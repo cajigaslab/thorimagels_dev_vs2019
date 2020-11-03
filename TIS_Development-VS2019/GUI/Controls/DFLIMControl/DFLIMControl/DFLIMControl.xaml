@@ -1,0 +1,174 @@
+﻿<UserControl x:Class="DFLIMControl.DFLIMControlUC"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:d3="http://research.microsoft.com/DynamicDataDisplay/1.0"
+             xmlns:sci="http://schemas.abtsoftware.co.uk/scichart"
+             xmlns:local="clr-namespace:DFLIMControl"
+             xmlns:validator="clr-namespace:Validations;assembly=Validations"
+             xmlns:sharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+             xmlns:customModifiers="clr-namespace:ROIStatsChart.CustomModifiers;assembly=ROIStatsChart"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <sharedTypes:DoubleCultureConverter x:Key="doubleCulture" />
+            <sharedTypes:BoolToOppositeBoolConverter x:Key="boolToOposite" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="2">
+            <StackPanel  Orientation="Horizontal">
+                <Label Width="90" />
+                <Label Width="70"
+                       HorizontalContentAlignment="Center"
+                       Content="CHA" />
+                <Label Width="70"
+                       HorizontalContentAlignment="Center"
+                       Content="CHB" />
+                <Label Width="70"
+                       HorizontalContentAlignment="Center"
+                       Content="CHC" />
+                <Label Width="70"
+                       HorizontalContentAlignment="Center"
+                       Content="CHD" />
+            </StackPanel>
+            <StackPanel  Orientation="Horizontal">
+                <Label Width="90"
+                       Content="Tau Blue [ns]"
+                       HorizontalContentAlignment="Right" />
+                <TextBox Width="70"
+                         HorizontalContentAlignment="Center"
+                         Text="{Binding DFLIMTauLow[0], StringFormat=N3}" />
+                <TextBox Width="70"
+                         HorizontalContentAlignment="Center"
+                         Text="{Binding DFLIMTauLow[1], StringFormat=N3}" />
+                <TextBox Width="70"
+                         HorizontalContentAlignment="Center"
+                         Text="{Binding DFLIMTauLow[2], StringFormat=N3}" />
+                <TextBox Width="70"
+                         HorizontalContentAlignment="Center"
+                         Text="{Binding DFLIMTauLow[3], StringFormat=N3}" />
+            </StackPanel>
+            <StackPanel  Orientation="Horizontal">
+                <Label Width="90"
+                       Content="Tau Red [ns]"
+                       HorizontalContentAlignment="Right" />
+                <TextBox Width="70"
+                         HorizontalContentAlignment="Center"
+                         Text="{Binding DFLIMTauHigh[0], StringFormat=N3}" />
+                <TextBox Width="70"
+                         HorizontalContentAlignment="Center"
+                         Text="{Binding DFLIMTauHigh[1], StringFormat=N3}" />
+                <TextBox Width="70"
+                         HorizontalContentAlignment="Center"
+                         Text="{Binding DFLIMTauHigh[2], StringFormat=N3}" />
+                <TextBox Width="70"
+                         HorizontalContentAlignment="Center"
+                         Text="{Binding DFLIMTauHigh[3], StringFormat=N3}" />
+            </StackPanel>
+            <StackPanel  Orientation="Horizontal">
+                <Label Width="90"
+                       Content="LUT Low [bins]"
+                       HorizontalContentAlignment="Right" />
+                <TextBox Width="70"
+                         HorizontalContentAlignment="Center"
+                         Text="{Binding DFLIMLUTLow[0]}" />
+                <TextBox Width="70"
+                         HorizontalContentAlignment="Center"
+                         Text="{Binding DFLIMLUTLow[1]}" />
+                <TextBox Width="70"
+                         HorizontalContentAlignment="Center"
+                         Text="{Binding DFLIMLUTLow[2]}" />
+                <TextBox Width="70"
+                         HorizontalContentAlignment="Center"
+                         Text="{Binding DFLIMLUTLow[3]}" />
+            </StackPanel>
+            <StackPanel  Orientation="Horizontal">
+                <Label Width="90"
+                       Content="LUT High [bins]"
+                       HorizontalContentAlignment="Right" />
+                <TextBox Width="70"
+                         HorizontalContentAlignment="Center"
+                         Text="{Binding DFLIMLUTHigh[0]}" />
+                <TextBox Width="70"
+                         HorizontalContentAlignment="Center"
+                         Text="{Binding DFLIMLUTHigh[1]}" />
+                <TextBox Width="70"
+                         HorizontalContentAlignment="Center"
+                         Text="{Binding DFLIMLUTHigh[2]}" />
+                <TextBox Width="70"
+                         HorizontalContentAlignment="Center"
+                         Text="{Binding DFLIMLUTHigh[3]}" />
+            </StackPanel>
+            <StackPanel  Orientation="Horizontal">
+                <Label Width="90"
+                       Content="tZero [ns]"
+                       HorizontalContentAlignment="Right" />
+                <TextBox Width="70"
+                         HorizontalContentAlignment="Center"
+                         Text="{Binding DFLIMTZero[0], StringFormat=N3}" />
+                <TextBox Width="70"
+                         HorizontalContentAlignment="Center"
+                         Text="{Binding DFLIMTZero[1], StringFormat=N3}" />
+                <TextBox Width="70"
+                         HorizontalContentAlignment="Center"
+                         Text="{Binding DFLIMTZero[2], StringFormat=N3}" />
+                <TextBox Width="70"
+                         HorizontalContentAlignment="Center"
+                         Text="{Binding DFLIMTZero[3], StringFormat=N3}" />
+            </StackPanel>
+        </StackPanel>
+        <DockPanel Name="SpDFLIMControlPanel1"
+                   Grid.Row="1"
+                   Margin="0,3,0,3">
+            <Button Content="Resync"
+                    Margin="5,0"
+                    HorizontalAlignment="Right"
+                    MinWidth="55"
+                    MaxWidth="100"
+                    Visibility="{Binding DFLIMHWControlsVisibility}"
+                    Command="{Binding DFLIMReSyncCommand}" />
+            <Button Content="FLIM Fit"
+                    Margin="5,0"
+                    MinWidth="55"
+                    MaxWidth="100"
+                    Visibility="{Binding DFLIMFitVisibility}"
+                    Command="{Binding DFLIMDisplayFitCommand}" />
+            <Button Content="Setup Assistant"
+                    Margin="5,0"
+                    Visibility="{Binding DFLIMHWControlsVisibility}"
+                    MinWidth="90"
+                    MaxWidth="120"
+                    Command="{Binding DFLIMDisplaySetupAssitantCommand}" />
+            <StackPanel Margin="10,0"
+                        HorizontalAlignment="Right">
+                <RadioButton Margin="2"
+                             GroupName="ImageType"
+                             IsChecked="{Binding DFLIMDisplayLifetimeImage}"
+                             Content="Lifetime Image"
+                             VerticalContentAlignment="Center"
+                             VerticalAlignment="Center"
+                             Foreground="White" />
+                <RadioButton Margin="2"
+                             GroupName="ImageType"
+                             IsChecked="{Binding DFLIMDisplayLifetimeImage, Converter={StaticResource boolToOposite}, Mode=OneWay}"
+                             Content="Intensity Image"
+                             VerticalContentAlignment="Center"
+                             VerticalAlignment="Center"
+                             Foreground="White" />
+            </StackPanel>
+        </DockPanel>
+        <local:DFLIMHistogram x:Name="dflimHistogram"
+                              Grid.Row="0" />
+    </Grid>
+</UserControl>

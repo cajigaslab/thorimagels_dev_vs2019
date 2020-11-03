@@ -1,0 +1,61 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.CaptureOptionsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:View="clr-namespace:CaptureSetupDll.View"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:opts="clr-namespace:CaptureOptionsControl;assembly=CaptureOptionsControl"
+             Width="385"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <opts:CaptureOptionsControlUC
+        BleachControlActive="{Binding Path=BleachControlActive}"
+        BleachFrames="{Binding Path=BleachFrames}"
+        BleachTriggerStr="{Binding Path=BleachTriggerStr}"
+        BleachPostTriggerStr="{Binding Path=BleachPostTriggerStr}"
+        BleachingCaptureModeVis="{Binding Path=BleachingCaptureModeVis}"
+        CaptureMode="{Binding Path=CaptureMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+        DataTypeStr="{Binding Path=DataTypeStr}"
+        EnabledPMTs="{Binding Path=EnabledPMTs}"
+        FastZActive="{Binding Path=FastZActive}"
+        FastZEnabledDisabledStr="{Binding Path=FastZEnabledDisabledStr}"
+        FiniteStreamingVis="{Binding Path=FiniteStreamingVis}"
+        HyperSpectralCaptureActive="{Binding Path=HyperSpectralCaptureActive}"
+        HyperspectralModeVis="{Binding Path=HyperspectralModeVis}"
+        KuriousSequenceSteps="{Binding Path=KuriousSequenceSteps}" 
+        PreBleachFrames="{Binding Path=PreBleachFrames}"
+        PreBleachInterval="{Binding Path=PreBleachInterval}"
+        PreBleachMode="{Binding Path=PreBleachMode}" 
+        PostBleachFrames1="{Binding Path=PostBleachFrames1}"
+        PostBleachInterval1="{Binding Path=PostBleachInterval1}"
+        PostBleachMode1="{Binding Path=PostBleachMode1}"
+        PostBleachFrames2="{Binding Path=PostBleachFrames2}"
+        PostBleachInterval2="{Binding Path=PostBleachInterval2}"
+        PostBleachMode2="{Binding Path=PostBleachMode2}"
+        PostBleach1Label="{Binding Path=PostBleach1Label}"
+        PostBleach2Label="{Binding Path=PostBleach2Label}"
+        SimultaneousEnabledStr="{Binding Path=SimultaneousEnabledStr}"
+        StaircaseEnabledDisabledStr="{Binding Path=StaircaseEnabledDisabledStr}"
+        StimulusStreamingVis="{Binding Path=StimulusStreamingVis}"
+        StimulusMaxFrames="{Binding Path=StimulusMaxFrames}"
+        StreamFrames="{Binding Path=StreamFrames}"
+        StreamVolumes="{Binding Path=StreamVolumes}"
+        StreamingCaptureModeVis="{Binding Path=StreamingCaptureModeVis}"
+        StreamingStorageModeStr="{Binding Path=StreamingStorageModeStr}"
+        TInterval="{Binding Path=TInterval}"
+        TFrames="{Binding Path=TFrames}"
+        TriggerModeStreamingStr="{Binding Path=TriggerModeStreamingStr}"   
+        TSeriesCaptureModeVis="{Binding Path=TSeriesCaptureModeVis}"
+        TriggerModeTimelapseStr="{Binding Path=TriggerModeTimelapseStr}"
+        ZFastEnable="{Binding Path=ZFastEnable}"
+        >
+        </opts:CaptureOptionsControlUC>
+    </Grid>
+</UserControl>

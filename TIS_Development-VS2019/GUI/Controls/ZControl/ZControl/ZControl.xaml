@@ -1,0 +1,1208 @@
+﻿<UserControl x:Class="ZControl.ZControlUC"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:RSlider="clr-namespace:RangeSliderWPF;assembly=RangeSliderWPF"
+             xmlns:zc="clr-namespace:ZControl"
+             xmlns:ts="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+             xmlns:validator="clr-namespace:Validations;assembly=Validations"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             Width="Auto"
+             Height="Auto"
+             >
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ts:BooleanToVisibilityConverter x:Key="boolToVis" />
+            <ts:BooleanToVisibilityConverter x:Key="boolToVisCust" />
+            <ts:BooleanToVisibilityConverter2 x:Key="boolToVisCust2" />
+            <ts:BooleanToVisibilityConverter3 x:Key="boolToVisCust3" />
+            <ts:DoubleCultureConverter x:Key="doubleCulture" />
+            <ts:DoubleScaledCultureConverter x:Key="doubleCultureUnitConverter" />
+            <zc:FontFamilyConverter x:Key="FontConverter" />
+            <zc:UpDownButtonContentConverter x:Key="ButtonContentConverter" />
+            <zc:CommandParameterConverter x:Key="CommandParamConverter" />
+            <zc:CommandParameterConverter2 x:Key="CommandParamConverter2" />
+            <x:StaticExtension Member="ts:ResourceManagerCS.Instance" x:Key="ResourceManagerCS"/>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel>
+            <StackPanel  Visibility="{Binding Source={StaticResource ResourceManagerCS}, Path=TabletModeEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVis}, ConverterParameter=true}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="50" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="85" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Row="0"
+                            Grid.RowSpan="2"
+                            Grid.Column="1"
+                            Margin="1"
+                            VerticalAlignment="Top">
+                        <StackPanel HorizontalAlignment="Center"
+                                Orientation="Horizontal">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Row="0"
+                                        Grid.Column="1"
+                                        HorizontalAlignment="Center"
+                                        Orientation="Horizontal">
+                                    <Label HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Content="Z : "
+                                       Foreground="White" />
+                                    <Label Name="zLabel"
+                                       Width="50"
+                                       VerticalAlignment="Center"
+                                       Content="{Binding Path=ZPosition,
+                                                         Mode=TwoWay,
+                                                         UpdateSourceTrigger=PropertyChanged,
+                                                         ConverterParameter=1000,
+                                                         Converter={StaticResource doubleCultureUnitConverter}}"
+                                       Foreground="White"
+                                       ToolTip="Z-axis position">
+                                        <Label.Style>
+                                            <Style TargetType="Label">
+                                                <Style.Resources>
+                                                    <Storyboard x:Key="flashingAnimation">
+                                                        <DoubleAnimation AutoReverse="True"
+                                                                     Duration="0:0:0.5"
+                                                                     From="1"
+                                                                     RepeatBehavior="Forever"
+                                                                     Storyboard.TargetProperty="(Background).(Opacity)"
+                                                                     To="0.5" />
+                                                    </Storyboard>
+                                                </Style.Resources>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=ZPosOutOfBounds}"
+                                                             Value="True">
+                                                        <Setter Property="Background"
+                                                            Value="Red" />
+                                                        <DataTrigger.EnterActions>
+                                                            <BeginStoryboard Name="flashing"
+                                                                         Storyboard="{StaticResource flashingAnimation}" />
+                                                        </DataTrigger.EnterActions>
+                                                        <DataTrigger.ExitActions>
+                                                            <StopStoryboard BeginStoryboardName="flashing" />
+                                                        </DataTrigger.ExitActions>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Label.Style>
+                                    </Label>
+                                    <Label HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Content="[um]"
+                                       Foreground="White" />
+                                </StackPanel>
+                                <StackPanel Grid.Row="1"
+                                        Grid.Column="1"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Orientation="Horizontal">
+                                    <TextBox Name="txtZGoto"
+                                         Width="70"
+                                         Text="{Binding Path=ZGotoValue[0], Mode=TwoWay, NotifyOnValidationError=True,ValidatesOnDataErrors=True}"
+                                         validator:Validation.ValidationType="{x:Type system:Double}"
+                                         validator:Validation.NoEmptyValue="False"
+                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                         ToolTip="Z Go to value" />
+                                    <Button Width="30"
+                                        Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                    Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txtZGoto}"
+                                                             Value="True">
+                                                        <Setter Property="Visibility"
+                                                            Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </StackPanel>
+                                <StackPanel Grid.Row="2"
+                                        Grid.Column="1"
+                                        Orientation="Horizontal">
+                                    <Button Width="50"
+                                        Height="30"
+                                        Margin="5"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Command="{Binding Path=ZCommand}"
+                                        CommandParameter="GO_Z"
+                                        Content="Go"
+                                        ToolTip="Command to move the Z-axis" />
+                                    <Button Width="50"
+                                        Height="30"
+                                        Margin="5"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Background="Red"
+                                        Command="{Binding Path=ZCommand}"
+                                        CommandParameter="STOP_Z"
+                                        Content="Stop"
+                                        Foreground="White"
+                                        Style="{x:Null}"
+                                        ToolTip="Command to stop the Z-axis" />
+                                    <Button Width="50"
+                                        Height="30"
+                                        Command="{Binding Path=ZCommand}"
+                                        CommandParameter="SET_Z_ZERO"
+                                        Content="Set Zero"
+                                        ToolTip="Command to set current location to zero"
+                                        Visibility="{Binding ZZeroVisibility}" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                        <StackPanel Margin="1"
+                                HorizontalAlignment="Center"
+                                Orientation="Horizontal"
+                                ToolTip="Select slider type"
+                                Visibility="Collapsed">
+                            <Label Height="25"
+                               Margin="5"
+                               Content="Slider Type"
+                               Foreground="White" />
+                            <RadioButton Name="rbMarker"
+                                     Margin="5"
+                                     VerticalAlignment="Center"
+                                     Content="Marker"
+                                     Foreground="White"
+                                     IsChecked="True" />
+                            <RadioButton Name="rbRange"
+                                     Margin="5"
+                                     VerticalAlignment="Center"                                    
+                                     Content="Range"
+                                     Foreground="White" />
+                        </StackPanel>
+                        <StackPanel HorizontalAlignment="Center"
+                                Orientation="Horizontal">
+                            <StackPanel Orientation="Horizontal">
+                                <Label Height="25"
+                                   Content="Slider Step Size"
+                                   Foreground="White" />
+                                <TextBox Name="txtStepSize"
+                                     Width="70"
+                                     Height="25"
+                                     Text="{Binding Path=ZStepSize,
+                                                    Mode=TwoWay,
+                                                    ConverterParameter=1000,
+                                                    Converter={StaticResource doubleCultureUnitConverter}}"
+                                     ToolTip="Enter the StepSize value" />
+                                <Button Width="30"
+                                    Height="25"
+                                    Content="✓">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txtStepSize}"
+                                                         Value="True">
+                                                    <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <Label Height="25"
+                                   Content="[um]"
+                                   Foreground="White" />
+                            </StackPanel>
+                            <StackPanel VerticalAlignment="Center"
+                                    ToolTip="Select slider step type">
+                                <Button Name="rbCoarse"
+                                    Margin="1"
+                                    Command="{Binding Path=ZCommand}"
+                                    CommandParameter="Z_STEPSIZE_COARSE"
+                                    Content="increase"
+                                    MinWidth="30" />
+                                <Button Name="rbFine"
+                                    Margin="1"
+                                    Command="{Binding Path=ZCommand}"
+                                    CommandParameter="Z_STEPSIZE_FINE"
+                                    Content="decrease"
+                                    MinWidth="30" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel>
+                                <StackPanel Margin="1"
+                                        Orientation="Horizontal">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label MinWidth="50"
+                                           Content="Start"
+                                           Foreground="White" />
+                                        <TextBox Name="tbZStartPos"
+                                             MinWidth="70"
+                                             Text="{Binding Path=ZScanStart,
+                                                            Mode=TwoWay,
+                                                            ConverterParameter=1000,
+                                                            Converter={StaticResource doubleCultureUnitConverter}}"
+                                             ToolTip="Enter Start position for Z-axis" />
+                                    </StackPanel>
+                                    <Button MinWidth="40"
+                                        Command="{Binding Path=ZCommand}"
+                                        CommandParameter="SET_Z_SCANSTART"
+                                        Content="Set"
+                                        ToolTip="Set Start position for Z-axis to current position"
+                                        Visibility="{Binding ElementName=tbZStartPos,
+                                                             Path=IsFocused,
+                                                             Converter={StaticResource boolToVisCust2},
+                                                             ConverterParameter=True}" />
+                                    <Button MinWidth="40"
+                                        Command="{Binding Path=ZCommand}"
+                                        CommandParameter="GO_Z_SCANSTART"
+                                        Content="Go"
+                                        ToolTip="Go to entered Z-axis position" />
+                                </StackPanel>
+                                <StackPanel Margin="1"
+                                        Orientation="Horizontal"
+                                        ToolTip="Center of Z-axis">
+                                    <Label MinWidth="50"
+                                       Content="Center:"
+                                       Foreground="White" />
+                                    <Label Name="zCenter"
+                                       MinWidth="70"
+                                       Content="{Binding Path=ZCenter,
+                                                         Mode=OneWay,
+                                                         UpdateSourceTrigger=PropertyChanged,
+                                                         ConverterParameter=1000,
+                                                         Converter={StaticResource doubleCultureUnitConverter}}"
+                                       Foreground="White" />
+                                    <Label MinWidth="40"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Content="[um]"
+                                       Foreground="White" />
+                                    <Button MinWidth="40"
+                                        Command="{Binding Path=ZCommand}"
+                                        CommandParameter="GO_Z_CENTER"
+                                        Content="Go"
+                                        ToolTip="Go to center of Z-axis" />
+                                </StackPanel>
+                                <StackPanel Margin="1"
+                                        Orientation="Horizontal">
+
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label MinWidth="50"
+                                           Content="Stop"
+                                           Foreground="White" />
+                                        <TextBox Name="tbZStopPos"
+                                             MinWidth="70"
+                                             Text="{Binding Path=ZScanStop,
+                                                            Mode=TwoWay,
+                                                            ConverterParameter=1000,
+                                                            Converter={StaticResource doubleCultureUnitConverter}}"
+                                             ToolTip="Enter Stop position for Z-axis">
+                                            <TextBox.Style>
+                                                <Style TargetType="TextBox">
+                                                    <Style.Resources>
+                                                        <Storyboard x:Key="flashingAnimation">
+                                                            <DoubleAnimation AutoReverse="True"
+                                                                         Duration="0:0:0.5"
+                                                                         From="1"
+                                                                         RepeatBehavior="Forever"
+                                                                         Storyboard.TargetProperty="(Background).(Opacity)"
+                                                                         To="0.5" />
+                                                        </Storyboard>
+                                                    </Style.Resources>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=ZScanStopNotValid}"
+                                                                 Value="True">
+                                                            <Setter Property="Background"
+                                                                Value="Red" />
+                                                            <DataTrigger.EnterActions>
+                                                                <BeginStoryboard Name="flashing"
+                                                                             Storyboard="{StaticResource flashingAnimation}" />
+                                                            </DataTrigger.EnterActions>
+                                                            <DataTrigger.ExitActions>
+                                                                <StopStoryboard BeginStoryboardName="flashing" />
+                                                            </DataTrigger.ExitActions>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBox.Style>
+                                        </TextBox>
+                                    </StackPanel>
+                                    <Button MinWidth="40"
+                                        Command="{Binding Path=ZCommand}"
+                                        CommandParameter="SET_Z_SCANSTOP"
+                                        Content="Set"
+                                        ToolTip="Set Stop position for Z-axis to current position"
+                                        Visibility="{Binding IsFocused,
+                                                             ConverterParameter=True,
+                                                             Converter={StaticResource boolToVisCust2},
+                                                             ElementName=tbZStopPos}" />
+                                    <Button MinWidth="40"
+                                        Command="{Binding Path=ZCommand}"
+                                        CommandParameter="GO_Z_SCANSTOP"
+                                        Content="Go"
+                                        ToolTip="Go to entered Z-axis position" />
+                                </StackPanel>
+                            </StackPanel>
+                            <Button Name="btnZStackPreview"
+                                Width="55"
+                                Height="50"
+                                Background="LimeGreen"
+                                Command="{Binding Path=PreviewZStackCommand}"
+                                Content="Preview"
+                                Foreground="White"
+                                Style="{x:Null}"
+                                IsEnabled="{Binding Path=PreviewButtonEnabled, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Margin="1"
+                                Orientation="Horizontal"
+                                ToolTip="Set step size">
+                            <Label Width="100"
+                               Content="Step"
+                               Foreground="White" />
+                            <TextBox Name="tbZScanStep"
+                                 Width="70"
+                                 Text="{Binding Path=ZScanStep,
+                                                Mode=TwoWay,
+                                                Converter={StaticResource doubleCulture}}" />
+                            <Button Width="30"
+                                Content="✓">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbZScanStep}"
+                                                     Value="True">
+                                                <Setter Property="Visibility"
+                                                    Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Label Width="50"
+                               Content="[um]"
+                               Foreground="White" />
+                        </StackPanel>
+                        <StackPanel Margin="1"
+                                Orientation="Horizontal"
+                                ToolTip="Number of steps from starting to ending point">
+                            <Label Width="100"
+                               Content="No. Steps"
+                               Foreground="White" />
+                            <Label Width="70"
+                               Content="{Binding Path=ZScanNumSteps, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Margin="1"
+                                Orientation="Horizontal"
+                                ToolTip="Thickness">
+                            <Label Width="100"
+                               Content="Volume"
+                               Foreground="White" />
+                            <Label Width="70"
+                               Content="{Binding Path=ZScanThickness,
+                                                 Mode=OneWay,
+                                                 UpdateSourceTrigger=PropertyChanged,
+                                                 Converter={StaticResource doubleCulture}}"
+                               Foreground="White" />
+                            <Label Width="50"
+                               Content="[um]"
+                               Foreground="White" />
+                        </StackPanel>
+                        <StackPanel Margin="2"
+                                Orientation="Horizontal"
+                                ToolTip="Section Thickness"
+                                Visibility="Collapsed">
+                            <Label Width="100"
+                               Content="Section Thickness"
+                               Foreground="White" />
+                            <Label Width="75"
+                               Content="{Binding Path=ZSectionThickness,
+                                                 Mode=OneWay,
+                                                 UpdateSourceTrigger=PropertyChanged,
+                                                 Converter={StaticResource doubleCulture}}"
+                               Foreground="White" />
+                            <Label Width="50"
+                               Content="[um]"
+                               Foreground="White" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Grid.RowSpan="2"
+                            Margin="5"
+                            VerticalAlignment="Center">
+                        <TextBox MinWidth="45"
+                             Height="20"
+                             HorizontalAlignment="Left"
+                             VerticalAlignment="Top"
+                             IsReadOnly="true"
+                             Text="{Binding Path=ZMax,
+                                            Mode=OneWay,
+                                            UpdateSourceTrigger=PropertyChanged,
+                                            ConverterParameter=1000,
+                                            Converter={StaticResource doubleCultureUnitConverter}}"
+                             TextWrapping="Wrap"
+                             ToolTip="Max Z-axis value">
+                            <TextBox.Visibility>
+                                <MultiBinding Converter="{StaticResource boolToVisCust3}"
+                                          ConverterParameter="true">
+                                    <Binding Path="ZInvertLimits" />
+                                    <Binding Path="ZInvertDevice" />
+                                </MultiBinding>
+                            </TextBox.Visibility>
+                        </TextBox>
+                        <TextBox MinWidth="45"
+                             Height="20"
+                             HorizontalAlignment="Left"
+                             VerticalAlignment="Bottom"
+                             IsReadOnly="true"
+                             Text="{Binding Path=ZMin,
+                                            Mode=OneWay,
+                                            UpdateSourceTrigger=PropertyChanged,
+                                            ConverterParameter=1000,
+                                            Converter={StaticResource doubleCultureUnitConverter}}"
+                             TextWrapping="Wrap"
+                             ToolTip="Min Z-axis value">
+                            <TextBox.Visibility>
+                                <MultiBinding  Converter="{StaticResource boolToVisCust3}"
+                                           ConverterParameter="false">
+                                    <Binding Path="ZInvertLimits" />
+                                    <Binding Path="ZInvertDevice" />
+                                </MultiBinding>
+                            </TextBox.Visibility>
+                        </TextBox>
+                        <Grid MaxWidth="80">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="4*" />
+                                <ColumnDefinition Width="11*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.Resources>
+                                <zc:ZProgressPixelConverter x:Key="zProgressPixelConverter" />
+                                <Style TargetType="{x:Type ProgressBar}">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="{x:Type ProgressBar}">
+                                                <Canvas x:Name="TemplateRoot"
+                                                    ClipToBounds="True">
+                                                    <Grid MinHeight="30"
+                                                      MinWidth="200">
+                                                        <Rectangle Name="PART_Track"
+                                                               Fill="Gainsboro"
+                                                               Stroke="Gray"
+                                                               StrokeThickness="1" />
+                                                        <Rectangle Name="PART_Indicator"
+                                                               Fill="LimeGreen"
+                                                               Stroke="Gray"
+                                                               StrokeThickness="1"
+                                                               HorizontalAlignment="Left" />
+                                                    </Grid>
+                                                    <Image Name="img"
+                                                       Source=".\microscope_objective.png"
+                                                       Height="64">
+                                                        <Canvas.Left>
+                                                            <MultiBinding Converter="{StaticResource zProgressPixelConverter}"
+                                                                      UpdateSourceTrigger="PropertyChanged">
+                                                                <Binding RelativeSource="{RelativeSource Self}" />
+                                                                <Binding RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=ProgressBar}" />
+                                                                <Binding  RelativeSource="{RelativeSource TemplatedParent}"
+                                                                      Path="Value" />
+                                                            </MultiBinding>
+                                                        </Canvas.Left>
+                                                        <Image.RenderTransform>
+                                                            <TranslateTransform X="-64"
+                                                                            Y="-17" />
+                                                        </Image.RenderTransform>
+                                                    </Image>
+                                                </Canvas>
+                                                <ControlTemplate.Triggers>
+                                                    <DataTrigger Binding="{Binding ElementName=cbZInvert,Path=IsChecked}"
+                                                             Value="True">
+                                                        <Setter Property="LayoutTransform"
+                                                            TargetName="TemplateRoot">
+                                                            <Setter.Value>
+                                                                <RotateTransform Angle="-90"
+                                                                             CenterX=".5"
+                                                                             CenterY=".5" />
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding ElementName=cbZInvert,Path=IsChecked}"
+                                                             Value="False">
+                                                        <Setter Property="LayoutTransform"
+                                                            TargetName="TemplateRoot">
+                                                            <Setter.Value>
+                                                                <RotateTransform Angle="90"
+                                                                             CenterX=".5"
+                                                                             CenterY=".5" />
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </DataTrigger>
+
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Grid.Resources>
+                            <ProgressBar x:Name="zSlider"
+                                     Orientation="Vertical"
+                                     Height="200"
+                                     Width="30"
+                                     HorizontalAlignment="Left"
+                                     Margin="8,0,0,0"
+                                     Value="{Binding Path=ZPositionBar, Mode=TwoWay, UpdateSourceTrigger=Explicit, Converter={StaticResource doubleCulture}}"
+                                     Maximum="{Binding Path=ZMax,
+                                                       Mode=OneWay,
+                                                       UpdateSourceTrigger=PropertyChanged,
+                                                       Converter={StaticResource doubleCulture}}"
+                                     Minimum="{Binding Path=ZMin,
+                                                       Mode=OneWay,
+                                                       UpdateSourceTrigger=PropertyChanged,
+                                                       Converter={StaticResource doubleCulture}}"
+                                     Grid.ColumnSpan="2">
+                            </ProgressBar>
+                            <StackPanel Grid.ColumnSpan="1"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Grid.Column="1"
+                                    Margin="0,78">
+                                <StackPanel Orientation="Vertical">
+                                    <RepeatButton Width="30"
+                                              Height="20"
+                                              Command="{Binding Path=ZCommand}"
+                                              CommandParameter="{Binding Path=ZInvertUpDown, Mode=OneWay, Converter={StaticResource CommandParamConverter}, ConverterParameter=top}"
+                                              FontFamily="{Binding Path=ZInvertUpDown, Mode=OneWay, Converter={StaticResource FontConverter}, ConverterParameter=1}"
+                                              Content="{Binding Path=ZInvertUpDown, Mode=OneWay, Converter={StaticResource ButtonContentConverter}, ConverterParameter=top}"
+                                              Delay="500"
+                                              Interval="100" />
+                                    <RepeatButton Width="30"
+                                              Height="20"
+                                              Command="{Binding Path=ZCommand}"
+                                              CommandParameter="{Binding Path=ZInvertUpDown, Mode=OneWay, Converter={StaticResource CommandParamConverter}, ConverterParameter=bottom}"
+                                              FontFamily="{Binding Path=ZInvertUpDown, Mode=OneWay, Converter={StaticResource FontConverter}, ConverterParameter=1}"
+                                              Content="{Binding Path=ZInvertUpDown, Mode=OneWay, Converter={StaticResource ButtonContentConverter}, ConverterParameter=bottom}"
+                                              Delay="500"
+                                              Interval="100" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBox MinWidth="45"
+                             Height="20"
+                             HorizontalAlignment="Left"
+                             VerticalAlignment="Bottom"
+                             IsReadOnly="true"
+                             Text="{Binding Path=ZMin,
+                                            Mode=OneWay,
+                                            UpdateSourceTrigger=PropertyChanged,
+                                            ConverterParameter=1000,
+                                            Converter={StaticResource doubleCultureUnitConverter}}"
+                             TextWrapping="Wrap"
+                             ToolTip="Min Z-axis value">
+                            <TextBox.Visibility>
+                                <MultiBinding Converter="{StaticResource boolToVisCust3}"
+                                          ConverterParameter="true">
+                                    <Binding Path="ZInvertLimits" />
+                                    <Binding Path="ZInvertDevice" />
+                                </MultiBinding>
+                            </TextBox.Visibility>
+                        </TextBox>
+                        <TextBox MinWidth="45"
+                             Height="20"
+                             HorizontalAlignment="Left"
+                             VerticalAlignment="Top"
+                             IsReadOnly="true"
+                             Text="{Binding Path=ZMax,
+                                            Mode=OneWay,
+                                            UpdateSourceTrigger=PropertyChanged,
+                                            ConverterParameter=1000,
+                                            Converter={StaticResource doubleCultureUnitConverter}}"
+                             TextWrapping="Wrap"
+                             ToolTip="Max Z-axis value">
+                            <TextBox.Visibility>
+                                <MultiBinding Converter="{StaticResource boolToVisCust3}"
+                                          ConverterParameter="false">
+                                    <Binding Path="ZInvertLimits" />
+                                    <Binding Path="ZInvertDevice" />
+                                </MultiBinding>
+                            </TextBox.Visibility>
+                        </TextBox>
+                        <CheckBox Name="cbZInvert"                              
+                              Content="Invert"
+                              Foreground="White"
+                              IsChecked="{Binding Path=ZInvert,
+                                                  Mode=TwoWay,
+                                                  UpdateSourceTrigger=PropertyChanged}"                              
+                              Visibility="{Binding Path=ZInvertVisibility}" />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+            <StackPanel>
+                <Border Name="Z2Border"
+                Visibility="{Binding Path=Z2StageVisibility}">
+                    <Expander Name="SecondaryZExpander">
+                        <Expander.Header>
+                            <Grid Width="350">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="285" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0"
+                                        Grid.ColumnSpan="1"
+                                        Orientation="Horizontal"
+                                        Visibility="{Binding Path=Z2StageVisibility}">
+                                    <Label Name="BorderTitle"
+                                       HorizontalAlignment="Left"
+                                       Content="Secondary Z and R Control:"
+                                       Foreground="White" />
+                                    <Label HorizontalAlignment="Left"
+                                       Content="{Binding Path=ZStage2Name}"
+                                       Foreground="White" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="0"
+                                        Grid.ColumnSpan="2"
+                                        HorizontalAlignment="Right"
+                                        Orientation="Horizontal"
+                                        Visibility="{Binding ElementName=SecondaryZExpander,
+                                                             Path=IsExpanded,
+                                                             ConverterParameter=True,
+                                                             Converter={StaticResource boolToVisCust}}">
+                                    <StackPanel HorizontalAlignment="Right"
+                                            Orientation="Horizontal">
+                                        <Label Margin="20,0,0,0"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center"
+                                           Content="Z:"
+                                           Foreground="White" />
+                                        <Label Name="z2Label_top"
+                                           MaxWidth="50"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center"
+                                           Content="{Binding Path=Z2Position,
+                                                             Mode=TwoWay,
+                                                             UpdateSourceTrigger=PropertyChanged,
+                                                             ConverterParameter=1000,
+                                                             Converter={StaticResource doubleCultureUnitConverter}}"
+                                           Foreground="White"
+                                           ToolTip="Current Z-axis value">
+                                            <Label.Style>
+                                                <Style TargetType="Label">
+                                                    <Style.Resources>
+                                                        <Storyboard x:Key="flashingAnimation">
+                                                            <DoubleAnimation AutoReverse="True"
+                                                                         Duration="0:0:0.5"
+                                                                         From="1"
+                                                                         RepeatBehavior="Forever"
+                                                                         Storyboard.TargetProperty="(Background).(Opacity)"
+                                                                         To="0.5" />
+                                                        </Storyboard>
+                                                    </Style.Resources>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=Z2PosOutOfBounds}"
+                                                                 Value="True">
+                                                            <Setter Property="Background"
+                                                                Value="Red" />
+                                                            <DataTrigger.EnterActions>
+                                                                <BeginStoryboard Name="flashing"
+                                                                             Storyboard="{StaticResource flashingAnimation}" />
+                                                            </DataTrigger.EnterActions>
+                                                            <DataTrigger.ExitActions>
+                                                                <StopStoryboard BeginStoryboardName="flashing" />
+                                                            </DataTrigger.ExitActions>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Label.Style>
+                                        </Label>
+                                        <Label HorizontalAlignment="Right"
+                                           VerticalAlignment="Center"
+                                           Content="[um]"
+                                           Foreground="White" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Expander.Header>
+                        <StackPanel>
+                            <StackPanel.LayoutTransform>
+                                <ScaleTransform ScaleX="{Binding Path=SecondaryZScale}"
+                                                ScaleY="{Binding Path=SecondaryZScale}"/>
+                            </StackPanel.LayoutTransform>
+                            <StackPanel Orientation="Horizontal">
+                                <StackPanel>
+                                    <StackPanel.Resources>
+                                        <zc:ZProgressPixelConverter x:Key="zProgressPixelConverter" />
+                                        <Style TargetType="{x:Type ProgressBar}">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="{x:Type ProgressBar}">
+                                                        <Canvas x:Name="TemplateRoot"
+                                                            ClipToBounds="True">
+                                                            <Grid MinHeight="30"
+                                                              MinWidth="200">
+                                                                <Rectangle Name="PART_Track"
+                                                                       Fill="Gainsboro"
+                                                                       Stroke="Gray"
+                                                                       StrokeThickness="1" />
+                                                                <Rectangle Name="PART_Indicator"
+                                                                       Fill="LimeGreen"
+                                                                       Stroke="Gray"
+                                                                       StrokeThickness="1"
+                                                                       HorizontalAlignment="Left" />
+                                                            </Grid>
+                                                            <Image Name="img"
+                                                               Source=".\microscope_objective.png"
+                                                               Height="64">
+                                                                <Canvas.Left>
+                                                                    <MultiBinding Converter="{StaticResource zProgressPixelConverter}"
+                                                                              UpdateSourceTrigger="PropertyChanged">
+                                                                        <Binding RelativeSource="{RelativeSource Self}" />
+                                                                        <Binding RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=ProgressBar}" />
+                                                                        <Binding  RelativeSource="{RelativeSource TemplatedParent}"
+                                                                              Path="Value" />
+                                                                    </MultiBinding>
+                                                                </Canvas.Left>
+                                                                <Image.RenderTransform>
+                                                                    <TranslateTransform X="-64"
+                                                                                    Y="-17" />
+                                                                </Image.RenderTransform>
+                                                            </Image>
+                                                        </Canvas>
+                                                        <ControlTemplate.Triggers>
+                                                            <DataTrigger Binding="{Binding ElementName=cbZ2Invert,Path=IsChecked}"
+                                                                     Value="True">
+                                                                <Setter Property="LayoutTransform"
+                                                                    TargetName="TemplateRoot">
+                                                                    <Setter.Value>
+                                                                        <RotateTransform Angle="-90"
+                                                                                     CenterX=".5"
+                                                                                     CenterY=".5" />
+                                                                    </Setter.Value>
+                                                                </Setter>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding ElementName=cbZ2Invert,Path=IsChecked}"
+                                                                     Value="False">
+                                                                <Setter Property="LayoutTransform"
+                                                                    TargetName="TemplateRoot">
+                                                                    <Setter.Value>
+                                                                        <RotateTransform Angle="90"
+                                                                                     CenterX=".5"
+                                                                                     CenterY=".5" />
+                                                                    </Setter.Value>
+                                                                </Setter>
+                                                            </DataTrigger>
+
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </StackPanel.Resources>
+                                    <TextBox MinWidth="45"
+                                         Height="20"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Bottom"
+                                         IsReadOnly="true"
+                                         Text="{Binding Path=Z2Max,
+                                                    Mode=OneWay,
+                                                    UpdateSourceTrigger=PropertyChanged,
+                                                    ConverterParameter=1000,
+                                                    Converter={StaticResource doubleCultureUnitConverter}}"
+                                         TextWrapping="Wrap"
+                                         ToolTip="Max Z-axis value">
+                                        <TextBox.Visibility>
+                                            <MultiBinding Converter="{StaticResource boolToVisCust3}"
+                                                      ConverterParameter="true">
+                                                <Binding Path="Z2InvertLimits" />
+                                                <Binding Path="Z2InvertDevice" />
+                                            </MultiBinding>
+                                        </TextBox.Visibility>
+                                    </TextBox>
+                                    <TextBox MinWidth="45"
+                                         Height="20"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Bottom"
+                                         IsReadOnly="true"
+                                         Text="{Binding Path=Z2Min,
+                                                    Mode=OneWay,
+                                                    UpdateSourceTrigger=PropertyChanged,
+                                                    ConverterParameter=1000,
+                                                    Converter={StaticResource doubleCultureUnitConverter}}"
+                                         TextWrapping="Wrap"
+                                         ToolTip="Min Z-axis value">
+                                        <TextBox.Visibility>
+                                            <MultiBinding  Converter="{StaticResource boolToVisCust3}"
+                                                       ConverterParameter="false">
+                                                <Binding Path="Z2InvertLimits" />
+                                                <Binding Path="Z2InvertDevice" />
+                                            </MultiBinding>
+                                        </TextBox.Visibility>
+                                    </TextBox>
+
+                                    <ProgressBar Orientation="Vertical"
+                                             Height="200"
+                                             Width="30"
+                                             HorizontalAlignment="Center"
+                                             Value="{Binding Path=Z2PositionBar, Mode=TwoWay, UpdateSourceTrigger=Explicit, Converter={StaticResource doubleCulture}}"
+                                             Maximum="{Binding Path=Z2Max,
+                                                                   Mode=OneWay,
+                                                                   UpdateSourceTrigger=PropertyChanged,
+                                                                   Converter={StaticResource doubleCulture}}"
+                                             Minimum="{Binding Path=Z2Min,
+                                                                   Mode=OneWay,
+                                                                   UpdateSourceTrigger=PropertyChanged,
+                                                                   Converter={StaticResource doubleCulture}}">
+
+                                    </ProgressBar>
+                                    <TextBox MinWidth="45"
+                                         Height="20"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Bottom"
+                                         IsReadOnly="true"
+                                         Text="{Binding Path=Z2Min,
+                                                    Mode=OneWay,
+                                                    UpdateSourceTrigger=PropertyChanged,
+                                                    ConverterParameter=1000,
+                                                    Converter={StaticResource doubleCultureUnitConverter}}"
+                                         TextWrapping="Wrap"
+                                         ToolTip="Min Z-axis value">
+                                        <TextBox.Visibility>
+                                            <MultiBinding Converter="{StaticResource boolToVisCust3}"
+                                                      ConverterParameter="true">
+                                                <Binding Path="Z2InvertLimits" />
+                                                <Binding Path="Z2InvertDevice" />
+                                            </MultiBinding>
+                                        </TextBox.Visibility>
+                                    </TextBox>
+                                    <TextBox MinWidth="45"
+                                         Height="20"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Bottom"
+                                         IsReadOnly="true"
+                                         Text="{Binding Path=Z2Max,
+                                                    Mode=OneWay,
+                                                    UpdateSourceTrigger=PropertyChanged,
+                                                    ConverterParameter=1000,
+                                                    Converter={StaticResource doubleCultureUnitConverter}}"
+                                         TextWrapping="Wrap"
+                                         ToolTip="Max Z-axis value">
+                                        <TextBox.Visibility>
+                                            <MultiBinding Converter="{StaticResource boolToVisCust3}"
+                                                      ConverterParameter="false">
+                                                <Binding Path="Z2InvertLimits" />
+                                                <Binding Path="Z2InvertDevice" />
+                                            </MultiBinding>
+                                        </TextBox.Visibility>
+
+                                    </TextBox>
+                                    <CheckBox Name="cbZ2Invert"                              
+                                Content="Invert"
+                                Foreground="White"
+                                IsChecked="{Binding Path=Z2Invert,
+                                                  Mode=TwoWay,
+                                                  UpdateSourceTrigger=PropertyChanged}"                              
+                                Visibility="{Binding Path=ZInvertVisibility}" />
+                                </StackPanel>
+                                <StackPanel HorizontalAlignment="Left"
+                                        VerticalAlignment="Center">
+                                    <StackPanel Orientation="Vertical">
+                                        <RepeatButton Width="30"
+                                                  Height="20"
+                                                  Command="{Binding Path=ZCommand}"
+                                                  CommandParameter="{Binding Path=ZInvertUpDown2, Mode=OneWay, Converter={StaticResource CommandParamConverter2}, ConverterParameter=top}"
+                                                  FontFamily="{Binding Path=ZInvertUpDown2, Mode=OneWay, Converter={StaticResource FontConverter}, ConverterParameter=1}"
+                                                  Content="{Binding Path=ZInvertUpDown2, Mode=OneWay, Converter={StaticResource ButtonContentConverter}, ConverterParameter=top}"
+                                                  Delay="500"
+                                                  Interval="100" />
+                                        <RepeatButton Width="30"
+                                                  Height="20"
+                                                  Command="{Binding Path=ZCommand}"
+                                                  CommandParameter="{Binding Path=ZInvertUpDown2, Mode=OneWay, Converter={StaticResource CommandParamConverter2}, ConverterParameter=bottom}"
+                                                  FontFamily="{Binding Path=ZInvertUpDown2, Mode=OneWay, Converter={StaticResource FontConverter}, ConverterParameter=1}"
+                                                  Content="{Binding Path=ZInvertUpDown2, Mode=OneWay, Converter={StaticResource ButtonContentConverter}, ConverterParameter=bottom}"
+                                                  Delay="500"
+                                                  Interval="100" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel Margin="10,10,10,0"
+                                        VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                            Visibility="{Binding Path=RStageVisibility}">
+                                        <Label Content="R : "
+                                           MinWidth="30"
+                                           HorizontalAlignment="Right"/>
+                                        <Label Content="{Binding Path=RPosition}"
+                                           Width="50" />
+                                        <Label HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Content="[deg]"
+                                           Foreground="White" />
+                                    </StackPanel>
+                                    <StackPanel HorizontalAlignment="Center"
+                                            Orientation="Horizontal">
+                                        <Label HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Content="Z : "
+                                           Foreground="White" 
+                                           MinWidth="30"/>
+                                        <Label Name="z2Label"
+                                           Width="50"
+                                           VerticalAlignment="Center"
+                                           Content="{Binding Path=Z2Position,
+                                                         Mode=TwoWay,
+                                                         UpdateSourceTrigger=PropertyChanged,
+                                                         ConverterParameter=1000,
+                                                         Converter={StaticResource doubleCultureUnitConverter}}"
+                                           Foreground="White"
+                                           ToolTip="Current Secondary Z-axis position">
+                                            <Label.Style>
+                                                <Style TargetType="Label">
+                                                    <Style.Resources>
+                                                        <Storyboard x:Key="flashingAnimation">
+                                                            <DoubleAnimation AutoReverse="True"
+                                                                         Duration="0:0:0.5"
+                                                                         From="1"
+                                                                         RepeatBehavior="Forever"
+                                                                         Storyboard.TargetProperty="(Background).(Opacity)"
+                                                                         To="0.5" />
+                                                        </Storyboard>
+                                                    </Style.Resources>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=Z2PosOutOfBounds}"
+                                                                 Value="True">
+                                                            <Setter Property="Background"
+                                                                Value="Red" />
+                                                            <DataTrigger.EnterActions>
+                                                                <BeginStoryboard Name="flashing"
+                                                                             Storyboard="{StaticResource flashingAnimation}" />
+                                                            </DataTrigger.EnterActions>
+                                                            <DataTrigger.ExitActions>
+                                                                <StopStoryboard BeginStoryboardName="flashing" />
+                                                            </DataTrigger.ExitActions>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Label.Style>
+                                        </Label>
+                                        <Label HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Content="[um]"
+                                           Foreground="White" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1"
+                                            Grid.Column="1"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Orientation="Horizontal">
+                                        <TextBox Name="txtZ2Goto"
+                                             Width="70"
+                                             Height="25"
+                                             Text="{Binding Path=ZGotoValue[1], Mode=TwoWay, NotifyOnValidationError=True,ValidatesOnDataErrors=True}"
+                                             validator:Validation.ValidationType="{x:Type system:Double}"
+                                             validator:Validation.NoEmptyValue="False"
+                                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                             ToolTip=" Secondary Z-Stage Go to value" />
+                                        <StackPanel Grid.Row="2"
+                                                Grid.Column="1"
+                                                Orientation="Horizontal">
+                                            <Button Name="Go2"
+                                                Width="50"
+                                                Height="30"
+                                                Margin="5"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Command="{Binding Path=ZCommand}"
+                                                CommandParameter="GO_Z2"
+                                                Content="Go"
+                                                ToolTip="Command to move the secondary Z-axis" />
+                                            <Button Width="50"
+                                                Height="30"
+                                                Margin="5"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Background="Red"
+                                                Command="{Binding Path=ZCommand}"
+                                                CommandParameter="STOP_Z2"
+                                                Content="Stop"
+                                                Foreground="White"
+                                                Style="{x:Null}"
+                                                ToolTip="Command to stop the Secondary Z-axis" />
+                                            <Button Width="50"
+                                                Height="30"
+                                                Command="{Binding Path=ZCommand}"
+                                                CommandParameter="SET_Z2_ZERO"
+                                                Content="Set Zero"
+                                                ToolTip="Command to set current location to zero"
+                                                Visibility="{Binding Path=Z2ZeroVisibility}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Label Height="25"
+                                               Content="Slider Step Size"
+                                               Foreground="White" />
+                                            <TextBox Name="txtStepSize2"
+                                                 Width="70"
+                                                 Height="25"
+                                                 Text="{Binding Path=Z2StepSize,
+                                                            Mode=TwoWay,
+                                                            ConverterParameter=1000,
+                                                            Converter={StaticResource doubleCultureUnitConverter}}"
+                                                 ToolTip="Enter the StepSize value" />
+                                            <Button Width="30"
+                                                Height="25"
+                                                Content="✓">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txtStepSize}"
+                                                                     Value="True">
+                                                                <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                            <Label Height="25"
+                                               Content="[um]"
+                                               Foreground="White" />
+                                            <StackPanel VerticalAlignment="Center"
+                                                    ToolTip="Select slider step type">
+                                                <Button Name="rb2Coarse"
+                                                    Margin="1"
+                                                    Command="{Binding Path=ZCommand}"
+                                                    CommandParameter="Z2_STEPSIZE_COARSE"
+                                                    Content="Increase"
+                                                    MinWidth="40" />
+                                                <Button Name="rb2Fine"
+                                                    Margin="1"
+                                                    Command="{Binding Path=ZCommand}"
+                                                    CommandParameter="Z2_STEPSIZE_FINE"
+                                                    Content="Decrease"
+                                                    MinWidth="40" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <StackPanel Margin="5,30,5,5"
+                                                ToolTip="Preset Z locations">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button MinWidth="40"
+                                                    Margin="1"
+                                                    Command="{Binding Path=ZStage2GoToLocationCommand}"
+                                                    CommandParameter="0"
+                                                    Content="{Binding Path=ZStage2LocationNames[0],
+                                                                  UpdateSourceTrigger=PropertyChanged}">
+                                                    <Button.ContextMenu>
+                                                        <ContextMenu>
+                                                            <MenuItem Name="btnPRCalSave0"
+                                                                  Command="{Binding Path=ZStage2LocationSaveCommand}"
+                                                                  CommandParameter="0"
+                                                                  Header="Save" />
+                                                        </ContextMenu>
+                                                    </Button.ContextMenu>
+                                                </Button>
+                                                <Button MinWidth="40"
+                                                    Margin="1"
+                                                    Command="{Binding Path=ZStage2GoToLocationCommand}"
+                                                    CommandParameter="1"
+                                                    Content="{Binding Path=ZStage2LocationNames[1],
+                                                                  UpdateSourceTrigger=PropertyChanged}">
+                                                    <Button.ContextMenu>
+                                                        <ContextMenu>
+                                                            <MenuItem Name="btnPRCalSave1"
+                                                                  Command="{Binding Path=ZStage2LocationSaveCommand}"
+                                                                  CommandParameter="1"
+                                                                  Header="Save" />
+                                                        </ContextMenu>
+                                                    </Button.ContextMenu>
+                                                </Button>
+                                                <Button MinWidth="40"
+                                                    Margin="1"
+                                                    Command="{Binding Path=ZStage2GoToLocationCommand}"
+                                                    CommandParameter="2"
+                                                    Content="{Binding Path=ZStage2LocationNames[2],
+                                                                  UpdateSourceTrigger=PropertyChanged}">
+                                                    <Button.ContextMenu>
+                                                        <ContextMenu>
+                                                            <MenuItem Name="btnPRCalSave2"
+                                                                  Command="{Binding Path=ZStage2LocationSaveCommand}"
+                                                                  CommandParameter="2"
+                                                                  Header="Save" />
+                                                        </ContextMenu>
+                                                    </Button.ContextMenu>
+                                                </Button>
+                                                <Button MinWidth="40"
+                                                    Margin="1"
+                                                    Command="{Binding Path=ZStage2GoToLocationCommand}"
+                                                    CommandParameter="3"
+                                                    Content="{Binding Path=ZStage2LocationNames[3],
+                                                                  UpdateSourceTrigger=PropertyChanged}">
+                                                    <Button.ContextMenu>
+                                                        <ContextMenu>
+                                                            <MenuItem Name="btnPRCalSave3"
+                                                                  Command="{Binding Path=ZStage2LocationSaveCommand}"
+                                                                  CommandParameter="3"
+                                                                  Header="Save" />
+                                                        </ContextMenu>
+                                                    </Button.ContextMenu>
+                                                </Button>
+                                                <Button MinWidth="40"
+                                                    Margin="1"
+                                                    Command="{Binding Path=ZStage2GoToLocationCommand}"
+                                                    CommandParameter="4"
+                                                    Content="{Binding Path=ZStage2LocationNames[4],
+                                                                  UpdateSourceTrigger=PropertyChanged}">
+                                                    <Button.ContextMenu>
+                                                        <ContextMenu>
+                                                            <MenuItem Name="btnPRCalSave4"
+                                                                  Command="{Binding Path=ZStage2LocationSaveCommand}"
+                                                                  CommandParameter="4"
+                                                                  Header="Save" />
+                                                        </ContextMenu>
+                                                    </Button.ContextMenu>
+                                                </Button>
+                                                <Button MinWidth="40"
+                                                    Margin="1"
+                                                    Command="{Binding Path=ZStage2GoToLocationCommand}"
+                                                    CommandParameter="5"
+                                                    Content="{Binding Path=ZStage2LocationNames[5],
+                                                                  UpdateSourceTrigger=PropertyChanged}">
+                                                    <Button.ContextMenu>
+                                                        <ContextMenu>
+                                                            <MenuItem Name="btnPRCalSave5"
+                                                                  Command="{Binding Path=ZStage2LocationSaveCommand}"
+                                                                  CommandParameter="5"
+                                                                  Header="Save" />
+                                                        </ContextMenu>
+                                                    </Button.ContextMenu>
+                                                </Button>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </Expander>
+                </Border>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

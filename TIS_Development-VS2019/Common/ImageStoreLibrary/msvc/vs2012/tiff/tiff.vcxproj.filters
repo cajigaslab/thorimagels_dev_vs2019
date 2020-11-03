@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\..\src\libtiff\dummy.c" />
+    <ClCompile Include="..\..\..\src\libtiff\getopt.c" />
+    <ClCompile Include="..\..\..\src\libtiff\strcasecmp.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_aux.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_close.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_codec.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_color.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_compress.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_dir.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_dirinfo.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_dirread.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_dirwrite.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_dumpmode.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_error.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_extension.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_fax3.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_fax3sm.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_flush.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_getimage.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_jbig.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_jpeg.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_jpeg_12.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_luv.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_lzma.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_lzw.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_next.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_ojpeg.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_open.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_packbits.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_pixarlog.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_predict.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_print.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_read.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_strip.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_swab.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_thunder.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_tile.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_unix.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_version.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_warning.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_write.c" />
+    <ClCompile Include="..\..\..\src\libtiff\tif_zip.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\src\libtiff\libport.h" />
+    <ClInclude Include="..\..\..\src\libtiff\tiff.h" />
+    <ClInclude Include="..\..\..\src\libtiff\tiffconf.h" />
+    <ClInclude Include="..\..\..\src\libtiff\tiffio.h" />
+    <ClInclude Include="..\..\..\src\libtiff\tiffvers.h" />
+    <ClInclude Include="..\..\..\src\libtiff\tif_config.h" />
+  </ItemGroup>
+</Project>

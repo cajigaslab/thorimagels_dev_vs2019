@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns:dm0="http://schemas.microsoft.com/VisualStudio/2008/DslTools/Core" xmlns:dm1="http://schemas.microsoft.com/dsltools/Kernel" xmlns:dm2="http://schemas.microsoft.com/dsltools/Component" xmlns:dm3="http://schemas.microsoft.com/dsltools/UseCase" xmlns:dm4="http://schemas.microsoft.com/dsltools/Activity" xmlns:dm5="http://schemas.microsoft.com/dsltools/Interaction" xmlns:dm6="http://schemas.microsoft.com/dsltools/UmlModelLibrary" xmlns:dm7="http://schemas.microsoft.com/dsltools/UmlDiagrams" xmlns:dm8="http://schemas.microsoft.com/dsltools/LogicalClassDesigner"
+  dslVersion="1.0.0.0"
+  Id="c7bc7579-6f6b-4f01-a3d1-22799a52ed61"
+  name="Composite"
+  visibility="Private" xmlns="http://schemas.microsoft.com/dsltools/ModelStore">
+  <referencesInternal>
+    <reference
+      Id="b14a0e18-dd06-460b-b238-a9caf73f22dc"
+      handle="viewcode://./CodeSchema_Namespace?Namespace%3DMicrosoft.Practices.Composite"
+      tag="ViewCode" />
+  </referencesInternal>
+  <packagedElements>
+    <packageHasNamedElement>
+      <packageMoniker
+        Id="03a8d483-ac68-43c7-946b-6856cdf3a6bf"
+        LastKnownName="Events"
+        LastKnownLocation="Package3_1143.uml" />
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <packageMoniker
+        Id="dde88e5b-6170-4c51-993f-9b9bc7fbb2b9"
+        LastKnownName="Regions"
+        LastKnownLocation="Package4_1143.uml" />
+    </packageHasNamedElement>
+  </packagedElements>
+</package>

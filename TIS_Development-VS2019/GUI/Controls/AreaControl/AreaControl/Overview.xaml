@@ -1,0 +1,48 @@
+﻿<Window x:Class="AreaControl.MesoOverview"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ts="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+        Title="Macro Overview" 
+        Background="#FF333333"
+        ResizeMode="CanResizeWithGrip"
+        SizeToContent="WidthAndHeight">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ts:BooleanToVisibilityConverter x:Key="VisibilityOfBool" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid x:Name="mainGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="8192" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="8192" />
+        </Grid.ColumnDefinitions>
+        <Border x:Name="imageBorder"
+                Style="{x:Null}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <Grid ScrollViewer.CanContentScroll="True">
+                    <Canvas x:Name="imageCanvas"
+                        RenderOptions.BitmapScalingMode="NearestNeighbor"
+                        RenderOptions.EdgeMode="Aliased">
+                        <Canvas.Background>
+                            <ImageBrush x:Name="overviewImage"
+                            AlignmentX="Left"
+                            AlignmentY="Top"
+                            Stretch="None" />
+                        </Canvas.Background>
+                    </Canvas>
+                    <Canvas x:Name="overlayCanvas">
+                        <Rectangle Name="dummyRectangle"
+                       Width="1"
+                       Height="2"
+                       Fill="Transparent" />
+                    </Canvas>
+                </Grid>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</Window>

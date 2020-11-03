@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SettingsEditor", "SettingsEditor\SettingsEditor.csproj", "{83D52F06-9D5A-456A-B5C3-169F8C9EA82C}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 2
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://vateam02:8080/tfs/defaultcollection
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = SettingsEditor\\SettingsEditor.csproj
+		SccProjectName1 = SettingsEditor
+		SccLocalPath1 = SettingsEditor
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{83D52F06-9D5A-456A-B5C3-169F8C9EA82C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83D52F06-9D5A-456A-B5C3-169F8C9EA82C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83D52F06-9D5A-456A-B5C3-169F8C9EA82C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83D52F06-9D5A-456A-B5C3-169F8C9EA82C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

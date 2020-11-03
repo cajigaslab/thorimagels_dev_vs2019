@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns:dm0="http://schemas.microsoft.com/VisualStudio/2008/DslTools/Core" xmlns:dm1="http://schemas.microsoft.com/dsltools/Kernel" xmlns:dm2="http://schemas.microsoft.com/dsltools/Component" xmlns:dm3="http://schemas.microsoft.com/dsltools/UseCase" xmlns:dm4="http://schemas.microsoft.com/dsltools/Activity" xmlns:dm5="http://schemas.microsoft.com/dsltools/Interaction" xmlns:dm6="http://schemas.microsoft.com/dsltools/UmlModelLibrary" xmlns:dm7="http://schemas.microsoft.com/dsltools/UmlDiagrams" xmlns:dm8="http://schemas.microsoft.com/dsltools/LogicalClassDesigner"
+  dslVersion="1.0.0.0"
+  Id="e1cd6c4a-66cd-447f-9c60-70cc7aee48f9"
+  name="Model"
+  visibility="Private" xmlns="http://schemas.microsoft.com/dsltools/ModelStore">
+  <referencesInternal>
+    <reference
+      Id="afb28b0c-be6d-4359-ba05-1552df2cf4f2"
+      handle="viewcode://./CodeSchema_Namespace?Namespace%3DCaptureSetupDll.Model"
+      tag="ViewCode" />
+  </referencesInternal>
+  <packagedElements>
+    <packageHasNamedElement>
+      <class
+        Id="edc19784-5d12-40d8-8a84-9f55281581b4"
+        name="LiveImage"
+        isAbstract="false"
+        isLeaf="false"
+        isActiveClass="false">
+        <referencesInternal>
+          <reference
+            Id="febd1d61-3389-4590-b804-aef81d5aeaae"
+            handle="viewcode://./CodeSchema_Class?Assembly%3Dfile:%2F%2F%2FD:%2FTIS%2FThorImage%2FTIS_Development%2FCommands%2FCaptureSetup%2FCaptureSetupModule%2Fbin%2FDebug%2FCaptureSetupModule.dll Namespace%3DCaptureSetupDll.Model Type%3DLiveImage"
+            tag="ViewCode" />
+        </referencesInternal>
+        <appliedStereotypesInternal>
+          <stereotypeInstance
+            Id="f81c52b9-6762-42a9-b05c-918f46cfbc81"
+            name="class"
+            profile="CSharpProfile">
+            <propertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="c6da3fd7-052f-4a5a-acf0-d445317a28b2">
+                <propertyInstance
+                  Id="e4afb6ee-7baf-4f3f-ac18-1c6dccb0d0cb"
+                  name="ClrAttributes" />
+              </stereotypeInstanceHasPropertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="80f4d8c6-b05f-4510-bbb5-b82131886475">
+                <propertyInstance
+                  Id="f13d4ebb-ccff-447b-98cd-357a488e6af2"
+                  name="IsPartial"
+                  value="false" />
+              </stereotypeInstanceHasPropertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="1ad9133d-91b8-4fb5-bc98-8dc056db6546">
+                <propertyInstance
+                  Id="5a1afe40-c769-4d56-a625-d4215dd4be35"
+                  name="IsStatic"
+                  value="False" />
+              </stereotypeInstanceHasPropertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="3cd65ce8-6923-4f9e-9256-3d1bfa9ccd5d">
+                <propertyInstance
+                  Id="0686b142-6b37-4202-b83e-5e8dd491b4e7"
+                  name="IsUnsafe"
+                  value="false" />
+              </stereotypeInstanceHasPropertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="71f6234b-a909-46d9-9473-95bd373fd610">
+                <propertyInstance
+                  Id="58674257-0ede-4469-90d8-c8cecd4844b3"
+                  name="PackageVisibility"
+                  value="internal" />
+              </stereotypeInstanceHasPropertyInstances>
+            </propertyInstances>
+          </stereotypeInstance>
+        </appliedStereotypesInternal>
+      </class>
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <enumeration
+        Id="e05f10b6-ccd1-49c3-b338-0615d6551d2e"
+        name="DigitizerBoardNames"
+        isAbstract="false"
+        isLeaf="false">
+        <referencesInternal>
+          <reference
+            Id="8786027d-af69-4c9d-9881-e5cc1491702b"
+            handle="viewcode://./CodeSchema_Enum?Assembly%3Dfile:%2F%2F%2FD:%2FTIS%2FThorImage%2FTIS_Development%2FCommands%2FCaptureSetup%2FCaptureSetupModule%2Fbin%2FDebug%2FCaptureSetupModule.dll Namespace%3DCaptureSetupDll.Model Type%3D(Name%3DDigitizerBoardNames ParentType%3DLiveImage)"
+            tag="ViewCode" />
+        </referencesInternal>
+        <appliedStereotypesInternal>
+          <stereotypeInstance
+            Id="e0cab7c9-19c8-49c1-a5da-a33226f7997e"
+            name="enum"
+            profile="CSharpProfile">
+            <propertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="71249009-7238-410d-bcc2-7d6eb751e763">
+                <propertyInstance
+                  Id="0f64a42a-19d8-490b-bcb4-b390846332e6"
+                  name="ClrAttributes" />
+              </stereotypeInstanceHasPropertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="20d426b0-e27d-463f-99df-a1d793158c84">
+                <propertyInstance
+                  Id="9e011b14-e60b-4440-a3d2-5d5b7adfe53b"
+                  name="BaseType"
+                  value="int" />
+              </stereotypeInstanceHasPropertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="75a9f9e3-b1d8-4711-ad2d-02971ac956bb">
+                <propertyInstance
+                  Id="595a8c80-f8bc-4d9b-a29d-a722c7fdd79e"
+                  name="PackageVisibility"
+                  value="internal" />
+              </stereotypeInstanceHasPropertyInstances>
+            </propertyInstances>
+          </stereotypeInstance>
+        </appliedStereotypesInternal>
+      </enumeration>
+    </packageHasNamedElement>
+  </packagedElements>
+</package>

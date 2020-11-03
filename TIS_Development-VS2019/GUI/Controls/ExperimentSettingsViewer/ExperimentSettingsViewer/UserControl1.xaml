@@ -1,0 +1,2800 @@
+﻿<UserControl x:Class="ExperimentSettingsViewer.UserControl1"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:ExperimentSettingsViewer"
+             xmlns:val="clr-namespace:Validations;assembly=Validations"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:xy="clr-namespace:XYTileControl;assembly=XYTileControl"
+             xmlns:ds="clr-namespace:DigitalOutputSwitches;assembly=DigitalOutputSwitches"
+             xmlns:validator="clr-namespace:Validations;assembly=Validations"
+             xmlns:sharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+             Height="Auto"
+             Width="550"
+             LostFocus="UserControl1_LostFocus">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <XmlDataProvider x:Key="expData" />
+            <XmlDataProvider x:Key="appSettings"
+							 XPath="ApplicationSettings/DisplayOptions" />
+            <XmlDataProvider x:Key="hwSettings" />
+            <XmlDataProvider x:Key="bleachData" />
+            <Style TargetType="Label">
+                <Setter Property="Foreground"
+						Value="White" />
+            </Style>
+            <sharedTypes:StringToVisibilityConverter x:Key="_stringToVis" />
+            <sharedTypes:BooleanToVisibilityConverter x:Key="_boolToVis" />
+            <BooleanToVisibilityConverter x:Key="boolToVis" />
+            <local:ChannelConverter x:Key="channelConverter" />
+            <local:InputRangeConverter x:Key="inputRangeConverter" />
+            <local:BandwidthConverter x:Key="bandwidthConverter" />
+            <local:DoubleCultureConverter x:Key="doubleCultureConverter" />
+            <local:BooleanToVisibilityCustomConverter x:Key="boolToVisibilityConverter" />
+            <local:lsmTypeToVisibilityCustomConverter x:Key="lsmTypeToVisibilityConverter" />
+            <local:IntToVisibilityConverter x:Key="intToVisibilityConverter" />
+            <local:ModeVisibilityConverter x:Key="modeVisibilityConverter" />
+            <local:DetectorVisibilityConverter x:Key="detectorVisibilityConverter" />
+            <local:IntToBoolConverter x:Key="intToBoolConverter" />
+            <local:IntToTriggerConverter x:Key="intToTriggerConverter" />
+            <local:ModeToBoolNegateConverter x:Key="modeToBoolNegateConverter" />
+            <local:NegateConverter x:Key="negate" />
+            <local:ObjectiveConverter x:Key="objConverter" />
+            <local:StreamTriggerConverter x:Key="streamTriggerConverter" />
+            <local:StringToRoundedDoubleConverter x:Key="StringToRoundedDoubleConverter" />
+            <local:UnixDateTimeConverter x:Key="unixDateTimeConverter" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel>
+            <StackPanel Visibility="{Binding Path=EditEnable, 
+											 ConverterParameter=0,
+											 Converter={StaticResource boolToVisibilityConverter}}"
+						IsEnabled="{Binding Path=EditEnable,
+										    UpdateSourceTrigger=PropertyChanged}">
+                <Label Content="Experiment Template" />
+                <StackPanel Orientation="Horizontal">
+                    <ComboBox Name="cbTemplate"
+							  Height="30"
+							  Width="425"
+							  Margin="1"
+							  SelectionChanged="cbTemplate_SelectionChanged" />
+                    <Button Name="btnTemplateSetup"
+						    Width="50"
+						    Height="30"
+						    Click="btnTemplateSetup_Click">
+                        <Image Source="/ExperimentSettingsViewer;component/gear.png"></Image>
+                    </Button>
+                </StackPanel>
+                <Label Content="Output Path" />
+                <StackPanel Orientation="Horizontal">
+                    <ComboBox Name="cbOutputPath"
+							  Height="30"
+							  Width="425"
+							  Margin="1"
+							  SelectionChanged="cbOutputPath_SelectionChanged" />
+                    <Button Name="btnPathSetup"
+						    Width="50"
+						    Height="30"
+						    Click="btnPathSetup_Click">
+                        <Image Source="/ExperimentSettingsViewer;component/gear.png"></Image>
+                    </Button>
+                </StackPanel >
+            </StackPanel>
+            <StackPanel Margin="1">
+                <Label Content="Experiment Name" />
+                <TextBox Text="{Binding Source={StaticResource expData},
+										XPath=ThorImageExperiment/Name/@name}"
+						 IsEnabled="{Binding Path=EditEnable,
+											 UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+					    Visibility="{Binding Path=EditEnable,
+											 ConverterParameter=1,
+											 Converter={StaticResource boolToVisibilityConverter}}"
+					    IsEnabled="{Binding Path=EditEnable,
+											UpdateSourceTrigger=PropertyChanged}">
+                <Label Content="Experiment Date:"
+					   Foreground="White" />
+                <Label Foreground="White"
+					   Content="{Binding Source={StaticResource expData},
+										 XPath=ThorImageExperiment/Date/@uTime,
+										 Converter={StaticResource unixDateTimeConverter}}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+					    Visibility="{Binding Path=EditEnable,
+											 ConverterParameter=1,
+											 Converter={StaticResource boolToVisibilityConverter}}"
+					    IsEnabled="{Binding Path=EditEnable,
+											UpdateSourceTrigger=PropertyChanged}">
+                <Label Foreground="White"
+                       Content="User:" />
+                <Label Foreground="White"
+                       Content="{Binding Source={StaticResource expData},
+										 XPath=ThorImageExperiment/User/@name}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+					    Visibility="{Binding Path=EditEnable,
+											 ConverterParameter=1,
+											 Converter={StaticResource boolToVisibilityConverter}}"
+					    IsEnabled="{Binding Path=EditEnable,
+											UpdateSourceTrigger=PropertyChanged}">
+                <Label Foreground="White"
+					   Content="Computer:" />
+                <Label Foreground="White"
+					   Content="{Binding Source={StaticResource expData},
+										 XPath=ThorImageExperiment/Computer/@name}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+					    Visibility="{Binding Path=EditEnable,
+											 ConverterParameter=1,
+											 Converter={StaticResource boolToVisibilityConverter}}"
+					    IsEnabled="{Binding Path=EditEnable,
+											UpdateSourceTrigger=PropertyChanged}">
+                <Label Foreground="White"
+					   Content="Software Version:" />
+                <Label Foreground="White"
+					   Content="{Binding Source={StaticResource expData},
+										 XPath=ThorImageExperiment/Software/@version}" />
+            </StackPanel>
+            <StackPanel>
+                <StackPanel IsEnabled="False">
+                    <Label Content="Notes" />
+                    <TextBox Height="Auto"
+						     Text="{Binding Source={StaticResource expData},
+											XPath=ThorImageExperiment/ExperimentNotes/@text}"
+						     TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Label Foreground="White"
+						   Content="Modality:" />
+                    <Label Foreground="White"
+						   Content="{Binding Source={StaticResource expData},
+											 XPath=ThorImageExperiment/Modality/@name}" />
+                </StackPanel>
+                <StackPanel Margin="1"
+							Orientation="Horizontal">
+                    <Label Foreground="White"
+						   Content="Objective:" />
+                    <Label Name="lbObjName"
+						   Foreground="White"
+						   Content="{Binding Source={StaticResource expData},
+											 XPath=ThorImageExperiment/Magnification/@name}" />
+                    <Label Name="lbObjTurretName"
+						   Foreground="White"
+						   Content="Obj Turret:" />
+                    <Label Foreground="White">
+                        <Label.Content>
+                            <MultiBinding Converter="{StaticResource objConverter}"
+										  ConverterParameter="{StaticResource hwSettings}">
+                                <Binding ElementName="lbObjName"
+										 Path="Content"
+										 Mode="OneWay" />
+                                <Binding ElementName="lbObjTurretName"
+										 Path="Content"
+										 Mode="OneWay" />
+                            </MultiBinding>
+                        </Label.Content>
+                    </Label>
+                    <Label Name="lbNAName"
+						   Foreground="White"
+						   Content="NA:" />
+                    <Label Foreground="White">
+                        <Label.Content>
+                            <MultiBinding Converter="{StaticResource objConverter}"
+										  ConverterParameter="{StaticResource hwSettings}">
+                                <Binding ElementName="lbObjName"
+										 Path="Content"
+										 Mode="OneWay" />
+                                <Binding ElementName="lbNAName"
+										 Path="Content"
+										 Mode="OneWay" />
+                            </MultiBinding>
+                        </Label.Content>
+                    </Label>
+                    <Label Name="lbBEName"
+						   Foreground="White"
+						   Content="Beam Exp 1:" />
+                    <Label Foreground="White">
+                        <Label.Content>
+                            <MultiBinding Converter="{StaticResource objConverter}"
+                                          ConverterParameter="{StaticResource hwSettings}">
+                                <Binding ElementName="lbObjName"
+										 Path="Content"
+										 Mode="OneWay" />
+                                <Binding ElementName="lbBEName"
+										 Path="Content"
+										 Mode="OneWay" />
+                            </MultiBinding>
+                        </Label.Content>
+                    </Label>
+                    <Label Name="lbBE2Name"
+						   Foreground="White"
+						   Content="Beam Exp 2:" />
+                    <Label Foreground="White">
+                        <Label.Content>
+                            <MultiBinding Converter="{StaticResource objConverter}"
+										  ConverterParameter="{StaticResource hwSettings}">
+                                <Binding ElementName="lbObjName"
+										 Path="Content"
+										 Mode="OneWay" />
+                                <Binding ElementName="lbBE2Name"
+										 Path="Content"
+										 Mode="OneWay" />
+                            </MultiBinding>
+                        </Label.Content>
+                    </Label>
+                </StackPanel>
+                <StackPanel>
+                    <GroupBox BorderThickness="1"
+							  Name="gbEpiTurret">
+                        <GroupBox.Header>
+                            <Label Content="Epi Turret"
+								   Foreground="White" />
+                        </GroupBox.Header>
+                        <StackPanel Margin="1">
+                            <StackPanel Orientation="Horizontal">
+                                <Label Content="Turret position:"
+									   Foreground="White"
+									   HorizontalContentAlignment="Center" />
+                                <Label Content="{Binding Source={StaticResource expData},
+														 XPath=ThorImageExperiment/EPITurret/@pos}"
+									   HorizontalContentAlignment="Center"
+									   Foreground="White" />
+                                <Label Content="Position name:"
+									   Foreground="White"
+									   HorizontalContentAlignment="Center" />
+                                <Label Content="{Binding Source={StaticResource expData},
+														 XPath=ThorImageExperiment/EPITurret/@name}"
+									   HorizontalContentAlignment="Center"
+									   Foreground="White" />
+                            </StackPanel>
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
+                <StackPanel Margin="1"
+							IsEnabled="False">
+                    <Label Foreground="White"
+						   Content="Capture Mode"
+						   Name="labelCapturemode" />
+                    <ComboBox Width="200"
+							  Name="cbCaptureMode"
+							  HorizontalAlignment="Left"
+							  PreviewKeyDown="cbCaptureMode_PreviewKeyDown"
+							  PreviewMouseWheel="cbCaptureMode_PreviewMouseWheel"
+							  SelectedIndex="{Binding Source={StaticResource expData},
+													  XPath=ThorImageExperiment/CaptureMode/@mode}"
+							  SelectionChanged="cbCaptureMode_SelectionChanged">
+                        <ComboBoxItem Content="Z and T Series"
+									  Visibility="{Binding Source={StaticResource appSettings}, 
+														   XPath=CaptureSetup/ZView/@Visibility}" />
+                        <ComboBoxItem Content="Streaming" />
+                        <ComboBoxItem Content="TDI"
+									  Visibility="{Binding Source={StaticResource appSettings}, 
+														   XPath=CaptureSetup/TDIView/@Visibility}" />
+                        <ComboBoxItem Content="Stimulation"
+									  Visibility="{Binding Source={StaticResource appSettings}, 
+														   XPath=CaptureSetup/BleachView/@Visibility}" />
+                        <ComboBoxItem Content="Hyperspectral" />
+                    </ComboBox>
+                </StackPanel>
+                <GroupBox Name="zStackGroup"
+						  BorderBrush="White"
+						  Margin="1"
+						  IsEnabled="False">
+                    <GroupBox.Header>
+                        <CheckBox x:Name="cbZEnable"
+								  IsChecked="{Binding Path=ZEnable, 
+													  Mode=TwoWay, 
+													  UpdateSourceTrigger=PropertyChanged}"
+								  ToolTip="Enable/Disable Z Stack Capture">
+                            <Label Content="Z Stack"
+								   Foreground="White" />
+                        </CheckBox>
+                    </GroupBox.Header>
+                    <StackPanel Orientation="Vertical"
+								IsEnabled="{Binding ElementName=cbZEnable,
+													Path=IsChecked, 
+													Mode=OneWay}">
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel Orientation="Horizontal"
+										IsEnabled="{Binding ElementName=cbZEnable,
+															Path=IsChecked}">
+                                <StackPanel ToolTip="Z Stack Start Position (millimeters)">
+                                    <StackPanel Orientation="Horizontal"
+												Margin="1">
+                                        <Label Width="130"
+											   Content="Start Position"
+											   Foreground="White"></Label>
+                                        <TextBox Name="tbZStartPosition"
+												 Width="50"
+												 val:Validation.MaxValue="2.0"
+												 val:Validation.MinValue="-2.0"
+												 val:Validation.ValidationType="{x:Type system:Double}"
+												 Text="{Binding Path=ZStartPosition,
+															    Mode=TwoWay, 
+																Converter={StaticResource doubleCultureConverter}}" />
+                                        <Button Width="30"
+												Content="✓">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+															Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,
+																					   ElementName=tbZStartPosition}"
+																	 Value="True">
+                                                            <Setter Property="Visibility"
+																	Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Label Width="120"
+											   Content="[um]"
+											   Foreground="White"></Label>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal"
+												Margin="1">
+                                        <Label Width="130"
+											   Content="Stop Position"
+											   Foreground="White"></Label>
+                                        <TextBox x:Name="tbZStopPosition"
+												 Width="50"
+												 val:Validation.MaxValue="2.0"
+												 val:Validation.MinValue="-2.0"
+												 val:Validation.ValidationType="{x:Type system:Double}"
+												 Text="{Binding Path=ZStopPosition,
+																Mode=TwoWay,
+																Converter={StaticResource doubleCultureConverter}}" />
+                                        <Button Width="30"
+												Content="✓">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+															Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,
+																					   ElementName=tbZStopPosition}"
+																	 Value="True">
+                                                            <Setter Property="Visibility"
+																	Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Label Width="120"
+											   Content="[um]"
+											   Foreground="White"></Label>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal"
+												Margin="1">
+                                        <Label Width="130"
+											   Content="Step Size"
+											   Foreground="White"
+											   ToolTip="Z Slice Spacing (microns)"></Label>
+                                        <TextBox Name="tbZStepSize"
+												 Width="50"
+												 val:Validation.MinValue="0.0000001"
+												 val:Validation.ValidationType="{x:Type system:Double}"
+												 Text="{Binding Path=ZStepSize,
+															    Mode=TwoWay, 
+																Converter={StaticResource doubleCultureConverter}}" />
+                                        <Button Width="30"
+											    Content="✓">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+															Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,
+																					   ElementName=tbZStepSize}"
+																	 Value="True">
+                                                            <Setter Property="Visibility"
+																	Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Label Width="120"
+											   Content="[um]"
+											   Foreground="White"></Label>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal"
+											    Margin="1"
+											    ToolTip="Total Number of Z Slices">
+                                        <Label Width="130"
+											   Content="Number of Slices"
+											   Foreground="White"></Label>
+                                        <Label  Width="50"
+												Name="lZSteps"
+												Content="{Binding Path=ZSteps,
+																  Mode=OneWay,
+																  UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+									Margin="1"
+									IsEnabled="True">
+                            <CheckBox Name="cbZSEnable"
+									  IsChecked="{Binding Source={StaticResource expData},
+														  XPath=ThorImageExperiment/ZStage/@zStreamMode,
+														  Mode=TwoWay,
+														  Converter={StaticResource intToBoolConverter}}"
+									  ToolTip="Enable Streaming for Each Z Location">
+                                <Label Content="Enable Z Streaming"
+									   Foreground="White" />
+                            </CheckBox>
+                            <TextBox Name="tbZStreamFrame"
+								     Width="50"
+								     val:Validation.MinValue="1"
+								     val:Validation.ValidationType="{x:Type system:Int32}"
+								     Text="{Binding Source={StaticResource expData},
+												    Mode=TwoWay,
+												    XPath=ThorImageExperiment/ZStage/@zStreamFrames}"
+								     IsEnabled="{Binding ElementName=cbZSEnable,
+														 Path=IsChecked}"></TextBox>
+                            <Button Width="30"
+									Content="✓">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+												Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsFocused,
+																		   ElementName=tbZStreamFrame}"
+														 Value="True">
+                                                <Setter Property="Visibility"
+														Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Label Width="120"
+								   Content="Frames"
+								   Foreground="White"></Label>
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Name="timeGroup"
+						  BorderBrush="White"
+						  Margin="1"
+						  IsEnabled="False">
+                    <GroupBox.Header>
+                        <CheckBox x:Name="cbTEnable"
+								  ToolTip="Enable/Disable Time Series Capture"
+								  IsChecked="{Binding Path=TEnable,
+													  Mode=TwoWay,
+													  UpdateSourceTrigger=PropertyChanged}">
+                            <Label Foreground="White"
+								   Content="Time Series" />
+                        </CheckBox>
+                    </GroupBox.Header>
+                    <StackPanel IsEnabled="{Binding ElementName=cbTEnable,
+													Path=IsChecked}"
+								ToolTip="Time Interval Between Timepoints (seconds)">
+                        <StackPanel Name="spTimeTrigger"
+									Orientation="Horizontal"
+									Margin="1">
+                            <Label Content="Trigger Mode"
+								   Foreground="White"
+								   Margin="1" />
+                            <ComboBox Name="cbTimeTriggerModes"
+									  Width="100"
+									  SelectedIndex="{Binding Source={StaticResource expData},
+															  Mode=TwoWay,
+															  XPath=ThorImageExperiment/Timelapse/@triggerMode}">
+                                <ComboBoxItem Content="None" />
+                                <ComboBoxItem Content="Trigger First" />
+                                <ComboBoxItem Content="Trigger Each" />
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+									Margin="1">
+                            <Label Width="120"
+								   Content="Interval"
+								   Foreground="White"></Label>
+                            <TextBox Name="tbTInterval"
+								     Width="50"
+								     val:Validation.MinValue="0.0"
+								     val:Validation.ValidationType="{x:Type system:Double}"
+								     Text="{Binding Source={StaticResource expData},
+													Mode=TwoWay, 
+													XPath=ThorImageExperiment/Timelapse/@intervalSec, 
+													Converter={StaticResource doubleCultureConverter}}"
+								     IsEnabled="{Binding ElementName=cbTimeTriggerModes,
+														 Path=SelectedIndex,
+														 ConverterParameter=2,
+														 Converter={StaticResource modeToBoolNegateConverter}}">
+                            </TextBox>
+                            <Button Width="30"
+									Content="✓">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+												Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsFocused,
+																		   ElementName=tbTInterval}"
+														 Value="True">
+                                                <Setter Property="Visibility"
+														Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Label Width="120"
+								   Content="[sec]"
+								   Foreground="White"></Label>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+									Margin="1"
+									ToolTip="Total Number of Timepoints">
+                            <Label Width="120"
+								   Content="Frames"
+								   Foreground="White"></Label>
+                            <TextBox Name="tbTFrames"
+								     Width="50"
+								     val:Validation.MinValue="0"
+								     val:Validation.ValidationType="{x:Type system:Int32}"
+								     Text="{Binding Source={StaticResource expData},
+												    Mode=TwoWay,
+												    XPath=ThorImageExperiment/Timelapse/@timepoints,
+												    Converter={StaticResource doubleCultureConverter}}">
+                            </TextBox>
+                            <Button Width="30"
+									Content="✓">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+												Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsFocused,
+																		   ElementName=tbTFrames}"
+														 Value="True">
+                                                <Setter Property="Visibility"
+														Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Name="streamGroup"
+						  BorderBrush="White"
+						  Margin="1"
+						  IsEnabled="False">
+                    <GroupBox.Header>
+                        <Label Content="Streaming"
+							   Foreground="White" />
+                    </GroupBox.Header>
+                    <StackPanel>
+                        <ComboBox Name="cbStorageModes"
+								  Width="150"
+								  HorizontalAlignment="Left"
+								  Margin="1"
+								  SelectedIndex="{Binding Source={StaticResource expData},
+														  Mode=TwoWay,
+														  XPath=ThorImageExperiment/Streaming/@storageMode,
+														  UpdateSourceTrigger=PropertyChanged}">
+                            <ComboBoxItem>Finite</ComboBoxItem>
+                            <ComboBoxItem>Stimulus</ComboBoxItem>
+                        </ComboBox>
+                        <StackPanel ToolTip="Total Frames for Streaming Capture"
+									Visibility="{Binding ElementName=cbStorageModes,
+														 Path=SelectedIndex,
+														 ConverterParameter=0,
+														 Converter={StaticResource modeVisibilityConverter}}">
+                            <StackPanel Orientation="Horizontal"
+									    Margin="1"
+									    Visibility="{Binding ElementName=chFastZ,
+															 Path=IsChecked,
+															 Mode=OneWay,
+															 ConverterParameter=1,
+															 Converter={StaticResource boolToVisibilityConverter}}">
+                                <Label Width="150"
+									   Foreground="White"
+									   Content="Number of Frames"></Label>
+                                <TextBox Name="tbStreamFrames"
+										 Width="50"
+										 val:Validation.MinValue="0"
+										 val:Validation.ValidationType="{x:Type system:Int32}"
+										 Text="{Binding Source={StaticResource expData},
+														Mode=TwoWay, 
+														XPath=ThorImageExperiment/Streaming/@frames}" />
+                                <Button Width="30"
+										Content="✓">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility"
+													Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Path=IsFocused,
+																			   ElementName=tbStreamFrames}"
+															 Value="True">
+                                                    <Setter Property="Visibility"
+															Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+									    Margin="1"
+									    Visibility="{Binding ElementName=chFastZ,
+															 Path=IsChecked,
+															 Mode=OneWay,
+															 ConverterParameter=0,
+															 Converter={StaticResource boolToVisibilityConverter}}">
+                                <Label Width="150"
+									   Foreground="White"
+									   Content="Number of Volumes"></Label>
+                                <TextBox Name="tbStreamVolumes"
+										 Width="50"
+										 val:Validation.MinValue="0"
+										 val:Validation.ValidationType="{x:Type system:Int32}"
+										 Text="{Binding Path=StreamVolumes,
+													    Mode=TwoWay}"></TextBox>
+                                <Button Width="30"
+										Content="✓">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility"
+													Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Path=IsFocused,
+																			   ElementName=tbStreamVolumes}"
+															 Value="True">
+                                                    <Setter Property="Visibility"
+															Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+									Margin="1"
+									ToolTip="Cycle frames for Stimulus Capture"
+									Visibility="{Binding ElementName=cbStorageModes,
+														 Path=SelectedIndex,
+														 Mode=OneWay,
+														 ConverterParameter=1,
+														 Converter={StaticResource modeVisibilityConverter}}">
+                            <Label Width="150"
+								   Content="Max Frames per Stimulus"
+								   Foreground="White"></Label>
+                            <TextBox Name="tbStimulusMaxFrames"
+								     Width="50"
+								     val:Validation.MinValue="0"
+								     val:Validation.ValidationType="{x:Type system:Int32}"
+								    Text="{Binding Source={StaticResource expData},
+												   Mode=TwoWay,
+												   XPath=ThorImageExperiment/Streaming/@stimulusMaxFrames}" />
+                            <Button Width="30"
+									Content="✓">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+											    Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsFocused,
+																		   ElementName=tbStimulusMaxFrames}"
+														 Value="True">
+                                                <Setter Property="Visibility"
+														Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+									Margin="1"
+									ToolTip="RAM Frames for Streaming Capture">
+                            <Label Width="150"
+					    		   Content="RAM Frames"
+								   Foreground="White">
+                            </Label>
+                            <TextBox Name="tbRAMFrames"
+								     Width="50"
+								     val:Validation.MinValue="4"
+								     val:Validation.ValidationType="{x:Type system:Int32}"
+								     Text="{Binding Source={StaticResource expData},
+												    Mode=TwoWay,
+												    XPath=ThorImageExperiment/Streaming/@dmaFrames}" />
+                            <Button Width="30"
+									Content="✓">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+												Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsFocused,
+																		   ElementName=tbRAMFrames}"
+														 Value="True">
+                                                <Setter Property="Visibility"
+														Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel>
+                                <ComboBox Name="cbRawData"
+										  SelectedIndex="{Binding Source={StaticResource expData},
+															  Mode=TwoWay,
+															  XPath=ThorImageExperiment/Streaming/@rawData}"
+										  ToolTip="Data Capture Type">
+                                    <ComboBoxItem>TIFF</ComboBoxItem>
+                                    <ComboBoxItem>RAW</ComboBoxItem>
+                                    <ComboBoxItem>OME TIFF</ComboBoxItem>
+                                </ComboBox>
+                                <CheckBox Name="chbExtStimulusTrig"
+										  IsChecked="{Binding Source={StaticResource expData},
+															  Mode=TwoWay,
+															  XPath=ThorImageExperiment/Streaming/@stimulusTriggering,
+															  Converter={StaticResource intToBoolConverter}}"
+										  ToolTip="Enable/Disable Stimulus Triggering"
+										  Visibility="{Binding ElementName=cbStorageModes,
+															   Path=SelectedIndex,
+															   Mode=OneWay,
+															   ConverterParameter=1,
+															   Converter={StaticResource modeVisibilityConverter}}">
+                                    <Label Foreground="White"
+										   Content="External Stimulus Triggering" />
+                                </CheckBox>
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Name="spStreamTrigger"
+									Orientation="Horizontal"
+									Margin="1"
+									Visibility="{Binding ElementName=cbStorageModes,
+														 Path=SelectedIndex,
+														 Mode=OneWay,
+														 ConverterParameter=0,
+														 Converter={StaticResource modeVisibilityConverter}}">
+                            <Label Content="Trigger Mode"
+							 	   Foreground="White"
+								   Margin="1" />
+                            <ComboBox Name="cbStreamTriggerModes"
+									  Width="100"
+									  ToolTip="Enable/Disable External Trigger Input"
+									  SelectedIndex="{Binding Source={StaticResource expData},
+															  Mode=TwoWay,
+															  XPath=ThorImageExperiment/Streaming/@triggerMode,
+															  Converter={StaticResource streamTriggerConverter}}">
+                                <ComboBoxItem Content="None" />
+                                <ComboBoxItem Content="Trigger First" />
+                            </ComboBox>
+                        </StackPanel>
+                        <GroupBox Margin="1"
+								  Name="groupBoxFastZ"
+								  Visibility="{Binding Source={StaticResource appSettings}, Mode=OneWay,
+													   XPath=RunSample/FastZView/@Visibility}"
+								  Height="Auto">
+                            <GroupBox.Header>
+                                <CheckBox Name="chFastZ"
+										  Content="Fast Z"
+										  IsChecked="{Binding Source={StaticResource expData},
+															  Mode=TwoWay,
+															  XPath=ThorImageExperiment/Streaming/@zFastEnable,
+															  Converter={StaticResource intToBoolConverter}}"
+										  Foreground="White" />
+                            </GroupBox.Header>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0"
+                                            IsEnabled="{Binding ElementName=chFastZ,
+														    Path=IsChecked,
+														    UpdateSourceTrigger=PropertyChanged}">
+
+                                    <StackPanel Grid.Row="0"
+                                                Orientation="Horizontal"
+												Margin="1">
+                                        <Label Width="130"
+											   Content="Start Position"
+											   Foreground="White"
+                                               ToolTip="Z Stack Start Position (millimeters)"></Label>
+                                        <TextBox Name="tb2ZStartPosition"
+												 Width="50"
+												 val:Validation.MaxValue="2.0"
+												 val:Validation.MinValue="-2.0"
+												 val:Validation.ValidationType="{x:Type system:Double}"
+												 Text="{Binding Path=ZStartPosition,
+															    Mode=TwoWay,
+															    Converter={StaticResource doubleCultureConverter}}" />
+                                        <Button Width="30"
+												Content="✓">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+															Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,
+																					   ElementName=tb2ZStartPosition}"
+																	 Value="True">
+                                                            <Setter Property="Visibility"
+																	Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Label Width="50"
+											   Content="[um]"
+											   Foreground="White"></Label>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="1"
+                                                Orientation="Horizontal"
+												Margin="1"
+                                                ToolTip="Z Stack Stop Position">
+                                        <Label Width="130"
+											   Content="Stop Position"
+											   Foreground="White"></Label>
+                                        <TextBox x:Name="tb2ZStopPosition"
+											     Width="50"
+												 val:Validation.MaxValue="2.0"
+												 val:Validation.MinValue="-2.0"
+												 val:Validation.ValidationType="{x:Type system:Double}"
+												 Text="{Binding Path=ZStopPosition,
+															    Mode=TwoWay,
+															    Converter={StaticResource doubleCultureConverter}}" />
+                                        <Button Width="30"
+												Content="✓">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+															Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,
+																					   ElementName=tb2ZStopPosition}"
+																	 Value="True">
+                                                            <Setter Property="Visibility"
+																	Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Label Width="50"
+											   Content="[um]"
+											   Foreground="White"></Label>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal"
+												Margin="1"
+                                                ToolTip="Z Slice Spacing (microns)">
+                                        <Label Width="130"
+											   Content="Step Size"
+											   Foreground="White"></Label>
+                                        <TextBox Name="tb2ZStepSize"
+												 Width="50"
+												 val:Validation.MinValue="0.0000001"
+												 val:Validation.ValidationType="{x:Type system:Double}"
+												 Text="{Binding Path=ZStepSize,
+															    Mode=TwoWay,
+															    Converter={StaticResource doubleCultureConverter}}" />
+                                        <Button Width="30"
+												Content="✓">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+															Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,
+																					   ElementName=tb2ZStepSize}"
+																	 Value="True">
+                                                            <Setter Property="Visibility"
+																	Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Label Width="50"
+											   Content="[um]"
+											   Foreground="White"></Label>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="3"
+                                            Orientation="Horizontal"
+											Margin="1"
+                                            ToolTip="Z Flyback Frames">
+                                        <Label Width="130"
+										   Content="Flyback Frames"
+										   Foreground="White"></Label>
+                                        <TextBox Width="50"
+										     Name="tbFlybackFrames"
+										     val:Validation.MinValue="0"
+										     val:Validation.ValidationType="{x:Type system:Int32}"
+										     Text="{Binding Source={StaticResource expData},
+														    Mode=TwoWay,
+															XPath=ThorImageExperiment/Streaming/@flybackFrames}" />
+                                        <Button Width="30"
+											Content="✓">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+														Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,
+																				   ElementName=tbFlybackFrames}"
+																 Value="True">
+                                                            <Setter Property="Visibility"
+																Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="4"
+                                                Margin="1"
+                                                Orientation="Horizontal"
+                                                ToolTip="Z Transition Cycles"
+                                                Visibility="{Binding Source={StaticResource expData},
+                                                                     Mode=TwoWay,
+													                 XPath=ThorImageExperiment/Streaming/@zFastMode,
+															         Converter={StaticResource modeVisibilityConverter},
+                                                                     ConverterParameter=2}">
+                                        <Label Width="130"
+                                               Content="Transition Cycles"
+                                               Foreground="White"/>
+                                        <TextBox Name="tbFlybackLines"
+                                                 Width="50"
+                                                 Text="{Binding Source={StaticResource expData},
+														        Mode=TwoWay,
+															    XPath=ThorImageExperiment/Streaming/@flybackLines}"
+                                                 val:Validation.ValidationType="{x:Type system:Int32}"
+                                                 val:Validation.NoEmptyValue="True"
+                                                 val:Validation.MinValue="0"
+                                                 val:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
+                                        <Button Width="30"
+                                                Content="✓">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbFlybackLines}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="5"
+                                                Orientation="Horizontal"
+											    Margin="1"
+											    ToolTip="Total Number of Z Slices">
+                                        <Label Width="130"
+											   Content="Number of Slices"
+											   Foreground="White"></Label>
+                                        <Label  Width="50"
+												Name="l2ZSteps"
+												Content="{Binding Path=ZSteps,
+																  UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="6"
+                                                Orientation="Horizontal">
+                                        <CheckBox Content="Use reference voltage to control pockels"
+                                                  Foreground="White"
+                                                  Visibility="{Binding Source={StaticResource expData},
+															  Mode=TwoWay,
+															  XPath=ThorImageExperiment/Streaming/@useReferenceVoltageForFastZPockels,
+															  Converter={StaticResource intToVisibilityConverter}}"
+                                                  VerticalAlignment="Center"
+                                                  Margin="5"
+                                                  IsChecked="{Binding Source={StaticResource expData},
+															  Mode=TwoWay,
+															  XPath=ThorImageExperiment/Streaming/@useReferenceVoltageForFastZPockels,
+															  Converter={StaticResource intToBoolConverter}}" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1"
+                                            Orientation="Vertical">
+                                    <!-- first three rows are empty labels -->
+                                    <StackPanel Grid.Row="0"
+                                                Orientation="Horizontal"
+                                                Margin="1">
+                                        <CheckBox Name="ckbStaircase"
+                                                  Content="Staircase Mode"
+                                                  VerticalAlignment="Center"
+                                                  Margin="5"
+                                                  IsChecked="True"
+                                                  Visibility="{Binding Source={StaticResource expData},
+															  Mode=TwoWay,
+															  XPath=ThorImageExperiment/Streaming/@zFastMode,
+															  Converter={StaticResource modeVisibilityConverter},
+                                                              ConverterParameter=2}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1"
+                                                Margin="1">
+                                        <Label Width="50"
+                                               Content="" />
+                                    </StackPanel>
+                                    <StackPanel Name="stackPanelVolumeTimeAdjustment"
+                                                Grid.Row="2"
+                                                Margin="1"
+                                                Orientation="Horizontal"
+                                                Visibility="{Binding Source={StaticResource appSettings}, 
+														   XPath=RunSample/FastZView/VolumeTimeAdjustment/@Visibility}" 
+                                                ToolTip="Z Volume Time Adjustment in msec, positive or negative.">
+                                        <StackPanel Orientation="Horizontal"
+                                                            Visibility="{Binding Source={StaticResource expData},
+															  Mode=TwoWay,
+															  XPath=ThorImageExperiment/Streaming/@zFastMode,
+															  Converter={StaticResource modeVisibilityConverter},
+                                                              ConverterParameter=1}">
+                                            <Label Width="150"
+                                                           Content="Volume Time Adjustment" />
+                                            <TextBox Name="tbVolumeTimeAdjust"
+                                                             Width="50"
+                                                             Text="{Binding Source={StaticResource expData},
+														            Mode=TwoWay,
+															        XPath=ThorImageExperiment/Streaming/@volumeTimeAdjustMS}"
+                                                             val:Validation.ValidationType="{x:Type system:Double}"
+                                                             val:Validation.NoEmptyValue="True"
+                                                             val:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
+                                            <Button Width="30"
+                                                            Content="✓">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Visibility"
+                                                                        Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbVolumeTimeAdjust}"
+                                                                                 Value="True">
+                                                                <Setter Property="Visibility"
+                                                                                Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                            <Label Width="50"
+                                                   Content="[ms]" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal"
+                                                            Visibility="{Binding Source={StaticResource expData},
+															  Mode=TwoWay,
+															  XPath=ThorImageExperiment/Streaming/@zFastMode,
+															  Converter={StaticResource modeVisibilityConverter},
+                                                              ConverterParameter=2}">
+                                            <Label Width="150"
+                                                           Content="  Frame Time Adjustment" />
+                                            <TextBox Name="tbStepTimeAdjust"
+                                                             Width="50"
+                                                             Text="{Binding Source={StaticResource expData},
+														            Mode=TwoWay,
+															        XPath=ThorImageExperiment/Streaming/@stepTimeAdjustMS}"
+                                                             val:Validation.ValidationType="{x:Type system:Double}"
+                                                             val:Validation.NoEmptyValue="True"
+                                                             val:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
+                                            <Button Width="30"
+                                                            Content="✓">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Visibility"
+                                                                        Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbStepTimeAdjust}"
+                                                                                 Value="True">
+                                                                <Setter Property="Visibility"
+                                                                                Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                            <Label Width="50"
+                                                           Content="[ms]" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="3"
+                                                        Margin="1"
+                                                        Orientation="Horizontal"
+                                                        ToolTip="Z Flyback Time Adjustment in msec, positive or negative.">
+                                        <Label Width="150"
+                                                       Content="Flyback Time Adjustment" />
+                                        <TextBox Name="tbFlybackTimeAdjust"
+                                                         Width="50"
+                                                         Text="{Binding Source={StaticResource expData},
+														            Mode=TwoWay,
+															        XPath=ThorImageExperiment/Streaming/@flybackTimeAdjustMS}"
+                                                         val:Validation.ValidationType="{x:Type system:Double}"
+                                                         val:Validation.NoEmptyValue="True"
+                                                         val:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
+                                        <Button Width="30"
+                                                        Content="✓">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                                    Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbFlybackTimeAdjust}"
+                                                                             Value="True">
+                                                            <Setter Property="Visibility"
+                                                                            Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Label Width="50"
+                                                       Content="[ms]" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </GroupBox>
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Name="bleachingGroup"
+                          BorderBrush="White"
+                          Margin="1">
+                    <GroupBox.Header>
+                        <Label Foreground="White"
+                               Content="Stimulation" />
+                    </GroupBox.Header>
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center"
+                                    IsEnabled="False">
+                            <StackPanel Orientation="Vertical"
+                                        Margin="1"
+                                        ToolTip="Pre Bleach Frames">
+                                <Label Width="50"
+                                       Content=""
+                                       Foreground="White"/>
+                                <Label Width="80"
+                                       Content="Frames"
+                                       Foreground="White"
+                                       HorizontalContentAlignment="Right"/>
+                                <Label Width="80"
+                                       Content="Interval [sec]"
+                                       Foreground="White"
+                                       HorizontalContentAlignment="Right"/>
+                                <CheckBox Name="ckbRaw"
+                                          Content="Raw File"
+                                          VerticalAlignment="Center"
+                                          HorizontalAlignment="Right"
+                                          IsChecked="True"
+                                          Foreground="White"
+                                          Visibility="{Binding Source={StaticResource expData},
+															   Mode=TwoWay,
+															   XPath=ThorImageExperiment/Photobleaching/@rawOption,
+															   Converter={StaticResource intToVisibilityConverter}}" />
+                            </StackPanel>
+                            <Border BorderBrush="White"
+                                    Margin="1"
+                                    BorderThickness="1">
+                                <StackPanel Orientation="Vertical"
+                                            Margin="1"
+                                            ToolTip="Pre Stimulation">
+                                    <Label Width="90"
+                                           Content="Pre Stimulation"
+                                           HorizontalAlignment="Left"
+                                           Foreground="White"
+                                           HorizontalContentAlignment="Center"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBox Width="50"
+                                                 Name="tbPreBleachFrames"
+                                                 val:Validation.MinValue="0"
+                                                 val:Validation.ValidationType="{x:Type system:Int32}"
+                                                 Text="{Binding Source={StaticResource expData}, Mode=TwoWay, XPath=ThorImageExperiment/Photobleaching/@preBleachFrames}"
+                                                 Margin="1"></TextBox>
+                                        <Button Width="30"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbPreBleachFrames}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBox Width="50"
+                                                 Name="tbPreBleachInterval"
+                                                 Margin="1"
+                                                 val:Validation.MinValue="0"
+                                                 val:Validation.ValidationType="{x:Type system:Int32}"
+                                                 Text="{Binding Source={StaticResource expData}, Mode=TwoWay, XPath=ThorImageExperiment/Photobleaching/@preBleachInterval}"
+                                                 IsEnabled="{Binding ElementName=chkPreBleaching, Path=IsChecked, Converter={StaticResource negate}}">
+                                        </TextBox>
+                                        <Button Width="30"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbPreBleachInterval}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </StackPanel>
+                                    <CheckBox Name="chkPreBleaching"
+                                              Content="Stream"
+                                              Foreground="White"
+                                              HorizontalAlignment="Left"
+                                              IsChecked="{Binding Source={StaticResource expData}, Mode=TwoWay, XPath=ThorImageExperiment/Photobleaching/@preBleachStream, Converter={StaticResource intToBoolConverter}}" />
+                                </StackPanel>
+                            </Border>
+                            <Border BorderBrush="White"
+                                    Margin="1"
+                                    BorderThickness="1">
+                                <StackPanel Orientation="Vertical"
+                                            Margin="1"
+                                            ToolTip="Stimulation">
+                                    <Label Width="110"
+                                           HorizontalAlignment="Left"
+                                           Content="Stimulation Cycles"
+                                           HorizontalContentAlignment="Center"
+                                           Foreground="White"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBox Width="50"
+                                                 Name="tbBleachFrames"
+                                                 Margin="1"
+                                                 val:Validation.MinValue="0"
+                                                 val:Validation.ValidationType="{x:Type system:Int32}"
+                                                 Text="{Binding Source={StaticResource expData}, Mode=TwoWay, XPath=ThorImageExperiment/Photobleaching/@bleachFrames}">
+                                        </TextBox>
+                                        <Button Width="30"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbBleachFrames}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </StackPanel>
+                                    <Label Width="50"
+                                           Height="22"
+                                           Margin="1"/>
+                                    <CheckBox Name="chkSimultaneous"
+                                              Content="Simultaneous"
+                                              Foreground="White"
+                                              HorizontalAlignment="Left"
+                                              IsChecked="{Binding Source={StaticResource expData}, Mode=TwoWay, XPath=ThorImageExperiment/Photobleaching/@EnableSimultaneous, Converter={StaticResource intToBoolConverter}}" />
+                                    <Label Margin="1"
+                                           Foreground="White"
+                                           Content="{Binding Source={StaticResource expData}, Mode=TwoWay, XPath=ThorImageExperiment/Photobleaching/@bleachTrigger, Converter={StaticResource intToTriggerConverter}}"/>
+                                    <StackPanel Orientation="Horizontal"
+                                                ToolTip="PMTs enabled while stimulating">
+                                        <CheckBox Content="A"
+                                                  Foreground="White"
+                                                  Margin="1"
+                                                  HorizontalAlignment="Left"
+                                                  IsChecked="{Binding Source={StaticResource expData}, Mode=TwoWay, XPath=ThorImageExperiment/Photobleaching/@pmt1EnableDuringBleach, Converter={StaticResource intToBoolConverter}}" />
+                                        <CheckBox Content="B"
+                                                  Foreground="White"
+                                                  Margin="1"
+                                                  HorizontalAlignment="Left"
+                                                  IsChecked="{Binding Source={StaticResource expData}, Mode=TwoWay, XPath=ThorImageExperiment/Photobleaching/@pmt2EnableDuringBleach, Converter={StaticResource intToBoolConverter}}" />
+                                        <CheckBox Content="C"
+                                                  Foreground="White"
+                                                  Margin="1"
+                                                  HorizontalAlignment="Left"
+                                                  IsChecked="{Binding Source={StaticResource expData}, Mode=TwoWay, XPath=ThorImageExperiment/Photobleaching/@pmt3EnableDuringBleach, Converter={StaticResource intToBoolConverter}}" />
+                                        <CheckBox Content="D"
+                                                  Foreground="White"
+                                                  Margin="1"
+                                                  HorizontalAlignment="Left"
+                                                  IsChecked="{Binding Source={StaticResource expData}, Mode=TwoWay, XPath=ThorImageExperiment/Photobleaching/@pmt4EnableDuringBleach, Converter={StaticResource intToBoolConverter}}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                            <Border BorderBrush="White"
+                                    Margin="1"
+                                    BorderThickness="1">
+                                <StackPanel Orientation="Vertical"
+                                            Margin="1"
+                                            ToolTip="Post Stimulation 1">
+                                    <Label Width="120"
+                                           Content="Post Stimulation 1"
+                                           HorizontalContentAlignment="Center"
+                                           Foreground="White"
+                                           Visibility="{Binding Path=IsChecked, ElementName=chkSimultaneous, ConverterParameter=1, Converter={StaticResource boolToVisibilityConverter}}"/>
+                                    <Label Width="120"
+                                           Content="Stimulation Imaging" 
+                                           HorizontalContentAlignment="Center"
+                                           Foreground="White"
+                                           Visibility="{Binding Path=IsChecked, ElementName=chkSimultaneous, ConverterParameter=0, Converter={StaticResource boolToVisibilityConverter}}"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBox Width="50"
+                                                 Margin="1"
+                                                 Name="tbPostBleachFrames1"
+                                                 val:Validation.MinValue="0"
+                                                 val:Validation.ValidationType="{x:Type system:Int32}"
+                                                 Text="{Binding Source={StaticResource expData}, Mode=TwoWay, XPath=ThorImageExperiment/Photobleaching/@postBleachFrames1}">
+                                        </TextBox>
+                                        <Button Width="30"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbPostBleachFrames1}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBox Width="50"
+                                                 Name="tbPostBleachInterval1"
+                                                 Margin="1"
+                                                 val:Validation.MinValue="0"
+                                                 val:Validation.ValidationType="{x:Type system:Int32}"
+                                                 Text="{Binding Source={StaticResource expData}, Mode=TwoWay, XPath=ThorImageExperiment/Photobleaching/@postBleachInterval1}"
+                                                 IsEnabled="{Binding ElementName=chkPostBleaching1, Path=IsChecked, Converter={StaticResource negate}}">
+                                        </TextBox>
+                                        <Button Width="30"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbPostBleachInterval1}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </StackPanel>
+                                    <CheckBox Name="chkPostBleaching1"
+                                              Content="Stream"
+                                              Foreground="White"
+                                              HorizontalAlignment="Left"
+                                              IsChecked="{Binding Source={StaticResource expData}, Mode=TwoWay, XPath=ThorImageExperiment/Photobleaching/@postBleachStream1, Converter={StaticResource intToBoolConverter}}" />
+                                    <Label Margin="1"
+                                           Foreground="White"
+                                           Content="{Binding Source={StaticResource expData}, Mode=TwoWay, XPath=ThorImageExperiment/Photobleaching/@bleachPostTrigger, Converter={StaticResource intToTriggerConverter}}"/>
+                                </StackPanel>
+                            </Border>
+                            <Border BorderBrush="White"
+                                    Margin="1"
+                                    BorderThickness="1">
+                                <StackPanel Orientation="Vertical"
+                                            Margin="1"
+                                            ToolTip="Post Stimulation 2">
+                                    <Label Width="110"
+                                           Content="Post Stimulation 2"
+                                           HorizontalContentAlignment="Center"
+                                           Foreground="White"
+                                           Visibility="{Binding Path=IsChecked, ElementName=chkSimultaneous, ConverterParameter=1, Converter={StaticResource boolToVisibilityConverter}}"/>
+                                    <Label Width="110"
+                                           Content="Post Stimulation"
+                                           HorizontalContentAlignment="Center"
+                                           Foreground="White"
+                                           Visibility="{Binding Path=IsChecked, ElementName=chkSimultaneous, ConverterParameter=0, Converter={StaticResource boolToVisibilityConverter}}"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBox Width="50"
+                                                 Margin="1"
+                                                 Name="tbPostBleachFrames2"
+                                                 val:Validation.MinValue="0"
+                                                 val:Validation.ValidationType="{x:Type system:Int32}"
+                                                 Text="{Binding Source={StaticResource expData}, Mode=TwoWay, XPath=ThorImageExperiment/Photobleaching/@postBleachFrames2}">
+                                        </TextBox>
+                                        <Button Width="30"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbPostBleachFrames2}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBox Width="50"
+                                                 Name="tbPostBleachInterval2"
+                                                 Margin="1"
+                                                 val:Validation.MinValue="0"
+                                                 val:Validation.ValidationType="{x:Type system:Int32}"
+                                                 Text="{Binding Source={StaticResource expData}, Mode=TwoWay, XPath=ThorImageExperiment/Photobleaching/@postBleachInterval2}"
+                                                 IsEnabled="{Binding ElementName=chkPostBleaching2, Path=IsChecked, Converter={StaticResource negate}}">
+                                        </TextBox>
+                                        <Button Width="30"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbPostBleachInterval2}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </StackPanel>
+                                    <CheckBox Name="chkPostBleaching2"
+                                              Content="Stream"
+                                              Foreground="White"
+                                              HorizontalAlignment="Left"
+                                              IsChecked="{Binding Source={StaticResource expData}, Mode=TwoWay, XPath=ThorImageExperiment/Photobleaching/@postBleachStream2, Converter={StaticResource intToBoolConverter}}" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                        <Expander IsExpanded="True">
+                            <Expander.Header>
+                                <Label Name="lbBleach" />
+                            </Expander.Header>
+                            <StackPanel>
+                                <DataGrid Name="dgBleach"
+                                          Foreground="White"
+                                          Background="#FF333333"
+                                          Margin="1"
+                                          IsReadOnly="True">
+                                    <DataGrid.RowStyle>
+                                        <Style TargetType="DataGridRow">
+                                            <Setter Property="Background"
+                                                    Value="#FF333333" />
+                                        </Style>
+                                    </DataGrid.RowStyle>
+                                    <DataGrid.ColumnHeaderStyle>
+                                        <Style TargetType="DataGridColumnHeader">
+                                            <Setter Property="Background"
+                                                    Value="#FF333333" />
+                                        </Style>
+                                    </DataGrid.ColumnHeaderStyle>
+                                </DataGrid>
+                            </StackPanel>
+                        </Expander>
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Name="hyperspectralGroup">
+                    <GroupBox.Header>
+                        <Label Content="Hyperspectral" />
+                    </GroupBox.Header>
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Start WL [nm]:" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/SpectralFilter/@wavelengthStart}" />
+                            <Label Content="Stop WL [nm]:" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/SpectralFilter/@wavelengthStop}" />
+                            <Label Content="WL Step Size:" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/SpectralFilter/@wavelengthStepSize}" />
+                            <Label Content="WL Steps:" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/SpectralFilter/@steps}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Bandwidth Mode:" />
+                            <Label Content="{Binding Path=HSBandwithMode,
+													 UpdateSourceTrigger=PropertyChanged}" />
+                            <Label Content="Exposure Table:" />
+                            <Label Content="{Binding Path=ExposureTable,
+													 UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+                <Border Margin="0,8,0,0"
+						Name="gbPMTGains">
+                    <StackPanel Margin="1"
+								Orientation="Horizontal">
+                        <StackPanel>
+                            <Label Content="Channel"
+								   Foreground="White"
+								   MinWidth="60"
+								   HorizontalContentAlignment="Center" />
+                            <Label Content="Gain"
+								   Foreground="White"
+								   MinWidth="60"
+								   HorizontalContentAlignment="Center" />
+                            <Label Content="D. Offset"
+								   Foreground="White"
+								   MinWidth="60"
+								   HorizontalContentAlignment="Center" />
+                            <Label Content="Offset [V]"
+								   Foreground="White"
+								   MinWidth="60"
+								   HorizontalContentAlignment="Center" />
+                            <Label Content="Bandwidth [kHz]"
+								   Foreground="White"
+								   MinWidth="60"
+								   HorizontalContentAlignment="Center" />
+                            <Label Content="InputRange"
+								   Foreground="White"
+								   MinWidth="60"
+								   HorizontalContentAlignment="Center" />
+                            <Label Content="Polarity"
+								   Foreground="White"
+								   MinWidth="60"
+								   HorizontalContentAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Visibility="{Binding Source={StaticResource expData},
+														 XPath=ThorImageExperiment/LSM/@channel,
+														 Converter={StaticResource channelConverter},
+														 ConverterParameter=1}">
+                            <Label Content="A"
+								   Foreground="White"
+								   HorizontalContentAlignment="Center"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/PMT/@gainA}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/LSM/@chan1DigOffset}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/PMT/@offsetAVolts}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/PMT/@bandwidthAHz,
+													 Converter={StaticResource bandwidthConverter}}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/LSM/@inputRange1,
+													 Converter={StaticResource inputRangeConverter}}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/LSM/@polarity1}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                        </StackPanel>
+                        <StackPanel Visibility="{Binding Source={StaticResource expData},
+														 XPath=ThorImageExperiment/LSM/@channel, Converter={StaticResource channelConverter}, ConverterParameter=2}">
+                            <Label Content="B"
+								   Foreground="White"
+								   HorizontalContentAlignment="Center"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/PMT/@gainB}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/LSM/@chan2DigOffset}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/PMT/@offsetBVolts}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/PMT/@bandwidthBHz,
+													 Converter={StaticResource bandwidthConverter}}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/LSM/@inputRange2,
+													 Converter={StaticResource inputRangeConverter}}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/LSM/@polarity2}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                        </StackPanel>
+                        <StackPanel Visibility="{Binding Source={StaticResource expData},
+														 XPath=ThorImageExperiment/LSM/@channel,
+														 Converter={StaticResource channelConverter},
+														 ConverterParameter=3}">
+                            <Label Content="C"
+								   Foreground="White"
+								   HorizontalContentAlignment="Center"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/PMT/@gainC}"
+								   Foreground="White"
+								   HorizontalContentAlignment="Center"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/LSM/@chan3DigOffset}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/PMT/@offsetCVolts}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/PMT/@bandwidthCHz,
+													 Converter={StaticResource bandwidthConverter}}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/LSM/@inputRange3,
+													 Converter={StaticResource inputRangeConverter}}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/LSM/@polarity3}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                        </StackPanel>
+                        <StackPanel Visibility="{Binding Source={StaticResource expData},
+														 XPath=ThorImageExperiment/LSM/@channel,
+														 Converter={StaticResource channelConverter},
+														 ConverterParameter=4}">
+                            <Label Content="D"
+								   Foreground="White"
+								   HorizontalContentAlignment="Center"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/PMT/@gainD}"
+								   Foreground="White"
+								   HorizontalContentAlignment="Center"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/LSM/@chan4DigOffset}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/PMT/@offsetDVolts}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/PMT/@bandwidthDHz,
+													 Converter={StaticResource bandwidthConverter}}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/LSM/@inputRange4,
+													 Converter={StaticResource inputRangeConverter}}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/LSM/@polarity4}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   MinWidth="60" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+                <StackPanel>
+                    <Border BorderThickness="1"
+							Visibility="{Binding Source={StaticResource appSettings}, 
+												 XPath=CaptureSetup/Pockels1/@Visibility}">
+                        <StackPanel>
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content=""
+										   MinWidth="120"></Label>
+                                    <Label Content="P1"
+										   MinWidth="65"
+										   Foreground="White"
+										   HorizontalContentAlignment="Center"
+										   Visibility="{Binding Source={StaticResource appSettings}, 
+																XPath=CaptureSetup/Pockels1/@Visibility}"></Label>
+                                    <Label Content="P2"
+										   MinWidth="65"
+										   Foreground="White"
+										   HorizontalContentAlignment="Center"
+										   Visibility="{Binding Source={StaticResource appSettings}, 
+																XPath=CaptureSetup/Pockels2/@Visibility}"></Label>
+                                    <Label Content="P3"
+										   MinWidth="65"
+										   Foreground="White"
+										   HorizontalContentAlignment="Center"
+										   Visibility="{Binding Source={StaticResource appSettings}, 
+																XPath=CaptureSetup/Pockels3/@Visibility}"></Label>
+                                    <Label Content="P4"
+										   MinWidth="65"
+										   Foreground="White"
+										   HorizontalContentAlignment="Center"
+										   Visibility="{Binding Source={StaticResource appSettings}, 
+																XPath=CaptureSetup/Pockels4/@Visibility}"></Label>
+                                    <Label Content="PowReg"
+										   MinWidth="65"
+										   Foreground="White"
+										   HorizontalContentAlignment="Center"
+										   Visibility="{Binding Source={StaticResource appSettings}, 
+																XPath=CaptureSetup/PowerReg/@Visibility}"></Label>
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Foreground="White"
+									   Width="120"
+									   Content="Power Level:" />
+                                <Label Foreground="White"
+									   MinWidth="65"
+									   HorizontalContentAlignment="Center"
+									   Content="{Binding Source={StaticResource expData},
+														 XPath=(ThorImageExperiment/Pockels/@start)[1]}"
+									   Visibility="{Binding Source={StaticResource appSettings}, 
+															XPath=CaptureSetup/Pockels1/@Visibility}" />
+                                <Label Foreground="White"
+									   MinWidth="65"
+									   HorizontalContentAlignment="Center"
+									   Content="{Binding Source={StaticResource expData},
+														 XPath=(ThorImageExperiment/Pockels/@start)[2]}"
+									   Visibility="{Binding Source={StaticResource appSettings}, 
+															XPath=CaptureSetup/Pockels2/@Visibility}" />
+                                <Label Foreground="White"
+									   MinWidth="65"
+									   HorizontalContentAlignment="Center"
+									   Content="{Binding Source={StaticResource expData},
+														 XPath=(ThorImageExperiment/Pockels/@start)[3]}"
+									   Visibility="{Binding Source={StaticResource appSettings}, 
+															XPath=CaptureSetup/Pockels3/@Visibility}" />
+                                <Label Foreground="White"
+									   MinWidth="65"
+									   HorizontalContentAlignment="Center"
+									   Content="{Binding Source={StaticResource expData},
+														 XPath=(ThorImageExperiment/Pockels/@start)[4]}"
+									   Visibility="{Binding Source={StaticResource appSettings}, 
+															XPath=CaptureSetup/Pockels4/@Visibility}" />
+                                <Label Foreground="White"
+									   MinWidth="65"
+									   HorizontalContentAlignment="Center"
+									   Content="{Binding Source={StaticResource expData},
+														 XPath=ThorImageExperiment/PowerRegulator/@start}"
+									   Visibility="{Binding Source={StaticResource appSettings}, 
+															XPath=CaptureSetup/PowerReg/@Visibility}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Foreground="White"
+									   Width="120"
+									   Content="Ramp File Name:" />
+                                <Label Foreground="White"
+									   MinWidth="65"
+									   HorizontalContentAlignment="Center"
+									   Content="{Binding Path=PockelsRampFileName[0].Value}"
+									   Visibility="{Binding Source={StaticResource appSettings}, 
+															XPath=CaptureSetup/Pockels1/@Visibility}" />
+                                <Label Foreground="White"
+									   MinWidth="65"
+									   HorizontalContentAlignment="Center"
+									   Content="{Binding Path=PockelsRampFileName[1].Value}"
+									   Visibility="{Binding Source={StaticResource appSettings}, 
+															XPath=CaptureSetup/Pockels2/@Visibility}" />
+                                <Label Foreground="White"
+									   MinWidth="65"
+									   HorizontalContentAlignment="Center"
+									   Content="{Binding Path=PockelsRampFileName[2].Value}"
+									   Visibility="{Binding Source={StaticResource appSettings}, 
+															XPath=CaptureSetup/Pockels3/@Visibility}" />
+                                <Label Foreground="White"
+									   MinWidth="65"
+									   HorizontalContentAlignment="Center"
+									   Content="{Binding Path=PockelsRampFileName[3].Value}"
+									   Visibility="{Binding Source={StaticResource appSettings}, 
+															XPath=CaptureSetup/Pockels4/@Visibility}">
+                                </Label>
+                                <Label Foreground="White"
+									   MinWidth="65"
+									   HorizontalContentAlignment="Center"
+									   Content="{Binding Path=PowerRegRampFileName}"
+									   Visibility="{Binding Source={StaticResource appSettings}, 
+															XPath=CaptureSetup/PowerReg/@Visibility}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Foreground="White"
+									   Width="120"
+									   Content="Mask Enable:" />
+                                <Label Foreground="White"
+									   MinWidth="65"
+									   HorizontalContentAlignment="Center"
+									   Content="{Binding Source={StaticResource expData},
+														 XPath=(ThorImageExperiment/Pockels/@maskEnable)[1]}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Foreground="White"
+									   Width="120"
+									   Content="Mask Invert:" />
+                                <Label Foreground="White"
+									   MinWidth="65"
+									   HorizontalContentAlignment="Center"
+									   Content="{Binding Source={StaticResource expData},
+														 XPath=(ThorImageExperiment/Pockels/@maskInvert)[1]}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Foreground="White"
+									   Width="120"
+									   Content="Mask Path:" />
+                                <Label Foreground="White"
+									   MinWidth="65"
+									   HorizontalContentAlignment="Center"
+									   Content="{Binding Source={StaticResource expData},
+														 XPath=(ThorImageExperiment/Pockels/@maskPath)[1]}"
+									   ToolTip="{Binding Source={StaticResource expData},
+														 XPath=(ThorImageExperiment/Pockels/@maskPath)[1]}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <GroupBox BorderThickness="1"
+						  Visibility="{Binding Source={StaticResource appSettings}, 
+										   	   XPath=CaptureSetup/MCLSView/@Visibility}"
+						  Name="gbMCLS">
+                    <GroupBox.Header>
+                        <Label Content="MCLS"
+							   Foreground="White" />
+                    </GroupBox.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <StackPanel>
+                            <Label Content="Laser"
+								   Foreground="White"
+								   Width="60"
+								   HorizontalContentAlignment="Center" />
+                            <Label Content="Power %"
+								   Foreground="White"
+								   Width="70"
+								   HorizontalContentAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Visibility="{Binding Source={StaticResource expData},
+														 XPath=ThorImageExperiment/MCLS/@enable1,
+														 Converter={StaticResource modeVisibilityConverter},
+														 ConverterParameter=1}">
+                            <Label Content="1"
+								   Foreground="White"
+								   HorizontalContentAlignment="Center"
+								   Width="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/MCLS/@power1percent,
+													 Converter={StaticResource doubleCultureConverter}}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   Width="70" />
+                        </StackPanel>
+                        <StackPanel Visibility="{Binding Source={StaticResource expData},
+														 XPath=ThorImageExperiment/MCLS/@enable2,
+														 Converter={StaticResource modeVisibilityConverter},
+														 ConverterParameter=1}">
+                            <Label Content="2"
+								   Foreground="White"
+								   HorizontalContentAlignment="Center"
+								   Width="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/MCLS/@power2percent,
+													 Converter={StaticResource doubleCultureConverter}}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   Width="70" />
+                        </StackPanel>
+                        <StackPanel Visibility="{Binding Source={StaticResource expData},
+														 XPath=ThorImageExperiment/MCLS/@enable3,
+														 Converter={StaticResource modeVisibilityConverter},
+														 ConverterParameter=1}">
+                            <Label Content="3"
+								   Foreground="White"
+								   HorizontalContentAlignment="Center"
+								   Width="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/MCLS/@power3percent,
+													 Converter={StaticResource doubleCultureConverter}}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   Width="70" />
+                        </StackPanel>
+                        <StackPanel Visibility="{Binding Source={StaticResource expData},
+														 XPath=ThorImageExperiment/MCLS/@enable4,
+														 Converter={StaticResource modeVisibilityConverter},
+														 ConverterParameter=1}">
+                            <Label Content="4"
+								   Foreground="White"
+								   HorizontalContentAlignment="Center"
+								   Width="60" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/MCLS/@power4percent,
+													 Converter={StaticResource doubleCultureConverter}}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White"
+								   Width="70" />
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox BorderThickness="1"
+						  Visibility="{Binding Source={StaticResource appSettings}, 
+											   XPath=CaptureSetup/MultiphotonView/@Visibility}"
+						  Name="gbMultiPhotonLaser">
+                    <GroupBox.Header>
+                        <Label Content="Multiphoton Laser"
+							   Foreground="White" />
+                    </GroupBox.Header>
+                    <StackPanel Margin="1">
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Wavelength:"
+								   Foreground="White"
+								   HorizontalContentAlignment="Center" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/MultiPhotonLaser/@pos}"
+								   HorizontalContentAlignment="Center"
+								   Foreground="White" />
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox BorderThickness="1"
+						  Visibility="{Binding Source={StaticResource expData},
+											   XPath=ThorImageExperiment/Modality/@primaryDetectorType,
+											   ConverterParameter=1,
+											   Converter={StaticResource detectorVisibilityConverter}}"
+						  IsEnabled="False">
+                    <GroupBox.Header>
+                        <Label Content="Scanner Area Control"
+							   Foreground="White" />
+                    </GroupBox.Header>
+                    <StackPanel Margin="1">
+                        <StackPanel Orientation="Horizontal"
+									Margin="1">
+                            <Label Content="Field Size:"
+								   Foreground="White" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/LSM/@fieldSize}" />
+                            <Label Foreground="White"
+								   Content="Width [um]:" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData}, 
+													 XPath=ThorImageExperiment/LSM/@widthUM}" />
+                            <Label Content="Height [um]:"
+								   Foreground="White" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData}, 
+													 XPath=ThorImageExperiment/LSM/@heightUM}" />
+                            <Label Foreground="White"
+								   Content="Offset:" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData}, 
+													 XPath=ThorImageExperiment/LSM/@offsetX}" />
+                            <Label Foreground="White"
+								   Content="," />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData}, 
+													 XPath=ThorImageExperiment/LSM/@offsetY}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+								    Margin="1">
+                            <Label Foreground="White"
+								   Content="Pixel Count:" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData}, 
+													 XPath=ThorImageExperiment/LSM/@pixelX}" />
+                            <Label Foreground="White"
+								   Content=" x " />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/LSM/@pixelY}" />
+                            <Label Foreground="White"
+								   Content="[um/pixel]:" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/LSM/@pixelSizeUM}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+								    Margin="1">
+                            <StackPanel Orientation="Horizontal"
+										Visibility="{Binding Source={StaticResource expData},
+															 XPath=ThorImageExperiment/LSM/@name, ConverterParameter=0,
+															 Converter={StaticResource lsmTypeToVisibilityConverter}}">
+                                <Label Foreground="White"
+									   Content="Rapid Scan" />
+                                <CheckBox Margin="0,0,15,0"
+                                          Foreground="White"
+										  VerticalAlignment="Center"
+										  IsChecked="{Binding Source={StaticResource expData},
+															  XPath=ThorImageExperiment/LSM/@interleave,
+															  Mode=TwoWay,
+															  UpdateSourceTrigger=PropertyChanged,
+															  Converter={StaticResource intToBoolConverter}}" />
+                            </StackPanel>
+                            <Label Foreground="White"
+								   Content="Scan Mode:" />
+                            <ComboBox Name="cbScanModes"
+									  Width="100"
+									  HorizontalAlignment="Center"
+									  Margin="1"
+									  SelectedIndex="{Binding Source={StaticResource expData},
+															  Mode=TwoWay,
+															  XPath=ThorImageExperiment/LSM/@scanMode,
+															  UpdateSourceTrigger=PropertyChanged}">
+                                <ComboBoxItem>Two-Way Scan</ComboBoxItem>
+                                <ComboBoxItem>One-Way Scan</ComboBoxItem>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+									Margin="1"
+									Visibility="{Binding Source={StaticResource expData},
+														 XPath=ThorImageExperiment/LSM/@averageMode,
+														 Converter={StaticResource intToVisibilityConverter}}">
+                            <Label Foreground="White"
+								   Content="Average Frames:" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/LSM/@averageNum}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <StackPanel Margin="1"
+											Orientation="Horizontal">
+                                    <Label Foreground="White"
+										   Content="Frame Rate [fps]:" />
+                                    <Label Foreground="White">
+                                        <TextBlock Text="{Binding Source={StaticResource expData},
+																  XPath=ThorImageExperiment/LSM/@frameRate,
+															      Converter={StaticResource StringToRoundedDoubleConverter},
+															      StringFormat={}{0:0.###}}">
+                                        </TextBlock>
+                                    </Label>
+                                    <Label Foreground="White"
+				                           Content="Flyback Cycles:" />
+                                    <Label Foreground="White"
+										   Content="{Binding Source={StaticResource expData},
+															 XPath=ThorImageExperiment/LSM/@flybackCycles}" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <StackPanel Margin="1"
+										    Orientation="Horizontal">
+                                    <Label Foreground="White"
+										   Content="Dwell Time [us]:" />
+                                    <Label Foreground="White"
+										   Content="{Binding Source={StaticResource expData},
+														     XPath=ThorImageExperiment/LSM/@dwellTime,
+														     Converter={StaticResource doubleCultureConverter}}" />
+                                </StackPanel>
+                                <StackPanel Margin="1"
+											Orientation="Horizontal">
+                                    <Label Foreground="White"
+										   Content="Area Angle:" />
+                                    <Label Foreground="White"
+										   Content="{Binding Source={StaticResource expData},
+														     XPath=ThorImageExperiment/LSM/@areaAngle,
+														     Converter={StaticResource doubleCultureConverter}}" />
+                                    <Label Foreground="White"
+										   Content="Flip Horiz:" />
+                                    <Label Foreground="White"
+										   Content="{Binding Source={StaticResource expData},
+															 XPath=ThorImageExperiment/LSM/@horizontalFlip}" />
+                                    <Label Foreground="White"
+										   Content="Flip Vert:" />
+                                    <Label Foreground="White"
+										   Content="{Binding Source={StaticResource expData},
+															 XPath=ThorImageExperiment/LSM/@verticalFlip}" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Foreground="White"
+									   Content="Fine Scale:" />
+                                <Label Foreground="White"
+									   Content="{Binding Source={StaticResource expData},
+														 XPath=ThorImageExperiment/LSM/@fineScaleX}" />
+                                <Label Foreground="White"
+									   Content="," />
+                                <Label Foreground="White"
+									   Content="{Binding Source={StaticResource expData},
+														 XPath=ThorImageExperiment/LSM/@fineScaleY}" />
+                                <Label Foreground="White"
+									   Content="Fine Offset:" />
+                                <Label Foreground="White"
+									   Content="{Binding Source={StaticResource expData},
+														 XPath=ThorImageExperiment/LSM/@fineOffsetX}" />
+                                <Label Foreground="White"
+									   Content="," />
+                                <Label Foreground="White"
+									   Content="{Binding Source={StaticResource expData},
+														 XPath=ThorImageExperiment/LSM/@fineOffsetY}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Visibility="{Binding Source={StaticResource expData},
+														     XPath=ThorImageExperiment/LSM/@timeBasedLineScan,
+															 Converter={StaticResource intToVisibilityConverter}}">
+                                <Label Foreground="White"
+									   Content="Time Based line scan" />
+                                <CheckBox VerticalAlignment="Center"
+                                          IsEnabled="False"
+                                          IsChecked="{Binding Source={StaticResource expData},
+															  XPath=ThorImageExperiment/LSM/@timeBasedLineScan,
+															  Mode=TwoWay,
+															  UpdateSourceTrigger=PropertyChanged,
+                                                              Converter={StaticResource intToBoolConverter}}" />
+                                <Label Margin="15,0,0,0"
+                                       Foreground="White"
+									   Content="Scan Time:" />
+                                <Label Foreground="White"
+									   Content="{Binding Source={StaticResource expData},
+														 XPath=ThorImageExperiment/LSM/@tbLineScanTimeMS}" />
+                                <Label Foreground="White"
+									   Content="[ms]" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Visibility="{Binding Source={StaticResource expData},
+											   XPath=ThorImageExperiment/Modality/@primaryDetectorType,
+											   ConverterParameter=0,
+											   Converter={StaticResource detectorVisibilityConverter}}"
+						  IsEnabled="False">
+                    <GroupBox.Header>
+                        <Label Content="Camera Control"
+							   Foreground="White" />
+                    </GroupBox.Header>
+                    <StackPanel Margin="1">
+                        <StackPanel Orientation="Horizontal"
+									Margin="1">
+                            <Label Content="Camera Name:"
+								   Foreground="White" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/Camera/@name}" />
+                            <Label Content="Exposure Time:"
+								   Foreground="White" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/Camera/@exposureTimeMS}" />
+                            <Label Foreground="White"
+								   Content="Pixel Size[um]:" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+												     XPath=ThorImageExperiment/Camera/@pixelSizeUM,
+												     Converter={StaticResource StringToRoundedDoubleConverter},
+												     ConverterParameter=3}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel Orientation="Horizontal"
+                                        Visibility="{Binding Path=GainBLVis,
+                                                             UpdateSourceTrigger=PropertyChanged}">
+                                <Label Foreground="White"
+								       Content="Gain:" />
+                                <Label Foreground="White"
+								       Content="{Binding Source={StaticResource expData},
+													     XPath=ThorImageExperiment/Camera/@gain}" />
+                                <Label Foreground="White"
+								       Content="Black Level:" />
+                                <Label Foreground="White"
+								       Content="{Binding Source={StaticResource expData},
+													     XPath=ThorImageExperiment/Camera/@blackLevel}" />
+                            </StackPanel>
+                            <Label Foreground="White"
+								   Content="BinX:" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/Camera/@binningX}" />
+                            <Label Foreground="White"
+								   Content="BinY:" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/Camera/@binningY}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Foreground="White"
+								   Content="Top:" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/Camera/@top}" />
+                            <Label Content="Left:"
+								   Foreground="White" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/Camera/@left}" />
+                            <Label Content="Bits/pixel:"
+								   Foreground="White" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/Camera/@bitsPerPixel}" />
+                            <Label Foreground="White"
+								   Content="Width:" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/Camera/@width}" />
+                            <Label Foreground="White"
+								   Content="/" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/Camera/@widthUM}" />
+                            <Label Foreground="White"
+								   Content="[um]" />
+                            <Label Foreground="White"
+								   Content="Height:" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/Camera/@height}" />
+                            <Label Foreground="White"
+								   Content="/" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/Camera/@heightUM}" />
+                            <Label Foreground="White"
+								   Content="[um]" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Foreground="White"
+								   Content="Bottom:" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/Camera/@bottom}" />
+                            <Label Foreground="White"
+								   Content="Right:" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/Camera/@right}" />
+                            <StackPanel Orientation="Horizontal"
+                                        Visibility="{Binding Path=TapsVis,
+                                                        UpdateSourceTrigger=PropertyChanged}">
+                                <Label Foreground="White"
+								       Content="Taps:" />
+                                <Label Foreground="White"
+								       Content="{Binding Path=Taps,
+													     UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <Label Foreground="White"
+								   Content="Tab Balance:" />
+                            <CheckBox Foreground="White"
+									  Height="13"
+									  IsChecked="{Binding Source={StaticResource expData},
+														  Mode=TwoWay,
+														  XPath=ThorImageExperiment/Camera/@tapBalance,
+														  Converter={StaticResource intToBoolConverter}}" />
+                            <StackPanel Orientation="Horizontal"
+                                        Visibility="{Binding Path=ReadoutSpeedVis,
+                                                             UpdateSourceTrigger=PropertyChanged}">
+                                <Label Foreground="White"
+								       Content="Readout Speed:" />
+                                <Label Foreground="White"
+								       Content="{Binding Path=ReadoutSpeed,
+													     UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Foreground="White"
+								   Content="Avg Mode:" />
+                            <Label Foreground="White"
+								   Content="{Binding Path=AverageMode,
+													 UpdateSourceTrigger=PropertyChanged}" />
+                            <Label Content="Average Num:"
+								   Foreground="White" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/Camera/@averageNum}" />
+                            <Label Foreground="White"
+								   Content="Vert Flip:" />
+                            <CheckBox Foreground="White"
+									  Height="13"
+									  IsChecked="{Binding Source={StaticResource expData},
+														  Mode=TwoWay,
+														  XPath=ThorImageExperiment/Camera/@verticalFlip,
+														  Converter={StaticResource intToBoolConverter}}" />
+                            <Label Foreground="White"
+								   Content="Horz Flip:" />
+                            <CheckBox Foreground="White"
+									  Height="13"
+									  IsChecked="{Binding Source={StaticResource expData},
+														  Mode=TwoWay,
+														  XPath=ThorImageExperiment/Camera/@horizontalFlip,
+														  Converter={StaticResource intToBoolConverter}}" />
+                            <Label Foreground="White"
+								   Content="Image Angle:" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/Camera/@imageAngle}" />
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox BorderThickness="1"
+						  Name="gbPinhole"
+						  Visibility="{Binding Source={StaticResource appSettings}, 
+											   XPath=CaptureSetup/PinholeView/@Visibility}">
+                    <GroupBox.Header>
+                        <Label Content="Pinhole Control"
+							   Foreground="White" />
+                    </GroupBox.Header>
+                    <StackPanel Margin="1">
+                        <StackPanel Orientation="Horizontal"
+								    HorizontalAlignment="Left">
+                            <Label Content="Pinhole Size [um]:"
+								   Foreground="White"
+								   Height="30" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/PinholeWheel/@micrometers}"
+								   Foreground="White"
+								   Margin="0"
+								   Height="30" />
+                            <Label Content="       ADUs:"
+								   Foreground="White"
+								   Height="30" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/PinholeWheel/@adu}"
+								   Foreground="White"
+								   Margin="0"
+								   Height="30" />
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+
+                <Border Margin="0,8,0,0"
+						Name="gbStage">
+                    <StackPanel Margin="1"
+								Orientation="Horizontal">
+                        <Label Content="Secondary Z [um]:"
+							   Foreground="White"
+							   MinWidth="80"
+							   HorizontalContentAlignment="Center" />
+                        <Label Content="{Binding Path=Z2Position,
+												 UpdateSourceTrigger=PropertyChanged}"
+							   Foreground="White"
+							   MinWidth="60"
+							   HorizontalContentAlignment="Center" />
+                        <Label Content="R Stage [deg]:"
+							   Foreground="White"
+							   HorizontalContentAlignment="Center"
+							   MinWidth="80" />
+                        <Label Content="{Binding Source={StaticResource expData},
+												 XPath=ThorImageExperiment/RStage/@pos}"
+							   HorizontalContentAlignment="Center"
+							   Foreground="White"
+							   MinWidth="60" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+            <StackPanel>
+                <GroupBox BorderThickness="1">
+                    <GroupBox.Header>
+                        <Label Content="Tile Control"
+							   Foreground="White" />
+                    </GroupBox.Header>
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal"
+									HorizontalAlignment="Left"
+									IsEnabled="False">
+                            <Label Content="Carrier Type"
+								   Foreground="White"
+								   Height="30" />
+                            <Label Width="175"
+								   Height="30"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/Sample/@name,
+													 Mode=TwoWay,
+													 UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+									HorizontalAlignment="Left"
+									IsEnabled="False">
+                            <Label Content="Home Location: X: "
+								   Foreground="White"
+								   Height="30" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/Sample/@homeOffsetX,
+													 Converter={StaticResource doubleCultureConverter}}"
+								   Foreground="White"
+								   Margin="0"
+								   Height="30" />
+                            <Label Content=" Y: "
+								   Margin="0"
+								   Foreground="White"
+								   Height="30" />
+                            <Label Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/Sample/@homeOffsetY,
+													 Converter={StaticResource doubleCultureConverter}}"
+								   Foreground="White"
+								   Margin="0"
+								   Height="30" />
+                        </StackPanel>
+                        <xy:XYTileDisplay Name="tileControl"
+										  HorizontalAlignment="Left"
+										  ActiveXML="{Binding Path=ExperimentName,
+															  Mode=OneWay,
+															  UpdateSourceTrigger=PropertyChanged}"
+										  ApplicationSettings="{Binding Path=ApplicationSettingPath,
+																		Mode=OneWay,
+																		UpdateSourceTrigger=PropertyChanged}"
+										  Mode="DefaultView" />
+                    </StackPanel>
+                </GroupBox>
+            </StackPanel>
+            <StackPanel>
+                <GroupBox Name="gbSequentialCapture">
+                    <GroupBox.Header>
+                        <Label Content="Sequential Capture Settings" />
+                    </GroupBox.Header>
+                    <StackPanel>
+                        <ListBox Name="lbLightPathSequenceStepTemplateListWide"
+								 Margin="0,0,1,1"
+								 HorizontalAlignment="Center"
+								 VerticalAlignment="Top"
+								 ItemsSource="{Binding CollectionCaptureSequence}"
+								 SelectionMode="Single">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <UserControl Content="{Binding Path=LightPathSequenceStepPreview}"
+											     Margin="1"
+											     HorizontalAlignment="Center">
+                                    </UserControl>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+                </GroupBox>
+            </StackPanel>
+            <StackPanel>
+                <GroupBox Name="gbDigitalSwitches">
+                    <GroupBox.Header>
+                        <Label Content="Digital Switches" />
+                    </GroupBox.Header>
+                    <StackPanel>
+                        <Grid x:Name="LayoutRoot">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <!-- Digital Switches -->
+                            <StackPanel Grid.Row="0" 
+                                        Orientation="Horizontal"
+                                        HorizontalAlignment="Left"
+                                        Margin="3"
+                                        Visibility="Visible">
+                                <CheckBox Content="Enable"
+                                          VerticalAlignment="Center"
+                                          Margin="1"
+                                          IsChecked="{Binding Source={StaticResource expData}, 
+                                                              Mode=TwoWay, 
+                                                              XPath=ThorImageExperiment/DigitalIO/@enable, 
+                                                              Converter={StaticResource intToBoolConverter}}"/>
+                                <StackPanel Margin="1">
+                                    <Label Content="1" />
+                                    <ToggleButton Width="25"
+                                                  Height="50"
+                                                  IsChecked="{Binding Source={StaticResource expData}, 
+                                                                      Mode=TwoWay, 
+                                                                      XPath=ThorImageExperiment/DigitalIO/@digOut1, 
+                                                                      Converter={StaticResource intToBoolConverter}}"
+                                                  Style="{StaticResource DipSwitchToggleButtonStyle}">
+                                    </ToggleButton>
+                                </StackPanel>
+                                <StackPanel Margin="1">
+                                    <Label Content="2" />
+                                    <ToggleButton Width="25"
+                                                  Height="50"
+                                                  IsChecked="{Binding Source={StaticResource expData}, 
+                                                                      Mode=TwoWay, 
+                                                                      XPath=ThorImageExperiment/DigitalIO/@digOut2, 
+                                                                      Converter={StaticResource intToBoolConverter}}"
+                                                  Style="{StaticResource DipSwitchToggleButtonStyle}">
+                                    </ToggleButton>
+                                </StackPanel>
+                                <StackPanel Margin="1">
+                                    <Label Content="3" />
+                                    <ToggleButton Width="25"
+                                                  Height="50"
+                                                  IsChecked="{Binding Source={StaticResource expData}, 
+                                                                      Mode=TwoWay, 
+                                                                      XPath=ThorImageExperiment/DigitalIO/@digOut3, 
+                                                                      Converter={StaticResource intToBoolConverter}}"
+                                                  Style="{StaticResource DipSwitchToggleButtonStyle}">
+                                    </ToggleButton>
+                                </StackPanel>
+                                <StackPanel Margin="1">
+                                    <Label Content="4" />
+                                    <ToggleButton Width="25"
+                                                  Height="50"
+                                                  IsChecked="{Binding Source={StaticResource expData}, 
+                                                                      Mode=TwoWay, 
+                                                                      XPath=ThorImageExperiment/DigitalIO/@digOut4, 
+                                                                      Converter={StaticResource intToBoolConverter}}"
+                                                  Style="{StaticResource DipSwitchToggleButtonStyle}">
+                                    </ToggleButton>
+                                </StackPanel>
+                                <StackPanel Margin="1">
+                                    <Label Content="5" />
+                                    <ToggleButton Width="25"
+                                                  Height="50"
+                                                  IsChecked="{Binding Source={StaticResource expData}, 
+                                                                      Mode=TwoWay, 
+                                                                      XPath=ThorImageExperiment/DigitalIO/@digOut5, 
+                                                                      Converter={StaticResource intToBoolConverter}}"
+                                                  Style="{StaticResource DipSwitchToggleButtonStyle}">
+                                    </ToggleButton>
+                                </StackPanel>
+                                <StackPanel Margin="1">
+                                    <Label Content="6" />
+                                    <ToggleButton Width="25"
+                                                  Height="50"
+                                                  IsChecked="{Binding Source={StaticResource expData}, 
+                                                                      Mode=TwoWay, 
+                                                                      XPath=ThorImageExperiment/DigitalIO/@digOut6, 
+                                                                      Converter={StaticResource intToBoolConverter}}"
+                                                  Style="{StaticResource DipSwitchToggleButtonStyle}">
+                                    </ToggleButton>
+                                </StackPanel>
+                                <StackPanel Margin="1">
+                                    <Label Content="7" />
+                                    <ToggleButton Width="25"
+                                                  Height="50"
+                                                  IsChecked="{Binding Source={StaticResource expData}, 
+                                                                      Mode=TwoWay, 
+                                                                      XPath=ThorImageExperiment/DigitalIO/@digOut7, 
+                                                                      Converter={StaticResource intToBoolConverter}}"
+                                                  Style="{StaticResource DipSwitchToggleButtonStyle}">
+                                    </ToggleButton>
+                                </StackPanel>
+                                <StackPanel Margin="1">
+                                    <Label Content="8" />
+                                    <ToggleButton Width="25"
+                                                  Height="50"
+                                                  IsChecked="{Binding Source={StaticResource expData}, 
+                                                                      Mode=TwoWay, 
+                                                                      XPath=ThorImageExperiment/DigitalIO/@digOut8, 
+                                                                      Converter={StaticResource intToBoolConverter}}"
+                                                  Style="{StaticResource DipSwitchToggleButtonStyle}">
+                                    </ToggleButton>
+                                </StackPanel>
+                            </StackPanel>
+                            <!-- Digital Triggers -->
+                            <GroupBox Header="Signal Generator" 
+                                      Grid.Row="1"
+                                      Margin="1"
+                                      HorizontalAlignment="Left"
+                                      Visibility="Visible">
+                                <StackPanel Orientation="Vertical">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="3" ToolTip="select mode and execute signal generation">
+                                            <Label Content="Mode" Width="50"/>
+                                            <ComboBox Name="cbDigTrigMode"
+                                                      IsEnabled="False"
+                                                      Margin="1"
+                                                      Width="160"
+                                                      HorizontalContentAlignment="Right"
+                                                      SelectedIndex="{Binding Source={StaticResource expData},
+															  Mode=TwoWay,
+															  XPath=ThorImageExperiment/DigitalIO/@trigMode,
+															  UpdateSourceTrigger=PropertyChanged}">
+                                                <ComboBoxItem>NONE</ComboBoxItem>
+                                                <ComboBoxItem>FRAME</ComboBoxItem>
+                                                <ComboBoxItem>LINE</ComboBoxItem>
+                                                <ComboBoxItem>ZSTACK</ComboBoxItem>
+                                                <ComboBoxItem>CAPTURE</ComboBoxItem>
+                                                <ComboBoxItem>STIMULATION</ComboBoxItem>
+                                                <ComboBoxItem>MANUAL</ComboBoxItem>
+                                                <ComboBoxItem>CUSTOM</ComboBoxItem>
+                                                <ComboBoxItem>EPHYS_LAST_TRIGGER_MODE</ComboBoxItem>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="1">
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel">
+                                                    <Setter Property="Visibility"
+                                                            Value="Visible" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=SelectedIndex,ElementName=cbDigTrigMode}"
+                                                                     Value="0">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Collapsed" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Path=SelectedIndex,ElementName=cbDigTrigMode}"
+                                                                     Value="6">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
+                                            <StackPanel Orientation="Vertical" Margin="1"
+                                                        ToolTip="start edge number">
+                                                <Label Content="Start" Width="50" HorizontalContentAlignment="Center"/>
+                                                <TextBox Width="50"
+                                                         HorizontalAlignment="Left"
+                                                         HorizontalContentAlignment="Right"
+                                                         Text="{Binding Source={StaticResource expData}, 
+                                                                        Mode=TwoWay, 
+                                                                        XPath=ThorImageExperiment/DigitalIO/@trigStartEdge}"
+                                                         validator:Validation.ValidationType="{x:Type system:Int32}"
+                                                         validator:Validation.MinValue="1"
+                                                         validator:Validation.NoEmptyValue="True"
+                                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Vertical" Margin="1"
+                                                        ToolTip="steps format: eg> 1:2">
+                                                <Label Content="Gaps" Width="40" HorizontalContentAlignment="Center"/>
+                                                <TextBox Width="95"
+                                                         HorizontalAlignment="Left"
+                                                         HorizontalContentAlignment="Right"
+                                                         Text="{Binding Source={StaticResource expData}, Mode=TwoWay, XPath=ThorImageExperiment/DigitalIO/@trigSteps}"
+                                                         validator:Validation.ValidationType="{x:Type system:Int32}"
+                                                         validator:Validation.Separator=":"
+                                                         validator:Validation.MinValue="0"
+                                                         validator:Validation.NoEmptyValue="True"
+                                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Vertical" Margin="1"
+                                                        ToolTip="repeat number, 0: infinite">
+                                                <Label Content="Repeat" Width="50" HorizontalContentAlignment="Center"/>
+                                                <TextBox Width="50"
+                                                         HorizontalAlignment="Left"
+                                                         HorizontalContentAlignment="Right"
+                                                         Text="{Binding Source={StaticResource expData}, Mode=TwoWay, XPath=ThorImageExperiment/DigitalIO/@trigRepeat}"
+                                                         validator:Validation.ValidationType="{x:Type system:Int32}"
+                                                         validator:Validation.MinValue="0"
+                                                         validator:Validation.NoEmptyValue="True"
+                                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="2" Orientation="Horizontal">
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel">
+                                                    <Setter Property="Visibility"
+                                                            Value="Visible" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=SelectedIndex,ElementName=cbDigTrigMode}"
+                                                                     Value="0">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
+                                            <StackPanel Orientation="Vertical"
+                                                        ToolTip="initial idle time in milliseconds">
+                                                <Label Content="ini. idle[ms]" HorizontalContentAlignment="Center"/>
+                                                <TextBox Text="{Binding Source={StaticResource expData}, 
+                                                                        Mode=TwoWay, 
+                                                                        XPath=ThorImageExperiment/DigitalIO/@trigStartIdleMS, 
+                                                                        ValidatesOnNotifyDataErrors=True, 
+                                                                        NotifyOnValidationError=True}"
+                                                         validator:Validation.ValidationType="{x:Type system:Double}"
+                                                         validator:Validation.MinValue="0.0"
+                                                         validator:Validation.NoEmptyValue="False"
+                                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                         Width="70"
+                                                         Margin="1"
+                                                         HorizontalContentAlignment="Right"
+                                                         HorizontalAlignment="Center"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Vertical" 
+                                                        ToolTip="idle time per iteration in milliseconds">
+                                                <Label Content="idle[ms]" HorizontalContentAlignment="Center"/>
+                                                <TextBox Text="{Binding Source={StaticResource expData}, 
+                                                                        Mode=TwoWay, 
+                                                                        XPath=ThorImageExperiment/DigitalIO/@trigIdleMS, 
+                                                                        ValidatesOnNotifyDataErrors=True, 
+                                                                        NotifyOnValidationError=True}"
+                                                         validator:Validation.MinValue="0.0"
+                                                         validator:Validation.ValidationType="{x:Type system:Double}"
+                                                         validator:Validation.NoEmptyValue="True"
+                                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                         Width="70"
+                                                         Margin="1"
+                                                         HorizontalContentAlignment="Right"
+                                                         HorizontalAlignment="Center"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Vertical"
+                                                        ToolTip="duration time per iteration in milliseconds">
+                                                <Label Content="duration[ms]" HorizontalContentAlignment="Center"/>
+                                                <TextBox Text="{Binding Source={StaticResource expData}, 
+                                                                        Mode=TwoWay, 
+                                                                        XPath=ThorImageExperiment/DigitalIO/@trigDurationMS, 
+                                                                        ValidatesOnNotifyDataErrors=True, 
+                                                                        NotifyOnValidationError=True}"
+                                                         validator:Validation.MinValue="0.001"
+                                                         validator:Validation.MaxValue="42949672"
+                                                         validator:Validation.ValidationType="{x:Type system:Double}"
+                                                         validator:Validation.NoEmptyValue="True"
+                                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                         Width="75"
+                                                         Margin="1"
+                                                         HorizontalContentAlignment="Right"
+                                                         HorizontalAlignment="Center"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Vertical" 
+                                                        ToolTip="iteration counts, 0: infinite">
+                                                <Label Content="iterations " HorizontalContentAlignment="Center"/>
+                                                <TextBox Text="{Binding Source={StaticResource expData}, 
+                                                                        Mode=TwoWay, 
+                                                                        XPath=ThorImageExperiment/DigitalIO/@trigIterations, 
+                                                                        ValidatesOnNotifyDataErrors=True, 
+                                                                        NotifyOnValidationError=True}"
+                                                         validator:Validation.MinValue="0"
+                                                         validator:Validation.ValidationType="{x:Type system:Int32}"
+                                                         validator:Validation.NoEmptyValue="True"
+                                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                         Width="60"
+                                                         Margin="1"
+                                                         HorizontalContentAlignment="Right"
+                                                         HorizontalAlignment="Center"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </GroupBox>
+                        </Grid>
+                    </StackPanel>
+                </GroupBox>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

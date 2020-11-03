@@ -1,0 +1,541 @@
+﻿<UserControl x:Class="FLIMFitting.View.FLIMFittingView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:FLIMFitting.View"
+             xmlns:Utils="clr-namespace:FLIMFitting.Utils"
+             xmlns:metro="http://metro.mahapps.com/winfx/xaml/controls"
+             xmlns:sciChart="http://schemas.abtsoftware.co.uk/scichart"
+             mc:Ignorable="d"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             Background="#FF333333">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <Utils:ColorToSolidColorBrushValueConverter x:Key="bkColorCvrt" />
+            <Utils:AxisTickProvider x:Key="axisTickProvider" />
+            <BooleanToVisibilityConverter x:Key="visibilityConverter" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="1.8*" />
+            <RowDefinition Height="0.9*" />
+            <RowDefinition Height="auto" />
+        </Grid.RowDefinitions>
+        <sciChart:SciChartSurface Grid.Row="1"
+                                  Padding="0,15,10,15"
+                                  x:Name="sciChartSurface"
+                                  Margin="2"
+                                  RenderableSeries="{Binding SelectedGroup.BinSeries}"
+                                  AutoRangeOnStartup="False">
+            <sciChart:SciChartSurface.XAxis>
+                <sciChart:NumericAxis AxisTitle="Lifetime[ns]"
+                                      Visibility="Collapsed" />
+            </sciChart:SciChartSurface.XAxis>
+            <sciChart:SciChartSurface.YAxis>
+                <sciChart:LogarithmicNumericAxis AxisTitle="Photon Count"
+                                                 VisibleRange="{Binding SelectedGroup.PhotonRange, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 VisibleRangeChanged="LogarithmicNumericAxis_VisibleRangeChanged"
+                                                 AxisAlignment="Left"
+                                                 TextFormatting="#.#E+0"
+                                                 Margin="0"
+                                                 Padding="0"
+                                                 LogarithmicBase="10"
+                                                 DrawMajorBands="False"
+                                                 ScientificNotation="LogarithmicBase">
+                    <sciChart:NumericAxis.GrowBy>
+                        <sciChart:DoubleRange Max="0.1"
+                                              Min="0.1" />
+                    </sciChart:NumericAxis.GrowBy>
+                </sciChart:LogarithmicNumericAxis>
+            </sciChart:SciChartSurface.YAxis>
+        </sciChart:SciChartSurface>
+        <sciChart:SciChartSurface Grid.Row="2"
+                                  Padding="30,15,10,15"
+                                  Margin="2"
+                                  RenderableSeries="{Binding SelectedGroup.ResidualsSeries}"
+                                  AutoRangeOnStartup="False">
+            <sciChart:SciChartSurface.XAxis>
+                <sciChart:NumericAxis AxisTitle="Lifetime[ns]" />
+            </sciChart:SciChartSurface.XAxis>
+            <sciChart:SciChartSurface.YAxis>
+                <sciChart:NumericAxis AxisTitle="Residuals"
+                                      VisibleRange="{Binding SelectedGroup.ResidualsRange, Mode=TwoWay}"
+                                      AxisAlignment="Left"
+                                      TickProvider="{StaticResource axisTickProvider}" />
+            </sciChart:SciChartSurface.YAxis>
+        </sciChart:SciChartSurface>
+        <StackPanel Grid.Row="3">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Stretch"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="2">
+                    <Button Margin="5,4,2,4"
+                            Width="70"
+                            Content="Prefit all"
+                            Command="{Binding PrefitAllCommand}" />
+                    <Button Margin="2,4"
+                            Width="70"
+                            Content="Refit all"
+                            Command="{Binding RefitAllCommand}" />
+                    <Button Margin="2,4"
+                            Width="70"
+                            Content="Prefit group"
+                            Command="{Binding PrefitGroupCommand}" />
+                    <Button Margin="2,4"
+                            Width="70"
+                            Content="Refit group"
+                            Command="{Binding RefitGroupCommand}" />
+                    <Button Margin="2,4"
+                            Width="70"
+                            Content="Refresh all"
+                            Command="{Binding RefreshCommand}" />
+                    <CheckBox Content="Autofit All"
+                              Margin="2,4"
+                              VerticalAlignment="Center"
+                              VerticalContentAlignment="Center"
+                              IsChecked="{Binding AlwaysAutoFit}" />
+                    <Button Margin="2,4,5,4"
+                            Width="75"
+                            Content="Load File"
+                            Command="{Binding LoadFileCommand}"
+                            Visibility="Collapsed" />
+                    <Button Margin="2,4,5,4"
+                            HorizontalAlignment="Right"
+                            Width="75"
+                            Content="Update tZero"
+                            Command="{Binding UpdateTZeroCommand}" />
+                </StackPanel>
+            </Grid>
+            <TabControl ItemsSource="{Binding FlimDataGroups}"
+                        SelectedItem="{Binding SelectedGroup}">
+                <TabControl.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </TabControl.ItemTemplate>
+                <TabControl.ContentTemplate>
+                    <DataTemplate>
+                        <StackPanel Background="#FF333333">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <GroupBox Header="Settings"
+                                          Grid.Row="0"
+                                          Margin="2">
+                                    <StackPanel>
+                                        <StackPanel Margin="0,2"
+                                                    Grid.Column="1"
+                                                    Orientation="Horizontal">
+                                            <RadioButton GroupName="ex"
+                                                         Margin="2"
+                                                         Content="Double exponential (gaussian PRF)"
+                                                         Foreground="White"
+                                                         IsChecked="{Binding IsDE, Mode=TwoWay}" />
+                                            <RadioButton GroupName="ex"
+                                                         Margin="2"
+                                                         Content="Single exponential (gaussian PRF)"
+                                                         Foreground="White" />
+                                        </StackPanel>
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="auto" />
+                                                <RowDefinition Height="auto" />
+                                                <RowDefinition Height="auto" />
+                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="auto" />
+                                                <ColumnDefinition Width="auto" />
+                                                <ColumnDefinition Width="auto" />
+                                                <ColumnDefinition Width="auto" />
+                                                <ColumnDefinition Width="auto" />
+                                                <ColumnDefinition Width="auto" />
+                                                <ColumnDefinition Width="auto" />
+                                                <ColumnDefinition Width="auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Label Grid.Column="1"
+                                                   Margin="2"
+                                                   HorizontalAlignment="Center"
+                                                   Content="amp1" />
+                                            <Label Grid.Column="2"
+                                                   Margin="2"
+                                                   HorizontalAlignment="Center"
+                                                   Content="tau1" />
+                                            <Label Grid.Column="3"
+                                                   Margin="2"
+                                                   HorizontalAlignment="Center"
+                                                   Content="amp2"
+                                                   Visibility="{Binding IsDE,Converter={StaticResource visibilityConverter}}" />
+                                            <Label Grid.Column="4"
+                                                   Margin="2"
+                                                   HorizontalAlignment="Center"
+                                                   Content="tau2"
+                                                   Visibility="{Binding IsDE,Converter={StaticResource visibilityConverter}}" />
+                                            <Label Grid.Column="5"
+                                                   Margin="2"
+                                                   HorizontalAlignment="Center"
+                                                   Content="tZero" />
+                                            <Label Grid.Column="6"
+                                                   Margin="2"
+                                                   HorizontalAlignment="Center"
+                                                   Content="gaussW" />
+                                            <Label Grid.Column="7"
+                                                   Margin="2"
+                                                   HorizontalAlignment="Center"
+                                                   Content="scatter" />
+                                            <Label Grid.Row="1"
+                                                   Margin="2"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   Content="Fixed" />
+                                            <Label Grid.Row="2"
+                                                   Margin="2"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   Content="Shared" />
+                                            <CheckBox Grid.Row="1"
+                                                      Grid.Column="1"
+                                                      Margin="2"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      IsChecked="{Binding FitParam.IsAmp1Fixed, Mode=TwoWay}" />
+                                            <CheckBox Grid.Row="1"
+                                                      Grid.Column="2"
+                                                      Margin="2"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      IsChecked="{Binding FitParam.IsTua1Fixed, Mode=TwoWay}" />
+                                            <CheckBox Grid.Row="1"
+                                                      Grid.Column="3"
+                                                      Margin="2"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      IsChecked="{Binding FitParam.IsAmp2Fixed, Mode=TwoWay}"
+                                                      Visibility="{Binding IsDE,Converter={StaticResource visibilityConverter}}" />
+                                            <CheckBox Grid.Row="1"
+                                                      Grid.Column="4"
+                                                      Margin="2"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      IsChecked="{Binding FitParam.IsTua2Fixed, Mode=TwoWay}"
+                                                      Visibility="{Binding IsDE,Converter={StaticResource visibilityConverter}}" />
+                                            <CheckBox Grid.Row="1"
+                                                      Grid.Column="5"
+                                                      Margin="2"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      IsChecked="{Binding FitParam.IsTZeroFixed, Mode=TwoWay}" />
+                                            <CheckBox Grid.Row="1"
+                                                      Grid.Column="6"
+                                                      Margin="2"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      IsChecked="{Binding FitParam.IsGaussWFixed, Mode=TwoWay}" />
+                                            <CheckBox Grid.Row="1"
+                                                      Grid.Column="7"
+                                                      Margin="2"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      IsChecked="{Binding FitParam.IsScatterFixed, Mode=TwoWay}" />
+                                            <CheckBox Grid.Row="2"
+                                                      Grid.Column="1"
+                                                      Margin="2"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      IsChecked="{Binding FitParam.IsAmp1Shared, Mode=TwoWay}"
+                                                      IsEnabled="{Binding IsMultiData}" />
+                                            <CheckBox Grid.Row="2"
+                                                      Grid.Column="2"
+                                                      Margin="2"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      IsChecked="{Binding FitParam.IsTua1Shared, Mode=TwoWay}"
+                                                      IsEnabled="{Binding IsMultiData}" />
+                                            <CheckBox Grid.Row="2"
+                                                      Grid.Column="3"
+                                                      Margin="2"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      IsChecked="{Binding FitParam.IsAmp2Shared, Mode=TwoWay}"
+                                                      Visibility="{Binding IsDE,Converter={StaticResource visibilityConverter}}"
+                                                      IsEnabled="{Binding IsMultiData}" />
+                                            <CheckBox Grid.Row="2"
+                                                      Grid.Column="4"
+                                                      Margin="2"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      IsChecked="{Binding FitParam.IsTua2Shared, Mode=TwoWay}"
+                                                      Visibility="{Binding IsDE,Converter={StaticResource visibilityConverter}}"
+                                                      IsEnabled="{Binding IsMultiData}" />
+                                            <CheckBox Grid.Row="2"
+                                                      Grid.Column="5"
+                                                      Margin="2"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      IsChecked="{Binding FitParam.IsTZeroShared, Mode=TwoWay}"
+                                                      IsEnabled="{Binding IsMultiData}" />
+                                            <CheckBox Grid.Row="2"
+                                                      Grid.Column="6"
+                                                      Margin="2"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      IsChecked="{Binding FitParam.IsGaussWShared, Mode=TwoWay}"
+                                                      IsEnabled="{Binding IsMultiData}" />
+                                            <CheckBox Grid.Row="2"
+                                                      Grid.Column="7"
+                                                      Margin="2"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      IsChecked="{Binding FitParam.IsScatterShared, Mode=TwoWay}"
+                                                      IsEnabled="{Binding IsMultiData}" />
+                                        </Grid>
+                                    </StackPanel>
+                                </GroupBox>
+                                <FrameworkElement x:Name="dummyElement"
+                                                  Visibility="Collapsed" />
+                                <GroupBox Header="Result"
+                                          Grid.Row="1"
+                                          Margin="2">
+                                    <DataGrid Margin="2"
+                                              ItemsSource="{Binding FlimDataList}"
+                                              AutoGenerateColumns="False"
+                                              CanUserAddRows="False"
+                                              Background="#FF333333"
+                                              Foreground="White"
+                                              EnableRowVirtualization="True"
+                                              RowHeaderWidth="20"
+                                              CanUserResizeColumns="False"
+                                              CanUserResizeRows="False"
+                                              HorizontalScrollBarVisibility="Disabled"
+                                              CanUserSortColumns="False">
+                                        <DataGrid.RowStyle>
+                                            <Style TargetType="DataGridRow">
+                                                <Setter Property="Background"
+                                                        Value="#FF333333" />
+                                            </Style>
+                                        </DataGrid.RowStyle>
+                                        <DataGrid.Resources>
+                                            <Style TargetType="{x:Type DataGridColumnHeader}">
+                                                <Setter Property="Background"
+                                                        Value="#FF333333" />
+                                                <Setter Property="HorizontalAlignment"
+                                                        Value="Center" />
+                                            </Style>
+                                            <Style TargetType="{x:Type DataGridRowHeader}">
+                                                <Setter Property="Background">
+                                                    <Setter.Value>
+                                                        <Binding Path="RenderColor"
+                                                                 Converter="{StaticResource bkColorCvrt}" />
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </DataGrid.Resources>
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="ID"
+                                                                Width="0.5*"
+                                                                Binding="{Binding ID}"
+                                                                IsReadOnly="True">
+                                                <DataGridTextColumn.CellStyle>
+                                                    <Style>
+                                                        <Setter Property="FrameworkElement.HorizontalAlignment"
+                                                                Value="Center" />
+                                                    </Style>
+                                                </DataGridTextColumn.CellStyle>
+                                            </DataGridTextColumn>
+                                            <DataGridTemplateColumn Header="chi2"
+                                                                    Width="*">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Margin="2"
+                                                                   Text="{Binding Path=Chi2,StringFormat=\{0:F2\}}"
+                                                                   VerticalAlignment="Center"
+                                                                   HorizontalAlignment="Center" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                                <DataGridTemplateColumn.CellEditingTemplate>
+                                                    <DataTemplate>
+                                                        <TextBox Text="{Binding Path=Chi2, StringFormat=F2}"
+                                                                 HorizontalAlignment="Right"
+                                                                 BorderThickness="0" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellEditingTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTemplateColumn Header="&lt;tau&gt;8"
+                                                                    Width="*">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Margin="2"
+                                                                   Text="{Binding Path=Tau8,StringFormat=\{0:F3\}}"
+                                                                   VerticalAlignment="Center"
+                                                                   HorizontalAlignment="Center" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                                <DataGridTemplateColumn.CellEditingTemplate>
+                                                    <DataTemplate>
+                                                        <TextBox Text="{Binding Path=Tau8, StringFormat=F3}"
+                                                                 HorizontalAlignment="Right"
+                                                                 BorderThickness="0" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellEditingTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTemplateColumn Header="amp1"
+                                                                    Width="*">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Margin="2"
+                                                                   Text="{Binding Path=Amp1,StringFormat=\{0:F0\}}"
+                                                                   VerticalAlignment="Center"
+                                                                   HorizontalAlignment="Center" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                                <DataGridTemplateColumn.CellEditingTemplate>
+                                                    <DataTemplate>
+                                                        <TextBox Text="{Binding Path=Amp1, StringFormat=F0}"
+                                                                 HorizontalAlignment="Right"
+                                                                 BorderThickness="0" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellEditingTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTemplateColumn Header="tau1"
+                                                                    Width="*">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Margin="2"
+                                                                   Text="{Binding Path=Tau1,StringFormat=\{0:F3\}}"
+                                                                   VerticalAlignment="Center"
+                                                                   HorizontalAlignment="Center" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                                <DataGridTemplateColumn.CellEditingTemplate>
+                                                    <DataTemplate>
+                                                        <TextBox Text="{Binding Path=Tau1, StringFormat=F3}"
+                                                                 HorizontalAlignment="Right"
+                                                                 BorderThickness="0" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellEditingTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTemplateColumn Header="amp2"
+                                                                    Width="*"
+                                                                    Visibility="{Binding DataContext.IsDE,Converter={StaticResource visibilityConverter}, Source={x:Reference dummyElement}}">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Margin="2"
+                                                                   Text="{Binding Path=Amp2,StringFormat=\{0:F0\}}"
+                                                                   VerticalAlignment="Center"
+                                                                   HorizontalAlignment="Center" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                                <DataGridTemplateColumn.CellEditingTemplate>
+                                                    <DataTemplate>
+                                                        <TextBox Text="{Binding Path=Amp2, StringFormat=F0}"
+                                                                 HorizontalAlignment="Right"
+                                                                 BorderThickness="0" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellEditingTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTemplateColumn Header="tau2"
+                                                                    Width="*"
+                                                                    Visibility="{Binding DataContext.IsDE,Converter={StaticResource visibilityConverter},Source={x:Reference dummyElement}}">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Margin="2"
+                                                                   Text="{Binding Path=Tau2,StringFormat=\{0:F3\}}"
+                                                                   VerticalAlignment="Center"
+                                                                   HorizontalAlignment="Center" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                                <DataGridTemplateColumn.CellEditingTemplate>
+                                                    <DataTemplate>
+                                                        <TextBox Text="{Binding Path=Tau2, StringFormat=F3}"
+                                                                 HorizontalAlignment="Right"
+                                                                 BorderThickness="0" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellEditingTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTemplateColumn Header="tZero"
+                                                                    Width="*">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Margin="2"
+                                                                   Text="{Binding Path=TZero,StringFormat=\{0:F3\}}"
+                                                                   VerticalAlignment="Center"
+                                                                   HorizontalAlignment="Center" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                                <DataGridTemplateColumn.CellEditingTemplate>
+                                                    <DataTemplate>
+                                                        <TextBox Text="{Binding Path=TZero, StringFormat=F3}"
+                                                                 HorizontalAlignment="Right"
+                                                                 BorderThickness="0" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellEditingTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTemplateColumn Header="gaussW"
+                                                                    Width="*">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Margin="2"
+                                                                   Text="{Binding Path=GaussW,StringFormat=\{0:F3\}}"
+                                                                   VerticalAlignment="Center"
+                                                                   HorizontalAlignment="Center" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                                <DataGridTemplateColumn.CellEditingTemplate>
+                                                    <DataTemplate>
+                                                        <TextBox Text="{Binding Path=GaussW, StringFormat=F3}"
+                                                                 HorizontalAlignment="Right"
+                                                                 BorderThickness="0" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellEditingTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTemplateColumn Header="scattr"
+                                                                    Width="*">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Margin="2"
+                                                                   Text="{Binding Path=Scattr,StringFormat=\{0:F3\}}"
+                                                                   VerticalAlignment="Center"
+                                                                   HorizontalAlignment="Center" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                                <DataGridTemplateColumn.CellEditingTemplate>
+                                                    <DataTemplate>
+                                                        <TextBox Text="{Binding Path=Scattr, StringFormat=F3}"
+                                                                 HorizontalAlignment="Right"
+                                                                 BorderThickness="0" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellEditingTemplate>
+                                            </DataGridTemplateColumn>
+                                            <DataGridTemplateColumn Header=" Visible ">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <CheckBox Margin="2"
+                                                                  HorizontalAlignment="Center"
+                                                                  IsChecked="{Binding IsSelected,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" />
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </GroupBox>
+                            </Grid>
+                        </StackPanel>
+                    </DataTemplate>
+                </TabControl.ContentTemplate>
+            </TabControl>
+        </StackPanel>
+    </Grid>
+</UserControl>

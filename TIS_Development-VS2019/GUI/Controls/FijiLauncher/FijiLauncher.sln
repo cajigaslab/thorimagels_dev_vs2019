@@ -1,0 +1,59 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FijiLauncher", "FijiLauncher\FijiLauncher.csproj", "{F679CD42-19FA-432A-88A8-E4822AF01CB1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FijiLauncherTester", "FijiLauncherTester\FijiLauncherTester.csproj", "{21D5AE3B-AE9C-43B6-973C-033F3BA5D785}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F679CD42-19FA-432A-88A8-E4822AF01CB1} = {F679CD42-19FA-432A-88A8-E4822AF01CB1}
+		{302D2059-4427-4D1B-90CC-608A6F0CD008} = {302D2059-4427-4D1B-90CC-608A6F0CD008}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FijiLauncherPanel", "FijiLauncherPanel\FijiLauncherPanel.csproj", "{302D2059-4427-4D1B-90CC-608A6F0CD008}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F679CD42-19FA-432A-88A8-E4822AF01CB1} = {F679CD42-19FA-432A-88A8-E4822AF01CB1}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://vateam02:8080/tfs/thorimagels
+		SccProjectUniqueName0 = FijiLauncher\\FijiLauncher.csproj
+		SccProjectName0 = FijiLauncher
+		SccAuxPath0 = http://vateam02:8080/tfs/thorimagels
+		SccLocalPath0 = FijiLauncher
+		SccProvider0 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccProjectUniqueName1 = FijiLauncherTester\\FijiLauncherTester.csproj
+		SccProjectName1 = FijiLauncherTester
+		SccAuxPath1 = http://vateam02:8080/tfs/thorimagels
+		SccLocalPath1 = FijiLauncherTester
+		SccProvider1 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccProjectUniqueName2 = FijiLauncherPanel\\FijiLauncherPanel.csproj
+		SccProjectName2 = FijiLauncherPanel
+		SccAuxPath2 = http://vateam02:8080/tfs/thorimagels
+		SccLocalPath2 = FijiLauncherPanel
+		SccProvider2 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F679CD42-19FA-432A-88A8-E4822AF01CB1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F679CD42-19FA-432A-88A8-E4822AF01CB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F679CD42-19FA-432A-88A8-E4822AF01CB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F679CD42-19FA-432A-88A8-E4822AF01CB1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21D5AE3B-AE9C-43B6-973C-033F3BA5D785}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21D5AE3B-AE9C-43B6-973C-033F3BA5D785}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21D5AE3B-AE9C-43B6-973C-033F3BA5D785}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21D5AE3B-AE9C-43B6-973C-033F3BA5D785}.Release|Any CPU.Build.0 = Release|Any CPU
+		{302D2059-4427-4D1B-90CC-608A6F0CD008}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{302D2059-4427-4D1B-90CC-608A6F0CD008}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{302D2059-4427-4D1B-90CC-608A6F0CD008}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{302D2059-4427-4D1B-90CC-608A6F0CD008}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

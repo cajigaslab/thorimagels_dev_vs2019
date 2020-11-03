@@ -1,0 +1,315 @@
+﻿<UserControl x:Class="RealTimeLineChart.View.ChannelsReviewView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:View="clr-namespace:RealTimeLineChart.View"
+             xmlns:vm="clr-namespace:RealTimeLineChart.ViewModel"
+             xmlns:validator="clr-namespace:RealTimeLineChart.InputValidation"
+             Background="#FF333333"
+             IsEnabled="{Binding Path=IsPanelsEnable, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <validator:DoubleCultureConverter x:Key="doubleCultureConverter" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid HorizontalAlignment="Stretch">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.Resources>
+            <Style x:Key="BorderStyle"
+                   TargetType="Border">
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver"
+                             Value="True">
+                        <Setter Property="Background"
+                                Value="{StaticResource DarkBrush}" />
+                    </Trigger>
+                    <Trigger Property="IsMouseOver"
+                             Value="False">
+                        <Setter Property="Background"
+                                Value="#FF333333" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            <Style x:Key="MyFocusVisualStyle">
+                <Setter Property="Control.Template">
+                    <Setter.Value>
+                        <ControlTemplate>
+                            <Rectangle x:Name="FocusStyle"
+                                       StrokeDashArray="4 4"
+                                       RadiusX="5"
+                                       RadiusY="5"
+                                       Fill="Transparent"
+                                       Stroke="#81d2eb"
+                                       StrokeThickness="1" />
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </Grid.Resources>
+        <StackPanel Orientation="Horizontal"
+                    Grid.Column="0"
+                    HorizontalAlignment="Stretch">
+            <StackPanel Orientation="Horizontal"
+                        VerticalAlignment="Top">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal"
+                                Grid.Row="0">
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Top">
+                            <Button PreviewMouseDown="LoadRecent_PreviewMouseDown"
+                                    Width="65"
+                                    Height="65"
+                                    Margin="1">
+                                <StackPanel>
+                                    <Image Source="/RealTimeLineChart;component/Icons/loadrecent.png"
+                                           Width="30"
+                                           HorizontalAlignment="Center" />
+                                    <TextBlock Text="Load"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="Recent"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="1"
+                                    Margin="1"
+                                    PreviewMouseDown="Load_PreviewMouseDown"
+                                    Width="65"
+                                    Height="65">
+                                <StackPanel>
+                                    <Image Source="/RealTimeLineChart;component/Icons/loadfile.png"
+                                           x:Name="Settings"
+                                           Width="30"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Top" />
+                                    <TextBlock Text="Load"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Bottom" />
+                                    <TextBlock Text="File"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+            <Rectangle VerticalAlignment="Stretch"
+                       Width="2"
+                       Margin="0,2,0,2"
+                       Fill="#FF474747" />
+            <StackPanel Orientation="Horizontal"
+                        VerticalAlignment="Top">
+                <Button Name="CursorBorder"
+                        Width="65"
+                        Height="65"
+                        Margin="1"
+                        Command="{Binding Path=ShowMeasureCursorCommand}">
+                    <StackPanel Width="60"
+                                Height="60">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel"
+                                   BasedOn="{StaticResource {x:Type StackPanel}}">
+                                <Setter Property="Background"
+                                        Value="#FF333333" />
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=IsMouseOver}"
+                                                       Value="True" />
+                                            <Condition Binding="{Binding Path=IsMeasureCursorVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                       Value="False" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Background"
+                                                Value="{StaticResource DarkBrush}" />
+                                    </MultiDataTrigger>
+                                    <DataTrigger Binding="{Binding Path=IsMeasureCursorVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Value="True">
+                                        <Setter Property="Background"
+                                                Value="LimeGreen" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <Image Source="/RealTimeLineChart;component/Icons/cursors.png"
+                               Height="30"
+                               HorizontalAlignment="Center" />
+                        <TextBlock Text="Cursor"
+                                   HorizontalAlignment="Center"
+                                   Foreground="White" />
+                    </StackPanel>
+                </Button>
+                <Button Margin="1"
+                        Width="65"
+                        Height="65"
+                        Command="{Binding Path=MarkerDisplayCommand}">
+                    <StackPanel Width="60"
+                                Height="60">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Background"
+                                        Value="#FF333333" />
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=IsMouseOver}"
+                                                       Value="True" />
+                                            <Condition Binding="{Binding Path=IsVerticalMarkerVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                       Value="False" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Background"
+                                                Value="{StaticResource DarkBrush}" />
+                                    </MultiDataTrigger>
+                                    <DataTrigger Binding="{Binding Path=IsVerticalMarkerVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Value="True">
+                                        <Setter Property="Background"
+                                                Value="LimeGreen" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <Image Source="/RealTimeLineChart;component/Icons/Reticle.png"
+                               Height="30"
+                               HorizontalAlignment="Center" />
+                        <TextBlock Text="Vertical"
+                                   HorizontalAlignment="Center"
+                                   Foreground="White" />
+                        <TextBlock Text="Marker"
+                                   HorizontalAlignment="Center"
+                                   Foreground="White" />
+                    </StackPanel>
+                </Button>
+                <StackPanel Grid.Column="2"
+                            Margin="1"
+                            Width="110">
+                    <StackPanel>
+                        <Button Name="AddMarker"
+                                Command="{Binding Path=MarkerRelayCommand}"
+                                CommandParameter="MARKER_ADD"
+                                HorizontalAlignment="Left">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Stroke="DodgerBlue"
+                                      Fill="DodgerBlue"
+                                      Margin="1"
+                                      Height="16"
+                                      Data="M 2 8 L 16 8 L 16 10 L 2 10 Z M 8 2 L 10 2 L 10 16 L 8 16 Z" />
+                                <TextBlock Text="Add Marker"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button Name="DeleteMarker"
+                                HorizontalAlignment="Left"
+                                Command="{Binding Path=MarkerRelayCommand}"
+                                CommandParameter="MARKER_DELETE">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Stroke="Red"
+                                      Fill="Red"
+                                      Margin="1"
+                                      Height="16"
+                                      Data="M 2 8 L 16 8 L 16 10 L 2 10 Z" />
+                                <TextBlock VerticalAlignment="Center"
+                                           Text="Delete Marker" />
+                            </StackPanel>
+                        </Button>
+                        <Button Name="DeleteAllMarkers"
+                                Command="{Binding Path=MarkerRelayCommand}"
+                                CommandParameter="MARKER_DELETEALL"
+                                HorizontalAlignment="Left">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Stroke="Red"
+                                      Fill="Red"
+                                      Margin="1"
+                                      Data="M 2 4 L 4 2 L 16 14 L 14 16 Z M 4 16 L 2 14 L 14 2 L 16 4 Z" />
+                                <TextBlock VerticalAlignment="Center"
+                                           Text="Delete All" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+            <Rectangle VerticalAlignment="Stretch"
+                       Width="2"
+                       Margin="0,2,0,2"
+                       Fill="#FF474747" />
+            <StackPanel Orientation="Horizontal"
+                        VerticalAlignment="Top">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal"
+                                Grid.Row="0">
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Top">
+                            <Button Grid.Column="0"
+                                    Margin="1"
+                                    Width="65"
+                                    Height="65"
+                                    Command="{Binding Path=IsRollOverEnabledCommand}"
+                                    VerticalAlignment="Top">
+                                <StackPanel Width="60"
+                                            Height="60">
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Background"
+                                                    Value="#FF333333" />
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=IsMouseOver}"
+                                                                   Value="True" />
+                                                        <Condition Binding="{Binding Path=IsRollOverEnabled}"
+                                                                   Value="False" />
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Background"
+                                                            Value="{StaticResource DarkBrush}" />
+                                                </MultiDataTrigger>
+                                                <DataTrigger Binding="{Binding Path=IsRollOverEnabled}"
+                                                             Value="True">
+                                                    <Setter Property="Background"
+                                                            Value="LimeGreen" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+                                    <Image Source="/RealTimeLineChart;component/Icons/InfoBox.png"
+                                           Width="30" />
+                                    <TextBlock Text="RollOver"
+                                               HorizontalAlignment="Center"
+                                               Foreground="White" />
+                                </StackPanel>
+                            </Button>
+                            <Button Width="65"
+                                    Height="65"
+                                    Margin="1"
+                                    PreviewMouseDown="PrintScreen_PreviewMouseDown">
+                                <StackPanel>
+                                    <Image Source="/RealTimeLineChart;component/Icons/camera2.png"
+                                           Width="30"
+                                           HorizontalAlignment="Center" />
+                                    <TextBlock Text="Print"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="Screen"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+            <Rectangle VerticalAlignment="Stretch"
+                       Width="2"
+                       Margin="0,2,0,2"
+                       Fill="#FF474747" />
+            <View:VisibilityChoiceView />
+            <Rectangle VerticalAlignment="Stretch"
+                       Width="2"
+                       Margin="0,2,0,2"
+                       Fill="#FF474747" />
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -1,0 +1,69 @@
+#pragma once
+
+
+#if defined(HOLOGEN_EXPORTS)
+#define DllExport_HOLOGEN __declspec(dllexport)
+#else
+//    definitions used when using DLL
+#define DllExport_HOLOGEN __declspec(dllimport)
+#endif
+
+#pragma warning( push )
+#pragma warning( disable : 4251 )
+
+class DllExport_HOLOGEN HologramGen
+{
+private:
+	static bool instanceFlag;									///singleton created flag
+	static std::auto_ptr<HologramGen> single;					///pointer to internal object
+
+	int	_mtrxWidth; 
+	int _mtrxHeight; 
+	int _mtrxLength;
+	int _holoGenMethod;
+	std::wstring _pathAndFilename;
+	double* _coeffs;
+	long _fittingMethod;
+
+public:
+	static HologramGen* getInstance();
+
+	~HologramGen(){ ClearMem(); instanceFlag = false; }
+
+	long FittingTransform(float* pImgDst);
+	long CalculateCoeffs(const float* pSrcPoints, const float* pTgtPoints, long size, long fittingAlg, double* coeffs);
+	double* CalculateZernikeCoeffs(double n,double k,double z, double alpha);
+	double* CalculateZernikePoly(double u, double v);
+	long NormalizePhase(float* img);
+	long Set3DParam(double na, double wavelength);
+	long SetSize(int width, int height);
+	long SetAlgorithm(int algorithmID);
+	long SetPathandFilename(const wchar_t * pathAndFilename);
+	long SetCoeffs(long algorithm, double* affCoeffs);
+	long VerticalFlip(float* pImgDst);
+	long RotateForAngle(float* pImgDst, double angle);
+	long ScaleByFactor(float* pImgDst, double scaleX, double scaleY);
+	long OffsetByPixels(float* pImgDst, long offsetX, long offsetY);
+	long GenerateHologram(float* pImg, int iteCount, float z);
+
+private:
+	HologramGen();
+	long AffineTransform(float* pImgDst);
+	long ProjectTransform(float* pImgDst);
+	long CalculateAffineCoeffs(const float* pSrcPoints, const float* pTgtPoints, long size, double* affCoeffs);
+	long CalculateProjectCoeffs(const float* pSrcPoints, const float* pTgtPoints, long size, double* projCoeffs);
+	void FFT(float* pPolMagnDst, float* pPolPhaseDst, bool forward);
+	void FilterGauss(float* pImgDst, int kernelSize, double diaRatio);
+	void GetImageIntensity(float* pImg, float* pDst);
+	void LoadPhaseImage(float* pImg, float* pDst);
+	long QuadrantShift(float* pImgDst);
+	void ClearMem();
+	void LogMessage(long eventLevel);
+	long PhaseGenByGS(float* pImgIn,float* pPhaseDst,int iterateCount);
+	long PhaseGenBy3DGS(float* pImg, float* pPolPhase, int iterateCount, double z);
+	long WeightByDistance(float* pImgDst);
+	long SinglePassFilter(float* pImgDst);
+
+};
+
+#pragma warning( push )

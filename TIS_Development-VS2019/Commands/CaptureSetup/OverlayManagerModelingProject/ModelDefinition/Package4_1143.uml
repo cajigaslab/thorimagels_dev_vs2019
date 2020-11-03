@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns:dm0="http://schemas.microsoft.com/VisualStudio/2008/DslTools/Core" xmlns:dm1="http://schemas.microsoft.com/dsltools/Kernel" xmlns:dm2="http://schemas.microsoft.com/dsltools/Component" xmlns:dm3="http://schemas.microsoft.com/dsltools/UseCase" xmlns:dm4="http://schemas.microsoft.com/dsltools/Activity" xmlns:dm5="http://schemas.microsoft.com/dsltools/Interaction" xmlns:dm6="http://schemas.microsoft.com/dsltools/UmlModelLibrary" xmlns:dm7="http://schemas.microsoft.com/dsltools/UmlDiagrams" xmlns:dm8="http://schemas.microsoft.com/dsltools/LogicalClassDesigner"
+  dslVersion="1.0.0.0"
+  Id="dde88e5b-6170-4c51-993f-9b9bc7fbb2b9"
+  name="Regions"
+  visibility="Private" xmlns="http://schemas.microsoft.com/dsltools/ModelStore">
+  <referencesInternal>
+    <reference
+      Id="59bf2614-5913-4d1c-b496-44170cfdddce"
+      handle="viewcode://./CodeSchema_Namespace?Namespace%3DMicrosoft.Practices.Composite.Regions"
+      tag="ViewCode" />
+  </referencesInternal>
+  <packagedElements>
+    <packageHasNamedElement>
+      <Interface
+        Id="58446c41-70e1-4d25-bcba-d119266c83d3"
+        name="IRegionManager"
+        isAbstract="false"
+        isLeaf="false">
+        <referencesInternal>
+          <reference
+            Id="6eae6d6e-5b13-42cf-a9a6-fd51446e9fd8"
+            handle="viewcode://./CodeSchema_Interface?Assembly%3D&quot;file:%2F%2F%2FD:%2FTIS%2FThorImage%2FTIS_Development%2FGUI%2FComposite Application%2FSource%2FCAL%2FComposite.UnityExtensions%2Fbin%2FDebug%2FMicrosoft.Practices.Composite.dll&quot; Namespace%3DMicrosoft.Practices.Composite.Regions Type%3DIRegionManager"
+            tag="ViewCode" />
+        </referencesInternal>
+        <appliedStereotypesInternal>
+          <stereotypeInstance
+            Id="4955fe60-74f6-4405-97fc-ca064200950f"
+            name="interface"
+            profile="CSharpProfile">
+            <propertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="4f14738c-bc88-44d7-a147-14fcb4732c37">
+                <propertyInstance
+                  Id="e5ab042f-c1f9-434c-85a9-30e36ba0d194"
+                  name="ClrAttributes" />
+              </stereotypeInstanceHasPropertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="dc3aecab-5ef1-41c7-85f7-df36c0455841">
+                <propertyInstance
+                  Id="23cdaf9f-b7b1-4b15-b46e-2e17c3640087"
+                  name="IsPartial"
+                  value="false" />
+              </stereotypeInstanceHasPropertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="0bc97e82-1fb8-4d18-808f-76f145ab1f37">
+                <propertyInstance
+                  Id="4006b064-80b1-45a3-b0c0-e26168645dee"
+                  name="IsUnsafe"
+                  value="false" />
+              </stereotypeInstanceHasPropertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="de61e1eb-02f6-4d97-ba97-dcdea4dc5acb">
+                <propertyInstance
+                  Id="b0cdfc35-2956-49ff-8545-00d5eff66159"
+                  name="PackageVisibility"
+                  value="internal" />
+              </stereotypeInstanceHasPropertyInstances>
+            </propertyInstances>
+          </stereotypeInstance>
+        </appliedStereotypesInternal>
+      </Interface>
+    </packageHasNamedElement>
+  </packagedElements>
+</package>

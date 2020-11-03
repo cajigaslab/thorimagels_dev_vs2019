@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ThorBeamStabilizerSettings>
+
+  <PiezoActuatorsConnection portID="47" baudRate="115200"/>
+
+  <PiezoActuatorPositions piezo1="0" piezo2="0" piezo3="0" piezo4="0"/>
+
+  <BeamProfilerA serialNumber="NA"/>
+
+  <BeamProfilerB serialNumber="NA"/>
+  
+  <ControlSettings piezo1Orientation="1" piezo2Orientation="1" piezo3Orientation="1" piezo4Orientation="1" deadband="100" p1Term="20" p2Term="0.3" maxExposureTime="100" minExposureTime="1" clipLevel="0.3" alignTimeOutSec="20"/>
+
+  <FactoryPiezoActuatorPositions piezo1="0" piezo2="0" piezo3="0" piezo4="0" piezoStepLimit="20000"/>
+  
+</ThorBeamStabilizerSettings>

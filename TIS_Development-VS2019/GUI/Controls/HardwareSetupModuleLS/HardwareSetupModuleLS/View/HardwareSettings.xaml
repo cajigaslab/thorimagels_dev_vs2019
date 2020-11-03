@@ -1,0 +1,48 @@
+﻿<Window x:Class="HardwareSetupDll.View.HardwareSettings"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:xmlView="clr-namespace:XMLViewer;assembly=XMLViewer"
+        Title="Hardware Settings"
+        Height="768"
+        Width="800"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="NoResize"
+        Loaded="HardwareSettings_Loaded"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid Background="#FF333333">
+        <StackPanel>
+            <Border Margin="1">
+                <xmlView:Viewer Name="xmlViewer"
+                                ExpandAllAttributes="True"
+                                Height="665"
+                                Margin="1" />
+            </Border>
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right">
+                <Button Name="btnUpdate"
+                        Content="Update"
+                        Margin="1"
+                        Width="80"
+                        Height="35"
+                        Click="btnUpdate_Click"
+                        HorizontalAlignment="Right" />
+                <Button Name="btnClose"
+                        Content="Close"
+                        Click="btnClose_Click"
+                        Margin="1"
+                        Width="80"
+                        Height="35"
+                        HorizontalAlignment="Right" />
+            </StackPanel>
+
+        </StackPanel>
+    </Grid>
+</Window>
+

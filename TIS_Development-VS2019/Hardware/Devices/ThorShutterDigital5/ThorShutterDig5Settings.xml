@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ThorShutterDig5Settings>
+  <IO shutterLine="" shutterDelayMS="100">
+  </IO>
+  <!--
+  <IO shutterLine="/Dev1/PFI2" shutterDelayMS="100"></IO>
+  -->
+</ThorShutterDig5Settings>

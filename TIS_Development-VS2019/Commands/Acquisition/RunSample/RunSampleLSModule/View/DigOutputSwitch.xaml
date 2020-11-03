@@ -1,0 +1,67 @@
+﻿<UserControl x:Class="RunSampleLSModule.View.DigOutputSwitchControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:ds="clr-namespace:DigitalOutputSwitches;assembly=DigitalOutputSwitches"
+             mc:Ignorable="d"
+             Height="Auto"
+             Width="Auto">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel>
+            <ds:DigitalOutputSwitchesControl Name="dsControl"
+                                       Width="Auto"
+                                             SwitchState0="{Binding Path=SwitchState[0].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             SwitchState1="{Binding Path=SwitchState[1].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             SwitchState2="{Binding Path=SwitchState[2].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             SwitchState3="{Binding Path=SwitchState[3].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             SwitchState4="{Binding Path=SwitchState[4].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             SwitchState5="{Binding Path=SwitchState[5].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             SwitchState6="{Binding Path=SwitchState[6].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             SwitchState7="{Binding Path=SwitchState[7].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             Switch0Command="{Binding Path=DigitalSwitchCommand}"
+                                             Switch1Command="{Binding Path=DigitalSwitchCommand}"
+                                             Switch2Command="{Binding Path=DigitalSwitchCommand}"
+                                             Switch3Command="{Binding Path=DigitalSwitchCommand}"
+                                             Switch4Command="{Binding Path=DigitalSwitchCommand}"
+                                             Switch5Command="{Binding Path=DigitalSwitchCommand}"
+                                             Switch6Command="{Binding Path=DigitalSwitchCommand}"
+                                             Switch7Command="{Binding Path=DigitalSwitchCommand}"
+                                             SwitchName0="{Binding Path=SwitchName[0].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             SwitchName1="{Binding Path=SwitchName[1].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             SwitchName2="{Binding Path=SwitchName[2].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             SwitchName3="{Binding Path=SwitchName[3].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             SwitchName4="{Binding Path=SwitchName[4].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             SwitchName5="{Binding Path=SwitchName[5].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             SwitchName6="{Binding Path=SwitchName[6].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             SwitchName7="{Binding Path=SwitchName[7].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             SwitchEnable="{Binding Path=SwitchEnable,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" 
+                                             TriggerEnableCommand="{Binding Path=TriggerEnableCommand}"
+                                             TriggerImagePath="{Binding Path=TriggerImagePath,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                             TriggerModeItems="{Binding Path=TriggerModeItems,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                             TriggerLabel="{Binding Path=TriggerLabel,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                             TriggerIsVisible="{Binding Path=TriggerIsVisible,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                             SwitchesIsVisible="{Binding Path=SwitchesIsVisible,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                             ExperimentMode="{Binding Path=ExperimentMode,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                             TriggerEnable="{Binding Path=TriggerEnable,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             TriggerMode="{Binding Path=TriggerMode,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             TriggerStartEdge="{Binding Path=TriggerStartEdge,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             TriggerEdgeString="{Binding Path=TriggerEdgeString,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             TriggerRepeat="{Binding Path=TriggerRepeat,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             TriggerStartIdleMS="{Binding Path=TriggerStartIdleMS,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             TriggerDurationMS="{Binding Path=TriggerDurationMS,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             TriggerIdleMS="{Binding Path=TriggerIdleMS,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             TriggerIterations="{Binding Path=TriggerIterations,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             TriggerError="{Binding Path=TriggerError,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             TriggerErrorColor="{Binding Path=TriggerErrorColor,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                             />
+        </StackPanel>
+    </Grid>
+</UserControl>

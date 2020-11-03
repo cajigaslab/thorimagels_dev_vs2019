@@ -1,0 +1,1243 @@
+﻿<UserControl x:Class="XYTileControl.XYTileDisplay"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:XYTileControl.Converter"
+             xmlns:customModifiers="clr-namespace:XYTileControl.CustomModifiers"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:s="http://schemas.abtsoftware.co.uk/scichart"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:validator="clr-namespace:Validations;assembly=Validations"
+             xmlns:theme="clr-namespace:ThemeControl;assembly=ThemeControl"
+             xmlns:ThorSharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"             
+             x:Name="Control"
+             Width="390"
+             Height="Auto"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ThorSharedTypes:DoubleScaledMultiConverter x:Key="doubleScaledMultiConverter" />
+            <x:StaticExtension Member="ThorSharedTypes:ResourceManagerCS.Instance" x:Key="ResourceManagerCS"/>
+            <LinearGradientBrush x:Key="DarkBrush"
+                                 StartPoint="0,0"
+                                 EndPoint="0,1">
+                <GradientBrush.GradientStops>
+                    <GradientStopCollection>
+                        <GradientStop Offset="0.0"
+                                      Color="#FFF" />
+                        <GradientStop Offset="1.0"
+                                      Color="#AAA" />
+                    </GradientStopCollection>
+                </GradientBrush.GradientStops>
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="ButtonNormalBackground"
+                                 StartPoint="0.5,0"
+                                 EndPoint="0.5,1">
+                <GradientStop Offset="0.014"
+                              Color="#FF424242" />
+                <GradientStop Offset="1"
+                              Color="#FF535353" />
+            </LinearGradientBrush>
+            <Style x:Key="AnnotationBaseStyle"
+                   TargetType="s:AnnotationBase" />
+            <Style x:Key="AnnotationEllipse"
+                   BasedOn="{StaticResource AnnotationBaseStyle}"
+                   TargetType="s:BoxAnnotation">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="s:BoxAnnotation">
+                            <Border x:Name="PART_BoxAnnotationRoot"
+                                    Margin="{TemplateBinding Margin}">
+                                <!--  Any UI can go here!  -->
+                                <Ellipse Width="{Binding ActualWidth,
+                                                         RelativeSource={RelativeSource FindAncestor,
+                                                                                        AncestorType=Border}}"
+                                         Height="{Binding ActualHeight,
+                                                          RelativeSource={RelativeSource FindAncestor,
+                                                                                         AncestorType=Border}}"
+                                         Fill="{TemplateBinding Background}"
+                                         Stroke="{TemplateBinding BorderBrush}"
+                                         StrokeThickness="1" />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="BorderStyle"
+                   TargetType="Border">
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver"
+                             Value="True">
+                        <Setter Property="Background"
+                                Value="{StaticResource DarkBrush}" />
+                    </Trigger>
+                    <Trigger Property="IsMouseOver"
+                             Value="False">
+                        <Setter Property="Background"
+                                Value="{StaticResource ButtonNormalBackground}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            <Style x:Key="BorderStyleSelected"
+                   TargetType="Border">
+                <Setter Property="Background"
+                        Value="ForestGreen" />
+            </Style>
+            <ContextMenu x:Key="TileContextMenu"
+                         Opened="TileContextMenu_Opened">
+                <MenuItem Name="GoToTilePosition"
+                          Click="TileContextMenu_GoToTilePosition_Click"
+                          Header="Go to Single Tile Position" />
+                <Separator />
+                <MenuItem Name="DeleteTiles"
+                          Click="TileContextMenu_DeleteTiles_Click"
+                          Header="Delete Tiled Area" />
+                <MenuItem Name="DuplicateTiles"
+                          Click="TileContextMenu_DuplicateTiles_Click"
+                          Header="Duplicate Tiled Area" />
+                <MenuItem Name="CopyTilesTo"
+                          Header="Copy Tiled Area to">
+                    <MenuItem Name="CopyTilesToSelectedWell"
+                              Click="CopyTilesToSelectedWell_Click"
+                              Header="Selected Wells" />
+                    <MenuItem Name="CopyTilesToAllWell"
+                              Click="CopyTilesToAllWell_Click"
+                              Header="All Wells" />
+                </MenuItem>
+                <Separator />
+                <MenuItem Name="MoveToCenter"
+                          Click="TileContextMenu_MoveToCenter_Click"
+                          Header="Move To Center" />
+                <MenuItem Name="MoveAsScanAreaCenter"
+                          Click="TileContextMenu_MoveAsScanAreaCenterClick"
+                          Header="Center Tiled Area " />
+            </ContextMenu>
+            <ContextMenu x:Key="WellContextMenu"
+                         Opened="ContextMenu_Opened">
+                <MenuItem Name="ContextMenu_GoToLocation"
+                          Click="ContainerMenu_GoToLocation_Click"
+                          Header="Move Here" />
+                <MenuItem Name="ContextrMenu_GoToHomeLocation"
+                          Click="ContainerMenu_GoToHomeLocation_Click"
+                          Header="Go to Home Location" />
+                <MenuItem Name="ContextMenu_MyLocation"
+                          Click="ContainerMenu_MyLocation_Click"
+                          Header="My Location" />
+                <Separator />
+                <MenuItem Name="ContextMenu_SelectWell"
+                          Click="WellContextMenu_SelectWell_Click"
+                          Header="Select" />
+                <MenuItem Name="ContextMenu_DeselectWell"
+                          Click="WellContextMenu_DeselectWell_Click"
+                          Header="Deselect" />
+                <MenuItem Name="ContextMenu_DeselectAll"
+                          Click="WellContextMenu_DeselectAll_Click"
+                          Header="Deselect All" />
+                <Separator />
+                <MenuItem Name="ContextMenu_GoToCenter"
+                          Click="WellContextMenu_GoToCenter_Click"
+                          Header="Go To Center" />
+            </ContextMenu>
+            <ContextMenu x:Key="ContainerContextMenu"
+                         Opened="ContextMenu_Opened">
+                <MenuItem Name="ContainerMenu_GoToLocation"
+                          Click="ContainerMenu_GoToLocation_Click"
+                          Header="Move Here" />
+                <MenuItem Name="ContainerMenu_GoToHomeLocation"
+                          Click="ContainerMenu_GoToHomeLocation_Click"
+                          Header="Go to Home Location" />
+                <Separator />
+                <MenuItem Name="ContainerMenu_MyLocation"
+                          Click="ContainerMenu_MyLocation_Click"
+                          Header="My Location" />
+            </ContextMenu>
+            <Storyboard x:Key="flashingAnimation">
+                <DoubleAnimation AutoReverse="True"
+                                 Duration="0:0:0.5"
+                                 From="1"
+                                 RepeatBehavior="Forever"
+                                 Storyboard.TargetProperty="Opacity"
+                                 To="0.5" />
+            </Storyboard>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.Resources>
+            <c:BooleanToVisibilityConverter x:Key="boolToVis" />
+            <c:InvertableBooleanToVisibilityConverter x:Key="invertableBoolToVis" />
+            <c:StringToDoubleConverter x:Key="stringToDouble" />
+        </Grid.Resources>
+        <StackPanel>
+            <StackPanel.LayoutTransform>
+                <ScaleTransform ScaleX="{Binding Path=XYPanelScale}"
+                                ScaleY="{Binding Path=XYPanelScale}"/>
+            </StackPanel.LayoutTransform>
+            <StackPanel Name="ControlPanel"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Visibility="{Binding ElementName=Control,
+                                             Path=IsControlPanelVisible,
+                                             UpdateSourceTrigger=PropertyChanged}">
+                <StackPanel.LayoutTransform>
+                    <ScaleTransform ScaleX="{Binding Path=XYControlPanelScale}"
+                                    ScaleY="{Binding Path=XYControlPanelScale}"/>
+                </StackPanel.LayoutTransform>
+                <Button Name="Overview"
+                        Width="86"
+                        Height="28"
+                        BorderBrush="Transparent"
+                        BorderThickness="0"
+                        Focusable="False"
+                        PreviewMouseDown="ControlPanel_Overview_PreviewMouseDown"
+                        ToolTip="Carrier Overview">
+                    <Image Width="25"
+                           Height="25"
+                           Source="/XYTileControl;component/Icon/home.png" />
+                </Button>
+                <Button Name="ScanAreaView"
+                        Width="86"
+                        Height="28"
+                        Focusable="False"
+                        PreviewMouseDown="ControlPanel_ScanAreaView_PreviewMouseDown"
+                        ToolTip="Show Scan Area Position">
+                    <Image Width="25"
+                           Height="25"
+                           Source="/XYTileControl;component/Icon/FastFocus.png" />
+                </Button>
+                <ToggleButton Name="TileEnabled"
+                              Width="86"
+                              Height="28"
+                              PreviewMouseLeftButtonDown="ControlPanel_TileEnabled_PreviewMouseDown"
+                              ToolTip="Draw Tiles">
+                    <Image Width="25"
+                           Height="25"
+                           Source="/XYTileControl;component/Icon/Tile.png" />
+                </ToggleButton>
+                <ToggleButton Name="SelectionEnabled"
+                              Width="86"
+                              Height="28"
+                              PreviewMouseDown="ControlPanel_SelectionEnabled_PreviewMouseDown"
+                              ToolTip="Select Wells">
+                    <Image Width="25"
+                           Height="25"
+                           Source="/XYTileControl;component/Icon/mover.png" />
+                </ToggleButton>
+            </StackPanel>
+            <StackPanel Width="360">
+                <Label Content="{Binding Path=ScanAreaWidth, Mode=OneWay}"
+                       Visibility="Collapsed" />
+                <Label Content="{Binding Path=ScanAreaHeight, Mode=OneWay}"
+                       Visibility="Collapsed" />
+                <s:SciChartSurface x:Name="sciChart"
+                                   Width="350"
+                                   Height="350"
+                                   Padding="5,5,5,0"
+                                   RenderPriority="Low">
+                    <s:SciChartSurface.Style>
+                        <Style TargetType="s:SciChartSurface">
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding ElementName=sciChart, Path=IsMouseOver}"
+                                                   Value="True" />
+                                        <Condition Binding="{Binding ElementName=TileEnabled, Path=IsChecked}"
+                                                   Value="True" />
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="FocusManager.FocusedElement"
+                                            Value="{Binding RelativeSource={RelativeSource Self}}" />
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </s:SciChartSurface.Style>
+                    <s:SciChartSurface.XAxis>
+                        <s:NumericAxis AxisAlignment="Bottom">
+                            <s:NumericAxis.GrowBy>
+                                <s:DoubleRange Max="0.1"
+                                               Min="0.10" />
+                            </s:NumericAxis.GrowBy>
+                        </s:NumericAxis>
+                    </s:SciChartSurface.XAxis>
+                    <s:SciChartSurface.YAxis>
+                        <s:NumericAxis AxisAlignment="Left"
+                                       VisibleRangeLimit="{Binding DataRange, Mode=OneWay, RelativeSource={RelativeSource Self}}">
+                            <s:NumericAxis.GrowBy>
+                                <s:DoubleRange Max="0.1"
+                                               Min="0.10" />
+                            </s:NumericAxis.GrowBy>
+                        </s:NumericAxis>
+                    </s:SciChartSurface.YAxis>
+                    <s:SciChartSurface.RenderableSeries>
+                        <s:FastLineRenderableSeries IsDigitalLine="True"
+                                                    SeriesColor="Transparent"
+                                                    StrokeThickness="1" />
+                        <s:FastLineRenderableSeries IsDigitalLine="True"
+                                                    SeriesColor="Transparent"
+                                                    StrokeThickness="1" />
+                    </s:SciChartSurface.RenderableSeries>
+                    <s:SciChartSurface.RenderSurface>
+                        <s:HighSpeedRenderSurface />
+                    </s:SciChartSurface.RenderSurface>
+                    <s:SciChartSurface.ChartModifier>
+                        <s:ModifierGroup>
+                            <customModifiers:ChartDragSelectModifier x:Name="SelectModifier"
+                                                                     TileOverlapX="{Binding ElementName=Control, Path=DefaultOverlapX, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                     TileOverlapY="{Binding ElementName=Control, Path=DefaultOverlapY, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                     IsEnabled="{Binding ElementName=Control,
+                                                                                         Path=IsChartDragSelectModifierEnabled,
+                                                                                         Mode=OneWay,
+                                                                                         UpdateSourceTrigger=PropertyChanged}"
+                                                                     ReceiveHandledEvents="True" />
+                            <customModifiers:TileResizeModifier x:Name="TileModifier"
+                                                                ReceiveHandledEvents="True" />
+                            <s:CursorModifier IsEnabled="True"
+                                              ReceiveHandledEvents="True" />
+                            <s:MouseWheelZoomModifier x:Name="MouseWheelZoomModifier" />
+                            <s:PinchZoomModifier x:Name="PinchZoomModifier" 
+                                                 XyDirection="XYDirection"
+                                                 IsUniform="True"
+                                                 GrowFactor="0.018"
+                                                 ReceiveHandledEvents="True"/>
+                            <s:ZoomPanModifier x:Name="ZoomPanModifier"
+                                               ExecuteOn="MouseLeftButton"
+                                               ReceiveHandledEvents="True" />
+                        </s:ModifierGroup>
+                    </s:SciChartSurface.ChartModifier>
+                </s:SciChartSurface>
+                <CheckBox Name="ShowGrid"
+                          Width="75"
+                          Height="16"
+                          Margin="260,-675,0,0"
+                          Click="ShowGrid_Click"
+                          IsChecked="{Binding  ElementName=Control,
+                                               Path=DisplayTileGrid,
+                                               UpdateSourceTrigger=PropertyChanged}"
+                          Content="Show Grid"
+                          ToolTip="Show the Grid of Tiles"
+                          Visibility="{Binding ElementName=Control,
+                                               Path=IsControlPanelVisible,
+                                               UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel HorizontalAlignment="Center">
+                <StackPanel Visibility="{Binding ElementName=Control, Path=IsControlPanelVisible, UpdateSourceTrigger=PropertyChanged}">
+                    <Border>
+                        <Expander x:Name="XYPositionExpander"
+                                  Margin="1"
+                                  Foreground="White">
+                            <Expander.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Width="80"
+                                               VerticalAlignment="Center"
+                                               Text="Position:" />
+                                    <StackPanel Orientation="Horizontal"
+                                                Visibility="{Binding Path=IsExpanded, ElementName=XYPositionExpander, Converter={StaticResource ResourceKey=invertableBoolToVis}, ConverterParameter=Inverted}">
+                                        <TextBlock Width="20"
+                                                   VerticalAlignment="Center"
+                                                   Text=" X:" />
+                                        <Border Width="55">
+                                            <Border.Style>
+                                                <Style TargetType="{x:Type Border}">
+                                                    <Setter Property="Background"
+                                                            Value="Transparent" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ElementName=Control, Path=ScanAreaXPosOutOfBounds, UpdateSourceTrigger=PropertyChanged}"
+                                                                     Value="True">
+                                                            <Setter Property="Background"
+                                                                    Value="Red" />
+                                                            <DataTrigger.EnterActions>
+                                                                <BeginStoryboard Name="flashing"
+                                                                                 Storyboard="{StaticResource flashingAnimation}" />
+                                                            </DataTrigger.EnterActions>
+                                                            <DataTrigger.ExitActions>
+                                                                <BeginStoryboard>
+                                                                    <Storyboard FillBehavior="Stop">
+                                                                        <DoubleAnimation Duration="0:0:1"
+                                                                                         Storyboard.TargetProperty="Opacity"
+                                                                                         To="1" />
+                                                                    </Storyboard>
+                                                                </BeginStoryboard>
+                                                            </DataTrigger.ExitActions>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Height="20"
+                                                       Margin="0,4,0,0"
+                                                       VerticalAlignment="Center">
+                                                <TextBlock.Text>
+                                                    <MultiBinding Converter="{StaticResource doubleScaledMultiConverter}">
+                                                        <Binding ElementName="Control" Path="ScanAreaXPosition" StringFormat="N4" Mode="TwoWay"/>
+                                                        <Binding Path="ConvertRatio" Mode="OneWay"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </Border>
+                                        <Label Content="{Binding LabelUnit}"/>
+                                        <TextBlock Width="20"
+                                                   VerticalAlignment="Center"
+                                                   Text="Y:" 
+                                                   Margin="10,0,0,0"/>
+                                        <Border Width="55">
+                                            <Border.Style>
+                                                <Style TargetType="{x:Type Border}">
+                                                    <Setter Property="Background"
+                                                            Value="Transparent" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ElementName=Control, Path=ScanAreaYPosOutOfBounds, UpdateSourceTrigger=PropertyChanged}"
+                                                                     Value="True">
+                                                            <Setter Property="Background"
+                                                                    Value="Red" />
+                                                            <DataTrigger.EnterActions>
+                                                                <BeginStoryboard Name="flashing"
+                                                                                 Storyboard="{StaticResource flashingAnimation}" />
+                                                            </DataTrigger.EnterActions>
+                                                            <DataTrigger.ExitActions>
+                                                                <BeginStoryboard>
+                                                                    <Storyboard FillBehavior="Stop">
+                                                                        <DoubleAnimation Duration="0:0:1"
+                                                                                         Storyboard.TargetProperty="Opacity"
+                                                                                         To="1" />
+                                                                    </Storyboard>
+                                                                </BeginStoryboard>
+                                                            </DataTrigger.ExitActions>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Height="20"
+                                                       Margin="0,4,0,0"
+                                                       VerticalAlignment="Center">
+                                                <TextBlock.Text>
+                                                    <MultiBinding Converter="{StaticResource doubleScaledMultiConverter}">
+                                                        <Binding ElementName="Control" Path="ScanAreaYPosition" StringFormat="N4" Mode="TwoWay"/>
+                                                        <Binding Path="ConvertRatio" Mode="OneWay"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </Border>
+                                        <Label Content="{Binding LabelUnit}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Expander.Header>
+                            <StackPanel Margin="0,0,0,0"
+                                        Orientation="Horizontal">
+                                <StackPanel Margin="3,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <StackPanel Width="147"
+                                                    VerticalAlignment="Center"
+                                                    Orientation="Horizontal">
+                                            <Label Width="20"
+                                                   Content="X:" />
+                                            <TextBox Name="CurrentXPosition"
+                                                     Width="66"
+                                                     Height="32"
+                                                     VerticalAlignment="Top"
+                                                     ToolTip="Current X Position"
+                                                     Foreground="White">
+                                                <TextBox.Text>
+                                                    <MultiBinding Converter="{StaticResource doubleScaledMultiConverter}">
+                                                        <Binding ElementName="Control" Path="ScanAreaXPosition" StringFormat="N5" Mode="TwoWay"/>
+                                                        <Binding Path="ConvertRatio" Mode="OneWay"/>
+                                                    </MultiBinding>
+                                                </TextBox.Text>
+                                                <TextBox.Style>
+                                                    <Style TargetType="{x:Type TextBox}">
+                                                        <Setter Property="Background"
+                                                                Value="Transparent" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding ElementName=Control, Path=ScanAreaXPosOutOfBounds, UpdateSourceTrigger=PropertyChanged}"
+                                                                         Value="True">
+                                                                <Setter Property="Background"
+                                                                        Value="Red" />
+                                                                <DataTrigger.EnterActions>
+                                                                    <BeginStoryboard Name="flashing"
+                                                                                     Storyboard="{StaticResource flashingAnimation}" />
+                                                                </DataTrigger.EnterActions>
+                                                                <DataTrigger.ExitActions>
+                                                                    <BeginStoryboard>
+                                                                        <Storyboard FillBehavior="Stop">
+                                                                            <DoubleAnimation Duration="0:0:1"
+                                                                                             Storyboard.TargetProperty="Opacity"
+                                                                                             To="1" />
+                                                                        </Storyboard>
+                                                                    </BeginStoryboard>
+                                                                </DataTrigger.ExitActions>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBox.Style>
+                                            </TextBox>
+                                            <Button Width="30"
+                                                    Height="32"
+                                                    VerticalAlignment="Top"
+                                                    Content="✓">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Path=IsFocused, ElementName=CurrentXPosition}"
+                                                                         Value="True">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                            <StackPanel Orientation="Vertical">
+                                                <RepeatButton Name="XPosPlus"
+                                                              Width="30"
+                                                              Height="15"
+                                                              Background="Transparent"
+                                                              Click="XPosPlus_Click"
+                                                              CommandParameter="0"
+                                                              Delay="500"
+                                                              Interval="100" />
+                                                <RepeatButton Name="XPosMinus"
+                                                              Width="30"
+                                                              Height="15"
+                                                              Background="Transparent"
+                                                              Click="XPosMinus_Click"
+                                                              CommandParameter="0"
+                                                              Delay="500"
+                                                              Interval="100" />
+                                                <TextBlock Margin="9,-37,0,0"
+                                                           FontSize="16"
+                                                           IsHitTestVisible="False"
+                                                           Text="+" />
+                                                <TextBlock Height="22"
+                                                           Margin="11,-24,0,0"
+                                                           FontSize="20"
+                                                           IsHitTestVisible="False"
+                                                           Text="-" />
+                                            </StackPanel>
+                                            <Label Content="{Binding LabelUnit}" />
+                                        </StackPanel>
+                                        <TextBox Name="StepSizeXTextBox"
+                                                 Width="55"
+                                                 Height="25"
+                                                 Margin="3,0,3,0"
+                                                 ToolTip="Enter the X StepSize value"
+                                                 TextWrapping="Wrap"
+                                                 HorizontalAlignment="Left"
+                                                 VerticalAlignment="Center">
+                                            <TextBox.Text>
+                                                <MultiBinding Converter="{StaticResource doubleScaledMultiConverter}">
+                                                    <Binding ElementName="Control" Path="StepSizeX" Mode="TwoWay"/>
+                                                    <Binding Path="ConvertRatio" Mode="OneWay"/>
+                                                </MultiBinding>
+                                            </TextBox.Text>
+                                        </TextBox>
+                                        <Button Width="30"
+                                                Margin="0,5,0,5"
+                                                VerticalAlignment="Top"
+                                                Content="✓">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=StepSizeXTextBox}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <StackPanel Margin="0,0,0,0">
+                                            <Button Name="StepSizeXCoarse"
+                                                    VerticalAlignment="Center"
+                                                    Click="StepSizeXCoarse_Click"
+                                                    Content="increase" />
+                                            <Button Name="StepSizeXFine"
+                                                    VerticalAlignment="Center"
+                                                    Click="StepSizeXFine_Click"
+                                                    Content="decrease" />
+                                        </StackPanel>
+                                        <Button Name="SetZeroX"
+                                                Width="30"
+                                                Height="25"
+                                                Margin="2,0,0,0"
+                                                Click="SetZeroX_Click"
+                                                Content="Zero"
+                                                ToolTip="Set current position to zero"
+                                                Visibility="{Binding XZeroVisibility}" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <StackPanel Width="147"
+                                                    VerticalAlignment="Center"
+                                                    Orientation="Horizontal">
+                                            <Label Width="20"
+                                                   Content="Y:" />
+                                            <TextBox Name="CurrentYPosition"
+                                                     Width="66"
+                                                     Height="32"
+                                                     VerticalAlignment="Top"
+                                                     ToolTip="Current Y Position"
+                                                     Foreground="White">
+                                                <TextBox.Text>
+                                                    <MultiBinding Converter="{StaticResource doubleScaledMultiConverter}">
+                                                        <Binding ElementName="Control" Path="ScanAreaYPosition" StringFormat="N5" Mode="TwoWay"/>
+                                                        <Binding Path="ConvertRatio" Mode="OneWay"/>
+                                                    </MultiBinding>
+                                                </TextBox.Text>
+                                                <TextBox.Style>
+                                                    <Style TargetType="{x:Type TextBox}">
+                                                        <Setter Property="Background"
+                                                                Value="Transparent" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding ElementName=Control, Path=ScanAreaYPosOutOfBounds, UpdateSourceTrigger=PropertyChanged}"
+                                                                         Value="True">
+                                                                <Setter Property="Background"
+                                                                        Value="Red" />
+                                                                <DataTrigger.EnterActions>
+                                                                    <BeginStoryboard Name="flashing"
+                                                                                     Storyboard="{StaticResource flashingAnimation}" />
+                                                                </DataTrigger.EnterActions>
+                                                                <DataTrigger.ExitActions>
+                                                                    <BeginStoryboard>
+                                                                        <Storyboard FillBehavior="Stop">
+                                                                            <DoubleAnimation Duration="0:0:1"
+                                                                                             Storyboard.TargetProperty="Opacity"
+                                                                                             To="1" />
+                                                                        </Storyboard>
+                                                                    </BeginStoryboard>
+                                                                </DataTrigger.ExitActions>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBox.Style>
+                                            </TextBox>
+                                            <Button Width="30"
+                                                    Height="32"
+                                                    VerticalAlignment="Top"
+                                                    Content="✓">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Path=IsFocused, ElementName=CurrentYPosition}"
+                                                                         Value="True">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                            <StackPanel Orientation="Vertical">
+                                                <RepeatButton Name="YPosPlus"
+                                                              Width="30"
+                                                              Height="15"
+                                                              Background="Transparent"
+                                                              Click="YPosPlus_Click"
+                                                              CommandParameter="0"
+                                                              Delay="500"
+                                                              Interval="100" />
+                                                <RepeatButton Name="YPosMinus"
+                                                              Width="30"
+                                                              Height="15"
+                                                              Background="Transparent"
+                                                              Click="YPosMinus_Click"
+                                                              CommandParameter="0"
+                                                              Delay="500"
+                                                              Interval="100" />
+                                                <TextBlock Margin="9,-37,0,0"
+                                                           FontSize="16"
+                                                           IsHitTestVisible="False"
+                                                           Text="+" />
+                                                <TextBlock Height="22"
+                                                           Margin="11,-24,0,0"
+                                                           FontSize="20"
+                                                           IsHitTestVisible="False"
+                                                           Text="-" />
+                                            </StackPanel>
+                                            <Label Content="{Binding LabelUnit}" />
+                                        </StackPanel>
+                                        <TextBox Name="StepSizeYTextBox"
+                                                 Width="55"
+                                                 Height="25"
+                                                 Margin="3,0,3,0"
+                                                 TextWrapping="Wrap"
+                                                 ToolTip="Enter the Y StepSize value"
+                                                 HorizontalAlignment="Left"
+                                                 VerticalAlignment="Center">
+                                            <TextBox.Text>
+                                                <MultiBinding Converter="{StaticResource doubleScaledMultiConverter}">
+                                                    <Binding ElementName="Control" Path="StepSizeY" Mode="TwoWay"/>
+                                                    <Binding Path="ConvertRatio" Mode="OneWay"/>
+                                                </MultiBinding>
+                                            </TextBox.Text>
+                                        </TextBox>
+                                        <Button Width="30"
+                                                Margin="0,5,0,5"
+                                                VerticalAlignment="Top"
+                                                Content="✓">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=StepSizeYTextBox}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <StackPanel Margin="0,2,0,2"
+                                                    Orientation="Horizontal"
+                                                    Visibility="Visible">
+                                            <StackPanel Margin="0,0,0,0">
+                                                <Button Name="StepSizeYCoarse"
+                                                        VerticalAlignment="Center"
+                                                        Click="StepSizeYCoarse_Click"
+                                                        Content="increase" />
+                                                <Button Name="StepSizeYFine"
+                                                        VerticalAlignment="Center"
+                                                        Click="StepSizeYFine_Click"
+                                                        Content="decrease" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <Button Name="SetZeroY"
+                                                Width="30"
+                                                Height="25"
+                                                Margin="2,0,0,0"
+                                                Click="SetZeroY_Click"
+                                                Content="Zero"
+                                                ToolTip="Set current position to zero"
+                                                Visibility="{Binding YZeroVisibility}" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel VerticalAlignment="Center">
+                                    <Button Name="SetXYToTileSize"
+                                            Width="63"
+                                            VerticalAlignment="Center"
+                                            HorizontalAlignment="Left"
+                                            Margin="0,1"
+                                            Height="38"
+                                            Click="SetXYToTileSize_Click"
+                                            ToolTip="Set X and Y step size to match tile size">
+                                        <TextBlock Text="Set Step to Tile Size"
+                                                   TextWrapping="Wrap"
+                                                   TextAlignment="Center" />
+                                    </Button>
+                                    <Button Name="SetXYToWellSize"
+                                            Visibility="{Binding ElementName=Control, Path=SetStepToWellSizeVisibility, UpdateSourceTrigger=PropertyChanged}"
+                                            Width="62"
+                                            Margin="0,1"
+                                            Height="38"
+                                            Click="SetXYToWellSize_Click"
+                                            ToolTip="Set X and Y step size to match well size">
+                                        <TextBlock Text="Set Step to Well Size"
+                                                   TextWrapping="Wrap"
+                                                   TextAlignment="Center" />
+                                    </Button>
+                                </StackPanel>
+                            </StackPanel>
+                        </Expander>
+                    </Border>
+                </StackPanel>
+                <StackPanel Visibility="{Binding ElementName=Control, Path=IsControlPanelVisible, UpdateSourceTrigger=PropertyChanged}">
+                    <Border Visibility="{Binding Source={StaticResource ResourceManagerCS}, Path=TabletModeEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVis}, ConverterParameter=true}">
+                        <Expander Margin="1"
+                                  Foreground="White">
+                            <Expander.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Width="90"
+                                               VerticalAlignment="Center"
+                                               Text="Carrier:" />
+                                </StackPanel>
+                            </Expander.Header>
+                            <StackPanel Margin="19,0,0,0">
+                                <StackPanel Margin="5"
+                                            Orientation="Horizontal">
+                                    <TextBlock Width="85"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               Text="Carrier Type:"
+                                               ToolTip="Sample Carrier" />
+                                    <Border Width="170"
+                                            Height="25"
+                                            Margin="0,0,5,0"
+                                            BorderBrush="#424242"
+                                            BorderThickness="2"
+                                            CornerRadius="2">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Name="SelectedCarrierName"
+                                                       Width="135"
+                                                       Background="{StaticResource ButtonNormalBackground}"
+                                                       Text="{Binding ElementName=Control,
+                                                                      Path=CurrentSampleCarrierName,
+                                                                      Mode=OneWay,
+                                                                      UpdateSourceTrigger=PropertyChanged}" />
+                                            <Border Name="SelectCarrierBtn"
+                                                    Width="31"
+                                                    PreviewMouseDown="SelectCarrierBtn_PreviewMouseDown"
+                                                    Style="{StaticResource BorderStyle}">
+                                                <Polygon Fill="Silver"
+                                                         Stroke="Silver"
+                                                         StrokeThickness="1">
+                                                    <Polygon.Points>
+                                                        <Point X="15"
+                                                               Y="13" />
+                                                        <Point X="10"
+                                                               Y="7" />
+                                                        <Point X="20"
+                                                               Y="7" />
+                                                    </Polygon.Points>
+                                                </Polygon>
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                                <StackPanel Margin="5"
+                                            Orientation="Horizontal">
+                                    <TextBlock Width="85"
+                                               VerticalAlignment="Center"
+                                               Text="Home :          X:"
+                                               ToolTip="Home Location:&#10;Slide or coverslip: Top-Left Corner&#10;Well Plate: A1 Center" />
+                                    <TextBox Name="homePositionX"
+                                             Width="70"
+                                             ToolTip="Home X Position"
+                                             Margin="0,2,0,0">
+                                        <TextBox.Text>
+                                            <MultiBinding Converter="{StaticResource doubleScaledMultiConverter}">
+                                                <Binding ElementName="Control" Path="HomePosX" Mode="TwoWay"/>
+                                                <Binding Path="ConvertRatio" Mode="OneWay"/>
+                                            </MultiBinding>
+                                        </TextBox.Text>
+                                    </TextBox>
+                                    <Button Width="20"
+                                            Height="24"
+                                            VerticalAlignment="Center"
+                                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=homePositionX}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <TextBlock Width="20"
+                                               Margin="5"
+                                               VerticalAlignment="Center"
+                                               Text="Y:" />
+                                    <TextBox Name="homePositionY"
+                                             Width="70"
+                                             Margin="0,2,0,0">
+                                        <TextBox.Text>
+                                            <MultiBinding Converter="{StaticResource doubleScaledMultiConverter}">
+                                                <Binding ElementName="Control" Path="HomePosY" Mode="TwoWay"/>
+                                                <Binding Path="ConvertRatio" Mode="OneWay"/>
+                                            </MultiBinding>
+                                        </TextBox.Text>
+                                    </TextBox>
+                                    <Button Width="20"
+                                            Height="24"
+                                            VerticalAlignment="Center"
+                                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=homePositionY}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <Button Name="SetHomeCommand"
+                                            Width="59"
+                                            Height="22"
+                                            Margin="5,2,0,0"
+                                            Click="SetHomeCommand_Click"
+                                            HorizontalContentAlignment="Center"
+                                            VerticalContentAlignment="Center"
+                                            Content="Set Home"
+                                            ToolTip="Set current Position coordinates as the new Home coordinates. Home is located at the top left of the slide." />
+                                </StackPanel>
+                                <StackPanel Margin="5"
+                                            Orientation="Horizontal">
+                                    <TextBlock Width="85"
+                                               VerticalAlignment="Center"
+                                               Text="Overlap [%] : X:"
+                                               ToolTip=" Overlap between two tiles nearby.$#10;X: Horizontal, Y: Vertical" />
+                                    <TextBox Name="OverlapX"
+                                             Width="70"
+                                             Margin="0,2,0,0"
+                                             Text="{Binding ElementName=Control, Path=DefaultOverlapX, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnDataErrors=True}"
+                                             validator:Validation.ValidationType="{x:Type system:Double}"
+                                             validator:Validation.MinValue="-100.0"
+                                             validator:Validation.MaxValue="100.0"
+                                             validator:Validation.NoEmptyValue="False"
+                                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                             ToolTip="Tile Overlap X - Range(+/- 1.0)" />
+                                    <Button Width="20"
+                                            Height="24"
+                                            VerticalAlignment="Center"
+                                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=OverlapX}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <TextBlock Width="20"
+                                               Margin="5"
+                                               VerticalAlignment="Center"
+                                               Text="Y:" />
+                                    <TextBox Name="OverlapY"
+                                             Width="70"
+                                             Margin="0,2,0,0"
+                                             Text="{Binding ElementName=Control, Path=DefaultOverlapY, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnDataErrors=True}"
+                                             validator:Validation.ValidationType="{x:Type system:Double}"
+                                             validator:Validation.MinValue="-100.0"
+                                             validator:Validation.MaxValue="100.0"
+                                             validator:Validation.NoEmptyValue="False"
+                                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                             ToolTip="Tile Overlap Y - Range(+/- 1.0)" />
+                                    <Button Width="20"
+                                            Height="24"
+                                            VerticalAlignment="Center"
+                                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=OverlapY}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </StackPanel>
+                                <StackPanel>
+                                    <StackPanel>
+                                        <CheckBox Name="cbTiltAdjust"
+                                                  Content="Tilt Adjustment"
+                                                  HorizontalAlignment="Left"
+                                                  IsChecked="{Binding ElementName=Control, Path=TiltAdjustment}" />
+                                    </StackPanel>
+                                    <StackPanel Visibility="{Binding ElementName=cbTiltAdjust, Path=IsChecked, Converter={StaticResource boolToVis}}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Label Content="Focus 1:" />
+                                            <Label Content="{Binding ElementName=Control,
+                                                            Path=FocusPoint1}"
+                                                   MinWidth="180" />
+                                            <Button Name="fp1GoBtn"
+                                                    Content="Go"
+                                                    Width="50"
+                                                    Height="22"
+                                                    Click="fp1GoBtn_Click" />
+                                            <Button Name="fp1Btn"
+                                                    Content="Record"
+                                                    Width="50"
+                                                    Height="22"
+                                                    Click="fp1Btn_Click" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Label Content="Focus 2:" />
+                                            <Label Content="{Binding ElementName=Control,
+                                                            Path=FocusPoint2}"
+                                                   MinWidth="180" />
+                                            <Button Name="fp2GoBtn"
+                                                    Content="Go"
+                                                    Width="50"
+                                                    Height="22"
+                                                    Click="fp2GoBtn_Click" />
+                                            <Button Name="fp2Btn"
+                                                    Content="Record"
+                                                    Width="50"
+                                                    Height="22"
+                                                    Click="fp2Btn_Click" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Label Content="Focus 3:" />
+                                            <Label Content="{Binding ElementName=Control,
+                                                            Path=FocusPoint3}"
+                                                   MinWidth="180" />
+                                            <Button Name="fp3GoBtn"
+                                                    Content="Go"
+                                                    Width="50"
+                                                    Height="22"
+                                                    Click="fp3GoBtn_Click" />
+                                            <Button Name="fp3Btn"
+                                                    Content="Record"
+                                                    Width="50"
+                                                    Height="22"
+                                                    Click="fp3Btn_Click" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Expander>
+                    </Border>
+                </StackPanel>
+                <StackPanel Visibility="{Binding ElementName=Control, Path=IsTileTableVisible, UpdateSourceTrigger=PropertyChanged}"
+                            MinWidth="230">
+                    <Border>
+                        <Expander Name="PositionTable"
+                                  Margin="1"
+                                  Foreground="White">
+                            <Expander.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Width="90"
+                                               VerticalAlignment="Center"
+                                               Text="Position Table:" />
+                                    <StackPanel Orientation="Horizontal"
+                                                Visibility="{Binding ElementName=Control, Path=NextPreviousTileStackPanelVisible, UpdateSourceTrigger=PropertyChanged}">
+                                        <Button Name="btnPreviousTile"
+                                                Content="Previous"
+                                                Margin="18,0,0,0"
+                                                Width="50"
+                                                HorizontalAlignment="Right"
+                                                ToolTip="Go to the previous tile"
+                                                Click="btnPreviousTile_Click" />
+                                        <Button Name="btnNextTile"
+                                                Content="Next"
+                                                Margin="1,0,0,0"
+                                                HorizontalAlignment="Right"
+                                                Width="50"
+                                                ToolTip="Go to the next tile"
+                                                Click="btnNextTile_Click" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Expander.Header>
+                            <StackPanel Margin="5">
+                                <StackPanel Orientation="Horizontal"
+                                            Visibility="{Binding ElementName=Control, Path=IsControlPanelVisible, UpdateSourceTrigger=PropertyChanged}">
+                                    <Button Name="XYTableAddPosition"
+                                            Width="55"
+                                            Height="20"
+                                            VerticalAlignment="Center"
+                                            Content="Add"
+                                            PreviewMouseDown="XYTableAddPosition_PreviewMouseDown"
+                                            ToolTip="Add a new Tile Area" />
+                                    <Button Name="XYTableAddPositionDeletePosition"
+                                            Width="55"
+                                            Height="20"
+                                            VerticalAlignment="Center"
+                                            Content="Delete"
+                                            PreviewMouseDown="XYTableDeletePosition_PreviewMouseDown"
+                                            ToolTip="Delete a Tile Area" />
+                                    <Button Name="XYTableAddPositionClearAllPositions"
+                                            Width="55"
+                                            Height="20"
+                                            VerticalAlignment="Center"
+                                            Content="Clear All"
+                                            PreviewMouseDown="XYTableClearAllPositions_PreviewMouseDown"
+                                            ToolTip="Clear all Tile Areas" />
+                                    <Button Name="XYTableAddPositionGotoPositions"
+                                            Width="55"
+                                            Height="20"
+                                            VerticalAlignment="Center"
+                                            Content="Goto"
+                                            PreviewMouseDown="XYTableGotoPosition_PreviewMouseDown"
+                                            ToolTip="Goto Selected Tile Area" />
+                                    <CheckBox Name="SinglePosition"
+                                              Margin="3,3,0,2"
+                                              VerticalAlignment="Center"
+                                              Click="SinglePosition_Click"
+                                              Content="Single Position"
+                                              Visibility="{Binding Source={StaticResource ResourceManagerCS}, Path=TabletModeEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVis}, ConverterParameter=true}"/>
+                                </StackPanel>
+                                <DataGrid Name="XYtable"
+                                          Height="140"
+                                          AutoGenerateColumns="False"
+                                          BorderThickness="0"
+                                          CanUserAddRows="False"
+                                          CanUserDeleteRows="False"
+                                          CanUserSortColumns="False"
+                                          CellEditEnding="XYtable_CellEditEnding"
+                                          EnableColumnVirtualization="True"
+                                          EnableRowVirtualization="True"
+                                          ItemsSource="{Binding ElementName=Control,
+                                                                Path=XYtableData}"
+                                          SelectionMode="Single">
+                                    <DataGrid.Resources>
+                                        <Style TargetType="DataGridRow">
+                                            <Style.Resources>
+                                                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="DarkGray"/>
+                                            </Style.Resources>
+                                            <EventSetter Event="MouseLeftButtonUp"
+                                                         Handler="XYTable_MouseLeftButtonUp" />
+                                            <EventSetter Event="MouseMove"
+                                                         Handler="XYTable_MouseMove" />
+                                            <EventSetter Event="MouseDoubleClick"
+                                                         Handler="XYtable_DoubleClick" />
+                                        </Style>
+                                    </DataGrid.Resources>
+                                    <DataGrid.Columns>
+                                        <DataGridCheckBoxColumn Width="20"
+                                                                Binding="{Binding Path=IsEnabled,
+                                                                                  Mode=TwoWay,
+                                                                                  NotifyOnSourceUpdated=False,
+                                                                                  NotifyOnTargetUpdated=True,
+                                                                                  UpdateSourceTrigger=PropertyChanged}"
+                                                                IsReadOnly="False">
+                                            <DataGridCheckBoxColumn.CellStyle>
+                                                <Style TargetType="DataGridCell">
+                                                    <EventSetter Event="CheckBox.Checked"
+                                                                 Handler="CellChanged" />
+                                                    <EventSetter Event="CheckBox.Unchecked"
+                                                                 Handler="CellChanged" />
+                                                    <Style.Triggers>
+                                                        <MultiTrigger>
+                                                            <MultiTrigger.Conditions>
+                                                                <Condition Property="IsMouseOver"
+                                                                           Value="True" />
+                                                                <Condition Property="IsReadOnly"
+                                                                           Value="False" />
+                                                            </MultiTrigger.Conditions>
+                                                            <Setter Property="IsEditing"
+                                                                    Value="True" />
+                                                        </MultiTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </DataGridCheckBoxColumn.CellStyle>
+                                        </DataGridCheckBoxColumn>
+                                        <DataGridTextColumn Width="80"
+                                                            Binding="{Binding Path=Name}"
+                                                            Header="Name"
+                                                            IsReadOnly="False" />
+                                        <DataGridTextColumn Width="55"
+                                                            Header="X"
+                                                            IsReadOnly="{Binding Path=IsDataGridReadOnly,
+                                                                                 ElementName=Control,
+                                                                                 UpdateSourceTrigger=PropertyChanged}">
+                                            <!-- editing view -->
+                                            <DataGridTextColumn.EditingElementStyle>
+                                                <Style TargetType="{x:Type TextBox}">
+                                                    <Setter Property="Text"
+                                                            Value="{Binding X, Converter={StaticResource ResourceKey=stringToDouble}}" />
+                                                </Style>
+                                            </DataGridTextColumn.EditingElementStyle>
+                                            <!-- not editing view -->
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="{x:Type TextBlock}">
+                                                    <Setter Property="Text"
+                                                            Value="{Binding X, StringFormat={}{0:0.####}, Converter={StaticResource ResourceKey=stringToDouble}}" />
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Width="55"
+                                                            Header="Y"
+                                                            IsReadOnly="{Binding Path=IsDataGridReadOnly,
+                                                                                 ElementName=Control,
+                                                                                 UpdateSourceTrigger=PropertyChanged}">
+                                            <!-- editing view -->
+                                            <DataGridTextColumn.EditingElementStyle>
+                                                <Style TargetType="{x:Type TextBox}">
+                                                    <Setter Property="Text"
+                                                            Value="{Binding Y, Converter={StaticResource ResourceKey=stringToDouble}}" />
+                                                </Style>
+                                            </DataGridTextColumn.EditingElementStyle>
+                                            <!-- not editing view -->
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="{x:Type TextBlock}">
+                                                    <Setter Property="Text"
+                                                            Value="{Binding Y, StringFormat={}{0:0.####}, Converter={StaticResource ResourceKey=stringToDouble}}" />
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Width="42"
+                                                            Binding="{Binding Path=Z}"
+                                                            Header="Z"
+                                                            IsReadOnly="{Binding Path=IsDataGridReadOnly,
+                                                                                 ElementName=Control,
+                                                                                 UpdateSourceTrigger=PropertyChanged}"
+                                                            Visibility="Collapsed" />
+                                        <DataGridTextColumn Width="40"
+                                                            Binding="{Binding Path=TileCol}"
+                                                            Header="col"
+                                                            IsReadOnly="{Binding Path=IsDataGridReadOnly,
+                                                                                 ElementName=Control,
+                                                                                 UpdateSourceTrigger=PropertyChanged}" />
+                                        <DataGridTextColumn Width="40"
+                                                            Binding="{Binding Path=TileRow}"
+                                                            Header="row"
+                                                            IsReadOnly="{Binding Path=IsDataGridReadOnly,
+                                                                                 ElementName=Control,
+                                                                                 UpdateSourceTrigger=PropertyChanged}" />
+                                        <DataGridTextColumn Width="40"
+                                                            Binding="{Binding Path=OverlapX}"
+                                                            Header="ovlpX"
+                                                            IsReadOnly="{Binding Path=IsDataGridReadOnly,
+                                                                                 ElementName=Control,
+                                                                                 UpdateSourceTrigger=PropertyChanged}">
+                                            <DataGridTextColumn.HeaderStyle>
+                                                <Style TargetType="DataGridColumnHeader">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver"
+                                                                 Value="True">
+                                                            <Setter Property="ToolTip"
+                                                                    Value=" Horizontal Overlap between two tiles nearby. Value -100 ~ 100" />
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </DataGridTextColumn.HeaderStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Width="40"
+                                                            Binding="{Binding Path=OverlapY}"
+                                                            Header="ovlpY"
+                                                            IsReadOnly="{Binding Path=IsDataGridReadOnly,
+                                                                                 ElementName=Control,
+                                                                                 UpdateSourceTrigger=PropertyChanged}">
+                                            <DataGridTextColumn.HeaderStyle>
+                                                <Style TargetType="DataGridColumnHeader">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver"
+                                                                 Value="True">
+                                                            <Setter Property="ToolTip"
+                                                                    Value=" Vertical Overlap between two tiles nearby. Value -100 ~ 100" />
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </DataGridTextColumn.HeaderStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Width="32"
+                                                            Binding="{Binding Path=Well}"
+                                                            Header="well"
+                                                            IsReadOnly="True" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Expander>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

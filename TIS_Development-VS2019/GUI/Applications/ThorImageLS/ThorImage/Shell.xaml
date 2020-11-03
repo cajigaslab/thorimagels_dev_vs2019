@@ -1,0 +1,24 @@
+﻿<Window x:Class="ThorImage.Shell"
+   xmlns:cal="http://www.codeplex.com/CompositeWPF"
+   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="ThorImage" WindowState="Normal" WindowStartupLocation="CenterScreen">
+
+            <Grid Background="#FF333333">
+                <Grid.RowDefinitions>
+                    <RowDefinition Name="MenuRow"
+                                   Height="64"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+            <ItemsControl Name="MenuRegion" cal:RegionManager.RegionName="MenuRegion" Grid.Row="0"/>
+
+        <ItemsControl Name="SettingsRegion" cal:RegionManager.RegionName="SettingsRegion" Grid.Row="1">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <Grid/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+        </ItemsControl>
+             </Grid> 
+   
+</Window>

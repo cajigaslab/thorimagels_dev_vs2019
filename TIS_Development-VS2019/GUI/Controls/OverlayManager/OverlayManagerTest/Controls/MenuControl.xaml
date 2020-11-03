@@ -1,0 +1,15 @@
+﻿<UserControl x:Class="OverlayManagerTest.Controls.MenuControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:Commands="clr-namespace:OverlayManagerTest.Commands"
+    Name="menuControl">
+    <Menu>
+        <MenuItem Header="_File">
+            <MenuItem Header="_Open" Command="Open"/>
+            <MenuItem Header="E_xit" Command="Close"/>
+        </MenuItem>
+        <MenuItem Header="_Play">
+            <MenuItem Header="_Play/Pause" Command="{x:Static Commands:Commands.ToggleCommand}"/>
+        </MenuItem>
+    </Menu>
+</UserControl>

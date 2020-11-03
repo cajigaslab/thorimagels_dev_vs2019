@@ -1,0 +1,41 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EA3D2CC3-D62E-41BC-8EF4-85806211B4A1}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ORCA", "ORCA\ORCA.vcxproj", "{78E21940-14D7-4577-92C1-83AD9FEEB077}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 2
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://stl-tfs1:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = ORCA\\ORCA.vcxproj
+		SccProjectTopLevelParentUniqueName1 = ORCA.sln
+		SccProjectName1 = ORCA
+		SccLocalPath1 = ORCA
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{78E21940-14D7-4577-92C1-83AD9FEEB077}.Debug|Win32.ActiveCfg = Debug|Win32
+		{78E21940-14D7-4577-92C1-83AD9FEEB077}.Debug|Win32.Build.0 = Debug|Win32
+		{78E21940-14D7-4577-92C1-83AD9FEEB077}.Debug|x64.ActiveCfg = Debug|x64
+		{78E21940-14D7-4577-92C1-83AD9FEEB077}.Debug|x64.Build.0 = Debug|x64
+		{78E21940-14D7-4577-92C1-83AD9FEEB077}.Release|Win32.ActiveCfg = Release|Win32
+		{78E21940-14D7-4577-92C1-83AD9FEEB077}.Release|Win32.Build.0 = Release|Win32
+		{78E21940-14D7-4577-92C1-83AD9FEEB077}.Release|x64.ActiveCfg = Release|x64
+		{78E21940-14D7-4577-92C1-83AD9FEEB077}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{78E21940-14D7-4577-92C1-83AD9FEEB077} = {EA3D2CC3-D62E-41BC-8EF4-85806211B4A1}
+	EndGlobalSection
+EndGlobal

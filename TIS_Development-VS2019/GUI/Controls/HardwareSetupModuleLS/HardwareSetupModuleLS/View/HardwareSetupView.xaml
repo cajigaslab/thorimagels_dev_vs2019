@@ -1,0 +1,58 @@
+﻿<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:View="clr-namespace:HardwareSetupDll.View"
+             xmlns:ViewModel="clr-namespace:HardwareSetupDll.ViewModel"
+             x:Class="HardwareSetupDll.View.HardwareSetupView"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             Height="Auto"
+             Width="Auto">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <DataTemplate DataType="{x:Type ViewModel:HardwareSetupViewModel}" />
+            <View:EnumBooleanConverter x:Key="ebc" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid Margin="1">
+        <StackPanel VerticalAlignment="Center">
+   
+            <Button Content="Display Options"
+                    Grid.Column="0"
+                    Margin="1"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Width="120"
+                    Height="35"
+                    Command="{Binding Path=DisplayOptionsCommand}" />
+            <Button Content="Application Settings"
+                    Grid.Column="0"
+                    Margin="1"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Width="120"
+                    Height="35"
+                    Command="{Binding Path=ApplicationSettingsCommand}" />
+            <Button Content="Hardware Settings"
+                    Grid.Column="0"
+                    Margin="1"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Width="120"
+                    Height="35"
+                    Command="{Binding Path=HardwareSettingsCommand}" />
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Streaming Temp Path"
+                       Foreground="White" />
+                <TextBox Width="300"
+                         Text="{Binding Path=StreamingPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <Button Content="Browse"
+                        Click="Browse_Click" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

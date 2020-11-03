@@ -1,0 +1,41 @@
+﻿<UserControl x:Class="ROIUserControl.UserControl1"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:myControl="clr-namespace:ROIUserControl"
+             Height="Auto"
+             Width="Auto"
+             Name="myUCName">
+    <Canvas Name="imageCanvas"
+            Height="Auto"
+            Width="Auto"
+            Background="AliceBlue">
+        <Rectangle Name="outerRect"
+                   Fill="Navy"
+                   MouseDown="outerRect_MouseDown"
+                   MouseMove="outerRect_MouseMove"
+                   MouseUp="outerRect_MouseUp"
+                   Stroke="Black"
+                   StrokeThickness="1">
+        </Rectangle>
+        <Ellipse Name="innerCircle"
+                 Fill="White"
+                 MouseDown="innerCircle_MouseDown"
+                 MouseMove="innerCircle_MouseMove"
+                 MouseUp="innerCircle_MouseUp"
+                 Stroke="Black"
+                 StrokeThickness="1"></Ellipse>
+        <Rectangle Name="innerRect"
+                   Fill="Red"
+                   MouseDown="innerRect_MouseDown"
+                   MouseMove="innerRect_MouseMove"
+                   MouseUp="innerRect_MouseUp"
+                   Stroke="Black"
+                   StrokeThickness="1">
+        </Rectangle>
+        <!--<TextBox  Text="{Binding Path=InnerRectLeft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" TextChanged="TextBox_TextChanged" Visibility="Hidden"/>
+        <TextBox  Text="{Binding Path=InnerRectTop, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" TextChanged="TextBox_TextChanged" Visibility="Hidden" />
+        <TextBox Text="{Binding Path=InnerRectWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" TextChanged="TextBox_TextChanged" Visibility="Hidden" />
+        <TextBox Text="{Binding Path=InnerRectHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" TextChanged="TextBox_TextChanged" Visibility="Hidden" />-->
+
+    </Canvas>
+</UserControl>

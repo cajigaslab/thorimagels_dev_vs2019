@@ -1,0 +1,41 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DigitalOutputSwitches", "DigitalOutputSwitches\DigitalOutputSwitches.csproj", "{B1F94201-2184-4442-91DF-1A5692C3C18A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DigitalOutputSwitchesTestApp", "DigitalOutputSwitchesTestApp\DigitalOutputSwitchesTestApp.csproj", "{F8B329C7-497D-4344-8171-2FAA3F1523F8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B1F94201-2184-4442-91DF-1A5692C3C18A} = {B1F94201-2184-4442-91DF-1A5692C3C18A}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://stl-tfs1:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = DigitalOutputSwitches\\DigitalOutputSwitches.csproj
+		SccProjectName1 = DigitalOutputSwitches
+		SccLocalPath1 = DigitalOutputSwitches
+		SccProjectUniqueName2 = DigitalOutputSwitchesTestApp\\DigitalOutputSwitchesTestApp.csproj
+		SccProjectName2 = DigitalOutputSwitchesTestApp
+		SccLocalPath2 = DigitalOutputSwitchesTestApp
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B1F94201-2184-4442-91DF-1A5692C3C18A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1F94201-2184-4442-91DF-1A5692C3C18A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1F94201-2184-4442-91DF-1A5692C3C18A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1F94201-2184-4442-91DF-1A5692C3C18A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8B329C7-497D-4344-8171-2FAA3F1523F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8B329C7-497D-4344-8171-2FAA3F1523F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8B329C7-497D-4344-8171-2FAA3F1523F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8B329C7-497D-4344-8171-2FAA3F1523F8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

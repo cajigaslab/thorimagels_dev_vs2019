@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OTMControl", "OTMControl\OTMControl.csproj", "{529791FC-D70D-4052-B5D5-290C5CBA0AAD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OTMControlTestApp", "OTMControlTestApp\OTMControlTestApp.csproj", "{7D68AC8B-B967-45F7-9285-B3476C0C0F7A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{529791FC-D70D-4052-B5D5-290C5CBA0AAD} = {529791FC-D70D-4052-B5D5-290C5CBA0AAD}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://stl-tfs1:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = OTMControl\\OTMControl.csproj
+		SccProjectName1 = OTMControl
+		SccLocalPath1 = OTMControl
+		SccProjectUniqueName2 = OTMControlTestApp\\OTMControlTestApp.csproj
+		SccProjectName2 = OTMControlTestApp
+		SccLocalPath2 = OTMControlTestApp
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{529791FC-D70D-4052-B5D5-290C5CBA0AAD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{529791FC-D70D-4052-B5D5-290C5CBA0AAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{529791FC-D70D-4052-B5D5-290C5CBA0AAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{529791FC-D70D-4052-B5D5-290C5CBA0AAD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D68AC8B-B967-45F7-9285-B3476C0C0F7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D68AC8B-B967-45F7-9285-B3476C0C0F7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,176 @@
+﻿<UserControl x:Class="LightEngineControl.LightEngineControlUC"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:LightEngineControl"
+             xmlns:conv="clr-namespace:LightEngineControl.Converter"
+             xmlns:ctrl="clr-namespace:LightEngineControl.Controls"
+             xmlns:sharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+
+             mc:Ignorable="d"
+             d:DesignWidth="385"
+             SnapsToDevicePixels="True"
+             MinHeight="365" MinWidth="385"
+             Background="Transparent">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid x:Name="ControlRootLayout"
+          Margin="3">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <!-- Linear Mode Slider -->
+        <ctrl:MasterSlider x:Name="LED_CTRL_ALL"
+                            Grid.Row="0"
+                            Margin="0 2 0 2"
+                            Text="Master"
+                            LightColor="Transparent"
+                            Foreground="White"
+                            ID="99"
+                            TabIndex="0"
+                            IsTabStop="False"
+                            MasterValue="{Binding MasterBrightness}"
+                            Value="{Binding MasterBrightness}"
+                            LinearModeSettingsSource="{Binding LinearModeSettingsSource}"
+                            SelectedLinearModeSettings="{Binding LinearModeSettingsSelectedIdx}"
+                            LampPowerPlusCommand="{Binding MasterPowerPlusCommand}"
+                            LampPowerMinusCommand="{Binding MasterPowerMinusCommand}"
+                            Visibility="{Binding MasterControlVis}"
+                            IsMaster="True"
+                            IsChecked="True"
+                            IsCheckable="False"
+                            IsNameEditable="False"
+                            HasTemperature="False"
+                            TemperatureUnit="{Binding TemperatureUnit, Mode=OneWay}"
+                            ShowTemperature="False"
+                            Loaded="LED_CTRL_ALL_Loaded" />
+        <Grid x:Name="LEDSliderLayout"
+              Grid.Row="1"
+              Grid.IsSharedSizeScope="True"
+              Margin="0 0 0 10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <!-- Single LED Controls -->
+            <ctrl:LEDSlider x:Name="LED_CTRL_1"
+                            Grid.Row="1"
+                            Margin="0 2 0 2"
+                            TabIndex="1"
+                            ID="{Binding LED1SockelID, Mode=OneWay}"
+                            Text="{Binding LED1ControlName, Mode=TwoWay}"
+                            LightColor="{Binding LED1LightColor, Mode=OneWay}"
+                            Value="{Binding LED1Power, Mode=TwoWay}"
+                            MasterValue="{Binding MasterBrightness, Mode=TwoWay}"
+                            IsChecked="{Binding LED1PowerState, Mode=TwoWay}"
+                            Temperature="{Binding LED1Temperature, Mode=OneWay}"
+                            TemperatureUnit="{Binding TemperatureUnit, Mode=OneWay}"
+                            ShowTemperature="{Binding ShowTemperatures, Mode=OneWay}"
+                            LampPowerPlusCommand="{Binding LED1PowerPlusCommand}"
+                            LampPowerMinusCommand="{Binding LED1PowerMinusCommand}" />
+            <ctrl:LEDSlider x:Name="LED_CTRL_2"
+                            Grid.Row="2"
+                            Margin="0 2 0 2"
+                            TabIndex="2"
+                            ID="{Binding LED2SockelID, Mode=OneWay}"
+                            Text="{Binding LED2ControlName, Mode=TwoWay}"
+                            LightColor="{Binding LED2LightColor, Mode=OneWay}"
+                            Value="{Binding LED2Power, Mode=TwoWay}"
+                            MasterValue="{Binding MasterBrightness}"
+                            IsChecked="{Binding LED2PowerState, Mode=TwoWay}"
+                            Temperature="{Binding LED2Temperature, Mode=OneWay}"
+                            TemperatureUnit="{Binding TemperatureUnit, Mode=OneWay}"
+                            ShowTemperature="{Binding ShowTemperatures, Mode=OneWay}"
+                            LampPowerPlusCommand="{Binding LED2PowerPlusCommand}"
+                            LampPowerMinusCommand="{Binding LED2PowerMinusCommand}" />
+            <ctrl:LEDSlider x:Name="LED_CTRL_3"
+                            Grid.Row="3"
+                            Margin="0 2 0 2"
+                            TabIndex="3"
+                            ID="{Binding LED3SockelID, Mode=OneWay}"
+                            Text="{Binding LED3ControlName, Mode=TwoWay}"
+                            LightColor="{Binding LED3LightColor, Mode=OneWay}"
+                            Value="{Binding LED3Power, Mode=TwoWay}"
+                            MasterValue="{Binding MasterBrightness}"
+                            IsChecked="{Binding LED3PowerState, Mode=TwoWay}"
+                            Temperature="{Binding LED3Temperature, Mode=OneWay}"
+                            TemperatureUnit="{Binding TemperatureUnit, Mode=OneWay}"
+                            ShowTemperature="{Binding ShowTemperatures, Mode=OneWay}"
+                            LampPowerPlusCommand="{Binding LED3PowerPlusCommand}"
+                            LampPowerMinusCommand="{Binding LED3PowerMinusCommand}" />
+            <ctrl:LEDSlider x:Name="LED_CTRL_4"
+                            Grid.Row="4"
+                            Margin="0 2 0 2"
+                            TabIndex="4"
+                            ID="{Binding LED4SockelID, Mode=OneWay}"
+                            Text="{Binding LED4ControlName, Mode=TwoWay}"
+                            LightColor="{Binding LED4LightColor, Mode=OneWay}"
+                            Value="{Binding LED4Power, Mode=TwoWay}"
+                            MasterValue="{Binding MasterBrightness}"
+                            IsChecked="{Binding LED4PowerState, Mode=TwoWay}"
+                            Temperature="{Binding LED4Temperature, Mode=OneWay}"
+                            TemperatureUnit="{Binding TemperatureUnit, Mode=OneWay}"
+                            ShowTemperature="{Binding ShowTemperatures, Mode=OneWay}"
+                            LampPowerPlusCommand="{Binding LED4PowerPlusCommand}"
+                            LampPowerMinusCommand="{Binding LED4PowerMinusCommand}" />
+            <ctrl:LEDSlider x:Name="LED_CTRL_5"
+                            Grid.Row="5"
+                            Margin="0 2 0 2"
+                            TabIndex="5"
+                            ID="{Binding LED5SockelID, Mode=OneWay}"
+                            Text="{Binding LED5ControlName, Mode=TwoWay}"
+                            LightColor="{Binding LED5LightColor, Mode=OneWay}"
+                            Value="{Binding LED5Power, Mode=TwoWay}"
+                            MasterValue="{Binding MasterBrightness}"
+                            IsChecked="{Binding LED5PowerState, Mode=TwoWay}"
+                            Temperature="{Binding LED5Temperature, Mode=OneWay}"
+                            TemperatureUnit="{Binding TemperatureUnit, Mode=OneWay}"
+                            ShowTemperature="{Binding ShowTemperatures, Mode=OneWay}"
+                            LampPowerPlusCommand="{Binding LED5PowerPlusCommand}"
+                            LampPowerMinusCommand="{Binding LED5PowerMinusCommand}" />
+            <ctrl:LEDSlider x:Name="LED_CTRL_6"
+                            Grid.Row="6"
+                            Margin="0 2 0 2"
+                            TabIndex="6"
+                            ID="{Binding LED6SockelID, Mode=OneWay}"
+                            Text="{Binding LED6ControlName, Mode=TwoWay}"
+                            LightColor="{Binding LED6LightColor, Mode=OneWay}"
+                            Value="{Binding LED6Power, Mode=TwoWay}"
+                            MasterValue="{Binding MasterBrightness}"
+                            IsChecked="{Binding LED6PowerState, Mode=TwoWay}"
+                            Temperature="{Binding LED6Temperature, Mode=OneWay}"
+                            TemperatureUnit="{Binding TemperatureUnit, Mode=OneWay}"
+                            ShowTemperature="{Binding ShowTemperatures, Mode=OneWay}"
+                            LampPowerPlusCommand="{Binding LED6PowerPlusCommand}"
+                            LampPowerMinusCommand="{Binding LED6PowerMinusCommand}" />
+        </Grid>
+        <!-- Style="{DynamicResource Thorlabs.MahControls.ToggleSwitch}" -->
+        <CheckBox x:Name="ShowHideTemperatures"
+                  Grid.Column="0" 
+                  Grid.Row="2"
+                  TabIndex="7"
+                  VerticalAlignment="Center"
+                  VerticalContentAlignment="Center"
+                  Content="Display Temperatures"
+                  IsChecked="{Binding ShowTemperatures, Mode=TwoWay}"
+                  HorizontalAlignment="Right"
+                  ToolTip="Show|Hide LEDs Temperature" />
+    </Grid>
+</UserControl>

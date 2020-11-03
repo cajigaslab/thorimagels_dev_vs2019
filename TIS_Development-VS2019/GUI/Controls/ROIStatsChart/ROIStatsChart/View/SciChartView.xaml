@@ -1,0 +1,124 @@
+﻿<UserControl x:Class="ROIStatsChart.View.SciChartView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:sci="http://schemas.abtsoftware.co.uk/scichart"
+             xmlns:vm="clr-namespace:ROIStatsChart.ViewModel"
+             xmlns:validator="clr-namespace:Validations;assembly=Validations"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:customModifiers="clr-namespace:ROIStatsChart.CustomModifiers"
+             xmlns:ViewModel="clr-namespace:ROIStatsChart.ViewModel"
+             mc:Ignorable="d"
+             IsEnabled="{Binding Path=PanelsEnable, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <ViewModel:FifoVisibleConverter x:Key="fifoVisibleConverter" />
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="65" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <sci:SciChartSurface Name="sciChartSurface"
+                             SeriesSource="{Binding ChartSeries}"
+                             Grid.Row="1">
+            <sci:SciChartSurface.Annotations>
+                <sci:VerticalLineAnnotation Name="CurrentFrameLineAnnotation"
+                                            VerticalAlignment="Stretch"
+                                            IsEditable="{Binding Path=IsInLoad, ConverterParameter=1, Converter={StaticResource fifoVisibleConverter}}"
+                                            LabelTextFormatting="0.00"
+											LabelValue="{Binding XReviewLabel, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                            Stroke="Orange"
+                                            StrokeThickness="{Binding Path=IsInLoad, ConverterParameter=4,Converter={StaticResource fifoVisibleConverter}}"
+                                            X1="{Binding XReviewPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    <sci:VerticalLineAnnotation.AnnotationLabels>
+                        <sci:AnnotationLabel Name="CurrentFrameAnnotationLabel"
+                                             Visibility="{Binding StrokeThickness, ConverterParameter=0 ,Converter={StaticResource fifoVisibleConverter}}"
+                                             LabelPlacement="Axis"
+                                             MouseDown="RedirectToCurrentFrameAnnotation"
+                                             MouseUp="RedirectToCurrentFrameAnnotation"
+                                             MouseMove="RedirectToCurrentFrameAnnotation"
+                                             Foreground="White" />
+                    </sci:VerticalLineAnnotation.AnnotationLabels>
+                </sci:VerticalLineAnnotation>
+            </sci:SciChartSurface.Annotations>
+            <sci:SciChartSurface.XAxis>
+                <sci:NumericAxis Name="XAxis"
+                                 AxisTitle="{Binding ChartXLabel}"
+                                 VisibleRange="{Binding XVisibleRange, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                 AutoRange="{Binding AutoRangeX}" />
+            </sci:SciChartSurface.XAxis>
+            <sci:SciChartSurface.YAxis>
+                <sci:NumericAxis AxisTitle="Value"
+                                 TextFormatting="0.0##E+0"
+                                 AutoRange="{Binding AutoRangeY}">
+                    <sci:NumericAxis.GrowBy>
+                        <sci:DoubleRange Max="0.1"
+                                         Min="0.20" />
+                    </sci:NumericAxis.GrowBy>
+                </sci:NumericAxis>
+            </sci:SciChartSurface.YAxis>
+            <sci:SciChartSurface.ChartModifier>
+                <sci:ModifierGroup>
+                    <sci:RubberBandXyZoomModifier ExecuteOn="MouseRightButton" />
+                    <sci:ZoomExtentsModifier ExecuteOn="MouseDoubleClick"
+                                             XyDirection="XYDirection" />
+                    <customModifiers:RightDoubleClickZoomExtentsModifier ExecuteOn="MouseDoubleClick"
+                                                                         XyDirection="YDirection" />
+                    <sci:ZoomPanModifier x:Name="zoomPanModifier"
+                                         ExecuteOn="MouseLeftButton"
+                                         XyDirection="XYDirection"
+                                         ClipModeX="ClipAtExtents" />
+                    <sci:LegendModifier Name="legendModifier" />
+                    <customModifiers:MouseWheelZoomCustomModifier />
+                    <customModifiers:ChartRolloverModifier />
+                    <!--<sci:RolloverModifier x:Name="rolloverModifier"
+                                          ShowAxisLabels="False"
+                                          UseInterpolation="True" />-->
+                </sci:ModifierGroup>
+            </sci:SciChartSurface.ChartModifier>
+        </sci:SciChartSurface>
+        <StackPanel Grid.Row="0"
+                    Background="{x:Null}">
+            <StackPanel Orientation="Horizontal"
+                        Visibility="{Binding Path=IsFifoVisible,ConverterParameter=0, Converter={StaticResource fifoVisibleConverter}}">
+                <Label VerticalAlignment="Center"
+                       Content="Display Size:" />
+                <TextBox Name="tbFifo"
+                         Width="50"
+                         Height="25"
+                         VerticalAlignment="Center"
+                         validator:Validation.MinValue="0"
+                         validator:Validation.ValidationType="{x:Type system:Int32}"
+                         validator:Validation.NoEmptyValue="True"
+                         Text="{Binding Path=FifoSize, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text">
+                </TextBox>
+                <StackPanel VerticalAlignment="Center">
+                    <RepeatButton Content="+"
+                                  Width="30"
+                                  Height="20"
+                                  Command="{Binding Path=FifoSizePlusCommand}"
+                                  Delay="500"
+                                  Interval="100" />
+                    <RepeatButton Content="-"
+                                  Width="30"
+                                  Height="20"
+                                  Command="{Binding Path=FifoSizeMinusCommand}"
+                                  Delay="500"
+                                  Interval="100" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <CheckBox Margin="5"
+                          Content="Show Cursor Stats"
+                          IsChecked="{Binding Path=IsStatsCursorEnabled}" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

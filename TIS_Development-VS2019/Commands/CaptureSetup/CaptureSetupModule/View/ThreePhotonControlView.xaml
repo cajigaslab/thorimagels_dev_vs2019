@@ -1,0 +1,34 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.ThreePhotonControlView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:tpControl="clr-namespace:ThreePhotonControl;assembly=ThreePhotonControl"
+             Height="Auto"
+             Width="385">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <tpControl:ThreePhotonControlUC Disable3PCheckbox="{Binding Path=Disable3PCheckbox., Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        ThreePhotonPanelEnable="{Binding Path=ThreePhotonPanelEnable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        ThreePhotonEnable="{Binding Path=ThreePhotonEnable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        ThreePhotonPhaseFineMinusCommand="{Binding Path=ThreePhotonPhaseFineMinusCommand}"
+                                        ThreePhotonPhaseFinePlusCommand="{Binding Path=ThreePhotonPhaseFinePlusCommand}"
+                                        ThreePhotonPhaseFine="{Binding Path=ThreePhotonPhaseFine, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        ThreePhotonPhaseCourse="{Binding Path=ThreePhotonPhaseCourse, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        ThreePhotonPhaseCourseMinusCommand="{Binding Path=ThreePhotonPhaseCourseMinusCommand}"
+                                        ThreePhotonPhaseCoursePlusCommand="{Binding Path=ThreePhotonPhaseCoursePlusCommand}"
+                                        ThreePhotonMeasureFrequencyCommand="{Binding Path=ThreePhotonMeasureFrequencyCommand}"
+                                        ThreePhotonFreq="{Binding Path=ThreePhotonFreq, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"                                                                                
+                                        LSMFIRFilterIndex="{Binding Path=LSMFIRFilterIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        LSMFIRFilterTapIndex="{Binding Path=LSMFIRFilterTapIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        LSMFIRFilterTapValue="{Binding Path=LSMFIRFilterTapValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        FIRSettingsVisibility="{Binding Path=FIRSettingsVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                        ThreePhotonPhaseCourseVisibility="{Binding Path=ThreePhotonPhaseCourseVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+        </tpControl:ThreePhotonControlUC>
+    </Grid>
+</UserControl>
+

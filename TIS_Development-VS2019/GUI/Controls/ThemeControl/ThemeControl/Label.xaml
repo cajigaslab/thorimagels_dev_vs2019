@@ -1,0 +1,60 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:tc="clr-namespace:ThemeControl">
+    <Style x:Key="{x:Type Label}"
+           TargetType="Label">
+        <Setter Property="Foreground"
+                Value="White" />
+    </Style>
+    <Style x:Key="LabelOutOfRangeStyle"
+           TargetType="Label">
+        <Style.Resources>
+            <Storyboard x:Key="flashingAnimation">
+                <DoubleAnimation AutoReverse="True"
+                                 Duration="0:0:0.5"
+                                 From="1"
+                                 RepeatBehavior="Forever"
+                                 Storyboard.TargetProperty="(Background).(Opacity)"
+                                 To="0.5" />
+            </Storyboard>
+        </Style.Resources>
+        <Style.Triggers>
+            <Trigger  Property="tc:Extensions.OutOfRange"
+                      Value="1">
+                <Setter Property="Background"
+                        Value="Green" />
+                <Trigger.EnterActions>
+                    <BeginStoryboard Name="flashingGreen"
+                                     Storyboard="{StaticResource flashingAnimation}" />
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                    <StopStoryboard BeginStoryboardName="flashingGreen" />
+                </Trigger.ExitActions>
+            </Trigger>
+            <Trigger  Property="tc:Extensions.OutOfRange"
+                      Value="2">
+                <Setter Property="Background"
+                        Value="Yellow" />
+                <Trigger.EnterActions>
+                    <BeginStoryboard Name="flashingYellow"
+                                     Storyboard="{StaticResource flashingAnimation}" />
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                    <StopStoryboard BeginStoryboardName="flashingYellow" />
+                </Trigger.ExitActions>
+            </Trigger>
+            <Trigger  Property="tc:Extensions.OutOfRange"
+                      Value="3">
+                <Setter Property="Background"
+                        Value="Red" />
+                <Trigger.EnterActions>
+                    <BeginStoryboard Name="flashingRed"
+                                     Storyboard="{StaticResource flashingAnimation}" />
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                    <StopStoryboard BeginStoryboardName="flashingRed" />
+                </Trigger.ExitActions>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+</ResourceDictionary>

@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{17E88FA6-5A92-4E42-8A94-32A1799A4546}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThemeControl", "ThemeControl\ThemeControl.csproj", "{868EAEA3-7DA7-4FC4-A28D-4E1B80F079E9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThemeTestApp", "ThemeTestApp\ThemeTestApp.csproj", "{E567859F-2F2F-4942-AAE3-A442F919D830}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://vateam02:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = ThemeControl\\ThemeControl.csproj
+		SccProjectName1 = ThemeControl
+		SccLocalPath1 = ThemeControl
+		SccProjectUniqueName2 = ThemeTestApp\\ThemeTestApp.csproj
+		SccProjectName2 = ThemeTestApp
+		SccLocalPath2 = ThemeTestApp
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{868EAEA3-7DA7-4FC4-A28D-4E1B80F079E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{868EAEA3-7DA7-4FC4-A28D-4E1B80F079E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{868EAEA3-7DA7-4FC4-A28D-4E1B80F079E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{868EAEA3-7DA7-4FC4-A28D-4E1B80F079E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E567859F-2F2F-4942-AAE3-A442F919D830}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E567859F-2F2F-4942-AAE3-A442F919D830}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E567859F-2F2F-4942-AAE3-A442F919D830}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E567859F-2F2F-4942-AAE3-A442F919D830}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

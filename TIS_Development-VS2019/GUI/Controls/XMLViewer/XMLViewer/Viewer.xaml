@@ -1,0 +1,170 @@
+﻿<UserControl x:Class="XMLViewer.Viewer"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:xmlstack="clr-namespace:System.Xml;assembly=System.Xml"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:XMLViewer">
+    <UserControl.Resources>
+        <!--<local:SearchToVisibilityConverter x:Key="searchConverter" />-->
+        <SolidColorBrush Color="Black"
+                         x:Key="xmlValueBrush" />
+        <SolidColorBrush Color="White"
+                         x:Key="xmAttributeBrush" />
+        <SolidColorBrush Color="White"
+                         x:Key="xmlTagBrush" />
+        <SolidColorBrush Color="White"
+                         x:Key="xmlMarkBrush" />
+        <SolidColorBrush Color="DodgerBlue"
+                         x:Key="xmlSearchBrush" />
+
+        <Style TargetType="{x:Type TreeViewItem}">
+            <Setter Property="IsExpanded"
+                    Value="True" />
+        </Style>
+
+        <Style x:Key="StyleOnMouseOver"
+               TargetType="StackPanel">
+            <Setter Property="Background"
+                    Value="#FF333333"></Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver"
+                         Value="True">
+                    <Setter Property="BitmapEffect">
+                        <Setter.Value>
+                            <OuterGlowBitmapEffect GlowColor="Navy"
+                                                   GlowSize="4"></OuterGlowBitmapEffect>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <HierarchicalDataTemplate x:Key="attributeTemplate">
+            <StackPanel Margin="1"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Left">
+                <!--Visibility="{Binding ElementName=tbName, Path=Text, Converter={StaticResource searchConverter}, ConverterParameter=Grayscale}"-->
+                <TextBlock x:Name="tbName"
+                           Text="{Binding Path=Name,Mode=OneWay}"
+                           Foreground="White" />
+                <TextBlock Text="="
+                           Foreground="{StaticResource xmlMarkBrush}" />
+                <TextBox Text="{Binding Path=Value}"
+                         GotFocus="TextBox_GotFocus" />
+            </StackPanel>
+        </HierarchicalDataTemplate>
+
+        <HierarchicalDataTemplate x:Key="treeViewTemplate"
+                                  ItemsSource="{Binding XPath=child::node()}">
+            <StackPanel Name="treeStack"
+                        Orientation="Horizontal"
+                        Margin="3"
+                        HorizontalAlignment="Center"
+                        Style="{StaticResource StyleOnMouseOver}">
+
+                <TextBlock Text="&lt;"
+                           HorizontalAlignment="Center"
+                           Foreground="{StaticResource xmlMarkBrush}"
+                           x:Name="startTag"
+                           Visibility="Hidden" />
+
+                <TextBlock Text="{Binding Path=Name}"
+                           Margin="0"
+                           HorizontalAlignment="Center"
+                           x:Name="xmlTag"
+                           Foreground="{StaticResource xmlTagBrush}" />
+
+                <TreeViewItem IsExpanded="True"
+                              Name="attributeTreeView"
+                              ItemsSource="{Binding Path=Attributes}"
+                              ItemTemplate="{StaticResource attributeTemplate}">
+                </TreeViewItem>
+
+                <TextBlock Text="&gt;"
+                           HorizontalAlignment="Center"
+                           Foreground="{StaticResource xmlMarkBrush}"
+                           x:Name="endTag"
+                           Visibility="Hidden" />
+
+            </StackPanel>
+
+            <HierarchicalDataTemplate.Triggers>
+                <DataTrigger Binding="{Binding NodeType}">
+                    <DataTrigger.Value>
+                        <xmlstack:XmlNodeType>Text</xmlstack:XmlNodeType>
+                    </DataTrigger.Value>
+                    <Setter Property="Text"
+                            Value="{Binding InnerText}"
+                            TargetName="xmlTag" />
+                    <Setter Property="Foreground"
+                            Value="Blue"
+                            TargetName="xmlTag" />
+                    <Setter Property="Visibility"
+                            Value="Collapsed"
+                            TargetName="startTag" />
+                    <Setter Property="Visibility"
+                            Value="Collapsed"
+                            TargetName="endTag" />
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding HasChildNodes}"
+                             Value="False">
+                    <Setter Property="Text"
+                            Value="/&gt;"
+                            TargetName="endTag" />
+                </DataTrigger>
+            </HierarchicalDataTemplate.Triggers>
+        </HierarchicalDataTemplate>
+
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <StackPanel Orientation="Horizontal"
+                    Grid.Row="0"
+                    Background="#FF333333">
+            <TextBox Name="tbSearch"
+                     Width="120"
+                     Height="30"
+                     Text="{Binding SearchText}"
+                     TextChanged="tbSearch_TextChanged"
+                     PreviewMouseDown="tbSearch_MouseDown"
+                     PreviewLostKeyboardFocus="tbSearch_LostFocus"
+                     Margin="1" />
+            <Button Name="btnNext"
+                    Content="Next"
+                    Width="50"
+                    Margin="1"
+                    Click="btnNext_Click" />
+            <Button Name="btnPrevious"
+                    Content="Prev"
+                    Width="50"
+                    Margin="1"
+                    Click="btnPrev_Click" />
+            <Label Name="lbSearchFound"
+                   Content="{Binding SearchFoundText}"
+                   Background="#FF333333"
+                   Foreground="White"
+                   Width="100" />
+        </StackPanel>
+        <Grid Grid.Row="1"
+              Grid.ColumnSpan="2">
+            <TreeView Background="#FF333333"   
+                      Name="xmlTree"
+                      ItemTemplate="{StaticResource treeViewTemplate}"
+                      BorderBrush="{x:Null}">
+                <TreeView.ItemContainerStyle>
+                    <Style TargetType="{x:Type TreeViewItem}">
+                        <Setter Property="local:TreeViewItemBehavior.IsBroughtIntoViewWhenSelected"
+                                Value="True" />
+                        <Setter Property="IsExpanded"
+                                Value="True" />
+                    </Style>
+                </TreeView.ItemContainerStyle>
+            </TreeView>
+        </Grid>
+    </Grid>
+</UserControl>
+

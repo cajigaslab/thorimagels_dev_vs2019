@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns:dm0="http://schemas.microsoft.com/VisualStudio/2008/DslTools/Core" xmlns:dm1="http://schemas.microsoft.com/dsltools/Kernel" xmlns:dm2="http://schemas.microsoft.com/dsltools/Component" xmlns:dm3="http://schemas.microsoft.com/dsltools/UseCase" xmlns:dm4="http://schemas.microsoft.com/dsltools/Activity" xmlns:dm5="http://schemas.microsoft.com/dsltools/Interaction" xmlns:dm6="http://schemas.microsoft.com/dsltools/UmlModelLibrary" xmlns:dm7="http://schemas.microsoft.com/dsltools/UmlDiagrams" xmlns:dm8="http://schemas.microsoft.com/dsltools/LogicalClassDesigner"
+  dslVersion="1.0.0.0"
+  Id="6b4f88d7-0e91-40c6-ab73-3356a7a3ce3e"
+  name="SpinnerProgress"
+  visibility="Private" xmlns="http://schemas.microsoft.com/dsltools/ModelStore">
+  <referencesInternal>
+    <reference
+      Id="410c880c-93e6-477b-8540-c044bc0a61ba"
+      handle="viewcode://./CodeSchema_Namespace?Namespace%3DSpinnerProgress"
+      tag="ViewCode" />
+  </referencesInternal>
+  <packagedElements>
+    <packageHasNamedElement>
+      <class
+        Id="8f4132d2-c2cb-44bb-a6af-f4e17390ab6d"
+        name="SpinnerProgressControl"
+        isAbstract="false"
+        isLeaf="false"
+        isActiveClass="false">
+        <referencesInternal>
+          <reference
+            Id="8e813374-2836-4170-a400-b298699e7d39"
+            handle="viewcode://./CodeSchema_Class?Assembly%3Dfile:%2F%2F%2FD:%2FTIS%2FThorImage%2FTIS_Development%2FGUI%2FControls%2FSpinnerProgress%2FSpinnerProgress%2Fbin%2FDebug%2FSpinnerProgress.dll Namespace%3DSpinnerProgress Type%3DSpinnerProgressControl"
+            tag="ViewCode" />
+        </referencesInternal>
+        <appliedStereotypesInternal>
+          <stereotypeInstance
+            Id="805d178a-48f4-45ed-b1ae-5216d9c0edee"
+            name="class"
+            profile="CSharpProfile">
+            <propertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="a59a50d3-1614-44ac-a29b-f0bc5fc07f3e">
+                <propertyInstance
+                  Id="91d1b765-8e86-4d06-8b92-c0727284a587"
+                  name="ClrAttributes" />
+              </stereotypeInstanceHasPropertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="072380f7-7c62-45b8-b68d-2dd1c6a6aee0">
+                <propertyInstance
+                  Id="13e7562a-a1c0-4630-98f0-02944377f985"
+                  name="IsPartial"
+                  value="false" />
+              </stereotypeInstanceHasPropertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="bd69dc5b-ae77-410f-b00a-718690d08268">
+                <propertyInstance
+                  Id="c863f98e-c5e7-4956-a8d2-c4b999f0303b"
+                  name="IsStatic"
+                  value="False" />
+              </stereotypeInstanceHasPropertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="c66327dc-dfe4-4b01-b998-ab25b2b2ac87">
+                <propertyInstance
+                  Id="e69d46c4-d705-45fd-88b0-c196178650ea"
+                  name="IsUnsafe"
+                  value="false" />
+              </stereotypeInstanceHasPropertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="7f18307e-88e3-46b7-ae96-ca76ad52eba6">
+                <propertyInstance
+                  Id="0f087dbf-e320-493b-a943-a5dc16433dc4"
+                  name="PackageVisibility"
+                  value="internal" />
+              </stereotypeInstanceHasPropertyInstances>
+            </propertyInstances>
+          </stereotypeInstance>
+        </appliedStereotypesInternal>
+      </class>
+    </packageHasNamedElement>
+  </packagedElements>
+</package>

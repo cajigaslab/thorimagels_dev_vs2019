@@ -1,0 +1,188 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RealTimeDataSettings>
+  <UserSettings>
+    <SciChart useFifo="1" fifoSize="1000" />
+    <Database pathAndName="C:\Users\Thorlabs\Documents\ThorImageLS\Application Settings\ThorDatabase.db" />
+    <Save enable="0" forceIPC="1" path="C:\Temp" name="SyncData001"/>
+    <Configuration OTM="0" VisibleChoices="63" />
+  </UserSettings>
+  <DaqDevices>
+    <AcquireBoard type="NI6363" devID="Dev3" active="1" totalAI="6" totalDI="0" duration="10" StimulusLimit="-0.5" hwTrigMode="0" hwTrigChannel="/PFI7" hwTrigType="0">
+      <DataChannel enable="1" alias="Vx" signalType="0" group="/AI" physicalChannel="/ai0" sample="1" Stimulus="0" red="255" green="200" blue="150" visible="0" />
+      <DataChannel enable="1" alias="Vy" signalType="0" group="/AI" physicalChannel="/ai1" sample="0" Stimulus="0" red="99" green="60" blue="233" visible="0" />
+      <DataChannel enable="1" alias="xsum" signalType="0" group="/AI" physicalChannel="/ai2" sample="0" Stimulus="0" red="0" green="0" blue="89" visible="0" />
+      <DataChannel enable="1" alias="ysum" signalType="0" group="/AI" physicalChannel="/ai3" sample="0" Stimulus="0" red="255" green="0" blue="0" visible="0" />
+      <DataChannel enable="1" alias="laser" signalType="0" group="/AI" physicalChannel="/ai4" sample="0" Stimulus="0" red="255" green="179" blue="0" />
+      <DataChannel enable="1" alias="zstage" signalType="0" group="/AI" physicalChannel="/ai5" sample="0" Stimulus="0" red="106" green="0" blue="0" />
+      <DataChannel enable="0" alias="ai6" signalType="0" group="/AI" physicalChannel="/ai6" sample="0" Stimulus="0" red="0" green="127" blue="255" />
+      <DataChannel enable="0" alias="ai7" signalType="0" group="/AI" physicalChannel="/ai7" sample="0" Stimulus="0" red="0" green="255" blue="127" />
+      <DataChannel enable="0" alias="Line0" signalType="1" group="/DI" physicalChannel="/port0/line0" sample="0" Stimulus="0" red="0" green="0" blue="255" />
+      <DataChannel enable="0" alias="FrameOut" signalType="1" group="/DI" physicalChannel="/port0/line1" sample="0" Stimulus="0" red="255" green="126" blue="0" />
+      <DataChannel enable="0" alias="FrameIn" signalType="1" group="/DI" physicalChannel="/port0/line2" sample="0" Stimulus="0" red="133" green="47" blue="255" />
+      <DataChannel enable="0" alias="BleachOut" signalType="1" group="/DI" physicalChannel="/port0/line3" sample="0" Stimulus="0" red="255" green="255" blue="0" />
+      <DataChannel enable="0" alias="Line4" signalType="1" group="/DI" physicalChannel="/port0/line4" sample="0" Stimulus="0" red="255" green="255" blue="0" />
+      <DataChannel enable="0" alias="BleachComplete" signalType="1" group="/DI" physicalChannel="/port0/line5" sample="0" Stimulus="0" red="70" green="180" blue="0" />
+      <DataChannel enable="0" alias="Line6" signalType="1" group="/DI" physicalChannel="/port0/line6" sample="0" Stimulus="0" red="69" green="180" blue="0" />
+      <DataChannel enable="0" alias="Line7" signalType="1" group="/DI" physicalChannel="/port0/line7" sample="0" Stimulus="0" red="240" green="70" blue="180" />
+      <DataChannel enable="0" alias="PockelDigOutput" signalType="1" group="/DI" physicalChannel="/port0/line8" sample="0" Stimulus="0" red="255" green="195" blue="255" />
+      <DataChannel enable="0" alias="CompleteOuput" signalType="1" group="/DI" physicalChannel="/port0/line9" sample="0" Stimulus="0" red="0" green="105" blue="0" />
+      <DataChannel enable="0" alias="CycleOutput" signalType="1" group="/DI" physicalChannel="/port0/line10" sample="0" Stimulus="0" red="140" green="70" blue="130" />
+      <DataChannel enable="0" alias="IterationOutput" signalType="1" group="/DI" physicalChannel="/port0/line11" sample="0" Stimulus="0" red="0" green="255" blue="255" />
+      <DataChannel enable="0" alias="PatternOutput" signalType="1" group="/DI" physicalChannel="/port0/line12" sample="0" Stimulus="0" red="154" green="127" blue="0" />
+      <DataChannel enable="0" alias="PatternComplete" signalType="1" group="/DI" physicalChannel="/port0/line13" sample="0" Stimulus="0" red="70" green="191" blue="159" />
+      <DataChannel enable="0" alias="Line14" signalType="1" group="/DI" physicalChannel="/port0/line14" sample="0" Stimulus="0" red="195" green="164" blue="157" />
+      <DataChannel enable="0" alias="Line15" signalType="1" group="/DI" physicalChannel="/port0/line15" sample="0" Stimulus="0" red="185" green="0" blue="0" />
+      <DataChannel enable="1" alias="FrameCounter" signalType="2" group="/CI" physicalChannel="/PFI3" sample="0" Stimulus="0" red="255" green="70" blue="70" />
+      <VirtualChannel enable="1" alias="xnorm" signalType="6" group="/VT" physicalChannel="Vx/xsum" red="55" green="100" blue="50" plot="1" visible="1" />
+      <VirtualChannel enable="1" alias="ynorm" signalType="6" group="/VT" physicalChannel="Vy/ysum" red="199" green="160" blue="233" plot="1" visible="1" />
+      <VirtualChannel enable="1" alias="ForceXpN" signalType="6" group="/VT" physicalChannel="VAR3 / VAR1 * xnorm" red="255" green="200" blue="150" plot="1" visible="0" />
+      <VirtualChannel enable="1" alias="ForceYpN" signalType="6" group="/VT" physicalChannel="VAR4 / VAR2 * ynorm" red="99" green="60" blue="233" plot="1" visible="0" />
+	  <VirtualChannel enable="1" alias="DispXnm" signalType="6" group="/VT" physicalChannel="xnorm / VAR1" red="255" green="100" blue="150" plot="1" visible="0" />
+      <VirtualChannel enable="1" alias="DispYnm" signalType="6" group="/VT" physicalChannel="ynorm / VAR2" red="99" green="160" blue="233" plot="1" visible="0" />
+	  <VirtualChannel enable="1" alias="laserMW" signalType="6" group="/VT" physicalChannel="VAR5 * laser" red="255" green="179" blue="0" plot="1" visible="0" />
+      <VirtualChannel enable="1" alias="zstageUM" signalType="6" group="/VT" physicalChannel="VAR6 * zstage" red="106" green="0" blue="0" plot="1" visible="0" />
+      <SampleRate name="High 1MHz" enable="0" rate="1000001" />
+      <SampleRate name="Med-High 200kHz" enable="0" rate="200000" />
+      <SampleRate name="Medium 100kHz" enable="1" rate="100000" />
+      <SampleRate name="Low 30kHz" enable="0" rate="30000" />
+      <Display resolution="High" enable="1" value="10" />
+      <Display resolution="Medium" enable="0" value="100" />
+      <Display resolution="Low" enable="0" value="1000" />
+      <Bleach shutterLine="/PFI5" bleachLine="/port0/line4" outputLine="/port0/line6" pmtCloseTime="25" bleachTime="100" bleachIdleTime="0" bleachIteration="1" outDelayTime="6" bleachTrigMode="0" hwTrigLine="/PFI7" cycle="1" interval="0" />
+      <Invert inputLine="10" outputLine="/PFI11" />
+      <SpectralDomain freqMin="1" freqMax="3000" liveSampleSec="0.2" sampleMinSec="0" sampleMaxSec="2" freqAvgNum="10" freqAvgMode="0" blockNum="100">
+        <SpectralChannel enable="1" alias="VxS" signalType="7" group="/FI" physicalChannel="Vx" red="255" green="200" blue="150" visible="0" yLabel="arb. unit" />
+        <SpectralChannel enable="1" alias="VyS" signalType="7" group="/FI" physicalChannel="Vy" red="99" green="60" blue="233" visible="0" yLabel="arb. unit" />
+        <SpectralChannel enable="1" alias="Snormx" signalType="7" group="/FI" physicalChannel="xnorm" red="55" green="100" blue="50" visible="0" yLabel="arb. unit" />
+        <SpectralChannel enable="1" alias="Snormy" signalType="7" group="/FI" physicalChannel="ynorm" red="199" green="160" blue="233" visible="0" yLabel="arb. unit" />
+        <VirtualChannel enable="1" alias="PSx" signalType="8" group="/VF" physicalChannel="POWERSPECTRUMX( Snormx )" red="55" green="100" blue="50" plot="1" visible="1" />
+        <VirtualChannel enable="1" alias="Fx" signalType="8" group="/VF" physicalChannel="LORENTZIANFITX( Snormx )" red="255" green="200" blue="150" plot="1" visible="1" />
+        <VirtualChannel enable="1" alias="PSy" signalType="8" group="/VF" physicalChannel="POWERSPECTRUMY( Snormy )" red="199" green="160" blue="233" visible="1" />
+        <VirtualChannel enable="1" alias="Fy" signalType="8" group="/VF" physicalChannel="LORENTZIANFITY( Snormy )" red="199" green="160" blue="233" visible="1" />
+        <VirtualChannel enable="1" alias="Crosstalk" signalType="8" group="/VF" physicalChannel="CROSSTALK( Snormx, Snormy )" red="109" green="110" blue="33" visible="1" />
+      </SpectralDomain>
+    </AcquireBoard>
+    <AcquireBoard type="NI6363-USB" devID="Dev3" active="0" totalAI="2" totalDI="4" duration="0" StimulusLimit="-0.5" hwTrigMode="0" hwTrigChannel="/PFI7" hwTrigType="0">
+      <DataChannel enable="1" alias="PiezoMonitor" signalType="0" group="/AI" physicalChannel="/ai0" sample="1" Stimulus="0" red="255" green="200" blue="150" />
+      <DataChannel enable="1" alias="Pockels1Monitor" signalType="0" group="/AI" physicalChannel="/ai1" sample="0" Stimulus="0" red="99" green="60" blue="233" />
+      <DataChannel enable="0" alias="ai2" signalType="0" group="/AI" physicalChannel="/ai2" sample="0" Stimulus="0" red="0" green="0" blue="89" />
+      <DataChannel enable="0" alias="ai3" signalType="0" group="/AI" physicalChannel="/ai3" sample="0" Stimulus="0" red="255" green="0" blue="0" />
+      <DataChannel enable="0" alias="ai4" signalType="0" group="/AI" physicalChannel="/ai4" sample="0" Stimulus="0" red="255" green="179" blue="0" />
+      <DataChannel enable="0" alias="ai5" signalType="0" group="/AI" physicalChannel="/ai5" sample="0" Stimulus="0" red="106" green="0" blue="0" />
+      <DataChannel enable="0" alias="ai6" signalType="0" group="/AI" physicalChannel="/ai6" sample="0" Stimulus="0" red="0" green="127" blue="255" />
+      <DataChannel enable="0" alias="ai7" signalType="0" group="/AI" physicalChannel="/ai7" sample="0" Stimulus="0" red="0" green="255" blue="127" />
+      <DataChannel enable="0" alias="Line0" signalType="1" group="/DI" physicalChannel="/port0/line0" sample="0" Stimulus="0" red="0" green="0" blue="255" />
+      <DataChannel enable="1" alias="FrameOut" signalType="1" group="/DI" physicalChannel="/port0/line1" sample="0" Stimulus="0" red="255" green="126" blue="0" />
+      <DataChannel enable="1" alias="FrameIn" signalType="1" group="/DI" physicalChannel="/port0/line2" sample="0" Stimulus="0" red="133" green="47" blue="255" />
+      <DataChannel enable="1" alias="BleachOut" signalType="1" group="/DI" physicalChannel="/port0/line3" sample="0" Stimulus="0" red="255" green="255" blue="0" />
+      <DataChannel enable="0" alias="Line4" signalType="1" group="/DI" physicalChannel="/port0/line4" sample="0" Stimulus="0" red="255" green="255" blue="0" />
+      <DataChannel enable="1" alias="BleachComplete" signalType="1" group="/DI" physicalChannel="/port0/line5" sample="0" Stimulus="0" red="70" green="180" blue="0" />
+      <DataChannel enable="0" alias="Line6" signalType="1" group="/DI" physicalChannel="/port0/line6" sample="0" Stimulus="0" red="69" green="180" blue="0" />
+      <DataChannel enable="0" alias="Line7" signalType="1" group="/DI" physicalChannel="/port0/line7" sample="0" Stimulus="0" red="240" green="70" blue="180" />
+      <DataChannel enable="1" alias="FrameCounter" signalType="2" group="/CI" physicalChannel="/PFI3" sample="0" Stimulus="0" red="255" green="70" blue="70" />
+      <SampleRate name="High 1MHz" enable="0" rate="1000001" />
+      <SampleRate name="Med-High 200kHz" enable="0" rate="200000" />
+      <SampleRate name="Medium 100kHz" enable="0" rate="100000" />
+      <SampleRate name="Low 20kHz" enable="1" rate="20000" />
+      <Display resolution="High" enable="1" value="10" />
+      <Display resolution="Medium" enable="0" value="100" />
+      <Display resolution="Low" enable="0" value="1000" />
+      <Bleach shutterLine="/PFI5" bleachLine="/port0/line4" outputLine="/port0/line6" pmtCloseTime="25" bleachTime="100" bleachIdleTime="0" bleachIteration="1" outDelayTime="6" bleachTrigMode="0" hwTrigLine="/PFI7" cycle="1" interval="0" />
+      <Invert inputLine="10" outputLine="/PFI11" />
+    </AcquireBoard>
+    <AcquireBoard type="NI6321" devID="Dev3" active="0" totalAI="2" totalDI="4" duration="0" StimulusLimit="-0.5" hwTrigMode="0" hwTrigChannel="/PFI7" hwTrigType="0">
+      <DataChannel enable="1" alias="PiezoMonitor" signalType="0" group="/AI" physicalChannel="/ai0" sample="1" Stimulus="0" red="255" green="200" blue="150" />
+      <DataChannel enable="1" alias="Pockels1Monitor" signalType="0" group="/AI" physicalChannel="/ai1" sample="0" Stimulus="0" red="99" green="60" blue="233" />
+      <DataChannel enable="0" alias="ai2" signalType="0" group="/AI" physicalChannel="/ai2" sample="0" Stimulus="0" red="0" green="0" blue="89" />
+      <DataChannel enable="0" alias="ai3" signalType="0" group="/AI" physicalChannel="/ai3" sample="0" Stimulus="0" red="255" green="0" blue="0" />
+      <DataChannel enable="0" alias="ai4" signalType="0" group="/AI" physicalChannel="/ai4" sample="0" Stimulus="0" red="255" green="179" blue="0" />
+      <DataChannel enable="0" alias="ai5" signalType="0" group="/AI" physicalChannel="/ai5" sample="0" Stimulus="0" red="106" green="0" blue="0" />
+      <DataChannel enable="0" alias="ai6" signalType="0" group="/AI" physicalChannel="/ai6" sample="0" Stimulus="0" red="0" green="127" blue="255" />
+      <DataChannel enable="0" alias="ai7" signalType="0" group="/AI" physicalChannel="/ai7" sample="0" Stimulus="0" red="0" green="255" blue="127" />
+      <DataChannel enable="0" alias="Line0" signalType="1" group="/DI" physicalChannel="/port0/line0" sample="0" Stimulus="0" red="0" green="0" blue="255" />
+      <DataChannel enable="1" alias="FrameOut" signalType="1" group="/DI" physicalChannel="/port0/line1" sample="0" Stimulus="0" red="255" green="126" blue="0" />
+      <DataChannel enable="1" alias="FrameIn" signalType="1" group="/DI" physicalChannel="/port0/line2" sample="0" Stimulus="0" red="133" green="47" blue="255" />
+      <DataChannel enable="1" alias="BleachOut" signalType="1" group="/DI" physicalChannel="/port0/line3" sample="0" Stimulus="0" red="255" green="255" blue="0" />
+      <DataChannel enable="0" alias="Line4" signalType="1" group="/DI" physicalChannel="/port0/line4" sample="0" Stimulus="0" red="255" green="255" blue="0" />
+      <DataChannel enable="1" alias="BleachComplete" signalType="1" group="/DI" physicalChannel="/port0/line5" sample="0" Stimulus="0" red="70" green="180" blue="0" />
+      <DataChannel enable="0" alias="Line6" signalType="1" group="/DI" physicalChannel="/port0/line6" sample="0" Stimulus="0" red="69" green="180" blue="0" />
+      <DataChannel enable="0" alias="Line7" signalType="1" group="/DI" physicalChannel="/port0/line7" sample="0" Stimulus="0" red="240" green="70" blue="180" />
+      <DataChannel enable="1" alias="FrameCounter" signalType="2" group="/CI" physicalChannel="/PFI3" sample="0" Stimulus="0" red="255" green="70" blue="70" />
+      <SampleRate name="High 250kHz" enable="0" rate="250000" />
+      <SampleRate name="Med-High 200kHz" enable="0" rate="200000" />
+      <SampleRate name="Medium 100kHz" enable="0" rate="100000" />
+      <SampleRate name="Low 30kHz" enable="1" rate="30000" />
+      <Display resolution="High" enable="1" value="10" />
+      <Display resolution="Medium" enable="0" value="100" />
+      <Display resolution="Low" enable="0" value="1000" />
+      <Bleach shutterLine="/PFI5" bleachLine="/port0/line4" outputLine="/port0/line6" pmtCloseTime="25" bleachTime="100" bleachIdleTime="0" bleachIteration="1" outDelayTime="6" bleachTrigMode="0" hwTrigLine="/PFI7" cycle="1" interval="0" />
+      <Invert inputLine="10" outputLine="/PFI11" />
+    </AcquireBoard>
+    <AcquireBoard type="NI6341" devID="Dev3" active="0" totalAI="2" totalDI="4" duration="0" StimulusLimit="-0.5" hwTrigMode="0" hwTrigChannel="/PFI7" hwTrigType="0">
+      <DataChannel enable="1" alias="PiezoMonitor" signalType="0" group="/AI" physicalChannel="/ai0" sample="1" Stimulus="0" red="255" green="200" blue="150" visible="1" />
+      <DataChannel enable="1" alias="Pockels1Monitor" signalType="0" group="/AI" physicalChannel="/ai1" sample="0" Stimulus="0" red="99" green="60" blue="233" visible="1" />
+      <DataChannel enable="0" alias="ai2" signalType="0" group="/AI" physicalChannel="/ai2" sample="0" Stimulus="0" red="0" green="0" blue="89" />
+      <DataChannel enable="0" alias="ai3" signalType="0" group="/AI" physicalChannel="/ai3" sample="0" Stimulus="0" red="255" green="0" blue="0" />
+      <DataChannel enable="0" alias="ai4" signalType="0" group="/AI" physicalChannel="/ai4" sample="0" Stimulus="0" red="255" green="179" blue="0" />
+      <DataChannel enable="0" alias="ai5" signalType="0" group="/AI" physicalChannel="/ai5" sample="0" Stimulus="0" red="106" green="0" blue="0" />
+      <DataChannel enable="0" alias="ai6" signalType="0" group="/AI" physicalChannel="/ai6" sample="0" Stimulus="0" red="0" green="127" blue="255" />
+      <DataChannel enable="0" alias="ai7" signalType="0" group="/AI" physicalChannel="/ai7" sample="0" Stimulus="0" red="0" green="255" blue="127" />
+      <DataChannel enable="0" alias="Line0" signalType="1" group="/DI" physicalChannel="/port0/line0" sample="0" Stimulus="0" red="0" green="0" blue="255" />
+      <DataChannel enable="1" alias="FrameOut" signalType="1" group="/DI" physicalChannel="/port0/line1" sample="0" Stimulus="0" red="255" green="126" blue="0" />
+      <DataChannel enable="1" alias="FrameIn" signalType="1" group="/DI" physicalChannel="/port0/line2" sample="0" Stimulus="0" red="133" green="47" blue="255" />
+      <DataChannel enable="1" alias="BleachOut" signalType="1" group="/DI" physicalChannel="/port0/line3" sample="0" Stimulus="0" red="255" green="255" blue="0" />
+      <DataChannel enable="0" alias="Line4" signalType="1" group="/DI" physicalChannel="/port0/line4" sample="0" Stimulus="0" red="255" green="255" blue="0" />
+      <DataChannel enable="1" alias="BleachComplete" signalType="1" group="/DI" physicalChannel="/port0/line5" sample="0" Stimulus="0" red="70" green="180" blue="0" />
+      <DataChannel enable="0" alias="Line6" signalType="1" group="/DI" physicalChannel="/port0/line6" sample="0" Stimulus="0" red="69" green="180" blue="0" />
+      <DataChannel enable="0" alias="Line7" signalType="1" group="/DI" physicalChannel="/port0/line7" sample="0" Stimulus="0" red="240" green="70" blue="180" />
+      <DataChannel enable="1" alias="FrameCounter" signalType="2" group="/CI" physicalChannel="/PFI3" sample="0" Stimulus="0" red="255" green="70" blue="70" />
+      <SampleRate name="High 500kHz" enable="0" rate="500000" />
+      <SampleRate name="Med-High 200kHz" enable="0" rate="200000" />
+      <SampleRate name="Medium 100kHz" enable="0" rate="100000" />
+      <SampleRate name="Low 20kHz" enable="1" rate="20000" />
+      <Display resolution="High" enable="1" value="10" />
+      <Display resolution="Medium" enable="0" value="100" />
+      <Display resolution="Low" enable="0" value="1000" />
+      <Bleach shutterLine="/PFI5" bleachLine="/port0/line4" outputLine="/port0/line6" pmtCloseTime="25" bleachTime="100" bleachIdleTime="0" bleachIteration="1" outDelayTime="6" bleachTrigMode="0" hwTrigLine="/PFI7" cycle="1" interval="0" />
+      <Invert inputLine="10" outputLine="/PFI11" />
+    </AcquireBoard>
+    <AcquireBoard type="Simulator" devID="NONE" active="0" totalAI="2" totalDI="3" duration="0" StimulusLimit="-0.5" hwTrigMode="0" hwTrigChannel="/PFI7" hwTrigType="0">
+      <DataChannel enable="1" alias="ai0" signalType="0" group="/AI" physicalChannel="/ai0" sample="1" Stimulus="0" red="255" green="200" blue="150" />
+      <DataChannel enable="1" alias="ai1" signalType="0" group="/AI" physicalChannel="/ai1" sample="0" Stimulus="0" red="99" green="60" blue="233" />
+      <DataChannel enable="0" alias="ai2" signalType="0" group="/AI" physicalChannel="/ai2" sample="0" Stimulus="0" red="0" green="0" blue="89" />
+      <DataChannel enable="0" alias="ai3" signalType="0" group="/AI" physicalChannel="/ai3" sample="0" Stimulus="0" red="255" green="0" blue="0" />
+      <DataChannel enable="0" alias="ai4" signalType="0" group="/AI" physicalChannel="/ai4" sample="0" Stimulus="0" red="255" green="179" blue="0" />
+      <DataChannel enable="0" alias="ai5" signalType="0" group="/AI" physicalChannel="/ai5" sample="0" Stimulus="0" red="106" green="0" blue="0" />
+      <DataChannel enable="0" alias="ai6" signalType="0" group="/AI" physicalChannel="/ai6" sample="0" Stimulus="0" red="0" green="127" blue="255" />
+      <DataChannel enable="0" alias="ai7" signalType="0" group="/AI" physicalChannel="/ai7" sample="0" Stimulus="0" red="0" green="255" blue="127" />
+      <DataChannel enable="0" alias="Line0" signalType="1" group="/DI" physicalChannel="/port0/line0" sample="0" Stimulus="0" red="0" green="0" blue="255" />
+      <DataChannel enable="1" alias="Line1" signalType="1" group="/DI" physicalChannel="/port0/line1" sample="0" Stimulus="0" red="255" green="126" blue="0" />
+      <DataChannel enable="0" alias="Line2" signalType="1" group="/DI" physicalChannel="/port0/line2" sample="0" Stimulus="0" red="133" green="47" blue="255" />
+      <DataChannel enable="1" alias="Line3" signalType="1" group="/DI" physicalChannel="/port0/line3" sample="0" Stimulus="0" red="255" green="255" blue="0" />
+      <DataChannel enable="0" alias="Line4" signalType="1" group="/DI" physicalChannel="/port0/line4" sample="0" Stimulus="0" red="255" green="255" blue="0" />
+      <DataChannel enable="1" alias="Line5" signalType="1" group="/DI" physicalChannel="/port0/line5" sample="0" Stimulus="0" red="70" green="180" blue="0" />
+      <DataChannel enable="0" alias="Line6" signalType="1" group="/DI" physicalChannel="/port0/line6" sample="0" Stimulus="0" red="69" green="180" blue="0" />
+      <DataChannel enable="0" alias="Line7" signalType="1" group="/DI" physicalChannel="/port0/line7" sample="0" Stimulus="0" red="240" green="70" blue="180" />
+      <DataChannel enable="0" alias="Counter" signalType="2" group="/CI" physicalChannel="/PFI3" sample="0" Stimulus="0" red="255" green="70" blue="70" />
+      <SampleRate name="High 250kHz" enable="0" rate="250000" />
+      <SampleRate name="Med-High 200kHz" enable="0" rate="200000" />
+      <SampleRate name="Medium 100kHz" enable="0" rate="100000" />
+      <SampleRate name="Low 30kHz" enable="1" rate="30000" />
+      <Display resolution="High" enable="1" value="10" />
+      <Display resolution="Medium" enable="0" value="100" />
+      <Display resolution="Low" enable="0" value="1000" />
+      <Bleach shutterLine="/PFI5" bleachLine="/port0/line4" outputLine="/port0/line6" pmtCloseTime="25" bleachTime="100" bleachIdleTime="0" bleachIteration="1" outDelayTime="6" bleachTrigMode="0" hwTrigLine="/PFI7" cycle="1" interval="0" />
+      <Invert inputLine="10" outputLine="/PFI11" />
+    </AcquireBoard>
+  </DaqDevices>
+  <Variables>
+    <Var ID="0" Value="1" Name="SimFreq" />
+    <Var ID="1" Value="1" Name="Beta1X" />
+    <Var ID="2" Value="1" Name="Beta1Y" />
+    <Var ID="3" Value="1" Name="KappaX" />
+    <Var ID="4" Value="1" Name="KappaY" />
+    <Var ID="5" Value="1" Name="PowerMW" />
+    <Var ID="6" Value="1" Name="ZPiezoUM" />
+    <Var ID="1000" Value="0" Name="ReserveLast" />
+  </Variables>
+</RealTimeDataSettings>

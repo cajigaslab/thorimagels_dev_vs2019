@@ -1,0 +1,286 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.PowerControlView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:RSlider="clr-namespace:RangeSliderWPF;assembly=RangeSliderWPF"
+             xmlns:Valid="clr-namespace:Validations;assembly=Validations"
+             xmlns:System="clr-namespace:System;assembly=mscorlib"
+             xmlns:pc="clr-namespace:PowerControl;assembly=PowerControl"
+             Height="Auto"
+             Width="380">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <pc:BooleanToVisibilityConverter x:Key="VisibilityOfBool" />
+            <pc:PowerModeToVisibility x:Key="powerModeToVis" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <TabControl Name="tabPower"
+                    Background="#FF333333"
+                    SelectedIndex="{Binding Path=SelectedPowerTab, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+            <TabItem Name="pockels0"
+                     Header="{Binding Path=PowerControlName[0].Value, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <TabItem.ContextMenu>
+                    <ContextMenu DataContext="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Self}}">
+                        <MenuItem Header="Save"
+                                  Command="{Binding Path=DataContext.PowerControlNameSaveCommand}"
+                                  CommandParameter="0" />
+                    </ContextMenu>
+                </TabItem.ContextMenu>
+                <Grid>
+                    <pc:PowerControlUC Name="pcPockels0"
+                                     MaskAndBlankingVisibility="Visible"
+                                     PockelsCalibrationVisibility="Visible"
+                                     PowerRegCalibrationVisibility="Collapsed"
+                                     EncoderPositionVisibility="Collapsed"
+                                     PowerStepSizeVisibility="Collapsed"  
+                                     PCTabIndex="0"
+                                     PockelsMaskOptionsAvailable="{Binding Path=PockelsMaskOptionsAvailable, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     EnablePockelsMask="{Binding Path=EnablePockelsMask, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PockelsMaskInvert="{Binding Path=PockelsMaskInvert0, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PockelsMaskFile="{Binding Path=PockelsMaskFile, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     UpdatePockelsMaskToROIMaskCommand="{Binding Path=UpdatePockelsMaskToROIMaskCommand}"
+                                     SelectPockelsMaskCommand="{Binding Path=SelectPockelsMaskCommand}"
+                                     PowerThreshold="{Binding Path=PockelsPowerThreshold[0].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Power="{Binding Path=Power0, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerGo="{Binding Path=PowerGo0, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     SetPowerCommand="{Binding Path=SetPowerCommand}"
+                                     PowerMode="{Binding Path=PowerMode0, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRampsCustom="{Binding Path=PowerRampsCustom}"
+                                     PowerRampSelected="{Binding Path=PowerRampSelected0,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRampEditCommand="{Binding Path=PowerRampEditCommand}"
+                                     PowerRampAddCommand="{Binding Path=PowerRampAddCommand}"
+                                     PowerRampDeleteCommand="{Binding Path=PowerRampDeleteCommand}"
+                                     PowerMin="{Binding Path=PockelsPowerMin, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerMax="{Binding Path=PockelsPowerMax, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerPlusCommand="{Binding Path=PowerPlusCommand}"
+                                     PowerMinusCommand="{Binding Path=PowerMinusCommand}"
+                                     CalibrateCommand="{Binding Path=PockelsCalibrateCommand}"
+                                     PockelsCalibrateAgainEnable="{Binding Path=PockelsCalibrateAgainEnable}"
+                                     VoltageMin="{Binding Path=PockelsVoltageMin0,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     VoltageMax="{Binding Path=PockelsVoltageMax0,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PockelsBlankPercentage="{Binding Path=PockelsBlankPercentage0, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    </pc:PowerControlUC>
+                </Grid>
+            </TabItem>
+            <TabItem Name="pockels1"
+                     Header="{Binding Path=PowerControlName[1].Value, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <TabItem.ContextMenu>
+                    <ContextMenu DataContext="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Self}}">
+                        <MenuItem Header="Save"
+                                  Command="{Binding Path=DataContext.PowerControlNameSaveCommand}"
+                                  CommandParameter="1" />
+                    </ContextMenu>
+                </TabItem.ContextMenu>
+                <Grid>
+                    <pc:PowerControlUC Name="pcPockels1"
+                                     MaskAndBlankingVisibility="Visible"
+                                     PockelsCalibrationVisibility="Visible"
+                                     PowerRegCalibrationVisibility="Collapsed"
+                                     PockelsMaskOptionsAvailable="False"
+                                     EncoderPositionVisibility="Collapsed"
+                                     PowerStepSizeVisibility="Collapsed"  
+                                     PCTabIndex="1"
+                                     PowerThreshold="{Binding Path=PockelsPowerThreshold[1].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Power="{Binding Path=Power1, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerGo="{Binding Path=PowerGo1, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     SetPowerCommand="{Binding Path=SetPowerCommand}"
+                                     PowerMode="{Binding Path=PowerMode1, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRampsCustom="{Binding Path=PowerRampsCustom}"
+                                     PowerRampSelected="{Binding Path=PowerRampSelected1,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRampEditCommand="{Binding Path=PowerRampEditCommand}"
+                                     PowerRampAddCommand="{Binding Path=PowerRampAddCommand}"
+                                     PowerRampDeleteCommand="{Binding Path=PowerRampDeleteCommand}"
+                                     PowerMin="{Binding Path=PockelsPowerMin, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerMax="{Binding Path=PockelsPowerMax, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerPlusCommand="{Binding Path=PowerPlusCommand}"
+                                     PowerMinusCommand="{Binding Path=PowerMinusCommand}"
+                                     CalibrateCommand="{Binding Path=PockelsCalibrateCommand}"
+                                     PockelsCalibrateAgainEnable="{Binding Path=PockelsCalibrateAgainEnable}"
+                                     VoltageMin="{Binding Path=PockelsVoltageMin1,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     VoltageMax="{Binding Path=PockelsVoltageMax1,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PockelsBlankPercentage="{Binding Path=PockelsBlankPercentage1, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" >
+                    </pc:PowerControlUC>
+                </Grid>
+            </TabItem>
+            <TabItem Name="pockels2"
+                     Header="{Binding Path=PowerControlName[2].Value, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <TabItem.ContextMenu>
+                    <ContextMenu DataContext="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Self}}">
+                        <MenuItem Header="Save"
+                                  Command="{Binding Path=DataContext.PowerControlNameSaveCommand}"
+                                  CommandParameter="2" />
+                    </ContextMenu>
+                </TabItem.ContextMenu>
+                <Grid>
+                    <pc:PowerControlUC Name="pcPockels2"
+                                     MaskAndBlankingVisibility="Visible"
+                                     PockelsCalibrationVisibility="Visible"
+                                     PowerRegCalibrationVisibility="Collapsed"
+                                     PockelsMaskOptionsAvailable="False"
+                                     EncoderPositionVisibility="Collapsed"
+                                     PowerStepSizeVisibility="Collapsed"  
+                                     PCTabIndex="2"
+                                     PowerThreshold="{Binding Path=PockelsPowerThreshold[2].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Power="{Binding Path=Power2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerGo="{Binding Path=PowerGo2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     SetPowerCommand="{Binding Path=SetPowerCommand}"
+                                     PowerMode="{Binding Path=PowerMode2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRampsCustom="{Binding Path=PowerRampsCustom}"
+                                     PowerRampSelected="{Binding Path=PowerRampSelected2,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRampEditCommand="{Binding Path=PowerRampEditCommand}"
+                                     PowerRampAddCommand="{Binding Path=PowerRampAddCommand}"
+                                     PowerRampDeleteCommand="{Binding Path=PowerRampDeleteCommand}"
+                                     PowerMin="{Binding Path=PockelsPowerMin, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerMax="{Binding Path=PockelsPowerMax, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerPlusCommand="{Binding Path=PowerPlusCommand}"
+                                     PowerMinusCommand="{Binding Path=PowerMinusCommand}"
+                                     CalibrateCommand="{Binding Path=PockelsCalibrateCommand}"
+                                     PockelsCalibrateAgainEnable="{Binding Path=PockelsCalibrateAgainEnable}"
+                                     VoltageMin="{Binding Path=PockelsVoltageMin2,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     VoltageMax="{Binding Path=PockelsVoltageMax2,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PockelsBlankPercentage="{Binding Path=PockelsBlankPercentage2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    </pc:PowerControlUC>
+                </Grid>
+            </TabItem>
+            <TabItem Name="pockels3"
+                     Header="{Binding Path=PowerControlName[3].Value, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <TabItem.ContextMenu>
+                    <ContextMenu DataContext="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Self}}">
+                        <MenuItem Header="Save"
+                                  Command="{Binding Path=DataContext.PowerControlNameSaveCommand}"
+                                  CommandParameter="3" />
+                    </ContextMenu>
+                </TabItem.ContextMenu>
+                <Grid>
+                    <pc:PowerControlUC Name="pcPockels3"
+                                     MaskAndBlankingVisibility="Visible"
+                                     PockelsCalibrationVisibility="Visible"
+                                     PowerRegCalibrationVisibility="Collapsed"
+                                     PockelsMaskOptionsAvailable="False"
+                                     EncoderPositionVisibility="Collapsed"
+                                     PowerStepSizeVisibility="Collapsed"  
+                                     PCTabIndex="3"
+                                     PowerThreshold="{Binding Path=PockelsPowerThreshold[3].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Power="{Binding Path=Power3, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerGo="{Binding Path=PowerGo3, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     SetPowerCommand="{Binding Path=SetPowerCommand}"
+                                     PowerMode="{Binding Path=PowerMode3, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRampsCustom="{Binding Path=PowerRampsCustom}"
+                                     PowerRampSelected="{Binding Path=PowerRampSelected3,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRampEditCommand="{Binding Path=PowerRampEditCommand}"
+                                     PowerRampAddCommand="{Binding Path=PowerRampAddCommand}"
+                                     PowerRampDeleteCommand="{Binding Path=PowerRampDeleteCommand}"
+                                     PowerMin="{Binding Path=PockelsPowerMin, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerMax="{Binding Path=PockelsPowerMax, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerPlusCommand="{Binding Path=PowerPlusCommand}"
+                                     PowerMinusCommand="{Binding Path=PowerMinusCommand}"
+                                     CalibrateCommand="{Binding Path=PockelsCalibrateCommand}"
+                                     PockelsCalibrateAgainEnable="{Binding Path=PockelsCalibrateAgainEnable}"
+                                     VoltageMin="{Binding Path=PockelsVoltageMin3,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     VoltageMax="{Binding Path=PockelsVoltageMax3,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PockelsBlankPercentage="{Binding Path=PockelsBlankPercentage3, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    </pc:PowerControlUC>
+                </Grid>
+            </TabItem>
+            <TabItem Name="powerReg"
+                     Header="{Binding Path=PowerControlName[4].Value, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <TabItem.ContextMenu>
+                    <ContextMenu DataContext="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Self}}">
+                        <MenuItem Header="Save"
+                                  Command="{Binding Path=DataContext.PowerControlNameSaveCommand}"
+                                  CommandParameter="4" />
+                    </ContextMenu>
+                </TabItem.ContextMenu>
+                <Grid>
+                    <pc:PowerControlUC Name="pcPowerReg"
+                                     MaskAndBlankingVisibility="Collapsed"
+                                     PockelsCalibrationVisibility="Collapsed"
+                                     PowerRegCalibrationVisibility="Visible"
+                                     PockelsMaskOptionsAvailable="False"
+                                     EncoderPositionVisibility="Visible"
+                                     PowerStepSizeVisibility="Visible"
+                                     PCTabIndex="4"
+                                     PowerThreshold="1"
+                                     Power="{Binding Path=PowerReg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerGo="{Binding Path=PowerGoReg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     SetPowerCommand="{Binding Path=SetPowerCommand}"
+                                     StepCoarseCommand="{Binding Path=StepCoarseCommand}"
+                                     StepFineCommand="{Binding Path=StepFineCommand}"
+                                     PowerMode="{Binding Path=PowerModeReg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRampsCustom="{Binding Path=PowerRampsCustom}"
+                                     PowerRampSelected="{Binding Path=PowerRampSelectedReg,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRampEditCommand="{Binding Path=PowerRampEditCommand}"
+                                     PowerRampAddCommand="{Binding Path=PowerRampAddCommand}"
+                                     PowerRampDeleteCommand="{Binding Path=PowerRampDeleteCommand}"
+                                     PowerMin="{Binding Path=PowerMin, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerMax="{Binding Path=PowerMax, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerPlusCommand="{Binding Path=PowerPlusCommand}"
+                                     PowerMinusCommand="{Binding Path=PowerMinusCommand}"
+                                     PowerRegZero="{Binding Path=PowerRegZero}"
+                                     PowerRegEncoderPosition="{Binding Path=PowerRegEncoderPosition, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRegCalCommand="{Binding Path=PowerRegCalCommand}"
+                                     PowerRegCalSaveCommand="{Binding Path=PowerRegCalSaveCommand}"
+                                     PowerRegCalName1="{Binding Path=PowerRegCal1Name, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRegCalName2="{Binding Path=PowerRegCal2Name, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRegCalName3="{Binding Path=PowerRegCal3Name, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRegCalName4="{Binding Path=PowerRegCal4Name, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRegCalName5="{Binding Path=PowerRegCal5Name, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRegCalName6="{Binding Path=PowerRegCal6Name, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerStepSize="{Binding Path=PowerStepSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    </pc:PowerControlUC>
+                </Grid>
+            </TabItem>
+            <TabItem Name="powerReg2"
+                     Header="{Binding Path=PowerControlName[5].Value, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <TabItem.ContextMenu>
+                    <ContextMenu DataContext="{Binding Path=PlacementTarget, RelativeSource={RelativeSource Self}}">
+                        <MenuItem Header="Save"
+                                  Command="{Binding Path=DataContext.PowerControlNameSaveCommand}"
+                                  CommandParameter="5" />
+                    </ContextMenu>
+                </TabItem.ContextMenu>
+                <Grid>
+                    <pc:PowerControlUC Name="pcPowerReg2"
+                                     MaskAndBlankingVisibility="Collapsed"
+                                     PockelsCalibrationVisibility="Collapsed"
+                                     PowerRegCalibrationVisibility="Visible"
+                                     EncoderPositionVisibility="Visible"
+                                     PockelsMaskOptionsAvailable="False"
+                                     PowerStepSizeVisibility="Visible"
+                                     PCTabIndex="5"
+                                     PowerThreshold="1"
+                                     Power="{Binding Path=PowerReg2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerGo="{Binding Path=PowerGoReg2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     SetPowerCommand="{Binding Path=SetPowerCommand}"
+                                     StepCoarseCommand="{Binding Path=StepCoarseCommand}"
+                                     StepFineCommand="{Binding Path=StepFineCommand}"
+                                     PowerMode="{Binding Path=PowerModeReg2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRampsCustom="{Binding Path=PowerRampsCustom}"
+                                     PowerRampSelected="{Binding Path=PowerRampSelectedReg2,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRampEditCommand="{Binding Path=PowerRampEditCommand}"
+                                     PowerRampAddCommand="{Binding Path=PowerRampAddCommand}"
+                                     PowerRampDeleteCommand="{Binding Path=PowerRampDeleteCommand}"
+                                     PowerMin="{Binding Path=Power2Min, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerMax="{Binding Path=Power2Max, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerPlusCommand="{Binding Path=PowerPlusCommand}"
+                                     PowerMinusCommand="{Binding Path=PowerMinusCommand}"
+                                     PowerRegZero="{Binding Path=PowerReg2Zero}"
+                                     PowerRegEncoderPosition="{Binding Path=PowerReg2EncoderPosition, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRegCalCommand="{Binding Path=PowerReg2CalCommand}"
+                                     PowerRegCalSaveCommand="{Binding Path=PowerReg2CalSaveCommand}"
+                                     PowerRegCalName1="{Binding Path=PowerReg2CalName1, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRegCalName2="{Binding Path=PowerReg2CalName2, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRegCalName3="{Binding Path=PowerReg2CalName3, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRegCalName4="{Binding Path=PowerReg2CalName4, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRegCalName5="{Binding Path=PowerReg2CalName5, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerRegCalName6="{Binding Path=PowerReg2CalName6, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     PowerStepSize="{Binding Path=Power2StepSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    </pc:PowerControlUC>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

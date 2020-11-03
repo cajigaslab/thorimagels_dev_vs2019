@@ -1,0 +1,74 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.LightEngineControlView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:le="clr-namespace:LightEngineControl;assembly=LightEngineControl"
+             Height="Auto"
+             Width="385">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <le:LightEngineControlUC MasterBrightness="{Binding MasterBrightness}"
+                                 LinearModeSettingsSource="{Binding LinearModeSettingsSource}"
+                                 LinearModeSettingsSelectedIdx="{Binding LinearModeSettingsSelectedIdx}"
+                                 TemperatureUnit="{Binding TemperatureUnit, Mode=OneWay}"
+                                 ShowTemperatures="{Binding ShowTemperatures, Mode=OneWay}"
+                                 LED1SockelID="{Binding LED1SockelID, Mode=OneWay}"
+                                 LED1ControlName="{Binding LED1ControlName, Mode=TwoWay}"
+                                 LED1LightColor="{Binding LED1LightColor, Mode=OneWay}"
+                                 LED1Power="{Binding LED1Power, Mode=TwoWay}"
+                                 LED1PowerState="{Binding LED1PowerState, Mode=TwoWay}"
+                                 LED1Temperature="{Binding LED1Temperature, Mode=OneWay}"
+                                 LED1PowerPlusCommand="{Binding LED1PowerPlusCommand, Mode=OneWay}"
+                                 LED1PowerMinusCommand="{Binding LED1PowerMinusCommand, Mode=OneWay}" 
+                                 LED2SockelID="{Binding LED2SockelID, Mode=OneWay}"
+                                 LED2ControlName="{Binding LED2ControlName, Mode=TwoWay}"
+                                 LED2LightColor="{Binding LED2LightColor, Mode=OneWay}"
+                                 LED2Power="{Binding LED2Power, Mode=TwoWay}"
+                                 LED2PowerState="{Binding LED2PowerState, Mode=TwoWay}"
+                                 LED2Temperature="{Binding LED2Temperature, Mode=OneWay}"
+                                 LED2PowerPlusCommand="{Binding LED2PowerPlusCommand, Mode=OneWay}"
+                                 LED2PowerMinusCommand="{Binding LED2PowerMinusCommand, Mode=OneWay}" 
+                                 LED3SockelID="{Binding LED3SockelID, Mode=OneWay}"
+                                 LED3ControlName="{Binding LED3ControlName, Mode=TwoWay}"
+                                 LED3LightColor="{Binding LED3LightColor, Mode=OneWay}"
+                                 LED3Power="{Binding LED3Power, Mode=TwoWay}"
+                                 LED3PowerState="{Binding LED3PowerState, Mode=TwoWay}"
+                                 LED3Temperature="{Binding LED3Temperature, Mode=OneWay}"
+                                 LED3PowerPlusCommand="{Binding LED3PowerPlusCommand, Mode=OneWay}"
+                                 LED3PowerMinusCommand="{Binding LED3PowerMinusCommand, Mode=OneWay}" 
+                                 LED4SockelID="{Binding LED4SockelID, Mode=OneWay}"
+                                 LED4ControlName="{Binding LED4ControlName, Mode=TwoWay}"
+                                 LED4LightColor="{Binding LED4LightColor, Mode=OneWay}"
+                                 LED4Power="{Binding LED4Power, Mode=TwoWay}"
+                                 LED4PowerState="{Binding LED4PowerState, Mode=TwoWay}"
+                                 LED4Temperature="{Binding LED4Temperature, Mode=OneWay}"        
+                                 LED4PowerPlusCommand="{Binding LED4PowerPlusCommand, Mode=OneWay}"
+                                 LED4PowerMinusCommand="{Binding LED4PowerMinusCommand, Mode=OneWay}" 
+                                 LED5SockelID="{Binding LED5SockelID, Mode=OneWay}"
+                                 LED5ControlName="{Binding LED5ControlName, Mode=TwoWay}"
+                                 LED5LightColor="{Binding LED5LightColor, Mode=OneWay}"
+                                 LED5Power="{Binding LED5Power, Mode=TwoWay}"
+                                 LED5PowerState="{Binding LED5PowerState, Mode=TwoWay}"
+                                 LED5Temperature="{Binding LED5Temperature, Mode=OneWay}"
+                                 LED5PowerPlusCommand="{Binding LED5PowerPlusCommand, Mode=OneWay}"
+                                 LED5PowerMinusCommand="{Binding LED5PowerMinusCommand, Mode=OneWay}" 
+                                 LED6SockelID="{Binding LED6SockelID, Mode=OneWay}"
+                                 LED6ControlName="{Binding LED6ControlName, Mode=TwoWay}"
+                                 LED6LightColor="{Binding LED6LightColor, Mode=OneWay}"
+                                 LED6Power="{Binding LED6Power, Mode=TwoWay}"
+                                 LED6PowerState="{Binding LED6PowerState, Mode=TwoWay}"
+                                 LED6Temperature="{Binding LED6Temperature, Mode=OneWay}"
+                                 LED6PowerPlusCommand="{Binding LED6PowerPlusCommand, Mode=OneWay}"
+                                 LED6PowerMinusCommand="{Binding LED6PowerMinusCommand, Mode=OneWay}" 
+                                 Foreground="{Binding Foreground, ElementName=ControlRoot}"
+                                 FontSize="{Binding FontSize, ElementName=ControlRoot}"
+                                 FontFamily="{Binding FontFamily, ElementName=ControlRoot}">
+        </le:LightEngineControlUC>
+    </Grid>
+</UserControl>
+

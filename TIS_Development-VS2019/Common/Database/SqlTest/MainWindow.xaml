@@ -1,0 +1,25 @@
+﻿<Window x:Class="SqlTest.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MainWindow" Height="350" Width="525">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="100" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
+        <Button Name="btnAdd" Content="Add" Click="btnAdd_Click" Width="150" />
+        <Button Name="btnDelete" Content="Delete"
+                Click="btnDelete_Click" Width="150"/>
+        </StackPanel>
+        <StackPanel Grid.Row="1" Orientation="Horizontal">
+        <DataGrid Name="dataGridBatches"
+                 Width="250"
+                  ItemsSource="{Binding BatchesDataView, Mode=OneWay}" />
+        <DataGrid Name="dataGridExperiments"
+                  Grid.Row="1"
+                  Width="250"
+                      ItemsSource="{Binding ExperimentsDataView, Mode=OneWay}" />
+        </StackPanel>
+    </Grid>
+</Window>

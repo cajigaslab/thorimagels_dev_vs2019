@@ -1,0 +1,190 @@
+<?xml version="1.0"?>
+<ApplicationSettings>
+  <SettingEditorXmlFiles maxSize="10240" />
+  <OMETIFFTag value="1" />
+  <TIFFCompressionEnable value="0"/>
+  <ImageNameFormat indexDigitCounts="3" alwaysAppendIndex="0" />
+  <JPEGEnable value="0" />
+  <FtpInformation location="" username="" password=""/>
+  <AnalysisInformation workingdirectory="" filename=""/>
+  <ZipInformation workingdirectory="" filename=""/>
+  <SchedulerInformation username="" password="" />
+  <ZStage queryreference="0" />
+  <DisplayOptions>
+    <General>
+      <CenterScannersButton Visibility="Visible" />
+      <GrayscaleForSingleChannel value="1" />
+      <ChannelTileViewSettings TilingEnableOption="False" />
+      <HistogramSettings ReducedBinValue="255"/>   
+    </General>
+    <CaptureSetup saveSnapshots="0" snapshotExperimentName="Snapshot" snapshotBaseName="Snapshot" saveExperimentInfo="0" savePath="">
+      <ScannerView Visibility="Collapsed" location="0">
+        <CoarsePanel Visibility="Collapsed"/>
+        <FieldSizePanel Visibility="Collapsed" />
+        <DigitalOffset Visibility="Collapsed" />
+        <PulseMultiplexing Visibility="Collapsed" />
+        <PixelDwellTime Visibility="Visible" />
+        <TurnAroundAlteration Visibility="Collapsed" />
+      </ScannerView>
+      <AreaView Visibility="Collapsed" location="12">
+        <ResolutionPresets>
+          <SquareResolutionPresets>
+            <Resolution width="128" height="128" />
+            <Resolution width="256" height="256" />
+            <Resolution width="512" height="512" />
+            <Resolution width="1024" height="1024" />
+            <Resolution width="2048" height="2048" />
+          </SquareResolutionPresets>
+          <RectangleResolutionPresets>
+            <Resolution width="512" height="256" />
+            <Resolution width="1024" height="512" />
+            <Resolution width="512" height="32" />
+            <Resolution width="1024" height="128" />
+          </RectangleResolutionPresets>
+          <LineResolutionPresets>
+            <Resolution width="128" height="1" />
+            <Resolution width="256" height="1" />
+            <Resolution width="512" height="1" />
+            <Resolution width="1024" height="1" />
+            <Resolution width="2048" height="1" />
+          </LineResolutionPresets>
+          <PolylineResolutionPresets>
+            <Resolution width="128" height="1" />
+            <Resolution width="256" height="1" />
+            <Resolution width="512" height="1" />
+            <Resolution width="1024" height="1" />
+            <Resolution width="2048" height="1" />
+          </PolylineResolutionPresets>
+          <KymographResolutionPresets>
+            <Resolution width="128" height="32" />
+            <Resolution width="256" height="32" />
+            <Resolution width="512" height="32" />
+            <Resolution width="1024" height="32" />
+            <Resolution width="2048" height="32" />
+          </KymographResolutionPresets>
+        </ResolutionPresets>
+        <ImageCorrectionControl Visibility="Collapsed"/>
+        <GGSuperUser value="0" />
+        <FieldFromROIZoom value="0" />
+        <TimeBasedScan Visibility="Collapsed"/>
+      </AreaView>
+      <TwoWayCalibration Visibility="Collapsed"/>
+      <BeamExpView Visibility="Collapsed" />
+      <BeamExp2View Visibility="Collapsed" />
+      <StatsTableSaveButtonView Visibility="Collapsed"/>
+      <LightPathView Visibility="Collapsed" location="6" GGLightPathVisibility="Visible"    GRLightPathVisibility="Visible"  CameraLightPathVisibility="Visible"  />
+	  <InvertedLightPathView LeftNameChange="Left" CenterNameChange="Center" RightNameChange="Right"/>
+      <BleachView Visibility="Visible" location="5" SLMPatternUnshifted="0">
+        <OTMView Visibility="Visible" Exclusive="1"/>
+        <BleachCalibrationTool Visibility="Collapsed" />
+      </BleachView>
+      <ZView Visibility="Visible" Invert="0" Invert2="0" location="2" zZeroVisibility="Visible" z2ZeroVisibility="Visible" InvertVisibility="Visible" InvertLimitsZ1="0" InvertLimitsZ2="0" Z1InvertPlusMinusButton="0" Z2InvertPlusMinusButton="0"/>
+      <PowerView Visibility="Collapsed" location="3"/>
+      <MCLSView Visibility="Visible" location="4" />
+      <PinholeView Visibility="Collapsed" SwitchSizeWithADU="0" location="8"/>
+      <XYView Visibility="Visible" SubColumnsMax="55" SubRowsMax="55" location="9" xZeroVisibility="Collapsed" yZeroVisibility="Collapsed" showInUM="1" showTileGrid="1"/>
+      <CaptureOptionsView Visibility="Visible" location="10" />
+      <ROIStatsWindow left="0" top="0" width="480" height="120" reset="0" display="0" />
+      <LineProfileWindow left="100" top="100" width="300" height="300" reset="0" display="0" lineWidth="1" />
+      <ROIChartWindow left="0" top="0" width="400" height="300" legendF="1" legendC="15" fifo="300" cursorStatsEnable="True" reset="0" display="0" />
+      <EditBleachWindow left="0" top="0" width="400" height="300" reset="0" />
+      <PowerRampWindow left="300" top="300" reset="0" />
+      <MultiPanelView Visibility="Visible" />
+      <TDIView Visibility="Collapsed" />
+      <Pockels1 Visibility="Collapsed">
+        <Calibration Visibility="Visible" />
+      </Pockels1>
+      <Pockels2 Visibility="Collapsed">
+        <Calibration Visibility="Visible" />
+      </Pockels2>
+      <Pockels3 Visibility="Collapsed">
+        <Calibration Visibility="Visible" />
+      </Pockels3>
+      <Pockels4 Visibility="Collapsed">
+        <Calibration Visibility="Visible" />
+      </Pockels4>
+      <PowerReg Visibility="Collapsed">
+        <Calibration Visibility="Visible" />
+        <EncoderPosition Visibility="Visible" />
+      </PowerReg>
+      <PowerReg2 Visibility="Collapsed">
+        <Calibration Visibility="Visible" />
+        <EncoderPosition Visibility="Visible" />
+      </PowerReg2>
+      <TwoColumnDisplay enable="1" />
+      <MultiphotonView Visibility="Collapsed" location="7" mpFastSeqVisibility="Collapsed" shutter2Visibility="Collapsed" BeamStabilizerDataVisibility="Visible">
+        <SavedWavelengths>
+          <SavedWavelength wavelength="0" />
+          <SavedWavelength wavelength="0" />
+          <SavedWavelength wavelength="0" />
+          <SavedWavelength wavelength="0" />
+          <SavedWavelength wavelength="0" />
+          <SavedWavelength wavelength="0" />
+          <SavedWavelength wavelength="0" />
+          <SavedWavelength wavelength="0" />
+        </SavedWavelengths>
+      </MultiphotonView>
+      <KuriosFilterView Visibility="Collapsed" location="11" />
+      <CameraView Visibility="Visible" location="1" >
+        <ResolutionPresets>
+          <Resolution name="1501M/C 512x512 centered" top="264" left="440" bottom="776" right="952" />
+          <Resolution name="sCMOS CS2100M/C 515x515 centered" top="284" left="704" bottom="796" right="1216" />
+          <Resolution name="CMOS CS505M/C 512x512 centered" top="768" left="968" bottom="1280" right="1480" />
+          <Resolution name="CMOS CS895M/C 512x512 centered" top="824" left="1792" bottom="1336" right="2304" />
+          <Resolution name="4070M/C 512x512 centered" top="768" left="768" bottom="1280" right="1280" />
+          <Resolution name="8050M/C 512x512 centered" top="980" left="1392" bottom="1492" right="1904" />
+        </ResolutionPresets>
+      </CameraView>
+      <DigitalSwitchesView Visibility="Visible" location="13" switchName1="1" switchName2="2" switchName3="3" switchName4="4" switchName5="5" switchName6="6" switchName7="7" switchName8="8" SwitchView="Visible" TriggerView="Collapsed" />
+      <QuickTemplate Visibility="Collapsed" location="14"/>
+      <LampView Visibility="Collapsed" location="15" MainControlVisibility="Collapsed" />
+      <ThreePhotonView Visibility="Collapsed" location="16" PhaseCoarseVisibility="Collapsed" FIRSettingsVisibility="Collapsed"/>
+      <EpiTurretView Visibility="Visible" EpiTurretPosName1="1" EpiTurretPosName2="2" EpiTurretPosName3="3" EpiTurretPosName4="4" EpiTurretPosName5="5" EpiTurretPosName6="6" />
+      <LightEngineView Visibility="Collapsed" location="17" />
+	    <DFLIMView Visibility="Collapsed" location="18" />
+      <EpiturretControlView Visibility="Collapsed" location="19" />
+    </CaptureSetup>
+    <RunSample>
+      <BleachingView Visibility="Visible"/>
+      <XYView Visibility="Hidden"/>
+      <FastZView Visibility="Collapsed">
+        <VolumeTimeAdjustment Visibility="Collapsed"/>
+      </FastZView>
+    </RunSample>
+    <Review>
+      <DeepZoomView Visibility="Collapsed"/>
+    </Review>
+    <OverlayManager showLineLength="0" showPolylineLength="0" />
+    <HardwareSetup ImageDetector="Visible" BleachingScanner="Visible" ControlUnit="Collapsed" PMT1="Collapsed" PMT2="Collapsed" PMT3="Collapsed" PMT4="Collapsed" Shutter="Collapsed" ZStage="Visible" SecondaryZStage="Collapsed" PowerRegulator="Collapsed" BeamExpander="Collapsed" LaserSource="Visible" PinholeWheel="Collapsed" LightPath="Collapsed" XYStage="Visible" SpectrumFilter="Collapsed" ObjectiveTurret="Collapsed" BleachingSLM="Collapsed" BeamStabilizer="Collapsed" PowerRegulator2="Collapsed" EpiTurret="Collapsed" LAMP="Collapsed"/>
+  </DisplayOptions>
+  <Runtime end="0" start="0" runTime="0" />
+  <KeyboardOptions>
+    <ZPlus ctrl="0" alt="1" shift="0" key="Up" />
+    <ZMinus ctrl="0" alt="1" shift="0" key="Down" />
+    <ZZero ctrl="0" alt="1" shift="0" key="Home" />
+    <ZStart ctrl="0" alt="1" shift="0" key="OemOpenBrackets" />
+    <ZStop ctrl="0" alt="1" shift="0" key="OemCloseBrackets" />
+    <XPlus ctrl="0" alt="0" shift="0" key="F10" />
+    <XMinus ctrl="0" alt="0" shift="0" key="F9" />
+    <XZero ctrl="0" alt="1" shift="0" key="F9" />
+    <YPlus ctrl="0" alt="0" shift="0" key="F12" />
+    <YMinus ctrl="0" alt="0" shift="0" key="F11" />
+    <YZero ctrl="0" alt="1" shift="0" key="F11" />
+    <PowerPlus0 ctrl="0" alt="1" shift="0" key="Left" />
+    <PowerMinus0 ctrl="0" alt="1" shift="0" key="Right" />
+    <PowerPlus1 ctrl="0" alt="1" shift="0" key="" />
+    <PowerMinus1 ctrl="0" alt="1" shift="0" key="" />
+    <PowerPlus2 ctrl="0" alt="1" shift="0" key="" />
+    <PowerMinus2 ctrl="0" alt="1" shift="0" key="" />
+    <PowerPlus3 ctrl="0" alt="1" shift="0" key="" />
+    <PowerMinus3 ctrl="0" alt="1" shift="0" key="" />
+    <Start ctrl="0" alt="0" shift="0" key="F5" />
+    <Snapshot ctrl="0" alt="0" shift="0" key="F6" />
+    <BleachNow ctrl="0" alt="0" shift="0" key="F8" />
+    <GGLightPath ctrl="0" alt="1" shift="0" key="g" />
+    <GRLightPath ctrl="0" alt="1" shift="0" key="r" />
+    <CamLightPath ctrl="0" alt="1" shift="0" key="c" />
+  </KeyboardOptions>
+  <RawFileOptions saveEnabledChannelsOnly="1" />
+  <ExperimentSaving generateUniqueNameWithoutAsking="0" />
+</ApplicationSettings>

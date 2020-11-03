@@ -1,0 +1,91 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.TileControlView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:View="clr-namespace:CaptureSetupDll.View"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:xy="clr-namespace:XYTileControl;assembly=XYTileControl"
+             Width="420"
+             Height="Auto">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <BooleanToVisibilityConverter x:Key="boolToVis" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="415" />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Row="0"
+                    HorizontalAlignment="Center"
+                    Grid.Column="0"
+                    Margin="3"
+                    Orientation="Vertical">
+            <StackPanel  HorizontalAlignment="Center">
+                <xy:XYTileDisplay Name="xyTileControl"
+                                  HorizontalAlignment="Center"
+                                  HomePosX="{Binding Path=HomePosXYZ[0], Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  HomePosY="{Binding Path=HomePosXYZ[1], Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  HomePosZ="{Binding Path=HomePosXYZ[2], Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  DefaultOverlapX="{Binding Path=DefaultOverlapXY[0], Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  DefaultOverlapY="{Binding Path=DefaultOverlapXY[1], Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  CurrentCarrier="{Binding Path=CurrentCarrier, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  XYtableData="{Binding Path=XYtableData, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  XYControlPanelScale="{Binding Path=XYControlPanelScale}"
+                                  XYPanelScale="{Binding Path=XYPanelScale}"
+                                  TiltAdjustment="{Binding Path=TiltAdjustment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  FP1XYZ="{Binding Path=FP1XYZ, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  FP2XYZ="{Binding Path=FP2XYZ, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  FP3XYZ="{Binding Path=FP3XYZ, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  ActiveXML="{Binding Path=ActiveXMLPath,
+                                                      Mode=OneWay,
+                                                      UpdateSourceTrigger=PropertyChanged}"
+                                  ApplicationSettings="{Binding Path=ApplicationSettingsPath,
+                                                                Mode=OneWay,
+                                                                UpdateSourceTrigger=PropertyChanged}"
+                                  MaxX="{Binding Path=XMax,
+                                                 Mode=OneWay,
+                                                 UpdateSourceTrigger=PropertyChanged}"
+                                  MaxY="{Binding Path=YMax,
+                                                 Mode=OneWay,
+                                                 UpdateSourceTrigger=PropertyChanged}"
+                                  MinX="{Binding Path=XMin,
+                                                 Mode=OneWay,
+                                                 UpdateSourceTrigger=PropertyChanged}"
+                                  MinY="{Binding Path=YMin,
+                                                 Mode=OneWay,
+                                                 UpdateSourceTrigger=PropertyChanged}"
+                                  Mode="Edit"
+                                  ScanAreaHeight="{Binding Path=ScanAreaHeight,
+                                                           Mode=OneWay}"
+                                  ScanAreaWidth="{Binding Path=ScanAreaWidth,
+                                                          Mode=OneWay}"
+                                  ScanAreaXPosition="{Binding Path=XPosition,
+                                                              Mode=TwoWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                  ScanAreaYPosition="{Binding Path=YPosition,
+                                                              Mode=TwoWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                  ScanAreaZPosition="{Binding Path=ZPosition,
+                                                              Mode=TwoWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                  StepSizeX="{Binding Path=XStepSize,
+                                                      Mode=TwoWay,
+                                                      UpdateSourceTrigger=PropertyChanged}"
+                                  StepSizeY="{Binding Path=YStepSize,
+                                                      Mode=TwoWay,
+                                                      UpdateSourceTrigger=PropertyChanged}"
+                                  DisplayTileGrid="{Binding Path=DisplayTileGrid,
+                                                             Mode=TwoWay,
+                                                             UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

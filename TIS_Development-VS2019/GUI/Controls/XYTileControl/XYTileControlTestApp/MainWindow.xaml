@@ -1,0 +1,40 @@
+﻿<Window x:Class="XYTileControlTestApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:uc="clr-namespace:XYTileControl;assembly=XYTileControl"
+        Title="MainWindow">
+    <Grid>
+        <StackPanel>
+            <StackPanel>
+                <ComboBox SelectionChanged="ComboBox_SelectionChanged">
+                    <ComboBoxItem>Edit</ComboBoxItem>
+                    <ComboBoxItem>Capture</ComboBoxItem>
+                    <ComboBoxItem>View</ComboBoxItem>
+                </ComboBox>
+            </StackPanel>
+            <StackPanel>
+                <uc:XYTileDisplay Name="xyTileControl"
+                                  ActiveXML="C:\Users\CGe\Documents\ThorImageLS 2.5\Capture Templates\Active.xml"
+                                  ApplicationSettings="C:\Users\CGe\Documents\ThorImageLS 2.5\Application Settings\ApplicationSettings.xml"
+                                  MaxX="120"
+                                  MaxY="120"
+                                  MinX="-120"
+                                  MinY="-120"
+                                  Mode="Edit"
+                                  ScanAreaHeight="255"
+                                  ScanAreaWidth="255"
+                                  ScanAreaXPosition="{Binding Path=XPosition,
+                                                              Mode=TwoWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                  ScanAreaYPosition="{Binding Path=YPosition,
+                                                              Mode=TwoWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                  ScanAreaZPosition="{Binding Path=ZPosition,
+                                                              Mode=TwoWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                  StepSizeX="1"
+                                  StepSizeY="2" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

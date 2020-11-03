@@ -1,0 +1,23 @@
+﻿<UserControl x:Class="ScriptManagerDll.MainWindow"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:View="clr-namespace:ScriptManagerDll.View"
+             xmlns:ViewModel="clr-namespace:ScriptManagerDll.ViewModel"
+             Name="mwUserControl">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <Border>
+            <ScrollViewer Name="scrollView"
+                          VerticalScrollBarVisibility="Auto"
+                          Margin="1">
+                <View:MasterView x:Name="masterView" />
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ThorObjectiveChangerSettings>
+    <Connection portID="51" baudRate="115200" serialNumber="NA" homed="0"/>
+</ThorObjectiveChangerSettings>

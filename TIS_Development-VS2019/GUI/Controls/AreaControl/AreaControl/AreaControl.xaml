@@ -1,0 +1,1331 @@
+﻿<UserControl x:Class="AreaControl.AreaControlUC"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:roi="clr-namespace:ROIUserControl;assembly=ROIUserControl"
+             xmlns:local="clr-namespace:AreaControl"
+             xmlns:sharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+             mc:Ignorable="d"
+             Height="Auto"
+             Width="385">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <Style x:Key="mySPStyle"
+                   TargetType="{x:Type StackPanel}"
+                   BasedOn="{StaticResource {x:Type StackPanel}}">
+                <Style.Triggers>
+                    <MultiTrigger>
+                        <MultiTrigger.Conditions>
+                            <Condition Property="Selector.IsSelectionActive"
+                                       Value="True" />
+                        </MultiTrigger.Conditions>
+                        <Setter Property="Background"
+                                Value="DodgerBlue" />
+                    </MultiTrigger>
+                    <MultiTrigger>
+                        <MultiTrigger.Conditions>
+                            <Condition Property="Selector.IsSelectionActive"
+                                       Value="False" />
+                        </MultiTrigger.Conditions>
+                        <Setter Property="Background"
+                                Value="DodgerBlue" />
+                        <Setter Property="Opacity"
+                                Value="50" />
+                    </MultiTrigger>
+                </Style.Triggers>
+            </Style>
+            <Style x:Key="myLBStyle"
+                   TargetType="{x:Type ListBoxItem}">
+                <Style.Setters>
+                    <Setter Property="BorderThickness"
+                            Value="4" />
+                    <Setter Property="BorderBrush"
+                            Value="White" />
+                    <Setter Property="Background"
+                            Value="#FF595959" />
+                    <Setter Property="Foreground"
+                            Value="White" />
+                </Style.Setters>
+            </Style>
+            <sharedTypes:BooleanToVisibilityConverter x:Key="boolToVisConverter" />
+            <sharedTypes:BoolToOppositeBoolConverter x:Key="boolOppositeConverter" />
+            <sharedTypes:DoubleCultureConverter x:Key="doubleCulture" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel>
+            <TabControl Name="tbViewMode"
+                        HorizontalAlignment="Center"
+                        Visibility="{Binding Path=MesoMicroVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVisConverter}}"
+                        IsEnabled="{Binding Path=ImageStartStatusArea, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                        SelectedIndex="{Binding Path=SelectedViewMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        BorderBrush="Transparent">
+                <TabItem Name="tiMesoView"
+                         IsSelected="True">
+                    <TabItem.Header>
+                        <Button Name="btnMesoView"
+                                Width="175"
+                                Height="25"
+                                ToolTip="MesoView"
+                                Content="MesoView"
+                                Click="btnMesoView_Click"
+                                IsDefault="True">
+                        </Button>
+                    </TabItem.Header>
+                </TabItem>
+                <TabItem Name="tiMicroView">
+                    <TabItem.Header>
+                        <Button Name="btnMicroView"
+                                Width="175"
+                                Height="25"
+                                ToolTip="MicroView"
+                                Click="btnMicroView_Click"
+                                Content="MicroView">
+                        </Button>
+                    </TabItem.Header>
+                </TabItem>
+            </TabControl>
+            <StackPanel HorizontalAlignment="Center"
+                        Orientation="Horizontal">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Visibility"
+                                Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Path=SelectedViewMode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                         Value="1">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <ListBox Name="lbAreaMode"
+                         SelectedIndex="{Binding Path=LSMAreaMode,
+                                                 Mode=TwoWay,
+                                                 UpdateSourceTrigger=PropertyChanged}"
+                         Style="{x:Null}"
+                         ItemContainerStyle="{StaticResource myLBStyle}">
+                    <ListBox.Resources>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
+                                         Color="#007ACC"
+                                         Opacity="0.5" />
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}">#007ACC</SolidColorBrush>
+                    </ListBox.Resources>
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel HorizontalAlignment="Center"
+                                        VerticalAlignment="Top"
+                                        Orientation="Horizontal"
+                                        Style="{StaticResource mySPStyle}" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBoxItem Width="76"
+                                 Height="38"
+                                 Margin="0"
+                                 Background="#FF595959"
+                                 Foreground="White"
+                                 VerticalAlignment="Bottom"
+                                 HorizontalContentAlignment="Center"
+                                 Content="Square">
+                    </ListBoxItem>
+                    <ListBoxItem Width="76"
+                                 Height="38"
+                                 Margin="0"
+                                 Background="#FF595959"
+                                 Foreground="White"
+                                 VerticalAlignment="Bottom"
+                                 HorizontalContentAlignment="Center"
+                                 Content="Rectangle"
+                                 Visibility="{Binding RectangleAreaModeVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <ListBoxItem Width="76"
+                                 Height="38"
+                                 Margin="0"
+                                 Background="#FF595959"
+                                 Foreground="White"
+                                 VerticalAlignment="Bottom"
+                                 HorizontalContentAlignment="Center"
+                                 Content="Kymograph"
+                                 Visibility="{Binding Path=GRLSMScanVisibility}" />
+                    <ListBoxItem Width="76"
+                                 Height="38"
+                                 Margin="0"
+                                 Background="#FF595959"
+                                 Foreground="White"
+                                 VerticalAlignment="Bottom"
+                                 HorizontalContentAlignment="Center"
+                                 Content="Line"
+                                 Visibility="{Binding Path=GGLSMScanVisibility}" />
+                    <ListBoxItem Width="76"
+                                 Height="38"
+                                 Margin="0"
+                                 Background="#FF595959"
+                                 Foreground="White"
+                                 VerticalAlignment="Bottom"
+                                 HorizontalContentAlignment="Center"
+                                 Content="Polyline"
+                                 Visibility="{Binding Path=PolylineScanVisibility}" />
+                </ListBox>
+            </StackPanel>
+            <Grid>
+                <StackPanel Name="spSquarePanel"
+                            Orientation="Vertical">
+                    <StackPanel ToolTip="Pixel resolution adjustment">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=SelectedViewMode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Value="1">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <Label Content="Pixel Count"
+                               Foreground="White" />
+                        <StackPanel HorizontalAlignment="Center"
+                                    Orientation="Horizontal"
+                                    Visibility="{Binding Path=MesoMicroVisible, Mode=OneWay, Converter={StaticResource boolToVisConverter}, ConverterParameter=Inverted, UpdateSourceTrigger=PropertyChanged}">
+                            <Label Width="18"
+                                   Content="X"
+                                   Foreground="White"
+                                   Visibility="{Binding Path=PixelXSliderVibility}" />
+                            <Slider Name="sliderPixelX"
+                                    Width="300"
+                                    Margin="0,5,0,5"
+                                    Maximum="{Binding Path=LSMPixelXMax,
+                                                      Mode=OneWay,
+                                                      UpdateSourceTrigger=PropertyChanged}"
+                                    Minimum="{Binding Path=LSMPixelXMin,
+                                                      Mode=OneWay,
+                                                      UpdateSourceTrigger=PropertyChanged}"
+                                    PreviewMouseUp="sliderPixelX_PreviewMouseUp"
+                                    ValueChanged="sliderPixelX_ValueChanged"
+                                    Visibility="{Binding Path=PixelXSliderVibility}"
+                                    Value="{Binding Path=LSMPixelX,
+                                                    Mode=OneWay,
+                                                    UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel HorizontalAlignment="Center"
+                                    Orientation="Horizontal"
+                                    Visibility="{Binding Path=PixelYSliderVibility}">
+                            <Label Width="18"
+                                   Content="Y"
+                                   Foreground="White" />
+                            <Slider Name="sliderPixelY"
+                                    Width="300"
+                                    Margin="0,5,0,5"
+                                    Maximum="{Binding ElementName=sliderPixelX,
+                                                      Path=Value}"
+                                    Minimum="{Binding Path=LSMPixelYMin,
+                                                      Mode=OneWay,
+                                                      UpdateSourceTrigger=PropertyChanged}"
+                                    PreviewMouseUp="sliderPixelY_PreviewMouseUp"
+                                    ValueChanged="sliderPixelY_ValueChanged"
+                                    Value="{Binding Path=LSMPixelY,
+                                                    Mode=OneWay,
+                                                    UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center"
+                                    Visibility="{Binding Path=MesoMicroVisible, Mode=OneWay, Converter={StaticResource boolToVisConverter}, ConverterParameter=Inverted, UpdateSourceTrigger=PropertyChanged}"
+                                    IsEnabled="{Binding Path=EnableResolutionPresets}">
+                            <Grid Width="200">
+                                <ComboBox Name="ResolutionSelector"
+                                          ItemsSource="{Binding ResolutionPresets}"
+                                          SelectionChanged="ResolutionSelector_SelectionChanged">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Text}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <TextBlock HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           IsHitTestVisible="False"
+                                           Text="{Binding Path=CurrentResolution.Text,
+                                                      Mode=OneWay}"
+                                           TextAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style BasedOn="{StaticResource {x:Type TextBlock}}"
+                                               TargetType="TextBlock">
+                                            <Setter Property="Visibility"
+                                                    Value="Hidden" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ElementName=ResolutionSelector, Path=SelectedItem}"
+                                                             Value="{x:Null}">
+                                                    <Setter Property="Visibility"
+                                                            Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                            <Button Content="+"
+                                    Width="20"
+                                    Height="20"
+                                    Command="{Binding ResolutionAddCommand}"
+                                    ToolTip="Add new pixel resolution" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Margin="1"
+                                HorizontalAlignment="Center"
+                                Orientation="Horizontal"
+                                Visibility="{Binding Path=TimedBasedVisiblity, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                        <CheckBox Name="cbTimeBasedLineScanEnable"
+                                  Margin="20,1"
+                                  VerticalAlignment="Center"
+                                  HorizontalAlignment="Left"
+                                  Content="Time Based line scan"
+                                  Foreground="White"
+                                  IsChecked="{Binding Path=TimeBasedLineScan,
+                                                      Mode=TwoWay,
+                                                      UpdateSourceTrigger=PropertyChanged}" />
+                        <StackPanel Orientation="Horizontal"
+                                    Visibility="{Binding Path=IsChecked, ElementName=cbTimeBasedLineScanEnable, Converter={StaticResource boolToVisConverter}}">
+                            <Label VerticalContentAlignment="Center"
+                               Content="Scan Time"/>
+                            <TextBox Name="tbTimeBasedLSTimeMS"
+                                 Width="50"
+                                 Height="20"
+                                 Text="{Binding Path=TimeBasedLSTimeMS}" />
+                            <Button Width="20"
+                                 Height="20"
+                                 Content="✓">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTimeBasedLSTimeMS}"
+                                                     Value="True">
+                                                <Setter Property="Visibility"
+                                                    Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <StackPanel VerticalAlignment="Center">
+                                <RepeatButton Width="20"
+                                          Height="20"
+                                          Command="{Binding Path=TimeBasedLSTimeMSPlusCommand}"
+                                          Content="+"
+                                          Delay="500"
+                                          Interval="100" />
+                                <RepeatButton Width="20"
+                                          Height="20"
+                                          Command="{Binding Path=TimeBasedLSTimeMSMinusCommand}"
+                                          Content="-"
+                                          Delay="500"
+                                          Interval="100" />
+                            </StackPanel>
+                            <Label VerticalContentAlignment="Center"
+                               Content="[ms]"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical">
+                        <StackPanel Margin="1"
+                                    HorizontalAlignment="Center"
+                                    Orientation="Horizontal"
+                                    Visibility="{Binding Path=MesoMicroVisible, Mode=OneWay, Converter={StaticResource boolToVisConverter}, ConverterParameter=Normal, UpdateSourceTrigger=PropertyChanged}">
+                            <Label Content="X:"
+                                   Foreground="White" />
+                            <Label Width="90"
+                                   Foreground="White"
+                                   HorizontalContentAlignment="Left"
+                                   Content="{Binding Path=LSMPixelX, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <Label Content="Y:"
+                                   Foreground="White" />
+                            <Label Width="90"
+                                   Foreground="White"
+                                   HorizontalContentAlignment="Left"
+                                   Content="{Binding Path=LSMPixelY, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Left"
+                                    Visibility="{Binding Path=StripVisible, Mode=OneWay, Converter={StaticResource boolToVisConverter}, UpdateSourceTrigger=PropertyChanged}">
+                            <Label VerticalAlignment="Center"
+                                   Content="Strip Pixels" />
+                            <Slider Margin="3"
+                                    Width="220"
+                                    VerticalAlignment="Center"
+                                    Maximum="{Binding MesoStripPixelsRange[1], Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Minimum="{Binding MesoStripPixelsRange[0], Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Value="{Binding MesoStripPixels, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    IsSnapToTickEnabled="True"
+                                    TickFrequency="{Binding MesoStripPixelsStep, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                    ToolTip="{Binding MesoStripPixels, StringFormat=F0}"
+                                    AutoToolTipPlacement="TopLeft"
+                                    AutoToolTipPrecision="0" />
+                            <StackPanel Margin="1"
+                                        HorizontalAlignment="Left"
+                                        Orientation="Horizontal">
+                                <TextBox Name="tbStripPixel"
+                                         Width="35"
+                                         Height="20"
+                                         Text="{Binding Path=MesoStripPixels}" />
+                                <Button Width="20"
+                                        Height="20"
+                                        Content="✓">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility"
+                                                    Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbStripPixel}"
+                                                             Value="True">
+                                                    <Setter Property="Visibility"
+                                                            Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <StackPanel VerticalAlignment="Center">
+                                    <RepeatButton Width="20"
+                                                  Height="20"
+                                                  Command="{Binding Path=MesoStripPixelsPlusCommand}"
+                                                  Content="+"
+                                                  Delay="500"
+                                                  Interval="100" />
+                                    <RepeatButton Width="20"
+                                                  Height="20"
+                                                  Command="{Binding Path=MesoStripPixelsMinusCommand}"
+                                                  Content="-"
+                                                  Delay="500"
+                                                  Interval="100" />
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="1"
+                                    HorizontalAlignment="Left"
+                                    Visibility="{Binding Path=StripVisible, Mode=OneWay, Converter={StaticResource boolToVisConverter}, UpdateSourceTrigger=PropertyChanged}">
+                            <Label Content="Strip Width" />
+                            <ComboBox Margin="1"
+                                      ItemsSource="{Binding Path=StripSizes, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                      SelectedItem="{Binding Path=SelectedStripSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <Label Content="[um]" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Left">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=SelectedViewMode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     Value="1">
+                                            <Setter Property="Visibility"
+                                                    Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <Label Content="ROI Index   " />
+                            <ComboBox Margin="1"
+                                      ItemsSource="{Binding Path=MicroScanAreas, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                      SelectedItem="{Binding Path=SelectedScanArea, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <Label Width="8" />
+                            <Label Width="180"
+                                   Content="{Binding Path=ROIFrameRate, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="1"
+                                    HorizontalAlignment="Center"
+                                    Visibility="{Binding Path=SelectedViewMode, Mode=OneWay, Converter={StaticResource boolToVisConverter}, UpdateSourceTrigger=PropertyChanged}">
+                            <ToggleButton Name="tbCfgMicroView"
+                                          Margin="1"
+                                          Height="25"
+                                          HorizontalAlignment="Center"
+                                          IsEnabled="{Binding Path=ImageStartStatusArea, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                          ToolTip="ON to draw micro view scan areas and OFF to stop.">
+                                <ToggleButton.Style>
+                                    <Style TargetType="ToggleButton"
+                                           BasedOn="{StaticResource {x:Type ToggleButton}}">
+                                        <Setter Property="IsChecked"
+                                                Value="{Binding Path=ConfigMicroScanArea, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                        <Setter Property="Content"
+                                                Value="Configure MicroView OFF" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsChecked"
+                                                     Value="True">
+                                                <Setter Property="Content"
+                                                        Value="Configure MicroView ON" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ToggleButton.Style>
+                            </ToggleButton>
+                            <ToggleButton Name="tbOverview"
+                                          Margin="10 1 1 1"
+                                          Height="25"
+                                          HorizontalAlignment="Center"
+                                          ToolTip="Show or hide over view for micro scan areas.">
+                                <ToggleButton.Style>
+                                    <Style TargetType="ToggleButton"
+                                           BasedOn="{StaticResource {x:Type ToggleButton}}">
+                                        <Setter Property="IsChecked"
+                                                Value="{Binding Path=OverviewVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                        <Setter Property="Content"
+                                                Value="Hide Overview" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsChecked"
+                                                     Value="True">
+                                                <Setter Property="Content"
+                                                        Value="Show Overview" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ToggleButton.Style>
+                            </ToggleButton>
+                        </StackPanel>
+                    </StackPanel>
+                    <Grid>
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=SelectedViewMode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Value="1">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+                        <TextBox x:Name="txtFieldOffsetX"
+                                 Width="50"
+                                 Text="{Binding Path=LSMFieldOffsetX,
+                                                Mode=TwoWay,
+                                                UpdateSourceTrigger=PropertyChanged}"
+                                 Visibility="Hidden" />
+                        <TextBox x:Name="txtFieldOffsetY"
+                                 Width="50"
+                                 Text="{Binding Path=LSMFieldOffsetY,
+                                                Mode=TwoWay,
+                                                UpdateSourceTrigger=PropertyChanged}"
+                                 Visibility="Hidden" />
+                        <StackPanel Margin="1"
+                                    Orientation="Horizontal">
+                            <StackPanel IsEnabled="{Binding Path=FielSizeAdjustMentEnable}"
+                                        Orientation="Horizontal"
+                                        ToolTip="Field Size adjustment">
+                                <StackPanel VerticalAlignment="Center">
+                                    <StackPanel Name="spZoom"
+                                                Orientation="Horizontal">
+                                        <Label VerticalAlignment="Center"
+                                               Content="Zoom"
+                                               Foreground="White" />
+                                        <Label Name="lblZoom"
+                                               Width="50"
+                                               VerticalAlignment="Center"
+                                               HorizontalContentAlignment="Right"
+                                               Content="{Binding Path=LSMZoom,
+                                                                 Mode=OneWay,
+                                                                 UpdateSourceTrigger=PropertyChanged}"
+                                               Foreground="White" />
+                                        <StackPanel>
+                                            <RepeatButton Width="20"
+                                                          Height="20"
+                                                          Command="{Binding Path=LSMZoomPlusCommand}"
+                                                          Content="+"
+                                                          Delay="500"
+                                                          Interval="100" />
+                                            <RepeatButton Width="20"
+                                                          Height="20"
+                                                          Command="{Binding Path=LSMZoomMinusCommand}"
+                                                          Content="-"
+                                                          Delay="500"
+                                                          Interval="100" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Label Width="45"
+                                                       VerticalAlignment="Center"
+                                                       Content="Width"
+                                                       Foreground="White" />
+                                                <Label Width="45"
+                                                       VerticalAlignment="Center"
+                                                       HorizontalContentAlignment="Right"
+                                                       Content="{Binding Path=LSMFieldSizeXUM,
+                                                                         Mode=OneWay,
+                                                                         UpdateSourceTrigger=PropertyChanged,
+                                                                         Converter={StaticResource doubleCulture}}"
+                                                       Foreground="White" />
+                                                <Label VerticalAlignment="Center"
+                                                       Content="[um]"
+                                                       Foreground="White" />
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Label Width="45"
+                                                       VerticalAlignment="Center"
+                                                       Content="Height"
+                                                       Foreground="White" />
+                                                <Label Width="45"
+                                                       VerticalAlignment="Center"
+                                                       HorizontalContentAlignment="Right"
+                                                       Content="{Binding Path=LSMFieldSizeYUM,
+                                                                         Mode=OneWay,
+                                                                         UpdateSourceTrigger=PropertyChanged,
+                                                                         Converter={StaticResource doubleCulture}}"
+                                                       Foreground="White" />
+                                                <Label VerticalAlignment="Center"
+                                                       Content="[um]"
+                                                       Foreground="White" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <RepeatButton Width="20"
+                                                          Height="20"
+                                                          Command="{Binding Path=LSMFieldSizePlusCommand}"
+                                                          Content="+"
+                                                          Delay="500"
+                                                          Interval="100" />
+                                            <RepeatButton Width="20"
+                                                          Height="20"
+                                                          Command="{Binding Path=LSMFieldSizeMinusCommand}"
+                                                          Content="-"
+                                                          Delay="500"
+                                                          Interval="100" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label Width="62"
+                                               VerticalAlignment="Center"
+                                               HorizontalContentAlignment="Right"
+                                               Content="{Binding Path=LSMUMPerPixel,
+                                                                 Mode=OneWay,
+                                                                 UpdateSourceTrigger=PropertyChanged,
+                                                                 Converter={StaticResource doubleCulture}}"
+                                               Foreground="White" />
+                                        <Label VerticalAlignment="Center"
+                                               Content="[um/pixel]"
+                                               Foreground="White" />
+                                    </StackPanel>
+                                    <Button Name="btnNyquist"
+                                            Width="32"
+                                            Height="32"
+                                            Margin="1"
+                                            HorizontalAlignment="Center"
+                                            Command="{Binding Path=NyquistCommand}"
+                                            ToolTip="Nyquist Calculator">
+                                        <Image Width="40"
+                                               Source=".\calculator.png" />
+                                    </Button>
+                                </StackPanel>
+                                <Slider x:Name="SliderFieldSize"
+                                        Template="{DynamicResource VerticalSlider}"
+                                        Width="Auto"
+                                        Height="128"
+                                        IsSnapToTickEnabled="True"
+                                        Maximum="{Binding Path=LSMFieldSizeMax,
+                                                          Mode=OneWay,
+                                                          UpdateSourceTrigger=PropertyChanged}"
+                                        Minimum="{Binding Path=LSMFieldSizeMin,
+                                                          Mode=OneWay,
+                                                          UpdateSourceTrigger=PropertyChanged}"
+                                        Orientation="Vertical"
+                                        TickFrequency="1"
+                                        Visibility="{Binding FieldSizeVisible}"
+                                        Value="{Binding Path=LSMFieldSize,
+                                                        Mode=TwoWay,
+                                                        UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <StackPanel HorizontalAlignment="Center"
+                                        VerticalAlignment="Center">
+                                <Button Width="85"
+                                        Height="20"
+                                        Margin="1"
+                                        Command="{Binding Path=RoiZoomInCommand}"
+                                        Content="Field from ROI"
+                                        IsEnabled="{Binding Path=FieldFromROIEnable}"
+                                        ToolTip="Set Field Size and location to dimensions of first Rectangle ROI" />
+                                <Button Width="85"
+                                        Height="20"
+                                        Margin="1"
+                                        Command="{Binding Path=ReturnToOriginalAreaCommand}"
+                                        Content="Original Area"
+                                        ToolTip="Set Field Size and location to dimensions of first Rectangle ROI" />
+                                <roi:UserControl1 x:Name="ucROI"
+                                                  Width="128"
+                                                  Height="128"
+                                                  LsmTypeName="{Binding Path=LSMAreaName,
+                                                                           Mode=OneWay,
+                                                                           UpdateSourceTrigger=PropertyChanged}"
+                                                  InnerRectAngle="{Binding Path=LSMScanAreaAngle,
+                                                                           Mode=TwoWay,
+                                                                           UpdateSourceTrigger=PropertyChanged}"
+                                                  InnerRectColor="Green"
+                                                  InnerRectHeight="{Binding Path=LSMFieldSizeDisplayY,
+                                                                            Mode=TwoWay,
+                                                                            UpdateSourceTrigger=PropertyChanged}"
+                                                  InnerRectLeft="{Binding Path=LSMFieldOffsetXDisplay,
+                                                                          Mode=TwoWay,
+                                                                          UpdateSourceTrigger=PropertyChanged}"
+                                                  InnerRectTop="{Binding Path=LSMFieldOffsetYDisplay,
+                                                                         Mode=TwoWay,
+                                                                         UpdateSourceTrigger=PropertyChanged}"
+                                                  InnerRectWidth="{Binding Path=LSMFieldSizeDisplayX,
+                                                                           Mode=TwoWay,
+                                                                           UpdateSourceTrigger=PropertyChanged}"
+                                                  IsCircleVisible="True"
+                                                  IsEnabled="{Binding Path=LockFieldOffset,
+                                                                      Mode=OneWay,
+                                                                      Converter={StaticResource boolOppositeConverter}}"
+                                                  OuterRectColor="#FF333333"
+                                                  OuterRectHeight="128"
+                                                  OuterRectLeft="0"
+                                                  OuterRectTop="0"
+                                                  OuterRectWidth="128"
+                                                  PanningState="False" />
+                                <StackPanel Name="spFieldSize"
+                                            HorizontalAlignment="Center"
+                                            Orientation="Horizontal"
+                                            Visibility="{Binding FieldSizeVisible}">
+                                    <Label VerticalAlignment="Center"
+                                           Content="Field Size"
+                                           Foreground="White" />
+                                    <TextBox Name="txtFieldSize"
+                                             MinWidth="30"
+                                             VerticalAlignment="Center"
+                                             LostFocus="txtFieldSize_LostFocus"
+                                             Text="{Binding Path=LSMFieldSize,
+                                                            Mode=TwoWay}" />
+                                    <Button Width="30"
+                                            Height="25"
+                                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txtFieldSize}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel VerticalAlignment="Center">
+                                <Label HorizontalAlignment="Center"
+                                       Content="Angle [deg]"
+                                       Visibility="{Binding Path=AreaAngleVisibility}" />
+                                <StackPanel Margin="1"
+                                            HorizontalAlignment="Center"
+                                            Orientation="Horizontal"
+                                            Visibility="{Binding Path=AreaAngleVisibility}">
+                                    <TextBox Name="tbAreaAngle"
+                                             Width="35"
+                                             Height="20"
+                                             Text="{Binding Path=LSMScanAreaAngle}" />
+                                    <Button Width="20"
+                                            Height="20"
+                                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbAreaAngle}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=LSMScanAreaAnglePlusCommand}"
+                                                      Content="+"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=LSMScanAreaAngleMinusCommand}"
+                                                      Content="-"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <Button Width="85"
+                                        Height="20"
+                                        Margin="1"
+                                        Command="{Binding Path=CenterROICommand}"
+                                        Content="Center"
+                                        ToolTip="Recenter the field" />
+                                <Label HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Content="Offset"
+                                       Foreground="White" />
+                                <StackPanel Name="spXOffset"
+                                            IsEnabled="{Binding Path=LockFieldOffset,
+                                                                Mode=OneWay,
+                                                                Converter={StaticResource boolOppositeConverter}}"
+                                            Orientation="Horizontal"
+                                            Visibility="{Binding IsGalvoRes}">
+                                    <Label Width="18"
+                                           VerticalAlignment="Center"
+                                           Content="X"
+                                           Foreground="White" />
+                                    <TextBox Name="tbLSMFieldOffsetXActual"
+                                             Width="30"
+                                             VerticalAlignment="Center"
+                                             Text="{Binding Path=LSMFieldOffsetXActual,
+                                                            Mode=TwoWay}"
+                                             ToolTip="Adjust offset horizontally" />
+                                    <Button Width="25"
+                                            Height="25"
+                                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbLSMFieldOffsetXActual}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <StackPanel>
+                                        <RepeatButton Name="butFieldOffsetXPlus"
+                                                      Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=LSMFieldOffsetXPlusCommand}"
+                                                      Content="+"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                        <RepeatButton Name="butFieldOffsetXMinus"
+                                                      Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=LSMFieldOffsetXMinusCommand}"
+                                                      Content="-"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel IsEnabled="{Binding Path=LockFieldOffset, Mode=OneWay, Converter={StaticResource boolOppositeConverter}}"
+                                            Orientation="Horizontal">
+                                    <Label Width="18"
+                                           VerticalAlignment="Center"
+                                           Content="Y"
+                                           Foreground="White" />
+                                    <TextBox Name="tbLSMFieldOffsetYActual"
+                                             Width="30"
+                                             VerticalAlignment="Center"
+                                             Text="{Binding Path=LSMFieldOffsetYActual,
+                                                            Mode=TwoWay}"
+                                             ToolTip="Adjust offset vertically" />
+                                    <Button Width="25"
+                                            Height="25"
+                                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbLSMFieldOffsetYActual}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <StackPanel>
+                                        <RepeatButton Name="butFieldOffsetYPlus"
+                                                      Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=LSMFieldOffsetYPlusCommand}"
+                                                      Content="+"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                        <RepeatButton Name="butFieldOffsetYMinus"
+                                                      Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=LSMFieldOffsetYMinusCommand}"
+                                                      Content="-"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <CheckBox Name="cbLockOffset"
+                                          Margin="1"
+                                          Foreground="White"
+                                          IsChecked="{Binding Path=LockFieldOffset,
+                                                              Mode=TwoWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                          Visibility="Collapsed">
+                                    <TextBlock ToolTip="Always keep field at center">
+                    Always
+                    <LineBreak />
+                    Center
+                                    </TextBlock>
+                                </CheckBox>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                    <Border>
+                        <Expander Foreground="White"
+                                  Header="Advanced"
+                                  IsExpanded="False">
+                            <StackPanel>
+                                <CheckBox Name="ckRef"
+                                          Margin="1"
+                                          HorizontalAlignment="Left"
+                                          Content="Place Reference Image into Channel D"
+                                          Foreground="White"
+                                          ToolTip="Enable/disable Reference channel input to D Channel"
+                                          IsChecked="{Binding Path=EnableReferenceChannel,
+                                                              Mode=TwoWay,
+                                                              UpdateSourceTrigger=PropertyChanged}" />
+                                <CheckBox Name="cbFlipScan"
+                                          Margin="1"
+                                          HorizontalAlignment="Left"
+                                          Content="Flip Vertical Scan Direction"
+                                          Foreground="White"
+                                          IsChecked="{Binding Path=LSMFlipVerticalScan,
+                                                              Mode=TwoWay,
+                                                              UpdateSourceTrigger=PropertyChanged}" />
+                                <CheckBox Name="cbFlipHorizontal"
+                                          Margin="1"
+                                          HorizontalAlignment="Left"
+                                          Content="Flip Horizontal"
+                                          Foreground="White"
+                                          IsChecked="{Binding Path=LSMFlipHorizontal,
+                                                              Mode=TwoWay,
+                                                              UpdateSourceTrigger=PropertyChanged}" />
+                                <StackPanel Orientation="Horizontal"
+                                            Visibility="{Binding GGLSMScanVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                    <StackPanel Width="140"
+                                                HorizontalAlignment="Left">
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Margin="90,0,0,0"
+                                                      HorizontalAlignment="Left"
+                                                      Command="{Binding Path=LSMFieldOffsetYFinePlusCommand}"
+                                                      Content="+"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                        <StackPanel Orientation="Horizontal">
+
+                                            <Label Width="70"
+                                                   VerticalAlignment="Center"
+                                                   Content="Fine Offset"
+                                                   Foreground="White" />
+                                            <RepeatButton Width="20"
+                                                          Height="20"
+                                                          Command="{Binding Path=LSMFieldOffsetXFineMinusCommand}"
+                                                          Content="-"
+                                                          Delay="500"
+                                                          Interval="100" />
+                                            <RepeatButton Width="20"
+                                                          Height="20"
+                                                          Command="{Binding Path=LSMFieldOffsetFineResetCommand}"
+                                                          Content="0"
+                                                          Delay="500"
+                                                          Interval="100" />
+                                            <RepeatButton Width="20"
+                                                          Height="20"
+                                                          Command="{Binding Path=LSMFieldOffsetXFinePlusCommand}"
+                                                          Content="+"
+                                                          Delay="500"
+                                                          Interval="100" />
+                                        </StackPanel>
+                                        <StackPanel Margin="10,0,0,0"
+                                                    Orientation="Horizontal">
+                                            <TextBox Name="tbOffsetXFine"
+                                                     Width="40"
+                                                     VerticalAlignment="Center"
+                                                     Text="{Binding Path=LSMFieldOffsetXFine,
+                                                                    Mode=TwoWay,
+                                                                    Converter={StaticResource doubleCulture}}" />
+                                            <Button Width="30"
+                                                    Content="✓">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbOffsetXFine}"
+                                                                         Value="True">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                            <TextBox Name="tbOffsetYFine"
+                                                     Width="40"
+                                                     VerticalAlignment="Center"
+                                                     Text="{Binding Path=LSMFieldOffsetYFine,
+                                                                    Mode=TwoWay,
+                                                                    Converter={StaticResource doubleCulture}}" />
+                                            <Button Width="30"
+                                                    Content="✓">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbOffsetYFine}"
+                                                                         Value="True">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                            <RepeatButton Width="20"
+                                                          Height="20"
+                                                          Command="{Binding Path=LSMFieldOffsetYFineMinusCommand}"
+                                                          Content="-"
+                                                          Delay="500"
+                                                          Interval="100" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Width="140"
+                                                Margin="30,0,0,0">
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Margin="90,0,0,0"
+                                                      HorizontalAlignment="Left"
+                                                      Command="{Binding Path=LSMFieldScaleYFinePlusCommand}"
+                                                      Content="+"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <Label Width="70"
+                                                   VerticalAlignment="Center"
+                                                   Content="Fine Scale"
+                                                   Foreground="White" />
+                                            <StackPanel Orientation="Horizontal">
+                                                <RepeatButton Width="20"
+                                                              Height="20"
+                                                              Command="{Binding Path=LSMFieldScaleXFineMinusCommand}"
+                                                              Content="-"
+                                                              Delay="500"
+                                                              Interval="100" />
+                                                <RepeatButton Width="20"
+                                                              Height="20"
+                                                              Command="{Binding Path=LSMFieldScaleFineResetCommand}"
+                                                              Content="0"
+                                                              Delay="500"
+                                                              Interval="100" />
+                                                <RepeatButton Width="20"
+                                                              Height="20"
+                                                              Command="{Binding Path=LSMFieldScaleXFinePlusCommand}"
+                                                              Content="+"
+                                                              Delay="500"
+                                                              Interval="100" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <StackPanel Margin="10,0,0,0"
+                                                    Orientation="Horizontal">
+                                            <TextBox Name="tbScaleXFine"
+                                                     Width="40"
+                                                     VerticalAlignment="Center"
+                                                     Text="{Binding Path=LSMFieldScaleXFine,
+                                                                    Mode=TwoWay,
+                                                                    Converter={StaticResource doubleCulture}}" />
+                                            <Button Width="30"
+                                                    Content="✓">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbScaleXFine}"
+                                                                         Value="True">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                            <TextBox Name="tbScaleYFine"
+                                                     Width="40"
+                                                     VerticalAlignment="Center"
+                                                     Text="{Binding Path=LSMFieldScaleYFine,
+                                                                    Mode=TwoWay,
+                                                                    Converter={StaticResource doubleCulture}}" />
+                                            <Button Width="30"
+                                                    Content="✓">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbScaleYFine}"
+                                                                         Value="True">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                            <RepeatButton Width="20"
+                                                          Height="20"
+                                                          Command="{Binding Path=LSMFieldScaleYFineMinusCommand}"
+                                                          Content="-"
+                                                          Delay="500"
+                                                          Interval="100" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Left">
+                                    <Button Margin="1"
+                                            Content="Save Calibration"
+                                            MinWidth="120"
+                                            Height="30"
+                                            Command="{Binding Path=LSMSaveCalibrationCommand}"
+                                            Visibility="{Binding GGLSMScanVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"></Button>
+                                    <Label Content="{Binding Path=LSMLastCalibrationDate}"
+                                           Foreground="Yellow" />
+                                </StackPanel>
+                                <StackPanel Margin="1"
+                                            HorizontalAlignment="Center"
+                                            Orientation="Horizontal"
+                                            ToolTip="Pixel aspect ratio X:Y">
+                                    <Label Content="Pixel Aspect Ratio X:Y"
+                                           Foreground="White" />
+                                    <Label Content="1:"
+                                           Foreground="White" />
+                                    <TextBox Name="tbLSMScaleYScan"
+                                             Width="30"
+                                             Text="{Binding Path=LSMScaleYScan,
+                                                            Mode=TwoWay,
+                                                            Converter={StaticResource doubleCulture}}" />
+                                    <Button Width="30"
+                                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbLSMScaleYScan}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Name="btCenterScanners"
+                                            Content="Center&#x0a;Scanners"
+                                            Width="60"
+                                            Height="40"
+                                            Margin="1"
+                                            IsEnabled="{Binding ImageStartStatusArea}"
+                                            Command="{Binding CenterScannersCommand}"
+                                            CommandParameter="{x:Static sharedTypes:SelectedHardware.SELECTED_CAMERA1}" />
+                                    <Button Name="btnCloseShutter"
+                                            Content="Close&#x0a;Shutter"
+                                            Width="60"
+                                            Height="40"
+                                            Margin="1"
+                                            IsEnabled="{Binding ImageStartStatusArea}"
+                                            Command="{Binding CloseShutterCommand}" />
+                                    <CheckBox Name="cbRSInitMode"
+                                              Content="Resonance&#x0a;Always On"
+                                              Width="80"
+                                              VerticalAlignment="Center"
+                                              Margin="1"
+                                              IsEnabled="{Binding ImageStartStatusArea}"
+                                              IsChecked="{Binding RSInitMode}" />
+                                    <StackPanel Margin="1"
+                                                VerticalAlignment="Center"
+                                                Orientation="Horizontal"
+                                                ToolTip="Measured resonance frequency in KHz."
+                                                Visibility="{Binding Path=RSLineVisible, Converter={StaticResource boolToVisConverter}}">
+                                        <Label Width="60"
+                                               Content="{Binding Path=RSLineRate, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                                        <Label Content="KHz" />
+                                        <ToggleButton Width="30"
+                                                      Margin="1"
+                                                      ToolTip="ON to measure resonance frequency and OFF to stop."
+                                                      IsChecked="{Binding Path=RSLineProbeOn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                            <ToggleButton.Style>
+                                                <Style TargetType="ToggleButton"
+                                                       BasedOn="{StaticResource {x:Type ToggleButton}}">
+                                                    <Setter Property="Content"
+                                                            Value="OFF" />
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsChecked"
+                                                                 Value="True">
+                                                            <Setter Property="Content"
+                                                                    Value="ON" />
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ToggleButton.Style>
+                                        </ToggleButton>
+                                        <Button Width="40"
+                                                Margin="1"
+                                                Content="Store"
+                                                ToolTip="Store current frequency to the settings."
+                                                Command="{Binding Path=StoreRSRateCommand}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Expander>
+                    </Border>
+                    <Border Name="bdImageCorrection">
+                        <Expander Foreground="White"
+                                  Header="Image Correction"
+                                  IsExpanded="False"
+                                  Margin="-1,0,1,0">
+                            <Grid Margin="30,0,0,0">
+                                <StackPanel>
+                                    <StackPanel Orientation="Vertical"
+                                                Margin="5">
+                                        <CheckBox Content="Enable Pincushion Correction"
+                                                  Foreground="White"
+                                                  Margin="0,5"
+                                                  HorizontalAlignment="Left"
+                                                  IsChecked="{Binding Path=EnablePincushionCorrection, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Label Content="Coefficient1"
+                                                       Foreground="White" />
+                                                <TextBox Name="tbCoeff1"
+                                                         Width="50"
+                                                         Text="{Binding Path=Coeff1, Mode=TwoWay, Converter={StaticResource doubleCulture}}" />
+                                                <Button Width="30"
+                                                        Content="&#x2713;">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbCoeff1}"
+                                                                             Value="True">
+                                                                    <Setter Property="Visibility"
+                                                                            Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Label Content="Coefficient3"
+                                                       Foreground="White" />
+                                                <TextBox Name="tbCoeff3"
+                                                         Width="50"
+                                                         Text="{Binding Path=Coeff3, Mode=TwoWay, Converter={StaticResource doubleCulture}}" />
+                                                <Button Width="30"
+                                                        Content="&#x2713;">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbCoeff3}"
+                                                                             Value="True">
+                                                                    <Setter Property="Visibility"
+                                                                            Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Label Content="Coefficient2"
+                                                       Foreground="White" />
+                                                <TextBox Name="tbCoeff2"
+                                                         Width="50"
+                                                         Text="{Binding Path=Coeff2, Mode=TwoWay, Converter={StaticResource doubleCulture}}" />
+                                                <Button Width="30"
+                                                        Content="&#x2713;">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbCoeff2}"
+                                                                             Value="True">
+                                                                    <Setter Property="Visibility"
+                                                                            Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Margin="5">
+                                        <CheckBox Content="Enable Background Subtraction"
+                                                  Foreground="White"
+                                                  HorizontalAlignment="Left"
+                                                  IsChecked="{Binding Path=EnableBackgroundSubtraction, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                        <StackPanel Orientation="Horizontal"
+                                                    Margin="5">
+                                            <TextBox Text="{Binding Path=PathBackgroundSubtraction, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     Width="200"
+                                                     ToolTip="{Binding Path=PathBackgroundSubtraction, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                                            <Button Content="Select"
+                                                    Width="50"
+                                                    Command="{Binding Path=SelectBackgroundCommand}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Margin="5">
+                                        <CheckBox Content="Enable Flatfielding"
+                                                  Foreground="White"
+                                                  HorizontalAlignment="Left"
+                                                  IsChecked="{Binding Path=EnableFlatField, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                        <StackPanel Orientation="Horizontal"
+                                                    Margin="5">
+                                            <TextBox Text="{Binding Path=PathFlatField, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     Width="200"
+                                                     ToolTip="{Binding Path=PathFlatField, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                                            <Button Content="Select"
+                                                    Width="50"
+                                                    Command="{Binding Path=SelectFlatFieldCommand}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Expander>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </Grid>
+</UserControl>

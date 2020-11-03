@@ -1,0 +1,30 @@
+﻿<Window x:Class="MenuLSDll.ViewModel.HardwareConnections"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:hsuc="clr-namespace:HardwareSetupUserControl;assembly=HardwareSetupUserControl"
+        Title="Hardware Connections"
+        Height="Auto"
+        Width="Auto"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <StackPanel>
+            <hsuc:UserControl1 Name="ucHardwareSetupUC"
+                               Margin="1" />
+            <Button Content="OK"
+                    Click="butOk_Click"
+                    Height="35"
+                    Width="70"
+                    Margin="1"
+                    HorizontalAlignment="Right" />
+        </StackPanel>
+    </Grid>
+</Window>

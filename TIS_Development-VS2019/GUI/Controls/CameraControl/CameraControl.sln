@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CameraControl", "CameraControl\CameraControl.csproj", "{1405B388-7427-475C-8EE8-2FE1CBA0EA2C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CameraControlTestApp", "CameraControlTestApp\CameraControlTestApp.csproj", "{44401265-DD87-4A56-B196-144D70BCDDF1}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://stl-tfs1:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = CameraControl\\CameraControl.csproj
+		SccProjectName1 = CameraControl
+		SccLocalPath1 = CameraControl
+		SccProjectUniqueName2 = CameraControlTestApp\\CameraControlTestApp.csproj
+		SccProjectName2 = CameraControlTestApp
+		SccLocalPath2 = CameraControlTestApp
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1405B388-7427-475C-8EE8-2FE1CBA0EA2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1405B388-7427-475C-8EE8-2FE1CBA0EA2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1405B388-7427-475C-8EE8-2FE1CBA0EA2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1405B388-7427-475C-8EE8-2FE1CBA0EA2C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44401265-DD87-4A56-B196-144D70BCDDF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44401265-DD87-4A56-B196-144D70BCDDF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44401265-DD87-4A56-B196-144D70BCDDF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44401265-DD87-4A56-B196-144D70BCDDF1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

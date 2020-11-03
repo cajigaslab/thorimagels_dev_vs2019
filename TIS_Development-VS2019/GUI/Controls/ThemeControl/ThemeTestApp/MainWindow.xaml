@@ -1,0 +1,151 @@
+﻿<Window x:Class="ThemeTestApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MainWindow"
+        Height="800"
+        Width="525">
+    <Grid>
+        <Grid.Resources>
+            <ResourceDictionary>
+                <ResourceDictionary.MergedDictionaries>
+                    <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+                </ResourceDictionary.MergedDictionaries>
+            </ResourceDictionary>
+        </Grid.Resources>
+        <StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        IsEnabled="{Binding ElementName=cbEnable, Path=IsChecked}">
+                <StackPanel>
+                    <Label Content="This is a label" />
+                    <Button Content="Button"
+                            Width="100"
+                            Height="50" />
+                    <Button Content="Button No Outline"
+                            Width="100"
+                            Height="50"
+                            Style="{StaticResource ButtonNoOutlineStyle}" />
+                    <RepeatButton Content="RepeatButton"
+                                  Width="100"
+                                  Height="50" />
+                    <ToggleButton Width="100"
+                                  Height="50"
+                                  Content="ToggleButton" />
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="Switch Toggle Button"  VerticalAlignment="Center"/>
+                        <ToggleButton Width="25"
+                                  Height="50"
+                                  Style="{StaticResource DipSwitchToggleButtonStyle}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="TextBox" />
+                        <TextBox  Width="75" />
+                    </StackPanel>
+                    <CheckBox Name="cb1"
+                              Content="CheckBox"
+                              IsChecked="True" />
+                    <CheckBox Name="cb2"
+                              Content="CheckBox"
+                              IsChecked="False" />
+                    <Border>
+                        <StackPanel Height="100">
+                            <Label Content="StackPanel" />
+                        </StackPanel>
+                    </Border>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="ComboBox" />
+                        <ComboBox Width="200">
+                            <ComboBoxItem>Item1</ComboBoxItem>
+                            <ComboBoxItem>Item2</ComboBoxItem>
+                            <ComboBoxItem>Item3</ComboBoxItem>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="Slider" />
+                        <Slider Width="200"
+                                Name="myslider"
+                                Minimum="-2"
+                                Maximum="2" />
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel>
+                    <TabControl Width="200"
+                                Height="200">
+                        <TabItem>
+                            <TabItem.Header>Tab1</TabItem.Header>
+                        </TabItem>
+                        <TabItem>
+                            <TabItem.Header>Tab2</TabItem.Header>
+                        </TabItem>
+                        <TabItem>
+                            <TabItem.Header>Tab3</TabItem.Header>
+                        </TabItem>
+                    </TabControl>
+                    <GroupBox>
+                        <GroupBox.Header>
+                            GroupBox
+                        </GroupBox.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="ListBox" />
+                            <ListBox Width="200">
+                                <ListBoxItem>Item1</ListBoxItem>
+                                <ListBoxItem>Item2</ListBoxItem>
+                                <ListBoxItem>Item3</ListBoxItem>
+                            </ListBox>
+                        </StackPanel>
+                    </GroupBox>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="ScrollViewer" />
+                        <ScrollViewer Height="100"
+                                      Width="100">
+                            <StackPanel>
+                                <Label>Item1</Label>
+                                <Label>Item2</Label>
+                                <Label>Item3</Label>
+                                <Label>Item4</Label>
+                                <Label>Item5</Label>
+                                <Label>Item6</Label>
+                                <Label>Item7</Label>
+                                <Label>Item8</Label>
+                                <Label>Item9</Label>
+                                <Label>Item10</Label>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="ScrollViewer" />
+                        <ScrollViewer Width="100"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Auto">
+                            <StackPanel Orientation="Horizontal">
+                                <Label>Item1</Label>
+                                <Label>Item2</Label>
+                                <Label>Item3</Label>
+                                <Label>Item4</Label>
+                                <Label>Item5</Label>
+                                <Label>Item6</Label>
+                                <Label>Item7</Label>
+                                <Label>Item8</Label>
+                                <Label>Item9</Label>
+                                <Label>Item10</Label>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Progress Bar" />
+                <ProgressBar Value="{Binding ElementName=myslider,Path=Value}"
+                             Minimum="{Binding ElementName=myslider,Path=Minimum}"
+                             Maximum="{Binding ElementName=myslider,Path=Maximum}"
+                             Width="200"
+                             Height="30"
+                             Orientation="Horizontal" />
+            </StackPanel>
+            <CheckBox Content="Enable the Panel"
+                      Name="cbEnable"
+                      IsChecked="True" />
+            <RadioButton Content="radio button1" GroupName="testRB" Margin="1" IsChecked="True"/>
+            <RadioButton Content="radio button2" GroupName="testRB" Margin="1"/>
+        </StackPanel>
+    </Grid>
+</Window>

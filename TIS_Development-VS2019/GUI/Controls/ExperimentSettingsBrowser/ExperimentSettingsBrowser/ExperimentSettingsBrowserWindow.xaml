@@ -1,0 +1,287 @@
+﻿<Window x:Class="ExperimentSettingsBrowser.ExperimentSettingsBrowserWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:esv="clr-namespace:ExperimentSettingsViewer;assembly=ExperimentSettingsViewer"
+        xmlns:src="clr-namespace:ExperimentSettingsBrowser"
+        xmlns:spin="clr-namespace:SpinnerProgress;assembly=SpinnerProgress"
+        WindowStartupLocation="CenterScreen"
+        Height="768"
+        Width="Auto"
+        SizeToContent="Width"
+        ResizeMode="NoResize"
+        Name="BrowserWin">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <Style TargetType="Label">
+                <Setter Property="Foreground"
+                        Value="white" />
+            </Style>
+            <Style x:Key="titleStyle"
+                   TargetType="TextBlock">
+                <Setter Property="Foreground"
+                        Value="White" />
+                <Setter Property="FontSize"
+                        Value="16" />
+            </Style>
+            <Style x:Key="smallTitleStyle"
+                   TargetType="TextBlock">
+                <Setter Property="FontWeight"
+                        Value="Bold" />
+                <Setter Property="Foreground"
+                        Value="White" />
+                <Setter Property="VerticalAlignment"
+                        Value="Center" />
+                <Setter Property="HorizontalAlignment"
+                        Value="Right" />
+            </Style>
+
+            <Style x:Key="textStyleTextBlock"
+                   TargetType="TextBlock">
+                <Setter Property="Foreground"
+                        Value="White" />
+            </Style>
+            <Style x:Key="comboBoxItemStyle"
+                   TargetType="ComboBoxItem">
+                <Setter Property="Foreground"
+                        Value="#333333" />
+            </Style>
+
+            <Style x:Key="comboBoxStyle"
+                   TargetType="ComboBox">
+                <Setter Property="Foreground"
+                        Value="#333333" />
+            </Style>
+            <CollectionViewSource Source="{Binding Path=DatabaseItems,Mode=OneWay}"
+                                  x:Key="listingDataView" />
+            <DataTemplate DataType="{x:Type src:DatabaseItem}">
+                <Border BorderThickness="1"
+                        BorderBrush="Gray"
+                        Padding="1"
+                        Name="border"
+                        Margin="1"
+                        Width="Auto">
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Name="ExperimentNameDTDataType"
+                                   Grid.Row="0"
+                                   Grid.Column="0"
+                                   Margin="8,5,8,0"
+                                   TextAlignment="Left"
+                                   Text="{Binding Path=ExpName}"
+                                   Style="{StaticResource textStyleTextBlock}" />
+                        <TextBlock Name="PathDTDataType"
+                                   Width="Auto"
+                                   ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                   TextAlignment="Left"
+                                   Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="8,5,8,0"
+                                   Text="{Binding Path=ExpPath}"
+                                   Style="{StaticResource textStyleTextBlock}" />
+
+                    </Grid>
+                </Border>
+            </DataTemplate>
+            <DataTemplate x:Key="groupingHeaderTemplate">
+                <TextBlock Text="{Binding Path=Name}"
+                           ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                           Foreground="Navy"
+                           FontWeight="Bold"
+                           FontSize="12" />
+            </DataTemplate>
+
+            <Style x:Key="checkBoxStyle"
+                   TargetType="{x:Type CheckBox}">
+                <Setter Property="Foreground"
+                        Value="#333333" />
+                <Setter Property="FontWeight"
+                        Value="Bold" />
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Background="#FF333333">
+        <StackPanel Orientation="Horizontal">
+            <StackPanel>
+                <StackPanel  Orientation="Horizontal"
+                             Grid.Row="1"
+                             Grid.ColumnSpan="3"
+                             Margin="8,8,0,0">
+                    <StackPanel Orientation="Vertical">
+                        <StackPanel  Orientation="Horizontal"
+                                     Name="spFavorites"
+                                     Margin="1">
+                            <RadioButton GroupName="SettingsLocation"
+                                         Checked="ChooseFromTemplates"
+                                         Margin="0,0,103,0"
+                                         IsChecked="True"
+                                         Name="rdChooseFromFavorites">
+                                <Label Content="Favorites" />
+                            </RadioButton>
+                            <ComboBox Name="cbChooseFromTamplate"
+                                      SelectionChanged="cbChooseFromTamplate_SelectionChanged"
+                                      Margin="1"
+                                      Width="250"
+                                      Height="25"
+                                      GotFocus="cbChooseFromTamplate_GotFocus" />
+                            <Button IsEnabled="{Binding Path=ChooseFromTemplateBool, UpdateSourceTrigger=PropertyChanged}"
+                                    Margin="1"
+                                    Name="btnUpdateNotes"
+                                    Height="25"
+                                    Width="90"
+                                    Content="Update Notes"
+                                    Click="btnUpdateNotes_Click" />
+                        </StackPanel>
+                        <StackPanel  Orientation="Horizontal"
+                                     Margin="1">
+                            <RadioButton GroupName="SettingsLocation"
+                                         Checked="Browse"
+                                         Margin="0,0,36,0"
+                                         Name="rdBrowse">
+                                <Label Content="Load From Exp Folder" />
+                            </RadioButton>
+                            <TextBox Margin="1"
+                                     Width="250"
+                                     Height="25"
+                                     Text="{Binding Path=BrowseExperimentPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     GotFocus="TextBox_GotFocus" />
+                            <Button Margin="1"
+                                    Name="btnBrowse"
+                                    Width="90"
+                                    Height="25"
+                                    Content="Browse"
+                                    Click="btnBrowse_Click">
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+                <GroupBox Margin="1">
+                    <GroupBox.Header>
+                        <RadioButton GroupName="SettingsLocation"
+                                     Checked="ChooseFromDatabase"
+                                     Name="rdChooseFromDatabase">
+                            <Label Content="Experiment History" />
+                        </RadioButton>
+                    </GroupBox.Header>
+                    <StackPanel MaxWidth="1024">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock TextAlignment="Left"
+                                       Text="Name"
+                                       FontSize="14"
+                                       Foreground="White"
+                                       FontWeight="Bold"
+                                       VerticalAlignment="Bottom"
+                                       Margin="20,0,0,0"
+                                       Width="160"
+                                       Style="{StaticResource textStyleTextBlock}" />
+                            <TextBlock TextAlignment="Left"
+                                       Text="Path"
+                                       FontSize="14"
+                                       Foreground="White"
+                                       FontWeight="Bold"
+                                       VerticalAlignment="Bottom"
+                                       Style="{StaticResource textStyleTextBlock}" />
+                        </StackPanel>
+                        <ListBox Name="ListBox"
+                                 Width="Auto"
+                                 Margin="1"
+                                 ItemsSource="{Binding Source={StaticResource listingDataView}}"
+                                 SelectionChanged="ListBoxSelectionChanged"
+                                 GotFocus="ListBox_GotFocus"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                 VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                                 Height="530">
+                            <ListBox.GroupStyle>
+                                <GroupStyle HeaderTemplate="{StaticResource groupingHeaderTemplate}" />
+                            </ListBox.GroupStyle>
+                        </ListBox>
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="20,0,0,0">
+
+                            <RadioButton GroupName="Order"
+                                         Margin="1"
+                                         IsChecked="True"
+                                         Checked="DescendingOrder"
+                                         IsEnabled="{Binding Path=ChooseFromDatabaseBool, UpdateSourceTrigger=PropertyChanged}">
+                                <Label Content="Descending" />
+                            </RadioButton>
+                            <RadioButton GroupName="Order"
+                                         Margin="1"
+                                         Checked="AscendingOrder"
+                                         IsEnabled="{Binding Path=ChooseFromDatabaseBool, UpdateSourceTrigger=PropertyChanged}">
+                                <Label Content="Ascending" />
+                            </RadioButton>
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right">
+                    <Button Name="btnOK"
+                            Content="OK"
+                            Width="75"
+                            Height="40"
+                            Margin="1"
+                            HorizontalAlignment="Right"
+                            Click="btnOK_Click"
+                            VerticalAlignment="Top" />
+                    <Button Name="btnCancel"
+                            Content="Cancel"
+                            Width="75"
+                            Height="40"
+                            Margin="1"
+                            HorizontalAlignment="Right"
+                            Click="btnCancel_Click"
+                            VerticalAlignment="Top" />
+                </StackPanel>
+            </StackPanel>
+            <Border BorderBrush="White"
+                    HorizontalAlignment="Right"
+                    Grid.Row="0"
+                    Grid.RowSpan="6"
+                    Grid.Column="3">
+                <Expander Foreground="White"
+                          HorizontalAlignment="Right"
+                          ExpandDirection="Right"
+                          IsExpanded="True">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <esv:UserControl1 Name="settingsPreview" />
+                    </ScrollViewer>
+                </Expander>
+            </Border>
+        </StackPanel>
+        <StackPanel Visibility="{Binding Path=SpinVisible,Mode=OneWay}">
+            <Canvas Width="105"
+                    Margin="5 210 5 5"
+                    Height="105"
+                    Name="CanvasSpinProgress">
+                <spin:SpinnerProgressControl  x:Name="spinProgress"
+                                              SpinnerHeight="50"
+                                              SpinnerWidth="50"
+                                              VerticalContentAlignment="Center" />
+            </Canvas>
+            <Label  Name="lblloading"
+                    HorizontalAlignment="Center"
+                    Margin="1"
+                    VerticalAlignment="Center"
+                    FontSize="15"
+                    HorizontalContentAlignment="Center"
+                    Foreground="#FFFFFFFF" />
+        </StackPanel>
+    </Grid>
+</Window>

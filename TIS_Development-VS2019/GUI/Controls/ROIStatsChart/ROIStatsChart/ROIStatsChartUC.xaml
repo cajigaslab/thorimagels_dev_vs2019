@@ -1,0 +1,318 @@
+﻿<UserControl x:Class="ROIStatsChart.ROIStatsChartUC"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:View="clr-namespace:ROIStatsChart.View"
+             Height="Auto"
+             Width="Auto">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Border Name="drawBorder"
+                Grid.Row="0"
+                BorderThickness="0"
+                Background="#FF595959">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <View:SciChartView x:Name="sciChartView"
+                                   Grid.Column="1"
+                                   Margin="0,0,0,0" />
+                <StackPanel Grid.Column="0"
+							Orientation="Horizontal">
+
+                            <Expander Name="epdLegend"
+                                      ExpandDirection="Right"
+                                      Width="Auto"
+                                      VerticalAlignment="Top"
+                                      Foreground="{x:Null}">
+                                <Expander.Header>
+                                    <TextBlock Text="Options"
+                                               Foreground="White"
+                                               Margin="0,0,0,0"
+                                               Width="Auto">
+                                        <TextBlock.LayoutTransform>
+                                            <TransformGroup>
+                                                <RotateTransform Angle="-90" />
+                                            </TransformGroup>
+                                        </TextBlock.LayoutTransform>
+                                    </TextBlock>
+                                </Expander.Header>
+                    <ScrollViewer Name="svLegends"
+                                  VerticalScrollBarVisibility="Auto">
+                                <StackPanel Orientation="Vertical">
+                                        <Expander Name="epdfeature"
+                                                  ExpandDirection="Down"
+                                                  Width="Auto"
+                                                  VerticalAlignment="Top"
+                                                  Foreground="{x:Null}"
+                                                  IsExpanded="True">
+                                            <Expander.Header>
+                                                <TextBlock Text="Features"
+                                                           Foreground="White"
+                                                           Margin="0,0,0,0"
+                                                           Width="Auto">
+                                                </TextBlock>
+                                            </Expander.Header>
+                                            <Border BorderThickness="1.5,1.5,1.5,1.5"
+                                                    BorderBrush="#FFFFFFFF"
+                                                    CornerRadius="2,2,2,2"
+                                                    Margin="3"
+                                                    Width="Auto">
+
+                                                <StackPanel Orientation="Vertical">
+                                                    <Button Name="btSAllFeature"
+                                                            Content="Select All"
+                                                            Margin="3"
+                                                            Width="Auto"
+                                                            Command="{Binding SelectAllFeatureLegend}"
+                                                            ToolTip="Select all features. " />
+                                                    <Button Name="btDSAllFeature"
+                                                            Content="Deselect All"
+                                                            Margin="3"
+                                                            Width="Auto"
+                                                            Command="{Binding DeselectAllFeatureLegend}"
+                                                            ToolTip="Deselect all features. " />
+                                                    <ListBox Name="lbFeature"
+                                                             ItemsSource="{Binding FeatureCheckBoxList,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                                             Height="Auto"
+                                                             Width="Auto"
+                                                             HorizontalAlignment="Left"
+                                                             Background="{x:Null}"
+                                                             Margin="3">
+                                                        <ListBox.Resources>
+                                                            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}">Transparent</SolidColorBrush>
+                                                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}">Transparent</SolidColorBrush>
+                                                        </ListBox.Resources>
+														<ListBox.Template>
+															<ControlTemplate TargetType="ListBox">
+																<Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderBrush}">
+																	<ItemsPresenter/>
+																</Border>
+															</ControlTemplate>
+														</ListBox.Template>
+                                                        <ListBox.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <CheckBox Content="{Binding Name}"
+                                                                          IsChecked="{Binding IsChecked,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                                                          Foreground="{Binding TextColor}"
+                                                                          Margin="8"
+                                                                          HorizontalAlignment="Left" />
+                                                            </DataTemplate>
+                                                        </ListBox.ItemTemplate>
+                                                    </ListBox>
+                                                </StackPanel>
+
+                                            </Border>
+                                        </Expander>
+                                        <Expander Name="epdchan"
+                                                  ExpandDirection="Down"
+                                                  Width="Auto"
+                                                  VerticalAlignment="Top"
+                                                  Foreground="{x:Null}">
+                                            <Expander.Header>
+                                                <TextBlock Text="Channels"
+                                                           Foreground="White"
+                                                           Margin="0,0,0,0"
+                                                           Width="Auto">
+                                                </TextBlock>
+                                            </Expander.Header>
+                                            <Border BorderThickness="1.5,1.5,1.5,1.5"
+                                                    BorderBrush="#FFFFFFFF"
+                                                    CornerRadius="2,2,2,2"
+                                                    Margin="3"
+                                                    Width="Auto">
+                                                <StackPanel Orientation="Vertical">
+                                                    <Button Name="btSAllChan"
+                                                            Content="Select All"
+                                                            Margin="3"
+                                                            Width="Auto"
+                                                            Command="{Binding SelectAllChannelLegend}"
+                                                            ToolTip="Select all channels. " />
+                                                    <Button Name="btDSAllChan"
+                                                            Content="Deselect All"
+                                                            Margin="3"
+                                                            Width="Auto"
+                                                            Command="{Binding DeselectAllChannelLegend}"
+                                                            ToolTip="Deselect all channels. " />
+                                                    <ListBox Name="lbChan"
+                                                             ItemsSource="{Binding ChannelCheckBoxList,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                                             Height="Auto"
+                                                             Width="Auto"
+                                                             HorizontalAlignment="Left"
+                                                             Background="{x:Null}"
+                                                             Margin="3">
+                                                        <ListBox.Resources>
+                                                            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}">Transparent</SolidColorBrush>
+                                                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}">Transparent</SolidColorBrush>
+                                                        </ListBox.Resources>
+														<ListBox.Template>
+															<ControlTemplate TargetType="ListBox">
+																<Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderBrush}">
+																	<ItemsPresenter/>
+																</Border>
+															</ControlTemplate>
+														</ListBox.Template>
+                                                        <ListBox.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <CheckBox Content="{Binding Name}"
+                                                                          IsChecked="{Binding IsChecked,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                                                          Foreground="{Binding TextColor}"
+                                                                          Margin="8"
+                                                                          HorizontalAlignment="Left" />
+                                                            </DataTemplate>
+                                                        </ListBox.ItemTemplate>
+                                                    </ListBox>
+                                                </StackPanel>
+                                            </Border>
+                                        </Expander>
+                                        <Expander Name="epdroi"
+                                                  ExpandDirection="Down"
+                                                  Width="Auto"
+                                                  VerticalAlignment="Top"
+                                                  Foreground="{x:Null}">
+                                            <Expander.Header>
+                                                <TextBlock Text="ROIs"
+                                                           Foreground="White"
+                                                           Margin="0,0,0,0"
+                                                           Width="Auto">
+                                                </TextBlock>
+                                            </Expander.Header>
+                                            <Border BorderThickness="1.5,1.5,1.5,1.5"
+                                                    BorderBrush="#FFFFFFFF"
+                                                    CornerRadius="2,2,2,2"
+                                                    Margin="3"
+                                                    Width="Auto">
+                                                <StackPanel Orientation="Vertical">
+                                                    <Button Name="btSAllROI"
+                                                            Content="Select All"
+                                                            Margin="3"
+                                                            Width="Auto"
+                                                            Command="{Binding SelectAllROILegend}"
+                                                            ToolTip="Select all ROIs. " />
+                                                    <Button Name="btDSAllROI"
+                                                            Content="Deselect All"
+                                                            Margin="3"
+                                                            Width="Auto"
+                                                            Command="{Binding DeselectAllROILegend}"
+                                                            ToolTip="Deselect all ROIs. " />
+                                                    <ListBox Name="lbROI"
+                                                             ItemsSource="{Binding ROICheckBoxList,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                                             Height="Auto"
+                                                             Width="Auto"
+                                                             HorizontalAlignment="Left"
+                                                             Background="{x:Null}"
+                                                             Margin="3">
+                                                        <ListBox.Resources>
+                                                            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}">Transparent</SolidColorBrush>
+                                                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}">Transparent</SolidColorBrush>
+                                                        </ListBox.Resources>
+														<ListBox.Template>
+															<ControlTemplate TargetType="ListBox">
+																<Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderBrush}">
+																	<ItemsPresenter/>
+																</Border>
+															</ControlTemplate>
+														</ListBox.Template>
+                                                        <ListBox.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <CheckBox Content="{Binding Name}"
+                                                                          IsChecked="{Binding IsChecked,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                                                          Foreground="{Binding TextColor}"
+                                                                          Margin="8"
+                                                                          HorizontalAlignment="Left" />
+                                                            </DataTemplate>
+                                                        </ListBox.ItemTemplate>
+                                                    </ListBox>
+                                                </StackPanel>
+                                            </Border>
+                                        </Expander>
+                                        <Expander Name="epdArithmetics"
+                                                  ExpandDirection="Down"
+                                                  Width="Auto"
+                                                  VerticalAlignment="Top"
+                                                  Foreground="{x:Null}">
+                                            <Expander.Header>
+                                                <TextBlock Text="Arithmetic"
+                                                           Foreground="White"
+                                                           Margin="0,0,0,0"
+                                                           Width="Auto">
+                                                </TextBlock>
+                                            </Expander.Header>
+                                            <Border BorderThickness="1.5,1.5,1.5,1.5"
+                                                    BorderBrush="#FFFFFFFF"
+                                                    CornerRadius="2,2,2,2"
+                                                    Margin="3"
+                                                    Width="Auto">
+                                                <StackPanel Orientation="Vertical">
+                                                    <Button x:Name="EquationManager"
+                                                            ToolTip="Show Equation Manager"
+                                                            Width="40"
+                                                            Height="40"
+                                                            HorizontalAlignment="Center"
+                                                            VerticalAlignment="Top"
+                                                            Command="{Binding ArithmeticSettings}"
+                                                            Margin="5">
+                                                        <Image Source="/ROIStatsChart;component/Icons/Arithmetics.png" />
+                                                    </Button>
+                                                    <Button Name="btSAllArithmetics"
+                                                            Content="Select All"
+                                                            Margin="3"
+                                                            Width="Auto"
+                                                            Command="{Binding SelectAllArithmeticsLegend}"
+                                                            ToolTip="Select all Arithmetic Calculations. " />
+                                                    <Button Name="btDSAllArithmetics"
+                                                            Content="Deselect All"
+                                                            Margin="3"
+                                                            Width="Auto"
+                                                            Command="{Binding DeselectAllArithmeticsLegend}"
+                                                            ToolTip="Deselect all Arithmetic Calculations. " />
+                                                    <ListBox Name="lbArithmetics"
+                                                             ItemsSource="{Binding ArithmeticsCheckBoxList,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                                             Height="Auto"
+                                                             Width="Auto"
+                                                             HorizontalAlignment="Left"
+                                                             Background="{x:Null}"
+                                                             Margin="3">
+                                                        <ListBox.Resources>
+                                                            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}">Transparent</SolidColorBrush>
+                                                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}">Transparent</SolidColorBrush>
+                                                        </ListBox.Resources>
+														<ListBox.Template>
+															<ControlTemplate TargetType="ListBox">
+																<Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderBrush}">
+																	<ItemsPresenter/>
+																</Border>
+															</ControlTemplate>
+														</ListBox.Template>
+                                                        <ListBox.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <CheckBox Content="{Binding Name}"
+                                                                          IsChecked="{Binding IsChecked,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                                                          Foreground="{Binding TextColor}"
+                                                                          Margin="8"
+                                                                          HorizontalAlignment="Left" />
+                                                            </DataTemplate>
+                                                        </ListBox.ItemTemplate>
+                                                    </ListBox>
+                                                </StackPanel>
+                                            </Border>
+                                        </Expander>
+                                </StackPanel>
+                     </ScrollViewer>                           
+				</Expander>
+
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

@@ -1,0 +1,135 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2018
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightEngineControl", "LightEngineControl\LightEngineControl.csproj", "{CA8514B4-F19A-4800-AA62-ED817AF74C36}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AA2DA572-BD61-416D-8908-39E8F8BCDA02} = {AA2DA572-BD61-416D-8908-39E8F8BCDA02}
+		{A64C6A8B-A426-42EE-A364-79349A400BED} = {A64C6A8B-A426-42EE-A364-79349A400BED}
+		{868EAEA3-7DA7-4FC4-A28D-4E1B80F079E9} = {868EAEA3-7DA7-4FC4-A28D-4E1B80F079E9}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightEngineControlTestApp", "LightEngineControlApp\LightEngineControlTestApp.csproj", "{44401265-DD87-4A56-B196-144D70BCDDF1}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AA2DA572-BD61-416D-8908-39E8F8BCDA02} = {AA2DA572-BD61-416D-8908-39E8F8BCDA02}
+		{868EAEA3-7DA7-4FC4-A28D-4E1B80F079E9} = {868EAEA3-7DA7-4FC4-A28D-4E1B80F079E9}
+		{CA8514B4-F19A-4800-AA62-ED817AF74C36} = {CA8514B4-F19A-4800-AA62-ED817AF74C36}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CaptureSetupModule", "..\..\..\Commands\CaptureSetup\CaptureSetupModule\CaptureSetupModule.csproj", "{3622138D-A051-46BC-BC13-289EAFC54C5D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThorSharedTypes", "..\..\..\Common\ThorSharedTypes\ThorSharedTypes\ThorSharedTypes.csproj", "{AA2DA572-BD61-416D-8908-39E8F8BCDA02}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4B3323BA-A4FD-421A-A456-4B447454AED4} = {4B3323BA-A4FD-421A-A456-4B447454AED4}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightEngineControlMVM", "..\..\ControlsMVM\LightEngineControlMVM\LightEngineControlMVM\LightEngineControlMVM.csproj", "{A64C6A8B-A426-42EE-A364-79349A400BED}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AA2DA572-BD61-416D-8908-39E8F8BCDA02} = {AA2DA572-BD61-416D-8908-39E8F8BCDA02}
+		{4B3323BA-A4FD-421A-A456-4B447454AED4} = {4B3323BA-A4FD-421A-A456-4B447454AED4}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThemeControl", "..\ThemeControl\ThemeControl\ThemeControl.csproj", "{868EAEA3-7DA7-4FC4-A28D-4E1B80F079E9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThorLogging", "..\..\..\Common\ThorLogging\ThorLogging\ThorLogging.csproj", "{4B3323BA-A4FD-421A-A456-4B447454AED4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CA8514B4-F19A-4800-AA62-ED817AF74C36}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA8514B4-F19A-4800-AA62-ED817AF74C36}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA8514B4-F19A-4800-AA62-ED817AF74C36}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CA8514B4-F19A-4800-AA62-ED817AF74C36}.Debug|x64.Build.0 = Debug|Any CPU
+		{CA8514B4-F19A-4800-AA62-ED817AF74C36}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA8514B4-F19A-4800-AA62-ED817AF74C36}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA8514B4-F19A-4800-AA62-ED817AF74C36}.Release|x64.ActiveCfg = Release|Any CPU
+		{CA8514B4-F19A-4800-AA62-ED817AF74C36}.Release|x64.Build.0 = Release|Any CPU
+		{44401265-DD87-4A56-B196-144D70BCDDF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44401265-DD87-4A56-B196-144D70BCDDF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44401265-DD87-4A56-B196-144D70BCDDF1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{44401265-DD87-4A56-B196-144D70BCDDF1}.Debug|x64.Build.0 = Debug|Any CPU
+		{44401265-DD87-4A56-B196-144D70BCDDF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44401265-DD87-4A56-B196-144D70BCDDF1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44401265-DD87-4A56-B196-144D70BCDDF1}.Release|x64.ActiveCfg = Release|Any CPU
+		{44401265-DD87-4A56-B196-144D70BCDDF1}.Release|x64.Build.0 = Release|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Debug|x64.Build.0 = Debug|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Release|x64.ActiveCfg = Release|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Release|x64.Build.0 = Release|Any CPU
+		{AA2DA572-BD61-416D-8908-39E8F8BCDA02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AA2DA572-BD61-416D-8908-39E8F8BCDA02}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AA2DA572-BD61-416D-8908-39E8F8BCDA02}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{AA2DA572-BD61-416D-8908-39E8F8BCDA02}.Debug|x64.Build.0 = Debug|Any CPU
+		{AA2DA572-BD61-416D-8908-39E8F8BCDA02}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AA2DA572-BD61-416D-8908-39E8F8BCDA02}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AA2DA572-BD61-416D-8908-39E8F8BCDA02}.Release|x64.ActiveCfg = Release|Any CPU
+		{AA2DA572-BD61-416D-8908-39E8F8BCDA02}.Release|x64.Build.0 = Release|Any CPU
+		{A64C6A8B-A426-42EE-A364-79349A400BED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A64C6A8B-A426-42EE-A364-79349A400BED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A64C6A8B-A426-42EE-A364-79349A400BED}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A64C6A8B-A426-42EE-A364-79349A400BED}.Debug|x64.Build.0 = Debug|Any CPU
+		{A64C6A8B-A426-42EE-A364-79349A400BED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A64C6A8B-A426-42EE-A364-79349A400BED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A64C6A8B-A426-42EE-A364-79349A400BED}.Release|x64.ActiveCfg = Release|Any CPU
+		{A64C6A8B-A426-42EE-A364-79349A400BED}.Release|x64.Build.0 = Release|Any CPU
+		{868EAEA3-7DA7-4FC4-A28D-4E1B80F079E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{868EAEA3-7DA7-4FC4-A28D-4E1B80F079E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{868EAEA3-7DA7-4FC4-A28D-4E1B80F079E9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{868EAEA3-7DA7-4FC4-A28D-4E1B80F079E9}.Debug|x64.Build.0 = Debug|Any CPU
+		{868EAEA3-7DA7-4FC4-A28D-4E1B80F079E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{868EAEA3-7DA7-4FC4-A28D-4E1B80F079E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{868EAEA3-7DA7-4FC4-A28D-4E1B80F079E9}.Release|x64.ActiveCfg = Release|Any CPU
+		{868EAEA3-7DA7-4FC4-A28D-4E1B80F079E9}.Release|x64.Build.0 = Release|Any CPU
+		{4B3323BA-A4FD-421A-A456-4B447454AED4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B3323BA-A4FD-421A-A456-4B447454AED4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B3323BA-A4FD-421A-A456-4B447454AED4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4B3323BA-A4FD-421A-A456-4B447454AED4}.Debug|x64.Build.0 = Debug|Any CPU
+		{4B3323BA-A4FD-421A-A456-4B447454AED4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B3323BA-A4FD-421A-A456-4B447454AED4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B3323BA-A4FD-421A-A456-4B447454AED4}.Release|x64.ActiveCfg = Release|Any CPU
+		{4B3323BA-A4FD-421A-A456-4B447454AED4}.Release|x64.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B23B66A3-28EA-46F3-AB58-AEA10CD5256F}
+	EndGlobalSection
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 8
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://stl-tfs1:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = LightEngineControl\\LightEngineControl.csproj
+		SccProjectName1 = LightEngineControl
+		SccLocalPath1 = LightEngineControl
+		SccProjectUniqueName2 = LightEngineControlApp\\LightEngineControlTestApp.csproj
+		SccProjectName2 = LightEngineControlApp
+		SccLocalPath2 = LightEngineControlApp
+		SccProjectUniqueName3 = ..\\..\\..\\Commands\\CaptureSetup\\CaptureSetupModule\\CaptureSetupModule.csproj
+		SccProjectName3 = ../../../Commands/CaptureSetup/CaptureSetupModule
+		SccLocalPath3 = ..\\..\\..\\Commands\\CaptureSetup\\CaptureSetupModule
+		SccProjectUniqueName4 = ..\\..\\..\\Common\\ThorSharedTypes\\ThorSharedTypes\\ThorSharedTypes.csproj
+		SccProjectName4 = ../../../Common/ThorSharedTypes/ThorSharedTypes
+		SccLocalPath4 = ..\\..\\..\\Common\\ThorSharedTypes\\ThorSharedTypes
+		SccProjectUniqueName5 = ..\\..\\ControlsMVM\\LightEngineControlMVM\\LightEngineControlMVM\\LightEngineControlMVM.csproj
+		SccProjectName5 = ../../ControlsMVM/LightEngineControlMVM/LightEngineControlMVM
+		SccLocalPath5 = ..\\..\\ControlsMVM\\LightEngineControlMVM\\LightEngineControlMVM
+		SccProjectUniqueName6 = ..\\ThemeControl\\ThemeControl\\ThemeControl.csproj
+		SccProjectName6 = ../ThemeControl/ThemeControl
+		SccLocalPath6 = ..\\ThemeControl\\ThemeControl
+		SccProjectUniqueName7 = ..\\..\\..\\Common\\ThorLogging\\ThorLogging\\ThorLogging.csproj
+		SccProjectName7 = ../../../Common/ThorLogging/ThorLogging
+		SccLocalPath7 = ..\\..\\..\\Common\\ThorLogging\\ThorLogging
+	EndGlobalSection
+EndGlobal

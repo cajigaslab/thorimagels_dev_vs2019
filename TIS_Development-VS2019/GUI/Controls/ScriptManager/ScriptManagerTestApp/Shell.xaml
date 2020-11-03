@@ -1,0 +1,17 @@
+﻿<Window x:Class="ScriptManagerTestApp.Shell"
+        xmlns:cal="http://www.codeplex.com/CompositeWPF"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Shell" Height="Auto" Width="Auto"
+        Background="Black">
+    <Grid>
+        <StackPanel>
+            <ItemsControl Name="MenuRegion"
+                      cal:RegionManager.RegionName="MenuRegion"
+                      />
+        <ItemsControl Name="SettingsRegion"
+                      cal:RegionManager.RegionName="SettingsRegion"
+                      />
+        </StackPanel>
+    </Grid>
+</Window>

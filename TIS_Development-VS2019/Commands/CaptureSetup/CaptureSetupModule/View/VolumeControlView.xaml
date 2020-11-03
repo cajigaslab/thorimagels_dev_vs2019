@@ -1,0 +1,41 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.VolumeControlView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:View="clr-namespace:CaptureSetupDll.View"
+             xmlns:ViewModel="clr-namespace:CaptureSetupDll.ViewModel"
+             xmlns:vcInterface="clr-namespace:VolumeControlInterface;assembly=VolumeControlInterface"
+             Height="700"
+             Width="700"
+             Name="volumeUserControl">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <DataTemplate DataType="{x:Type ViewModel:CaptureSetupViewModel}">
+                <View:VolumeControlView />
+            </DataTemplate>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <vcInterface:VolumeControlInterface Name="VolumeInterface"
+                                            Width="Auto"
+                                            Height="Auto"
+                                            Margin="5"
+                                            BlackPoint0="{Binding Path=BlackPoint0, Mode=TwoWay}"
+                                            WhitePoint0="{Binding Path=WhitePoint0, Mode=TwoWay}"
+                                            BlackPoint1="{Binding Path=BlackPoint1, Mode=TwoWay}"
+                                            WhitePoint1="{Binding Path=WhitePoint1, Mode=TwoWay}"
+                                            BlackPoint2="{Binding Path=BlackPoint2, Mode=TwoWay}"
+                                            WhitePoint2="{Binding Path=WhitePoint2, Mode=TwoWay}"
+                                            BlackPoint3="{Binding Path=BlackPoint3, Mode=TwoWay}"
+                                            WhitePoint3="{Binding Path=WhitePoint3, Mode=TwoWay}"
+                                            TileIndex="1"
+                                            WellIndex="1"
+                                            TimePointIndex="1"
+                                            ZStackCacheDirectory="{Binding Path=ZStackCacheDirectory, Mode=TwoWay}"
+                                            OutputDirectory="{Binding Path=OutputDirectory, Mode=TwoWay}"
+                                            OutputExperiment="{Binding Path=OutputExperiment, Mode=TwoWay}">
+        </vcInterface:VolumeControlInterface>
+    </Grid>
+</UserControl>

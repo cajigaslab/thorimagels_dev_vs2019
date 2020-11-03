@@ -1,0 +1,53 @@
+﻿<Window x:Class="HardwareSetupDll.View.WavelengthInputDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Name="TheWavelengthInputDialog"
+    Height="350" Width="400" ResizeMode="NoResize"        
+    xmlns:View="clr-namespace:HardwareSetupDll.View" Title="Add/Edit Wavelength Parameters"
+        >
+    <Window.Resources>
+        <View:EnumBooleanConverter x:Key="ebc"/>
+    </Window.Resources>
+    <Grid Background="#FF333333">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Column="0" Grid.Row="0" Text="Wavelength Name" Margin="5" Foreground="#FFFFFFFF" Height="20" HorizontalAlignment="Right"/>
+        <TextBox Grid.Column="1" Grid.Row="0" Name="wavelengthName" Margin="5"  Width="200" Height="20" HorizontalAlignment="Left"/>
+        <TextBlock Grid.Column="0" Grid.Row="1" Text="Wavelength Value (nm)" Margin="5" Foreground="#FFFFFFFF" Height="20" HorizontalAlignment="Right"/>
+        <TextBox Grid.Column="1" Grid.Row="1" Name="wavelengthValue" Margin="5"  Width="50" Height="20" HorizontalAlignment="Left"/>
+        <TextBlock Grid.Column="0" Grid.Row="2" Text="Color" Margin="5" Foreground="#FFFFFFFF" Height="20" HorizontalAlignment="Right"/>
+
+        <StackPanel Grid.Column="1" Grid.Row="3">
+              <RadioButton Name="fluorescence" Content="Fluorescence" IsChecked="{Binding ElementName=TheWavelengthInputDialog, Path=Fluorescence, Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos1}"  Margin="5" Foreground="White"/>
+               <RadioButton Name="brightfield" Content="Brightfield" IsChecked="{Binding ElementName=TheWavelengthInputDialog, Path=Fluorescence, Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos2}"  Margin="5" Foreground="White"/>
+        </StackPanel>
+
+        <Button Grid.Column="1" Grid.Row="2" Margin="5"  Width="150" Height="50" HorizontalAlignment="Left" Background="Transparent" Click="colorButton_Click">
+            <Rectangle Width="140" Height="40"
+                Stroke="Black" StrokeThickness="2">
+                <Rectangle.Fill>
+                    <SolidColorBrush Color="{Binding ElementName=TheWavelengthInputDialog, Path=FillColor}" />
+                </Rectangle.Fill>
+            </Rectangle>
+        </Button>
+
+        <Grid Grid.Column="1" Grid.Row="4" >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Content="OK" Width="75" Height="40" Click="Button_ClickOK" IsDefault="True"/>
+            <Button Grid.Column="1"  Content="Cancel" Width="75" Height="40" Click="Button_ClickCancel" />
+        </Grid>
+
+    </Grid>
+</Window>

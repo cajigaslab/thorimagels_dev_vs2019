@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ElectroPhysSettings>
+  <IO devName="/Dev3/" digitalPort="PFI6"></IO>
+  <!--<IO devName="/Dev3/" digitalPort="PFI6"></IO>-->
+  <!--<IO devName="/Dev3/" digitalPort="port1/line1"></IO>-->
+  <!--<Output port1="/Dev4/PFI8" port2="" port3="" port4="" port5="" port6="" port7="" port8=""/>-->
+  <Output port1="" port2="" port3="" port4="" port5="" port6="" port7="" port8=""/>
+  <!--<TriggerConfig activeLoadCount="8" counterOutput="/Dev4/ctr1" outputLine="/Dev4/PFI2" edgeOutput="/Dev4/PFI7" bufferOutput="/Dev4/port0/line7" customInput="/Dev4/PFI1"/>-->
+  <TriggerConfiguration activeLoadCount="8" counterOutput="" outputLine="" edgeOutput="" bufferOutput="" customInput=""/>
+  <!--<FrequencyProbe probeIntervalSec="0.01 averageCount="10" counterLine="/Dev1/ctr1" measureLine="/Dev3/PFI4" />-->
+  <FrequencyProbe probeIntervalSec="0.01" averageCount="10" counterLine="" measureLine="" />
+</ElectroPhysSettings>

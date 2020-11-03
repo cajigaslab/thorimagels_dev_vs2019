@@ -1,0 +1,41 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleRegionSelection", "SampleRegionSelection\SampleRegionSelection.csproj", "{299B1DB4-B6CF-4761-9636-8DD68322F8FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleRegionSelectionTest", "SampleRegionSelectionTest\SampleRegionSelectionTest.csproj", "{3D613EB1-3B3B-4B17-8826-D0C8E4B97FAE}"
+	ProjectSection(ProjectDependencies) = postProject
+		{299B1DB4-B6CF-4761-9636-8DD68322F8FC} = {299B1DB4-B6CF-4761-9636-8DD68322F8FC}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://vateam02:8080/tfs/defaultcollection
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = SampleRegionSelection\\SampleRegionSelection.csproj
+		SccProjectName1 = SampleRegionSelection
+		SccLocalPath1 = SampleRegionSelection
+		SccProjectUniqueName2 = SampleRegionSelectionTest\\SampleRegionSelectionTest.csproj
+		SccProjectName2 = SampleRegionSelectionTest
+		SccLocalPath2 = SampleRegionSelectionTest
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{299B1DB4-B6CF-4761-9636-8DD68322F8FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{299B1DB4-B6CF-4761-9636-8DD68322F8FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{299B1DB4-B6CF-4761-9636-8DD68322F8FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{299B1DB4-B6CF-4761-9636-8DD68322F8FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3D613EB1-3B3B-4B17-8826-D0C8E4B97FAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D613EB1-3B3B-4B17-8826-D0C8E4B97FAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D613EB1-3B3B-4B17-8826-D0C8E4B97FAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3D613EB1-3B3B-4B17-8826-D0C8E4B97FAE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

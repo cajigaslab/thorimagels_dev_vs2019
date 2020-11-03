@@ -1,0 +1,96 @@
+#include "stdafx.h"
+#include "AutoFocus.h"
+#include "AcquireSingle.h"
+#include "AcquireMultiWavelength.h"
+#include "AcquireZStack.h"
+#include "AcquireTSeries.h"
+#include "AcquireTStream.h"
+#include "AcquireBleaching.h"
+#include "AcquireSequence.h"
+#include "AcquireHyperspectral.h"
+#include "AcquireFactory.h"
+#include "Observer.h"
+
+AcquireFactory::AcquireFactory()
+{
+}
+
+const char* const AcquireFactory::bufferChannelName[] = {"ChanA","ChanB","ChanC","ChanD"};
+
+Observer * AcquireFactory::pDefaultObserver = NULL;
+
+IAcquire * AcquireFactory::getAcquireInstance(AcquireType type,IAutoFocus *pAF,Observer *pOb, IExperiment *pExp,wstring path)
+{
+	IAcquire *pAcquire;
+	switch(type)
+	{
+	case ACQ_SINGLE:
+		{
+			pAcquire = new AcquireSingle(pAF,pExp,path);
+		}
+		break;
+	case ACQ_MULTI_WAVELENGTH:
+		{
+			pAcquire = new AcquireMultiWavelength(pAF,pExp,path);
+		}
+		break;
+	case ACQ_Z_STACK:
+		{			
+			pAcquire = new AcquireZStack(pAF,pExp,path);
+		}
+		break;
+	case ACQ_T_SERIES:
+		{			
+			pAcquire = new AcquireTSeries(pAF,pExp,path);
+		}
+		break;
+	case ACQ_T_STREAM:
+		{
+			pAcquire = new AcquireTStream(pAF,pExp,path);
+		}
+		break;
+	case ACQ_BLEACHING:
+		{
+			pAcquire = new AcquireBleaching(pAF,pExp,path);
+		}
+		break;
+	case ACQ_SEQUENCE:
+		{
+			pAcquire = new AcquireSequence(pAF,pExp,path);	
+		}
+		break;
+	case ACQ_HYPERSPECTRAL:
+		{
+			pAcquire = new AcquireHyperspectral(pAF,pExp,path);	
+		}
+		break;
+	default:
+		{
+			pAcquire = new AcquireSingle(pAF,pExp,path);
+		}
+	}
+
+	if(NULL == pOb)
+	{
+		//in the case of a null observer. use the default observer that was stored previously
+		pOb = pDefaultObserver;
+	}
+
+	if(pOb != NULL)
+	{
+		pDefaultObserver = pOb;
+		pAcquire->CaptureImage.connect(pOb,&Observer::OnCaptureImage);
+		pAcquire->SaveImage.connect(pOb,&Observer::OnSaveImage);
+		pAcquire->CaptureSubImage.connect(pOb,&Observer::OnCaptureSubImage);
+		pAcquire->SaveSubImage.connect(pOb,&Observer::OnSaveSubImage);
+		pAcquire->StopCapture.connect(pOb,&Observer::OnStopCapture);
+		pAcquire->SaveZImage.connect(pOb,&Observer::OnSaveZImage);
+		pAcquire->SaveTImage.connect(pOb,&Observer::OnSaveTImage);
+		pAcquire->CaptureComplete.connect(pOb,&Observer::OnCaptureComplete);
+		pAcquire->PreCapture.connect(pOb,&Observer::OnPreCapture);
+		pAcquire->SequenceStepCurrent.connect(pOb,&Observer::OnSequenceStepCurrent);
+		pAcquire->StartProgressBar.connect(pOb,&Observer::OnProgressBarStart);
+	}
+
+	return pAcquire;
+}

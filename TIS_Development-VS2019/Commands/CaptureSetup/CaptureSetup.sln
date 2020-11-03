@@ -1,0 +1,106 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CaptureSetupModule", "CaptureSetupModule\CaptureSetupModule.csproj", "{3622138D-A051-46BC-BC13-289EAFC54C5D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CaptureSetupTest", "CaptureSetupTest\CaptureSetupTest.csproj", "{4EB7296F-1A1A-43E1-8810-F2FB0A685DC7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BE4EE271-1BE9-4B0B-BAC4-AF140E961A1A}"
+	ProjectSection(SolutionItems) = preProject
+		CaptureSetup.vsmdi = CaptureSetup.vsmdi
+		TestSettings1.testsettings = TestSettings1.testsettings
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CaptureSetup", "CaptureSetup\CaptureSetup.vcxproj", "{BBE60C4A-5412-4E87-B22E-47A409E199D2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DesignDocs", "DesignDocs", "{2345E467-B5FA-4807-87F5-8908ACF73674}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\Documents\Design\546\Snapshot.vsdx = ..\..\Documents\Design\546\Snapshot.vsdx
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 4
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://stl-tfs1:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = CaptureSetupModule\\CaptureSetupModule.csproj
+		SccProjectName1 = CaptureSetupModule
+		SccLocalPath1 = CaptureSetupModule
+		SccProjectUniqueName2 = CaptureSetupTest\\CaptureSetupTest.csproj
+		SccProjectName2 = CaptureSetupTest
+		SccLocalPath2 = CaptureSetupTest
+		SccProjectUniqueName3 = CaptureSetup\\CaptureSetup.vcxproj
+		SccProjectName3 = CaptureSetup
+		SccLocalPath3 = CaptureSetup
+	EndGlobalSection
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = CaptureSetup.vsmdi
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|Mixed Platforms = Debug|Mixed Platforms
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|Mixed Platforms = Release|Mixed Platforms
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Release|Win32.ActiveCfg = Release|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Release|x64.ActiveCfg = Release|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Release|x86.ActiveCfg = Release|Any CPU
+		{4EB7296F-1A1A-43E1-8810-F2FB0A685DC7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4EB7296F-1A1A-43E1-8810-F2FB0A685DC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4EB7296F-1A1A-43E1-8810-F2FB0A685DC7}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{4EB7296F-1A1A-43E1-8810-F2FB0A685DC7}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{4EB7296F-1A1A-43E1-8810-F2FB0A685DC7}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{4EB7296F-1A1A-43E1-8810-F2FB0A685DC7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4EB7296F-1A1A-43E1-8810-F2FB0A685DC7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4EB7296F-1A1A-43E1-8810-F2FB0A685DC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4EB7296F-1A1A-43E1-8810-F2FB0A685DC7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4EB7296F-1A1A-43E1-8810-F2FB0A685DC7}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{4EB7296F-1A1A-43E1-8810-F2FB0A685DC7}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{4EB7296F-1A1A-43E1-8810-F2FB0A685DC7}.Release|Win32.ActiveCfg = Release|Any CPU
+		{4EB7296F-1A1A-43E1-8810-F2FB0A685DC7}.Release|x64.ActiveCfg = Release|Any CPU
+		{4EB7296F-1A1A-43E1-8810-F2FB0A685DC7}.Release|x86.ActiveCfg = Release|Any CPU
+		{BBE60C4A-5412-4E87-B22E-47A409E199D2}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{BBE60C4A-5412-4E87-B22E-47A409E199D2}.Debug|Any CPU.Build.0 = Debug|x64
+		{BBE60C4A-5412-4E87-B22E-47A409E199D2}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{BBE60C4A-5412-4E87-B22E-47A409E199D2}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{BBE60C4A-5412-4E87-B22E-47A409E199D2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BBE60C4A-5412-4E87-B22E-47A409E199D2}.Debug|Win32.Build.0 = Debug|Win32
+		{BBE60C4A-5412-4E87-B22E-47A409E199D2}.Debug|x64.ActiveCfg = Debug|x64
+		{BBE60C4A-5412-4E87-B22E-47A409E199D2}.Debug|x64.Build.0 = Debug|x64
+		{BBE60C4A-5412-4E87-B22E-47A409E199D2}.Debug|x86.ActiveCfg = Debug|Win32
+		{BBE60C4A-5412-4E87-B22E-47A409E199D2}.Debug|x86.Build.0 = Debug|Win32
+		{BBE60C4A-5412-4E87-B22E-47A409E199D2}.Release|Any CPU.ActiveCfg = Release|x64
+		{BBE60C4A-5412-4E87-B22E-47A409E199D2}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{BBE60C4A-5412-4E87-B22E-47A409E199D2}.Release|Mixed Platforms.Build.0 = Release|x64
+		{BBE60C4A-5412-4E87-B22E-47A409E199D2}.Release|Win32.ActiveCfg = Release|Win32
+		{BBE60C4A-5412-4E87-B22E-47A409E199D2}.Release|Win32.Build.0 = Release|Win32
+		{BBE60C4A-5412-4E87-B22E-47A409E199D2}.Release|x64.ActiveCfg = Release|x64
+		{BBE60C4A-5412-4E87-B22E-47A409E199D2}.Release|x64.Build.0 = Release|x64
+		{BBE60C4A-5412-4E87-B22E-47A409E199D2}.Release|x86.ActiveCfg = Release|Win32
+		{BBE60C4A-5412-4E87-B22E-47A409E199D2}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(DPCodeReviewSolutionGUID) = preSolution
+		DPCodeReviewSolutionGUID = {00000000-0000-0000-0000-000000000000}
+	EndGlobalSection
+EndGlobal

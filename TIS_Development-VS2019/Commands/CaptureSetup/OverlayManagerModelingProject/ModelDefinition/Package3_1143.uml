@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns:dm0="http://schemas.microsoft.com/VisualStudio/2008/DslTools/Core" xmlns:dm1="http://schemas.microsoft.com/dsltools/Kernel" xmlns:dm2="http://schemas.microsoft.com/dsltools/Component" xmlns:dm3="http://schemas.microsoft.com/dsltools/UseCase" xmlns:dm4="http://schemas.microsoft.com/dsltools/Activity" xmlns:dm5="http://schemas.microsoft.com/dsltools/Interaction" xmlns:dm6="http://schemas.microsoft.com/dsltools/UmlModelLibrary" xmlns:dm7="http://schemas.microsoft.com/dsltools/UmlDiagrams" xmlns:dm8="http://schemas.microsoft.com/dsltools/LogicalClassDesigner"
+  dslVersion="1.0.0.0"
+  Id="03a8d483-ac68-43c7-946b-6856cdf3a6bf"
+  name="Events"
+  visibility="Private" xmlns="http://schemas.microsoft.com/dsltools/ModelStore">
+  <referencesInternal>
+    <reference
+      Id="c0880636-aa2e-44e7-bafa-4539e23fc6c2"
+      handle="viewcode://./CodeSchema_Namespace?Namespace%3DMicrosoft.Practices.Composite.Events"
+      tag="ViewCode" />
+  </referencesInternal>
+  <packagedElements>
+    <packageHasNamedElement>
+      <Interface
+        Id="2df6543d-d8fa-4f31-862a-0418771cec27"
+        name="IEventAggregator"
+        isAbstract="false"
+        isLeaf="false">
+        <referencesInternal>
+          <reference
+            Id="2c9c0f1b-2c87-4313-9d32-5ac13c2c2cea"
+            handle="viewcode://./CodeSchema_Interface?Assembly%3D&quot;file:%2F%2F%2FD:%2FTIS%2FThorImage%2FTIS_Development%2FGUI%2FComposite Application%2FSource%2FCAL%2FComposite.UnityExtensions%2Fbin%2FDebug%2FMicrosoft.Practices.Composite.dll&quot; Namespace%3DMicrosoft.Practices.Composite.Events Type%3DIEventAggregator"
+            tag="ViewCode" />
+        </referencesInternal>
+        <appliedStereotypesInternal>
+          <stereotypeInstance
+            Id="3b890677-d845-48b2-bb31-48c9c24ca5d2"
+            name="interface"
+            profile="CSharpProfile">
+            <propertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="8bed5116-884f-4487-bf5b-fde68a39932a">
+                <propertyInstance
+                  Id="a7c8e83f-e6b1-49a1-8a28-b4b01a3cf72f"
+                  name="ClrAttributes" />
+              </stereotypeInstanceHasPropertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="b558a91b-8651-4819-9520-494bf0ae59d3">
+                <propertyInstance
+                  Id="c6dcde82-19a1-44dc-8161-f49450e1c860"
+                  name="IsPartial"
+                  value="false" />
+              </stereotypeInstanceHasPropertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="9d48a9b3-fea9-4f4d-a1a9-c06e64d89371">
+                <propertyInstance
+                  Id="f50cfc23-0790-42f3-9c43-d57fa209f23e"
+                  name="IsUnsafe"
+                  value="false" />
+              </stereotypeInstanceHasPropertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="235fffc0-f9a1-49c7-aba5-d13a6a48c058">
+                <propertyInstance
+                  Id="25e8ff76-023d-4c95-9ff5-163587c3412a"
+                  name="PackageVisibility"
+                  value="internal" />
+              </stereotypeInstanceHasPropertyInstances>
+            </propertyInstances>
+          </stereotypeInstance>
+        </appliedStereotypesInternal>
+      </Interface>
+    </packageHasNamedElement>
+  </packagedElements>
+</package>

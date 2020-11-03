@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<PinholeStepperSettings>
+
+  <Connection portID="10" baudRate="115200" address="1"/>
+
+  <PinholeLoc value="0"/>
+  <PinholeLoc value="100"/>
+  <PinholeLoc value="200"/>
+  <PinholeLoc value="300"/>
+  <PinholeLoc value="400"/>
+  <PinholeLoc value="500"/>
+  <PinholeLoc value="600"/>
+  <PinholeLoc value="700"/>
+  <PinholeLoc value="800"/>
+  <PinholeLoc value="900"/>
+  <PinholeLoc value="1000"/>
+  <PinholeLoc value="1100"/>
+  <PinholeLoc value="1200"/>
+  <PinholeLoc value="1300"/>
+  <PinholeLoc value="1400"/>
+  <PinholeLoc value="1500"/>
+  
+</PinholeStepperSettings>

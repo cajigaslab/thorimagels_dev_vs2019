@@ -1,0 +1,70 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VtkVolumeControl", "VtkVolumeControl\VtkVolumeControl.csproj", "{236A922E-EBB4-4B76-A128-931FA311ABC3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VtkVolumeApplication", "VtkVolumeApplication\VtkVolumeApplication.csproj", "{9A263AF7-6732-4E93-B355-72F26560633B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{236A922E-EBB4-4B76-A128-931FA311ABC3} = {236A922E-EBB4-4B76-A128-931FA311ABC3}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VtkVolumeControl64", "VtkVolumeControl64\VtkVolumeControl64.csproj", "{6E359A27-B299-443A-87FE-87299657832A}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 4
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://stl-tfs1:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = VtkVolumeApplication\\VtkVolumeApplication.csproj
+		SccProjectName1 = VtkVolumeApplication
+		SccLocalPath1 = VtkVolumeApplication
+		SccProjectUniqueName2 = VtkVolumeControl\\VtkVolumeControl.csproj
+		SccProjectName2 = VtkVolumeControl
+		SccLocalPath2 = VtkVolumeControl
+		SccProjectUniqueName3 = VtkVolumeControl64\\VtkVolumeControl64.csproj
+		SccProjectName3 = VtkVolumeControl64
+		SccLocalPath3 = VtkVolumeControl64
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{236A922E-EBB4-4B76-A128-931FA311ABC3}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{236A922E-EBB4-4B76-A128-931FA311ABC3}.Debug|Any CPU.Build.0 = Debug|x86
+		{236A922E-EBB4-4B76-A128-931FA311ABC3}.Debug|x64.ActiveCfg = Debug|x86
+		{236A922E-EBB4-4B76-A128-931FA311ABC3}.Debug|x64.Build.0 = Debug|x86
+		{236A922E-EBB4-4B76-A128-931FA311ABC3}.Debug|x86.ActiveCfg = Debug|x86
+		{236A922E-EBB4-4B76-A128-931FA311ABC3}.Debug|x86.Build.0 = Debug|x86
+		{236A922E-EBB4-4B76-A128-931FA311ABC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{236A922E-EBB4-4B76-A128-931FA311ABC3}.Release|x64.ActiveCfg = Release|x86
+		{236A922E-EBB4-4B76-A128-931FA311ABC3}.Release|x86.ActiveCfg = Release|x86
+		{236A922E-EBB4-4B76-A128-931FA311ABC3}.Release|x86.Build.0 = Release|x86
+		{9A263AF7-6732-4E93-B355-72F26560633B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A263AF7-6732-4E93-B355-72F26560633B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A263AF7-6732-4E93-B355-72F26560633B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9A263AF7-6732-4E93-B355-72F26560633B}.Debug|x64.Build.0 = Debug|Any CPU
+		{9A263AF7-6732-4E93-B355-72F26560633B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9A263AF7-6732-4E93-B355-72F26560633B}.Debug|x86.Build.0 = Debug|Any CPU
+		{9A263AF7-6732-4E93-B355-72F26560633B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A263AF7-6732-4E93-B355-72F26560633B}.Release|x64.ActiveCfg = Release|Any CPU
+		{9A263AF7-6732-4E93-B355-72F26560633B}.Release|x86.ActiveCfg = Release|Any CPU
+		{9A263AF7-6732-4E93-B355-72F26560633B}.Release|x86.Build.0 = Release|Any CPU
+		{6E359A27-B299-443A-87FE-87299657832A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E359A27-B299-443A-87FE-87299657832A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E359A27-B299-443A-87FE-87299657832A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6E359A27-B299-443A-87FE-87299657832A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6E359A27-B299-443A-87FE-87299657832A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E359A27-B299-443A-87FE-87299657832A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E359A27-B299-443A-87FE-87299657832A}.Release|x64.ActiveCfg = Release|Any CPU
+		{6E359A27-B299-443A-87FE-87299657832A}.Release|x86.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ThorBCMPASettings>
+  <PA1 portID="39" baudRate="460800" serialNumber="NA" useShutter="0" />
+  <PA2 portID="40" baudRate="460800" serialNumber="NA" useShutter="0" />
+  <PA3 portID="41" baudRate="460800" serialNumber="NA" useShutter="0" />
+  <PA1Calibration zero="0"/>
+  <PA2Calibration zero="0"/>
+  <PA3Calibration zero="0"/>
+  <MotorsConfig number="1"/>
+  <TimeOut timeMS="1000"/>
+</ThorBCMPASettings>

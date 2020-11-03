@@ -1,0 +1,41 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThorImage", "ThorImage\ThorImage.csproj", "{C0F85454-2CDA-409A-BD53-23E5F4C2A20A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThorImageInfastructure", "ThorImageInfastructure\ThorImageInfastructure.csproj", "{B0D8974F-41EC-4D1D-BCD7-A494114DC0BE}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://stl-tfs1:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = ThorImage\\ThorImage.csproj
+		SccProjectName1 = ThorImage
+		SccLocalPath1 = ThorImage
+		SccProjectUniqueName2 = ThorImageInfastructure\\ThorImageInfastructure.csproj
+		SccProjectName2 = ThorImageInfastructure
+		SccLocalPath2 = ThorImageInfastructure
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C0F85454-2CDA-409A-BD53-23E5F4C2A20A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0F85454-2CDA-409A-BD53-23E5F4C2A20A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0F85454-2CDA-409A-BD53-23E5F4C2A20A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0F85454-2CDA-409A-BD53-23E5F4C2A20A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0D8974F-41EC-4D1D-BCD7-A494114DC0BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0D8974F-41EC-4D1D-BCD7-A494114DC0BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0D8974F-41EC-4D1D-BCD7-A494114DC0BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0D8974F-41EC-4D1D-BCD7-A494114DC0BE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(DPCodeReviewSolutionGUID) = preSolution
+		DPCodeReviewSolutionGUID = {1F11953A-2857-4213-A946-E19B6C56A572}
+	EndGlobalSection
+EndGlobal

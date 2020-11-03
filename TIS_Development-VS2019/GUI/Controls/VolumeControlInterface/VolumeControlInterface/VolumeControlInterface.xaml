@@ -1,0 +1,659 @@
+﻿<UserControl x:Class="VolumeControlInterface.VolumeControlInterface"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vtkVC="clr-namespace:VtkVolumeControl;assembly=VtkVolumeControl"
+             xmlns:local="clr-namespace:VolumeControlInterface"
+             Height="700"
+             Width="700"
+             Margin="5">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <Grid DataContext="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}">
+            <vtkVC:VolumeRenderer Name="VolumeControl"
+                                  Width="Auto"
+                                  Height="Auto"
+                                  Margin="5"
+                                  Grid.Column="0"
+                                  LowerThresholdChanA="{Binding Path=BlackPoint0, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  UpperThresholdChanA="{Binding Path=WhitePoint0, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  LowerThresholdChanB="{Binding Path=BlackPoint1, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  UpperThresholdChanB="{Binding Path=WhitePoint1, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  LowerThresholdChanC="{Binding Path=BlackPoint2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  UpperThresholdChanC="{Binding Path=WhitePoint2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  LowerThresholdChanD="{Binding Path=BlackPoint3, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  UpperThresholdChanD="{Binding Path=WhitePoint3, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  IsChanASelected="{Binding Path=IsChanASelected, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                  IsChanBSelected="{Binding Path=IsChanBSelected, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                  IsChanCSelected="{Binding Path=IsChanCSelected, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                  IsChanDSelected="{Binding Path=IsChanDSelected, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                  DataSpacingZ="{Binding Path=DataSpacingZ, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  DataSpacingZMultiplier="{Binding Path=DataSpacingZMultiplier, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  FolderDirectory="{Binding Path=ZStackCacheDirectory, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                  HardwareSettingsFile="{Binding Path=HardwareSettingsFile, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                  TileIndex="{Binding Path=TileIndex, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                  WellIndex="{Binding Path=WellIndex, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                  TimePointIndex="{Binding Path=TimePointIndex, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                  ZStreamIndex="{Binding Path=ZStreamIndex, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                  TotalSystemChannels="4"
+                                  Timepoints="1">
+            </vtkVC:VolumeRenderer>
+        </Grid>
+        <Expander Grid.Column="1"
+                  Header="Options"
+                  Foreground="White"
+                  Margin="1">
+            <ScrollViewer Name="scrollView"
+                          VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <StackPanel Name="spChanCbs"
+                                Orientation="Horizontal">
+                        <StackPanel Name="spA"
+                                    Orientation="Horizontal"
+                                    Margin="1">
+                            <CheckBox Name="ckA"
+                                      IsChecked="{Binding Path=IsChanASelected, Mode=TwoWay, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+                                      VerticalAlignment="Center"></CheckBox>
+                            <Label Name="lblA"
+                                   Content="ChanA"
+                                   ToolTip="Enable/disable channel A"
+                                   Foreground="White" />
+                        </StackPanel>
+                        <StackPanel Name="spB"
+                                    Orientation="Horizontal"
+                                    Margin="1">
+                            <CheckBox Name="ckB"
+                                      IsChecked="{Binding Path=IsChanBSelected, Mode=TwoWay, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+                                      VerticalAlignment="Center" />
+                            <Label Name="lblB"
+                                   Content="ChanB"
+                                   ToolTip="Enable/disable channel B"
+                                   Foreground="White" />
+                        </StackPanel>
+                        <StackPanel Name="spC"
+                                    Orientation="Horizontal"
+                                    Margin="1">
+                            <CheckBox Name="ckC"
+                                      IsChecked="{Binding Path=IsChanCSelected, Mode=TwoWay, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+                                      VerticalAlignment="Center" />
+                            <Label Name="lblC"
+                                   Content="ChanC"
+                                   ToolTip="Enable/disable channel C"
+                                   Foreground="White" />
+                        </StackPanel>
+                        <StackPanel  Name="spD"
+                                     Orientation="Horizontal"
+                                     Margin="1">
+                            <CheckBox Name="ckD"
+                                      IsChecked="{Binding Path=IsChanDSelected, Mode=TwoWay, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+                                      VerticalAlignment="Center" />
+                            <Label Name="lblD"
+                                   Content="ChanD"
+                                   ToolTip="Enable/disable channel D"
+                                   Foreground="White" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="1"></StackPanel>
+                        <StackPanel Name="spChanAL"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="1">
+                            <Label Content="A BP"
+                                   Width="40"
+                                   Foreground="White"
+                                   Margin="1"
+                                   VerticalAlignment="Center" />
+                            <Slider Name="SliderLowerChanA"
+                                    Width="190"
+                                    IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center"
+                                    Maximum="{Binding ElementName=VolumeControl, Path=NumberOfColorBins, Mode=OneWay}"
+                                    Value="{Binding ElementName=VolumeControl, Delay=1000, Path=LowerThresholdChanA, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            </Slider>
+                            <StackPanel Width="30"
+                                        Margin="1"
+                                        VerticalAlignment="Center">
+                                <RepeatButton Name="ABPPlus"
+                                              Content="+"
+                                              Click="btnABPPlus_Click"
+                                              Delay="500"
+                                              Interval="100" />
+                                <RepeatButton Name="ABPMinus"
+                                              Content="-"
+                                              Click="btnABPMinus_Click"
+                                              Delay="500"
+                                              Interval="100" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Name="spChanAU"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="1">
+                            <Label Content="A WP"
+                                   Width="40"
+                                   Foreground="White"
+                                   Margin="1"
+                                   VerticalAlignment="Center" />
+                            <Slider Name="SliderUpperChanA"
+                                    Width="190"
+                                    IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center"
+                                    Maximum="{Binding ElementName=VolumeControl, Path=NumberOfColorBins, Mode=OneWay}"
+                                    Value="{Binding ElementName=VolumeControl, Delay=1000, Path=UpperThresholdChanA, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            </Slider>
+                            <StackPanel Width="30"
+                                        Margin="1"
+                                        VerticalAlignment="Center">
+                                <RepeatButton Name="AWPPlus"
+                                              Content="+"
+                                              Click="btnAWPPlus_Click"
+                                              Delay="500"
+                                              Interval="100" />
+                                <RepeatButton Name="AWPMinus"
+                                              Content="-"
+                                              Click="btnAWPMinus_Click"
+                                              Delay="500"
+                                              Interval="100" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="1">
+                            <Label Content="B BP"
+                                   Width="40"
+                                   Foreground="White"
+                                   Margin="1"
+                                   VerticalAlignment="Center" />
+                            <Slider Name="SliderLowerChanB"
+                                    Width="190"
+                                    IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center"
+                                    Maximum="{Binding ElementName=VolumeControl, Path=NumberOfColorBins, Mode=OneWay}"
+                                    Value="{Binding ElementName=VolumeControl, Delay=1000, Path=LowerThresholdChanB, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            </Slider>
+                            <StackPanel Width="30"
+                                        Margin="1"
+                                        VerticalAlignment="Center">
+                                <RepeatButton Name="BBPPlus"
+                                              Content="+"
+                                              Click="btnBBPPlus_Click"
+                                              Delay="500"
+                                              Interval="100" />
+                                <RepeatButton Name="BBPMinus"
+                                              Content="-"
+                                              Click="btnBBPMinus_Click"
+                                              Delay="500"
+                                              Interval="100" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="1">
+                            <Label Content="B WP"
+                                   Width="40"
+                                   Foreground="White"
+                                   Margin="1"
+                                   VerticalAlignment="Center" />
+                            <Slider Name="SliderUpperChanB"
+                                    Width="190"
+                                    IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center"
+                                    Maximum="{Binding ElementName=VolumeControl, Path=NumberOfColorBins, Mode=OneWay}"
+                                    Value="{Binding ElementName=VolumeControl, Delay=1000, Path=UpperThresholdChanB, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            </Slider>
+                            <StackPanel Width="30"
+                                        Margin="1"
+                                        VerticalAlignment="Center">
+                                <RepeatButton Name="BWPPlus"
+                                              Content="+"
+                                              Click="btnBWPPlus_Click"
+                                              Delay="500"
+                                              Interval="100" />
+                                <RepeatButton Name="BWPMinus"
+                                              Content="-"
+                                              Click="btnBWPMinus_Click"
+                                              Delay="500"
+                                              Interval="100" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="1">
+                            <Label Name="lblChanCL"
+                                   Width="40"
+                                   Content="C BP"
+                                   Foreground="White"
+                                   Margin="1"
+                                   VerticalAlignment="Center" />
+                            <Slider Name="SliderLowerChanC"
+                                    Width="190"
+                                    IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center"
+                                    Maximum="{Binding ElementName=VolumeControl, Path=NumberOfColorBins, Mode=OneWay}"
+                                    Value="{Binding ElementName=VolumeControl, Delay=1000, Path=LowerThresholdChanC, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            </Slider>
+                            <StackPanel Width="30"
+                                        Margin="1"
+                                        VerticalAlignment="Center">
+                                <RepeatButton Name="CBPPlus"
+                                              Content="+"
+                                              Click="btnCBPPlus_Click"
+                                              Delay="500"
+                                              Interval="100" />
+                                <RepeatButton Name="CBPMinus"
+                                              Content="-"
+                                              Click="btnCBPMinus_Click"
+                                              Delay="500"
+                                              Interval="100" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Name="spChanCU"
+                                    Orientation="Horizontal"
+                                    Margin="1">
+                            <Label Content="C WP"
+                                   Width="40"
+                                   Foreground="White"
+                                   Margin="1"
+                                   VerticalAlignment="Center" />
+                            <Slider Name="SliderUpperChanC"
+                                    Width="190"
+                                    IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center"
+                                    Maximum="{Binding ElementName=VolumeControl, Path=NumberOfColorBins, Mode=OneWay}"
+                                    Value="{Binding ElementName=VolumeControl, Delay=1000, Path=UpperThresholdChanC, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            </Slider>
+                            <StackPanel Width="30"
+                                        Margin="1"
+                                        VerticalAlignment="Center">
+                                <RepeatButton Name="CWPPlus"
+                                              Content="+"
+                                              Click="btnCWPPlus_Click"
+                                              Delay="500"
+                                              Interval="100" />
+                                <RepeatButton Name="CWPMinus"
+                                              Content="-"
+                                              Click="btnCWPMinus_Click"
+                                              Delay="500"
+                                              Interval="100" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="1">
+                            <Label Content="D BP"
+                                   Width="40"
+                                   Foreground="White"
+                                   Margin="1"
+                                   VerticalAlignment="Center" />
+                            <Slider Name="SliderLowerChanD"
+                                    Width="190"
+                                    IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center"
+                                    Maximum="{Binding ElementName=VolumeControl, Path=NumberOfColorBins, Mode=OneWay}"
+                                    Value="{Binding ElementName=VolumeControl, Delay=1000, Path=LowerThresholdChanD, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            </Slider>
+                            <StackPanel Width="30"
+                                        Margin="1">
+                                <RepeatButton Name="DBPPlus"
+                                              Content="+"
+                                              Click="btnDBPPlus_Click"
+                                              Delay="500"
+                                              Interval="100" />
+                                <RepeatButton Name="DBPMinus"
+                                              Content="-"
+                                              Click="btnDBPMinus_Click"
+                                              Delay="500"
+                                              Interval="100" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="1">
+                            <Label Content="D WP"
+                                   Width="40"
+                                   Foreground="White"
+                                   Margin="1"
+                                   VerticalAlignment="Center" />
+                            <Slider Name="SliderUpperChanD"
+                                    Width="190"
+                                    IsSnapToTickEnabled="True"
+                                    VerticalAlignment="Center"
+                                    Maximum="{Binding ElementName=VolumeControl, Path=NumberOfColorBins, Mode=OneWay}"
+                                    Value="{Binding ElementName=VolumeControl, Delay=1000, Path=UpperThresholdChanD, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            </Slider>
+                            <StackPanel Width="30"
+                                        Margin="1"
+                                        VerticalAlignment="Center">
+                                <RepeatButton Name="DWPPlus"
+                                              Content="+"
+                                              Click="btnDWPPlus_Click"
+                                              Delay="500"
+                                              Interval="100" />
+                                <RepeatButton Name="DWPMinus"
+                                              Content="-"
+                                              Click="btnDWPMinus_Click"
+                                              Delay="500"
+                                              Interval="100" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                    <GroupBox Margin="1"
+                              Header="Crop and Rotation">
+                        <StackPanel Margin="1">
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1">
+                                <Label Content="XMin:"
+                                       Foreground="White"
+                                       Width="45" />
+                                <Slider Name="SliderXMin"
+                                        Width="190"
+                                        VerticalAlignment="Center"
+                                        Thumb.DragCompleted="SliderCroppingXMinRegion_ValueChanged"
+                                        ToolTipService.Placement="Top"
+                                        ToolTip="{Binding ElementName=VolumeControl, Path=RenderedVolumeXMin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        Maximum="{Binding ElementName=VolumeControl, Path=DataExtentX, Mode=OneWay}"
+                                        Value="{Binding ElementName=VolumeControl, Path=RenderedVolumeXMin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        TickFrequency="1"
+                                        IsSnapToTickEnabled="True">
+                                </Slider>
+                                <StackPanel Width="30"
+                                            Margin="1">
+                                    <RepeatButton Name="btnXMinCrop3DPlus"
+                                                  Content="+"
+                                                  Click="btnXMinCrop3DPlus_Click"
+                                                  Delay="500"
+                                                  Interval="100" />
+                                    <RepeatButton Name="btnXMinCrop3DMinus"
+                                                  Content="-"
+                                                  Click="btnXMinCrop3DMinus_Click"
+                                                  Delay="500"
+                                                  Interval="100" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1">
+                                <Label Content="XMax:"
+                                       Foreground="White"
+                                       Width="45" />
+                                <Slider Name="SliderXMax"
+                                        Width="190"
+                                        VerticalAlignment="Center"
+                                        TickFrequency="1"
+                                        IsSnapToTickEnabled="True"
+                                        Thumb.DragCompleted="SliderCroppingXMaxRegion_ValueChanged"
+                                        ToolTipService.Placement="Top"
+                                        ToolTip="{Binding ElementName=VolumeControl, Path=RenderedVolumeXMax, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        Maximum="{Binding ElementName=VolumeControl, Path=DataExtentX, Mode=OneWay}"
+                                        Value="{Binding ElementName=VolumeControl, Path=RenderedVolumeXMax, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                </Slider>
+                                <StackPanel Width="30"
+                                            Margin="1">
+                                    <RepeatButton Name="btnXMaxCrop3DPlus"
+                                                  Content="+"
+                                                  Click="btnXMaxCrop3DPlus_Click"
+                                                  Delay="500"
+                                                  Interval="100" />
+                                    <RepeatButton Name="btnXMaxCrop3DMinus"
+                                                  Content="-"
+                                                  Click="btnXMaxCrop3DMinus_Click"
+                                                  Delay="500"
+                                                  Interval="100" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1">
+                                <Label Content="YMin:"
+                                       Foreground="White"
+                                       Width="45" />
+                                <Slider Name="SliderYMin"
+                                        Width="190"
+                                        VerticalAlignment="Center"
+                                        TickFrequency="1"
+                                        IsSnapToTickEnabled="True"
+                                        Thumb.DragCompleted="SliderCroppingYMinRegion_ValueChanged"
+                                        ToolTipService.Placement="Top"
+                                        ToolTip="{Binding ElementName=VolumeControl, Path=RenderedVolumeYMin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        Maximum="{Binding ElementName=VolumeControl, Path=DataExtentY, Mode=OneWay}"
+                                        Value="{Binding ElementName=VolumeControl, Path=RenderedVolumeYMin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                </Slider>
+                                <StackPanel Width="30"
+                                            Margin="1">
+                                    <RepeatButton Name="btnYMinCrop3DPlus"
+                                                  Content="+"
+                                                  Click="btnYMinCrop3DPlus_Click"
+                                                  Delay="500"
+                                                  Interval="100" />
+                                    <RepeatButton Name="btnYMinCrop3DMinus"
+                                                  Content="-"
+                                                  Click="btnYMinCrop3DMinus_Click"
+                                                  Delay="500"
+                                                  Interval="100" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1">
+                                <Label Content="YMax:"
+                                       Foreground="White"
+                                       Width="45" />
+                                <Slider Name="SliderYMax"
+                                        Width="190"
+                                        VerticalAlignment="Center"
+                                        TickFrequency="1"
+                                        IsSnapToTickEnabled="True"
+                                        Thumb.DragCompleted="SliderCroppingYMaxRegion_ValueChanged"
+                                        ToolTipService.Placement="Top"
+                                        ToolTip="{Binding ElementName=VolumeControl, Path=RenderedVolumeYMax, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        Maximum="{Binding ElementName=VolumeControl, Path=DataExtentY, Mode=OneWay}"
+                                        Value="{Binding ElementName=VolumeControl, Path=RenderedVolumeYMax, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                </Slider>
+                                <StackPanel Width="30"
+                                            Margin="1">
+                                    <RepeatButton Name="btnYMaxCrop3DPlus"
+                                                  Content="+"
+                                                  Click="btnYMaxCrop3DPlus_Click"
+                                                  Delay="500"
+                                                  Interval="100" />
+                                    <RepeatButton Name="btnYMaxCrop3DMinus"
+                                                  Content="-"
+                                                  Click="btnYMaxCrop3DMinus_Click"
+                                                  Delay="500"
+                                                  Interval="100" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1">
+                                <Label Content="ZMin:"
+                                       Foreground="White"
+                                       Width="45" />
+                                <Slider Name="SliderZMin"
+                                        Width="190"
+                                        VerticalAlignment="Center"
+                                        TickFrequency="1"
+                                        IsSnapToTickEnabled="True"
+                                        Thumb.DragCompleted="SliderCroppingZMinRegion_ValueChanged"
+                                        ToolTipService.Placement="Top"
+                                        ToolTip="{Binding ElementName=VolumeControl, Path=RenderedVolumeZMin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        Minimum="0"
+                                        Maximum="{Binding ElementName=VolumeControl, Path=DataExtentZ, Mode=OneWay}"
+                                        Value="{Binding ElementName=VolumeControl, Path=RenderedVolumeZMin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                </Slider>
+                                <StackPanel Width="30"
+                                            Margin="1">
+                                    <RepeatButton Name="btnZMinCrop3DPlus"
+                                                  Content="+"
+                                                  Click="btnZMinCrop3DPlus_Click"
+                                                  Delay="500"
+                                                  Interval="100" />
+                                    <RepeatButton Name="btnZMinCrop3DMinus"
+                                                  Content="-"
+                                                  Click="btnZMinCrop3DMinus_Click"
+                                                  Delay="500"
+                                                  Interval="100" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1">
+                                <Label Content="ZMax:"
+                                       Foreground="White"
+                                       Width="45" />
+                                <Slider Name="SliderZMax"
+                                        Width="190"
+                                        VerticalAlignment="Center"
+                                        IsSnapToTickEnabled="True"
+                                        Thumb.DragCompleted="SliderCroppingZMaxRegion_ValueChanged"
+                                        ToolTipService.Placement="Top"
+                                        ToolTip="{Binding ElementName=VolumeControl, Path=RenderedVolumeZMax, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        Minimum="0"
+                                        Maximum="{Binding ElementName=VolumeControl, Path=DataExtentZ, Mode=OneWay}"
+                                        Value="{Binding ElementName=VolumeControl, Path=RenderedVolumeZMax, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                </Slider>
+                                <StackPanel Width="30"
+                                            Margin="1">
+                                    <RepeatButton Name="btnZMaxCrop3DPlus"
+                                                  Content="+"
+                                                  Click="btnZMaxCrop3DPlus_Click"
+                                                  Delay="500"
+                                                  Interval="100" />
+                                    <RepeatButton Name="btnZMaxCrop3DMinus"
+                                                  Content="-"
+                                                  Click="btnZMaxCrop3DMinus_Click"
+                                                  Delay="500"
+                                                  Interval="100" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <RepeatButton FontFamily="Marlett"
+                                                  FontSize="20"
+                                                  Grid.Row="1"
+                                                  Grid.Column="1"
+                                                  Content="3"
+                                                  Width="20"
+                                                  Height="30"
+                                                  Click="btnLeftArrow_Click"
+                                                  Delay="500"
+                                                  Interval="100"
+                                                  HorizontalAlignment="Left" />
+                                    <RepeatButton FontFamily="Marlett"
+                                                  FontSize="20"
+                                                  Grid.Row="0"
+                                                  Grid.Column="1"
+                                                  Content="5"
+                                                  Width="40"
+                                                  Height="20"
+                                                  Click="btnUpArrow_Click"
+                                                  Delay="500"
+                                                  Interval="100" />
+                                    <RepeatButton FontFamily="Marlett"
+                                                  FontSize="20"
+                                                  Grid.Row="1"
+                                                  Grid.Column="1"
+                                                  Content="4"
+                                                  Width="20"
+                                                  Height="30"
+                                                  Click="btnRightArrow_Click"
+                                                  Delay="500"
+                                                  Interval="100"
+                                                  HorizontalAlignment="Right" />
+                                    <RepeatButton FontFamily="Marlett"
+                                                  FontSize="20"
+                                                  Grid.Row="2"
+                                                  Grid.Column="1"
+                                                  Content="6"
+                                                  Width="40"
+                                                  Height="20"
+                                                  Click="btnDownArrow_Click"
+                                                  Delay="500"
+                                                  Interval="100" />
+                                    <Button Grid.Row="1"
+                                            Grid.Column="1"
+                                            Content="Reset"
+                                            Width="40"
+                                            Height="30"
+                                            Click="btnResetCrop3D_Click" />
+                                </Grid>
+                            </StackPanel>
+                        </StackPanel>
+                    </GroupBox>
+                    <StackPanel DataContext="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+                                Orientation="Horizontal">
+                        <Label Content="ZSpacing Multiplier"
+                               VerticalAlignment="Center"
+                               Foreground="White" />
+                        <StackPanel Width="30"
+                                    Margin="0,1,0,1">
+                            <RepeatButton Name="btnZMultiplierPlus"
+                                          Click="btnZMultiplierPlus_Click"
+                                          Content="+"
+                                          Delay="500"
+                                          Interval="100" />
+                            <RepeatButton Name="btnZMultiplierMinus"
+                                          Click="btnZMultiplierMinus_Click"
+                                          Content="-"
+                                          Delay="500"
+                                          Interval="100" />
+                        </StackPanel>
+                        <TextBox Name="txtZSpacingMultiplier"
+                                 Text="{Binding Path=DataSpacingZMultiplier, Mode=TwoWay, NotifyOnTargetUpdated=True, NotifyOnSourceUpdated=True}"
+                                 Width="40"
+                                 VerticalAlignment="Center" />
+                        <Button Width="30"
+                                Content="&#x2713;"
+                                Height="23">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txtZSpacingMultiplier}"
+                                                     Value="True">
+                                            <Setter Property="Visibility"
+                                                    Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                    <StackPanel>
+                        <StackPanel Margin="5"
+                                    Orientation="Horizontal"
+                                    ToolTip="Destination Directory for Experiment">
+                            <Label Foreground="White">Output Path</Label>
+                            <TextBox Text="{Binding Path=OutputDirectory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Width="110" />
+                            <Button Click="Browse_Click"
+                                    Width="75">Browse</Button>
+                        </StackPanel>
+                        <StackPanel Margin="5"
+                                    Orientation="Horizontal"
+                                    ToolTip="Experiment Name">
+                            <Label Foreground="White">Experiment Name</Label>
+                            <TextBox Text="{Binding Path=OutputExperiment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Width="80" />
+                            <Button Click="Save_Click"
+                                    Width="75">Save</Button>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Expander>
+    </Grid>
+</UserControl>

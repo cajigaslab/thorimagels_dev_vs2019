@@ -1,0 +1,24 @@
+﻿<Window x:Class="SpinnerProgress.SpinnerProgressWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:Spin="clr-namespace:SpinnerProgress"
+    Height="162" 
+    Width="162"
+    ResizeMode="NoResize"
+    WindowStyle="None"
+    Background="DimGray"
+    AllowsTransparency="True">
+    <Border>
+        <StackPanel>
+            <Grid HorizontalAlignment="Center">
+                <Canvas Width="105" Margin="0,10"
+                                Height="105" Name="CanvasSpinProgress">
+                    <!--Define a boundary to enclose the control-->
+                    <Spin:SpinnerProgressControl  x:Name="spinProgress" SpinnerHeight="50" SpinnerWidth="50" />
+                </Canvas>
+
+            </Grid>
+            <Label Name="lblspinner" HorizontalAlignment="Center" Foreground="White"/>
+        </StackPanel>
+    </Border>
+</Window>

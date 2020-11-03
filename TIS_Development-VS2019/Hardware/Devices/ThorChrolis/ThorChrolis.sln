@@ -1,0 +1,52 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30204.135
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorChrolis", "ThorChrolis\ThorChrolis.vcxproj", "{7120A75D-8BEF-4FC1-81CF-9A225CC1E9DA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorChrolis_UnitTest", "ThorChrolis_UnitTest\ThorChrolis_UnitTest.vcxproj", "{C5783D5D-97A1-414B-8883-4F4CAC4CE937}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7120A75D-8BEF-4FC1-81CF-9A225CC1E9DA}.Debug|x64.ActiveCfg = Debug|x64
+		{7120A75D-8BEF-4FC1-81CF-9A225CC1E9DA}.Debug|x64.Build.0 = Debug|x64
+		{7120A75D-8BEF-4FC1-81CF-9A225CC1E9DA}.Debug|x86.ActiveCfg = Debug|Win32
+		{7120A75D-8BEF-4FC1-81CF-9A225CC1E9DA}.Debug|x86.Build.0 = Debug|Win32
+		{7120A75D-8BEF-4FC1-81CF-9A225CC1E9DA}.Release|x64.ActiveCfg = Release|x64
+		{7120A75D-8BEF-4FC1-81CF-9A225CC1E9DA}.Release|x64.Build.0 = Release|x64
+		{7120A75D-8BEF-4FC1-81CF-9A225CC1E9DA}.Release|x86.ActiveCfg = Release|Win32
+		{7120A75D-8BEF-4FC1-81CF-9A225CC1E9DA}.Release|x86.Build.0 = Release|Win32
+		{C5783D5D-97A1-414B-8883-4F4CAC4CE937}.Debug|x64.ActiveCfg = Debug|x64
+		{C5783D5D-97A1-414B-8883-4F4CAC4CE937}.Debug|x86.ActiveCfg = Debug|Win32
+		{C5783D5D-97A1-414B-8883-4F4CAC4CE937}.Debug|x86.Build.0 = Debug|Win32
+		{C5783D5D-97A1-414B-8883-4F4CAC4CE937}.Release|x64.ActiveCfg = Release|x64
+		{C5783D5D-97A1-414B-8883-4F4CAC4CE937}.Release|x64.Build.0 = Release|x64
+		{C5783D5D-97A1-414B-8883-4F4CAC4CE937}.Release|x86.ActiveCfg = Release|Win32
+		{C5783D5D-97A1-414B-8883-4F4CAC4CE937}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {59FC2AFF-4805-4BF5-8448-CACD625A3C91}
+	EndGlobalSection
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://stl-tfs1:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = ThorChrolis\\ThorChrolis.vcxproj
+		SccProjectName1 = ThorChrolis
+		SccLocalPath1 = ThorChrolis
+		SccProjectUniqueName2 = ThorChrolis_UnitTest\\ThorChrolis_UnitTest.vcxproj
+		SccProjectName2 = ThorChrolis_UnitTest
+		SccLocalPath2 = ThorChrolis_UnitTest
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,60 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.ZControlView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:zc="clr-namespace:ZControl;assembly=ZControl"
+             Width="Auto"
+             Height="Auto"
+             Loaded="ZControlView_Loaded">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <zc:ZControlUC PreviewZStackCommand="{Binding Path=PreviewZStackCommand}"
+                       PreviewButtonEnabled="{Binding Path=PreviewButtonEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       RPosition="{Binding Path=RPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       RStageVisibility ="{Binding Path=RStageVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       SecondaryZScale="{Binding Path=SecondaryZScale}"
+                       Z2Max="{Binding Path=Z2Max, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       Z2Min="{Binding Path=Z2Min, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       Z2Position="{Binding Path=Z2Position, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       Z2PosOutOfBounds="{Binding Path=Z2PosOutOfBounds, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       Z2StageVisibility="{Binding Path=Z2StageVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       Z2StepSize="{Binding Path=Z2StepSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       Z2ZeroVisibility="{Binding Path=Z2ZeroVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZCommand="{Binding Path=ZCommand}"
+                       ZCenter="{Binding Path=ZCenter, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZGotoValue="{Binding Path=ZGotoValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZInvert="{Binding Path=ZInvert, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZInvert2="{Binding Path=ZInvert2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZInvertDevice="{Binding Path=ZInvertDevice, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZInvertDevice2="{Binding Path=ZInvertDevice2, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZInvertUpDown="{Binding Path=ZInvertUpDown, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZInvertUpDown2="{Binding Path=ZInvertUpDown2, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZInvertVisibility="{Binding Path=ZInvertVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZInvertLimits="{Binding Path=ZInvertLimits, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       Z2InvertLimits="{Binding Path=Z2InvertLimits, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZMax="{Binding Path=ZMax, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZMin="{Binding Path=ZMin, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZPosition="{Binding Path=ZPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZPositionBar="{Binding Path=ZPositionBar, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       Z2PositionBar="{Binding Path=Z2PositionBar, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZPosOutOfBounds="{Binding Path=ZPosOutOfBounds, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZScanNumSteps="{Binding Path=ZScanNumSteps, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZScanStart="{Binding Path=ZScanStart, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZScanStep="{Binding Path=ZScanStep, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZScanStop="{Binding Path=ZScanStop, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZScanStopNotValid="{Binding Path=ZScanStopNotValid, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZScanThickness="{Binding Path=ZScanThickness, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZSectionThickness="{Binding Path=ZSectionThickness, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZStage2GoToLocationCommand="{Binding Path=ZStage2GoToLocationCommand}"
+                       ZStage2LocationNames="{Binding Path=ZStage2LocationNames, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZStage2LocationSaveCommand="{Binding Path=ZStage2LocationSaveCommand}"
+                       ZStage2Name="{Binding Path=ZStage2Name, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       ZStepSize="{Binding Path=ZStepSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    />
+    </Grid>
+</UserControl>

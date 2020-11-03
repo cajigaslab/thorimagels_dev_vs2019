@@ -1,0 +1,38 @@
+﻿<Window x:Class="OverlayManager.LineROIOptions"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             Width="200" Height="100"
+             Background="#FF333333"
+             ResizeMode="NoResize"
+             WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Button.xaml" />
+                <ResourceDictionary Source="Label.xaml" />
+                <ResourceDictionary Source="Window.xaml" />
+                <ResourceDictionary Source="Shared.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <StackPanel>
+            <CheckBox Margin="5" Content="Display Line Length" Foreground="White" 
+                      IsChecked="{Binding Path=ShowLength}"/>
+        </StackPanel>
+        <StackPanel Grid.Row="1"
+                    Orientation="Horizontal"
+                    VerticalAlignment="Bottom"
+                    HorizontalAlignment="Right">
+            <Button Content="OK"
+                    Name="btnOK"
+                    Width="65"
+                    Height="35"
+                    HorizontalAlignment="Right"
+                    Margin="3"
+                    Click="btnOK_Click"></Button>
+        </StackPanel>
+    </Grid>
+</Window>

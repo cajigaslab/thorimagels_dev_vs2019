@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns:dm0="http://schemas.microsoft.com/VisualStudio/2008/DslTools/Core" xmlns:dm1="http://schemas.microsoft.com/dsltools/Kernel" xmlns:dm2="http://schemas.microsoft.com/dsltools/Component" xmlns:dm3="http://schemas.microsoft.com/dsltools/UseCase" xmlns:dm4="http://schemas.microsoft.com/dsltools/Activity" xmlns:dm5="http://schemas.microsoft.com/dsltools/Interaction" xmlns:dm6="http://schemas.microsoft.com/dsltools/UmlModelLibrary" xmlns:dm7="http://schemas.microsoft.com/dsltools/UmlDiagrams" xmlns:dm8="http://schemas.microsoft.com/dsltools/LogicalClassDesigner"
+  dslVersion="1.0.0.0"
+  Id="64b51724-9f59-4ccc-ba1c-24e9a7303825"
+  name="Practices"
+  visibility="Private" xmlns="http://schemas.microsoft.com/dsltools/ModelStore">
+  <referencesInternal>
+    <reference
+      Id="4d042812-6efc-491a-9f1f-2408d6b70408"
+      handle="viewcode://./CodeSchema_Namespace?Namespace%3DMicrosoft.Practices"
+      tag="ViewCode" />
+  </referencesInternal>
+  <packagedElements>
+    <packageHasNamedElement>
+      <packageMoniker
+        Id="c7bc7579-6f6b-4f01-a3d1-22799a52ed61"
+        LastKnownName="Composite"
+        LastKnownLocation="Package2_1143.uml" />
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <packageMoniker
+        Id="40efc3a0-145a-4a2d-bf2d-5dfa2a56c0d4"
+        LastKnownName="Unity"
+        LastKnownLocation="Package5_1143.uml" />
+    </packageHasNamedElement>
+  </packagedElements>
+</package>

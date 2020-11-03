@@ -1,0 +1,1591 @@
+﻿<UserControl x:Class="RealTimeLineChart.View.StatsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:vm="clr-namespace:RealTimeLineChart.ViewModel"
+             xmlns:validator="clr-namespace:RealTimeLineChart.InputValidation"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:ikriv="clr-namespace:IKriv.Wpf"
+             xmlns:Constants ="clr-namespace:Constants"
+             Background="#FF333333"
+             mc:Ignorable="d"
+             Width="420">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <XmlDataProvider x:Key="OTMSetting" />
+            <XmlDataProvider x:Key="RealTimeSetting" />
+            <x:StaticExtension Member="Constants:ThorRealTimeData.CELSIUS_TO_KELVIN" x:Key="CELSIUS_TO_KELVIN"/>
+            <validator:DoubleCultureConverter x:Key="doubleCultureConverter" />
+            <validator:InvertableBooleanToVisibilityConverter x:Key="_Converter" />
+            <validator:InverseBooleanConverter x:Key="_InverseBooleanConverter" />
+            <validator:InvertableIntegralToVisibilityConverter x:Key="_IntToBoolConverter" />
+            <validator:InvertableIntToVisibilityANDConverter x:Key="_MultiIntANDConverter" />
+            <validator:InvertableVisibilityGateConverter x:Key="_MultiGateConverter" />
+            <validator:NumberRoundFormatter x:Key="_roundConverter" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.Resources>
+            <Style x:Key="BorderStyle"
+                   TargetType="Border">
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver"
+                             Value="True">
+                        <Setter Property="Background"
+                                Value="{StaticResource DarkBrush}" />
+                    </Trigger>
+                    <Trigger Property="IsMouseOver"
+                             Value="False">
+                        <Setter Property="Background"
+                                Value="#FF333333" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        </Grid.Resources>
+        <DockPanel>
+            <ListBox Background="#FF30302E"
+                     BorderBrush="Transparent">
+                <ListBox.Resources>
+                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
+                                     Color="Transparent" />
+                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
+                                     Color="Black" />
+                    <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}"
+                                     Color="Transparent" />
+                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
+                                     Color="Transparent" />
+                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
+                                     Color="Transparent" />
+                </ListBox.Resources>
+                <ListBoxItem Visibility="{Binding VisibilityCollection[0],ConverterParameter=Normal,Converter={StaticResource _Converter}}">
+                    <StackPanel>
+                        <Expander Header="File"
+                                  Foreground="white"
+                                  BorderThickness="0.2"
+                                  Width="300"
+                                  BorderBrush="Gray"
+                                  IsExpanded="True">
+                            <StackPanel IsEnabled="{Binding IsCapturingStopped, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="70" />
+                                        <ColumnDefinition Width="230" />
+                                    </Grid.ColumnDefinitions>
+                                    <Label Width="70"
+                                           Height="30"
+                                           Content="File Path:"
+                                           HorizontalAlignment="Left"
+                                           VerticalAlignment="Top"
+                                           Grid.Row="0"
+                                           Grid.Column="0" />
+                                    <Label Width="70"
+                                           Height="30"
+                                           Content="Name:"
+                                           HorizontalAlignment="Left"
+                                           VerticalAlignment="Top"
+                                           Grid.Row="1"
+                                           Grid.Column="0" />
+                                    <StackPanel Grid.Row="0"
+                                                Grid.Column="1"
+                                                VerticalAlignment="Center"
+                                                Orientation="Horizontal">
+                                        <TextBox Width="150"
+                                                 Text="{Binding SavePath}"
+                                                 IsReadOnly="{Binding ChartMode, ConverterParameter=Inverted, Converter={StaticResource _InverseBooleanConverter}}" />
+                                        <Button x:Name="btnSetSavePath"
+                                                Content="Browse"
+                                                Width="65"
+                                                Margin="1"
+                                                Command="{Binding SetSavePathCommand}"
+                                                Visibility="{Binding ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1"
+                                                Grid.Column="1"
+                                                VerticalAlignment="Center"
+                                                Orientation="Horizontal">
+                                        <TextBox x:Name="txtSaveName"
+                                                 Width="150"
+                                                 Text="{Binding SaveName, UpdateSourceTrigger=PropertyChanged}"
+                                                 IsReadOnly="{Binding ChartMode, ConverterParameter=Inverted, Converter={StaticResource _InverseBooleanConverter}}" />
+                                    </StackPanel>
+                                    <CheckBox Grid.Column="1"
+                                              Grid.Row="2"
+                                              Content="Save"
+                                              IsChecked="{Binding Path=IsSaving, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                              VerticalAlignment="Center"
+                                              Visibility="{Binding ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}}" />
+                                </Grid>
+                            </StackPanel>
+                        </Expander>
+                    </StackPanel>
+                </ListBoxItem>
+                <ListBoxItem Visibility="{Binding VisibilityCollection[1],ConverterParameter=Normal,Converter={StaticResource _Converter}}">
+                    <StackPanel>
+                        <Expander Header="Sampling"
+                                  Foreground="white"
+                                  BorderThickness="0.2"
+                                  Width="300"
+                                  BorderBrush="Gray"
+                                  IsExpanded="True">
+                            <StackPanel IsEnabled="{Binding IsCapturingStopped, UpdateSourceTrigger=PropertyChanged}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Label Width="90"
+                                           Height="30"
+                                           Content="Mode"
+                                           HorizontalAlignment="Left"
+                                           VerticalAlignment="Top"
+                                           Grid.Row="0"
+                                           Grid.Column="0" />
+                                    <Label Width="90"
+                                           Height="30"
+                                           Content="Rate"
+                                           HorizontalAlignment="Left"
+                                           VerticalAlignment="Top"
+                                           Grid.Row="1"
+                                           Grid.Column="0" />
+                                    <Label Width="90"
+                                           Height="30"
+                                           Content="Duration"
+                                           HorizontalAlignment="Left"
+                                           VerticalAlignment="Top"
+                                           Grid.Row="2"
+                                           Grid.Column="0" />
+                                    <Label Width="90"
+                                           Height="30"
+                                           Content="Limit"
+                                           HorizontalAlignment="Left"
+                                           VerticalAlignment="Top"
+                                           Grid.Row="3"
+                                           Grid.Column="0" />
+                                    <TextBlock Text="{Binding Path=TriggerModeText, Mode=OneWay}"
+                                               Foreground="White"
+                                               Margin="0,3,0,0"
+                                               VerticalAlignment="Stretch"
+                                               Visibility="{Binding IsModeEditing,ConverterParameter=Inverted, Mode=TwoWay,Converter={StaticResource _Converter}}"
+                                               HorizontalAlignment="left"
+                                               Grid.Row="0"
+                                               Grid.Column="1"
+                                               PreviewMouseDown="SamplingMode_PreviewMouseDown"
+                                               IsHitTestVisible="{Binding ChartMode,Converter={StaticResource _InverseBooleanConverter}}" />
+                                    <StackPanel Grid.Row="0"
+                                                Grid.Column="1"
+                                                Visibility="{Binding IsModeEditing,ConverterParameter=Normal,Mode=TwoWay,Converter={StaticResource _Converter}}"
+                                                VerticalAlignment="Center"
+                                                Orientation="Horizontal"
+                                                Height="22"
+                                                Margin="0,6,0,5">
+                                        <ComboBox Name="cbTriggerMode"
+                                                  Width="150"
+                                                  SelectedIndex="{Binding Path=TriggerMode}"
+                                                  MouseLeave="cMode_MouseLeave">
+                                            <ComboBoxItem Content="Free Run" />
+                                            <ComboBoxItem Content="HW Trigger Single" />
+                                            <ComboBoxItem Content="HW Trigger Retriggerable" />
+                                            <ComboBoxItem Content="HW Synchronizable" />
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Path=SamplingRate, Mode=OneWay}"
+                                               Foreground="White"
+                                               Margin="0,3,0,0"
+                                               VerticalAlignment="Stretch"
+                                               Visibility="{Binding IsRateEditing,ConverterParameter=Inverted, Mode=TwoWay,Converter={StaticResource _Converter}}"
+                                               HorizontalAlignment="left"
+                                               Grid.Row="1"
+                                               Grid.Column="1"
+                                               PreviewMouseDown="SamplingRate_PreviewMouseDown"
+                                               IsHitTestVisible="{Binding ChartMode,Converter={StaticResource _InverseBooleanConverter}}" />
+                                    <StackPanel Grid.Row="1"
+                                                Grid.Column="1"
+                                                Visibility="{Binding IsRateEditing,ConverterParameter=Normal,Mode=TwoWay,Converter={StaticResource _Converter}}"
+                                                VerticalAlignment="Center"
+                                                Orientation="Horizontal"
+                                                Height="22"
+                                                Margin="0,5,0,6">
+                                        <ComboBox Name="cbSampleRate"
+                                                  Width="150"
+                                                  SelectedIndex="{Binding Path=SampleRate,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                                  ItemsSource="{Binding SampleRateList}"
+                                                  MouseLeave="cRate_MouseLeave">
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="2"
+                                                Grid.Column="1"
+                                                VerticalAlignment="Center"
+                                                Orientation="Horizontal"
+                                                Height="26"
+                                                Margin="0,2">
+                                        <TextBox Name="tbDuration"
+                                                 Height="24"
+                                                 Width="75"
+                                                 validator:Validation.MinValue="0.0"
+                                                 validator:Validation.ValidationType="{x:Type system:Double}"
+                                                 validator:Validation.NoEmptyValue="True"
+                                                 Text="{Binding Path=SamplingDuration, Converter={StaticResource doubleCultureConverter}, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                                 validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                 IsReadOnly="{Binding ChartMode, ConverterParameter=Inverted, Converter={StaticResource _InverseBooleanConverter}}" />
+                                        <Button Width="30"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbDuration}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="{Binding ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Label Content="[sec]"></Label>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="3"
+                                                Grid.Column="1"
+                                                VerticalAlignment="Center"
+                                                Orientation="Horizontal"
+                                                Height="26"
+                                                Margin="0,2">
+                                        <TextBox Name="tbLimit"
+                                                 Width="75"
+                                                 Height="24"
+                                                 validator:Validation.ValidationType="{x:Type system:Double}"
+                                                 validator:Validation.NoEmptyValue="True"
+                                                 Text="{Binding Path=StimulusLimit, Converter={StaticResource doubleCultureConverter}, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                                 validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                 IsReadOnly="{Binding ChartMode, ConverterParameter=Inverted, Converter={StaticResource _InverseBooleanConverter}}" />
+                                        <Button Width="30"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbLimit}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="{Binding ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Label Content="[V]" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Expander>
+                    </StackPanel>
+                </ListBoxItem>
+                <ListBoxItem Visibility="{Binding VisibilityCollection[2],ConverterParameter=Normal,Converter={StaticResource _Converter}}">
+                    <StackPanel>
+                        <Expander Header="Display"
+                                  Foreground="white"
+                                  BorderThickness="0.2"
+                                  Width="300"
+                                  IsExpanded="True"
+                                  BorderBrush="Gray">
+                            <StackPanel>
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Label Width="70"
+                                               Height="30"
+                                               Content="Resolution"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Top"
+                                               Grid.Row="0"
+                                               Grid.Column="0" />
+                                        <Label Width="70"
+                                               Height="30"
+                                               Content="Size"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Top"
+                                               Grid.Row="1"
+                                               Grid.Column="0" />
+                                        <TextBlock Text="{Binding Path=DisplayResolution, Mode=OneWay}"
+                                                   Height="30"
+                                                   Foreground="White"
+                                                   Margin="0,3,0,0"
+                                                   VerticalAlignment="Stretch"
+                                                   Visibility="{Binding IsResolutionEditing,ConverterParameter=Inverted, Mode=TwoWay,Converter={StaticResource _Converter}}"
+                                                   HorizontalAlignment="left"
+                                                   Grid.Row="0"
+                                                   Grid.Column="1"
+                                                   PreviewMouseDown="DisplayResolution_PreviewMouseDown"
+                                                   IsHitTestVisible="{Binding ChartMode,Converter={StaticResource _InverseBooleanConverter}}" />
+                                        <StackPanel Grid.Row="0"
+                                                    Grid.Column="1"
+                                                    Visibility="{Binding IsResolutionEditing,ConverterParameter=Normal,Mode=TwoWay,Converter={StaticResource _Converter}}"
+                                                    VerticalAlignment="Center"
+                                                    Orientation="Horizontal">
+                                            <ComboBox Name="cbDisplay"
+                                                      Width="150"
+                                                      SelectedIndex="{Binding Path=DisplayOptionSelectedIndex}"
+                                                      ItemsSource="{Binding DisplayOptionList}"
+                                                      MouseLeave="cbDisplay_MouseLeave">
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1"
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    Orientation="Horizontal">
+                                            <TextBox x:Name="tbFifo"
+                                                     Width="75"
+                                                     validator:Validation.ValidationType="{x:Type system:Double}"
+                                                     validator:Validation.NoEmptyValue="True"
+                                                     validator:Validation.MinValue="0.0"
+                                                     Text="{Binding FifoSize, Converter={StaticResource doubleCultureConverter}, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                     IsReadOnly="{Binding ChartMode, ConverterParameter=Inverted, Converter={StaticResource _InverseBooleanConverter}}" />
+                                            <Button Width="30"
+                                                    Content="&#x2713;">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbFifo}"
+                                                                         Value="True">
+                                                                <Setter Property="Visibility"
+                                                                        Value="{Binding ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                            <Label Content="[sec]" />
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                                <StackPanel Margin="5">
+                                    <StackPanel.Visibility>
+                                        <MultiBinding Converter="{StaticResource _MultiIntANDConverter}"
+                                                      ConverterParameter="Normal">
+                                            <Binding Path="IsStackedDisplay"
+                                                     Converter="{StaticResource _InverseBooleanConverter}"
+                                                     ConverterParameter="Inverted"
+                                                     Mode="OneWay"
+                                                     UpdateSourceTrigger="PropertyChanged" />
+                                            <Binding Path="ChartMode"
+                                                     Mode="OneWay"
+                                                     UpdateSourceTrigger="PropertyChanged" />
+                                        </MultiBinding>
+                                    </StackPanel.Visibility>
+                                    <Label Content="Range"
+                                           Foreground="White"
+                                           HorizontalAlignment="Left"></Label>
+                                    <StackPanel>
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="*" />
+                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="50" />
+                                                <ColumnDefinition Width="90" />
+                                                <ColumnDefinition Width="50" />
+                                                <ColumnDefinition Width="90" />
+                                            </Grid.ColumnDefinitions>
+                                            <Label Content="MinX"
+                                                   HorizontalAlignment="Left"
+                                                   Height="30"
+                                                   Grid.Column="0"
+                                                   Grid.Row="0"></Label>
+                                            <Label Content="MaxX"
+                                                   HorizontalAlignment="Left"
+                                                   Height="30"
+                                                   Grid.Column="2"
+                                                   Grid.Row="0"></Label>
+                                            <Label Content="MinY"
+                                                   HorizontalAlignment="Left"
+                                                   Height="30"
+                                                   Grid.Column="0"
+                                                   Grid.Row="1">
+                                            </Label>
+                                            <Label Content="MaxY"
+                                                   HorizontalAlignment="Left"
+                                                   Height="30"
+                                                   Grid.Column="2"
+                                                   Grid.Row="1">
+                                            </Label>
+                                            <TextBox Text="{Binding Path=XVisibleRangeChartMin, Mode=TwoWay, StringFormat=N6, Converter={StaticResource doubleCultureConverter}, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                                     validator:Validation.ValidationType="{x:Type system:Double}"
+                                                     validator:Validation.NoEmptyValue="False"
+                                                     validator:Validation.MinValue="0.0"
+                                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                     Background="#FF424242"
+                                                     Foreground="White"
+                                                     Height="27"
+                                                     HorizontalAlignment="Left"
+                                                     Width="80"
+                                                     Grid.Column="1"
+                                                     Grid.Row="0" />
+                                            <TextBox Text="{Binding Path=XVisibleRangeChartMax, Mode=TwoWay, StringFormat=N6, Converter={StaticResource doubleCultureConverter}, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                                     validator:Validation.ValidationType="{x:Type system:Double}"
+                                                     validator:Validation.NoEmptyValue="False"
+                                                     validator:Validation.MinValue="0.0"
+                                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                     Background="#FF424242"
+                                                     Foreground="White"
+                                                     Height="27"
+                                                     HorizontalAlignment="Left"
+                                                     Width="80"
+                                                     Grid.Column="3"
+                                                     Grid.Row="0" />
+                                            <TextBox Text="{Binding Path=VisibleYAxisMin, Mode=TwoWay, StringFormat=N6, Converter={StaticResource doubleCultureConverter}, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                                     validator:Validation.ValidationType="{x:Type system:Double}"
+                                                     validator:Validation.NoEmptyValue="False"
+                                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                     Background="#FF424242"
+                                                     Foreground="White"
+                                                     Height="27"
+                                                     HorizontalAlignment="Left"
+                                                     Width="80"
+                                                     Grid.Column="1"
+                                                     Grid.Row="1" />
+                                            <TextBox Text="{Binding Path=VisibleYAxisMax, Mode=TwoWay, StringFormat=N6, Converter={StaticResource doubleCultureConverter}, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                                     validator:Validation.ValidationType="{x:Type system:Double}"
+                                                     validator:Validation.NoEmptyValue="False"
+                                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                     Background="#FF424242"
+                                                     Foreground="White"
+                                                     Height="27"
+                                                     HorizontalAlignment="Left"
+                                                     Width="80"
+                                                     Grid.Column="3"
+                                                     Grid.Row="1" />
+                                        </Grid>
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <CheckBox Margin="5"
+                                              Content="Stacked Display"
+                                              IsChecked="{Binding Path=IsStackedDisplay, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                              HorizontalAlignment="Left" />
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <StackPanel.Visibility>
+                                            <MultiBinding Converter="{StaticResource _MultiGateConverter}"
+                                                          ConverterParameter="Inverted">
+                                                <Binding Path="IsSimulator" />
+                                                <Binding Path="ChartMode" />
+                                            </MultiBinding>
+                                        </StackPanel.Visibility>
+                                        <Label Width="70"
+                                               Height="30"
+                                               Content="Freq. Gen"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Top"/>
+                                        <TextBox Name="tbFreqGen"
+                                                 Width="50"
+                                                 Height="24"
+                                                 Text="{Binding Source={StaticResource RealTimeSetting}, XPath=/RealTimeDataSettings/Variables/Var[@ID\=\'0\']/@Value, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                                 validator:Validation.ValidationType="{x:Type system:Double}"
+                                                 validator:Validation.NoEmptyValue="False"
+                                                 validator:Validation.MinValue="0.0"
+                                                 validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"/>
+                                        <Button Width="30"
+                                            Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbFreqGen}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="{Binding ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Label Content="[Hz]" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Expander>
+                    </StackPanel>
+                </ListBoxItem>
+                <ListBoxItem Visibility="{Binding VisibilityCollection[3],ConverterParameter=Normal,Converter={StaticResource _Converter}}">
+                    <StackPanel>
+                        <Expander Header="Spectral Analysis"
+                                  Foreground="white"
+                                  BorderThickness="0.2"
+                                  Width="300"
+                                  BorderBrush="Gray">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="7" />
+                                    <RowDefinition Height="39" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid Grid.Row="0"
+                                      Margin="3,3,1,3"
+                                      Grid.RowSpan="2">
+                                    <Button x:Name="btnAddSpectralChart"
+                                            Content="Add Spectral Chart"
+                                            HorizontalAlignment="Center"
+                                            Grid.Row="0"
+                                            Width="110"
+                                            Margin="10"
+                                            IsEnabled="{Binding IsCapturingStopped, UpdateSourceTrigger=PropertyChanged}"
+                                            Command="{Binding AddSpectralChartCommand}" />
+                                </Grid>
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Left"
+                                            Margin="1,1,0,1"
+                                            Grid.Row="2"
+                                            Visibility="{Binding ChartMode, Mode=OneWay,UpdateSourceTrigger=PropertyChanged, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}}">
+                                    <Label Content="Frequency Min"
+                                           Width="90"
+                                           Grid.Column="0"
+                                           HorizontalContentAlignment="Left" />
+                                    <TextBox Name="tbFreqMin"
+                                             Grid.Column="1"
+                                             HorizontalAlignment="Left"
+                                             Foreground="White"
+                                             Text="{Binding Path=FreqMin, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                             validator:Validation.MinValue="0.0"
+                                             validator:Validation.ValidationType="{x:Type system:Double}"
+                                             validator:Validation.NoEmptyValue="True"
+                                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                             Width="70"
+                                             Margin="0,2,0,-2" />
+                                    <Button Width="30"
+                                            Content="&#x2713;">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbFreqMin}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <Label Content="Max"
+                                           Grid.Column="2"
+                                           HorizontalContentAlignment="Left" />
+                                    <TextBox Name="tbFreqMax"
+                                             Grid.Column="2"
+                                             HorizontalAlignment="Left"
+                                             Foreground="White"
+                                             Text="{Binding Path=FreqMax, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                             validator:Validation.MinValue="0.0"
+                                             validator:Validation.ValidationType="{x:Type system:Double}"
+                                             validator:Validation.NoEmptyValue="True"
+                                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                             Width="70" />
+                                    <Button Width="30"
+                                            Content="&#x2713;">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbFreqMax}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <Label Content="[Hz]"
+                                           Grid.Column="2"
+                                           HorizontalContentAlignment="Left" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Left"
+                                            Margin="1,1,0,1"
+                                            Grid.Row="3"
+                                            IsEnabled="{Binding IsCapturingStopped, UpdateSourceTrigger=PropertyChanged}"
+                                            Visibility="{Binding ChartMode, ConverterParameter=Inverted,Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                    <Label Content="Sample:"
+                                           Width="90"
+                                           Grid.Column="0"
+                                           HorizontalContentAlignment="Left" />
+                                    <TextBox Name="tbLiveSample"
+                                             Grid.Column="1"
+                                             HorizontalAlignment="Left"
+                                             Foreground="White"
+                                             Text="{Binding Path=LiveSampleSec, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                             validator:Validation.MinValue="0.1"
+                                             validator:Validation.ValidationType="{x:Type system:Double}"
+                                             validator:Validation.NoEmptyValue="True"
+                                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                             Width="70" />
+                                    <Button Width="30"
+                                            Content="&#x2713;">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbLiveSample}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <Label Content="[sec]"
+                                           Foreground="White"
+                                           Grid.Column="2"
+                                           HorizontalContentAlignment="Left" />
+                                    <Label Content="Δf ="
+                                           Foreground="White"
+                                           Grid.Column="2"
+                                           HorizontalContentAlignment="Left" />
+                                    <Label Content="{Binding Path=DeltaFreqHz, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                           Foreground="White"
+                                           Grid.Column="2"
+                                           HorizontalContentAlignment="Left" />
+                                    <Label Content="[Hz]"
+                                           Foreground="White"
+                                           Grid.Column="2"
+                                           HorizontalContentAlignment="Left" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Left"
+                                            Margin="1,1,0,1"
+                                            Grid.Row="3"
+                                            Visibility="{Binding ChartMode, ConverterParameter=Normal,Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                    <Label Content="Sample:     Min"
+                                           Width="90"
+                                           Grid.Column="0"
+                                           HorizontalContentAlignment="Left" />
+                                    <TextBox Name="tbFreqSampleMin"
+                                             Grid.Column="1"
+                                             HorizontalAlignment="Left"
+                                             Foreground="White"
+                                             Text="{Binding Path=FreqSampleSecMin, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ConverterParameter=1, Converter={StaticResource _roundConverter}, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                             validator:Validation.MinValue="0.0"
+                                             validator:Validation.ValidationType="{x:Type system:Double}"
+                                             validator:Validation.NoEmptyValue="True"
+                                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                             Width="70" />
+                                    <Button Width="30"
+                                            Content="&#x2713;">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbFreqSampleMin}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <Label Content="Max"
+                                           Grid.Column="2"
+                                           HorizontalContentAlignment="Left" />
+                                    <TextBox Name="tbFreqSampleMax"
+                                             Grid.Column="2"
+                                             HorizontalAlignment="Left"
+                                             Foreground="White"
+                                             Text="{Binding Path=FreqSampleSecMax, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, ConverterParameter=1, Converter={StaticResource _roundConverter}, NotifyOnValidationError=True}"
+                                             validator:Validation.MinValue="0.0"
+                                             validator:Validation.ValidationType="{x:Type system:Double}"
+                                             validator:Validation.NoEmptyValue="True"
+                                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                             Width="70" />
+                                    <Button Width="30"
+                                            Content="&#x2713;">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbFreqSampleMax}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <Label Content="[sec]"
+                                           Grid.Column="2"
+                                           HorizontalContentAlignment="Left" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Left"
+                                            Margin="1,1,0,1"
+                                            Grid.Row="4"
+                                            Visibility="{Binding ChartMode, ConverterParameter=Normal,Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                    <Label Content="Average Mode"
+                                           Width="90"
+                                           Grid.Column="0"
+                                           HorizontalContentAlignment="Left" />
+                                    <ComboBox Grid.Column="1"
+                                              Grid.ColumnSpan="2"
+                                              HorizontalAlignment="Left"
+                                              Width="100"
+                                              SelectedIndex="{Binding Path=FreqAverageMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                        <ComboBoxItem>NONE</ComboBoxItem>
+                                        <ComboBoxItem>Cumulative</ComboBoxItem>
+                                    </ComboBox>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Left"
+                                            Margin="1,1,0,1"
+                                            Grid.Row="5"
+                                            Visibility="{Binding ChartMode, ConverterParameter=Normal,Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                    <Label Content="# of Averages"
+                                           Width="90"
+                                           Grid.Column="0"
+                                           HorizontalContentAlignment="Left" />
+                                    <TextBox Name="tbFreqAverageNum"
+                                             Grid.Column="1"
+                                             HorizontalAlignment="Left"
+                                             Foreground="White"
+                                             Text="{Binding Path=FreqAverageNum, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                             validator:Validation.MinValue="1"
+                                             validator:Validation.ValidationType="{x:Type system:Int32}"
+                                             validator:Validation.NoEmptyValue="True"
+                                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                             Width="70"
+                                             Height="20" />
+                                    <Button Width="30"
+                                            Content="&#x2713;">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbFreqAverageNum}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Left"
+                                            Margin="1,1,0,1"
+                                            Grid.Row="6"
+                                            Visibility="{Binding ChartMode, ConverterParameter=Normal,Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                    <Label Content="Time blocks"
+                                           Width="90"
+                                           Grid.Column="0"
+                                           HorizontalContentAlignment="Left" />
+                                    <TextBox Name="tbblocks"
+                                             Width="70"
+                                             Grid.Column="1"
+                                             HorizontalAlignment="Left"
+                                             Foreground="White"
+                                             Text="{Binding Path=Freqblock,Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                             validator:Validation.MinValue="1"
+                                             validator:Validation.ValidationType="{x:Type system:Int32}"
+                                             validator:Validation.NoEmptyValue="True"
+                                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
+                                    <Button Width="30"
+                                            Content="&#x2713;">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbblocks}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Expander>
+                    </StackPanel>
+                </ListBoxItem>
+                <ListBoxItem Visibility="{Binding VisibilityCollection[4],ConverterParameter=Normal,Converter={StaticResource _Converter}}">
+                    <StackPanel>
+                        <Expander Header="Cursor"
+                                  Foreground="white"
+                                  BorderThickness="0.2"
+                                  Width="300"
+                                  BorderBrush="Gray">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="Left"
+                                           Width="60"
+                                           HorizontalContentAlignment="Left" />
+                                    <TextBlock Name="tbCursorLeft"
+                                               Text="{Binding CursorLeft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=N6}"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               Foreground="White"
+                                               Width="80" />
+                                    <Label Content="Right"
+                                           Width="60"
+                                           HorizontalContentAlignment="Left" />
+                                    <TextBlock Name="tbCursorRight"
+                                               Text="{Binding CursorRight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=N6}"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               Foreground="White"
+                                               Width="80" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="Top"
+                                           Width="60"
+                                           HorizontalContentAlignment="Left" />
+                                    <TextBlock Name="tbCursorTop"
+                                               Text="{Binding CursorTop, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=N6}"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               Foreground="White"
+                                               Width="80" />
+                                    <Label Content="Bottom"
+                                           Width="60"
+                                           HorizontalContentAlignment="Left" />
+                                    <TextBlock Name="tbCursorBottom"
+                                               Text="{Binding CursorBottom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=N6}"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               Foreground="White"
+                                               Width="80" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal"
+                                            Margin="1">
+                                    <Label Content="∆X"
+                                           Width="60"
+                                           HorizontalContentAlignment="Left" />
+                                    <TextBlock HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               Foreground="White"
+                                               Width="80">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{ikriv:MathConverter}"
+                                                          ConverterParameter="y - x"
+                                                          StringFormat="N6">
+                                                <Binding Path="Text"
+                                                         ElementName="tbCursorLeft" />
+                                                <Binding Path="Text"
+                                                         ElementName="tbCursorRight" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                    <Label Content="1/∆X"
+                                           HorizontalContentAlignment="Left"
+                                           Width="60" />
+                                    <TextBlock HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               Foreground="White"
+                                               Width="80">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{ikriv:MathConverter}"
+                                                          ConverterParameter="1/(y - x)~6">
+                                                <Binding Path="Text"
+                                                         ElementName="tbCursorLeft" />
+                                                <Binding Path="Text"
+                                                         ElementName="tbCursorRight" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal"
+                                            Margin="1">
+                                    <Label Content="∆Y"
+                                           Width="60"
+                                           HorizontalContentAlignment="Left" />
+                                    <TextBlock HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               Foreground="White"
+                                               Width="80">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{ikriv:MathConverter}"
+                                                          ConverterParameter="y - x"
+                                                          StringFormat="N6">
+                                                <Binding Path="Text"
+                                                         ElementName="tbCursorBottom" />
+                                                <Binding Path="Text"
+                                                         ElementName="tbCursorTop" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </StackPanel>
+                            </StackPanel>
+                        </Expander>
+                    </StackPanel>
+                </ListBoxItem>
+                <ListBoxItem Visibility="{Binding VisibilityCollection[5],ConverterParameter=Normal,Converter={StaticResource _Converter}}">
+                    <StackPanel>
+                        <Expander Header="Vertical Marker"
+                                  Foreground="White"
+                                  BorderThickness="0.2"
+                                  Width="300"
+                                  BorderBrush="Gray">
+                            <ListBox Name="MarkersListView"
+                                     Background="#FF30302E"
+                                     BorderBrush="#FF30302E"
+                                     ItemsSource="{Binding Path=VerticalMarkerList}"
+                                     Height="140"
+                                     MouseDoubleClick="MarkersListView_MouseDoubleClick">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}"
+                                                       Width="70"
+                                                       Foreground="White" />
+                                            <TextBlock Text="{Binding XCoordination}"
+                                                       Width="70"
+                                                       Foreground="White" />
+                                            <TextBlock Text="{Binding Comments}"
+                                                       Foreground="White" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Expander>
+                    </StackPanel>
+                </ListBoxItem>
+                <ListBoxItem Visibility="{Binding VisibilityCollection[6],ConverterParameter=Normal,Converter={StaticResource _Converter}}">
+                    <StackPanel>
+                        <Expander Name="expOTM"
+                                  Header="OTM"
+                                  Foreground="white"
+                                  BorderThickness="0.2"
+                                  Width="300"
+                                  BorderBrush="Gray">
+                            <StackPanel>
+                                <StackPanel Name="stFit">
+                                    <StackPanel.Visibility>
+                                        <MultiBinding Converter="{StaticResource _MultiIntANDConverter}"
+                                                      ConverterParameter="Normal">
+                                            <Binding Path="ChartMode" />
+                                            <Binding Path="VisibilityCollection[6]" />
+                                        </MultiBinding>
+                                    </StackPanel.Visibility>
+                                    <StackPanel Orientation="Horizontal"
+                                                HorizontalAlignment="Left"
+                                                VerticalAlignment="Center"
+                                                Margin="1,1,1,1">
+                                        <CheckBox Name="ckFit"
+                                                  Content="Curve Fitting"
+                                                  Width="110"
+                                                  Foreground="white"
+                                                  VerticalAlignment="Center"
+                                                  HorizontalAlignment="Left">
+                                            <CheckBox.Style>
+                                                <Style TargetType="{x:Type CheckBox}">
+                                                    <Setter Property="IsChecked"
+                                                            Value="False" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=Visibility, ElementName=stFit, UpdateSourceTrigger=PropertyChanged}"
+                                                                     Value="Visible">
+                                                            <Setter Property="IsChecked"
+                                                                    Value="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@IsCurveFit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </CheckBox.Style>
+                                        </CheckBox>
+                                        <Label Content="Freq. blocks"
+                                               Width="80"
+                                               HorizontalContentAlignment="Left" />
+                                        <TextBox Name="tbFreqBlock"
+                                                 HorizontalAlignment="Left"
+                                                 Foreground="White"
+                                                 Margin="0,5,0,0"
+                                                 Visibility="{Binding Path=IsChecked, ElementName=ckFit, ConverterParameter=Normal, Converter={StaticResource _Converter}}"
+                                                 Text="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@FreqBlock, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                                 validator:Validation.MinValue="1"
+                                                 validator:Validation.ValidationType="{x:Type system:Int32}"
+                                                 validator:Validation.NoEmptyValue="True"
+                                                 validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                 Width="75" />
+                                        <Button Width="30"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbFreqBlock}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Label HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Visibility="{Binding Path=IsChecked, ElementName=ckFit, ConverterParameter=Inverted, Converter={StaticResource _Converter}}"
+                                               Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@FreqBlock, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                               Width="75" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel Orientation="Vertical">
+                                    <StackPanel Orientation="Horizontal"
+                                                HorizontalAlignment="Left"
+                                                VerticalAlignment="Center"
+                                                Margin="1,1,1,1">
+                                        <Label Content="Freq. Min"
+                                               Width="80"
+                                               HorizontalContentAlignment="Left" />
+                                        <TextBox Name="tbFitFreqMin"
+                                                 HorizontalAlignment="Left"
+                                                 Foreground="White"
+                                                 Margin="0,5,0,0"
+                                                 Visibility="{Binding Path=IsChecked, ElementName=ckFit, ConverterParameter=Normal, Converter={StaticResource _Converter}}"
+                                                 Text="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@FitFreqMin, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                                 validator:Validation.MinValue="0.0"
+                                                 validator:Validation.ValidationType="{x:Type system:Double}"
+                                                 validator:Validation.NoEmptyValue="True"
+                                                 validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                 Width="75" />
+                                        <Button Width="30"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbFitFreqMin}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Label HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Visibility="{Binding Path=IsChecked, ElementName=ckFit, ConverterParameter=Inverted, Converter={StaticResource _Converter}}"
+                                               Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@FitFreqMin, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                               Width="75" />
+                                        <Label Content="Max"
+                                               Width="40"
+                                               HorizontalContentAlignment="Left" />
+                                        <TextBox Name="tbFitFreqMax"
+                                                 HorizontalAlignment="Left"
+                                                 Foreground="White"
+                                                 Margin="0,5,0,0"
+                                                 Visibility="{Binding Path=IsChecked, ElementName=ckFit, ConverterParameter=Normal, Converter={StaticResource _Converter}}"
+                                                 Text="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@FitFreqMax, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                                 validator:Validation.MinValue="0.0"
+                                                 validator:Validation.ValidationType="{x:Type system:Double}"
+                                                 validator:Validation.NoEmptyValue="True"
+                                                 validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                 Width="75" />
+                                        <Button Width="30"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbFitFreqMax}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Label HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Visibility="{Binding Path=IsChecked, ElementName=ckFit, ConverterParameter=Inverted, Converter={StaticResource _Converter}}"
+                                               Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@FitFreqMax, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                               Width="75" />
+                                        <Label Content="[Hz]"
+                                               HorizontalContentAlignment="Left" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label Content="Temperature"
+                                               Width="80"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Top" />
+                                        <TextBox Name="tbTemperature"
+                                                 HorizontalAlignment="Left"
+                                                 Width="75"
+                                                 Margin="0,5,0,0"
+                                                 Visibility="{Binding Path=IsChecked, ElementName=ckFit, ConverterParameter=Normal, Converter={StaticResource _Converter}}"
+                                                 Text="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@Temperature, Mode=TwoWay, Converter={StaticResource doubleCultureConverter}, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                                 validator:Validation.MinValue="0.0"
+                                                 validator:Validation.NoEmptyValue="True"
+                                                 validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                 IsReadOnly="{Binding ChartMode, ConverterParameter=Normal, Converter={StaticResource _InverseBooleanConverter}}" />
+                                        <Button Width="30"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbTemperature}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Label HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Visibility="{Binding Path=IsChecked, ElementName=ckFit, ConverterParameter=Inverted, Converter={StaticResource _Converter}}"
+                                               Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@Temperature, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                               Width="75" />
+                                        <Label Content="[℃]" Width="40"/>
+                                        <Label Width="75">
+                                            <Label.Content>
+                                                <MultiBinding Converter="{ikriv:MathConverter}"
+                                                          ConverterParameter="x + y"
+                                                          StringFormat="N6">
+                                                    <Binding Source="{StaticResource OTMSetting}"
+                                                             XPath="OTMSettings/Parameters/@Temperature"
+                                                             Mode="OneWay"
+                                                             UpdateSourceTrigger="PropertyChanged" />
+                                                    <Binding Source="{StaticResource CELSIUS_TO_KELVIN}" />
+                                                </MultiBinding>
+                                            </Label.Content>
+                                        </Label>
+                                        <Label Content="[K]" HorizontalContentAlignment="Left"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label Content="r (radius)"
+                                               Width="80"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Top" />
+                                        <TextBox Name="tbRadius"
+                                                 Width="75"
+                                                 Margin="0,5,0,0"
+                                                 HorizontalAlignment="Left"
+                                                 Visibility="{Binding Path=IsChecked, ElementName=ckFit, ConverterParameter=Normal, Converter={StaticResource _Converter}}"
+                                                 Text="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@Radius,Mode=TwoWay,Converter={StaticResource doubleCultureConverter}, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                                 validator:Validation.MinValue="0.0"
+                                                 validator:Validation.NoEmptyValue="True"
+                                                 validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                 IsReadOnly="{Binding ChartMode, ConverterParameter=Normal, Converter={StaticResource _InverseBooleanConverter}}" />
+                                        <Button Width="30"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbRadius}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Label HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Visibility="{Binding Path=IsChecked, ElementName=ckFit, ConverterParameter=Inverted, Converter={StaticResource _Converter}}"
+                                               Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@Radius, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                               Width="75" />
+                                        <Label Content="[µm]" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label Content="η (viscosity)"
+                                               Width="80"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Top" />
+                                        <TextBox Name="tbViscosity"
+                                                 Width="75"
+                                                 Margin="0,5,0,0"
+                                                 HorizontalAlignment="Left"
+                                                 Text="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@Viscosity,Mode=TwoWay,Converter={StaticResource doubleCultureConverter}, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                                 validator:Validation.MinValue="0.0"
+                                                 validator:Validation.NoEmptyValue="True"
+                                                 validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                 IsReadOnly="{Binding ChartMode, ConverterParameter=Normal, Converter={StaticResource _InverseBooleanConverter}}">
+                                            <TextBox.Visibility>
+                                                <MultiBinding Converter="{StaticResource _MultiIntANDConverter}"
+                                                          ConverterParameter="Normal">
+                                                    <Binding Path="IsChecked" ElementName="ckFit" Mode="OneWay" UpdateSourceTrigger="PropertyChanged" />
+                                                    <Binding Path="IsChecked" ElementName="ckPureWater" Mode="OneWay" UpdateSourceTrigger="PropertyChanged" ConverterParameter="Inverted" Converter="{StaticResource _InverseBooleanConverter}" />
+                                                </MultiBinding>
+                                            </TextBox.Visibility>
+                                        </TextBox>
+                                        <Button Width="30"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbViscosity}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Label HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@Viscosity, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                               Width="75">
+                                            <Label.Visibility>
+                                                <MultiBinding Converter="{StaticResource _MultiIntANDConverter}"
+                                                          ConverterParameter="Inverted">
+                                                    <Binding Path="IsChecked" ElementName="ckFit" Mode="OneWay" UpdateSourceTrigger="PropertyChanged" />
+                                                    <Binding Path="IsChecked" ElementName="ckPureWater" Mode="OneWay" UpdateSourceTrigger="PropertyChanged" ConverterParameter="Inverted" Converter="{StaticResource _InverseBooleanConverter}" />
+                                                </MultiBinding>
+                                            </Label.Visibility>
+                                        </Label>
+                                        <Label Content="[kg/(m·s)]" />
+                                        <CheckBox Name="ckPureWater" 
+                                                  Content="pure water"
+                                                  Width="75"
+                                                  HorizontalAlignment="Left"
+                                                  VerticalAlignment="Center"
+                                                  Visibility="{Binding Path=IsChecked, ElementName=ckFit, ConverterParameter=Normal, Converter={StaticResource _Converter}}"  
+                                                  IsChecked="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@IsPureWater, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label Content="γ (drag)"
+                                               Width="80"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Top" />
+                                        <TextBox Name="tbGammaTheory"
+                                                 Width="75"
+                                                 Margin="0,5,0,0"
+                                                 HorizontalAlignment="Left"
+                                                 Visibility="{Binding Path=IsChecked, ElementName=ckFit, ConverterParameter=Normal, Converter={StaticResource _Converter}}"
+                                                 Text="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@GammaTheory,Mode=TwoWay,Converter={StaticResource doubleCultureConverter}, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True, StringFormat=N6}"
+                                                 validator:Validation.MinValue="0.0"
+                                                 validator:Validation.NoEmptyValue="True"
+                                                 validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                 IsReadOnly="{Binding ChartMode, ConverterParameter=Normal, Converter={StaticResource _InverseBooleanConverter}}" />
+                                        <Button Width="30"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbGammaTheory}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Label HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Visibility="{Binding Path=IsChecked, ElementName=ckFit, ConverterParameter=Inverted, Converter={StaticResource _Converter}}"
+                                               Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@GammaTheory, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                               Width="75" />
+                                        <Label Content="[kg/s]" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label Content="D (diffusion)"
+                                               Width="80"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Top" />
+                                        <Label HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@DiffTheory, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=4, Converter={StaticResource _roundConverter}}"
+                                               Width="75" />
+                                        <Label Content="[μm&#x00B2;/s]" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal"
+                                                HorizontalAlignment="Left"
+                                                VerticalAlignment="Center"
+                                                Margin="1,1,1,1">
+                                        <Label Content="β2 Fit Min"
+                                               Width="80"
+                                               HorizontalContentAlignment="Left" />
+                                        <TextBox Name="tbBeta2FreqMin"
+                                                 HorizontalAlignment="Left"
+                                                 Foreground="White"
+                                                 Margin="0,5,0,0"
+                                                 Visibility="{Binding Path=IsChecked, ElementName=ckFit, ConverterParameter=Normal, Converter={StaticResource _Converter}}"
+                                                 Text="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@Beta2FreqMin, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                                 validator:Validation.MinValue="0.0"
+                                                 validator:Validation.ValidationType="{x:Type system:Double}"
+                                                 validator:Validation.NoEmptyValue="False"
+                                                 validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                 Width="75" />
+                                        <Button Width="30"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbBeta2FreqMin}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Label HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Visibility="{Binding Path=IsChecked, ElementName=ckFit, ConverterParameter=Inverted, Converter={StaticResource _Converter}}"
+                                               Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@Beta2FreqMin, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                               Width="75" />
+                                        <Label Content="Max"
+                                               Width="40"
+                                               HorizontalContentAlignment="Left" />
+                                        <TextBox Name="tbBeta2FreqMax"
+                                                 HorizontalAlignment="Left"
+                                                 Foreground="White"
+                                                 Margin="0,5,0,0"
+                                                 Visibility="{Binding Path=IsChecked, ElementName=ckFit, ConverterParameter=Normal, Converter={StaticResource _Converter}}"
+                                                 Text="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@Beta2FreqMax, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                                 validator:Validation.MinValue="0.0"
+                                                 validator:Validation.ValidationType="{x:Type system:Double}"
+                                                 validator:Validation.NoEmptyValue="False"
+                                                 validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                 Width="75" />
+                                        <Button Width="30"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbBeta2FreqMax}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Label HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Visibility="{Binding Path=IsChecked, ElementName=ckFit, ConverterParameter=Inverted, Converter={StaticResource _Converter}}"
+                                               Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Parameters/@FitFreqMax, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                               Width="75" />
+                                        <Label Content="[Hz]"
+                                               HorizontalContentAlignment="Left" />
+                                    </StackPanel>
+
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label Content=""
+                                               Width="20" />
+                                        <Label Content="x"
+                                               Width="140"
+                                               HorizontalContentAlignment="Center" />
+                                        <Label Content="y"
+                                               Width="75"
+                                               HorizontalContentAlignment="Left" />
+                                        <Label Content=""
+                                               Width="50" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label Content="D1"
+                                               Width="80"
+                                               HorizontalContentAlignment="Left" />
+                                        <Label Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Fittings/@DiffX1, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=4, Converter={StaticResource _roundConverter}}"
+                                               HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Width="70" />
+                                        <Label Content=""
+                                               Width="10" />
+                                        <Label Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Fittings/@DiffY1, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=4, Converter={StaticResource _roundConverter}}"
+                                               HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Width="70" />
+                                        <Label Content="[μm&#x00B2;/s]"
+                                               Width="70" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label Content="D2"
+                                               Width="80"
+                                               HorizontalContentAlignment="Left" />
+                                        <Label Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Fittings/@DiffX2, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=4, Converter={StaticResource _roundConverter}}"
+                                               HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Width="70" />
+                                        <Label Content=""
+                                               Width="10" />
+                                        <Label Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Fittings/@DiffY2, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=4, Converter={StaticResource _roundConverter}}"
+                                               HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Width="70" />
+                                        <Label Content="[μm&#x00B2;/s]"
+                                               Width="70" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label Content="fc"
+                                               Width="80"
+                                               HorizontalContentAlignment="Left" />
+                                        <Label Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Fittings/@CornerX, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=4, Converter={StaticResource _roundConverter}}"
+                                               HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Width="70" />
+                                        <Label Content=""
+                                               Width="10" />
+                                        <Label Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Fittings/@CornerY, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=4, Converter={StaticResource _roundConverter}}"
+                                               HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Width="70" />
+                                        <Label Content="[Hz]"
+                                               Width="70"
+                                               HorizontalContentAlignment="Left" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label Content="χ&#x00B2;"
+                                               Width="80"
+                                               HorizontalContentAlignment="Left" />
+                                        <Label Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Fittings/@ChiX, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=2, Converter={StaticResource _roundConverter}}"
+                                               HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Width="70" />
+                                        <Label Content=""
+                                               Width="10" />
+                                        <Label Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Fittings/@ChiY, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=2, Converter={StaticResource _roundConverter}}"
+                                               HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Width="70" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label Content="γ"
+                                               Width="80"
+                                               HorizontalContentAlignment="Left" />
+                                        <Label Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Fittings/@GammaX, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=4, Converter={StaticResource _roundConverter}}"
+                                               HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Width="70" />
+                                        <Label Content=""
+                                               Width="10" />
+                                        <Label Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Fittings/@GammaY, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=4, Converter={StaticResource _roundConverter}}"
+                                               HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Width="70" />
+                                        <Label Content="[kg/s]"
+                                               Width="70"
+                                               HorizontalContentAlignment="Left" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label Content="Κ"
+                                               Width="80"
+                                               HorizontalContentAlignment="Left" />
+                                        <Label Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Fittings/@KappaX, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=4, Converter={StaticResource _roundConverter}}"
+                                               HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Width="70" />
+                                        <Label Content=""
+                                               Width="10" />
+                                        <Label Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Fittings/@KappaY, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=4, Converter={StaticResource _roundConverter}}"
+                                               HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Width="70" />
+                                        <Label Content="[pN/nm]"
+                                               Width="70"
+                                               HorizontalContentAlignment="Left" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label Content="β1"
+                                               Width="80"
+                                               HorizontalContentAlignment="Left">
+                                        </Label>
+                                        <Label Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Fittings/@BetaX1, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=4, Converter={StaticResource _roundConverter}}"
+                                               HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Width="70" />
+                                        <Label Content=""
+                                               Width="10" />
+                                        <Label Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Fittings/@BetaY1, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=4, Converter={StaticResource _roundConverter}}"
+                                               HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Width="70" />
+                                        <Label Content="[V/nm]"
+                                               Width="70"
+                                               HorizontalContentAlignment="Left" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label Content="β2"
+                                               Width="80"
+                                               HorizontalContentAlignment="Left" />
+                                        <Label Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Fittings/@BetaX2, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=4, Converter={StaticResource _roundConverter}}"
+                                               HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Width="70" />
+                                        <Label Content=""
+                                               Width="10" />
+                                        <Label Content="{Binding Source={StaticResource OTMSetting}, XPath=OTMSettings/Fittings/@BetaY2, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=4, Converter={StaticResource _roundConverter}}"
+                                               HorizontalAlignment="Left"
+                                               Foreground="White"
+                                               Width="70" />
+                                        <Label Content="[V/nm]"
+                                               Width="70"
+                                               HorizontalContentAlignment="Left" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Expander>
+                    </StackPanel>
+                </ListBoxItem>
+            </ListBox>
+        </DockPanel>
+    </Grid>
+</UserControl>

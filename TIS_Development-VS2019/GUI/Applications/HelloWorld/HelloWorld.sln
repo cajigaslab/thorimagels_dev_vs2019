@@ -1,0 +1,56 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelloWorld", "HelloWorld\HelloWorld.csproj", "{C0F85454-2CDA-409A-BD53-23E5F4C2A20A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelloWorldModule", "HelloWorldModule\HelloWorldModule.csproj", "{0521AD5B-98C4-416D-9EFF-2100C0A19431}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptModule", "ScriptModule\ScriptModule.csproj", "{76449CAC-7533-40A6-9792-9F38188C037E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelloWorldInfastructure", "HelloWorldInfastructure\HelloWorldInfastructure.csproj", "{B0D8974F-41EC-4D1D-BCD7-A494114DC0BE}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 5
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://vateam02:8080/tfs/defaultcollection
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = HelloWorld\\HelloWorld.csproj
+		SccProjectName1 = HelloWorld
+		SccLocalPath1 = HelloWorld
+		SccProjectUniqueName2 = HelloWorldModule\\HelloWorldModule.csproj
+		SccProjectName2 = HelloWorldModule
+		SccLocalPath2 = HelloWorldModule
+		SccProjectUniqueName3 = ScriptModule\\ScriptModule.csproj
+		SccProjectName3 = ScriptModule
+		SccLocalPath3 = ScriptModule
+		SccProjectUniqueName4 = HelloWorldInfastructure\\HelloWorldInfastructure.csproj
+		SccProjectName4 = HelloWorldInfastructure
+		SccLocalPath4 = HelloWorldInfastructure
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C0F85454-2CDA-409A-BD53-23E5F4C2A20A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0F85454-2CDA-409A-BD53-23E5F4C2A20A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0F85454-2CDA-409A-BD53-23E5F4C2A20A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0F85454-2CDA-409A-BD53-23E5F4C2A20A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0521AD5B-98C4-416D-9EFF-2100C0A19431}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0521AD5B-98C4-416D-9EFF-2100C0A19431}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0521AD5B-98C4-416D-9EFF-2100C0A19431}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0521AD5B-98C4-416D-9EFF-2100C0A19431}.Release|Any CPU.Build.0 = Release|Any CPU
+		{76449CAC-7533-40A6-9792-9F38188C037E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76449CAC-7533-40A6-9792-9F38188C037E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76449CAC-7533-40A6-9792-9F38188C037E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76449CAC-7533-40A6-9792-9F38188C037E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0D8974F-41EC-4D1D-BCD7-A494114DC0BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0D8974F-41EC-4D1D-BCD7-A494114DC0BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0D8974F-41EC-4D1D-BCD7-A494114DC0BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0D8974F-41EC-4D1D-BCD7-A494114DC0BE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

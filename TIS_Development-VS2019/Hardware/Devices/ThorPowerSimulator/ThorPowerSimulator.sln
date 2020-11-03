@@ -1,0 +1,62 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30204.135
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DeviceTest", "..\_DeviceTests\DeviceTest.vcxproj", "{234F0447-ED60-4222-AFA9-0F79819BF6C8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorPowerSimulator", "ThorPowerSimulator\ThorPowerSimulator.vcxproj", "{64B57B98-B3E0-4DEC-A2FC-CDA824444903}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		debug2|Win32 = debug2|Win32
+		debug2|x64 = debug2|x64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{234F0447-ED60-4222-AFA9-0F79819BF6C8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{234F0447-ED60-4222-AFA9-0F79819BF6C8}.Debug|Win32.Build.0 = Debug|Win32
+		{234F0447-ED60-4222-AFA9-0F79819BF6C8}.Debug|x64.ActiveCfg = Debug|x64
+		{234F0447-ED60-4222-AFA9-0F79819BF6C8}.Debug|x64.Build.0 = Debug|x64
+		{234F0447-ED60-4222-AFA9-0F79819BF6C8}.debug2|Win32.ActiveCfg = debug2|Win32
+		{234F0447-ED60-4222-AFA9-0F79819BF6C8}.debug2|Win32.Build.0 = debug2|Win32
+		{234F0447-ED60-4222-AFA9-0F79819BF6C8}.debug2|x64.ActiveCfg = debug2|x64
+		{234F0447-ED60-4222-AFA9-0F79819BF6C8}.debug2|x64.Build.0 = debug2|x64
+		{234F0447-ED60-4222-AFA9-0F79819BF6C8}.Release|Win32.ActiveCfg = Release|Win32
+		{234F0447-ED60-4222-AFA9-0F79819BF6C8}.Release|Win32.Build.0 = Release|Win32
+		{234F0447-ED60-4222-AFA9-0F79819BF6C8}.Release|x64.ActiveCfg = Release|x64
+		{234F0447-ED60-4222-AFA9-0F79819BF6C8}.Release|x64.Build.0 = Release|x64
+		{64B57B98-B3E0-4DEC-A2FC-CDA824444903}.Debug|Win32.ActiveCfg = Debug|Win32
+		{64B57B98-B3E0-4DEC-A2FC-CDA824444903}.Debug|Win32.Build.0 = Debug|Win32
+		{64B57B98-B3E0-4DEC-A2FC-CDA824444903}.Debug|x64.ActiveCfg = Debug|x64
+		{64B57B98-B3E0-4DEC-A2FC-CDA824444903}.Debug|x64.Build.0 = Debug|x64
+		{64B57B98-B3E0-4DEC-A2FC-CDA824444903}.debug2|Win32.ActiveCfg = Debug|Win32
+		{64B57B98-B3E0-4DEC-A2FC-CDA824444903}.debug2|Win32.Build.0 = Debug|Win32
+		{64B57B98-B3E0-4DEC-A2FC-CDA824444903}.debug2|x64.ActiveCfg = Debug|x64
+		{64B57B98-B3E0-4DEC-A2FC-CDA824444903}.debug2|x64.Build.0 = Debug|x64
+		{64B57B98-B3E0-4DEC-A2FC-CDA824444903}.Release|Win32.ActiveCfg = Release|Win32
+		{64B57B98-B3E0-4DEC-A2FC-CDA824444903}.Release|Win32.Build.0 = Release|Win32
+		{64B57B98-B3E0-4DEC-A2FC-CDA824444903}.Release|x64.ActiveCfg = Release|x64
+		{64B57B98-B3E0-4DEC-A2FC-CDA824444903}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {682564FC-D277-4F37-BB2A-0F55A83ECD13}
+	EndGlobalSection
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://stl-tfs1:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = ..\\_DeviceTests\\DeviceTest.vcxproj
+		SccProjectName1 = ../_DeviceTests
+		SccLocalPath1 = ..\\_DeviceTests
+		SccProjectUniqueName2 = ThorPowerSimulator\\ThorPowerSimulator.vcxproj
+		SccProjectName2 = ThorPowerSimulator
+		SccLocalPath2 = ThorPowerSimulator
+	EndGlobalSection
+EndGlobal

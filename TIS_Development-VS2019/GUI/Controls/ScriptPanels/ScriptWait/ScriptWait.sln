@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptWait", "ScriptWait\ScriptWait.csproj", "{9427F689-B47E-4C95-A1B3-AF0D9577894C}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 2
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://vateam02:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = ScriptWait\\ScriptWait.csproj
+		SccProjectName1 = ScriptWait
+		SccLocalPath1 = ScriptWait
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9427F689-B47E-4C95-A1B3-AF0D9577894C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9427F689-B47E-4C95-A1B3-AF0D9577894C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9427F689-B47E-4C95-A1B3-AF0D9577894C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9427F689-B47E-4C95-A1B3-AF0D9577894C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,800 @@
+﻿<Window x:Class="DFLIMSetupAssistant.SetupAssistant"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:sharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+        xmlns:local="clr-namespace:DFLIMSetupAssistant"
+        mc:Ignorable="d"
+        Background="{DynamicResource BackgroundBrush}"
+        MinHeight="850"
+        Height="850"
+        Width="800"
+        MinWidth="800">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"
+                              x:Name="DiagnosticsColumn" />
+            <ColumnDefinition Width="*"
+                              x:Name="HistogramColumn" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <StackPanel Orientation="Horizontal"
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="3"
+                    Margin="2">
+            <Label Content="Mode"
+                   VerticalAlignment="Center"
+                   DockPanel.Dock="Left" />
+            <ComboBox Name="CBDFLIMCaptureMode"
+                      DockPanel.Dock="Left"
+                      Margin="0,5,5,5"
+                      VerticalAlignment="Center"
+                      SelectedIndex="{Binding DFLIMAcquisitionMode}"
+                      Width="120">
+                <ComboBoxItem Content="Digital FLIM" />
+                <ComboBoxItem Content="Diagnostics" />
+            </ComboBox>
+        </StackPanel>
+        <Border BorderThickness="1"
+                Grid.Row="1"
+                Grid.Column="0"
+                Margin="0"
+                Visibility="{Binding DFLIMDiagnosticsViewVisibility}">
+            <StackPanel Grid.Column="1"
+                        Grid.Row="0"
+                        HorizontalAlignment="Stretch">
+
+                <Label Content="Diagnostics"
+                       FontSize="16"
+                       HorizontalContentAlignment="Center"
+                       HorizontalAlignment="Center" />
+            </StackPanel>
+        </Border>
+        <Border BorderThickness="1"
+                Grid.Row="2"
+                Grid.Column="0"
+                Margin="0"
+                Visibility="{Binding DFLIMDiagnosticsViewVisibility}">
+            <local:Diagnostics Grid.Row="1"
+                               Margin="0,5,5,0"
+                               Padding="0,0,0,-5"
+                               Grid.Column="1"
+                               x:Name="DFLIMDiagnostics1" />
+        </Border>
+        <Border BorderThickness="1"
+                Grid.Row="3"
+                Grid.Column="0"
+                Margin="0"
+                Visibility="{Binding DFLIMDiagnosticsViewVisibility}">
+            <local:Diagnostics Grid.Row="2"
+                               Margin="0,5,5,0"
+                               Padding="0,0,0,-5"
+                               Grid.Column="1"
+                               x:Name="DFLIMDiagnostics2" />
+        </Border>
+        <Border BorderThickness="1"
+                Grid.Row="4"
+                Grid.Column="0"
+                Margin="0"
+                Visibility="{Binding DFLIMDiagnosticsViewVisibility}">
+            <local:Diagnostics Grid.Row="3"
+                               Margin="0,5,5,0"
+                               Padding="0,0,0,-5"
+                               Grid.Column="1"
+                               x:Name="DFLIMDiagnostics3" />
+        </Border>
+        <Border BorderThickness="1"
+                Grid.Row="5"
+                Grid.Column="0"
+                Margin="0"
+                Visibility="{Binding DFLIMDiagnosticsViewVisibility}">
+            <local:Diagnostics Grid.Row="4"
+                               Margin="0,5,5,0"
+                               Padding="0,0,0,-5"
+                               Grid.Column="0"
+                               x:Name="DFLIMDiagnostics4" />
+        </Border>
+        <Border BorderThickness="1"
+                Grid.Row="1"
+                Grid.Column="1"
+                Margin="0"
+                Visibility="{Binding DFLIMHistogramViewVisibility}">
+            <StackPanel Grid.Row="0"
+                        Grid.Column="2"
+                        HorizontalAlignment="Stretch">
+                <Label Content="Histograms"
+                       FontSize="16"
+                       HorizontalContentAlignment="Center"
+                       HorizontalAlignment="Center" />
+            </StackPanel>
+        </Border>
+        <Border BorderThickness="1"
+                Grid.Row="2"
+                Grid.Column="1"
+                Margin="0"
+                Padding="1"
+                Visibility="{Binding DFLIMHistogramViewVisibility}">
+            <local:DFLIMHistogram Grid.Row="1"
+                                  Margin="0,5,5,0"
+                                  Padding="0,0,0,-5"
+                                  Grid.Column="2"
+                                  x:Name="DFLIMHistogram1" />
+        </Border>
+        <Border BorderThickness="1"
+                Grid.Row="3"
+                Grid.Column="1"
+                Margin="0"
+                Padding="1"
+                Visibility="{Binding DFLIMHistogramViewVisibility}">
+            <local:DFLIMHistogram Grid.Row="2"
+                                  Grid.Column="2"
+                                  Margin="0,5,5,0"
+                                  Padding="0,0,0,-5"
+                                  x:Name="DFLIMHistogram2" />
+        </Border>
+        <Border BorderThickness="1"
+                Grid.Row="4"
+                Grid.Column="1"
+                Margin="0"
+                Padding="1"
+                Visibility="{Binding DFLIMHistogramViewVisibility}">
+            <local:DFLIMHistogram Grid.Row="3"
+                                  Grid.Column="2"
+                                  Margin="0,5,5,0"
+                                  Padding="0,0,0,-5"
+                                  x:Name="DFLIMHistogram3" />
+        </Border>
+        <Border BorderThickness="1"
+                Grid.Row="5"
+                Grid.Column="1"
+                Margin="0"
+                Padding="1"
+                Visibility="{Binding DFLIMHistogramViewVisibility}">
+            <local:DFLIMHistogram Grid.Row="4"
+                                  Grid.Column="2"
+                                  Margin="0,5,5,0"
+                                  Padding="0,0,0,-5"
+                                  x:Name="DFLIMHistogram4" />
+        </Border>
+        <Border BorderThickness="1"
+                Grid.Row="1"
+                Grid.Column="2"
+                Margin="0"
+                Padding="1"
+                Visibility="{Binding DFLIMHistogramViewVisibility}">
+            <DockPanel Width="160"
+                       HorizontalAlignment="Stretch">
+                <Label Content="Shifts"
+                       FontSize="16"
+                       HorizontalContentAlignment="Center"
+                       HorizontalAlignment="Center" />
+            </DockPanel>
+        </Border>
+        <Border BorderThickness="1"
+                Grid.Row="2"
+                Grid.Column="2"
+                Margin="0"
+                Padding="1"
+                Visibility="{Binding DFLIMHistogramViewVisibility}">
+            <StackPanel Grid.Row="1"
+                        Grid.Column="3"
+                        Width="160"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal"
+                            Margin="1">
+                    <Label Content="Coarse"
+                           Width="55"
+                           HorizontalContentAlignment="Right"
+                           HorizontalAlignment="Center" />
+                    <TextBox Width="50"
+                             Text="{Binding DFLIMCoarseShift1, Mode=TwoWay}"
+                             IsEnabled="{Binding DFLIMEnableControlsThatNeedAcquistionOff}"
+                             x:Name="chACoarseShiftBtn" />
+                    <Button Width="25"
+                            Height="25"
+                            Content="&#x2713;">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=chACoarseShiftBtn}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal"
+                            Margin="1">
+                    <Label Content="Fine"
+                           Width="55"
+                           HorizontalContentAlignment="Right"
+                           HorizontalAlignment="Center" />
+                    <TextBox Width="50"
+                             x:Name="chAFineShiftBtn"
+                             IsEnabled="{Binding DFLIMEnableControlsThatNeedAcquistionOff}"
+                             Text="{Binding DFLIMFineShift1, Mode=TwoWay}" />
+                    <Button Width="25"
+                            Height="25"
+                            Content="&#x2713;">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=chAFineShiftBtn}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+        <Border BorderThickness="1"
+                Grid.Row="3"
+                Grid.Column="2"
+                Margin="0"
+                Padding="1"
+                Visibility="{Binding DFLIMHistogramViewVisibility}">
+            <StackPanel Grid.Row="2"
+                        Width="160"
+                        Grid.Column="3"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal"
+                            Margin="1">
+                    <Label Content="Coarse"
+                           Width="55"
+                           HorizontalContentAlignment="Right"
+                           HorizontalAlignment="Center" />
+                    <TextBox Width="50"
+                             IsEnabled="{Binding DFLIMEnableControlsThatNeedAcquistionOff}"
+                             Text="{Binding DFLIMCoarseShift2, Mode=TwoWay}"
+                             x:Name="chBCoarseShiftBtn" />
+                    <Button Width="25"
+                            Height="25"
+                            Content="&#x2713;">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=chBCoarseShiftBtn}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal"
+                            Margin="1">
+                    <Label Content="Fine"
+                           Width="55"
+                           HorizontalContentAlignment="Right"
+                           HorizontalAlignment="Center" />
+                    <TextBox Width="50"
+                             x:Name="chBFineShiftBtn"
+                             IsEnabled="{Binding DFLIMEnableControlsThatNeedAcquistionOff}"
+                             Text="{Binding DFLIMFineShift2, Mode=TwoWay}" />
+                    <Button Width="25"
+                            Height="25"
+                            Content="&#x2713;">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=chBFineShiftBtn}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+        <Border BorderThickness="1"
+                Grid.Row="4"
+                Grid.Column="2"
+                Margin="0"
+                Padding="1"
+                Visibility="{Binding DFLIMHistogramViewVisibility}">
+            <StackPanel Grid.Row="3"
+                        Grid.Column="3"
+                        Width="160"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal"
+                            Margin="1">
+                    <Label Content="Coarse"
+                           Width="55"
+                           HorizontalContentAlignment="Right"
+                           HorizontalAlignment="Center" />
+                    <TextBox Width="50"
+                             IsEnabled="{Binding DFLIMEnableControlsThatNeedAcquistionOff}"
+                             Text="{Binding DFLIMCoarseShift3, Mode=TwoWay}"
+                             x:Name="chCCoarseShiftBtn" />
+                    <Button Width="25"
+                            Height="25"
+                            Content="&#x2713;">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=chCCoarseShiftBtn}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal"
+                            Margin="1">
+                    <Label Content="Fine"
+                           Width="55"
+                           HorizontalContentAlignment="Right"
+                           HorizontalAlignment="Center" />
+                    <TextBox Width="50"
+                             x:Name="chCFineShiftBtn"
+                             IsEnabled="{Binding DFLIMEnableControlsThatNeedAcquistionOff}"
+                             Text="{Binding DFLIMFineShift3, Mode=TwoWay}" />
+                    <Button Width="25"
+                            Height="25"
+                            Content="&#x2713;">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=chCFineShiftBtn}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+        <Border BorderThickness="1"
+                Grid.Row="5"
+                Grid.Column="2"
+                Margin="0"
+                Padding="1"
+                Visibility="{Binding DFLIMHistogramViewVisibility}">
+            <StackPanel Grid.Row="4"
+                        Grid.Column="3"
+                        Width="160"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal"
+                            Margin="1">
+                    <Label Content="Coarse"
+                           Width="55"
+                           HorizontalContentAlignment="Right"
+                           HorizontalAlignment="Center" />
+                    <TextBox Width="50"
+                             IsEnabled="{Binding DFLIMEnableControlsThatNeedAcquistionOff}"
+                             x:Name="chDCoarseShiftBtn"
+                             Text="{Binding DFLIMCoarseShift4, Mode=TwoWay}" />
+                    <Button Width="25"
+                            Height="25"
+                            Content="&#x2713;">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=chDCoarseShiftBtn}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal"
+                            Margin="1">
+                    <Label Content="Fine"
+                           Width="55"
+                           HorizontalContentAlignment="Right"
+                           HorizontalAlignment="Center" />
+                    <TextBox Width="50"
+                             x:Name="chDFineShiftBtn"
+                             IsEnabled="{Binding DFLIMEnableControlsThatNeedAcquistionOff}"
+                             Text="{Binding DFLIMFineShift4, Mode=TwoWay}" />
+                    <Button Width="25"
+                            Height="25"
+                            Content="&#x2713;">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=chDFineShiftBtn}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+        <StackPanel Grid.Row="6"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="4"
+                    Orientation="Horizontal">
+            <GroupBox Header="Controls"
+                      MinHeight="180"
+                      Height="200"
+                      VerticalAlignment="Stretch">
+                <StackPanel>
+
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Left">
+                        <Label Content="Sync Delay [taps]"
+                               Width="115"
+                               HorizontalContentAlignment="Right"
+                               VerticalContentAlignment="Center"
+                               Padding="2" />
+                        <TextBox Width="50"
+                                 Margin="1,5"
+                                 IsEnabled="{Binding DFLIMEnableControlsThatNeedAcquistionOff}"
+                                 Text="{Binding DFLIMSyncDelay}"
+                                 x:Name="syncDelayTxt" />
+                        <Button Width="25"
+                                Height="25"
+                                Content="&#x2713;">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=syncDelayTxt}"
+                                                     Value="True">
+                                            <Setter Property="Visibility"
+                                                    Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="Resync Delay [ticks]"
+                               Width="115"
+                               HorizontalContentAlignment="Right"
+                               VerticalContentAlignment="Center"
+                               Padding="2" />
+                        <TextBox Width="50"
+                                 Margin="1,5"
+                                 IsEnabled="{Binding DFLIMEnableControlsThatNeedAcquistionOff}"
+                                 Text="{Binding DFLIMResyncDelay}"
+                                 x:Name="resyncDelayTxt" />
+                        <Button Width="25"
+                                Height="25"
+                                Content="&#x2713;">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=resyncDelayTxt}"
+                                                     Value="True">
+                                            <Setter Property="Visibility"
+                                                    Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                    <CheckBox Content="Resync Every Line"
+                              Margin="10,5"
+                              FlowDirection="RightToLeft"
+                              HorizontalAlignment="Left"
+                              VerticalAlignment="Center"
+                              VerticalContentAlignment="Center"
+                              IsEnabled="{Binding DFLIMEnableControlsThatNeedAcquistionOff}"
+                              IsChecked="{Binding DFLIMResyncEveryLine}"
+                              Padding="2" />
+                    <!--<CheckBox Content="Save Images On Live"
+                              Margin="10,5"
+                              FlowDirection="RightToLeft"
+                              HorizontalAlignment="Left"
+                              VerticalAlignment="Center"
+                              VerticalContentAlignment="Center"
+                              IsEnabled="{Binding DFLIMEnableControlsThatNeedAcquistionOff}"
+                              IsChecked="{Binding DFLIMSaveImagesOnLiveMode}"
+                              Padding="2" />-->
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                Margin="5">
+                        <Button Content="Revert"
+                                Height="29"
+                                Margin="5"
+                                MinWidth="50"
+                                HorizontalAlignment="Center"
+                                IsEnabled="{Binding DFLIMEnableControlsThatNeedAcquistionOff}"
+                                Command="{Binding DFLIMRevertSetupAssistantSettingChangesCommand}" />
+                        <Button Content="Save"
+                                Height="29"
+                                Margin="5"
+                                MinWidth="50"
+                                HorizontalAlignment="Center"
+                                IsEnabled="{Binding DFLIMEnableControlsThatNeedAcquistionOff}"
+                                Command="{Binding DFLIMSaveSettingsCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+            <StackPanel>
+
+                <GroupBox Header="Clocks"
+                          MinHeight="180"
+                          Height="200"
+                          VerticalAlignment="Stretch">
+                    <StackPanel  Margin="1">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Width="90"
+                                    Content="Get Rates"
+                                    Command="{Binding DFLIMQueryClockFrequenciesCommand}" />
+                            <Label Width=" 100"
+                                   Content="Actual"
+                                   HorizontalContentAlignment="Center"
+                                   Margin="2" />
+                            <Label Width=" 100"
+                                   Content="Implied"
+                                   HorizontalContentAlignment="Center"
+                                   Margin="2" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Clock 1 [MHz]:"
+                                   Width="90"
+                                   HorizontalContentAlignment="Right" />
+                            <Label Content="{Binding DFLIMFreqClock1}"
+                                   ContentStringFormat="{}{0:0.##}"
+                                   Margin="2"
+                                   Width=" 100"
+                                   HorizontalContentAlignment="Center" />
+                            <Label Content="{Binding DFLIMImpliedFreqClock1}"
+                                   ContentStringFormat="{}{0:0.##}"
+                                   Margin="2"
+                                   Width=" 100"
+                                   HorizontalContentAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Clock 2 [MHz]:"
+                                   Width="90"
+                                   HorizontalContentAlignment="Right" />
+                            <Label Content="{Binding DFLIMFreqClock2}"
+                                   ContentStringFormat="{}{0:0.##}"
+                                   Margin="2"
+                                   Width=" 100"
+                                   HorizontalContentAlignment="Center" />
+                            <Label Content="{Binding DFLIMImpliedFreqClock2}"
+                                   ContentStringFormat="{}{0:0.##}"
+                                   Margin="2"
+                                   Width=" 100"
+                                   HorizontalContentAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Clock 3 [MHz]:"
+                                   Width="90"
+                                   HorizontalContentAlignment="Right" />
+                            <Label Content="{Binding DFLIMFreqClock3}"
+                                   ContentStringFormat="{}{0:0.##}"
+                                   Margin="2"
+                                   Width=" 100"
+                                   HorizontalContentAlignment="Center" />
+                            <Label Content="{Binding DFLIMImpliedFreqClock3}"
+                                   ContentStringFormat="{}{0:0.##}"
+                                   Margin="2"
+                                   Width=" 100"
+                                   HorizontalContentAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Clock 4 [MHz]:"
+                                   Width="90"
+                                   HorizontalContentAlignment="Right" />
+                            <Label Content="{Binding DFLIMFreqClock4}"
+                                   ContentStringFormat="{}{0:0.##}"
+                                   Margin="2"
+                                   Width=" 100"
+                                   HorizontalContentAlignment="Center" />
+                            <Label Content="{Binding DFLIMImpliedFreqClock4}"
+                                   ContentStringFormat="{}{0:0.##}"
+                                   Margin="2"
+                                   Width=" 100"
+                                   HorizontalContentAlignment="Center" />
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+            </StackPanel>
+            <StackPanel>
+                <GroupBox Header="Diagnostic Settings"
+                          Height="45"
+                          Visibility="{Binding DFLIMDiagnosticsViewVisibility}"
+                          VerticalAlignment="Stretch">
+                    <StackPanel Orientation="Horizontal" Margin="5,0">
+                        <Label Content="Data Length" MinWidth="5"
+                               Padding="1"
+                               VerticalAlignment="Center" />
+                        <ComboBox VerticalAlignment="Center"
+                                  SelectedIndex="{Binding DFLIMDiagnosticsBufferLengthSelectedIndex}">
+                            <ComboBoxItem Content="128" />
+                            <ComboBoxItem Content="2048" />
+                        </ComboBox>
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Header="HPD Settings"
+                          MinHeight="155"
+                          VerticalAlignment="Stretch"
+                          Height="100">
+                    <StackPanel Orientation="Vertical">
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Top"
+                                    Margin="2">
+                            <Label Content="Channel A Gain"
+                                   Width="95"
+                                   HorizontalContentAlignment="Right"
+                                   HorizontalAlignment="Center" />
+                            <TextBox Width="70"
+                                     Text="{Binding HPD1Gain, Mode=TwoWay}"
+                                     x:Name="chanAHPDGainTxt" />
+                            <Button Width="25"
+                                    Height="25"
+                                    Content="&#x2713;">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsFocused, ElementName=chanAHPDGainTxt}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Top"
+                                    Margin="2">
+                            <Label Content="Channel B Gain"
+                                   Width="95"
+                                   HorizontalContentAlignment="Right"
+                                   HorizontalAlignment="Center" />
+                            <TextBox Width="70"
+                                     Text="{Binding HPD2Gain, Mode=TwoWay}"
+                                     x:Name="chanBHPDGainTxt" />
+                            <Button Width="25"
+                                    Height="25"
+                                    Content="&#x2713;">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsFocused, ElementName=chanBHPDGainTxt}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Top"
+                                    Margin="2">
+                            <Label Content="Channel C Gain"
+                                   Width="95"
+                                   HorizontalContentAlignment="Right"
+                                   HorizontalAlignment="Center" />
+                            <TextBox Width="70"
+                                     Text="{Binding HPD3Gain, Mode=TwoWay}"
+                                     x:Name="chanCHPDGainTxt" />
+                            <Button Width="25"
+                                    Height="25"
+                                    Content="&#x2713;">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsFocused, ElementName=chanCHPDGainTxt}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Top"
+                                    Margin="2">
+                            <Label Content="Channel D Gain"
+                                   Width="95"
+                                   HorizontalContentAlignment="Right"
+                                   HorizontalAlignment="Center" />
+                            <TextBox Width="70"
+                                     Text="{Binding HPD4Gain, Mode=TwoWay}"
+                                     x:Name="chanDHPDGainTxt" />
+                            <Button Width="25"
+                                    Height="25"
+                                    Content="&#x2713;">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsFocused, ElementName=chanDHPDGainTxt}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+            </StackPanel>
+            <StackPanel Visibility="Collapsed">
+                <GroupBox Header="Registers"
+                          MinHeight="160"
+                          VerticalAlignment="Stretch" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

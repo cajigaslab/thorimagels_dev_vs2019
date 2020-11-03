@@ -1,0 +1,23 @@
+﻿<UserControl x:Class="ScriptFijiProcessingDll.MainWindow"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:View="clr-namespace:ScriptFijiProcessingDll.View"
+             xmlns:ViewModel="clr-namespace:ScriptFijiProcessingDll.ViewModel"
+             Name="mwUserControl">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/ScriptFijiProcessing;component/Border.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <Border>
+            <ScrollViewer Name="scrollView"
+                          VerticalScrollBarVisibility="Auto"
+                          Margin="5">
+                <View:MasterView x:Name="masterView" />
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

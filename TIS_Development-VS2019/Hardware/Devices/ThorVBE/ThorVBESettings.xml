@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ThorVBESettings>
+  <BE1 portID="36" baudRate="460800" serialNumber="NA" />
+  <BE2 portID="37" baudRate="460800" serialNumber="NA" />
+  <BE3 portID="38" baudRate="460800" serialNumber="NA" />
+  <!--
+	<Configuration magMin="80" magMax="240" wavelengthMin="405" wavelengthMax="1080" />
+  -->
+  <Configuration magMin="100" magMax="300" wavelengthMin="405" wavelengthMax="1080" />
+</ThorVBESettings>

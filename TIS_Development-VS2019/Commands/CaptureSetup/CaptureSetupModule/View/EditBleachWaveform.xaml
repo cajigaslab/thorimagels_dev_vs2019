@@ -1,0 +1,395 @@
+﻿<Window x:Class="CaptureSetupDll.View.EditBleachWaveform"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:Valid="clr-namespace:Validations;assembly=Validations"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
+        xmlns:ViewModel="clr-namespace:CaptureSetupDll.ViewModel"
+        xmlns:Spin="clr-namespace:SpinnerProgress;assembly=SpinnerProgress"
+        xmlns:ThorSharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+        Title="Edit Stimulation Waveform"
+        Topmost="True"
+        Width="Auto"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="NoResize">
+    <Window.Resources>
+        <ResourceDictionary>
+            <DataTemplate DataType="{x:Type ViewModel:CaptureSetupViewModel}" />
+            <ViewModel:DoubleCultureConverter x:Key="doubleCulture" />
+            <ThorSharedTypes:BooleanToVisibilityConverter x:Key="boolToVis" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <CheckBox Name="chkPxDen"
+                          VerticalAlignment="Center"
+                          Margin="1"
+                          Checked="PixelDensity_Checked"
+                          Unchecked="PixelDensity_Checked"
+                          IsChecked="True"
+                          Visibility="Collapsed" />
+                <Label HorizontalAlignment="Left"
+                       HorizontalContentAlignment="Center"
+                       Content="Pixel Density : "
+                       Width="100" />
+                <TextBox Name="txPxDen"
+                         HorizontalAlignment="Left"
+                         HorizontalContentAlignment="Center"
+                         Width="30"
+                         IsEnabled="True"
+                         Valid:Validation.MinValue="1"
+                         Valid:Validation.ValidationType="{x:Type system:Int32}"
+                         Valid:Validation.NoEmptyValue="True"
+                         Valid:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                         Text="{Binding Path=PixelDensity, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}">
+                </TextBox>
+                <Label HorizontalAlignment="Left"
+                       HorizontalContentAlignment="Center"
+                       Content="Clock Rate : "
+                       Width="80"></Label>
+                <!--<TextBox Name="TxBoxMRate" VerticalContentAlignment="Center" VerticalAlignment="Center" Width="40" Text="1540"
+                          HorizontalAlignment="Right" HorizontalContentAlignment="Right" Margin="1" ToolTip="Modify clock rate for bleach waveform. "></TextBox>-->
+                <ComboBox Name="cbClkRate"
+                          Width="140"
+                          ToolTip="Select clock rate. "
+                          SelectionChanged="cbClkRate_SelectionChanged"
+                          Visibility="Collapsed">
+                    <ComboBoxItem Content="High 1.54MHz" />
+                    <ComboBoxItem Content="Inter-High 500KHz" />
+                    <ComboBoxItem Content="Medium 250KHz" />
+                    <ComboBoxItem Content="Inter-Low 80KHz" />
+                    <ComboBoxItem Content="Low 20KHz" />
+                </ComboBox>
+                <Label Name="lblClkRate"
+                       HorizontalAlignment="Left"
+                       HorizontalContentAlignment="Left"
+                       Width="100"
+                       Visibility="Visible"
+                       Content="{Binding Path=ClockRateByPixel, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                <CheckBox Name="ckGenIdv"
+                          VerticalAlignment="Center"
+                          HorizontalAlignment="Center"
+                          IsChecked="{Binding Path=PixelUnitMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    <Label Width="120"
+                           Content="Timelapse per Pixel" />
+                </CheckBox>
+                <TextBox Name="txLongIdle"
+                         HorizontalAlignment="Left"
+                         HorizontalContentAlignment="Center"
+                         Width="40"
+                         IsEnabled="{Binding Path=PixelUnitMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                         Valid:Validation.MinValue="0.0"
+                         Valid:Validation.ValidationType="{x:Type system:Double}"
+                         Valid:Validation.NoEmptyValue="False"
+                         Valid:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                         Text="{Binding Path=PixelLongIdleTime, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}">
+                </TextBox>
+                <Label Width="40"
+                       Content="[sec]" />
+            </StackPanel>
+            <!--<StackPanel Orientation="Horizontal">
+                <Label HorizontalAlignment="Left" HorizontalContentAlignment="Left" Content="Memory Consumption: " Width="130"></Label>
+                <Label HorizontalAlignment="Left" HorizontalContentAlignment="Left" Content="{Binding }"></Label>
+                <Label HorizontalAlignment="Left" HorizontalContentAlignment="Left" Content="MB" Width="30"></Label>
+            </StackPanel>-->
+            <StackPanel Name="stkEpoch"
+                        Orientation="Horizontal"
+                        Visibility="{Binding IsChecked, ElementName=ckGenIdv, Converter={StaticResource boolToVis}, ConverterParameter=true, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <Label HorizontalAlignment="Left"
+                       HorizontalContentAlignment="Right"
+                       Content="Epoch :"
+                       Width="50" />
+                <TextBox HorizontalAlignment="Left"
+                         HorizontalContentAlignment="Center"
+                         Width="40"
+                         Valid:Validation.MinValue="1"
+                         Valid:Validation.ValidationType="{x:Type system:Int32}"
+                         Valid:Validation.NoEmptyValue="True"
+                         Valid:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                         Text="{Binding Path=BleachEpoches, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}"/>
+                <Label HorizontalAlignment="Left"
+                       HorizontalContentAlignment="Right"
+                       Content="Epoch PreIdle :"
+                       Width="90" />
+                <TextBox HorizontalAlignment="Left"
+                         HorizontalContentAlignment="Center"
+                         Width="40"
+                         Valid:Validation.MinValue="0.0"
+                         Valid:Validation.ValidationType="{x:Type system:Double}"
+                         Valid:Validation.NoEmptyValue="True"
+                         Valid:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                         Text="{Binding Path=PreEpochIdleTime, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}"/>
+                <Label HorizontalAlignment="Left"
+                           HorizontalContentAlignment="Center"
+                           Content="[ms], PostIdle :"
+                           Width="90" />
+                <TextBox HorizontalAlignment="Left"
+                         HorizontalContentAlignment="Center"
+                         Width="40"
+                         Valid:Validation.MinValue="0.0"
+                         Valid:Validation.ValidationType="{x:Type system:Double}"
+                         Valid:Validation.NoEmptyValue="True"
+                         Valid:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                         Text="{Binding Path=PostEpochIdleTime, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}"/>
+                <Label HorizontalAlignment="Left"
+                       HorizontalContentAlignment="Center"
+                       Content="[ms]"
+                       Width="40" />
+                <Label HorizontalAlignment="Left"
+                       HorizontalContentAlignment="Right"
+                       Content="Stimulation Cycle PreIdle :"
+                       Width="160" />
+                <TextBox HorizontalAlignment="Left"
+                         HorizontalContentAlignment="Center"
+                         Width="40"
+                         Valid:Validation.MinValue="0.0"
+                         Valid:Validation.ValidationType="{x:Type system:Double}"
+                         Valid:Validation.NoEmptyValue="True"
+                         Valid:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                         Text="{Binding Path=PreCycleIdleTime, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}"/>
+                <Label HorizontalAlignment="Left"
+                       HorizontalContentAlignment="Center"
+                       Content="[ms], PostIdle :"
+                       Width="90" />
+                <TextBox HorizontalAlignment="Left"
+                         HorizontalContentAlignment="Center"
+                         Width="40"
+                         Valid:Validation.MinValue="0.0"
+                         Valid:Validation.ValidationType="{x:Type system:Double}"
+                         Valid:Validation.NoEmptyValue="True"
+                         Valid:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                         Text="{Binding Path=PostCycleIdleTime, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}"/>
+                <Label HorizontalAlignment="Left"
+                       HorizontalContentAlignment="Center"
+                       Content="[ms]"
+                       Width="40" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Left">
+                <DataGrid Name="dgLines"
+                          Height="Auto"
+                          Width="Auto"
+                          HorizontalAlignment="Left"
+                          Background="#FF333333"
+                          Foreground="White"
+                          Margin="1"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Auto"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          CanUserReorderColumns="False"
+                          CanUserSortColumns="False"
+                          AutoGenerateColumns="False"
+                          ItemsSource="{Binding}"
+                          DataContext="{Binding BleachParamList, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Background"
+                                    Value="#FF333333" />
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.ColumnHeaderStyle>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background"
+                                    Value="#FF333333" />
+                        </Style>
+                    </DataGrid.ColumnHeaderStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Width="Auto"
+                                            Header=" ID "
+                                            IsReadOnly="True"
+                                            Binding="{Binding ID, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" />
+                        <DataGridTextColumn Width="Auto"
+                                            Header=" Type "
+                                            IsReadOnly="True"
+                                            Binding="{Binding shapeType, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" />
+                        <DataGridTextColumn Width="Auto"
+                                            Header=" Top &#x0a;(um)"
+                                            IsReadOnly="True"
+                                            Binding="{Binding ROITopUM, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" />
+                        <DataGridTextColumn Width="Auto"
+                                            Header=" Left &#x0a;(um)"
+                                            IsReadOnly="True"
+                                            Binding="{Binding ROILeftUM, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" />
+                        <DataGridTextColumn Width="Auto"
+                                            Header=" Bottom &#x0a; (um)"
+                                            IsReadOnly="True"
+                                            Binding="{Binding ROIBottomUM, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" />
+                        <DataGridTextColumn Width="Auto"
+                                            Header=" Right &#x0a; (um)"
+                                            IsReadOnly="True"
+                                            Binding="{Binding ROIRightUM, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" />
+                        <DataGridTextColumn Width="Auto"
+                                            Header=" ROIWidth &#x0a;   (um)"
+                                            IsReadOnly="True"
+                                            Binding="{Binding ROIWidthUM, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" />
+                        <DataGridTextColumn Width="Auto"
+                                            Header=" ROIHeight &#x0a;    (um)"
+                                            IsReadOnly="True"
+                                            Binding="{Binding ROIHeightUM, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" />
+                        <DataGridTemplateColumn Width="Auto"
+                                                Header=" Pat. PreIdle &#x0a;     (ms)"
+                                                IsReadOnly="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox VerticalContentAlignment="Center"
+                                             HorizontalContentAlignment="Left"
+                                             Valid:Validation.MinValue="0.0"
+                                             Valid:Validation.ValidationType="{x:Type system:Double}"
+                                             Valid:Validation.NoEmptyValue="True"
+                                             Valid:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                             ToolTip="pattern pre-idle time"
+                                             Text="{Binding PrePatIdleTime, Mode=TwoWay,UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="Auto"
+                                                Header=" Ite. PreIdle &#x0a;     (ms)"
+                                                IsReadOnly="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox VerticalContentAlignment="Center"
+                                             HorizontalContentAlignment="Left"
+                                             Valid:Validation.MinValue="0.0"
+                                             Valid:Validation.ValidationType="{x:Type system:Double}"
+                                             Valid:Validation.NoEmptyValue="True"
+                                             Valid:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                             ToolTip="iteration pre-idle time"
+                                             Text="{Binding PreIdleTime, Mode=TwoWay,UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="Auto"
+                                                Header=" DwellTime &#x0a;      (us)"
+                                                IsReadOnly="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox VerticalContentAlignment="Center"
+                                             HorizontalContentAlignment="Left"
+                                             Valid:Validation.MinValue="0.0"
+                                             Valid:Validation.ValidationType="{x:Type system:Double}"
+                                             Valid:Validation.NoEmptyValue="True"
+                                             Valid:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                             ToolTip="iteration dwell time"
+                                             Text="{Binding DwellTime, Mode=TwoWay,UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="Auto"
+                                                Header=" Ite. PostIdle &#x0a;      (ms)"
+                                                IsReadOnly="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox VerticalContentAlignment="Center"
+                                             HorizontalContentAlignment="Left"
+                                             Valid:Validation.MinValue="0.0"
+                                             Valid:Validation.ValidationType="{x:Type system:Double}"
+                                             Valid:Validation.NoEmptyValue="True"
+                                             Valid:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                             Text="{Binding PostIdleTime, Mode=TwoWay,UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="Auto"
+                                                Header=" Pat. PostIdle &#x0a;      (ms)"
+                                                IsReadOnly="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox VerticalContentAlignment="Center"
+                                             HorizontalContentAlignment="Left"
+                                             Valid:Validation.MinValue="0.0"
+                                             Valid:Validation.ValidationType="{x:Type system:Double}"
+                                             Valid:Validation.NoEmptyValue="True"
+                                             Valid:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                             ToolTip="pattern post-idle time"
+                                             Text="{Binding PostPatIdleTime, Mode=TwoWay,UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Width="Auto"
+                                            Header=" Est. Duration &#x0a;      (ms)"
+                                            IsReadOnly="True"
+                                            Binding="{Binding EstDuration, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" />
+                        <DataGridTemplateColumn Width="Auto"
+                                                Header=" Iterations "
+                                                IsReadOnly="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox VerticalContentAlignment="Center"
+                                             HorizontalContentAlignment="Left"
+                                             Valid:Validation.MinValue="1"
+                                             Valid:Validation.ValidationType="{x:Type system:Int32}"
+                                             Valid:Validation.NoEmptyValue="True"
+                                             Valid:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                             Text="{Binding Iterations, Mode=TwoWay,UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="Auto"
+                                                Header=" Fill "
+                                                IsReadOnly="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ComboBox ToolTip="Select Fill Mode"
+                                              VerticalContentAlignment="Center"
+                                              HorizontalContentAlignment="Left"
+                                              ItemsSource="{Binding FillModes, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                              SelectedValuePath="Key"
+                                              DisplayMemberPath="Value"
+                                              SelectedIndex="{Binding Path=Fill, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}">
+                                    </ComboBox>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="Auto"
+                                                Header=" Idle Each Point "
+                                                IsReadOnly="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox HorizontalAlignment="Center"
+                                              HorizontalContentAlignment="Center"
+                                              IsChecked="{Binding PixelMode, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged }" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right">
+                <Canvas Width="105"
+                        Height="105"
+                        Name="CanvasSpinProgress">
+                    <!--Define a boundary to enclose the control-->
+                    <Spin:SpinnerProgressControl  x:Name="spinProgress"
+                                                  SpinnerHeight="100"
+                                                  SpinnerWidth="100" />
+                </Canvas>
+                <Label Name="lblStatus"
+                       MaxWidth="470"
+                       HorizontalAlignment="Left"
+                       HorizontalContentAlignment="Left"
+                       Margin="1" />
+                <Button Name="btnGen"
+                        Width="120"
+                        Height="30"
+                        Margin="1"
+                        Content="Generate Waveform"
+                        Click="btnGen_Click" />
+                <Button Name="btnOk"
+                        Width="40"
+                        Height="30"
+                        Margin="1"
+                        Content="OK"
+                        Click="btnOk_Click" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,0 +1,41 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.TDIControlView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:View="clr-namespace:CaptureSetupDll.View"
+    xmlns:ViewModel="clr-namespace:CaptureSetupDll.ViewModel"
+    Height="Auto" Width="300">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <DataTemplate DataType="{x:Type ViewModel:LiveImageViewModel}" />
+            <BooleanToVisibilityConverter x:Key="boolToVis" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="..\Styles\Button.xaml" />
+                <ResourceDictionary Source="..\Styles\tooltip.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="3">
+                <Label Content="TDIWidthMM"
+                       HorizontalContentAlignment="Right"
+                       Width="150"
+                       Background="{x:Null}"
+                       Foreground="White" />
+                <TextBox Name="tbTdiWidthMM"
+                         Width="70"
+                         Text="{Binding Path=TDIWidthMM, Mode= TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="3">
+                <Label Content="TDIHeightMM"
+                       HorizontalContentAlignment="Right"
+                       Width="150"
+                       Background="{x:Null}"
+                       Foreground="White" />
+                <TextBox Name="tbTdiHeightMM"
+                         Width="70"
+                         Text="{Binding Path=TDIHeightMM, Mode= TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

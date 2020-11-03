@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns:dm0="http://schemas.microsoft.com/VisualStudio/2008/DslTools/Core" xmlns:dm1="http://schemas.microsoft.com/dsltools/Kernel" xmlns:dm2="http://schemas.microsoft.com/dsltools/Component" xmlns:dm3="http://schemas.microsoft.com/dsltools/UseCase" xmlns:dm4="http://schemas.microsoft.com/dsltools/Activity" xmlns:dm5="http://schemas.microsoft.com/dsltools/Interaction" xmlns:dm6="http://schemas.microsoft.com/dsltools/UmlModelLibrary" xmlns:dm7="http://schemas.microsoft.com/dsltools/UmlDiagrams" xmlns:dm8="http://schemas.microsoft.com/dsltools/LogicalClassDesigner"
+  dslVersion="1.0.0.0"
+  Id="bf50ea42-b87e-4300-9f75-0b0a8a6bc883"
+  name="HistogramControl"
+  visibility="Private" xmlns="http://schemas.microsoft.com/dsltools/ModelStore">
+  <referencesInternal>
+    <reference
+      Id="a5d42bba-0cfe-45fe-849d-dde9a1ea4f89"
+      handle="viewcode://./CodeSchema_Namespace?Namespace%3DHistogramControl"
+      tag="ViewCode" />
+  </referencesInternal>
+  <packagedElements>
+    <packageHasNamedElement>
+      <class
+        Id="143fc9f4-446d-4a27-bbc2-c3b8238cd379"
+        name="Histogram"
+        isAbstract="false"
+        isLeaf="false"
+        isActiveClass="false">
+        <referencesInternal>
+          <reference
+            Id="4bfb1bca-f2a7-4f0c-adcb-fd4ecfbecec3"
+            handle="viewcode://./CodeSchema_Class?Assembly%3Dfile:%2F%2F%2FD:%2FTIS%2FThorImage%2FTIS_Development%2FTools%2FHistogramControl%2FHistogramControl%2Fbin%2FDebug%2FHistogramControl.dll Namespace%3DHistogramControl Type%3DHistogram"
+            tag="ViewCode" />
+        </referencesInternal>
+        <appliedStereotypesInternal>
+          <stereotypeInstance
+            Id="e519adfe-dd6b-43f0-be88-5c7aa52cb104"
+            name="class"
+            profile="CSharpProfile">
+            <propertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="ea0e6367-b70b-4ecd-8c8e-52bcdef79e76">
+                <propertyInstance
+                  Id="f6a46bcd-3ddb-46e3-98c9-83455e99d343"
+                  name="ClrAttributes" />
+              </stereotypeInstanceHasPropertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="35380ae5-890d-4aa6-a805-d830387adcb7">
+                <propertyInstance
+                  Id="61e24903-2608-4bb4-abfd-c22b4e20ca78"
+                  name="IsPartial"
+                  value="false" />
+              </stereotypeInstanceHasPropertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="3cc4831c-9d3e-4c22-b15a-537e81886642">
+                <propertyInstance
+                  Id="2152a587-7312-4c13-aa80-98208bb8b4f5"
+                  name="IsStatic"
+                  value="False" />
+              </stereotypeInstanceHasPropertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="ad78e313-475a-4a08-af88-573c9a0cd994">
+                <propertyInstance
+                  Id="43e09e0b-dc76-4133-97e1-41e6dc2086cf"
+                  name="IsUnsafe"
+                  value="false" />
+              </stereotypeInstanceHasPropertyInstances>
+              <stereotypeInstanceHasPropertyInstances
+                Id="601b104c-2546-4ab9-8bd3-e5bca7fe2c1b">
+                <propertyInstance
+                  Id="8f3b839b-7aa5-430e-9266-98070637a598"
+                  name="PackageVisibility"
+                  value="internal" />
+              </stereotypeInstanceHasPropertyInstances>
+            </propertyInstances>
+          </stereotypeInstance>
+        </appliedStereotypesInternal>
+        <suppliersInternal>
+          <interfaceRealization
+            Id="8d3e59d1-d155-404a-9115-215097399bf0">
+            <interfaceMoniker
+              Id="9a7cb8bc-46f4-4189-93e9-75f0c740d607"
+              LastKnownName="IComponentConnector"
+              LastKnownLocation="Package5_1142.uml" />
+          </interfaceRealization>
+        </suppliersInternal>
+        <generalsInternal>
+          <generalization
+            Id="1f383145-302c-4828-9a7e-849b494b85ac"
+            isSubstitutable="false">
+            <classMoniker
+              Id="dec3bfae-9e00-4cbd-af94-89d3a581b012"
+              LastKnownName="UserControl"
+              LastKnownLocation="Package4_1136.uml" />
+          </generalization>
+        </generalsInternal>
+      </class>
+    </packageHasNamedElement>
+  </packagedElements>
+</package>

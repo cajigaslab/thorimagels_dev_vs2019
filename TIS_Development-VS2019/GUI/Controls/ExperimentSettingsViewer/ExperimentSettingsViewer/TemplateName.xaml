@@ -1,0 +1,41 @@
+﻿<Window x:Class="ExperimentSettingsViewer.TemplateName"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Template Name"
+        Height="120"
+        Width="300"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <StackPanel>
+            <TextBox Name="tbName"
+                     Margin="1"
+                     Text="{Binding Path=NewName}" />
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="right">
+                <Button Name="btnOK"
+                        Content="OK"
+                        Width="75"
+                        Height="30"
+                        HorizontalAlignment="Right"
+                        Margin="1"
+                        Click="btnOK_Click" />
+                <Button Name="btnCancel"
+                        Content="Cancel"
+                        Width="75"
+                        Height="30"
+                        HorizontalAlignment="Right"
+                        Margin="1"
+                        IsCancel="True"
+                        Click="btnCancel_Click" />
+            </StackPanel>
+
+        </StackPanel>
+    </Grid>
+</Window>

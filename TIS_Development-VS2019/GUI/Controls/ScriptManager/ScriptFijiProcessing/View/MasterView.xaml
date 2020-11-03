@@ -1,0 +1,27 @@
+﻿<UserControl x:Class="ScriptFijiProcessingDll.View.MasterView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ViewModel="clr-namespace:ScriptFijiProcessingDll.ViewModel"
+             xmlns:View="clr-namespace:ScriptFijiProcessingDll.View"
+             Height="Auto"
+             Width="Auto"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <DataTemplate DataType="{x:Type ViewModel:ScriptFijiProcessingViewModel}" />          
+            <BooleanToVisibilityConverter x:Key="boolToVis" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/ScriptFijiProcessing;component/Button.xaml" />
+                <ResourceDictionary Source="/ScriptFijiProcessing;component/Window.xaml" />
+                <ResourceDictionary Source="/ScriptFijiProcessing;component/Label.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid Background="{x:Null}">
+            <StackPanel Margin="5">
+            <TextBlock Text="{Binding Path=StatusString}" 
+                       Foreground="White" />
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -1,0 +1,53 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.LaserControlView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:lc="clr-namespace:LaserControl;assembly=LaserControl"
+             Height="Auto"
+             Width="385">
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </UserControl.Resources>
+  <Grid>
+	<lc:LaserControlUC 
+					   EnableLaserControlPanel="{Binding Path=EnableLaserControlPanel}"
+					   SpMainLaserVisibility="{Binding Path=SpMainLaserVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+					   MainLaserIndex="{Binding Path=MainLaserIndex}"
+					   SpLaser1Visibility="{Binding Path=SpLaser1Visibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+					   CbLaser1Content="{Binding Path=CbLaser1Content}"
+					   Laser1Enable="{Binding Path=Laser1Enable}"
+					   Laser1Min="{Binding Path=Laser1Min}"
+					   Laser1Max="{Binding Path=Laser1Max}"
+					   Laser1Power="{Binding Path=Laser1Power}"
+					   Laser1PowerPlusCommand="{Binding Path=Laser1PowerPlusCommand}"
+					   Laser1PowerMinusCommand="{Binding Path=Laser1PowerMinusCommand}"
+					   SpLaser2Visibility="{Binding Path=SpLaser2Visibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+					   CbLaser2Content="{Binding Path=CbLaser2Content}"
+					   Laser2Enable="{Binding Path=Laser2Enable}"
+					   Laser2Min="{Binding Path=Laser2Min}"
+					   Laser2Max="{Binding Path=Laser2Max}"
+					   Laser2Power="{Binding Path=Laser2Power}"
+					   Laser2PowerPlusCommand="{Binding Path=Laser2PowerPlusCommand}"
+					   Laser2PowerMinusCommand="{Binding Path=Laser2PowerMinusCommand}"
+					   SpLaser3Visibility="{Binding Path=SpLaser3Visibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+					   CbLaser3Content="{Binding Path=CbLaser3Content}" 
+					   Laser3Enable="{Binding Path=Laser3Enable}"
+					   Laser3Min="{Binding Path=Laser3Min}"
+					   Laser3Max="{Binding Path=Laser3Max}"
+					   Laser3Power="{Binding Path=Laser3Power}"
+					   Laser3PowerPlusCommand="{Binding Path=Laser3PowerPlusCommand}"
+					   Laser3PowerMinusCommand="{Binding Path=Laser3PowerMinusCommand}"
+					   SpLaser4Visibility="{Binding Path=SpLaser3Visibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+					   CbLaser4Content="{Binding Path=CbLaser4Content}"
+					   Laser4Enable="{Binding Path=Laser4Enable}"
+					   Laser4Min="{Binding Path=Laser4Min}"
+					   Laser4Max="{Binding Path=Laser4Max}"
+					   Laser4Power="{Binding Path=Laser4Power}"
+					   Laser4PowerPlusCommand="{Binding Path=Laser4PowerPlusCommand}"
+					   Laser4PowerMinusCommand="{Binding Path=Laser4PowerMinusCommand}" >
+	</lc:LaserControlUC>   
+  </Grid>
+</UserControl>

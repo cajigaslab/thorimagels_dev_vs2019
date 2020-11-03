@@ -1,0 +1,30 @@
+﻿<UserControl x:Class="ScriptRunMatlabModule.MatlabOutputView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <Border>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="5">
+                <Grid>
+                    <ItemsControl ItemsSource="{Binding Path=Lines}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Name="tbMatlabOutput" 
+                                           Margin="5,0"
+                                           Text="{Binding Path=StatusString}" 
+                                           Foreground="White"
+                                           Background="{Binding Path=DisplayColor}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

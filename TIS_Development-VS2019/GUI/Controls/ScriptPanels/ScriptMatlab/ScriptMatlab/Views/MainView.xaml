@@ -1,0 +1,46 @@
+﻿<UserControl x:Class="ScriptMatlab.UserControl1"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:com="clr-namespace:ScriptMatlab.Common"
+        Height="Auto" Width="Auto">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <com:InverseBooleanConverter x:Key="inverseBooleanConverter"/>
+            <BooleanToVisibilityConverter x:Key="boolToVis" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="3">
+                <Label Content="Matlab Script" Width="100" />
+                <TextBox Width="400" Text="{Binding Path=MacroScriptPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <Button Name="btnMacroBrowse" Content="Browse" Margin="3" Width="50" Height="30" Command="{Binding BrowseMacro}"/>
+            </StackPanel>
+
+            <GroupBox Margin="3" Header="SettingsLocation">
+                <StackPanel >
+                    <RadioButton Margin="5,2" IsChecked="{Binding IsNotMostRecentExp, Converter={StaticResource inverseBooleanConverter}}">
+                        <Label Content="Most Recent Experiment"/>
+                    </RadioButton>
+                    <RadioButton Margin="5,2" IsChecked="{Binding IsNotMostRecentExp}">
+                        <StackPanel Orientation="Horizontal">
+                            <Label Margin="0,0,10,0" Content="Specific Folder"/>
+                            <TextBox Width="385" IsEnabled="{Binding IsNotMostRecentExp}" Text="{Binding InputFolder}"/>
+                            <Button Width="50" Height="30"  Margin="3,2" Content="Browse" IsEnabled="{Binding IsNotMostRecentExp}"
+                                    Command="{Binding BrowseInputFolder}"/>
+                        </StackPanel>
+                    </RadioButton>
+                </StackPanel>
+            </GroupBox>
+            
+            
+            <StackPanel Margin="3">
+                <CheckBox Margin="5" IsChecked="{Binding IsAsynchronous, Converter={StaticResource inverseBooleanConverter}}" Content="Synchronous"/>
+                <CheckBox Margin="5" IsChecked="{Binding IsAsynchronous}" Content="Asynchronous"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -1,0 +1,356 @@
+﻿<UserControl x:Class="LaserControl.LaserControlUC"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:system="clr-namespace:System;assembly=mscorlib"
+			 xmlns:val="clr-namespace:Validations;assembly=Validations"
+             xmlns:roi="clr-namespace:ROIUserControl;assembly=ROIUserControl"
+             xmlns:local="clr-namespace:LaserControl"
+			 xmlns:ts="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+             xmlns:sharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+             mc:Ignorable="d"
+             Height="Auto"
+             Width="385">
+    <UserControl.Resources>
+        <ResourceDictionary>
+		   <local:PercentConverter x:Key="percentConverter"/>
+		   <ts:DoubleCultureConverter x:Key="doubleCulture" />
+           <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel Margin="1">
+      <StackPanel IsEnabled="{Binding Path=EnableLaserControlPanel}"
+                  Margin="2">
+        <StackPanel Name="spMainLaser"
+					Orientation="Horizontal"
+                    Margin="0,3,0,3"
+                    ToolTip="Main laser selection"
+					Visibility="{Binding Path=SpMainLaserVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <Label Content="Main Laser: "
+                       Foreground="White" />
+                <ComboBox Name="cbMainLasers"
+                          Height="25"
+                          MinWidth="75"
+                          SelectedIndex="{Binding Path=MainLaserIndex}">
+                    <ComboBoxItem Content="OFF" />
+                    <ComboBoxItem Content="2W" />
+                    <ComboBoxItem Content="5W" />
+                </ComboBox>
+		</StackPanel>
+        <StackPanel Name="spLaser1"
+					Orientation="Horizontal"
+                    Margin="0,3,0,3"
+                    ToolTip="Set Laser1 power"
+					Visibility="{Binding Path=SpLaser1Visibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+          <CheckBox Name="cbLaser1"
+                    Content="{Binding Path=CbLaser1Content, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    Margin="3"
+                    VerticalAlignment="Center"
+                    Foreground="White"
+                    IsChecked="{Binding Path=Laser1Enable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    Width="100" />
+          <Slider Name="sliderLaser1"
+                  VerticalAlignment="Center"
+                  Minimum="{Binding Path=Laser1Min, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource doubleCulture}}"
+                  Maximum="{Binding Path=Laser1Max, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource doubleCulture}}"
+                  Margin="2"
+                  Width="175"
+                  IsEnabled="True"
+                  Value="{Binding Path=Laser1Power, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource doubleCulture}}" />
+          <TextBox Name="tbLaser1"
+                   VerticalAlignment="Center"
+                   Width="40"
+                   val:Validation.MaxValue="100.0"
+                   val:Validation.MinValue="0.0"
+                   val:Validation.ValidationType="{x:Type system:Double}"
+                   IsEnabled="{Binding ElementName=cbLaser1, Path=IsChecked}">
+				<TextBox.Text>
+					<MultiBinding  Converter="{StaticResource percentConverter}" 
+								   ConverterParameter="1">
+						<Binding Path="Value" 
+								 ElementName="sliderLaser1"
+								 Mode="TwoWay" 
+								 UpdateSourceTrigger="PropertyChanged"/>
+						<Binding Path="Minimum" 
+								 ElementName="sliderLaser1"
+								 Mode="OneWay"/>
+						<Binding Path="Maximum" 
+								 ElementName="sliderLaser1"
+								 Mode="OneWay"/>
+					</MultiBinding>
+				</TextBox.Text>
+		  </TextBox>
+          <Button Width="30"
+                  Height="25"
+                  Content="&#x2713;">
+            <Button.Style>
+              <Style TargetType="Button">
+                <Setter Property="Visibility"
+                        Value="Collapsed" />
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbLaser1}"
+                               Value="True">
+                    <Setter Property="Visibility"
+                            Value="Visible" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Button.Style>
+          </Button>
+          <StackPanel VerticalAlignment="Center">
+            <RepeatButton Content="+"
+                          Width="30"
+                          Height="20"
+                          Command="{Binding Path=Laser1PowerPlusCommand}"
+                          IsEnabled="{Binding ElementName=cbLaser1, Path=IsChecked}"
+                          Delay="500"
+                          Interval="100" />
+            <RepeatButton Content="-"
+                          Width="30"
+                          Height="20"
+                          Command="{Binding Path=Laser1PowerMinusCommand}"
+                          IsEnabled="{Binding ElementName=cbLaser1, Path=IsChecked}"
+                          Delay="500"
+                          Interval="100" />
+          </StackPanel>
+        </StackPanel>
+        <StackPanel Name="spLaser2"
+					Orientation="Horizontal"
+                    Margin="0,3,0,3"
+                    ToolTip="Set Laser2 power"
+					Visibility="{Binding Path=SpLaser2Visibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+          <CheckBox Name="cbLaser2"
+                    Content="{Binding Path=CbLaser2Content, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    Margin="3"
+                    VerticalAlignment="Center"
+                    Foreground="White"
+                    IsChecked="{Binding Path=Laser2Enable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    Width="100" />
+          <Slider Name="sliderLaser2"
+                  VerticalAlignment="Center"
+                  Minimum="{Binding Path=Laser2Min, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource doubleCulture}}"
+                  Maximum="{Binding Path=Laser2Max, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource doubleCulture}}"
+                  Margin="2"
+                  Width="175"
+                  IsEnabled="True"
+                  Foreground="White"
+                  Value="{Binding Path=Laser2Power, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource doubleCulture}}" />
+          <TextBox Name="tbLaser2"
+                   VerticalAlignment="Center"
+                   Width="40"
+                   val:Validation.MaxValue="100.0"
+                   val:Validation.MinValue="0.0"
+                   val:Validation.ValidationType="{x:Type system:Double}"
+                   IsEnabled="{Binding ElementName=cbLaser2, Path=IsChecked}">
+				<TextBox.Text>
+					<MultiBinding  Converter="{StaticResource percentConverter}" 
+								   ConverterParameter="2">
+						<Binding Path="Value" 
+								 ElementName="sliderLaser2"
+								 Mode="TwoWay" 
+								 UpdateSourceTrigger="PropertyChanged"/>
+						<Binding Path="Minimum" 
+								 ElementName="sliderLaser2"
+								 Mode="OneWay"/>
+						<Binding Path="Maximum" 
+								 ElementName="sliderLaser2"
+								 Mode="OneWay"/>
+					</MultiBinding>
+				</TextBox.Text>
+		  </TextBox>
+          <Button Width="30"
+                  Height="25"
+                  Content="&#x2713;">
+            <Button.Style>
+              <Style TargetType="Button">
+                <Setter Property="Visibility"
+                        Value="Collapsed" />
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbLaser2}"
+                               Value="True">
+                    <Setter Property="Visibility"
+                            Value="Visible" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Button.Style>
+          </Button>
+          <StackPanel VerticalAlignment="Center">
+            <RepeatButton Content="+"
+                          Width="30"
+                          Height="20"
+                          Command="{Binding Path=Laser2PowerPlusCommand}"
+                          IsEnabled="{Binding ElementName=cbLaser2, Path=IsChecked}"
+                          Delay="500"
+                          Interval="100" />
+            <RepeatButton Content="-"
+                          Width="30"
+                          Height="20"
+                          Command="{Binding Path=Laser2PowerMinusCommand}"
+                          IsEnabled="{Binding ElementName=cbLaser2, Path=IsChecked}"
+                          Delay="500"
+                          Interval="100" />
+          </StackPanel>
+        </StackPanel>
+        <StackPanel Name="spLaser3"
+					Orientation="Horizontal"
+                    Margin="0,3,0,3"
+                    ToolTip="Set Laser3 power"
+					Visibility="{Binding Path=SpLaser3Visibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+          <CheckBox Name="cbLaser3"
+                    Content="{Binding Path=CbLaser3Content, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    Margin="3"
+                    VerticalAlignment="Center"
+                    Foreground="White"
+                    IsChecked="{Binding Path=Laser3Enable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    Width="100" />
+          <Slider Name="sliderLaser3"
+                  VerticalAlignment="Center"
+                  Minimum="{Binding Path=Laser3Min, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource doubleCulture}}"
+                  Maximum="{Binding Path=Laser3Max, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource doubleCulture}}"
+                  Margin="2"
+                  Width="175"
+                  IsEnabled="True"
+                  Value="{Binding Path=Laser3Power, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource doubleCulture}}" />
+          <TextBox Name="tbLaser3"
+                   VerticalAlignment="Center"
+                   Width="40"
+                   val:Validation.MaxValue="100.0"
+                   val:Validation.MinValue="0.0"
+                   val:Validation.ValidationType="{x:Type system:Double}"
+                   IsEnabled="{Binding ElementName=cbLaser3, Path=IsChecked}">
+				<TextBox.Text>
+					<MultiBinding  Converter="{StaticResource percentConverter}" 
+								   ConverterParameter="3">
+						<Binding Path="Value" 
+								 ElementName="sliderLaser3"
+								 Mode="TwoWay" 
+								 UpdateSourceTrigger="PropertyChanged"/>
+						<Binding Path="Minimum" 
+								 ElementName="sliderLaser3"
+								 Mode="OneWay"/>
+						<Binding Path="Maximum" 
+								 ElementName="sliderLaser3"
+								 Mode="OneWay"/>
+					</MultiBinding>
+				</TextBox.Text>
+		  </TextBox>          
+		  <Button Width="30"
+                  Height="25"
+                  Content="&#x2713;">
+            <Button.Style>
+              <Style TargetType="Button">
+                <Setter Property="Visibility"
+                        Value="Collapsed" />
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbLaser3}"
+                               Value="True">
+                    <Setter Property="Visibility"
+                            Value="Visible" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Button.Style>
+          </Button>
+          <StackPanel VerticalAlignment="Center">
+            <RepeatButton Content="+"
+                          Width="30"
+                          Height="20"
+                          Command="{Binding Path=Laser3PowerPlusCommand}"
+                          IsEnabled="{Binding ElementName=cbLaser3, Path=IsChecked}"
+                          Delay="500"
+                          Interval="100" />
+            <RepeatButton Content="-"
+                          Width="30"
+                          Height="20"
+                          Command="{Binding Path=Laser3PowerMinusCommand}"
+                          IsEnabled="{Binding ElementName=cbLaser3, Path=IsChecked}"
+                          Delay="500"
+                          Interval="100" />
+          </StackPanel>
+        </StackPanel>
+        <StackPanel Name="spLaser4"
+					Orientation="Horizontal"
+                    Margin="0,3,0,3"
+                    ToolTip="Set Laser4 power"
+					Visibility="{Binding Path=SpLaser4Visibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+          <CheckBox Name="cbLaser4"
+                    Content="{Binding Path=CbLaser4Content, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    Margin="3"
+                    VerticalAlignment="Center"
+                    Foreground="White"
+                    IsChecked="{Binding Path=Laser4Enable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    Width="100" />
+          <Slider Name="sliderLaser4"
+                  VerticalAlignment="Center"
+                  Minimum="{Binding Path=Laser4Min, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource doubleCulture}}"
+                  Maximum="{Binding Path=Laser4Max, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource doubleCulture}}"
+                  Margin="2"
+                  Width="175"
+                  IsEnabled="True"
+                  Value="{Binding Path=Laser4Power, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource doubleCulture}}" />
+          <TextBox Name="tbLaser4"
+                   VerticalAlignment="Center"
+                   Width="40"
+                   val:Validation.MaxValue="100.0"
+                   val:Validation.MinValue="0.0"
+                   val:Validation.ValidationType="{x:Type system:Double}"
+                   IsEnabled="{Binding ElementName=cbLaser4, Path=IsChecked}">
+				<TextBox.Text>
+					<MultiBinding  Converter="{StaticResource percentConverter}" 
+								   ConverterParameter="4">
+						<Binding Path="Value" 
+								 ElementName="sliderLaser4"
+								 Mode="TwoWay" 
+								 UpdateSourceTrigger="PropertyChanged"/>
+						<Binding Path="Minimum" 
+								 ElementName="sliderLaser4"
+								 Mode="OneWay"/>
+						<Binding Path="Maximum" 
+								 ElementName="sliderLaser4"
+								 Mode="OneWay"/>
+					</MultiBinding>
+				</TextBox.Text>
+		  </TextBox>
+          <Button Width="30"
+                  Height="25"
+                  Content="&#x2713;">
+            <Button.Style>
+              <Style TargetType="Button">
+                <Setter Property="Visibility"
+                        Value="Collapsed" />
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbLaser4}"
+                               Value="True">
+                    <Setter Property="Visibility"
+                            Value="Visible" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Button.Style>
+          </Button>
+          <StackPanel VerticalAlignment="Center">
+            <RepeatButton Content="+"
+                          Width="30"
+                          Height="20"
+                          Command="{Binding Path=Laser4PowerPlusCommand}"
+                          IsEnabled="{Binding ElementName=cbLaser4, Path=IsChecked}"
+                          Delay="500"
+                          Interval="100" />
+            <RepeatButton Content="-"
+                          Width="30"
+                          Height="20"
+                          Command="{Binding Path=Laser4PowerMinusCommand}"
+                          IsEnabled="{Binding ElementName=cbLaser4, Path=IsChecked}"
+                          Delay="500"
+                          Interval="100" />
+          </StackPanel>
+        </StackPanel>
+      </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

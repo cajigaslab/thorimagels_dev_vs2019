@@ -1,0 +1,402 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{283E5431-6895-49CB-BF7D-BFABC3AD8E39}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ImageReviewModule</RootNamespace>
+    <AssemblyName>ImageReview</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <WarningLevel>4</WarningLevel>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <StartupObject>
+    </StartupObject>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <StartAction>Program</StartAction>
+    <StartProgram>$(MSBuildProjectDirectory)\..\..\..\Applications\ThorImageLS\ThorImage\bin\Debug\ThorImageLS.exe</StartProgram>
+    <StartWorkingDirectory>$(MSBuildProjectDirectory)\..\..\..\Applications\ThorImageLS\ThorImage\bin\Debug</StartWorkingDirectory>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="AviFile, Version=1.0.3792.24612, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Tools\AviFile\bin\Debug\AviFile.dll</HintPath>
+    </Reference>
+    <Reference Include="BitMiracle.LibTiff.NET40">
+      <HintPath>..\..\..\..\Tools\LibTiff.Net40\Debug\BitMiracle.LibTiff.NET40.dll</HintPath>
+    </Reference>
+    <Reference Include="DeepZoomGen, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Tools\DeepZoomGen\DeepZoomGen\bin\Debug\DeepZoomGen.dll</HintPath>
+    </Reference>
+    <Reference Include="ExperimentSettingsBrowser">
+      <HintPath>..\..\ExperimentSettingsBrowser\ExperimentSettingsBrowser\bin\Debug\ExperimentSettingsBrowser.dll</HintPath>
+    </Reference>
+    <Reference Include="ExperimentSettingsViewer, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\ExperimentSettingsViewer\ExperimentSettingsViewer\bin\Debug\ExperimentSettingsViewer.dll</HintPath>
+    </Reference>
+    <Reference Include="FolderDialogControl, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\FolderDialogControl\FolderDialogControl\bin\Debug\FolderDialogControl.dll</HintPath>
+    </Reference>
+    <Reference Include="HistogramControl, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Tools\HistogramControl\HistogramControl\bin\Debug\HistogramControl.dll</HintPath>
+    </Reference>
+    <Reference Include="ImageTilerControl, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\ImageTilerControl\ImageTilerControl\bin\Debug\ImageTilerControl.dll</HintPath>
+    </Reference>
+    <Reference Include="LineProfileWindow">
+      <HintPath>..\..\LineProfileWindow\LineProfileWindow\bin\Debug\LineProfileWindow.dll</HintPath>
+    </Reference>
+    <Reference Include="MatlabEngine">
+      <HintPath>..\..\..\..\Common\MatlabEngine\MatlabEngine\bin\Debug\MatlabEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.Composite, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Composite Application\Source\CAL\Composite.UnityExtensions\bin\Debug\Microsoft.Practices.Composite.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.Composite.UnityExtensions, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Composite Application\Source\CAL\Composite.UnityExtensions\bin\Debug\Microsoft.Practices.Composite.UnityExtensions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.Composite.Wpf, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Composite Application\Source\CAL\Composite.UnityExtensions\bin\Debug\Microsoft.Practices.Composite.Wpf.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.ObjectBuilder2, Version=2.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Composite Application\Source\CAL\Composite.UnityExtensions\bin\Debug\Microsoft.Practices.ObjectBuilder2.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.Unity, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Composite Application\Source\CAL\Composite.UnityExtensions\bin\Debug\Microsoft.Practices.Unity.dll</HintPath>
+    </Reference>
+    <Reference Include="MultiROIStats">
+      <HintPath>..\..\MultiROIStats\MultiROIStats\bin\Debug\MultiROIStats.dll</HintPath>
+    </Reference>
+    <Reference Include="OverlayManager">
+      <HintPath>..\..\OverlayManager\OverlayManager\bin\Debug\OverlayManager.dll</HintPath>
+    </Reference>
+    <Reference Include="ROIStatsChart">
+      <HintPath>..\..\ROIStatsChart\ROIStatsChart\bin\Debug\ROIStatsChart.dll</HintPath>
+    </Reference>
+    <Reference Include="SampleRegionSelection, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\SampleRegionSelection\SampleRegionSelection\bin\Debug\SampleRegionSelection.dll</HintPath>
+    </Reference>
+    <Reference Include="SpinnerProgress, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\SpinnerProgress\SpinnerProgress\bin\Debug\SpinnerProgress.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.ServiceModel">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="ThemeControl">
+      <HintPath>..\..\ThemeControl\ThemeControl\bin\Debug\ThemeControl.dll</HintPath>
+    </Reference>
+    <Reference Include="ThorImageInfastructure, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Applications\ThorImageLS\ThorImageInfastructure\bin\Debug\ThorImageInfastructure.dll</HintPath>
+    </Reference>
+    <Reference Include="ThorLogging, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Common\ThorLogging\ThorLogging\bin\Debug\ThorLogging.dll</HintPath>
+    </Reference>
+    <Reference Include="ThorSharedTypes, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Common\ThorSharedTypes\ThorSharedTypes\bin\Debug\ThorSharedTypes.dll</HintPath>
+    </Reference>
+    <Reference Include="TilesDisplay, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\TilesDisplay\TilesDisplay\bin\Debug\TilesDisplay.dll</HintPath>
+    </Reference>
+    <Reference Include="UIAutomationProvider">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="Validations">
+      <HintPath>..\..\Validations\Validations\bin\Debug\Validations.dll</HintPath>
+    </Reference>
+    <Reference Include="VolumeControlInterface, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\VolumeControlInterface\VolumeControlInterface\bin\Debug\VolumeControlInterface.dll</HintPath>
+    </Reference>
+    <Reference Include="WindowsBase">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="PresentationCore">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="PresentationFramework">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="XYTileControl">
+      <HintPath>..\..\XYTileControl\XYTileControl\bin\Debug\XYTileControl.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="MainWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\ImageTilerView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\ImageView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\MasterView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\OrthoViewDispOptWin.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\ROIMasterView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\ROIStatsChartWin.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\SnapshotSettings.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\SplashScreen.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\ToolBarView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\VolumeControlView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\ZoomSettings.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ExperimentData.cs" />
+    <Compile Include="ImageReviewModule.cs" />
+    <Compile Include="MainWindow.xaml.cs">
+      <DependentUpon>MainWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Model\ImageReview.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="ViewModel\ImageReviewViewModel.cs" />
+    <Compile Include="ViewModel\RelayCommand.cs" />
+    <Compile Include="ViewModel\ViewModelBase.cs" />
+    <Compile Include="View\ImageTilerView.xaml.cs">
+      <DependentUpon>ImageTilerView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\ImageView.xaml.cs">
+      <DependentUpon>ImageView.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="View\MasterView.xaml.cs">
+      <DependentUpon>MasterView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\OrthoViewDispOptWin.xaml.cs">
+      <DependentUpon>OrthoViewDispOptWin.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\ROIMasterView.xaml.cs">
+      <DependentUpon>ROIMasterView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\ROIStatsChartWin.xaml.cs">
+      <DependentUpon>ROIStatsChartWin.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\SnapshotSettings.xaml.cs">
+      <DependentUpon>SnapshotSettings.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\SplashScreen.xaml.cs">
+      <DependentUpon>SplashScreen.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\ToolBarView.xaml.cs">
+      <DependentUpon>ToolBarView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\VolumeControlView.xaml.cs">
+      <DependentUpon>VolumeControlView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\ZoomSettings.xaml.cs">
+      <DependentUpon>ZoomSettings.xaml</DependentUpon>
+    </Compile>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <AppDesigner Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\Camera.png" />
+    <Resource Include="Icons\CameraColor.png" />
+    <Resource Include="Icons\Eject.png" />
+    <Resource Include="Icons\Histogram.png" />
+    <Resource Include="Icons\InfoBox.png" />
+    <Resource Include="Icons\Play.png" />
+    <Resource Include="Icons\Resize.png" />
+    <Resource Include="Icons\Stop.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\2D.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\3D.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\Tile.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\ChanAB.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\Styles\ClearAll.png">
+      <Link>Icons\ClearAll.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\DeleteSelectedROIs.png">
+      <Link>Icons\DeleteSelectedROIs.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Line.png">
+      <Link>Icons\Line.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Open.png">
+      <Link>Icons\Open.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Pencil.png">
+      <Link>Icons\Pencil.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Point.png">
+      <Link>Icons\Point.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Polygon.png">
+      <Link>Icons\Polygon.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Rectangle.png">
+      <Link>Icons\Rectangle.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Reset.png">
+      <Link>Icons\Reset.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Reticle.png">
+      <Link>Icons\Reticle.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Select.png">
+      <Link>Icons\Select.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\Styles\Save.png">
+      <Link>Icons\Save.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\Styles\polyline.png">
+      <Link>Icons\polyline.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\Styles\Ellipse.png">
+      <Link>Icons\Ellipse.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\orthogonal.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\Styles\Scale.png">
+      <Link>Icons\Scale.png</Link>
+    </Resource>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>if $(ConfigurationName) == Debug  copy $(TargetPath) $(TargetDir)..\..\..\..\..\Applications\ThorImageLS\ThorImage\bin\Debug\Modules</PostBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

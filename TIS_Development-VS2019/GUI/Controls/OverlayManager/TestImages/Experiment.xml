@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<ThorImageExperiment>
+  <Name name="Untitled209" />
+  <Date date="06/24/2014" />
+  <User name="ncui" />
+  <Computer name="STL-NCUI-W7" />
+  <Software version="1.0.0.0" />
+  <Camera name="None" width="1392" height="1040" pixelSizeUM="6.45" binning="2" gain="0" lightmode="0" left="0" right="1392" top="0" bottom="1040" binningX="1" binningY="1" tdiWidth="0" tdiHeight="0" />
+  <Magnification mag="60" name="60X" />
+  <Wavelengths>
+    <Wavelength name="ChanA" exposureTimeMS="0" />
+    <ChannelEnable Set="1" />
+  </Wavelengths>
+  <ZStage name="ThorZStepperSimulator" steps="3" stepSizeUM="0.18" startPos="0" zStreamFrames="1" zStreamMode="0" />
+  <Timelapse timepoints="30" intervalSec="0" triggerMode="0" />
+  <Sample type="0" offsetXMM="0" offsetYMM="-1">
+    <Wells startRow="1" startColumn="1" rows="1" columns="1" wellOffsetXMM="-36" wellOffsetYMM="36">
+      <SubImages subRows="1" subColumns="1" transOffsetXMM="0" transOffsetYMM="0" subOffsetXMM="0.3" subOffsetYMM="0.3" />
+    </Wells>
+  </Sample>
+  <Autofocus type="3" repeat="1" exposureTimeMS="1.0" stepSizeUM="1.0" startPosMM="-5.0" stopPosMM="5.0" />
+  <Comments text="" />
+  <LSM name="ResonanceGalvoSim" scanMode="0" channel="1" fieldSize="180" pixelX="1024" pixelY="1024" offsetX="0" offsetY="0" averageMode="0" averageNum="2" clockSource="1" inputRange1="7" inputRange2="7" twoWayAlignment="0" extClockRate="80000000" inputRange3="7" inputRange4="7" dwellTime="0" />
+  <PMT enableA="1" gainA="1" enableB="0" gainB="1" enableC="0" gainC="1" enableD="0" gainD="1" />
+  <MCLS enable1="0" power1="0" enable2="0" power2="0" enable3="0" power3="0" enable4="0" power4="0" power1percent="0" power2percent="0" power3percent="0" power4percent="0" />
+  <PinholeWheel position="0" />
+  <Streaming enable="0" frames="3" rawData="0" triggerMode="1" displayImage="1" storageMode="0" zFastEnable="0" flybackFrames="1" stimulusTriggering="0" dmaFrames="4" stimulusMaxFrames="2000" />
+  <PowerRegulator enable="1" type="0" start="-1" stop="-1" path="C:\" pockelsBlankPercentage="0" />
+  <ImageCorrection enablePincushion="0" pinCoeff1="0" pinCoeff2="0" pinCoeff3="0" enableBackgroundSubtraction="0" pathBackgroundSubtraction="C:\" enableFlatField="0" pathFlatField="C:\" />
+  <MultiPhotonLaser enable="1" pos="0" />
+  <Photobleaching enable="0" laserPos="710" durationMS="5000" powerPos="300" width="64" height="64" offsetX="0" offsetY="0" bleachFrames="1" fieldSize="5" powerEnable="0" laserEnable="0" bleachQuery="0" bleachTrigger="0" preBleachFrames="0" preBleachInterval="0" preBleachStream="0" postBleachFrames1="0" postBleachInterval1="0" postBleachStream1="0" postBleachFrames2="0" postBleachInterval2="0" postBleachStream2="0" />
+  <LightPath GalvoGalvo="0" GalvoResonance="1" Camera="0" />
+  <CaptureMode mode="0" />
+</ThorImageExperiment>

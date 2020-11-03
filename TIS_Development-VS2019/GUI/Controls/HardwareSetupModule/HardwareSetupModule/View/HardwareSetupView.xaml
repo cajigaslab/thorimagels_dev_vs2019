@@ -1,0 +1,194 @@
+﻿<UserControl
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:View="clr-namespace:HardwareSetupDll.View"
+    xmlns:ViewModel="clr-namespace:HardwareSetupDll.ViewModel" 
+    x:Class="HardwareSetupDll.View.HardwareSetupView" 
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+    mc:Ignorable="d"
+    Height="Auto"
+    Width="1000"
+    Background="#FF333333">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <DataTemplate DataType="{x:Type ViewModel:HardwareSetupViewModel}"/>
+            <XmlDataProvider x:Key="Experiment" XPath="/ThorImageExperiment"></XmlDataProvider>
+            <View:EnumBooleanConverter x:Key="ebc"/>
+            <XmlDataProvider x:Key="HardwareSettings" XPath="/HardwareSettings"></XmlDataProvider>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Button.xaml" />
+                <ResourceDictionary Source="RadioButton.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+        <Grid Margin="5" Background="#FF333333">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="200"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0">
+                <ListView Name="wavelengthListView" ItemsSource="{Binding Source={StaticResource HardwareSettings}, XPath=Wavelength}">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Wavelength Name"  Width="200">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Name="txtName" Text="{Binding XPath=@name}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Wavelength"  Width="100">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding XPath=@wavelength}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Excitation Filter"   Width="100">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding XPath=@ex}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Dichroic Filter"   Width="100">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding XPath=@dic}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Emission Filter" Width="100">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding XPath=@em}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        <GridViewColumn Header="Is Fluor"   Width="100">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding XPath=@fluor}" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Color"   Width="100">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Rectangle Width="20" Height="20" Stroke="Black" StrokeThickness="1">
+                                            <Rectangle.Fill>
+                                                <SolidColorBrush Color="{Binding XPath=@color}" />
+                                            </Rectangle.Fill>
+                                        </Rectangle>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </Grid>
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Button Content="Add" Grid.Column="0" Margin="5" VerticalAlignment="Center" Width="75" Height="50" Click="Button_Click_Add"/>
+                <Button Content="Edit" Grid.Column="1" Margin="5" VerticalAlignment="Center" Width="75" Height="50" Click="Button_Click_Edit"/>
+                <Button Content="Delete" Grid.Column="2" Margin="5" VerticalAlignment="Center" Width="75" Height="50"  Click="Button_Click_Delete" />
+                <CheckBox Content="Shutter Open" Grid.Column="3" Foreground="White" Width="Auto" Height="Auto" HorizontalAlignment="Center" VerticalAlignment="Center" Command="{Binding ShutterCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Self}, Path=IsChecked}"/>
+            </Grid>
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Label Grid.Column="0" Content="Excitation" Foreground="White" HorizontalAlignment="Center"/>
+                <Label Grid.Column="1" Content="Dichroic" Foreground="White" HorizontalAlignment="Center"/>
+                <Label Grid.Column="2" Content="Emission" Foreground="White" HorizontalAlignment="Center"/>
+            </Grid>
+            <Grid Grid.Row="3" Height="Auto" Width="Auto" VerticalAlignment="Top">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid Grid.Column="0">
+                    <Ellipse Margin="5" VerticalAlignment="Center" Width="300" Height="300" Fill="#FFFFFFFF" Stroke="#FF000000"/>
+                    <RadioButton Content="Pos1"  IsChecked="{Binding Path=Excitation,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos1}"  Margin="0,-200,0,0" VerticalAlignment="Center" Width="50" Height="50" d:LayoutOverrides="HorizontalAlignment" Command="{Binding ExcitationCommand}" CommandParameter="Pos1"/>
+                    <RadioButton Content="Pos2"  IsChecked="{Binding Path=Excitation,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos2}"  Margin="145,-145,0,0" VerticalAlignment="Center" Width="50" Height="50" d:LayoutOverrides="HorizontalAlignment" Command="{Binding ExcitationCommand}" CommandParameter="Pos2"/>
+                    <RadioButton Content="Pos3" IsChecked="{Binding Path=Excitation,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos3}"  Margin="200,0,0,0" VerticalAlignment="Center" Width="50" Height="50" d:LayoutOverrides="HorizontalAlignment" Command="{Binding ExcitationCommand}" CommandParameter="Pos3"/>
+                    <RadioButton Content="Pos4"  IsChecked="{Binding Path=Excitation,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos4}"  Margin="145,145,0,0" VerticalAlignment="Center" Width="50" Height="50" d:LayoutOverrides="HorizontalAlignment" Command="{Binding ExcitationCommand}" CommandParameter="Pos4"/>
+                    <RadioButton Content="Pos5"  IsChecked="{Binding Path=Excitation,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos5}"  Margin="-0,200,0,0" VerticalAlignment="Center" Width="50" Height="50" d:LayoutOverrides="HorizontalAlignment" Command="{Binding ExcitationCommand}" CommandParameter="Pos5"/>
+                    <RadioButton Content="Pos6"  IsChecked="{Binding Path=Excitation,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos6}"  Margin="-145,145,0,0" VerticalAlignment="Center" Width="50" Height="50" d:LayoutOverrides="HorizontalAlignment" Command="{Binding ExcitationCommand}" CommandParameter="Pos6"/>
+                    <RadioButton Content="Pos7" IsChecked="{Binding Path=Excitation,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos7}"  Margin="-200,0,0,0" VerticalAlignment="Center" Width="50" Height="50" d:LayoutOverrides="HorizontalAlignment" Command="{Binding ExcitationCommand}" CommandParameter="Pos7"/>
+                    <RadioButton Content="Pos8"  IsChecked="{Binding Path=Excitation,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos8}"  Margin="-145,-145,0,0" VerticalAlignment="Center" Width="50" Height="50" d:LayoutOverrides="HorizontalAlignment" Command="{Binding ExcitationCommand}" CommandParameter="Pos8"/>
+                    <TextBlock Text="1" Margin="0,-125,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" Width="Auto" Height="Auto" />
+                    <TextBlock Text="2" Margin="85,-85,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" Width="Auto" Height="Auto" />
+                    <TextBlock Text="3" Margin="125,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" Width="Auto" Height="Auto" />
+                    <TextBlock Text="4" Margin="85,85,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" Width="Auto" Height="Auto" />
+                    <TextBlock Text="5" Margin="0,125,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" Width="Auto" Height="Auto" />
+                    <TextBlock Text="6" Margin="-85,85,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" Width="Auto" Height="Auto" />
+                    <TextBlock Text="7" Margin="-125,-0,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" Width="Auto" Height="Auto" />
+                    <TextBlock Text="8" Margin="-85,-85,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" Width="Auto" Height="Auto" />
+                </Grid>
+                <Grid Grid.Column="1">
+                    <Ellipse  Margin="5" VerticalAlignment="Center" Width="300" Height="300" Fill="#FFFFFFFF" Stroke="#FF000000"/>
+                    <RadioButton Content="Pos1"  IsChecked="{Binding Path=Dichroic,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos1}" Margin="0,-200,0,0" VerticalAlignment="Center" Width="50" Height="50" d:LayoutOverrides="HorizontalAlignment" Command="{Binding DichroicCommand}" CommandParameter="Pos1"/>
+                    <RadioButton Content="Pos2"  IsChecked="{Binding Path=Dichroic,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos2}" Margin="0,89,29,0" VerticalAlignment="Top" Width="50" Height="50" d:LayoutOverrides="HorizontalAlignment" HorizontalAlignment="Right"  Command="{Binding DichroicCommand}" CommandParameter="Pos2"/>
+                    <RadioButton Content="Pos3"  IsChecked="{Binding Path=Dichroic,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos3}" Margin="0,0,60.502,52.5" VerticalAlignment="Bottom" Width="50" Height="50" d:LayoutOverrides="HorizontalAlignment" HorizontalAlignment="Right" Command="{Binding DichroicCommand}" CommandParameter="Pos3" />
+                    <RadioButton Content="Pos4"  IsChecked="{Binding Path=Dichroic,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos4}" Margin="64,0,0,52.5" VerticalAlignment="Bottom" Width="50" Height="50" d:LayoutOverrides="HorizontalAlignment" HorizontalAlignment="Left" Command="{Binding DichroicCommand}" CommandParameter="Pos4" />
+                    <RadioButton Content="Pos5"  IsChecked="{Binding Path=Dichroic,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos5}" Margin="31,100.861,0,149.139" Width="50" d:LayoutOverrides="HorizontalAlignment" HorizontalAlignment="Left" Command="{Binding DichroicCommand}" CommandParameter="Pos5" />
+                    <TextBlock Text="1" Margin="0,-125,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" Width="Auto" Height="Auto" />
+                    <TextBlock Text="2" Margin="0,125.723,93,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="6.003" Height="13.277" />
+                    <TextBlock Text="3" Margin="0,0,117,100.861" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="6.003" Height="13.277" />
+                    <TextBlock Text="4" Margin="120,0,0,100.861" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="6.003" Height="13.277" />
+                    <TextBlock Text="5" Margin="87,125.723,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="6.003" Height="13.277" />
+                </Grid>
+                <Grid Grid.Column="2">
+                    <Ellipse  Margin="5" VerticalAlignment="Center" Width="300" Height="300" Fill="#FFFFFFFF" Stroke="#FF000000"/>
+                    <RadioButton Content="Pos1"  IsChecked="{Binding Path=Emission,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos1}"  Margin="0,-200,0,0" VerticalAlignment="Center" Width="50" Height="50" d:LayoutOverrides="HorizontalAlignment" Command="{Binding EmissionCommand}" CommandParameter="Pos1"/>
+                    <RadioButton Content="Pos2"  IsChecked="{Binding Path=Emission,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos2}"  Margin="145,-145,0,0" VerticalAlignment="Center" Width="50" Height="50" d:LayoutOverrides="HorizontalAlignment" Command="{Binding EmissionCommand}" CommandParameter="Pos2"/>
+                    <RadioButton Content="Pos3"  IsChecked="{Binding Path=Emission,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos3}"  Margin="200,0,0,0" VerticalAlignment="Center" Width="50" Height="50" d:LayoutOverrides="HorizontalAlignment" Command="{Binding EmissionCommand}" CommandParameter="Pos3"/>
+                    <RadioButton Content="Pos4"  IsChecked="{Binding Path=Emission,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos4}"  Margin="145,145,0,0" VerticalAlignment="Center" Width="50" Height="50" d:LayoutOverrides="HorizontalAlignment" Command="{Binding EmissionCommand}" CommandParameter="Pos4"/>
+                    <RadioButton Content="Pos5"  IsChecked="{Binding Path=Emission,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos5}"  Margin="-0,200,0,0" VerticalAlignment="Center" Width="50" Height="50" d:LayoutOverrides="HorizontalAlignment" Command="{Binding EmissionCommand}" CommandParameter="Pos5"/>
+                    <RadioButton Content="Pos6"  IsChecked="{Binding Path=Emission,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos6}"  Margin="-145,145,0,0" VerticalAlignment="Center" Width="50" Height="50" d:LayoutOverrides="HorizontalAlignment" Command="{Binding EmissionCommand}" CommandParameter="Pos6"/>
+                    <RadioButton Content="Pos7"  IsChecked="{Binding Path=Emission,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos7}"  Margin="-200,0,0,0" VerticalAlignment="Center" Width="50" Height="50" d:LayoutOverrides="HorizontalAlignment" Command="{Binding EmissionCommand}" CommandParameter="Pos7"/>
+                    <RadioButton Content="Pos8"  IsChecked="{Binding Path=Emission,Mode=TwoWay,Converter={StaticResource ebc},ConverterParameter=Pos8}"  Margin="-145,-145,0,0" VerticalAlignment="Center" Width="50" Height="50" d:LayoutOverrides="HorizontalAlignment" Command="{Binding EmissionCommand}" CommandParameter="Pos8"/>
+                    <TextBlock Text="1" Margin="0,-125,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" Width="Auto" Height="Auto" />
+                    <TextBlock Text="2" Margin="85,-85,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" Width="Auto" Height="Auto" />
+                    <TextBlock Text="3" Margin="125,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" Width="Auto" Height="Auto" />
+                    <TextBlock Text="4" Margin="85,85,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" Width="Auto" Height="Auto" />
+                    <TextBlock Text="5" Margin="0,125,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" Width="Auto" Height="Auto" />
+                    <TextBlock Text="6" Margin="-85,85,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" Width="Auto" Height="Auto" />
+                    <TextBlock Text="7" Margin="-125,-0,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" Width="Auto" Height="Auto" />
+                    <TextBlock Text="8" Margin="-85,-85,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" Width="Auto" Height="Auto" />
+                </Grid>
+
+            </Grid>
+
+            <Grid Grid.Row="4" Height="Auto" Width="Auto" VerticalAlignment="Top">
+                <StackPanel Orientation="Horizontal">
+                    <Button Name="zScan" Content="Z Scan"  Click="zScan_Click" Foreground="White" Margin="5"/>
+                <TextBlock Text="Center Position (mm)" Foreground="White" Margin="5"/>
+                <TextBox Name="centerPos" Width="100" Margin="5"/>
+                <TextBlock Text="Range (mm) around current position" Foreground="White" Margin="5"/>
+                <TextBox Name="scanRange" Width="100" Margin="5"/>
+                    <TextBlock Text="Iterations" Foreground="White" Margin="5"/>
+                    <TextBox Name="iterations" Width="100" Margin="5"/>
+                <Button Name="stopZScan" Content="Stop"  Click="stopZScan_Click" Foreground="White" Margin="5"/>
+            </StackPanel>
+            </Grid>
+        </Grid>
+
+</UserControl>

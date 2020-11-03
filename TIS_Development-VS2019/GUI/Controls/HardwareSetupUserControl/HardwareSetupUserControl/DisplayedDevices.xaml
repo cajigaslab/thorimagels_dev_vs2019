@@ -1,0 +1,116 @@
+﻿<Window x:Class="HardwareSetupUserControl.DisplayedDevices"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Displayed Devices"
+        Height="520"
+        Width="250"
+        ResizeMode="NoResize"
+        WindowStyle="ToolWindow"
+        WindowStartupLocation="CenterOwner"
+        Topmost="True">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid Background="#FF333333">
+        <DockPanel>
+            <Border  BorderBrush="White"
+                     DockPanel.Dock="Top"
+                     BorderThickness="1"
+                     Margin="5">
+                <StackPanel Margin="5">
+                    <CheckBox Content="Image Detector"
+                              IsChecked="{Binding Path=ImageDetector}"
+                              Margin="1" />
+                    <CheckBox Content="Stimulus Scanner"
+                              IsChecked="{Binding Path=BleachingScanner}"
+                              Margin="1" />
+                    <CheckBox Content="Stimulus SLM"
+                              IsChecked="{Binding BleachingSLM}"
+                              Margin="1" />
+                    <CheckBox Content="Control Unit"
+                              IsChecked="{Binding Path=ControlUnit}"
+                              Margin="1" />
+                    <CheckBox Content="PMT1"
+                              IsChecked="{Binding Path=PMT1}"
+                              Margin="1" />
+                    <CheckBox Content="PMT2"
+                              IsChecked="{Binding Path=PMT2}"
+                              Margin="1" />
+                    <CheckBox Content="PMT3"
+                              IsChecked="{Binding Path=PMT3}"
+                              Margin="1" />
+                    <CheckBox Content="PMT4"
+                              IsChecked="{Binding Path=PMT4}"
+                              Margin="1" />
+                    <CheckBox Content="Light Path"
+                              IsChecked="{Binding LightPath}"
+                              Margin="1" />
+                    <CheckBox Content="Shutter"
+                              IsChecked="{Binding Path=Shutter}"
+                              Margin="1" />
+                    <CheckBox Content="Objective Turret"
+                              IsChecked="{Binding ObjectiveTurret}"
+                              Margin="1" />
+                    <CheckBox Content="Z Stage"
+                              IsChecked="{Binding Path=ZStage}"
+                              Margin="1" />
+                    <CheckBox Content="Secondary Z Stage"
+                              IsChecked="{Binding Path=SecondaryZStage}"
+                              Margin="1" />
+                    <CheckBox Content="XY Stage"
+                              IsChecked="{Binding XYStage}"
+                              Margin="1" />
+                    <CheckBox Content="Power Regulator"
+                              IsChecked="{Binding Path=PowerRegulator}"
+                              Margin="1" />
+                    <CheckBox Content="Power Regulator 2"
+                              IsChecked="{Binding Path=PowerRegulator2}"
+                              Margin="1" />
+                    <CheckBox Content="Laser Source"
+                              IsChecked="{Binding LaserSource}"
+                              Margin="1" />
+                    <CheckBox Content="Beam Expander"
+                              IsChecked="{Binding Path=BeamExpander}"
+                              Margin="1" />
+                    <CheckBox Content="Beam Stabilizer"
+                              IsChecked="{Binding BeamStabilizer}"
+                              Margin="1" />
+                    <CheckBox Content="Pinhole Wheel"
+                              IsChecked="{Binding Path=PinholeWheel}"
+                              Margin="1" />
+                    <CheckBox Content="Spectrum Filter"
+                              IsChecked="{Binding Path=SpectrumFilter}"
+                              Margin="1" />
+                    <CheckBox Content="EPI Turret"
+                              IsChecked="{Binding Path=EpiTurret}"
+                              Margin="1" />
+                    <CheckBox Content="Lamp"
+                              IsChecked="{Binding Path=Lamp}"
+                              Margin="1" />
+                </StackPanel>
+            </Border>
+            <StackPanel Orientation="Horizontal"
+                        DockPanel.Dock="Bottom"
+                        HorizontalAlignment="Right">
+                <Button Name="btnOK"
+                        Content="OK"
+                        Width="75"
+                        Height="35"
+                        HorizontalAlignment="Right"
+                        Margin="1"
+                        Click="btnOK_Click" />
+                <Button Name="btnCancel"
+                        Content="Cancel"
+                        Width="75"
+                        Height="35"
+                        HorizontalAlignment="Right"
+                        Margin="1"
+                        Click="btnCancel_Click" />
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>

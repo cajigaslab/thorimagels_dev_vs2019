@@ -1,0 +1,40 @@
+﻿<?xml version="1.0"?>
+<CommandList>
+  <Command name="Capture" guid="30db4357-7508-46c9-84eb-3ca0900aa4c5" panel=".\Modules\ExperimentSettingsViewer.dll" description="">
+	  <Experiment value=""/>
+    <OutputPath value=""/>
+  </Command>
+  <Command name="Digital Switches" guid="" panel=".\Modules\DigitalOutputSwitches.dll" description="">
+    <DigiSwitch status="00000000" enabled="0" />
+  </Command>
+  <Command name="For" guid="" panel=".\Modules\ForLoop.dll" description="">
+    <ForEnd value="loop"/>
+    <Iterations value="1"/>
+  </Command>
+  <Command name="ForEnd" guid="" panel="" description="loop">
+  </Command>
+  <Command name="Run ImageJ Macro" guid="C1391459-132F-45ea-AE72-D7BEB2BD8086" panel=".\Modules\FijiLauncherPanel.dll" description="">
+    <Macro value="" />
+    <DataFolder value="" />
+    <FijiExe value="C:\Users\user\Documents\Fiji.app\fiji-win64.exe" />
+    <Headless value="1" />
+  </Command>
+  <Command name="Run Matlab Script" guid="b3f2f8a4-cf8f-4fce-a195-b163a3c20c75" panel=".\Modules\ScriptMatlab.dll" description="">
+    <MatlabMacro value=""/>
+    <MatlabDataFolderIsNotMostRecent value=""/>
+    <MatlabDataFolder value=""/>
+    <Asynchronous value="false"/>
+  </Command>
+  <Command name="Secondary Z Move" guid="" panel=".\Modules\ScriptZ2Move.dll" description="">
+    <Z2Move z2NewPos="0" doRelativeMove="0"/>
+  </Command>
+  <Command name="Wait" guid="" panel=".\Modules\ScriptWait.dll" description="">
+    <WaitTime value="0" />
+  </Command>
+    <Command name="XY Move" guid="" panel=".\Modules\ScriptXYMove.dll" description="">
+    <XYMove xNewPos="0" yNewPos="0" enableXMove="0" enableYMove="0" doRelativeXMove="0" doRelativeYMove="0"/>
+  </Command>
+  <Command name="Z Move" guid="" panel=".\Modules\ScriptZMove.dll" description="">
+    <ZMove zNewPos="0" doRelativeMove="0"/>
+  </Command>
+</CommandList>

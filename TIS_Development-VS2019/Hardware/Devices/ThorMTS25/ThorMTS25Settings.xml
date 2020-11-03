@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ThorMTS25ZSettings>
+
+  <Connection portID="59" baudRate="115200" address="1" />
+
+  <ZRangeConfig minMM="0"  maxMM="25"  threshold="20.0" invert="0" home="0"/>
+
+  <SleepAfterMove time_milliseconds="0" />
+
+</ThorMTS25ZSettings>

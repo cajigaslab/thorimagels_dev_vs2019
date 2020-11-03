@@ -1,0 +1,270 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{DE381DEA-1F87-460F-A775-7FAC1C9ECC01}</ProjectGuid>
+    <RootNamespace>RunSample</RootNamespace>
+    <SccProjectName>SAK</SccProjectName>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccProvider>SAK</SccProvider>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>11.0.61030.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\..\..\Tools\tiff-3.8.2\libtiff;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_HAS_TR1=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <OpenMPSupport>true</OpenMPSupport>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <CallingConvention>Cdecl</CallingConvention>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>CameraManager.lib;DeviceManager.lib;ImageManager.lib;ExperimentManager.lib;PincushionCorrection.lib;FlatField.lib;ThorDiskIO.lib;jpeg.lib;TileBuilder.lib;StatsManager.lib;ResourceManager.lib;HardwareCom.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)$(ProjectName).dll</OutputFile>
+      <AdditionalLibraryDirectories>..\..\..\..\Tools\IJGWin32\IJGWin32\$(Configuration);..\..\..\..\Hardware\Cameras\CameraManager\$(Configuration);..\..\..\..\Hardware\Devices\DeviceManager\$(Configuration);..\..\..\..\Common\ExperimentManager\$(Configuration);..\..\..\..\Common\ThorDiskIO\$(Configuration);..\..\..\..\Commands\ImageAnalysis\FlatField\$(Configuration);..\..\..\..\Commands\ImageAnalysis\PincushionCorrection\$(Configuration);..\..\..\..\Common\ImageManager\$(Configuration);..\..\..\..\GUI\Controls\TileBuilder\$(Configuration);..\..\..\..\Common\StatsManager\$(Configuration);..\..\..\..\Common\ResourceManager\$(Configuration);..\..\..\..\Common\HardwareCom\$(Configuration);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <TargetMachine>MachineX86</TargetMachine>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\..\..\Tools\tiff-3.8.2\libtiff;..\..\..\..\Tools\Intel IPP\intel64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_HAS_TR1=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <OpenMPSupport>true</OpenMPSupport>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CallingConvention>Cdecl</CallingConvention>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>CameraManager.lib;DeviceManager.lib;ImageManager.lib;ExperimentManager.lib;PincushionCorrection.lib;FlatField.lib;ThorDiskIO.lib;jpeg.lib;StatsManager.lib;ResourceManager.lib;ippi.lib;shlwapi.lib;HardwareCom.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)$(ProjectName).dll</OutputFile>
+      <AdditionalLibraryDirectories>..\..\..\..\Tools\IJGWin32\IJGWin32\x64\$(Configuration);..\..\..\..\Hardware\Cameras\CameraManager\x64\$(Configuration);..\..\..\..\Hardware\Devices\DeviceManager\x64\$(Configuration);..\..\..\..\Common\ExperimentManager\x64\$(Configuration);..\..\..\..\Common\ThorDiskIO\x64\$(Configuration);..\..\..\..\Commands\ImageAnalysis\FlatField\x64\$(Configuration);..\..\..\..\Commands\ImageAnalysis\PincushionCorrection\x64\$(Configuration);..\..\..\..\Common\ImageManager\x64\$(Configuration);..\..\..\..\Common\StatsManager\x64\$(Configuration);..\..\..\..\Common\ResourceManager\x64\$(Configuration);..\..\..\..\Common\HardwareCom\x64\$(Configuration);..\..\..\..\Tools\Intel IPP\intel64\lib;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <TargetMachine>MachineX64</TargetMachine>
+      <IgnoreSpecificDefaultLibraries>libcmtd.lib</IgnoreSpecificDefaultLibraries>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy $(TargetPath) $(ProjectDir)..\..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\Debug\Modules_Native</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>..\..\..\..\Tools\tiff-3.8.2\libtiff;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;DPSAPI_VERSION=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>Psapi.lib;CameraManager.lib;DeviceManager.lib;ImageManager.lib;ExperimentManager.lib;PincushionCorrection.lib;FlatField.lib;ThorDiskIO.lib;jpeg.lib;TileBuilder.lib;StatsManager.lib;ResourceManager.lib;HardwareCom.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\..\Tools\IJGWin32\IJGWin32\$(Configuration);..\..\..\..\Hardware\Cameras\CameraManager\$(Configuration);..\..\..\..\Hardware\Devices\DeviceManager\$(Configuration);..\..\..\..\Common\ExperimentManager\$(Configuration);..\..\..\..\Common\ThorDiskIO\$(Configuration);..\..\..\..\Commands\ImageAnalysis\FlatField\$(Configuration);..\..\..\..\Commands\ImageAnalysis\PincushionCorrection\$(Configuration);..\..\..\..\Common\ImageManager\$(Configuration);..\..\..\..\GUI\Controls\TileBuilder\$(Configuration);..\..\..\..\Common\StatsManager\$(Configuration);..\..\..\..\Common\ResourceManager\$(Configuration);..\..\..\..\Common\HardwareCom\$(Configuration);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Console</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>..\..\..\..\Tools\tiff-3.8.2\libtiff;..\..\..\..\Tools\Intel IPP\intel64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;DPSAPI_VERSION=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>Psapi.lib;CameraManager.lib;DeviceManager.lib;ImageManager.lib;ExperimentManager.lib;PincushionCorrection.lib;FlatField.lib;ThorDiskIO.lib;jpeg.lib;StatsManager.lib;ResourceManager.lib;ippi.lib;shlwapi.lib;HardwareCom.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\..\Tools\IJGWin32\IJGWin32\x64\$(Configuration);..\..\..\..\Hardware\Cameras\CameraManager\x64\$(Configuration);..\..\..\..\Hardware\Devices\DeviceManager\x64\$(Configuration);..\..\..\..\Common\ExperimentManager\x64\$(Configuration);..\..\..\..\Common\ThorDiskIO\x64\$(Configuration);..\..\..\..\Commands\ImageAnalysis\FlatField\x64\$(Configuration);..\..\..\..\Commands\ImageAnalysis\PincushionCorrection\x64\$(Configuration);..\..\..\..\Common\ImageManager\x64\$(Configuration);..\..\..\..\Common\StatsManager\x64\$(Configuration);..\..\..\..\Common\ResourceManager\x64\$(Configuration);..\..\..\..\Common\HardwareCom\x64\$(Configuration);..\..\..\..\Tools\Intel IPP\intel64\lib;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Console</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <TargetMachine>MachineX64</TargetMachine>
+      <IgnoreSpecificDefaultLibraries>libcmt.lib</IgnoreSpecificDefaultLibraries>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="AcquireBleaching.cpp" />
+    <ClCompile Include="AcquireFactory.cpp" />
+    <ClCompile Include="AcquireMultiWavelength.cpp" />
+    <ClCompile Include="AcquireSaveInfo.cpp" />
+    <ClCompile Include="AcquireSequence.cpp" />
+    <ClCompile Include="AcquireSingle.cpp" />
+    <ClCompile Include="AcquireTSeries.cpp" />
+    <ClCompile Include="AcquireTStream.cpp" />
+    <ClCompile Include="AcquireZStack.cpp" />
+    <ClCompile Include="AcquireHyperspectral.cpp" />
+    <ClCompile Include="AutoFocusHW.cpp" />
+    <ClCompile Include="AutoFocusHWandImage.cpp" />
+    <ClCompile Include="AutoFocusImage.cpp" />
+    <ClCompile Include="AutoFocusNone.cpp" />
+    <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="..\..\..\..\Common\HardwareXML\HardwareSetupXML.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="ImageCorrection.cpp" />
+    <ClCompile Include="Observer.cpp" />
+    <ClCompile Include="RunSample.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\ticpp\ticpp.cpp" />
+    <ClCompile Include="..\..\..\..\Tools\ticpp\tinystr.cpp" />
+    <ClCompile Include="..\..\..\..\Tools\ticpp\tinyxml.cpp" />
+    <ClCompile Include="..\..\..\..\Tools\ticpp\tinyxmlerror.cpp" />
+    <ClCompile Include="..\..\..\..\Tools\ticpp\tinyxmlparser.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AcquireBleaching.h" />
+    <ClInclude Include="AcquireFactory.h" />
+    <ClInclude Include="AcquireMultiWavelength.h" />
+    <ClInclude Include="AcquireSaveInfo.h" />
+    <ClInclude Include="AcquireSequence.h" />
+    <ClInclude Include="AcquireSingle.h" />
+    <ClInclude Include="AcquireTSeries.h" />
+    <ClInclude Include="AcquireTStream.h" />
+    <ClInclude Include="AcquireZStack.h" />
+    <ClInclude Include="AcquireHyperspectral.h" />
+    <ClInclude Include="AutoFocus.h" />
+    <ClInclude Include="AutoFocusHW.h" />
+    <ClInclude Include="AutoFocusHWandImage.h" />
+    <ClInclude Include="AutoFocusImage.h" />
+    <ClInclude Include="AutoFocusNone.h" />
+    <ClInclude Include="..\..\..\..\Common\Camera.h" />
+    <ClInclude Include="..\..\..\..\Common\Command.h" />
+    <ClInclude Include="..\..\..\..\Common\HardwareXML\HardwareSetupXML.h" />
+    <ClInclude Include="ImageCorrection.h" />
+    <ClInclude Include="Observer.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="RunSample.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="..\..\..\..\Tools\ticpp\ticpp.h" />
+    <ClInclude Include="..\..\..\..\Tools\ticpp\ticpprc.h" />
+    <ClInclude Include="..\..\..\..\Tools\tiff-3.8.2\libtiff\tiffio.h" />
+    <ClInclude Include="..\..\..\..\Tools\ticpp\tinystr.h" />
+    <ClInclude Include="..\..\..\..\Tools\ticpp\tinyxml.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RunSample.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram1.cd" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,163 @@
+<?xml version="1.0"?>
+<ApplicationSettings>
+  <SettingEditorXmlFiles maxSize="10240" />
+  <OMETIFFTag value="1" />
+  <TIFFCompressionEnable value="1" />
+  <FtpInformation location="" username="" password="" />
+  <AnalysisInformation workingdirectory="" filename="" />
+  <ZipInformation workingdirectory="" filename="" />
+  <SchedulerInformation username="" password="" />
+  <ZStage queryreference="0" />
+  <DisplayOptions>
+    <General>
+      <CenterScannersButton Visibility="Visible" />
+      <GrayscaleForSingleChannel value="1" />
+    </General>
+    <CaptureSetup saveSnapshots="0" snapshotExperimentName="Snapshot">
+      <ScannerView Visibility="Visible" location="0">
+        <CoarsePanel Visibility="Collapsed" />
+        <FieldSizePanel Visibility="Collapsed" />
+      </ScannerView>
+      <AreaView Visibility="Visible" location="1">
+        <ResolutionPresets>
+          <SquareResolutionPresets>
+            <Resolution width="128" height="128" />
+            <Resolution width="256" height="256" />
+            <Resolution width="512" height="512" />
+            <Resolution width="1024" height="1024" />
+            <Resolution width="2048" height="2048" />
+          </SquareResolutionPresets>
+          <RectangleResolutionPresets>
+            <Resolution width="512" height="256" />
+            <Resolution width="1024" height="512" />
+            <Resolution width="512" height="32" />
+            <Resolution width="1024" height="128" />
+          </RectangleResolutionPresets>
+          <LineResolutionPresets>
+            <Resolution width="128" height="1" />
+            <Resolution width="256" height="1" />
+            <Resolution width="512" height="1" />
+            <Resolution width="1024" height="1" />
+            <Resolution width="2048" height="1" />
+          </LineResolutionPresets>
+          <PolylineResolutionPresets>
+            <Resolution width="128" height="1" />
+            <Resolution width="256" height="1" />
+            <Resolution width="512" height="1" />
+            <Resolution width="1024" height="1" />
+            <Resolution width="2048" height="1" />
+          </PolylineResolutionPresets>
+          <KymographResolutionPresets>
+            <Resolution width="128" height="32" />
+            <Resolution width="256" height="32" />
+            <Resolution width="512" height="32" />
+            <Resolution width="1024" height="32" />
+            <Resolution width="2048" height="32" />
+          </KymographResolutionPresets>
+        </ResolutionPresets>
+        <ImageCorrectionControl Visibility="Visible" />
+      </AreaView>
+      <TwoWayCalibration Visibility="Collapsed" />
+      <BeamExpView Visibility="Collapsed" />
+      <BeamExp2View Visibility="Collapsed" />
+      <StatsTableSaveButtonView Visibility="Collapsed" />
+      <LightPathView Visibility="Visible" location="4" GGLightPathVisibility="Visible" GRLightPathVisibility="Visible" CameraLightPathVisibility="Visible" />
+      <BleachView Visibility="Visible" location="5">
+        <BleachScannerControl Visibility="Collapsed" />
+      </BleachView>
+      <ZView Visibility="Visible" Invert="0" location="2" zZeroVisibility="Visible" z2ZeroVisibility="Visible" InvertVisibility="Visible" />
+      <PowerView Visibility="Visible" location="3" />
+      <MCLSView Visibility="Visible" location="6" />
+      <PinholeView Visibility="Visible" location="8" />
+      <XYView Visibility="Hidden" SubColumnsMax="55" SubRowsMax="55" location="9" xZeroVisibility="Collapsed" yZeroVisibility="Collapsed" />
+      <CaptureOptionsView Visibility="Visible" location="10" />
+      <ROIStatsWindow left="0" top="0" width="480" height="120" reset="0" display="0" />
+      <LineProfileWindow left="100" top="100" width="300" height="300" reset="0" />
+      <ROIChartWindow left="0" top="0" width="400" height="300" legendF="1" legendC="15" fifo="30" cursorStatsEnable="True" reset="0" display="0" />
+      <EditBleachWindow left="0" top="0" width="400" height="300" reset="0" />
+      <PowerRampWindow left="300" top="300" reset="0" />
+      <MultiPanelView Visibility="Visible" />
+      <TDIView Visibility="Collapsed" />
+      <Pockels1 Visibility="Collapsed" />
+      <Pockels2 Visibility="Collapsed" />
+      <Pockels3 Visibility="Collapsed" />
+      <Pockels4 Visibility="Collapsed" />
+      <PowerReg Visibility="Collapsed" />
+      <TwoColumnDisplay enable="0" />
+      <MultiphotonView Visibility="Visible" location="7" mpFastSeq="Collapsed">
+        <SavedWavelengths>
+          <SavedWavelength wavelength="0" />
+          <SavedWavelength wavelength="0" />
+          <SavedWavelength wavelength="0" />
+          <SavedWavelength wavelength="0" />
+          <SavedWavelength wavelength="0" />
+          <SavedWavelength wavelength="0" />
+          <SavedWavelength wavelength="0" />
+          <SavedWavelength wavelength="0" />
+        </SavedWavelengths>
+      </MultiphotonView>
+      <KuriosFilterView Visibility="Visible" location="11" />
+      <CameraView Visibility="Visible" location="12" />
+    </CaptureSetup>
+    <RunSample>
+      <BleachingView Visibility="Visible" />
+      <XYView Visibility="Hidden" />
+      <FastZView Visibility="Collapsed" />
+    </RunSample>
+    <Review>
+      <DeepZoomView Visibility="Collapsed" />
+    </Review>
+    <OverlayManager showLineLength="0" showPolylineLength="0" />
+  </DisplayOptions>
+  <Runtime end="0" start="0" runTime="0" />
+  <KeyboardOptions>
+    <ZPlus ctrl="0" alt="1" shift="0" key="Up" />
+    <ZMinus ctrl="0" alt="1" shift="0" key="Down" />
+    <ZZero ctrl="0" alt="1" shift="0" key="Home" />
+    <ZStart ctrl="0" alt="1" shift="0" key="OemOpenBrackets" />
+    <ZStop ctrl="0" alt="1" shift="0" key="OemCloseBrackets" />
+    <XPlus ctrl="0" alt="0" shift="0" key="F10" />
+    <XMinus ctrl="0" alt="0" shift="0" key="F9" />
+    <XZero ctrl="0" alt="1" shift="0" key="F9" />
+    <YPlus ctrl="0" alt="0" shift="0" key="F12" />
+    <YMinus ctrl="0" alt="0" shift="0" key="F11" />
+    <YZero ctrl="0" alt="1" shift="0" key="F11" />
+    <PowerPlus0 ctrl="0" alt="1" shift="0" key="Left" />
+    <PowerMinus0 ctrl="0" alt="1" shift="0" key="Right" />
+    <PowerPlus1 ctrl="0" alt="1" shift="0" key="" />
+    <PowerMinus1 ctrl="0" alt="1" shift="0" key="" />
+    <PowerPlus2 ctrl="0" alt="1" shift="0" key="" />
+    <PowerMinus2 ctrl="0" alt="1" shift="0" key="" />
+    <PowerPlus3 ctrl="0" alt="1" shift="0" key="" />
+    <PowerMinus3 ctrl="0" alt="1" shift="0" key="" />
+    <Start ctrl="0" alt="0" shift="0" key="F5" />
+    <Snapshot ctrl="0" alt="0" shift="0" key="F6" />
+    <BleachNow ctrl="0" alt="0" shift="0" key="F8" />
+    <GGLightPath ctrl="0" alt="1" shift="0" key="g" />
+    <GRLightPath ctrl="0" alt="1" shift="0" key="r" />
+    <CamLightPath ctrl="0" alt="1" shift="0" key="c" />
+  </KeyboardOptions>
+  <RawFileOptions saveEnabledChannelsOnly="1" />
+  <ExperimentSaving generateUniqueNameWithoutAsking="0" />
+  <SampleCarrier>
+    <Carrier Name="Slide 75 x 25 mm" Type="Slide" Height="25" Width="75" Row="0" Col="0" Diameter="0" CenterToCenterX="0" CenterToCenterY="0" TopLeftCenterOffsetX="0" TopLeftCenterOffsetY="0" WellShape="Circle" WellWidth="0" WellHeight="0" />
+    <Carrier Name="Slide 75 x 38 mm" Type="Slide" Height="38" Width="75" Row="0" Col="0" Diameter="0" CenterToCenterX="0" CenterToCenterY="0" TopLeftCenterOffsetX="0" TopLeftCenterOffsetY="0" WellShape="Circle" WellWidth="0" WellHeight="0" />
+    <Carrier Name="Slide 76 x 26 mm" Type="Slide" Height="26" Width="76" Row="0" Col="0" Diameter="0" CenterToCenterX="0" CenterToCenterY="0" TopLeftCenterOffsetX="0" TopLeftCenterOffsetY="0" WellShape="Circle" WellWidth="0" WellHeight="0" />
+    <Carrier Name="Slide 48 x 28 mm" Type="Slide" Height="28" Width="75" Row="0" Col="0" Diameter="0" CenterToCenterX="0" CenterToCenterY="0" TopLeftCenterOffsetX="0" TopLeftCenterOffsetY="0" WellShape="Circle" WellWidth="0" WellHeight="0" />
+    <Carrier Name="Slide 46 x 27 mm" Type="Slide" Height="27" Width="46" Row="0" Col="0" Diameter="0" CenterToCenterX="0" CenterToCenterY="0" TopLeftCenterOffsetX="0" TopLeftCenterOffsetY="0" WellShape="Circle" WellWidth="0" WellHeight="0" />
+    <Carrier Name="Cover Slip 20 x 20 mm" Type="Slide" Height="20" Width="20" Row="0" Col="0" Diameter="0" CenterToCenterX="0" CenterToCenterY="0" TopLeftCenterOffsetX="0" TopLeftCenterOffsetY="0" WellShape="Circle" WellWidth="0" WellHeight="0" />
+    <Carrier Name="Cover Slip 50 x 50 mm" Type="Slide" Height="50" Width="50" Row="0" Col="0" Diameter="0" CenterToCenterX="0" CenterToCenterY="0" TopLeftCenterOffsetX="0" TopLeftCenterOffsetY="0" WellShape="Circle" WellWidth="0" WellHeight="0" />
+    <Carrier Name="6 Well Plate" Type="Multiwell" Height="85.5" Width="127.5" Row="2" Col="3" Diameter="35" CenterToCenterX="39.24" CenterToCenterY="39.24" TopLeftCenterOffsetX="24.55" TopLeftCenterOffsetY="23.05" WellShape="Circle" WellWidth="0" WellHeight="0" />
+    <Carrier Name="24 Well Plate" Type="Multiwell" Height="85.5" Width="127.5" Row="4" Col="6" Diameter="15.5" CenterToCenterX="19.3" CenterToCenterY="19.3" TopLeftCenterOffsetX="17.05" TopLeftCenterOffsetY="13.67" WellShape="Circle" WellWidth="0" WellHeight="0" />
+    <Carrier Name="96 Well Plate" Type="Multiwell" Height="85.5" Width="127.5" Row="8" Col="12" Diameter="6.35" CenterToCenterX="8.99" CenterToCenterY="8.99" TopLeftCenterOffsetX="14.38" TopLeftCenterOffsetY="11.24" WellShape="Circle" WellWidth="0" WellHeight="0" />
+    <Carrier Name="384 Well Plate" Type="Multiwell" Height="85.5" Width="127.5" Row="16" Col="24" Diameter="3" CenterToCenterX="4.5" CenterToCenterY="4.5" TopLeftCenterOffsetX="12.13" TopLeftCenterOffsetY="9" WellShape="Circle" WellWidth="0" WellHeight="0" />
+    <Carrier Name="1536 Well Plate" Type="Multiwell" Height="85.5" Width="127.5" Row="32" Col="48" Diameter="1.7" CenterToCenterX="2.25" CenterToCenterY="2.25" TopLeftCenterOffsetX="10.96" TopLeftCenterOffsetY="7.84" WellShape="Circle" WellWidth="0" WellHeight="0" />
+    <Carrier Name="C4SH01 4 Slide Carrier" Type="Multislide" Height="85.5" Width="127.6" Row="1" Col="4" Diameter="0" CenterToCenterX="27.2" CenterToCenterY="0" TopLeftCenterOffsetX="23.1" TopLeftCenterOffsetY="42.75" WellShape="Rectangle" WellWidth="75" WellHeight="25" />
+    <Carrier Name="MLS203P10 4 Slide Carrier" Type="Multislide" Height="130.3" Width="170.3" Row="1" Col="4" Diameter="0" CenterToCenterX="28.5" CenterToCenterY="0" TopLeftCenterOffsetX="40.65" TopLeftCenterOffsetY="65.15" WellShape="Rectangle" WellWidth="75" WellHeight="25" />
+    <Carrier Name="Clath Slide" Type="Multiwell" Height="25" Width="70" Row="6" Col="2" Diameter="0" CenterToCenterX="30.463" CenterToCenterY="3.271" TopLeftCenterOffsetX="21.655" TopLeftCenterOffsetY="3.3425" WellShape="Rectangle" WellWidth="26.226" WellHeight="2.141" />
+    <Carrier Name="2 Chamber CoverSlip" Type="Multiwell" Height="16" Width="46" Row="1" Col="2" Diameter="0" CenterToCenterX="25" CenterToCenterY="0" TopLeftCenterOffsetX="10.05" TopLeftCenterOffsetY="8" WellShape="Rectangle" WellWidth="21" WellHeight="16" />
+    <Carrier Name="8 Chamber CoverSlip" Type="Multiwell" Height="23" Width="52" Row="2" Col="4" Diameter="0" CenterToCenterX="12.5" CenterToCenterY="10.45" TopLeftCenterOffsetX="7.25" TopLeftCenterOffsetY="6.225" WellShape="Rectangle" WellWidth="10.5" WellHeight="8.45" />
+    <Carrier Name="Petri Dish 100mm" Type="PetriDish" Height="0" Width="0" Row="1" Col="1" Diameter="100" CenterToCenterX="0" CenterToCenterY="0" TopLeftCenterOffsetX="0" TopLeftCenterOffsetY="0" WellShape="Circle" WellWidth="0" WellHeight="0" />
+    <Carrier Name="Petri Dish 60mm" Type="PetriDish" Height="0" Width="0" Row="1" Col="1" Diameter="60" CenterToCenterX="0" CenterToCenterY="0" TopLeftCenterOffsetX="0" TopLeftCenterOffsetY="0" WellShape="Circle" WellWidth="0" WellHeight="0" />
+  </SampleCarrier>
+</ApplicationSettings>

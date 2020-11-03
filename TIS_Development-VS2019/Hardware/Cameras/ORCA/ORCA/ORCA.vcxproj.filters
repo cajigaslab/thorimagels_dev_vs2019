@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GetSetParam.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ORCA.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\access_image\access_image.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\attach_imagebuf\attach_imagebuf.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\attach_metadatabuf\attach_metadatabuf.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\binning_subarray\binning_subarray.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\misc\common.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\control_calibration\control_calibration.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\copymetadata\copymetadata.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\misc\dyndcam4.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\framebundle\framebundle.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\imageproc_option\imageproc_option.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\init_uninit\init_uninit.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\live_average\live_average.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\open_show_modelinfo\open_show_modelinfo.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\propertylist\propertylist.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\misc\qthread.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\recording\recording.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\setdata_lut\setdata_lut.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\setdata_region\setdata_region.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\software_trigger\software_trigger.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\splitview\splitview.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\samples\cpp\unpack_mono12\unpack_mono12.cpp">
+      <Filter>Sample Code</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\Common\Camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\inc\dcamapi4.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Tools\Hamamatsu\dcamsdk4\inc\dcamprop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ORCA.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{1cd847d6-1599-4891-a4ca-4d4de3f0b040}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{22b58eee-e4ed-4ce2-b865-fc7b8c567b7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{b1ee4b33-f63e-47bb-9e03-e849905a1078}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sample Code">
+      <UniqueIdentifier>{b4fd1166-97ba-40bf-9c5c-078ee71a70d9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ORCA.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<PinholeStepperSettings>
+
+  <Connection portID="24" baudRate="9600" address="1"/>
+
+  <PinholeLoc value="6732" />
+  <PinholeLoc value="7232" />
+  <PinholeLoc value="7732" />
+  <PinholeLoc value="8232" />
+  <PinholeLoc value="9232" />
+  <PinholeLoc value="9732" />
+  <PinholeLoc value="232" />
+  <PinholeLoc value="732" />
+  <PinholeLoc value="1732" />
+  <PinholeLoc value="2232" />
+  <PinholeLoc value="2732" />
+  <PinholeLoc value="3232" />
+  <PinholeLoc value="4232" />
+  <PinholeLoc value="4732" />
+  <PinholeLoc value="5232" />
+  <PinholeLoc value="5732" />
+  
+</PinholeStepperSettings>

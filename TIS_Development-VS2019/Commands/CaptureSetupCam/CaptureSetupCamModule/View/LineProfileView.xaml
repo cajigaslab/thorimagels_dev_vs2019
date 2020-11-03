@@ -1,0 +1,22 @@
+﻿<Window x:Class="CaptureSetupDll.ViewModel.LineProfileView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:lp="clr-namespace:LineProfileControl;assembly=LineProfileControl"   
+    Height="400" Width="500" Title="LineProfile" WindowStartupLocation="Manual" Top="0" Left="0"
+    WindowStyle="ToolWindow" 
+    ResizeMode="NoResize" 
+    SizeToContent="WidthAndHeight"
+    Topmost="True"
+    HorizontalAlignment="Left">
+    <Grid>  
+        <StackPanel Orientation="Vertical">
+            <lp:LineProfile Name="lineProfile"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Label Content="Line Width"/>
+                <TextBox Name="txtLineWidth" Text="1" Width="30"/>
+                <Button Name="btnLineWidth" Content="Set" Width="50" Click="btnLineWidth_Click" />
+                <Button Name="btnClose" Content="Close" Width="50" Click="btnClose_Click" />                
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

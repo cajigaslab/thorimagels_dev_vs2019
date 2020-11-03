@@ -1,0 +1,192 @@
+﻿<Window x:Class="RealTimeLineChart.ViewModel.EditSamplingDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:validator="clr-namespace:RealTimeLineChart.InputValidation"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
+        Title="Sampling"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <ResourceDictionary>
+            <validator:DoubleCultureConverter x:Key="doubleCultureConverter" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="0,0,0,0"
+                        Background="#FF4B4B4B">
+                <Label HorizontalAlignment="Center"
+                       HorizontalContentAlignment="Center"
+                       Content="Mode"
+                       Width="120"></Label>
+                <Label HorizontalAlignment="Center"
+                       HorizontalContentAlignment="Center"
+                       Content="Sampling"
+                       Width="160"></Label>
+            </StackPanel>
+            <StackPanel>
+                <StackPanel Orientation="Horizontal"
+                            Margin="10,5,0,0">
+                    <Label Content="Trigger Mode"
+                           Width="120"
+                           HorizontalContentAlignment="Left" />
+                    <ComboBox Name="cbTriggerMode"
+                              Width="160"
+                              SelectedIndex="{Binding Path=TriggerMode}">
+                        <ComboBoxItem Content="Free Run" />
+                        <ComboBoxItem Content="HW Trigger Single" />
+                        <ComboBoxItem Content="HW Trigger Retriggerable" />
+                        <ComboBoxItem Content="HW Synchronizable" />
+                    </ComboBox>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal"
+                            Margin="10,3,0,0">
+                    <Label Content="Sampling Rate"
+                           Width="120"
+                           HorizontalContentAlignment="Left" />
+                    <ComboBox Name="cbSampleRate"
+                              Width="160"
+                              SelectedIndex="{Binding Path=SampleRate}"
+                              ItemsSource="{Binding SampleRateList}">
+                    </ComboBox>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal"
+                            Margin="10,3,0,0"
+                            ToolTip="Finite time for capture; 0 means contineous. ">
+                    <Label Content="Sampling Duration"
+                           Width="120"
+                           HorizontalContentAlignment="Left" />
+                    <TextBox Name="DurationTxBox"
+                             Height="24"
+                             Width="75"
+                             validator:Validation.MinValue="0.0"
+                             validator:Validation.ValidationType="{x:Type system:Double}"
+                             validator:Validation.NoEmptyValue="True"
+                             Text="{Binding Path=SamplingDuration, Converter={StaticResource doubleCultureConverter}, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text">
+                    </TextBox>
+                    <Button Width="30"
+                            Content="&#x2713;">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused,ElementName=DurationTxBox}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Label Content="[sec]" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal"
+                            Margin="10,3,0,0"
+                            ToolTip="Voltage threshold set at selected analog channel for saving or triggering,&#xa;always true if digital is selected instead. ">
+                    <Label Content="Stimulus Limit"
+                           VerticalContentAlignment="Center"
+                           Width="120"
+                           HorizontalContentAlignment="Left" />
+                    <TextBox Name="LimitTxBox"
+                             Width="75"
+                             Height="24"
+                             validator:Validation.ValidationType="{x:Type system:Double}"
+                             validator:Validation.NoEmptyValue="True"
+                             Text="{Binding Path=StimulusLimit, Converter={StaticResource doubleCultureConverter}, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
+                    <Button Width="30"
+                            Content="&#x2713;">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused,ElementName=LimitTxBox}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Label Content="[V]"
+                           VerticalContentAlignment="Center" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Background="#FF4B4B4B"
+                        Margin="0,5,0,5">
+                <Label HorizontalAlignment="Center"
+                       HorizontalContentAlignment="Left"
+                       Content="Save  Option"
+                       Width="360"
+                       Margin="10,0,0,0"></Label>
+            </StackPanel>
+            <StackPanel VerticalAlignment="Center"
+                        Margin="0,0,0,10">
+                <StackPanel Orientation="Horizontal"
+                            Margin="10,0,0,0">
+                    <Label Content="File Path"
+                           VerticalContentAlignment="Center"
+                           Width="120"
+                           HorizontalContentAlignment="Left" />
+                    <TextBox Width="160"
+                             Text="{Binding Path=SavePath}"
+                             Height="24" />
+                    <Button x:Name="btnSetSavePath"
+                            Content="Browse"
+                            Margin="1"
+                            Width="65"
+                            Height="20"
+                            Command="{Binding SetSavePathCommand}">
+                    </Button>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal"
+                            Margin="10,0,0,0">
+                    <Label Content="File Name"
+                           VerticalContentAlignment="Center"
+                           Width="120"
+                           HorizontalContentAlignment="Left" />
+                    <TextBox Name="fileName"
+                             Width="160"
+                             Text="{Binding Path=SaveName}"
+                             Height="24" />
+                    <Button Width="30"
+                            Content="&#x2713;">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused,ElementName=fileName}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Margin="1">
+                <Button Content="OK"
+                        Width="75"
+                        Height="30"
+                        Name="btnOK"
+                        Click="btnOK_Click" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

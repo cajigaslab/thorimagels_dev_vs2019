@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns:dm0="http://schemas.microsoft.com/VisualStudio/2008/DslTools/Core" xmlns:dm1="http://schemas.microsoft.com/dsltools/Kernel" xmlns:dm2="http://schemas.microsoft.com/dsltools/Component" xmlns:dm3="http://schemas.microsoft.com/dsltools/UseCase" xmlns:dm4="http://schemas.microsoft.com/dsltools/Activity" xmlns:dm5="http://schemas.microsoft.com/dsltools/Interaction" xmlns:dm6="http://schemas.microsoft.com/dsltools/UmlModelLibrary" xmlns:dm7="http://schemas.microsoft.com/dsltools/UmlDiagrams" xmlns:dm8="http://schemas.microsoft.com/dsltools/LogicalClassDesigner"
+  dslVersion="1.0.0.0"
+  Id="9097611d-6c51-489a-958d-544781856f8a"
+  name="CaptureSetupDll"
+  visibility="Private" xmlns="http://schemas.microsoft.com/dsltools/ModelStore">
+  <referencesInternal>
+    <reference
+      Id="091b77f6-234d-4460-8b11-a260a9ae896b"
+      handle="viewcode://./CodeSchema_Namespace?Namespace%3DCaptureSetupDll"
+      tag="ViewCode" />
+  </referencesInternal>
+  <packagedElements>
+    <packageHasNamedElement>
+      <packageMoniker
+        Id="6cf8e538-6726-4550-9226-9ef6e46821ca"
+        LastKnownName="ViewModel"
+        LastKnownLocation="Package1_1136.uml" />
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <packageMoniker
+        Id="27d1d7c8-3476-40b3-a56a-186ed1e6eaa9"
+        LastKnownName="View"
+        LastKnownLocation="Package_1142.uml" />
+    </packageHasNamedElement>
+    <packageHasNamedElement>
+      <packageMoniker
+        Id="e1cd6c4a-66cd-447f-9c60-70cc7aee48f9"
+        LastKnownName="Model"
+        LastKnownLocation="Package6_1143.uml" />
+    </packageHasNamedElement>
+  </packagedElements>
+</package>

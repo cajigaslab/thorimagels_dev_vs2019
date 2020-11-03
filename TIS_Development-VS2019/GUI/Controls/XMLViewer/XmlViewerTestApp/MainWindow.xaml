@@ -1,0 +1,12 @@
+﻿<Window x:Class="XmlViewerTestApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:xv="clr-namespace:XMLViewer;assembly=XMLViewer"
+        Title="MainWindow"
+        Height="350"
+        Width="525">
+    <Grid>
+        <xv:Viewer Name="xmlView">
+        </xv:Viewer>
+    </Grid>
+</Window>

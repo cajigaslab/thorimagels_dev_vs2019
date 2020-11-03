@@ -1,0 +1,239 @@
+﻿<UserControl x:Class="CaptureSetupDll.MainWindow"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:View="clr-namespace:CaptureSetupDll.View"
+             xmlns:local="clr-namespace:CaptureSetupDll"
+             xmlns:ViewModel="clr-namespace:CaptureSetupDll.ViewModel"
+             xmlns:ts="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+             Name="mwUserControl">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <DataTemplate DataType="{x:Type ViewModel:CaptureSetupViewModel}">
+                <ListView SelectedIndex="{Binding ViewType}" />
+            </DataTemplate>
+            <local:ViewTypeToVisibilityConverter x:Key="ViewTypeConverter" />
+            <ts:BooleanToVisibilityConverter x:Key="VisibilityOfBool" />
+            <x:StaticExtension Member="ts:ResourceManagerCS.Instance" x:Key="ResourceManagerCS"/>
+
+            <KeyBinding x:Key="zPlus"
+                        Command="{Binding Path=zPosPlusCommand}"
+                        Modifiers="{Binding Path=ZPosPlusModifier}"
+                        Key="{Binding Path=ZPosPlusKey}" />
+            <KeyBinding  x:Key="zMinus"
+                         Command="{Binding Path=zPosMinusCommand}"
+                         Modifiers="{Binding Path=ZPosMinusModifier}"
+                         Key="{Binding Path=ZPosMinusKey}" />
+            <KeyBinding  x:Key="zZero"
+                         Command="{Binding Path=SetZZeroCommand}"
+                         Modifiers="{Binding Path=ZZeroModifier}"
+                         Key="{Binding Path=ZZeroKey}" />
+            <KeyBinding  x:Key="zStart"
+                         Command="{Binding Path=SetZScanStartCommand}"
+                         Modifiers="{Binding Path=ZStartModifier}"
+                         Key="{Binding Path=ZStartKey}" />
+            <KeyBinding  x:Key="zStop"
+                         Command="{Binding Path=SetZScanStopCommand}"
+                         Modifiers="{Binding Path=ZStopModifier}"
+                         Key="{Binding Path=ZStopKey}" />
+            <KeyBinding x:Key="z2Plus"
+                        Command="{Binding Path=z2PosPlusCommand}"
+                        Modifiers="{Binding Path=Z2PosPlusModifier}"
+                        Key="{Binding Path=Z2PosPlusKey}" />
+            <KeyBinding  x:Key="z2Minus"
+                         Command="{Binding Path=z2PosMinusCommand}"
+                         Modifiers="{Binding Path=Z2PosMinusModifier}"
+                         Key="{Binding Path=Z2PosMinusKey}" />
+            <KeyBinding  x:Key="z2Zero"
+                         Command="{Binding Path=SetZ2ZeroCommand}"
+                         Modifiers="{Binding Path=Z2ZeroModifier}"
+                         Key="{Binding Path=Z2ZeroKey}" />
+            <KeyBinding  x:Key="xPlus"
+                         Command="{Binding Path=XPosPlusCommand}"
+                         Modifiers="{Binding Path=XPlusModifier}"
+                         Key="{Binding Path=XPlusKey}" />
+            <KeyBinding  x:Key="xMinus"
+                         Command="{Binding Path=XPosMinusCommand}"
+                         Modifiers="{Binding Path=XMinusModifier}"
+                         Key="{Binding Path=XMinusKey}" />
+            <KeyBinding  x:Key="xZero"
+                         Command="{Binding Path=SetXZeroCommand}"
+                         Modifiers="{Binding Path=XZeroModifier}"
+                         Key="{Binding Path=XZeroKey}" />
+            <KeyBinding  x:Key="yPlus"
+                         Command="{Binding Path=YPosPlusCommand}"
+                         Modifiers="{Binding Path=YPlusModifier}"
+                         Key="{Binding Path=YPlusKey}" />
+            <KeyBinding  x:Key="yMinus"
+                         Command="{Binding Path=YPosMinusCommand}"
+                         Modifiers="{Binding Path=YMinusModifier}"
+                         Key="{Binding Path=YMinusKey}" />
+            <KeyBinding  x:Key="yZero"
+                         Command="{Binding Path=SetYZeroCommand}"
+                         Modifiers="{Binding Path=YZeroModifier}"
+                         Key="{Binding Path=YZeroKey}" />
+            <KeyBinding  x:Key="powerPlus0"
+                         Command="{Binding Path=PowerPlusCommand}"
+                         CommandParameter="0"
+                         Modifiers="{Binding Path=PowerPlusModifier0}"
+                         Key="{Binding Path=PowerPlusKey0}" />
+            <KeyBinding  x:Key="powerPlus1"
+                         Command="{Binding Path=PowerPlusCommand}"
+                         CommandParameter="1"
+                         Modifiers="{Binding Path=PowerPlusModifier1}"
+                         Key="{Binding Path=PowerPlusKey1}" />
+            <KeyBinding  x:Key="powerPlus2"
+                         Command="{Binding Path=PowerPlusCommand}"
+                         CommandParameter="2"
+                         Modifiers="{Binding Path=PowerPlusModifier2}"
+                         Key="{Binding Path=PowerPlusKey2}" />
+            <KeyBinding  x:Key="powerPlus3"
+                         Command="{Binding Path=PowerPlusCommand}"
+                         CommandParameter="3"
+                         Modifiers="{Binding Path=PowerPlusModifier3}"
+                         Key="{Binding Path=PowerPlusKey3}" />
+            <KeyBinding  x:Key="powerPlusReg"
+                         Command="{Binding Path=PowerPlusCommand}"
+                         CommandParameter="4"
+                         Modifiers="{Binding Path=PowerPlusModifierReg}"
+                         Key="{Binding Path=PowerPlusKeyReg}" />
+            <KeyBinding  x:Key="powerMinus0"
+                         Command="{Binding Path=PowerMinusCommand}"
+                         CommandParameter="0"
+                         Modifiers="{Binding Path=PowerMinusModifier0}"
+                         Key="{Binding Path=PowerMinusKey0}" />
+            <KeyBinding  x:Key="powerMinus1"
+                         Command="{Binding Path=PowerMinusCommand}"
+                         CommandParameter="1"
+                         Modifiers="{Binding Path=PowerMinusModifier1}"
+                         Key="{Binding Path=PowerMinusKey1}" />
+            <KeyBinding  x:Key="powerMinus2"
+                         Command="{Binding Path=PowerMinusCommand}"
+                         CommandParameter="2"
+                         Modifiers="{Binding Path=PowerMinusModifier2}"
+                         Key="{Binding Path=PowerMinusKey2}" />
+            <KeyBinding  x:Key="powerMinus3"
+                         Command="{Binding Path=PowerMinusCommand}"
+                         CommandParameter="3"
+                         Modifiers="{Binding Path=PowerMinusModifier3}"
+                         Key="{Binding Path=PowerMinusKey3}" />
+            <KeyBinding  x:Key="powerMinusReg"
+                         Command="{Binding Path=PowerMinusCommand}"
+                         CommandParameter="4"
+                         Modifiers="{Binding Path=PowerMinusModifierReg}"
+                         Key="{Binding Path=PowerMinusKeyReg}" />
+            <KeyBinding  x:Key="start"
+                         Command="{Binding Path=StartCommand}"
+                         Modifiers="{Binding Path=StartModifier}"
+                         Key="{Binding Path=StartKey}" />
+            <KeyBinding  x:Key="snapshot"
+                         Command="{Binding Path=SnapshotCommand}"
+                         Modifiers="{Binding Path=SnapshotModifier}"
+                         Key="{Binding Path=SnapshotKey}" />
+            <KeyBinding  x:Key="bleachNow"
+                         Command="{Binding Path=BleachNowCommand}"
+                         Modifiers="{Binding Path=BleachNowModifier}"
+                         Key="{Binding Path=BleachNowKey}" />
+            <KeyBinding  x:Key="ggLightPath"
+                         Command="{Binding Path=LightPathSwitch}"
+                         CommandParameter="GG_Flip"
+                         Modifiers="{Binding Path=GGLightPathModifier}"
+                         Key="{Binding Path=GGLightPathKey}" />
+            <KeyBinding  x:Key="grLightPath"
+                         Command="{Binding Path=LightPathSwitch}"
+                         CommandParameter="GR_Flip"
+                         Modifiers="{Binding Path=GRLightPathModifier}"
+                         Key="{Binding Path=GRLightPathKey}" />
+            <KeyBinding  x:Key="camLightPath"
+                         Command="{Binding Path=LightPathSwitch}"
+                         CommandParameter="CAM_Flip"
+                         Modifiers="{Binding Path=CamLightPathModifier}"
+                         Key="{Binding Path=CamLightPathKey}" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <UserControl.InputBindings>
+        <StaticResource ResourceKey="zPlus" />
+        <StaticResource ResourceKey="zMinus" />
+        <StaticResource ResourceKey="zZero" />
+        <StaticResource ResourceKey="zStart" />
+        <StaticResource ResourceKey="zStop" />
+        <StaticResource ResourceKey="xPlus" />
+        <StaticResource ResourceKey="xMinus" />
+        <StaticResource ResourceKey="xZero" />
+        <StaticResource ResourceKey="xPlus" />
+        <StaticResource ResourceKey="xMinus" />
+        <StaticResource ResourceKey="xZero" />
+        <StaticResource ResourceKey="yPlus" />
+        <StaticResource ResourceKey="yMinus" />
+        <StaticResource ResourceKey="yZero" />
+        <StaticResource ResourceKey="powerPlus0" />
+        <StaticResource ResourceKey="powerMinus0" />
+        <StaticResource ResourceKey="powerPlus1" />
+        <StaticResource ResourceKey="powerMinus1" />
+        <StaticResource ResourceKey="powerPlus2" />
+        <StaticResource ResourceKey="powerMinus2" />
+        <StaticResource ResourceKey="powerPlus3" />
+        <StaticResource ResourceKey="powerMinus3" />
+        <StaticResource ResourceKey="powerPlusReg" />
+        <StaticResource ResourceKey="powerMinusReg" />
+        <StaticResource ResourceKey="start" />
+        <StaticResource ResourceKey="snapshot" />
+        <StaticResource ResourceKey="bleachNow" />
+        <StaticResource ResourceKey="ggLightPath" />
+        <StaticResource ResourceKey="grLightPath" />
+        <StaticResource ResourceKey="camLightPath" />
+    </UserControl.InputBindings>
+    <Grid Name="mainGrid"
+          Margin="1"
+          Background="#FF333333">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Border VerticalAlignment="Top"
+                Grid.Column="0">
+            <Border.LayoutTransform>
+                <ScaleTransform ScaleX="{Binding Path=PanelsScale, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
+            </Border.LayoutTransform>
+            <View:MasterView x:Name="MasterView"
+                             Margin="1" />
+        </Border>
+        <Border Name="ImageViewBorder"
+                VerticalAlignment="Top"
+                Grid.Column="1"
+                Visibility="{Binding Path=ImagerViewVis, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+            <Grid>
+                <ScrollViewer Name="scrollViewImage"
+                              VerticalScrollBarVisibility="{Binding Path=IVScrollbarVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                              VerticalAlignment="Top"
+                              Margin="1"
+                              ScrollChanged="scrollViewImage_ScrollChanged"
+                              Visibility="{Binding Path=ViewType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource ViewTypeConverter}, ConverterParameter=0}">
+                    <StackPanel Height="{Binding Path=IVScrollBarHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        <View:ImageView x:Name="imageView"
+                                        Grid.Column="1" />
+                    </StackPanel>
+                </ScrollViewer>
+                <StackPanel Name="spVolume"
+                            Visibility="{Binding Path=ViewType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource ViewTypeConverter}, ConverterParameter=1}">
+                    <View:VolumeControlView x:Name="volumeView"
+                                            Grid.Column="1"
+                                            Margin="1" />
+                </StackPanel>
+                <StackPanel Name="spTilesPreview"
+                            Visibility="{Binding Path=ViewType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource ViewTypeConverter}, ConverterParameter=2}">
+                </StackPanel>
+            </Grid>
+        </Border>
+        <Border Grid.Column="2"
+                Visibility="{Binding Source={StaticResource ResourceManagerCS}, Path=TabletModeEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource VisibilityOfBool}, ConverterParameter=true}">
+            <View:ToolBarView x:Name="toolBarView"/>
+        </Border>
+    </Grid>
+</UserControl>

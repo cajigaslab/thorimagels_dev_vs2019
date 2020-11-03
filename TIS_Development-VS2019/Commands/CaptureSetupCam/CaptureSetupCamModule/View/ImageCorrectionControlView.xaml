@@ -1,0 +1,51 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.ImageCorrectionControlView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:View="clr-namespace:CaptureSetupDll.View" xmlns:ViewModel="clr-namespace:CaptureSetupDll.ViewModel"
+        Height="Auto" Width="310">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <DataTemplate DataType="{x:Type ViewModel:LiveImageViewModel}" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="..\Styles\Button.xaml" />
+                <ResourceDictionary Source="..\Styles\tooltip.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel>
+            <StackPanel Orientation="Vertical" Margin="5">
+                <CheckBox Content="Enable Pincushion Correction" Foreground="White" Margin="5"
+                        IsChecked="{Binding Path=EnablePincushionCorrection, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="Coefficient1" Foreground="White" />
+                        <TextBox Width="50" Text="{Binding Path=Coeff1, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="Coefficient3" Foreground="White" />
+                        <TextBox Width="50" Text="{Binding Path=Coeff3, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="Coefficient2" Foreground="White" />
+                        <TextBox Width="50" Text="{Binding Path=Coeff2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Margin="5">
+                <CheckBox Content="Enable Background Subtraction" Foreground="White" IsChecked="{Binding Path=EnableBackgroundSubtraction, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <StackPanel Orientation="Horizontal" Margin="5">
+                    <TextBox Text="{Binding Path=PathBackgroundSubtraction, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="200" ToolTip="{Binding Path=PathBackgroundSubtraction, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <Button Content="Select" Width="50" Command="{Binding Path=SelectBackgroundCommand}"/>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Margin="5">
+                <CheckBox Content="Enable Flatfielding" Foreground="White" IsChecked="{Binding Path=EnableFlatField, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <StackPanel Orientation="Horizontal" Margin="5">
+                    <TextBox Text="{Binding Path=PathFlatField, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="200" ToolTip="{Binding Path=PathFlatField, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Button Content="Select" Width="50" Command="{Binding Path=SelectFlatFieldCommand}"/>
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

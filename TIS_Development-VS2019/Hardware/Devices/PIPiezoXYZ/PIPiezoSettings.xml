@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PIPiezoSettings>
+  <Conversion volts2mm="0.020" xPos_min="0" xPos_max="0.200" yPos_min="0" yPos_max="0.200" zPos_min="0" zPos_max="0.200">
+  </Conversion>
+  <IO piezoXLine="" XanalogLine="" piezoYLine="" YanalogLine="" piezoZLine="" ZanalogLine="" />
+  <!--
+  <IO piezoXLine="/Dev1/" XanalogLine="ao0" piezoYLine="/Dev1/" YanalogLine="ao1" piezoZLine="/Dev2/" ZanalogLine="ao0" />
+  -->
+</PIPiezoSettings>

@@ -1,0 +1,51 @@
+﻿<Window x:Class="ThorSync.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:chart="clr-namespace:RealTimeLineChart;assembly=RealTimeLineChart"
+        Title="ThorSync"
+        Height="480"
+        Width="1180"
+        Background="#FF333333"
+        Icon="ThorSync.ico"
+      WindowState="Minimized">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Menu Grid.Row="0"
+              Background="#FF333333">
+            <MenuItem Header="File"
+                      Background="#FF333333"
+                      Foreground="White">
+                <MenuItem Header="Exit"
+                          Name="miExit"
+                          Foreground="White"
+                          Background="#FF333333"
+                          Click="miExit_Click"/>
+            </MenuItem>
+            <MenuItem Header="_Help"
+                          Background="{x:Null}"
+                          Foreground="White">
+                <MenuItem Header="_About ThorSync"
+                              Click="About_Click"                              
+                              Background="#FF333333"
+                              Foreground="White"
+                              OpacityMask="{x:Null}"
+                              BorderBrush="{x:Null}">
+                </MenuItem>
+                <MenuItem Header="_Quick Support"
+                              Click="Support_Click"                              
+                              Background="#FF333333"
+                              Foreground="White"
+                              OpacityMask="{x:Null}"
+                              BorderBrush="{x:Null}">
+                </MenuItem>
+            </MenuItem>
+        </Menu>
+
+        <chart:MasterView x:Name="ucChart" Grid.Row="1">
+
+        </chart:MasterView>
+    </Grid>
+</Window>

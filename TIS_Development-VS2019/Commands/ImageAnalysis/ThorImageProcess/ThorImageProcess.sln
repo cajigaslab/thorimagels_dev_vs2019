@@ -1,0 +1,62 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorImageProcess", "ThorImageProcess\ThorImageProcess.vcxproj", "{79E234AE-9776-4712-9A3A-DB0FE61FCA11}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestConsoleCpp", "TestConsoleCpp\TestConsoleCpp.vcxproj", "{A740AC9C-CA57-401C-BAFA-541EC3348F10}"
+	ProjectSection(ProjectDependencies) = postProject
+		{79E234AE-9776-4712-9A3A-DB0FE61FCA11} = {79E234AE-9776-4712-9A3A-DB0FE61FCA11}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://vateam02:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = ThorImageProcess\\ThorImageProcess.vcxproj
+		SccProjectName1 = ThorImageProcess
+		SccLocalPath1 = ThorImageProcess
+		SccProjectUniqueName2 = TestConsoleCpp\\TestConsoleCpp.vcxproj
+		SccProjectName2 = TestConsoleCpp
+		SccLocalPath2 = TestConsoleCpp
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Mixed Platforms = Debug|Mixed Platforms
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Mixed Platforms = Release|Mixed Platforms
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{79E234AE-9776-4712-9A3A-DB0FE61FCA11}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{79E234AE-9776-4712-9A3A-DB0FE61FCA11}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{79E234AE-9776-4712-9A3A-DB0FE61FCA11}.Debug|Win32.ActiveCfg = Debug|x64
+		{79E234AE-9776-4712-9A3A-DB0FE61FCA11}.Debug|Win32.Build.0 = Debug|x64
+		{79E234AE-9776-4712-9A3A-DB0FE61FCA11}.Debug|Win32.Deploy.0 = Debug|Win32
+		{79E234AE-9776-4712-9A3A-DB0FE61FCA11}.Debug|x64.ActiveCfg = Debug|x64
+		{79E234AE-9776-4712-9A3A-DB0FE61FCA11}.Debug|x64.Build.0 = Debug|x64
+		{79E234AE-9776-4712-9A3A-DB0FE61FCA11}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{79E234AE-9776-4712-9A3A-DB0FE61FCA11}.Release|Mixed Platforms.Build.0 = Release|x64
+		{79E234AE-9776-4712-9A3A-DB0FE61FCA11}.Release|Mixed Platforms.Deploy.0 = Release|x64
+		{79E234AE-9776-4712-9A3A-DB0FE61FCA11}.Release|Win32.ActiveCfg = Release|Win32
+		{79E234AE-9776-4712-9A3A-DB0FE61FCA11}.Release|Win32.Build.0 = Release|Win32
+		{79E234AE-9776-4712-9A3A-DB0FE61FCA11}.Release|Win32.Deploy.0 = Release|Win32
+		{79E234AE-9776-4712-9A3A-DB0FE61FCA11}.Release|x64.ActiveCfg = Release|x64
+		{79E234AE-9776-4712-9A3A-DB0FE61FCA11}.Release|x64.Build.0 = Release|x64
+		{A740AC9C-CA57-401C-BAFA-541EC3348F10}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{A740AC9C-CA57-401C-BAFA-541EC3348F10}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A740AC9C-CA57-401C-BAFA-541EC3348F10}.Debug|Win32.Build.0 = Debug|Win32
+		{A740AC9C-CA57-401C-BAFA-541EC3348F10}.Debug|x64.ActiveCfg = Debug|x64
+		{A740AC9C-CA57-401C-BAFA-541EC3348F10}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{A740AC9C-CA57-401C-BAFA-541EC3348F10}.Release|Mixed Platforms.Deploy.0 = Release|x64
+		{A740AC9C-CA57-401C-BAFA-541EC3348F10}.Release|Win32.ActiveCfg = Release|Win32
+		{A740AC9C-CA57-401C-BAFA-541EC3348F10}.Release|Win32.Build.0 = Release|Win32
+		{A740AC9C-CA57-401C-BAFA-541EC3348F10}.Release|Win32.Deploy.0 = Release|Win32
+		{A740AC9C-CA57-401C-BAFA-541EC3348F10}.Release|x64.ActiveCfg = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

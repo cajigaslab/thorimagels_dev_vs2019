@@ -1,0 +1,298 @@
+﻿<UserControl x:Class="DigitalOutputSwitches.DigitalOutputSwitchesControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:validator="clr-namespace:Validations;assembly=Validations"
+             xmlns:sharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+             mc:Ignorable="d"
+             d:DesignWidth="300">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <sharedTypes:StringToVisibilityConverter x:Key="_stringToVis" />
+            <sharedTypes:BooleanToVisibilityConverter x:Key="_boolToVis" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid x:Name="LayoutRoot">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <!-- Digital Switches -->
+        <StackPanel Grid.Row="0" 
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Left"
+                    Margin="3"
+                    Visibility="{Binding Path=SwitchesIsVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource _boolToVis}}">
+            <CheckBox Content="Enable"
+                      VerticalAlignment="Center"
+                      Margin="1"
+                      IsChecked="{Binding SwitchEnable}" 
+                      Command="{Binding Path=EnableCommand}"/>
+            <StackPanel Margin="1">
+                <Label Content="{Binding Path=SwitchName0}" />
+                <ToggleButton Width="25"
+                              Height="50"
+                              IsChecked="{Binding Path=SwitchState0}"
+                              Command="{Binding Path=Switch0Command}"
+                              CommandParameter="0"
+                              Style="{StaticResource DipSwitchToggleButtonStyle}">
+                </ToggleButton>
+            </StackPanel>
+            <StackPanel Margin="1">
+                <Label Content="{Binding Path=SwitchName1}" />
+                <ToggleButton Width="25"
+                              Height="50"
+                              IsChecked="{Binding Path=SwitchState1}"
+                              Command="{Binding Path=Switch1Command}"
+                              CommandParameter="1"
+                              Style="{StaticResource DipSwitchToggleButtonStyle}">
+                </ToggleButton>
+            </StackPanel>
+            <StackPanel Margin="1">
+                <Label Content="{Binding Path=SwitchName2}" />
+                <ToggleButton Width="25"
+                              Height="50"
+                              IsChecked="{Binding Path=SwitchState2}"
+                              Command="{Binding Path=Switch2Command}"
+                              CommandParameter="2"
+                              Style="{StaticResource DipSwitchToggleButtonStyle}">
+                </ToggleButton>
+            </StackPanel>
+            <StackPanel Margin="1">
+                <Label Content="{Binding Path=SwitchName3}" />
+                <ToggleButton Width="25"
+                              Height="50"
+                              IsChecked="{Binding Path=SwitchState3}"
+                              Command="{Binding Path=Switch3Command}"
+                              CommandParameter="3"
+                              Style="{StaticResource DipSwitchToggleButtonStyle}">
+                </ToggleButton>
+            </StackPanel>
+            <StackPanel Margin="1">
+                <Label Content="{Binding Path=SwitchName4}" />
+                <ToggleButton Width="25"
+                              Height="50"
+                              IsChecked="{Binding Path=SwitchState4}"
+                              Command="{Binding Path=Switch4Command}"
+                              CommandParameter="4"
+                              Style="{StaticResource DipSwitchToggleButtonStyle}">
+                </ToggleButton>
+            </StackPanel>
+            <StackPanel Margin="1">
+                <Label Content="{Binding Path=SwitchName5}" />
+                <ToggleButton Width="25"
+                              Height="50"
+                              IsChecked="{Binding Path=SwitchState5}"
+                              Command="{Binding Path=Switch5Command}"
+                              CommandParameter="5"
+                              Style="{StaticResource DipSwitchToggleButtonStyle}">
+                </ToggleButton>
+            </StackPanel>
+            <StackPanel Margin="1">
+                <Label Content="{Binding Path=SwitchName6}" />
+                <ToggleButton Width="25"
+                              Height="50"
+                              IsChecked="{Binding Path=SwitchState6}"
+                              Command="{Binding Path=Switch6Command}"
+                              CommandParameter="6"
+                              Style="{StaticResource DipSwitchToggleButtonStyle}">
+                </ToggleButton>
+            </StackPanel>
+            <StackPanel Margin="1">
+                <Label Content="{Binding Path=SwitchName7}" />
+                <ToggleButton Width="25"
+                              Height="50"
+                              IsChecked="{Binding Path=SwitchState7}"
+                              Command="{Binding Path=Switch7Command}"
+                              CommandParameter="7"
+                              Style="{StaticResource DipSwitchToggleButtonStyle}">
+                </ToggleButton>
+            </StackPanel>
+        </StackPanel>
+        <!-- Digital Triggers -->
+        <GroupBox Header="Signal Generator" 
+                  Grid.Row="1"
+                  Margin="1"
+                  HorizontalAlignment="Left"
+                  Visibility="{Binding Path=TriggerIsVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource _boolToVis}}">
+            <StackPanel Orientation="Vertical">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="3" ToolTip="select mode and execute signal generation">
+                        <Label Content="Mode" Width="50"/>
+                        <ComboBox Name="cbDigTrigMode"
+                                  Margin="1"
+                                  Width="160"
+                                  HorizontalContentAlignment="Right"
+                                  ItemsSource="{Binding Path=TriggerModeItems,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                  SelectedIndex="{Binding Path=TriggerMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  DisplayMemberPath="Value">
+                        </ComboBox>
+                        <Button Width="65"
+                                Margin="1"
+                                Command="{Binding Path=TriggerEnableCommand}">
+                            <Image Source="{Binding TriggerImagePath, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Width="20" />
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                    <Setter Property="Visibility"
+                                            Value="{Binding Path=ExperimentMode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=true, Converter={StaticResource _boolToVis}}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=SelectedIndex,ElementName=cbDigTrigMode}"
+                                                     Value="0">
+                                            <Setter Property="Visibility"
+                                                    Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="1">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=SelectedIndex,ElementName=cbDigTrigMode}"
+                                                 Value="0">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Path=SelectedIndex,ElementName=cbDigTrigMode}"
+                                                 Value="6">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <StackPanel Orientation="Vertical" VerticalAlignment="Bottom" Margin="1">
+                            <Label Content="{Binding Path=TriggerLabel, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Width="80" HorizontalContentAlignment="Left"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Vertical" Margin="1"
+                                    ToolTip="start edge number">
+                            <Label Content="Start" Width="50" HorizontalContentAlignment="Center"/>
+                            <TextBox Width="50"
+                                     HorizontalAlignment="Left"
+                                     HorizontalContentAlignment="Right"
+                                     Text="{Binding Path=TriggerStartEdge,Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                     validator:Validation.ValidationType="{x:Type system:Int32}"
+                                     validator:Validation.MinValue="1"
+                                     validator:Validation.NoEmptyValue="True"
+                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Vertical" Margin="1"
+                                    ToolTip="steps format: eg> 1:2">
+                            <Label Content="Gaps" Width="40" HorizontalContentAlignment="Center"/>
+                            <TextBox Name="tbTriggerEdges"
+                                     Width="95"
+                                     HorizontalAlignment="Left"
+                                     HorizontalContentAlignment="Right"
+                                     Text="{Binding Path=TriggerEdgeString, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnExceptions=True, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                     validator:Validation.ValidationType="{x:Type system:Int32}"
+                                     validator:Validation.Separator=":"
+                                     validator:Validation.MinValue="0"
+                                     validator:Validation.NoEmptyValue="True"
+                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Vertical" Margin="1"
+                                    ToolTip="repeat number, 0: infinite">
+                            <Label Content="Repeat" Width="50" HorizontalContentAlignment="Center"/>
+                            <TextBox Width="50"
+                                     HorizontalAlignment="Left"
+                                     HorizontalContentAlignment="Right"
+                                     Text="{Binding Path=TriggerRepeat,Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                     validator:Validation.ValidationType="{x:Type system:Int32}"
+                                     validator:Validation.MinValue="0"
+                                     validator:Validation.NoEmptyValue="True"
+                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=SelectedIndex,ElementName=cbDigTrigMode}"
+                                                 Value="0">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <StackPanel Orientation="Vertical"
+                                    ToolTip="initial idle time in milliseconds">
+                            <Label Content="ini. idle[ms]" HorizontalContentAlignment="Center"/>
+                            <TextBox Text="{Binding Path=TriggerStartIdleMS, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                     validator:Validation.ValidationType="{x:Type system:Double}"
+                                     validator:Validation.MinValue="0.0"
+                                     validator:Validation.NoEmptyValue="False"
+                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                     Width="70"
+                                     Margin="1"
+                                     HorizontalContentAlignment="Right"
+                                     HorizontalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Vertical" 
+                                    ToolTip="idle time per iteration in milliseconds">
+                            <Label Content="idle[ms]" HorizontalContentAlignment="Center"/>
+                            <TextBox Text="{Binding Path=TriggerIdleMS, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                     validator:Validation.MinValue="0.0"
+                                     validator:Validation.ValidationType="{x:Type system:Double}"
+                                     validator:Validation.NoEmptyValue="True"
+                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                     Width="70"
+                                     Margin="1"
+                                     HorizontalContentAlignment="Right"
+                                     HorizontalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Vertical"
+                                    ToolTip="duration time per iteration in milliseconds">
+                            <Label Content="duration[ms]" HorizontalContentAlignment="Center"/>
+                            <TextBox Text="{Binding Path=TriggerDurationMS, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                     validator:Validation.MinValue="0.001"
+                                     validator:Validation.MaxValue="42949672"
+                                     validator:Validation.ValidationType="{x:Type system:Double}"
+                                     validator:Validation.NoEmptyValue="True"
+                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                     Width="75"
+                                     Margin="1"
+                                     HorizontalContentAlignment="Right"
+                                     HorizontalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Vertical" 
+                                    ToolTip="iteration counts, 0: infinite">
+                            <Label Content="iterations " HorizontalContentAlignment="Center"/>
+                            <TextBox Text="{Binding Path=TriggerIterations, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                     validator:Validation.MinValue="0"
+                                     validator:Validation.ValidationType="{x:Type system:Int32}"
+                                     validator:Validation.NoEmptyValue="True"
+                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                     Width="60"
+                                     Margin="1"
+                                     HorizontalContentAlignment="Right"
+                                     HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <TextBlock Grid.Row="3" 
+                               Text="{Binding Path=TriggerError, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
+                               Visibility="{Binding Path=TriggerError, Converter={StaticResource _stringToVis}}"
+                               Foreground="{Binding Path=TriggerErrorColor, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                    </TextBlock>
+                </Grid>
+            </StackPanel>
+        </GroupBox>
+    </Grid>
+</UserControl>

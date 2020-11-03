@@ -1,0 +1,11 @@
+﻿<UserControl x:Class="VtkVolumeControl.VolumeRenderer"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vtk="clr-namespace:Kitware.VTK;assembly=Kitware.VTK"
+    Height="Auto" Width="Auto">
+    <Grid>
+        <WindowsFormsHost Name="formHolder" Margin="5" Grid.Column="0">
+            <!--<vtk:RenderWindowControl x:Name="renWindowControl" />-->
+        </WindowsFormsHost>
+    </Grid>
+</UserControl>

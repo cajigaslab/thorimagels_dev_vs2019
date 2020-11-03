@@ -1,0 +1,29 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.DFLIMControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dflimControl="clr-namespace:DFLIMControl;assembly=DFLIMControl"
+             Height="Auto"
+             Width="390">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <dflimControl:DFLIMControlUC DFLIMReSyncCommand="{Binding Path=DFLIMReSyncCommand}"                                     
+                                     DFLIMDisplaySetupAssitantCommand="{Binding Path=DFLIMDisplaySetupAssitantCommand}"
+                                     DFLIMTauLow="{Binding DFLIMTauLow}"
+                                     DFLIMTauHigh="{Binding DFLIMTauHigh}"                                
+                                     DFLIMLUTLow="{Binding DFLIMLUTLow}"
+                                     DFLIMLUTHigh="{Binding DFLIMLUTHigh}"
+                                     DFLIMTZero="{Binding DFLIMTZero}"
+                                     DFLIMDisplayLifetimeImage="{Binding DFLIMDisplayLifetimeImage}"
+                                     DFLIMHWControlsVisibility="{Binding DFLIMHWControlsVisibility}"
+                                     DFLIMHistogramCopyCounter="{Binding DFLIMHistogramCopyCounter, Mode=OneWay}"
+                                     DFLIMHistogramMVMDataLock="{Binding DFLIMHistogramMVMDataLock, Mode=OneWay}"
+                                     DFLIMHistogramDictionary="{Binding DFLIMHistogramDictionary, Mode=OneWay}"/>
+    </Grid>
+</UserControl>
+

@@ -1,0 +1,20 @@
+﻿<UserControl x:Class="MenuLSDll.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:View="clr-namespace:MenuLSDll.View"
+    Width="Auto" Height="Auto">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <View:MenuLSView x:Name="MenuLSView" Grid.Column="0" Grid.Row="0" Background="{x:Null}"
+                          />
+        
+    </Grid>
+
+</UserControl>
+    

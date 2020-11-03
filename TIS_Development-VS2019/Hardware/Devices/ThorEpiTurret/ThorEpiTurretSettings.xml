@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ThorEpiTurretSettings>
+    <Connection portID="49" baudRate="115200" serialNumber="NA" />
+	<TimeOut timeMS="1000"/>
+</ThorEpiTurretSettings>

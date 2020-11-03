@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ThorPLSZSettings>
+
+  <Connection portID="53" baudRate="115200" address="1" />
+
+  <ZRangeConfig minMM="-1"  maxMM="25"  threshold="20.0" invert="0" home="1"/>
+
+  <SleepAfterMove time_milliseconds="0" />
+
+</ThorPLSZSettings>

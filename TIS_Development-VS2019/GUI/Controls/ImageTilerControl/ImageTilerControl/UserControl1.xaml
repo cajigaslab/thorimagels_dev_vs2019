@@ -1,0 +1,22 @@
+﻿<UserControl x:Class="ImageTilerControl.UserControl1"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:wf="clr-namespace:System.Windows.Forms;assembly=System.Windows.Forms"
+    Height="300" Width="446">
+    <Grid Name="gridLayout" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="210"></ColumnDefinition>
+            <ColumnDefinition Width="300*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="195"></RowDefinition>
+            <RowDefinition Height="300*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <WindowsFormsHost Grid.Column="0" Grid.Row="0" Margin="0,0,10,0" Name="windowsFormsHost1">
+            <wf:PictureBox x:Name="pbThumbView" Width="200" Paint="pbThumbView_Paint"  MouseDown="pbThumbView_MouseDown" MouseMove="pbThumbView_MouseMove" MouseUp="pbThumbView_MouseUp" MouseWheel="pbThumbView_MouseWheel" MouseEnter="pbThumbView_MouseEnter" MouseLeave="pbThumbView_MouseLeave"/>
+        </WindowsFormsHost>
+        <WindowsFormsHost HorizontalAlignment="Stretch" Grid.Column="1" Grid.RowSpan="2" Name="windowsFormsHost2">
+            <wf:PictureBox x:Name="pbZoomView" Paint="pbZoomView_Paint"  MouseDown="pbZoomView_MouseDown" MouseMove="pbZoomView_MouseMove" MouseUp="pbZoomView_MouseUp" MouseWheel="pbZoomView_MouseWheel" MouseEnter="pbZoomView_MouseEnter" Resize="pbZoomView_Resize"/>
+        </WindowsFormsHost>
+    </Grid>
+</UserControl>

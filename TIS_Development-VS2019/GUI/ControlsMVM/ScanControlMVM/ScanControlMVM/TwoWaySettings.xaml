@@ -1,0 +1,58 @@
+﻿<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="ScanControl.ViewModel.TwoWaySettings"
+        xmlns:pctrl="clr-namespace:ChartPlotterControl;assembly=ChartPlotterControl"
+        Width="650"
+        Height="485"
+        WindowStyle="ToolWindow"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        HorizontalAlignment="Left"
+        Background="#FF595959"
+        Topmost="true">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid Margin="5">
+        <StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <StackPanel>
+                    <ListBox x:Name="lstRecPoints"
+                             Width="100"
+                             Height="360" />
+                    <Button Content="Record"
+                            Name="btnRecord"
+                            Click="btnRecord_Click" />
+                    <Button Content="Delete"
+                            Name="btnDelete"
+                            Click="btnDelete_Click" />
+                </StackPanel>
+                <pctrl:UserControl1 Name="plot" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right">
+                <Label Name="lblDwellTimeIndex"
+                       Content="{Binding Path=LSMPixelDwellTimeIndex,Mode=OneWay}" />
+                <Label Name="lblCoarseVisibility"
+                       Content="{Binding Path=CoarsePanelVisibility,Mode=OneWay}" />
+                <Label Name="lblTwoWayCoarse"
+                       Content="{Binding Path=LSMTwoWayAlignmentCoarse,Mode=OneWay}" />
+                <Label Name="lblTwoWay"
+                       Content="{Binding Path=LSMTwoWayAlignment,Mode=OneWay}" />
+                <Button Content="Cancel"
+                        Click="Button_OnCancel"
+                        Width="75"
+                        Height="25" />
+                <Button Content="Apply"
+                        Name="btnApplyAlignment"
+                        Click="Button_OnOK"
+                        Width="75"
+                        Height="25" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

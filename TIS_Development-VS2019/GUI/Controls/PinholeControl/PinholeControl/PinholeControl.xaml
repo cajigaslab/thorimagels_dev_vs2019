@@ -1,0 +1,96 @@
+﻿<UserControl x:Class="PinholeControl.PinholeControlUC"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:roi="clr-namespace:ROIUserControl;assembly=ROIUserControl"
+             xmlns:local="clr-namespace:PinholeControl"
+             xmlns:sharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+             mc:Ignorable="d"
+             Height="Auto"
+             Width="385">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel HorizontalAlignment="Center" Margin="1">
+            <StackPanel Margin="5"
+                        Orientation="Horizontal">
+                <Label Content="Pinhole Size"
+                       Foreground="White"
+                       Margin="5" />
+                <ComboBox Name="cbPinhole"
+                          Width="100"
+                          Height="25"
+                          ItemsSource="{Binding Path=ComboBoxItemsList}"
+                          SelectedIndex="{Binding Path=PinholePosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          SelectionChanged="cbPinhole_SelectionChanged">
+                </ComboBox>
+                <Label Name="labelPinhole"
+                       Width="100"
+                       Content="{Binding PinholeADUsString, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       Margin="5"
+                       Foreground="White" />
+            </StackPanel>
+            <Border>
+                <Expander Header="Alignment"
+                          Foreground="White"
+                          ToolTip="Adjustment for bringing pinhole wheel into alignment"
+                          Margin="1">
+                    <StackPanel Margin="5">
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel>
+                                <RepeatButton Name="butPlus"
+                                              Content="+"
+                                              Width="30"
+                                              Height="20"
+                                              Command="{Binding Path=LSMPinholeAlignmentPlusCommand}"
+                                              Delay="500"
+                                              Interval="100" />
+                                <RepeatButton Name="butMinus"
+                                              Content="-"
+                                              Width="30"
+                                              Height="20"
+                                              Command="{Binding Path=LSMPinholeAlignmentMinusCommand}"
+                                              Delay="500"
+                                              Interval="100" />
+                            </StackPanel>
+                            <TextBox Text="{Binding Path=TxtPinholeAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                     Width="75"
+                                     Height="25"
+                                     LostFocus="txtPinholeAlignment_LostFocus">
+                            </TextBox>
+                            <Button Width="30"
+                                    Content="✓"
+                                    Margin="0,7.5,0,7.5">
+                                <Button.Style>
+                                    <Style TargetType="{x:Type Button}">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsFocused, ElementName=txtPinholeAlignment}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Button Name="btnSetPinhole"
+                                    Width="120"
+                                    Content="Set Pinhole"
+                                    VerticalAlignment="Center"
+                                    Foreground="White"
+                                    Command="{Binding Path=LSMPinholeAlignmentSetCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Expander>
+            </Border>
+        </StackPanel>
+    </Grid>
+</UserControl>

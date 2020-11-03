@@ -1,0 +1,161 @@
+﻿<Window x:Class="RealTimeLineChart.View.EditLinesDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:validator="clr-namespace:RealTimeLineChart.InputValidation"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
+        Title="Edit Lines"
+        Width="Auto"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <Style TargetType="{x:Type TextBlock}">
+                <Setter Property="Foreground"
+                        Value="White" />
+            </Style>
+            <validator:DoubleCultureConverter x:Key="doubleCultureConverter" />
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <!--<Label HorizontalAlignment="Left" HorizontalContentAlignment="Center"  Width="100"></Label>-->
+                <ComboBox Name="cbAiTrigMode"
+                          Width="110"
+                          ToolTip="Select analog/digital trigger line. "
+                          Visibility="Collapsed">
+                    <!--SelectionChanged="cbAiTrigMode_SelectionChanged"-->
+                    <ComboBoxItem Content="Digital Trigger" />
+                    <ComboBoxItem Content="Analog Trigger" />
+                </ComboBox>
+                <Label HorizontalAlignment="Left"
+                       HorizontalContentAlignment="Center"
+                       Content="Line Name"
+                       Width="90"></Label>
+                <CheckBox Name="chkStim"
+                          Click="chkStim_Click"
+                          VerticalContentAlignment="Center"
+                          VerticalAlignment="Center"
+                          HorizontalAlignment="Right"
+                          HorizontalContentAlignment="Right"
+                          Margin="1"
+                          ToolTip="Enable/Disable stimulus line seletion. "></CheckBox>
+                <Label HorizontalAlignment="Left"
+                       HorizontalContentAlignment="Left"
+                       Content="Stimulus"
+                       Width="60"></Label>
+                <Label HorizontalAlignment="Left"
+                       HorizontalContentAlignment="Center"
+                       Content="Color"
+                       Width="60"></Label>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Left">
+                <ListBox Name="lbLines"
+                         Height="580"
+                         Width="Auto"
+                         HorizontalAlignment="Left"
+                         Background="#FF333333"
+                         Margin="1">
+                </ListBox>
+                <Expander Name="epdRGB"
+                          ExpandDirection="Right"
+                          Height="250"
+                          VerticalAlignment="Top">
+                    <Expander.Header>
+                        <TextBlock Text="RGB Color Configure"
+                                   Margin="0,0,0,0"
+                                   Width="Auto">
+                            <TextBlock.LayoutTransform>
+                                <TransformGroup>
+                                    <RotateTransform Angle="-90" />
+                                </TransformGroup>
+                            </TextBlock.LayoutTransform>
+                        </TextBlock>
+                    </Expander.Header>
+                    <Border BorderThickness="1,1,1,1"
+                            BorderBrush="#FFFFFFFF"
+                            CornerRadius="1"
+                            Margin="1">
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Top">
+                            <StackPanel>
+                                <Label VerticalAlignment="Top"
+                                       HorizontalContentAlignment="Center"
+                                       Content="R" />
+                                <Label Width="30"
+                                       Content="{Binding Value,ElementName=sliderR, Mode=OneWay, Converter={StaticResource doubleCultureConverter}, ConverterParameter=0}"
+                                       Margin="1" />
+                                <Slider Name="sliderR"
+                                        Maximum="255"
+                                        Minimum="0"
+                                        Orientation="Vertical"
+                                        Margin="1"
+                                        Height="180"
+                                        SmallChange="1"
+                                        ValueChanged="Color_Changed"
+                                        MouseWheel="ColorDelta_Changed" />
+                            </StackPanel>
+                            <StackPanel>
+                                <Label VerticalAlignment="Top"
+                                       HorizontalContentAlignment="Center"
+                                       Content="G" />
+                                <Label Width="30"
+                                       Content="{Binding Value,ElementName=sliderG, Mode=OneWay, Converter={StaticResource doubleCultureConverter}, ConverterParameter=0}"
+                                       Margin="1" />
+                                <Slider Name="sliderG"
+                                        Maximum="255"
+                                        Minimum="0"
+                                        Orientation="Vertical"
+                                        Margin="1"
+                                        Height="180"
+                                        SmallChange="1"
+                                        ValueChanged="Color_Changed"
+                                        MouseWheel="ColorDelta_Changed" />
+                            </StackPanel>
+                            <StackPanel>
+                                <Label VerticalAlignment="Top"
+                                       HorizontalContentAlignment="Center"
+                                       Content="B" />
+                                <Label Width="30"
+                                       Content="{Binding Value,ElementName=sliderB, Mode=OneWay, Converter={StaticResource doubleCultureConverter}, ConverterParameter=0}"
+                                       Margin="1" />
+                                <Slider Name="sliderB"
+                                        Maximum="255"
+                                        Minimum="0"
+                                        Orientation="Vertical"
+                                        Margin="1"
+                                        Height="180"
+                                        SmallChange="1"
+                                        ValueChanged="Color_Changed"
+                                        MouseWheel="ColorDelta_Changed" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Expander>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right">
+                <Button Content="Cancel"
+                        Width="75"
+                        Height="30"
+                        Margin="1"
+                        Name="btnCancel"
+                        Click="btnCancel_Click" />
+                <Button Content="OK"
+                        Width="75"
+                        Height="30"
+                        Margin="1"
+                        Name="btnOK"
+                        Click="btnOK_Click" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,0 +1,86 @@
+﻿<Window x:Class="HardwareSetupDll.View.DisplayOptions"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Display Options"
+        Height="Auto"
+        Width="Auto"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <StackPanel>
+            <GroupBox Margin="1">
+                <GroupBox.Header>
+                    <Label Content="Capture Setup Panel" />
+                </GroupBox.Header>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <GroupBox Foreground="White"
+                                  Margin="1">
+                            <GroupBox.Header>
+                                <Label Content="Display Options"
+                                       Foreground="White" />
+                            </GroupBox.Header>
+                            <ListBox Name="lbDisplayOrder"
+                                     Background="#FF333333"
+                                     SelectionMode="Single">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding Content}"
+                                                  IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                                  Margin="1"
+                                                  Foreground="White"
+                                                  Click="CheckBox_Click" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                                <ListBox.Resources>
+                                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}">SteelBlue</SolidColorBrush>
+                                </ListBox.Resources>
+
+                            </ListBox>
+                        </GroupBox>
+                        <StackPanel VerticalAlignment="Center">
+                            <Button Name="btnUp"
+                                    Content="&#x2191;"
+                                    Height="40"
+                                    Margin="1"
+                                    Click="btnUp_Click" />
+                            <Button Name="btnDown"
+                                    Content="&#x2193;"
+                                    Height="40"
+                                    Margin="1"
+                                    Click="btnDown_Click" />
+                        </StackPanel>
+                    </StackPanel>
+                    <CheckBox Name="cbTwoColumnDisplay"
+                              Content="Capture Setup 2 Column Arrangement"
+                              Foreground="White"
+                              Margin="1" />
+                    <CheckBox Name="cbExpander"
+                              Content="Multi Panel Access"
+                              Foreground="White"
+                              Margin="1" />
+                </StackPanel>
+            </GroupBox>
+            <Button Name="ResetWindows"
+                    Content="Reset Windows"
+                    Click="ResetWindows_Click"
+                    Margin="1"
+                    Height="30"
+                    HorizontalAlignment="Left" />
+            <Button Content="OK"
+                    Click="butOk_Click"
+                    Margin="1"
+                    Width="70"
+                    Height="30"
+                    HorizontalAlignment="Right" />
+        </StackPanel>
+    </Grid>
+</Window>

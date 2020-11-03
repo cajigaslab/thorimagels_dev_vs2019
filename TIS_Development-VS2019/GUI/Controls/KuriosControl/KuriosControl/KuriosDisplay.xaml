@@ -1,0 +1,268 @@
+﻿<UserControl x:Class="KuriosControl.KuriosDisplay"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:control="clr-namespace:KuriosControl.Common"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:validator="clr-namespace:Validations;assembly=Validations"
+             xmlns:view="clr-namespace:KuriosControl"
+             xmlns:vm="clr-namespace:KuriosControl.ViewModel"
+             x:Name="KuriosUserControl"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <ObjectDataProvider x:Key="BandwidthModes"
+                                MethodName="GetValues"
+                                ObjectType="{x:Type sys:Enum}">
+                <ObjectDataProvider.MethodParameters>
+                    <x:Type Type="vm:BandwidthModes" />
+                </ObjectDataProvider.MethodParameters>
+            </ObjectDataProvider>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel>
+            <DockPanel Width="390">
+                <StackPanel Orientation="Horizontal">
+                    <Label Width="75"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Center"
+                           Content="Wavelength" />
+                    <TextBox Name="tbxWavelength"
+                             MinWidth="65"
+                             Margin="5,0,0,0"
+                             VerticalAlignment="Center"
+                             Text="{Binding ElementName=KuriosUserControl,
+                                        Path=KuriosWavelength}"
+                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                             validator:Validation.MaxValue="{Binding ElementName=KuriosUserControl,
+                                                                 Path=WavelengthRange.Max}"
+                             validator:Validation.MinValue="{Binding ElementName=KuriosUserControl,
+                                                                 Path=WavelengthRange.Min}"
+                             validator:Validation.ValidationType="{x:Type system:Int32}" />
+                    <Button Width="30"
+                            Margin="0,5,0,5"
+                            VerticalAlignment="Top"
+                            Content="✓">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused,
+                                                               ElementName=tbxWavelength}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Label Margin="0,0,3,0"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Center"
+                           HorizontalContentAlignment="Left"
+                           Content="[nm]" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Label Content="Bandwidth" />
+                    <ComboBox Width="80"
+                                  Height="22"
+                                  Margin="0,0,0,0"
+                                  HorizontalAlignment="Left"
+                                  SelectedIndex="{Binding ElementName=KuriosUserControl,
+                                                              Path=KuriosBandwidthModeIndex}">
+                        <ComboBox.ItemsSource>
+                            <Binding Source="{StaticResource BandwidthModes}" />
+                        </ComboBox.ItemsSource>
+                    </ComboBox>
+
+                </StackPanel>
+            </DockPanel>
+            <StackPanel Orientation="Horizontal">
+
+                <StackPanel>
+                    <Label HorizontalAlignment="Center"
+                           VerticalAlignment="Bottom"
+                           Content="{Binding WavelengthRange.Max}" />
+                    <control:VisualSpectrumColorSlider Height="290"
+                                                       Margin="5,0,15,0"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Top"
+                                                       AutoToolTipPlacement="TopLeft"
+                                                       IsDirectionReversed="False"
+                                                       IsMoveToPointEnabled="True"
+                                                       IsSnapToTickEnabled="False"
+                                                       Maximum="{Binding ElementName=KuriosUserControl,
+                                                                         Path=KuriosWavelengthMax}"
+                                                       Minimum="{Binding ElementName=KuriosUserControl,
+                                                                         Path=KuriosWavelengthMin}"
+                                                       Orientation="Vertical"
+                                                       TickFrequency="50"
+                                                       Value="{Binding ElementName=KuriosUserControl,
+                                                                       Path=KuriosWavelength}" />
+                    <Label HorizontalAlignment="Center"
+                           VerticalAlignment="Top"
+                           Content="{Binding WavelengthRange.Min}" />
+                </StackPanel>
+                <StackPanel>
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <Label Width="100"
+                                   Content="Start" />
+                            <TextBox Name="tbxWavelengthStart"
+                                     MinWidth="90"
+                                     Margin="5,0,0,0"
+                                     VerticalAlignment="Center"
+                                     Text="{Binding ElementName=KuriosUserControl,
+                                                    Path=KuriosStartWavelength}"
+                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                     validator:Validation.MaxValue="{Binding ElementName=KuriosUserControl,
+                                                                             Path=WavelengthRange.Max}"
+                                     validator:Validation.MinValue="{Binding ElementName=KuriosUserControl,
+                                                                             Path=WavelengthRange.Min}"
+                                     validator:Validation.ValidationType="{x:Type system:Int32}" />
+                            <Button Width="30"
+                                    Margin="0,5,0,5"
+                                    VerticalAlignment="Top"
+                                    Content="✓">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsFocused,
+                                                                           ElementName=tbxWavelengthStart}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Label Margin="0,0,3,0"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Center"
+                                   HorizontalContentAlignment="Left"
+                                   Content="[nm]" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Width="100"
+                                   Content="Stop" />
+                            <TextBox Name="tbxWavelengthStop"
+                                     MinWidth="90"
+                                     Margin="5,0,0,0"
+                                     VerticalAlignment="Center"
+                                     Text="{Binding ElementName=KuriosUserControl,
+                                                    Path=KuriosStopWavelength}"
+                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                     validator:Validation.MaxValue="{Binding ElementName=KuriosUserControl,
+                                                                             Path=WavelengthRange.Max}"
+                                     validator:Validation.MinValue="{Binding ElementName=KuriosUserControl,
+                                                                             Path=WavelengthRange.Min}"
+                                     validator:Validation.ValidationType="{x:Type system:Int32}" />
+                            <Button Width="30"
+                                    Margin="0,5,0,5"
+                                    VerticalAlignment="Top"
+                                    Content="✓">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsFocused,
+                                                                           ElementName=tbxWavelengthStop}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Label Margin="0,0,3,0"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Center"
+                                   HorizontalContentAlignment="Left"
+                                   Content="[nm]" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Width="100"
+                                   Content="Step Size" />
+                            <TextBox Name="tbxWavelengthStepSize"
+                                     MinWidth="90"
+                                     Margin="5,0,0,0"
+                                     VerticalAlignment="Center"
+                                     Text="{Binding ElementName=KuriosUserControl,
+                                                    Path=KuriosStepSize}"
+                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                     validator:Validation.MinValue="1"
+                                     validator:Validation.ValidationType="{x:Type system:Int32}" />
+                            <Button Width="30"
+                                    Margin="0,5,0,5"
+                                    VerticalAlignment="Top"
+                                    Content="✓">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsFocused,
+                                                                           ElementName=tbxWavelengthStepSize}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Label Margin="0,0,3,0"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Center"
+                                   HorizontalContentAlignment="Left"
+                                   Content="[nm]" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <ListBox Name="linkListView"
+                                 Width="230"
+                                 Height="190"
+                                 Margin="10"
+                                 ItemsSource="{Binding ElementName=KuriosUserControl,
+                                                       Path=WavelengthSequences}"
+                                 SelectedItem="{Binding ElementName=KuriosUserControl,
+                                                        Path=CurrentWavelengthSequence}" />
+                        <StackPanel VerticalAlignment="Center">
+                            <Button Width="60"
+                                    Height="22"
+                                    Margin="2"
+                                    Command="{Binding ElementName=KuriosUserControl,
+                                                      Path=EditWavelengthSequenceCommand}"
+                                    Content="Edit" />
+                            <Button Width="60"
+                                    Height="22"
+                                    Margin="2"
+                                    Command="{Binding ElementName=KuriosUserControl,
+                                                      Path=AddWavelengthSequenceCommand}"
+                                    Content="Add" />
+                            <Button Width="60"
+                                    Height="22"
+                                    Margin="2"
+                                    Command="{Binding ElementName=KuriosUserControl,
+                                                      Path=DeleteWavelengthSequenceCommand}"
+                                    Content="Delete" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

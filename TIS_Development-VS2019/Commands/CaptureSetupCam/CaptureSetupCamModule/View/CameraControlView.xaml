@@ -1,0 +1,486 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.CameraControlView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:View="clr-namespace:CaptureSetupDll.View"
+             xmlns:ViewModel="clr-namespace:CaptureSetupDll.ViewModel"
+             Height="Auto"
+             Width="Auto"
+             Loaded="CameraControlView_Loaded">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <DataTemplate DataType="{x:Type ViewModel:LiveImageViewModel}" />
+            <BooleanToVisibilityConverter x:Key="boolToVis" />
+            <ViewModel:BoolToOppositeBoolConverter x:Key="boolOppositeConverter" />
+            <ViewModel:BoolToHiddenConverter x:Key="boolToHidden" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="..\Styles\Button.xaml" />
+                <ResourceDictionary Source="..\Styles\tooltip.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid Width="400">
+        <StackPanel Margin="3">
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Margin="3">
+                <StackPanel Margin="3">
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="Exposure"
+                               HorizontalContentAlignment="Right"
+                               Foreground="White" />
+                        <Slider Name="sliderExposure"
+                                Width="150"
+                                AutoToolTipPlacement="TopLeft"
+                                TickFrequency="1"
+                                IsSnapToTickEnabled="True"
+                                Interval="300"
+                                Thumb.DragCompleted="sliderExposure_DragCompleted"
+                                Thumb.DragStarted="sliderExposure_DragStarted"
+                                Visibility="{Binding ElementName=rbExpoRange4, Path=IsChecked, Converter={StaticResource boolToHidden}}"
+                                Value="{Binding Path=ExposureTimeCam0, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                Minimum="{Binding Path=ExposureTimeMin, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                Maximum="{Binding Path=ExposureTimeSliderMax, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                        </Slider>
+                        <TextBox Name="tbExpoTimeCam0"
+                                 Width="70"
+                                 Height="25"
+                                 ToolTip="Click here to manually enter exposure time, then click Apply."
+                                 Text="{Binding Path=ExposureTimeCam0, Mode= TwoWay}" />
+                        <Grid>
+                            <Label Content="[ms]"
+                                   Foreground="White" />
+                            <Button Name="btnApply"
+                                    Content="Apply"
+                                    Visibility="{Binding ElementName=tbExpoTimeCam0, Path=IsFocused, Converter={StaticResource boolToVis}}" />
+                        </Grid>
+                    </StackPanel>
+                    <ListView SelectedIndex="{Binding Path=ExposureRangeIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              BorderThickness="0"
+                              Background="{x:Null}">
+                        <ListView.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ListView.ItemsPanel>
+                        <ListView.Resources>
+                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
+                                             Color="Transparent" />
+                            <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}"
+                                             Color="Transparent" />
+                        </ListView.Resources>
+                        <ListViewItem IsSelected="{Binding ElementName=rbExpoRange1, Path=IsChecked}">
+                            <RadioButton Name="rbExpoRange1"
+                                         GroupName="expRange"
+                                         Margin="3">
+                                <Label Foreground="White"
+                                       Content="0-10ms" />
+                            </RadioButton>
+                        </ListViewItem>
+                        <ListViewItem IsSelected="{Binding ElementName=rbExpoRange2, Path=IsChecked}">
+                            <RadioButton Name="rbExpoRange2"
+                                         GroupName="expRange"
+                                         Margin="3">
+                                <Label Foreground="White"
+                                       Content="0-100ms" />
+                            </RadioButton>
+                        </ListViewItem>
+                        <ListViewItem IsSelected="{Binding ElementName=rbExpoRange3, Path=IsChecked}">
+                            <RadioButton Name="rbExpoRange3"
+                                         GroupName="expRange"
+                                         Margin="3">
+                                <Label Foreground="White"
+                                       Content="0-1000ms" />
+                            </RadioButton>
+                        </ListViewItem>
+                        <ListViewItem IsSelected="{Binding ElementName=rbExpoRange4, Path=IsChecked}">
+                            <RadioButton Name="rbExpoRange4"
+                                         GroupName="expRange"
+                                         Margin="3">
+                                <Label Foreground="White"
+                                       Content=">1000ms" />
+                            </RadioButton>
+                        </ListViewItem>
+                    </ListView>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="3">
+                <Label Content="Gain"
+                       Width="100"
+                       HorizontalContentAlignment="Right"
+                       Background="{x:Null}"
+                       Foreground="White" />
+                <Slider Width="150"
+                        Delay="300"
+                        Value="{Binding Path=Gain, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Minimum="{Binding Path=GainMin, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                        Maximum="{Binding Path=GainMax, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"></Slider>
+                <TextBox Name="tbGain"
+                         Width="70"
+                         Text="{Binding Path=Gain, Mode= TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="3">
+                <Label Content="Black Level"
+                       HorizontalContentAlignment="Right"
+                       Width="150"
+                       Background="{x:Null}"
+                       Foreground="White" />
+                <TextBox Name="tbOpticalBlk"
+                         Height="25"
+                         Width="70"
+                         Text="{Binding Path=OpticalBlackLevel, Mode= TwoWay}" />
+                <StackPanel>
+                    <RepeatButton Content="+"
+                                  Width="30"
+                                  Height="20"
+                                  Command="{Binding Path=BlackLevelPlusCommand}"
+                                  Delay="500"
+                                  Interval="100" />
+                    <RepeatButton Content="-"
+                                  Width="30"
+                                  Height="20"
+                                  Command="{Binding Path=BlackLevelMinusCommand}"
+                                  Delay="500"
+                                  Interval="100" />
+                </StackPanel>
+                <Button Height="25"
+                        Content="Apply"
+                        Visibility="{Binding ElementName=tbOpticalBlk, Path=IsFocused, Converter={StaticResource boolToVis}}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="3"
+                        Visibility="Collapsed">
+                <Label Content="LightMode"
+                       HorizontalContentAlignment="Right"
+                       Width="150"
+                       Background="{x:Null}"
+                       Foreground="White" />
+                <TextBox Name="tbLightMode"
+                         Width="70"
+                         Text="{Binding Path=LightMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="3"
+                        Visibility="Collapsed">
+                <Label Content="FrameCount"
+                       HorizontalContentAlignment="Right"
+                       Width="150"
+                       Background="{x:Null}"
+                       Foreground="White" />
+                <TextBox Name="tbFrameCount"
+                         Width="70"
+                         Text="{Binding Path=FrameCount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="3"
+                        IsEnabled="{Binding Path=IsLive, Converter={StaticResource boolOppositeConverter}}">
+                <Label Content="Readout Speed"
+                       HorizontalContentAlignment="Right"
+                       Width="150"
+                       Background="{x:Null}"
+                       Foreground="White" />
+                <ComboBox Width="70"
+                          Foreground="Black"
+                          SelectedIndex="{Binding Path=ReadOutSpeedIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          ItemsSource="{Binding Path=ReadOutSpeedEntries, Mode=OneWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}"
+                                       Foreground="Black"
+                                       Margin="2" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Label Content="MHz"
+                       HorizontalContentAlignment="Right"
+                       Background="{x:Null}"
+                       Foreground="White" />
+            </StackPanel>
+            <StackPanel Name="spReadoutTaps"
+                        Orientation="Horizontal"
+                        Margin="3"
+                        IsEnabled="{Binding Path=IsLive, Converter={StaticResource boolOppositeConverter}}">
+                <Label Content="Readout Taps"
+                       HorizontalContentAlignment="Right"
+                       Width="150"
+                       Background="{x:Null}"
+                       Foreground="White" />
+                <ComboBox Width="70"
+                          Foreground="Black"
+                          SelectedIndex="{Binding Path=ReadOutTapIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          ItemsSource="{Binding Path=ReadOutTapEntries, Mode=OneWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}"
+                                       Foreground="Black"
+                                       Margin="2" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+            <StackPanel Name="spTapBalance"
+                        Orientation="Horizontal"
+                        Margin="3"
+                        IsEnabled="{Binding Path=IsLive, Converter={StaticResource boolOppositeConverter}}">
+                <Label Content="Tap Balance"
+                       HorizontalContentAlignment="Right"
+                       Width="150"
+                       Background="{x:Null}"
+                       Foreground="White" />
+                <CheckBox ToolTip="Check or Uncheck to turn tap balance on or off"
+                          VerticalAlignment="Center"
+                          Margin="3"
+                          IsChecked ="{Binding Path=TapBalance, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    <Label Foreground="White"
+                           Content="ON/OFF" />
+                </CheckBox>
+            </StackPanel>
+            <StackPanel Name="spCoolMode" Orientation="Horizontal"
+                        Margin="3"
+                        Visibility="{Binding Path=CoolingModeSupported, Converter={StaticResource boolToVis}}"
+                        IsEnabled="{Binding Path=IsLive, Converter={StaticResource boolOppositeConverter}}">
+                <Label Content="Cooling"
+                       HorizontalContentAlignment="Right"
+                       Width="150"
+                       Background="{x:Null}"
+                       Foreground="White" />
+                <CheckBox ToolTip="Check or Uncheck to turn cooling mode on or off"
+                          VerticalAlignment="Center"
+                          Margin="3"
+                          IsChecked="{Binding Path=CoolingMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    <Label Foreground="White"
+                           Content="ON/OFF" />
+                </CheckBox>
+            </StackPanel>
+            <StackPanel Name="spNIRBoost" Orientation="Horizontal"
+                        Margin="3"
+                        Visibility="{Binding Path=NIRBoostSupported, Converter={StaticResource boolToVis}}"
+                        IsEnabled="{Binding Path=IsLive, Converter={StaticResource boolOppositeConverter}}">
+                <Label Content="NIR Boost"
+                       HorizontalContentAlignment="Right"
+                       Width="150"
+                       Background="{x:Null}"
+                       Foreground="White" />
+                <CheckBox ToolTip="Check or Uncheck to turn NIR boost on or off"
+                          VerticalAlignment="Center"
+                          Margin="3"
+                          IsChecked="{Binding Path=NIRBoost, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    <Label Foreground="White"
+                           Content="ON/OFF" />
+                </CheckBox>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="3"
+                        Visibility="Collapsed">
+                <Label Content="OperatingMode"
+                       HorizontalContentAlignment="Right"
+                       Width="150"
+                       Background="{x:Null}"
+                       Foreground="White" />
+                <TextBox Name="tbOpMode"
+                         Width="70"
+                         Text="{Binding Path=OperatingMode, Mode= TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="3"
+                        IsEnabled="{Binding Path=IsLive, Converter={StaticResource boolOppositeConverter}}">
+                <Label Content="BinX"
+                       HorizontalContentAlignment="Right"
+                       Width="150"
+                       Background="{x:Null}"
+                       Foreground="White" />
+                <TextBox Name="tbBinX"
+                         Height="25"
+                         Width="70"
+                         Text="{Binding Path=BinX, Mode= TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <StackPanel>
+                    <RepeatButton Content="+"
+                                  Width="30"
+                                  Height="20"
+                                  Command="{Binding Path=BinXPlusCommand}"
+                                  Delay="500"
+                                  Interval="100" />
+                    <RepeatButton Content="-"
+                                  Width="30"
+                                  Height="20"
+                                  Command="{Binding Path=BinXMinusCommand}"
+                                  Delay="500"
+                                  Interval="100" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="3"
+                        IsEnabled="{Binding Path=IsLive, Converter={StaticResource boolOppositeConverter}}">
+                <Label Content="BinY"
+                       HorizontalContentAlignment="Right"
+                       Width="150"
+                       Background="{x:Null}"
+                       Foreground="White" />
+                <TextBox Name="tbBinY"
+                         Height="25"
+                         Width="70"
+                         Text="{Binding Path=BinY, Mode= TwoWay}" />
+                <StackPanel>
+                    <RepeatButton Content="+"
+                                  Width="30"
+                                  Height="20"
+                                  Command="{Binding Path=BinYPlusCommand}"
+                                  Delay="500"
+                                  Interval="100" />
+                    <RepeatButton Content="-"
+                                  Width="30"
+                                  Height="20"
+                                  Command="{Binding Path=BinYMinusCommand}"
+                                  Delay="500"
+                                  Interval="100" />
+                </StackPanel>
+            </StackPanel>
+            <Border CornerRadius="12"
+                    Margin="3"
+                    BorderBrush="White"
+                    BorderThickness="1">
+                <StackPanel Margin="3"
+                            IsEnabled="{Binding Path=IsLive, Converter={StaticResource boolOppositeConverter}}">
+                    <StackPanel Orientation="Horizontal"
+                                Margin="3"
+                                HorizontalAlignment="Center">
+                        <Label Content="Top"
+                               Width="50"
+                               Background="{x:Null}"
+                               Foreground="White"
+                               HorizontalContentAlignment="Right" />
+                        <TextBox Name="tbTop"
+                                 Width="70"
+                                 Text="{Binding Path=Top, Mode= TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal"
+                                Margin="3"
+                                HorizontalAlignment="Center">
+                        <Label Content="Left"
+                               Background="{x:Null}"
+                               Foreground="White"
+                               Width="50"
+                               HorizontalContentAlignment="Right" />
+                        <TextBox Name="tbLeft"
+                                 Width="70"
+                                 Text="{Binding Path=Left, Mode= TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal"
+                                Margin="3"
+                                HorizontalAlignment="Center">
+                        <Label Content="Width"
+                               Width="50"
+                               Background="{x:Null}"
+                               Foreground="White"
+                               HorizontalContentAlignment="Right" />
+                        <TextBox Name="tbWidth"
+                                 Width="70"
+                                 Text="{Binding Path=Width, Mode= TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal"
+                                Margin="3"
+                                HorizontalAlignment="Center">
+                        <Label Content="Height"
+                               Width="50"
+                               Background="{x:Null}"
+                               Foreground="White"
+                               HorizontalContentAlignment="Right" />
+                        <TextBox Name="tbHeight"
+                                 Width="70"
+                                 Text="{Binding Path=Height, Mode= TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                    <StackPanel HorizontalAlignment="Center"
+                                Margin="3">
+                        <Button Name="btnFullFrame"
+                                Content="Full Frame"
+                                Width="70"
+                                Height="30"
+                                Click="btnFullFrame_Click" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Margin="3">
+                <Label Content="CCD Width"
+                       Background="{x:Null}"
+                       Foreground="White" />
+                <Label Name="labCameraWidth"
+                       Width="70"
+                       HorizontalContentAlignment="Center"
+                       Foreground="White"
+                       Content="{Binding Path=CameraWidth, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Margin="3">
+                <Label Content="CCD Height"
+                       Background="{x:Null}"
+                       Foreground="White" />
+                <Label Name="labCameraHeight"
+                       Width="70"
+                       HorizontalContentAlignment="Center"
+                       Foreground="White"
+                       Content="{Binding Path=CameraHeight, Mode= OneWay, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Name="cmdConsolePanel"
+                        Margin="3">
+                <Button Name="cmdConsole"
+                        Content="Command Console"
+                        Height="35"
+                        Width="120"
+                        Margin="3"
+                        Command="{Binding Path=CameraConsoleCommand}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="3"
+                        Visibility="Collapsed">
+                <Label Content="TDITriggers"
+                       HorizontalContentAlignment="Right"
+                       Width="150"
+                       Background="{x:Null}"
+                       Foreground="White" />
+                <TextBox Name="tbTdiTriggers"
+                         Width="70"
+                         Text="{Binding Path=TDITriggers, Mode= TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="3"
+                        Visibility="Collapsed">
+                <Label Content="TDILineShifts"
+                       HorizontalContentAlignment="Right"
+                       Width="150"
+                       Background="{x:Null}"
+                       Foreground="White" />
+                <TextBox Name="tbTdiLineShifts"
+                         Width="70"
+                         Text="{Binding Path=TDILineShifts, Mode= TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="3"
+                        Visibility="Collapsed">
+                <Label Content="TDITrimMode"
+                       HorizontalContentAlignment="Right"
+                       Width="150"
+                       Background="{x:Null}"
+                       Foreground="White" />
+                <TextBox Name="tbTdiTrimMode"
+                         Width="70"
+                         Text="{Binding Path=TDITrimMode, Mode= TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="3"
+                        Visibility="Collapsed">
+                <Label Content="TDILineTrim"
+                       HorizontalContentAlignment="Right"
+                       Width="150"
+                       Background="{x:Null}"
+                       Foreground="White" />
+                <TextBox Name="tbTdiLineTrim"
+                         Width="70"
+                         Text="{Binding Path=TDILineTrim, Mode= TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -1,0 +1,738 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.SLMControlView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:View="clr-namespace:CaptureSetupDll.View"
+             xmlns:ViewModel="clr-namespace:CaptureSetupDll.ViewModel"
+             xmlns:dragdrop="clr-namespace:GongSolutions.Wpf.DragDrop;assembly=GongSolutions.Wpf.DragDrop"
+             xmlns:validator="clr-namespace:Validations;assembly=Validations"
+             xmlns:sharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+             mc:Ignorable="d"
+             Height="Auto"
+             Width="360">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <sharedTypes:InverseBooleanConverter x:Key="InvertBool" />
+            <DataTemplate DataType="{x:Type ViewModel:CaptureSetupViewModel}" />
+            <XmlDataProvider x:Key="expData" />
+            <ViewModel:DoubleCultureConverter x:Key="doubleCulture" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Center">
+            <Label Content="Epoch"
+                   Height="30"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Top" />
+        </StackPanel>
+        <StackPanel Grid.Row="1">
+            <ListView Name="SLMPatternList"
+                      Width="350"
+                      Height="130"
+                      Margin="3"
+                      SelectedIndex="{Binding SLMPatternSelectedIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                      IsEnabled="{Binding ElementName=tbtnSLMAdvance,Path=IsChecked,Mode=OneWay,UpdateSourceTrigger=PropertyChanged,ConverterParameter=Inverted,Converter={StaticResource InvertBool}}"
+                      ItemsSource="{Binding SLMBleachWaveParams}"
+                      SelectionMode="Single"
+                      HorizontalContentAlignment="Center"
+                      ToolTip="List details of bleach parameters for SLM patterns"
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                      dragdrop:DragDrop.DropHandler="{Binding}"
+                      dragdrop:DragDrop.IsDragSource="True"
+                      dragdrop:DragDrop.IsDropTarget="True">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Focusable"
+                                Value="True" />
+                        <Setter Property="HorizontalContentAlignment"
+                                Value="Stretch" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.Style>
+                    <Style TargetType="{x:Type ListView}">
+                        <Setter Property="HorizontalContentAlignment"
+                                Value="Stretch" />
+                    </Style>
+                </ListView.Style>
+                <ListView.View>
+                    <GridView AllowsColumnReorder="False">
+                        <GridViewColumn Header="ID"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=BleachWaveParams.ID}" />
+                        <GridViewColumn Header="Name"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Name}" />
+                        <GridViewColumn Header="Duration&#x0a;   (ms)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Duration}" />
+                        <GridViewColumn Header="CenterX&#x0a;   (um)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=BleachWaveParams.CenterUM.X}" />
+                        <GridViewColumn Header="CenterY&#x0a;   (um)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=BleachWaveParams.CenterUM.Y}" />
+                        <GridViewColumn Header="ROIWidth&#x0a;    (um)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=BleachWaveParams.ROIWidthUM}" />
+                        <GridViewColumn Header="ROIHeight&#x0a;    (um)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=BleachWaveParams.ROIHeightUM}" />
+                        <GridViewColumn Header="Px.Spacing"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding PixelSpacing}" />
+                        <GridViewColumn Header="Iterations"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=BleachWaveParams.Iterations}" />
+                        <GridViewColumn Header="Pre-Pat.Idle&#x0a;     (ms)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=BleachWaveParams.PrePatIdleTime}" />
+                        <GridViewColumn Header="Post-Pat.Idle&#x0a;     (ms)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=BleachWaveParams.PostPatIdleTime}" />
+                        <GridViewColumn Header="Pre-Ite.Idle&#x0a;     (ms)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=BleachWaveParams.PreIdleTime}" />
+                        <GridViewColumn Header="Post-Ite.Idle&#x0a;     (ms)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=BleachWaveParams.PostIdleTime}" />
+                        <GridViewColumn Header="Power&#x0a;   (%)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=BleachWaveParams.Power}" />
+                        <GridViewColumn Header="Mea.Power&#x0a;    (mW)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=BleachWaveParams.MeasurePower}" />
+                        <GridViewColumn Header="Mea.Power D&#x0a;    (mW/um^2)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=SLMMeasurePowerArea}" />
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </StackPanel>
+        <StackPanel Grid.Row="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Center"
+                    IsEnabled="{Binding ElementName=tbtnSLMAdvance,Path=IsChecked,Mode=OneWay,UpdateSourceTrigger=PropertyChanged,ConverterParameter=Inverted,Converter={StaticResource InvertBool}}"
+                    Margin="3">
+            <Button ToolTip="Command to add one SLM pattern"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Height="20"
+                    Width="65"
+                    Margin="1"
+                    Command="{Binding Path=EditSLMParamRelayCommand}"
+                    CommandParameter="SLM_PATTERN_ADD"
+                    IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
+                <TextBlock ToolTip="Extract SLM ROI data, update settings for SLM waveform">Add</TextBlock>
+            </Button>
+            <Button ToolTip="Command to edit selected SLM pattern"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Height="20"
+                    Width="65"
+                    Margin="1"
+                    Command="{Binding Path=EditSLMParamRelayCommand}"
+                    CommandParameter="SLM_PATTERN_EDIT"
+                    IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
+                <Button.Style>
+                    <Style TargetType="Button"
+                           BasedOn="{StaticResource {x:Type Button}}">
+                        <Setter Property="Visibility"
+                                Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SLMBleachWaveParams.Count}"
+                                         Value="0">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+                <TextBlock ToolTip="Edit settings for SLM waveform">Edit</TextBlock>
+            </Button>
+            <Button ToolTip="Command to delete selected SLM pattern"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Height="20"
+                    Width="65"
+                    Margin="1"
+                    Command="{Binding Path=EditSLMParamRelayCommand}"
+                    CommandParameter="SLM_PATTERN_DELETE"
+                    IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
+                <TextBlock ToolTip="Delete settings and waveform">Delete</TextBlock>
+            </Button>
+            <Button ToolTip="Command to show or hide all ROIs"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Height="20"
+                    Width="70"
+                    Margin="1"
+                    Command="{Binding Path=EditSLMParamRelayCommand}"
+                    CommandParameter="SLM_PATTERN_SHOWHIDE">
+                <TextBlock ToolTip="Display or hide all ROIs">Show/Hide</TextBlock>
+            </Button>
+            <Button ToolTip="Command to import SLM specs from a selected file"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Height="20"
+                    Width="65"
+                    Margin="1"
+                    Command="{Binding Path=EditSLMParamRelayCommand}"
+                    CommandParameter="SLM_IMPORT"
+                    IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
+                <TextBlock ToolTip="Import custom SLM bleaching patterns.">Import</TextBlock>
+            </Button>
+        </StackPanel>
+        <StackPanel Grid.Row="3">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <ToggleButton Name="tbtnSLM3D"
+                              Margin="1"
+                              Height="25"
+                              Width="40"
+                              IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                              IsChecked ="{Binding Path=SLM3D, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              ToolTip="create SLM patterns in 2D or 3D mode."
+                              VerticalAlignment="Center"
+                              HorizontalAlignment="Right">
+                    <ToggleButton.Style>
+                        <Style TargetType="ToggleButton" BasedOn="{StaticResource {x:Type ToggleButton}}">
+                            <Setter Property="Content"
+                                    Value="2D" />
+                            <Style.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter Property="Content" Value="3D"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ToggleButton.Style>
+                </ToggleButton>
+                <ToggleButton Name="tbtnSLMAdvance"
+                              Margin="1"                    
+                              Height="25"
+                              Width="70"
+                              IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                              IsChecked ="{Binding Path=SLMSequenceOn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              ToolTip="ON to create multiple epochs based on defined patterns."
+                              VerticalAlignment="Center"
+                              HorizontalAlignment="Right">
+                    <ToggleButton.Style>
+                        <Style TargetType="ToggleButton" BasedOn="{StaticResource {x:Type ToggleButton}}">
+                            <Setter Property="Content"
+                                    Value="Basic" />
+                            <Style.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter Property="Content" Value="Advance"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ToggleButton.Style>
+                </ToggleButton>
+                <Label Content="λ" HorizontalContentAlignment="Right" 
+                       Width="25"/>
+                <TextBox Text="{Binding Path=Wavelength, Mode=TwoWay}"
+                         IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                         Height="20"
+                         Width="40">
+                    <TextBox.Style>
+                        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                            <Setter Property="IsReadOnly"
+                                    Value="False" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ElementName=tbtnSLMAdvance, Path=IsChecked }"
+                                             Value="True">
+                                    <Setter Property="IsReadOnly"
+                                            Value="True" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+                <Label Content="nm" 
+                       Width="30"/>
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel" BasedOn="{StaticResource {x:Type StackPanel}}">
+                            <Setter Property="Visibility"
+                                    Value="Visible" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ElementName=tbtnSLMAdvance, Path=IsChecked }"
+                                             Value="True">
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <Label Content="Epoch Count" Foreground="White"/>
+                    <TextBox Name="epochCount"
+                             Text="{Binding Path=EpochCount, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}"
+                             IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                             validator:Validation.ValidationType="{x:Type system:Int32}"
+                             validator:Validation.MinValue="1"
+                             validator:Validation.NoEmptyValue="True"
+                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                             Width="40"
+                             Margin="3"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center"
+                             HorizontalContentAlignment="Right">
+                        <TextBox.Style>
+                            <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource {x:Type TextBox}}">
+                                <Style.Triggers>
+                                    <Trigger Property="Validation.HasError"
+                                             Value="True">
+                                        <Setter Property="ToolTip"
+                                                Value="{Binding RelativeSource={x:Static RelativeSource.Self}, Path=(Validation.Errors).CurrentItem.ErrorContent}" />
+                                    </Trigger>
+                                    <Trigger Property="Validation.HasError"
+                                             Value="False">
+                                        <Setter Property="ToolTip"
+                                                Value="Enter the cycles to repeat over the patterns in order." />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+                    <Button Width="25"
+                        Height="25"
+                        Content="✓">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=epochCount}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+                <Button Name="ConfigureEpochs"
+                        VerticalAlignment="Center"
+                        Width="120"
+                        Height="25"
+                        Command="{Binding Path=EditSLMParamRelayCommand}"
+                        CommandParameter="SLM_CONFIG_SEQUENCE"
+                        Content="Configure Epochs">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                            <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ElementName=tbtnSLMAdvance, Path=IsChecked}"
+                                             Value="True">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Margin="3">
+                <Label Content="Repeats No."
+                       Height="30"
+                       HorizontalAlignment="Left" />
+                <TextBox Name="txtRepeats"
+                         Text="{Binding Path=BleachFrames, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}"
+                         validator:Validation.ValidationType="{x:Type system:Int32}"
+                         validator:Validation.MinValue="1"
+                         validator:Validation.NoEmptyValue="True"
+                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                         Width="40"
+                         Margin="3,3,3,3"
+                         HorizontalAlignment="Center"
+                         VerticalAlignment="Center"
+                         HorizontalContentAlignment="Right">
+                    <TextBox.Style>
+                        <Style TargetType="{x:Type TextBox}"
+                               BasedOn="{StaticResource {x:Type TextBox}}">
+                            <Style.Triggers>
+                                <Trigger Property="Validation.HasError"
+                                         Value="True">
+                                    <Setter Property="ToolTip"
+                                            Value="{Binding RelativeSource={x:Static RelativeSource.Self}, Path=(Validation.Errors).CurrentItem.ErrorContent}" />
+                                </Trigger>
+                                <Trigger Property="Validation.HasError"
+                                         Value="False">
+                                    <Setter Property="ToolTip"
+                                            Value="Enter the cycles to repeat over the patterns in order." />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+                <Button Width="25"
+                        Height="25"
+                        Content="✓">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txtRepeats}"
+                                             Value="True">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Label Content="Delay"
+                       Height="30"
+                       HorizontalAlignment="Left" />
+                <TextBox Name="txtRepeatDelay"
+                         Text="{Binding Path=SLMBleachDelay, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}"
+                         validator:Validation.ValidationType="{x:Type system:Double}"
+                         validator:Validation.MinValue="0.0"
+                         validator:Validation.NoEmptyValue="True"
+                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                         Width="40"
+                         Margin="3,3,3,3"
+                         HorizontalAlignment="Center"
+                         VerticalAlignment="Center"
+                         HorizontalContentAlignment="Right">
+                    <TextBox.Style>
+                        <Style TargetType="{x:Type TextBox}"
+                               BasedOn="{StaticResource {x:Type TextBox}}">
+                            <Style.Triggers>
+                                <Trigger Property="Validation.HasError"
+                                         Value="True">
+                                    <Setter Property="ToolTip"
+                                            Value="{Binding RelativeSource={x:Static RelativeSource.Self}, Path=(Validation.Errors).CurrentItem.ErrorContent}" />
+                                </Trigger>
+                                <Trigger Property="Validation.HasError"
+                                         Value="False">
+                                    <Setter Property="ToolTip"
+                                            Value="Enter time delay between repeats in seconds." />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+
+                </TextBox>
+                <Button Width="25"
+                        Height="25"
+                        Content="✓">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txtRepeatDelay}"
+                                             Value="True">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Label Content="[s]"
+                       Height="30"
+                       HorizontalAlignment="Left" />
+                <Button ToolTip="Bleach Now"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Width="80"
+                        Height="30"
+                        Margin="1"
+                        Command="{Binding Path=EditSLMParamRelayCommand}"
+                        CommandParameter="SLM_EXECUTE"
+                        IsEnabled="{Binding Path=SLMBleachNowEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                    <Button.Style>
+                        <Style TargetType="Button"
+                               BasedOn="{x:Null}">
+                            <Setter Property="Foreground"
+                                    Value="White" />
+                            <Setter Property="Background"
+                                    Value="LimeGreen" />
+                            <Setter Property="Visibility"
+                                    Value="Visible" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SLMBleachWaveParams.Count}"
+                                             Value="0">
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <TextBlock ToolTip="Bleach Now">Bleach Now</TextBlock>
+                </Button>
+            </StackPanel>
+        </StackPanel>
+        <StackPanel Grid.Row="4"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Stretch">
+            <Border>
+                <Expander Name="slmCalExpander"
+                          Foreground="#FFFFFFFF">
+                    <Expander.Header>
+                        <Grid Width="325">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal"
+                                        Grid.Column="0">
+                                <Label Content="Calibration"
+                                       HorizontalAlignment="Left"
+                                       VerticalAlignment="Center"
+                                       Foreground="White" />
+                                <StackPanel>
+                                    <StackPanel Orientation="Vertical"
+                                                HorizontalAlignment="Stretch">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Label Content="GG:"
+                                                   Foreground="Yellow" />
+                                            <Label Content="{Binding Path=LSMLastCalibrationDateForSLM}"
+                                                   Foreground="Yellow" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label Content="SLM:"
+                                               Foreground="Yellow" />
+                                        <Label Content="{Binding Path=SLMLastCalibTime, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"
+                                               HorizontalAlignment="Left"
+                                               Foreground="White">
+                                            <Label.Style>
+                                                <Style TargetType="Label">
+                                                    <Style.Resources>
+                                                        <Storyboard x:Key="flashingAnimation">
+                                                            <DoubleAnimation AutoReverse="True"
+                                                                             Duration="0:0:0.5"
+                                                                             From="1"
+                                                                             RepeatBehavior="Forever"
+                                                                             Storyboard.TargetProperty="(Background).(Opacity)"
+                                                                             To="0.5" />
+                                                        </Storyboard>
+                                                    </Style.Resources>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=SLMCalAlert}"
+                                                                     Value="True">
+                                                            <Setter Property="Background"
+                                                                    Value="Yellow" />
+                                                            <DataTrigger.EnterActions>
+                                                                <BeginStoryboard Name="flashing"
+                                                                                 Storyboard="{StaticResource flashingAnimation}" />
+                                                            </DataTrigger.EnterActions>
+                                                            <DataTrigger.ExitActions>
+                                                                <StopStoryboard BeginStoryboardName="flashing" />
+                                                            </DataTrigger.ExitActions>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Label.Style>
+                                        </Label>
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </Expander.Header>
+                    <StackPanel Orientation="Vertical"
+                                HorizontalAlignment="Stretch">
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center">
+                            <StackPanel Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                <Label Content="Power"
+                                       HorizontalAlignment="Center"
+                                       Foreground="White" />
+                                <TextBox Text="{Binding Path=SLMCalibPower, Mode=TwoWay}"
+                                         validator:Validation.ValidationType="{x:Type system:Double}"
+                                         validator:Validation.MinValue="0.0"
+                                         validator:Validation.NoEmptyValue="True"
+                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                         Width="60"
+                                         Name="tbSLMCalPower"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"
+                                         Margin="3,3,3,3">
+                                    <TextBox.Style>
+                                        <Style TargetType="{x:Type TextBox}"
+                                               BasedOn="{StaticResource {x:Type TextBox}}">
+                                            <Style.Triggers>
+                                                <Trigger Property="Validation.HasError"
+                                                         Value="True">
+                                                    <Setter Property="ToolTip"
+                                                            Value="{Binding RelativeSource={x:Static RelativeSource.Self}, Path=(Validation.Errors).CurrentItem.ErrorContent}" />
+                                                </Trigger>
+                                                <Trigger Property="Validation.HasError"
+                                                         Value="False">
+                                                    <Setter Property="ToolTip"
+                                                            Value="Enter the power for SLM Calibration" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBox.Style>
+
+                                </TextBox>
+                                <Label Content="%"
+                                       HorizontalAlignment="Center"
+                                       Foreground="White" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                <Label Content="Dwell Time Per &#x0a;Calibration Spot"
+                                       HorizontalAlignment="Center"
+                                       Foreground="White" />
+                                <TextBox Text="{Binding Path=SLMCalibDwell, Mode=TwoWay}"
+                                         validator:Validation.ValidationType="{x:Type system:Double}"
+                                         validator:Validation.MinValue="0.0"
+                                         validator:Validation.NoEmptyValue="True"
+                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                         Width="60"
+                                         Name="tbSLMCalDwell"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"
+                                         Margin="3,3,3,3">
+                                    <TextBox.Style>
+                                        <Style TargetType="{x:Type TextBox}"
+                                               BasedOn="{StaticResource {x:Type TextBox}}">
+                                            <Style.Triggers>
+                                                <Trigger Property="Validation.HasError"
+                                                         Value="True">
+                                                    <Setter Property="ToolTip"
+                                                            Value="{Binding RelativeSource={x:Static RelativeSource.Self}, Path=(Validation.Errors).CurrentItem.ErrorContent}" />
+                                                </Trigger>
+                                                <Trigger Property="Validation.HasError"
+                                                         Value="False">
+                                                    <Setter Property="ToolTip"
+                                                            Value="Enter the dwell time for SLM Calibration" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
+                                <Label Content="[ms]"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Foreground="White" />
+                            </StackPanel>
+                        </StackPanel>
+                        <Button ToolTip="Command to check SLM calibration"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Height="30"
+                                Width="Auto"
+                                Margin="3"
+                                Command="{Binding Path=EditSLMParamRelayCommand}"
+                                CommandParameter="SLM_CALIBRATION"
+                                IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
+                            <TextBlock ToolTip="Calibrate SLM">Check Calibration</TextBlock>
+                        </Button>
+                        <StackPanel Grid.Row="5"
+                                    Name="stpSLMBleacherControl"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Left">
+                            <Button Content="UnCalib.&#x0a; Center"
+                                    ToolTip="Center bleach scanner at non-calibrated imaging center"
+                                    Width="50"
+                                    Height="40"
+                                    Margin="1"
+                                    IsEnabled="{Binding LiveStartButtonStatus}"
+                                    Command="{Binding CenterScannersCommand}"
+                                    CommandParameter="{x:Static sharedTypes:SelectedHardware.SELECTED_BLEACHINGSCANNER}" />
+                            <Button Content=" Calib.&#x0a;Center"
+                                    ToolTip="Center bleach scanner at calibrated center"
+                                    Width="50"
+                                    Height="40"
+                                    Margin="1"
+                                    IsEnabled="{Binding LiveStartButtonStatus}"
+                                    Command="{Binding ImagingCenterScannersCommand}"
+                                    CommandParameter="{x:Static sharedTypes:SelectedHardware.SELECTED_BLEACHINGSCANNER}" />
+                            <Button Name="btnSLMBlank"
+                                    ToolTip="Command to set SLM blank"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Width="50"
+                                    Height="40"
+                                    Margin="1"
+                                    Command="{Binding Path=EditSLMParamRelayCommand}"
+                                    CommandParameter="SLM_BLANK"
+                                    IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
+                                <TextBlock Text="  Set&#x0a;Blank"
+                                           ToolTip="Set blank SLM pattern" />
+                            </Button>
+                            <StackPanel Name="stkBleachPockelSLM" Orientation="Horizontal" HorizontalAlignment="Left">
+                                <Label Content="Pockels"
+                                       HorizontalAlignment="Center"
+                                       Foreground="White"
+                                       VerticalAlignment="Center" />
+                                <ComboBox MinWidth="40"
+                                          Height="30"
+                                          HorizontalAlignment="Left"
+                                          HorizontalContentAlignment="Left"
+                                          ToolTip="Select the pockels ID, those have to be set as visible."
+                                          ItemsSource="{Binding BleacherPockelsList, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          SelectedIndex="{Binding Path=BleacherPowerID, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                </ComboBox>
+                                <Label Content=":"
+                                       HorizontalAlignment="Center"
+                                       Foreground="White"
+                                       VerticalAlignment="Center" />
+                                <TextBox Name="tbSLMBleachPower"
+                                         Text="{Binding Path=BleacherPowerGo, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}"
+                                         ToolTip="Enter the power value of bleach scanner to go to"
+                                         Width="40"
+                                         VerticalAlignment="Center"
+                                         validator:Validation.ValidationType="{x:Type system:Double}"
+                                         validator:Validation.MinValue="0"
+                                         validator:Validation.MaxValue="100"
+                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text">
+                                </TextBox>
+                                <Button Width="30"
+                                        Content="✓">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility"
+                                                    Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbSLMBleachPower}"
+                                                             Value="True">
+                                                    <Setter Property="Visibility"
+                                                            Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <Button Content="Go"
+                                        ToolTip="Command to set pockels Power of bleach scanner"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Command="{Binding Path=SetBleacherPowerCommand}"
+                                        MinWidth="25"
+                                        Margin="3">
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </Expander>
+            </Border>
+        </StackPanel>
+    </Grid>
+</UserControl>

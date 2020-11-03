@@ -1,0 +1,76 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorRealTimeData", "ThorRealTimeData\ThorRealTimeData.vcxproj", "{3E4BB75A-6D29-402F-ADD6-DA4F98FC24DE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThorRealTimeDataTests", "ThorRealTimeDataTests\ThorRealTimeDataTests.csproj", "{974601FB-C6D6-4D5E-8CC7-83DD0849F56C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3E4BB75A-6D29-402F-ADD6-DA4F98FC24DE} = {3E4BB75A-6D29-402F-ADD6-DA4F98FC24DE}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9BDC92C8-A417-4A8A-959E-BB0ED65DFA86}"
+	ProjectSection(SolutionItems) = preProject
+		TestSettings.testsettings = TestSettings.testsettings
+		ThorRealTimeData.runsettings = ThorRealTimeData.runsettings
+		ThorRealTimeData.vsmdi = ThorRealTimeData.vsmdi
+		ThorRealTimeDataSettings.xml = ThorRealTimeDataSettings.xml
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://stl-tfs1:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = ThorRealTimeData\\ThorRealTimeData.vcxproj
+		SccProjectName1 = ThorRealTimeData
+		SccLocalPath1 = ThorRealTimeData
+		SccProjectUniqueName2 = ThorRealTimeDataTests\\ThorRealTimeDataTests.csproj
+		SccProjectName2 = ThorRealTimeDataTests
+		SccLocalPath2 = ThorRealTimeDataTests
+	EndGlobalSection
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = ThorRealTimeData.vsmdi
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|Mixed Platforms = Debug|Mixed Platforms
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Any CPU = Release|Any CPU
+		Release|Mixed Platforms = Release|Mixed Platforms
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3E4BB75A-6D29-402F-ADD6-DA4F98FC24DE}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{3E4BB75A-6D29-402F-ADD6-DA4F98FC24DE}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{3E4BB75A-6D29-402F-ADD6-DA4F98FC24DE}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{3E4BB75A-6D29-402F-ADD6-DA4F98FC24DE}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3E4BB75A-6D29-402F-ADD6-DA4F98FC24DE}.Debug|Win32.Build.0 = Debug|Win32
+		{3E4BB75A-6D29-402F-ADD6-DA4F98FC24DE}.Debug|x64.ActiveCfg = Debug|x64
+		{3E4BB75A-6D29-402F-ADD6-DA4F98FC24DE}.Debug|x64.Build.0 = Debug|x64
+		{3E4BB75A-6D29-402F-ADD6-DA4F98FC24DE}.Release|Any CPU.ActiveCfg = Release|x64
+		{3E4BB75A-6D29-402F-ADD6-DA4F98FC24DE}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{3E4BB75A-6D29-402F-ADD6-DA4F98FC24DE}.Release|Mixed Platforms.Build.0 = Release|x64
+		{3E4BB75A-6D29-402F-ADD6-DA4F98FC24DE}.Release|Win32.ActiveCfg = Release|Win32
+		{3E4BB75A-6D29-402F-ADD6-DA4F98FC24DE}.Release|Win32.Build.0 = Release|Win32
+		{3E4BB75A-6D29-402F-ADD6-DA4F98FC24DE}.Release|x64.ActiveCfg = Release|x64
+		{3E4BB75A-6D29-402F-ADD6-DA4F98FC24DE}.Release|x64.Build.0 = Release|x64
+		{974601FB-C6D6-4D5E-8CC7-83DD0849F56C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{974601FB-C6D6-4D5E-8CC7-83DD0849F56C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{974601FB-C6D6-4D5E-8CC7-83DD0849F56C}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{974601FB-C6D6-4D5E-8CC7-83DD0849F56C}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{974601FB-C6D6-4D5E-8CC7-83DD0849F56C}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{974601FB-C6D6-4D5E-8CC7-83DD0849F56C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{974601FB-C6D6-4D5E-8CC7-83DD0849F56C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{974601FB-C6D6-4D5E-8CC7-83DD0849F56C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{974601FB-C6D6-4D5E-8CC7-83DD0849F56C}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{974601FB-C6D6-4D5E-8CC7-83DD0849F56C}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{974601FB-C6D6-4D5E-8CC7-83DD0849F56C}.Release|Win32.ActiveCfg = Release|Any CPU
+		{974601FB-C6D6-4D5E-8CC7-83DD0849F56C}.Release|x64.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

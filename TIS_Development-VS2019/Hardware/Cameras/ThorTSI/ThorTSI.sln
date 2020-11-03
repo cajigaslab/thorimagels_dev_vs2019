@@ -1,0 +1,53 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EA3D2CC3-D62E-41BC-8EF4-85806211B4A1}"
+	ProjectSection(SolutionItems) = preProject
+		CopyDependencies.bat = CopyDependencies.bat
+		CopySingleDependency.bat = CopySingleDependency.bat
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorTSI", "ThorTSI\ThorTSI.vcxproj", "{162960AB-116A-43B5-84F4-F113CDBBB8CA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorTSITestApp", "ThorTSITestApp\ThorTSITestApp.vcxproj", "{781626A7-6E94-4A65-9C32-2007A1C70234}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://vateam02:8080/tfs/defaultcollection
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = ThorTSI\\ThorTSI.vcxproj
+		SccProjectName1 = ThorTSI
+		SccLocalPath1 = ThorTSI
+		SccProjectUniqueName2 = ThorTSITestApp\\ThorTSITestApp.vcxproj
+		SccProjectName2 = ThorTSITestApp
+		SccLocalPath2 = ThorTSITestApp
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{162960AB-116A-43B5-84F4-F113CDBBB8CA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{162960AB-116A-43B5-84F4-F113CDBBB8CA}.Debug|Win32.Build.0 = Debug|Win32
+		{162960AB-116A-43B5-84F4-F113CDBBB8CA}.Debug|x64.ActiveCfg = Debug|x64
+		{162960AB-116A-43B5-84F4-F113CDBBB8CA}.Debug|x64.Build.0 = Debug|x64
+		{162960AB-116A-43B5-84F4-F113CDBBB8CA}.Release|Win32.ActiveCfg = Release|Win32
+		{162960AB-116A-43B5-84F4-F113CDBBB8CA}.Release|Win32.Build.0 = Release|Win32
+		{162960AB-116A-43B5-84F4-F113CDBBB8CA}.Release|x64.ActiveCfg = Release|x64
+		{162960AB-116A-43B5-84F4-F113CDBBB8CA}.Release|x64.Build.0 = Release|x64
+		{781626A7-6E94-4A65-9C32-2007A1C70234}.Debug|Win32.ActiveCfg = Debug|Win32
+		{781626A7-6E94-4A65-9C32-2007A1C70234}.Debug|Win32.Build.0 = Debug|Win32
+		{781626A7-6E94-4A65-9C32-2007A1C70234}.Debug|x64.ActiveCfg = Debug|x64
+		{781626A7-6E94-4A65-9C32-2007A1C70234}.Debug|x64.Build.0 = Debug|x64
+		{781626A7-6E94-4A65-9C32-2007A1C70234}.Release|Win32.ActiveCfg = Release|Win32
+		{781626A7-6E94-4A65-9C32-2007A1C70234}.Release|Win32.Build.0 = Release|Win32
+		{781626A7-6E94-4A65-9C32-2007A1C70234}.Release|x64.ActiveCfg = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

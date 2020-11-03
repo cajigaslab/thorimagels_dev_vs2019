@@ -1,0 +1,81 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThorLogging", "ThorLogging\ThorLogging.csproj", "{4B3323BA-A4FD-421A-A456-4B447454AED4}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorLoggingUnmanaged", "ThorLoggingUnmanaged\ThorLoggingUnmanaged.vcxproj", "{3DE9D1FC-4D23-479E-AE65-58AC1391233E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorLoggingUnmanagedDisabled", "ThorLoggingUnmanagedDisabled\ThorLoggingUnmanagedDisabled.vcxproj", "{2BF6023A-B386-4C55-9B19-44699A312A7C}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 4
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://stl-tfs1:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = ThorLogging\\ThorLogging.csproj
+		SccProjectName1 = ThorLogging
+		SccLocalPath1 = ThorLogging
+		SccProjectUniqueName2 = ThorLoggingUnmanaged\\ThorLoggingUnmanaged.vcxproj
+		SccProjectName2 = ThorLoggingUnmanaged
+		SccLocalPath2 = ThorLoggingUnmanaged
+		SccProjectUniqueName3 = ThorLoggingUnmanagedDisabled\\ThorLoggingUnmanagedDisabled.vcxproj
+		SccProjectName3 = ThorLoggingUnmanagedDisabled
+		SccLocalPath3 = ThorLoggingUnmanagedDisabled
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|Mixed Platforms = Debug|Mixed Platforms
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Any CPU = Release|Any CPU
+		Release|Mixed Platforms = Release|Mixed Platforms
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4B3323BA-A4FD-421A-A456-4B447454AED4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B3323BA-A4FD-421A-A456-4B447454AED4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B3323BA-A4FD-421A-A456-4B447454AED4}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{4B3323BA-A4FD-421A-A456-4B447454AED4}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{4B3323BA-A4FD-421A-A456-4B447454AED4}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{4B3323BA-A4FD-421A-A456-4B447454AED4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4B3323BA-A4FD-421A-A456-4B447454AED4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B3323BA-A4FD-421A-A456-4B447454AED4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B3323BA-A4FD-421A-A456-4B447454AED4}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{4B3323BA-A4FD-421A-A456-4B447454AED4}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{4B3323BA-A4FD-421A-A456-4B447454AED4}.Release|Win32.ActiveCfg = Release|Any CPU
+		{4B3323BA-A4FD-421A-A456-4B447454AED4}.Release|x64.ActiveCfg = Release|Any CPU
+		{3DE9D1FC-4D23-479E-AE65-58AC1391233E}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{3DE9D1FC-4D23-479E-AE65-58AC1391233E}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{3DE9D1FC-4D23-479E-AE65-58AC1391233E}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{3DE9D1FC-4D23-479E-AE65-58AC1391233E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3DE9D1FC-4D23-479E-AE65-58AC1391233E}.Debug|Win32.Build.0 = Debug|Win32
+		{3DE9D1FC-4D23-479E-AE65-58AC1391233E}.Debug|x64.ActiveCfg = Debug|x64
+		{3DE9D1FC-4D23-479E-AE65-58AC1391233E}.Debug|x64.Build.0 = Debug|x64
+		{3DE9D1FC-4D23-479E-AE65-58AC1391233E}.Release|Any CPU.ActiveCfg = Release|Win32
+		{3DE9D1FC-4D23-479E-AE65-58AC1391233E}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{3DE9D1FC-4D23-479E-AE65-58AC1391233E}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{3DE9D1FC-4D23-479E-AE65-58AC1391233E}.Release|Win32.ActiveCfg = Release|Win32
+		{3DE9D1FC-4D23-479E-AE65-58AC1391233E}.Release|Win32.Build.0 = Release|Win32
+		{3DE9D1FC-4D23-479E-AE65-58AC1391233E}.Release|x64.ActiveCfg = Release|x64
+		{3DE9D1FC-4D23-479E-AE65-58AC1391233E}.Release|x64.Build.0 = Release|x64
+		{2BF6023A-B386-4C55-9B19-44699A312A7C}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{2BF6023A-B386-4C55-9B19-44699A312A7C}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{2BF6023A-B386-4C55-9B19-44699A312A7C}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{2BF6023A-B386-4C55-9B19-44699A312A7C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2BF6023A-B386-4C55-9B19-44699A312A7C}.Debug|Win32.Build.0 = Debug|Win32
+		{2BF6023A-B386-4C55-9B19-44699A312A7C}.Debug|x64.ActiveCfg = Debug|x64
+		{2BF6023A-B386-4C55-9B19-44699A312A7C}.Debug|x64.Build.0 = Debug|x64
+		{2BF6023A-B386-4C55-9B19-44699A312A7C}.Release|Any CPU.ActiveCfg = Release|x64
+		{2BF6023A-B386-4C55-9B19-44699A312A7C}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{2BF6023A-B386-4C55-9B19-44699A312A7C}.Release|Mixed Platforms.Build.0 = Release|x64
+		{2BF6023A-B386-4C55-9B19-44699A312A7C}.Release|Win32.ActiveCfg = Release|Win32
+		{2BF6023A-B386-4C55-9B19-44699A312A7C}.Release|Win32.Build.0 = Release|Win32
+		{2BF6023A-B386-4C55-9B19-44699A312A7C}.Release|x64.ActiveCfg = Release|x64
+		{2BF6023A-B386-4C55-9B19-44699A312A7C}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

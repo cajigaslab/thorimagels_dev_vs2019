@@ -1,0 +1,51 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorBmExpan", "ThorBmExpan\ThorBmExpan.vcxproj", "{BE692056-55CA-459E-B25D-F1BEB13E217F}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DeviceTest", "..\_DeviceTests\DeviceTest.vcxproj", "{234F0447-ED60-4222-AFA9-0F79819BF6C8}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 2
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://stl-tfs1:8080/tfs/thorimagels
+		SccProjectUniqueName0 = ThorBmExpan\\ThorBmExpan.vcxproj
+		SccProjectName0 = ThorBmExpan
+		SccAuxPath0 = http://stl-tfs1:8080/tfs/thorimagels
+		SccLocalPath0 = ThorBmExpan
+		SccProvider0 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccProjectUniqueName1 = ..\\_DeviceTests\\DeviceTest.vcxproj
+		SccProjectName1 = ../_DeviceTests
+		SccAuxPath1 = http://stl-tfs1:8080/tfs/thorimagels
+		SccLocalPath1 = ..\\_DeviceTests
+		SccProvider1 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BE692056-55CA-459E-B25D-F1BEB13E217F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BE692056-55CA-459E-B25D-F1BEB13E217F}.Debug|Win32.Build.0 = Debug|Win32
+		{BE692056-55CA-459E-B25D-F1BEB13E217F}.Debug|x64.ActiveCfg = Debug|x64
+		{BE692056-55CA-459E-B25D-F1BEB13E217F}.Debug|x64.Build.0 = Debug|x64
+		{BE692056-55CA-459E-B25D-F1BEB13E217F}.Release|Win32.ActiveCfg = Release|Win32
+		{BE692056-55CA-459E-B25D-F1BEB13E217F}.Release|Win32.Build.0 = Release|Win32
+		{BE692056-55CA-459E-B25D-F1BEB13E217F}.Release|x64.ActiveCfg = Release|x64
+		{BE692056-55CA-459E-B25D-F1BEB13E217F}.Release|x64.Build.0 = Release|x64
+		{234F0447-ED60-4222-AFA9-0F79819BF6C8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{234F0447-ED60-4222-AFA9-0F79819BF6C8}.Debug|Win32.Build.0 = Debug|Win32
+		{234F0447-ED60-4222-AFA9-0F79819BF6C8}.Debug|x64.ActiveCfg = Debug|x64
+		{234F0447-ED60-4222-AFA9-0F79819BF6C8}.Debug|x64.Build.0 = Debug|x64
+		{234F0447-ED60-4222-AFA9-0F79819BF6C8}.Release|Win32.ActiveCfg = Release|Win32
+		{234F0447-ED60-4222-AFA9-0F79819BF6C8}.Release|Win32.Build.0 = Release|Win32
+		{234F0447-ED60-4222-AFA9-0F79819BF6C8}.Release|x64.ActiveCfg = Release|x64
+		{234F0447-ED60-4222-AFA9-0F79819BF6C8}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

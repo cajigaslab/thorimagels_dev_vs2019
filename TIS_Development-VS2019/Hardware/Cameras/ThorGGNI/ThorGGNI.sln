@@ -1,0 +1,48 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorGGNI", "ThorGGNI\ThorGGNI.vcxproj", "{97798518-7D8D-484F-BAF5-46D20732FD6A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CameraTest", "..\_CameraTests\CameraTest.vcxproj", "{B459E5A9-7803-4DE9-B837-8D46461C8286}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://stl-tfs1:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = ThorGGNI\\ThorGGNI.vcxproj
+		SccProjectName1 = ThorGGNI
+		SccLocalPath1 = ThorGGNI
+		SccProjectUniqueName2 = ..\\_CameraTests\\CameraTest.vcxproj
+		SccProjectName2 = ../_CameraTests
+		SccLocalPath2 = ..\\_CameraTests
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{97798518-7D8D-484F-BAF5-46D20732FD6A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{97798518-7D8D-484F-BAF5-46D20732FD6A}.Debug|Win32.Build.0 = Debug|Win32
+		{97798518-7D8D-484F-BAF5-46D20732FD6A}.Debug|x64.ActiveCfg = Debug|x64
+		{97798518-7D8D-484F-BAF5-46D20732FD6A}.Debug|x64.Build.0 = Debug|x64
+		{97798518-7D8D-484F-BAF5-46D20732FD6A}.Release|Win32.ActiveCfg = Release|Win32
+		{97798518-7D8D-484F-BAF5-46D20732FD6A}.Release|Win32.Build.0 = Release|Win32
+		{97798518-7D8D-484F-BAF5-46D20732FD6A}.Release|x64.ActiveCfg = Release|x64
+		{97798518-7D8D-484F-BAF5-46D20732FD6A}.Release|x64.Build.0 = Release|x64
+		{B459E5A9-7803-4DE9-B837-8D46461C8286}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B459E5A9-7803-4DE9-B837-8D46461C8286}.Debug|Win32.Build.0 = Debug|Win32
+		{B459E5A9-7803-4DE9-B837-8D46461C8286}.Debug|x64.ActiveCfg = Debug|x64
+		{B459E5A9-7803-4DE9-B837-8D46461C8286}.Debug|x64.Build.0 = Debug|x64
+		{B459E5A9-7803-4DE9-B837-8D46461C8286}.Release|Win32.ActiveCfg = Release|Win32
+		{B459E5A9-7803-4DE9-B837-8D46461C8286}.Release|Win32.Build.0 = Release|Win32
+		{B459E5A9-7803-4DE9-B837-8D46461C8286}.Release|x64.ActiveCfg = Release|x64
+		{B459E5A9-7803-4DE9-B837-8D46461C8286}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

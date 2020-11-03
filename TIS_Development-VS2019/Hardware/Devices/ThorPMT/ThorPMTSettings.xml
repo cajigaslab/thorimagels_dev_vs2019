@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ThorPMTSettings>
+
+  <Connection portID="20" baudRate="115200" address="0">   
+  </Connection>
+
+  <Configuration rsInitMode="0">   
+  </Configuration>
+
+</ThorPMTSettings>

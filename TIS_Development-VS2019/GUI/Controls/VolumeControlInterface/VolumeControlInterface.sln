@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VolumeControlInterface", "VolumeControlInterface\VolumeControlInterface.csproj", "{4BF11DBB-E34E-45AB-8A87-E94ED4A13EA5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApp", "TestApp\TestApp.csproj", "{66C34DED-4683-40A3-9A5C-A025498EEF2D}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://vateam02:8080/tfs/defaultcollection
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = VolumeControlInterface\\VolumeControlInterface.csproj
+		SccProjectName1 = VolumeControlInterface
+		SccLocalPath1 = VolumeControlInterface
+		SccProjectUniqueName2 = TestApp\\TestApp.csproj
+		SccProjectName2 = TestApp
+		SccLocalPath2 = TestApp
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4BF11DBB-E34E-45AB-8A87-E94ED4A13EA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4BF11DBB-E34E-45AB-8A87-E94ED4A13EA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4BF11DBB-E34E-45AB-8A87-E94ED4A13EA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4BF11DBB-E34E-45AB-8A87-E94ED4A13EA5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66C34DED-4683-40A3-9A5C-A025498EEF2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66C34DED-4683-40A3-9A5C-A025498EEF2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66C34DED-4683-40A3-9A5C-A025498EEF2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66C34DED-4683-40A3-9A5C-A025498EEF2D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

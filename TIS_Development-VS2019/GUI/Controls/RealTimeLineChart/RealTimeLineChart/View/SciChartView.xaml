@@ -1,0 +1,299 @@
+﻿<UserControl x:Class="RealTimeLineChart.View.SciChartView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:sci="http://schemas.abtsoftware.co.uk/scichart"
+             xmlns:vm="clr-namespace:RealTimeLineChart.ViewModel"
+             xmlns:validator="clr-namespace:RealTimeLineChart.InputValidation"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:customModifiers="clr-namespace:RealTimeLineChart.CustomModifiers"
+             xmlns:s3D="http://schemas.abtsoftware.co.uk/scichart3D"
+             xmlns:ikriv="clr-namespace:IKriv.Wpf"
+             mc:Ignorable="d"
+             IsEnabled="{Binding Path=IsPanelsEnable, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <sci:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <validator:DoubleCultureConverter x:Key="doubleCultureConverter" />
+            <validator:InvertableBooleanToVisibilityConverter x:Key="_Converter" />
+            <validator:InverseBooleanConverter x:Key="_IntToBoolConverter" />
+            <validator:InvertableIntegralToVisibilityConverter x:Key="_IntVisConverter" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+                <ResourceDictionary Source="/RealTimeLineChart;component/Styles/ChannelTemplates.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid Name="MainGrid">
+        <Grid.Resources>
+            <ResourceDictionary>
+                <ResourceDictionary.MergedDictionaries>
+                    <ResourceDictionary Source="/RealTimeLineChart;component/Styles/SciChartStyles.xaml" />
+                </ResourceDictionary.MergedDictionaries>
+            </ResourceDictionary>
+        </Grid.Resources>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="7" />
+            <RowDefinition Height="{Binding Path=SpecPanelHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                <RowDefinition.MaxHeight>
+                    <MultiBinding Converter="{ikriv:MathConverter}"
+                                  ConverterParameter="x-7">
+                        <Binding Path="ActualHeight"
+                                 RelativeSource="{RelativeSource AncestorType=Grid}" />
+                    </MultiBinding>
+                </RowDefinition.MaxHeight>
+            </RowDefinition>
+        </Grid.RowDefinitions>
+        <sci:SciChartSurface Name="sciChartSurface"
+                             Visibility="{Binding IsStackedDisplay, ConverterParameter=Inverted,Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                             IsVisibleChanged="SciChartSurface_IsVisibleChanged"
+                             SeriesSource="{Binding ChartSeries}"
+                             Grid.Row="0"
+                             RenderPriority="Low">
+            <sci:SciChartSurface.XAxis>
+                <sci:NumericAxis AxisTitle="Time"
+                                 AutoRange="{Binding AutoRangeX}"
+                                 VisibleRange="{Binding XVisibleRangeChart, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 DrawMinorTicks="False"
+                                 DrawMinorGridLines="False"
+                                 x:Name="xAxis">
+                </sci:NumericAxis>
+            </sci:SciChartSurface.XAxis>
+            <sci:SciChartSurface.YAxis>
+                <sci:NumericAxis AxisTitle="Value"
+                                 TextFormatting="#.000"
+                                 AutoRange="{Binding AutoRangeY}"
+                                 DrawMinorTicks="False"
+                                 DrawMinorGridLines="False"
+                                 x:Name="yAxis">
+                    <sci:NumericAxis.GrowBy>
+                        <sci:DoubleRange Max="0.1"
+                                         Min="0.20" />
+                    </sci:NumericAxis.GrowBy>
+                </sci:NumericAxis>
+            </sci:SciChartSurface.YAxis>
+            <sci:SciChartSurface.ChartModifier>
+                <sci:ModifierGroup>
+                    <customModifiers:RubberBandXyZoomModifierEx ExecuteOn="MouseRightButton"
+                                                                FreqSampleSecMin="{Binding FreqSampleSecMin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                FreqSampleSecMax="{Binding FreqSampleSecMax, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                SelectionPolygonStyle="{StaticResource SelectionStyle}"
+                                                                IsEnabled="{Binding Path=ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <sci:ZoomExtentsModifier ExecuteOn="MouseDoubleClick"
+                                             XyDirection="XYDirection" />
+                    <customModifiers:RightDoubleClickZoomExtentsModifier ExecuteOn="MouseDoubleClick"
+                                                                         XyDirection="YDirection" />
+                    <sci:ZoomPanModifier x:Name="zoomPanModifier"
+                                         ExecuteOn="MouseLeftButton"
+                                         XyDirection="XYDirection"
+                                         ClipModeX="ClipAtExtents"
+                                         IsEnabled="{Binding Path=ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <sci:XAxisDragModifier x:Name="xAxisDragModifier"
+                                           IsEnabled="{Binding IsDragToScaleEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                           ClipModeX="None" />
+                    <sci:YAxisDragModifier x:Name="yAxisRightDragmodifier"
+                                           IsEnabled="{Binding IsDragToScaleEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <customModifiers:MouseWheelZoomCustomModifier x:Name="mouseWheelZoomModifier"
+                                                                  IsEnabled="{Binding Path=ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <sci:LegendModifier Name="legendModifier"
+                                        ReceiveHandledEvents="True" />
+                    <customModifiers:ChartCanvasModifier x:Name="ChartCanvasModifier"
+                                                         CursorTop="{Binding CursorTop, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         CursorBottom="{Binding CursorBottom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         CursorLeft="{Binding CursorLeft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         CursorRight="{Binding CursorRight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         CursorSelectedIndex="{Binding CursorSelectedIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         ExecuteOn="MouseLeftButton"
+                                                         MeasureCursor="MEASURECURSOR_ALL"
+                                                         MeasureBorderVisible="True"
+                                                         MeasureCursorVisible="{Binding IsMeasureCursorVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         IsDragToScale="{Binding IsDragToScaleEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         IsRollOver="{Binding IsRollOverEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <sci:VerticalSliceModifier Name="sliceModifier"
+                                               ReceiveHandledEvents="True" />
+                </sci:ModifierGroup>
+            </sci:SciChartSurface.ChartModifier>
+            <sci:SciChartSurface.RenderSurface>
+                <sci:HighSpeedRenderSurface />
+            </sci:SciChartSurface.RenderSurface>
+        </sci:SciChartSurface>
+        <StackPanel Name="Legend"
+                    Grid.Row="0"
+                    Panel.ZIndex="1"
+                    HorizontalAlignment="Left"
+                    Visibility="{Binding IsStackedDisplay, ConverterParameter=Inverted,Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                    Background="{x:Null}"
+                    Margin="0,0,0,0">
+            <StackPanel Orientation="Horizontal"
+                        Visibility="{Binding IsCounting, ConverterParameter=Normal,Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                        Margin="0,-5,0,-1"
+                        Background="Transparent">
+                <Label Content="Counter:"
+                       Background="Transparent" />
+                <Label Content="{Binding Path=ImageCounterNumber}"
+                       Background="Transparent" />
+            </StackPanel>
+            <sci:SciChartLegend Name="legendControl"
+                                MaxWidth="300"
+                                ShowVisibilityCheckboxes="True"
+                                LegendData="{Binding LegendData, ElementName=legendModifier, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+        </StackPanel>
+        <!--  Define the listbox which will host the N channels of the Time Domain  -->
+        <ScrollViewer Name="scvDataStack"
+                      Grid.Row="0"
+                      VerticalScrollBarVisibility="Auto"
+                      Visibility="{Binding IsStackedDisplay, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal"
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Visibility="{Binding IsCounting, ConverterParameter=Normal,Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                    <Label Content="Counter:"
+                           Background="Transparent" />
+                    <Label Content="{Binding Path=ImageCounterNumber}"
+                           Background="Transparent" />
+                </StackPanel>
+                <Expander ExpandDirection="Right"
+                          Width="Auto"
+                          HorizontalAlignment="Left"
+                          IsExpanded="True"
+                          Grid.Row="0"
+                          Grid.Column="0"
+                          Grid.RowSpan="2">
+                    <Expander.Header>
+                        <TextBlock Text="Legend"
+                                   Foreground="White"
+                                   RenderTransformOrigin="0.5,0.5">
+                            <TextBlock.LayoutTransform>
+                                <RotateTransform Angle="-90" />
+                            </TextBlock.LayoutTransform>
+                        </TextBlock>
+                    </Expander.Header>
+                    <ListBox HorizontalAlignment="Left"
+                             SelectionMode="Extended"
+                             Height="Auto"
+                             VerticalAlignment="Top"
+                             ItemsSource="{Binding Path=ChannelViewModels, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding Path=IsVisible, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                          Content="{Binding Path=ChannelName}"
+                                          Foreground="{Binding Path=StrokeBrush}" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="{x:Type ListBoxItem}">
+                                <Setter Property="IsSelected"
+                                        Value="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
+                </Expander>
+                <ListBox Name="lbDataStack"
+                         Grid.Row="1"
+                         Grid.Column="1"
+                         Height="Auto"
+                         VerticalAlignment="Top"
+                         BorderThickness="0"
+                         ItemContainerStyle="{StaticResource TimeChannelItemStyle}"
+                         ItemTemplate="{StaticResource DataChannelTemplate}"
+                         ItemsSource="{Binding Path=ChannelViewModels, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                         Grid.IsSharedSizeScope="True"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         PreviewMouseWheel="Stack_PreviewMouseWheel" />
+            </Grid>
+        </ScrollViewer>
+        <GridSplitter Grid.Row="1"
+                      Height="6"
+                      ShowsPreview="True"
+                      ResizeBehavior="PreviousAndNext"
+                      IsEnabled="True"
+                      VerticalAlignment="Bottom"
+                      HorizontalAlignment="Stretch"
+                      Style="{DynamicResource GridSplitterCustomStyle}"
+                      Cursor="SizeNS"
+                      Background="#FF474747">
+        </GridSplitter>
+        <!--  Define the listbox which will host the N channels of the Frequency Domain  -->
+        <ScrollViewer Name="scvFreqStack"
+                      Grid.Row="2"
+                      VerticalScrollBarVisibility="Auto"
+                      Visibility="{Binding Path=SpecChViewModels.Count, ConverterParameter=Normal, Converter={StaticResource _IntVisConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Expander ExpandDirection="Right"
+                          Width="Auto"
+                          HorizontalAlignment="Left"
+                          IsExpanded="True"
+                          Grid.Column="0"
+                          Visibility="{Binding Path=SpecChViewModels.Count, ConverterParameter=Normal, Converter={StaticResource _IntVisConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                    <Expander.Header>
+                        <TextBlock Text="Legend"
+                                   Foreground="White"
+                                   RenderTransformOrigin="0.5,0.5">
+                            <TextBlock.LayoutTransform>
+                                <RotateTransform Angle="-90" />
+                            </TextBlock.LayoutTransform>
+                        </TextBlock>
+                    </Expander.Header>
+                    <ListBox HorizontalAlignment="Left"
+                             SelectionMode="Extended"
+                             Height="Auto"
+                             VerticalAlignment="Top"
+                             ItemsSource="{Binding Path=SpecChViewModels, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding Path=IsVisible, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                          Content="{Binding Path=ChannelName}"
+                                          Foreground="{Binding Path=StrokeBrush}" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="{x:Type ListBoxItem}">
+                                <Setter Property="IsSelected"
+                                        Value="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
+                </Expander>
+                <ListBox Name="lbAnalysisStack"
+                         Grid.Column="1"
+                         Height="Auto"
+                         VerticalAlignment="Top"
+                         Background="#1c1c1e"
+                         BorderThickness="0"
+                         ItemContainerStyle="{StaticResource FreqChannelItemStyle}"
+                         ItemTemplate="{StaticResource FreqChannelTemplate}"
+                         ItemsSource="{Binding Path=SpecChViewModels, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                         SelectedItem="{Binding SelectedFreqCh}"
+                         Grid.IsSharedSizeScope="True"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         PreviewMouseWheel="Stack_PreviewMouseWheel">
+                </ListBox>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

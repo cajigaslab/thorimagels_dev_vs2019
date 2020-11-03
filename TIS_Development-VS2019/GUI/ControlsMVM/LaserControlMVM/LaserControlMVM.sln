@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LaserControlMVM", "LaserControlMVM\LaserControlMVM.csproj", "{CCBDC8FE-F9D6-4CB6-AA2E-801AFC7F9C81}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 2
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://stl-tfs1:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = LaserControlMVM\\LaserControlMVM.csproj
+		SccProjectName1 = LaserControlMVM
+		SccLocalPath1 = LaserControlMVM
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CCBDC8FE-F9D6-4CB6-AA2E-801AFC7F9C81}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCBDC8FE-F9D6-4CB6-AA2E-801AFC7F9C81}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCBDC8FE-F9D6-4CB6-AA2E-801AFC7F9C81}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCBDC8FE-F9D6-4CB6-AA2E-801AFC7F9C81}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

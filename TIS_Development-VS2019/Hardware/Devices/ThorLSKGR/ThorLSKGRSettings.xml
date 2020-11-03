@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ThorLSKGRSettings>
+
+  <Connection portID="48" baudRate="512000">   
+  </Connection>
+  
+  <Configuration rsInitMode="0">   
+  </Configuration>
+
+ <!--
+ The StandaloneApp tag is only used in the standalone software LSKGR Control
+ -->
+  <StandaloneApp is12KHz="0">
+  </StandaloneApp>
+
+</ThorLSKGRSettings>

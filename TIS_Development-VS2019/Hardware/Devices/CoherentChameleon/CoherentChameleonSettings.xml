@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CoherentChameleonSettings>
+
+  <Connection portID="17" secondLaserLine="0" laserMin="690" laserMax="1040">   
+  </Connection>
+
+</CoherentChameleonSettings>

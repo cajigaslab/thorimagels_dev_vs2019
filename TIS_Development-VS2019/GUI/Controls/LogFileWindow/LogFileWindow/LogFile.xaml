@@ -1,0 +1,42 @@
+﻿<Window x:Class="LogFileWindow.LogFile"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
+        xmlns:validator="clr-namespace:Validations;assembly=Validations"
+        xmlns:ViewModel="clr-namespace:LogFileWindow.ViewModel"
+        xmlns:local ="clr-namespace:LogFileWindow"
+        WindowStyle="SingleBorderWindow"
+        MinHeight="125"
+        MinWidth="768"
+        Name="logFileWindow"
+        Title="Log File">
+    <Window.Resources>
+        <ResourceDictionary>
+            <DataTemplate DataType="ViewModel:LogFileViewModel" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid Margin="5">
+        <StackPanel>
+            <ListBox Name="lbLog"
+                     ItemsSource="{Binding LogMessages}"
+                     SelectedIndex="{Binding MessageIndex}"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                     MinHeight="125"
+                     IsSynchronizedWithCurrentItem="True"
+                     local:ListBoxExtenders.AutoScrollToCurrentItem="True">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding LogText}"
+                                   Background="{Binding DisplayColor}"
+                                   Foreground="Black">
+                        </TextBlock>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </StackPanel>
+    </Grid>
+</Window>

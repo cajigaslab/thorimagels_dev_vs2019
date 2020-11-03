@@ -1,0 +1,103 @@
+﻿<UserControl x:Class="RealTimeLineChart.View.VisibilityChoiceView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:validator="clr-namespace:RealTimeLineChart.InputValidation"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <validator:InvertableBooleanToVisibilityConverter x:Key="_boolToVisConverter" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel Background="#FF333333">
+            <Expander ExpandDirection="Right"
+                      Width="160"
+                      Height="Auto"
+                      HorizontalAlignment="Left"
+                      IsExpanded="True">
+                <Expander.Header>
+                    <TextBlock Text="Window"
+                               Foreground="White">
+                        <TextBlock.LayoutTransform>
+                            <RotateTransform Angle="-90" />
+                        </TextBlock.LayoutTransform>
+                    </TextBlock>
+                </Expander.Header>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <CheckBox Content="File"
+                              Foreground="White"
+                              Grid.Row="0"
+                              Grid.Column="0"
+                              Margin="1"
+                              IsChecked="{Binding Path=VisibilityCollection[0]}"></CheckBox>
+                    <CheckBox Content="Sampling"
+                              Foreground="White"
+                              Grid.Row="1"
+                              Grid.Column="0"
+                              Margin="1"
+                              IsChecked="{Binding Path=VisibilityCollection[1]}"></CheckBox>
+                    <CheckBox Content="Display"
+                              Foreground="White"
+                              Grid.Row="2"
+                              Grid.Column="0"
+                              Margin="1"
+                              IsChecked="{Binding Path=VisibilityCollection[2]}"></CheckBox>
+                    <CheckBox Content="Spectral"
+                              Foreground="White"
+                              Grid.Row="3"
+                              Grid.Column="0"
+                              Margin="1"
+                              IsChecked="{Binding Path=VisibilityCollection[3]}"></CheckBox>
+                    <CheckBox Content="Cursor"
+                              Foreground="White"
+                              Grid.Row="0"
+                              Grid.Column="1"
+                              Margin="1"
+                              IsChecked="{Binding Path=VisibilityCollection[4]}"></CheckBox>
+                    <CheckBox Content="Marker"
+                              Foreground="White"
+                              Grid.Row="1"
+                              Grid.Column="1"
+                              Margin="1"
+                              IsChecked="{Binding Path=VisibilityCollection[5]}"></CheckBox>
+                    <CheckBox Content="OTM"
+                              Foreground="White"
+                              Grid.Row="2"
+                              Grid.Column="1"
+                              Margin="1"
+                              Visibility="{Binding Path=Configuration[0],ConverterParameter=Normal, Converter={StaticResource _boolToVisConverter}}">
+                        <CheckBox.Style>
+                            <Style TargetType="{x:Type CheckBox}"
+                                   BasedOn="{StaticResource {x:Type CheckBox}}">
+                                <Setter Property="IsChecked"
+                                        Value="False" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=Visibility, RelativeSource={RelativeSource Self}, UpdateSourceTrigger=PropertyChanged}"
+                                                 Value="Visible">
+                                        <Setter Property="IsChecked"
+                                                Value="{Binding Path=VisibilityCollection[6]}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </CheckBox.Style>
+                    </CheckBox>
+                </Grid>
+            </Expander>
+        </StackPanel>
+    </Grid>
+</UserControl>

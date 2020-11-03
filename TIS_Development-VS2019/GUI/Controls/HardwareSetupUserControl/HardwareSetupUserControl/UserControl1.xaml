@@ -1,0 +1,947 @@
+﻿<UserControl x:Class="HardwareSetupUserControl.UserControl1"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:se="clr-namespace:SettingsEditor;assembly=SettingsEditor"
+             xmlns:Spin="clr-namespace:SpinnerProgress;assembly=SpinnerProgress"
+             Height="Auto"
+             Width="Auto"
+             Name="HarwareSetupControl">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <Style x:Key="mySPStyle"
+                   TargetType="{x:Type StackPanel}">
+                <Style.Triggers>
+                    <MultiTrigger>
+                        <MultiTrigger.Conditions>
+                            <Condition Property="Selector.IsSelectionActive"
+                                       Value="True" />
+                        </MultiTrigger.Conditions>
+                        <Setter Property="Background"
+                                Value="DodgerBlue" />
+                    </MultiTrigger>
+                    <MultiTrigger>
+                        <MultiTrigger.Conditions>
+                            <Condition Property="Selector.IsSelectionActive"
+                                       Value="False" />
+                        </MultiTrigger.Conditions>
+                        <Setter Property="Background"
+                                Value="DodgerBlue" />
+                        <Setter Property="Opacity"
+                                Value="50" />
+                    </MultiTrigger>
+                </Style.Triggers>
+            </Style>
+            <Style x:Key="myLBStyle"
+                   TargetType="{x:Type ListBoxItem}">
+                <Style.Setters>
+                    <Setter Property="BorderThickness"
+                            Value="4" />
+                    <Setter Property="BorderBrush"
+                            Value="White" />
+                    <Setter Property="Background"
+                            Value="#FF595959" />
+                    <Setter Property="Foreground"
+                            Value="White" />
+                </Style.Setters>
+            </Style>
+            <XmlDataProvider x:Key="dataProvider" />
+            <XmlDataProvider x:Key="dataProviderAppSettings" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        IsEnabled="{Binding Path=EnableControls, ElementName=HarwareSetupControl}"
+                        HorizontalAlignment="Left"
+                        Margin="5">
+                <Label Content="Modalities:"
+                       VerticalAlignment="Center" />
+                <ListBox Name="lbModalities"
+                         Style="{x:Null}"
+                         Margin="1,0,1,0"
+                         SelectionChanged="lbModalities_SelectionChanged"
+                         ItemContainerStyle="{StaticResource myLBStyle}">
+                    <ListBox.Resources>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#007ACC" Opacity="0.5"/>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}">#007ACC</SolidColorBrush>
+                    </ListBox.Resources>
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal"
+                                        Style="{StaticResource mySPStyle}" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                </ListBox>
+                <Button Name="btnAddModality"
+                        Content="+"
+                        Width="35"
+                        Click="btnAddModality_Click"></Button>
+                <Button Name="btnDelModality"
+                        Content="-"
+                        Width="35"
+                        Click="btnDelModality_Click"></Button>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Border Margin="1"
+                        IsEnabled="{Binding Path=EnableControls, ElementName=HarwareSetupControl}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  Margin="1">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spCamera"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@ImageDetector}">
+                                <Path Name="imgCamera"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="Image Detector"
+                                       Width="110"
+                                       Foreground="White"
+                                       VerticalAlignment="Center" />
+                                <ComboBox Name="cbCamera"
+                                          Width="180"
+                                          SelectionChanged="cbCamera_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/ImageDetectors/*}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock>
+                                                    <TextBlock.Text>
+                                                        <Binding XPath="@cameraName" />
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                                <TextBlock>
+                                                    <TextBlock.Text>
+                                                        <Binding XPath="@serialNumber" />
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <Image Name="imgPockels1"
+                                       Width="32"
+                                       Height="32"
+                                       Source="./Icons/pok1.png" />
+                                <Image Name="imgPockels2"
+                                       Width="32"
+                                       Height="32"
+                                       Source="./Icons/pok2.png" />
+                                <Image Name="imgPockels3"
+                                       Width="32"
+                                       Height="32"
+                                       Source="./Icons/pok3.png" />
+                                <Image Name="imgPockels4"
+                                       Width="32"
+                                       Height="32"
+                                       Source="./Icons/pok4.png" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spBleachingScanner"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@BleachingScanner}">
+                                <Path Name="imgBleachingScanner"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="Stimulus Scanner"
+                                       Width="110"
+                                       Foreground="White"
+                                       VerticalAlignment="Center" />
+                                <ComboBox Name="cbBleachingScanner"
+                                          Width="180"
+                                          SelectionChanged="cbBleachingScanner_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/ImageDetectors/LSM[not(@cameraName\=\'ResonanceGalvo\') and not(@cameraName\=\'ResonanceGalvoGalvo\')]}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock>
+                                                    <TextBlock.Text>
+                                                        <Binding XPath="@cameraName" />
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spSLM"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@BleachingSLM}">
+                                <Path Name="imgSLM"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="Stimulus SLM"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbSLM"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/SLM}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spControlUnit"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@ControlUnit}">
+                                <Path Name="imgControlUnit"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="Control Unit"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbControlUnit"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/ControlUnit}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spPMT1"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@PMT1}">
+                                <Path Name="imgPMT1"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="PMT 1"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbPMT1"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/PMT1}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spPMT2"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@PMT2}">
+                                <Path Name="imgPMT2"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="PMT 2"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbPMT2"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/PMT2}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spPMT3"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@PMT3}">
+                                <Path Name="imgPMT3"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="PMT 3"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbPMT3"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/PMT3}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spPMT4"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@PMT4}">
+                                <Path Name="imgPMT4"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="PMT 4"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbPMT4"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/PMT4}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spLightPath"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@LightPath}">
+                                <Path Name="imgLightPath"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="Light Path"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbLightPath"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/LightPath}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spShutter"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@Shutter}">
+                                <Path Name="imgShutter"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="Shutter"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbShutter"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/Shutter}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spTurret"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@ObjectiveTurret}">
+                                <Path Name="imgTurret"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="Objective Turret"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbTurret"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/Turret}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spZStage"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@ZStage}">
+                                <Path Name="imgZStage"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="Z Stage"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbZStage"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/ZStage}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spZStage2"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@SecondaryZStage}">
+                                <Path Name="imgZStage2"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="Secondary Z Stage"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbZStage2"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/ZStage2}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spXYStage"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@XYStage}">
+                                <Path Name="imgXYStage"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="XY Stage"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbXYStage"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/XYStage}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spPowerReg"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@PowerRegulator}">
+                                <Path Name="imgPowerReg"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="Power Regulator"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbPowerReg"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/PowerRegulator}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spPowerReg2"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@PowerRegulator2}">
+                                <Path Name="imgPowerReg2"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="Power Regulator 2"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbPowerReg2"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/PowerRegulator2}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spMCLS"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@LaserSource}">
+                                <Path Name="imgLaserSource"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="Laser Source"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbLaserSource"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/MCLS}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spBeamExpan"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@BeamExpander}">
+                                <Path Name="imgBeamExpan"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="Beam Expander"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbBeamExpan"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/BeamExpander}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spBeamStabilizer"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@BeamStabilizer}">
+                                <Path Name="imgBeamStabilizer"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="Beam Stabilizer"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbBeamStabilizer"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/BeamStabilizer}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spPinhole"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@PinholeWheel}">
+                                <Path Name="imgPinhole"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="Pinhole Wheel"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbPinhole"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/PinholeWheel}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spSpectrumFilter"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@SpectrumFilter}">
+                                <Path Name="imgSpectrumFilter"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="Spectrum Filter"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbSpectrumFilter"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/SpectrumFilter}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spEpiTurret"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@EpiTurret}">
+                                <Path Name="imgEpiTurret"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="EPI Turret"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbEpiTurret"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/EpiTurret}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="1"
+                                        Name="spLamp"
+                                        Visibility="{Binding Source={StaticResource dataProviderAppSettings}, XPath=/ApplicationSettings/DisplayOptions/HardwareSetup/@LAMP}">
+                                <Path Name="imgLamp"
+                                      Width="16"
+                                      Height="16">
+                                    <Path.Data>
+                                        <CombinedGeometry>
+                                            <CombinedGeometry.Geometry1>
+                                                <EllipseGeometry Center="8,8"
+                                                                 RadiusX="7"
+                                                                 RadiusY="7" />
+                                            </CombinedGeometry.Geometry1>
+
+                                        </CombinedGeometry>
+                                    </Path.Data>
+                                </Path>
+                                <Label Content="Lamp"
+                                       Width="110"
+                                       Foreground="White" />
+                                <ComboBox Name="cbLamp"
+                                          Width="180"
+                                          SelectionChanged="cbDevice_SelectionChanged"
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/Devices/LAMP}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding XPath=@dllName}"
+                                                       Padding="3" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+                <StackPanel>
+                    <StackPanel Margin="1"
+                                IsEnabled="{Binding Path=EnableControls, ElementName=HarwareSetupControl}"
+                                Orientation="Vertical">
+                        <Button Content="Refresh Hardware Connections"
+                                Height="35"
+                                Margin="1"
+                                Click="Button_RefreshHardware"
+                                Name="btnRefreshHW" />
+                        <Button Name="btnObjectives"
+                                Content="Setup Objectives"
+                                Height="35"
+                                Margin="1"
+                                Click="btnObjectives_Click" />
+                        <Button Name="btnRenameDetector" 
+                                Visibility="Collapsed"
+                                Content="Rename Selected Detector"
+                                Height="35"
+                                Margin="1"
+                                Click="Button_RenameDetector" />
+                        <Button Name="btnDisplay"
+                                Content="Displayed Devices"
+                                Height="35"
+                                Margin="1"
+                                Click="btnDisplay_Click" />
+                        <Button Content="Show Device Manager"
+                                Height="35"
+                                Margin="1"
+                                Click="Button_ShowDevManger" />
+                        <Button Name="btnAppSettings"
+                                Content="Application Settings"
+                                Height="35"
+                                Margin="1"
+                                Click="btnAppSettings_Click" />
+                        <Button Name="btnHardwareSettings"
+                                Content="Hardware Settings"
+                                Height="35"
+                                Margin="1"
+                                Click="btnHardwareSettings_Click" />
+                    </StackPanel>
+                    <Canvas Width="105"
+                            Height="105"
+                            Name="CanvasSpinProgress">
+                        <!--Define a boundary to enclose the control-->
+                        <Spin:SpinnerProgressControl  x:Name="spinProgress"
+                                                      SpinnerHeight="100"
+                                                      SpinnerWidth="100" />
+                    </Canvas>
+                </StackPanel>
+                <Border Margin="1"
+                        IsEnabled="{Binding Path=EnableControls, ElementName=HarwareSetupControl}">
+                    <Expander Header="Setting Editor"
+                              Foreground="White"
+                              IsExpanded="True">
+                        <se:SettingsEditorView Name="settingEditor" />
+                    </Expander>
+                </Border>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

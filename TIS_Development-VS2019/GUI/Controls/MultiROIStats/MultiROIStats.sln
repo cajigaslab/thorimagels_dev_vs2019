@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiROIStats", "MultiROIStats\MultiROIStats.csproj", "{12FC1112-86CF-4B80-9B52-30651506B519}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiROIStatsTest", "MultiROIStatsTest\MultiROIStatsTest.csproj", "{1C9184F8-BA70-4842-B112-F8430E5556C0}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://vateam02:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = MultiROIStats\\MultiROIStats.csproj
+		SccProjectName1 = MultiROIStats
+		SccLocalPath1 = MultiROIStats
+		SccProjectUniqueName2 = MultiROIStatsTest\\MultiROIStatsTest.csproj
+		SccProjectName2 = MultiROIStatsTest
+		SccLocalPath2 = MultiROIStatsTest
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{12FC1112-86CF-4B80-9B52-30651506B519}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12FC1112-86CF-4B80-9B52-30651506B519}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12FC1112-86CF-4B80-9B52-30651506B519}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12FC1112-86CF-4B80-9B52-30651506B519}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C9184F8-BA70-4842-B112-F8430E5556C0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C9184F8-BA70-4842-B112-F8430E5556C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C9184F8-BA70-4842-B112-F8430E5556C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C9184F8-BA70-4842-B112-F8430E5556C0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

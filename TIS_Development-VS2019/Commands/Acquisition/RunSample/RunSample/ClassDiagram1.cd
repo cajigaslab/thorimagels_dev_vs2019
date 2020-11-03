@@ -1,0 +1,417 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="AcquireSingle" Collapsed="true">
+    <Position X="15" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAAAEAAAAAAAAYAAAAAAAAAAAAAAAAAAAAAAAAAABA=</HashCode>
+      <FileName>AcquireSingle.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ICamera" Collapsed="true">
+    <Position X="5.5" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAEAQAAEAEAAAAAgSBAAAAAAIgAAAAAAACAAAAAg=</HashCode>
+      <FileName>c:\TIS\Common\Camera.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CameraDll" Collapsed="true">
+    <Position X="5.5" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>JAAAgEASYBEgMIgACAgTBIAAhAsKgIAAAAgACAAAAAg=</HashCode>
+      <FileName>c:\TIS\Common\Camera.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ICommand" Collapsed="true">
+    <Position X="1.75" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAAAAAAQAAAESAIAAAAAMgABABAAQAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Common\Command.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CommandDll" Collapsed="true">
+    <Position X="0.5" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEYgBAAAwRSAESgIAAggAMwABABIAUCIIBAgA=</HashCode>
+      <FileName>c:\TIS\Common\Command.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Observer" Collapsed="true">
+    <Position X="16.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAgEAACAAAAAAAAAAAgAAAAgAAAAAAAAAAAAABACAA=</HashCode>
+      <FileName>Observer.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="RunSample" Collapsed="true">
+    <Position X="2.75" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAICCAAQAAJESUIgEAAAcgERABAAQAAAAAEg=</HashCode>
+      <FileName>RunSample.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ConfigHC" Collapsed="true">
+    <Position X="0.5" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AIGAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAA=</HashCode>
+      <FileName>ConfigHC.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="IConfig" Collapsed="true">
+    <Position X="1.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AICAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Common\Config.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ConfigDll" Collapsed="true">
+    <Position X="2.75" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gICCAAAAAAAAAAAACAAIAACAAAIAEAAAAAAEAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Common\Config.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Struct Name="RunSampleCommandParams" Collapsed="true">
+    <Position X="15" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAACAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>RunSample.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="RunSampleCustomParams" Collapsed="true">
+    <Position X="16.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>RunSample.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="__unnamed_0057_1" Collapsed="true">
+    <Position X="9.5" Y="15.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>QCQCAIAAAABAAEAAAAAAAAAAAAAAAAAEAACAQAAAEAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="__unnamed_0057_2" Collapsed="true">
+    <Position X="1.5" Y="15.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAAAgAAAAAAAAACAAAAAAAAAgAAAABAAAAgAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="__unnamed_0057_3" Collapsed="true">
+    <Position X="12.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAACAIAAAAAAAAAAAAAAEAAQEiAAAAYAEAAAIAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="_TIFFRGBAImage" Collapsed="true">
+    <Position X="9.5" Y="10.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AYABiAQAABgAIAUAYACBQAgEAAIgCAAAAAEQAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="__unnamed_0057_4" Collapsed="true">
+    <Position X="5.5" Y="12.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAEBAIAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="__unnamed_0057_5" Collapsed="true">
+    <Position X="9.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAIAAAgAAAAAAAAABAAAAAAgAAAAAAAAAACAQAAAgA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="_TIFFTagValue" Collapsed="true">
+    <Position X="1.5" Y="10.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAABAAAAAAAAAAAACAAQAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="__unnamed_0057_6" Collapsed="true">
+    <Position X="6.5" Y="7.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AABAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAI=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Typedef Name="myPrototype" Collapsed="true">
+    <Position X="22" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>RunSample.cpp</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="DeviceIterator" Collapsed="true">
+    <Position X="18.5" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\tis\commands\general\selecthardware\selecthardware\selecthardware.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="CameraIterator" Collapsed="true">
+    <Position X="15" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\tis\commands\general\selecthardware\selecthardware\selecthardware.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="Cameras" Collapsed="true">
+    <Position X="16.75" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\tis\commands\general\selecthardware\selecthardware\selecthardware.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="Devices" Collapsed="true">
+    <Position X="20.25" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\tis\commands\general\selecthardware\selecthardware\selecthardware.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFF" Collapsed="true">
+    <Position X="18.5" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="ttag_t" Collapsed="true">
+    <Position X="23.75" Y="6" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="tdir_t" Collapsed="true">
+    <Position X="15" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="tsample_t" Collapsed="true">
+    <Position X="18.5" Y="6" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="tstrip_t" Collapsed="true">
+    <Position X="22" Y="6" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="ttile_t" Collapsed="true">
+    <Position X="15" Y="6.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="tsize_t" Collapsed="true">
+    <Position X="20.25" Y="6" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="tdata_t" Collapsed="true">
+    <Position X="23.75" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="toff_t" Collapsed="true">
+    <Position X="16.75" Y="6" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="thandle_t" Collapsed="true">
+    <Position X="16.75" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFRGBValue" Collapsed="true">
+    <Position X="23.75" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFDisplay" Collapsed="true">
+    <Position X="9.5" Y="13.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFYCbCrToRGB" Collapsed="true">
+    <Position X="1.5" Y="13.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFCIELabToRGB" Collapsed="true">
+    <Position X="10.5" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFRGBAImage" Collapsed="true">
+    <Position X="9.5" Y="8.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="tileContigRoutine" Collapsed="true">
+    <Position X="23.75" Y="5.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="tileSeparateRoutine" Collapsed="true">
+    <Position X="15" Y="6" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFInitMethod" Collapsed="true">
+    <Position X="16.75" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFCodec" Collapsed="true">
+    <Position X="5.5" Y="10.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFErrorHandler" Collapsed="true">
+    <Position X="22" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFErrorHandlerExt" Collapsed="true">
+    <Position X="23.75" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFReadWriteProc" Collapsed="true">
+    <Position X="22" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFSeekProc" Collapsed="true">
+    <Position X="15" Y="5.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFCloseProc" Collapsed="true">
+    <Position X="20.25" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFSizeProc" Collapsed="true">
+    <Position X="16.75" Y="5.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFMapFileProc" Collapsed="true">
+    <Position X="18.5" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFUnmapFileProc" Collapsed="true">
+    <Position X="18.5" Y="5.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFExtendProc" Collapsed="true">
+    <Position X="15" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFFieldInfo" Collapsed="true">
+    <Position X="9.5" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFTagValue" Collapsed="true">
+    <Position X="1.5" Y="8.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFVSetMethod" Collapsed="true">
+    <Position X="22" Y="5.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFVGetMethod" Collapsed="true">
+    <Position X="20.25" Y="5.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFPrintMethod" Collapsed="true">
+    <Position X="20.25" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="TIFFTagMethods" Collapsed="true">
+    <Position X="6.5" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\TIS\Tools\tiff-3.8.2\libtiff\tiffio.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Font Name="Tahoma" Size="8.25" />
+</ClassDiagram>

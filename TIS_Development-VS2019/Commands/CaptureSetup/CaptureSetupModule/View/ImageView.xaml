@@ -1,0 +1,1507 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.ImageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+             xmlns:Hist="clr-namespace:HistogramControl;assembly=HistogramControl"
+             xmlns:Valid="clr-namespace:Validations;assembly=Validations"
+             xmlns:View="clr-namespace:CaptureSetupDll.View"
+             xmlns:ViewModel="clr-namespace:CaptureSetupDll.ViewModel"
+             xmlns:help="clr-namespace:HelpProvider;assembly=HelpProvider"
+             Width="Auto"
+             Height="Auto"
+             help:Help.Filename="ThorImageLS.chm"
+             help:Help.Keyword="CaptureSetup"
+             xmlns:ts="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <DataTemplate DataType="{x:Type ViewModel:CaptureSetupViewModel}">
+                <StackPanel>
+                    <Image Source="{Binding Bitmap}" />
+                </StackPanel>
+            </DataTemplate>
+            <ts:BooleanToVisibilityConverter x:Key="VisibilityOfBool" />
+            <ViewModel:PercentStringConverter x:Key="PercentStringConverter" />
+            <ViewModel:HistogramConverter x:Key="HistogramConverter" />
+            <ViewModel:BoolToOpacityConverter x:Key="BoolToOpacity" />
+            <ViewModel:HistogramLinLogToTextConverter x:Key="HistogramLinLogToText" />
+            <ViewModel:HistogramAutoManualToTextConverter x:Key="HistogramAutoManualToText" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid x:Name="mainGrid">
+        <!--  Create a large grid area to insert the image. This will prevent the clipping of the image data as the user pans and zooms  -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="65536" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="65536" />
+        </Grid.ColumnDefinitions>
+        <Border x:Name="imageBorder"
+                Style="{x:Null}">
+            <Grid>
+                <Canvas x:Name="imageCanvas"
+                        RenderOptions.BitmapScalingMode="NearestNeighbor"
+                        RenderOptions.EdgeMode="Aliased">
+                    <Canvas.Background>
+                        <ImageBrush x:Name="image1"
+                                    AlignmentX="Left"
+                                    AlignmentY="Top"
+                                    ImageSource="{Binding Path=Bitmap,
+                                                          Mode=OneWay,
+                                                          UpdateSourceTrigger=PropertyChanged}"
+                                    Stretch="None" />
+                    </Canvas.Background>
+                    <Canvas.ContextMenu>
+                        <ContextMenu Name="ImageCanvasContextMenu">
+                            <MenuItem x:Name="saveAs"
+                                      Click="saveAs_Click"
+                                      Header="Save As" />
+                            <MenuItem x:Name="saveAsReference"
+                                      Click="saveAsReference_Click"
+                                      Header="Save As Reference Channel" />
+                            <MenuItem x:Name="lockPosition"
+                                      Click="OrthogonalLinesLockPosition_Click"
+                                      Header="Lock Position"
+                                      IsCheckable="True"
+                                      Visibility="Collapsed" />
+                        </ContextMenu>
+                    </Canvas.ContextMenu>
+                </Canvas>
+                <Canvas x:Name="presentationCanvas"
+                        MouseMove="presentationCanvas_MouseMove">
+                    <Canvas.Background>
+                        <ImageBrush x:Name="presentationImage"
+                                    AlignmentX="Left"
+                                    AlignmentY="Top"
+                                    ImageSource="{Binding Path=BitmapPresentation,
+                                                          Mode=OneWay,
+                                                          UpdateSourceTrigger=PropertyChanged}"
+                                    Stretch="None" />
+                    </Canvas.Background>
+                    <TextBox Name="ROIIndex"
+                             Canvas.Left="{Binding Path=AutoTrackToolTipX}"
+                             Canvas.Top="{Binding Path=AutoTrackToolTipY}"
+                             Width="50"
+                             Height="18"
+                             Background="#FF566DFF"
+                             FontSize="8"
+                             Foreground="Black"
+                             Visibility="Collapsed" />
+                    <Canvas.Style>
+                        <Style TargetType="{x:Type Canvas}">
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding Path=IsSelected, ElementName=SelectTool}"
+                                                   Value="False" />
+                                        <Condition Binding="{Binding Path=IsMouseOver, ElementName=presentationCanvas}"
+                                                   Value="True" />
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Cursor"
+                                            Value="Pen" />
+                                </MultiDataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding Path=SelectedIndex, ElementName=ROIDrawingTools}"
+                                                   Value="-1" />
+                                        <Condition Binding="{Binding Path=IsMouseOver, ElementName=presentationCanvas}"
+                                                   Value="True" />
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Cursor"
+                                            Value="Arrow" />
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Canvas.Style>
+                </Canvas>
+                <Canvas x:Name="overlayCanvas"
+                        Visibility="{Binding Path=BitmapReady, Converter={StaticResource VisibilityOfBool}}">
+                    <Rectangle Name="dummyRectangle"
+                               Width="1"
+                               Height="2"
+                               Fill="Transparent" />
+                </Canvas>
+                <Canvas x:Name="xyOrthogonalImageCanvas">
+                    <Rectangle Width="1"
+                               Height="2"
+                               Fill="Transparent" />
+                </Canvas>
+                <Canvas x:Name="xzOrthogonalImageCanvas"
+                        Visibility="Collapsed">
+                    <Canvas.Background>
+                        <ImageBrush x:Name="orthogonalImageXZ"
+                                    AlignmentX="Left"
+                                    AlignmentY="Top"
+                                    ImageSource="{Binding Path=BitmapXZ,
+                                                          Mode=OneWay,
+                                                          UpdateSourceTrigger=PropertyChanged}"
+                                    Stretch="None" />
+                    </Canvas.Background>
+                </Canvas>
+                <Canvas x:Name="yzOrthogonalImageCanvas"
+                        Visibility="Collapsed">
+                    <Canvas.Background>
+                        <ImageBrush x:Name="orthogonalImageYZ"
+                                    AlignmentX="Left"
+                                    AlignmentY="Top"
+                                    ImageSource="{Binding Path=BitmapYZ,
+                                                          Mode=OneWay,
+                                                          UpdateSourceTrigger=PropertyChanged}"
+                                    Stretch="None" />
+                    </Canvas.Background>
+                </Canvas>
+            </Grid>
+        </Border>
+        <Grid x:Name="toolbarGrid"
+              Grid.Row="0"
+              Grid.Column="0"
+              Width="auto"
+              Height="auto"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Top"
+              Margin="{Binding Path=ROItoolbarMargin}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="50" />
+                <RowDefinition Height="50" />
+                <RowDefinition Height="50" />
+                <RowDefinition Height="50" />
+                <RowDefinition Height="50" />
+                <RowDefinition Height="50" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="60" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Row="0"
+                        Grid.Column="4">
+                <StackPanel.LayoutTransform>
+                    <ScaleTransform ScaleX="{Binding Path=ROIToolsScale}"
+                                    ScaleY="{Binding Path=ROIToolsScale}"/>
+                </StackPanel.LayoutTransform>
+                <ToggleButton x:Name="chanAEnable"
+                              Grid.Row="2"
+                              Grid.Column="4"
+                              Width="40"
+                              Height="40"
+                              Margin="5"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Top"
+                              IsChecked="{Binding Path=LSMChannelEnable0}"
+                              ToolTip="Enables display of A Channel"
+                              Visibility="{Binding Path=IsChannelVisible0, UpdateSourceTrigger=PropertyChanged}">
+                    <Border>
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background"
+                                        Value="#FFEEEEEE" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsChecked, ElementName=chanAEnable}"
+                                                 Value="True">
+                                        <Setter Property="Background"
+                                                Value="{Binding Path=LSMChannelColor0}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Label Width="40"
+                               Margin="-1,-7,0,0"
+                               HorizontalContentAlignment="Center"
+                               Background="Transparent"
+                               Content="A"
+                               FontSize="30" />
+                    </Border>
+                </ToggleButton>
+                <ToggleButton x:Name="chanBEnable"
+                              Grid.Row="2"
+                              Grid.Column="4"
+                              Width="40"
+                              Height="40"
+                              Margin="5"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Top"
+                              IsChecked="{Binding Path=LSMChannelEnable1}"
+                              ToolTip="Enables display of B Channel"
+                              Visibility="{Binding Path=IsChannelVisible1, UpdateSourceTrigger=PropertyChanged}">
+                    <Border>
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background"
+                                        Value="#FFEEEEEE" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsChecked, ElementName=chanBEnable}"
+                                                 Value="True">
+                                        <Setter Property="Background"
+                                                Value="{Binding Path=LSMChannelColor1}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Label Width="40"
+                               Margin="-1,-7,0,0"
+                               HorizontalContentAlignment="Center"
+                               Background="Transparent"
+                               Content="B"
+                               FontSize="30" />
+                    </Border>
+                </ToggleButton>
+                <ToggleButton x:Name="chanCEnable"
+                              Grid.Row="2"
+                              Grid.Column="4"
+                              Width="40"
+                              Height="40"
+                              Margin="5"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Top"
+                              IsChecked="{Binding Path=LSMChannelEnable2}"
+                              ToolTip="Enables display of C Channel"
+                              Visibility="{Binding Path=IsChannelVisible2, UpdateSourceTrigger=PropertyChanged}">
+                    <Border>
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background"
+                                        Value="#FFEEEEEE" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsChecked, ElementName=chanCEnable}"
+                                                 Value="True">
+                                        <Setter Property="Background"
+                                                Value="{Binding Path=LSMChannelColor2}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Label Width="40"
+                               Margin="-1,-7,0,0"
+                               HorizontalContentAlignment="Center"
+                               Background="Transparent"
+                               Content="C"
+                               FontSize="30" />
+                    </Border>
+                </ToggleButton>
+                <ToggleButton x:Name="chanDEnable"
+                              Grid.Row="2"
+                              Grid.Column="4"
+                              Width="40"
+                              Height="40"
+                              Margin="5"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Top"
+                              IsChecked="{Binding Path=LSMChannelEnable3}"
+                              ToolTip="Enables display of D Channel"
+                              Visibility="{Binding Path=IsChannelVisible3, UpdateSourceTrigger=PropertyChanged}">
+                    <Border>
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background"
+                                        Value="#FFEEEEEE" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsChecked, ElementName=chanDEnable}"
+                                                 Value="True">
+                                        <Setter Property="Background"
+                                                Value="{Binding Path=LSMChannelColor3}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Label Width="40"
+                               Margin="-1,-7,0,0"
+                               HorizontalContentAlignment="Center"
+                               Background="Transparent"
+                               Content="D"
+                               FontSize="30" />
+                    </Border>
+                </ToggleButton>
+                <Button Name="colorImageSettings"
+                        Width="40"
+                        Height="40"
+                        Margin="5"
+                        Command="{Binding Path=ChangeColorSettingsCommand}"
+                        ToolTip="Color image setttings">
+                    <Image Source="/CaptureSetupModule;component/Icons/ChanAB.png" />
+                </Button>
+                <ToggleButton x:Name="tileEnable"
+                              Grid.Row="2"
+                              Grid.Column="4"
+                              Width="40"
+                              Height="40"
+                              Margin="5"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Top"
+                              IsChecked="{Binding Path=TileDisplay, UpdateSourceTrigger=PropertyChanged}"
+                              ToolTip="Enables Tiling of Color Channels"
+                              Visibility="{Binding Path=IsTileDisplayButtonVisible, UpdateSourceTrigger=PropertyChanged}">
+                    <Image Source="/CaptureSetupModule;component/Icons/ColorTile.png" />
+                </ToggleButton>
+                <Slider x:Name="zoomSlider"
+                        Width="25"
+                        Height="100"
+                        Margin="5"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Top"
+                        Background="#00D51515"
+                        Maximum="10"
+                        Minimum="0.1"
+                        Orientation="Vertical"
+                        ToolTip="Image Zoom in/out"
+                        Value="{Binding ZoomLevel}" />
+                <TextBox x:Name="zoomText"
+                         Width="40"
+                         Height="25"
+                         Margin="5,0,5,5"
+                         HorizontalAlignment="Center"
+                         VerticalAlignment="Top"
+                         Text="{Binding Path=ZoomLevel,
+                                        Converter={StaticResource PercentStringConverter}}"
+                         Valid:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
+                <Button x:Name="originalButton"
+                        Width="40"
+                        Height="40"
+                        Margin="5"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Top"
+                        Click="originalButton_Click"
+                        Content="100%"
+                        ToolTip="Image size 100%" />
+            </StackPanel>
+            <Button x:Name="resetButton"
+                    Grid.Row="1"
+                    Grid.Column="4"
+                    Width="40"
+                    Height="40"
+                    Margin="5"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Top"
+                    Click="ResetClick"
+                    ToolTip="Reset the image size">
+                <Image Source="/CaptureSetupModule;component/Icons/Resize.png" />
+            </Button>
+            <ToggleButton x:Name="histogramEnable"
+                          Grid.Row="2"
+                          Grid.Column="4"
+                          Width="40"
+                          Height="40"
+                          Margin="5"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Top"
+                          ToolTip="Displays the histogram control">
+                <Image Source="/CaptureSetupModule;component/Icons/Histogram.png" />
+            </ToggleButton>
+            <StackPanel Grid.Row="0"
+                        Grid.RowSpan="8"
+                        Grid.Column="1"
+                        VerticalAlignment="Top"
+                        Background="Transparent"
+                        Orientation="Vertical">
+                <StackPanel HorizontalAlignment="Right"
+                            VerticalAlignment="Bottom"
+                            Background="Transparent"
+                            Orientation="Vertical"
+                            Visibility="{Binding ElementName=histogramEnable,
+                                                 Path=IsChecked,
+                                                 Converter={StaticResource VisibilityOfBool}}">
+                    <StackPanel Name="panel1"
+                                HorizontalAlignment="Right">
+                        <Grid>
+                            <Grid>
+                                <StackPanel HorizontalAlignment="Stretch"
+                                            VerticalAlignment="Stretch"
+                                            Background="Transparent"
+                                            Orientation="Vertical">
+                                    <ToggleButton Width="15"
+                                                  Height="13"
+                                                  HorizontalAlignment="Left"
+                                                  VerticalAlignment="Bottom"
+                                                  HorizontalContentAlignment="Center"
+                                                  VerticalContentAlignment="Center"
+                                                  IsChecked="{Binding LargeHistogram1,
+                                                                      Mode=TwoWay,
+                                                                      UpdateSourceTrigger=PropertyChanged}"
+                                                  Padding="0"
+                                                  ToolTip="Expand Histogram">
+                                        <Path Width="15"
+                                              Height="13"
+                                              Data="M 4 6 L 10 6 M 7 3 L 7 9"
+                                              Fill="{StaticResource ToolPathBrush}"
+                                              Stroke="{StaticResource ToolPathBrush}" />
+                                    </ToggleButton>
+                                    <ToggleButton Width="15"
+                                                  Height="13"
+                                                  HorizontalAlignment="Left"
+                                                  VerticalAlignment="Bottom"
+                                                  HorizontalContentAlignment="Center"
+                                                  VerticalContentAlignment="Center"
+                                                  IsChecked="{Binding AllHistogramsExpanded,
+                                                                      Mode=TwoWay,
+                                                                      UpdateSourceTrigger=PropertyChanged}"
+                                                  Padding="0"
+                                                  ToolTip="Expand All Histograms">
+                                        <Path Width="15"
+                                              Height="13"
+                                              Data="M 5 6 L 9 6 M 7 4 L 7 8 M 1 9 L 5 9 M 3 7 L 3 11 M 9 3 L 13 3 M 11 1 L 11 5"
+                                              Fill="{StaticResource ToolPathBrush}"
+                                              Stroke="{StaticResource ToolPathBrush}" />
+                                    </ToggleButton>
+                                </StackPanel>
+                                <Label HorizontalAlignment="Left"
+                                       VerticalAlignment="Center"
+                                       Background="Transparent"
+                                       Content="{Binding Path=ChannelName[0].Value}">
+                                    <Label.LayoutTransform>
+                                        <RotateTransform Angle="-90" />
+                                    </Label.LayoutTransform>
+                                </Label>
+                            </Grid>
+                            <Grid>
+                                <Hist:Histogram Name="histogram1"
+                                                Width="{Binding Path=HistogramWidth1,
+                                                                Mode=TwoWay,
+                                                                UpdateSourceTrigger=PropertyChanged}"
+                                                Height="{Binding Path=HistogramHeight1,
+                                                                 Mode=TwoWay,
+                                                                 UpdateSourceTrigger=PropertyChanged}"
+                                                BlackPoint="{Binding Path=BlackPoint0,
+                                                                     Mode=TwoWay,
+                                                                     UpdateSourceTrigger=PropertyChanged}"
+                                                WhitePoint="{Binding Path=WhitePoint0,
+                                                                     Mode=TwoWay,
+                                                                     UpdateSourceTrigger=PropertyChanged}"
+                                                ShiftValue="{Binding Path=PixelBitShiftValue, 
+                                                                     Mode=OneWay, 
+                                                                     UpdateSourceTrigger=PropertyChanged}"
+                                                LogScaleData="{Binding Path=LogScaleEnabled0,
+                                                                     Mode=TwoWay,
+                                                                     UpdateSourceTrigger=PropertyChanged}"/>
+                            </Grid>
+                        </Grid>
+                        <StackPanel Orientation="Horizontal">
+                            <RepeatButton Name="btnBPDown0"
+                                          Width="16"
+                                          Click="btnBPDown0_Click"
+                                          Content="⟨" />
+                            <Slider Name="sliderBP0"
+                                    Width="{Binding Path=HistogramWidth1,
+                                                    Mode=OneWay,
+                                                    UpdateSourceTrigger=PropertyChanged}"
+                                    HorizontalAlignment="Stretch"
+                                    Maximum="255"
+                                    Minimum="0"
+                                    Orientation="Horizontal"
+                                    Value="{Binding Path=BlackPoint0,
+                                                    Mode=TwoWay,
+                                                    UpdateSourceTrigger=PropertyChanged}"
+                                    Thumb.DragStarted="slider0_DragStarted" />
+                            <RepeatButton Name="btnBPUp0"
+                                          Width="16"
+                                          Click="btnBPUp0_Click"
+                                          Content="⟩" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <RepeatButton Name="btnWPDown0"
+                                          Width="16"
+                                          Click="btnWPDown0_Click"
+                                          Content="⟨" />
+                            <Slider Name="sliderWP0"
+                                    Width="{Binding Path=HistogramWidth1,
+                                                    Mode=OneWay,
+                                                    UpdateSourceTrigger=PropertyChanged}"
+                                    Maximum="255"
+                                    Minimum="0"
+                                    Orientation="Horizontal"
+                                    Value="{Binding Path=WhitePoint0,
+                                                    Mode=TwoWay,
+                                                    UpdateSourceTrigger=PropertyChanged}" 
+                                    Thumb.DragStarted="slider0_DragStarted" />
+                            <RepeatButton Name="btnWPUp0"
+                                          Width="16"
+                                          Click="btnWPUp0_Click"
+                                          Content="⟩" />
+                        </StackPanel>
+                        <StackPanel Height="25"
+                                    Margin="0,0,0,2"
+                                    HorizontalAlignment="Center"
+                                    Orientation="Horizontal">
+                            <ToggleButton Name="AutoManualTog1"
+                                          Width="70"
+                                          IsChecked="{Binding Path=AutoManualTog1Checked,
+                                                      Mode=TwoWay,
+                                                      UpdateSourceTrigger=PropertyChanged}"
+                                          Content="{Binding RelativeSource={RelativeSource Mode=Self},
+                                                            Path=IsChecked,
+                                                            Converter={StaticResource HistogramAutoManualToText}}"
+                                          ToolTip="Show Auto-Adjust Histogram" />
+                            <Button Width="70"
+                                    Click="ButtonReset_Click1"
+                                    Content="Reset" />
+                            <ToggleButton Width="70"
+                                          Content="{Binding RelativeSource={RelativeSource Mode=Self},
+                                                            Path=IsChecked,
+                                                            Converter={StaticResource HistogramLinLogToText}}"
+                                          IsChecked="{Binding ElementName=histogram1,
+                                                              Path=LogScaleData,
+                                                              Mode=TwoWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                          ToolTip="Show Log-Scale Histogram" />
+                        </StackPanel>
+                        <StackPanel Height="{Binding Path=HistogramSpacing, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    HorizontalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Name="panel2"
+                                HorizontalAlignment="Right">
+                        <Grid>
+                            <Grid>
+                                <StackPanel HorizontalAlignment="Stretch"
+                                            VerticalAlignment="Stretch"
+                                            Background="Transparent"
+                                            Orientation="Vertical">
+                                    <ToggleButton Width="15"
+                                                  Height="13"
+                                                  HorizontalAlignment="Left"
+                                                  VerticalAlignment="Bottom"
+                                                  HorizontalContentAlignment="Center"
+                                                  VerticalContentAlignment="Center"
+                                                  IsChecked="{Binding LargeHistogram2,
+                                                                      Mode=TwoWay,
+                                                                      UpdateSourceTrigger=PropertyChanged}"
+                                                  Padding="0"
+                                                  ToolTip="Expand Histogram">
+                                        <Path Width="15"
+                                              Height="13"
+                                              Data="M 3 6 L 11 6 M 7 2 L 7 10"
+                                              Fill="{StaticResource ToolPathBrush}"
+                                              Stroke="{StaticResource ToolPathBrush}" />
+                                    </ToggleButton>
+                                    <ToggleButton Width="15"
+                                                  Height="13"
+                                                  HorizontalAlignment="Left"
+                                                  VerticalAlignment="Bottom"
+                                                  HorizontalContentAlignment="Center"
+                                                  VerticalContentAlignment="Center"
+                                                  IsChecked="{Binding AllHistogramsExpanded,
+                                                                      Mode=TwoWay,
+                                                                      UpdateSourceTrigger=PropertyChanged}"
+                                                  Padding="0"
+                                                  ToolTip="Expand Histogram">
+                                        <Path Width="15"
+                                              Height="13"
+                                              Data="M 5 6 L 9 6 M 7 4 L 7 8 M 1 9 L 5 9 M 3 7 L 3 11 M 9 3 L 13 3 M 11 1 L 11 5"
+                                              Fill="{StaticResource ToolPathBrush}"
+                                              Stroke="{StaticResource ToolPathBrush}" />
+                                    </ToggleButton>
+                                </StackPanel>
+                                <Label HorizontalAlignment="Left"
+                                       VerticalAlignment="Center"
+                                       Background="Transparent"
+                                       Content="{Binding Path=ChannelName[1].Value}">
+                                    <Label.LayoutTransform>
+                                        <RotateTransform Angle="-90" />
+                                    </Label.LayoutTransform>
+                                </Label>
+                            </Grid>
+                            <Grid>
+                                <Hist:Histogram Name="histogram2"
+                                                Width="{Binding Path=HistogramWidth2,
+                                                                Mode=TwoWay,
+                                                                UpdateSourceTrigger=PropertyChanged}"
+                                                Height="{Binding Path=HistogramHeight2,
+                                                                 Mode=TwoWay,
+                                                                 UpdateSourceTrigger=PropertyChanged}"
+                                                BlackPoint="{Binding Path=BlackPoint1,
+                                                                     Mode=TwoWay,
+                                                                     UpdateSourceTrigger=PropertyChanged}"
+                                                WhitePoint="{Binding Path=WhitePoint1,
+                                                                     Mode=TwoWay,
+                                                                     UpdateSourceTrigger=PropertyChanged}"
+                                                ShiftValue="{Binding Path=PixelBitShiftValue, 
+                                                                     Mode=OneWay, 
+                                                                     UpdateSourceTrigger=PropertyChanged}"
+                                                LogScaleData="{Binding Path=LogScaleEnabled1,
+                                                                     Mode=TwoWay,
+                                                                     UpdateSourceTrigger=PropertyChanged}"/>
+                            </Grid>
+                        </Grid>
+                        <StackPanel Orientation="Horizontal">
+                            <RepeatButton Name="btnBPDown1"
+                                          Width="16"
+                                          Click="btnBPDown1_Click"
+                                          Content="⟨" />
+                            <Slider Name="sliderBP1"
+                                    Width="{Binding Path=HistogramWidth2,
+                                                    Mode=OneWay,
+                                                    UpdateSourceTrigger=PropertyChanged}"
+                                    Maximum="255"
+                                    Minimum="0"
+                                    Orientation="Horizontal"
+                                    Value="{Binding Path=BlackPoint1,
+                                                    Mode=TwoWay,
+                                                    UpdateSourceTrigger=PropertyChanged}" 
+                                    Thumb.DragStarted="slider1_DragStarted" />
+
+                            <RepeatButton Name="btnBPUp1"
+                                          Width="16"
+                                          Click="btnBPUp1_Click"
+                                          Content="⟩" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <RepeatButton Name="btnWPDown1"
+                                          Width="16"
+                                          Click="btnWPDown1_Click"
+                                          Content="⟨" />
+                            <Slider Name="sliderWP1"
+                                    Width="{Binding Path=HistogramWidth2,
+                                                    Mode=OneWay,
+                                                    UpdateSourceTrigger=PropertyChanged}"
+                                    Maximum="255"
+                                    Minimum="0"
+                                    Orientation="Horizontal"
+                                    Value="{Binding Path=WhitePoint1,
+                                                    Mode=TwoWay,
+                                                    UpdateSourceTrigger=PropertyChanged}" 
+                                    Thumb.DragStarted="slider1_DragStarted" />
+
+                            <RepeatButton Name="btnWPUp1"
+                                          Width="16"
+                                          Click="btnWPUp1_Click"
+                                          Content="⟩" />
+                        </StackPanel>
+                        <StackPanel Height="25"
+                                    Margin="0,0,0,2"
+                                    HorizontalAlignment="Center"
+                                    Orientation="Horizontal">
+                            <ToggleButton Name="AutoManualTog2"
+                                          Width="70"
+                                          IsChecked="{Binding Path=AutoManualTog2Checked,
+                                                      Mode=TwoWay,
+                                                      UpdateSourceTrigger=PropertyChanged}"
+                                          Content="{Binding RelativeSource={RelativeSource Mode=Self},
+                                                            Path=IsChecked,
+                                                            Converter={StaticResource HistogramAutoManualToText}}"
+                                          ToolTip="Show Auto-Adjust Histogram" />
+                            <Button Width="70"
+                                    Click="ButtonReset_Click2"
+                                    Content="Reset" />
+                            <ToggleButton Width="70"
+                                          Content="{Binding RelativeSource={RelativeSource Mode=Self},
+                                                            Path=IsChecked,
+                                                            Converter={StaticResource HistogramLinLogToText}}"
+                                          IsChecked="{Binding ElementName=histogram2,
+                                                              Path=LogScaleData,
+                                                              Mode=TwoWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                          ToolTip="Show Log-Scale Histogram" />
+                        </StackPanel>
+                        <StackPanel Height="{Binding Path=HistogramSpacing, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    HorizontalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Name="panel3"
+                                HorizontalAlignment="Right">
+                        <Grid>
+                            <Grid>
+                                <StackPanel HorizontalAlignment="Stretch"
+                                            VerticalAlignment="Stretch"
+                                            Background="Transparent"
+                                            Orientation="Vertical">
+                                    <ToggleButton Width="15"
+                                                  Height="13"
+                                                  HorizontalAlignment="Left"
+                                                  VerticalAlignment="Bottom"
+                                                  HorizontalContentAlignment="Center"
+                                                  VerticalContentAlignment="Center"
+                                                  IsChecked="{Binding LargeHistogram3,
+                                                                      Mode=TwoWay,
+                                                                      UpdateSourceTrigger=PropertyChanged}"
+                                                  Padding="0"
+                                                  ToolTip="Expand Histogram">
+                                        <Path Width="15"
+                                              Height="13"
+                                              Data="M 3 6 L 11 6 M 7 2 L 7 10"
+                                              Fill="{StaticResource ToolPathBrush}"
+                                              Stroke="{StaticResource ToolPathBrush}" />
+                                    </ToggleButton>
+                                    <ToggleButton Width="15"
+                                                  Height="13"
+                                                  HorizontalAlignment="Left"
+                                                  VerticalAlignment="Bottom"
+                                                  HorizontalContentAlignment="Center"
+                                                  VerticalContentAlignment="Center"
+                                                  IsChecked="{Binding AllHistogramsExpanded,
+                                                                      Mode=TwoWay,
+                                                                      UpdateSourceTrigger=PropertyChanged}"
+                                                  Padding="0"
+                                                  ToolTip="Expand Histogram">
+                                        <Path Width="15"
+                                              Height="13"
+                                              Data="M 5 6 L 9 6 M 7 4 L 7 8 M 1 9 L 5 9 M 3 7 L 3 11 M 9 3 L 13 3 M 11 1 L 11 5"
+                                              Fill="{StaticResource ToolPathBrush}"
+                                              Stroke="{StaticResource ToolPathBrush}" />
+                                    </ToggleButton>
+                                </StackPanel>
+                                <Label HorizontalAlignment="Left"
+                                       VerticalAlignment="Center"
+                                       Background="Transparent"
+                                       Content="{Binding Path=ChannelName[2].Value}">
+                                    <Label.LayoutTransform>
+                                        <RotateTransform Angle="-90" />
+                                    </Label.LayoutTransform>
+                                </Label>
+                            </Grid>
+                            <Grid>
+                                <Hist:Histogram Name="histogram3"
+                                                Width="{Binding Path=HistogramWidth3,
+                                                                Mode=TwoWay,
+                                                                UpdateSourceTrigger=PropertyChanged}"
+                                                Height="{Binding Path=HistogramHeight3,
+                                                                 Mode=TwoWay,
+                                                                 UpdateSourceTrigger=PropertyChanged}"
+                                                BlackPoint="{Binding Path=BlackPoint2,
+                                                                     Mode=TwoWay,
+                                                                     UpdateSourceTrigger=PropertyChanged}"
+                                                WhitePoint="{Binding Path=WhitePoint2,
+                                                                     Mode=TwoWay,
+                                                                     UpdateSourceTrigger=PropertyChanged}"
+                                                ShiftValue="{Binding Path=PixelBitShiftValue, 
+                                                                     Mode=OneWay, 
+                                                                     UpdateSourceTrigger=PropertyChanged}"
+                                                LogScaleData="{Binding Path=LogScaleEnabled2,
+                                                                     Mode=TwoWay,
+                                                                     UpdateSourceTrigger=PropertyChanged}"/>
+                            </Grid>
+                        </Grid>
+                        <StackPanel Orientation="Horizontal">
+                            <RepeatButton Name="btnBPDown2"
+                                          Width="16"
+                                          Click="btnBPDown2_Click"
+                                          Content="⟨" />
+                            <Slider Name="sliderBP2"
+                                    Width="{Binding Path=HistogramWidth3,
+                                                    Mode=OneWay,
+                                                    UpdateSourceTrigger=PropertyChanged}"
+                                    Maximum="255"
+                                    Minimum="0"
+                                    Orientation="Horizontal"
+                                    Value="{Binding Path=BlackPoint2,
+                                                    Mode=TwoWay,
+                                                    UpdateSourceTrigger=PropertyChanged}" 
+                                    Thumb.DragStarted="slider2_DragStarted" />
+                            <RepeatButton Name="btnBPUp2"
+                                          Width="16"
+                                          Click="btnBPUp2_Click"
+                                          Content="⟩" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <RepeatButton Name="btnWPDown2"
+                                          Width="16"
+                                          Click="btnWPDown2_Click"
+                                          Content="⟨" />
+                            <Slider Name="sliderWP2"
+                                    Width="{Binding Path=HistogramWidth3,
+                                                    Mode=OneWay,
+                                                    UpdateSourceTrigger=PropertyChanged}"
+                                    Maximum="255"
+                                    Minimum="0"
+                                    Orientation="Horizontal"
+                                    Value="{Binding Path=WhitePoint2,
+                                                    Mode=TwoWay,
+                                                    UpdateSourceTrigger=PropertyChanged}" 
+                                    Thumb.DragStarted="slider2_DragStarted" />
+                            <RepeatButton Name="btnWPUp2"
+                                          Width="16"
+                                          Click="btnWPUp2_Click"
+                                          Content="⟩" />
+                        </StackPanel>
+                        <StackPanel Height="25"
+                                    Margin="0,0,0,2"
+                                    HorizontalAlignment="Center"
+                                    Orientation="Horizontal">
+                            <ToggleButton Name="AutoManualTog3"
+                                          Width="70"
+                                          IsChecked="{Binding Path=AutoManualTog3Checked,
+                                                      Mode=TwoWay,
+                                                      UpdateSourceTrigger=PropertyChanged}"
+                                          Content="{Binding RelativeSource={RelativeSource Mode=Self},
+                                                            Path=IsChecked,
+                                                            Converter={StaticResource HistogramAutoManualToText}}"
+                                          ToolTip="Show Auto-Adjust Histogram" />
+                            <Button Width="70"
+                                    Click="ButtonReset_Click3"
+                                    Content="Reset" />
+                            <ToggleButton Width="70"
+                                          Content="{Binding RelativeSource={RelativeSource Mode=Self},
+                                                            Path=IsChecked,
+                                                            Converter={StaticResource HistogramLinLogToText}}"
+                                          IsChecked="{Binding ElementName=histogram3,
+                                                              Path=LogScaleData,
+                                                              Mode=TwoWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                          ToolTip="Show Log-Scale Histogram" />
+                        </StackPanel>
+                        <StackPanel Height="{Binding Path=HistogramSpacing, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    HorizontalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Name="panel4"
+                                HorizontalAlignment="Right">
+                        <Grid>
+                            <Grid>
+                                <StackPanel HorizontalAlignment="Stretch"
+                                            VerticalAlignment="Stretch"
+                                            Background="Transparent"
+                                            Orientation="Vertical">
+                                    <ToggleButton Width="15"
+                                                  Height="13"
+                                                  HorizontalAlignment="Left"
+                                                  VerticalAlignment="Bottom"
+                                                  HorizontalContentAlignment="Center"
+                                                  VerticalContentAlignment="Center"
+                                                  IsChecked="{Binding LargeHistogram4,
+                                                                      Mode=TwoWay,
+                                                                      UpdateSourceTrigger=PropertyChanged}"
+                                                  Padding="0"
+                                                  ToolTip="Expand Histogram">
+                                        <Path Width="15"
+                                              Height="13"
+                                              Data="M 3 6 L 11 6 M 7 2 L 7 10"
+                                              Fill="{StaticResource ToolPathBrush}"
+                                              Stroke="{StaticResource ToolPathBrush}" />
+                                    </ToggleButton>
+                                    <ToggleButton Width="15"
+                                                  Height="13"
+                                                  HorizontalAlignment="Left"
+                                                  VerticalAlignment="Bottom"
+                                                  HorizontalContentAlignment="Center"
+                                                  VerticalContentAlignment="Center"
+                                                  IsChecked="{Binding AllHistogramsExpanded,
+                                                                      Mode=TwoWay,
+                                                                      UpdateSourceTrigger=PropertyChanged}"
+                                                  Padding="0"
+                                                  ToolTip="Expand Histogram">
+                                        <Path Width="15"
+                                              Height="13"
+                                              Data="M 5 6 L 9 6 M 7 4 L 7 8 M 1 9 L 5 9 M 3 7 L 3 11 M 9 3 L 13 3 M 11 1 L 11 5"
+                                              Fill="{StaticResource ToolPathBrush}"
+                                              Stroke="{StaticResource ToolPathBrush}" />
+                                    </ToggleButton>
+                                </StackPanel>
+                                <Label HorizontalAlignment="Left"
+                                       VerticalAlignment="Center"
+                                       Background="Transparent"
+                                       Content="{Binding Path=ChannelName[3].Value}">
+                                    <Label.LayoutTransform>
+                                        <RotateTransform Angle="-90" />
+                                    </Label.LayoutTransform>
+                                </Label>
+                            </Grid>
+                            <Grid>
+                                <Hist:Histogram Name="histogram4"
+                                                Width="{Binding Path=HistogramWidth4,
+                                                                Mode=TwoWay,
+                                                                UpdateSourceTrigger=PropertyChanged}"
+                                                Height="{Binding Path=HistogramHeight4,
+                                                                 Mode=TwoWay,
+                                                                 UpdateSourceTrigger=PropertyChanged}"
+                                                BlackPoint="{Binding Path=BlackPoint3,
+                                                                     Mode=TwoWay,
+                                                                     UpdateSourceTrigger=PropertyChanged}"
+                                                WhitePoint="{Binding Path=WhitePoint3,
+                                                                     Mode=TwoWay,
+                                                                     UpdateSourceTrigger=PropertyChanged}"
+                                                ShiftValue="{Binding Path=PixelBitShiftValue, 
+                                                                     Mode=OneWay, 
+                                                                     UpdateSourceTrigger=PropertyChanged}"
+                                                LogScaleData="{Binding Path=LogScaleEnabled3,
+                                                                     Mode=TwoWay,
+                                                                     UpdateSourceTrigger=PropertyChanged}"/>
+                            </Grid>
+                        </Grid>
+                        <StackPanel Orientation="Horizontal">
+                            <RepeatButton Name="btnBPDown3"
+                                          Width="16"
+                                          Click="btnBPDown3_Click"
+                                          Content="⟨" />
+                            <Slider Name="sliderBP3"
+                                    Width="{Binding Path=HistogramWidth4,
+                                                    Mode=OneWay,
+                                                    UpdateSourceTrigger=PropertyChanged}"
+                                    Maximum="255"
+                                    Minimum="0"
+                                    Orientation="Horizontal"
+                                    Value="{Binding Path=BlackPoint3,
+                                                    Mode=TwoWay,
+                                                    UpdateSourceTrigger=PropertyChanged}" 
+                                    Thumb.DragStarted="slider3_DragStarted" />
+                            <RepeatButton Name="btnBPUp3"
+                                          Width="16"
+                                          Click="btnBPUp3_Click"
+                                          Content="⟩" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <RepeatButton Name="btnWPDown3"
+                                          Width="16"
+                                          Click="btnWPDown3_Click"
+                                          Content="⟨" />
+                            <Slider Name="sliderWP3"
+                                    Width="{Binding Path=HistogramWidth4,
+                                                    Mode=OneWay,
+                                                    UpdateSourceTrigger=PropertyChanged}"
+                                    Maximum="255"
+                                    Minimum="0"
+                                    Orientation="Horizontal"
+                                    Value="{Binding Path=WhitePoint3,
+                                                    Mode=TwoWay,
+                                                    UpdateSourceTrigger=PropertyChanged}" 
+                                    Thumb.DragStarted="slider3_DragStarted" />
+                            <RepeatButton Name="btnWPUp3"
+                                          Width="16"
+                                          Click="btnWPUp3_Click"
+                                          Content="⟩" />
+                        </StackPanel>
+                        <StackPanel Height="25"
+                                    Margin="0,0,0,2"
+                                    HorizontalAlignment="Center"
+                                    Orientation="Horizontal">
+                            <ToggleButton Name="AutoManualTog4"
+                                          Width="70"
+                                          IsChecked="{Binding Path=AutoManualTog4Checked,
+                                                      Mode=TwoWay,
+                                                      UpdateSourceTrigger=PropertyChanged}"
+                                          Content="{Binding RelativeSource={RelativeSource Mode=Self},
+                                                            Path=IsChecked,
+                                                            Converter={StaticResource HistogramAutoManualToText}}"
+                                          ToolTip="Show Auto-Adjust Histogram" />
+                            <Button Width="70"
+                                    Click="ButtonReset_Click4"
+                                    Content="Reset" />
+                            <ToggleButton Width="70"
+                                          Content="{Binding RelativeSource={RelativeSource Mode=Self},
+                                                            Path=IsChecked,
+                                                            Converter={StaticResource HistogramLinLogToText}}"
+                                          IsChecked="{Binding ElementName=histogram4,
+                                                              Path=LogScaleData,
+                                                              Mode=TwoWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                          ToolTip="Show Log-Scale Histogram" />
+                        </StackPanel>
+                        <StackPanel Height="{Binding Path=HistogramSpacing, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    HorizontalAlignment="Center" />
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel x:Name="GrayScaleIntensityPanel"
+                            Margin="10"
+                            HorizontalAlignment="Right"
+                            Background="Gray">
+                    <StackPanel Orientation="Horizontal"
+                                Visibility="{Binding ElementName=rollOverButton, Path=IsChecked, Converter={StaticResource VisibilityOfBool}}">
+                        <StackPanel Background="Gray"
+                                    Orientation="Horizontal">
+                            <Label Width="50"
+                                   Height="25"
+                                   Margin="5"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Top"
+                                   HorizontalContentAlignment="Right"
+                                   Content="X"
+                                   Foreground="White"
+                                   Visibility="{Binding ElementName=rollOverButton,
+                                                        Path=IsChecked,
+                                                        Converter={StaticResource VisibilityOfBool}}" />
+                            <TextBox x:Name="rollOverTextX"
+                                     Width="50"
+                                     Height="25"
+                                     Margin="5"
+                                     HorizontalAlignment="Left"
+                                     VerticalAlignment="Top"
+                                     Visibility="{Binding ElementName=rollOverButton,
+                                                          Path=IsChecked,
+                                                          Converter={StaticResource VisibilityOfBool}}" />
+                        </StackPanel>
+
+                        <StackPanel Background="Gray"
+                                    Orientation="Horizontal">
+                            <Label Width="50"
+                                   Height="25"
+                                   Margin="5"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Top"
+                                   HorizontalContentAlignment="Right"
+                                   Content="Y"
+                                   Foreground="White"
+                                   Visibility="{Binding ElementName=rollOverButton,
+                                                        Path=IsChecked,
+                                                        Converter={StaticResource VisibilityOfBool}}" />
+                            <TextBox x:Name="rollOverTextY"
+                                     Width="50"
+                                     Height="25"
+                                     Margin="5"
+                                     HorizontalAlignment="Left"
+                                     VerticalAlignment="Top"
+                                     Visibility="{Binding ElementName=rollOverButton,
+                                                          Path=IsChecked,
+                                                          Converter={StaticResource VisibilityOfBool}}" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Background="Transparent"
+                                Orientation="Horizontal">
+                        <StackPanel Name="panelAVal"
+                                    Background="Gray"
+                                    Orientation="Horizontal">
+                            <Label Name="labAVal"
+                                   Width="50"
+                                   Height="25"
+                                   Margin="5"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Top"
+                                   HorizontalContentAlignment="Right"
+                                   Content="A Val"
+                                   Foreground="White"
+                                   Visibility="{Binding ElementName=rollOverButton,
+                                                        Path=IsChecked,
+                                                        Converter={StaticResource VisibilityOfBool}}" />
+                            <TextBox x:Name="rollOverTextInt0"
+                                     Width="50"
+                                     Height="25"
+                                     Margin="5"
+                                     HorizontalAlignment="Left"
+                                     VerticalAlignment="Top"
+                                     Visibility="{Binding ElementName=rollOverButton,
+                                                          Path=IsChecked,
+                                                          Converter={StaticResource VisibilityOfBool}}" />
+                        </StackPanel>
+                        <StackPanel Name="panelBVal"
+                                    Background="Gray"
+                                    Orientation="Horizontal">
+                            <Label Width="50"
+                                   Height="25"
+                                   Margin="5"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Top"
+                                   HorizontalContentAlignment="Right"
+                                   Content="B Val"
+                                   Foreground="White"
+                                   Visibility="{Binding ElementName=rollOverButton,
+                                                        Path=IsChecked,
+                                                        Converter={StaticResource VisibilityOfBool}}" />
+                            <TextBox x:Name="rollOverTextInt1"
+                                     Width="50"
+                                     Height="25"
+                                     Margin="5"
+                                     HorizontalAlignment="Left"
+                                     VerticalAlignment="Top"
+                                     Visibility="{Binding ElementName=rollOverButton,
+                                                          Path=IsChecked,
+                                                          Converter={StaticResource VisibilityOfBool}}" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Background="Transparent"
+                                Orientation="Horizontal">
+                        <StackPanel Name="panelCVal"
+                                    Background="Gray"
+                                    Orientation="Horizontal">
+                            <Label Width="50"
+                                   Height="25"
+                                   Margin="5"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Top"
+                                   HorizontalContentAlignment="Right"
+                                   Content="C Val"
+                                   Foreground="White"
+                                   Visibility="{Binding ElementName=rollOverButton,
+                                                        Path=IsChecked,
+                                                        Converter={StaticResource VisibilityOfBool}}" />
+                            <TextBox x:Name="rollOverTextInt2"
+                                     Width="50"
+                                     Height="25"
+                                     Margin="5"
+                                     HorizontalAlignment="Left"
+                                     VerticalAlignment="Top"
+                                     Visibility="{Binding ElementName=rollOverButton,
+                                                          Path=IsChecked,
+                                                          Converter={StaticResource VisibilityOfBool}}" />
+                        </StackPanel>
+                        <StackPanel Name="panelDVal"
+                                    Background="Gray"
+                                    Orientation="Horizontal">
+                            <Label Width="50"
+                                   Height="25"
+                                   Margin="5"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Top"
+                                   HorizontalContentAlignment="Right"
+                                   Content="D Val"
+                                   Foreground="White"
+                                   Visibility="{Binding ElementName=rollOverButton,
+                                                        Path=IsChecked,
+                                                        Converter={StaticResource VisibilityOfBool}}" />
+                            <TextBox x:Name="rollOverTextInt3"
+                                     Width="50"
+                                     Height="25"
+                                     Margin="5"
+                                     HorizontalAlignment="Left"
+                                     VerticalAlignment="Top"
+                                     Visibility="{Binding ElementName=rollOverButton,
+                                                          Path=IsChecked,
+                                                          Converter={StaticResource VisibilityOfBool}}" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+            <ToggleButton x:Name="rollOverButton"
+                          Grid.Row="3"
+                          Grid.Column="4"
+                          Width="40"
+                          Height="40"
+                          Margin="5"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Top"
+                          Click="rollOverButton_Click"
+                          ToolTip="Displays image details">
+                <Image Source="/CaptureSetupModule;component/Icons/InfoBox.png" />
+            </ToggleButton>
+            <Button x:Name="SaveImageButton"
+                    Grid.Row="4"
+                    Grid.Column="4"
+                    Width="40"
+                    Height="40"
+                    Margin="5"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Top"
+                    Click="SaveImageButton_Click"
+                    ToolTip="Save Image Now (Raw TIF)">
+                <Image Width="30"
+                       Source="/CaptureSetupModule;component/Icons/Save.png" />
+            </Button>
+            <ToggleButton x:Name="ROIToolbarEnable"
+                          Grid.Row="5"
+                          Grid.Column="4"
+                          Width="40"
+                          Margin="10,5"
+                          HorizontalAlignment="Center"
+                          ToolTip="Displays the ROI Editing Toolbar">
+                <Image Source="/CaptureSetupModule;component/Icons/Pencil.png" />
+            </ToggleButton>
+            <ToggleButton x:Name="OrthogonalViewEnable"
+                          Grid.Row="6"
+                          Grid.Column="4"
+                          Width="40"
+                          Height="40"
+                          Margin="1"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Top"
+                          Click="OrthogonalViewEnable_Click"
+                          IsChecked="{Binding Path=IsOrthogonalViewChecked,
+                                              Mode=TwoWay,
+                                              UpdateSourceTrigger=PropertyChanged}"
+                          ToolTip="Displays the Orthogonal View">
+                <Image Source="/CaptureSetupModule;component/Icons/orthogonal.png" />
+                <ToggleButton.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem x:Name="virtualStack"
+                                  Click="OrthogonalVirtualStack_Click"
+                                  Header="Virtual Stack"
+                                  IsCheckable="True"
+                                  IsChecked="{Binding Path=VirtualZStack}" />
+                        <MenuItem x:Name="displayOption"
+                                  Click="OrthogonalDisplayOption_Click"
+                                  Header="Display Option" />
+                    </ContextMenu>
+                </ToggleButton.ContextMenu>
+            </ToggleButton>
+            <StackPanel Grid.Row="0"
+                        Grid.RowSpan="6"
+                        Grid.Column="3"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Bottom"
+                        IsEnabled="{Binding Path=BitmapReady}"
+                        Opacity="{Binding Path=BitmapReady,
+                                          Converter={StaticResource BoolToOpacity}}">
+                <StackPanel.LayoutTransform>
+                    <ScaleTransform ScaleX="{Binding Path=ROIToolsScale}"
+                                    ScaleY="{Binding Path=ROIToolsScale}"/>
+                </StackPanel.LayoutTransform>
+                <GroupBox BorderThickness="1"
+                          IsVisibleChanged="ROIToolbar_VisibilityChanged"
+                          Visibility="{Binding ElementName=ROIToolbarEnable,
+                                               Path=IsChecked,
+                                               Converter={StaticResource VisibilityOfBool}}">
+
+                    <GroupBox.Header>
+                        <Label Content="ROI Tools"
+                               Foreground="White" />
+                    </GroupBox.Header>
+                    <StackPanel HorizontalAlignment="Center"
+                                Orientation="Vertical">
+                        <ListBox Name="ROIDrawingTools"
+                                 Background="{StaticResource BackgroundBrush}"
+                                 Style="{x:Null}">
+                            <ListBox.Resources>
+                                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}">Transparent</SolidColorBrush>
+                                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}">Transparent</SolidColorBrush>
+                            </ListBox.Resources>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Style.Triggers>
+                                        <MultiTrigger>
+                                            <MultiTrigger.Conditions>
+                                                <Condition Property="IsSelected"
+                                                           Value="True" />
+                                                <Condition Property="IsFocused"
+                                                           Value="True" />
+                                            </MultiTrigger.Conditions>
+                                            <Setter Property="BorderThickness"
+                                                    Value="3" />
+                                            <Setter Property="BorderBrush"
+                                                    Value="{StaticResource SelectedToggleButtonBrush}" />
+                                        </MultiTrigger>
+                                        <MultiTrigger>
+                                            <MultiTrigger.Conditions>
+                                                <Condition Property="IsSelected"
+                                                           Value="True" />
+                                                <Condition Property="IsFocused"
+                                                           Value="False" />
+                                            </MultiTrigger.Conditions>
+                                            <Setter Property="BorderThickness"
+                                                    Value="3" />
+                                            <Setter Property="BorderBrush"
+                                                    Value="{StaticResource SelectedToggleButtonBrush}" />
+                                        </MultiTrigger>
+                                        <Trigger Property="IsSelected"
+                                                 Value="false">
+                                            <Setter Property="BorderThickness"
+                                                    Value="1" />
+                                            <Setter Property="BorderBrush"
+                                                    Value="Transparent" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel HorizontalAlignment="Center"
+                                                VerticalAlignment="Top"
+                                                Orientation="Vertical" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBoxItem Name="SelectTool"
+                                         Margin="1"
+                                         VerticalAlignment="Bottom"
+                                         HorizontalContentAlignment="Center"
+                                         Foreground="White"
+                                         Visibility="{Binding Path=ROIToolVisible[0], Converter={StaticResource VisibilityOfBool}, ConverterParameter=False}"
+                                         Selected="SelectROI_Selected"
+                                         ToolTip="Select ROI">
+                                <StackPanel Orientation="Horizontal"
+                                            Style="{x:Null}">
+                                    <Path Width="32"
+                                          Height="32"
+                                          Data="M 8 8 L 26 16 L 23 19 L 28 24 L 23 29 L 17 23 L 14 26 Z"
+                                          Fill="{StaticResource ToolPathBrush}"
+                                          Stroke="{StaticResource ToolPathBrush}"
+                                          StrokeThickness="3" />
+                                </StackPanel>
+                            </ListBoxItem>
+                            <ListBoxItem Name="LineROI"
+                                         Margin="1"
+                                         VerticalAlignment="Bottom"
+                                         HorizontalContentAlignment="Center"
+                                         Foreground="White"
+                                         Visibility="{Binding Path=ROIToolVisible[1], Converter={StaticResource VisibilityOfBool}, ConverterParameter=False}"
+                                         PreviewMouseDoubleClick="createLineROI_DoubleClick"
+                                         PreviewMouseLeftButtonDown="createLineROI_Click"
+                                         ToolTip="Create Line ROI">
+                                <StackPanel Style="{x:Null}">
+                                    <Path Width="32"
+                                          Height="32"
+                                          Data="M 2 30 L 30 2"
+                                          Stroke="{StaticResource ToolPathBrush}"
+                                          StrokeThickness="3" />
+                                </StackPanel>
+                            </ListBoxItem>
+                            <ListBoxItem Name="RectangleROI"
+                                         Margin="1"
+                                         VerticalAlignment="Bottom"
+                                         HorizontalContentAlignment="Center"
+                                         Foreground="White"
+                                         Visibility="{Binding Path=ROIToolVisible[2], Converter={StaticResource VisibilityOfBool}, ConverterParameter=False}"
+                                         Selected="createRectROI_Click"
+                                         ToolTip="Create Rectangle ROI">
+                                <Path Width="32"
+                                      Height="32"
+                                      Data="M 4 4 L 28 4 L 28 24 L 4 24 Z"
+                                      Stroke="{StaticResource ToolPathBrush}"
+                                      StrokeThickness="3" />
+                            </ListBoxItem>
+                            <ListBoxItem Name="EllipseROI"
+                                         Margin="1"
+                                         VerticalAlignment="Bottom"
+                                         HorizontalContentAlignment="Center"
+                                         Foreground="White"
+                                         Visibility="{Binding Path=ROIToolVisible[3], Converter={StaticResource VisibilityOfBool}, ConverterParameter=False}"
+                                         Selected="createEllipseROI_Click"
+                                         ToolTip="Create Ellipse ROI">
+                                <StackPanel Orientation="Horizontal"
+                                            Style="{x:Null}">
+                                    <Path Stroke="{StaticResource ToolPathBrush}"
+                                          StrokeThickness="3">
+                                        <Path.Data>
+                                            <CombinedGeometry>
+                                                <CombinedGeometry.Geometry1>
+                                                    <EllipseGeometry Center="16,16"
+                                                                     RadiusX="14"
+                                                                     RadiusY="14" />
+                                                </CombinedGeometry.Geometry1>
+
+                                            </CombinedGeometry>
+                                        </Path.Data>
+                                    </Path>
+                                </StackPanel>
+                            </ListBoxItem>
+                            <ListBoxItem Name="PolygonROI"
+                                         Margin="1"
+                                         VerticalAlignment="Bottom"
+                                         HorizontalContentAlignment="Center"
+                                         Foreground="White"
+                                         Visibility="{Binding Path=ROIToolVisible[4], Converter={StaticResource VisibilityOfBool}, ConverterParameter=False}"
+                                         Selected="createPolyROI_Click"
+                                         ToolTip="Create Polygon ROI">
+                                <StackPanel Orientation="Horizontal"
+                                            Style="{x:Null}">
+                                    <Path Width="32"
+                                          Height="32"
+                                          Data="M 4 14 L 16 4 L 28 16 L 22 28 L 10 28 Z"
+                                          Stroke="{StaticResource ToolPathBrush}"
+                                          StrokeThickness="3" />
+                                </StackPanel>
+                            </ListBoxItem>
+                            <ListBoxItem Name="PolylineROI"
+                                         Margin="1"
+                                         VerticalAlignment="Bottom"
+                                         HorizontalContentAlignment="Center"
+                                         Foreground="White"
+                                         Visibility="{Binding Path=ROIToolVisible[5], Converter={StaticResource VisibilityOfBool}, ConverterParameter=False}"
+                                         PreviewMouseDoubleClick="createPolylineROI_DoubleClick"
+                                         PreviewMouseLeftButtonDown="createPolylineROI_Click"
+                                         ToolTip="Create Polyline ROI">
+                                <StackPanel Orientation="Horizontal"
+                                            Style="{x:Null}">
+                                    <Path Width="32"
+                                          Height="32"
+                                          Data="M 4 28 L 14 4 L 20 22 L 28 8"
+                                          Stroke="{StaticResource ToolPathBrush}"
+                                          StrokeThickness="3" />
+                                </StackPanel>
+                            </ListBoxItem>
+                            <ListBoxItem Name="CrosshairROI"
+                                         Margin="1"
+                                         VerticalAlignment="Bottom"
+                                         HorizontalContentAlignment="Center"
+                                         Foreground="White"
+                                         Visibility="{Binding Path=ROIToolVisible[6], Converter={StaticResource VisibilityOfBool}, ConverterParameter=False}"
+                                         Selected="createCrosshairROI_Click"
+                                         ToolTip="Create Point ROI">
+                                <StackPanel Orientation="Horizontal"
+                                            Style="{x:Null}">
+                                    <Path Width="32"
+                                          Height="32"
+                                          Data="M 4 16 L 28 16 M 16 4 L 16 28"
+                                          Stroke="{StaticResource ToolPathBrush}"
+                                          StrokeThickness="3" />
+                                </StackPanel>
+                            </ListBoxItem>
+                        </ListBox>
+                        <ToggleButton x:Name="ReticleOnOff"
+                                      Width="40"
+                                      Height="40"
+                                      Margin="5,0,5,5"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Top"
+                                      Visibility="{Binding Path=ROIToolVisible[7], Converter={StaticResource VisibilityOfBool}, ConverterParameter=False}"
+                                      Click="ReticleOnOff_Click"
+                                      ToolTip="Reticle ON/OFF">
+                            <Image Source="/CaptureSetupModule;component/Icons/Reticle.png" />
+                        </ToggleButton>
+                        <ToggleButton x:Name="ScaleOnOff"
+                                      Width="40"
+                                      Height="40"
+                                      Margin="5,0,5,5"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Top"
+                                      Visibility="{Binding Path=ROIToolVisible[8], Converter={StaticResource VisibilityOfBool}, ConverterParameter=False}"
+                                      Click="ScaleOnOff_Click"
+                                      ToolTip="Scale ON/OFF">
+                            <Image Source="/CaptureSetupModule;component/Icons/Scale.png" />
+                        </ToggleButton>
+                        <Button x:Name="DeleteSingleROIs"
+                                Width="40"
+                                Height="40"
+                                Margin="5,0,5,5"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Top"
+                                Visibility="{Binding Path=ROIToolVisible[9], Converter={StaticResource VisibilityOfBool}, ConverterParameter=False}"
+                                Click="DeleteSelectedROIs"
+                                ToolTip="Delete Selected ROIs">
+                            <Image Source="/CaptureSetupModule;component/Icons/DeleteSelectedROIs.png" />
+                        </Button>
+                        <Button x:Name="ClearAllROIs"
+                                Width="40"
+                                Height="40"
+                                Margin="5,0,5,5"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Top"
+                                Visibility="{Binding Path=ROIToolVisible[10], Converter={StaticResource VisibilityOfBool}, ConverterParameter=False}"
+                                Click="ClearAllROIs_Click"
+                                ToolTip="Delete All ROIs">
+                            <Image Source="/CaptureSetupModule;component/Icons/ClearAll.png" />
+                        </Button>
+                        <Button x:Name="LoadROIs"
+                                Width="40"
+                                Height="40"
+                                Margin="5,0,5,5"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Top"
+                                Visibility="{Binding Path=ROIToolVisible[11], Converter={StaticResource VisibilityOfBool}, ConverterParameter=False}"
+                                Click="LoadROIs_Click"
+                                ToolTip="Load ROIs from a file">
+                            <Image Source="/CaptureSetupModule;component/Icons/Open.png" />
+                        </Button>
+                        <Button x:Name="SaveROIs"
+                                Width="40"
+                                Height="40"
+                                Margin="5,0,5,5"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Top"
+                                Visibility="{Binding Path=ROIToolVisible[12], Converter={StaticResource VisibilityOfBool}, ConverterParameter=False}"
+                                Click="SaveROIs_Click"
+                                ToolTip="Save ROIs to a file">
+                            <Image Source="/CaptureSetupModule;component/Icons/Save.png" />
+                        </Button>
+                        <Button x:Name="ChooseStatsWindows"
+                                Width="40"
+                                Height="40"
+                                Margin="5,0,5,5"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Top"
+                                Visibility="{Binding Path=ROIToolVisible[13], Converter={StaticResource VisibilityOfBool}, ConverterParameter=False}"
+                                Command="{Binding Path=DisplayROIStatsOptionsCommand}"
+                                ToolTip="Choose Active Stats Windows">
+                            <Image Source="/CaptureSetupModule;component/Icons/ShowStats.png" />
+                        </Button>
+                        <Button x:Name="AutoContourDisplay"
+                                Width="40"
+                                Height="40"
+                                Margin="5,0,5,5"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Top"
+                                Command="{Binding Path=AutoContourDisplayCommand}"
+                                ToolTip="Auto ROI tracking"
+                                Visibility="Collapsed">
+                            <Image Source="/CaptureSetupModule;component/Icons/autotrack.png" />
+                        </Button>
+                    </StackPanel>
+                </GroupBox>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

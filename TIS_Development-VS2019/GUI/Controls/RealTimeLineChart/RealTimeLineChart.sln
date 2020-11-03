@@ -1,0 +1,47 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealTimeLineChart", "RealTimeLineChart\RealTimeLineChart.csproj", "{8A944650-45A6-45D9-9F11-80F9F2C299F1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{546A7975-62D4-4AFC-AB9F-9E33ECAC0D1B}"
+	ProjectSection(SolutionItems) = preProject
+		RealTimeLineChart1.vsmdi = RealTimeLineChart1.vsmdi
+		TestSettings2.testsettings = TestSettings2.testsettings
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealtimeLineChartTests", "RealtimeLineChartTests\RealtimeLineChartTests.csproj", "{F201227E-BF51-4E15-BCE3-254F821DA7A7}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://vateam02:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = RealTimeLineChart\\RealTimeLineChart.csproj
+		SccProjectName1 = RealTimeLineChart
+		SccLocalPath1 = RealTimeLineChart
+		SccProjectUniqueName2 = RealtimeLineChartTests\\RealtimeLineChartTests.csproj
+		SccProjectName2 = RealtimeLineChartTests
+		SccLocalPath2 = RealtimeLineChartTests
+	EndGlobalSection
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = RealTimeLineChart1.vsmdi
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8A944650-45A6-45D9-9F11-80F9F2C299F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A944650-45A6-45D9-9F11-80F9F2C299F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A944650-45A6-45D9-9F11-80F9F2C299F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A944650-45A6-45D9-9F11-80F9F2C299F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F201227E-BF51-4E15-BCE3-254F821DA7A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F201227E-BF51-4E15-BCE3-254F821DA7A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F201227E-BF51-4E15-BCE3-254F821DA7A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F201227E-BF51-4E15-BCE3-254F821DA7A7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

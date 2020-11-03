@@ -1,0 +1,33 @@
+﻿<Window x:Class="PowerControlTestApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:pc="clr-namespace:PowerControl;assembly=PowerControl"
+        xmlns:System="clr-namespace:System;assembly=mscorlib"
+        Title="MainWindow"
+        Height="Auto"
+        Width="525">
+    <Grid x:Name="layoutRoot">
+<StackPanel>
+<TextBox Text="{Binding Path=PowerGo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+        <pc:PowerControlUC Name="poweControl"
+                         PockelsCalibrationVisibility="Visible"
+                         PowerRegCalibrationVisibility="Visible"
+                         PowerGo="{Binding Path=PowerGo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                         Power="10"
+                         PowerMin="0.5"
+                         PowerMax="88"
+                         MaskAndBlankingVisibility="Visible"
+                         PowerMode="1"
+                         PowerRampSelected="1"
+                         VoltageMin=".123"
+                         VoltageMax="4.56"
+                         PowerThreshold=".8">
+            <pc:PowerControlUC.PowerRampsCustom>
+                <System:String>A Ramp</System:String>
+                <System:String>B Ramp</System:String>
+                <System:String>C Ramp</System:String>
+            </pc:PowerControlUC.PowerRampsCustom>
+        </pc:PowerControlUC>
+</StackPanel>
+    </Grid>
+</Window>

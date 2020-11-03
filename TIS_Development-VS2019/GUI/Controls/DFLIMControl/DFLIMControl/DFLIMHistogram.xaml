@@ -1,0 +1,68 @@
+﻿<UserControl x:Class="DFLIMControl.DFLIMHistogram"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:sci="http://schemas.abtsoftware.co.uk/scichart"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:local="clr-namespace:DFLIMControl"
+             xmlns:customModifiers="clr-namespace:ROIStatsChart.CustomModifiers;assembly=ROIStatsChart"
+             mc:Ignorable="d"
+             Height="300"
+             MinWidth="150">
+    <!--<UserControl.Resources>
+        <ResourceDictionary>
+            <local:LogarithmicBaseConverter x:Key="LogarithmicBaseConverter" />
+            <ViewModel:BoolToOpacityConverter x:Key="BoolToOpacity" />
+            <ViewModel:HistogramLinLogToTextConverter x:Key="HistogramLinLogToText" />
+            <ViewModel:HistogramAutoManualToTextConverter x:Key="HistogramAutoManualToText" />
+        </ResourceDictionary>
+    </UserControl.Resources>-->
+    <Grid HorizontalAlignment="Stretch"
+          Margin="0,5,1,1">
+        <sci:SciChartSurface Name="sciChartSurface"
+                             HorizontalAlignment="Stretch"
+                             Margin="0"
+                             Padding="0,0,0,0">
+            <sci:SciChartSurface.XAxis>
+                <sci:NumericAxis Name="XAxis"
+                                 AxisTitle="Lifetime[ns]" />
+            </sci:SciChartSurface.XAxis>
+            <sci:SciChartSurface.YAxis>
+                <sci:LogarithmicNumericAxis AxisTitle="# photons"
+                                            AxisAlignment="Left"
+                                            LogarithmicBase="10"
+                                            ScientificNotation="LogarithmicBase"
+                                            x:Name="YAxis"
+                                            Margin="0"
+                                            Padding="0"
+                                            TextFormatting="#.#E+0"
+                                            DrawMajorBands="False">
+                    <sci:NumericAxis.GrowBy>
+                        <sci:DoubleRange Max="0.1"
+                                         Min="0.1" />
+                    </sci:NumericAxis.GrowBy>
+                </sci:LogarithmicNumericAxis>
+            </sci:SciChartSurface.YAxis>
+            <sci:SciChartSurface.ChartModifier>
+                <sci:ModifierGroup>
+                    <sci:RubberBandXyZoomModifier ExecuteOn="MouseRightButton" />
+                    <sci:ZoomExtentsModifier ExecuteOn="MouseDoubleClick"
+                                             XyDirection="XYDirection" />
+                    <!--<customModifiers:RightDoubleClickZoomExtentsModifier ExecuteOn="MouseDoubleClick"
+                                                                         XyDirection="YDirection" />-->
+                    <sci:ZoomPanModifier x:Name="zoomPanModifier"
+                                         ExecuteOn="MouseLeftButton"
+                                         XyDirection="XYDirection"
+                                         ClipModeX="ClipAtExtents" />
+                    <sci:LegendModifier Name="legendModifier" />
+                    <!--<customModifiers:MouseWheelZoomCustomModifier />
+                    <customModifiers:ChartRolloverModifier />-->
+                    <!--<sci:RolloverModifier x:Name="rolloverModifier"
+                                          ShowAxisLabels="False"
+                                          UseInterpolation="True" />-->
+                </sci:ModifierGroup>
+            </sci:SciChartSurface.ChartModifier>
+        </sci:SciChartSurface>
+    </Grid>
+</UserControl>

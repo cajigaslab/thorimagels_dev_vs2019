@@ -1,0 +1,56 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.OTMControlView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:RSlider="clr-namespace:RangeSliderWPF;assembly=RangeSliderWPF"
+             xmlns:Valid="clr-namespace:Validations;assembly=Validations"
+             xmlns:System="clr-namespace:System;assembly=mscorlib"
+             xmlns:oc="clr-namespace:OTMControl;assembly=OTMControl"
+             Height="Auto"
+             Width="380">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <oc:OTMControlUC Name="otmControlUC"
+                         TrapMode="{Binding Path=TrapMode, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                         TrapEnable="{Binding Path=TrapEnable, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                         TrapAum="{Binding Path=TrapAum, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                         TrapAStepUM="{Binding Path=TrapAStepUM, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                         TrapAumPlusCommand="{Binding Path=TrapAumPlusCommand}"
+                         TrapAumMinusCommand="{Binding Path=TrapAumMinusCommand}"
+                         TrapAStepUMPlusCommand="{Binding Path=TrapAStepUMPlusCommand}"    
+                         TrapAStepUMMinusCommand="{Binding Path=TrapAStepUMMinusCommand}"    
+                         TrapBum="{Binding Path=TrapBum, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                         TrapBStepUM="{Binding Path=TrapBStepUM, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                         TrapBumPlusCommand="{Binding Path=TrapBumPlusCommand}"
+                         TrapBumMinusCommand="{Binding Path=TrapBumMinusCommand}"
+                         TrapBStepUMPlusCommand="{Binding Path=TrapBStepUMPlusCommand}"    
+                         TrapBStepUMMinusCommand="{Binding Path=TrapBStepUMMinusCommand}"
+                         CenterTrapCommand="{Binding Path=CenterTrapCommand}"
+                         TrapAOffset="{Binding Path=TrapAOffset, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                         TrapAOffsetMinusCommand="{Binding Path=TrapAOffsetMinusCommand}"
+                         TrapAOffsetPlusCommand="{Binding Path=TrapAOffsetPlusCommand}"
+                         TrapAOffsetResetCommand="{Binding Path=TrapAOffsetResetCommand}"
+                         TrapAScale="{Binding Path=TrapAScale, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                         TrapAScaleMinusCommand="{Binding Path=TrapAScaleMinusCommand}"
+                         TrapAScalePlusCommand="{Binding Path=TrapAScalePlusCommand}"
+                         TrapAScaleResetCommand="{Binding Path=TrapAScaleResetCommand}"
+                         TrapBOffset="{Binding Path=TrapBOffset, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                         TrapBOffsetMinusCommand="{Binding Path=TrapBOffsetMinusCommand}"
+                         TrapBOffsetPlusCommand="{Binding Path=TrapBOffsetPlusCommand}"
+                         TrapBOffsetResetCommand="{Binding Path=TrapBOffsetResetCommand}"
+                         TrapBScale="{Binding Path=TrapBScale, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                         TrapLastCalibTime="{Binding Path=TrapLastCalibTime, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                         TrapBScaleMinusCommand="{Binding Path=TrapBScaleMinusCommand}"
+                         TrapBScalePlusCommand="{Binding Path=TrapBScalePlusCommand}"
+                         TrapBScaleResetCommand="{Binding Path=TrapBScaleResetCommand}"
+                         TrapCalAlert="{Binding Path=TrapCalAlert, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                         SaveCalibrationCommand="{Binding Path=SaveCalibrationCommand}"
+                         >
+        </oc:OTMControlUC>
+    </Grid>
+</UserControl>

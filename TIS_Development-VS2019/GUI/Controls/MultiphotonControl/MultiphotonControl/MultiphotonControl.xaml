@@ -1,0 +1,480 @@
+﻿<UserControl x:Class="MultiphotonControl.MultiphotonControlUC"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:sharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+             xmlns:tc="clr-namespace:ThemeControl;assembly=ThemeControl"
+             xmlns:loc="clr-namespace:MultiphotonControl"
+             mc:Ignorable="d"
+             Height="Auto"
+             Width="385">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <loc:BooleanToVisibilityConverter x:Key="VisibilityOfBool" />
+            <Style 
+                TargetType="{x:Type ListBox}">
+                <Setter Property="ListBox.ItemTemplate">
+                    <Setter.Value>
+                        <DataTemplate>
+                            <ToggleButton Content="{Binding}"
+                                          IsChecked="{Binding IsSelected, Mode=TwoWay, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}"/> 
+                        </DataTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <MultiTrigger>
+                        <MultiTrigger.Conditions>
+                            <Condition Property="Selector.IsSelectionActive"
+                                       Value="True" />
+                        </MultiTrigger.Conditions>
+                        <Setter Property="Background"
+                                Value="DodgerBlue" />
+                    </MultiTrigger>
+                    <MultiTrigger>
+                        <MultiTrigger.Conditions>
+                            <Condition Property="Selector.IsSelectionActive"
+                                       Value="False" />
+                        </MultiTrigger.Conditions>
+                        <Setter Property="Background"
+                                Value="DodgerBlue" />
+                        <Setter Property="Opacity"
+                                Value="50" />
+                    </MultiTrigger>
+                </Style.Triggers>
+            </Style>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel>
+            <StackPanel  Margin="1">
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Center">
+                    <StackPanel Margin="1"
+                                VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center">
+                            <Label Foreground="White"
+                                   Content="Wavelength [nm]:"
+                                   VerticalAlignment="Center" />
+                            <Label Content="{Binding Path=Laser1Position}"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Center"
+                                   Width="45" />
+                            <StackPanel Orientation="Vertical">
+                                <RepeatButton Content="+"
+                                              Width="30"
+                                              Height="20"
+                                              Command="{Binding Laser1PlusCommand}"
+                                              Delay="500"
+                                              Interval="100" />
+                                <RepeatButton Content="-"
+                                              Width="30"
+                                              Height="20"
+                                              Command="{Binding Laser1MinusCommand}"
+                                              Delay="500"
+                                              Interval="100" />
+                            </StackPanel>
+                            <TextBox x:Name="tbLaser1Position"
+                                     Width="45"
+                                     Height="25"
+                                     VerticalContentAlignment="Center"
+                                     Text="{Binding Laser1PositionGo, Mode=TwoWay}" />
+                            <Button Content="Go"
+                                    ToolTip="Command to set the laser wavelength"
+                                    Width="30"
+                                    Height="25"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Margin="1,3,3,3"
+                                    Command="{Binding Path=Laser1GoCommand}"
+                                    MinWidth="50"
+                                    CommandParameter="3">
+                            </Button>
+                        </StackPanel>
+                        <ListBox x:Name="lbLaserWavelength"
+                                 Width="220"
+                                 Margin="1"
+                                 Background="White"
+                                 SelectedIndex="{Binding SelectedWavelengthIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            <ListBox.Resources>
+                                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
+                                                 Color="Transparent" />
+                                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
+                                                 Color="Black" />
+                                <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}"
+                                                 Color="Transparent" />
+                            </ListBox.Resources>
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid ToolTip="Right click to save current wavelength as preset"
+                                                 Columns="4"
+                                                 Height="50">
+                                        <UniformGrid.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="Save As Preset"
+                                                          Command="{Binding Path=PresetWavelengthAssignCommand}"
+                                                          CommandParameter="{Binding Path=SelectedWavelengthIndex}"/>
+                                            </ContextMenu>
+                                        </UniformGrid.ContextMenu>
+                                    </UniformGrid>
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBoxItem HorizontalContentAlignment="Center"
+                                         MinWidth="50"
+                                         Height="25">
+                                <Button MinWidth="50"
+                                        Command="{Binding Path=PresetWavelengthCommand}"
+                                        CommandParameter="0"
+                                        Content="{Binding Path=PresetWavelengthNames[0].Value}"/>
+                            </ListBoxItem>
+                            <ListBoxItem HorizontalContentAlignment="Center"
+                                         MinWidth="50"
+                                         Height="25">
+                                <Button MinWidth="50"
+                                        Command="{Binding Path=PresetWavelengthCommand}"
+                                        CommandParameter="1"
+                                        Content="{Binding Path=PresetWavelengthNames[1].Value}"/>
+                            </ListBoxItem>
+                            <ListBoxItem HorizontalContentAlignment="Center"
+                                         MinWidth="50"
+                                         Height="25">
+                                <Button MinWidth="50"
+                                        Command="{Binding Path=PresetWavelengthCommand}"
+                                        CommandParameter="2"
+                                        Content="{Binding Path=PresetWavelengthNames[2].Value}"/>
+                            </ListBoxItem>
+                            <ListBoxItem HorizontalContentAlignment="Center"
+                                         MinWidth="50"
+                                         Height="25">
+                                <Button MinWidth="50"
+                                        Command="{Binding Path=PresetWavelengthCommand}"
+                                        CommandParameter="3"
+                                        Content="{Binding Path=PresetWavelengthNames[3].Value}"/>
+                            </ListBoxItem>
+                            <ListBoxItem HorizontalContentAlignment="Center"
+                                         MinWidth="50"
+                                         Height="25">
+                                <Button MinWidth="50"
+                                        Command="{Binding Path=PresetWavelengthCommand}"
+                                        CommandParameter="4"
+                                        Content="{Binding Path=PresetWavelengthNames[4].Value}" />
+                            </ListBoxItem>
+                            <ListBoxItem HorizontalContentAlignment="Center"
+                                         MinWidth="50"
+                                         Height="25">
+                                <Button MinWidth="50"
+                                        Command="{Binding Path=PresetWavelengthCommand}"
+                                        CommandParameter="5"
+                                        Content="{Binding Path=PresetWavelengthNames[5].Value}"/>
+                            </ListBoxItem>
+                            <ListBoxItem HorizontalContentAlignment="Center"
+                                         MinWidth="50"
+                                         Height="25">
+                                <Button MinWidth="50"
+                                        Command="{Binding Path=PresetWavelengthCommand}"
+                                        CommandParameter="6"
+                                        Content="{Binding Path=PresetWavelengthNames[6].Value}"/>
+                            </ListBoxItem>
+                            <ListBoxItem HorizontalContentAlignment="Center"
+                                         MinWidth="50"
+                                         Height="25">
+                                <Button MinWidth="50"
+                                        Command="{Binding Path=PresetWavelengthCommand}"
+                                        CommandParameter="7"
+                                        Content="{Binding Path=PresetWavelengthNames[7].Value}" />
+                            </ListBoxItem>
+                        </ListBox>
+                    </StackPanel>
+                    <StackPanel>
+                        <StackPanel Margin="1">
+                            <Label Foreground="White"
+                                   Content="Shutter"
+                                   HorizontalContentAlignment="Center"
+                                   Margin="1" />
+                            <ListBox SelectedIndex="{Binding Path=LaserShutterPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <ListBox.Resources>
+                                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}">#007ACC</SolidColorBrush>
+                                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}">#007ACC</SolidColorBrush>
+                                </ListBox.Resources>
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Style.Triggers>
+                                            <MultiTrigger>
+                                                <MultiTrigger.Conditions>
+                                                    <Condition Property="IsSelected"
+                                                               Value="True" />
+                                                    <Condition Property="IsFocused"
+                                                               Value="True" />
+                                                </MultiTrigger.Conditions>
+                                                <Setter Property="BorderThickness"
+                                                        Value="4" />
+                                                <Setter Property="BorderBrush"
+                                                        Value="White" />
+                                            </MultiTrigger>
+                                            <MultiTrigger>
+                                                <MultiTrigger.Conditions>
+                                                    <Condition Property="IsSelected"
+                                                               Value="True" />
+                                                    <Condition Property="IsFocused"
+                                                               Value="False" />
+                                                </MultiTrigger.Conditions>
+                                                <Setter Property="BorderThickness"
+                                                        Value="4" />
+                                                <Setter Property="BorderBrush"
+                                                        Value="White" />
+                                            </MultiTrigger>
+                                            <Trigger Property="IsSelected"
+                                                     Value="false">
+                                                <Setter Property="BorderThickness"
+                                                        Value="4" />
+                                                <Setter Property="BorderBrush"
+                                                        Value="White" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"
+                                                    VerticalAlignment="Top"
+                                                    HorizontalAlignment="Left" />
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBoxItem 
+                                             IsSelected="{Binding Shutter1Close}"
+                                             Content="Close"
+                                             HorizontalContentAlignment="Center"
+                                             VerticalAlignment="Bottom"
+                                             Background="#FF595959"
+                                             Foreground="White"
+                                             Width="50"
+                                             Height="38" />
+                                <ListBoxItem 
+                                             IsSelected="{Binding Shutter1Open}"
+                                             Content="Open"
+                                             HorizontalContentAlignment="Center"
+                                             VerticalAlignment="Bottom"
+                                             Background="#FF595959"
+                                             Foreground="White"
+                                             Width="50"
+                                             Height="38" />
+                            </ListBox>
+                        </StackPanel>
+                        <StackPanel Margin="1"
+                                    Visibility="{Binding Laser1Shutter2Visibility}">
+                            <Label Foreground="White"
+                                   Content="Shutter 2"
+                                   HorizontalContentAlignment="Center"
+                                   Margin="1" />
+                            <ListBox SelectedIndex="{Binding Path=LaserShutter2Position, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <ListBox.Resources>
+                                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}">#007ACC</SolidColorBrush>
+                                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}">#007ACC</SolidColorBrush>
+                                </ListBox.Resources>
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Style.Triggers>
+                                            <MultiTrigger>
+                                                <MultiTrigger.Conditions>
+                                                    <Condition Property="IsSelected"
+                                                               Value="True" />
+                                                    <Condition Property="IsFocused"
+                                                               Value="True" />
+                                                </MultiTrigger.Conditions>
+                                                <Setter Property="BorderThickness"
+                                                        Value="4" />
+                                                <Setter Property="BorderBrush"
+                                                        Value="White" />
+                                            </MultiTrigger>
+                                            <MultiTrigger>
+                                                <MultiTrigger.Conditions>
+                                                    <Condition Property="IsSelected"
+                                                               Value="True" />
+                                                    <Condition Property="IsFocused"
+                                                               Value="False" />
+                                                </MultiTrigger.Conditions>
+                                                <Setter Property="BorderThickness"
+                                                        Value="4" />
+                                                <Setter Property="BorderBrush"
+                                                        Value="White" />
+                                            </MultiTrigger>
+                                            <Trigger Property="IsSelected"
+                                                     Value="false">
+                                                <Setter Property="BorderThickness"
+                                                        Value="4" />
+                                                <Setter Property="BorderBrush"
+                                                        Value="White" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"
+                                                    VerticalAlignment="Top"
+                                                    HorizontalAlignment="Left" />
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBoxItem Content="Close"
+                                             HorizontalContentAlignment="Center"
+                                             VerticalAlignment="Bottom"
+                                             Background="#FF595959"
+                                             Foreground="White"
+                                             Width="50"
+                                             Height="38" />
+                                <ListBoxItem Content="Open"
+                                             HorizontalContentAlignment="Center"
+                                             VerticalAlignment="Bottom"
+                                             Background="#FF595959"
+                                             Foreground="White"
+                                             Width="50"
+                                             Height="38" />
+                            </ListBox>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+            <GroupBox Margin="1"
+                      Visibility="{Binding Laser1FastSeqVisibility}">
+                <GroupBox.Header>
+                    <CheckBox Content="Fast Sequence Mode"
+                              IsChecked="{Binding Laser1SeqEnable}" />
+                </GroupBox.Header>
+                <StackPanel Orientation="Horizontal"
+                            Margin="1">
+                    <Label Content="Wavelength 1:" />
+                    <TextBox MinWidth="45"
+                             Text="{Binding Laser1SeqPos1}" />
+                    <Label Content="Wavelength 2:" />
+                    <TextBox MinWidth="45"
+                             Text="{Binding Laser1SeqPos2}" />
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Margin="1"
+                      Visibility="{Binding Path=BeamStabilizerAvailable, ConverterParameter=False, Converter={StaticResource VisibilityOfBool}}">
+                <GroupBox.Header>
+                    <Label Content="Beam Stabilization" />
+                </GroupBox.Header>
+                <StackPanel Orientation="Vertical"
+                            HorizontalAlignment="Center">
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center">
+                        <Button Content="Realign Beam"
+                                Command="{Binding RealignBeamCommand}"
+                                MinWidth="170"
+                                MinHeight="25" />
+                    </StackPanel>
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="1">
+                            <Label Content="BPA"
+                                   Width="34" />
+                            <Label Content="Centroid X:" />
+                            <Label MinWidth="55"
+                                   MaxWidth="55"
+                                   Foreground="White"
+                                   HorizontalContentAlignment="Left"
+                                   Content="{Binding BeamStabilizerBPACentroidX}"
+                                   ContentStringFormat="{}{0:0.##}"
+                                   tc:Extensions.OutOfRange="{Binding BeamStabilizerCentroidInRange[0].Value}"
+                                   Style="{StaticResource LabelOutOfRangeStyle}" />
+                            <Label Content="Centroid Y:" />
+                            <Label MinWidth="55"
+                                   MaxWidth="55"
+                                   Foreground="White"
+                                   HorizontalContentAlignment="Left"
+                                   Content="{Binding BeamStabilizerBPACentroidY}"
+                                   ContentStringFormat="{}{0:0.##}"
+                                   tc:Extensions.OutOfRange="{Binding BeamStabilizerCentroidInRange[1].Value}"
+                                   Style="{StaticResource LabelOutOfRangeStyle}" />
+                            <Label Content="Exp:" />
+                            <Label MinWidth="55"
+                                   MaxWidth="55"
+                                   Foreground="White"
+                                   HorizontalContentAlignment="Left"
+                                   Content="{Binding BeamStabilizerBPAExposure}"
+                                   ContentStringFormat="{}{0:0.##}"
+                                   tc:Extensions.OutOfRange="{Binding BeamStabilizerExpInRange[0].Value}"
+                                   Style="{StaticResource LabelOutOfRangeStyle}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="1">
+                            <Label Content="BPB"
+                                   Width="34" />
+                            <Label Content="Centroid X:" />
+                            <Label MinWidth="55"
+                                   MaxWidth="55"
+                                   Foreground="White"
+                                   HorizontalContentAlignment="Left"
+                                   Content="{Binding BeamStabilizerBPBCentroidX}"
+                                   ContentStringFormat="{}{0:0.##}"
+                                   tc:Extensions.OutOfRange="{Binding BeamStabilizerCentroidInRange[2].Value}"
+                                   Style="{StaticResource LabelOutOfRangeStyle}" />
+                            <Label Content="Centroid Y:" />
+                            <Label MinWidth="55"
+                                   MaxWidth="55"
+                                   Foreground="White"
+                                   HorizontalContentAlignment="Left"
+                                   Content="{Binding BeamStabilizerBPBCentroidY}"
+                                   ContentStringFormat="{}{0:0.##}"
+                                   tc:Extensions.OutOfRange="{Binding BeamStabilizerCentroidInRange[3].Value}"
+                                   Style="{StaticResource LabelOutOfRangeStyle}" />
+                            <Label Content="Exp:" />
+                            <Label MinWidth="55"
+                                   MaxWidth="55"
+                                   Foreground="White"
+                                   HorizontalContentAlignment="Left"
+                                   Content="{Binding BeamStabilizerBPBExposure}"
+                                   ContentStringFormat="{}{0:0.##}"
+                                   tc:Extensions.OutOfRange="{Binding BeamStabilizerExpInRange[1].Value}"
+                                   Style="{StaticResource LabelOutOfRangeStyle}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="1">
+                            <Label Content="M1P1:" />
+                            <Label MinWidth="55"
+                                   MaxWidth="55"
+                                   Foreground="White"
+                                   HorizontalContentAlignment="Left"
+                                   Content="{Binding BeamStabilizerPiezo1Pos}"
+                                   tc:Extensions.OutOfRange="{Binding BeamStabilizerPiezoInRange[0].Value}"
+                                   Style="{StaticResource LabelOutOfRangeStyle}" />
+                            <Label Content="M1P2:" />
+                            <Label MinWidth="55"
+                                   MaxWidth="55"
+                                   Foreground="White"
+                                   HorizontalContentAlignment="Left"
+                                   Content="{Binding BeamStabilizerPiezo2Pos}"
+                                   tc:Extensions.OutOfRange="{Binding BeamStabilizerPiezoInRange[1].Value}"
+                                   Style="{StaticResource LabelOutOfRangeStyle}" />
+                            <Label Content="M2P1:" />
+                            <Label MinWidth="55"
+                                   MaxWidth="55"
+                                   Foreground="White"
+                                   HorizontalContentAlignment="Left"
+                                   Content="{Binding BeamStabilizerPiezo3Pos}"
+                                   tc:Extensions.OutOfRange="{Binding BeamStabilizerPiezoInRange[2].Value}"
+                                   Style="{StaticResource LabelOutOfRangeStyle}" />
+                            <Label Content="M2P2:" />
+                            <Label MinWidth="55"
+                                   MaxWidth="55"
+                                   Foreground="White"
+                                   HorizontalContentAlignment="Left"
+                                   Content="{Binding BeamStabilizerPiezo4Pos}"
+                                   tc:Extensions.OutOfRange="{Binding BeamStabilizerPiezoInRange[3].Value}"
+                                   Style="{StaticResource LabelOutOfRangeStyle}" />
+                        </StackPanel>
+                        <Button Content="Reset to Factory Alignment"
+                                Command="{Binding ResetFactoryAlignmentCommand}"
+                                MinWidth="170"
+                                MinHeight="25" />
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+        </StackPanel>
+    </Grid>
+</UserControl>

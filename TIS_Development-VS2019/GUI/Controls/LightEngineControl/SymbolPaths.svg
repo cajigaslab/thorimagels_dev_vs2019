@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg8"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   sodipodi:docname="SymbolPaths.svg">
+  <title
+     id="title868">Symbol Pathes</title>
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="8"
+     inkscape:cx="102.79103"
+     inkscape:cy="936.90829"
+     inkscape:document-units="mm"
+     inkscape:current-layer="SaveLayer"
+     showgrid="false"
+     inkscape:window-width="1920"
+     inkscape:window-height="1058"
+     inkscape:window-x="1912"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Symbol Pathes</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:groupmode="layer"
+     id="SaveLayer"
+     inkscape:label="Save">
+    <rect
+       style="fill:#201f22;fill-rule:evenodd;stroke:#201f22;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       id="Background"
+       width="14"
+       height="14"
+       x="2.916949"
+       y="11.742474" />
+    <g
+       id="FloppyDisk"
+       transform="translate(-4.1671875,-1.0583333)">
+      <g
+         id="Floppy">
+        <rect
+           style="fill:#6ebbff;fill-rule:evenodd;stroke:#6ebbff;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+           id="FloppyFrame"
+           width="12"
+           height="12"
+           x="8.084136"
+           y="13.800807" />
+        <path
+           style="fill:#201f22;stroke:#201f22;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+           d="m 18.084137,13.800807 h 2 v 2 z"
+           id="CornerEraser"
+           inkscape:connector-curvature="0" />
+      </g>
+      <g
+         transform="translate(6.0064276,-6.6085401)"
+         id="FloppyWindow">
+        <rect
+           style="fill:#201f22;fill-rule:evenodd;stroke:#201f22;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+           id="Slider"
+           width="6"
+           height="5"
+           x="5.0781207"
+           y="20.409449" />
+        <rect
+           style="fill:#6ebbff;fill-rule:evenodd;stroke:#6ebbff;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+           id="Window"
+           width="2"
+           height="3"
+           x="8.0784769"
+           y="20.409348" />
+      </g>
+    </g>
+    <rect
+       style="fill:none;fill-rule:evenodd;stroke:#808080;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       id="PlacingHelper"
+       width="3"
+       height="2"
+       x="22.158916"
+       y="12.397642" />
+    <rect
+       style="fill:#201f22;fill-rule:evenodd;stroke:#201f22;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       id="Background-3"
+       width="14"
+       height="14"
+       x="2.916949"
+       y="29.128841" />
+    <rect
+       style="fill:#6ebbff;fill-rule:evenodd;stroke:#6ebbff;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       id="FloppyFrame-6"
+       width="12"
+       height="12"
+       x="3.916965"
+       y="30.12904" />
+    <path
+       style="fill:#201f22;stroke:#201f22;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 13.916966,30.129039 h 2 v 2 z"
+       id="CornerEraser-1"
+       inkscape:connector-curvature="0" />
+    <rect
+       style="fill:#201f22;fill-rule:evenodd;stroke:#201f22;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       id="Slider-3"
+       width="6"
+       height="5"
+       x="6.917377"
+       y="30.129141" />
+    <rect
+       style="fill:#6ebbff;fill-rule:evenodd;stroke:#6ebbff;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       id="Window-6"
+       width="2"
+       height="3"
+       x="9.9177332"
+       y="30.12904" />
+    <rect
+       style="fill:none;fill-rule:evenodd;stroke:#201f22;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       id="Background-3-9"
+       width="14"
+       height="14"
+       x="22.609673"
+       y="29.695278" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#6ebbff;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       d="M 23.611271,30.798888 V 42.798673 H 35.61157 v -9.999908 l -1.999877,-1.999877 z"
+       id="FloppyFrameCutted"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#201f22;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       d="M 26.611604,30.798888 V 35.7991 h 5.999633 v -5.000212 h -0.999421 v 3.000335 h -1.999879 v -3.000335 z"
+       id="SliderCutted"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:#6ebbff;fill-rule:evenodd;stroke:#6ebbff;stroke-width:0.07000434px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       d="M 23.778326,46.388803 V 58.388589 H 35.778625 V 48.38868 l -1.999876,-1.999877 h -1.000456 v 5.000213 h -5.999634 v -5.000213 z m 6.000666,0 v 3.000333 h 1.99988 v -3.000333 z"
+       id="FloppyDiskCutted"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:#201f22;fill-rule:evenodd;stroke:#201f22;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+       d="m 26.778659,46.486092 v 5.000212 h 5.999633 v -5.000212 h -0.999421 v 3.000335 h -1.999879 v -3.000335 z"
+       id="DiskSliderCutted"
+       inkscape:connector-curvature="0" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="decrease"
+     inkscape:label="DecreaseGlyph"
+     style="display:none">
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.25px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 0,5 H 10"
+       id="decreaseHLine"
+       inkscape:connector-curvature="0" />
+  </g>
+  <g
+     inkscape:label="IncreaseGlyph"
+     inkscape:groupmode="layer"
+     id="increase"
+     style="display:none">
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.25px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:0"
+       d="M 0,5 H 10"
+       id="increaseHLine"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.25px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:0"
+       d="M 5,0 V 10"
+       id="increaseVLine"
+       inkscape:connector-curvature="0" />
+    <path
+       id="increaseCross"
+       style="fill:none;stroke:#000000;stroke-width:0.25px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 5,0 V 10 M 0,5 h 10"
+       inkscape:connector-curvature="0" />
+  </g>
+</svg>

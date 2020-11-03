@@ -1,0 +1,43 @@
+﻿<UserControl x:Class="ImageReviewDll.View.ROIMasterView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:ViewModel="clr-namespace:ImageReviewDll.ViewModel"
+             xmlns:Spin="clr-namespace:SpinnerProgress;assembly=SpinnerProgress"
+             Height="Auto"
+             Width="Auto">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <DataTemplate DataType="{x:Type ViewModel:ImageReviewViewModel}"></DataTemplate>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <Border Margin="0">
+            <ListView Name="lvROIControl"
+                      IsEnabled="{Binding Path=ROIControlEnabled,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                      SelectionMode="Single"
+                      SelectedIndex="{Binding Path=ViewType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                      Background="{x:Null}"
+                      BorderBrush="{x:Null}"
+                      Margin="2">
+                <StackPanel HorizontalAlignment="Center">
+                    <Button Name="btRoiCal"
+                            IsEnabled="{Binding Path=MaskReady, UpdateSourceTrigger=PropertyChanged}"
+                            Content="ROI calculation"
+                            Width="100"
+                            Margin="1"
+                            Command="{Binding ROICalculation}" />
+                    <Button Name="btRoiLoad"
+                            Content="ROI Data Load"
+                            Width="100"
+                            Margin="1"
+                            Command="{Binding ROILoad}" />
+                </StackPanel>
+            </ListView>
+        </Border>
+    </Grid>
+</UserControl>

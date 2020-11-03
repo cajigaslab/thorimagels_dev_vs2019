@@ -1,0 +1,190 @@
+﻿<Window x:Class="VtkVolumeApplication.Window1"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:uc="clr-namespace:VtkVolumeControl;assembly=VtkVolumeControl"
+    Title="Window1" Height="600" Width="830">
+    <Grid>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="246" />
+            </Grid.ColumnDefinitions>
+            <uc:VolumeRenderer Name="VolumeControl" Grid.Column="0" 
+                               Width="Auto" Height="Auto" Margin="5" >
+            </uc:VolumeRenderer>
+            <StackPanel Orientation="Vertical"  Grid.Column="1" Width="Auto">
+                <StackPanel Orientation="Horizontal" Height="30">
+                    <TextBox Width="150" Margin="2"
+                             Text="{Binding ElementName=VolumeControl, Path=ApplicationSettingsDirectory, Mode=OneWay}"/>
+                    <Button Name="btnloadAppSettings" Content="Load Settings" 
+                            Click="btnloadAppSettings_Click" ClickMode="Press">
+                    </Button>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Height="30">
+                    <TextBox Width="150" Margin="2"
+                             Text="{Binding ElementName=VolumeControl, Path=FolderDirectory, Mode=OneWay}"/>
+                    <Button Name="btnSelectXML" Content="Browse For XML"
+                        Click="btnSelectXML_Click" ClickMode="Press">
+                    </Button>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Height="30">
+                    <Button Name="btnRenderVolume" Content="Render A Volume" Margin="2, 0, 2, 0"
+                        Click="btnRenderVolume_Click" ClickMode="Press">
+                    </Button>
+                    <Button Name="btnShowPlanes" Content="Show Cropping" Margin="2, 0, 2, 0"
+                        Click="btnShowPlanes_Click" ClickMode="Press" >
+                    </Button>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Height="30">
+                    <Button Name="btnViewAllChannels" Content="All Chans" Margin="2, 0, 2, 0"
+                            Click="btnViewAllChannels_Click" ClickMode="Press"/>
+                    <Button Name="btnChannel1" Content="ChanA" Margin="2, 0, 2, 0"
+                            Click="btnChannel1_Click" ClickMode="Press"/>
+                    <Button Name="btnChannel2"  Content="ChanB" Margin="2, 0, 2, 0"
+                            Click="btnChannel2_Click" ClickMode="Press"/>
+                    <Button Name="btnChannel3" Content="ChanC" Margin="2, 0, 2, 0"
+                            Click="btnChannel3_Click" ClickMode="Press"/>
+                    <Button Name="btnChannel4" Content="ChanD" Margin="2, 0, 2, 0"
+                            Click="btnChannel4_Click" ClickMode="Press" />
+                </StackPanel>
+                <StackPanel Margin="5">
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="XMin:" />
+                        <Slider Name="SliderXMin" Width="190"
+                            ValueChanged="SliderCroppingRegion_ValueChanged"
+                            Maximum="{Binding ElementName=VolumeControl, Path=DataExtentX, Mode=OneWay}"
+                            Value="{Binding ElementName=VolumeControl, Path=RenderedVolumeXMin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            TickFrequency="1"
+                            IsSnapToTickEnabled="True">
+                        </Slider>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="XMax:" />
+                        <Slider Name="SliderXMax" Width="190"
+                            TickFrequency="1"
+                            IsSnapToTickEnabled="True"
+                            ValueChanged="SliderCroppingRegion_ValueChanged"
+                            Maximum="{Binding ElementName=VolumeControl, Path=DataExtentX, Mode=OneWay}"
+                            Value="{Binding ElementName=VolumeControl, Path=RenderedVolumeXMax, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        </Slider>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="YMin:" />
+                        <Slider Name="SliderYMin" Width="190"
+                            TickFrequency="1"
+                            IsSnapToTickEnabled="True"
+                            ValueChanged="SliderCroppingRegion_ValueChanged"
+                            Maximum="{Binding ElementName=VolumeControl, Path=DataExtentY, Mode=OneWay}"
+                            Value="{Binding ElementName=VolumeControl, Path=RenderedVolumeYMin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        </Slider>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="YMax:" />
+                        <Slider Name="SliderYMax" Width="190"
+                                TickFrequency="1"
+                            IsSnapToTickEnabled="True"
+                            ValueChanged="SliderCroppingRegion_ValueChanged"
+                            Maximum="{Binding ElementName=VolumeControl, Path=DataExtentY, Mode=OneWay}"
+                            Value="{Binding ElementName=VolumeControl, Path=RenderedVolumeYMax, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        </Slider>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="ZMin:" />
+                        <Slider Name="SliderZMin" Width="190"
+                                TickFrequency="1"
+                            IsSnapToTickEnabled="True"
+                            ValueChanged="SliderCroppingRegion_ValueChanged"
+                            Minimum="1"
+                            Maximum="{Binding ElementName=VolumeControl, Path=DataExtentZ, Mode=OneWay}"
+                            Value="{Binding ElementName=VolumeControl, Path=RenderedVolumeZMin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        </Slider>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="ZMax:" />
+                        <Slider Name="SliderZMax" Width="190"
+                            ValueChanged="SliderCroppingRegion_ValueChanged"
+                            Minimum="1"
+                            Maximum="{Binding ElementName=VolumeControl, Path=DataExtentZ, Mode=OneWay}"
+                            Value="{Binding ElementName=VolumeControl, Path=RenderedVolumeZMax, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        </Slider>
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" >
+                    <Label Content="Z Spacing:" />
+                    <TextBox Name="textZSpacing" Width="40" 
+                             Text="{Binding ElementName=VolumeControl, Path=DataSpacingZ, Mode=TwoWay}">
+                    </TextBox>
+                </StackPanel>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="ChanA Lower:" Width="90" />
+                        <Slider Name="SliderLowerChanA" Width="150"
+                            Maximum="{Binding ElementName=VolumeControl, Path=NumberOfColorBins, Mode=OneWay}"
+                            Value="{Binding ElementName=VolumeControl, Path=LowerThresholdChanA, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        </Slider>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="ChanA Upper:" Width="90" />
+                        <Slider Name="SliderUpperChanA" Width="150"
+                            Maximum="{Binding ElementName=VolumeControl, Path=NumberOfColorBins, Mode=OneWay}"
+                            Value="{Binding ElementName=VolumeControl, Path=UpperThresholdChanA, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        </Slider>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="ChanB Lower:" Width="90" />
+                        <Slider Name="SliderLowerChanB" Width="150"
+                            Maximum="{Binding ElementName=VolumeControl, Path=NumberOfColorBins, Mode=OneWay}"
+                            Value="{Binding ElementName=VolumeControl, Path=LowerThresholdChanB, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        </Slider>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="ChanB Upper:" Width="90" />
+                        <Slider Name="SliderUpperChanB" Width="150"
+                            Maximum="{Binding ElementName=VolumeControl, Path=NumberOfColorBins, Mode=OneWay}"
+                            Value="{Binding ElementName=VolumeControl, Path=UpperThresholdChanB, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        </Slider>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="ChanC Lower:" Width="90" />
+                        <Slider Name="SliderLowerChanC" Width="150"
+                            Maximum="{Binding ElementName=VolumeControl, Path=NumberOfColorBins, Mode=OneWay}"
+                            Value="{Binding ElementName=VolumeControl, Path=LowerThresholdChanC, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        </Slider>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="ChanC Upper:" Width="90" />
+                        <Slider Name="SliderUpperChanC" Width="150"
+                            Maximum="{Binding ElementName=VolumeControl, Path=NumberOfColorBins, Mode=OneWay}"
+                            Value="{Binding ElementName=VolumeControl, Path=UpperThresholdChanC, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        </Slider>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="ChanD Lower:" Width="90" />
+                        <Slider Name="SliderLowerChanD" Width="150"
+                            Maximum="{Binding ElementName=VolumeControl, Path=NumberOfColorBins, Mode=OneWay}"
+                            Value="{Binding ElementName=VolumeControl, Path=LowerThresholdChanD, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        </Slider>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="ChanD Upper:" Width="90" />
+                        <Slider Name="SliderUpperChanD" Width="150"
+                            Maximum="{Binding ElementName=VolumeControl, Path=NumberOfColorBins, Mode=OneWay}"
+                            Value="{Binding ElementName=VolumeControl, Path=UpperThresholdChanD, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        </Slider>
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Label Content="TimeIndex:" Width="90" />
+                    <Slider Name="SliderTimePointIndex" Width="150"
+                            Minimum="1" 
+                            Maximum="{Binding ElementName=VolumeControl, Path=Timepoints, Mode=OneWay}"
+                            TickFrequency="1"
+                            IsSnapToTickEnabled="True"
+                            ValueChanged="SliderTimePointIndex_ValueChanged"
+                            Value="{Binding ElementName=VolumeControl, Path=TimePointIndex, Mode=TwoWay}">
+                    </Slider>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

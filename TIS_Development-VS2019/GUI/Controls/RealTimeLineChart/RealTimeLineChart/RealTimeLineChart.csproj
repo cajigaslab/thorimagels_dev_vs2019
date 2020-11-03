@@ -1,0 +1,386 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{8A944650-45A6-45D9-9F11-80F9F2C299F1}</ProjectGuid>
+    <OutputType>library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>RealTimeLineChart</RootNamespace>
+    <AssemblyName>RealTimeLineChart</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <WarningLevel>4</WarningLevel>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <StartAction>Program</StartAction>
+    <StartProgram>$(MSBuildProjectDirectory)\..\..\..\Applications\ThorSync\ThorSync\bin\Debug\ThorSync.exe</StartProgram>
+    <StartWorkingDirectory>$(MSBuildProjectDirectory)\..\..\..\Applications\ThorSync\ThorSync\bin\Debug</StartWorkingDirectory>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Abt.Controls.SciChart.Wpf, Version=3.42.0.6778, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Tools\SciChart.3.6\lib\net40\Abt.Controls.SciChart.Wpf.dll</HintPath>
+    </Reference>
+    <Reference Include="DatabaseInterface">
+      <HintPath>..\..\..\..\Common\Database\DatabaseInterface\bin\Debug\DatabaseInterface.dll</HintPath>
+    </Reference>
+    <Reference Include="FolderDialogControl">
+      <HintPath>..\..\FolderDialogControl\FolderDialogControl\bin\Debug\FolderDialogControl.dll</HintPath>
+    </Reference>
+    <Reference Include="MessageBoxCheck">
+      <HintPath>..\..\MessageBoxCheck\MessageBoxCheck\bin\Debug\MessageBoxCheck.dll</HintPath>
+    </Reference>
+    <Reference Include="SpinnerProgress">
+      <HintPath>..\..\SpinnerProgress\SpinnerProgress\bin\Debug\SpinnerProgress.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Xaml">
+      <RequiredTargetFramework>4.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="ThemeControl">
+      <HintPath>..\..\ThemeControl\ThemeControl\bin\Debug\ThemeControl.dll</HintPath>
+    </Reference>
+    <Reference Include="ThorLogging">
+      <HintPath>..\..\..\..\Common\ThorLogging\ThorLogging\bin\Debug\ThorLogging.dll</HintPath>
+    </Reference>
+    <Reference Include="WindowsBase" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\..\..\Common\HDF5IOcs.cs">
+      <Link>Model\HDF5IOcs.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\..\Common\MathConverter.cs">
+      <Link>Model\MathConverter.cs</Link>
+    </Compile>
+    <Compile Include="DefineConverter.cs">
+      <DependentUpon>DefineConverter.tt</DependentUpon>
+      <SubType>Code</SubType>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Include="Model\CustomModifiers.cs" />
+    <Compile Include="Converters.cs" />
+    <Compile Include="PublicEnum.cs" />
+    <Compile Include="ViewModel\ChannelViewModel.cs" />
+    <Compile Include="ViewModel\RealTimeLineChartIPC.cs" />
+    <Compile Include="Validations.cs" />
+    <Compile Include="Model\RealTimeDataCapture.cs" />
+    <Compile Include="Model\RealTimeLineChartModel.cs" />
+    <Compile Include="ViewModel\RelayCommand.cs" />
+    <Compile Include="ViewModel\ViewModelBase.cs" />
+    <Compile Include="ViewModel\RealTimeLineChartViewModel.cs" />
+    <Compile Include="ViewModel\ViewModelBleach.cs" />
+    <Compile Include="ViewModel\ViewModelChart.cs" />
+    <Compile Include="ViewModel\ViewModelStats.cs" />
+    <Compile Include="View\CommentView.xaml.cs">
+      <DependentUpon>CommentView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\EditDisplayOption.xaml.cs">
+      <DependentUpon>EditDisplayOption.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\EditLinesDialog.xaml.cs">
+      <DependentUpon>EditLinesDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\ChannelsReviewView.xaml.cs">
+      <DependentUpon>ChannelsReviewView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\ChannelsSetupView.xaml.cs">
+      <DependentUpon>ChannelsSetupView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\EditPipeDialog.xaml.cs">
+      <DependentUpon>EditPipeDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\EditSamplingDialog.xaml.cs">
+      <DependentUpon>EditSamplingDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\AddSpectralChart.xaml.cs">
+      <DependentUpon>AddSpectralChart.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\SciChartView.xaml.cs">
+      <DependentUpon>SciChartView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\EditBleachDialog.xaml.cs">
+      <DependentUpon>EditBleachDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\SplashProgress.xaml.cs">
+      <DependentUpon>SplashProgress.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\StatsView.xaml.cs">
+      <DependentUpon>StatsView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\VisibilityChoiceView.xaml.cs">
+      <DependentUpon>VisibilityChoiceView.xaml</DependentUpon>
+    </Compile>
+    <Page Include="MasterView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Compile Include="MasterView.xaml.cs">
+      <DependentUpon>MasterView.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Page Include="Styles\ChannelTemplates.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Styles\SciChartStyles.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\CommentView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\EditDisplayOption.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\EditLinesDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\ChannelsReviewView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\ChannelsSetupView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\EditPipeDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\EditSamplingDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\AddSpectralChart.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\SciChartView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\EditBleachDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\SplashProgress.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\StatsView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\VisibilityChoiceView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <None Include="DefineConverter.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>DefineConverter.cs</LastGenOutput>
+    </None>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <AppDesigner Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SciChartLicense.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\Thorlabs.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\Styles\Pause.png">
+      <Link>Icons\Pause.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Play.png">
+      <Link>Icons\Play.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Stop.png">
+      <Link>Icons\Stop.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\FastFocus.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\Styles\Reticle.png">
+      <Link>Icons\Reticle.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\Styles\Point.png">
+      <Link>Icons\Point.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\Styles\delete.png">
+      <Link>Icons\delete.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\minus.png">
+      <Link>Icons\minus.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\add.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\ShowStats.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\loadfile.png" />
+    <Resource Include="Icons\loadrecent.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\Histogram.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\Styles\InfoBox.png">
+      <Link>Icons\InfoBox.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\arrow move.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\Styles\mover.png">
+      <Link>Icons\mover.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\Camera2.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\Styles\cursors.png">
+      <Link>Icons\cursors.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\Styles\bluegear.png">
+      <Link>Icons\bluegear.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\Play2.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\Styles\ThorImageLS.png">
+      <Link>Icons\ThorImageLS.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\ThorImage.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\Styles\ConnectThorImage.png">
+      <Link>Icons\ConnectThorImage.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\Setting.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\ConnectionSetting.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\Styles\SamplingSettings.png">
+      <Link>Icons\SamplingSettings.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\Styles\Run.png">
+      <Link>Icons\Run.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\Styles\Bleach2.png">
+      <Link>Icons\Bleach2.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\Styles\BleachSettings.png">
+      <Link>Icons\BleachSettings.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent>if $(ConfigurationName) == Debug copy $(TargetPath) $(TargetDir)..\..\..\..\..\Applications\ThorSync\ThorSync\bin\Debug\</PostBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

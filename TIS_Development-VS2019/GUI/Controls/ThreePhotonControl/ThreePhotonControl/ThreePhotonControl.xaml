@@ -1,0 +1,270 @@
+﻿<UserControl x:Class="ThreePhotonControl.ThreePhotonControlUC"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:roi="clr-namespace:ROIUserControl;assembly=ROIUserControl"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:local="clr-namespace:ThreePhotonControl"
+             xmlns:validator="clr-namespace:Validations;assembly=Validations"
+             xmlns:sharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+             mc:Ignorable="d"
+             Height="Auto"
+             Width="385">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <sharedTypes:DoubleCultureConverter x:Key="doubleCulture" />
+            <local:ADCGainConverter x:Key="adcGainConverter"/>
+            <local:ADCGainValConverter x:Key="adcGainValConverter" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel Margin="2"
+                IsEnabled="{Binding Path=ThreePhotonPanelEnable}">
+            <StackPanel Name="SpThreePhotonControlPanel1"
+                  Orientation="Horizontal"
+                  Margin="0,3,0,3">
+                <CheckBox Name="CbThreePhotonModeEnable"
+                  Content="Three Photon Mode"
+                  Margin="3,3,60,3"
+                  VerticalAlignment="Center"
+                  Foreground="White"
+                  IsChecked="{Binding Path=ThreePhotonEnable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                  IsEnabled="{Binding Path=Disable3PCheckbox., Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <StackPanel Orientation="Horizontal"
+                    IsEnabled="{Binding LiveStartButtonStatus}">
+                    <Button Content="Measure Freq."
+                            MinWidth="30"
+                            Command="{Binding Path=ThreePhotonMeasureFrequencyCommand}" />
+                    <Label Width="65"
+                           Height="25"
+                           Content="{Binding Path=ThreePhotonFreq, Mode=OneWay, Converter={StaticResource doubleCulture}}"
+                           ToolTip="External pulse train clock rate in Hz"
+                           VerticalAlignment="Center" />
+                    <Label Content="[Hz]"
+                            VerticalAlignment="Center" />
+                </StackPanel>
+
+            </StackPanel >
+            <StackPanel Visibility="Collapsed"
+                  Name="SpThreePhotonPhaseAdj1"
+                  Orientation="Horizontal"
+                  Margin="0,3,0,3"
+                  ToolTip="Fine Alignment">
+                <TextBlock Text="Fine Alignment"
+                   Margin="3"
+                   VerticalAlignment="Center"
+                   Foreground="White"
+                   Width="100" />
+                <Slider Name="SliderPhase1"
+                VerticalAlignment="Center"
+                Minimum="0"
+                Maximum="100"
+                Margin="2"
+                Width="175"
+                IsEnabled="True"
+                Value="{Binding Path=ThreePhotonPhaseFine, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Name="tbPhase1"
+                 VerticalAlignment="Center"
+                 Width="40"
+                 Text="{Binding Path=Value, ElementName=SliderPhase1, Mode=TwoWay}"
+                 validator:Validation.MaxValue="100.0"
+                 validator:Validation.MinValue="0.0"
+                 validator:Validation.ValidationType="{x:Type system:Double}">
+                </TextBox>
+                <Button Width="30"
+                Height="25"
+                Content="&#x2713;">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility"
+                      Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbPhase1}"
+                             Value="True">
+                                    <Setter Property="Visibility"
+                          Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <StackPanel VerticalAlignment="Center">
+                    <RepeatButton Content="+"
+                        Width="30"
+                        Height="20"
+                        Command="{Binding Path=ThreePhotonPhaseFinePlusCommand}"
+                        Delay="500"
+                        Interval="100" />
+                    <RepeatButton Content="-"
+                        Width="30"
+                        Height="20"
+                        Command="{Binding Path=ThreePhotonPhaseFineMinusCommand}"
+                        Delay="500"
+                        Interval="100" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Name="spPhase2"
+                  Orientation="Horizontal"
+                  Margin="0,3,0,3"
+                  ToolTip="Coarse Alignment"
+                  Visibility="{Binding Path=ThreePhotonPhaseCourseVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <TextBlock Text="Phase Alignment"
+                   Margin="3"
+                   VerticalAlignment="Center"
+                   Foreground="White"
+                   Width="100" />
+                <Slider Name="sliderPhase2"
+                VerticalAlignment="Center"
+                Minimum="0"
+                Maximum="600"
+                Margin="2"
+                Width="175"
+                IsEnabled="True"
+                Foreground="White"
+                Value="{Binding Path=ThreePhotonPhaseCourse, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Name="tbPhase2"
+                 VerticalAlignment="Center"
+                 Width="40"
+                 Text="{Binding Path=Value, ElementName=sliderPhase2, Mode=TwoWay}"
+                 validator:Validation.MaxValue="320.0"
+                 validator:Validation.MinValue="0.0"
+                 validator:Validation.ValidationType="{x:Type system:Double}">
+                </TextBox>
+                <Button Width="30"
+                Height="25"
+                Content="&#x2713;">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility"
+                      Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbPhase2}"
+                             Value="True">
+                                    <Setter Property="Visibility"
+                          Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <StackPanel VerticalAlignment="Center">
+                    <RepeatButton Content="+"
+                        Width="30"
+                        Height="20"
+                        Command="{Binding Path=ThreePhotonPhaseCoursePlusCommand}"
+                        Delay="500"
+                        Interval="100" />
+                    <RepeatButton Content="-"
+                        Width="30"
+                        Height="20"
+                        Command="{Binding Path=ThreePhotonPhaseCourseMinusCommand}"
+                        Delay="500"
+                        Interval="100" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel  HorizontalAlignment="Stretch"
+                   Orientation="Horizontal"
+                   Visibility="{Binding Path=FIRSettingsVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <StackPanel Margin="3,0" HorizontalAlignment="Stretch">
+                    <Label Content="FIR" HorizontalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Slider
+            ToolTip="Digitizer channel A input gain"
+            VerticalAlignment="Center"
+            Width="60"
+            MinWidth="10"
+            Value="{Binding  Path=LSMFIRFilterIndex}"
+            Minimum="0"
+            Maximum="1"
+            TickFrequency="1"
+            IsSnapToTickEnabled="True"/>
+                        <Label Content="{Binding  Path=LSMFIRFilterIndex}" HorizontalContentAlignment="Left" Width="20"/>
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel Margin="20,0" HorizontalAlignment="Stretch" >
+                    <Label Content="Tap Index" HorizontalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Slider
+            ToolTip="Digitizer channel A input gain"
+            VerticalAlignment="Center"
+            Width="140"
+            MinWidth="10"
+            Value="{Binding  Path=LSMFIRFilterTapIndex}"
+            Minimum="0"
+            Maximum="15"
+            TickFrequency="1"
+            IsSnapToTickEnabled="True"/>
+                        <Label Content="{Binding  Path=LSMFIRFilterTapIndex}" Width="30" />
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel Margin="3,0" HorizontalAlignment="Stretch">
+                    <Label Content="Value"  HorizontalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBox Name="tbFIRTapValue"
+                                 ToolTip="Tap value"
+                                 VerticalAlignment="Center"
+                                 Width="50"
+                                 Text="{Binding  Path=LSMFIRFilterTapValue, Mode=TwoWay}" />
+                        <Button Width="30"
+                                Height="25"
+                                Content="&#x2713;">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbFIRTapValue}"
+                                                     Value="True">
+                                            <Setter Property="Visibility"
+                                                    Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel HorizontalAlignment="Stretch"
+                        Orientation="Horizontal"
+                        Margin="0,3"
+                        Visibility="{Binding Path=MultiPlaneVis, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <Label Content="Number of planes"/>
+                <StackPanel Orientation="Horizontal">
+                    <TextBox Name="tbNumOfPlanes"
+                             ToolTip="Set number of planes to image"
+                             VerticalAlignment="Center"
+                             Width="50"
+                             TextChanged="tbNumOfPlanes_TextChanged"
+                             Text="{Binding  Path=LSMNumberOfPlanes, Mode=TwoWay}" />
+                    <Button Width="30"
+                            Height="25"
+                            Content="&#x2713;">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbNumOfPlanes, UpdateSourceTrigger=PropertyChanged}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+                <Label Margin="10,0,0,0"
+                       Content="Display plane"/>
+                <ComboBox Name="cbDisplayPlane" 
+                          ToolTip="Select the image plane to be previewed"
+                          SelectedIndex="{Binding  Path=LSMSelectedPlaneIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

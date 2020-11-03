@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<PowerControlSettings>
+    <Connection portID="28" baudRate="9600" address="1" />
+    <PowerLevel value="0" />
+</PowerControlSettings>

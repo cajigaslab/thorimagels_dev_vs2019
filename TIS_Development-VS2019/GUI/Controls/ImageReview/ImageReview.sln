@@ -1,0 +1,33 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageReviewModule", "ImageReview\ImageReviewModule.csproj", "{283E5431-6895-49CB-BF7D-BFABC3AD8E39}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 2
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://stl-tfs1:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = ImageReview\\ImageReviewModule.csproj
+		SccProjectName1 = ImageReview
+		SccLocalPath1 = ImageReview
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{283E5431-6895-49CB-BF7D-BFABC3AD8E39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{283E5431-6895-49CB-BF7D-BFABC3AD8E39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{283E5431-6895-49CB-BF7D-BFABC3AD8E39}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{283E5431-6895-49CB-BF7D-BFABC3AD8E39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{283E5431-6895-49CB-BF7D-BFABC3AD8E39}.Release|Any CPU.Build.0 = Release|Any CPU
+		{283E5431-6895-49CB-BF7D-BFABC3AD8E39}.Release|x86.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

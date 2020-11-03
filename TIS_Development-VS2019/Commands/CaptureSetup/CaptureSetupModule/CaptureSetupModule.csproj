@@ -1,0 +1,808 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <UICulture>en-US</UICulture>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{3622138D-A051-46BC-BC13-289EAFC54C5D}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>CaptureSetupModule</RootNamespace>
+    <AssemblyName>CaptureSetupModule</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;CSHARP;CODE_ANALYSIS;ANIMATE_FEEDBACK;DEBUG_DUMP</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <StartAction>Program</StartAction>
+    <StartProgram>$(MSBuildProjectDirectory)\..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\Debug\ThorImageLS.exe</StartProgram>
+    <StartWorkingDirectory>$(MSBuildProjectDirectory)\..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\Debug</StartWorkingDirectory>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE;CSHARP;ANIMATE_FEEDBACK;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Abt.Controls.SciChart.Wpf, Version=3.60.0.7618, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Tools\SciChart.3.6\lib\net45\Abt.Controls.SciChart.Wpf.dll</HintPath>
+    </Reference>
+    <Reference Include="AreaControl">
+      <HintPath>..\..\..\GUI\Controls\AreaControl\AreaControl\bin\Debug\AreaControl.dll</HintPath>
+    </Reference>
+    <Reference Include="CameraControl">
+      <HintPath>..\..\..\GUI\Controls\CameraControl\CameraControl\bin\Debug\CameraControl.dll</HintPath>
+    </Reference>
+    <Reference Include="CaptureOptionsControl">
+      <HintPath>..\..\..\GUI\Controls\CaptureOptionsControl\CaptureOptionsControl\bin\Debug\CaptureOptionsControl.dll</HintPath>
+    </Reference>
+    <Reference Include="ChartPlotterControl, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\GUI\Controls\ChartPlotterControl\ChartPlotterControl\bin\Debug\ChartPlotterControl.dll</HintPath>
+    </Reference>
+    <Reference Include="DatabaseInterface, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Common\Database\DatabaseInterface\bin\Debug\DatabaseInterface.dll</HintPath>
+    </Reference>
+    <Reference Include="DeepZoomGen, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Tools\DeepZoomGen\DeepZoomGen\bin\Debug\DeepZoomGen.dll</HintPath>
+    </Reference>
+    <Reference Include="DFLIMControl">
+      <HintPath>..\..\..\GUI\Controls\DFLIMControl\DFLIMControl\bin\Debug\DFLIMControl.dll</HintPath>
+    </Reference>
+    <Reference Include="DigitalOutputSwitches">
+      <HintPath>..\..\..\GUI\Controls\DigitalOutputSwitches\DigitalOutputSwitches\bin\Debug\DigitalOutputSwitches.dll</HintPath>
+    </Reference>
+    <Reference Include="DynamicDataDisplay, Version=0.3.0.0, Culture=neutral, PublicKeyToken=5b7d744a7263923f, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Tools\DynamicDataDisplay v0.3 Binaries &amp; Samples\DynamicDataDisplay\DynamicDataDisplay.dll</HintPath>
+    </Reference>
+    <Reference Include="EpiTurretControl">
+      <HintPath>..\..\..\GUI\Controls\EpiTurretControl\EpiTurretControl\bin\Debug\EpiTurretControl.dll</HintPath>
+    </Reference>
+    <Reference Include="ExperimentSettingsBrowser, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\GUI\Controls\ExperimentSettingsBrowser\ExperimentSettingsBrowser\bin\Debug\ExperimentSettingsBrowser.dll</HintPath>
+    </Reference>
+    <Reference Include="FolderDialogControl, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\GUI\Controls\FolderDialogControl\FolderDialogControl\bin\Debug\FolderDialogControl.dll</HintPath>
+    </Reference>
+    <Reference Include="GeometryUtilities">
+      <HintPath>..\..\..\Common\GeometryUtilities\GeometryUtilities\bin\Debug\GeometryUtilities.dll</HintPath>
+    </Reference>
+    <Reference Include="GongSolutions.Wpf.DragDrop, Version=0.1.3.11, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Tools\Gong\gong-wpf-dragdrop-master\GongSolutions.Wpf.DragDrop\bin\Debug\NET4\GongSolutions.Wpf.DragDrop.dll</HintPath>
+    </Reference>
+    <Reference Include="HelpProvider, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Common\HelpProvider\HelpProvider\bin\Debug\HelpProvider.dll</HintPath>
+    </Reference>
+    <Reference Include="HistogramControl, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Tools\HistogramControl\HistogramControl\bin\Debug\HistogramControl.dll</HintPath>
+    </Reference>
+    <Reference Include="KuriosControl">
+      <HintPath>..\..\..\GUI\Controls\KuriosControl\KuriosControl\bin\Debug\KuriosControl.dll</HintPath>
+    </Reference>
+    <Reference Include="LampControl">
+      <HintPath>..\..\..\GUI\Controls\LampControl\LampControl\bin\Debug\LampControl.dll</HintPath>
+    </Reference>
+    <Reference Include="LaserControl">
+      <HintPath>..\..\..\GUI\Controls\LaserControl\LaserControl\bin\Debug\LaserControl.dll</HintPath>
+    </Reference>
+    <Reference Include="LightEngineControl">
+      <HintPath>..\..\..\GUI\Controls\LightEngineControl\LightEngineControl\bin\Debug\LightEngineControl.dll</HintPath>
+    </Reference>
+    <Reference Include="LineProfileWindow">
+      <HintPath>..\..\..\GUI\Controls\LineProfileWindow\LineProfileWindow\bin\Debug\LineProfileWindow.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.Composite, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\GUI\Composite Application\Source\CAL\Composite.UnityExtensions\bin\Debug\Microsoft.Practices.Composite.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.Composite.UnityExtensions, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\GUI\Composite Application\Source\CAL\Composite.UnityExtensions\bin\Debug\Microsoft.Practices.Composite.UnityExtensions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.Composite.Wpf, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\GUI\Composite Application\Source\CAL\Composite.UnityExtensions\bin\Debug\Microsoft.Practices.Composite.Wpf.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.ObjectBuilder2, Version=2.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\GUI\Composite Application\Source\CAL\Composite.UnityExtensions\bin\Debug\Microsoft.Practices.ObjectBuilder2.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.Unity, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\GUI\Composite Application\Source\CAL\Composite.UnityExtensions\bin\Debug\Microsoft.Practices.Unity.dll</HintPath>
+    </Reference>
+    <Reference Include="MultiphotonControl">
+      <HintPath>..\..\..\GUI\Controls\MultiphotonControl\MultiphotonControl\bin\Debug\MultiphotonControl.dll</HintPath>
+    </Reference>
+    <Reference Include="MultiROIStats">
+      <HintPath>..\..\..\GUI\Controls\MultiROIStats\MultiROIStats\bin\Debug\MultiROIStats.dll</HintPath>
+    </Reference>
+    <Reference Include="OTMControl">
+      <HintPath>..\..\..\GUI\Controls\OTMControl\OTMControl\bin\Debug\OTMControl.dll</HintPath>
+    </Reference>
+    <Reference Include="OverlayManager">
+      <HintPath>..\..\..\GUI\Controls\OverlayManager\OverlayManager\bin\Debug\OverlayManager.dll</HintPath>
+    </Reference>
+    <Reference Include="PinholeControl">
+      <HintPath>..\..\..\GUI\Controls\PinholeControl\PinholeControl\bin\Debug\PinholeControl.dll</HintPath>
+    </Reference>
+    <Reference Include="PowerControl">
+      <HintPath>..\..\..\GUI\Controls\PowerControl\PowerControl\bin\Debug\PowerControl.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="PresentationCore">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="PresentationFramework">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="QuickTemplatesControl, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\GUI\Controls\QuickTemplatesControl\QuickTemplatesControl\bin\Debug\QuickTemplatesControl.dll</HintPath>
+    </Reference>
+    <Reference Include="RangeSliderWPF, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\GUI\Controls\RangeSliderWPF\bin\Debug\RangeSliderWPF.dll</HintPath>
+    </Reference>
+    <Reference Include="RemoteIPCControl">
+      <HintPath>..\..\..\GUI\Controls\RemoteIPCControl\RemoteIPCControl\bin\Debug\RemoteIPCControl.dll</HintPath>
+    </Reference>
+    <Reference Include="ROIStatsChart">
+      <HintPath>..\..\..\GUI\Controls\ROIStatsChart\ROIStatsChart\bin\Debug\ROIStatsChart.dll</HintPath>
+    </Reference>
+    <Reference Include="ROIUserControl, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\GUI\Controls\ROIUserControl\bin\Debug\ROIUserControl.dll</HintPath>
+    </Reference>
+    <Reference Include="SampleRegionSelection, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\GUI\Controls\SampleRegionSelection\SampleRegionSelection\bin\Debug\SampleRegionSelection.dll</HintPath>
+    </Reference>
+    <Reference Include="ScanControl">
+      <HintPath>..\..\..\GUI\Controls\ScanControl\ScanControl\bin\Debug\ScanControl.dll</HintPath>
+    </Reference>
+    <Reference Include="SpinnerProgress, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\GUI\Controls\SpinnerProgress\SpinnerProgress\bin\Debug\SpinnerProgress.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Runtime.Serialization">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.ServiceModel">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="System.XML" />
+    <Reference Include="ThemeControl">
+      <HintPath>..\..\..\GUI\Controls\ThemeControl\ThemeControl\bin\Debug\ThemeControl.dll</HintPath>
+    </Reference>
+    <Reference Include="ThorImageInfastructure, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\GUI\Applications\ThorImageLS\ThorImageInfastructure\bin\Debug\ThorImageInfastructure.dll</HintPath>
+    </Reference>
+    <Reference Include="ThorLogging, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Common\ThorLogging\ThorLogging\bin\Debug\ThorLogging.dll</HintPath>
+    </Reference>
+    <Reference Include="ThorSharedTypes, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Common\ThorSharedTypes\ThorSharedTypes\bin\Debug\ThorSharedTypes.dll</HintPath>
+    </Reference>
+    <Reference Include="ThreePhotonControl">
+      <HintPath>..\..\..\GUI\Controls\ThreePhotonControl\ThreePhotonControl\bin\Debug\ThreePhotonControl.dll</HintPath>
+    </Reference>
+    <Reference Include="TilesDisplay, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\GUI\Controls\TilesDisplay\TilesDisplay\bin\Debug\TilesDisplay.dll</HintPath>
+    </Reference>
+    <Reference Include="UIAutomationProvider">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="Validations">
+      <HintPath>..\..\..\GUI\Controls\Validations\Validations\bin\Debug\Validations.dll</HintPath>
+    </Reference>
+    <Reference Include="VolumeControlInterface, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\GUI\Controls\VolumeControlInterface\VolumeControlInterface\bin\Debug\VolumeControlInterface.dll</HintPath>
+    </Reference>
+    <Reference Include="WindowsBase">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="WPFToolkit, Version=3.5.40128.1, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Tools\WPFToolkit\v3.5.40619.1\WPFToolkit.dll</HintPath>
+    </Reference>
+    <Reference Include="XYTileControl, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\GUI\Controls\XYTileControl\XYTileControl\bin\Debug\XYTileControl.dll</HintPath>
+    </Reference>
+    <Reference Include="ZControl">
+      <HintPath>..\..\..\GUI\Controls\ZControl\ZControl\bin\Debug\ZControl.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="CaptureSetupModule.cs" />
+    <Compile Include="MainWindow.xaml.cs">
+      <DependentUpon>MainWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Model\CaptureSetup.cs" />
+    <Compile Include="Model\CaptureSetupAcquire.cs" />
+    <Compile Include="Model\CaptureSetupBleach.cs" />
+    <Compile Include="Model\CaptureSetupImage.cs" />
+    <Compile Include="Model\CaptureSetupLightPath.cs" />
+    <Compile Include="Model\CaptureSetupBleachSLM.cs" />
+    <Compile Include="Model\CaptureSetupSpectralFilter.cs" />
+    <Compile Include="Model\CaptureSetupZStage.cs" />
+    <Compile Include="ImageResolution.cs" />
+    <Compile Include="ViewModel\CaptureSetupViewModel.cs" />
+    <Compile Include="ViewModel\CaptureSetupViewModelBleachSLM.cs" />
+    <Compile Include="ViewModel\LightPathSequenceStep.cs" />
+    <Compile Include="ViewModel\Converters.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ViewModel\CaptureSetupViewModelAcquire.cs" />
+    <Compile Include="ViewModel\CaptureSetupViewModelImage.cs" />
+    <Compile Include="ViewModel\CaptureSetupViewModelLightPath.cs" />
+    <Compile Include="ViewModel\CaptureSetupViewModelPersist.cs" />
+    <Compile Include="ViewModel\CaptureSetupViewModelZStage.cs" />
+    <Compile Include="ViewModel\RelayCommand.cs" />
+    <Compile Include="ViewModel\ViewModelBase.cs" />
+    <Compile Include="View\ActiveStatsWinChooser.xaml.cs">
+      <DependentUpon>ActiveStatsWinChooser.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\AreaControlView.xaml.cs">
+      <DependentUpon>AreaControlView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\AutoContourWin.xaml.cs">
+      <DependentUpon>AutoContourWin.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\BleachControlView.xaml.cs">
+      <DependentUpon>BleachControlView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\DFLIMControl.xaml.cs">
+      <DependentUpon>DFLIMControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\LightEngineControlView.xaml.cs">
+      <DependentUpon>LightEngineControlView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\OrthoViewDispOptWin.xaml.cs">
+      <DependentUpon>OrthoViewDispOptWin.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\RemoteIPCView.xaml.cs">
+      <DependentUpon>RemoteIPCView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\LampControlView.xaml.cs">
+      <DependentUpon>LampControlView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\DigitalSwitchesView.xaml.cs">
+      <DependentUpon>DigitalSwitchesView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\KuriosFilterView.xaml.cs">
+      <DependentUpon>KuriosFilterView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\CameraControl.xaml.cs">
+      <DependentUpon>CameraControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\OTMControlView.xaml.cs">
+      <DependentUpon>OTMControlView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\QuickTemplate.xaml.cs">
+      <DependentUpon>QuickTemplate.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\ScanControlView.xaml.cs">
+      <DependentUpon>ScanControlView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\SLMControlView.xaml.cs">
+      <DependentUpon>SLMControlView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\SLMParamEditWin.xaml.cs">
+      <DependentUpon>SLMParamEditWin.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\SnapSettings.xaml.cs">
+      <DependentUpon>SnapSettings.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\EditBleachWaveform.xaml.cs">
+      <DependentUpon>EditBleachWaveform.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\LightPathControlView.xaml.cs">
+      <DependentUpon>LightPathControlView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\MultiphotonControlView.xaml.cs">
+      <DependentUpon>MultiphotonControlView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ViewModel\CaptureSetupViewModelBleach.cs" />
+    <Compile Include="View\LaserControlView.xaml.cs">
+      <DependentUpon>LaserControlView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\PinholeControlView.xaml.cs">
+      <DependentUpon>PinholeControlView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\PowerControlView.xaml.cs">
+      <DependentUpon>PowerControlView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\ROIStatsChartWin.xaml.cs">
+      <DependentUpon>ROIStatsChartWin.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\CaptureOptionsView.xaml.cs">
+      <DependentUpon>CaptureOptionsView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\LightPathSequenceStepView.xaml.cs">
+      <DependentUpon>LightPathSequenceStepView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\LightPathStepNameEdit.xaml.cs">
+      <DependentUpon>LightPathStepNameEdit.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\SplashScreen.xaml.cs">
+      <DependentUpon>SplashScreen.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\TileControlView.xaml.cs">
+      <SubType>Code</SubType>
+      <DependentUpon>TileControlView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\ToolBarView.xaml.cs">
+      <DependentUpon>ToolBarView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\ThreePhotonControlView.xaml.cs">
+      <DependentUpon>ThreePhotonControlView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\EpiturretControlView.xaml.cs">
+      <DependentUpon>EpiturretControlView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\VolumeControlView.xaml.cs">
+      <DependentUpon>VolumeControlView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\ZoomSettings.xaml.cs">
+      <DependentUpon>ZoomSettings.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\DragCanvas.cs" />
+    <Compile Include="View\LUTSettings.xaml.cs">
+      <DependentUpon>LUTSettings.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\WavelengthTemplates.cs" />
+    <Compile Include="View\ExperimentTemplates.cs" />
+    <Compile Include="View\ImageView.xaml.cs">
+      <DependentUpon>ImageView.xaml</DependentUpon>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Compile>
+    <Compile Include="View\LocalTemplates.cs" />
+    <Compile Include="View\MasterView.xaml.cs">
+      <DependentUpon>MasterView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\ZControlView.xaml.cs">
+      <DependentUpon>ZControlView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\ZStagePresetLocationEdit.xaml.cs">
+      <DependentUpon>ZStagePresetLocationEdit.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="VmToVmEvents.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="MainWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\ActiveStatsWinChooser.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\AreaControlView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\AutoContourWin.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\BleachControlView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\CameraControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\DFLIMControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\LightEngineControlView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\OrthoViewDispOptWin.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\RemoteIPCView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\LampControlView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\DigitalSwitchesView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\KuriosFilterView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\OTMControlView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\QuickTemplate.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\ScanControlView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\SLMControlView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\SLMParamEditWin.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\SnapSettings.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\EditBleachWaveform.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\LightPathControlView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\MultiphotonControlView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\LaserControlView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\PinholeControlView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\PowerControlView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\ROIStatsChartWin.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\CaptureOptionsView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\LightPathSequenceStepView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\LightPathStepNameEdit.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\SplashScreen.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\TileControlView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\ToolBarView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\ThreePhotonControlView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\EpiturretControlView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\VolumeControlView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\ZoomSettings.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\ImageView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\MasterView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\LUTSettings.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\ZControlView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\ZStagePresetLocationEdit.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.en-US.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Effects\" />
+    <Folder Include="Images\" />
+    <Folder Include="Services\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\GUI\Styles\2D.png">
+      <Link>Icons\2D.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\3D.png">
+      <Link>Icons\3D.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\Camera2.png">
+      <Link>Icons\Camera2.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\FastFocus.png">
+      <Link>Icons\FastFocus.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\Histogram.png">
+      <Link>Icons\Histogram.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\InfoBox.png">
+      <Link>Icons\InfoBox.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\Open.png">
+      <Link>Icons\Open.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\Pause.png">
+      <Link>Icons\Pause.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\Play.png">
+      <Link>Icons\Play.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\Resize.png">
+      <Link>Icons\Resize.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\Run2.png">
+      <Link>Icons\Run2.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\Save.png">
+      <Link>Icons\Save.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\Stop.png">
+      <Link>Icons\Stop.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\Tile.png">
+      <Link>Icons\Tile.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\Wrench.png">
+      <Link>Icons\Wrench.png</Link>
+    </Resource>
+    <Resource Include="Icons\CameraColor.png" />
+    <Resource Include="Icons\ChanA.PNG" />
+    <Resource Include="Icons\ChanAB.PNG" />
+    <Resource Include="Icons\ChanB.PNG" />
+    <Resource Include="Icons\ChanC.PNG" />
+    <Resource Include="Icons\ChanD.PNG" />
+    <Resource Include="Icons\OneWayArrow.PNG" />
+    <Resource Include="Icons\ToggleCam_down.png" />
+    <Resource Include="Icons\ToggleCam_up.png" />
+    <Resource Include="Icons\ToggleOff_down.png" />
+    <Resource Include="Icons\ToggleOff_up.png" />
+    <Resource Include="Icons\ToggleOn_down.png" />
+    <Resource Include="Icons\ToggleOn_up.png" />
+    <Resource Include="Icons\TogglePMT_down.png" />
+    <Resource Include="Icons\TogglePMT_up.png" />
+    <Resource Include="Icons\TwoWayArrow.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\ColorTile.PNG" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\ClearAll.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\GUI\Styles\Reset.png">
+      <Link>Icons\Reset.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\GUI\Styles\DeleteSelectedROIs.png">
+      <Link>Icons\DeleteSelectedROIs.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\Line.png">
+      <Link>Icons\Line.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\Pencil.png">
+      <Link>Icons\Pencil.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\Point.png">
+      <Link>Icons\Point.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\Polygon.png">
+      <Link>Icons\Polygon.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\Polyline.png">
+      <Link>Icons\Polyline.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\Rectangle.png">
+      <Link>Icons\Rectangle.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\Reticle.png">
+      <Link>Icons\Reticle.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\Select.png">
+      <Link>Icons\Select.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\GUI\Styles\Ellipse.png">
+      <Link>Icons\Ellipse.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\GUI\Styles\ShowStats.png">
+      <Link>Icons\ShowStats.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\GUI\Styles\calculator.png">
+      <Link>Icons\calculator.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\GUI\Styles\2pNyquist.png">
+      <Link>Icons\2pNyquist.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\GUI\Styles\confocalNyquist.png">
+      <Link>Icons\confocalNyquist.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\GUI\Styles\autotrack.png">
+      <Link>Icons\autotrack.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\GUI\Styles\CameraSave.png">
+      <Link>Icons\CameraSave.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\GUI\Styles\microscope_objective.png">
+      <Link>Icons\microscope_objective.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\GUI\Styles\Scale.png">
+      <Link>Icons\Scale.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\GUI\Styles\Run.png">
+      <Link>Icons\Run.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\GUI\Styles\Run3.png">
+      <Link>Icons\Run3.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\orthogonal.png" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <PropertyGroup>
+    <PostBuildEvent>if $(ConfigurationName) == Debug  copy $(TargetPath) $(TargetDir)..\..\..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\Debug\Modules
+if $(ConfigurationName) == Debug  copy $(TargetDir)en-US\CaptureSetupModule.resources.dll $(TargetDir)..\..\..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\Debug\en-US</PostBuildEvent>
+    <PreBuildEvent>
+    </PreBuildEvent>
+  </PropertyGroup>
+</Project>

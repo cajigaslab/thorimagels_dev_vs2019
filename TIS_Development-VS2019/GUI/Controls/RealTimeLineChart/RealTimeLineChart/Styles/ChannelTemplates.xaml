@@ -1,0 +1,663 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:sci="http://schemas.abtsoftware.co.uk/scichart"
+                    xmlns:validator="clr-namespace:RealTimeLineChart.InputValidation"
+                    xmlns:customModifiers="clr-namespace:RealTimeLineChart.CustomModifiers"
+                    xmlns:system="clr-namespace:System;assembly=mscorlib"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <sci:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    <validator:DoubleCultureConverter x:Key="doubleCultureConverter" />
+    <validator:InverseBooleanConverter x:Key="_IntToBoolConverter" />
+    <validator:InvertableBooleanToVisibilityConverter x:Key="_Converter" />
+    <validator:InvertableIntegralToVisibilityConverter x:Key="_IntVisConverter" />
+    <validator:InvertableVisibilityGateConverter x:Key="_gateVisConverter" />
+
+    <!--  ItemTemplate for EEG Channels. Create a single SciChartSurface instance per EEGChannelViewModel  -->
+    <DataTemplate x:Key="DataChannelTemplate">
+        <Grid>
+            <Grid.Resources>
+                <ResourceDictionary>
+                    <ResourceDictionary.MergedDictionaries>
+                        <ResourceDictionary Source="/RealTimeLineChart;component/Styles/SciChartStyles.xaml" />
+                    </ResourceDictionary.MergedDictionaries>
+                </ResourceDictionary>
+            </Grid.Resources>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Name="tbCh"
+                   Grid.Column="0"
+                   Margin="2"
+                   Foreground="White"
+                   Text="{Binding Path=ChannelName, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                   Visibility="{Binding Path=IsVisible, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                   TextAlignment="Center">
+                    <TextBlock.LayoutTransform>
+                        <RotateTransform Angle="-90" />
+                    </TextBlock.LayoutTransform>
+                </TextBlock>
+                <Label Name="tbYLabel"
+               Grid.Column="1"
+               Margin="2"
+               Foreground="White"
+               Content="{Binding Path=YLabel, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+               Visibility="{Binding Path=IsVisible, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+               HorizontalContentAlignment="Center">
+                    <Label.LayoutTransform>
+                        <RotateTransform Angle="-90" />
+                    </Label.LayoutTransform>
+                </Label>
+                <sci:SciChartSurface Grid.Column="2"
+                             Height="{Binding Path=Height, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                             Visibility="{Binding Path=IsVisible, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                             Margin="1"
+                             HorizontalAlignment="Stretch"
+                             Padding="0">
+                    <sci:SciChartSurface.ChartModifier>
+                        <sci:ModifierGroup>
+                            <customModifiers:RubberBandXyZoomModifierEx ExecuteOn="MouseRightButton"
+                                                          IsXAxisOnly="True"
+                                                          IsAnimated="True"
+                                                          RubberBandFill="#55FFFFFF"
+                                                          RubberBandStroke="#FFFFFFFF"
+                                                          RubberBandStrokeDashArray="2 2"
+                                                          ReceiveHandledEvents="True"
+                                                          SelectionPolygonStyle="{StaticResource SelectionStyle}"
+                                                          FreqSampleSecMin="{Binding Path=DataContext.FreqSampleSecMin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}"
+                                                          FreqSampleSecMax="{Binding Path=DataContext.FreqSampleSecMax, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}"
+                                                          IsEnabled="{Binding Path=DataContext.ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}" />
+                            <sci:ZoomExtentsModifier ExecuteOn="MouseDoubleClick"
+                                       XyDirection="XYDirection"
+                                       IsEnabled="{Binding Path=DataContext.ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}" />
+                            <customModifiers:RightDoubleClickZoomExtentsModifier ExecuteOn="MouseDoubleClick"
+                                                                   XyDirection="YDirection"
+                                                                   IsEnabled="{Binding Path=DataContext.ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}" />
+                            <sci:ZoomPanModifier x:Name="zoomPanModifier"
+                                   ExecuteOn="MouseLeftButton"
+                                   XyDirection="XDirection"
+                                   ClipModeX="ClipAtExtents"
+                                   IsEnabled="{Binding Path=DataContext.ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}" />
+                            <sci:XAxisDragModifier x:Name="xAxisDragModifier"
+                                     IsEnabled="{Binding Path=DataContext.IsDragToScaleEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}"
+                                     ClipModeX="None" />
+                            <customModifiers:MouseWheelZoomCustomModifier x:Name="mouseWheelZoomModifier"
+                                                            IsXOnly="true"
+                                                            IsEnabled="{Binding Path=DataContext.ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}" />
+                            <customModifiers:ChartCanvasModifier x:Name="ChartCanvasModifier"
+                                                   CursorTop="{Binding Path=DataContext.CursorTop, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}"
+                                                   CursorBottom="{Binding Path=DataContext.CursorBottom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}"
+                                                   CursorLeft="{Binding Path=DataContext.CursorLeft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}"
+                                                   CursorRight="{Binding Path=DataContext.CursorRight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}"
+                                                   CursorSelectedIndex="{Binding Path=DataContext.CursorSelectedIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}"
+                                                   ExecuteOn="MouseLeftButton"
+                                                   MeasureCursor="MEASURECURSOR_X_ONLY"
+                                                   MeasureBorderVisible="{Binding Path=IsVisible, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                                   MeasureCursorVisible="{Binding Path=DataContext.IsMeasureCursorVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}"
+                                                   IsDragToScale="{Binding Path=DataContext.IsDragToScaleEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}"
+                                                   IsRollOver="{Binding Path=IsRollOverEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </sci:ModifierGroup>
+                    </sci:SciChartSurface.ChartModifier>
+                    <!--  Declare RenderableSeries, which are mapped to DataSet Series 1:1 and in order  -->
+                    <sci:SciChartSurface.RenderableSeries>
+                        <sci:FastLineRenderableSeries AntiAliasing="False"
+                                          DataSeries="{Binding ChannelSeries, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                          ResamplingMode="None"
+                                          StrokeThickness="2"
+                                          StrokeDashArray=""
+                                          SeriesColor="{Binding Stroke, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                            <sci:FastLineRenderableSeries.RolloverMarkerTemplate>
+                                <ControlTemplate>
+                                    <Ellipse Width="7"
+                           Height="7"
+                           Fill="SlateGray"
+                           Stroke="SlateGray"
+                           StrokeThickness="1" />
+                                </ControlTemplate>
+                            </sci:FastLineRenderableSeries.RolloverMarkerTemplate>
+                        </sci:FastLineRenderableSeries>
+                    </sci:SciChartSurface.RenderableSeries>
+
+                    <!--  Axes are created implicitly when a dataset is created, but we override them here so we can style them  -->
+                    <sci:SciChartSurface.XAxis>
+                        <sci:NumericAxis AxisTitle="Time"
+                             AutoRange="{Binding Path=AutoRangeX, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                             DrawMajorGridLines="False"
+                             DrawMinorGridLines="False"
+                             DrawMajorBands="False"
+                             DrawLabels="{Binding Path=XAxisVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                             VisibleRange="{Binding Path=DataContext.XVisibleRangeStack, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}"
+                             Visibility="{Binding Path=XAxisVisible, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                            <sci:NumericAxis.Scrollbar>
+                                <sci:SciChartScrollbar Style="{StaticResource ScrollbarStyle}"
+                                       Visibility="{Binding Path=XScrollVisible, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </sci:NumericAxis.Scrollbar>
+                        </sci:NumericAxis>
+                    </sci:SciChartSurface.XAxis>
+                    <sci:SciChartSurface.YAxis>
+                        <sci:NumericAxis AutoRange="{Binding Path=AutoRangeY,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                             VisibleRange="{Binding Path=YVisibleRange, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             DrawMajorGridLines="False"
+                             DrawMinorGridLines="False"
+                             DrawMajorBands="False"                           
+                             ScientificNotation="{Binding Path=ThresholdValue, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                             TextFormatting="{Binding Path= TextForScientificNotation, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                             Visibility="Visible" >
+                            <sci:NumericAxis.GrowBy>
+                                <sci:DoubleRange Min="0.1"
+                                 Max="0.1" />
+                            </sci:NumericAxis.GrowBy>
+                        </sci:NumericAxis>
+                    </sci:SciChartSurface.YAxis>
+                    <sci:SciChartSurface.Annotations>
+                        <sci:BoxAnnotation X1="5.0"
+                               Y1="5" />
+                    </sci:SciChartSurface.Annotations>
+
+                </sci:SciChartSurface>
+            </Grid>
+            <StackPanel Name="ButtonBar"
+                  Grid.Row="0"
+                  Background="{x:Null}">
+                <StackPanel Orientation="Vertical">
+                    <!--<Button x:Name="Button1"
+                            Content="X"
+                            ToolTip="Click to delete channel"
+                            Width="20"
+                            Height="20"
+                            VerticalAlignment="Top"
+                            HorizontalAlignment="Left"
+                            Margin="0,0,0,0"
+                            Command="{Binding Path=DataContext.RemoveChannelCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}"
+                            CommandParameter="{Binding ElementName=Button1}"/>-->
+                    <CheckBox x:Name="chbLockYTime"
+                    Content="YLock"
+                    ToolTip="Lock Y Range"
+                    Width="Auto"
+                    VerticalAlignment="Top"
+                    HorizontalAlignment="Left"
+                    Margin="0,0,0,0">
+                        <CheckBox.Visibility>
+                            <MultiBinding Converter="{StaticResource _gateVisConverter}"
+                            ConverterParameter="Inverted">
+                                <Binding Path="IsVisible"
+                         Mode="OneWay"
+                         UpdateSourceTrigger="PropertyChanged" />
+                                <Binding Path="DataContext.ChartMode"
+                         RelativeSource="{RelativeSource FindAncestor, AncestorType={x:Type UserControl}}" />
+                            </MultiBinding>
+                        </CheckBox.Visibility>
+                        <CheckBox.Style>
+                            <Style TargetType="CheckBox">
+                                <Setter Property="IsChecked"
+                        Value="{Binding Path=YVisibleLock, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=DataContext.ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}"
+                               Value="True">
+                                        <Setter Property="IsChecked"
+                            Value="True" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </CheckBox.Style>
+                    </CheckBox>
+                    <StackPanel Orientation="Vertical">
+                        <StackPanel.Visibility>
+                            <MultiBinding Converter="{StaticResource _gateVisConverter}"
+                            ConverterParameter="Normal">
+                                <Binding Path="IsVisible"
+                         Mode="OneWay"
+                         UpdateSourceTrigger="PropertyChanged" />
+                                <Binding Path="IsChecked"
+                         ElementName="chbLockYTime"
+                         Mode="OneWay"
+                         UpdateSourceTrigger="PropertyChanged" />
+                            </MultiBinding>
+                        </StackPanel.Visibility>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBox x:Name="tbYMaxTime"
+                       ToolTip="Y Range Max"
+                       Width="50"
+                       VerticalAlignment="Top"
+                       HorizontalAlignment="Left"
+                       Text="{Binding Path=YVisibleRange.Max, Mode=TwoWay, ConverterParameter=3, Converter={StaticResource doubleCultureConverter}, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                       validator:Validation.ValidationType="{x:Type system:Double}"
+                       validator:Validation.NoEmptyValue="True"
+                       validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
+                            <Button Width="30"
+                      Content="&#x2713;">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+                            Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbYMaxTime}"
+                                   Value="True">
+                                                <Setter Property="Visibility"
+                                Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                        VerticalAlignment="Bottom"
+                        HorizontalAlignment="Left">
+                            <TextBox x:Name="tbYMinTime"
+                       ToolTip="Y Range Min"
+                       Width="50"
+                       Text="{Binding Path=YVisibleRange.Min, Mode=TwoWay, ConverterParameter=3, Converter={StaticResource doubleCultureConverter}, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                       validator:Validation.ValidationType="{x:Type system:Double}"
+                       validator:Validation.NoEmptyValue="True"
+                       validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
+                            <Button Width="30"
+                      Content="&#x2713;">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+                            Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbYMinTime}"
+                                   Value="True">
+                                                <Setter Property="Visibility"
+                                Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+    </DataTemplate>
+    <DataTemplate x:Key="FreqChannelTemplate">
+        <Grid>
+            <Grid.Resources>
+                <ResourceDictionary>
+                    <ResourceDictionary.MergedDictionaries>
+                        <ResourceDictionary Source="/RealTimeLineChart;component/Styles/SciChartStyles.xaml" />
+                    </ResourceDictionary.MergedDictionaries>
+                </ResourceDictionary>
+            </Grid.Resources>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Name="tbCh"
+                   Grid.Column="0"
+                   Margin="2"
+                   Foreground="White"
+                   Visibility="{Binding Path=IsVisible, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                   Text="{Binding Path=ChannelName, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                   TextAlignment="Center">
+                    <TextBlock.LayoutTransform>
+                        <RotateTransform Angle="-90" />
+                    </TextBlock.LayoutTransform>
+                </TextBlock>
+                <Label Name="tbYLabel"
+               Grid.Column="1"
+               Margin="2"
+               Foreground="White"
+               Visibility="{Binding Path=IsVisible, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+               Content="{Binding Path=YLabel, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+               HorizontalContentAlignment="Center">
+                    <Label.LayoutTransform>
+                        <RotateTransform Angle="-90" />
+                    </Label.LayoutTransform>
+                </Label>
+                <sci:SciChartSurface Grid.Column="2"
+                             Height="{Binding Height, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                             Visibility="{Binding Path=IsVisible, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                             HorizontalAlignment="Stretch"
+                             Margin="1"
+                             Padding="0">
+                    <sci:SciChartSurface.ChartModifier>
+                        <sci:ModifierGroup>
+                            <customModifiers:RubberBandXyZoomModifierEx ExecuteOn="MouseRightButton"
+                                                          IsXAxisOnly="True"
+                                                          IsAnimated="True"
+                                                          RubberBandFill="#55FFFFFF"
+                                                          RubberBandStroke="#FFFFFFFF"
+                                                          RubberBandStrokeDashArray="2 2"
+                                                          IsEnabled="{Binding Path=DataContext.ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}" />
+                            <sci:ZoomExtentsModifier ExecuteOn="MouseDoubleClick"
+                                       XyDirection="XYDirection"
+                                       IsEnabled="{Binding Path=DataContext.ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}" />
+                            <customModifiers:RightDoubleClickZoomExtentsModifier ExecuteOn="MouseDoubleClick"
+                                                                   XyDirection="YDirection" />
+                            <sci:ZoomPanModifier x:Name="zoomPanModifier"
+                                   ExecuteOn="MouseLeftButton"
+                                   XyDirection="XDirection"
+                                   ClipModeX="ClipAtExtents"
+                                   IsEnabled="{Binding Path=DataContext.ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}" />
+                            <sci:XAxisDragModifier x:Name="xAxisDragModifier"
+                                     IsEnabled="{Binding Path=DataContext.IsDragToScaleEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}"
+                                     ClipModeX="None" />
+                            <customModifiers:MouseWheelZoomCustomModifier x:Name="mouseWheelZoomModifier"
+                                                            IsXOnly="true"
+                                                            IsEnabled="{Binding Path=DataContext.ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}" />
+                            <customModifiers:ChartCanvasModifier x:Name="ChartCanvasModifier"
+                                                   MeasureBorderVisible="False"
+                                                   MeasureCursorVisible="False"
+                                                   IsDragToScale="True"
+                                                   IsRollOver="{Binding Path=IsRollOverEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                        </sci:ModifierGroup>
+                    </sci:SciChartSurface.ChartModifier>
+                    <!--  Declare RenderableSeries, which are mapped to DataSet Series 1:1 and in order  -->
+                    <sci:SciChartSurface.RenderableSeries>
+                        <sci:FastLineRenderableSeries AntiAliasing="False"
+                                          DataSeries="{Binding ChannelSeries, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                          ResamplingMode="None"
+                                          StrokeThickness="1"
+                                          SeriesColor="{Binding Stroke[0], Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                            <sci:FastLineRenderableSeries.RolloverMarkerTemplate>
+                                <ControlTemplate>
+                                    <Ellipse Width="7"
+                           Height="7"
+                           Fill="SlateGray"
+                           Stroke="SlateGray"
+                           StrokeThickness="1" />
+                                </ControlTemplate>
+                            </sci:FastLineRenderableSeries.RolloverMarkerTemplate>
+                        </sci:FastLineRenderableSeries>
+                        <sci:XyScatterRenderableSeries AntiAliasing="False"
+                                           DataSeries="{Binding ChannelSeries2, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                           ResamplingMode="None"
+                                           StrokeThickness="5"
+                                           SeriesColor="{Binding Stroke[1], Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                            <sci:XyScatterRenderableSeries.PointMarker>
+                                <sci:EllipsePointMarker Stroke="{Binding Path=SeriesColor}"
+                                        StrokeThickness="5"
+                                        Fill="{Binding Path=SeriesColor}"
+                                        Width="5"
+                                        Height="5" />
+                            </sci:XyScatterRenderableSeries.PointMarker>
+                            <sci:XyScatterRenderableSeries.RolloverMarkerTemplate>
+                                <ControlTemplate>
+                                    <Ellipse Width="7"
+                           Height="7"
+                           Fill="SlateGray"
+                           Stroke="SlateGray"
+                           StrokeThickness="1" />
+                                </ControlTemplate>
+                            </sci:XyScatterRenderableSeries.RolloverMarkerTemplate>
+                        </sci:XyScatterRenderableSeries>
+                    </sci:SciChartSurface.RenderableSeries>
+
+                    <!--  Axes are created implicitly when a dataset is created, but we override them here so we can style them  -->
+                    <sci:SciChartSurface.XAxis>
+                        <sci:LogarithmicNumericAxis AxisTitle="Frequency"
+                                        LogarithmicBase="10"
+                                        AutoRange="Never"
+                                        DrawMajorGridLines="False"
+                                        DrawMinorGridLines="False"
+                                        DrawMajorBands="False"
+                                        VisibleRange="{Binding Path=XVisibleRange, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        Visibility="Visible"
+                                        GrowBy="0.1">
+                            <!--<sci:LogarithmicNumericAxis.VisibleRange>
+                                <sci:DoubleRange Max="5"
+                                                 Min="0.05" />
+                            </sci:LogarithmicNumericAxis.VisibleRange>
+                            <sci:LogarithmicNumericAxis.GrowBy>
+                                <sci:DoubleRange Max="0.1"
+                                                 Min="0.1" />
+                            </sci:LogarithmicNumericAxis.GrowBy>-->
+                        </sci:LogarithmicNumericAxis>
+                    </sci:SciChartSurface.XAxis>
+                    <sci:SciChartSurface.YAxis>
+                        <sci:LogarithmicNumericAxis LogarithmicBase="10"
+                                        AutoRange="Never"
+                                        DrawMajorGridLines="False"
+                                        DrawMinorGridLines="False"
+                                        DrawMajorBands="False"
+                                        ScientificNotation="{Binding Path=ThresholdValue, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                        TextFormatting="{Binding Path= TextForScientificNotation, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                        VisibleRange="{Binding Path=YVisibleRange, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        Visibility="Visible">
+                        </sci:LogarithmicNumericAxis>
+                    </sci:SciChartSurface.YAxis>
+                    <sci:SciChartSurface.Annotations>
+                        <sci:BoxAnnotation X1="5.0"
+                               Y1="5" />
+                    </sci:SciChartSurface.Annotations>
+
+                </sci:SciChartSurface>
+            </Grid>
+            <StackPanel Name="ButtonBar"
+                  Grid.Row="0"
+                  Orientation="Vertical"
+                  Background="{x:Null}">
+                <!--<ToggleButton Content="Fit"
+                              Width="30"
+                              Height="20"
+                              VerticalAlignment="Top"
+                              HorizontalAlignment="Right"
+                              Margin="0,0,0,0"
+                              Command="{Binding Path=DataContext.RemoveChannelCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}" 
+                              CommandParameter="{Binding}"/>-->
+                <StackPanel Orientation="Vertical"
+                    Visibility="{Binding Path=DataContext.ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}">
+                    <Button Content="X"
+                  ToolTip="Click to delete channel"
+                  Width="20"
+                  Height="20"
+                  VerticalAlignment="Top"
+                  HorizontalAlignment="Left"
+                  Margin="0,0,0,0"
+                  Command="{Binding Path=DataContext.RemoveChannelCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}"
+                  CommandParameter="{Binding}" />
+                    <StackPanel Orientation="Horizontal">
+                        <TextBox x:Name="tbYMaxFreq"
+                     ToolTip="Y Range Max"
+                     Width="50"
+                     VerticalAlignment="Top"
+                     HorizontalAlignment="Left"
+                     Text="{Binding Path=YVisibleRange.Max, Mode=TwoWay, ConverterParameter=12, Converter={StaticResource doubleCultureConverter}, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                     validator:Validation.MinValue="0.000000000001"
+                     validator:Validation.ValidationType="{x:Type system:Double}"
+                     validator:Validation.NoEmptyValue="True"
+                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
+                        <Button Width="30"
+                    Content="&#x2713;">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility"
+                          Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbYMaxFreq}"
+                                 Value="True">
+                                            <Setter Property="Visibility"
+                              Value="{Binding ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBox x:Name="tbYMinFreq"
+                     ToolTip="Y Range Min"
+                     Width="50"
+                     Text="{Binding Path=YVisibleRange.Min, Mode=TwoWay, ConverterParameter=12, Converter={StaticResource doubleCultureConverter}, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                     validator:Validation.MinValue="0.000000000001"
+                     validator:Validation.ValidationType="{x:Type system:Double}"
+                     validator:Validation.NoEmptyValue="True"
+                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
+                        <Button Width="30"
+                    Content="&#x2713;">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility"
+                          Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbYMinFreq}"
+                                 Value="True">
+                                            <Setter Property="Visibility"
+                              Value="{Binding ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+    </DataTemplate>
+
+    <!--  Style per ListBoxItem to ensure the chart stretches to fit  -->
+    <Style x:Key="TimeChannelItemStyle"
+         TargetType="ListBoxItem">
+        <Setter Property="HorizontalContentAlignment"
+            Value="Stretch" />
+        <Setter Property="Margin"
+            Value="3,0,3,0" />
+        <Setter Property="Padding"
+            Value="0" />
+        <Style.Resources>
+            <Style TargetType="Button"
+             BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="Visibility"
+                Value="{Binding IsVisible, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+            </Style>
+            <Style TargetType="CheckBox"
+             BasedOn="{StaticResource {x:Type CheckBox}}">
+                <Setter Property="Visibility"
+                Value="{Binding Path=IsVisible, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                <Setter Property="IsChecked"
+                Value="{Binding Path=YVisibleLock,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" />
+            </Style>
+            <Style TargetType="Label">
+                <Setter Property="Visibility"
+                Value="Collapsed" />
+            </Style>
+            <Style TargetType="TextBox"
+             BasedOn="{StaticResource {x:Type TextBox}}">
+                <Setter Property="Visibility"
+                Value="{Binding IsVisible, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+            </Style>
+            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
+                       Color="LightBlue"
+                       Opacity="0" />
+            <!--SelectedItem without focus-->
+            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey }"
+                       Color="LightBlue"
+                       Opacity="0" />
+        </Style.Resources>
+    </Style>
+    <Style x:Key="FreqChannelItemStyle"
+         TargetType="ListBoxItem">
+        <Setter Property="HorizontalContentAlignment"
+            Value="Stretch" />
+        <!--<Setter Property="Margin"
+                Value="3,0,3,0" />-->
+        <Setter Property="Padding"
+            Value="0" />
+        <Style.Resources>
+            <Style TargetType="CheckBox"
+             BasedOn="{StaticResource {x:Type CheckBox}}">
+                <Setter Property="Visibility"
+                Value="{Binding IsVisible, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+            </Style>
+            <Style TargetType="Button"
+             BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="Visibility"
+                Value="{Binding IsVisible, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+            </Style>
+            <Style TargetType="Label"
+             BasedOn="{StaticResource {x:Type Label}}">
+                <Setter Property="Visibility"
+                Value="{Binding IsVisible, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+            </Style>
+            <Style TargetType="TextBox"
+             BasedOn="{StaticResource {x:Type TextBox}}">
+                <Setter Property="Visibility"
+                Value="{Binding IsVisible, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+            </Style>
+            <!--SelectedItem with focus-->
+            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
+                       Color="LightBlue"
+                       Opacity=".4" />
+            <!--SelectedItem without focus-->
+            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey }"
+                       Color="LightBlue"
+                       Opacity=".4" />
+        </Style.Resources>
+    </Style>
+
+    <!--  Style grid splitter  -->
+    <Style x:Key="GridSplitterPreviewStyle">
+        <Setter Property="Control.Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Rectangle Fill="#80000000" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="GridSplitterCustomStyle"
+         TargetType="{x:Type GridSplitter}">
+        <Setter Property="Background"
+            Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
+        <Setter Property="PreviewStyle"
+            Value="{StaticResource GridSplitterPreviewStyle}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type GridSplitter}">
+                    <Border BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  Background="{TemplateBinding Background}"
+                  CornerRadius="5">
+                        <Canvas RenderOptions.EdgeMode="Aliased"
+                    UseLayoutRounding="True"
+                    Height="6"
+                    VerticalAlignment="Center"
+                    Width="50"
+                    HorizontalAlignment="Center">
+                            <Line X1="0"
+                    X2="50"
+                    Y1="0"
+                    Y2="0"
+                    Stroke="White"
+                    StrokeThickness="1" />
+                            <Line X1="0"
+                    X2="50"
+                    Y1="1"
+                    Y2="1"
+                    Stroke="#A0A0A0"
+                    StrokeThickness="1" />
+                            <Line X1="0"
+                    X2="50"
+                    Y1="4"
+                    Y2="4"
+                    Stroke="White"
+                    StrokeThickness="1" />
+                            <Line X1="0"
+                    X2="50"
+                    Y1="5"
+                    Y2="5"
+                    Stroke="#A0A0A0"
+                    StrokeThickness="1" />
+                        </Canvas>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

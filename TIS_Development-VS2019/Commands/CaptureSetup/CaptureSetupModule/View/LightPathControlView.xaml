@@ -1,0 +1,487 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.LightPathControlView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:View="clr-namespace:CaptureSetupDll.View"
+             xmlns:ViewModel="clr-namespace:CaptureSetupDll.ViewModel"
+             xmlns:dd="clr-namespace:GongSolutions.Wpf.DragDrop;assembly=GongSolutions.Wpf.DragDrop"
+             Height="Auto"
+             MinWidth="430">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ViewModel:BooleanToVisibilityConverter x:Key="VisibilityOfBool" />
+            <DataTemplate DataType="{x:Type ViewModel:CaptureSetupViewModel}" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Left">
+                <StackPanel VerticalAlignment="Center"
+                            Visibility="{Binding GGLightPathVisibility}">
+                    <Label Content="{Binding LightPathLabel_1}"
+                           FontSize="14"
+                           Foreground="White"
+                           HorizontalContentAlignment="Center"
+                           VerticalAlignment="Center"
+                           Height="31.28">
+                    </Label>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Name="Btn_GGon"
+                                Width="50"
+                                Height="40"
+                                Margin="20,0,0,10"
+                                VerticalAlignment="Center"
+                                Visibility="{Binding Path=IsUprightScope}"
+                                ToolTip="Switch Galvo/Galvo light path on"
+                                Command="{Binding Path=LightPathSwitch}"
+                                CommandParameter="GG_IN">
+                            <Image Name="ToggleGGon"
+                                   Source="{Binding Path=LightPathGGDisplayOn}" />
+                        </Button>
+                        <Button Name="Btn_GGoff"
+                                Width="50"
+                                Height="40"
+                                Margin="0,0,20,10"
+                                VerticalAlignment="Center"
+                                Visibility="{Binding Path=IsUprightScope}"
+                                ToolTip="Switch Galvo/Galvo light path off"
+                                Command="{Binding Path=LightPathSwitch}"
+                                CommandParameter="GG_OUT">
+                            <Image Name="ToggleGGoff"
+                                   Source="{Binding Path=LightPathGGDisplayOff}" />
+                        </Button>
+                        <Button Name="Btn_GGInverted"
+                                Width="50"
+                                Height="40"
+                                Margin="45,0,45,10"
+                                VerticalAlignment="Center"
+                                Visibility="{Binding Path=IsInvertedScope}"
+                                ToolTip="Select left side mirror"
+                                Command="{Binding Path=LightPathSwitch}"
+                                CommandParameter="Left">
+                            <Image Name="ToggleGGInvertedOn"
+                                   Source="{Binding Path=InvertedLpLeftDisplay, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel VerticalAlignment="Center"
+                            Visibility="{Binding GRLightPathVisibility}">
+                    <Label Content="{Binding LightPathLabel_2}"
+                           FontSize="14"
+                           Foreground="White"
+                           HorizontalContentAlignment="Center"
+                           VerticalAlignment="Center"
+                           Height="31.28">
+                    </Label>
+                    <StackPanel Grid.Row="0"
+                                Grid.Column="0"
+                                Orientation="Horizontal">
+                        <Button Name="Btn_GRon"
+                                Width="50"
+                                Height="40"
+                                Margin="20,0,0,10"
+                                Visibility="{Binding Path=IsUprightScope}"
+                                ToolTip="Switch Galvo/Resonance light path on"
+                                Command="{Binding Path=LightPathSwitch}"
+                                CommandParameter="GR_IN">
+                            <Image Name="ToggleGRon"
+                                   Source="{Binding Path=LightPathGRDisplayOn}" />
+                        </Button>
+                        <Button Name="Btn_GRoff"
+                                Width="50"
+                                Height="40"
+                                Margin="0,0,20,10"
+                                Visibility="{Binding Path=IsUprightScope}"
+                                ToolTip="Switch Galvo/Resonance light path off"
+                                Command="{Binding Path=LightPathSwitch}"
+                                CommandParameter="GR_OUT">
+                            <Image Name="ToggleGRoff"
+                                   Source="{Binding Path=LightPathGRDisplayOff}" />
+                        </Button>
+                        <Button Name="Btn_GRInverted"
+                                Width="50"
+                                Height="40"
+                                Margin="45,0,45,10"
+                                Visibility="{Binding Path=IsInvertedScope}"
+                                ToolTip="Select center mirror"
+                                Command="{Binding Path=LightPathSwitch}"
+                                CommandParameter="Center">
+                            <Image Name="ToggleGRInvertedon"
+                                   Source="{Binding Path=InvertedLpCenterDisplay, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel Visibility="{Binding CameraLightPathVisibility}">
+                    <Label Content="{Binding LightPathLabel_3}"
+                           FontSize="14"
+                           Foreground="White"
+                           HorizontalContentAlignment="Center"
+                           VerticalAlignment="Center"
+                           Height="31.28">
+                    </Label>
+                    <StackPanel Grid.Row="0"
+                                Orientation="Horizontal">
+                        <Button Name="Btn_Camon"
+                                Width="50"
+                                Height="40"
+                                VerticalAlignment="Center"
+                                Margin="20,0,0,10"
+                                Visibility="{Binding Path=IsUprightScope}"
+                                ToolTip="Switch Camera light path off"
+                                Command="{Binding Path=LightPathSwitch}"
+                                CommandParameter="CAM_PMT">
+                            <Image Name="ToggleCamon"
+                                   Source="{Binding Path=LightPathCamDisplayOn}" />
+                        </Button>
+                        <Button Name="Btn_Camoff"
+                                Width="50"
+                                Height="40"
+                                Margin="0,0,20,10"
+                                Visibility="{Binding Path=IsUprightScope}"
+                                ToolTip="Switch Camera light path off"
+                                Command="{Binding Path=LightPathSwitch}"
+                                CommandParameter="CAM_CAM">
+                            <Image Name="ToggleCamoff"
+                                   Source="{Binding Path=LightPathCamDisplayOff}" />
+                        </Button>
+                        <Button Name="Btn_CamInverted"
+                                Width="50"
+                                Height="40"
+                                VerticalAlignment="Center"
+                                Margin="45,0,45,10"
+                                Visibility="{Binding Path=IsInvertedScope}"
+                                ToolTip="Select right side mirror"
+                                Command="{Binding Path=LightPathSwitch}"
+                                CommandParameter="Right">
+                            <Image Name="ToggleCamInverted"
+                                   Source="{Binding Path=InvertedLpRightDisplay, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel
+                 Visibility="{Binding IsTabletModeEnabled}"
+                 HorizontalAlignment="Center"
+                        Orientation="Horizontal">
+                <StackPanel>
+                    <Label HorizontalAlignment="Center"
+                           HorizontalContentAlignment="Center"
+                           Content="Light Paths" />
+                    <StackPanel Visibility="{Binding ElementName=cbSequentialCapture, Path=IsChecked, ConverterParameter=False, Converter={StaticResource VisibilityOfBool}}">
+                        <ListView Name="lbLightPathSequenceStepTemplateList"
+                                  Width="192"
+                                  Height="130"
+                                  Margin="0,0,1,1"
+                                  VerticalAlignment="Top"
+                                  ItemsSource="{Binding CollectionLightPaths}"
+                                  SelectionMode="Single"
+                                  dd:DragDrop.DropHandler="{Binding}"
+                                  dd:DragDrop.IsDragSource="True"
+                                  dd:DragDrop.IsDropTarget="True">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="Focusable"
+                                            Value="False" />
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock MinWidth="80"
+                                                           Margin="0"
+                                                           Text="{Binding Path=Name,
+                                                                          Mode=OneWay}"
+                                                           ToolTip="{Binding Path=LightPathSequenceStepPreview}" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Width="75"
+                                                            Margin="0"
+                                                            Orientation="Horizontal">
+                                                    <Button Name="btApplyLightPathSequenceStepTemplateSettings"
+                                                            Height="20"
+                                                            Margin="0"
+                                                            HorizontalContentAlignment="Center"
+                                                            VerticalContentAlignment="Center"
+                                                            Click="btApplyLightPathSequenceStepTemplateSettings_Click"
+                                                            CommandParameter="{Binding Path=LightPathLineNumber}"
+                                                            Content="Apply"
+                                                            ToolTip="Apply these settings" />
+                                                    <Button Name="btUpdateLightPathSequenceStepTemplateSettings"
+                                                            Height="20"
+                                                            MinWidth="21"
+                                                            Margin="0"
+                                                            HorizontalContentAlignment="Center"
+                                                            VerticalContentAlignment="Center"
+                                                            Click="btUpdateLightPathSequenceStepTemplateSettings_Click"
+                                                            CommandParameter="{Binding Path=LightPathLineNumber}"
+                                                            ToolTip="Use the current settings to update this light path">
+                                                        <Image Source="..\Icons\Save.png" />
+                                                    </Button>
+                                                    <Button Name="btDeleteLightPathSequenceStepTemplate"
+                                                            Width="20"
+                                                            Height="20"
+                                                            Margin="0"
+                                                            Click="btDeleteLightPathSequenceStepTemplate_Click"
+                                                            CommandParameter="{Binding Path=LightPathLineNumber}"
+                                                            ToolTip="Delete this light path and its settings">
+                                                        <StackPanel Margin="1"
+                                                                    HorizontalAlignment="Right"
+                                                                    Style="{x:Null}">
+                                                            <Path x:Name="ButtonPath"
+                                                                  HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center"
+                                                                  Stretch="Uniform"
+                                                                  Stroke="{StaticResource DeleteBrush}"
+                                                                  StrokeEndLineCap="Square"
+                                                                  StrokeStartLineCap="Square"
+                                                                  StrokeThickness="4">
+                                                                <Path.Data>
+                                                                    <PathGeometry>
+                                                                        <PathGeometry.Figures>
+                                                                            <PathFigure StartPoint="0,0">
+                                                                                <LineSegment Point="25,25" />
+                                                                            </PathFigure>
+                                                                            <PathFigure StartPoint="0,25">
+                                                                                <LineSegment Point="25,0" />
+                                                                            </PathFigure>
+                                                                        </PathGeometry.Figures>
+                                                                    </PathGeometry>
+                                                                </Path.Data>
+                                                            </Path>
+                                                        </StackPanel>
+                                                    </Button>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                    </StackPanel>
+                    <StackPanel Visibility="{Binding ElementName=cbSequentialCapture, Path=IsChecked, ConverterParameter=True, Converter={StaticResource VisibilityOfBool}}">
+                        <ListBox Name="lbLightPathSequenceStepTemplateListWide"
+                                 Width="384"
+                                 Height="130"
+                                 Margin="0,0,1,1"
+                                 VerticalAlignment="Top"
+                                 ItemsSource="{Binding CollectionLightPaths}"
+                                 SelectionMode="Single"
+                                 dd:DragDrop.DropHandler="{Binding}"
+                                 dd:DragDrop.IsDragSource="True"
+                                 dd:DragDrop.IsDropTarget="True">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Focusable"
+                                            Value="False" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="2,2,0,2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="275" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                   MinWidth="270"
+                                                   Text="{Binding Path=Name,
+                                                                  Mode=OneWay}"
+                                                   ToolTip="{Binding Path=LightPathSequenceStepPreview}" />
+                                        <StackPanel Grid.Column="1"
+                                                    Width="75"
+                                                    HorizontalAlignment="Right"
+                                                    Orientation="Horizontal">
+                                            <Button Name="btApplyLightPathSequenceStepTemplateSettings"
+                                                    Height="20"
+                                                    Margin="0"
+                                                    HorizontalAlignment="Right"
+                                                    HorizontalContentAlignment="Center"
+                                                    VerticalContentAlignment="Center"
+                                                    Click="btApplyLightPathSequenceStepTemplateSettings_Click"
+                                                    CommandParameter="{Binding Path=LightPathLineNumber}"
+                                                    Content="Apply"
+                                                    ToolTip="Apply these settings" />
+                                            <Button Name="btUpdateLightPathSequenceStepTemplateSettings"
+                                                    Height="20"
+                                                    MinWidth="21"
+                                                    Margin="0"
+                                                    HorizontalAlignment="Right"
+                                                    HorizontalContentAlignment="Center"
+                                                    VerticalContentAlignment="Center"
+                                                    Click="btUpdateLightPathSequenceStepTemplateSettings_Click"
+                                                    CommandParameter="{Binding Path=LightPathLineNumber}"
+                                                    ToolTip="Use the current settings to update this light path">
+                                                <Image Source="..\Icons\Save.png" />
+                                            </Button>
+                                            <Button Name="btDeleteLightPathSequenceStepTemplate"
+                                                    Width="20"
+                                                    Height="20"
+                                                    Margin="0"
+                                                    HorizontalAlignment="Right"
+                                                    Click="btDeleteLightPathSequenceStepTemplate_Click"
+                                                    CommandParameter="{Binding Path=LightPathLineNumber}"
+                                                    ToolTip="Delete this light path and its settings">
+                                                <StackPanel Margin="1"
+                                                            Style="{x:Null}">
+                                                    <Path x:Name="ButtonPath"
+                                                          HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center"
+                                                          Stretch="Uniform"
+                                                          Stroke="{StaticResource DeleteBrush}"
+                                                          StrokeEndLineCap="Square"
+                                                          StrokeStartLineCap="Square"
+                                                          StrokeThickness="4">
+                                                        <Path.Data>
+                                                            <PathGeometry>
+                                                                <PathGeometry.Figures>
+                                                                    <PathFigure StartPoint="0,0">
+                                                                        <LineSegment Point="25,25" />
+                                                                    </PathFigure>
+                                                                    <PathFigure StartPoint="0,25">
+                                                                        <LineSegment Point="25,0" />
+                                                                    </PathFigure>
+                                                                </PathGeometry.Figures>
+                                                            </PathGeometry>
+                                                        </Path.Data>
+                                                    </Path>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+                    <StackPanel HorizontalAlignment="Left"
+                                Orientation="Horizontal">
+                        <Button Name="btnAddCurrent"
+                                Width="65"
+                                Margin="0"
+                                HorizontalAlignment="Left"
+                                Command="{Binding Path=LightPathListAddCommand}"
+                                Content="Add"
+                                ToolTip="Add new a light path to the Light Paths list with the current settings" />
+                        <CheckBox Name="cbSequentialCapture"
+                                  Margin="5,0,0,0"
+                                  HorizontalAlignment="Left"
+                                  VerticalAlignment="Center"
+                                  VerticalContentAlignment="Center"
+                                  Content="Sequential Capture"
+                                  IsChecked="{Binding Path=EnableSequentialCapture}" />
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel Visibility="{Binding ElementName=cbSequentialCapture, Path=IsChecked, ConverterParameter=False, Converter={StaticResource VisibilityOfBool}}">
+                    <Label HorizontalAlignment="Center"
+                           HorizontalContentAlignment="Center"
+                           Content="Sequence" />
+                    <ListView Name="lbCaptureSequence"
+                              Width="190"
+                              Height="130"
+                              Margin="0,0,0,1"
+                              VerticalAlignment="Top"
+                              ItemsSource="{Binding CollectionCaptureSequence}"
+                              SelectionMode="Single"
+                              dd:DragDrop.DropHandler="{Binding}"
+                              dd:DragDrop.IsDragSource="True"
+                              dd:DragDrop.IsDropTarget="True">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="Focusable"
+                                        Value="False" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn>
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock MinWidth="7"
+                                                       Margin="0"
+                                                       Text="{Binding Path=SequenceLineNumber,
+                                                                      Mode=OneWay}"
+                                                       ToolTip="{Binding Path=LightPathSequenceStepPreview}" />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn>
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock MinWidth="80"
+                                                       Margin="0"
+                                                       Text="{Binding Path=Name,
+                                                                      Mode=OneWay}"
+                                                       ToolTip="{Binding Path=LightPathSequenceStepPreview}" />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn>
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Width="55"
+                                                        Margin="0"
+                                                        Orientation="Horizontal">
+                                                <Button Name="btApplyLightPathSequenceStepSettings"
+                                                        Height="20"
+                                                        MinWidth="21"
+                                                        Margin="0"
+                                                        HorizontalContentAlignment="Center"
+                                                        VerticalContentAlignment="Center"
+                                                        Click="btApplyLightPathSequenceStepSettings_Click"
+                                                        CommandParameter="{Binding Path=SequenceLineNumber}"
+                                                        Content="Apply"
+                                                        ToolTip="Apply these settings" />
+                                                <Button Name="btDeleteLightPathSequenceStep"
+                                                        Width="20"
+                                                        Height="20"
+                                                        Margin="0"
+                                                        Click="btDeleteLightPathSequenceStep_Click"
+                                                        CommandParameter="{Binding Path=SequenceLineNumber}"
+                                                        ToolTip="Delete this sequence step">
+                                                    <StackPanel Margin="1"
+                                                                Style="{x:Null}">
+                                                        <Path x:Name="ButtonPath"
+                                                              HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center"
+                                                              Stretch="Uniform"
+                                                              Stroke="{StaticResource DeleteBrush}"
+                                                              StrokeEndLineCap="Square"
+                                                              StrokeStartLineCap="Square"
+                                                              StrokeThickness="4">
+                                                            <Path.Data>
+                                                                <PathGeometry>
+                                                                    <PathGeometry.Figures>
+                                                                        <PathFigure StartPoint="0,0">
+                                                                            <LineSegment Point="25,25" />
+                                                                        </PathFigure>
+                                                                        <PathFigure StartPoint="0,25">
+                                                                            <LineSegment Point="25,0" />
+                                                                        </PathFigure>
+                                                                    </PathGeometry.Figures>
+                                                                </PathGeometry>
+                                                            </Path.Data>
+                                                        </Path>
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>
+    

@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<BeamExpanderSettings>
+  <Connection portID0="9" baudRate0="9600" address0="1" portID1="8" baudRate1="9600" address1="1"></Connection>
+  <EXP_RATIOS RATIO0="1" RATIO1="1.5" RATIO2="2" RATIO3="2.5" RATIO4="2.9" RATIO5="3.2" RATIO6="3.5"></EXP_RATIOS>
+  <MOT0_POS POS0="-1377" POS1="-6181" POS2="-8578" POS3="-10014" POS4="-10972" POS5="-11657" POS6="-11981"></MOT0_POS>
+  <MOT1_POS POS0="-1533" POS1="-909" POS2="-1978" POS3="-5690" POS4="-7864" POS5="-9490" POS6="-12401"></MOT1_POS>
+</BeamExpanderSettings>
+ 

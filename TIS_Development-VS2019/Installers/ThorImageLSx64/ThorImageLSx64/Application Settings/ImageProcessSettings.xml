@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<ImageProcessSettings>
+  <General MaxRoiNum="500" MinSnr="15"/>
+  <Thresholding>
+	<OSTU active="1"/>
+	<Fixed active="0" lowthreshold="0" highthreshold="0"/>
+  </Thresholding>
+  <Filter>
+    <MinArea active="1" value="50"/>  
+	<MaxArea active="0" value="1000"/>
+  </Filter>
+</ImageProcessSettings>

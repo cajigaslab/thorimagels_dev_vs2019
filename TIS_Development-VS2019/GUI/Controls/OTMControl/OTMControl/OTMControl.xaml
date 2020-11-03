@@ -1,0 +1,1335 @@
+﻿<UserControl x:Class="OTMControl.OTMControlUC"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:oc="clr-namespace:OTMControl"
+             xmlns:validator="clr-namespace:Validations;assembly=Validations"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:tc="clr-namespace:ThemeControl;assembly=ThemeControl"
+             xmlns:ts="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <oc:TrapModeToVisibility x:Key="TrapModeToVis" />
+            <ts:DoubleScaledMultiConverter x:Key="doubleScaledMultiConverter" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid x:Name="LayoutRoot">
+        <StackPanel Orientation="Vertical"
+                    Margin="3">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <StackPanel Grid.Row="0"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Margin="3">
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center">
+                        <Label Content="Mode "
+                               HorizontalAlignment="Center"
+                               Foreground="#FFFFFFFF"
+                               VerticalAlignment="Center" />
+                        <ComboBox Name="cmbTrapMode" SelectedIndex="{Binding Path=TrapMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        IsSynchronizedWithCurrentItem="True"
+                        d:LayoutOverrides="Height"
+                        MinWidth="100"
+                        Width="Auto"
+                        ToolTip="Changes OTM trap mode">
+                            <ComboBoxItem Content="Manual" />
+                            <!--<ComboBoxItem Content="Epoch" />-->
+                        </ComboBox>
+                    </StackPanel>
+                </StackPanel>
+                <GroupBox Grid.Row="1" Name="grpManual"
+                          Margin="1"
+                          BorderBrush="#FFFFFFFF">
+                    <!-- Visibility="{Binding ElementName=cmbTrapMode, Path=SelectedIndex, ConverterParameter=0, Converter={StaticResource TrapModeToVis}}"> -->
+                    <GroupBox.Header>
+                        <Label Content="Manual" />
+                    </GroupBox.Header>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Vertical"
+                                HorizontalAlignment="Left">
+                            <StackPanel Orientation="Horizontal" ToolTip="Enable/disable path A trap">
+                                <CheckBox VerticalAlignment="Center" Name="cbTrapA" 
+                                          IsChecked="{Binding Path=TrapEnable[0].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Text="Trap A" Height="20" Margin="1"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                        ToolTip="Set X position of Trap A"
+                                        IsEnabled="{Binding ElementName=cbTrapA, Path=IsChecked, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                <Label VerticalAlignment="Center" HorizontalContentAlignment="Right" Margin="1" Content="X:" Width="20"/>
+                                <StackPanel Margin="1"
+                                            HorizontalAlignment="Center"
+                                            Orientation="Horizontal">
+                                    <TextBox Name="tbTrapAX"
+                                             Width="40"
+                                             Height="20"                                             
+                                             validator:Validation.ValidationType="{x:Type system:Double}"
+                                             validator:Validation.NoEmptyValue="True"
+                                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text">
+                                        <TextBox.Text>
+                                            <MultiBinding Converter="{StaticResource doubleScaledMultiConverter}">
+                                                <Binding Path="DataContext.TrapAum[0].Value" Mode="TwoWay"/>
+                                                <Binding Path="DataContext.Volt2UM.Value" Mode="OneWay"/>
+                                            </MultiBinding>
+                                        </TextBox.Text>
+                                    </TextBox>
+                                    <Button Width="20"
+                                            Height="20"
+                                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapAX}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapAumPlusCommand}"
+                                                      CommandParameter="0"
+                                                      Content="+"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapAumMinusCommand}"
+                                                      CommandParameter="0"
+                                                      Content="-"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                    </StackPanel>
+                                    <Label VerticalAlignment="Center" Margin="1" Content="[um]"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                        ToolTip="Set Y position of Trap A"
+                                        IsEnabled="{Binding ElementName=cbTrapA, Path=IsChecked, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                <Label VerticalAlignment="Center" HorizontalContentAlignment="Right" Margin="1" Content="Y:" Width="20"/>
+                                <StackPanel Margin="1"
+                                            HorizontalAlignment="Center"
+                                            Orientation="Horizontal">
+                                    <TextBox Name="tbTrapAY"
+                                             Width="40"
+                                             Height="20"
+                                             validator:Validation.ValidationType="{x:Type system:Double}"
+                                             validator:Validation.NoEmptyValue="True"
+                                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text">
+                                        <TextBox.Text>
+                                            <MultiBinding Converter="{StaticResource doubleScaledMultiConverter}">
+                                                <Binding Path="DataContext.TrapAum[1].Value" Mode="TwoWay"/>
+                                                <Binding Path="DataContext.Volt2UM.Value" Mode="OneWay"/>
+                                            </MultiBinding>
+                                        </TextBox.Text>
+                                    </TextBox>
+                                    <Button Width="20"
+                                            Height="20"
+                                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapAY}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapAumPlusCommand}"
+                                                      CommandParameter="1"
+                                                      Content="+"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapAumMinusCommand}"
+                                                      CommandParameter="1"
+                                                      Content="-"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                    </StackPanel>
+                                    <Label VerticalAlignment="Center" Margin="1" Content="[um]"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" ToolTip="Enable/disable path B trap">
+                                <CheckBox VerticalAlignment="Center" Name="cbTrapB"
+                                          IsChecked="{Binding Path=TrapEnable[1].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Text="Trap B" Height="20" Margin="1"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                        ToolTip="Set X position of Trap B"
+                                        IsEnabled="{Binding ElementName=cbTrapB, Path=IsChecked, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                <Label VerticalAlignment="Center" HorizontalContentAlignment="Right" Margin="1" Content="X:" Width="20"/>
+                                <StackPanel Margin="1"
+                                            HorizontalAlignment="Center"
+                                            Orientation="Horizontal">
+                                    <TextBox Name="tbTrapBX"
+                                             Width="40"
+                                             Height="20"
+                                             validator:Validation.ValidationType="{x:Type system:Double}"
+                                             validator:Validation.NoEmptyValue="True"
+                                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text">
+                                        <TextBox.Text>
+                                            <MultiBinding Converter="{StaticResource doubleScaledMultiConverter}">
+                                                <Binding Path="DataContext.TrapBum[0].Value" Mode="TwoWay"/>
+                                                <Binding Path="DataContext.Volt2UM.Value" Mode="OneWay"/>
+                                            </MultiBinding>
+                                        </TextBox.Text>
+                                    </TextBox>
+                                    <Button Width="20"
+                                            Height="20"
+                                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapBX}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapBumPlusCommand}"
+                                                      CommandParameter="0"
+                                                      Content="+"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapBumMinusCommand}"
+                                                      CommandParameter="0"
+                                                      Content="-"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                    </StackPanel>
+                                    <Label VerticalAlignment="Center" Margin="1" Content="[um]"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                        ToolTip="Set Y position of Trap B"
+                                        IsEnabled="{Binding ElementName=cbTrapB, Path=IsChecked, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                <Label VerticalAlignment="Center" HorizontalContentAlignment="Right" Margin="1" Content="Y:" Width="20"/>
+                                <StackPanel Margin="1"
+                                            HorizontalAlignment="Center"
+                                            Orientation="Horizontal">
+                                    <TextBox Name="tbTrapBY"
+                                             Width="40"
+                                             Height="20"
+                                             validator:Validation.ValidationType="{x:Type system:Double}"
+                                             validator:Validation.NoEmptyValue="True"
+                                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text">
+                                        <TextBox.Text>
+                                            <MultiBinding Converter="{StaticResource doubleScaledMultiConverter}">
+                                                <Binding Path="DataContext.TrapBum[1].Value" Mode="TwoWay"/>
+                                                <Binding Path="DataContext.Volt2UM.Value" Mode="OneWay"/>
+                                            </MultiBinding>
+                                        </TextBox.Text>
+                                    </TextBox>
+                                    <Button Width="20"
+                                            Height="20"
+                                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapBY}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapBumPlusCommand}"
+                                                      CommandParameter="1"
+                                                      Content="+"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapBumMinusCommand}"
+                                                      CommandParameter="1"
+                                                      Content="-"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                    </StackPanel>
+                                    <Label VerticalAlignment="Center" Margin="1" Content="[um]"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                        ToolTip="Set Z position of Trap B"
+                                        IsEnabled="{Binding ElementName=cbTrapB, Path=IsChecked, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                <Label VerticalAlignment="Center" HorizontalContentAlignment="Right" Margin="1" Content="Z:" Width="20"/>
+                                <StackPanel Margin="1"
+                                            HorizontalAlignment="Center"
+                                            Orientation="Horizontal">
+                                    <TextBox Name="tbTrapAZ"
+                                             Width="40"
+                                             Height="20"
+                                             Text="{Binding Path=TrapAum[2].Value, Mode= TwoWay, UpdateSourceTrigger=PropertyChanged,NotifyOnValidationError=True,ValidatesOnDataErrors=True}"
+                                             validator:Validation.ValidationType="{x:Type system:Double}"
+                                             validator:Validation.NoEmptyValue="True"
+                                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text">
+                                    </TextBox>
+                                    <Button Width="20"
+                                            Height="20"
+                                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapAZ}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapAumPlusCommand}"
+                                                      CommandParameter="2"
+                                                      Content="+"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapAumMinusCommand}"
+                                                      CommandParameter="2"
+                                                      Content="-"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                    </StackPanel>
+                                    <Label VerticalAlignment="Center" Margin="1" Content="[um]"/>
+                                    <!--[um]-->
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Vertical"
+                                HorizontalAlignment="Left">
+                            <Button Name="btnCenterTrapA"
+                                    Content="Center Path A"
+                                    IsEnabled="{Binding ElementName=cbTrapA, Path=IsChecked, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Width="100"
+                                    Height="20"
+                                    Margin="1"
+                                    Command="{Binding CenterTrapCommand}"
+                                    CommandParameter="0" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                        ToolTip="Set step size in Volts along X for Trap A"
+                                        IsEnabled="{Binding ElementName=cbTrapA, Path=IsChecked, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                <Label VerticalAlignment="Center" Margin="1" Content="Step Size:" Width="60"/>
+                                <StackPanel Margin="1"
+                                            HorizontalAlignment="Center"
+                                            Orientation="Horizontal">
+                                    <TextBox Name="tbTrapAXstep"
+                                             Width="40"
+                                             Height="20"
+                                             Text="{Binding Path=TrapAStepUM[0].Value, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged,NotifyOnValidationError=True,ValidatesOnDataErrors=True}"
+                                             validator:Validation.ValidationType="{x:Type system:Double}"
+                                             validator:Validation.MinValue="0.001"
+                                             validator:Validation.NoEmptyValue="True"
+                                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text">
+                                    </TextBox>
+                                    <Button Width="20"
+                                            Height="20"
+                                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapAXstep}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapAStepUMPlusCommand}"
+                                                      CommandParameter="0"
+                                                      Content="+"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapAStepUMMinusCommand}"
+                                                      CommandParameter="0"
+                                                      Content="-"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                    </StackPanel>
+                                    <Label VerticalAlignment="Center" Margin="1" Content="[V]"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                        ToolTip="Set step size in Volts along Y for Trap A"
+                                        IsEnabled="{Binding ElementName=cbTrapA, Path=IsChecked, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                <Label VerticalAlignment="Center" Margin="1" Content="Step Size:" Width="60"/>
+                                <StackPanel Margin="1"
+                                            HorizontalAlignment="Center"
+                                            Orientation="Horizontal">
+                                    <TextBox Name="tbTrapAYstep"
+                                             Width="40"
+                                             Height="20"
+                                             Text="{Binding Path=TrapAStepUM[1].Value, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged,NotifyOnValidationError=True,ValidatesOnDataErrors=True}"
+                                             validator:Validation.ValidationType="{x:Type system:Double}"
+                                             validator:Validation.MinValue="0.001"
+                                             validator:Validation.NoEmptyValue="True"
+                                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text">
+                                    </TextBox>
+                                    <Button Width="20"
+                                            Height="20"
+                                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapAYstep}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapAStepUMPlusCommand}"
+                                                      CommandParameter="1"
+                                                      Content="+"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapAStepUMMinusCommand}"
+                                                      CommandParameter="1"
+                                                      Content="-"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                    </StackPanel>
+                                    <Label VerticalAlignment="Center" Margin="1" Content="[V]"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <Button Name="btnCenterTrapB"
+                                    Content="Center Path B"
+                                    IsEnabled="{Binding ElementName=cbTrapB, Path=IsChecked, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Width="100"
+                                    Height="20"
+                                    Margin="1"
+                                    Command="{Binding CenterTrapCommand}"
+                                    CommandParameter="1" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                        ToolTip="Set step size in Volts along X for Trap B"
+                                        IsEnabled="{Binding ElementName=cbTrapB, Path=IsChecked, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                <Label VerticalAlignment="Center" Margin="1" Content="Step Size:" Width="60"/>
+                                <StackPanel Margin="1"
+                                            HorizontalAlignment="Center"
+                                            Orientation="Horizontal">
+                                    <TextBox Name="tbTrapBXstep"
+                                             Width="40"
+                                             Height="20"
+                                             Text="{Binding Path=TrapBStepUM[0].Value, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged,NotifyOnValidationError=True,ValidatesOnDataErrors=True}"
+                                             validator:Validation.ValidationType="{x:Type system:Double}"
+                                             validator:Validation.MinValue="0.001"
+                                             validator:Validation.NoEmptyValue="True"
+                                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text">
+                                    </TextBox>
+                                    <Button Width="20"
+                                            Height="20"
+                                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapBXstep}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapBStepUMPlusCommand}"
+                                                      CommandParameter="0"
+                                                      Content="+"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapBStepUMMinusCommand}"
+                                                      CommandParameter="0"
+                                                      Content="-"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                    </StackPanel>
+                                    <Label VerticalAlignment="Center" Margin="1" Content="[V]"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                        ToolTip="Set step size in Volts along Y for Trap B"
+                                        IsEnabled="{Binding ElementName=cbTrapB, Path=IsChecked, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                <Label VerticalAlignment="Center" Margin="1" Content="Step Size:" Width="60"/>
+                                <StackPanel Margin="1"
+                                            HorizontalAlignment="Center"
+                                            Orientation="Horizontal">
+                                    <TextBox Name="tbTrapBYstep"
+                                             Width="40"
+                                             Height="20"
+                                             Text="{Binding Path=TrapBStepUM[1].Value, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged,NotifyOnValidationError=True,ValidatesOnDataErrors=True}"
+                                             validator:Validation.ValidationType="{x:Type system:Double}"
+                                             validator:Validation.MinValue="0.001"
+                                             validator:Validation.NoEmptyValue="True"
+                                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text">
+                                    </TextBox>
+                                    <Button Width="20"
+                                            Height="20"
+                                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapBYstep}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapBStepUMPlusCommand}"
+                                                      CommandParameter="1"
+                                                      Content="+"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapBStepUMMinusCommand}"
+                                                      CommandParameter="1"
+                                                      Content="-"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                    </StackPanel>
+                                    <Label VerticalAlignment="Center" Margin="1" Content="[V]"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                        ToolTip="Set step size in Volts along Z for Trap B"
+                                        IsEnabled="{Binding ElementName=cbTrapB, Path=IsChecked, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                <Label VerticalAlignment="Center" Margin="1" Content="Step Size:" Width="60"/>
+                                <StackPanel Margin="1"
+                                            HorizontalAlignment="Center"
+                                            Orientation="Horizontal">
+                                    <TextBox Name="tbTrapAZstep"
+                                             Width="40"
+                                             Height="20"
+                                             Text="{Binding Path=TrapAStepUM[2].Value, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged,NotifyOnValidationError=True,ValidatesOnDataErrors=True}"
+                                             validator:Validation.ValidationType="{x:Type system:Double}"
+                                             validator:Validation.MinValue="0.001"
+                                             validator:Validation.NoEmptyValue="True"
+                                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text">
+                                    </TextBox>
+                                    <Button Width="20"
+                                            Height="20"
+                                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapAZstep}"
+                                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapAStepUMPlusCommand}"
+                                                      CommandParameter="2"
+                                                      Content="+"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapAStepUMMinusCommand}"
+                                                      CommandParameter="2"
+                                                      Content="-"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                    </StackPanel>
+                                    <Label VerticalAlignment="Center" Margin="1" Content="[um]"/>
+                                    <!--[um]-->
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                </GroupBox>
+                <!--<GroupBox Grid.Row="1" Name="grpEpoch"
+                                  Margin="1"
+                                  BorderBrush="#FFFFFFFF"
+                                  Visibility="{Binding ElementName=cmbTrapMode, Path=SelectedIndex, ConverterParameter=0, Converter={StaticResource TrapModeToVis}}">
+                    <GroupBox.Header>
+                        <Label Content="Epoch" />
+                    </GroupBox.Header>
+                </GroupBox> -->
+                <Border Grid.Row="2">
+                    <Expander Foreground="#FFFFFFFF"
+                                  IsExpanded="False">
+                        <Expander.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Content="Advanced" />
+                                <Label Content="Calibration Date:"
+                                       Foreground="#FFFFFFFF"
+                                       Style="{StaticResource LabelOutOfRangeStyle}"
+                                       tc:Extensions.OutOfRange="{Binding Path=TrapCalAlert}"/>
+                                <Label Content="{Binding Path=TrapLastCalibTime, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                       HorizontalAlignment="Left"
+                                       Style="{StaticResource LabelOutOfRangeStyle}"
+                                       Foreground="#FFFFFFFF"
+                                       tc:Extensions.OutOfRange="{Binding Path=TrapCalAlert}"/>
+                            </StackPanel>
+                        </Expander.Header>
+                        <StackPanel Orientation="Vertical">
+                            <!--Advanced Trap A-->
+                            <GroupBox Margin="1"
+                                  BorderBrush="#FFFFFFFF">
+                                <GroupBox.Header>
+                                    <Label Content="Trap A" />
+                                </GroupBox.Header>
+                                <StackPanel HorizontalAlignment="Left"
+                                        Orientation="Vertical">
+                                    <StackPanel HorizontalAlignment="Left"
+                                        Orientation="Horizontal">
+                                        <StackPanel Width="140"
+                                                    HorizontalAlignment="Left"
+                                                    ToolTip="Calibrate Trap A offsets">
+                                            <RepeatButton Width="20"
+                                                          Height="20"
+                                                          Margin="92,0,0,0"
+                                                          HorizontalAlignment="Left"
+                                                          Command="{Binding Path=TrapAOffsetPlusCommand}"
+                                                          CommandParameter="1"
+                                                          Content="+"
+                                                          Delay="500"
+                                                          Interval="100" />
+                                            <StackPanel Orientation="Horizontal">
+                                                <Label Width="70"
+                                                   VerticalAlignment="Center"
+                                                   Content="X, Y Offset"
+                                                   Foreground="#FFFFFFFF" />
+                                                <RepeatButton Width="20"
+                                                              Height="20"
+                                                              Command="{Binding Path=TrapAOffsetMinusCommand}"
+                                                              CommandParameter="0"
+                                                              Content="-"
+                                                              Delay="500"
+                                                              Interval="100" />
+                                                <RepeatButton Width="20"
+                                                              Height="20"
+                                                              Command="{Binding Path=TrapAOffsetResetCommand}"
+                                                              Content="0"
+                                                              Delay="500"
+                                                              Interval="100" />
+                                                <RepeatButton Width="20"
+                                                              Height="20"
+                                                              Command="{Binding Path=TrapAOffsetPlusCommand}"
+                                                              CommandParameter="0"
+                                                              Content="+"
+                                                              Delay="500"
+                                                              Interval="100" />
+                                            </StackPanel>
+                                            <StackPanel Margin="10,0,0,0"
+                                                    Orientation="Horizontal">
+                                                <TextBox Name="tbTrapAOffsetX"
+                                                     Width="40"
+                                                     VerticalAlignment="Center"
+                                                     Text="{Binding Path=TrapAOffset[0].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged,NotifyOnValidationError=True,ValidatesOnDataErrors=True}" 
+                                                         validator:Validation.ValidationType="{x:Type system:Double}"
+                                                         validator:Validation.NoEmptyValue="True"
+                                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"/>
+                                                <Button Width="30"
+                                                    Content="✓">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapAOffsetX}"
+                                                                         Value="True">
+                                                                    <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                                <TextBox Name="tbTrapAOffsetY"
+                                                     Width="40"
+                                                     VerticalAlignment="Center"
+                                                     Text="{Binding Path=TrapAOffset[1].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnValidationError=True, ValidatesOnDataErrors=True}" 
+                                                         validator:Validation.ValidationType="{x:Type system:Double}"
+                                                         validator:Validation.NoEmptyValue="True"
+                                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"/>
+                                                <Button Width="30"
+                                                    Content="✓">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapAOffsetY}"
+                                                                         Value="True">
+                                                                    <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                                <RepeatButton Width="20"
+                                                              Height="20"
+                                                              Command="{Binding Path=TrapAOffsetMinusCommand}"
+                                                              CommandParameter="1"
+                                                              Content="-"
+                                                              Delay="500"
+                                                              Interval="100" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <StackPanel Width="140"
+                                                    Margin="30,0,0,0"
+                                                    ToolTip="Calibrate Trap A scales">
+                                            <RepeatButton Width="20"
+                                                          Height="20"
+                                                          Margin="92,0,0,0"
+                                                          HorizontalAlignment="Left"
+                                                          Command="{Binding Path=TrapAScalePlusCommand}"
+                                                          CommandParameter="1"
+                                                          Content="+"
+                                                          Delay="500"
+                                                          Interval="100" />
+                                            <StackPanel Orientation="Horizontal">
+                                                <Label Width="70"
+                                                   VerticalAlignment="Center"
+                                                   Content="X, Y Scale"
+                                                   Foreground="#FFFFFFFF" />
+                                                <StackPanel Orientation="Horizontal">
+                                                    <RepeatButton Width="20"
+                                                                  Height="20"
+                                                                  Command="{Binding Path=TrapAScaleMinusCommand}"
+                                                                  CommandParameter="0"
+                                                                  Content="-"
+                                                                  Delay="500"
+                                                                  Interval="100" />
+                                                    <RepeatButton Width="20"
+                                                                  Height="20"
+                                                                  Command="{Binding Path=TrapAScaleResetCommand}"
+                                                                  Content="0"
+                                                                  Delay="500"
+                                                                  Interval="100" />
+                                                    <RepeatButton Width="20"
+                                                                  Height="20"
+                                                                  Command="{Binding Path=TrapAScalePlusCommand}"
+                                                                  CommandParameter="0"
+                                                                  Content="+"
+                                                                  Delay="500"
+                                                                  Interval="100" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <StackPanel Margin="10,0,0,0"
+                                                    Orientation="Horizontal">
+                                                <TextBox Name="tbTrapAScaleX"
+                                                         Width="40"
+                                                         VerticalAlignment="Center"
+                                                         Text="{Binding Path=TrapAScale[0].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnValidationError=True, ValidatesOnDataErrors=True}" 
+                                                         validator:Validation.ValidationType="{x:Type system:Double}"
+                                                         validator:Validation.NoEmptyValue="True"
+                                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"/>
+                                                <Button Width="30"
+                                                    Content="✓">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapAScaleX}"
+                                                                         Value="True">
+                                                                    <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                                <TextBox Name="tbTrapAScaleY"
+                                                         Width="40"
+                                                         VerticalAlignment="Center"
+                                                         Text="{Binding Path=TrapAScale[1].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnValidationError=True, ValidatesOnDataErrors=True}" 
+                                                         validator:Validation.ValidationType="{x:Type system:Double}"
+                                                         validator:Validation.NoEmptyValue="True"
+                                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"/>
+                                                <Button Width="30"
+                                                    Content="✓">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapAScaleY}"
+                                                                         Value="True">
+                                                                    <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                                <RepeatButton Width="20"
+                                                              Height="20"
+                                                              Command="{Binding Path=TrapAScaleMinusCommand}"
+                                                              CommandParameter="1"
+                                                              Content="-"
+                                                              Delay="500"
+                                                              Interval="100" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel HorizontalAlignment="Left"
+                                        Orientation="Horizontal">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" Orientation="Vertical"
+                                                    HorizontalAlignment="Center">
+                                                <Label VerticalAlignment="Center" HorizontalContentAlignment="Center" Margin="1" Content="Angle" Width="100"/>
+                                                <StackPanel Margin="1"
+                                                            HorizontalAlignment="Center"
+                                                            Orientation="Horizontal"
+                                                            ToolTip="Calibrate Trap A angle">
+                                                    <TextBox Name="tbTrapAAngle"
+                                                             Width="35"
+                                                             Height="20"
+                                                             Text="{Binding Path=TrapAAngle}" />
+                                                    <Button Width="20"
+                                                            Height="20"
+                                                            Content="✓">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Collapsed" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapAAngle}"
+                                                                                 Value="True">
+                                                                        <Setter Property="Visibility"
+                                                                                Value="Visible" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <RepeatButton Width="20"
+                                                                      Height="20"
+                                                                      Command="{Binding Path=TrapAAnglePlusCommand}"
+                                                                      Content="+"
+                                                                      Delay="500"
+                                                                      Interval="100" />
+                                                        <RepeatButton Width="20"
+                                                      Height="20"
+                                                      Command="{Binding Path=TrapAAngleMinusCommand}"
+                                                      Content="-"
+                                                      Delay="500"
+                                                      Interval="100" />
+                                                    </StackPanel>
+                                                    <Label VerticalAlignment="Center" Margin="1" Content="[deg]"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Vertical"
+                                                        HorizontalAlignment="Center"
+                                                        ToolTip="Calibrate Trap A maximum width range">
+                                                <Label VerticalAlignment="Center" HorizontalContentAlignment="Center" Margin="1" Content="Max. Width" Width="100"/>
+                                                <StackPanel Margin="1"
+                                                            HorizontalAlignment="Center"
+                                                            Orientation="Horizontal">
+                                                    <TextBox Name="tbTrapAMaxWidth" Width="40" Height="20"
+                                                             Text="{Binding Path=TrapAMaxWidth}" />
+                                                    <Button Width="20" Height="20" Content="✓">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Collapsed" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapAMaxWidth}"
+                                                                                 Value="True">
+                                                                        <Setter Property="Visibility"
+                                                                                Value="Visible" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <RepeatButton Width="20"
+                                                                      Height="20"
+                                                                      Command="{Binding Path=TrapAMaxWidthPlusCommand}"
+                                                                      Content="+"
+                                                                      Delay="500"
+                                                                      Interval="100" />
+                                                        <RepeatButton Width="20"
+                                                                      Height="20"
+                                                                      Command="{Binding Path=TrapAMaxWidthMinusCommand}"
+                                                                      Content="-"
+                                                                      Delay="500"
+                                                                      Interval="100" />
+                                                    </StackPanel>
+                                                    <Label VerticalAlignment="Center" Margin="1" Content="[um]"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Orientation="Vertical"
+                                                        ToolTip="Calibrate Trap A maximum height range"
+                                                        HorizontalAlignment="Center">
+                                                <Label VerticalAlignment="Center" HorizontalContentAlignment="Center" Margin="1" Content="Max. Height" Width="100"/>
+                                                <StackPanel Margin="1" HorizontalAlignment="Center" Orientation="Horizontal">
+                                                    <TextBox Name="tbTrapAMaxHeight" Width="40" Height="20" Text="{Binding Path=TrapAMaxHeight}" />
+                                                    <Button Width="20" Height="20" Content="✓">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Collapsed" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapAMaxHeight}"
+                                                                                 Value="True">
+                                                                        <Setter Property="Visibility"
+                                                                                Value="Visible" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <RepeatButton Width="20"
+                                                                      Height="20"
+                                                                      Command="{Binding Path=TrapAMaxHeightPlusCommand}"
+                                                                      Content="+"
+                                                                      Delay="500"
+                                                                      Interval="100" />
+                                                        <RepeatButton Width="20"
+                                                                      Height="20"
+                                                                      Command="{Binding Path=TrapAMaxHeightMinusCommand}"
+                                                                      Content="-"
+                                                                      Delay="500"
+                                                                      Interval="100" />
+                                                    </StackPanel>
+                                                    <Label VerticalAlignment="Center" Margin="1" Content="[um]"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                </StackPanel>
+                            </GroupBox>
+                            <!--Advanced Trap B-->
+                            <GroupBox Margin="1"
+                                  BorderBrush="#FFFFFFFF">
+                                <GroupBox.Header>
+                                    <Label Content="Trap B" />
+                                </GroupBox.Header>
+                                <StackPanel HorizontalAlignment="Left"
+                                        Orientation="Vertical">
+                                    <StackPanel HorizontalAlignment="Left"
+                                        Orientation="Horizontal">
+                                        <StackPanel Width="140"
+                                                    HorizontalAlignment="Left"
+                                                    ToolTip="Calibrate Trap B offsets">
+                                            <RepeatButton Width="20"
+                                                          Height="20"
+                                                          Margin="92,0,0,0"
+                                                          HorizontalAlignment="Left"
+                                                          Command="{Binding Path=TrapBOffsetPlusCommand}"
+                                                          CommandParameter="1"
+                                                          Content="+"
+                                                          Delay="500"
+                                                          Interval="100" />
+                                            <StackPanel Orientation="Horizontal">
+                                                <Label Width="70"
+                                                       VerticalAlignment="Center"
+                                                       Content="X, Y Offset"
+                                                       Foreground="#FFFFFFFF" />
+                                                <RepeatButton Width="20"
+                                                              Height="20"
+                                                              Command="{Binding Path=TrapBOffsetMinusCommand}"
+                                                              CommandParameter="0"
+                                                              Content="-"
+                                                              Delay="500"
+                                                              Interval="100" />
+                                                <RepeatButton Width="20"
+                                                              Height="20"
+                                                              Command="{Binding Path=TrapBOffsetResetCommand}"
+                                                              Content="0"
+                                                              Delay="500"
+                                                              Interval="100" />
+                                                <RepeatButton Width="20"
+                                                              Height="20"
+                                                              Command="{Binding Path=TrapBOffsetPlusCommand}"
+                                                              CommandParameter="0"
+                                                              Content="+"
+                                                              Delay="500"
+                                                              Interval="100" />
+                                            </StackPanel>
+                                            <StackPanel Margin="10,0,0,0" Orientation="Horizontal">
+                                                <TextBox Name="tbTrapBOffsetX"
+                                                         Width="40"
+                                                         VerticalAlignment="Center"
+                                                         Text="{Binding Path=TrapBOffset[0].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnValidationError=True, ValidatesOnDataErrors=True}" 
+                                                         validator:Validation.ValidationType="{x:Type system:Double}"
+                                                         validator:Validation.NoEmptyValue="True"
+                                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"/>
+                                                <Button Width="30"
+                                                    Content="✓">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapBOffsetX}"
+                                                                         Value="True">
+                                                                    <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                                <TextBox Name="tbTrapBOffsetY"
+                                                         Width="40"
+                                                         VerticalAlignment="Center"
+                                                         Text="{Binding Path=TrapBOffset[1].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnValidationError=True, ValidatesOnDataErrors=True}" 
+                                                         validator:Validation.ValidationType="{x:Type system:Double}"
+                                                         validator:Validation.NoEmptyValue="True"
+                                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"/>
+                                                <Button Width="30"
+                                                    Content="✓">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapBOffsetY}"
+                                                                         Value="True">
+                                                                    <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                                <RepeatButton Width="20"
+                                                              Height="20"
+                                                              Command="{Binding Path=TrapBOffsetMinusCommand}"
+                                                              CommandParameter="1"
+                                                              Content="-"
+                                                              Delay="500"
+                                                              Interval="100" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <StackPanel Width="140"
+                                                    Margin="30,0,0,0"
+                                                    ToolTip="Calibrate Trap B scales">
+                                            <RepeatButton Width="20"
+                                                          Height="20"
+                                                          Margin="92,0,0,0"
+                                                          HorizontalAlignment="Left"
+                                                          Command="{Binding Path=TrapBScalePlusCommand}"
+                                                          CommandParameter="1"
+                                                          Content="+"
+                                                          Delay="500"
+                                                          Interval="100" />
+                                            <StackPanel Orientation="Horizontal">
+                                                <Label Width="70"
+                                                       VerticalAlignment="Center"
+                                                       Content="X, Y Scale"
+                                                       Foreground="#FFFFFFFF" />
+                                                <StackPanel Orientation="Horizontal">
+                                                    <RepeatButton Width="20"
+                                                                  Height="20"
+                                                                  Command="{Binding Path=TrapBScaleMinusCommand}"
+                                                                  CommandParameter="0"
+                                                                  Content="-"
+                                                                  Delay="500"
+                                                                  Interval="100" />
+                                                    <RepeatButton Width="20"
+                                                                  Height="20"
+                                                                  Command="{Binding Path=TrapBScaleResetCommand}"
+                                                                  Content="0"
+                                                                  Delay="500"
+                                                                  Interval="100" />
+                                                    <RepeatButton Width="20"
+                                                                  Height="20"
+                                                                  Command="{Binding Path=TrapBScalePlusCommand}"
+                                                                  CommandParameter="0"
+                                                                  Content="+"
+                                                                  Delay="500"
+                                                                  Interval="100" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <StackPanel Margin="10,0,0,0"
+                                                    Orientation="Horizontal">
+                                                <TextBox Name="tbTrapBScaleX"
+                                                         Width="40"
+                                                         VerticalAlignment="Center"
+                                                         Text="{Binding Path=TrapBScale[0].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnValidationError=True, ValidatesOnDataErrors=True}" 
+                                                         validator:Validation.ValidationType="{x:Type system:Double}"
+                                                         validator:Validation.NoEmptyValue="True"
+                                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"/>
+                                                <Button Width="30"
+                                                    Content="✓">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapBScaleX}"
+                                                                         Value="True">
+                                                                    <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                                <TextBox Name="tbTrapBScaleY"
+                                                         Width="40"
+                                                         VerticalAlignment="Center"
+                                                         Text="{Binding Path=TrapBScale[1].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnValidationError=True, ValidatesOnDataErrors=True}" 
+                                                         validator:Validation.ValidationType="{x:Type system:Double}"
+                                                         validator:Validation.NoEmptyValue="True"
+                                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"/>
+                                                <Button Width="30"
+                                                    Content="✓">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapBScaleY}"
+                                                                         Value="True">
+                                                                    <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                                <RepeatButton Width="20"
+                                                              Height="20"
+                                                              Command="{Binding Path=TrapBScaleMinusCommand}"
+                                                              CommandParameter="1"
+                                                              Content="-"
+                                                              Delay="500"
+                                                              Interval="100" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel HorizontalAlignment="Left"
+                                                Orientation="Horizontal">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Calibrate Trap B angle">
+                                                <Label VerticalAlignment="Center" HorizontalContentAlignment="Center" Margin="1" Content="Angle" Width="100"/>
+                                                <StackPanel Margin="1" HorizontalAlignment="Center" Orientation="Horizontal">
+                                                    <TextBox Name="tbTrapBAngle"
+                                                             Width="35"
+                                                             Height="20"
+                                                             Text="{Binding Path=TrapBAngle}" />
+                                                    <Button Width="20" Height="20" Content="✓">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Collapsed" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapBAngle}"
+                                                                                 Value="True">
+                                                                        <Setter Property="Visibility"
+                                                                                Value="Visible" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <RepeatButton Width="20"
+                                                                      Height="20"
+                                                                      Command="{Binding Path=TrapBAnglePlusCommand}"
+                                                                      Content="+"
+                                                                      Delay="500"
+                                                                      Interval="100" />
+                                                        <RepeatButton Width="20"
+                                                                      Height="20"
+                                                                      Command="{Binding Path=TrapBAngleMinusCommand}"
+                                                                      Content="-"
+                                                                      Delay="500"
+                                                                      Interval="100" />
+                                                    </StackPanel>
+                                                    <Label VerticalAlignment="Center" Margin="1" Content="[deg]"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Calibrate Trap B maximum width range">
+                                                <Label VerticalAlignment="Center" HorizontalContentAlignment="Center" Margin="1" Content="Max. Width" Width="100"/>
+                                                <StackPanel Margin="1" HorizontalAlignment="Center" Orientation="Horizontal">
+                                                    <TextBox Name="tbTrapBMaxWidth" Width="40" Height="20" Text="{Binding Path=TrapBMaxWidth}" />
+                                                    <Button Width="20" Height="20" Content="✓">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Collapsed" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapBMaxWidth}"
+                                                                                 Value="True">
+                                                                        <Setter Property="Visibility"
+                                                                                Value="Visible" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <RepeatButton Width="20"
+                                                                      Height="20"
+                                                                      Command="{Binding Path=TrapBMaxWidthPlusCommand}"
+                                                                      Content="+"
+                                                                      Delay="500"
+                                                                      Interval="100" />
+                                                        <RepeatButton Width="20"
+                                                                      Height="20"
+                                                                      Command="{Binding Path=TrapBMaxWidthMinusCommand}"
+                                                                      Content="-"
+                                                                      Delay="500"
+                                                                      Interval="100" />
+                                                    </StackPanel>
+                                                    <Label VerticalAlignment="Center" Margin="1" Content="[um]"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Orientation="Vertical" HorizontalAlignment="Center" ToolTip="Calibrate Trap B maximum height range">
+                                                <Label VerticalAlignment="Center" HorizontalContentAlignment="Center" Margin="1" Content="Max. Height" Width="100"/>
+                                                <StackPanel Margin="1" HorizontalAlignment="Center" Orientation="Horizontal">
+                                                    <TextBox Name="tbTrapBMaxHeight" Width="40" Height="20" Text="{Binding Path=TrapBMaxHeight}" />
+                                                    <Button Width="20" Height="20" Content="✓">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Collapsed" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbTrapBMaxHeight}"
+                                                                                 Value="True">
+                                                                        <Setter Property="Visibility"
+                                                                                Value="Visible" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <RepeatButton Width="20"
+                                                                      Height="20"
+                                                                      Command="{Binding Path=TrapBMaxHeightPlusCommand}"
+                                                                      Content="+"
+                                                                      Delay="500"
+                                                                      Interval="100" />
+                                                        <RepeatButton Width="20"
+                                                                      Height="20"
+                                                                      Command="{Binding Path=TrapBMaxHeightMinusCommand}"
+                                                                      Content="-"
+                                                                      Delay="500"
+                                                                      Interval="100" />
+                                                    </StackPanel>
+                                                    <Label VerticalAlignment="Center" Margin="1" Content="[um]"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                </StackPanel>
+                            </GroupBox>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Name="btnSaveCalibrate" Width="100" Height="30" Margin="3"
+                                        Content="Save Calibration"
+                                        Command="{Binding Path=SaveCalibrationCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Expander>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </Grid>
+</UserControl>

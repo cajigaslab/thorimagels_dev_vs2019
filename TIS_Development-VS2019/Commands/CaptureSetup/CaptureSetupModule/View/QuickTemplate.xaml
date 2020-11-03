@@ -1,0 +1,25 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.QuickTemplate"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:qtctrl="clr-namespace:QuickTemplatesControl;assembly=QuickTemplatesControl"
+             mc:Ignorable="d" 
+             Height="Auto"
+             Width="385">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <qtctrl:QuickTemplatesControlUC 
+            ActiveQuickConfigItemCommand="{Binding Path=ActiveQuickConfigItemCommand}"
+            DeleteQuickConfigItemCommand="{Binding Path=DeleteQuickConfigItemCommand}"
+            OpenQuickConfigCommand ="{Binding Path=OpenQuickConfigCommand}"
+            QuickConfigCollection ="{Binding Path=QuickConfigCollection}" >
+        </qtctrl:QuickTemplatesControlUC>
+    </Grid>
+</UserControl>

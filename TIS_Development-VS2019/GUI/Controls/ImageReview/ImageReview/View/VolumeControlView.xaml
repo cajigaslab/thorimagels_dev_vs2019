@@ -1,0 +1,74 @@
+﻿<UserControl x:Class="ImageReviewDll.View.VolumeControlView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:View="clr-namespace:ImageReviewDll.View"
+             xmlns:ViewModel="clr-namespace:ImageReviewDll.ViewModel"
+             xmlns:vcInterface="clr-namespace:VolumeControlInterface;assembly=VolumeControlInterface"
+             Name="volumeUserControl"
+             Width="700"
+             Height="700">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <DataTemplate DataType="{x:Type ViewModel:ImageReviewViewModel}">
+                <View:VolumeControlView />
+            </DataTemplate>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid Name="volumeMainGrid">
+        <vcInterface:VolumeControlInterface Name="VolumeInterface"
+                                            Width="Auto"
+                                            Height="Auto"
+                                            Margin="1"
+                                            BlackPoint0="{Binding Path=BlackPoint0,
+                                                                  Mode=TwoWay,
+                                                                  UpdateSourceTrigger=PropertyChanged}"
+                                            BlackPoint1="{Binding Path=BlackPoint1,
+                                                                  Mode=TwoWay,
+                                                                  UpdateSourceTrigger=PropertyChanged}"
+                                            BlackPoint2="{Binding Path=BlackPoint2,
+                                                                  Mode=TwoWay,
+                                                                  UpdateSourceTrigger=PropertyChanged}"
+                                            BlackPoint3="{Binding Path=BlackPoint3,
+                                                                  Mode=TwoWay,
+                                                                  UpdateSourceTrigger=PropertyChanged}"
+                                            DataSpacingZ="{Binding Path=ZVolumeSpacing,
+                                                                   Mode=TwoWay,
+                                                                   UpdateSourceTrigger=PropertyChanged}"
+                                            OutputDirectory="{Binding Path=OutputDirectory,
+                                                                      Mode=TwoWay,
+                                                                      UpdateSourceTrigger=PropertyChanged}"
+                                            OutputExperiment="{Binding Path=OutputExperiment,
+                                                                       Mode=TwoWay,
+                                                                       UpdateSourceTrigger=PropertyChanged}"
+                                            TileIndex="{Binding Path=SubTileIndex,
+                                                                Mode=OneWay,
+                                                                UpdateSourceTrigger=PropertyChanged}"
+                                            TimePointIndex="{Binding Path=TValue3D,
+                                                                     Mode=OneWay,
+                                                                     UpdateSourceTrigger=PropertyChanged}"
+                                            ZStreamIndex="{Binding Path=ZStreamValue3D,
+                                                                     Mode=OneWay,
+                                                                     UpdateSourceTrigger=PropertyChanged}"
+                                            WellIndex="{Binding Path=SampleSiteIndex,
+                                                                Mode=OneWay,
+                                                                UpdateSourceTrigger=PropertyChanged}"
+                                            WhitePoint0="{Binding Path=WhitePoint0,
+                                                                  Mode=TwoWay,
+                                                                  UpdateSourceTrigger=PropertyChanged}"
+                                            WhitePoint1="{Binding Path=WhitePoint1,
+                                                                  Mode=TwoWay,
+                                                                  UpdateSourceTrigger=PropertyChanged}"
+                                            WhitePoint2="{Binding Path=WhitePoint2,
+                                                                  Mode=TwoWay,
+                                                                  UpdateSourceTrigger=PropertyChanged}"
+                                            WhitePoint3="{Binding Path=WhitePoint3,
+                                                                  Mode=TwoWay,
+                                                                  UpdateSourceTrigger=PropertyChanged}"
+                                            ZStackCacheDirectory="{Binding Path=ExperimentFolderPath,
+                                                                           Mode=OneWay,
+                                                                           UpdateSourceTrigger=PropertyChanged}" />
+    </Grid>
+</UserControl>

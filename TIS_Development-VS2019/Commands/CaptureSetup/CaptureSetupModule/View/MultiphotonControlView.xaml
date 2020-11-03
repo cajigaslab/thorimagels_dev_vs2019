@@ -1,0 +1,66 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.MultiphotonControlView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:View="clr-namespace:CaptureSetupDll.View"
+             xmlns:validator="clr-namespace:Validations;assembly=Validations"
+             xmlns:tc="clr-namespace:ThemeControl;assembly=ThemeControl"
+             xmlns:mc="clr-namespace:MultiphotonControl;assembly=MultiphotonControl"
+             Height="Auto"
+             Width="400">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <Style TargetType="{x:Type ListBox}">
+                <Setter Property="ListBox.ItemTemplate">
+                    <Setter.Value>
+                        <DataTemplate>
+                            <ToggleButton Content="{Binding}"
+                                          IsChecked="{Binding IsSelected, Mode=TwoWay, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" />
+                        </DataTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <mc:MultiphotonControlUC 
+            BeamStabilizerAvailable="{Binding Path=BeamStabilizerAvailable, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+BeamStabilizerBPACentroidX="{Binding Path=BeamStabilizerBPACentroidX, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+BeamStabilizerBPACentroidY="{Binding Path=BeamStabilizerBPACentroidY, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+BeamStabilizerBPAExposure="{Binding Path=BeamStabilizerBPAExposure, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+BeamStabilizerBPBCentroidX="{Binding Path=BeamStabilizerBPBCentroidX, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+BeamStabilizerBPBCentroidY="{Binding Path=BeamStabilizerBPBCentroidY, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+BeamStabilizerBPBExposure="{Binding Path=BeamStabilizerBPBExposure, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+BeamStabilizerCentroidInRange="{Binding Path=BeamStabilizerCentroidInRange, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+BeamStabilizerDataVisibility="{Binding Path=BeamStabilizerDataVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+BeamStabilizerExpInRange="{Binding Path=BeamStabilizerExpInRange, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+BeamStabilizerPiezo1Pos="{Binding Path=BeamStabilizerPiezo1Pos, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+BeamStabilizerPiezo2Pos="{Binding Path=BeamStabilizerPiezo2Pos, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+BeamStabilizerPiezo3Pos="{Binding Path=BeamStabilizerPiezo3Pos, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+BeamStabilizerPiezo4Pos="{Binding Path=BeamStabilizerPiezo4Pos, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+BeamStabilizerPiezoInRange="{Binding Path=BeamStabilizerPiezoInRange, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+Laser1FastSeqVisibility="{Binding Path=Laser1FastSeqVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+Laser1GoCommand="{Binding Path=Laser1GoCommand}"
+Laser1MinusCommand="{Binding Path=Laser1MinusCommand}"
+Laser1PlusCommand="{Binding Path=Laser1PlusCommand}"
+Laser1Position="{Binding Path=Laser1Position, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+Laser1PositionGo="{Binding Path=Laser1PositionGo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+Laser1SeqEnable="{Binding Path=Laser1SeqEnable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+Laser1SeqPos1="{Binding Path=Laser1SeqPos1, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+Laser1SeqPos2="{Binding Path=Laser1SeqPos2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+LaserShutter2Position="{Binding Path=LaserShutter2Position, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+LaserShutter2Visibility="{Binding Path=LaserShutter2Visibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+LaserShutterPosition="{Binding Path=LaserShutterPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+PresetWavelengthAssignCommand="{Binding Path=PresetWavelengthAssignCommand}"
+PresetWavelengthCommand="{Binding Path=PresetWavelengthCommand}"
+PresetWavelengthNames="{Binding Path=PresetWavelengthNames, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+RealignBeamCommand="{Binding Path=RealignBeamCommand}"
+ResetFactoryAlignmentCommand="{Binding Path=ResetFactoryAlignmentCommand}"
+            
+            >
+            
+        </mc:MultiphotonControlUC>
+    </Grid>
+</UserControl>

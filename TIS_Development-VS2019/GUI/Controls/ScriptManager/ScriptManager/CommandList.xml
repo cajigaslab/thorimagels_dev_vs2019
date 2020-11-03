@@ -1,0 +1,14 @@
+﻿<?xml version="1.0"?>
+<CommandList>
+<Command name="Capture" guid="30db4357-7508-46c9-84eb-3ca0900aa4c5" panel="C:\TIS\GUI\Controls\ExperimentSettingsViewer\ExperimentSettingsViewer\bin\Debug\ExperimentSettingsViewer.dll">
+	<Experiment value=""/>
+<OutputPath value=""/>
+</Command>
+  <Command name="Run ImageJ Macro" guid="C1391459-132F-45ea-AE72-D7BEB2BD8086" panel="C:\TIS\GUI\Controls\FijiLauncher\FijiLauncherPanel\bin\Debug\FijiLauncherPanel.dll" description="">
+    <Macro value="" />
+    <DataFolder value="" />
+    <FijiExe value="C:\Users\user\Downloads\fiji-win64\Fiji.app\ImageJ-win64.exe" />
+    <Headless value="0" />
+  </Command>
+
+</CommandList>

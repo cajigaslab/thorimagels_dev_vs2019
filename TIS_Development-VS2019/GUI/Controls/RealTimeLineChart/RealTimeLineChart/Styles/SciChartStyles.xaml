@@ -1,0 +1,84 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sci="http://schemas.abtsoftware.co.uk/scichart">
+
+    <!-- Define style for the rollover -->
+    <Style x:Key="CursorLineStyle"
+           TargetType="Line">
+        <Setter Property="StrokeThickness"
+                Value="1" />
+        <Setter Property="Stroke"
+                Value="SlateGray " />
+        <Setter Property="StrokeDashArray"
+                Value="2 2" />
+    </Style>
+
+    <!-- Define style for the Selection -->
+    <Style x:Key="SelectionStyle"
+           TargetType="{x:Type Shape}">
+        <Setter Property="Fill"
+                Value="#33FF0000" />
+        <!--<Setter Property="Stroke"
+            Value="LightGray" />-->
+        <Setter Property="StrokeThickness"
+                Value="1" />
+        <Setter Property="StrokeDashArray"
+                Value="2, 2" />
+    </Style>
+
+    <!-- Define style for the SciChartScrollbar -->
+    <Style x:Key="ScrollbarStyle"
+           TargetType="sci:SciChartScrollbar">
+        <Setter Property="GripsThickness"
+                Value="10" />
+
+        <!-- Define style for resizing grips -->
+        <Setter Property="GripsStyle">
+            <Setter.Value>
+                <Style TargetType="Control">
+                    <Setter Property="VerticalAlignment"
+                            Value="Bottom" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Control">
+                                <Border BorderThickness="2,2,2,2"
+                                        CornerRadius="4"
+                                        BorderBrush="Transparent"
+                                        Background="Transparent"
+                                        Height="15">
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Setter.Value>
+        </Setter>
+        <!-- Define style for viewport area -->
+        <Setter Property="ViewportStyle">
+            <Setter.Value>
+                <Style TargetType="Control">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Control">
+                                <Border BorderThickness="0,1,0,1"
+                                        CornerRadius="4"
+                                        BorderBrush="Black"
+                                        Background="DimGray" />
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Setter.Value>
+        </Setter>
+
+        <!-- Define style for non selected area -->
+        <Setter Property="NonSelectedAreaStyle">
+            <Setter.Value>
+                <Style TargetType="Path">
+                    <Setter Property="Fill"
+                            Value="#33000000" />
+                </Style>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

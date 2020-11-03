@@ -1,0 +1,41 @@
+﻿<UserControl x:Class="SpinnerProgress.SpinnerProgressCancel"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:Spin="clr-namespace:SpinnerProgress"
+        Name="winSpinCancel" 
+        Height="300" Width="400" Background="Transparent">
+    <Grid Background="#FF595959" Opacity="0.9">
+        <Grid.RowDefinitions>
+            <RowDefinition Height = "2*"/>
+            <RowDefinition Height = "5*"/>
+            <RowDefinition Height = "2*"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row = "0" Background="#FF333333" >
+            <TextBlock HorizontalAlignment="Center" Margin="0" VerticalAlignment="Center" Text="" Background="{x:Null}" Foreground="#FFFFFFFF" FontSize="20" TextAlignment="Left"/>
+        </Grid>
+        <Grid Grid.Row = "1" Grid.Column = "1">
+            <StackPanel Orientation="Vertical">
+                <Canvas Width="105" Margin="5"
+                                Height="105" Name="CanvasSpinProgress">
+                    <!--Define a boundary to enclose the control-->
+                    <Spin:SpinnerProgressControl  x:Name="spinProgress" SpinnerHeight="50" SpinnerWidth="50" />
+                </Canvas>
+                <Label  Name="lblloading" HorizontalAlignment="Center" Margin="5" VerticalAlignment="Center" FontSize="15"
+                        HorizontalContentAlignment="Center" Foreground="#FFFFFFFF"/>
+            </StackPanel>
+        </Grid>
+        <Grid Grid.Row = "2" Grid.Column = "1" Background="#FF333333">
+            <StackPanel Orientation="Vertical">
+                <Label  Name="lblProgress" HorizontalAlignment="Left" Margin="65,0,0,0" VerticalAlignment="Center" Width="120" Content="0%" HorizontalContentAlignment="Center" Foreground="#FFFFFFFF"/>
+                <StackPanel Orientation="Horizontal">
+                    <ProgressBar  Name="pbProgress" HorizontalAlignment="Left" Margin="5,0,40,0" IsIndeterminate="False" VerticalAlignment="Center" Width="240" Height="20" HorizontalContentAlignment="Center" Foreground="#FFFFFFFF" Background="#FF808080"
+                                  Minimum="0"
+                                  Maximum="100"/>
+                    <Button x:Name="btnCancel" Click="btnCancel_Click" HorizontalAlignment="Right" Width="100" Height="20" Content="Cancel"/>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

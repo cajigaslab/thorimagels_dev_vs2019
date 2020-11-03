@@ -1,0 +1,70 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.KuriosFilterView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:kf="clr-namespace:KuriosControl;assembly=KuriosControl"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             Width="Auto"
+             Height="Auto">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Row="0"
+                    Grid.Column="0"
+                    Margin="3"
+                    Orientation="Vertical">
+            <StackPanel>
+                <kf:KuriosDisplay Name="kfControl"
+                                  Width="Auto"
+                                  CurrentExposure="{Binding Path=ExposureTimeCam,
+                                                            Mode=TwoWay,
+                                                            UpdateSourceTrigger=PropertyChanged}"
+                                  ExposureMax="{Binding Path=ExposureTimeMax,
+                                                        Mode=OneWay,
+                                                        UpdateSourceTrigger=PropertyChanged}"
+                                  ExposureMin="{Binding Path=ExposureTimeMin,
+                                                        Mode=OneWay,
+                                                        UpdateSourceTrigger=PropertyChanged}"
+                                  KuriosBandwidthModeIndex="{Binding Path=KuriosBandwidthModeIndex,
+                                                                     Mode=TwoWay,
+                                                                     UpdateSourceTrigger=PropertyChanged}"
+                                  KuriosCurrentWavelengthSequenceName="{Binding Path=KuriosCurrentWavelengthSequenceName,
+                                                                                Mode=TwoWay,
+                                                                                UpdateSourceTrigger=PropertyChanged}"
+                                  KuriosStartWavelength="{Binding Path=KuriosStartWL,
+                                                                 Mode=TwoWay,
+                                                                 UpdateSourceTrigger=PropertyChanged}"
+                                  KuriosStepCount="{Binding Path=KuriousSequenceSteps,
+                                                            Mode=TwoWay,
+                                                            UpdateSourceTrigger=PropertyChanged}"
+                                  KuriosStepSize="{Binding Path=KuriosStepSizeWL,
+                                                           Mode=TwoWay,
+                                                           UpdateSourceTrigger=PropertyChanged}"
+                                  KuriosStopWavelength="{Binding Path=KuriosStopWL,
+                                                                Mode=TwoWay,
+                                                                UpdateSourceTrigger=PropertyChanged}"
+                                  KuriosWavelength="{Binding Path=KuriosWavelength,
+                                                             Mode=TwoWay,
+                                                             UpdateSourceTrigger=PropertyChanged}"
+                                  KuriosWavelengthMax="{Binding Path=KuriosWavelengthMax,
+                                                                Mode=OneWay,
+                                                                UpdateSourceTrigger=PropertyChanged}"
+                                  KuriosWavelengthMin="{Binding Path=KuriosWavelengthMin,
+                                                                Mode=OneWay,
+                                                                UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

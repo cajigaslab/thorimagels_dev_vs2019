@@ -1,0 +1,10 @@
+#===========================================
+#    Thor MCLS 405nm Linearization Table
+#
+# All table values should be between 0 and 1
+#===========================================
+#  In Power%  ||  Out Power%
+#------------------------------
+#  Comments start with # 
+0	0
+1	1

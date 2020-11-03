@@ -1,0 +1,70 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptManagerModule", "ScriptManager\ScriptManagerModule.csproj", "{0E69AD1D-65D1-4145-9B8C-D9A7BA60CFEB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptManagerTestApp", "ScriptManagerTestApp\ScriptManagerTestApp.csproj", "{83BF664C-76DE-409D-8CAE-81052C5F967A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0E69AD1D-65D1-4145-9B8C-D9A7BA60CFEB} = {0E69AD1D-65D1-4145-9B8C-D9A7BA60CFEB}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptFijiProcessingModule", "ScriptFijiProcessing\ScriptFijiProcessingModule.csproj", "{8E3F2473-FDA7-4ABE-B567-22EDD1037BD7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptRunMatlabModule", "ScriptRunMatlabModule\ScriptRunMatlabModule.csproj", "{0AEE7C0D-78E1-453D-AD41-659C50D558FA}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 5
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://stl-tfs1:8080/tfs/thorimagels
+		SccLocalPath0 = .h
+		SccProjectFilePathRelativizedFromConnection0 = ..\\
+		SccProjectUniqueName1 = ScriptManager\\ScriptManagerModule.csproj
+		SccProjectName1 = ScriptManager
+		SccLocalPath1 = ScriptManager
+		SccProjectUniqueName2 = ScriptManagerTestApp\\ScriptManagerTestApp.csproj
+		SccProjectName2 = ScriptManagerTestApp
+		SccLocalPath2 = ScriptManagerTestApp
+		SccProjectUniqueName3 = ScriptFijiProcessing\\ScriptFijiProcessingModule.csproj
+		SccProjectName3 = ScriptFijiProcessing
+		SccLocalPath3 = ScriptFijiProcessing
+		SccProjectUniqueName4 = ScriptRunMatlabModule\\ScriptRunMatlabModule.csproj
+		SccProjectName4 = ScriptRunMatlabModule
+		SccLocalPath4 = ScriptRunMatlabModule
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0E69AD1D-65D1-4145-9B8C-D9A7BA60CFEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E69AD1D-65D1-4145-9B8C-D9A7BA60CFEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E69AD1D-65D1-4145-9B8C-D9A7BA60CFEB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0E69AD1D-65D1-4145-9B8C-D9A7BA60CFEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E69AD1D-65D1-4145-9B8C-D9A7BA60CFEB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E69AD1D-65D1-4145-9B8C-D9A7BA60CFEB}.Release|x86.ActiveCfg = Release|Any CPU
+		{83BF664C-76DE-409D-8CAE-81052C5F967A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83BF664C-76DE-409D-8CAE-81052C5F967A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83BF664C-76DE-409D-8CAE-81052C5F967A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{83BF664C-76DE-409D-8CAE-81052C5F967A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83BF664C-76DE-409D-8CAE-81052C5F967A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83BF664C-76DE-409D-8CAE-81052C5F967A}.Release|x86.ActiveCfg = Release|Any CPU
+		{8E3F2473-FDA7-4ABE-B567-22EDD1037BD7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E3F2473-FDA7-4ABE-B567-22EDD1037BD7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E3F2473-FDA7-4ABE-B567-22EDD1037BD7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8E3F2473-FDA7-4ABE-B567-22EDD1037BD7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E3F2473-FDA7-4ABE-B567-22EDD1037BD7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E3F2473-FDA7-4ABE-B567-22EDD1037BD7}.Release|x86.ActiveCfg = Release|Any CPU
+		{0AEE7C0D-78E1-453D-AD41-659C50D558FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0AEE7C0D-78E1-453D-AD41-659C50D558FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0AEE7C0D-78E1-453D-AD41-659C50D558FA}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0AEE7C0D-78E1-453D-AD41-659C50D558FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0AEE7C0D-78E1-453D-AD41-659C50D558FA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0AEE7C0D-78E1-453D-AD41-659C50D558FA}.Release|x86.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

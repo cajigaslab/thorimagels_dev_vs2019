@@ -1,0 +1,87 @@
+﻿<UserControl x:Class="ImageReviewDll.View.ImageTilerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:tc="clr-namespace:ImageTilerControl;assembly=ImageTilerControl">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+        <Grid>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Margin="1"
+                    VerticalAlignment="Stretch">
+                <StackPanel>
+                    <Button x:Name="btnShowMostRecent"
+                            Width="120"
+                            Height="40"
+                            Content="Show Most Recent"
+                            Margin="1"
+                            Click="btnShowMostRecent_Click" />
+                    <Button x:Name="btnSelectTDIExperiment"
+                            Width="120"
+                            Height="40"
+                            Content="Select Experiment"
+                            Margin="1"
+                            Click="btnSelectTDIExperiment_Click" />
+
+                    <Border Margin="1"
+                            VerticalAlignment="Stretch">
+                        <StackPanel>
+                            <Label Foreground="White"
+                                   Content="Experiment:" />
+                            <TextBlock x:Name="txtSelectedTDIExperiment"
+                                       Text="None"
+                                       Width="200"
+                                       Margin="1"
+                                       Foreground="White"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                    <CheckBox x:Name="cbClickToMove"
+                              Height="16"
+                              Width="160"
+                              Margin="1"
+                              Foreground="White"
+                              Checked="cbClickToMove_Checked"
+                              Unchecked="cbClickToMove_Checked"
+                              HorizontalAlignment="Left"
+                              IsChecked="True">Right-click to move stage</CheckBox>
+                    <StackPanel Height="25"
+                                Width="200"
+                                Orientation="Horizontal"
+                                Margin="1">
+                        <TextBlock Height="21"
+                                   Width="100"
+                                   Foreground="White"
+                                   Text="Mouse over tile : "
+                                   HorizontalAlignment="Left" />
+                        <TextBlock x:Name="txtMouseOverGrid"
+                                   Height="21"
+                                   Width="60"
+                                   Foreground="White"
+                                   Text="(0,0)" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+            <Border Name="imageTilerBorder"
+                    Margin="1"
+                    VerticalAlignment="Stretch"
+                    SizeChanged="imageTilerBorder_SizeChanged"
+                    Grid.Column="1">
+                <tc:UserControl1 Name="imageTilerControl"
+                                 Margin="1"
+                                 Width="auto"
+                                 HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Stretch"
+                                 BorderThickness="0" />
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

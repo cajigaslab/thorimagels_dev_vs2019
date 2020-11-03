@@ -1,0 +1,432 @@
+﻿<Window x:Class="XYTileControl.SampleCarrierTemplate"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:c="clr-namespace:XYTileControl.Converter"
+        xmlns:theme="clr-namespace:ThemeControl;assembly=ThemeControl"
+        Name="CarrierTemplate"
+        Title="SampleCarrierTemplate"
+        Width="1024"
+        Height="615"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <ResourceDictionary>
+            <c:FontSizeConverter x:Key="fontSizeConverter" />
+            <LinearGradientBrush x:Key="DarkBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientBrush.GradientStops>
+                    <GradientStopCollection>
+                        <GradientStop Offset="0.0" Color="#FFF" />
+                        <GradientStop Offset="1.0" Color="#AAA" />
+                    </GradientStopCollection>
+                </GradientBrush.GradientStops>
+            </LinearGradientBrush>
+            <Style x:Key="BorderStyle" TargetType="Border">
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{StaticResource DarkBrush}" />
+                    </Trigger>
+                    <Trigger Property="IsMouseOver" Value="False">
+                        <Setter Property="Background" Value="#FF333333" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            <Style x:Key="BorderStyleSelected" TargetType="Border">
+                <Setter Property="Background" Value="Silver" />
+            </Style>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0"
+                    Height="574"
+                    Background="#FF333333">
+            <Label Height="25"
+                   Content="Sample Carrier :"
+                   Foreground="Ivory" />
+            <ListView Name="SampleCarrier"
+                      Height="525"
+                      Background="Transparent"
+                      BorderBrush="Transparent"
+                      BorderThickness="0"
+                      SelectedIndex="{Binding CarrierSelectedIndex,
+                                              Mode=TwoWay}"
+                      SelectionChanged="SampleCarrier_SelectionChanged">
+                <ListView.Resources>
+                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent" />
+                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black" />
+                    <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="Transparent" />
+                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="Transparent" />
+                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="Transparent" />
+                </ListView.Resources>
+            </ListView>
+            <StackPanel Orientation="Horizontal">
+                <Button Name="AddSlide"
+                        Width="50"
+                        Height="23"
+                        PreviewMouseDown="Add_PreviewMouseDown"
+                        ToolTip="Add Slide">
+                    <Image Width="15"
+                           Height="15"
+                           Source="/XYTileControl;component/Point.png" />
+                </Button>
+                <Button Name="DeleteCarrier"
+                        Width="50"
+                        Height="23"
+                        PreviewMouseDown="Delete_PreviewMouseDown"
+                        ToolTip="Delete Selected Carrier">
+                    <Image Width="15"
+                           Height="15"
+                           Source="/XYTileControl;component/minus.png" />
+                </Button>
+            </StackPanel>
+        </StackPanel>
+        <DockPanel Grid.Column="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="400" />
+                    <RowDefinition Height="176" />
+                </Grid.RowDefinitions>
+                <StackPanel Grid.Row="0">
+                    <Canvas Name="CarrierCanvas"
+                            Height="400"
+                            Background="Snow" />
+                </StackPanel>
+                <Border Grid.Row="1" BorderThickness="0">
+                    <StackPanel VerticalAlignment="Stretch" Orientation="Horizontal">
+                        <StackPanel Width="230">
+                            <Label Content="Overview :" FontSize="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=FontSize, Converter={StaticResource fontSizeConverter}}" />
+                            <StackPanel Orientation="Horizontal">
+                                <Label Width="50" Content="Name :" />
+                                <TextBox Name="TemplateName"
+                                         Width="120"
+                                         Height="20"
+                                         Text="{Binding ElementName=CarrierTemplate,
+                                                        Path=CarrierName,
+                                                        Mode=TwoWay,
+                                                        UpdateSourceTrigger=LostFocus}" />
+                                <Button Width="20"
+                                        Height="20"
+                                        VerticalAlignment="Center"
+                                        Content="✓">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=TemplateName}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Width="50" Content="Type :" />
+                                <ComboBox Name="TypeComboBox"
+                                          Width="120"
+                                          Height="20"
+                                          SelectedIndex="{Binding ElementName=CarrierTemplate,
+                                                                  Path=CarrierTypeIndex,
+                                                                  Mode=TwoWay,
+                                                                  UpdateSourceTrigger=PropertyChanged}">
+                                    <ComboBoxItem>Slide</ComboBoxItem>
+                                    <ComboBoxItem>Well Plate</ComboBoxItem>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Width="50"
+                                       Content="Width :"
+                                       ToolTip="Width of Plate" />
+                                <TextBox Name="TemplateWidth"
+                                         Width="120"
+                                         Height="20"
+                                         Text="{Binding ElementName=CarrierTemplate,
+                                                        Path=CarrierWidth,
+                                                        Mode=TwoWay,
+                                                        UpdateSourceTrigger=LostFocus}" />
+                                <Button Width="20"
+                                        Height="20"
+                                        VerticalAlignment="Center"
+                                        Content="✓">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=TemplateWidth}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <Label Width="50" Content="[ mm ]" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Width="50"
+                                       Content="Length :"
+                                       ToolTip="Length of Plate" />
+                                <TextBox Name="TemplateHeight"
+                                         Width="120"
+                                         Height="20"
+                                         Text="{Binding ElementName=CarrierTemplate,
+                                                        Path=CarrierHeight,
+                                                        Mode=TwoWay,
+                                                        UpdateSourceTrigger=LostFocus}" />
+                                <Button Width="20"
+                                        Height="20"
+                                        VerticalAlignment="Center"
+                                        Content="✓">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=TemplateHeight}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <Label Width="50" Content="[ mm ]" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Width="230">
+                            <Label Content="Well Size :" FontSize="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=FontSize, Converter={StaticResource fontSizeConverter}}" />
+                            <StackPanel Orientation="Horizontal">
+                                <Label Width="60"
+                                       Content="Row :"
+                                       ToolTip="Rows of Wells" />
+                                <TextBox Name="TemplateWellRow"
+                                         Width="100"
+                                         Height="20"
+                                         IsReadOnly="{Binding ElementName=CarrierTemplate,
+                                                              Path=IsSlideChosen,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                         Text="{Binding ElementName=CarrierTemplate,
+                                                        Path=WellRow,
+                                                        Mode=TwoWay,
+                                                        UpdateSourceTrigger=LostFocus}" />
+                                <Button Width="20"
+                                        Height="20"
+                                        VerticalAlignment="Center"
+                                        Content="✓">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding Path=IsFocused, ElementName=TemplateWellRow}" Value="True" />
+                                                        <Condition Binding="{Binding Path=SelectedIndex, ElementName=TypeComboBox}" Value="1" />
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Width="60"
+                                       Content="Column :"
+                                       ToolTip="Column of Wells" />
+                                <TextBox Name="TemplateWellColumn"
+                                         Width="100"
+                                         Height="20"
+                                         IsReadOnly="{Binding ElementName=CarrierTemplate,
+                                                              Path=IsSlideChosen,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                         Text="{Binding ElementName=CarrierTemplate,
+                                                        Path=WellColumn,
+                                                        Mode=TwoWay,
+                                                        UpdateSourceTrigger=LostFocus}" />
+                                <Button Width="20"
+                                        Height="20"
+                                        VerticalAlignment="Center"
+                                        Content="✓">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding Path=IsFocused, ElementName=TemplateWellColumn}" Value="True" />
+                                                        <Condition Binding="{Binding Path=SelectedIndex, ElementName=TypeComboBox}" Value="1" />
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Width="60"
+                                       Content="Distance :"
+                                       ToolTip="Well Center-to-center Spacing" />
+                                <TextBox Name="TemplateWellDistance"
+                                         Width="100"
+                                         Height="20"
+                                         IsReadOnly="{Binding ElementName=CarrierTemplate,
+                                                              Path=IsSlideChosen,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                         Text="{Binding ElementName=CarrierTemplate,
+                                                        Path=WellCenterToCenterDistance,
+                                                        Mode=TwoWay,
+                                                        UpdateSourceTrigger=LostFocus}" />
+                                <Button Width="20"
+                                        Height="20"
+                                        VerticalAlignment="Center"
+                                        Content="✓">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding Path=IsFocused, ElementName=TemplateWellDistance}" Value="True" />
+                                                        <Condition Binding="{Binding Path=SelectedIndex, ElementName=TypeComboBox}" Value="1" />
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <Label Width="50" Content="[ mm ]" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Width="60"
+                                       Content="Diameter :"
+                                       ToolTip="Well Diameter" />
+                                <TextBox Name="TemplateWellDiameter"
+                                         Width="100"
+                                         Height="20"
+                                         IsReadOnly="{Binding ElementName=CarrierTemplate,
+                                                              Path=IsSlideChosen,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                         Text="{Binding ElementName=CarrierTemplate,
+                                                        Path=WellDiameter,
+                                                        Mode=TwoWay,
+                                                        UpdateSourceTrigger=LostFocus}" />
+                                <Button Width="20"
+                                        Height="20"
+                                        VerticalAlignment="Center"
+                                        Content="✓">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding Path=IsFocused, ElementName=TemplateWellDiameter}" Value="True" />
+                                                        <Condition Binding="{Binding Path=SelectedIndex, ElementName=TypeComboBox}" Value="1" />
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <Label Width="50" Content="[ mm ]" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Width="230">
+                            <Label Content="" FontSize="14" />
+                            <StackPanel Orientation="Horizontal">
+                                <Label Width="60"
+                                       Content="OffsetX :"
+                                       ToolTip="A1 Row Offset" />
+                                <TextBox Name="TemplateWellOffsetX"
+                                         Width="100"
+                                         Height="20"
+                                         IsReadOnly="{Binding ElementName=CarrierTemplate,
+                                                              Path=IsSlideChosen,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                         Text="{Binding ElementName=CarrierTemplate,
+                                                        Path=WellOffsetX,
+                                                        Mode=TwoWay,
+                                                        UpdateSourceTrigger=LostFocus}" />
+                                <Button Width="20"
+                                        Height="20"
+                                        VerticalAlignment="Center"
+                                        Content="✓">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding Path=IsFocused, ElementName=TemplateWellOffsetX}" Value="True" />
+                                                        <Condition Binding="{Binding Path=SelectedIndex, ElementName=TypeComboBox}" Value="1" />
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <Label Width="50" Content="[ mm ]" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Width="60"
+                                       Content="OffsetY :"
+                                       ToolTip="A1 Column Offset" />
+                                <TextBox Name="TemplateWellOffsetY"
+                                         Width="100"
+                                         Height="20"
+                                         IsReadOnly="{Binding ElementName=CarrierTemplate,
+                                                              Path=IsSlideChosen,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                         Text="{Binding ElementName=CarrierTemplate,
+                                                        Path=WellOffsetY,
+                                                        Mode=TwoWay,
+                                                        UpdateSourceTrigger=LostFocus}" />
+                                <Button Width="20"
+                                        Height="20"
+                                        VerticalAlignment="Center"
+                                        Content="✓">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding Path=IsFocused, ElementName=TemplateWellOffsetY}" Value="True" />
+                                                        <Condition Binding="{Binding Path=SelectedIndex, ElementName=TypeComboBox}" Value="1" />
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <Label Width="50" Content="[ mm ]" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel VerticalAlignment="Bottom" Margin="-10,0,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Width="60"
+                                        Height="40"
+                                        Margin="1"
+                                        Content="OK"
+                                        PreviewMouseDown="Exit_PreviewMouseDown" />
+                                <Button Width="60"
+                                        Height="40"
+                                        Margin="1"
+                                        Content="Cancel"
+                                        PreviewMouseDown="Cancel_PreviewMouseDown" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </DockPanel>
+    </Grid>
+</Window>

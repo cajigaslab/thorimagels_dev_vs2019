@@ -1,0 +1,235 @@
+﻿<Window x:Class="RealTimeLineChart.View.EditBleachDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
+        xmlns:validator="clr-namespace:RealTimeLineChart.InputValidation"
+        Title="Stimulation"
+        ResizeMode="NoResize"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <ResourceDictionary>
+            <validator:DoubleCultureConverter x:Key="doubleCultureConverter" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <StackPanel>
+            <StackPanel Margin="3" Orientation="Horizontal">
+                <Label Width="110"
+                       HorizontalAlignment="Center"
+                       HorizontalContentAlignment="Right"
+                       Content="Mode : " />
+                <Label Width="160"
+                       HorizontalAlignment="Center"
+                       HorizontalContentAlignment="Center"
+                       Content="Stimulation" />
+            </StackPanel>
+            <!--  Bleach StackPanel  -->
+            <StackPanel Name="spBleach">
+                <StackPanel Margin="3" Orientation="Horizontal">
+                    <Label Width="110"
+                           HorizontalContentAlignment="Right"
+                           Content="Trigger Mode: " />
+                    <ComboBox Name="cbAsyncTrigMode"
+                              Width="160"
+                              SelectedIndex="{Binding Path=TriggerBleachMode}">
+                        <ComboBoxItem Content="Free Run" />
+                        <ComboBoxItem Content="HW Trigger Single" />
+                        <ComboBoxItem Content="HW Trigger Retriggerable" />
+                    </ComboBox>
+                </StackPanel>
+                <StackPanel Margin="3">
+                    <StackPanel Margin="3" Orientation="Horizontal">
+                        <Label Width="130"
+                               HorizontalAlignment="Left"
+                               HorizontalContentAlignment="Right"
+                               Content="Cyles :" />
+                        <TextBox Name="tbBlchCycle"
+                                 Width="50"
+                                 Height="20"
+                                 HorizontalAlignment="Center"
+                                 HorizontalContentAlignment="Right"
+                                 Text="{Binding Path=BleachCycle,
+                                                UpdateSourceTrigger=LostFocus,
+                                                ValidatesOnNotifyDataErrors=True,
+                                                NotifyOnValidationError=True}"
+                                 validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                 validator:Validation.MinValue="1"
+                                 validator:Validation.NoEmptyValue="True"
+                                 validator:Validation.ValidationType="{x:Type system:Int32}" />
+                    </StackPanel>
+                    <StackPanel Margin="3" Orientation="Horizontal">
+                        <Label Width="130"
+                               HorizontalAlignment="Left"
+                               HorizontalContentAlignment="Right"
+                               Content="Idle Time :" />
+                        <TextBox Name="tbBlchCycleInterval"
+                                 Width="50"
+                                 Height="20"
+                                 HorizontalAlignment="Center"
+                                 HorizontalContentAlignment="Right"
+                                 Text="{Binding Path=BleachCycleInterval,
+                                                Converter={StaticResource doubleCultureConverter},
+                                                UpdateSourceTrigger=LostFocus,
+                                                ValidatesOnNotifyDataErrors=True,
+                                                NotifyOnValidationError=True}"
+                                 validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                 validator:Validation.MinValue="0.0"
+                                 validator:Validation.NoEmptyValue="True"
+                                 validator:Validation.ValidationType="{x:Type system:Double}" />
+                        <Label Width="40"
+                               HorizontalAlignment="Left"
+                               HorizontalContentAlignment="Left"
+                               Content="[sec]" />
+                    </StackPanel>
+                    <StackPanel Margin="3" Orientation="Horizontal">
+                        <Label Width="110"
+                               HorizontalAlignment="Left"
+                               HorizontalContentAlignment="Center"
+                               Content="PMT SHUTTER" />
+                    </StackPanel>
+                    <StackPanel Margin="3" Orientation="Horizontal">
+                        <Label Width="130"
+                               HorizontalAlignment="Left"
+                               HorizontalContentAlignment="Right"
+                               Content="Close Time :" />
+                        <TextBox Name="ShtClsTxBox"
+                                 Width="50"
+                                 Height="20"
+                                 HorizontalAlignment="Center"
+                                 HorizontalContentAlignment="Right"
+                                 Text="{Binding Path=ClosingPMTShutterDuration,
+                                                Converter={StaticResource doubleCultureConverter},
+                                                UpdateSourceTrigger=LostFocus,
+                                                ValidatesOnNotifyDataErrors=True,
+                                                NotifyOnValidationError=True}"
+                                 validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                 validator:Validation.MinValue="0.0"
+                                 validator:Validation.NoEmptyValue="True"
+                                 validator:Validation.ValidationType="{x:Type system:Double}" />
+                        <Label Width="40"
+                               HorizontalAlignment="Left"
+                               HorizontalContentAlignment="Left"
+                               Content="[ms]" />
+                    </StackPanel>
+                    <StackPanel Margin="3" Orientation="Horizontal">
+                        <Label Width="110"
+                               HorizontalAlignment="Left"
+                               HorizontalContentAlignment="Center"
+                               Content="LIGHT SOURCE" />
+                    </StackPanel>
+                    <StackPanel Margin="3" Orientation="Horizontal">
+                        <Label Width="130"
+                               HorizontalAlignment="Left"
+                               HorizontalContentAlignment="Right"
+                               Content="Stimulation Time :" />
+                        <TextBox Name="BlchTmTxBox"
+                                 Width="50"
+                                 Height="20"
+                                 HorizontalAlignment="Center"
+                                 HorizontalContentAlignment="Right"
+                                 Text="{Binding Path=BleachTime,
+                                                Converter={StaticResource doubleCultureConverter},
+                                                UpdateSourceTrigger=LostFocus,
+                                                ValidatesOnNotifyDataErrors=True,
+                                                NotifyOnValidationError=True}"
+                                 validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                 validator:Validation.MinValue="0.0"
+                                 validator:Validation.NoEmptyValue="True"
+                                 validator:Validation.ValidationType="{x:Type system:Double}" />
+                        <Label Width="40"
+                               HorizontalAlignment="Left"
+                               HorizontalContentAlignment="Left"
+                               Content="[ms]" />
+                    </StackPanel>
+                    <StackPanel Margin="3" Orientation="Horizontal">
+                        <Label Width="130"
+                               HorizontalAlignment="Left"
+                               HorizontalContentAlignment="Right"
+                               Content="Stimulation Idle Time :" />
+                        <TextBox Name="tbBlchIdle"
+                                 Width="50"
+                                 Height="20"
+                                 HorizontalAlignment="Center"
+                                 HorizontalContentAlignment="Right"
+                                 Text="{Binding Path=BleachIdleTime,
+                                                Converter={StaticResource doubleCultureConverter},
+                                                UpdateSourceTrigger=LostFocus,
+                                                ValidatesOnNotifyDataErrors=True,
+                                                NotifyOnValidationError=True}"
+                                 validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                 validator:Validation.MinValue="0.0"
+                                 validator:Validation.NoEmptyValue="True"
+                                 validator:Validation.ValidationType="{x:Type system:Double}" />
+                        <Label Width="40"
+                               HorizontalAlignment="Left"
+                               HorizontalContentAlignment="Left"
+                               Content="[ms]" />
+                    </StackPanel>
+                    <StackPanel Margin="3" Orientation="Horizontal">
+                        <Label Width="130"
+                               HorizontalAlignment="Left"
+                               HorizontalContentAlignment="Right"
+                               Content="Stimulation Iterations :" />
+                        <TextBox Name="tbBlchIteration"
+                                 Width="50"
+                                 Height="20"
+                                 HorizontalAlignment="Center"
+                                 HorizontalContentAlignment="Right"
+                                 Text="{Binding Path=BleachIteration,
+                                                UpdateSourceTrigger=LostFocus,
+                                                ValidatesOnNotifyDataErrors=True,
+                                                NotifyOnValidationError=True}"
+                                 validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                 validator:Validation.MinValue="1"
+                                 validator:Validation.NoEmptyValue="True"
+                                 validator:Validation.ValidationType="{x:Type system:Int32}" />
+                    </StackPanel>
+                    <StackPanel Margin="3" Orientation="Horizontal">
+                        <Label Width="110"
+                               HorizontalAlignment="Left"
+                               HorizontalContentAlignment="Center"
+                               Content="COMPLETE" />
+                    </StackPanel>
+                    <StackPanel Margin="3" Orientation="Horizontal">
+                        <Label Width="130"
+                               HorizontalAlignment="Left"
+                               HorizontalContentAlignment="Right"
+                               Content="Delay Time :" />
+                        <TextBox Name="ShtOpTxBox"
+                                 Width="50"
+                                 Height="20"
+                                 HorizontalAlignment="Center"
+                                 HorizontalContentAlignment="Right"
+                                 Text="{Binding Path=DelayTime,
+                                                Converter={StaticResource doubleCultureConverter},
+                                                UpdateSourceTrigger=LostFocus,
+                                                ValidatesOnNotifyDataErrors=True,
+                                                NotifyOnValidationError=True}"
+                                 validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                 validator:Validation.NoEmptyValue="True"
+                                 validator:Validation.ValidationType="{x:Type system:Double}" />
+                        <Label Width="40"
+                               HorizontalAlignment="Left"
+                               HorizontalContentAlignment="Left"
+                               Content="[ms]" />
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                <Button Name="btnOK"
+                        Width="75"
+                        Height="30"
+                        Margin="3"
+                        Click="btnOK_Click"
+                        Content="OK" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

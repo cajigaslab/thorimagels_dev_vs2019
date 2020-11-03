@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ThorTiberiusSettings>
+
+  <Connection portID="42" baudRate="115200" address="1">   
+  </Connection>
+  <Wavelength wavelengthMin="720" wavelengthMax="1060">   
+  </Wavelength>
+</ThorTiberiusSettings>

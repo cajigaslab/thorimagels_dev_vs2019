@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RealTimeDataSettings>
+  <UserSettings>
+    <SciChart useFifo="1" fifoSize="1000" />
+    <Database pathAndName="C:\Users\Thorlabs\Documents\ThorImageLS\Application Settings\ThorDatabase.db"/>
+	<Save enable="0" path="C:\Temp" name="SyncData001"/>
+  </UserSettings>
+  <DaqDevices>
+    <AcquireBoard type="NI6363" devID="Dev3" active="1" totalAI="8" totalDI="6" duration="0.1" StimulusLimit="-0.5" hwTrigMode="0" hwTrigChannel="/PFI8" hwTrigType="0">
+      <DataChannel enable="1" alias="ai0" signalType="0" group="/AI" physicalChannel="/ai0" sample="1" aiTrigger="0" Stimulus="0" red="255" green="0" blue="0" />
+      <DataChannel enable="1" alias="Piezo In" signalType="0" group="/AI" physicalChannel="/ai1" sample="0" aiTrigger="0" Stimulus="0" red="0" green="255" blue="0" />
+      <DataChannel enable="1" alias="ai2" signalType="0" group="/AI" physicalChannel="/ai2" sample="0" aiTrigger="0" Stimulus="0" red="0" green="0" blue="255" />
+      <DataChannel enable="1" alias="ai3" signalType="0" group="/AI" physicalChannel="/ai3" sample="0" aiTrigger="0" Stimulus="0" red="255" green="0" blue="0" />
+      <DataChannel enable="1" alias="ai4" signalType="0" group="/AI" physicalChannel="/ai4" sample="0" aiTrigger="0" Stimulus="0" red="255" green="127" blue="0" />
+      <DataChannel enable="1" alias="ai5" signalType="0" group="/AI" physicalChannel="/ai5" sample="0" aiTrigger="0" Stimulus="0" red="127" green="255" blue="0" />
+      <DataChannel enable="1" alias="ai6" signalType="0" group="/AI" physicalChannel="/ai6" sample="0" aiTrigger="0" Stimulus="0" red="0" green="127" blue="255" />
+      <DataChannel enable="1" alias="ai7" signalType="0" group="/AI" physicalChannel="/ai7" sample="0" aiTrigger="0" Stimulus="0" red="0" green="255" blue="127" />
+      <DataChannel enable="1" alias="Line 0" signalType="1" group="/DI" physicalChannel="/port0/line0" sample="0" aiTrigger="0" Stimulus="0" red="0" green="0" blue="255" />
+      <DataChannel enable="1" alias="Frame Out" signalType="1" group="/DI" physicalChannel="/port0/line1" sample="0" aiTrigger="0" Stimulus="0" red="0" green="125" blue="0" />
+      <DataChannel enable="1" alias="Frame In" signalType="1" group="/DI" physicalChannel="/port0/line2" sample="0" aiTrigger="0" Stimulus="0" red="255" green="255" blue="0" />
+      <DataChannel enable="1" alias="Bleach Out" signalType="1" group="/DI" physicalChannel="/port0/line3" sample="0" aiTrigger="0" Stimulus="0" red="255" green="128" blue="0" />
+      <DataChannel enable="0" alias="Line 4" signalType="1" group="/DI" physicalChannel="/port0/line4" sample="0" aiTrigger="0" Stimulus="0" red="127" green="127" blue="255" />
+      <DataChannel enable="1" alias="Bleach Complete" signalType="1" group="/DI" physicalChannel="/port0/line5" sample="0" aiTrigger="0" Stimulus="0" red="66" green="31" blue="160" />
+      <DataChannel enable="0" alias="line 6" signalType="1" group="/DI" physicalChannel="/port0/line6" sample="0" aiTrigger="0" Stimulus="0" red="127" green="127" blue="0" />
+      <DataChannel enable="1" alias="PMT Shutter" signalType="1" group="/DI" physicalChannel="/port0/line7" sample="0" aiTrigger="0" Stimulus="0" red="104" green="104" blue="104" />
+      <DataChannel enable="1" alias="Frame Counter" signalType="2" group="/CI" physicalChannel="/PFI3" sample="0" aiTrigger="0" Stimulus="0" red="127" green="0" blue="127" />
+      <SampleRate name="High 1MHz" enable="0" rate="1000001" />
+      <SampleRate name="Medium 100kHz" enable="1" rate="100000" />
+      <SampleRate name="Low 30kHz" enable="0" rate="30000" />
+      <Display resolution="High" enable="1" value="10" />
+      <Display resolution="Medium" enable="0" value="100" />
+      <Display resolution="Low" enable="0" value="1000" />
+      <Bleach shutterLine="/PFI6" bleachLine="/port0/line4" outputLine="/port0/line6" pmtCloseTime="25" bleachTime="100" outDelayTime="6" hwTrigMode="0" hwTrigLine="/PFI8" />
+      <Invert inputLine="10" outputLine="/PFI11" />
+    </AcquireBoard>
+    <AcquireBoard type="NONE" devID="" active="0">
+    </AcquireBoard>
+  </DaqDevices>
+</RealTimeDataSettings>

@@ -1,0 +1,32 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.EpiTurretControlView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ec="clr-namespace:EpiTurretControl;assembly=EpiTurretControl"
+             Height="Auto"
+             Width="385">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <ec:EpiTurretControlUC 
+					   GoToEpiPositionCommand="{Binding Path=GoToEpiPositionCommand}"
+					   EpiPositionNameChangeCommand="{Binding Path=EpiPositionNameChangeCommand}"
+            	       EpiPosition1Name="{Binding Path=EpiPosition1Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       EpiPosition1="{Binding Path=EpiPosition1, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+            	       EpiPosition2Name="{Binding Path=EpiPosition2Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       EpiPosition2="{Binding Path=EpiPosition2, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       EpiPosition3Name="{Binding Path=EpiPosition3Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       EpiPosition3="{Binding Path=EpiPosition3, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       EpiPosition4Name="{Binding Path=EpiPosition4Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       EpiPosition4="{Binding Path=EpiPosition4, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       EpiPosition5Name="{Binding Path=EpiPosition5Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       EpiPosition5="{Binding Path=EpiPosition5, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       EpiPosition6Name="{Binding Path=EpiPosition6Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       EpiPosition6="{Binding Path=EpiPosition6, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+        </ec:EpiTurretControlUC>
+    </Grid>
+</UserControl>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ThorDDR05Settings>
+    <PA1 portID="43" baudRate="115200" serialNumber="NA" useShutter="0" />
+	<PA2 portID="44" baudRate="115200" serialNumber="NA" useShutter="0" />
+	<PA3 portID="45" baudRate="115200" serialNumber="NA" useShutter="0" />
+    <PA1Calibration zero="0"/>
+	<PA2Calibration zero="0"/>
+	<PA3Calibration zero="0"/>
+	<MotorsConfig number="1"/>
+	<TimeOut timeMS="1000"/>
+</ThorDDR05Settings>

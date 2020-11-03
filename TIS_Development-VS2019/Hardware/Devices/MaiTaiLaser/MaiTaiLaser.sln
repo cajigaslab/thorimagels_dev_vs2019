@@ -1,0 +1,71 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{408B9069-7F97-4080-9585-3DE45A948412}"
+	ProjectSection(SolutionItems) = preProject
+		MaiTaiLaser.vsmdi = MaiTaiLaser.vsmdi
+		TestSettingsMaiTai.testsettings = TestSettingsMaiTai.testsettings
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MaiTaiTest", "MaiTaiTest\MaiTaiTest.csproj", "{D5EA82E3-3169-42E8-8736-9E6994316625}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MaiTaiLaser", "MaiTaiLaser\MaiTaiLaser.vcxproj", "{F2332F4F-0CF1-4050-984B-6B21F6A229EC}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://stl-tfs1:8080/tfs/thorimagels
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = MaiTaiTest\\MaiTaiTest.csproj
+		SccProjectName1 = MaiTaiTest
+		SccLocalPath1 = MaiTaiTest
+		SccProjectUniqueName2 = MaiTaiLaser\\MaiTaiLaser.vcxproj
+		SccProjectName2 = MaiTaiLaser
+		SccLocalPath2 = MaiTaiLaser
+	EndGlobalSection
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = MaiTaiLaser.vsmdi
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|Mixed Platforms = Debug|Mixed Platforms
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Any CPU = Release|Any CPU
+		Release|Mixed Platforms = Release|Mixed Platforms
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D5EA82E3-3169-42E8-8736-9E6994316625}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D5EA82E3-3169-42E8-8736-9E6994316625}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D5EA82E3-3169-42E8-8736-9E6994316625}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{D5EA82E3-3169-42E8-8736-9E6994316625}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{D5EA82E3-3169-42E8-8736-9E6994316625}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{D5EA82E3-3169-42E8-8736-9E6994316625}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D5EA82E3-3169-42E8-8736-9E6994316625}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D5EA82E3-3169-42E8-8736-9E6994316625}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D5EA82E3-3169-42E8-8736-9E6994316625}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{D5EA82E3-3169-42E8-8736-9E6994316625}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{D5EA82E3-3169-42E8-8736-9E6994316625}.Release|Win32.ActiveCfg = Release|Any CPU
+		{D5EA82E3-3169-42E8-8736-9E6994316625}.Release|x64.ActiveCfg = Release|Any CPU
+		{F2332F4F-0CF1-4050-984B-6B21F6A229EC}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{F2332F4F-0CF1-4050-984B-6B21F6A229EC}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{F2332F4F-0CF1-4050-984B-6B21F6A229EC}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{F2332F4F-0CF1-4050-984B-6B21F6A229EC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F2332F4F-0CF1-4050-984B-6B21F6A229EC}.Debug|Win32.Build.0 = Debug|Win32
+		{F2332F4F-0CF1-4050-984B-6B21F6A229EC}.Debug|x64.ActiveCfg = Debug|x64
+		{F2332F4F-0CF1-4050-984B-6B21F6A229EC}.Debug|x64.Build.0 = Debug|x64
+		{F2332F4F-0CF1-4050-984B-6B21F6A229EC}.Release|Any CPU.ActiveCfg = Release|Win32
+		{F2332F4F-0CF1-4050-984B-6B21F6A229EC}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{F2332F4F-0CF1-4050-984B-6B21F6A229EC}.Release|Mixed Platforms.Build.0 = Release|x64
+		{F2332F4F-0CF1-4050-984B-6B21F6A229EC}.Release|Win32.ActiveCfg = Release|Win32
+		{F2332F4F-0CF1-4050-984B-6B21F6A229EC}.Release|Win32.Build.0 = Release|Win32
+		{F2332F4F-0CF1-4050-984B-6B21F6A229EC}.Release|x64.ActiveCfg = Release|x64
+		{F2332F4F-0CF1-4050-984B-6B21F6A229EC}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

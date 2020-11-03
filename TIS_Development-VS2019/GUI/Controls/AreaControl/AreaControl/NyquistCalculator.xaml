@@ -1,0 +1,393 @@
+﻿<Window x:Class="AreaControl.NyquistCalculator"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="ToolWindow"
+        Height="500"
+        Width="440"
+        Title="Nyquist Calculator"
+        Topmost="True"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Background="#FF333333">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+                <ResourceDictionary>
+                    <Storyboard x:Key="invalidValueFlashingAnimation">
+                        <DoubleAnimation AutoReverse="True"
+                            Duration="0:0:0.5"
+                            From="1"
+                            RepeatBehavior="Forever"
+                            Storyboard.TargetProperty="(Background).(Opacity)"
+                            To="0.5" />
+                    </Storyboard>
+                </ResourceDictionary>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid Margin="3">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="59*" />
+            <ColumnDefinition Width="37*" />
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.ColumnSpan="2">
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Numerical Aperture"
+                       Margin="3"
+                       Width="115" />
+                <TextBox Name="tbNA"
+                         Width="40"
+                         Margin="3"
+                         Text="{Binding Path=NumericalAperture}" />
+                <Button Width="25"
+                        Height="25"
+                        Content="&#x2713;">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbNA}"
+                                             Value="True">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Index of refraction"
+                       Margin="3"
+                       Width="115" />
+                <TextBox Name="tbIOR"
+                         Width="40"
+                         Margin="3"
+                         Text="{Binding Path=IndexOfRefraction}" />
+                <Button Width="25"
+                        Height="25"
+                        Content="&#x2713;">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbIOR}"
+                                             Value="True">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Excitaton &#x03BB;"
+                       Margin="3"
+                       Width="115" />
+                <TextBox Name="tbEW"
+                         Width="40"
+                         Margin="3"
+                         Text="{Binding Path=ExcitationWavelength}" />
+                <Button Width="25"
+                        Height="25"
+                        Content="&#x2713;">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbEW}"
+                                             Value="True">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Label Content="[nm]"
+                       Margin="3"
+                       Width="115" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Emission &#x03BB;"
+                       Margin="3"
+                       Width="115" />
+                <TextBox Name="tbEM"
+                         Width="40"
+                         Margin="3"
+                         Text="{Binding Path=EmissionWavelength}" />
+                <Button Width="25"
+                        Height="25"
+                        Content="&#x2713;">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbEM}"
+                                             Value="True">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Label Content="[nm]"
+                       Margin="3"
+                       Width="115" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Pinhole Size"
+                       Margin="3"
+                       Width="115" />
+                <TextBox Name="tbPinhole"
+                         Width="40"
+                         Margin="3"
+                         Text="{Binding Path=PinholeSizeUM}" />
+                <Button Width="25"
+                        Height="25"
+                        Content="&#x2713;">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbPinhole}"
+                                             Value="True">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Label Content="[um]"
+                       Margin="3"
+                       Width="115" />
+            </StackPanel>
+            <GroupBox Header="Confocal"
+                      Foreground="White">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="X"
+                               Margin="3"
+                               Width="30" />
+                        <Label Name="lblX"
+                               Content="{Binding Path=PixelXConfocal}"
+                               Margin="3"
+                               Width="50"
+                               ToolTip="{Binding XOutOfRangeErrorText}"
+                               ToolTipService.IsEnabled="{Binding Path=LsmPixelXConfocalOutOfRange}">
+                            <Label.Style>
+                                <Style TargetType="Label" BasedOn="{StaticResource {x:Type Label}}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=LsmPixelXConfocalOutOfRange}" Value="True">
+                                            <Setter Property="Background" Value="Red" />
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard Name="flashing" Storyboard="{StaticResource invalidValueFlashingAnimation}" />
+                                            </DataTrigger.EnterActions>
+                                            <DataTrigger.ExitActions>
+                                                <StopStoryboard BeginStoryboardName="flashing" />
+                                            </DataTrigger.ExitActions>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Label.Style>
+                        </Label>
+                        <Label Content="[pixels]"
+                               Margin="3"
+                               Width="50" />
+                        <Label Name="lblXum"
+                               Content="{Binding Path=UMPerPixelXConfocal}"
+                               Margin="3"
+                               Width="40" />
+                        <Label Content="[um/pixel]"
+                               Margin="3"
+                               Width="65" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label  Content="Y"
+                                Margin="3"
+                                Width="30" />
+                        <Label Name="lblY"
+                               Content="{Binding Path=PixelYConfocal}"
+                               Margin="3"
+                               Width="50"
+                               ToolTip="{Binding YOutOfRangeErrorText}"
+                               ToolTipService.IsEnabled="{Binding Path=LsmPixelYConfocalOutOfRange}">
+                            <Label.Style>
+                                <Style TargetType="Label" BasedOn="{StaticResource {x:Type Label}}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=LsmPixelYConfocalOutOfRange}" Value="True">
+                                            <Setter Property="Background" Value="Red" />
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard Name="flashing" Storyboard="{StaticResource invalidValueFlashingAnimation}" />
+                                            </DataTrigger.EnterActions>
+                                            <DataTrigger.ExitActions>
+                                                <StopStoryboard BeginStoryboardName="flashing" />
+                                            </DataTrigger.ExitActions>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Label.Style>
+                        </Label>
+                        <Label Content="[pixels]"
+                               Margin="3"
+                               Width="50" />
+                        <Label Name="lblYum"
+                               Content="{Binding Path=UMPerPixelYConfocal}"
+                               Margin="3"
+                               Width="40" />
+                        <Label Content="[um/pixel]"
+                               Margin="3"
+                               Width="65" />
+                        <Button Content="Apply"
+                                Name="btnApplyConfocal"
+                                Width="75"
+                                Height="25"
+                                Margin="3"
+                                IsEnabled="{Binding Path=ConfocalSettingsValid}"
+                                Click="btnApplyConfocal_Click"></Button>
+                        <Button Content="&#x003F;"
+                                Name="btnInfoConfocal"
+                                Width="35"
+                                Height="25"
+                                Margin="3"
+                                Click="btnInfoConfocal_Click"></Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="Z"
+                               Margin="3"
+                               Width="30" />
+                        <Label Name="lblZum"
+                               Content="{Binding Path=UMPerStepZConfocal}"
+                               Margin="3"
+                               Width="50" />
+                        <Label Content="[um/pixel]"
+                               Margin="3"
+                               Width="65" />
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="Multiphoton"
+                      Foreground="White">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="X"
+                               Margin="3"
+                               Width="30" />
+                        <Label Name="lblX2"
+                               Content="{Binding Path=PixelX2P}"
+                               Margin="3"
+                               Width="50" 
+                               ToolTip="{Binding XOutOfRangeErrorText}"
+                               ToolTipService.IsEnabled="{Binding Path=LsmPixelXMultiphotonOutOfRange}">
+                            <Label.Style>
+                                <Style TargetType="Label" BasedOn="{StaticResource {x:Type Label}}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=LsmPixelXMultiphotonOutOfRange}" Value="True">
+                                            <Setter Property="Background" Value="Red" />
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard Name="flashing" Storyboard="{StaticResource invalidValueFlashingAnimation}" />
+                                            </DataTrigger.EnterActions>
+                                            <DataTrigger.ExitActions>
+                                                <StopStoryboard BeginStoryboardName="flashing" />
+                                            </DataTrigger.ExitActions>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Label.Style>
+                        </Label>
+                        <Label Content="[pixels]"
+                               Margin="3"
+                               Width="50" />
+                        <Label Name="lblX2um"
+                               Content="{Binding Path=UMPerPixelX2P}"
+                               Margin="3"
+                               Width="40" />
+                        <Label Content="[um/pixel]"
+                               Margin="3"
+                               Width="65" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="Y"
+                               Margin="3"
+                               Width="30" />
+                        <Label Name="lblY2"
+                               Content="{Binding Path=PixelY2P}"
+                               Margin="3"
+                               Width="50"
+                               ToolTip="{Binding YOutOfRangeErrorText}"
+                               ToolTipService.IsEnabled="{Binding Path=LsmPixelYMultiphotonOutOfRange}">
+                            <Label.Style>
+                                <Style TargetType="Label" BasedOn="{StaticResource {x:Type Label}}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=LsmPixelYMultiphotonOutOfRange}" Value="True">
+                                            <Setter Property="Background" Value="Red" />
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard Name="flashing" Storyboard="{StaticResource invalidValueFlashingAnimation}" />
+                                            </DataTrigger.EnterActions>
+                                            <DataTrigger.ExitActions>
+                                                <StopStoryboard BeginStoryboardName="flashing" />
+                                            </DataTrigger.ExitActions>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Label.Style>
+                        </Label>
+                        <Label Content="[pixels]"
+                               Margin="3"
+                               Width="50" />
+                        <Label  Name="lblY2um"
+                                Content="{Binding Path=UMPerPixelY2P}"
+                                Margin="3"
+                                Width="40" />
+                        <Label Content="[um/pixel]"
+                               Margin="3"
+                               Width="65" />
+                        <Button Content="Apply"
+                                Name="btnApply2P"
+                                Width="75"
+                                Height="25"
+                                Margin="3"
+                                IsEnabled="{Binding Path=MultiPhotonSettingsValid}"
+                                Click="btnApply2P_Click"></Button>
+                        <Button Content="&#x003F;"
+                                Name="btnInfo2P"
+                                Width="35"
+                                Height="25"
+                                Margin="3"
+                                Click="btnInfo2P_Click"></Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="Z"
+                               Margin="3"
+                               Width="30" />
+                        <Label Name="lblZ2um"
+                               Content="{Binding Path=UMPerStepZ2P}"
+                               Margin="3"
+                               Width="50" />
+                        <Label Content="[um/pixel]"
+                               Margin="3"
+                               Width="65" />
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right">
+                <Button Content="Cancel"
+                        Name="btnCancel"
+                        Width="75"
+                        Height="35"
+                        Margin="3"
+                        Click="btnCancel_Click"></Button>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

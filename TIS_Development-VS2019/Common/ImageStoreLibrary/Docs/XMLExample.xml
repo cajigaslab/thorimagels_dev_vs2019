@@ -1,0 +1,134 @@
+<Plates>
+    <Plate ID="Plate:1" Name="4 Slide Carrier" Width="115.000" Height="70.000">
+        <Well ID="Well:1.1" PositionX="7.000" PositionY="5.000" Width="20.000" Height="60.000" Shape="Rectangle"/>
+        <Well ID="Well:1.2" PositionX="34.000" PositionY="5.000" Width="20.000" Height="60.000" Shape="Rectangle"/>
+        <Well ID="Well:1.3" PositionX="61.000" PositionY="5.000" Width="20.000" Height="60.000" Shape="Rectangle"/>
+        <Well ID="Well:1.4" PositionX="88.000" PositionY="5.000" Width="20.000" Height="60.000" Shape="Rectangle"/>
+    </Plate>
+</Plates>
+
+<Scans>
+    <Scan ID="1" PlateID="0" PhysicalSizeX="20.000" PhysicalSizeY="21.013" PhysicalSizeZ="1.000" PhysicalSizeXUnit="4" PhysicalSizeYUnit="4" PhysicalSizeZUnit="4" 
+			TimeIncrement="1" TimeIncrementUnit="s" DimensionOrder="XYCZT" TileWidth="850" TileHeight="1346" Type="uint16" SignificantBits="14">
+        <Channels>
+            <Channel ID="0" Name="Green"/>
+            <Channel ID="1" Name="Long Red"/>
+            <Channel ID="2" Name="488"/>
+            <Channel ID="3" Name="585LP LL"/>
+        </Channels>
+        <ScanRegions>
+            <ScanRegion ID="0" SizeX="850" SizeY="1346" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.1" PositionX="8.619" PositionY="9.828" PositionZ="0.000" SizeX="16.995" SizeY="28.259" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="1" SizeX="850" SizeY="1346" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.2" PositionX="36.025" PositionY="9.592" PositionZ="0.000" SizeX="16.995" SizeY="28.259" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="2" SizeX="850" SizeY="1346" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.3" PositionX="63.405" PositionY="9.409" PositionZ="0.000" SizeX="16.995" SizeY="28.259" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="3" SizeX="850" SizeY="1346" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="89.954" PositionY="11.753" PositionZ="0.000" SizeX="16.995" SizeY="28.259" SizeZ="0.000"/>
+            </ScanRegion>
+        </ScanRegions>
+    </Scan>
+    <Scan ID="2" PlateID="0" PhysicalSizeX="0.500" PhysicalSizeY="0.243" PhysicalSizeZ="1.000" PhysicalSizeXUnit="4" PhysicalSizeYUnit="4" PhysicalSizeZUnit="4" 
+			TimeIncrement="1" TimeIncrementUnit="s" DimensionOrder="XYCZT" TileWidth="992" TileHeight="768" Type="uint16" SignificantBits="14">
+        <Channels>
+            <Channel ID="0" Name="Blue"/>
+            <Channel ID="1" Name="Green"/>
+            <Channel ID="2" Name="Long Red"/>
+            <Channel ID="3" Name="488"/>
+            <Channel ID="4" Name="585LP LL"/>
+            <Channel ID="5" Name="Yellow 2"/>
+        </Channels>
+        <ScanRegions>
+            <ScanRegion ID="0" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="94.526" PositionY="14.799" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="1" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="94.846" PositionY="18.056" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="2" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="101.086" PositionY="16.102" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="3" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="100.126" PositionY="16.039" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="4" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="100.446" PositionY="16.544" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="5" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="101.206" PositionY="22.448" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="6" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="94.206" PositionY="22.932" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="7" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="94.086" PositionY="23.520" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="8" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="93.546" PositionY="25.768" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="9" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="95.586" PositionY="24.802" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="10" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="93.806" PositionY="27.113" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="11" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="94.566" PositionY="28.500" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="12" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="99.546" PositionY="28.437" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="13" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="100.046" PositionY="28.080" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="14" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="100.406" PositionY="28.983" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="15" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="99.266" PositionY="26.987" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="16" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="95.646" PositionY="31.946" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="17" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="95.466" PositionY="32.451" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="18" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="94.106" PositionY="37.473" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="19" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="93.206" PositionY="36.086" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="20" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="100.806" PositionY="34.132" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="21" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="100.506" PositionY="35.119" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="22" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="99.126" PositionY="37.242" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="23" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="100.046" PositionY="37.725" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="24" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="101.106" PositionY="37.704" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="25" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="102.126" PositionY="38.629" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="26" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="100.566" PositionY="36.212" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="27" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="101.206" PositionY="35.498" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+            <ScanRegion ID="28" SizeX="1000" SizeY="1986" SizeZ="1" SizeT="1" SizeS="1">
+                <WellSample WellID="Well:1.4" PositionX="101.426" PositionY="34.867" PositionZ="0.000" SizeX="0.500" SizeY="0.483" SizeZ="0.000"/>
+            </ScanRegion>
+        </ScanRegions>
+    </Scan>
+</Scans>

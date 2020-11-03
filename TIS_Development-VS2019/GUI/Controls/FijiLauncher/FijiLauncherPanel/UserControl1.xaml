@@ -1,0 +1,54 @@
+﻿<UserControl x:Class="FijiLauncherPanel.UserControl1"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:FijiLauncherPanel"
+             Height="Auto"
+             Width="Auto">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/FijiLauncherPanel;component/Label.xaml" />
+                <ResourceDictionary Source="/FijiLauncherPanel;component/Button.xaml" />
+                <ResourceDictionary Source="/FijiLauncherPanel;component/Window.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="3">
+                <Label Content="Macro"
+                       Width="100" />
+                <TextBox Width="400"
+                         Text="{Binding Path=MacroFile, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <Button Name="btnMacroBrowse"
+                        Content="Browse"
+                        Margin="3"
+                        Width="50"
+                        Height="30"
+                        Click="btnMacroBrowse_Click" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal"
+                        Margin="3">
+                <Label Content="Data Folder"
+                       Width="100" />
+                <ComboBox Name="cbDataPath"
+                          Height="30"
+                          Width="400"
+                          SelectionChanged="cbDataPath_SelectionChanged" />
+                <Button Name="btnPathSetup"
+                        Width="50"
+                        Height="30"
+                        Margin="3"
+                        Click="btnPathSetup_Click">
+                    <Image Source="/FijiLauncherPanel;component/gear.png"></Image>
+                </Button>
+            </StackPanel>
+            <RichTextBox Name="rtbMacro"
+                         Width="400"
+                         Height="500"
+                         VerticalScrollBarVisibility="Auto" />
+        </StackPanel>
+    </Grid>
+</UserControl>

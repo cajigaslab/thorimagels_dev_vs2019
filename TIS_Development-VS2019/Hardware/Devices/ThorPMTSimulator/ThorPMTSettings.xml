@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ThorPMTSettings>
+
+  <Connection portID="17" baudRate="115200" address="1">   
+  </Connection>
+
+</ThorPMTSettings>

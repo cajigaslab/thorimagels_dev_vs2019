@@ -1,0 +1,91 @@
+﻿<UserControl x:Class="ScriptZ2Move.UserControl1"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:Valid="clr-namespace:Validations;assembly=Validations"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:ScriptZ2Move"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:system="clr-namespace:System;assembly=mscorlib">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel>
+            <StackPanel Margin="3">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton Name="rbAbsolute"
+                             Margin="0,0,36,0"
+                             GroupName="posType"
+                             IsChecked="True"
+                             VerticalContentAlignment="Center">
+                        <Label Content="Absolute" />
+                    </RadioButton>
+                    <RadioButton Name="rbRelative"
+                             Margin="0,0,36,0"
+                             GroupName="posType"
+                             VerticalContentAlignment="Center"
+                             IsChecked="{Binding Path=DoRelativeMove}">
+                        <Label Content="Relative" />
+                    </RadioButton>
+                </StackPanel>
+                <StackPanel Margin="1"
+                        Orientation="Horizontal"
+                        IsEnabled="{Binding Path=IsLoadFromTemplateDissabled}">
+                    <Label Content="New Secondary Z Position:" />
+                    <TextBox Name="NewZ2Position"
+                         MinWidth="40"
+                         VerticalAlignment="Center"
+                         Foreground="White"
+                         Text="{Binding Path=Z2Pos}"
+                         ToolTip="New Z2 Position"
+                         Valid:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                         Valid:Validation.NoEmptyValue="True"
+                         Valid:Validation.ValidationType="{x:Type system:Double}" />
+                    <Label Content="{Binding Path=Units}" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Margin="3">
+                <CheckBox Name="cbLoad"
+                      VerticalAlignment="Center"
+                      Margin="0,5,5,5"
+                      IsChecked="{Binding Path=EnableLoadFromTemplate}"
+                      Content="Load positions from Template" />
+                <StackPanel Orientation="Horizontal"
+                            IsEnabled="{Binding ElementName=cbLoad, Path=IsChecked}">
+                    <Label Margin="0,0,10,0" 
+                           Content="Template Path"/>
+                    <TextBox Width="385" 
+                             Text="{Binding Path=InputPath}"/>
+                    <Button Width="50" 
+                            Height="30"  
+                            Margin="3,2" 
+                            Content="Browse"
+                            Click="BrowseButton_Click"/>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Margin="3">
+                <Label VerticalAlignment="Center"
+                       Content="Step unit" />
+                <StackPanel Orientation="Horizontal"
+                            Margin="1">
+                    <RadioButton Margin="0,0,36,0"
+                                 GroupName="customStep"
+                                 VerticalContentAlignment="Center"
+                                 IsChecked="True">
+                        <Label Content="mm" />
+                    </RadioButton>
+                    <RadioButton Margin="0,0,36,0"
+                                 GroupName="customStep"
+                                 VerticalContentAlignment="Center"
+                                 IsChecked="{Binding Path=StepsInUM}">
+                        <Label Content="um" />
+                    </RadioButton>
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

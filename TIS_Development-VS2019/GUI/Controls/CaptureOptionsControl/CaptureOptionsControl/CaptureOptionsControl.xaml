@@ -1,0 +1,213 @@
+﻿<UserControl x:Class="CaptureOptionsControl.CaptureOptionsControlUC"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:roi="clr-namespace:ROIUserControl;assembly=ROIUserControl"
+             xmlns:local="clr-namespace:CaptureOptionsControl"
+             xmlns:sharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+             mc:Ignorable="d"
+             Height="Auto"
+             Width="385">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <sharedTypes:BooleanToVisibilityConverter x:Key="VisibilityOfBool" />
+           <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel Margin="1">
+            <Grid>
+                <StackPanel>
+                    <GroupBox>
+                        <GroupBox.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <ComboBox Name="cbCaptureMode"
+                                  Width="200"
+                                  SelectedIndex="{Binding Path=CaptureMode,
+                                                          Mode=TwoWay,
+                                                          UpdateSourceTrigger=PropertyChanged}">
+                                    <ComboBoxItem Name="cbiZAndT">Z and T</ComboBoxItem>
+                                    <ComboBoxItem Name="cbiStreaming">Streaming</ComboBoxItem>
+                                    <ComboBoxItem Name="cbiTDI"
+                                          Visibility="Collapsed">TDI</ComboBoxItem>
+                                    <ComboBoxItem Name="cbiBleaching"
+                                          Visibility="{Binding Path=BleachControlActive,ConverterParameter=False,
+                                                             Converter={StaticResource VisibilityOfBool} }">Stimulation</ComboBoxItem>
+                                    <ComboBoxItem Name="cbiHyperSpectral"
+                                          Visibility="{Binding Path=HyperSpectralCaptureActive,ConverterParameter=False,
+                                                             Converter={StaticResource VisibilityOfBool} }">Hyperspectral</ComboBoxItem>
+                                </ComboBox>
+                            </StackPanel>
+                        </GroupBox.Header>
+                        <StackPanel>
+                            <StackPanel Name="spTimeSeries"
+                                Visibility="{Binding Path=TSeriesCaptureModeVis}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="Trigger Mode:" />
+                                    <Label Content="{Binding Path=TriggerModeTimelapseStr}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="Interval:" />
+                                    <Label Content="{Binding Path=TInterval}" />
+                                    <Label Content="[sec]" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="Frames:" />
+                                    <Label Content="{Binding Path=TFrames}" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Name="streamingStackPanel"
+                                Visibility="{Binding Path=StreamingCaptureModeVis}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="Mode:" />
+                                    <Label Content="{Binding Path=StreamingStorageModeStr}" />
+                                </StackPanel>
+                                <StackPanel Name="spFinite"
+                                    Visibility="{Binding Path=FiniteStreamingVis}">
+                                    <StackPanel Orientation="Horizontal"
+                                        Visibility="{Binding Path=ZFastEnable,
+                                                             ConverterParameter=True,
+                                                             Converter={StaticResource VisibilityOfBool}}">
+                                        <Label Content="Number Frames:" />
+                                        <Label Content="{Binding Path=StreamFrames}" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal"
+                                        Visibility="{Binding Path=ZFastEnable,
+                                                             ConverterParameter=False,
+                                                             Converter={StaticResource VisibilityOfBool}}">
+                                        <Label Content="Number of Volumes:" />
+                                        <Label Content="{Binding Path=StreamVolumes}" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label Content="Data Type:" />
+                                        <Label Content="{Binding Path=DataTypeStr}" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label Content="Trigger Mode:" />
+                                        <Label Content="{Binding Path=TriggerModeStreamingStr}" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel Name="spStimulus"
+                                    Visibility="{Binding Path=StimulusStreamingVis}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Label Content="Max Frames per Stimulus:" />
+                                        <Label Content="{Binding Path=StimulusMaxFrames}" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal"
+                                    Visibility="{Binding Path=FastZActive,
+                                                         ConverterParameter=False,
+                                                         Converter={StaticResource VisibilityOfBool}}">
+                                    <Label Content="Fast Z:" />
+                                    <Label Content="{Binding Path=FastZEnabledDisabledStr}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal"
+                                            Visibility="{Binding Path=ZFastEnable,
+                                                         ConverterParameter=False,
+                                                         Converter={StaticResource VisibilityOfBool}}">
+                                    <Label Content="Staircase Mode:" />
+                                    <Label Content="{Binding Path=StaircaseEnabledDisabledStr}" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Name="spBleaching"
+                                Visibility="{Binding Path=BleachingCaptureModeVis}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Width="103" />
+                                    <Label Width="50"
+                                   HorizontalContentAlignment="Center"
+                                   Content="Frames" />
+                                    <Label Width="80"
+                                   HorizontalContentAlignment="Center"
+                                   Content="Interval [Sec]" />
+                                    <Label Width="60"
+                                   HorizontalContentAlignment="Center"
+                                   Content="Mode" />
+                                    <Label Width="80"
+                                   HorizontalContentAlignment="Center"
+                                   Content="TriggerMode" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Width="106"
+                                   HorizontalContentAlignment="left"
+                                   Content="Pre Stimulation" />
+                                    <Label Width="50"
+                                   HorizontalContentAlignment="Center"
+                                   Content="{Binding Path=PreBleachFrames}" />
+                                    <Label Width="60"
+                                   HorizontalContentAlignment="Center"
+                                   Content="{Binding Path=PreBleachInterval}" />
+                                    <Label Width="80"
+                                   VerticalAlignment="Center"
+                                   HorizontalContentAlignment="Center"
+                                   Content="{Binding Path=PreBleachMode}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Width="106"
+                                           HorizontalContentAlignment="Left"
+                                           Content="Stimulation Cycles" />
+                                    <Label Width="50"
+                                           HorizontalContentAlignment="Center"
+                                           Content="{Binding Path=BleachFrames}" />
+                                    <Label Width="59" 
+                                           HorizontalContentAlignment="Center"
+                                           Content="{Binding Path=EnabledPMTs}"/>
+                                    <Label Width="81"
+                                           HorizontalContentAlignment="Center"
+                                           Content="{Binding Path=SimultaneousEnabledStr}"/>
+                                    <Label Width="80"
+                                           HorizontalContentAlignment="Center"
+                                           Content="{Binding Path=BleachTriggerStr}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Width="106"
+                                   HorizontalContentAlignment="Left"
+                                   Content="{Binding Path=PostBleach1Label}" />
+                                    <Label Width="50"
+                                   HorizontalContentAlignment="Center"
+                                   Content="{Binding Path=PostBleachFrames1}" />
+                                    <Label Width="60"
+                                   HorizontalContentAlignment="Center"
+                                   Content="{Binding Path=PostBleachInterval1}" />
+                                    <Label Width="80"
+                                   VerticalAlignment="Center"
+                                   HorizontalContentAlignment="Center"
+                                   Content="{Binding Path=PostBleachMode1}" />
+                                    <Label Width="80"
+                                   HorizontalContentAlignment="Center"
+                                   Content="{Binding Path=BleachPostTriggerStr}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Width="106"
+                                   HorizontalContentAlignment="Left"
+                                   Content="{Binding Path=PostBleach2Label}" />
+                                    <Label Width="50"
+                                   HorizontalContentAlignment="Center"
+                                   Content="{Binding Path=PostBleachFrames2}" />
+                                    <Label Width="60"
+                                   HorizontalContentAlignment="Center"
+                                   Content="{Binding Path=PostBleachInterval2}" />
+                                    <Label Width="80"
+                                   VerticalAlignment="Center"
+                                   HorizontalContentAlignment="Center"
+                                   Content="{Binding Path=PostBleachMode2}" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Name="spHyperspectral"
+                                Orientation="Horizontal"
+                                Visibility="{Binding Path=HyperspectralModeVis}">
+                                <Label HorizontalContentAlignment="Right"
+                               Content="Sequence Steps" />
+                                <Label Width="50"
+                               HorizontalContentAlignment="Center"
+                               Content="{Binding Path=KuriousSequenceSteps}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CaptureSetupModule", "CaptureSetupModule.csproj", "{3622138D-A051-46BC-BC13-289EAFC54C5D}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 1
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://vateam01:8080/
+		SccProjectUniqueName0 = CaptureSetupModule.csproj
+		SccProjectName0 = .
+		SccAuxPath0 = http://vateam01:8080
+		SccLocalPath0 = .
+		SccProvider0 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Debug|x64.ActiveCfg = Debug|x64
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Debug|x64.Build.0 = Debug|x64
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Release|x64.ActiveCfg = Release|x64
+		{3622138D-A051-46BC-BC13-289EAFC54C5D}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
