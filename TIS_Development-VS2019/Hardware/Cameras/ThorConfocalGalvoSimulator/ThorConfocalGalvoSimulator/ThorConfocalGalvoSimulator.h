@@ -19,6 +19,13 @@
 #define AlazarFailed(error)             ((error) > 513)
 
 
+#define MIN_DWELL_TIME               0.4
+#define MAX_DWELL_TIME               20
+#define DEFAULT_DWELL_TIME           2
+#define DWELL_TIME_STEP              0.2
+
+#define MAX_NUMBER_OF_PLANES		16
+#define MIN_NUMBER_OF_PLANES		1
 
 #ifdef __cplusplus
 extern "C"
@@ -164,6 +171,10 @@ extern "C"
 		long _galvoEnable;
 		AreaMode _areaMode;
 		long _yAmplitudeScaler;
+		long _threePhotonEnabled;
+		long _numberOfPlanes;
+		long _selectedPlane;
+		double _dwellTime;
 
 		long _pixelX_C;
 		long _pixelY_C;

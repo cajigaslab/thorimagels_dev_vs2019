@@ -1205,7 +1205,7 @@ string AcquireSingle::uUIDSetup(auto_ptr<HardwareSetupXML> &pHardware, long time
 	return strOME;
 }
 
-long SetupDimensions(ICamera *pCamera,IExperiment *pExperiment,double fieldSizeCalibration, double magnification, Dimensions &d, long &avgFrames, long &bufferChannels, long &avgMode, double &umPerPixel)
+long SetupDimensions(ICamera *pCamera,IExperiment *pExperiment,double fieldSizeCalibration, double magnification, Dimensions &d, long &avgFrames, long &bufferChannels, long &avgMode, double &umPerPixel, long &numPlanes)
 {	
 	long width,height;
 
@@ -1255,6 +1255,7 @@ long SetupDimensions(ICamera *pCamera,IExperiment *pExperiment,double fieldSizeC
 				pCamera->SetParam(ICamera::PARAM_LSM_AVERAGEMODE,ICamera::AVG_MODE_NONE);
 				avgFrames = camAverageNum;
 			}
+			numPlanes = 1;
 		}
 		break;		
 	case ICamera::CCD_MOSAIC:
@@ -1288,6 +1289,7 @@ long SetupDimensions(ICamera *pCamera,IExperiment *pExperiment,double fieldSizeC
 			d.y = height;
 			d.z = 1;
 			d.imageBufferType = 0;
+			numPlanes = 1;
 		}
 		break;
 	case ICamera::LSM:
@@ -1320,14 +1322,17 @@ long SetupDimensions(ICamera *pCamera,IExperiment *pExperiment,double fieldSizeC
 			double crsFrequencyHz = 0;
 			long timeBasedLineScan = FALSE;
 			long timeBasedLineScanMS = 0;
-			pExperiment->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,lsmChannel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS);
-
+			long threePhotonEnable = FALSE;
+			long numberOfPlanes = 1;
+			pExperiment->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,lsmChannel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes);
+			
 			pCamera->SetParam(ICamera::PARAM_LSM_VERTICAL_SCAN_DIRECTION, verticalFlip);
 			pCamera->SetParam(ICamera::PARAM_LSM_HORIZONTAL_FLIP, horizontalFlip);
 			pCamera->SetParam(ICamera::PARAM_LSM_DWELL_TIME, dwellTime);
 			pCamera->SetParam(ICamera::PARAM_LSM_PIXEL_X, pixelX);
 			pCamera->SetParam(ICamera::PARAM_LSM_PIXEL_Y, pixelY);
 			pCamera->SetParam(ICamera::PARAM_LSM_FIELD_SIZE, fieldSize);
+			pCamera->SetParam(ICamera::PARAM_RAW_SAVE_ENABLED_CHANNELS_ONLY, FALSE);
 
 			//if its a timebased line scan then we want to get the pixel Y from the camera instead of assuming that it is what we set it as
 			if (pCamera->SetParam(ICamera::PARAM_LSM_TIME_BASED_LINE_SCAN, timeBasedLineScan) && TRUE == timeBasedLineScan)
@@ -1377,13 +1382,15 @@ long SetupDimensions(ICamera *pCamera,IExperiment *pExperiment,double fieldSizeC
 				break;
 			}
 
+			numPlanes = numberOfPlanes >= 1 && TRUE == threePhotonEnable ? numberOfPlanes : 1;
+
 			d.c = bufferChannels;
 			d.dType = INT_16BIT;
 			d.m = 1;
 			d.mType = CONTIGUOUS_CHANNEL;
 			d.t = 1;
 			d.x = width;
-			d.y = height;
+			d.y = height * numPlanes;
 			d.z = 1;
 			d.imageBufferType = 0;
 			avgMode = averageMode;
@@ -1406,99 +1413,99 @@ long AcquireSingle::Execute(long index, long subWell)
 {
 	double magnification;
 	string objName;
-	_pExp->GetMagnification(magnification,objName);
+	_pExp->GetMagnification(magnification, objName);
 	//Get filter parameters from hardware setup.xml
 
 	auto_ptr<HardwareSetupXML> pHardware(new HardwareSetupXML());
 
-	long position=0;
+	long position = 0;
 	double numAperture;
-	double afStartPos=0;
-	double afFocusOffset=0;
-	double afAdaptiveOffset=0;
-	long beamExpPos=0;
-	long beamExpWavelength=0;
-	long beamExpPos2=0;
-	long beamExpWavelength2=0;
-	long turretPosition=0;
-	long zAxisToEscape=0;
-	double zAxisEscapeDistance=0;
+	double afStartPos = 0;
+	double afFocusOffset = 0;
+	double afAdaptiveOffset = 0;
+	long beamExpPos = 0;
+	long beamExpWavelength = 0;
+	long beamExpPos2 = 0;
+	long beamExpWavelength2 = 0;
+	long turretPosition = 0;
+	long zAxisToEscape = 0;
+	double zAxisEscapeDistance = 0;
 
-	pHardware->GetMagInfoFromName(objName,magnification,position,numAperture,afStartPos,afFocusOffset,afAdaptiveOffset,beamExpPos,beamExpWavelength,beamExpPos2,beamExpWavelength2,turretPosition,zAxisToEscape,zAxisEscapeDistance);
+	pHardware->GetMagInfoFromName(objName, magnification, position, numAperture, afStartPos, afFocusOffset, afAdaptiveOffset, beamExpPos, beamExpWavelength, beamExpPos2, beamExpWavelength2, turretPosition, zAxisToEscape, zAxisEscapeDistance);
 
 	_adaptiveOffset = afAdaptiveOffset;
 
-	long aftype,repeat;
-	double expTimeMS,stepSizeUM,startPosMM,stopPosMM;
+	long aftype, repeat;
+	double expTimeMS, stepSizeUM, startPosMM, stopPosMM;
 
-	_pExp->GetAutoFocus(aftype,repeat,expTimeMS,stepSizeUM,startPosMM,stopPosMM);
+	_pExp->GetAutoFocus(aftype, repeat, expTimeMS, stepSizeUM, startPosMM, stopPosMM);
 
 	//Determine if we are capturing the first image for the experiment. If so make sure an autofocus is executed if enabled.
 	//After the first iteration the Z position will overlap with the XY motion
-	if((aftype != IAutoFocus::AF_NONE)&&(subWell==1))
+	if ((aftype != IAutoFocus::AF_NONE) && (subWell == 1))
 	{
 		_evenOdd = FALSE;
 		_lastGoodFocusPosition = afStartPos + _adaptiveOffset;
-		if(FALSE == SetAutoFocusStartZPosition(afStartPos,TRUE,FALSE))
+		if (FALSE == SetAutoFocusStartZPosition(afStartPos, TRUE, FALSE))
 		{
 			return FALSE;
 		}
 	}
 
-	IDevice * pAutoFocusDevice = NULL;
+	IDevice* pAutoFocusDevice = NULL;
 
 	pAutoFocusDevice = GetDevice(SelectedHardware::SELECTED_AUTOFOCUS);
 
-	if(NULL == pAutoFocusDevice)
-	{	
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create autofocus device");
+	if (NULL == pAutoFocusDevice)
+	{
+		logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample Execute could not create autofocus device");
 		return FALSE;
 	}
 
 	BOOL afFound = FALSE;
 
-	if(aftype != IAutoFocus::AF_NONE)
+	if (aftype != IAutoFocus::AF_NONE)
 	{
 		if (FALSE == AutoFocusAndRetry(index, pAutoFocusDevice, afFound))
 		{
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample AutoFocusAndRetry failed");
+			logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample AutoFocusAndRetry failed");
 			return FALSE;
 		}
 	}
 
-	ICamera *pCamera = NULL;
+	ICamera* pCamera = NULL;
 
 	pCamera = GetCamera(SelectedHardware::SELECTED_CAMERA1);
 
-	if(NULL == pCamera)
-	{	
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create camera");
+	if (NULL == pCamera)
+	{
+		logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample Execute could not create camera");
 		return FALSE;
 	}
 
 	double fieldSizeCalibration = 100.0;
-	pCamera->GetParam(ICamera::PARAM_LSM_FIELD_SIZE_CALIBRATION,fieldSizeCalibration);
+	pCamera->GetParam(ICamera::PARAM_LSM_FIELD_SIZE_CALIBRATION, fieldSizeCalibration);
 
 	Dimensions baseDimensions;
-	long avgFrames=1;
-	long bufferChannels=1;
-	long avgMode=ICamera::AVG_MODE_NONE;
+	long avgFrames = 1;
+	long bufferChannels = 1;
+	long avgMode = ICamera::AVG_MODE_NONE;
 	double umPerPixel = 1.0;
-
-	SetupDimensions(pCamera,_pExp, fieldSizeCalibration,magnification, baseDimensions, avgFrames,bufferChannels, avgMode, umPerPixel);
+	long numberOfPlanes = 1;
+	SetupDimensions(pCamera, _pExp, fieldSizeCalibration, magnification, baseDimensions, avgFrames, bufferChannels, avgMode, umPerPixel, numberOfPlanes);
 	//Set temp path to streaming temp path:
 	wstring tempPath; double previewRate;
 	pHardware->GetStreaming(tempPath, previewRate);
-	if(NULL != tempPath.c_str())
+	if (NULL != tempPath.c_str())
 	{
 		ImageManager::getInstance()->SetMemMapPath((tempPath + L"\\").c_str());
 	}
 
 	char* pMemoryBuffer = NULL;
-	char* pMemoryBufferDFLIMHisto = NULL; 
+	char* pMemoryBufferDFLIMHisto = NULL;
 	char* pMemoryBufferDFLIMSinglePhoton = NULL;
 	char* pMemoryBufferDFLIMArrivalTimeSum = NULL;
-	char* pMemoryBufferDFLIMPhotons = NULL; 
+	char* pMemoryBufferDFLIMPhotons = NULL;
 
 	long tempImageID;
 
@@ -1510,9 +1517,9 @@ long AcquireSingle::Execute(long index, long subWell)
 	Dimensions dIntensity = baseDimensions;
 	dIntensity.imageBufferType = BufferType::INTENSITY;
 
-	if(ImageManager::getInstance()->CreateImage(tempImageID,dIntensity,L"intensity")== FALSE)
+	if (ImageManager::getInstance()->CreateImage(tempImageID, dIntensity, L"intensity") == FALSE)
 	{
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create intensity  memory buffer");
+		logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample Execute could not create intensity  memory buffer");
 		return FALSE;
 	}
 	imageIDs.insert(std::pair<long, long>(BufferType::INTENSITY, tempImageID));
@@ -1522,58 +1529,58 @@ long AcquireSingle::Execute(long index, long subWell)
 	if (imageMethod == 1)
 	{
 		const long DFLIM_HISTOGRAM_BINS = 256;
-		Dimensions ddflimHisto= baseDimensions;
+		Dimensions ddflimHisto = baseDimensions;
 		ddflimHisto.imageBufferType = BufferType::DFLIM_HISTOGRAM;
 		ddflimHisto.x = DFLIM_HISTOGRAM_BINS;
 		ddflimHisto.y = 1;
 		ddflimHisto.dType = DataType::INT_32BIT;
-		if(ImageManager::getInstance()->CreateImage(tempImageID,ddflimHisto,L"dFLIMShisto")== FALSE)
+		if (ImageManager::getInstance()->CreateImage(tempImageID, ddflimHisto, L"dFLIMShisto") == FALSE)
 		{
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create dflim histogram  memory buffer");
+			logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample Execute could not create dflim histogram  memory buffer");
 			return FALSE;
-		}		
+		}
 		imageIDs.insert(std::pair<long, long>(BufferType::DFLIM_HISTOGRAM, tempImageID));
 		buffersDimensions.insert(std::pair<long, Dimensions>(BufferType::DFLIM_HISTOGRAM, ddflimHisto));
 
-		Dimensions ddflimSinglePhoton= baseDimensions;
+		Dimensions ddflimSinglePhoton = baseDimensions;
 		ddflimSinglePhoton.imageBufferType = BufferType::DFLIM_IMAGE_SINGLE_PHOTON;
 		ddflimSinglePhoton.dType = DataType::INT_16BIT;
-		if(ImageManager::getInstance()->CreateImage(tempImageID,ddflimSinglePhoton,L"dFLIMSinglePhoton")== FALSE)
+		if (ImageManager::getInstance()->CreateImage(tempImageID, ddflimSinglePhoton, L"dFLIMSinglePhoton") == FALSE)
 		{
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create dFLIMSinglePhoton  memory buffer");
+			logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample Execute could not create dFLIMSinglePhoton  memory buffer");
 			return FALSE;
-		}		
+		}
 		imageIDs.insert(std::pair<long, long>(BufferType::DFLIM_IMAGE_SINGLE_PHOTON, tempImageID));
 		buffersDimensions.insert(std::pair<long, Dimensions>(BufferType::DFLIM_IMAGE_SINGLE_PHOTON, ddflimSinglePhoton));
 
 		Dimensions ddflimArrivalTimeSum = baseDimensions;
 		ddflimArrivalTimeSum.imageBufferType = BufferType::DFLIM_IMAGE_ARRIVAL_TIME_SUM;
 		ddflimArrivalTimeSum.dType = DataType::INT_32BIT;
-		if(ImageManager::getInstance()->CreateImage(tempImageID,ddflimArrivalTimeSum,L"dFLIMArrivalTimeSum")== FALSE)
+		if (ImageManager::getInstance()->CreateImage(tempImageID, ddflimArrivalTimeSum, L"dFLIMArrivalTimeSum") == FALSE)
 		{
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create dFLIMArrivalTimeSum  memory buffer");
+			logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample Execute could not create dFLIMArrivalTimeSum  memory buffer");
 			return FALSE;
-		}			
+		}
 		imageIDs.insert(std::pair<long, long>(BufferType::DFLIM_IMAGE_ARRIVAL_TIME_SUM, tempImageID));
 		buffersDimensions.insert(std::pair<long, Dimensions>(BufferType::DFLIM_IMAGE_ARRIVAL_TIME_SUM, ddflimArrivalTimeSum));
 
 		double dwelltime = 0;
 		pCamera->GetParam(ICamera::PARAM_LSM_DWELL_TIME, dwelltime);
 
-		long maxPhotonsSize = static_cast<long>(round(baseDimensions.x * baseDimensions.y * (1 + 30* dwelltime)));
+		long maxPhotonsSize = static_cast<long>(round(baseDimensions.x * baseDimensions.y * (1 + 30 * dwelltime)));
 		Dimensions ddflimPhotons = baseDimensions;
 		ddflimPhotons.x = maxPhotonsSize;
 		ddflimPhotons.y = 1;
 		ddflimPhotons.imageBufferType = BufferType::DFLIM_PHOTONS;
 		ddflimPhotons.dType = DataType::INT_8BIT;
-		if(ImageManager::getInstance()->CreateImage(tempImageID,ddflimPhotons,L"dFLIMphotons")== FALSE)
+		if (ImageManager::getInstance()->CreateImage(tempImageID, ddflimPhotons, L"dFLIMphotons") == FALSE)
 		{
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create dFLIMphotons  memory buffer");
+			logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample Execute could not create dFLIMphotons  memory buffer");
 			return FALSE;
-		}	
+		}
 		imageIDs.insert(std::pair<long, long>(BufferType::DFLIM_PHOTONS, tempImageID));
-		buffersDimensions.insert(std::pair<long, Dimensions>(BufferType::DFLIM_PHOTONS, ddflimPhotons));	
-	
+		buffersDimensions.insert(std::pair<long, Dimensions>(BufferType::DFLIM_PHOTONS, ddflimPhotons));
+
 	}
 
 	pMemoryBuffer = ImageManager::getInstance()->GetImagePtr(imageIDs[BufferType::INTENSITY], 0, 0, 0, 0);
@@ -1585,32 +1592,32 @@ long AcquireSingle::Execute(long index, long subWell)
 		Dimensions dPhotons = buffersDimensions[BufferType::DFLIM_IMAGE_ARRIVAL_TIME_SUM];
 
 		pMemoryBufferDFLIMHisto = ImageManager::getInstance()->GetImagePtr(imageIDs[BufferType::DFLIM_HISTOGRAM], 0, 0, 0, 0);
-		memset(pMemoryBufferDFLIMHisto,0,dHisto.x*dHisto.y*dHisto.c*sizeof(uint32));
+		memset(pMemoryBufferDFLIMHisto, 0, dHisto.x * dHisto.y * dHisto.c * sizeof(uint32));
 
 		pMemoryBufferDFLIMSinglePhoton = ImageManager::getInstance()->GetImagePtr(imageIDs[BufferType::DFLIM_IMAGE_SINGLE_PHOTON], 0, 0, 0, 0);
-		memset(pMemoryBufferDFLIMSinglePhoton,0,dSinglePhoton.x*dSinglePhoton.y*dHisto.c*sizeof(unsigned short));
-		
+		memset(pMemoryBufferDFLIMSinglePhoton, 0, dSinglePhoton.x * dSinglePhoton.y * dHisto.c * sizeof(unsigned short));
+
 		pMemoryBufferDFLIMArrivalTimeSum = ImageManager::getInstance()->GetImagePtr(imageIDs[BufferType::DFLIM_IMAGE_ARRIVAL_TIME_SUM], 0, 0, 0, 0);
-		memset(pMemoryBufferDFLIMArrivalTimeSum,0,dArrivalTimeSum.x*dArrivalTimeSum.y*dHisto.c*sizeof(uint32));
+		memset(pMemoryBufferDFLIMArrivalTimeSum, 0, dArrivalTimeSum.x * dArrivalTimeSum.y * dHisto.c * sizeof(uint32));
 
 		pMemoryBufferDFLIMPhotons = ImageManager::getInstance()->GetImagePtr(imageIDs[BufferType::DFLIM_PHOTONS], 0, 0, 0, 0);
-		memset(pMemoryBufferDFLIMPhotons,0,dPhotons.x*dPhotons.y*dHisto.c*sizeof(char));
+		memset(pMemoryBufferDFLIMPhotons, 0, dPhotons.x * dPhotons.y * dHisto.c * sizeof(char));
 	}
 
 	const int MAX_TIME_LENGTH = 30;
-	long wavelengthIndex = 0, zstageSteps, timePoints,triggerModeTimelapse,zEnable;
+	long wavelengthIndex = 0, zstageSteps, timePoints, triggerModeTimelapse, zEnable;
 	string wavelengthName, zstageName;
 	double exposureTimeMS, zstageStepSize, zStartPos, intervalSec;
-	long zStreamFrames,zStreamMode;
-	_pExp->GetWavelength(wavelengthIndex,wavelengthName,exposureTimeMS);
-	_pExp->GetZStage(zstageName,zEnable,zstageSteps,zstageStepSize,zStartPos,zStreamFrames,zStreamMode);
-	_pExp->GetTimelapse(timePoints,intervalSec,triggerModeTimelapse);
-	if(0 == zEnable) zstageSteps = 1;	//If Z is not enable, set the step number to 0 for FIJI to read it
+	long zStreamFrames, zStreamMode;
+	_pExp->GetWavelength(wavelengthIndex, wavelengthName, exposureTimeMS);
+	_pExp->GetZStage(zstageName, zEnable, zstageSteps, zstageStepSize, zStartPos, zStreamFrames, zStreamMode);
+	_pExp->GetTimelapse(timePoints, intervalSec, triggerModeTimelapse);
+	if (0 == zEnable) zstageSteps = 1;	//If Z is not enable, set the step number to 0 for FIJI to read it
 	string strOME;
 	//build the ome image guid list on the first acquisition only
-	if((_zFrame == 1)&&(_tFrame == 1))
+	if ((_zFrame == 1) && (_tFrame == 1))
 	{
-		strOME = uUIDSetup(pHardware, timePoints, zstageSteps,  index,  subWell);
+		strOME = uUIDSetup(pHardware, timePoints, zstageSteps, index, subWell);
 	}
 
 	Dimensions dAvg;
@@ -1632,68 +1639,68 @@ long AcquireSingle::Execute(long index, long subWell)
 
 	Dimensions dIntensityAvg = dAvg;
 	dIntensityAvg.imageBufferType = BufferType::INTENSITY;
-	if(ImageManager::getInstance()->CreateImage(tempAvgImageID,dIntensityAvg,L"intensity")== FALSE)
+	if (ImageManager::getInstance()->CreateImage(tempAvgImageID, dIntensityAvg, L"intensity") == FALSE)
 	{
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create intensity  memory buffer");
+		logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample Execute could not create intensity  memory buffer");
 		return FALSE;
 	}
 	avgImageIDs.insert(std::pair<long, long>(BufferType::INTENSITY, tempAvgImageID));
 	avgBuffersDimensions.insert(std::pair<long, Dimensions>(BufferType::INTENSITY, dIntensityAvg));
-	
+
 	//if DFLIM
 	if (imageMethod == 1)
 	{
 		const long DFLIM_HISTOGRAM_BINS = 256;
-		Dimensions ddflimHisto= dAvg;
+		Dimensions ddflimHisto = dAvg;
 		ddflimHisto.imageBufferType = BufferType::DFLIM_HISTOGRAM;
 		ddflimHisto.x = DFLIM_HISTOGRAM_BINS;
 		ddflimHisto.y = 1;
 		ddflimHisto.dType = DataType::INT_32BIT;
-		if(ImageManager::getInstance()->CreateImage(tempAvgImageID,ddflimHisto,L"dFLIMShisto")== FALSE)
+		if (ImageManager::getInstance()->CreateImage(tempAvgImageID, ddflimHisto, L"dFLIMShisto") == FALSE)
 		{
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create dflim histogram  memory buffer");
+			logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample Execute could not create dflim histogram  memory buffer");
 			return FALSE;
-		}		
+		}
 		avgImageIDs.insert(std::pair<long, long>(BufferType::DFLIM_HISTOGRAM, tempAvgImageID));
 		avgBuffersDimensions.insert(std::pair<long, Dimensions>(BufferType::DFLIM_HISTOGRAM, ddflimHisto));
 
 		Dimensions ddflimSinglePhoton = dAvg;
 		ddflimSinglePhoton.imageBufferType = BufferType::DFLIM_IMAGE_SINGLE_PHOTON;
 		ddflimSinglePhoton.dType = DataType::INT_16BIT;
-		if(ImageManager::getInstance()->CreateImage(tempAvgImageID,ddflimSinglePhoton,L"dFLIMSinglePhoton")== FALSE)
+		if (ImageManager::getInstance()->CreateImage(tempAvgImageID, ddflimSinglePhoton, L"dFLIMSinglePhoton") == FALSE)
 		{
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create dFLIMSinglePhoton  memory buffer");
+			logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample Execute could not create dFLIMSinglePhoton  memory buffer");
 			return FALSE;
-		}		
+		}
 		avgImageIDs.insert(std::pair<long, long>(BufferType::DFLIM_IMAGE_SINGLE_PHOTON, tempAvgImageID));
 		avgBuffersDimensions.insert(std::pair<long, Dimensions>(BufferType::DFLIM_IMAGE_SINGLE_PHOTON, ddflimSinglePhoton));
 
 		Dimensions ddflimArrivalTimeSum = dAvg;
 		ddflimArrivalTimeSum.imageBufferType = BufferType::DFLIM_IMAGE_ARRIVAL_TIME_SUM;
 		ddflimArrivalTimeSum.dType = DataType::INT_32BIT;
-		if(ImageManager::getInstance()->CreateImage(tempAvgImageID,ddflimArrivalTimeSum,L"dFLIMArrivalTimeSum")== FALSE)
+		if (ImageManager::getInstance()->CreateImage(tempAvgImageID, ddflimArrivalTimeSum, L"dFLIMArrivalTimeSum") == FALSE)
 		{
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create dFLIMArrivalTimeSum  memory buffer");
+			logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample Execute could not create dFLIMArrivalTimeSum  memory buffer");
 			return FALSE;
-		}			
+		}
 		avgImageIDs.insert(std::pair<long, long>(BufferType::DFLIM_IMAGE_ARRIVAL_TIME_SUM, tempAvgImageID));
 		avgBuffersDimensions.insert(std::pair<long, Dimensions>(BufferType::DFLIM_IMAGE_ARRIVAL_TIME_SUM, ddflimArrivalTimeSum));
-		
+
 		double dwelltime = 0;
 		pCamera->GetParam(ICamera::PARAM_LSM_DWELL_TIME, dwelltime);
 
-		long maxPhotonsSize = static_cast<long>(round(baseDimensions.x * baseDimensions.y * (1 + 30* dwelltime)));
+		long maxPhotonsSize = static_cast<long>(round(baseDimensions.x * baseDimensions.y * (1 + 30 * dwelltime)));
 
 		Dimensions ddflimPhotons = dAvg;
 		ddflimPhotons.x = maxPhotonsSize;
 		ddflimPhotons.y = 1;
 		ddflimPhotons.imageBufferType = BufferType::DFLIM_PHOTONS;
 		ddflimPhotons.dType = DataType::INT_8BIT;
-		if(ImageManager::getInstance()->CreateImage(tempAvgImageID,ddflimPhotons,L"dFLIMphotons")== FALSE)
+		if (ImageManager::getInstance()->CreateImage(tempAvgImageID, ddflimPhotons, L"dFLIMphotons") == FALSE)
 		{
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create dFLIMphotons  memory buffer");
+			logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample Execute could not create dFLIMphotons  memory buffer");
 			return FALSE;
-		}	
+		}
 		avgImageIDs.insert(std::pair<long, long>(BufferType::DFLIM_PHOTONS, tempAvgImageID));
 		avgBuffersDimensions.insert(std::pair<long, Dimensions>(BufferType::DFLIM_PHOTONS, ddflimPhotons));
 	}
@@ -1703,88 +1710,88 @@ long AcquireSingle::Execute(long index, long subWell)
 	long maxFrameWaitTime = 30000;
 	double typeVal;
 
-	pCamera->GetParam(ICamera::PARAM_CAMERA_TYPE,typeVal);
+	pCamera->GetParam(ICamera::PARAM_CAMERA_TYPE, typeVal);
 
 	long cameraType = static_cast<long>(typeVal);
 	avgMode = ICamera::AVG_MODE_NONE;
 
 	long currentTriggerMode;
 	double dVal;
-	pCamera->GetParam(ICamera::PARAM_TRIGGER_MODE,dVal);
+	pCamera->GetParam(ICamera::PARAM_TRIGGER_MODE, dVal);
 
 	currentTriggerMode = static_cast<long>(dVal);
 
 	pCamera->SetParam(ICamera::PARAM_LSM_FORCE_SETTINGS_UPDATE, 1);
 	pCamera->SetParam(ICamera::PARAM_MULTI_FRAME_COUNT, avgFrames);
 
-	switch(cameraType)
+	switch (cameraType)
 	{
 	case ICamera::CCD:
+	{
+		switch (currentTriggerMode)
 		{
-			switch(currentTriggerMode)
-			{
-			case ICamera::HW_MULTI_FRAME_TRIGGER_EACH:
-			case ICamera::HW_MULTI_FRAME_TRIGGER_FIRST:
-			case ICamera::HW_SINGLE_FRAME:
-				{
-					maxFrameWaitTime = INFINITE;
-				}
-				break;
-			default:
-				{
-					const long ADDITIONAL_TRANSFER_TIME_MS = 500;
-					maxFrameWaitTime = static_cast<long>(exposureTimeMS + ADDITIONAL_TRANSFER_TIME_MS);
-					pCamera->SetParam(ICamera::PARAM_TRIGGER_MODE, ICamera::SW_MULTI_FRAME);
-				}
-				break;
-			}
+		case ICamera::HW_MULTI_FRAME_TRIGGER_EACH:
+		case ICamera::HW_MULTI_FRAME_TRIGGER_FIRST:
+		case ICamera::HW_SINGLE_FRAME:
+		{
+			maxFrameWaitTime = INFINITE;
 		}
 		break;
+		default:
+		{
+			const long ADDITIONAL_TRANSFER_TIME_MS = 500;
+			maxFrameWaitTime = static_cast<long>(exposureTimeMS + ADDITIONAL_TRANSFER_TIME_MS);
+			pCamera->SetParam(ICamera::PARAM_TRIGGER_MODE, ICamera::SW_MULTI_FRAME);
+		}
+		break;
+		}
+	}
+	break;
 	case ICamera::LSM:
+	{
+		switch (currentTriggerMode)
 		{
-			switch(currentTriggerMode)
-			{
-			case ICamera::HW_MULTI_FRAME_TRIGGER_EACH:
-			case ICamera::HW_MULTI_FRAME_TRIGGER_FIRST:
-			case ICamera::HW_SINGLE_FRAME:
-				{
-					pCamera->SetParam(ICamera::PARAM_TRIGGER_MODE, ICamera::HW_MULTI_FRAME_TRIGGER_FIRST);
-				}
-				break;
-			default:
-				{
-					pCamera->SetParam(ICamera::PARAM_TRIGGER_MODE, ICamera::SW_MULTI_FRAME);
-				}
-				break;
-			}
+		case ICamera::HW_MULTI_FRAME_TRIGGER_EACH:
+		case ICamera::HW_MULTI_FRAME_TRIGGER_FIRST:
+		case ICamera::HW_SINGLE_FRAME:
+		{
+			pCamera->SetParam(ICamera::PARAM_TRIGGER_MODE, ICamera::HW_MULTI_FRAME_TRIGGER_FIRST);
 		}
 		break;
+		default:
+		{
+			pCamera->SetParam(ICamera::PARAM_TRIGGER_MODE, ICamera::SW_MULTI_FRAME);
+		}
+		break;
+		}
+	}
+	break;
 	}
 
 	double deltaT = 0;
 	string acquiredDateTime;
-	FrameInfo frameInfo = {0, 0, 0, 0};
+	FrameInfo frameInfo = { 0, 0, 0, 0 };
 
 	pCamera->SetupAcquisition(pMemoryBuffer);
 
 	long camStarted = pCamera->StartAcquisition(pMemoryBuffer);
 	//HW timed out, or failed to start:
-	if(FALSE == camStarted)
+	if (FALSE == camStarted)
 	{
 		pCamera->PostflightAcquisition(NULL);
 
-		std::map<long, long>::iterator it = imageIDs.begin(); 
+		std::map<long, long>::iterator it = imageIDs.begin();
 		while (it != imageIDs.end())
-		{		
+		{
 			long imageID = it->second;
-			ImageManager::getInstance()->UnlockImagePtr(imageID,0,0,0,0);
+			ImageManager::getInstance()->UnlockImagePtr(imageID, 0, 0, 0, 0);
 			ImageManager::getInstance()->DestroyImage(imageID);
 			it++;
 		}
 
-		it = avgImageIDs.begin(); 
+		it = avgImageIDs.begin();
 		while (it != avgImageIDs.end())
-		{		
+		{
 			long imageID = it->second;
 			ImageManager::getInstance()->DestroyImage(imageID);
 			it++;
@@ -1810,15 +1817,15 @@ long AcquireSingle::Execute(long index, long subWell)
 
 	UINT64 dflimPhotonListOffset = 0;
 
-	for(long i=0; i<avgFrames; i++)
+	for (long i = 0; i < avgFrames; i++)
 	{
 		//hEvent = CreateEvent(0, FALSE, FALSE, 0);
 
-		if(i == 0)
+		if (i == 0)
 		{
 			// TO DO: 
 			// and (index == 1) condition when it is supported to capture multiple sample locations in a later release
-			if((subWell == 1) && (_zFrame == 1) && (_tFrame == 1))
+			if ((subWell == 1) && (_zFrame == 1) && (_tFrame == 1))
 			{
 				// set current as the start time of the experiment
 				_acquireSaveInfo->getInstance()->SetExperimentStartCount();
@@ -1859,32 +1866,32 @@ long AcquireSingle::Execute(long index, long subWell)
 		long stopStatus = 0;
 		long status = ICamera::STATUS_BUSY;
 
-		while((ICamera::STATUS_BUSY == status) || (ICamera::STATUS_PARTIAL == status))
+		while ((ICamera::STATUS_BUSY == status) || (ICamera::STATUS_PARTIAL == status))
 		{
-			if(FALSE == pCamera->StatusAcquisition(status))
+			if (FALSE == pCamera->StatusAcquisition(status))
 			{
 				break;
 			}
 
 			//if the capture is still busy check the stop status
-			if(ICamera::STATUS_BUSY == status)
+			if (ICamera::STATUS_BUSY == status)
 			{
 				StopCaptureEventCheck(stopStatus);
 
 				//user has asked to stop the capture
-				if(1 == stopStatus)
+				if (1 == stopStatus)
 					break;
 			}
 		}
 
 
-		if(1 == stopStatus)
+		if (1 == stopStatus)
 		{
-			std::map<long, long>::iterator it = avgImageIDs.begin(); 
+			std::map<long, long>::iterator it = avgImageIDs.begin();
 			while (it != avgImageIDs.end())
-			{		
+			{
 				long imageID = it->second; // Accessing VALUE from element pointed by it.
-				ImageManager::getInstance()->UnlockImagePtr(imageID,0,0,0,i);
+				ImageManager::getInstance()->UnlockImagePtr(imageID, 0, 0, 0, i);
 				ImageManager::getInstance()->DestroyImage(imageID);
 				it++;// Increment the Iterator to point to next entry
 			}
@@ -1909,24 +1916,24 @@ long AcquireSingle::Execute(long index, long subWell)
 			dflimPhotonListOffset += frameInfo.copySize;
 		}
 
-		std::map<long, long>::iterator it = avgImageIDs.begin(); 
+		std::map<long, long>::iterator it = avgImageIDs.begin();
 		while (it != avgImageIDs.end())
-		{		
+		{
 			long imageID = it->second; // Accessing VALUE from element pointed by it.
-			ImageManager::getInstance()->UnlockImagePtr(imageID,0,0,0,i);
+			ImageManager::getInstance()->UnlockImagePtr(imageID, 0, 0, 0, i);
 			it++;// Increment the Iterator to point to next entry
 		}
 
-		if(i < (avgFrames - 1))
+		if (i < (avgFrames - 1))
 		{
-			pAvg = (unsigned short*)ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::INTENSITY], 0, 0, 0, i+1);
+			pAvg = (unsigned short*)ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::INTENSITY], 0, 0, 0, i + 1);
 			//if DFLIM
 			if (imageMethod == 1)
 			{
-				pDFLIMHistoAvg = (uint32*)ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_HISTOGRAM], 0, 0, 0, i+1);
-				pDFLIMSinglePhotonAvg = (unsigned short*)ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_IMAGE_SINGLE_PHOTON], 0, 0, 0, i+1);
-				pDFLIMArrivalTimeSumAvg = (uint32*)ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_IMAGE_ARRIVAL_TIME_SUM], 0, 0, 0, i+1);
-				pDFLIMPhotonsAvg = ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_PHOTONS], 0, 0, 0, i+1, dflimPhotonListOffset);
+				pDFLIMHistoAvg = (uint32*)ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_HISTOGRAM], 0, 0, 0, i + 1);
+				pDFLIMSinglePhotonAvg = (unsigned short*)ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_IMAGE_SINGLE_PHOTON], 0, 0, 0, i + 1);
+				pDFLIMArrivalTimeSumAvg = (uint32*)ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_IMAGE_ARRIVAL_TIME_SUM], 0, 0, 0, i + 1);
+				pDFLIMPhotonsAvg = ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_PHOTONS], 0, 0, 0, i + 1, dflimPhotonListOffset);
 			}
 		}
 	}
@@ -1938,22 +1945,22 @@ long AcquireSingle::Execute(long index, long subWell)
 	}
 	clock_t start = std::clock();
 	//reset the trigger mode in the event it was changed for averaging
-	pCamera->SetParam(ICamera::PARAM_TRIGGER_MODE,currentTriggerMode);
+	pCamera->SetParam(ICamera::PARAM_TRIGGER_MODE, currentTriggerMode);
 
 
 	Dimensions dSum = buffersDimensions[BufferType::INTENSITY];
 
-	long * pSumBuffer = new long[dSum.x*dSum.y*dSum.c];
+	long* pSumBuffer = new long[dSum.x * dSum.y * dSum.c];
 
-	memset(pSumBuffer,0,sizeof(long)*dSum.x*dSum.y*dSum.c);
+	memset(pSumBuffer, 0, sizeof(long) * dSum.x * dSum.y * dSum.c);
 
-	for(long i=0; i<avgFrames; i++)
+	for (long i = 0; i < avgFrames; i++)
 	{
-		long * pSum = pSumBuffer;
+		long* pSum = pSumBuffer;
 
-		unsigned short * pAvgBuffer = (unsigned short*)ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::INTENSITY],0,0,0,i);
+		unsigned short* pAvgBuffer = (unsigned short*)ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::INTENSITY], 0, 0, 0, i);
 
-		for(long k=0; k<dSum.x*dSum.y*dSum.c; k++)
+		for (long k = 0; k < dSum.x * dSum.y * dSum.c; k++)
 		{
 			*pSum += *pAvgBuffer;
 			pSum++;
@@ -1963,33 +1970,33 @@ long AcquireSingle::Execute(long index, long subWell)
 		//if DFLIM
 		if (imageMethod == 1)
 		{
-			uint32 * pDFLIMHistoSum = (uint32*)pMemoryBufferDFLIMHisto;
-			unsigned short * pDFLIMSinglePhotonSum = (unsigned short*)pMemoryBufferDFLIMSinglePhoton;
-			uint32 * pArrivalTimeSumSum = (uint32*)pMemoryBufferDFLIMArrivalTimeSum;
+			uint32* pDFLIMHistoSum = (uint32*)pMemoryBufferDFLIMHisto;
+			unsigned short* pDFLIMSinglePhotonSum = (unsigned short*)pMemoryBufferDFLIMSinglePhoton;
+			uint32* pArrivalTimeSumSum = (uint32*)pMemoryBufferDFLIMArrivalTimeSum;
 
-			uint32 * pAvgDFLIMHistoBuffer = (uint32*)ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_HISTOGRAM],0,0,0,i);
-			unsigned short * pAvgDFLIMSinglePhotonBuffer = (unsigned short*)ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_IMAGE_SINGLE_PHOTON],0,0,0,i);
-			uint32 * pAvgDFLIMArrivalTimeSumBuffer = (uint32*)ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_IMAGE_ARRIVAL_TIME_SUM],0,0,0,i);
+			uint32* pAvgDFLIMHistoBuffer = (uint32*)ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_HISTOGRAM], 0, 0, 0, i);
+			unsigned short* pAvgDFLIMSinglePhotonBuffer = (unsigned short*)ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_IMAGE_SINGLE_PHOTON], 0, 0, 0, i);
+			uint32* pAvgDFLIMArrivalTimeSumBuffer = (uint32*)ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_IMAGE_ARRIVAL_TIME_SUM], 0, 0, 0, i);
 
 			Dimensions dHistoSum = buffersDimensions[BufferType::DFLIM_HISTOGRAM];
 			Dimensions dSinglePhotonSum = buffersDimensions[BufferType::DFLIM_IMAGE_SINGLE_PHOTON];
 			Dimensions dArrivalTimeSumSum = buffersDimensions[BufferType::DFLIM_IMAGE_ARRIVAL_TIME_SUM];
 
-			for(long k=0; k<dHistoSum.x*dHistoSum.y*dHistoSum.c; k++)
+			for (long k = 0; k < dHistoSum.x * dHistoSum.y * dHistoSum.c; k++)
 			{
 				*pDFLIMHistoSum += *pAvgDFLIMHistoBuffer;
 				pDFLIMHistoSum++;
 				pAvgDFLIMHistoBuffer++;
 			}
 
-			for(long k=0; k<dSinglePhotonSum.x*dSinglePhotonSum.y*dSinglePhotonSum.c; k++)
+			for (long k = 0; k < dSinglePhotonSum.x * dSinglePhotonSum.y * dSinglePhotonSum.c; k++)
 			{
 				*pDFLIMSinglePhotonSum += *pAvgDFLIMSinglePhotonBuffer;
 				pDFLIMSinglePhotonSum++;
 				pAvgDFLIMSinglePhotonBuffer++;
 			}
 
-			for(long k=0; k<dArrivalTimeSumSum.x*dArrivalTimeSumSum.y*dArrivalTimeSumSum.c; k++)
+			for (long k = 0; k < dArrivalTimeSumSum.x * dArrivalTimeSumSum.y * dArrivalTimeSumSum.c; k++)
 			{
 				*pArrivalTimeSumSum += *pAvgDFLIMArrivalTimeSumBuffer;
 				pArrivalTimeSumSum++;
@@ -1997,21 +2004,21 @@ long AcquireSingle::Execute(long index, long subWell)
 			}
 		}
 
-		std::map<long, long>::iterator it = avgImageIDs.begin(); 
+		std::map<long, long>::iterator it = avgImageIDs.begin();
 		while (it != avgImageIDs.end())
-		{		
+		{
 			long imageID = it->second; // Accessing VALUE from element pointed by it.
-			ImageManager::getInstance()->UnlockImagePtr(imageID,0,0,0,i);
+			ImageManager::getInstance()->UnlockImagePtr(imageID, 0, 0, 0, i);
 			it++;// Increment the Iterator to point to next entry
 		}
 	}
 
-	unsigned short * pBuf = (unsigned short*)pMemoryBuffer;
-	long * pSum = pSumBuffer;
+	unsigned short* pBuf = (unsigned short*)pMemoryBuffer;
+	long* pSum = pSumBuffer;
 
-	for(long k=0; k<dSum.x*dSum.y*dSum.c; k++)
+	for (long k = 0; k < dSum.x * dSum.y * dSum.c; k++)
 	{
-		*pBuf = static_cast<unsigned short>((*pSum)/(double)avgFrames);
+		*pBuf = static_cast<unsigned short>((*pSum) / (double)avgFrames);
 		pBuf++;
 		pSum++;
 	}
@@ -2019,10 +2026,10 @@ long AcquireSingle::Execute(long index, long subWell)
 	delete[] pSumBuffer;
 
 	//restore the average mode since it was switched to AVG_MODE_NONE
-	pCamera->SetParam(ICamera::PARAM_LSM_AVERAGEMODE,avgMode);
+	pCamera->SetParam(ICamera::PARAM_LSM_AVERAGEMODE, avgMode);
 
 	//re establish the existing triggermode
-	pCamera->SetParam(ICamera::PARAM_TRIGGER_MODE,currentTriggerMode);
+	pCamera->SetParam(ICamera::PARAM_TRIGGER_MODE, currentTriggerMode);
 
 	ImageCorrections(_pExp, pMemoryBuffer, dSum.x, dSum.y, bufferChannels);
 
@@ -2033,11 +2040,11 @@ long AcquireSingle::Execute(long index, long subWell)
 	wchar_t ext[_MAX_EXT];
 	wchar_t timingFile[_MAX_PATH];
 
-	_wsplitpath_s(_path.c_str(),drive,_MAX_DRIVE,dir,_MAX_DIR,fname,_MAX_FNAME,ext,_MAX_EXT);
+	_wsplitpath_s(_path.c_str(), drive, _MAX_DRIVE, dir, _MAX_DIR, fname, _MAX_FNAME, ext, _MAX_EXT);
 
-	if((_zFrame == zstageSteps) && (_tFrame == timePoints))
+	if ((_zFrame == zstageSteps) && (_tFrame == timePoints))
 	{
-		StringCbPrintfW(timingFile,_MAX_PATH, L"%s%stiming.txt", drive, dir);
+		StringCbPrintfW(timingFile, _MAX_PATH, L"%s%stiming.txt", drive, dir);
 
 		string timeFile = ConvertWStringToString(timingFile);
 		//string timeFile = expPath + "\\timing.txt";
@@ -2046,10 +2053,10 @@ long AcquireSingle::Execute(long index, long subWell)
 		_acquireSaveInfo->getInstance()->ClearTimestamps();
 	}
 
-	if((aftype != IAutoFocus::AF_NONE)&&(TRUE == _pAutoFocus->WillAFExecuteNextIteration()))
+	if ((aftype != IAutoFocus::AF_NONE) && (TRUE == _pAutoFocus->WillAFExecuteNextIteration()))
 	{
 		////move to an offset of of the start location	
-		if(FALSE == SetAutoFocusStartZPosition(afStartPos,FALSE,afFound))
+		if (FALSE == SetAutoFocusStartZPosition(afStartPos, FALSE, afFound))
 		{
 			return FALSE;
 		}
@@ -2061,7 +2068,7 @@ long AcquireSingle::Execute(long index, long subWell)
 	long bp;
 	long wp;
 
-	GetColorInfo(pHardware.get(),wavelengthName,red,green,blue,bp,wp);
+	GetColorInfo(pHardware.get(), wavelengthName, red, green, blue, bp, wp);
 
 	const int COLOR_MAP_SIZE = 65536;
 	unsigned short rlut[COLOR_MAP_SIZE];
@@ -2070,20 +2077,20 @@ long AcquireSingle::Execute(long index, long subWell)
 
 	const int COLOR_MAP_BIT_DEPTH_TIFF = 8;
 
-	GetLookUpTables(rlut, glut, blut,red, green, blue, bp, wp,COLOR_MAP_BIT_DEPTH_TIFF);
+	GetLookUpTables(rlut, glut, blut, red, green, blue, bp, wp, COLOR_MAP_BIT_DEPTH_TIFF);
 
 	wchar_t filePathAndName[_MAX_PATH];
 
-	string redChan,greenChan,blueChan,cyanChan,magentaChan,yellowChan,grayChan;
-	pHardware->GetColorChannels(redChan,greenChan,blueChan,cyanChan,magentaChan,yellowChan,grayChan);
+	string redChan, greenChan, blueChan, cyanChan, magentaChan, yellowChan, grayChan;
+	pHardware->GetColorChannels(redChan, greenChan, blueChan, cyanChan, magentaChan, yellowChan, grayChan);
 
-	long bufferOffsetIndex =0;
+	long bufferOffsetIndex = 0;
 
 	PhysicalSize physicalSize;	// unit: um
-	double res = floor(umPerPixel*1000+0.5)/1000;	// keep 2 figures after decimal point; res will be x.xx micron	
+	double res = floor(umPerPixel * 1000 + 0.5) / 1000;	// keep 2 figures after decimal point; res will be x.xx micron	
 	physicalSize.x = res;
 	physicalSize.y = res;
-	physicalSize.z = zstageStepSize;		
+	physicalSize.z = zstageStepSize;
 
 	long totalExperimentWavelengths = 0;
 	if (TRUE == _sp.doOME)
@@ -2100,7 +2107,7 @@ long AcquireSingle::Execute(long index, long subWell)
 		if (TRUE == captureSequenceEnable && captureSequence.size() > 1)
 		{
 
-			for (long i=0; i < captureSequence.size(); i++)
+			for (long i = 0; i < captureSequence.size(); i++)
 			{
 				totalExperimentWavelengths += static_cast<long>(captureSequence[i].Wavelength.size());
 			}
@@ -2110,262 +2117,290 @@ long AcquireSingle::Execute(long index, long subWell)
 			totalExperimentWavelengths = _pExp->GetNumberOfWavelengths();
 		}
 	}
-	long imgIndxDigiCnts = ResourceManager::getInstance()->GetSettingsParamLong((int)SettingsFileType::APPLICATION_SETTINGS,L"ImageNameFormat",L"indexDigitCounts", (int)Constants::DEFAULT_FILE_FORMAT_DIGITS);
+	long imgIndxDigiCnts = ResourceManager::getInstance()->GetSettingsParamLong((int)SettingsFileType::APPLICATION_SETTINGS, L"ImageNameFormat", L"indexDigitCounts", (int)Constants::DEFAULT_FILE_FORMAT_DIGITS);
 	switch (imageMethod)
 	{
 	case 1: //dflim capture
+	{
+		Dimensions dIntensity = buffersDimensions[BufferType::INTENSITY];
+		Dimensions dHisto = buffersDimensions[BufferType::DFLIM_HISTOGRAM];
+		Dimensions dSinglePhoton = buffersDimensions[BufferType::DFLIM_IMAGE_SINGLE_PHOTON];
+		Dimensions dArrivalTimeSum = buffersDimensions[BufferType::DFLIM_IMAGE_ARRIVAL_TIME_SUM];
+		Dimensions dPhotonList = buffersDimensions[BufferType::DFLIM_PHOTONS];
+		long numberOfchannels = _pExp->GetNumberOfWavelengths();
+		long dflimImageSize = dHisto.x * dHisto.y * numberOfchannels * sizeof(uint32) +
+			dIntensity.x * dIntensity.y * numberOfchannels * sizeof(unsigned short) +
+			dSinglePhoton.x * dSinglePhoton.y * numberOfchannels * sizeof(unsigned short) +
+			dArrivalTimeSum.x * dArrivalTimeSum.y * numberOfchannels * sizeof(uint32);
+
+		char* dflimBuffer = new char[dflimImageSize];
+		long copiedDFLIMSize = 0;
+		for (long i = 0; i < bufferChannels; i++)
 		{
-			Dimensions dIntensity = buffersDimensions[BufferType::INTENSITY];
-			Dimensions dHisto = buffersDimensions[BufferType::DFLIM_HISTOGRAM];
-			Dimensions dSinglePhoton = buffersDimensions[BufferType::DFLIM_IMAGE_SINGLE_PHOTON];
-			Dimensions dArrivalTimeSum = buffersDimensions[BufferType::DFLIM_IMAGE_ARRIVAL_TIME_SUM];
-			Dimensions dPhotonList = buffersDimensions[BufferType::DFLIM_PHOTONS];
-			long numberOfchannels = _pExp->GetNumberOfWavelengths();
-			long dflimImageSize = dHisto.x * dHisto.y * numberOfchannels * sizeof(uint32) + 
-								  dIntensity.x * dIntensity.y * numberOfchannels * sizeof(unsigned short) + 
-								  dSinglePhoton.x * dSinglePhoton.y * numberOfchannels * sizeof(unsigned short) + 
-								  dArrivalTimeSum.x * dArrivalTimeSum.y * numberOfchannels * sizeof(uint32);
-
-			char* dflimBuffer = new char[dflimImageSize];
-			long copiedDFLIMSize = 0;
-			for(long i=0; i<bufferChannels; i++)			
+			if (i < _pExp->GetNumberOfWavelengths())
 			{
-				if(i < _pExp->GetNumberOfWavelengths())
-				{			
-					_pExp->GetWavelength(i,wavelengthName,exposureTimeMS);
+				_pExp->GetWavelength(i, wavelengthName, exposureTimeMS);
 
-					//A single buffer is used for one channel capture so no offset is needed for that case
-					if(bufferChannels > 1)
-					{
-						pHardware->GetWavelengthIndex(wavelengthName,bufferOffsetIndex);
-					}
-
-					memcpy(dflimBuffer + copiedDFLIMSize, pMemoryBufferDFLIMHisto + dHisto.x * dHisto.y * bufferOffsetIndex * sizeof(uint32), dHisto.x * dHisto.y * sizeof(uint32));
-					copiedDFLIMSize += dHisto.x * dHisto.y * sizeof(uint32);
-				}				
-			}
-			
-			for(long i=0; i<bufferChannels; i++)			
-			{
-				if(i < _pExp->GetNumberOfWavelengths())
-				{			
-					_pExp->GetWavelength(i,wavelengthName,exposureTimeMS);
-
-					//A single buffer is used for one channel capture so no offset is needed for that case
-					if(bufferChannels > 1)
-					{
-						pHardware->GetWavelengthIndex(wavelengthName,bufferOffsetIndex);
-					}
-					memcpy(dflimBuffer + copiedDFLIMSize, pMemoryBuffer + dIntensity.x * dIntensity.y * bufferOffsetIndex * sizeof(unsigned short), dIntensity.x * dIntensity.y * sizeof(unsigned short));
-					copiedDFLIMSize += dIntensity.x * dIntensity.y * sizeof(unsigned short);
-				}				
-			}
-
-			for(long i=0; i<bufferChannels; i++)			
-			{
-				if(i < _pExp->GetNumberOfWavelengths())
-				{			
-					_pExp->GetWavelength(i,wavelengthName,exposureTimeMS);
-
-					//A single buffer is used for one channel capture so no offset is needed for that case
-					if(bufferChannels > 1)
-					{
-						pHardware->GetWavelengthIndex(wavelengthName,bufferOffsetIndex);
-					}
-					memcpy(dflimBuffer + copiedDFLIMSize, pMemoryBufferDFLIMSinglePhoton + dSinglePhoton.x * dSinglePhoton.y * bufferOffsetIndex * sizeof(unsigned short),  dSinglePhoton.x * dSinglePhoton.y * sizeof(unsigned short));
-					copiedDFLIMSize += dSinglePhoton.x * dSinglePhoton.y * sizeof(unsigned short);
-				}				
-			}
-
-			for(long i=0; i<bufferChannels; i++)			
-			{
-				if(i < _pExp->GetNumberOfWavelengths())
-				{			
-					_pExp->GetWavelength(i,wavelengthName,exposureTimeMS);
-
-					//A single buffer is used for one channel capture so no offset is needed for that case
-					if(bufferChannels > 1)
-					{
-						pHardware->GetWavelengthIndex(wavelengthName,bufferOffsetIndex);
-					}
-					memcpy(dflimBuffer + copiedDFLIMSize, pMemoryBufferDFLIMArrivalTimeSum + dArrivalTimeSum.x * dArrivalTimeSum.y * bufferOffsetIndex * sizeof(uint32), dArrivalTimeSum.x * dArrivalTimeSum.y * sizeof(uint32));
-					copiedDFLIMSize += dArrivalTimeSum.x * dArrivalTimeSum.y * sizeof(uint32);
-				}				
-			}
-
-			FrameInfo statsFrameInfo;
-			statsFrameInfo.bufferType = BufferType::DFLIM_IMAGE;		
-			statsFrameInfo.imageWidth = dIntensity.x;
-			statsFrameInfo.imageHeight = dIntensity.y;
-			StatsManager::getInstance()->ComputeStats((unsigned short*)dflimBuffer, 
-				statsFrameInfo,
-				_lsmChannel,FALSE,TRUE,TRUE);
-
-			std::wstringstream dFLIMImgNameFormat;
-			dFLIMImgNameFormat << L"%s%s%Image_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" 
-				<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
-				<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" 
-				<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.dFLIM";
-			std::wstringstream photonsImgNameFormat;
-			photonsImgNameFormat << L"%s%s%Image_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" 
-				<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
-				<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" 
-				<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.photons";
-		
-			std::wstring rawdFLIMPhotonsName = ImageManager::getInstance()->GetImagePath(avgImageIDs[BufferType::DFLIM_PHOTONS]);	
-
-			StringCbPrintfW(filePathAndName,_MAX_PATH,dFLIMImgNameFormat.str().c_str(),drive,dir,index,subWell,_zFrame,_tFrame);
-
-			wchar_t filePathAndNamePhotons[_MAX_PATH];
-			StringCbPrintfW(filePathAndNamePhotons,_MAX_PATH,photonsImgNameFormat.str().c_str(),drive,dir,index,subWell,_zFrame,_tFrame);
-
-			ofstream dflimFile(filePathAndName, ios_base::binary);
-			dflimFile.write(dflimBuffer, dflimImageSize);
-			dflimFile.close();	
-			delete[] dflimBuffer;
-			
-			long maxPhotonListSizePerFrame = dPhotonList.c * dPhotonList.x * dPhotonList.y;
-			ofstream photonsFile(filePathAndNamePhotons, ios_base::binary);
-			if (dflimPhotonListOffset > maxPhotonListSizePerFrame)
-			{
-				int n = static_cast<int>(floor((double)dflimPhotonListOffset / (double)maxPhotonListSizePerFrame));
-				char* photonsBuffer;
-				for (int i = 0; i < n; ++i)
+				//A single buffer is used for one channel capture so no offset is needed for that case
+				if (bufferChannels > 1)
 				{
-					photonsBuffer = ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_PHOTONS],0,0,0,i,i*maxPhotonListSizePerFrame);
-					photonsFile.write((char*)photonsBuffer, maxPhotonListSizePerFrame);
-					ImageManager::getInstance()->UnlockImagePtr(avgImageIDs[BufferType::DFLIM_PHOTONS],0,0,0,i);
+					pHardware->GetWavelengthIndex(wavelengthName, bufferOffsetIndex);
 				}
 
-				int rem = dflimPhotonListOffset % maxPhotonListSizePerFrame;
-				if (rem != 0)
-				{
-					photonsBuffer = ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_PHOTONS],0,0,0,n,n*maxPhotonListSizePerFrame);
-					photonsFile.write((char*)photonsBuffer, rem);
-					ImageManager::getInstance()->UnlockImagePtr(avgImageIDs[BufferType::DFLIM_PHOTONS],0,0,0,n);	
-				}
+				memcpy(dflimBuffer + copiedDFLIMSize, pMemoryBufferDFLIMHisto + dHisto.x * dHisto.y * bufferOffsetIndex * sizeof(uint32), dHisto.x * dHisto.y * sizeof(uint32));
+				copiedDFLIMSize += dHisto.x * dHisto.y * sizeof(uint32);
 			}
-			else
-			{
-				char* photonsBuffer = ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_PHOTONS],0,0,0,0);
-				photonsFile.write((char*)photonsBuffer, dflimPhotonListOffset);
-				ImageManager::getInstance()->UnlockImagePtr(avgImageIDs[BufferType::DFLIM_PHOTONS],0,0,0,0);				
-			}
-			photonsFile.close();
+		}
 
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,filePathAndName);
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,filePathAndNamePhotons);
-		}
-		break;
-	default:
+		for (long i = 0; i < bufferChannels; i++)
 		{
-			FrameInfo statsFrameInfo;
-			statsFrameInfo.bufferType = BufferType::INTENSITY;		
-			statsFrameInfo.imageWidth = dSum.x;
-			statsFrameInfo.imageHeight = dSum.y;
-			StatsManager::getInstance()->ComputeStats( (unsigned short*)pMemoryBuffer, 
-					statsFrameInfo,
-					_lsmChannel,FALSE,TRUE,FALSE);
+			if (i < _pExp->GetNumberOfWavelengths())
+			{
+				_pExp->GetWavelength(i, wavelengthName, exposureTimeMS);
+
+				//A single buffer is used for one channel capture so no offset is needed for that case
+				if (bufferChannels > 1)
+				{
+					pHardware->GetWavelengthIndex(wavelengthName, bufferOffsetIndex);
+				}
+				memcpy(dflimBuffer + copiedDFLIMSize, pMemoryBuffer + dIntensity.x * dIntensity.y * bufferOffsetIndex * sizeof(unsigned short), dIntensity.x * dIntensity.y * sizeof(unsigned short));
+				copiedDFLIMSize += dIntensity.x * dIntensity.y * sizeof(unsigned short);
+			}
 		}
-		break;
+
+		for (long i = 0; i < bufferChannels; i++)
+		{
+			if (i < _pExp->GetNumberOfWavelengths())
+			{
+				_pExp->GetWavelength(i, wavelengthName, exposureTimeMS);
+
+				//A single buffer is used for one channel capture so no offset is needed for that case
+				if (bufferChannels > 1)
+				{
+					pHardware->GetWavelengthIndex(wavelengthName, bufferOffsetIndex);
+				}
+				memcpy(dflimBuffer + copiedDFLIMSize, pMemoryBufferDFLIMSinglePhoton + dSinglePhoton.x * dSinglePhoton.y * bufferOffsetIndex * sizeof(unsigned short), dSinglePhoton.x * dSinglePhoton.y * sizeof(unsigned short));
+				copiedDFLIMSize += dSinglePhoton.x * dSinglePhoton.y * sizeof(unsigned short);
+			}
+		}
+
+		for (long i = 0; i < bufferChannels; i++)
+		{
+			if (i < _pExp->GetNumberOfWavelengths())
+			{
+				_pExp->GetWavelength(i, wavelengthName, exposureTimeMS);
+
+				//A single buffer is used for one channel capture so no offset is needed for that case
+				if (bufferChannels > 1)
+				{
+					pHardware->GetWavelengthIndex(wavelengthName, bufferOffsetIndex);
+				}
+				memcpy(dflimBuffer + copiedDFLIMSize, pMemoryBufferDFLIMArrivalTimeSum + dArrivalTimeSum.x * dArrivalTimeSum.y * bufferOffsetIndex * sizeof(uint32), dArrivalTimeSum.x * dArrivalTimeSum.y * sizeof(uint32));
+				copiedDFLIMSize += dArrivalTimeSum.x * dArrivalTimeSum.y * sizeof(uint32);
+			}
+		}
+
+		FrameInfo statsFrameInfo;
+		statsFrameInfo.bufferType = BufferType::DFLIM_IMAGE;
+		statsFrameInfo.imageWidth = dIntensity.x;
+		statsFrameInfo.imageHeight = dIntensity.y;
+		StatsManager::getInstance()->ComputeStats((unsigned short*)dflimBuffer,
+			statsFrameInfo,
+			_lsmChannel, FALSE, TRUE, TRUE);
+
+		std::wstringstream dFLIMImgNameFormat;
+		dFLIMImgNameFormat << L"%s%s\\Image_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+			<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+			<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+			<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.dFLIM";
+		std::wstringstream photonsImgNameFormat;
+		photonsImgNameFormat << L"%s%s\\Image_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+			<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+			<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+			<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.photons";
+
+		std::wstring rawdFLIMPhotonsName = ImageManager::getInstance()->GetImagePath(avgImageIDs[BufferType::DFLIM_PHOTONS]);
+
+		StringCbPrintfW(filePathAndName, _MAX_PATH, dFLIMImgNameFormat.str().c_str(), drive, dir, index, subWell, _zFrame, _tFrame);
+
+		wchar_t filePathAndNamePhotons[_MAX_PATH];
+		StringCbPrintfW(filePathAndNamePhotons, _MAX_PATH, photonsImgNameFormat.str().c_str(), drive, dir, index, subWell, _zFrame, _tFrame);
+
+		ofstream dflimFile(filePathAndName, ios_base::binary);
+		dflimFile.write(dflimBuffer, dflimImageSize);
+		dflimFile.close();
+		delete[] dflimBuffer;
+
+		long maxPhotonListSizePerFrame = dPhotonList.c * dPhotonList.x * dPhotonList.y;
+		ofstream photonsFile(filePathAndNamePhotons, ios_base::binary);
+		if (dflimPhotonListOffset > maxPhotonListSizePerFrame)
+		{
+			int n = static_cast<int>(floor((double)dflimPhotonListOffset / (double)maxPhotonListSizePerFrame));
+			char* photonsBuffer;
+			for (int i = 0; i < n; ++i)
+			{
+				photonsBuffer = ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_PHOTONS], 0, 0, 0, i, i * maxPhotonListSizePerFrame);
+				photonsFile.write((char*)photonsBuffer, maxPhotonListSizePerFrame);
+				ImageManager::getInstance()->UnlockImagePtr(avgImageIDs[BufferType::DFLIM_PHOTONS], 0, 0, 0, i);
+			}
+
+			int rem = dflimPhotonListOffset % maxPhotonListSizePerFrame;
+			if (rem != 0)
+			{
+				photonsBuffer = ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_PHOTONS], 0, 0, 0, n, n * maxPhotonListSizePerFrame);
+				photonsFile.write((char*)photonsBuffer, rem);
+				ImageManager::getInstance()->UnlockImagePtr(avgImageIDs[BufferType::DFLIM_PHOTONS], 0, 0, 0, n);
+			}
+		}
+		else
+		{
+			char* photonsBuffer = ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_PHOTONS], 0, 0, 0, 0);
+			photonsFile.write((char*)photonsBuffer, dflimPhotonListOffset);
+			ImageManager::getInstance()->UnlockImagePtr(avgImageIDs[BufferType::DFLIM_PHOTONS], 0, 0, 0, 0);
+		}
+		photonsFile.close();
+
+		logDll->TLTraceEvent(INFORMATION_EVENT, 1, filePathAndName);
+		logDll->TLTraceEvent(INFORMATION_EVENT, 1, filePathAndNamePhotons);
 	}
-	long bitDepth=14;
-	switch(cameraType)
+	break;
+	default:
+	{
+		FrameInfo statsFrameInfo;
+		statsFrameInfo.bufferType = BufferType::INTENSITY;
+		statsFrameInfo.imageWidth = dSum.x;
+		statsFrameInfo.imageHeight = dSum.y;
+		StatsManager::getInstance()->ComputeStats((unsigned short*)pMemoryBuffer,
+			statsFrameInfo,
+			_lsmChannel, FALSE, TRUE, FALSE);
+	}
+	break;
+	}
+	long bitDepth = 14;
+	switch (cameraType)
 	{
 	case ICamera::CCD:
 	case ICamera::CCD_MOSAIC:
-		{
-			double bitsPerPixel = 12;
-			pCamera->GetParam(ICamera::PARAM_BITS_PER_PIXEL,bitsPerPixel);
-			bitDepth = static_cast<long>(bitsPerPixel);
-		}
-		break;
-	case ICamera::LSM:
-		{
-			bitDepth = 14; //%TODO%  Retrieve the bitdepth from the camera
-		}
-		break;
-	}	
-
-	std::wstringstream imgNameFormat;
-	imgNameFormat << L"%s%s%S_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" 
-		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
-		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" 
-		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.tif";
-	std::wstringstream jpgNameFormat;
-	jpgNameFormat << L"%s%sjpeg\\%S_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" 
-		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" 
-		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" 
-		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.jpg";
-
-	Dimensions d = dSum;
-
-	for(long i=0; i<bufferChannels; i++)			
 	{
-		if(i < _pExp->GetNumberOfWavelengths())
-		{			
-			_pExp->GetWavelength(i,wavelengthName,exposureTimeMS);
+		double bitsPerPixel = 12;
+		pCamera->GetParam(ICamera::PARAM_BITS_PER_PIXEL, bitsPerPixel);
+		bitDepth = static_cast<long>(bitsPerPixel);
+	}
+	break;
+	case ICamera::LSM:
+	{
+		bitDepth = 14; //%TODO%  Retrieve the bitdepth from the camera
+	}
+	break;
+	}
 
+
+	std::wstringstream rawImgNameFormat;
+	rawImgNameFormat << L"%s%s\\Image_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.raw";
+
+	StringCbPrintfW(filePathAndName, _MAX_PATH, rawImgNameFormat.str().c_str(), drive, dir, index, subWell, _zFrame, _tFrame);
+
+	ofstream rawFile(filePathAndName, ios_base::binary);
+	long numberOfchannels = _pExp->GetNumberOfWavelengths();
+	Dimensions d = dSum;
+	long rawFrameSize = dIntensity.x * dIntensity.y * sizeof(unsigned short);
+	for (long i = 0; i < bufferChannels; i++)
+	{
+		if (i < _pExp->GetNumberOfWavelengths())
+		{
+			_pExp->GetWavelength(i, wavelengthName, exposureTimeMS);
 			//A single buffer is used for one channel capture so no offset is needed for that case
-			if(bufferChannels > 1)
+			if (bufferChannels > 1)
 			{
-				pHardware->GetWavelengthIndex(wavelengthName,bufferOffsetIndex);
+				pHardware->GetWavelengthIndex(wavelengthName, bufferOffsetIndex);
 			}
 
-			GetColorInfo(pHardware.get(),wavelengthName,red,green,blue,bp,wp);
-			GetLookUpTables(rlut, glut, blut,red, green, blue, bp, wp,COLOR_MAP_BIT_DEPTH_TIFF);
+			rawFile.write(pMemoryBuffer + ((size_t)bufferOffsetIndex * d.x * d.y * sizeof(unsigned short)), rawFrameSize);
+		}
+	}
+	
+	rawFile.close();
 
-			StringCbPrintfW(filePathAndName,_MAX_PATH,imgNameFormat.str().c_str(),drive,dir,wavelengthName.c_str(),index,subWell,_zFrame,_tFrame);
+	std::wstringstream imgNameFormat;
+	imgNameFormat << L"%s%s%S_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.tif";
+	std::wstringstream jpgNameFormat;
+	jpgNameFormat << L"%s%sjpeg\\%S_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.jpg";
 
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,filePathAndName);
+	for (long i = 0; i < bufferChannels; i++)
+	{
+		if (i < _pExp->GetNumberOfWavelengths())
+		{
+			_pExp->GetWavelength(i, wavelengthName, exposureTimeMS);
+
+			//A single buffer is used for one channel capture so no offset is needed for that case
+			if (bufferChannels > 1)
+			{
+				pHardware->GetWavelengthIndex(wavelengthName, bufferOffsetIndex);
+			}
+
+			GetColorInfo(pHardware.get(), wavelengthName, red, green, blue, bp, wp);
+			GetLookUpTables(rlut, glut, blut, red, green, blue, bp, wp, COLOR_MAP_BIT_DEPTH_TIFF);
+
+			StringCbPrintfW(filePathAndName, _MAX_PATH, imgNameFormat.str().c_str(), drive, dir, wavelengthName.c_str(), index, subWell, _zFrame, _tFrame);
+
+			logDll->TLTraceEvent(INFORMATION_EVENT, 1, filePathAndName);
 
 			string acquiredDate = acquiredDateTime;
 
 			if (TRUE == _sp.doOME)
 			{
-				SaveTIFF(filePathAndName,pMemoryBuffer + (bufferOffsetIndex * d.x * d.y * 2),d.x,d.y,rlut,glut,blut,
-					umPerPixel, totalExperimentWavelengths, timePoints, zstageSteps, intervalSec, i, _tFrame-1, _zFrame-1,&acquiredDate,deltaT,
-					&strOME, physicalSize,_sp.doCompression);			
+				SaveTIFF(filePathAndName, pMemoryBuffer + (bufferOffsetIndex * d.x * d.y * 2), d.x, d.y, rlut, glut, blut,
+					umPerPixel, totalExperimentWavelengths, timePoints, zstageSteps, intervalSec, i, _tFrame - 1, _zFrame - 1, &acquiredDate, deltaT,
+					&strOME, physicalSize, _sp.doCompression);
 			}
 			else
 			{
-				SaveTIFFWithoutOME(filePathAndName,pMemoryBuffer + (bufferOffsetIndex * d.x * d.y * 2),d.x,d.y,rlut,glut,blut,umPerPixel,_pExp->GetNumberOfWavelengths(), timePoints, zstageSteps, intervalSec, i, _tFrame-1, _zFrame-1,&acquiredDate,deltaT,_sp.doCompression);
+				SaveTIFFWithoutOME(filePathAndName, pMemoryBuffer + (bufferOffsetIndex * d.x * d.y * 2), d.x, d.y, rlut, glut, blut, umPerPixel, _pExp->GetNumberOfWavelengths(), timePoints, zstageSteps, intervalSec, i, _tFrame - 1, _zFrame - 1, &acquiredDate, deltaT, _sp.doCompression);
 			}
 
-			if(_sp.doJPEG)
+			if (_sp.doJPEG)
 			{
 				const int COLOR_MAP_BIT_DEPTH_JPEG = 16;
 
-				GetLookUpTables(rlut, glut, blut,red, green, blue, bp, wp,COLOR_MAP_BIT_DEPTH_JPEG);
+				GetLookUpTables(rlut, glut, blut, red, green, blue, bp, wp, COLOR_MAP_BIT_DEPTH_JPEG);
 
-				StringCbPrintfW(filePathAndName,_MAX_PATH,jpgNameFormat.str().c_str(),drive,dir,wavelengthName.c_str(),index,subWell,_zFrame,_tFrame);
+				StringCbPrintfW(filePathAndName, _MAX_PATH, jpgNameFormat.str().c_str(), drive, dir, wavelengthName.c_str(), index, subWell, _zFrame, _tFrame);
 
-				SaveJPEG(filePathAndName,pMemoryBuffer + (bufferOffsetIndex * d.x * d.y * 2),d.x,d.y,rlut,glut,blut,bitDepth);
+				SaveJPEG(filePathAndName, pMemoryBuffer + (bufferOffsetIndex * d.x * d.y * 2), d.x, d.y, rlut, glut, blut, bitDepth);
 			}
 		}
 	}
-		
 
-	std::map<long, long>::iterator it = avgImageIDs.begin(); 
+
+	std::map<long, long>::iterator it = avgImageIDs.begin();
 	while (it != avgImageIDs.end())
-	{		
+	{
 		long imageID = it->second;
 		ImageManager::getInstance()->DestroyImage(imageID);
 		it++;
 	}
 
-	it = imageIDs.begin(); 
+	it = imageIDs.begin();
 	while (it != imageIDs.end())
-	{		
+	{
 		long imageID = it->second;
-		ImageManager::getInstance()->UnlockImagePtr(imageID,0,0,0,0);
+		ImageManager::getInstance()->UnlockImagePtr(imageID, 0, 0, 0, 0);
 		ImageManager::getInstance()->DestroyImage(imageID);
 		it++;
 	}
 
 
 	double val;
-	pCamera->GetParam(ICamera::PARAM_LSM_TYPE,val);
+	pCamera->GetParam(ICamera::PARAM_LSM_TYPE, val);
 	ICamera::LSMType lsmType = (ICamera::LSMType)static_cast<long>(val);
 
 	//When the camera is a Galvo-Galvo it needs some time to end the NI task

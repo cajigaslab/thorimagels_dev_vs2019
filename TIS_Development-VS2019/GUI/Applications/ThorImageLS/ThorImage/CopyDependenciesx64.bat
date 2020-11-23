@@ -291,7 +291,7 @@ echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocalSimulator\x64\Debug\T
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocalGalvoSimulator\x64\Debug\ThorConfocalGalvoSimulator.dll .\bin\Debug\Modules_Native
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorZStepperSimulator\x64\Debug\ThorZStepperSimulator.dll .\bin\Debug\Modules_Native
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorPMTSimulator\x64\Debug\ThorPMTSimulator.dll .\bin\Debug\Modules_Native
-echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorPowerSimulator\x64\Debug\ThorPowerSimulator.dll .\bin\Debug\Modules_Native
+echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorTDCSimulator\x64\Debug\ThorTDCSimulator.dll .\bin\Debug\Modules_Native
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\SimDeviceXY\x64\Debug\SimDeviceXY.dll .\bin\Debug\Modules_Native
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\SimDeviceFW\x64\Debug\SimDeviceFW.dll .\bin\Debug\Modules_Native
 rem echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorBmExpanSimulator\x64\Debug\ThorBmExpanSimulator.dll .\bin\Debug\Modules_Native
@@ -315,6 +315,7 @@ REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocal\x64\Debug\ThorCo
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocalGalvo\x64\Debug\ThorConfocalGalvo.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorGGNI\x64\Debug\ThorGGNI.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorMesoScan\x64\Debug\ThorMesoScan.dll .\bin\Debug\Modules_Native
+REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorStim\x64\Debug\ThorStim.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorTSI\x64\Debug\ThorTSI.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Common\Camera-TSI\dlls\Native_64_lib\bin_CCD_mono\*.dll .\bin\Debug\Lib
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorTSI_CS\x64\Debug\ThorTSI_CS.dll .\bin\Debug\Modules_Native
@@ -383,6 +384,7 @@ echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocalGalvoSimulator\ThorCo
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocalSimulator\ThorConfocalSimulatorSettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorGGNI\ThorGGNISettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorMesoScan\ThorMesoScanSettings.xml .\bin\Debug
+echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorStim\ThorStimSettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorECU\ThorECUSettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorEpiTurret\ThorEpiTurretSettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\GUI\Applications\ThorImageLS\ThorImage\ThorImageLS.ico .\bin\Debug
@@ -417,8 +419,8 @@ echo F | xcopy /F ..\..\..\..\Hardware\Devices\OTMLaser\OTMLaserSettings.xml .\b
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorLSKGR\ThorLSKGRSettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM6000\ThorMCM6000Settings.xml .\bin\Debug
 
-REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\thordaq\Dll\ThorDAQResonantGalvo\ThorDAQResonantGalvoSettings.xml .\bin\Debug
-REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\thordaq\Dll\ThorDAQGalvoGalvo\ThorDAQGalvoGalvoSettings.xml .\bin\Debug
+echo F | xcopy /F ..\..\..\..\Hardware\Cameras\thordaq\Dll\ThorDAQResonantGalvo\ThorDAQResonantGalvoSettings.xml .\bin\Debug
+echo F | xcopy /F ..\..\..\..\Hardware\Cameras\thordaq\Dll\ThorDAQGalvoGalvo\ThorDAQGalvoGalvoSettings.xml .\bin\Debug
 
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThordaqDFLIM\Dll\ThorDFLIMGalvoGalvo\ThorDFLIMGalvoGalvoSettings.xml .\bin\Debug
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThordaqDFLIM\Dll\ThorDAQGGDFLIMSim\fullFrameSim.bin .\bin\debug

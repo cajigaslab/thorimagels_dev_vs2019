@@ -202,7 +202,6 @@ public:
 	static double _statsList[STATSLIST_LENGTH];	// (1+MAX_BOUNDRY_COUNT): stats + boundry info
 	static double _tZero[MAX_CHANNEL_COUNT];
 	static CritSect _critSect;
-	long _syncFlag;
 	long ComputeStats(unsigned short *data, FrameInfoStruct frameInfo, long channelEnable, long includeLineProfile, long includeRegularStats, long enabledChannelsOnly = FALSE);
 	long ComputeContours(unsigned short *data, long width, long height, long channelEnable, long channelSelected);
 	long CopyStatsImageDataToLineImageData();

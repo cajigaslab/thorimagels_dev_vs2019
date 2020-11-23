@@ -299,9 +299,16 @@
                                 XmlManager.SetAttribute(ndList[i], experimentFile, "postPatIdleMS", this.SLMBleachWaveParams[i].BleachWaveParams.PostPatIdleTime.ToString());
                                 XmlManager.SetAttribute(ndList[i], experimentFile, "preIteIdleMS", this.SLMBleachWaveParams[i].BleachWaveParams.PreIdleTime.ToString());
                                 XmlManager.SetAttribute(ndList[i], experimentFile, "postIteIdleMS", this.SLMBleachWaveParams[i].BleachWaveParams.PostIdleTime.ToString());
-                                XmlManager.SetAttribute(ndList[i], experimentFile, "power", this.SLMBleachWaveParams[i].BleachWaveParams.Power.ToString());
-                                XmlManager.SetAttribute(ndList[i], experimentFile, "measurePowerMW", this.SLMBleachWaveParams[i].BleachWaveParams.MeasurePower.ToString());
-                                XmlManager.SetAttribute(ndList[i], experimentFile, "measurePowerMWPerUM2", this.SLMBleachWaveParams[i].SLMMeasurePowerArea.ToString());
+                                for (int j = 0; j < this.SLMBleachWaveParams[i].BleachWaveParams.Power.Count(); j++)
+                                {
+                                    string pwrStr = (0 < j) ? "power" + j : "power";
+                                    XmlManager.SetAttribute(ndList[i], experimentFile, pwrStr, this.SLMBleachWaveParams[i].BleachWaveParams.Power[j].ToString());
+                                    pwrStr = (0 < j) ? "measurePower" + j + "MW" : "measurePowerMW";
+                                    XmlManager.SetAttribute(ndList[i], experimentFile, "measurePowerMW", this.SLMBleachWaveParams[i].BleachWaveParams.MeasurePower[j].ToString());
+                                    pwrStr = (0 < j) ? "measurePower" + j + "MWPerUM2" : "measurePowerMWPerUM2";
+                                    XmlManager.SetAttribute(ndList[i], experimentFile, pwrStr, this.SLMBleachWaveParams[i].SLMMeasurePowerArea[j].ToString());
+
+                                }
                                 XmlManager.SetAttribute(ndList[i], experimentFile, "red", this.SLMBleachWaveParams[i].Red.ToString());
                                 XmlManager.SetAttribute(ndList[i], experimentFile, "green", this.SLMBleachWaveParams[i].Green.ToString());
                                 XmlManager.SetAttribute(ndList[i], experimentFile, "blue", this.SLMBleachWaveParams[i].Blue.ToString());

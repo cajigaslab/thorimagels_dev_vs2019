@@ -457,7 +457,8 @@
                         MinHeight="40" Visibility="{Binding Path=IsTapsVisible, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}" >
                 <Label Content="Taps"
                        VerticalAlignment="Center"
-                       MinWidth="95" />
+                       HorizontalAlignment="Left"
+                       MinWidth="100" />
                 <ComboBox Name="cbCamTaps"
                           Height="25"
                           MinWidth="75"
@@ -478,18 +479,21 @@
                         Visibility="{Binding Path=IsReadoutVisible, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
                 <Label Content="Readout Speed"
                        VerticalAlignment="Center"
-                       MinWidth="95" />
+                       HorizontalAlignment="Left"
+                       MinWidth="100" />
                 <ComboBox ItemsSource="{Binding Path=CamReadoutSpeedList}"
                           SelectedIndex="{Binding Path=CamReadoutSpeedIndex}"
                           Height="25"
                           MinWidth="125" >
                 </ComboBox>
             </StackPanel>
-            <StackPanel Orientation="Horizontal"
+            <StackPanel Margin="1"
+                        Orientation="Horizontal"
                         MinHeight="40">
                 <Label VerticalAlignment="Center"
+                       HorizontalAlignment="Left"
                        Content="Averaging Mode"
-                       MinWidth="95" />
+                       MinWidth="100" />
                 <ComboBox Height="25"
                           MinWidth="125"
                           SelectedIndex="{Binding Path=CamAverageMode,

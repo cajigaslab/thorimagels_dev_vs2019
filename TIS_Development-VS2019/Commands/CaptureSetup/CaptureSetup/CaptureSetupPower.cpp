@@ -152,7 +152,7 @@ DllExportLiveImage SetShutterPosition(long pos)
 
 DllExportLiveImage SetBFLampPosition(long pos)
 {
-	return SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP,IDevice::LAMP,pos,FALSE);
+	return SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP,IDevice::PARAM_LEDS_ENABLE_DISABLE,pos,FALSE);
 }
 
 DllExportLiveImage PowerCalibrateZero()

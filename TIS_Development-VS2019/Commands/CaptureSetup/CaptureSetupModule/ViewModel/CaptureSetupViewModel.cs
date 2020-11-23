@@ -214,8 +214,6 @@
 
             OverlayManagerClass.Instance.InitOverlayManagerClass(512, 512, 1.0, true);
 
-            OverlayManagerClass.Instance.MaskChangedEvent += _overlayManager_MaskChangedEvent;
-
             _roiStatsChartActive = false;
             _roiStatsTableActive = false;
             _lineProfileActive = false;
@@ -1610,6 +1608,8 @@
                 _restartBWHardware = true;
             }
 
+            OverlayManagerClass.Instance.MaskChangedEvent += _overlayManager_MaskChangedEvent;
+
             this._captureSetup.ConnectHandlers();
         }
 
@@ -1868,10 +1868,13 @@
         public void LoadXMLSettings()
         {
             string str = string.Empty, str1 = string.Empty;
-            double dTmp = 0.0;
+            double dTmp = 0.0, dTmp1 = 0.0;
             int iTmp = 0;
             Int64 i64Tmp = 0;
             UInt32 uiTmp = 0;
+
+            //determine the bleach type, GG or WideField
+            SLMPhaseDirect = IsStimulator;
 
             //load exp
             ExperimentDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS];
@@ -1979,15 +1982,18 @@
                     }
                     if (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "power", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
                     {
-                        sparam.BleachWaveParams.Power = dTmp;
+                        sparam.BleachWaveParams.Power = (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "power1", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp1)) ?
+                            new double[2] { dTmp, dTmp1 } : new double[1] { dTmp };
                     }
                     if (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "measurePowerMW", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
                     {
-                        sparam.BleachWaveParams.MeasurePower = dTmp;
+                        sparam.BleachWaveParams.MeasurePower = (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "measurePower1MW", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp1)) ?
+                            new double[2] { dTmp, dTmp1 } : new double[1] { dTmp };
                     }
                     if (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "measurePowerMWPerUM2", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
                     {
-                        sparam.SLMMeasurePowerArea = dTmp;
+                        sparam.SLMMeasurePowerArea = (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "measurePower1MWPerUM2", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp1)) ?
+                             new double[2] { dTmp, dTmp1 } : new double[1] { dTmp };
                     }
                     if (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "red", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
                     {
@@ -2238,6 +2244,7 @@
             if (_bwHardware != null)
                 _bwHardware.CancelAsync();
 
+            OverlayManagerClass.Instance.MaskChangedEvent -= _overlayManager_MaskChangedEvent;
             //close any floating panels or windows
             CloseFloatingWindows();
         }
@@ -2855,7 +2862,7 @@
                 {
                     System.Windows.Application.Current.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal,
                         new Action(
-                            delegate()
+                            delegate ()
                             {
                                 CloseProgressWindow();
                             }
@@ -3091,6 +3098,10 @@
                     {
                         //update PMT safety status
                         MVMManager.Instance["ScanControlViewModel", "PMTSafetyStatus"] = GetPMTSafetyStatus();
+                        OnPropertyChanged("PMT1Saturations");
+                        OnPropertyChanged("PMT2Saturations");
+                        OnPropertyChanged("PMT3Saturations");
+                        OnPropertyChanged("PMT4Saturations");
                         lastS = DateTime.Now;
                         // Check for collision, if the device returns true on the collision flag, change
                         // the background of the Objective label to flashing red.
@@ -3279,6 +3290,14 @@
                 OnPropertyChanged("InvertedLpLeftDisplay");
                 OnPropertyChanged("InvertedLpCenterDisplay");
                 OnPropertyChanged("InvertedLpRightDisplay");
+                ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("EnableDisableLEDs");
+                ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("MasterBrightness");
+                ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED1Power");
+                ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED2Power");
+                ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED3Power");
+                ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED4Power");
+                ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED5Power");
+                ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED6Power");
             }
 
             //Update any stats

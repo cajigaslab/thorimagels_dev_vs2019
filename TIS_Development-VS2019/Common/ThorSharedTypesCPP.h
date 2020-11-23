@@ -22,16 +22,17 @@ template < class T > inline long CheckNewValue(T &val, T newVal) { if (val != ne
 
 extern "C" _declspec(dllexport) typedef struct GGalvoWaveformParams
 {
-	unsigned long long ClockRate;	
+	unsigned long long ClockRate;
 	unsigned long long analogXYSize;
 	unsigned long long analogPockelSize;
 	unsigned long long digitalSize;
 	double stepVolt;
+	unsigned char pockelsCount;
+	unsigned char driverType;
 	double* GalvoWaveformXY;
 	double* GalvoWaveformPockel;
 	unsigned char* DigBufWaveform;
 	long digitalLineCnt;
-	long pockelsCount;
 	long Scanmode;
 	long Triggermode;
 	long CycleNum;
@@ -45,16 +46,17 @@ extern "C" _declspec(dllexport) typedef struct GGalvoWaveformParams
 
 extern "C" _declspec(dllexport) typedef struct ThorDAQGGWaveformParams
 {
-	unsigned long long ClockRate;	
+	unsigned long long ClockRate;
 	unsigned long long analogXYSize;
 	unsigned long long analogPockelSize;
 	unsigned long long digitalSize;
 	double stepVolt;
+	unsigned char pockelsCount;
+	unsigned char driverType;
 	unsigned short* GalvoWaveformXY;
 	unsigned short* GalvoWaveformPockel;
 	unsigned char* DigBufWaveform;
 	long digitalLineCnt;
-	long pockelsCount;
 	long Scanmode;
 	long Triggermode;
 	long CycleNum;
@@ -84,13 +86,14 @@ extern "C" _declspec(dllexport) typedef struct EPhysTriggerStruct
 
 extern "C" _declspec(dllexport) typedef struct FrameInfoStruct
 {
-	long	imageWidth;
-	long	imageHeight;
-	long	channels;
-	long	fullFrame;
-	long	scanAreaID;
-	long	bufferType;
-    unsigned long long	copySize;
+	long	 imageWidth;
+	long	 imageHeight;
+	long	 channels;
+	long	 fullFrame;
+	long	 scanAreaID;
+	long	 bufferType;
+    unsigned long long copySize;
+	long numberOfPlanes;
 }FrameInfo;
 
 struct WaveformGenParams

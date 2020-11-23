@@ -254,3 +254,6 @@ extern auto_ptr<CommandDll> shwDll;
 
 const long SHUTTER_OPEN = 0;
 const long SHUTTER_CLOSE = 1;
+
+const long DISABLE_LEDS = 0;
+const long ENABLE_LEDS = 1;

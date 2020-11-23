@@ -21,31 +21,6 @@ DllExportLiveImage GetNumberOfCameras(long &numCameras)
 	return TRUE;
 }
 
-DllExportLiveImage GetBleachScannerType(long &BleachScannerType)
-{
-	long paramType;
-	long paramAvailable;
-	long paramReadOnly;
-	double paramMin;
-	double paramMax;
-	double paramDefault;
-
-	if(NULL == GetCamera(SelectedHardware::SELECTED_BLEACHINGSCANNER))
-	{
-		return FALSE;
-	}
-
-	if(GetCamera(SelectedHardware::SELECTED_BLEACHINGSCANNER)->GetParamInfo(ICamera::PARAM_LSM_TYPE,paramType,paramAvailable,paramReadOnly,paramMin,paramMax,paramDefault) != TRUE)
-	{
-		return FALSE;
-	}
-
-	BleachScannerType = static_cast<long>(paramDefault);
-
-	return TRUE;
-}
-
-
 DllExportLiveImage GetCameraHeight(long &height)
 {
 	long ret = FALSE;
@@ -132,6 +107,8 @@ DllExportLiveImage CenterLSMScanners(long selectedCamera)
 
 			//open shutter
 			SetShutterPosition(SHUTTER_OPEN);
+			//enable LEDs
+			SetBFLampPosition(ENABLE_LEDS);
 		}
 		break;
 	default:

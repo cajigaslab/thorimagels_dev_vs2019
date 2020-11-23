@@ -65,6 +65,7 @@
     {
         STATSONLY = 0,
         PATTERN_NOSTATS,
+        PATTERN_WIDEFIELD,
         MICRO_SCANAREA,
         LAST_MODE
     }
@@ -98,6 +99,7 @@
         FLAGS,
         SUB_PATTERN_ID,
         RGB,
+        WAVELENGTH_NM,
         LAST_TAG
     }
 
@@ -119,6 +121,7 @@
         public Int32 scanAreaID;
         public Int32 bufferType;
         public UInt64 copySize;
+        public Int32 numberOfPlanes;
     }
 
     /// <summary>
@@ -135,11 +138,40 @@
         public UInt64 analogPockelSize;
         public UInt64 digitalSize;
         public double stepVolt;
+        public byte pockelsCount;
+        public byte driverType;
         public IntPtr GalvoWaveformXY;
         public IntPtr GalvoWaveformPockel;
         public IntPtr DigBufWaveform;
         public int digitalLineCnt;
-        public int pockelsCount;
+        public int Scanmode;
+        public int Triggermode;
+        public int CycleNum;
+        public IntPtr bufferHandle;
+        public int lastLoaded;
+        public int PreCapStatus;
+    }
+
+    /// <summary>
+    /// Identical data structure defined in ThorSharedTypesCPP.h.
+    /// clockRate, analog galvo XY interleaved, analog pockels of unit length,  
+    /// digital signals for multiple lines in order: 
+    /// dummy,complete output, cycle envelope, iteration envelope, pattern envelope, pattern complete trigger.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct ThorDAQGGWaveformParams
+    {
+        public UInt64 clockRate;
+        public UInt64 analogXYSize;
+        public UInt64 analogPockelSize;
+        public UInt64 digitalSize;
+        public double stepVolt;
+        public byte pockelsCount;
+        public byte driverType;
+        public IntPtr GalvoWaveformXY;
+        public IntPtr GalvoWaveformPockel;
+        public IntPtr DigBufWaveform;
+        public int digitalLineCnt;
         public int Scanmode;
         public int Triggermode;
         public int CycleNum;
@@ -263,6 +295,7 @@
             RESONANCE_GALVO_GALVO,
             DFLIM_GALVO_GALVO,
             DFLIM_GALVO_RESONANCE,
+            STIMULATE_MODULATOR,
             LSMTYPE_LAST
         }
 
@@ -938,7 +971,7 @@
             PARAM_LSM_FINE_OFFSET_Y2,///<2nd GG mirror Y fine offset
             PARAM_LSM_3P_ENABLE,
             PARAM_LSM_3P_ALIGN_FINE,
-            PARAM_LSM_3P_ALIGN_COURSE,
+            PARAM_LSM_3P_ALIGN_COARSE,
             PARAM_LSM_3P_FIR_CHANNEL,
             PARAM_LSM_3P_FIR_INDEX,
             PARAM_LSM_3P_FIR_TAP_INDEX,
@@ -949,11 +982,11 @@
             PARAM_LSM_CALCULATED_MIN_DWELL,
             PARAM_LSM_TB_LINE_SCAN_TIME_MS,
             PARAM_LSM_TIME_BASED_LINE_SCAN,
-            PARAM_LSM_IS_LIVE,            
-			PARAM_LSM_TIME_BASED_LINE_SCAN_INCREMENT_TIME_MS,
-		    PARAM_LSM_WAVEFORM_DRIVER_TYPE,
+            PARAM_LSM_IS_LIVE,
+            PARAM_LSM_TIME_BASED_LINE_SCAN_INCREMENT_TIME_MS,
+            PARAM_LSM_WAVEFORM_DRIVER_TYPE,
             PARAM_LSM_NUMBER_OF_PLANES,
-            PARAM_LSM_SELECTED_PLANE,
+            PARAM_LSM_3P_MANUAL_FIR1_CONTROL_ENABLE,
 
             PARAM_FIRST_CCD_PARAM = 1000,
             PARAM_BINNING_X = 1000,///<Binning X
@@ -1006,6 +1039,7 @@
             PARAM_HOT_PIXEL_ENABLED,
             PARAM_BIN_INDEX,
             PARAM_HOT_PIXEL_INDEX,
+            PARAM_DMA_BUFFER_AVAILABLE_FRAMES,
 
             PARAM_MESO_PLATE_INFO = 1500,
             PARAM_MESO_SCAN_INFO,
@@ -1099,7 +1133,7 @@
             PARAM_DFLIM_RESYNC_EVERYLINE,
             PARAM_DFLIM_SAVE_SETTINGS,
             PARAM_DFLIM_SAVE_IMAGES_ON_LIVE_MODE,
-            PARAM_DFLIM_ACQUISITION_TYPE,
+            PARAM_DFLIM_FRAME_TYPE,
             PARAM_RESEARCH_CAMERA_10,
             PARAM_RESEARCH_CAMERA_11,
             PARAM_RESEARCH_CAMERA_12,
@@ -1577,6 +1611,12 @@
             PARAM_PMT4_BANDWIDTH_POS_CURRENT,
             PARAM_PMT5_BANDWIDTH_POS_CURRENT,
             PARAM_PMT6_BANDWIDTH_POS_CURRENT,
+            PARAM_PMT1_SATURATIONS,
+            PARAM_PMT2_SATURATIONS,
+            PARAM_PMT3_SATURATIONS,
+            PARAM_PMT4_SATURATIONS,
+            PARAM_PMT5_SATURATIONS,
+            PARAM_PMT6_SATURATIONS,
 
             PARAM_STOP = 1000,
 
@@ -1606,7 +1646,9 @@
             PARAM_SLM_CALIB_Z,
             PARAM_SLM_NA,
             PARAM_SLM_WAVELENGTH,
+            PARAM_SLM_WAVELENGTH_SELECT,
             PARAM_SLM_3D,
+            PARAM_SLM_PHASE_DIRECT,
 
             PARAM_R_POS = 1200,
             PARAM_R_HOME = 1201,
@@ -2268,6 +2310,7 @@
             PARAM_LED5_POWER,
             PARAM_LED6_POWER,
 
+            PARAM_LEDS_ENABLE_DISABLE,
             PARAM_LEDS_LINEAR_VALUE,
 
             PARAM_LED1_CURRENT,

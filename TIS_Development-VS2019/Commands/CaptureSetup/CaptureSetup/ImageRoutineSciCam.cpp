@@ -196,6 +196,9 @@ long ImageRoutineSciCam::StartLiveCapture()
 }
 long ImageRoutineSciCam::StopLiveCapture()
 {
+	//disable LEDs
+	SetBFLampPosition(DISABLE_LEDS);
+
 	//return if the capture is not active
 	if(FALSE == GetCaptureActive())
 	{
@@ -569,6 +572,8 @@ UINT SnapshotThreadProcSciCam(LPVOID pParam)
 	//open shutter
 	SetShutterPosition(SHUTTER_OPEN);
 
+	SetBFLampPosition(ENABLE_LEDS);
+
 	//snapshot shared the parameters with the live mode
 	long avgFrames=1;
 	long avgMode = 0;
@@ -623,6 +628,8 @@ UINT SnapshotThreadProcSciCam(LPVOID pParam)
 	}
 
 	SetShutterPosition(SHUTTER_CLOSE);
+
+	SetBFLampPosition(DISABLE_LEDS);
 
 	PostflightCamera(SelectedHardware::SELECTED_CAMERA1);
 
@@ -703,6 +710,8 @@ UINT ZStackCaptureThreadProcSciCam( LPVOID pParam )
 
 	//open shutter
 	SetShutterPosition(SHUTTER_OPEN);
+
+	SetBFLampPosition(ENABLE_LEDS);
 
 	if(SetCameraParamDouble(SelectedHardware::SELECTED_CAMERA1,ICamera::PARAM_TRIGGER_MODE,ICamera::SW_MULTI_FRAME) != TRUE)
 	{
@@ -849,6 +858,8 @@ UINT ZStackCaptureThreadProcSciCam( LPVOID pParam )
 		SetEvent(hCaptureActive);
 	}
 	SetShutterPosition(SHUTTER_CLOSE);
+
+	SetBFLampPosition(DISABLE_LEDS);
 
 	//return to start z position after z-stack capture finished
 	if (FALSE == stopCapture)

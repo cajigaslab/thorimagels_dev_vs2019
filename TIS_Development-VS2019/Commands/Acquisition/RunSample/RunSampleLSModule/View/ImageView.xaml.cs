@@ -333,7 +333,10 @@
                     }
                     else
                     {
-                        this.imageCanvas.ContextMenu.Visibility = Visibility.Visible;
+                        if (this.imageCanvas.ContextMenu != null)
+                        {
+                            this.imageCanvas.ContextMenu.Visibility = Visibility.Visible;
+                        }
                     }
 
                     Cursor = Cursors.Arrow;

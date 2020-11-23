@@ -14,28 +14,28 @@
              MinHeight="35" MinWidth="378"
              Background="Transparent"
              x:Name="ControlRoot">
-	<UserControl.Resources>
-		<ResourceDictionary>
-			<ResourceDictionary.MergedDictionaries>
-				<ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
-			</ResourceDictionary.MergedDictionaries>
-			<sharedTypes:BooleanToVisibilityConverter x:Key="VisibilityConverter" />
-			<ControlTemplate x:Key="ButtonContentTemplate" TargetType="{x:Type Button}">
-				<Border x:Name="Border"
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <sharedTypes:BooleanToVisibilityConverter x:Key="VisibilityConverter" />
+            <ControlTemplate x:Key="ButtonContentTemplate" TargetType="{x:Type Button}">
+                <Border x:Name="Border"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
                         Background="{TemplateBinding Background}"
                         CornerRadius="1"
                         Margin="0"
                         SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}">
-					<Grid HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                    <Grid HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                           SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}">
-						<Grid.ColumnDefinitions>
-							<ColumnDefinition Width="Auto" />
-							<ColumnDefinition Width="*" />
-						</Grid.ColumnDefinitions>
-						<ContentPresenter x:Name="IconContent"
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <ContentPresenter x:Name="IconContent"
                                           Grid.Column="0"
                                           Content="{DynamicResource FloppyDisk}"
                                           HorizontalAlignment="Center"
@@ -43,7 +43,7 @@
                                           Margin="{TemplateBinding Padding}"
                                           Visibility="Collapsed"
                                           SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
-						<ContentPresenter x:Name="CustomContent"
+                        <ContentPresenter x:Name="CustomContent"
                                           Grid.Column="1"
                                           Content="{TemplateBinding Content}"
                                           ContentStringFormat="{TemplateBinding ContentStringFormat}"
@@ -51,76 +51,76 @@
                                           VerticalAlignment="Center"
                                           Margin="{TemplateBinding Padding}"
                                           SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
-					</Grid>
-				</Border>
-			</ControlTemplate>
+                    </Grid>
+                </Border>
+            </ControlTemplate>
 
-			<DataTemplate x:Key="ButtonDataTemplate">
-				<StackPanel Orientation="Horizontal">
-					<ContentPresenter x:Name="CustomContent"
+            <DataTemplate x:Key="ButtonDataTemplate">
+                <StackPanel Orientation="Horizontal">
+                    <ContentPresenter x:Name="CustomContent"
                                       Content="{TemplateBinding Content}"
                                       ContentStringFormat="{TemplateBinding ContentStringFormat}"
                                       HorizontalAlignment="Center"
                                       VerticalAlignment="Center"
                                       SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
-				</StackPanel>
-			</DataTemplate>
+                </StackPanel>
+            </DataTemplate>
 
-			<Style x:Key="ThorlabsButtonStyle" TargetType="{x:Type Button}">
-				<!--<Setter Property="Background" Value="#201F22" />-->
-				<Setter Property="Background" Value="{DynamicResource FlatButtonBackgroundBrush}" />
-				<Setter Property="FontFamily" Value="{DynamicResource UsedFontFamily}" />
-				<Setter Property="FontSize" Value="{DynamicResource UsedFontSize}" />
-				<!--<Setter Property="Foreground" Value="{DynamicResource UsedFontColor}" />-->
-				<Setter Property="Foreground" Value="{DynamicResource FlatButtonForegroundBrush}" />
-				<Setter Property="Margin" Value="0 0 0 0" />
-				<Setter Property="Padding" Value="0 0 0 0" />
-				<Setter Property="BorderThickness" Value="0" />
-				<!--<Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Style x:Key="ThorlabsButtonStyle" TargetType="{x:Type Button}">
+                <!--<Setter Property="Background" Value="#201F22" />-->
+                <Setter Property="Background" Value="{DynamicResource FlatButtonBackgroundBrush}" />
+                <Setter Property="FontFamily" Value="{DynamicResource UsedFontFamily}" />
+                <Setter Property="FontSize" Value="{DynamicResource UsedFontSize}" />
+                <!--<Setter Property="Foreground" Value="{DynamicResource UsedFontColor}" />-->
+                <Setter Property="Foreground" Value="{DynamicResource FlatButtonForegroundBrush}" />
+                <Setter Property="Margin" Value="0 0 0 0" />
+                <Setter Property="Padding" Value="0 0 0 0" />
+                <Setter Property="BorderThickness" Value="0" />
+                <!--<Setter Property="HorizontalContentAlignment" Value="Center" />
                 <Setter Property="VerticalContentAlignment" Value="Center" />-->
-				<Setter Property="Template">
-					<Setter.Value>
-						<ControlTemplate TargetType="{x:Type Button}">
-							<Border x:Name="Border"
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Border x:Name="Border"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
                                     Background="{TemplateBinding Background}"
                                     CornerRadius="1"
                                     Margin="{TemplateBinding Margin}"
                                     SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}">
-							</Border>
-						</ControlTemplate>
-					</Setter.Value>
-				</Setter>
-				<Style.Triggers>
-					<Trigger Property="IsMouseOver" Value="True">
-						<Setter Property="Background" Value="DarkGray" />
-					</Trigger>
-					<Trigger Property="IsPressed" Value="True">
-						<Setter Property="Background" Value="{DynamicResource FlatButtonPressedBackgroundBrush}" />
-						<Setter Property="Foreground" Value="{DynamicResource FlatButtonPressedForegroundBrush}" />
-					</Trigger>
-					<Trigger Property="IsEnabled" Value="False">
-						<Setter Property="Foreground" Value="{DynamicResource GrayBrush2}" />
-						<Setter Property="Opacity" Value="0.5" />
-					</Trigger>
-				</Style.Triggers>
-			</Style>
-		</ResourceDictionary>
-	</UserControl.Resources>
-	<Grid x:Name="ControlRootLayout"
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="DarkGray" />
+                    </Trigger>
+                    <Trigger Property="IsPressed" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource FlatButtonPressedBackgroundBrush}" />
+                        <Setter Property="Foreground" Value="{DynamicResource FlatButtonPressedForegroundBrush}" />
+                    </Trigger>
+                    <Trigger Property="IsEnabled" Value="False">
+                        <Setter Property="Foreground" Value="{DynamicResource GrayBrush2}" />
+                        <Setter Property="Opacity" Value="0.5" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid x:Name="ControlRootLayout"
           ClipToBounds="{Binding ClipToBounds, ElementName=ControlRoot}"
           DataContext="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=local:LEDSlider}}"
           d:DataContext="{d:DesignInstance Type=local:LEDSlider, IsDesignTimeCreatable=True}">
-		<Grid.ColumnDefinitions>
-			<ColumnDefinition Width="Auto" SharedSizeGroup="HeaderColumn" />
-			<ColumnDefinition Width="Auto" SharedSizeGroup="ConfigColumn" />
-			<ColumnDefinition Width="*" />
-			<ColumnDefinition Width="Auto" SharedSizeGroup="InputColumn" />
-			<ColumnDefinition Width="Auto" SharedSizeGroup="TemperatureColumn" />
-		</Grid.ColumnDefinitions>
-		<!-- On|Off ToggleButton -->
-		<CheckBox x:Name="SWITCH_PART"
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" SharedSizeGroup="HeaderColumn" />
+            <ColumnDefinition Width="Auto" SharedSizeGroup="ConfigColumn" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" SharedSizeGroup="InputColumn" />
+            <ColumnDefinition Width="Auto" SharedSizeGroup="TemperatureColumn" />
+        </Grid.ColumnDefinitions>
+        <!-- On|Off ToggleButton -->
+        <CheckBox x:Name="SWITCH_PART"
                   Grid.Column="0"
                   Grid.Row="1"
                   TabIndex="0"
@@ -133,12 +133,12 @@
                   Visibility="{Binding IsCheckable, Converter={StaticResource VisibilityConverter}}"
                   IsChecked="{Binding IsChecked, Mode=TwoWay}"
                   Click="SWITCH_PART_Click" />
-		<!-- Header -->
-		<Grid x:Name="HEADER_PART"
+        <!-- Header -->
+        <Grid x:Name="HEADER_PART"
               Grid.Column="1"
               Grid.Row="1">
-			<StackPanel Orientation="Horizontal" >
-				<TextBox x:Name="NAME_PART"
+            <StackPanel Orientation="Horizontal" >
+                <TextBox x:Name="NAME_PART"
                      Margin="0"
                      TabIndex="2"
                      Foreground="White"
@@ -155,14 +155,14 @@
                      KeyUp="NAME_PART_KeyUp"
                      GotFocus="NAME_PART_GotFocus"
                      MouseDoubleClick="NAME_PART_DoubleClick" />
-				<Label Content="nm"
+                <Label Content="nm"
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center"
                    Width="28"/>
-			</StackPanel>
-		</Grid>
-		<!-- Slider -->
-		<Slider x:Name="RANGE_SLIDER_PART"
+            </StackPanel>
+        </Grid>
+        <!-- Slider -->
+        <Slider x:Name="RANGE_SLIDER_PART"
                 Grid.Column="2"
                 Grid.Row="1"
                 Margin="10,0"
@@ -177,12 +177,12 @@
                 Value="{Binding Value, Mode=TwoWay}"
                  Background="{Binding LightColor}"
                 TickFrequency="20">
-		</Slider>
-		<!-- Plus/Minus -->
-		<StackPanel Orientation="Horizontal"
+        </Slider>
+        <!-- Plus/Minus -->
+        <StackPanel Orientation="Horizontal"
                     Grid.Column="3"
                     Grid.Row="1">
-			<TextBox Name="NUMERIC_INPUT_PART"
+            <TextBox Name="NUMERIC_INPUT_PART"
                      VerticalAlignment="Center"
                      Width="40"
                      val:Validation.MaxValue="100.0"
@@ -190,69 +190,69 @@
                      ToolTip="Set LED Power"
                      IsEnabled="{Binding ElementName=SWITCH_PART, Path=IsChecked}"
                      Text="{Binding Value, Mode=TwoWay}">
-			</TextBox>
-			<Button Width="30"
+            </TextBox>
+            <Button Width="30"
                     Height="25"
                     Content="✓">
-				<Button.Style>
-					<Style TargetType="Button">
-						<Setter Property="Visibility"
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Visibility"
                                 Value="Collapsed" />
-						<Style.Triggers>
-							<DataTrigger Binding="{Binding Path=IsFocused, ElementName=NUMERIC_INPUT_PART}"
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Path=IsFocused, ElementName=NUMERIC_INPUT_PART}"
                                          Value="True">
-								<Setter Property="Visibility"
+                                <Setter Property="Visibility"
                                         Value="Visible" />
-							</DataTrigger>
-						</Style.Triggers>
-					</Style>
-				</Button.Style>
-			</Button>
-			<StackPanel VerticalAlignment="Center">
-				<RepeatButton Content="+"
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+            <StackPanel VerticalAlignment="Center">
+                <RepeatButton Content="+"
                               Width="30"
                               Height="20"
                               Command="{Binding Path=LampPowerPlusCommand}"
-                              IsEnabled="{Binding ElementName=SWITCH_PART, Path=IsChecked}"
                               Delay="500"
                               Interval="100" />
-				<RepeatButton Content="-"
+                              <!--IsEnabled="{Binding ElementName=SWITCH_PART, Path=IsChecked}"-->
+                <RepeatButton Content="-"
                               Width="30"
                               Height="20"
                               Command="{Binding Path=LampPowerMinusCommand}"
-                              IsEnabled="{Binding ElementName=SWITCH_PART, Path=IsChecked}"
                               Delay="500"
                               Interval="100" />
-			</StackPanel>
-		</StackPanel>
-		<!-- Infos -->
-		<Grid x:Name="TEMPERATURE_PART"
+                              <!--IsEnabled="{Binding ElementName=SWITCH_PART, Path=IsChecked}"-->
+            </StackPanel>
+        </StackPanel>
+        <!-- Infos -->
+        <Grid x:Name="TEMPERATURE_PART"
               Grid.Column="4"
               Grid.Row="1"
               Margin="0"
               HorizontalAlignment="Center"
               ToolTip="Measured LED Module Temperature"
               Visibility="{Binding ShowTemperature, Converter={StaticResource VisibilityConverter}}">
-			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="Auto" SharedSizeGroup="TemperatureValueColumn" />
-				<ColumnDefinition Width="Auto" SharedSizeGroup="TemperatureUnitColumn" />
-			</Grid.ColumnDefinitions>
-			<Label ClipToBounds="{Binding ClipToBounds, ElementName=ControlRoot}"
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" SharedSizeGroup="TemperatureValueColumn" />
+                <ColumnDefinition Width="Auto" SharedSizeGroup="TemperatureUnitColumn" />
+            </Grid.ColumnDefinitions>
+            <Label ClipToBounds="{Binding ClipToBounds, ElementName=ControlRoot}"
                    Foreground="White"
                    Margin="0"
                    Grid.Column="0"
                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                    Visibility="{Binding HasTemperature, Converter={StaticResource VisibilityConverter}}"
                    Content="{Binding Path=Temperature}">
-			</Label>
-			<Label ClipToBounds="{Binding ClipToBounds, ElementName=ControlRoot}"
+            </Label>
+            <Label ClipToBounds="{Binding ClipToBounds, ElementName=ControlRoot}"
                    Foreground="White"
                    Margin="0"
                    Grid.Column="1"
                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                    Visibility="{Binding HasTemperature, Converter={StaticResource VisibilityConverter}}"
                    Content="ºC">
-			</Label>
-		</Grid>
-	</Grid>
+            </Label>
+        </Grid>
+    </Grid>
 </UserControl>

@@ -132,6 +132,7 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.XML" />
+    <Reference Include="System.Xml.Linq" />
     <Reference Include="ThemeControl">
       <HintPath>..\..\..\..\GUI\Controls\ThemeControl\ThemeControl\bin\Debug\ThemeControl.dll</HintPath>
     </Reference>

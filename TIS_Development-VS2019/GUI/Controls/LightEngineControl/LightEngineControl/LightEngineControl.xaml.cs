@@ -98,6 +98,16 @@
                FrameworkPropertyMetadataOptions.AffectsRender |
                FrameworkPropertyMetadataOptions.AffectsMeasure));
 
+        public static DependencyProperty EnableDisableLEDsProperty = DependencyProperty.RegisterAttached(
+            "EnableDisableLEDs",
+            typeof(Boolean),
+            typeof(LightEngineControlUC),
+            new FrameworkPropertyMetadata(true,
+            //FrameworkPropertyMetadataOptions.Inherits |
+                FrameworkPropertyMetadataOptions.AffectsArrange |
+                FrameworkPropertyMetadataOptions.AffectsRender |
+                FrameworkPropertyMetadataOptions.AffectsMeasure,
+                new PropertyChangedCallback(onEnableDisableLEDsChanged)));
         public static DependencyProperty LED1ControlNameProperty = DependencyProperty.RegisterAttached(
             "LED1ControlName",
             typeof(String),
@@ -359,6 +369,21 @@
         #endregion Constructors
 
         #region Properties
+
+        public Boolean EnableDisableLEDs
+        {
+            get
+            {
+                return (Boolean)this.GetValue(EnableDisableLEDsProperty);
+            }
+            set
+            {
+                if (!this.GetValue(EnableDisableLEDsProperty).Equals(value))
+                {
+                    this.SetValue(EnableDisableLEDsProperty, value);
+                }
+            }
+        }
 
         public String LED1ControlName
         {
@@ -1069,6 +1094,10 @@
         #endregion Properties
 
         #region Methods
+
+        public static void onEnableDisableLEDsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+        }
 
         public static void onLED1ControlNameChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {

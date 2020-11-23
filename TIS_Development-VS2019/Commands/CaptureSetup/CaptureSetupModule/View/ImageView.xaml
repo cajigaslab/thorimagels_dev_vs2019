@@ -183,7 +183,7 @@
                         Grid.Column="4">
                 <StackPanel.LayoutTransform>
                     <ScaleTransform ScaleX="{Binding Path=ROIToolsScale}"
-                                    ScaleY="{Binding Path=ROIToolsScale}"/>
+                                    ScaleY="{Binding Path=ROIToolsScale}" />
                 </StackPanel.LayoutTransform>
                 <ToggleButton x:Name="chanAEnable"
                               Grid.Row="2"
@@ -476,7 +476,10 @@
                                                                      UpdateSourceTrigger=PropertyChanged}"
                                                 LogScaleData="{Binding Path=LogScaleEnabled0,
                                                                      Mode=TwoWay,
-                                                                     UpdateSourceTrigger=PropertyChanged}"/>
+                                                                     UpdateSourceTrigger=PropertyChanged}" 
+                                                Saturations="{Binding Path=PMT1Saturations}"
+                                                SaturationsVisibility="{Binding Path=PMTSaturationsVisibility}"
+                                                />
                             </Grid>
                         </Grid>
                         <StackPanel Orientation="Horizontal">
@@ -515,7 +518,7 @@
                                     Orientation="Horizontal"
                                     Value="{Binding Path=WhitePoint0,
                                                     Mode=TwoWay,
-                                                    UpdateSourceTrigger=PropertyChanged}" 
+                                                    UpdateSourceTrigger=PropertyChanged}"
                                     Thumb.DragStarted="slider0_DragStarted" />
                             <RepeatButton Name="btnWPUp0"
                                           Width="16"
@@ -622,7 +625,9 @@
                                                                      UpdateSourceTrigger=PropertyChanged}"
                                                 LogScaleData="{Binding Path=LogScaleEnabled1,
                                                                      Mode=TwoWay,
-                                                                     UpdateSourceTrigger=PropertyChanged}"/>
+                                                                     UpdateSourceTrigger=PropertyChanged}"
+                                                Saturations="{Binding Path=PMT2Saturations}"
+                                                SaturationsVisibility="{Binding Path=PMTSaturationsVisibility}" />
                             </Grid>
                         </Grid>
                         <StackPanel Orientation="Horizontal">
@@ -639,7 +644,7 @@
                                     Orientation="Horizontal"
                                     Value="{Binding Path=BlackPoint1,
                                                     Mode=TwoWay,
-                                                    UpdateSourceTrigger=PropertyChanged}" 
+                                                    UpdateSourceTrigger=PropertyChanged}"
                                     Thumb.DragStarted="slider1_DragStarted" />
 
                             <RepeatButton Name="btnBPUp1"
@@ -661,7 +666,7 @@
                                     Orientation="Horizontal"
                                     Value="{Binding Path=WhitePoint1,
                                                     Mode=TwoWay,
-                                                    UpdateSourceTrigger=PropertyChanged}" 
+                                                    UpdateSourceTrigger=PropertyChanged}"
                                     Thumb.DragStarted="slider1_DragStarted" />
 
                             <RepeatButton Name="btnWPUp1"
@@ -769,7 +774,9 @@
                                                                      UpdateSourceTrigger=PropertyChanged}"
                                                 LogScaleData="{Binding Path=LogScaleEnabled2,
                                                                      Mode=TwoWay,
-                                                                     UpdateSourceTrigger=PropertyChanged}"/>
+                                                                     UpdateSourceTrigger=PropertyChanged}"
+                                                Saturations="{Binding Path=PMT3Saturations}"
+                                                SaturationsVisibility="{Binding Path=PMTSaturationsVisibility}" />
                             </Grid>
                         </Grid>
                         <StackPanel Orientation="Horizontal">
@@ -786,7 +793,7 @@
                                     Orientation="Horizontal"
                                     Value="{Binding Path=BlackPoint2,
                                                     Mode=TwoWay,
-                                                    UpdateSourceTrigger=PropertyChanged}" 
+                                                    UpdateSourceTrigger=PropertyChanged}"
                                     Thumb.DragStarted="slider2_DragStarted" />
                             <RepeatButton Name="btnBPUp2"
                                           Width="16"
@@ -807,7 +814,7 @@
                                     Orientation="Horizontal"
                                     Value="{Binding Path=WhitePoint2,
                                                     Mode=TwoWay,
-                                                    UpdateSourceTrigger=PropertyChanged}" 
+                                                    UpdateSourceTrigger=PropertyChanged}"
                                     Thumb.DragStarted="slider2_DragStarted" />
                             <RepeatButton Name="btnWPUp2"
                                           Width="16"
@@ -914,7 +921,9 @@
                                                                      UpdateSourceTrigger=PropertyChanged}"
                                                 LogScaleData="{Binding Path=LogScaleEnabled3,
                                                                      Mode=TwoWay,
-                                                                     UpdateSourceTrigger=PropertyChanged}"/>
+                                                                     UpdateSourceTrigger=PropertyChanged}"
+                                                Saturations="{Binding Path=PMT4Saturations}"
+                                                SaturationsVisibility="{Binding Path=PMTSaturationsVisibility}" />
                             </Grid>
                         </Grid>
                         <StackPanel Orientation="Horizontal">
@@ -931,7 +940,7 @@
                                     Orientation="Horizontal"
                                     Value="{Binding Path=BlackPoint3,
                                                     Mode=TwoWay,
-                                                    UpdateSourceTrigger=PropertyChanged}" 
+                                                    UpdateSourceTrigger=PropertyChanged}"
                                     Thumb.DragStarted="slider3_DragStarted" />
                             <RepeatButton Name="btnBPUp3"
                                           Width="16"
@@ -952,7 +961,7 @@
                                     Orientation="Horizontal"
                                     Value="{Binding Path=WhitePoint3,
                                                     Mode=TwoWay,
-                                                    UpdateSourceTrigger=PropertyChanged}" 
+                                                    UpdateSourceTrigger=PropertyChanged}"
                                     Thumb.DragStarted="slider3_DragStarted" />
                             <RepeatButton Name="btnWPUp3"
                                           Width="16"
@@ -1219,7 +1228,7 @@
                                           Converter={StaticResource BoolToOpacity}}">
                 <StackPanel.LayoutTransform>
                     <ScaleTransform ScaleX="{Binding Path=ROIToolsScale}"
-                                    ScaleY="{Binding Path=ROIToolsScale}"/>
+                                    ScaleY="{Binding Path=ROIToolsScale}" />
                 </StackPanel.LayoutTransform>
                 <GroupBox BorderThickness="1"
                           IsVisibleChanged="ROIToolbar_VisibilityChanged"
@@ -1505,3 +1514,4 @@
         </Grid>
     </Grid>
 </UserControl>
+    

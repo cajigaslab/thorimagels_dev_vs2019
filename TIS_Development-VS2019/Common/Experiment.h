@@ -31,14 +31,15 @@ struct SampleRegion
 
 extern "C" _declspec(dllexport) typedef struct ScanRegion
 {
-	 uint8_t ScanID;
+	uint8_t ScanID;
 	uint16_t RegionID;
 	uint32_t SizeX;
 	uint32_t SizeY;
 	uint32_t SizeZ;
 	uint32_t SizeT;
 	uint32_t SizeS;
-	  size_t BufferSize;
+	uint32_t NumberOfPlanes;
+	size_t BufferSize;
 }ScanRegionStruct;
 
 using namespace std;
@@ -158,10 +159,10 @@ public:
 	virtual long GetCamera(string &name,long &width,long &height,double &pixelSizeUM,double &exposureTimeMS, long &gain, long &blackLevel, long &lightMode, long &left, long &top, long &right, long &bottom, long &binningX, long &binningY, long &tapsIndex, long &tapsBalance, long &readOutSpeedIndex, long &averageMode, long &averageNum, long &verticalFlip, long &horizontalFlip, long &imageAngle)=0;///camera information
 	virtual long SetCamera(string name, long width, long height, double pixelSizeUM, long binning, long gain, long lightMode)=0;
 
-	virtual long GetLSM(long &areaMode, double &areaAngle, long &scanMode,long &interleave,long &pixelX,long &pixelY,long &channel, long &fieldSize, long &offsetX, long &offsetY,
-		long &averageMode, long &averageNum, long &clockSource, long &inputRange1, long &inputRange2, long &twoWayAlignment, long &extClockRate, double &dwellTime, 
-		long &flybackCycles, long &inputRange3, long &inputRange4, long &minimizeFlybackCycles, long &polarity1, long &polarity2, long &polarity3, long &polarity4,
-		long &verticalFlip, long &horizontalFlip, double &crsFrequencyHz, long &timeBasedLineScan, long &timeBasedLSTimeMS)=0;
+	virtual long GetLSM(long& areaMode, double& areaAngle, long& scanMode, long& interleave, long& pixelX, long& pixelY, long& channel, long& fieldSize, long& offsetX, long& offsetY,
+		long& averageMode, long& averageNum, long& clockSource, long& inputRange1, long& inputRange2, long& twoWayAlignment, long& extClockRate, double& dwellTime,
+		long& flybackCycles, long& inputRange3, long& inputRange4, long& minimizeFlybackCycles, long& polarity1, long& polarity2, long& polarity3, long& polarity4,
+		long& verticalFlip, long& horizontalFlip, double& crsFrequencyHz, long& timeBasedLineScan, long& timeBasedLSTimeMS, long& threePhotonEnable, long& numberOfPlanes) = 0;
 	virtual long SetLSM(long areaMode, double areaAngle,long scanMode,long interleave,long pixelX,long pixelY,long channel, long fieldSize, long offsetX, long offsetY,
 		long averageMode, long averageNum, long clockSource, long inputRange1, long inputRange2, long twoWayAlignment, long extClockRate,double dwellTime,long flybackCycles, long inputRange3, long inputRange4, long minimizeFlybackCycles, long polarity1, long polarity2, long polarity3, long polarity4, long verticalFlip, long horizontalFlip)=0;
 
@@ -247,12 +248,15 @@ public:
 	virtual long GetSpectralFilter(long &startWavelength, long &stopWavelength, long &stepsSizeWavelength, long &bandwidthMode, string &path)=0;
 	virtual long SetSpectralFilter(long startWavelength, long stopWavelength, long stepsSizeWavelength, long bandwidthMode, string path)=0;
 
-	virtual long GetLampLED(long& led1enable, double& led1power, long& led2enable, double& led2power, long& led3enable, double& led3power, long& led4enable, double& led4power, long& led5enable, double& led5power, long& led6enable, double& led6power) = 0;
+	virtual long GetLampLED(long& led1enable, double& led1power, long& led2enable, double& led2power, long& led3enable, double& led3power, long& led4enable, double& led4power, long& led5enable, double& led5power, long& led6enable, double& led6power, double& mainPower) = 0;
 
 	virtual long GetSampleRegions(long &viewMode, vector<SampleRegion> &sregions)=0;
 	virtual long GetScanRegions(long &viewMode, vector<ScanRegion> &sregions)=0;
 	virtual long GetScanAttribute(long viewMode, string attribute, double &value)=0;
 	virtual long SetAllScanAreas(long viewMode, long enable)=0;
+
+	virtual long GetZPosList(vector<double>& vec) = 0;
+	virtual long GetZFileInfo(int& enable, double& scale) = 0;
 
 	virtual void Update()=0;
 };

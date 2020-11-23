@@ -33,7 +33,7 @@
         <!-- Linear Mode Slider -->
         <ctrl:MasterSlider x:Name="LED_CTRL_ALL"
                             Grid.Row="0"
-                            Margin="0 2 0 2"
+                            Margin="0"
                             Text="Master"
                             LightColor="Transparent"
                             Foreground="White"
@@ -58,7 +58,7 @@
         <Grid x:Name="LEDSliderLayout"
               Grid.Row="1"
               Grid.IsSharedSizeScope="True"
-              Margin="0 0 0 10">
+              Margin="0 0 0 1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -162,15 +162,28 @@
                             LampPowerMinusCommand="{Binding LED6PowerMinusCommand}" />
         </Grid>
         <!-- Style="{DynamicResource Thorlabs.MahControls.ToggleSwitch}" -->
-        <CheckBox x:Name="ShowHideTemperatures"
-                  Grid.Column="0" 
-                  Grid.Row="2"
-                  TabIndex="7"
-                  VerticalAlignment="Center"
-                  VerticalContentAlignment="Center"
-                  Content="Display Temperatures"
-                  IsChecked="{Binding ShowTemperatures, Mode=TwoWay}"
-                  HorizontalAlignment="Right"
-                  ToolTip="Show|Hide LEDs Temperature" />
+        <StackPanel Grid.Column="0" 
+                    Grid.Row="2"
+                    Orientation="Vertical"
+                    HorizontalAlignment="Right">
+            <CheckBox x:Name="ShowHideTemperatures"
+                      Margin="0,2,0,2"
+                      VerticalAlignment="Center"
+                      TabIndex="7"
+                      VerticalContentAlignment="Center"
+                      Content="Display Temperatures"
+                      IsChecked="{Binding ShowTemperatures, Mode=TwoWay}"
+                      HorizontalAlignment="Left"
+                      ToolTip="Show|Hide LEDs Temperature" />
+            <CheckBox x:Name="EnableLEDs"
+                      Margin="0,2,0,2"
+                      TabIndex="7"
+                      VerticalAlignment="Center"
+                      VerticalContentAlignment="Center"
+                      Content="LEDs ON"
+                      IsChecked="{Binding EnableDisableLEDs, Mode=TwoWay}"
+                      HorizontalAlignment="Left"
+                      ToolTip="Enable LEDs outside of acquisition" />
+        </StackPanel>
     </Grid>
 </UserControl>

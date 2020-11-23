@@ -959,12 +959,11 @@
             vm.PropertyChanged += vm_PropertyChanged;
             vm.LoadLineProfileData();
 
-            XmlDocument applicationDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
-            XmlNode node = applicationDoc.SelectSingleNode("/ApplicationSettings/DisplayOptions/General/HistogramSettings");
+            XmlNode node = vm.ApplicationDoc.SelectSingleNode("/ApplicationSettings/DisplayOptions/General/HistogramSettings");
             if (null != node)
             {
                 string str = string.Empty;
-                if (XmlManager.GetAttribute(node, applicationDoc, "ReducedBinValue", ref str))
+                if (XmlManager.GetAttribute(node, vm.ApplicationDoc, "ReducedBinValue", ref str))
                 {
                     _whitePointMaxVal = Convert.ToInt32(str);
                     if (0 >= _whitePointMaxVal || 255 < _whitePointMaxVal)
@@ -1582,7 +1581,7 @@
                 return;
             }
 
-            OverlayManagerClass.Instance.UpdateParams(ExperimentData.ImageInfo.pixelX, ExperimentData.ImageInfo.pixelY, ExperimentData.LSMUMPerPixel);
+            OverlayManagerClass.Instance.UpdateParams(ExperimentData.ImageInfo.pixelX, ExperimentData.ImageInfo.pixelY * ExperimentData.NumberOfPlanes, ExperimentData.LSMUMPerPixel);
             vm_CloseOrthogonalView();
 
             bool reticleActive = false;

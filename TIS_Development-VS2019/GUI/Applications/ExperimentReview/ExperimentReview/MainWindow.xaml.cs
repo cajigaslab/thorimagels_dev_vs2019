@@ -44,6 +44,7 @@
             this.Closed += new EventHandler(MainWindow_Closed);
             this.Loaded += new RoutedEventHandler(MainWindow_Loaded);
             this.ContentRendered += new EventHandler(MainWindow_Rendered);
+            _vm.IncreaseViewArea += new Action<bool>(NewWindowAdjustImageViewSize);
         }
 
         #endregion Constructors
@@ -168,6 +169,12 @@
         {
             //When the viewer first loaded bring in the last experiment
             ImageReviewWindow.LoadLastExperiment();
+        }
+
+        void NewWindowAdjustImageViewSize(bool obj)
+        {
+            //When the viewer first loaded bring in the last experiment
+            ImageReviewWindow.AdjustImageViewSize(obj);
         }
 
         #endregion Methods

@@ -370,8 +370,6 @@
         private OrthogonalViewStatus _orthogonalViewStat;
         private string _outputDirectory;
         private string _outputExperiment;
-
-        //        private OverlayManagerClass _overlayManager;
         private bool _panelsEnable = true;
         private byte[] _pdXZ;
         private byte[] _pdYZ;
@@ -483,7 +481,7 @@
             _primaryChannelFileNames = new List<ImageFileNameClass>();
             _orthogonalViewStat = OrthogonalViewStatus.INACTIVE;
             _currentMovieParameter = CurrentMovieParameterEnum.T;
-            OverlayManagerClass.Instance.InitOverlayManagerClass(ExperimentData.ImageInfo.pixelX, ExperimentData.ImageInfo.pixelY, ExperimentData.LSMUMPerPixel, false);
+            OverlayManagerClass.Instance.InitOverlayManagerClass(ExperimentData.ImageInfo.pixelX, ExperimentData.ImageInfo.pixelY * ExperimentData.NumberOfPlanes, ExperimentData.LSMUMPerPixel, false);
             EnableHandlers();
 
             VirtualZStack = true;
@@ -3339,7 +3337,7 @@
         public void EnableHandlers()
         {
             //invoked multiple times at single image review,
-            //do release before enable:
+            //do release before enable:lin
             ReleaseHandlers();
 
             _bw.ProgressChanged += new ProgressChangedEventHandler(_bw_ProgressChanged);
@@ -3578,7 +3576,7 @@
             int zSteps = ImageInfo.isZFastEnabled ? ImageInfo.zSteps + ImageInfo.flybackFrames : 1;
             int imageSize = ImageInfo.pixelX * ImageInfo.pixelY * NumChannelsInRaw() * zSteps * 2;
 
-            return fileSize / imageSize;
+            return fileSize / imageSize / ExperimentData.NumberOfPlanes;
         }
 
         public void InitOrthogonalView()
@@ -3613,7 +3611,7 @@
             d.StringFormat drawMarkFormat = new d.StringFormat();
             GetInscribeParameters(ref linePoints, ref markRect, ref scaleLen, ref drawMarkFormat);
 
-            int step = (int)(ExperimentData.ImageInfo.pixelX * ExperimentData.ImageInfo.pixelY * 2);
+            int step = (int)(ExperimentData.ImageInfo.pixelX * ExperimentData.ImageInfo.pixelY * 2 * ExperimentData.NumberOfPlanes);
 
             DirectoryInfo di = new DirectoryInfo(ExperimentFolderPath);
             TotalImageCount = 0;
@@ -4392,7 +4390,7 @@
             int[] pixelXY = { (0 < ImageInfo.scanAreaIDList.Count && 0 < srStruct.SizeX) ? (int)srStruct.SizeX : ImageInfo.pixelX,
                            (0 < ImageInfo.scanAreaIDList.Count && 0 < srStruct.SizeY) ? (int)srStruct.SizeY : ImageInfo.pixelY};
 
-            _imageReview.UpdateChannelData(fileNames, ImageInfo.channelEnabled, 4, zIndexToRead, tIndexToRead, pixelXY[0], pixelXY[1], ImageInfo.zSteps
+            _imageReview.UpdateChannelData(fileNames, ImageInfo.channelEnabled, 4, zIndexToRead, tIndexToRead, pixelXY[0], pixelXY[1] * ExperimentData.NumberOfPlanes, ImageInfo.zSteps
                 + ImageInfo.flybackFrames, GetRawContainsDisabledChannels(), ScanAreaID);
         }
 
@@ -5810,7 +5808,7 @@
                                     }
                                     else
                                     {
-                                        ImageReview.LoadImageIntoBufferFromRawFile(dataIn, fname, ImageInfo.channelEnabled, ImageReview.MaxChannels, zSlice, time, ImageInfo.pixelX, ImageInfo.pixelY, ZMax, GetRawContainsDisabledChannels());
+                                        ImageReview.LoadImageIntoBufferFromRawFile(dataIn, fname, ImageInfo.channelEnabled, ImageReview.MaxChannels, zSlice, time, ImageInfo.pixelX, ImageInfo.pixelY * ExperimentData.NumberOfPlanes, ZMax, GetRawContainsDisabledChannels());
                                     }
                                     break;
                                 case CaptureFile.FILE_TIFF:
@@ -5825,6 +5823,7 @@
                             frameInfo.bufferType = (int)BufferType.INTENSITY;
                             frameInfo.imageWidth = ImageReview.ImageWidth;
                             frameInfo.imageHeight = ImageReview.ImageHeight;
+                            frameInfo.numberOfPlanes = 1;
                             ComputeStats(dataOut, frameInfo, ChannelEnabled, 0, 1, 0);
                         }
                         catch (Exception ex)

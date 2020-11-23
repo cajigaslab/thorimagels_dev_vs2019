@@ -5,6 +5,7 @@
 	if (0 == targetSize) { free(MemStruct.memPtr); MemStruct.memPtr = NULL; MemStruct.size = 0; } \
 	else if (targetSize != MemStruct.size) { MemStruct.memPtr = (unsigned char*)realloc((void*)MemStruct.memPtr, targetSize); MemStruct.size = targetSize; }
 
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -42,9 +43,10 @@ extern "C"
 
 		long _fileSettingsLoaded; ///<Flag set when the settings from the settings file have been read
 		std::string _pSlmName;///<slm device name
-		double* _fitCoeff; ///<fitting coefficients in order of [0][0],[0][1],[0][2],[1][0],[1][1],[1][2],[2[0],[2][1]
+		double* _fitCoeff[2]; ///<fitting coefficients for two wavelengths in order of [0][0],[0][1],[0][2],[1][0],[1][1],[1][2],[2[0],[2][1]
 		long _deviceCount; ///<how many SLM being detected
 		bool _deviceDetected;
+		long _pixelUM; ///<pixel unit size in [UM], assuming square in shape
 		long* _pixelRange; ///<pixel range of Xmin, Xmax, Ymin, Ymax
 		long _overDrive; ///<overdrive mode for meadowlark slm
 		unsigned int _transientFrames; ///<transient frame counts in overdrive mode for meadowlark slm
@@ -68,10 +70,16 @@ extern "C"
 		long _offsetPixels[2]; ///<preset offset in pixels before pattern generation
 		static long _bufferCount; ///<total count of pattern buffers in circulation
 		static long _slmRuntimeCalculate; ///<runtime calculation of transient frames
+
+		//Get,Set:
 		double _calibZ;
 		double _na;
-		double _wavelength;
+		double _wavelength[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT]; ///<incident light wavelengths, could be two for left-right halves
+		long _selectWavelength; ///<active wavelength selection, either 0[first] or 1[second]
 		long _slm3D; ///<hologram generation in 3D (true) or 2D (false)
+		long _loadPhaseDirectly; ///<load or save phase mask directly (TRUE) or default load-then-convert (FALSE)
+		long _dmdMode; ///<use SLM in DMD mode if TRUE
+		bool _doHologram; ///<phase image applied by hologram & transform if TRUE
 
 		//NI:
 		static TaskHandle _taskHandleCI; ///<trigger input
@@ -123,6 +131,7 @@ extern "C"
 		long ResetSequence(wchar_t* filename = L"");
 		long SetIntermediateBuffer(MemoryStruct memStruct);
 		long SetupHWTriggerIn();
+		unsigned char* MapImageHologram(const wchar_t* pathAndFilename, PBITMAPINFO pbmi);
 		unsigned char* GetAndProcessBMP(long& size, BITMAPINFO& bmi);
 		unsigned char* GetAndProcessText(long& size, BITMAPINFO& bmi);
 

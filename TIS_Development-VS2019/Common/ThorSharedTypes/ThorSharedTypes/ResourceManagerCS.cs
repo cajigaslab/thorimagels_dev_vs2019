@@ -164,6 +164,15 @@
             return sb.ToString();
         }
 
+        public static int GetBleacherType()
+        {
+            int lsmType = (int)ICamera.LSMType.LSMTYPE_LAST;
+
+            GetCameraParamInt((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_TYPE, ref lsmType);
+
+            return lsmType;
+        }
+
         [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "GetCameraParamAvailable")]
         public static extern int GetCameraParamAvailable(int cameraSelection, int paramId);
 
@@ -219,8 +228,24 @@
         [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "GetDeviceParamAvailable")]
         public static extern int GetDeviceParamAvailable(int deviceSelection, int paramId);
 
+        public static int GetDeviceParamBuffer<T>(int deviceSelection, int paramId, T[] buf, long len)
+        {
+            int ret = 0;
+            var gch = default(GCHandle);
+            try
+            {
+                gch = GCHandle.Alloc(buf, GCHandleType.Pinned);
+                ret = GetDeviceParamBuffer(deviceSelection, paramId, gch.AddrOfPinnedObject(), len);
+            }
+            finally
+            {
+                if (gch.IsAllocated) gch.Free();
+            }
+            return ret;
+        }
+
         [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "GetDeviceParamBuffer")]
-        public static extern int GetDeviceParamBuffer(int deviceSelection, int paramId, byte[] buf, long len);
+        public static extern int GetDeviceParamBuffer(int deviceSelection, int paramId, IntPtr buf, long len);
 
         [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "GetDeviceParamDouble")]
         public static extern int GetDeviceParamDouble(int deviceSelection, int paramId, ref double param);

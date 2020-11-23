@@ -108,14 +108,24 @@
     {
         #region Fields
 
-        public static readonly DependencyProperty ThreePhotonPhaseCourseMinusCommandProperty = 
+        public static readonly DependencyProperty NumberOfPlanesMinusCommandProperty = 
             DependencyProperty.Register(
-            "ThreePhotonPhaseCourseMinusCommand",
+            "NumberOfPlanesMinusCommand",
             typeof(ICommand),
             typeof(ThreePhotonControlUC));
-        public static readonly DependencyProperty ThreePhotonPhaseCoursePlusCommandProperty = 
+        public static readonly DependencyProperty NumberOfPlanesPlusCommandProperty = 
             DependencyProperty.Register(
-            "ThreePhotonPhaseCoursePlusCommand",
+            "NumberOfPlanesPlusCommand",
+            typeof(ICommand),
+            typeof(ThreePhotonControlUC));
+        public static readonly DependencyProperty ThreePhotonPhaseCoarseMinusCommandProperty = 
+            DependencyProperty.Register(
+            "ThreePhotonPhaseCoarseMinusCommand",
+            typeof(ICommand),
+            typeof(ThreePhotonControlUC));
+        public static readonly DependencyProperty ThreePhotonPhaseCoarsePlusCommandProperty = 
+            DependencyProperty.Register(
+            "ThreePhotonPhaseCoarsePlusCommand",
             typeof(ICommand),
             typeof(ThreePhotonControlUC));
         public static readonly DependencyProperty ThreePhotonPhaseFineMinusCommandProperty = 
@@ -132,6 +142,10 @@
         public static DependencyProperty Disable3PCheckboxProperty = 
             DependencyProperty.Register("Disable3PCheckbox",
             typeof(bool),
+            typeof(ThreePhotonControlUC));
+        public static DependencyProperty FIR1ManualControlEnableProperty = 
+            DependencyProperty.Register("FIR1ManualControlEnable",
+            typeof(int),
             typeof(ThreePhotonControlUC));
         public static DependencyProperty FIRSettingsVisibilityProperty = 
             DependencyProperty.Register("FIRSettingsVisibility",
@@ -153,9 +167,9 @@
            DependencyProperty.Register("LSMNumberOfPlanes",
            typeof(int),
            typeof(ThreePhotonControlUC));
-        public static DependencyProperty LSMSelectedPlaneIndexProperty = 
-           DependencyProperty.Register("LSMSelectedPlaneIndex",
-           typeof(int),
+        public static DependencyProperty MultiplaneVisibilityProperty = 
+           DependencyProperty.Register("MultiplaneVisibility",
+           typeof(Visibility),
            typeof(ThreePhotonControlUC));
         public static DependencyProperty ThreePhotonEnableProperty = 
             DependencyProperty.Register("ThreePhotonEnable",
@@ -173,12 +187,12 @@
             DependencyProperty.Register("ThreePhotonPanelEnable",
             typeof(bool),
             typeof(ThreePhotonControlUC));
-        public static DependencyProperty ThreePhotonPhaseCourseProperty = 
-            DependencyProperty.Register("ThreePhotonPhaseCourse",
+        public static DependencyProperty ThreePhotonPhaseCoarseProperty = 
+            DependencyProperty.Register("ThreePhotonPhaseCoarse",
             typeof(int),
             typeof(ThreePhotonControlUC));
-        public static DependencyProperty ThreePhotonPhaseCourseVisibilityProperty = 
-            DependencyProperty.Register("ThreePhotonPhaseCourseVisibility",
+        public static DependencyProperty ThreePhotonPhaseCoarseVisibilityProperty = 
+            DependencyProperty.Register("ThreePhotonPhaseCoarseVisibility",
             typeof(Visibility),
             typeof(ThreePhotonControlUC));
         public static DependencyProperty ThreePhotonPhaseFineProperty = 
@@ -203,6 +217,12 @@
         {
             get { return (bool)GetValue(Disable3PCheckboxProperty); }
             set { SetValue(Disable3PCheckboxProperty, value); }
+        }
+
+        public int FIR1ManualControlEnable
+        {
+            get { return (int)GetValue(FIR1ManualControlEnableProperty); }
+            set { SetValue(FIR1ManualControlEnableProperty, value); }
         }
 
         public Visibility FIRSettingsVisibility
@@ -235,10 +255,22 @@
             set { SetValue(LSMNumberOfPlanesProperty, value); }
         }
 
-        public int LSMSelectedPlaneIndex
+        public Visibility MultiplaneVisibility
         {
-            get { return (int)GetValue(LSMSelectedPlaneIndexProperty); }
-            set { SetValue(LSMSelectedPlaneIndexProperty, value); }
+            get { return (Visibility)GetValue(MultiplaneVisibilityProperty); }
+            set { SetValue(MultiplaneVisibilityProperty, value); }
+        }
+
+        public ICommand NumberOfPlanesMinusCommand
+        {
+            get { return (ICommand)GetValue(NumberOfPlanesMinusCommandProperty); }
+            set { SetValue(NumberOfPlanesMinusCommandProperty, value); }
+        }
+
+        public ICommand NumberOfPlanesPlusommand
+        {
+            get { return (ICommand)GetValue(NumberOfPlanesPlusCommandProperty); }
+            set { SetValue(NumberOfPlanesPlusCommandProperty, value); }
         }
 
         public bool ThreePhotonEnable
@@ -265,28 +297,28 @@
             set { SetValue(ThreePhotonPanelEnableProperty, value); }
         }
 
-        public int ThreePhotonPhaseCourse
+        public int ThreePhotonPhaseCoarse
         {
-            get { return (int)GetValue(ThreePhotonPhaseCourseProperty); }
-            set { SetValue(ThreePhotonPhaseCourseProperty, value); }
+            get { return (int)GetValue(ThreePhotonPhaseCoarseProperty); }
+            set { SetValue(ThreePhotonPhaseCoarseProperty, value); }
         }
 
-        public ICommand ThreePhotonPhaseCourseMinusCommand
+        public ICommand ThreePhotonPhaseCoarseMinusCommand
         {
-            get { return (ICommand)GetValue(ThreePhotonPhaseCourseMinusCommandProperty); }
-            set { SetValue(ThreePhotonPhaseCourseMinusCommandProperty, value); }
+            get { return (ICommand)GetValue(ThreePhotonPhaseCoarseMinusCommandProperty); }
+            set { SetValue(ThreePhotonPhaseCoarseMinusCommandProperty, value); }
         }
 
-        public ICommand ThreePhotonPhaseCoursePlusCommand
+        public ICommand ThreePhotonPhaseCoarsePlusCommand
         {
-            get { return (ICommand)GetValue(ThreePhotonPhaseCoursePlusCommandProperty); }
-            set { SetValue(ThreePhotonPhaseCoursePlusCommandProperty, value); }
+            get { return (ICommand)GetValue(ThreePhotonPhaseCoarsePlusCommandProperty); }
+            set { SetValue(ThreePhotonPhaseCoarsePlusCommandProperty, value); }
         }
 
-        public Visibility ThreePhotonPhaseCourseVisibility
+        public Visibility ThreePhotonPhaseCoarseVisibility
         {
-            get { return (Visibility)GetValue(ThreePhotonPhaseCourseVisibilityProperty); }
-            set { SetValue(ThreePhotonPhaseCourseVisibilityProperty, value); }
+            get { return (Visibility)GetValue(ThreePhotonPhaseCoarseVisibilityProperty); }
+            set { SetValue(ThreePhotonPhaseCoarseVisibilityProperty, value); }
         }
 
         public int ThreePhotonPhaseFine
@@ -311,35 +343,5 @@
         }
 
         #endregion Properties
-
-        #region Methods
-
-        private void tbNumOfPlanes_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            int numOfPlanes = 1;
-            int initialCount = cbDisplayPlane.Items.Count;
-            Int32.TryParse(tbNumOfPlanes.Text, out numOfPlanes);
-            int iterationNum = (numOfPlanes > initialCount) ? numOfPlanes : initialCount;
-
-            for (int i = 1; i <= iterationNum; i++)
-            {
-                if (i <= numOfPlanes && i > initialCount)
-                {
-                    cbDisplayPlane.Items.Add(i.ToString());
-                }
-                if (i > numOfPlanes && i <= initialCount)
-                {
-                    cbDisplayPlane.Items.Remove(i.ToString());
-                }
-            }
-            //if the selected index is not in the list anymore it will become -1, select plane "1"
-            //for this case
-            if(-1 == cbDisplayPlane.SelectedIndex)
-            {
-                cbDisplayPlane.SelectedItem = "1";
-            }
-        }
-
-        #endregion Methods
     }
 }

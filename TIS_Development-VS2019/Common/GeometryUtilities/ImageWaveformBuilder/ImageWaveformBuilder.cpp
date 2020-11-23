@@ -20,7 +20,6 @@ ImageWaveformBuilder::ImageWaveformBuilder(int type)
 	InitializeParams();
 	ResetCounter();
 	_waveformFileName = L"";
-	_pTemp = NULL;
 }
 
 ///	***************************************** <summary> static members & global variables </summary>	********************************************** ///
@@ -50,7 +49,7 @@ void ImageWaveformBuilder::BufferAvailableCallbackFunc(long sType, long bufSpace
 	unsigned long currentIdx = 0;											//index within totalSizeToFill
 	unsigned long countToCopy[3] = {0};										//count to be copied per if/else section
 	unsigned long bufSpaceIdx = 0;											//current index of copied buffer space number
-	long pockelsCount = GetPockelsCount();
+	unsigned char pockelsCount = GetPockelsCount();
 	double* dSrc = NULL, *dTgt = NULL;
 	UCHAR* cSrc = NULL;
 
@@ -294,8 +293,8 @@ long ImageWaveformBuilder::GetGGalvoWaveformParams(SignalType sType, void* param
 		if(WAIT_OBJECT_0 != WaitForSingleObject(_gParams[_scanAreaId].bufferHandle, 3*EVENT_WAIT_TIME))					//timeout: 15 seconds
 			return FALSE;
 	}
-	long unitSize[3] = { static_cast<long>(_countPerCallback[sType]),  static_cast<long>(_countPerCallback[sType]),  static_cast<long>(_countPerCallback[sType])};
-	if(FALSE == ResetGGalvoWaveformParam(&_gParams[_scanAreaId], unitSize, 1, _gWaveXY[_scanAreaId].digitalLineCnt))	//count to be copied before return is _countPerCallback
+	long unitSize[3] = { static_cast<long>(_countPerCallback[sType]), static_cast<long>(_countPerCallback[sType]), static_cast<long>(_countPerCallback[sType])};
+	if(FALSE == ResetGGalvoWaveformParam(&_gParams[_scanAreaId], unitSize, _gWaveXY[_scanAreaId].pockelsCount, _gWaveXY[_scanAreaId].digitalLineCnt))	//count to be copied before return is _countPerCallback
 	{
 		ReleaseMutex(_gParams[_scanAreaId].bufferHandle);
 		return FALSE;
@@ -308,6 +307,7 @@ long ImageWaveformBuilder::GetGGalvoWaveformParams(SignalType sType, void* param
 	_gParams[_scanAreaId].stepVolt = _gWaveXY[_scanAreaId].stepVolt;
 	_gParams[_scanAreaId].Scanmode = ScanMode::BLEACH_SCAN;
 	_gParams[_scanAreaId].PreCapStatus = preCaptureStatus;
+	_gParams[_scanAreaId].pockelsCount = _gWaveXY[_scanAreaId].pockelsCount;
 
 	//do not continue if user did not reset global index:
 	if((_countTotal[_scanAreaId][sType][0] + _countTotal[_scanAreaId][sType][1] + _countTotal[_scanAreaId][sType][2]) <= _countIndex[_scanAreaId][sType])
@@ -329,10 +329,13 @@ long ImageWaveformBuilder::GetGGalvoWaveformParams(SignalType sType, void* param
 			{
 			case ANALOG_XY:
 				//travel to start:
-				SAFE_MEMCPY((void*)(_gParams[_scanAreaId].GalvoWaveformXY + (2*currentIdx)), (2*countToCopy[sType]*sizeof(double)), (void*)(_gWaveXY[_scanAreaId].GalvoWaveformXY + (2*currentIdx)));
+				SAFE_MEMCPY((void*)(_gParams[_scanAreaId].GalvoWaveformXY + (2*currentIdx)), (2*countToCopy[sType]*WaveformMemory::GetDataTypeSizeInBytes<double>()), (void*)(_gWaveXY[_scanAreaId].GalvoWaveformXY + (2*currentIdx)));
 				break;
 			case ANALOG_POCKEL:
-				SAFE_MEMCPY((void*)(_gParams[_scanAreaId].GalvoWaveformPockel + currentIdx), (countToCopy[sType]*sizeof(double)), (void*)(_gWaveXY[_scanAreaId].GalvoWaveformPockel + currentIdx));
+				for (int pid = 0; pid < _gParams[_scanAreaId].pockelsCount; pid++)
+				{
+					SAFE_MEMCPY((void*)(_gParams[_scanAreaId].GalvoWaveformPockel + (pid*_countPerCallback[sType]) + currentIdx), (countToCopy[sType]*WaveformMemory::GetDataTypeSizeInBytes<double>()), (void*)(_gWaveXY[_scanAreaId].GalvoWaveformPockel + (pid*_countTotal[_scanAreaId][sType][0]) + currentIdx));
+				}
 				break;
 			case DIGITAL_LINES:
 				//digital lines:
@@ -350,21 +353,21 @@ long ImageWaveformBuilder::GetGGalvoWaveformParams(SignalType sType, void* param
 
 					if ((BLEACHSCAN_DIGITAL_LINENAME::ACTIVE_ENVELOPE == i)	|| (BLEACHSCAN_DIGITAL_LINENAME::CYCLE_COMPLEMENTARY == i))		//ActiveEnvelope, cycleComplementary set to be high
 					{
-						std::memset((void*)(_gParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), 0x1, (countToCopy[sType]*sizeof(unsigned char)));
+						std::memset((void*)(_gParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), 0x1, (countToCopy[sType]*WaveformMemory::GetDataTypeSizeInBytes<unsigned char>()));
 					}
 					else if(BLEACHSCAN_DIGITAL_LINENAME::CYCLE_COMPLETE == i)			//CycleComplete set to be low
 					{						
-						std::memset((void*)(_gParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), 0x0, (countToCopy[sType]*sizeof(unsigned char)));
+						std::memset((void*)(_gParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), 0x0, (countToCopy[sType]*WaveformMemory::GetDataTypeSizeInBytes<unsigned char>()));
 					}
 					else if(((BLEACHSCAN_DIGITAL_LINENAME::DUMMY == i)) && (0 == _countIndex[_scanAreaId][sType])) //at Dummy and beginning of waveform
 					{
 						//first of Dummy is 1 at the very first:
-						std::memset(_gParams[_scanAreaId].DigBufWaveform, 0x0, (countToCopy[sType]*sizeof(unsigned char)));
-						std::memset(_gParams[_scanAreaId].DigBufWaveform, 0x1, (1*sizeof(unsigned char)));
+						std::memset(_gParams[_scanAreaId].DigBufWaveform, 0x0, (countToCopy[sType]*WaveformMemory::GetDataTypeSizeInBytes<unsigned char>()));
+						std::memset(_gParams[_scanAreaId].DigBufWaveform, 0x1, (1*WaveformMemory::GetDataTypeSizeInBytes<unsigned char>()));
 					}
 					else
 					{
-						std::memset((void*)(_gParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), 0x0, (countToCopy[sType]*sizeof(unsigned char)));
+						std::memset((void*)(_gParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), 0x0, (countToCopy[sType]*WaveformMemory::GetDataTypeSizeInBytes<unsigned char>()));
 					}
 				}			
 				break;
@@ -391,14 +394,18 @@ long ImageWaveformBuilder::GetGGalvoWaveformParams(SignalType sType, void* param
 			case ANALOG_XY:
 				//load analogXY:
 				ptr = WaveformMemory::getInstance()->GetMemMapPtr(SignalType::ANALOG_XY, 2*fileStartOffset, 2*countToCopy[sType]);
-				SAFE_MEMCPY((void*)(_gParams[_scanAreaId].GalvoWaveformXY + (2*currentIdx)), (2*countToCopy[sType]*sizeof(double)), (void*)(ptr));
+				SAFE_MEMCPY((void*)(_gParams[_scanAreaId].GalvoWaveformXY + (2*currentIdx)), (2*countToCopy[sType]*WaveformMemory::GetDataTypeSizeInBytes<double>()), (void*)(ptr));
 				WaveformMemory::getInstance()->UnlockMemMapPtr();
 				break;
 			case ANALOG_POCKEL:
-				//analog Pockel:
-				ptr = WaveformMemory::getInstance()->GetMemMapPtr(SignalType::ANALOG_POCKEL, fileStartOffset, countToCopy[sType]);
-				SAFE_MEMCPY((void*)(_gParams[_scanAreaId].GalvoWaveformPockel + currentIdx), (countToCopy[sType]*sizeof(double)), (void*)(ptr));
-				WaveformMemory::getInstance()->UnlockMemMapPtr();
+				//analog Pockel, digial lines are build-all & load-selected, 
+				//but pockels lines are build-selected-no-gap to save memory space
+				for (int pid = 0; pid < _gParams[_scanAreaId].pockelsCount; pid++)
+				{
+					ptr = WaveformMemory::getInstance()->GetMemMapPtr(SignalType::ANALOG_POCKEL, (pid * _countTotal[_scanAreaId][sType][1]) + fileStartOffset, countToCopy[sType]);
+					SAFE_MEMCPY((void*)(_gParams[_scanAreaId].GalvoWaveformPockel + (pid * _countPerCallback[sType]) + currentIdx), (countToCopy[sType]*WaveformMemory::GetDataTypeSizeInBytes<double>()), (void*)(ptr));
+					WaveformMemory::getInstance()->UnlockMemMapPtr();
+				}
 				break;
 			case DIGITAL_LINES:
 				//digital lines: dummy, pockels digital, complete, cycle, iteration, pattern, patternComplete, active
@@ -406,17 +413,17 @@ long ImageWaveformBuilder::GetGGalvoWaveformParams(SignalType sType, void* param
 				if(0 < (_digitalLineSelection & (0x1 << BLEACHSCAN_DIGITAL_LINENAME::DUMMY)))
 				{
 					lineIdx++;
-					memset((void*)(_gParams[_scanAreaId].DigBufWaveform + currentIdx), 0x0, (countToCopy[sType]*sizeof(unsigned char)));
+					memset((void*)(_gParams[_scanAreaId].DigBufWaveform + currentIdx), 0x0, (countToCopy[sType]*WaveformMemory::GetDataTypeSizeInBytes<unsigned char>()));
 					if(0 == _countIndex[_scanAreaId][sType])
 					{
-						memset((void*)(_gParams[_scanAreaId].DigBufWaveform + currentIdx), 0x1, 1*sizeof(unsigned char));
+						memset((void*)(_gParams[_scanAreaId].DigBufWaveform + currentIdx), 0x1, 1*WaveformMemory::GetDataTypeSizeInBytes<unsigned char>());
 					}
 				}
 				if(0 < (_digitalLineSelection & (0x1 << BLEACHSCAN_DIGITAL_LINENAME::POCKEL_DIG)))
 				{
 					ptr = WaveformMemory::getInstance()->GetMemMapPtr(SignalType::DIGITAL_LINES, (fileLineIdx * _countTotal[_scanAreaId][sType][1]) + fileStartOffset, countToCopy[sType]);
 					lineIdx++;
-					SAFE_MEMCPY((void*)(_gParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), (countToCopy[sType]*sizeof(unsigned char)), (void*)(ptr));
+					SAFE_MEMCPY((void*)(_gParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), (countToCopy[sType]*WaveformMemory::GetDataTypeSizeInBytes<unsigned char>()), (void*)(ptr));
 					WaveformMemory::getInstance()->UnlockMemMapPtr();
 				}
 				fileLineIdx++;
@@ -427,13 +434,13 @@ long ImageWaveformBuilder::GetGGalvoWaveformParams(SignalType sType, void* param
 					if(0 < (_digitalLineSelection & (0x1 << BLEACHSCAN_DIGITAL_LINENAME::ACTIVE_ENVELOPE)))
 					{
 						lineIdx++;
-						memset((void*)(_gParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), 0x1, countToCopy[sType]*sizeof(unsigned char));		//ActiveEnvelope always high if not last
+						memset((void*)(_gParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), 0x1, countToCopy[sType]*WaveformMemory::GetDataTypeSizeInBytes<unsigned char>());		//ActiveEnvelope always high if not last
 					}
 					fileLineIdx++;
 					if(0 < (_digitalLineSelection & (0x1 << BLEACHSCAN_DIGITAL_LINENAME::CYCLE_COMPLETE)))
 					{
 						lineIdx++;
-						memset((void*)(_gParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), 0x0, countToCopy[sType]*sizeof(unsigned char));		//CycleComplete always low if not last
+						memset((void*)(_gParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), 0x0, countToCopy[sType]*WaveformMemory::GetDataTypeSizeInBytes<unsigned char>());		//CycleComplete always low if not last
 					}
 					fileLineIdx++;
 					break;
@@ -444,7 +451,7 @@ long ImageWaveformBuilder::GetGGalvoWaveformParams(SignalType sType, void* param
 						{
 							ptr = WaveformMemory::getInstance()->GetMemMapPtr(SignalType::DIGITAL_LINES, (fileLineIdx * _countTotal[_scanAreaId][sType][1]) + fileStartOffset, countToCopy[sType]);
 							lineIdx++;
-							SAFE_MEMCPY((void*)(_gParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), (countToCopy[sType]*sizeof(unsigned char)), (void*)(ptr));
+							SAFE_MEMCPY((void*)(_gParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), (countToCopy[sType]*WaveformMemory::GetDataTypeSizeInBytes<unsigned char>()), (void*)(ptr));
 							WaveformMemory::getInstance()->UnlockMemMapPtr();
 						}
 						fileLineIdx++;
@@ -459,7 +466,7 @@ long ImageWaveformBuilder::GetGGalvoWaveformParams(SignalType sType, void* param
 					{
 						ptr = WaveformMemory::getInstance()->GetMemMapPtr(SignalType::DIGITAL_LINES, (fileLineIdx * _countTotal[_scanAreaId][sType][1]) + fileStartOffset, countToCopy[sType]);
 						lineIdx++;
-						SAFE_MEMCPY((void*)(_gParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), (countToCopy[sType]*sizeof(unsigned char)), (void*)(ptr));
+						SAFE_MEMCPY((void*)(_gParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), (countToCopy[sType]*WaveformMemory::GetDataTypeSizeInBytes<unsigned char>()), (void*)(ptr));
 						WaveformMemory::getInstance()->UnlockMemMapPtr();
 					}
 					fileLineIdx++;
@@ -491,9 +498,9 @@ long ImageWaveformBuilder::GetGGalvoWaveformParams(SignalType sType, void* param
 				break;
 			case ANALOG_POCKEL:
 				//patch for callback, repeat last since it should only be hit once:
-				for (unsigned long i = currentIdx; i < (currentIdx + countToCopy[sType]); i++)
+				for (int pid = 0; pid < _gParams[_scanAreaId].pockelsCount; pid++)
 				{
-					_gParams[_scanAreaId].GalvoWaveformPockel[i] = std::max(MIN_AO_VOLTAGE, std::min(_gParams[_scanAreaId].GalvoWaveformPockel[lastIdx],MAX_AO_VOLTAGE));
+					std::fill(_gParams[_scanAreaId].GalvoWaveformPockel + (pid*_countPerCallback[sType]) + currentIdx, _gParams[_scanAreaId].GalvoWaveformPockel + (pid*_countPerCallback[sType]) + currentIdx + countToCopy[sType], std::max(MIN_AO_VOLTAGE, std::min(*(_gParams[_scanAreaId].GalvoWaveformPockel + (pid*_countPerCallback[sType]) + lastIdx),MAX_AO_VOLTAGE)));
 				}
 				break;
 			case DIGITAL_LINES:
@@ -507,7 +514,7 @@ long ImageWaveformBuilder::GetGGalvoWaveformParams(SignalType sType, void* param
 					{
 						continue;
 					}
-					memset((void*)(_gParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx),*(_gParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + lastIdx), (countToCopy[sType]*sizeof(unsigned char)));
+					memset((void*)(_gParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx),*(_gParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + lastIdx), (countToCopy[sType]*WaveformMemory::GetDataTypeSizeInBytes<unsigned char>()));
 				}			
 				break;
 			default:
@@ -539,7 +546,7 @@ long ImageWaveformBuilder::GetThorDAQGGWaveformParams(SignalType sType, void* pa
 		if(WAIT_OBJECT_0 != WaitForSingleObject(_gThorDAQParams[_scanAreaId].bufferHandle, 3*EVENT_WAIT_TIME))					//timeout: 15 seconds
 			return FALSE;
 	}
-	long unitSize[3] = { static_cast<long>(_countPerCallback[sType]),  static_cast<long>(_countPerCallback[sType]),  static_cast<long>(_countPerCallback[sType])};
+	long unitSize[3] = { static_cast<long>(_countPerCallback[sType]), static_cast<long>(_countPerCallback[sType]), static_cast<long>(_countPerCallback[sType])};
 	if(FALSE == ResetThorDAQGGWaveformParam(&_gThorDAQParams[_scanAreaId], unitSize, 1, _gThorDAQWaveXY[_scanAreaId].digitalLineCnt))	//count to be copied before return is _countPerCallback
 	{
 		ReleaseMutex(_gThorDAQParams[_scanAreaId].bufferHandle);
@@ -553,6 +560,7 @@ long ImageWaveformBuilder::GetThorDAQGGWaveformParams(SignalType sType, void* pa
 	_gThorDAQParams[_scanAreaId].stepVolt = _gThorDAQWaveXY[_scanAreaId].stepVolt;
 	_gThorDAQParams[_scanAreaId].Scanmode = ScanMode::BLEACH_SCAN;
 	_gThorDAQParams[_scanAreaId].PreCapStatus = preCaptureStatus;
+	_gThorDAQParams[_scanAreaId].pockelsCount = _gThorDAQWaveXY[_scanAreaId].pockelsCount;
 
 	//do not continue if user did not reset global index:
 	if((_countTotal[_scanAreaId][sType][0] + _countTotal[_scanAreaId][sType][1] + _countTotal[_scanAreaId][sType][2]) <= _countIndex[_scanAreaId][sType])
@@ -856,8 +864,8 @@ uint64_t ImageWaveformBuilder::RebuildWaveformFromFile(const wchar_t* waveformFi
 	//set file unit size:
 	for (int i = 0; i < static_cast<int>(SignalType::SIGNALTYPE_LAST); i++)
 	{
-		_countTotal[_scanAreaId][i][0] = _countTotal[_scanAreaId][i][2] = 0;
-		_countTotal[_scanAreaId][i][1] = _gWaveXY[_scanAreaId].analogPockelSize;		//unit size is the same as pockel size in file loading bleach scan mode
+		_countTotal[_scanAreaId][i][0] = _countTotal[_scanAreaId][i][2] = 0;												//[0] travel to start, [2] zero pedding end
+		_countTotal[_scanAreaId][i][1] = _gWaveXY[_scanAreaId].analogPockelSize / _gWaveXY[_scanAreaId].pockelsCount;		//[1] unit size of waveform body
 	}
 	_waveformFileName = waveformFileName;
 
@@ -870,23 +878,27 @@ uint64_t ImageWaveformBuilder::RebuildWaveformFromFile(const wchar_t* waveformFi
 		WaveformMemory::getInstance()->UnlockMemMapPtr();
 
 		//find power idle:
-		double powerIdle = 0;
-		ptr = WaveformMemory::getInstance()->GetMemMapPtr(SignalType::ANALOG_POCKEL, 0, 1);
-		SAFE_MEMCPY((void*)(&powerIdle), (sizeof(double)), (void*)(ptr));
-		WaveformMemory::getInstance()->UnlockMemMapPtr();
+		double* powerIdle = new double[_gWaveXY[_scanAreaId].pockelsCount];
+		for (int i = 0; i < _gWaveXY[_scanAreaId].pockelsCount; i++)
+		{
+			ptr = WaveformMemory::getInstance()->GetMemMapPtr(SignalType::ANALOG_POCKEL, i + _countTotal[_scanAreaId][i][1], 1);
+			SAFE_MEMCPY((void*)(&powerIdle[i]), (sizeof(double)), (void*)(ptr));
+			WaveformMemory::getInstance()->UnlockMemMapPtr();
+		}
 
 		//get count of travel to first point in file
-		BuildTravelToStart(powerIdle, positionVxy, _countTotal[_scanAreaId][0][0]);
+		BuildTravelToStart(powerIdle, positionVxy, _countTotal[_scanAreaId][SignalType::ANALOG_XY][0]);
+		SAFE_DELETE_ARRAY(powerIdle);
 
 		//same length for all signal types
-		_countTotal[_scanAreaId][2][0] = _countTotal[_scanAreaId][1][0] = _countTotal[_scanAreaId][0][0];
+		_countTotal[_scanAreaId][SignalType::DIGITAL_LINES][0] = _countTotal[_scanAreaId][SignalType::ANALOG_POCKEL][0] = _countTotal[_scanAreaId][SignalType::ANALOG_XY][0];
 	}
 
-	//set counters: all signal types should be same length
+	//set counters: all signal types should be same length but XY could be empty
 	for (int i = 0; i < static_cast<int>(SignalType::SIGNALTYPE_LAST); i++)
 	{
-		ret = GetTotalCount(countPerCallback[i], (SignalType)i, _countTotal[_scanAreaId][0][0], _countTotal[_scanAreaId][0][1]);
-		if(FALSE == ret)
+		ret = GetTotalCount(countPerCallback[i], (SignalType)i, _countTotal[_scanAreaId][SignalType::ANALOG_XY][0], _countTotal[_scanAreaId][SignalType::ANALOG_XY][1]);
+		if(FALSE == ret && SignalType::ANALOG_XY != i)
 		{
 			ReleaseMutex(_gWaveXY[_scanAreaId].bufferHandle);
 			return FALSE;
@@ -934,32 +946,11 @@ uint64_t ImageWaveformBuilder::RebuildThorDAQWaveformFromFile(const wchar_t* wav
 	}
 	_waveformFileName = waveformFileName;
 
-	//find first XY location, skip if no current location:
-	if(currentVxy)
-	{
-		double positionVxy[4] = {static_cast<double>(*(currentVxy)), static_cast<double>(*(currentVxy + 1)), 0 , 0};
-		char* ptr = WaveformMemory::getInstance()->GetMemMapPtrThorDAQ(SignalType::ANALOG_XY, 0, 2);
-		SAFE_MEMCPY((void*)(positionVxy+2), (2*sizeof(unsigned short)), (void*)(ptr));
-		WaveformMemory::getInstance()->UnlockMemMapPtr();
-
-		//find power idle:
-		double powerIdle = 0;
-		ptr = WaveformMemory::getInstance()->GetMemMapPtrThorDAQ(SignalType::ANALOG_POCKEL, 0, 1);
-		SAFE_MEMCPY((void*)(&powerIdle), (sizeof(unsigned short)), (void*)(ptr));
-		WaveformMemory::getInstance()->UnlockMemMapPtr();
-
-		//get count of travel to first point in file
-		BuildTravelToStart(powerIdle, positionVxy, _countTotal[_scanAreaId][0][0]);
-
-		//same length for all signal types
-		_countTotal[_scanAreaId][2][0] = _countTotal[_scanAreaId][1][0] = _countTotal[_scanAreaId][0][0];
-	}
-
 	//set counters: all signal types should be same length
 	for (int i = 0; i < static_cast<int>(SignalType::SIGNALTYPE_LAST); i++)
 	{
-		ret = GetTotalCount(countPerCallback[i], (SignalType)i, _countTotal[_scanAreaId][0][0], _countTotal[_scanAreaId][0][1]);
-		if(FALSE == ret)
+		ret = GetTotalCount(countPerCallback[i], (SignalType)i, _countTotal[_scanAreaId][SignalType::ANALOG_XY][0], _countTotal[_scanAreaId][SignalType::ANALOG_XY][1]);
+		if(FALSE == ret && SignalType::ANALOG_XY != i)
 		{
 			ReleaseMutex(_gThorDAQWaveXY[_scanAreaId].bufferHandle);
 			return FALSE;
@@ -990,9 +981,9 @@ void ImageWaveformBuilder::CloseWaveformFile()
 
 ///	***************************************** <summary> General Private Functions </summary>	********************************************** ///
 
-long ImageWaveformBuilder::GetPockelsCount()
+unsigned char ImageWaveformBuilder::GetPockelsCount()
 {
-	long pockelsCnt = 0;
+	unsigned char pockelsCnt = 0;
 	for(int poc=0; poc<MAX_GG_POCKELS_CELL_COUNT; poc++)
 	{
 		if(TRUE == _wParams.pockelsLineEnable[poc])
@@ -1112,28 +1103,7 @@ long ImageWaveformBuilder::ResetGGalvoWaveformParam(GGalvoWaveformParams * param
 		params->analogXYSize = std::max(2 * params->unitSize[SignalType::ANALOG_XY], (unsigned long long)0);	//x,y
 		if(0 < params->analogXYSize)
 		{
-
-			if (NULL == params->GalvoWaveformXY)
-			{
-				params->GalvoWaveformXY = (double*)std::malloc(sizeof(double) * params->analogXYSize);
-			}
-			else
-			{
-				_pTemp = (char*)realloc(params->GalvoWaveformXY, sizeof(double) * params->analogXYSize);
-
-				if (NULL != _pTemp)
-				{
-					params->GalvoWaveformXY = (double*)_pTemp;
-				}
-				else
-				{
-					free(params->GalvoWaveformXY);
-					params->GalvoWaveformXY = NULL;
-					ReleaseMutex(params->bufferHandle);
-					return FALSE;					
-				}
-			}			
-			
+			params->GalvoWaveformXY = (double*)realloc(params->GalvoWaveformXY, params->analogXYSize * sizeof(double));
 			if (NULL == params->GalvoWaveformXY)
 			{
 				ReleaseMutex(params->bufferHandle);
@@ -1153,28 +1123,7 @@ long ImageWaveformBuilder::ResetGGalvoWaveformParam(GGalvoWaveformParams * param
 		params->analogPockelSize = std::max(numPockels * params->unitSize[SignalType::ANALOG_POCKEL], (unsigned long long)0);
 		if(0 < params->analogPockelSize)
 		{
-			if (NULL == params->GalvoWaveformPockel)
-			{
-				params->GalvoWaveformPockel = (double*)std::malloc(sizeof(double) * params->analogPockelSize);
-			}
-			else
-			{
-
-				_pTemp = (char*)realloc(params->GalvoWaveformPockel, sizeof(double) * params->analogPockelSize);
-
-				if (NULL != _pTemp)
-				{
-					params->GalvoWaveformPockel = (double*)_pTemp;
-				}
-				else
-				{
-					free(params->GalvoWaveformPockel);
-					params->GalvoWaveformPockel = NULL;
-					ReleaseMutex(params->bufferHandle);
-					return FALSE;
-				}
-			}
-
+			params->GalvoWaveformPockel = (double*)realloc(params->GalvoWaveformPockel, params->analogPockelSize * sizeof(double));
 			if (NULL == params->GalvoWaveformPockel)
 			{
 				ReleaseMutex(params->bufferHandle);
@@ -1193,28 +1142,7 @@ long ImageWaveformBuilder::ResetGGalvoWaveformParam(GGalvoWaveformParams * param
 		params->digitalSize = std::max(digitalLineCnt * params->unitSize[SignalType::DIGITAL_LINES], (unsigned long long)0);		//[BleachScan]: pockels digital with complete, cycle, iteration, pattern, patternComplete lines
 		if(0 < params->digitalSize)
 		{
-			if (NULL == params->DigBufWaveform)
-			{
-				params->DigBufWaveform = (unsigned char*)std::malloc(sizeof(unsigned char) * params->digitalSize);
-			}
-			else
-			{
-				_pTemp = (char*)realloc(params->DigBufWaveform, sizeof(unsigned char) * params->digitalSize);
-
-				if (NULL != _pTemp)
-				{
-					params->DigBufWaveform = (unsigned char*)_pTemp;
-				}
-				else
-				{
-					free(params->DigBufWaveform);
-					params->DigBufWaveform = NULL;
-					ReleaseMutex(params->bufferHandle);
-					return FALSE;
-				}
-
-			}
-
+			params->DigBufWaveform = (unsigned char*)realloc(params->DigBufWaveform, params->digitalSize * sizeof(unsigned char));
 			if (NULL == params->DigBufWaveform)
 			{
 				ReleaseMutex(params->bufferHandle);
@@ -1271,27 +1199,7 @@ long ImageWaveformBuilder::ResetThorDAQGGWaveformParam(ThorDAQGGWaveformParams *
 		params->analogXYSize = std::max(2 * params->unitSize[SignalType::ANALOG_XY], (unsigned long long)0);	//x,y
 		if(0 < params->analogXYSize)
 		{
-			if (NULL == params->GalvoWaveformXY)
-			{
-				params->GalvoWaveformXY = (unsigned short*)std::malloc(sizeof(unsigned short) * params->analogXYSize);
-			}
-			else
-			{
-				_pTemp = (char*)realloc(params->GalvoWaveformXY, sizeof(unsigned short) * params->analogXYSize);
-
-				if (NULL != _pTemp)
-				{
-					params->GalvoWaveformXY = (unsigned short*)_pTemp;
-				}
-				else
-				{
-					free(params->GalvoWaveformXY);
-					params->GalvoWaveformXY = NULL;
-					ReleaseMutex(params->bufferHandle);
-					return FALSE;
-				}
-			}
-
+			params->GalvoWaveformXY = (unsigned short*)realloc(params->GalvoWaveformXY, params->analogXYSize * sizeof(unsigned short));
 			if (NULL == params->GalvoWaveformXY)
 			{
 				ReleaseMutex(params->bufferHandle);
@@ -1311,27 +1219,7 @@ long ImageWaveformBuilder::ResetThorDAQGGWaveformParam(ThorDAQGGWaveformParams *
 		params->analogPockelSize = std::max(numPockels * params->unitSize[SignalType::ANALOG_POCKEL], (unsigned long long)0);
 		if(0 < params->analogPockelSize)
 		{
-			if (NULL == params->GalvoWaveformPockel)
-			{
-				params->GalvoWaveformPockel = (unsigned short*)std::malloc(sizeof(unsigned short) * params->analogXYSize);
-			}
-			else
-			{
-				_pTemp = (char*)realloc(params->GalvoWaveformPockel, sizeof(unsigned short) * params->analogPockelSize);
-
-				if (NULL != _pTemp)
-				{
-					params->GalvoWaveformPockel = (unsigned short*)_pTemp;
-				}
-				else
-				{
-					free(params->GalvoWaveformPockel);
-					params->GalvoWaveformPockel = NULL;
-					ReleaseMutex(params->bufferHandle);
-					return FALSE;
-				}
-			}
-
+			params->GalvoWaveformPockel = (unsigned short*)realloc(params->GalvoWaveformPockel, params->analogPockelSize * sizeof(unsigned short));
 			if (NULL == params->GalvoWaveformPockel)
 			{
 				ReleaseMutex(params->bufferHandle);
@@ -1350,27 +1238,7 @@ long ImageWaveformBuilder::ResetThorDAQGGWaveformParam(ThorDAQGGWaveformParams *
 		params->digitalSize = std::max(digitalLineCnt * params->unitSize[SignalType::DIGITAL_LINES], (unsigned long long)0);		//[BleachScan]: pockels digital with complete, cycle, iteration, pattern, patternComplete lines
 		if(0 < params->digitalSize)
 		{
-			if (NULL == params->DigBufWaveform)
-			{
-				params->DigBufWaveform = (unsigned char*)std::malloc(sizeof(unsigned char) * params->analogXYSize);
-			}
-			else
-			{
-				_pTemp = (char*)realloc(params->DigBufWaveform, sizeof(unsigned char) * params->analogPockelSize);
-
-				if (NULL != _pTemp)
-				{
-					params->DigBufWaveform = (unsigned char*)_pTemp;
-				}
-				else
-				{
-					free(params->DigBufWaveform);
-					params->DigBufWaveform = NULL;
-					ReleaseMutex(params->bufferHandle);
-					return FALSE;
-				}
-			}
-
+			params->DigBufWaveform = (unsigned char*)realloc(params->DigBufWaveform, params->digitalSize * sizeof(unsigned char));
 			if (NULL == params->DigBufWaveform)
 			{
 				ReleaseMutex(params->bufferHandle);

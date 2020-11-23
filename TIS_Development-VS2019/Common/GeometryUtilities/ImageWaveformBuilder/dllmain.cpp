@@ -163,6 +163,11 @@ DllExport_IMGWFBUILDER uint64_t RebuildWaveformFromFile(const wchar_t* waveformF
 	return ImageWaveformBuilder::getInstance(_boardID)->RebuildWaveformFromFile(waveformFileName, currentVxy, digLineSelection, countPerCallback);
 }
 
+DllExport_IMGWFBUILDER uint64_t RebuildThorDAQWaveformFromFile(const wchar_t* waveformFileName, unsigned short* currentVxy, int digLineSelection, long* countPerCallback)
+{
+	return ImageWaveformBuilder::getInstance(_boardID)->RebuildThorDAQWaveformFromFile(waveformFileName, currentVxy, digLineSelection, countPerCallback);
+}
+
 DllExport_IMGWFBUILDER void CloseWaveformFile()
 {
 	return ImageWaveformBuilder::getInstance(_boardID)->CloseWaveformFile();

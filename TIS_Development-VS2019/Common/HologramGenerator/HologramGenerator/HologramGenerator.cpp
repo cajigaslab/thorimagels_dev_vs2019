@@ -4,7 +4,6 @@
 #include "stdafx.h"
 #include "HologramGenerator.h"
 #include "HologramGeneratorlib.h"
-#include "..\..\bmpCpp.h"
 #include <cmath>
 #include <complex>
 
@@ -34,9 +33,9 @@ double _alpha=asin(_NA/_refractiveIndex);
 
 HologramGen::HologramGen()
 {
-	_mtrxWidth = _mtrxHeight = _mtrxLength = 0; 
+	_mtrxWidth = _mtrxHeight = _mtrxLength = 0;
+	_pixelUM = 0;
 	_holoGenMethod = HoloGenAlg::GerchbergSaxton;
-	_pathAndFilename = ( L"" );
 	_coeffs = NULL;
 }
 
@@ -60,9 +59,9 @@ HologramGen* HologramGen::getInstance()
 
 long HologramGen::NormalizePhase(float* img)
 {
-	
+
 	Ipp32f minPhase, maxPhase;
-	
+
 	if (img!=NULL)
 	{
 		ippsDll->ippsMin_32f(img, _mtrxLength, &minPhase);
@@ -85,13 +84,14 @@ long HologramGen::Set3DParam(double na, double wavelength)
 }
 
 
-long HologramGen::SetSize(int width, int height)
+long HologramGen::SetSize(int width, int height, double pixelUM)
 {
 	if(((width%2) == 0) && ((height%2) == 0))
 	{
 		_mtrxWidth = width;
 		_mtrxHeight = height;
 		_mtrxLength = _mtrxWidth*_mtrxHeight;
+		_pixelUM = pixelUM;
 		return TRUE;
 	}
 	return FALSE;
@@ -107,13 +107,61 @@ long HologramGen::SetAlgorithm(int algorithmID)
 	return FALSE;
 }
 
-long HologramGen::SetPathandFilename(const wchar_t * pathAndFilename)
+// combine two holograms to first, from center parts of each: [1 | 2], left from 1 and right from 2
+long HologramGen::CombineHologramFiles(const wchar_t * pathAndFilename1, const wchar_t * pathAndFilename2)
 {
-	_pathAndFilename = std::wstring(pathAndFilename);
+	std::wstring fname[2] = {std::wstring(pathAndFilename1), std::wstring(pathAndFilename2)};
+
+	//test load of bmp and resize
+	int imgWidth[2] = {0}, imgHeight[2] = {0};
+	long size; BITMAPINFO bmi;
+	unsigned char* imgRead[2] = {NULL};
+	for (int i = 0; i < 2; i++)
+	{
+		imgRead[i] = LoadBMP(&imgWidth[i], &imgHeight[i], &size, &bmi.bmiHeader, fname[i].c_str());
+	}
+	if (NULL == imgRead[0] || NULL == imgRead[1] || imgWidth[0] != imgWidth[1] || imgHeight[0] != imgHeight[1])
+	{
+		for (int i = 0; i < 2; i++)
+		{
+			if (NULL != imgRead[i])
+				delete[] imgRead[i];
+		}
+		return FALSE;
+	}
+
+	long newSize;
+	unsigned char* imgRGB[2] = {NULL};
+	for (int i = 0; i < 2; i++)
+	{
+		imgRGB[i] = ConvertBGRToRGBBuffer(imgRead[i], bmi.bmiHeader, &newSize);
+	}
+
+	int channelCnt = static_cast<int>(bmi.bmiHeader.biBitCount/CHAR_BIT);
+	BYTE* pSrc = imgRGB[1];
+	BYTE* pDst = imgRGB[0];
+	size_t dLength = channelCnt*bmi.bmiHeader.biWidth * sizeof(BYTE);
+	for (int j = 0; j < bmi.bmiHeader.biHeight; j++)
+	{
+		memcpy_s(pDst, static_cast<int>(dLength/2), (pDst+static_cast<int>(dLength/4)), static_cast<int>(dLength/2));
+		memcpy_s((pDst+dLength/2), static_cast<int>(dLength/2), (pSrc+static_cast<int>(dLength/4)), static_cast<int>(dLength/2));
+		pDst += dLength/sizeof(BYTE);
+		pSrc += dLength/sizeof(BYTE);
+	}
+
+	//save on the first file name
+	unsigned char* imgBGR = ConvertRGBToBGRBuffer(imgRGB[0], bmi.bmiHeader, &size);
+	SaveBMP(imgBGR, imgWidth[0], imgHeight[0], size, fname[0].c_str());
+	delete[] imgBGR;
+	for (int i = 0; i < 2; i++)
+	{
+		delete[] imgRGB[i];
+		delete[] imgRead[i];
+	}
 	return TRUE;
 }
 
-///fitting transformation with preset coefficients by SetCoeffs
+// fitting transformation with preset coefficients by SetCoeffs
 long HologramGen::FittingTransform(float* pImgDst)
 {
 	switch ((GeoFittingAlg)_fittingMethod)
@@ -128,7 +176,7 @@ long HologramGen::FittingTransform(float* pImgDst)
 	return FALSE;
 }
 
-///calculate fitting coefficients out of source(x1,y1,x2,y2...) to target(x1,y1,x2,y2...): Coeffs = (Src^-1)*Tgt
+// calculate fitting coefficients out of source(x1,y1,x2,y2...) to target(x1,y1,x2,y2...): Coeffs = (Src^-1)*Tgt
 long HologramGen::CalculateCoeffs(const float* pSrcPoints, const float* pTgtPoints, long size, long fittingAlg, double* coeffs)
 {
 	_fittingMethod = (GeoFittingAlg)fittingAlg;
@@ -170,7 +218,7 @@ double* HologramGen::CalculateZernikePoly(double u, double v)
 }
 
 
-///set coefficients in fitting transformation
+// set coefficients in fitting transformation
 long HologramGen::SetCoeffs(long algorithm, double* affCoeffs)
 {	
 	switch ((GeoFittingAlg)algorithm)
@@ -352,7 +400,7 @@ long HologramGen::OffsetByPixels(float* pImgDst, long offsetX, long offsetY)
 
 ///***	private functions	***///
 
-///affine transformation with preset affine coefficients: {x = C00*x'+C01*y'+C02, y = C10*x'+C11*y'+C12}
+//affine transformation with preset affine coefficients: {x = C00*x'+C01*y'+C02, y = C10*x'+C11*y'+C12}
 long HologramGen::AffineTransform(float* pImgDst)
 {
 	long ret = TRUE;
@@ -387,7 +435,7 @@ long HologramGen::AffineTransform(float* pImgDst)
 	return ret;
 }
 
-///projective transformation with preset coefficients: {kx = C00*x'+C01*y'+C02, ky = C10*x'+C11*y'+C12, k = C20*x'+C21*y'+1 }
+//projective transformation with preset coefficients: {kx = C00*x'+C01*y'+C02, ky = C10*x'+C11*y'+C12, k = C20*x'+C21*y'+1 }
 long HologramGen::ProjectTransform(float* pImgDst)
 {
 	long ret = TRUE;
@@ -670,7 +718,7 @@ void HologramGen::FilterGauss(float* pImgDst, int kernelSize, double diaRatio)
 	ippsDll->ippsFree(pGauss);	
 }
 
-///get image intensity by sqrt of value
+//get image intensity by sqrt of value
 void HologramGen::GetImageIntensity(float* pImg, float* pDst)
 {
 	float* pSrc = pImg;
@@ -686,7 +734,7 @@ void HologramGen::GetImageIntensity(float* pImg, float* pDst)
 	}
 }
 
-///load hologram image
+//load hologram image
 void HologramGen::LoadPhaseImage(float* pImg, float* pDst)
 {
 	float* pSrc = pImg;
@@ -699,7 +747,7 @@ void HologramGen::LoadPhaseImage(float* pImg, float* pDst)
 	}
 }
 
-///fftshift from top-left corner to center
+//fftshift from top-left corner to center
 long HologramGen::QuadrantShift(float* pImgDst)
 {
 	Ipp32f* pTmp = ippsDll->ippsMalloc_32f(_mtrxLength);
@@ -731,7 +779,7 @@ long HologramGen::QuadrantShift(float* pImgDst)
 	return TRUE;
 }
 
-///clear memory usage before destruction
+//clear memory usage before destruction
 void HologramGen::ClearMem()
 {
 	if(NULL != _coeffs)
@@ -741,7 +789,7 @@ void HologramGen::ClearMem()
 	}
 }
 
-///log message on ThorLogging
+//log message on ThorLogging
 void HologramGen::LogMessage(long eventLevel)
 {
 #ifdef LOGGING_ENABLED
@@ -749,7 +797,7 @@ void HologramGen::LogMessage(long eventLevel)
 #endif
 }
 
-///hologram generation by Gerchberg-Saxton
+//hologram generation by Gerchberg-Saxton
 long HologramGen::PhaseGenByGS(float* pImg, float* pPolPhase, int iterateCount)
 {
 
@@ -782,28 +830,28 @@ long HologramGen::PhaseGenByGS(float* pImg, float* pPolPhase, int iterateCount)
 	ippsDll->ippsRandUniform_32f(pPolPhase, _mtrxLength, pRus);
 	ippsDll->ippsRandUniformFree_32f(pRus);
 
-	
-	
+
+
 
 	for (int i = 1; i <= iterateCount; i++)	
 	{
-		
 
-			//FFT
-			FFT(pPolMagn, pPolPhase, true);
 
-			//replace with target:
-			ippStatus =ippsDll-> ippsCopy_32f(pImgInt,pPolMagn,_mtrxLength);
+		//FFT
+		FFT(pPolMagn, pPolPhase, true);
 
-			//IFFT
-			FFT(pPolMagn, pPolPhase, false);
+		//replace with target:
+		ippStatus =ippsDll-> ippsCopy_32f(pImgInt,pPolMagn,_mtrxLength);
 
-			//apply gaussian instead of unit int. copy
-			//for uniform int. distribution:
-			FilterGauss(pPolMagn, 3, 0.5);
+		//IFFT
+		FFT(pPolMagn, pPolPhase, false);
 
-			//ippsDll->ippsCopy_32f(pUnit, pPolMagn, _mtrxLength);
-		
+		//apply gaussian instead of unit int. copy
+		//for uniform int. distribution:
+		FilterGauss(pPolMagn, 3, 0.5);
+
+		//ippsDll->ippsCopy_32f(pUnit, pPolMagn, _mtrxLength);
+
 	}
 
 	////*** DEBUG	***//
@@ -865,7 +913,7 @@ long HologramGen::PhaseGenBy3DGS(float* pImg, float* pPolPhase, int iterateCount
 
 	double *coeff;
 	double *poly;
-	
+
 	Ipp32f* totalPhase = ippsDll->ippsMalloc_32f(_mtrxLength * sizeof(Ipp32f));
 
 
@@ -875,54 +923,54 @@ long HologramGen::PhaseGenBy3DGS(float* pImg, float* pPolPhase, int iterateCount
 	double a;
 	double b;
 
-	
+
 	for (int i = 1; i <= iterateCount; i++)	
 	{
-		
 
-			//FFT
-			FFT(pPolMagn, pPolPhase, true);
 
-			//replace with target:
-			ippStatus =ippsDll-> ippsCopy_32f(pImgInt,pPolMagn,_mtrxLength);
+		//FFT
+		FFT(pPolMagn, pPolPhase, true);
 
-			//IFFT
-			FFT(pPolMagn, pPolPhase, false);
+		//replace with target:
+		ippStatus =ippsDll-> ippsCopy_32f(pImgInt,pPolMagn,_mtrxLength);
 
-			//apply gaussian instead of unit int. copy
-			//for uniform int. distribution:
-			FilterGauss(pPolMagn, 3, 0.5);
+		//IFFT
+		FFT(pPolMagn, pPolPhase, false);
 
-			
-		
+		//apply gaussian instead of unit int. copy
+		//for uniform int. distribution:
+		FilterGauss(pPolMagn, 3, 0.5);
+
+
+
 	}
-	
-	
 
-	
+
+
+
 	for(int v=0;v<_slmYsize;v++)
+	{
+		for (int u=0;u<_slmXsize;u++)
 		{
-			for (int u=0;u<_slmXsize;u++)
-			{
-				poly=CalculateZernikePoly(((double)u- (double)_slmXsize/2)/ (double)_slmXsize*2,((double)v- (double)_slmYsize/2)/ (double)_slmYsize*2);
-				//poly=CalculateZernikePoly(((double)u),((double)v));
-				
-				a = cos(-2 * PI*(coeff[0] * poly[0] + coeff[1] * poly[1] + coeff[2] * poly[2]));
-				b = sin(-2 * PI*(coeff[0] * poly[0] + coeff[1] * poly[1] + coeff[2] * poly[2]));
-				
-				complex<double> complexnumber(a, b);
-				
+			poly=CalculateZernikePoly(((double)u- (double)_slmXsize/2)/ (double)_slmXsize*2,((double)v- (double)_slmYsize/2)/ (double)_slmYsize*2);
+			//poly=CalculateZernikePoly(((double)u),((double)v));
 
-				totalPhase[(v )*_slmXsize + u] = static_cast<Ipp32f>(arg(complexnumber) + PI);
-				complex<double> tempComplex(0,pPolPhase[(v )*_slmXsize + u]+totalPhase[(v )*_slmXsize + u]);
-				pPolPhase[(v )*_slmXsize + u]= static_cast<float>(arg(exp(tempComplex)));	
-				
+			a = cos(-2 * PI*(coeff[0] * poly[0] + coeff[1] * poly[1] + coeff[2] * poly[2]));
+			b = sin(-2 * PI*(coeff[0] * poly[0] + coeff[1] * poly[1] + coeff[2] * poly[2]));
 
-				
-			}
+			complex<double> complexnumber(a, b);
+
+
+			totalPhase[(v)*_slmXsize + u] = static_cast<Ipp32f>(arg(complexnumber) + PI);
+			complex<double> tempComplex(0,pPolPhase[(v )*_slmXsize + u]+totalPhase[(v )*_slmXsize + u]);
+			pPolPhase[(v )*_slmXsize + u]= static_cast<float>(arg(exp(tempComplex)));
+
+
+
 		}
-		
-		
+	}
+
+
 	NormalizePhase(pPolPhase);
 
 
@@ -1047,4 +1095,3 @@ long HologramGen::SinglePassFilter(float* pImgDst)
 
 	return TRUE;
 }
-

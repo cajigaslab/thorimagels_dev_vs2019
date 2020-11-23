@@ -2182,6 +2182,12 @@
             }
         }
 
+        public int NumberOfPlanes
+        {
+            get => _RunSampleLS.NumberOfPlanes;
+            set => _RunSampleLS.NumberOfPlanes = value;
+        }
+
         //public ObservableCollection<Button> ObjectCollection
         //{
         //    get { return this._RunSampleLS.Collection; }
@@ -2997,18 +3003,12 @@
 
         public int SettingsImageHeight
         {
-            get
-            {
-                return _RunSampleLS.SettingsImageHeight;
-            }
+            get => _RunSampleLS.SettingsImageHeight;
         }
 
         public int SettingsImageWidth
         {
-            get
-            {
-                return _RunSampleLS.SettingsImageWidth;
-            }
+            get => _RunSampleLS.SettingsImageWidth;
         }
 
         public int SFStartWavelength
@@ -3450,6 +3450,12 @@
                 OnPropertyChanged("TTotalTime");
                 OnPropertyChanged("DriveSpace");
             }
+        }
+
+        public bool ThreePhotonEnable
+        {
+            get => _RunSampleLS.ThreePhotonEnable;
+            set => _RunSampleLS.ThreePhotonEnable = value;
         }
 
         public XYTileControl.XYTileDisplay TileControl
@@ -3912,6 +3918,41 @@
             }
         }
 
+        public int ZFileEnable
+        {
+            get
+            {
+                return this._RunSampleLS.ZFileEnable;
+            }
+            set
+            {
+                this._RunSampleLS.ZFileEnable = value;
+                // if value differs from the file read flag, reset that flag to false
+                if (value != _RunSampleLS.ZFilePosRead) _RunSampleLS.ZFilePosRead = 0;
+                OnPropertyChanged("ZFileEnable");
+                OnPropertyChanged("ZNumSteps");
+            }
+        }
+
+        public double ZFilePosScale
+        {
+            get
+            {
+                return _RunSampleLS.ZFilePosScale;
+            }
+            set
+            {
+                _RunSampleLS.ZFilePosScale = value;
+                OnPropertyChanged("ZFilePosScale");
+            }
+        }
+
+        public Visibility ZFileVisibility
+        {
+            get;
+            set;
+        }
+
         public int ZNumSteps
         {
             get
@@ -4133,6 +4174,12 @@
         public bool BuildChannelPalettes()
         {
             return _RunSampleLS.BuildChannelPalettes();
+        }
+
+        public void CleanupOnQuit()
+        {
+            // make sure z file read button is off
+            ZFileEnable = 0;
         }
 
         /// <summary>
@@ -4861,6 +4908,14 @@
                 MessageBox.Show("Not enough Disk space, please update the settings or  use a disk with enough space before starting capture.", "Error: Low Disk Space", MessageBoxButton.OK, MessageBoxImage.Error);
                 RunSampleLS_UpdateScript("Error");
                 return;
+            }
+
+            // read z-position list if read from file enabled
+            // do this irrespective of whether the file has been read before
+            if (1 == ZFileEnable)
+            {
+                if (!RunSampleLS.getZPosFromFile()) return;
+                OnPropertyChanged("ZNumSteps");
             }
 
             // clearing the previous image if exists from the image viewer control

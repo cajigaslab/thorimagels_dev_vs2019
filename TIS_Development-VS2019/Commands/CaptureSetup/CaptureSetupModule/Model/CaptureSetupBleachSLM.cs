@@ -46,7 +46,6 @@
         private List<string> _slmFilesInFolder;
         private bool _slmSequenceOn = false;
         private List<string> _slmSequencesInFolder;
-        private int _wavelength = 1040;
 
         #endregion Fields
 
@@ -74,6 +73,26 @@
             }
         }
 
+        public bool IsStimulator
+        {
+            get { return ((int)ICamera.LSMType.STIMULATE_MODULATOR == ResourceManagerCS.GetBleacherType()); }
+        }
+
+        public bool SLM3D
+        {
+            get
+            {
+                int val = 0;
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_3D, ref val);
+                return (1 == val);
+            }
+            set
+            {
+                int val = value ? 1 : 0;
+                ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_3D, val, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
+            }
+        }
+
         public double SLMBleachDelay
         {
             get { return _slmBleachDelay; }
@@ -96,20 +115,45 @@
             }
         }
 
-        public bool SLM3D
+        public bool SLMPhaseDirect
         {
             get
             {
-                int val = 0;
-                GetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_3D, ref val);
+                int phaseDirect = 0;
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_PHASE_DIRECT, ref phaseDirect);
+                return (1 == phaseDirect);
+            }
+            set
+            {
+                int phaseDirect = value ? 1 : 0;
+                ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_PHASE_DIRECT, phaseDirect, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
+            }
+        }
+
+        public int[] SLMPixelXY
+        {
+            get
+            {
+                int[] val = new int[2] { 0, 0 };
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_PIXEL_X, ref val[0]);
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_PIXEL_X, ref val[1]);
+                return val;
+            }
+        }
+
+        public bool SLMSelectWavelength
+        {
+            get
+            {
+                int val = -1;
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_WAVELENGTH_SELECT, ref val);
                 return (1 == val);
             }
             set
             {
-                int val = value ? 1 : 0;
-                SetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_3D, val, false);
+                ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_WAVELENGTH_SELECT, value ? 1 : 0, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
             }
-        }        
+        }
 
         public bool SLMSequenceOn
         {
@@ -133,27 +177,50 @@
         /// </summary>
         public string[] SLMWaveformFolder
         {
-            get { return new string[] {
+            get
+            {
+                return new string[] {
                 ResourceManagerCS.GetCaptureTemplatePathString() + "SLMWaveforms",
-                ResourceManagerCS.GetCaptureTemplatePathString() + "SLMWaveforms\\SLMSequences" }; }
+                ResourceManagerCS.GetCaptureTemplatePathString() + "SLMWaveforms\\SLMSequences" };
+            }
         }
 
-        public int Wavelength
+        public int SLMWavelengthCount
         {
             get
             {
-                return _wavelength;
-            }
-            set
-            {
-                _wavelength = value;
+                double[] val = new double[2] { 0, 0 };
+                ResourceManagerCS.GetDeviceParamBuffer<double>((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_WAVELENGTH, val, (int)Constants.MAX_WIDEFIELD_WAVELENGTH_COUNT);
+                return (0 < val[1] ? 2 : (0 < val[0] ? 1 : 0));
             }
         }
 
+        public int SLMWavelengthNM
+        {
+            get
+            {
+                double[] val = new double[2] { 0, 0 };
+                ResourceManagerCS.GetDeviceParamBuffer<double>((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_WAVELENGTH, val, (int)Constants.MAX_WIDEFIELD_WAVELENGTH_COUNT);
+                return (int)val[SLMSelectWavelength ? 1 : 0];
+            }
+        }
 
         #endregion Properties
 
         #region Methods
+
+        public bool CombineHolograms(string bmpPhaseName1, string bmpPhaseName2)
+        {
+            return ((1 == CombineHologramFiles(bmpPhaseName1, bmpPhaseName2)) ? true : false);
+        }
+
+        public void InitializeWaveformBuilder(int clockRateHz)
+        {
+            WaveformBuilder.ClkRate = clockRateHz;
+            WaveformBuilder.Field2Volts = (double)MVMManager.Instance["AreaControlViewModel", "LSMField2Theta", (object)1.0];
+            WaveformBuilder.InitializeParams(BleachCalibrateFieldSize, BleachCalibrateFineScaleXY, BleachCalibratePixelXY, BleachCalibrateOffsetXY, BleachCalibrateFineOffsetXY, BleachCalibrateScaleYScan,
+                BleachCalibrateFlipHV[1], BleachCalibrateFlipHV[0], BleachCalibratePockelsVoltageMin0, WaveformDriverType);
+        }
 
         public bool LoadSLMPatternName(int runtimeCal, int id, string bmpPatternName, bool start, int timeoutVal = 0)
         {
@@ -170,21 +237,13 @@
             return ((1 == SaveSLMPattern(phaseMaskName)) ? true : false);
         }
 
-        public bool SetSLM3DParameter(double na, double wavelength)
-        {
-            
-            return ((1 == SetSLM3DParam(na, wavelength)) ? true : false);
-        }
-
-
-
         public bool SLMCalibration(string bmpPatternName, float[] ptsFrom, float[] ptsTo, int size, int pixelX, int pixelY, double z)
         {
             IntPtr ptsToPtr = Marshal.AllocHGlobal(size * sizeof(float));
             IntPtr ptsFromPtr = Marshal.AllocHGlobal(size * sizeof(float));
             Marshal.Copy(ptsTo, 0, ptsToPtr, size);
             Marshal.Copy(ptsFrom, 0, ptsFromPtr, size);
-            int ret = CalibrateSLM(bmpPatternName, ptsFromPtr, ptsToPtr, size, pixelX, pixelY,z);
+            int ret = CalibrateSLM(bmpPatternName, ptsFromPtr, ptsToPtr, size, pixelX, pixelY, z);
 
             Marshal.FreeHGlobal(ptsToPtr);
             Marshal.FreeHGlobal(ptsFromPtr);
@@ -233,6 +292,9 @@
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "CalibrateSLM", CharSet = CharSet.Unicode)]
         private static extern int CalibrateSLM(string bmpPatternName, IntPtr xyPointFrom, IntPtr xyPointTo, int size, int pixelX, int pixelY, double z);
 
+        [DllImport(".\\Modules_Native\\HologramGenerator.dll", EntryPoint = "CombineHologramFiles", CharSet = CharSet.Unicode)]
+        private static extern int CombineHologramFiles(string bmpPhaseName1, string bmpPhaseName2);
+
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "InitCallBackBleachSLM")]
         private static extern void InitCallBackBleachSLM(ReportBleachSLMNowFinished reportBleachSLMNowFinished, PreBleachSLMCallback preBleachSLMCallback);
 
@@ -247,10 +309,6 @@
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "SaveSLMPattern", CharSet = CharSet.Unicode)]
         private static extern int SaveSLMPattern(string bmpPhaseName);
-
-        [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "SetSLM3DParam")]
-        private static extern int SetSLM3DParam(double na, double wavelength);
-
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "SetSLMBlank")]
         private static extern int SetSLMBlank();

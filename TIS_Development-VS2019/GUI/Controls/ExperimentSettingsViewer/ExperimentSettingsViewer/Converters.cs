@@ -684,7 +684,7 @@
                 {
                     return null;
                 }
-                else if (null == xdp.Document)
+                else if (null == xdp.Document && null != xdp.Source)
                 {
                     doc.Load(Uri.UnescapeDataString(xdp.Source.AbsolutePath));
                 }

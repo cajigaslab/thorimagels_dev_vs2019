@@ -519,6 +519,12 @@
                     _camReadoutSpeedList.Add("60 MS/S");
                     _camReadoutSpeedList.Add("100 MS/S");
                 }
+                else if (ActiveCameraName.Contains("C14440"))
+                {
+                    _camReadoutSpeedList.Add("Ultra Quiet");
+                    _camReadoutSpeedList.Add("Standard");
+                    _camReadoutSpeedList.Add("Fast");
+                }
                 else
                 {
                     _camReadoutSpeedList.Add("20 MHZ");
@@ -816,7 +822,8 @@
         {
             get
             {
-                return ((!CameraCSType || ActiveCameraName.Contains("CS2100")) && (int)ICamera.CCDType.ORCA != ResourceManagerCS.GetCCDType());
+                //Make it visible if the camera is not a CMOS (all CCD) or if it is the CS2100, or if the camera is an Orca and the CS14440 (EMCCD doesn't have readoutspeed)
+                return ((!CameraCSType || ActiveCameraName.Contains("CS2100")) || ((int)ICamera.CCDType.ORCA == ResourceManagerCS.GetCCDType() && ActiveCameraName.Contains("C14440")));
             }
         }
 
@@ -1121,6 +1128,11 @@
             CameraCSType = (ActiveCameraName.Contains("CS2100") || ActiveCameraName.Contains("CS895") || ActiveCameraName.Contains("CS505")) ? true : false;
 
             OnPropertyChanged("CamResolutionPresets");
+            //Load the visibilities of the Orca camera
+            OnPropertyChanged("BinningOrcaType");
+            OnPropertyChanged("BinList");
+            OnPropertyChanged("HotPixelCBVisibility");
+            OnPropertyChanged("HotPixelLevelList");
 
             if (ndList.Count > 0)
             {
@@ -1504,8 +1516,8 @@
                     if (points.Count == 2)
                     {
                         int x1, x2, y1, y2;
-                        int w = (this.Right - this.Left);
-                        int h = (this.Bottom - this.Top);
+                        int w = CamImageWidth;
+                        int h = CamImageHeight;
 
                         //take the image angle into consideration
                         switch (this.CameraImageAngle)
@@ -1576,7 +1588,9 @@
                         }
 
                         //don't allow 0 pixel images and don't go past max width and height
-                        if (x1 == x2 && x2 < this.RightMax)
+                        int binningX = (BinX == 0) ? 1 : BinX;
+                        int binningY = (BinY == 0) ? 1 : BinY;
+                        if (x1 == x2 && x2 < this.RightMax / binningX)
                         {
                             x2 += 1;
                         }
@@ -1585,7 +1599,7 @@
                             x1 -= 1;
                         }
 
-                        if (x1 == x2 && x2 < this.RightMax)
+                        if (x1 == x2 && x2 < this.RightMax / binningX)
                         {
                             x2 += 1;
                         }
@@ -1594,10 +1608,10 @@
                             x1 -= 1;
                         }
 
-                        this.Top += y1;
-                        this.Left += x1;
-                        this.Bottom = this.Top + y2 - y1;
-                        this.Right = this.Left + x2 - x1;
+                        this.Top = this.Top + y1 * binningY;
+                        this.Left = this.Left + x1 * binningX;
+                        this.Bottom = this.Top + (y2 - y1) * binningY;
+                        this.Right = this.Left + (x2 - x1) * binningX;
 
                         ((ICommand)MVMManager.Instance["CaptureSetupViewModel", "ClearaAllObjectsCommand", (object)new RelayCommand(() => { })]).Execute(null);
                     }

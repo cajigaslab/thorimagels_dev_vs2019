@@ -15,7 +15,7 @@
       <CenterScannersButton Visibility="Visible" />
       <GrayscaleForSingleChannel value="1" />
       <ChannelTileViewSettings TilingEnableOption="False" />
-      <HistogramSettings ReducedBinValue="255"/>   
+      <HistogramSettings ReducedBinValue="255" saturationCountVisibility="Collapsed"/>   
     </General>
     <CaptureSetup saveSnapshots="0" snapshotExperimentName="Snapshot" snapshotBaseName="Snapshot" saveExperimentInfo="0" savePath="">
       <ScannerView Visibility="Collapsed" location="0">
@@ -137,10 +137,10 @@
       </CameraView>
       <DigitalSwitchesView Visibility="Visible" location="13" switchName1="1" switchName2="2" switchName3="3" switchName4="4" switchName5="5" switchName6="6" switchName7="7" switchName8="8" SwitchView="Visible" TriggerView="Collapsed" />
       <QuickTemplate Visibility="Collapsed" location="14"/>
-      <LampView Visibility="Collapsed" location="15" MainControlVisibility="Collapsed" />
-      <ThreePhotonView Visibility="Collapsed" location="16" PhaseCoarseVisibility="Collapsed" FIRSettingsVisibility="Collapsed"/>
+      <LampView Visibility="Collapsed" location="15" />
+      <ThreePhotonView Visibility="Collapsed" location="16" PhaseCoarseVisibility="Collapsed" FIRSettingsVisibility="Collapsed" MultiplaneVisibility="Collapsed"/>
       <EpiTurretView Visibility="Visible" EpiTurretPosName1="1" EpiTurretPosName2="2" EpiTurretPosName3="3" EpiTurretPosName4="4" EpiTurretPosName5="5" EpiTurretPosName6="6" />
-      <LightEngineView Visibility="Collapsed" location="17" />
+      <LightEngineView Visibility="Collapsed" location="17" MainControlVisibility="Collapsed" />
 	    <DFLIMView Visibility="Collapsed" location="18" />
       <EpiturretControlView Visibility="Collapsed" location="19" />
     </CaptureSetup>
@@ -150,6 +150,7 @@
       <FastZView Visibility="Collapsed">
         <VolumeTimeAdjustment Visibility="Collapsed"/>
       </FastZView>
+      <ZReadFromFile Visibility="Collapsed"/>
     </RunSample>
     <Review>
       <DeepZoomView Visibility="Collapsed"/>

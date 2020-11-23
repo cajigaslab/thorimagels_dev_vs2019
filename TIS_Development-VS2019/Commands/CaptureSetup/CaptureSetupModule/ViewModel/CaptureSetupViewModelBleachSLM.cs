@@ -106,6 +106,11 @@
             }
         }
 
+        public bool IsStimulator
+        {
+            get { return this._captureSetup.IsStimulator; }
+        }
+
         public string LSMLastCalibrationDateForSLM
         {
             get
@@ -177,6 +182,17 @@
             }
         }
 
+        public string SLMActiveFolder
+        {
+            get
+            {
+                string workFolder = SLMSequenceOn ? SLMWaveformFolder[1] : SLMWaveformFolder[0];
+                if (!Directory.Exists(workFolder))
+                    Directory.CreateDirectory(workFolder);
+                return workFolder;
+            }
+        }
+
         public double SLMBleachDelay
         {
             get { return this._captureSetup.SLMBleachDelay; }
@@ -191,15 +207,10 @@
         {
             get
             {
-                if (!IsProgressWindowOff)
+                if (!IsProgressWindowOff || null != _slmParamEditWin)
                     return false;
 
-                string workFolder = SLMSequenceOn ? SLMWaveformFolder[1] : SLMWaveformFolder[0];
-
-                if (!Directory.Exists(workFolder) || null != _slmParamEditWin)
-                    return false;
-
-                return (0 < Directory.EnumerateFiles(workFolder, "*.raw ", SearchOption.TopDirectoryOnly).Count()) ? true : false;
+                return (0 < Directory.EnumerateFiles(SLMActiveFolder, "*.raw ", SearchOption.TopDirectoryOnly).Count()) ? true : false;
             }
         }
 
@@ -343,7 +354,33 @@
             {
                 _slmPatternsVisible = value;
                 OverlayManagerClass.Instance.InitSelectROI(ref CaptureSetupViewModel.OverlayCanvas);
-                OverlayManagerClass.Instance.DisplayModeROI(ref CaptureSetupViewModel.OverlayCanvas, ThorSharedTypes.Mode.PATTERN_NOSTATS, _slmPatternsVisible);
+                OverlayManagerClass.Instance.DisplayModeROI(ref CaptureSetupViewModel.OverlayCanvas,
+                    IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS, _slmPatternsVisible);
+            }
+        }
+
+        public bool SLMPhaseDirect
+        {
+            get { return this._captureSetup.SLMPhaseDirect; }
+            set { this._captureSetup.SLMPhaseDirect = value; }
+        }
+
+        public int[] SLMPixelXY
+        {
+            get { return this._captureSetup.SLMPixelXY; }
+        }
+
+        public bool SLMSelectWavelength
+        {
+            get { return this._captureSetup.SLMSelectWavelength; }
+            set
+            {
+                this._captureSetup.SLMSelectWavelength = value;
+                OnPropertyChanged("SLMSelectWavelength");
+                OnPropertyChanged("SLMWavelengthNM");
+                //update for wavelength selection
+                OverlayManagerClass.Instance.WavelengthNM = SLMWavelengthNM;
+                OverlayManagerClass.Instance.DimWavelengthROI(ref CaptureSetupViewModel.OverlayCanvas);
             }
         }
 
@@ -384,18 +421,14 @@
             { return this._captureSetup.SLMWaveformFolder; }
         }
 
-        public int Wavelength
+        public int SLMWavelengthCount
         {
-            get
-            {
-                return _captureSetup.Wavelength;
-            }
+            get { return this._captureSetup.SLMWavelengthCount; }
+        }
 
-            set
-            {
-                _captureSetup.Wavelength = value;
-                OnPropertyChanged("Wavelength");
-            }
+        public int SLMWavelengthNM
+        {
+            get { return this._captureSetup.SLMWavelengthNM; }
         }
 
         #endregion Properties
@@ -475,6 +508,11 @@
             {
                 ThorLogging.ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Verbose, 1, "ClearSLMFiles error: " + ex.Message);
             }
+        }
+
+        public bool CombineHolograms(string bmpPhaseName1, string bmpPhaseName2)
+        {
+            return _captureSetup.CombineHolograms(bmpPhaseName1, bmpPhaseName2);
         }
 
         /// <summary>
@@ -716,6 +754,11 @@
             return roiOffset;
         }
 
+        public void InitializeWaveformBuilder(int clockRateHz)
+        {
+            _captureSetup.InitializeWaveformBuilder(clockRateHz);
+        }
+
         public bool ResetSLMCalibration()
         {
             return _captureSetup.ResetSLMCalibration();
@@ -724,11 +767,6 @@
         public bool SaveSLMPatternName(string phaseMaskName)
         {
             return _captureSetup.SaveSLMPatternName(phaseMaskName);
-        }
-
-        public bool SetSLM3DParameter(double na, double wavelength)
-        {
-            return _captureSetup.SetSLM3DParameter(na, wavelength);
         }
 
         public bool SLMCalibration(string bmpPatternName, float[] ptsFrom, float[] ptsTo, int size, int pixelX, int pixelY, double z)
@@ -770,7 +808,10 @@
                 case SLMParamEditWin.SLMPatternType.Add:
                     if (null == _slmParamEditWin)
                     {
-                        ROIToolVisible = new bool[14] { true, false, false, true, false, false, true, false, false, true, true, true, true, false };
+                        ROIToolVisible = (IsStimulator) ?
+                            new bool[14] { true, true, true, true, true, true, true, false, false, true, true, true, true, false } :
+                            new bool[14] { true, false, false, true, false, false, true, false, false, true, true, true, true, false };
+
                         _slmParamEditWin = new SLMParamEditWin(this);
                         _slmParamEditWin.Topmost = true;
                         _slmParamEditWin.PanelMode = SLMParamEditWin.SLMPanelMode.ParamEdit;
@@ -786,6 +827,8 @@
                             _slmParamEditWin.SLMParamsCurrent.Blue = 0;
                             _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.Iterations = 10;
                             _slmParamEditWin.SLMParamsCurrent.Duration = 100;
+                            _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.Power = (1 == BleachCalibratePockelsVoltageMin0.Length) ? new double[1] { 0.0 } : new double[2] { 10.0, 0.0 };
+                            _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.MeasurePower = (1 == BleachCalibratePockelsVoltageMin0.Length) ? new double[1] { 0.0 } : new double[2] { 0.0, 0.0 };
                         }
                         _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.UMPerPixel = (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0];
                         _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.UMPerPixelRatio = this.BleachPixelSizeUMRatio;
@@ -794,11 +837,14 @@
                         _slmParamEditWin.Title = "Add SLM Pattern";
                         _slmParamEditWin.SLMParamID = -1;
 
-                        OverlayManagerClass.Instance.CurrentMode = ThorSharedTypes.Mode.PATTERN_NOSTATS;
+                        OverlayManagerClass.Instance.CurrentMode = IsStimulator ?
+                            ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS;
                         OverlayManagerClass.Instance.PatternID = SLMBleachWaveParams.Count + 1;
                         bitVec32 = new System.Collections.Specialized.BitVector32(Convert.ToByte(_slmParamEditWin.SLMParamsCurrent.Red));
                         bitVec32[OverlayManagerClass.SecG] = Convert.ToByte(_slmParamEditWin.SLMParamsCurrent.Green);
                         bitVec32[OverlayManagerClass.SecB] = Convert.ToByte(_slmParamEditWin.SLMParamsCurrent.Blue);
+                        bitVec32[OverlayManagerClass.SecA] = 0; //avoid overflow int
+                        OverlayManagerClass.Instance.WavelengthNM = SLMWavelengthNM;
                         OverlayManagerClass.Instance.ColorRGB = bitVec32.Data;
                         OverlayManagerClass.Instance.BackupROIs();
 
@@ -817,12 +863,14 @@
 
                     if (null == _slmParamEditWin)
                     {
-                        ROIToolVisible = new bool[14] { true, false, false, true, false, false, true, false, false, true, true, true, true, false };
+                        ROIToolVisible = IsStimulator ?
+                           new bool[14] { true, true, true, true, true, true, true, false, false, true, true, true, true, false } :
+                           new bool[14] { true, false, false, true, false, false, true, false, false, true, true, true, true, false };
 
                         _slmParamEditWin = new SLMParamEditWin(this);
                         _slmParamEditWin.Topmost = true;
                         _slmParamEditWin.PanelMode = SLMParamEditWin.SLMPanelMode.ParamEdit;
-                        OverlayManagerClass.Instance.CurrentMode = ThorSharedTypes.Mode.PATTERN_NOSTATS;
+                        OverlayManagerClass.Instance.CurrentMode = IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS;
 
                         if (SLMBleachWaveParams.Count > 0)
                         {
@@ -849,6 +897,8 @@
                         bitVec32 = new System.Collections.Specialized.BitVector32(Convert.ToByte(_slmParamEditWin.SLMParamsCurrent.Red));
                         bitVec32[OverlayManagerClass.SecG] = Convert.ToByte(_slmParamEditWin.SLMParamsCurrent.Green);
                         bitVec32[OverlayManagerClass.SecB] = Convert.ToByte(_slmParamEditWin.SLMParamsCurrent.Blue);
+                        bitVec32[OverlayManagerClass.SecA] = 0; //avoid overflow int
+                        OverlayManagerClass.Instance.WavelengthNM = SLMWavelengthNM;
                         OverlayManagerClass.Instance.ColorRGB = bitVec32.Data;
                         OverlayManagerClass.Instance.BackupROIs();
 
@@ -866,7 +916,8 @@
                     if ((0 < SLMBleachWaveParams.Count)
                         && (0 <= _slmPatternSelectedIndex) && (SLMBleachWaveParams.Count > _slmPatternSelectedIndex))
                     {
-                        OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, (int)SLMBleachWaveParams[_slmPatternSelectedIndex].BleachWaveParams.ID);    //ID: 1 based
+                        OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, (int)SLMBleachWaveParams[_slmPatternSelectedIndex].BleachWaveParams.ID,              //ID: 1 based
+                            (IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS));
                         OverlayManagerClass.Instance.BackupROIs();
                         DeleteSLMBleachParamsID(SLMBleachWaveParams[_slmPatternSelectedIndex].BleachWaveParams.ID);
 
@@ -895,10 +946,9 @@
                     SLMCalibZPos = (double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0];
                     if (null == _slmParamEditWin)
                     {
-                        long bleachSLMType = 0;
                         if (null == Bitmap)
                             return;
-                        if (false == _captureSetup.GetBleacherType(ref bleachSLMType))
+                        if ((int)ICamera.LSMType.LSMTYPE_LAST == ResourceManagerCS.GetBleacherType())
                         {
                             System.Windows.MessageBox.Show("Bleach Scanner has not been selected!");
                             return;
@@ -917,11 +967,12 @@
 
                         ROIToolVisible = new bool[14] { true, false, false, false, false, false, true, false, false, true, true, true, true, false };
 
-                        OverlayManagerClass.Instance.CurrentMode = ThorSharedTypes.Mode.PATTERN_NOSTATS;
+                        OverlayManagerClass.Instance.CurrentMode = IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS;
                         OverlayManagerClass.Instance.PatternID = 2;      //for user-selection, target is on PatterID 1
                         bitVec32 = new System.Collections.Specialized.BitVector32(Convert.ToByte(255));
                         bitVec32[OverlayManagerClass.SecG] = Convert.ToByte(0);
                         bitVec32[OverlayManagerClass.SecB] = Convert.ToByte(0);
+                        bitVec32[OverlayManagerClass.SecA] = 0; //avoid overflow int
                         OverlayManagerClass.Instance.ColorRGB = bitVec32.Data;
 
                         _slmParamEditWin = new SLMParamEditWin(this);
@@ -950,7 +1001,9 @@
                 case SLMParamEditWin.SLMPatternType.Build:
                     if ((null == _slmParamEditWin) && !CompareSLMFiles(EpochSequence))
                     {
-                        ROIToolVisible = new bool[14] { true, false, false, true, false, false, true, false, false, true, true, true, true, false };
+                        ROIToolVisible = IsStimulator ?
+                           new bool[14] { true, true, true, true, true, true, true, false, false, true, true, true, true, false } :
+                           new bool[14] { true, false, false, true, false, false, true, false, false, true, true, true, true, false };
 
                         _slmParamEditWin = new SLMParamEditWin(this);
                         _slmParamEditWin.Topmost = true;
@@ -1049,8 +1102,7 @@
         private bool StartSLMBleach()
         {
             //Return when no bleach SLM is selected:
-            long bleachSLMType = 0;
-            if (false == _captureSetup.GetBleacherType(ref bleachSLMType))
+            if ((int)ICamera.LSMType.LSMTYPE_LAST == ResourceManagerCS.GetBleacherType())
             {
                 System.Windows.MessageBox.Show("Bleach Scanner has not been selected!");
                 return false;
@@ -1141,16 +1193,15 @@
             //SLM sequence folder
             if (Directory.Exists(SLMWaveformFolder[1]))
             {
-                fileList = Directory.EnumerateFiles(SLMWaveformFolder[1], "*.raw ", SearchOption.TopDirectoryOnly).Union(Directory.EnumerateFiles(SLMWaveformFolder[1], "*.* ", SearchOption.TopDirectoryOnly));
+                fileList = Directory.EnumerateFiles(SLMWaveformFolder[1], "*.raw ", SearchOption.TopDirectoryOnly).Union(Directory.EnumerateFiles(SLMWaveformFolder[1], "*.txt ", SearchOption.TopDirectoryOnly));
                 if (0 < fileList.Count())
                 {
-                    for (int i = 0; i < EpochSequence.Count(); i++)
+                    waveFileName.Clear();
+                    for (int i = 1; i <= EpochSequence.Count(); i++)
                     {
-                        string name = SLMWaveformFolder[1] + "\\" + SLMWaveBaseName[0] + "_" + SLMBleachWaveParams[i].BleachWaveParams.ID.ToString(digits) + ".raw";
-                        string bname = SLMWaveformFolder[1] + "\\" + SLMWaveBaseName[0] + "_" + SLMBleachWaveParams[i].BleachWaveParams.ID.ToString(digits) + ".bmp";
-                        string tname = SLMWaveformFolder[1] + "\\" + SLMWaveBaseName[2] + "_" + SLMBleachWaveParams[i].BleachWaveParams.ID.ToString(digits) + ".txt";
+                        string name = SLMWaveformFolder[1] + "\\" + SLMWaveBaseName[0] + "_" + i.ToString(digits) + ".raw";
+                        string tname = SLMWaveformFolder[1] + "\\" + SLMWaveBaseName[2] + "_" + i.ToString(digits) + ".txt";
                         waveFileName.Add(name);
-                        waveFileName.Add(bname);
                         waveFileName.Add(tname);
                     }
 
@@ -1190,7 +1241,6 @@
                         DeleteFile(waveFile);
                     }
                 }
-                //PersistGlobalExperimentXML(GlobalExpAttribute.SLM_BLEACH);  //test
             }
 
             OnPropertyChanged("SLMBleachNowEnabled");

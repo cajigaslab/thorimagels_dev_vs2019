@@ -527,6 +527,10 @@
         DependencyProperty.Register("LSMTwoWayAlignment",
         typeof(int),
         typeof(ScanControlUC));
+        public static DependencyProperty NumberOfPulsesPerPixelProperty = 
+        DependencyProperty.Register("NumberOfPulsesPerPixel",
+        typeof(int),
+        typeof(ScanControlUC));
         public static DependencyProperty PmtBandwidthIndexProperty = 
         DependencyProperty.Register("PmtBandwidthIndex",
         typeof(List<int>),
@@ -566,6 +570,10 @@
         public static DependencyProperty PMTVoltProperty = 
         DependencyProperty.Register("PMTVolt",
         typeof(CustomCollection<HwVal<double>>),
+        typeof(ScanControlUC));
+        public static DependencyProperty PulsesPerPixelVisibilityProperty = 
+        DependencyProperty.Register("PulsesPerPixelVisibility",
+        typeof(Visibility),
         typeof(ScanControlUC));
         public static DependencyProperty RapidScanVisibilityProperty = 
         DependencyProperty.Register("RapidScanVisibility",
@@ -896,6 +904,12 @@
             set { SetValue(LSMTwoWayAlignmentCoarseProperty, value); }
         }
 
+        public int NumberOfPulsesPerPixel
+        {
+            get { return (int)GetValue(NumberOfPulsesPerPixelProperty); }
+            set { SetValue(NumberOfPulsesPerPixelProperty, value); }
+        }
+
         public List<int> PmtBandwidthIndex
         {
             get { return (List<int>)GetValue(PmtBandwidthIndexProperty); }
@@ -978,6 +992,12 @@
         {
             get { return (CustomCollection<HwVal<double>>)GetValue(PMTVoltProperty); }
             set { SetValue(PMTVoltProperty, value); }
+        }
+
+        public Visibility PulsesPerPixelVisibility
+        {
+            get { return (Visibility)GetValue(PulsesPerPixelVisibilityProperty); }
+            set { SetValue(PulsesPerPixelVisibilityProperty, value); }
         }
 
         public Visibility RapidScanVisibility

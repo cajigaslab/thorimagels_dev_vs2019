@@ -207,8 +207,12 @@
             foreach (var file in Directory.GetFiles(sourceDir))
             {
                 File.Copy(file, System.IO.Path.Combine(targetDir, System.IO.Path.GetFileName(file)));
-                //remove TemplateScans node
-                XmlManager.RemoveNodeByName(System.IO.Path.Combine(targetDir, System.IO.Path.GetFileName(file)), "TemplateScans");
+                //remove TemplateScans node only for xml files
+                string fileExtension = System.IO.Path.GetExtension(file);
+                if (fileExtension == ".xml")
+                {
+                    XmlManager.RemoveNodeByName(System.IO.Path.Combine(targetDir, System.IO.Path.GetFileName(file)), "TemplateScans");
+                }
             }
 
             foreach (var directory in Directory.GetDirectories(sourceDir))

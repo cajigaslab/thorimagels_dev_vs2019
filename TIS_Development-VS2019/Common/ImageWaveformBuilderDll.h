@@ -12,14 +12,6 @@ enum BuilderType
 	EPHYS_DO
 };
 
-enum SignalType
-{
-	ANALOG_XY = 0,
-	ANALOG_POCKEL = 1,
-	DIGITAL_LINES,
-	SIGNALTYPE_LAST
-};
-
 static int UnitSizeInBytes(SignalType input)
 {
 	int unitSizeInByte = 0;
@@ -87,6 +79,7 @@ class ImageWaveformBuilderDLL : public PDLL
 	DECLARE_FUNCTION2(void, BufferAvailableCallbackFunc, long, long)
 	DECLARE_FUNCTION2(void, ConnectBufferCallback, SignalType, BlockRingBuffer*)
 	DECLARE_FUNCTION4(uint64_t, RebuildWaveformFromFile, const wchar_t*, double*, int, long*)
+	DECLARE_FUNCTION4(uint64_t, RebuildThorDAQWaveformFromFile, const wchar_t*, unsigned short*, int, long*)
 	DECLARE_FUNCTION0(void, CloseWaveformFile)
 
 };

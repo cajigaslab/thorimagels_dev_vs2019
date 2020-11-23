@@ -395,20 +395,20 @@ long ExperimentXML::SetCamera(string name, long width, long height, double pixel
 const char * const ExperimentXML::LSM = "LSM";
 
 const char * const ExperimentXML::LSM_ATTR[NUM_LSM_ATTRIBUTES] = {"areaMode","areaAngle","scanMode","interleave","pixelX","pixelY","channel","fieldSize","offsetX","offsetY","averageMode",
-	"averageNum","clockSource","inputRange1","inputRange2","twoWayAlignment","extClockRate","dwellTime","flybackCycles","inputRange3","inputRange4", "minimizeFlybackCycles", "polarity1", "polarity2", "polarity3", "polarity4", "verticalFlip", "horizontalFlip", "crsFrequencyHz", "timeBasedLineScan", "tbLineScanTimeMS"};
+	"averageNum","clockSource","inputRange1","inputRange2","twoWayAlignment","extClockRate","dwellTime","flybackCycles","inputRange3","inputRange4", "minimizeFlybackCycles", "polarity1", "polarity2", "polarity3", "polarity4", "verticalFlip", "horizontalFlip", "crsFrequencyHz", "timeBasedLineScan", "tbLineScanTimeMS", "ThreePhotonEnable", "NumberOfPlanes"};
 
-long ExperimentXML::GetLSM(long &areaMode, double &areaAngle, long &scanMode,long &interleave,long &pixelX,long &pixelY,long &channel, long &fieldSize, long &offsetX, long &offsetY,
-						   long &averageMode, long &averageNum, long &clockSource, long &inputRange1, long &inputRange2, long &twoWayAlignment, long &extClockRate, 
-						   double &dwellTime, long &flybackCycles, long &inputRange3, long &inputRange4, long& minimizeFlybackCycles, long &polarity1, long &polarity2, long &polarity3, long &polarity4,
-						   long &verticalFlip, long &horizontalFlip, double &crsFrequencyHz, long& timeBasedLineScan, long& timeBasedLSTimeMS)
+long ExperimentXML::GetLSM(long& areaMode, double& areaAngle, long& scanMode, long& interleave, long& pixelX, long& pixelY, long& channel, long& fieldSize, long& offsetX, long& offsetY,
+	long& averageMode, long& averageNum, long& clockSource, long& inputRange1, long& inputRange2, long& twoWayAlignment, long& extClockRate,
+	double& dwellTime, long& flybackCycles, long& inputRange3, long& inputRange4, long& minimizeFlybackCycles, long& polarity1, long& polarity2, long& polarity3, long& polarity4,
+	long& verticalFlip, long& horizontalFlip, double& crsFrequencyHz, long& timeBasedLineScan, long& timeBasedLSTimeMS, long& threePhotonEnable, long& numberOfPlanes)
 {
 	string str;
 
 	long index;
 
-	for(index=0; index<NUM_LSM_ATTRIBUTES; index++)
+	for (index = 0; index < NUM_LSM_ATTRIBUTES; index++)
 	{
-		if(!GetAttribute(LSM, LSM_ATTR[index], str))
+		if (!GetAttribute(LSM, LSM_ATTR[index], str))
 		{
 			//if the attribute is not found just continue to the next attribute
 			continue;
@@ -416,100 +416,106 @@ long ExperimentXML::GetLSM(long &areaMode, double &areaAngle, long &scanMode,lon
 
 		stringstream ss(str);
 
-		switch(index)
+		switch (index)
 		{
 		case 0:
-			ss>>areaMode;
+			ss >> areaMode;
 			break;
 		case 1:
-			ss>>areaAngle;
+			ss >> areaAngle;
 			break;
 		case 2:
-			ss>>scanMode;
+			ss >> scanMode;
 			break;
 		case 3:
-			ss>>interleave;
+			ss >> interleave;
 			break;
 		case 4:
-			ss>>pixelX;
+			ss >> pixelX;
 			break;
 		case 5:
-			ss>>pixelY;
+			ss >> pixelY;
 			break;
 		case 6:
-			ss>>channel;
+			ss >> channel;
 			break;
 		case 7:
-			ss>>fieldSize;
+			ss >> fieldSize;
 			break;
 		case 8:
-			ss>>offsetX;
+			ss >> offsetX;
 			break;
 		case 9:
-			ss>>offsetY;
+			ss >> offsetY;
 			break;
 		case 10:
-			ss>>averageMode;
+			ss >> averageMode;
 			break;
 		case 11:
-			ss>>averageNum;
+			ss >> averageNum;
 			break;
 		case 12:
-			ss>>clockSource;
+			ss >> clockSource;
 			break;
 		case 13:
-			ss>>inputRange1;
+			ss >> inputRange1;
 			break;
 		case 14:
-			ss>>inputRange2;
+			ss >> inputRange2;
 			break;
 		case 15:
-			ss>>twoWayAlignment;
+			ss >> twoWayAlignment;
 			break;
 		case 16:
-			ss>>extClockRate;
+			ss >> extClockRate;
 			break;
 		case 17:
-			ss>>dwellTime;
+			ss >> dwellTime;
 			break;
 		case 18:
-			ss>>flybackCycles;
+			ss >> flybackCycles;
 			break;
 		case 19:
-			ss>>inputRange3;
+			ss >> inputRange3;
 			break;
 		case 20:
-			ss>>inputRange4;
+			ss >> inputRange4;
 			break;
 		case 21:
-			ss>>minimizeFlybackCycles;
+			ss >> minimizeFlybackCycles;
 			break;
 		case 22:
-			ss>>polarity1;
+			ss >> polarity1;
 			break;
 		case 23:
-			ss>>polarity2;
+			ss >> polarity2;
 			break;
 		case 24:
-			ss>>polarity3;
+			ss >> polarity3;
 			break;
 		case 25:
-			ss>>polarity4;
+			ss >> polarity4;
 			break;
 		case 26:
-			ss>>verticalFlip;
+			ss >> verticalFlip;
 			break;
 		case 27:
-			ss>>horizontalFlip;
+			ss >> horizontalFlip;
 			break;
 		case 28:
-			ss>>crsFrequencyHz;
+			ss >> crsFrequencyHz;
 			break;
 		case 29:
-			ss>>timeBasedLineScan;
+			ss >> timeBasedLineScan;
 			break;
 		case 30:
-			ss>>timeBasedLSTimeMS;
+			ss >> timeBasedLSTimeMS;
+			break;
+		case 31:
+			ss >> threePhotonEnable;
+			break;
+		case 32:
+			ss >> numberOfPlanes;
 			break;
 		}
 	}
@@ -1366,6 +1372,27 @@ long ExperimentXML::SetZStage(string name, long enable, long steps, double stepS
 	return TRUE;
 }
 
+long ExperimentXML::GetZFileInfo(int& enable, double& scale)
+{
+	string str;
+
+	if (!GetAttribute(ZSTAGE, "zFileEnable", str))
+	{
+		logDll->TLTraceEvent(VERBOSE_EVENT, 1, L"ExperimentManger  Could not find zFileEnable attribute");
+		return FALSE;
+	}
+	enable = stoi(str);
+
+	if (!GetAttribute(ZSTAGE, "zFilePosScale", str))
+	{
+		logDll->TLTraceEvent(VERBOSE_EVENT, 1, L"ExperimentManger  Could not find zFilePosScale attribute");
+		return FALSE;
+	}
+	scale = stod(str);
+
+	return TRUE;
+}
+
 const char * const ExperimentXML::TIMELAPSE = "Timelapse";
 
 const char * const ExperimentXML::TIMELAPSE_ATTR[NUM_TIMELAPSE_ATTRIBUTES] = {"timepoints", "intervalSec", "triggerMode"};
@@ -2019,7 +2046,7 @@ const char* const ExperimentXML::LAMP = "LAMP";
 const char* const ExperimentXML::LAMP_ATTR[NUM_LAMP_ATTRIBUTES] = { "IsExternalTriggerTerm1","IsExternalTriggerTerm2","LampPosition1","LampPosition2","LampTerminal","led1enable","led1power","led2enable"
 ,"led2power","led3enable","led3power","led4enable","led4power","led5enable","led5power","led6enable","led6power","displayTemperatures","mainPower" };
 
-long ExperimentXML::GetLampLED(long& led1enable, double& led1power, long& led2enable, double& led2power, long& led3enable, double& led3power, long& led4enable, double& led4power, long& led5enable, double& led5power, long& led6enable, double& led6power)
+long ExperimentXML::GetLampLED(long& led1enable, double& led1power, long& led2enable, double& led2power, long& led3enable, double& led3power, long& led4enable, double& led4power, long& led5enable, double& led5power, long& led6enable, double& led6power, double& mainPower)
 {
 	string str;
 
@@ -2073,6 +2100,9 @@ long ExperimentXML::GetLampLED(long& led1enable, double& led1power, long& led2en
 			break;
 		case 16:
 			ss >> led6power;
+			break;
+		case 18:
+			ss >> mainPower;
 			break;
 		}
 	}
@@ -3417,6 +3447,19 @@ long ExperimentXML::SetAllScanAreas(long viewMode, long enable)
 	}
 }
 
+const char* const ExperimentXML::ZFILEPOSTAG = "PosList";
+
+long ExperimentXML::GetZPosList(vector<double>& vec)
+{
+
+	if (!GetElementList(ZFILEPOSTAG, "item", vec))
+	{
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 long ExperimentXML::GetAttribute(string tagName, string attribute, string &attributeValue)
 {
 	if(_xmlObj.get() == NULL)
@@ -3569,7 +3612,50 @@ long ExperimentXML::GetTagCount(string tagParent, string tagName, long &count)
 
 		return TRUE;
 	}
+}
 
+long ExperimentXML::GetElementList(string tagParent, string tagName, vector<double>& vect)
+{
+	if (_xmlObj.get() == NULL)
+	{
+		logDll->TLTraceEvent(VERBOSE_EVENT, 1, L"ExperimentManger  GetTagCount _xmlObj is null");
+		return FALSE;
+	}
+	// make sure the top level root element exist
+	ticpp::Element* configObj = _xmlObj->FirstChildElement(false);
+
+	if (configObj == NULL)
+	{
+		return FALSE;
+	}
+	else
+	{
+		vect.clear(); // clear the vector first
+
+		try
+		{
+			// find the element named 'tagParent' and iterate over its children of name 'tagName'
+			ticpp::Element* parent = configObj->FirstChildElement(tagParent);
+			ticpp::Iterator< ticpp::Element > child(parent, tagName);
+
+			for (child = child.begin(parent); child != child.end(); child++)
+			{
+				string str = child->GetText();
+				stringstream ss(str);
+				double dVal;
+				// convert to double
+				ss >> dVal;
+				vect.push_back(dVal);
+			}
+		}
+		catch (...)
+		{
+			logDll->TLTraceEvent(WARNING_EVENT, 1, L"ExperimentManger  ElementList could not be read");
+			return FALSE;
+		}
+
+		return TRUE;
+	}
 }
 
 const char * const ExperimentXML::ROOT_TAG = "ThorImageExperiment";

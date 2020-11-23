@@ -621,8 +621,10 @@ void RunSample::SetPockelsMask(ICamera* camera, IExperiment* exp, string maskPat
 			double areaAngle,dwellTime,crsFrequencyHz = 0;
 			long timeBasedLineScan = FALSE;
 			long timeBasedLineScanMS = 0;
+			long threePhotonEnable = FALSE;
+			long numberOfPlanes = 1;
 			exp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,channel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,
-				flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS);
+				flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes);
 			width = static_cast<long>(pixelX);
 			height = static_cast<long>(pixelY);
 
@@ -964,13 +966,8 @@ void RunSample::PostCaptureProtocol(IExperiment *exp)
 		SetDeviceParamBuffer(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_SEQ,seqBuf,sizeof(seqBuf),TRUE);
 	}
 
-	//Disable all LEDs once acquisition is finished 
-	SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP,IDevice::PARAM_LED1_POWER_STATE,FALSE,TRUE);
-	SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP,IDevice::PARAM_LED2_POWER_STATE,FALSE,TRUE);
-	SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP,IDevice::PARAM_LED3_POWER_STATE,FALSE,TRUE);
-	SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP,IDevice::PARAM_LED4_POWER_STATE,FALSE,TRUE);
-	SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP,IDevice::PARAM_LED5_POWER_STATE,FALSE,TRUE);
-	SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP,IDevice::PARAM_LED6_POWER_STATE,FALSE,TRUE);
+	//Turn OFF all LEDs once acquisition is finished 
+	SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP, IDevice::PARAM_LEDS_ENABLE_DISABLE, FALSE, TRUE);
 }
 
 UINT RunSampleThreadProc( LPVOID pParam )
@@ -1951,18 +1948,15 @@ void SetLEDs(IExperiment* exp, ICamera* camera, double zPos, double &power1, dou
 
 	long const CHROLIS_RANGE_CONVERSION = 10;
 	long led1enable = FALSE, led2enable = FALSE, led3enable = FALSE, led4enable = FALSE, led5enable = FALSE, led6enable = FALSE;
-	double led1power = 0, led2power = 0, led3power = 0, led4power = 0, led5power = 0, led6power = 0;
-
-	StringCbPrintfW(message,MSG_LENGTH,L"Called set leds");
-	logDll->TLTraceEvent(ERROR_EVENT,1,message);
+	double led1power = 0, led2power = 0, led3power = 0, led4power = 0, led5power = 0, led6power = 0, mainPower = 0;
 
 	//Enable the LEDs and set the power
-	exp->GetLampLED(led1enable,led1power,led2enable,led2power,led3enable,led3power,led4enable,led4power,led5enable,led5power,led6enable,led6power);
-
-	StringCbPrintfW(message,MSG_LENGTH,L"1en %d 1p %f 2en %d 2p %f 3en %d 3p %f  4en %d 4p %f 5en %d 5p %f 6en %d 6p %f", led1enable,led1power,led2enable,led2power,led3enable,led3power,led4enable,led4power,led5enable,led5power,led6enable,led6power);
-	logDll->TLTraceEvent(ERROR_EVENT,1,message);
+	exp->GetLampLED(led1enable, led1power, led2enable, led2power, led3enable, led3power, led4enable, led4power, led5enable, led5power, led6enable, led6power, mainPower);
 
 	//Keep in mind the range of the power of the Chrolis is from 1 - 1000, we need to multiply the value read from the experiment.xml by 10
+	//Set the Main Power first then each individual LED power. Otherwise it will transform the individual powers if we do the main power last
+	SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP, IDevice::PARAM_LEDS_LINEAR_VALUE, mainPower * CHROLIS_RANGE_CONVERSION, TRUE);
+
 	SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP,IDevice::PARAM_LED1_POWER_STATE,led1enable,TRUE);
 	SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP,IDevice::PARAM_LED1_POWER,led1power * CHROLIS_RANGE_CONVERSION,TRUE);
 	power1 = led1power;
@@ -1986,4 +1980,7 @@ void SetLEDs(IExperiment* exp, ICamera* camera, double zPos, double &power1, dou
 	SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP,IDevice::PARAM_LED6_POWER_STATE,led6enable,TRUE);
 	SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP,IDevice::PARAM_LED6_POWER,led6power * CHROLIS_RANGE_CONVERSION,TRUE);
 	power6 = led6power;
+
+	//Turn ON LEDS 
+	SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP, IDevice::PARAM_LEDS_ENABLE_DISABLE, TRUE, TRUE);
 }

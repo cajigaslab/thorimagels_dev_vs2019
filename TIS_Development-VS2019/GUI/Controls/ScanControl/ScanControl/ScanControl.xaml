@@ -481,6 +481,12 @@
                                ContentStringFormat="{}{0:0.00}" />
                         <Label Content="[us]"
                                Foreground="White" />
+                        <StackPanel Orientation="Horizontal"
+                                    Visibility="{Binding Path=PulsesPerPixelVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                            <Label Margin="10,0,0,0"
+                                   Content="Laser Pulses Per Pixel: " />
+                            <Label Content="{Binding Path=NumberOfPulsesPerPixel, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <RepeatButton Content="&#x27E8;"

@@ -146,6 +146,21 @@
 
         #region Methods
 
+        //when the image is bigger than the dispaly area, increase the display area so the scroll bar
+        // can see the entire image. Make it public because it is called from Experiment Review App Window
+        public void AdjustImageViewSize(bool obj)
+        {
+            if (true == obj)
+            {
+                ImageReviewViewModel vm = ((ImageReviewViewModel)this.DataContext);
+                if (null == vm)
+                {
+                    return;
+                }
+                this.ImageView.Height = Math.Max(vm.IVScrollBarHeight, Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_VSCROLL);
+            }
+        }
+
         // Called from Experiment Review application window
         public void LoadLastExperiment()
         {
@@ -163,21 +178,6 @@
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadImageInfo")]
         private static extern int ReadImageInfo([MarshalAs(UnmanagedType.LPWStr)]string path, ref int width, ref int height, ref int colorChannels);
-
-        //when the image is bigger than the dispaly area, increase the display area so the scroll bar
-        // can see the entire image
-        void AdjustImageViewSize(bool obj)
-        {
-            if (true == obj)
-            {
-                ImageReviewViewModel vm = ((ImageReviewViewModel)this.DataContext);
-                if (null == vm)
-                {
-                    return;
-                }
-                this.ImageView.Height = Math.Max(vm.IVScrollBarHeight, Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_VSCROLL);
-            }
-        }
 
         void AdjustViewSizes()
         {

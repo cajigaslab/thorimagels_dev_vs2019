@@ -254,6 +254,9 @@ UINT LiveThreadProc( LPVOID pParam )
 	//open shutter
 	SetShutterPosition(SHUTTER_OPEN);
 
+	//enable LEDs
+	SetBFLampPosition(ENABLE_LEDS);
+
 	LARGE_INTEGER freqInt;
 	QueryPerformanceFrequency(&freqInt);
 	double dfrq=(double) freqInt.QuadPart;
@@ -364,6 +367,9 @@ RETURN:
 	PostflightCamera(SelectedHardware::SELECTED_CAMERA1);
 
 	PostflightPMT();
+
+	//disable LEDs
+	SetBFLampPosition(DISABLE_LEDS);
 
 	CHECK_INLINE_PACTIVEIMAGEROUTINE(SetCaptureActive(FALSE));
 

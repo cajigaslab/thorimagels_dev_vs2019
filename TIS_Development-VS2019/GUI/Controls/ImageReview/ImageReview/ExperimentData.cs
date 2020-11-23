@@ -34,7 +34,6 @@
         public int timePoints;
         public int zSteps;
         public int zStreamFrames;
-
         #endregion Fields
     }
 
@@ -69,7 +68,8 @@
         private static double _zStepSizeUM;
         private static int _zStreamMax;
         private static int _zStreamMode;
-
+        private static int _numberOfPlanes = 1;
+        private static int _threePhotonEnable = 0;
         #endregion Fields
 
         #region Properties
@@ -176,6 +176,11 @@
         public static int ZStreamMax
         {
             get { return _zStreamMax; }
+        }
+
+        public static int NumberOfPlanes
+        {
+            get => _numberOfPlanes;
         }
 
         /// <summary>
@@ -286,7 +291,8 @@
                     _fieldSize = XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/LSM", "fieldSize");
                     _bitsPerPixel = BITS_PER_PIXEL_LSM;
                     _pixelSizeUM = XmlManager.ReadAttribute<Double>(doc, "/ThorImageExperiment/LSM", "pixelSizeUM");
-
+                    _threePhotonEnable = XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/LSM", "ThreePhotonEnable");
+                    _numberOfPlanes = _threePhotonEnable == 1 ? XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/LSM", "NumberOfPlanes") : 1;
                     break;
             }
 
@@ -393,7 +399,7 @@
                         break;
                 }
 
-                _imageInfo.frameSize = _imageInfo.pixelX * _imageInfo.pixelY * 2;
+                _imageInfo.frameSize = _imageInfo.pixelX * _imageInfo.pixelY * _numberOfPlanes * 2;
 
                 _imageInfo.timePoints = XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/Timelapse", "timepoints");
                 switch (_captureMode)

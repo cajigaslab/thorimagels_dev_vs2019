@@ -77,6 +77,19 @@
 
         #region Properties
 
+        public Boolean EnableDisableLEDs
+        {
+            get
+            {
+                return this._lightEngineControlModel.EnableDisableLEDs;
+            }
+            set
+            {
+                this._lightEngineControlModel.EnableDisableLEDs = value;
+                OnPropertyChanged("EnableDisableLEDs");
+            }
+        }
+
         public String LED1ControlName
         {
             get
@@ -1024,7 +1037,7 @@
 
             XmlNodeList ndList = expDoc.SelectNodes("/ThorImageExperiment/LAMP");
 
-            XmlNodeList appNdList = appDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/LampView");
+            XmlNodeList appNdList = appDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/LightEngineView");
 
             //Do not enable the LEDs when the hardware configuration window is open, check the flag EnableDeviceQuery for this
             bool deviceQueryEnabled = (bool)MVMManager.Instance["CaptureSetupViewModel", "EnableDeviceQuery", (object)true];
@@ -1042,6 +1055,14 @@
             if (ndList.Count > 0)
             {
                 string str = string.Empty;
+                if (XmlManager.GetAttribute(ndList[0], expDoc, "mainPower", ref str))
+                {
+                    double tmp = 0;
+                    if (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out tmp))
+                    {
+                        MasterBrightness = tmp;
+                    }
+                }
                 if (XmlManager.GetAttribute(ndList[0], expDoc, "led1enable", ref str) && deviceQueryEnabled)
                 {
                     LED1PowerState = (str == "1" || str == Boolean.TrueString);
@@ -1118,14 +1139,6 @@
                 {
                     ShowTemperatures = (str == "1" || str == Boolean.TrueString);
                 }
-                if (XmlManager.GetAttribute(ndList[0], expDoc, "mainPower", ref str))
-                {
-                    double tmp = 0;
-                    if (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out tmp))
-                    {
-                        MasterBrightness = tmp;
-                    }
-                }
             }
         }
 
@@ -1133,7 +1146,7 @@
         /// Raises Property Changed Event
         /// </summary>
         /// <param name="propertyName">Name of the Property<seealso cref="String"/></param>
-        public void OnPropertyChange([CallerMemberName] String propertyName = null)
+        public void OnPropertyChange([CallerMemberName]String propertyName = null)
         {
             if (null != this.GetPropertyInfo(propertyName))
             {
@@ -1163,12 +1176,7 @@
                 XmlManager.SetAttribute(ndList[0], experimentFile, "displayTemperatures", ShowTemperatures.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "mainPower", MasterBrightness.ToString());
             }
-            this._lightEngineControlModel.LED1PowerState = false;
-            this._lightEngineControlModel.LED2PowerState = false;
-            this._lightEngineControlModel.LED3PowerState = false;
-            this._lightEngineControlModel.LED4PowerState = false;
-            this._lightEngineControlModel.LED5PowerState = false;
-            this._lightEngineControlModel.LED6PowerState = false;
+            EnableDisableLEDs = false;
         }
 
         private void LEDMinus(int ledIndex)

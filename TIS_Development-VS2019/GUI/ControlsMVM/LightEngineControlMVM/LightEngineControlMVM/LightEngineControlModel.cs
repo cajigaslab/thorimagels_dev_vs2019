@@ -81,6 +81,21 @@
 
         #region Properties
 
+        public Boolean EnableDisableLEDs
+        {
+            get
+            {
+                int state = 0;
+                int retCode = ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LEDS_ENABLE_DISABLE, ref state);
+                return state > 0;
+            }
+            set
+            {
+                int state = (Boolean)value ? 1 : 0;
+                int retCode = ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LEDS_ENABLE_DISABLE, state, (int)IDevice.DeviceSetParamType.EXECUTION_WAIT);
+            }
+        }
+
         public String LED1ControlName
         {
             get
@@ -134,9 +149,9 @@
         {
             get
             {
-                int state = -1;
-                int retCode = ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED1_POWER_STATE, ref state);
-                _lED1PowerState = (state > 0);
+                //int state = -1;
+                //int retCode = ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED1_POWER_STATE, ref state);
+                //_lED1PowerState = (state > 0);
                 return _lED1PowerState;
             }
             set
@@ -229,9 +244,9 @@
         {
             get
             {
-                int state = -1;
-                int retCode = ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED2_POWER_STATE, ref state);
-                _lED2PowerState = (state > 0);
+                //int state = -1;
+                //int retCode = ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED2_POWER_STATE, ref state);
+                //_lED2PowerState = (state > 0);
                 return _lED2PowerState;
             }
             set
@@ -321,9 +336,9 @@
         {
             get
             {
-                int state = -1;
-                int retCode = ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED3_POWER_STATE, ref state);
-                _lED3PowerState = (state > 0);
+                //int state = -1;
+                //int retCode = ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED3_POWER_STATE, ref state);
+                //_lED3PowerState = (state > 0);
                 return _lED3PowerState;
             }
             set
@@ -416,9 +431,9 @@
         {
             get
             {
-                int state = -1;
-                int retCode = ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED4_POWER_STATE, ref state);
-                _lED4PowerState = (state > 0);
+                //int state = -1;
+                //int retCode = ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED4_POWER_STATE, ref state);
+                //_lED4PowerState = (state > 0);
                 return _lED4PowerState;
             }
             set
@@ -511,9 +526,9 @@
         {
             get
             {
-                int state = -1;
-                int retCode = ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED5_POWER_STATE, ref state);
-                _lED5PowerState = (state > 0);
+                //int state = -1;
+                //int retCode = ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED5_POWER_STATE, ref state);
+                //_lED5PowerState = (state > 0);
                 return _lED5PowerState;
             }
             set
@@ -606,9 +621,9 @@
         {
             get
             {
-                int state = -1;
-                int retCode = ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED6_POWER_STATE, ref state);
-                _lED6PowerState = (state > 0);
+                //int state = -1;
+                //int retCode = ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED6_POWER_STATE, ref state);
+                //_lED6PowerState = (state > 0);
                 return _lED6PowerState;
             }
             set

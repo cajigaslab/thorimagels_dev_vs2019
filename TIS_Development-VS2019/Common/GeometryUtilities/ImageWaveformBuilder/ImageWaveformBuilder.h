@@ -60,7 +60,7 @@ private:
 	double* _pGalvoWaveformX; ///<galvo X waveform
 	double* _pGalvoWaveformY; ///<galvo Y waveform
 	double* _outputXY; ///<galvo X & Y waveform for output on moving to start or others
-	char* _pTemp;
+
 	//private functions:
 	ImageWaveformBuilder(int type);
 	long SetupParamsForArea();
@@ -71,7 +71,7 @@ private:
 	std::vector<double> ConvertPixelToVolt(std::vector<long> vertices,double offsetVolt,double deltaX_volt);
 
 	//private func: [for active load]
-	long BuildTravelToStart(double powerIdle, double* srcDstVxy, uint64_t& outCount);
+	long BuildTravelToStart(double* powerIdle, double* srcDstVxy, uint64_t& outCount);
 	long BuildTravelToStartImagePos(long sAreaId, double stepVolts, double * srcVxy);
 	uint64_t GetTotalCount(long& countPerCallback, SignalType sType, uint64_t stage1, uint64_t stage2);
 	void InitializeParams();
@@ -98,7 +98,7 @@ public:
 	long GetThorDAQGGWaveformParams(SignalType sType, void* params, long preCaptureStatus, uint64_t& indexNow);
 	long GetGGalvoWaveformStartLoc(const wchar_t* waveformFileName, double* startXY, long& clockRate);
 	long GetThorDAQGGWaveformStartLoc(const wchar_t* waveformFileName, unsigned short* startXY, long& clockRate);
-	static long GetPockelsCount();
+	static unsigned char GetPockelsCount();
 	double* GetTravelWaveform(double stepSize, long outputInterleave, double* posFromXYToXY, long& count);
 	void SetWaveformGenParams(void* params);
 	void ResetGGalvoWaveformParams();

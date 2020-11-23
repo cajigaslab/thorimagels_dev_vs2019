@@ -26,7 +26,8 @@ long ThorSLMPDM512XML::GetPostTransform(long &verticalFlip, double &rotateAngle,
 	StringCbPrintfW(_currentPathAndFile,MAX_PATH,L"ThorSLMPDM512Settings.xml");		
 
 	wstring ws = _currentPathAndFile;
-	string s = ConvertWStringToString(ws);
+	string s(ws.begin(), ws.end());
+	s.assign(ws.begin(), ws.end());
 
 	OpenConfigFile(s);
 	// make sure the top level root element exist
@@ -105,7 +106,8 @@ long ThorSLMPDM512XML::SetPostTransform(long verticalFlip, double rotateAngle, d
 	StringCbPrintfW(_currentPathAndFile,MAX_PATH,L"ThorSLMPDM512Settings.xml");		
 
 	wstring ws = _currentPathAndFile;
-	string s = ConvertWStringToString(ws);
+	string s(ws.begin(), ws.end());
+	s.assign(ws.begin(), ws.end());
 
 	OpenConfigFile(s);
 	// make sure the top level root element exist
@@ -150,15 +152,17 @@ long ThorSLMPDM512XML::SetPostTransform(long verticalFlip, double rotateAngle, d
 	return ret;}
 
 const char * const ThorSLMPDM512XML::CALIBRATION = "Calibration";
+const char * const ThorSLMPDM512XML::CALIBRATION2 = "Calibration2";
 
-const char * const ThorSLMPDM512XML::CALIBRATION_ATTR[NUM_CALIBRATION_ATTRIBUTES] = {"coeff1","coeff2","coeff3","coeff4","coeff5","coeff6", "coeff7", "coeff8"};
+const char * const ThorSLMPDM512XML::CALIBRATION_ATTR[NUM_CALIBRATION_ATTRIBUTES] = {"wavelengthNM","coeff1","coeff2","coeff3","coeff4","coeff5","coeff6", "coeff7", "coeff8"};
 
-long ThorSLMPDM512XML::GetCalibration(double &coeff1, double &coeff2, double &coeff3, double &coeff4, double &coeff5, double &coeff6, double &coeff7, double &coeff8)
+long ThorSLMPDM512XML::GetCalibration(int id, double& wavelengthNM, double &coeff1, double &coeff2, double &coeff3, double &coeff4, double &coeff5, double &coeff6, double &coeff7, double &coeff8)
 {	
 	StringCbPrintfW(_currentPathAndFile,MAX_PATH,L"ThorSLMPDM512Settings.xml");		
 
 	wstring ws = _currentPathAndFile;
-	string s = ConvertWStringToString(ws);
+	string s(ws.begin(), ws.end());
+	s.assign(ws.begin(), ws.end());
 
 	OpenConfigFile(s);
 	// make sure the top level root element exist
@@ -172,7 +176,7 @@ long ThorSLMPDM512XML::GetCalibration(double &coeff1, double &coeff2, double &co
 	{
 		try
 		{
-			ticpp::Iterator< ticpp::Element > child(configObj,CALIBRATION);
+			ticpp::Iterator< ticpp::Element > child(configObj, 1 == id ? CALIBRATION : CALIBRATION2);
 
 			for ( child = child.begin( configObj ); child != child.end(); child++)
 			{
@@ -185,40 +189,45 @@ long ThorSLMPDM512XML::GetCalibration(double &coeff1, double &coeff2, double &co
 					{
 					case 0:
 						{
-							ss>>coeff1;
+							ss>> wavelengthNM;
 						}
 						break;
 					case 1:
 						{
-							ss>>coeff2;
+							ss>>coeff1;
 						}
 						break;
 					case 2:
 						{
-							ss>>coeff3;
+							ss>>coeff2;
 						}
 						break;
 					case 3:
 						{
-							ss>>coeff4;
+							ss>>coeff3;
 						}
 						break;
 					case 4:
 						{
-							ss>>coeff5;
+							ss>>coeff4;
 						}
 						break;
 					case 5:
 						{
-							ss>>coeff6;
+							ss>>coeff5;
 						}
 						break;
 					case 6:
 						{
-							ss>>coeff7;
+							ss>>coeff6;
 						}
 						break;
 					case 7:
+						{
+							ss>>coeff7;
+						}
+						break;
+					case 8:
 						{
 							ss>>coeff8;
 						}
@@ -240,14 +249,15 @@ long ThorSLMPDM512XML::GetCalibration(double &coeff1, double &coeff2, double &co
 	return TRUE;
 }
 
-long ThorSLMPDM512XML::SetCalibration(double coeff1, double coeff2, double coeff3, double coeff4, double coeff5, double coeff6, double coeff7, double coeff8)
+long ThorSLMPDM512XML::SetCalibration(int id, double coeff1, double coeff2, double coeff3, double coeff4, double coeff5, double coeff6, double coeff7, double coeff8)
 {	
 	long ret = TRUE;
 
 	StringCbPrintfW(_currentPathAndFile,MAX_PATH,L"ThorSLMPDM512Settings.xml");		
 
 	wstring ws = _currentPathAndFile;
-	string s = ConvertWStringToString(ws);
+	string s(ws.begin(), ws.end());
+	s.assign(ws.begin(), ws.end());
 
 	OpenConfigFile(s);
 	// make sure the top level root element exist
@@ -282,12 +292,12 @@ long ThorSLMPDM512XML::SetCalibration(double coeff1, double coeff2, double coeff
 
 		long index;
 
-		for(index=0; index<NUM_CALIBRATION_ATTRIBUTES; index++)
+		for(index=1; index<NUM_CALIBRATION_ATTRIBUTES; index++)
 		{
 			getline(ss,str);
 
 			// iterate over to get the particular tag element specified as a parameter(tagName)
-			ticpp::Iterator<ticpp::Element> child(configObj->FirstChildElement(CALIBRATION), CALIBRATION);
+			ticpp::Iterator<ticpp::Element> child(configObj->FirstChildElement(1 == id ? CALIBRATION : CALIBRATION2), 1 == id ? CALIBRATION : CALIBRATION2);
 			//get the attribute value for the specified attribute name
 			child->SetAttribute(CALIBRATION_ATTR[index], str);
 		}
@@ -298,14 +308,15 @@ long ThorSLMPDM512XML::SetCalibration(double coeff1, double coeff2, double coeff
 
 const char * const ThorSLMPDM512XML::SPEC = "Spec";
 
-const char * const ThorSLMPDM512XML::SPEC_ATTR[NUM_SPEC_ATTRIBUTES] = {"Name","overDrive","transientFrames","pixelXmin","pixelXmax","pixelYmin","pixelYmax","LUT","overDriveLUT","waveFront"};
+const char * const ThorSLMPDM512XML::SPEC_ATTR[NUM_SPEC_ATTRIBUTES] = {"Name","dmdMode","overDrive","transientFrames","pixelUM","pixelXmin","pixelXmax","pixelYmin","pixelYmax","LUT","overDriveLUT","waveFront"};
 
-long ThorSLMPDM512XML::GetSpec(string &name, long &overDrive, unsigned int &transientFrames, long &pixelXmin, long &pixelXmax, long &pixelYmin, long &pixelYmax, string &lut, string &odLUT, string &wavefront)
+long ThorSLMPDM512XML::GetSpec(string &name, long &dmdMode, long &overDrive, unsigned int &transientFrames, long &pixelUM, long &pixelXmin, long &pixelXmax, long &pixelYmin, long &pixelYmax, string &lut, string &odLUT, string &wavefront)
 {
 	StringCbPrintfW(_currentPathAndFile,MAX_PATH,L"ThorSLMPDM512Settings.xml");		
 
 	wstring ws = _currentPathAndFile;
-	string s = ConvertWStringToString(ws);
+	string s(ws.begin(), ws.end());
+	s.assign(ws.begin(), ws.end());
 
 	OpenConfigFile(s);
 	// make sure the top level root element exist
@@ -337,45 +348,55 @@ long ThorSLMPDM512XML::GetSpec(string &name, long &overDrive, unsigned int &tran
 						break;
 					case 1:
 						{
-							ss>>overDrive;
+							ss>>dmdMode;
 						}
 						break;
 					case 2:
 						{
-							ss>>transientFrames;
+							ss>>overDrive;
 						}
 						break;
 					case 3:
 						{
-							ss>>pixelXmin;
+							ss>>transientFrames;
 						}
 						break;
 					case 4:
 						{
-							ss>>pixelXmax;
+							ss>>pixelUM;
 						}
-						break;
+						break;						
 					case 5:
 						{
-							ss>>pixelYmin;
+							ss>>pixelXmin;
 						}
 						break;
 					case 6:
 						{
-							ss>>pixelYmax;
+							ss>>pixelXmax;
 						}
 						break;
 					case 7:
 						{
-							lut = str;
+							ss>>pixelYmin;
 						}
 						break;
 					case 8:
 						{
-							odLUT = str;
+							ss>>pixelYmax;
 						}
 						break;
 					case 9:
+						{
+							lut = str;
+						}
+						break;
+					case 10:
+						{
+							odLUT = str;
+						}
+						break;
+					case 11:
 						{
 							wavefront = str;
 						}
@@ -406,7 +427,8 @@ long ThorSLMPDM512XML::GetTrigger(string &counterLine, string &triggerInput)
 	StringCbPrintfW(_currentPathAndFile,MAX_PATH,L"ThorSLMPDM512Settings.xml");		
 
 	wstring ws = _currentPathAndFile;
-	string s = ConvertWStringToString(ws);
+	string s(ws.begin(), ws.end());
+	s.assign(ws.begin(), ws.end());
 
 	OpenConfigFile(s);
 	// make sure the top level root element exist

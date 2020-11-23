@@ -145,6 +145,7 @@
         {
             if (this.IsLoaded)
             {
+                ((RunSampleLSViewModel)this.RunSampleLSView.DataContext).CleanupOnQuit();
                 ((RunSampleLSViewModel)this.RunSampleLSView.DataContext).UpdateExperimentFile();
             }
         }

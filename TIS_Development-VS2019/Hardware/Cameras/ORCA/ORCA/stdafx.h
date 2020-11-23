@@ -34,7 +34,7 @@
 
 #ifdef LOGGING_ENABLED
 #include "..\..\..\..\Common\Log.h"
-static std::auto_ptr<LogDll> logDll(new LogDll(L".\\Modules_Native\\ThorLoggingUnmanaged.dll"));
+static std::shared_ptr<LogDll> logDll(new LogDll(L".\\Modules_Native\\ThorLoggingUnmanaged.dll"));
 #else
 enum EventType
 {

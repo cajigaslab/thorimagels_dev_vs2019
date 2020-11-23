@@ -15,7 +15,7 @@ long SaveTIFFWithoutOME(wchar_t *filePathAndName, char * pMemoryBuffer, long wid
 long SaveJPEG(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height,unsigned short * rlut, unsigned short * glut, unsigned short * blut,long bitDepth);
 void GetColorInfo(HardwareSetupXML *pHardware,string wavelengthName, long &red, long &green, long &blue,long &bp, long &wp);
 void GetLookUpTables(unsigned short * rlut, unsigned short * glut, unsigned short *blut,long red, long green, long blue, long bp, long wp, long bitdepth);
-long SetupDimensions(ICamera *pCamera,IExperiment *pExperiment,double fieldSizeCalibration, double magnification, Dimensions &d, long &avgFrames, long &bufferChannels, long &avgMode, double &umPerPixel);
+long SetupDimensions(ICamera *pCamera,IExperiment *pExperiment,double fieldSizeCalibration, double magnification, Dimensions &d, long &avgFrames, long &bufferChannels, long &avgMode, double &umPerPixe, long &numOfPlanes);
 AcquireMultiWavelength::AcquireMultiWavelength(IAutoFocus * pAutoFocus, IExperiment *pExperiment, wstring path)
 {
 	_pAutoFocus = pAutoFocus;
@@ -460,7 +460,9 @@ long AcquireMultiWavelength::Execute(long index, long subWell)
 	double crsFrequencyHz = 0;
 	long timeBasedLineScan = FALSE;
 	long timeBasedLineScanMS = 0;
-	_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,lsmChannel, fieldSize, offsetX, offsetY,averageMode, averageNum, clockSource,inputRange1, inputRange2, twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS);
+	long threePhotonEnable = FALSE;
+	long numberOfPlanes = 1;
+	_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,lsmChannel, fieldSize, offsetX, offsetY,averageMode, averageNum, clockSource,inputRange1, inputRange2, twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes);
 	pCamera->SetParam(ICamera::PARAM_LSM_VERTICAL_SCAN_DIRECTION, verticalFlip);
 	pCamera->SetParam(ICamera::PARAM_LSM_HORIZONTAL_FLIP, horizontalFlip);
 	long width = 0;
@@ -481,7 +483,7 @@ long AcquireMultiWavelength::Execute(long index, long subWell)
 
 	double fieldSizeCalibration=100.0;
 
-	SetupDimensions(pCamera,_pExp, fieldSizeCalibration,magnification, d, avgFrames,bufferChannels, avgMode, umPerPixel);
+	SetupDimensions(pCamera,_pExp, fieldSizeCalibration,magnification, d, avgFrames,bufferChannels, avgMode, umPerPixel, numberOfPlanes);
 
 	char * pMemoryBuffer = NULL;
 	FrameInfo frameInfo = {0, 0, 0, 0};

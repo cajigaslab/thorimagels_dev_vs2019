@@ -7,7 +7,7 @@
 ///	***************************************** <summary> Build Line			</summary>	********************************************** ///
 
 //srcDstVxy is expected to be: [FromVx, FromVy, ToVx, ToVy]; only build analog XY and Pockels
-long ImageWaveformBuilder::BuildTravelToStart(double powerIdle, double * srcDstVxy, uint64_t& outCount)
+long ImageWaveformBuilder::BuildTravelToStart(double* powerIdle, double * srcDstVxy, uint64_t& outCount)
 {
 	outCount = 0;
 	double deltaX_volt = _gWaveXY[_scanAreaId].stepVolt; //[Volt/step] MAX_FIELD_SIZE * FIELD2VOLTS * SLOW_GALVO_RATE / _gWaveXY.ClockRate
@@ -42,25 +42,31 @@ long ImageWaveformBuilder::BuildTravelToStart(double powerIdle, double * srcDstV
 			return FALSE;
 		}
 		_gWaveXY[_scanAreaId].analogXYSize = static_cast<long>(2 * unitSize);
-		_gWaveXY[_scanAreaId].GalvoWaveformPockel = (double*)realloc(_gWaveXY[_scanAreaId].GalvoWaveformPockel, unitSize);
+		_gWaveXY[_scanAreaId].GalvoWaveformPockel = (double*)realloc(_gWaveXY[_scanAreaId].GalvoWaveformPockel, _gWaveXY[_scanAreaId].pockelsCount * unitSize);
 		if(NULL == _gWaveXY[_scanAreaId].GalvoWaveformPockel)
 		{
 			return FALSE;
 		}
-		_gWaveXY[_scanAreaId].analogPockelSize = static_cast<long>(unitSize);
+		_gWaveXY[_scanAreaId].analogPockelSize = static_cast<long>(_gWaveXY[_scanAreaId].pockelsCount * unitSize);
 
 		for (int id = 0; id < Nd; id++)
 		{	
 			_gWaveXY[_scanAreaId].GalvoWaveformXY[2*id] = std::max(MIN_AO_VOLTAGE, std::min(MAX_AO_VOLTAGE, (*(srcDstVxy) + id * xDirection * (float)std::min(deltaX_volt, DistanceVx / Nd))));
 			_gWaveXY[_scanAreaId].GalvoWaveformXY[2*id+1] = std::max(MIN_AO_VOLTAGE, std::min(MAX_AO_VOLTAGE, (*(srcDstVxy+1) + id * yDirection * (float)std::min(deltaY_volt, DistanceVy / Nd))));
-			_gWaveXY[_scanAreaId].GalvoWaveformPockel[id] = powerIdle;
+			for (int p = 0; p < _gWaveXY[_scanAreaId].pockelsCount; p++)
+			{
+				_gWaveXY[_scanAreaId].GalvoWaveformPockel[id + (p * outCount)] = powerIdle[p];
+			}
 		}
 	}
 	if (dV_sub_X != 0 || dV_sub_Y != 0)
 	{
 		_gWaveXY[_scanAreaId].GalvoWaveformXY[2*Nd] = std::max(MIN_AO_VOLTAGE, std::min(MAX_AO_VOLTAGE, (_gWaveXY[_scanAreaId].GalvoWaveformXY[2*(Nd-1)] + dV_sub_X)));
 		_gWaveXY[_scanAreaId].GalvoWaveformXY[2*Nd+1] = std::max(MIN_AO_VOLTAGE, std::min(MAX_AO_VOLTAGE, (_gWaveXY[_scanAreaId].GalvoWaveformXY[2*(Nd-1)+1] + dV_sub_Y)));
-		_gWaveXY[_scanAreaId].GalvoWaveformPockel[Nd] = powerIdle;
+		for (int p = 0; p < _gWaveXY[_scanAreaId].pockelsCount; p++)
+		{
+			_gWaveXY[_scanAreaId].GalvoWaveformPockel[Nd + (p * outCount)] = powerIdle[p];
+		}
 	}
 
 	return TRUE;
@@ -98,7 +104,7 @@ long ImageWaveformBuilder::BuildTravelToStartImagePos(long sAreaId, double stepV
 	double dV_sub_X = *(srcDstVxy+2) -(*(srcDstVxy) + (Nd-1) * xDirection * (float)std::min(deltaX_volt, DistanceVx / Nd));
 	double dV_sub_Y = *(srcDstVxy+3) -(*(srcDstVxy+1) + (Nd-1) * yDirection * (float)std::min(deltaY_volt, DistanceVy / Nd));
 	long outCount = (dV_sub_X != 0 || dV_sub_Y != 0) ? (Nd + 1) : Nd;
-	long pockelsCount = GetPockelsCount();
+	unsigned char pockelsCount = GetPockelsCount();
 	long unitSize[SignalType::SIGNALTYPE_LAST] = {outCount, outCount, outCount}; 
 	ReleaseMutex(_gWaveXY[sAreaId].bufferHandle);
 
@@ -157,7 +163,8 @@ double* ImageWaveformBuilder::GetTravelWaveform(double stepSize, long outputInte
 	if(GetMutex(_gWaveXY[_scanAreaId].bufferHandle))
 	{
 		_gWaveXY[_scanAreaId].stepVolt = stepSize;
-		ret = BuildTravelToStart(0.0, posFromXYToXY, val);
+		double powerIdle = 0.0;
+		ret = BuildTravelToStart(&powerIdle, posFromXYToXY, val);
 		if(TRUE == ret)
 		{
 			_outputXY = (double*)realloc(_outputXY, _gWaveXY[_scanAreaId].analogXYSize);

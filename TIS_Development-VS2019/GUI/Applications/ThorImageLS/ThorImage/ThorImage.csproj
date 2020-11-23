@@ -289,8 +289,14 @@
   <PropertyGroup>
     <PostBuildEvent>
     </PostBuildEvent>
-    <PreBuildEvent>rem cd ..\..\
-rem CopyDependenciesx64.bat
-rem CopyDependenciesx64-Release.bat</PreBuildEvent>
+    <PreBuildEvent>if $(SolutionName) == ThorImage (
+cd ..\..\
+if $(ConfigurationName) == Debug (
+CopyDependenciesx64.bat
+)
+if $(ConfigurationName) == Release (
+rem CopyDependenciesx64-Release.bat
+)
+)</PreBuildEvent>
   </PropertyGroup>
 </Project>

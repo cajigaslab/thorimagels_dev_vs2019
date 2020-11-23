@@ -244,7 +244,7 @@ private:
 	void SavePreviewImage(SaveParams *sp, long tFrame, char * pBuffer, long saveEnabledChannelsOnly);
 	void SaveFastZPreviewImageWithoutOME(SaveParams *sp, char *buffer, long bufferSizeBytes);
 	long SetupImageData(wstring streamPath, ICamera *pCamera, long averageMode, SaveParams* sp, long zFastEnableGUI, long bufferChannels, double pixelDwellTime, long avgFrames, Dimensions &baseDimensions);
-	void SetupSaveParams(long index, long subWell, long streamFrames, double exposureTimeMS, long width, long height, double umPerPixel, long zFastEnable, long zStageSteps, long zFlybackFrames,long bufferChannels, long lsmChannels, long storageMode, long hyperSpectralWavelengths, long rawData, long previewID, SaveParams *sp);
+	void SetupSaveParams(long index, long subWell, long streamFrames, double exposureTimeMS, long width, long height, long numberOfPlanes, double umPerPixel, long zFastEnable, long zStageSteps, long zFlybackFrames,long bufferChannels, long lsmChannels, long storageMode, long hyperSpectralWavelengths, long rawData, long previewID, SaveParams *sp);
 	void SaveImagesPostCapture(long index, long subWell, long streamFrames, SaveParams *sp, bool rawContainsDisabledChannels, long subwell);
 	long SetupZStage(int setupMode, ICamera *pCamera, ZRangeInfo* zRange);
 	//void ExtractBufferDetails(ICamera *pCamera,double magnification, double fieldSizeCalibration, long channel,long pixelX,long pixelY, long left, long top, long right, long bottom, long binningX, long binningY, ICamera::CameraType &cameraType, double &umPerPixel, long &bufferChannels);
@@ -252,7 +252,7 @@ private:
 	long GetStimulusActive(void);
 	void ControlShutterInStream(long zFastEnable);	
 	shared_ptr<InternallyStoredImage <unsigned short> > createFullChannelCopy(char* bufferWithOnlyEnabledChannels, SaveParams& sp);
-	long SetGetCameraSettings(ICamera* pCamera, long &channel, long &bufferChannels, long &width, long &height, long &avgMode, long &avgNum, double &umPerPixel, long &fieldSize, double &dwellTime);
+	long SetGetCameraSettings(ICamera* pCamera, long& channel, long& bufferChannels, long& width, long& height, long& avgMode, long& avgNum, double& umPerPixel, long& fieldSize, double& dwellTime, long& numberOfPlanes);;
 	long SetCameraTriggerMode(ICamera* pCamera);
 	long PrepareAndStartAcquisition(ICamera* pCamera, long& dmaFrames, SaveParams& sp, long zFastEnableGUI, long cameraType, long stimulusTriggering, long captureMode);
 	void UnlockImages(map<long, long>& idsMap, long unlockFrameID);

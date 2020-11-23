@@ -6,12 +6,14 @@
 #include "AutoFocusNone.h"
 #include "AcquireZStack.h"
 #include "AcquireFactory.h"
+#include <functional>
 
 
 long SetDeviceParameterValue(IDevice *pDevice,long paramID, double val,long bWait,HANDLE hEvent,long waitTime);
 
 extern auto_ptr<CommandDll> shwDll;
 extern auto_ptr<TiffLibDll> tiffDll;
+extern "C" long __declspec(dllimport) GetZRange(double& zMin, double& zMax, double& zDefault);
 
 AcquireZStack::AcquireZStack(IAutoFocus * pAF,IExperiment *exp,wstring path)
 {
@@ -218,8 +220,9 @@ long AcquireZStack::Execute(long index, long subWell)
 	double areaAngle,dwellTime, crsFrequencyHz = 0;
 	long timeBasedLineScan = FALSE;
 	long timeBasedLineScanMS = 0;
-
-	_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,channel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource, inputRange1, inputRange2, twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS);
+	long threePhotonEnable = FALSE;
+	long numberOfPlanes = 1;
+	_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,channel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource, inputRange1, inputRange2, twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes);
 
 	ICamera::CameraType cameraType;
 
@@ -344,6 +347,8 @@ long AcquireZStack::Execute(long index, long subWell)
 	_pCamera->SetParam(ICamera::PARAM_LSM_TIME_BASED_LINE_SCAN, timeBasedLineScan);
 	_pCamera->SetParam(ICamera::PARAM_LSM_TB_LINE_SCAN_TIME_MS, timeBasedLineScanMS);
 
+	_pCamera->SetParam(ICamera::PARAM_LSM_3P_ENABLE, threePhotonEnable);
+
 	//notify the ECU of the zoom change also
 	if(SetDeviceParamLong(SelectedHardware::SELECTED_CONTROLUNIT,IDevice::PARAM_SCANNER_ZOOM_POS,fieldSize,FALSE))
 	{
@@ -460,39 +465,86 @@ long SetDevicePosition(IDevice *pDevice,long paramID,double pos,BOOL bWait)
 
 }
 
-long AcquireZStack::CaptureZStack(long index, long subWell, auto_ptr<IAcquire> &acqZFrame)
+long AcquireZStack::CaptureZStack(long index, long subWell, auto_ptr<IAcquire>& acqZFrame)
 {
 	long ret = TRUE;
 	double zStartPos, zStopPos, zTiltPos, zStepSizeMM;
+	double zMin, zMax, zDefault;
 	long zstageSteps, zStreamFrames, zStreamMode;
 	GetZPositions(_pExp, NULL, zStartPos, zStopPos, zTiltPos, zStepSizeMM, zstageSteps, zStreamFrames, zStreamMode);
 
 	double pos = zStartPos;
+	vector<double> posList;
+
+	// check if the read from file mode is enabled
+	int zFileEnable;
+	double zFilePosScale;
+	_pExp->GetZFileInfo(zFileEnable, zFilePosScale);
+
+	// create list of positions
+	if (TRUE == zFileEnable)
+	{
+		_pExp->GetZPosList(posList);
+		// multiply the whole vector by zFilePosScale
+		std::transform(posList.begin(), posList.end(), posList.begin(),
+			std::bind(std::multiplies<double>(), std::placeholders::_1, zFilePosScale));
+		// make sure that the list of positions has the correct size
+		if (zstageSteps != posList.size())
+		{
+			logDll->TLTraceEvent(WARNING_EVENT, 1, L"AcquireZStack Mismatched position list size");
+			return FALSE;
+		}
+		logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"AcquireZStack Executed with posList read from file");
+	}
+	else
+	{
+		for (long z = 0; z < zstageSteps; z++) posList.push_back(pos + z * zStepSizeMM);
+		logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"AcquireZStack Executed with uniform steps");
+	}
+
+	// check to make sure the z-positions are within range
+	GetZRange(zMin, zMax, zDefault);
+	for (long z = 0; z < zstageSteps; z++)
+	{
+		if (posList[z]<zMin || posList[z] > zMax)
+		{
+			logDll->TLTraceEvent(WARNING_EVENT, 1, L"AcquireZStack Requested position outside allowed z-range");
+			MessageBox(NULL, L"At least one of the positions is out of range.", L"", MB_OK);
+			return FALSE;
+		}
+	}
 
 	//Reset _stopZCapture flag each time experiment starts 
 	_stopZCapture = FALSE;
 	double power0 = 0, power1 = 0, power2 = 0, power3 = 0, power4 = 0, power5 = 0;
 	double ledPower1 = 0, ledPower2 = 0, ledPower3 = 0, ledPower4 = 0, ledPower5 = 0, ledPower6 = 0;
 	//step through z and capture
-	for(long z=1;z<=zstageSteps;z++)
+	for (long z = 1; z <= zstageSteps; z++)
 	{
-		if(FALSE == SetZPosition(pos,TRUE))
+		if (TRUE == zFileEnable)
 		{
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AcquireZStack Execute SetZPosition failed ");
+			pos = posList[(long long)z - 1];
+		}
+		if (FALSE == SetZPosition(pos, TRUE))
+		{
+			logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"AcquireZStack Execute SetZPosition failed ");
 			break;
 		}
 
-		SetPower(_pExp, _pCamera, pos, power0, power1, power2, power3,power4, power5);
+		SetPower(_pExp, _pCamera, pos, power0, power1, power2, power3, power4, power5);
 
 		SetLEDs(_pExp, _pCamera, pos, ledPower1, ledPower2, ledPower3, ledPower4, ledPower5, ledPower6);
 
-		if (FALSE == acqZFrame->Execute(index,subWell,z,1))
+		if (FALSE == acqZFrame->Execute(index, subWell, z, 1))
 		{
 			ret = FALSE;
 			break;
 		}
 
-		pos += zStepSizeMM;
+		if (TRUE != zFileEnable)
+		{
+			pos += zStepSizeMM;
+		}
 
 		//update progress Z to observer.
 		CallSaveZImage(z, power0, power1, power2, power3, power4, power5);

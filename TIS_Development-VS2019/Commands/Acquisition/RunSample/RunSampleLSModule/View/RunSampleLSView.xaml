@@ -361,7 +361,6 @@
                                             </Style>
                                         </Button.Style>
                                     </Button>
-                                    
                                 </StackPanel>
                             </StackPanel>
                         </GroupBox>
@@ -551,7 +550,47 @@
                                                 </Button>
                                                 <Label Width="80"
                                                        Content="Frames" />
-
+                                            </StackPanel>
+                                            <StackPanel Margin="1"
+                                                        IsEnabled="True"
+                                                        Orientation="Horizontal"
+                                                        Visibility="{Binding Path=ZFileVisibility,
+                                                                            Mode=OneWay,
+                                                                            UpdateSourceTrigger=PropertyChanged}">
+                                                <CheckBox Name="cbZFileEnable"
+                                                        Width="130"
+                                                        IsChecked="{Binding Path=ZFileEnable,
+                                                                            Mode=TwoWay,
+                                                                            UpdateSourceTrigger=PropertyChanged}"
+                                                        ToolTip="Read list of Z positions from file">
+                                                    <Label Content="Read from File" />
+                                                </CheckBox>
+                                                <Label Content="Conversion Factor:" />
+                                                <TextBox Name="tbZFilePosScale"
+                                                        Width="50"
+                                                        IsEnabled="{Binding Path=ZFileEnable,
+                                                                            Mode=OneWay,
+                                                                            UpdateSourceTrigger=PropertyChanged}"
+                                                        Text="{Binding Path=ZFilePosScale,
+                                                                       Converter={StaticResource doubleCulture},
+                                                                       Mode=TwoWay}"
+                                                        ToolTip="Scale factor to apply to file content" />
+                                                <Button Width="30"
+                                                      Content="✓">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbZFilePosScale}"
+                                                                    Value="True">
+                                                                    <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
                                             </StackPanel>
                                         </StackPanel>
                                         <!--
@@ -1130,11 +1169,11 @@
                                                     Visibility="{Binding Path=TimeBasedLineScanVisibility,
                                                                          Mode=TwoWay, 
                                                                          UpdateSourceTrigger=PropertyChanged}">
-											<Label Content="Time Based Line Scan"
+                                            <Label Content="Time Based Line Scan"
                                                    Width="150"/>
-											<Label Content="{Binding Path=TimeBasedLSTimeMS}"
+                                            <Label Content="{Binding Path=TimeBasedLSTimeMS}"
                                                    Width="50"/>
-											<TextBox Name="tbTimeBasedLSTimeMS"
+                                            <TextBox Name="tbTimeBasedLSTimeMS"
                                                      Width="50"
                                                      Visibility="Collapsed"
                                                      Text="{Binding Path=TimeBasedLSTimeMS,

@@ -157,10 +157,19 @@ namespace ThorSharedTypes
             get
             {
                 sync.AcquireReaderLock(Timeout.Infinite);
-                var result = collection[index];
-                sync.ReleaseReaderLock();
-                return result;
-            }
+
+                if (collection?.Count > index)
+                {
+                    var result = collection[index];
+                    sync.ReleaseReaderLock();
+                    return result;
+                }
+                else
+                {
+                    var val = default(T);
+                    return val;
+                }
+            }        
             set
             {
                 sync.AcquireWriterLock(Timeout.Infinite);

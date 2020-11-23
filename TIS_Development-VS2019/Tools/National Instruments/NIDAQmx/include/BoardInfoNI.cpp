@@ -45,6 +45,17 @@ void BoardInfoNI::GetAllBoardsInfo()
 
 		std::string compStr1 = GetNIDeviceAttribute(bInfo.devName,DAQmx_Dev_Terminals);
 		bInfo.rtsiConfigure = ((0 < compStr1.size()) && (std::string::npos != compStr1.find("RTSI"))) ? 1 : 0;
+		
+		compStr1 = GetNIDeviceCIPhysicalChans(bInfo.devName);
+		std::string toSearch = "ctr";
+		std::size_t pos = compStr1.find("ctr");
+		int i = 0;
+		while (pos!=std::string::npos)
+		{
+			i++;
+			pos = compStr1.find("ctr", pos + toSearch.size());
+		}
+		bInfo.counterCount = i;
 
 		_boardVec.push_back(bInfo);
 
@@ -89,9 +100,17 @@ long BoardInfoNI::VerifyLineNI(BoardInfo* bInfo, LineTypeNI signalType, std::str
 		compStr1 = GetNIDeviceAttribute(bInfo->devName,DAQmx_Dev_DI_Lines);
 		compStr2 = (0 == lineName.find("/")) ? (lineName.substr(1, lineName.size()-1)) : (lineName);
 		break;
-	case LineTypeNI::COUNTER_IN:
+	case LineTypeNI::TERMINAL:
 		compStr1 = GetNIDeviceAttribute(bInfo->devName,DAQmx_Dev_Terminals);
 		compStr2 = (0 != lineName.find("/")) ? ("/" + lineName) : (lineName);
+		break;
+	case LineTypeNI::ANALOG_OUT:
+		compStr1 = GetNIDeviceAttribute(bInfo->devName,DAQmx_Dev_AO_PhysicalChans);
+		compStr2 = (0 == lineName.find("/")) ? (lineName.substr(1, lineName.size()-1)) : (lineName);
+		break;
+	case LineTypeNI::COUNTER:
+		compStr1 = GetNIDeviceCIPhysicalChans(bInfo->devName);
+		compStr2 = (0 == lineName.find("/")) ? (lineName.substr(1, lineName.size()-1)) : (lineName);
 		break;
 	default:
 		return FALSE;

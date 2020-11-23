@@ -15,6 +15,9 @@ namespace GeometryUtilities
     using System.Threading.Tasks;
     using System.Windows;
     using System.Windows.Media;
+    using System.Windows.Shapes;
+
+    using OverlayManager;
 
     public class GeometryTypes
     {
@@ -541,7 +544,7 @@ namespace GeometryUtilities
         /// <param name="imWidth"></param>
         /// <param name="imHeight"></param>
         /// <returns></returns>
-        public static System.Drawing.Bitmap CreateBinaryBitmap( int imWidth, int imHeight, List<Point> ptGroups, List<int> ptValues = null)
+        public static System.Drawing.Bitmap CreateBinaryBitmap(int imWidth, int imHeight, List<Point> ptGroups, List<int> ptValues = null)
         {
             System.Drawing.Bitmap bmp8bit = new System.Drawing.Bitmap(imWidth, imHeight, System.Drawing.Imaging.PixelFormat.Format8bppIndexed);
             System.Drawing.Imaging.BitmapData bmpData = bmp8bit.LockBits(new System.Drawing.Rectangle(0, 0, bmp8bit.Width, bmp8bit.Height), System.Drawing.Imaging.ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format8bppIndexed);
@@ -555,6 +558,54 @@ namespace GeometryUtilities
             System.Runtime.InteropServices.Marshal.Copy(bytes, 0, bmpData.Scan0, bytes.Length);
             bmp8bit.UnlockBits(bmpData);
             return bmp8bit;
+        }
+
+        /// <summary>
+        /// Create a binary mask of 8bppIndexed bitmap based on provided shapes
+        /// </summary>
+        /// <param name="imgSize"></param>
+        /// <param name="shapeGroups"></param>
+        /// <returns></returns>
+        public static System.Drawing.Bitmap CreateBinaryBitmap(int[] imgSize, List<Shape> shapeGroups)
+        {
+            System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(imgSize[0], imgSize[1]);
+            if (null == shapeGroups)
+                return bitmap;
+
+            foreach (Shape shape in shapeGroups)
+            {
+                if (typeof(ROICrosshair) == shape.GetType())
+                {
+                    bitmap.SetPixel(((int)((ROICrosshair)shape).CenterPoint.X), ((int)((ROICrosshair)shape).CenterPoint.Y), System.Drawing.Color.White);
+                }
+                else
+                {
+                    using (System.Drawing.Graphics gr = System.Drawing.Graphics.FromImage(bitmap))
+                    {
+                        if (typeof(ROIEllipse) == shape.GetType())
+                        {
+                            gr.FillEllipse(new System.Drawing.SolidBrush(System.Drawing.Color.White),
+                                new System.Drawing.RectangleF((float)((ROIEllipse)shape).StartPoint.X, (float)((ROIEllipse)shape).StartPoint.Y, (float)((ROIEllipse)shape).ROIWidth, (float)((ROIEllipse)shape).ROIHeight));
+                        }
+                        else if (typeof(ROIRect) == shape.GetType())
+                        {
+                            gr.FillRectangle(new System.Drawing.SolidBrush(System.Drawing.Color.White),
+                                new System.Drawing.RectangleF((float)((ROIRect)shape).StartPoint.X, (float)((ROIRect)shape).StartPoint.Y, (float)((ROIRect)shape).ROIWidth, (float)((ROIRect)shape).ROIHeight));
+                        }
+                        else if (typeof(ROIPoly) == shape.GetType())
+                        {
+                            gr.FillPolygon(new System.Drawing.SolidBrush(System.Drawing.Color.White),
+                                ((ROIPoly)shape).Points.Select(elm => new System.Drawing.Point((int)elm.X, (int)elm.Y)).ToArray());
+                        }
+                        else if (typeof(Line) == shape.GetType())
+                        {
+                            gr.DrawLine(new System.Drawing.Pen(new System.Drawing.SolidBrush(System.Drawing.Color.White), 1),
+                                new System.Drawing.Point((int)((Line)shape).X1, (int)((Line)shape).Y1), new System.Drawing.Point((int)((Line)shape).X2, (int)((Line)shape).Y2));
+                        }
+                    }
+                }
+            }
+            return bitmap;
         }
 
         public static System.Drawing.Bitmap CreateBitmap(List<Point> ptGroups, bool fillByGraphic, bool offsetToZero, int extendPx, ref Point translate)

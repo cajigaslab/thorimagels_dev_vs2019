@@ -114,13 +114,13 @@
                                         DisplayMemberBinding="{Binding Path=BleachWaveParams.PostIdleTime}" />
                         <GridViewColumn Header="Power&#x0a;   (%)"
                                         Width="Auto"
-                                        DisplayMemberBinding="{Binding Path=BleachWaveParams.Power}" />
+                                        DisplayMemberBinding="{Binding Path=BleachWaveParams.Power[0]}" />
                         <GridViewColumn Header="Mea.Power&#x0a;    (mW)"
                                         Width="Auto"
-                                        DisplayMemberBinding="{Binding Path=BleachWaveParams.MeasurePower}" />
+                                        DisplayMemberBinding="{Binding Path=BleachWaveParams.MeasurePower[0]}" />
                         <GridViewColumn Header="Mea.Power D&#x0a;    (mW/um^2)"
                                         Width="Auto"
-                                        DisplayMemberBinding="{Binding Path=SLMMeasurePowerArea}" />
+                                        DisplayMemberBinding="{Binding Path=SLMMeasurePowerArea[0]}" />
                     </GridView>
                 </ListView.View>
             </ListView>
@@ -200,74 +200,61 @@
             </Button>
         </StackPanel>
         <StackPanel Grid.Row="3">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Center">
                 <ToggleButton Name="tbtnSLM3D"
                               Margin="1"
                               Height="25"
                               Width="40"
                               IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                              IsChecked ="{Binding Path=SLM3D, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              IsChecked="{Binding Path=SLM3D, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                               ToolTip="create SLM patterns in 2D or 3D mode."
                               VerticalAlignment="Center"
                               HorizontalAlignment="Right">
                     <ToggleButton.Style>
-                        <Style TargetType="ToggleButton" BasedOn="{StaticResource {x:Type ToggleButton}}">
+                        <Style TargetType="ToggleButton"
+                               BasedOn="{StaticResource {x:Type ToggleButton}}">
                             <Setter Property="Content"
                                     Value="2D" />
                             <Style.Triggers>
-                                <Trigger Property="IsChecked" Value="True">
-                                    <Setter Property="Content" Value="3D"/>
+                                <Trigger Property="IsChecked"
+                                         Value="True">
+                                    <Setter Property="Content"
+                                            Value="3D" />
                                 </Trigger>
                             </Style.Triggers>
                         </Style>
                     </ToggleButton.Style>
                 </ToggleButton>
                 <ToggleButton Name="tbtnSLMAdvance"
-                              Margin="1"                    
+                              Margin="1"
                               Height="25"
                               Width="70"
                               IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                              IsChecked ="{Binding Path=SLMSequenceOn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              IsChecked="{Binding Path=SLMSequenceOn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                               ToolTip="ON to create multiple epochs based on defined patterns."
                               VerticalAlignment="Center"
                               HorizontalAlignment="Right">
                     <ToggleButton.Style>
-                        <Style TargetType="ToggleButton" BasedOn="{StaticResource {x:Type ToggleButton}}">
+                        <Style TargetType="ToggleButton"
+                               BasedOn="{StaticResource {x:Type ToggleButton}}">
                             <Setter Property="Content"
                                     Value="Basic" />
                             <Style.Triggers>
-                                <Trigger Property="IsChecked" Value="True">
-                                    <Setter Property="Content" Value="Advance"/>
+                                <Trigger Property="IsChecked"
+                                         Value="True">
+                                    <Setter Property="Content"
+                                            Value="Advance" />
                                 </Trigger>
                             </Style.Triggers>
                         </Style>
                     </ToggleButton.Style>
                 </ToggleButton>
-                <Label Content="λ" HorizontalContentAlignment="Right" 
-                       Width="25"/>
-                <TextBox Text="{Binding Path=Wavelength, Mode=TwoWay}"
-                         IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
-                         Height="20"
-                         Width="40">
-                    <TextBox.Style>
-                        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
-                            <Setter Property="IsReadOnly"
-                                    Value="False" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding ElementName=tbtnSLMAdvance, Path=IsChecked }"
-                                             Value="True">
-                                    <Setter Property="IsReadOnly"
-                                            Value="True" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBox.Style>
-                </TextBox>
-                <Label Content="nm" 
-                       Width="30"/>
+                <Label Width="100" />
                 <StackPanel Orientation="Horizontal">
                     <StackPanel.Style>
-                        <Style TargetType="StackPanel" BasedOn="{StaticResource {x:Type StackPanel}}">
+                        <Style TargetType="StackPanel"
+                               BasedOn="{StaticResource {x:Type StackPanel}}">
                             <Setter Property="Visibility"
                                     Value="Visible" />
                             <Style.Triggers>
@@ -279,7 +266,8 @@
                             </Style.Triggers>
                         </Style>
                     </StackPanel.Style>
-                    <Label Content="Epoch Count" Foreground="White"/>
+                    <Label Content="Epoch Count"
+                           Foreground="White" />
                     <TextBox Name="epochCount"
                              Text="{Binding Path=EpochCount, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}"
                              IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
@@ -293,7 +281,8 @@
                              VerticalAlignment="Center"
                              HorizontalContentAlignment="Right">
                         <TextBox.Style>
-                            <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource {x:Type TextBox}}">
+                            <Style TargetType="{x:Type TextBox}"
+                                   BasedOn="{StaticResource {x:Type TextBox}}">
                                 <Style.Triggers>
                                     <Trigger Property="Validation.HasError"
                                              Value="True">
@@ -310,8 +299,8 @@
                         </TextBox.Style>
                     </TextBox>
                     <Button Width="25"
-                        Height="25"
-                        Content="✓">
+                            Height="25"
+                            Content="✓">
                         <Button.Style>
                             <Style TargetType="Button">
                                 <Setter Property="Visibility"
@@ -335,7 +324,8 @@
                         CommandParameter="SLM_CONFIG_SEQUENCE"
                         Content="Configure Epochs">
                     <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                        <Style TargetType="Button"
+                               BasedOn="{StaticResource {x:Type Button}}">
                             <Setter Property="Visibility"
                                     Value="Collapsed" />
                             <Style.Triggers>
@@ -633,17 +623,45 @@
                                        Foreground="White" />
                             </StackPanel>
                         </StackPanel>
-                        <Button ToolTip="Command to check SLM calibration"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Height="30"
-                                Width="Auto"
-                                Margin="3"
-                                Command="{Binding Path=EditSLMParamRelayCommand}"
-                                CommandParameter="SLM_CALIBRATION"
-                                IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
-                            <TextBlock ToolTip="Calibrate SLM">Check Calibration</TextBlock>
-                        </Button>
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                            <Label Content="Wavelength"
+                                   Height="30"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                            <ToggleButton x:Name="btnLamda"
+                                          Width="60"
+                                          Height="20"
+                                          Margin="3"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          ToolTip="select wavelength of incident light on SLM"
+                                          IsEnabled="{Binding Path=IsStimulator, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                          IsChecked="{Binding Path=SLMSelectWavelength,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                          Content="{Binding Path=SLMWavelengthNM, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}">
+                            </ToggleButton>
+                            <Label Content="[nm]"
+                                   Width="50"
+                                   Height="30"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                            <Label Content=""
+                                   Width="40"
+                                   Height="30"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                            <Button ToolTip="Command to check SLM calibration"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Height="30"
+                                    Width="Auto"
+                                    Margin="3"
+                                    Command="{Binding Path=EditSLMParamRelayCommand}"
+                                    CommandParameter="SLM_CALIBRATION"
+                                    IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
+                                <TextBlock ToolTip="Calibrate SLM">Check Calibration</TextBlock>
+                            </Button>
+                        </StackPanel>
                         <StackPanel Grid.Row="5"
                                     Name="stpSLMBleacherControl"
                                     Orientation="Horizontal"
@@ -677,7 +695,9 @@
                                 <TextBlock Text="  Set&#x0a;Blank"
                                            ToolTip="Set blank SLM pattern" />
                             </Button>
-                            <StackPanel Name="stkBleachPockelSLM" Orientation="Horizontal" HorizontalAlignment="Left">
+                            <StackPanel Name="stkBleachPockelSLM"
+                                        Orientation="Horizontal"
+                                        HorizontalAlignment="Left">
                                 <Label Content="Pockels"
                                        HorizontalAlignment="Center"
                                        Foreground="White"

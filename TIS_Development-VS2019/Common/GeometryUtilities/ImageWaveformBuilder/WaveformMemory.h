@@ -20,6 +20,10 @@ public:
 	long SetTempFileName(const wchar_t* tFileName);
 	long SaveWaveformDataStruct(const wchar_t* tPathName, GGalvoWaveformParams waveformParams);
 	long SaveThorDAQWaveformDataStruct(const wchar_t* tPathName, ThorDAQGGWaveformParams waveformParams);
+
+	template<typename T>
+	static long GetDataTypeSizeInBytes(){ return sizeof(T)/sizeof(char); }
+
 private:
 	static bool _instanceFlag;
 	static std::unique_ptr<WaveformMemory> _single;
@@ -46,8 +50,5 @@ private:
 	std::wstring _tempFileName;
 
 	WaveformMemory();
-
-	template<typename T>
-	static long GetDataTypeSizeInBytes();
 
 };

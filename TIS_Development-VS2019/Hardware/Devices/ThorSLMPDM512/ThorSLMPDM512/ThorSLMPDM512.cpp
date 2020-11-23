@@ -21,7 +21,7 @@ unique_ptr<ThorSLMPDM512XML> pSetup(new ThorSLMPDM512XML());
 float* ThorSLM::_fpPointsXY[MAX_ARRAY_CNT] = {NULL};
 long ThorSLM::_arrayOrFileID = 0;		//0-based buffer or sequence index
 long ThorSLM::_bufferCount = 1;			//1-based total buffer size
-long ThorSLM::_slmRuntimeCalculate = 0;	//[1]:calculate transient frames at runtime
+long ThorSLM::_slmRuntimeCalculate = FALSE;	//[1]:calculate transient frames at runtime
 unique_ptr<WinDVIDLL> winDVI(new WinDVIDLL(L".\\WinDVI.dll"));
 unique_ptr<HoloGenDLL> holoGen(new HoloGenDLL(L".\\HologramGenerator.dll"));
 TaskHandle ThorSLM::_taskHandleCI = NULL;
@@ -40,7 +40,8 @@ ThorSLM::ThorSLM() :
 	DEFAULT_TRANSIENT_FRAMES(10U),
 	MAX_TRANSIENT_FRAMES(20U)
 {
-	_fitCoeff = new double[PROJECT_COEFF_CNT];
+	_fitCoeff[0] = new double[PROJECT_COEFF_CNT];
+	_fitCoeff[1] = new double[PROJECT_COEFF_CNT];
 	_deviceCount = 0;
 	_deviceDetected = FALSE;
 	_fileSettingsLoaded = FALSE;
@@ -53,7 +54,10 @@ ThorSLM::ThorSLM() :
 	SetDefault();
 	_blinkSDK = NULL;
 	_transientFrames = DEFAULT_TRANSIENT_FRAMES;
-	_slm3D = FALSE;
+	_dmdMode = _loadPhaseDirectly = _slm3D = FALSE;
+	_doHologram = false;
+	_wavelength[0] = _wavelength[1] = 0;
+	_selectWavelength = 0;
 }
 
 ThorSLM* ThorSLM::getInstance()
@@ -74,10 +78,14 @@ ThorSLM::~ThorSLM()
 {
 	_instanceFlag = false;
 
-	if(NULL != _fitCoeff)
+	for (int i = 0; i < Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT; i++)
 	{
-		delete[] _fitCoeff;
-		_fitCoeff = NULL;
+		if(NULL != _fitCoeff[i])
+		{
+			delete[] _fitCoeff[i];
+			_fitCoeff[i] = NULL;
+		}
+
 	}
 	if(NULL != _pixelRange)
 	{
@@ -102,7 +110,7 @@ long ThorSLM::FindDevices(long &deviceCount)
 	_deviceDetected = TRUE;
 	try
 	{
-		if(FALSE == pSetup->GetSpec(_pSlmName,_overDrive,_transientFrames,_pixelRange[0],_pixelRange[1],_pixelRange[2],_pixelRange[3], _lutFile, _overDrivelutFile, _wavefrontFile))
+		if(FALSE == pSetup->GetSpec(_pSlmName,_dmdMode,_overDrive,_transientFrames,_pixelUM,_pixelRange[0],_pixelRange[1],_pixelRange[2],_pixelRange[3], _lutFile, _overDrivelutFile, _wavefrontFile))
 		{
 			StringCbPrintfW(_errMsg,MSG_SIZE,L"GetSpec from ThorSLMPDM512Settings failed.");
 			LogMessage(_errMsg,ERROR_EVENT);
@@ -193,12 +201,16 @@ long ThorSLM::SelectDevice(const long device)
 				StringCbPrintfW(_errMsg,MSG_SIZE,L"GetPostTransform from ThorSLMPDM512Settings failed.");
 				LogMessage(_errMsg,ERROR_EVENT);
 			}
-			if(FALSE == pSetup->GetCalibration(_fitCoeff[0],_fitCoeff[1],_fitCoeff[2],_fitCoeff[3],_fitCoeff[4],_fitCoeff[5],_fitCoeff[6],_fitCoeff[7]))
+			_wavelength[0] = _wavelength[1] = 0;
+			for (int i = 0; i < Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT; i++)
 			{
-				StringCbPrintfW(_errMsg,MSG_SIZE,L"GetCalibration from ThorSLMPDM512Settings failed.");
-				LogMessage(_errMsg,ERROR_EVENT);
+				if(FALSE == pSetup->GetCalibration(i+1,_wavelength[i],_fitCoeff[i][0],_fitCoeff[i][1],_fitCoeff[i][2],_fitCoeff[i][3],_fitCoeff[i][4],_fitCoeff[i][5],_fitCoeff[i][6],_fitCoeff[i][7]))
+				{
+					StringCbPrintfW(_errMsg,MSG_SIZE,L"GetCalibration from ThorSLMPDM512Settings failed.");
+					LogMessage(_errMsg,ERROR_EVENT);
+				}
 			}
-			if(FALSE == pSetup->GetSpec(_pSlmName,_overDrive,_transientFrames,_pixelRange[0],_pixelRange[1],_pixelRange[2],_pixelRange[3], _lutFile, _overDrivelutFile, _wavefrontFile))
+			if(FALSE == pSetup->GetSpec(_pSlmName,_dmdMode,_overDrive,_transientFrames,_pixelUM,_pixelRange[0],_pixelRange[1],_pixelRange[2],_pixelRange[3], _lutFile, _overDrivelutFile, _wavefrontFile))
 			{
 				StringCbPrintfW(_errMsg,MSG_SIZE,L"GetSpec from ThorSLMPDM512Settings failed.");
 				LogMessage(_errMsg,ERROR_EVENT);
@@ -268,7 +280,6 @@ long ThorSLM::GetLastErrorMsg(wchar_t * msg, long size)
 long ThorSLM::GetParamInfo(const long paramID, long &paramType, long &paramAvailable, long &paramReadOnly, double &paramMin, double &paramMax, double &paramDefault)
 {
 	long ret = TRUE;
-
 	switch (paramID)
 	{
 	case IDevice::PARAM_DEVICE_TYPE:
@@ -362,14 +373,24 @@ long ThorSLM::GetParamInfo(const long paramID, long &paramType, long &paramAvail
 		break;
 	case IDevice::PARAM_SLM_WAVELENGTH:
 		{
-			paramType = IDevice::TYPE_DOUBLE;
+			paramType = IDevice::TYPE_BUFFER;
 			paramAvailable = TRUE;
 			paramMin = 0;
-			paramMax = 2000;
+			paramMax = 10000;
 			paramDefault = 1040;
 			paramReadOnly = TRUE;
 		}
 		break;
+	case IDevice::PARAM_SLM_WAVELENGTH_SELECT:
+		{
+			paramType = IDevice::TYPE_LONG;
+			paramAvailable = TRUE;
+			paramMin = 0;
+			paramMax = Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT;
+			paramDefault = 0;
+			paramReadOnly = FALSE;
+		}
+		break;		
 	case IDevice::PARAM_SLM_3D:
 		{
 			paramType = IDevice::TYPE_LONG;
@@ -380,6 +401,16 @@ long ThorSLM::GetParamInfo(const long paramID, long &paramType, long &paramAvail
 			paramReadOnly = FALSE;
 		}
 		break;
+	case IDevice::PARAM_SLM_PHASE_DIRECT:
+		{
+			paramType = IDevice::TYPE_LONG;
+			paramAvailable = TRUE;
+			paramMin = FALSE;
+			paramMax = TRUE;
+			paramDefault = FALSE;
+			paramReadOnly = FALSE;
+		}
+		break;		
 	case IDevice::PARAM_SLM_RESET_AFFINE:
 		{
 			paramType = IDevice::TYPE_LONG;
@@ -453,15 +484,13 @@ long ThorSLM::GetParamInfo(const long paramID, long &paramType, long &paramAvail
 
 long ThorSLM::SetParam(const long paramID, const double param)
 {
-	long ret = FALSE;
-
+	long ret = TRUE;
 	switch (paramID)
 	{
 	case IDevice::PARAM_SLM_FUNC_MODE:
 		if ((param >= SLMFunctionMode::LOAD_PHASE_ONLY) && (param < SLMFunctionMode::LAST_FUNCTION))
 		{
 			_slmFuncMode = static_cast<long> (param);
-			ret = TRUE;
 		}
 		break;
 	case IDevice::PARAM_SLM_ARRAY_ID:
@@ -469,46 +498,46 @@ long ThorSLM::SetParam(const long paramID, const double param)
 		{
 			_arrayOrFileID = static_cast<long> (param);
 			_bufferCount = (_bufferCount < (_arrayOrFileID+1)) ? (_arrayOrFileID+1) : _bufferCount;
-			ret = TRUE;
 		}
 		break;
 	case IDevice::PARAM_SLM_PIXEL_X:
 		if ((param >= _pixelRange[0]) && (param <= _pixelRange[1]))
 		{
 			_pixelX = static_cast<long> (param);
-			ret = TRUE;
 		}
 		break;
 	case IDevice::PARAM_SLM_PIXEL_Y:
 		if ((param >= _pixelRange[2]) && (param <= _pixelRange[3]))
 		{
 			_pixelY = static_cast<long> (param);
-			ret = TRUE;
 		}
 		break;
 	case IDevice::PARAM_SLM_CALIB_Z:
 		_calibZ = param;
-		ret = TRUE;
 		break;
 	case IDevice::PARAM_SLM_NA:
 		if (param > 0)
 		{
 			_na = param;
-			ret = TRUE;
 		}
 		break;
-	case IDevice::PARAM_SLM_WAVELENGTH:
-		if (param > 0)
+	case IDevice::PARAM_SLM_WAVELENGTH_SELECT:
+		if (0 <= param || param < Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT)
 		{
-			_wavelength = static_cast<double> (param);
-			ret = TRUE;
+			if (0 < _wavelength[static_cast<long>(param)])
+				_selectWavelength = static_cast<long>(param);
 		}
 		break;
 	case IDevice::PARAM_SLM_3D:
 		if ((param >= FALSE) && (param <= TRUE))
 		{
 			_slm3D = static_cast<long> (param);
-			ret = TRUE;
+		}
+		break;
+	case IDevice::PARAM_SLM_PHASE_DIRECT:
+		if (FALSE <= param || param <= TRUE)
+		{
+			_loadPhaseDirectly = static_cast<long> (param);
 		}
 		break;
 	case IDevice::PARAM_SLM_RESET_AFFINE:
@@ -517,9 +546,9 @@ long ThorSLM::SetParam(const long paramID, const double param)
 			if(static_cast<long> (param))
 			{
 				//reset affine coefficients:
-				_fitCoeff[0] = 1; _fitCoeff[1] = 0; _fitCoeff[2] = 0; 
-				_fitCoeff[3] = 0; _fitCoeff[4] = 1; _fitCoeff[5] = 0; 
-				_fitCoeff[6] = 0; _fitCoeff[7] = 0; 
+				_fitCoeff[_selectWavelength][0] = 1; _fitCoeff[_selectWavelength][1] = 0; _fitCoeff[_selectWavelength][2] = 0; 
+				_fitCoeff[_selectWavelength][3] = 0; _fitCoeff[_selectWavelength][4] = 1; _fitCoeff[_selectWavelength][5] = 0; 
+				_fitCoeff[_selectWavelength][6] = 0; _fitCoeff[_selectWavelength][7] = 0; 
 
 				//reset post affine transform params:
 				_rotateAngle = 0.0;
@@ -527,7 +556,6 @@ long ThorSLM::SetParam(const long paramID, const double param)
 				_verticalFlip = _offsetPixels[0] = _offsetPixels[1] = 0;
 				PersistAffineValues();
 			}
-			ret = TRUE;
 		}
 		break;
 	case IDevice::PARAM_SLM_BLANK:
@@ -565,33 +593,29 @@ long ThorSLM::SetParam(const long paramID, const double param)
 
 				free(pImg);
 			}
-			ret = TRUE;
 		}
 		break;
 	case IDevice::PARAM_SLM_TIMEOUT:
 		_slmTimeout = (param >= SLM_TIMEOUT_MIN) ? static_cast<unsigned int>(ceil(param/SLM_TIMEOUT_MIN)*SLM_TIMEOUT_MIN) : SLM_TIMEOUT_MIN;
-		ret = TRUE;
 		break;
 	case IDevice::PARAM_SLM_RUNTIME_CALC:
 		if ((param >= FALSE) && (param <= TRUE))
 		{
 			_slmRuntimeCalculate = static_cast<long>(param);
-			ret = TRUE;
 		}
 		break;
 	default:
 		StringCbPrintfW(_errMsg,MSG_SIZE,L"SLM Parameter (%d) not implemented",paramID);
 		LogMessage(_errMsg,ERROR_EVENT);
+		ret = FALSE;
 		break;
 	}
-
 	return ret;
 }
 
 long ThorSLM::SetParamBuffer(const long paramID, char * pBuffer, long size)
 {
 	long ret = TRUE;
-
 	switch (paramID)
 	{
 	case IDevice::PARAM_SLM_POINTS_ARRAY:
@@ -613,7 +637,6 @@ long ThorSLM::SetParamBuffer(const long paramID, char * pBuffer, long size)
 long ThorSLM::SetParamString(const long paramID, wchar_t * str)
 {
 	long ret = TRUE;
-
 	switch (paramID)
 	{
 	case IDevice::PARAM_SLM_BMP_FILENAME:
@@ -660,7 +683,6 @@ long ThorSLM::SetParamString(const long paramID, wchar_t * str)
 long ThorSLM::GetParam(const long paramID, double &param)
 {
 	long ret = TRUE;
-
 	switch (paramID)
 	{
 	case IDevice::PARAM_DEVICE_TYPE:
@@ -681,8 +703,14 @@ long ThorSLM::GetParam(const long paramID, double &param)
 	case IDevice::PARAM_SLM_PIXEL_Y:
 		param = _pixelY;
 		break;
+	case IDevice::PARAM_SLM_WAVELENGTH_SELECT:
+		param = _selectWavelength;
+		break;
 	case IDevice::PARAM_SLM_3D:
 		param = _slm3D;
+		break;
+	case IDevice::PARAM_SLM_PHASE_DIRECT:
+		param = _loadPhaseDirectly;
 		break;
 	case IDevice::PARAM_SLM_RESET_AFFINE:
 		param = FALSE;
@@ -709,17 +737,20 @@ long ThorSLM::GetParam(const long paramID, double &param)
 long ThorSLM::GetParamBuffer(const long paramID, char * pBuffer, long size)
 {
 	long ret = TRUE;
-	std::string str;
-
 	switch (paramID)
 	{
 	case IDevice::PARAM_SLM_POINTS_ARRAY:
 		size = _fpPointsXYSize[_arrayOrFileID];
 		pBuffer = (char*)_fpPointsXY[_arrayOrFileID];
 		break;
+	case IDevice::PARAM_SLM_WAVELENGTH:
+		size = Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT;
+		SAFE_MEMCPY((void*)pBuffer, size * sizeof(double), _wavelength);
+		break;
 	default:
 		StringCbPrintfW(_errMsg,MSG_SIZE,L"Parameter (%d) not implemented",paramID);
 		LogMessage(_errMsg,ERROR_EVENT);
+		ret = FALSE;
 		break;
 	}
 
@@ -729,7 +760,6 @@ long ThorSLM::GetParamBuffer(const long paramID, char * pBuffer, long size)
 long ThorSLM::GetParamString(const long paramID, wchar_t * str, long size)
 {
 	long ret = TRUE;
-
 	switch (paramID)
 	{
 	case IDevice::PARAM_SLM_BMP_FILENAME:
@@ -757,12 +787,12 @@ long ThorSLM::PreflightPosition()
 long ThorSLM::SetupPosition()
 {
 	long ret = TRUE;
-
 	try
 	{
 		switch (_slmFuncMode)
 		{
 		case SLMFunctionMode::LOAD_PHASE_ONLY:
+			_doHologram = (FALSE == _loadPhaseDirectly || FALSE == _dmdMode);
 			ret = LoadHologram();
 			break;
 		case SLMFunctionMode::PHASE_CALIBRATION:
@@ -798,7 +828,7 @@ long ThorSLM::SetupPosition()
 						CoordinatesRotate(_fpPointsXY[0],_fpPointsXYSize[0], _rotateAngle);
 						CoordinatesRotate(_fpPointsXY[1],_fpPointsXYSize[1], _rotateAngle);
 					}
-					if(TRUE == holoGen->CalculateCoeffs(_fpPointsXY[0],_fpPointsXY[1],_fpPointsXYSize[1], GeoFittingAlg::PROJECTIVE, _fitCoeff))
+					if(TRUE == holoGen->CalculateCoeffs(_fpPointsXY[0],_fpPointsXY[1],_fpPointsXYSize[1], GeoFittingAlg::PROJECTIVE, _fitCoeff[_selectWavelength]))
 					{
 						PersistAffineValues();
 					}
@@ -807,10 +837,12 @@ long ThorSLM::SetupPosition()
 
 			//reset buffer count since only write one calibration frame:
 			_bufferCount = 1;
+			_doHologram = true;
 			ret = LoadHologram();
 			break;
 		case SLMFunctionMode::SAVE_PHASE:
-			ret = SaveHologram(true);
+			_doHologram = (TRUE == _loadPhaseDirectly && FALSE == _dmdMode);
+			ret = SaveHologram(FALSE == _loadPhaseDirectly);
 			break;
 		default:
 			StringCbPrintfW(_errMsg,MSG_SIZE,L"SetupSLM Failed: Invalid SLM Function Mode");
@@ -933,6 +965,7 @@ long ThorSLM::PostflightPosition()
 		}
 		break;
 	case SLMFunctionMode::PHASE_CALIBRATION:
+		_doHologram = true;
 		SaveHologram(false);
 		return TRUE;
 	}
@@ -1077,7 +1110,7 @@ long ThorSLM::PersistAffineValues()
 {
 	long retVal = TRUE;
 	//persist affine coefficients:
-	if(FALSE == pSetup->SetCalibration(_fitCoeff[0],_fitCoeff[1],_fitCoeff[2],_fitCoeff[3],_fitCoeff[4],_fitCoeff[5],_fitCoeff[6],_fitCoeff[7]))
+	if(FALSE == pSetup->SetCalibration(_selectWavelength+1,_fitCoeff[_selectWavelength][0],_fitCoeff[_selectWavelength][1],_fitCoeff[_selectWavelength][2],_fitCoeff[_selectWavelength][3],_fitCoeff[_selectWavelength][4],_fitCoeff[_selectWavelength][5],_fitCoeff[_selectWavelength][6],_fitCoeff[_selectWavelength][7]))
 	{
 		StringCbPrintfW(_errMsg,MSG_SIZE,L"SetCalibration from ThorSLMPDM512Settings failed");
 		LogMessage(_errMsg,ERROR_EVENT);
@@ -1369,7 +1402,6 @@ long ThorSLM::SaveHologram(bool saveInSubFolder)
 {
 	long size;
 	BITMAPINFO bmi;
-
 	unsigned char* imgRead = GetAndProcessBMP(size, bmi);
 	if(NULL == imgRead)
 	{
@@ -1405,58 +1437,136 @@ long ThorSLM::SaveHologram(bool saveInSubFolder)
 	return TRUE;
 }
 
+//Map from image array to SLM or DMD dimension
+unsigned char* ThorSLM::MapImageHologram(const wchar_t* pathAndFilename, PBITMAPINFO pbmi)
+{
+	//test load of bmp
+	long size;
+	int imgWidth, imgHeight;
+	unsigned char* imgRead = LoadBMP(&imgWidth, &imgHeight, &size, &pbmi->bmiHeader, pathAndFilename);
+	if (NULL == imgRead)
+		return NULL;
+
+	//convert buffer
+	long newSize;
+	unsigned char* imgRGB = ConvertBGRToRGBBuffer(imgRead, pbmi->bmiHeader, &newSize);
+	double pixelUM = (double)Constants::M_TO_UM / pbmi->bmiHeader.biXPelsPerMeter; //[um]
+
+	//--- START mapping to maximum SLM image size ---//
+	int channelCnt = static_cast<int>(pbmi->bmiHeader.biBitCount/CHAR_BIT);
+	size_t imgMapRGBBufSize = _pixelRange[1]*_pixelRange[3]*channelCnt;
+	BYTE* imgMapRGB = new BYTE[imgMapRGBBufSize];
+	memset(imgMapRGB,0x0,imgMapRGBBufSize*sizeof(BYTE));
+
+	//copy to buffer
+	int centerX = static_cast<int>(floor(imgWidth/2));
+	int centerY = static_cast<int>(floor(imgHeight/2));
+	int newCenterX = static_cast<int>(floor(_pixelRange[1]/2));
+	int newCenterY = static_cast<int>(floor(_pixelRange[3]/2));
+	double vecX = newCenterX * _pixelUM - centerX * pixelUM;
+	double vecY = newCenterY * _pixelUM - centerY * pixelUM;
+
+	BYTE* pSrc = imgRGB;
+	BYTE* pDst = imgMapRGB;
+	vector<pair<int, int>> target;	//target coordinates X-first,Y-second
+	for (long j = 0; j < pbmi->bmiHeader.biHeight; j++)
+	{
+		for (long i = 0; i < channelCnt*pbmi->bmiHeader.biWidth; i+=channelCnt)
+		{
+			if(0 < (*pSrc))
+			{
+				int sourceX = (i-(i%channelCnt))/channelCnt;
+				int sourceY = j;
+				target.clear();
+				target.push_back(pair<int,int>(static_cast<int>(floor((sourceX*pixelUM + vecX)/_pixelUM)), static_cast<int>(floor((sourceY*pixelUM + vecY)/_pixelUM))));
+				//avoid filling if single dot
+				if (0 < *(imgRGB + ((j-1) * pbmi->bmiHeader.biWidth * channelCnt + (i-channelCnt)))
+					|| 0 < *(imgRGB + (j * pbmi->bmiHeader.biWidth * channelCnt + (i-channelCnt)))
+					|| 0 < *(imgRGB + ((j+1) * pbmi->bmiHeader.biWidth * channelCnt + (i-channelCnt)))
+					|| 0 < *(imgRGB + ((j-1) * pbmi->bmiHeader.biWidth * channelCnt + i))
+					|| 0 < *(imgRGB + ((j+1) * pbmi->bmiHeader.biWidth * channelCnt + i))
+					|| 0 < *(imgRGB + ((j-1) * pbmi->bmiHeader.biWidth * channelCnt + (i+channelCnt)))
+					|| 0 < *(imgRGB + (j * pbmi->bmiHeader.biWidth * channelCnt + (i+channelCnt)))
+					|| 0 < *(imgRGB + ((j+1) * pbmi->bmiHeader.biWidth * channelCnt + (i+channelCnt)))
+					)
+				{
+					target.push_back(pair<int,int>(static_cast<int>(ceil((sourceX*pixelUM + vecX)/_pixelUM)), static_cast<int>(ceil((sourceY*pixelUM + vecY)/_pixelUM))));
+					target.push_back(pair<int,int>(static_cast<int>(floor((sourceX*pixelUM + vecX)/_pixelUM)), static_cast<int>(ceil((sourceY*pixelUM + vecY)/_pixelUM))));
+					target.push_back(pair<int,int>(static_cast<int>(ceil((sourceX*pixelUM + vecX)/_pixelUM)), static_cast<int>(floor((sourceY*pixelUM + vecY)/_pixelUM))));
+				}
+				for (int i = 0; i < target.size(); i++)
+				{
+					//map from image to slm by overlapping center locations
+					if (imgMapRGBBufSize > (target[i].second * _pixelRange[1] + target[i].first) * channelCnt + 2)
+					{
+						*(pDst + (target[i].second * _pixelRange[1] + target[i].first) * channelCnt) = *pSrc;
+						*(pDst + (target[i].second * _pixelRange[1] + target[i].first) * channelCnt + 1) = *(pSrc+1);
+						*(pDst + (target[i].second * _pixelRange[1] + target[i].first) * channelCnt + 2) = *(pSrc+2);
+					}
+				}
+			}
+			pSrc+=channelCnt;
+		}
+	}
+	delete[] imgRGB;
+	delete[] imgRead;
+
+	//set bmi header to SLM dimension
+	pbmi->bmiHeader.biWidth = _pixelRange[1];
+	pbmi->bmiHeader.biHeight = _pixelRange[3];
+	pbmi->bmiHeader.biSizeImage = _pixelRange[1] * _pixelRange[3] * channelCnt + 2;
+	pbmi->bmiHeader.biXPelsPerMeter = static_cast<LONG>((double)Constants::M_TO_UM/_pixelUM);
+	pbmi->bmiHeader.biYPelsPerMeter = pbmi->bmiHeader.biXPelsPerMeter;
+
+	return imgMapRGB;
+}
+
 unsigned char* ThorSLM::GetAndProcessBMP(long& size, BITMAPINFO& bmi)
 {
 	long ret = TRUE;
-	int imgWidth, imgHeight;
 	const int ITERATIONS_2D = 10;
-
-	unsigned char* imgRead = LoadBMP(&imgWidth, &imgHeight, &size, &bmi.bmiHeader, _bmpPathAndName.c_str());
-	if(NULL == imgRead)
-	{
-		StringCbPrintfW(_errMsg,MSG_SIZE,L"ThorSLMPDM512 GetAndProcessBMP: load bmp file failed.");
-		LogMessage(_errMsg, ERROR_EVENT);
-		return NULL;
-	}
-
-	//convert buffer:
-	long newSize;
-	unsigned char* imgRGB = ConvertBGRToRGBBuffer(imgRead, bmi.bmiHeader, &newSize);
+	unsigned char* imgRGB = MapImageHologram(_bmpPathAndName.c_str(), &bmi);
 
 	//update local sizes:	
-	if ((imgHeight >= _pixelRange[2]) && (imgHeight <= _pixelRange[3]) && 
-		(imgWidth >= _pixelRange[0]) && (imgWidth <= _pixelRange[1]) &&
-		(newSize == imgWidth*imgHeight))
+	if ((bmi.bmiHeader.biHeight >= _pixelRange[2]) && (bmi.bmiHeader.biHeight <= _pixelRange[3]) && 
+		(bmi.bmiHeader.biWidth >= _pixelRange[0]) && (bmi.bmiHeader.biWidth <= _pixelRange[1]))
 	{
-		_pixelY = imgHeight;
-		_pixelX = imgWidth;
+		_pixelY = bmi.bmiHeader.biHeight;
+		_pixelX = bmi.bmiHeader.biWidth;
 	}
 	else
 	{
-		delete[] imgRead;
+		//delete[] imgRead;
 		delete[] imgRGB;
 		StringCbPrintfW(_errMsg,MSG_SIZE,L"ThorSLMPDM512 GetAndProcessBMP: invalid bmp size.");
 		LogMessage(_errMsg, ERROR_EVENT);
 		return NULL;
 	}
 
+	//return if no need to apply hologram & transform, [LoadPhaseDirect or DMD]
+	if (!_doHologram)
+	{
+		return imgRGB;
+	}
+
 	//apply affine & generate phase:
-	ret = holoGen->SetSize(imgWidth, imgHeight);
-	ret = holoGen->SetCoeffs(GeoFittingAlg::PROJECTIVE, _fitCoeff);
+	double pixelUM = 6.4; // [um]
+	ret = holoGen->SetSize(_pixelX, _pixelY, pixelUM);
+	ret = holoGen->SetCoeffs(GeoFittingAlg::PROJECTIVE, _fitCoeff[_selectWavelength]);
 	ret = holoGen->SetAlgorithm(HoloGenAlg::GerchbergSaxton);
 
-	float* fImg = (float*)std::malloc(imgWidth*imgHeight*sizeof(float));
+	float* fImg = (float*)std::malloc(_pixelX*_pixelY*sizeof(float));
 
 	//copy to buffer:
 	unsigned char* pSrc = imgRGB;
 	float* pDst = fImg;
-	for (int i = 0; i < imgWidth*imgHeight; i++)
+	for (int i = 0; i < _pixelX*_pixelY; i++)
 	{
 		*pDst = *pSrc;
 		pDst++;
 		pSrc++;
 	}
-	delete[] imgRGB;
+	//delete[] imgRGB;
 
 	//pre-offset, flip, scale or rotate before affine:
 	if((0 != _offsetPixels[0]) || (0 != _offsetPixels[1]))
@@ -1480,9 +1590,9 @@ unsigned char* ThorSLM::GetAndProcessBMP(long& size, BITMAPINFO& bmi)
 	ret = holoGen->GenerateHologram(fImg, ITERATIONS_2D, 0);
 
 	//copy back from buffer, scale if necessary:
-	pSrc = imgRead;
+	pSrc = imgRGB;
 	pDst = fImg;
-	for (int i = 0; i < imgWidth*imgHeight; i++)
+	for (int i = 0; i < _pixelX*_pixelY; i++)
 	{
 		*pSrc = ((MAX_ARRAY_CNT-1) < (*pDst)) ? static_cast<unsigned char>((*pDst)*(MAX_ARRAY_CNT-1)/(LUT_SIZE-1)) : static_cast<unsigned char>((*pDst));
 		pSrc++;
@@ -1490,7 +1600,7 @@ unsigned char* ThorSLM::GetAndProcessBMP(long& size, BITMAPINFO& bmi)
 	}
 	std::free(fImg);
 
-	return imgRead;
+	return imgRGB;
 }
 
 unsigned char* ThorSLM::GetAndProcessText(long& size, BITMAPINFO& bmi)	//for 3D pattern, we should use textfile instead of bmp
@@ -1536,7 +1646,7 @@ unsigned char* ThorSLM::GetAndProcessText(long& size, BITMAPINFO& bmi)	//for 3D 
 	float* mImg = (float*)std::calloc(imgWidth*imgHeight,sizeof(float));
 
 	ret = holoGen->SetAlgorithm(HoloGenAlg::CompressiveSensing);
-	ret = holoGen->Set3DParam(_na, _wavelength);
+	ret = holoGen->Set3DParam(_na, _wavelength[0]);
 
 	if (myReadFile.is_open())
 	{
@@ -1563,8 +1673,9 @@ unsigned char* ThorSLM::GetAndProcessText(long& size, BITMAPINFO& bmi)	//for 3D 
 
 			}
 			//apply affine & generate phase:
-			ret = holoGen->SetSize(imgWidth, imgHeight);
-			ret	= holoGen->SetCoeffs(GeoFittingAlg::PROJECTIVE, _fitCoeff);
+			double pixelUM = 6.4;	//[um]
+			ret = holoGen->SetSize(imgWidth, imgHeight, pixelUM);
+			ret	= holoGen->SetCoeffs(GeoFittingAlg::PROJECTIVE, _fitCoeff[0]);
 
 
 
@@ -1598,14 +1709,14 @@ unsigned char* ThorSLM::GetAndProcessText(long& size, BITMAPINFO& bmi)	//for 3D 
 			free(fImg);
 		}
 		myReadFile.close();
-	}	
+	}
 	else
 	{
 		StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorSLMPDM512 GetAndProcessText: load text file failed.");
 		LogMessage(_errMsg, ERROR_EVENT);
 		return NULL;
 	}
-	
+
 	//free(fullFileName);
 
 
@@ -1704,7 +1815,6 @@ long ThorSLM::ResetSequence(wchar_t* filename)
 
 long ThorSLM::SetIntermediateBuffer(MemoryStruct memStruct)
 {
-	long ret = TRUE;
 	unsigned int tmpCount = 0U;
 
 	if((NULL == memStruct.memPtr) || (0 == memStruct.size))
@@ -1714,6 +1824,8 @@ long ThorSLM::SetIntermediateBuffer(MemoryStruct memStruct)
 	HighPerfTimer timer;
 	timer.Start();
 #endif
+	_callbackMutex.lock();
+
 	if (TRUE == _slmRuntimeCalculate)
 	{
 		//persist image buffers, then calculate transient at callback
@@ -1724,13 +1836,13 @@ long ThorSLM::SetIntermediateBuffer(MemoryStruct memStruct)
 	{
 		//calculate transient to current frame, buffer size including header:
 		if(false == _blinkSDK->Calculate_transient_frames(memStruct.memPtr, &tmpCount))
-			return FALSE;
+			goto FALSE_RETURN;
 
 		ReallocMemChk(_slmTempBuf, tmpCount*sizeof(unsigned char));
 		if ((0 == tmpCount) || (false == _blinkSDK->Retrieve_transient_frames(_slmTempBuf.memPtr)))
 		{
 			ReallocMemChk(_slmTempBuf, 0);
-			return FALSE;
+			goto FALSE_RETURN;
 		}
 
 		//persist transient buffers:
@@ -1739,7 +1851,7 @@ long ThorSLM::SetIntermediateBuffer(MemoryStruct memStruct)
 		if(NULL == _intermediateBuf[_arrayOrFileID].memPtr)
 		{
 			ReallocMemChk(_slmTempBuf, 0);
-			return FALSE;
+			goto FALSE_RETURN;
 		}
 
 		memcpy_s(_intermediateBuf[_arrayOrFileID].memPtr, tmpCount*sizeof(unsigned char), _slmTempBuf.memPtr, tmpCount*sizeof(unsigned char));
@@ -1749,7 +1861,12 @@ long ThorSLM::SetIntermediateBuffer(MemoryStruct memStruct)
 	StringCbPrintfW(_errMsg,MSG_SIZE,L"ThorSLM:%hs@%u: SetIntermediateBuffer time: %d ms", __FILE__, __LINE__, static_cast<int>(timer.ElapsedMilliseconds()));
 	LogMessage(_errMsg,INFORMATION_EVENT);
 #endif
-	return ret;
+	_callbackMutex.unlock();
+	return TRUE;
+
+FALSE_RETURN:
+	_callbackMutex.unlock();
+	return FALSE;
 }
 
 long ThorSLM::SetupHWTriggerIn()

@@ -17,6 +17,7 @@
         private Point _centerPoint;
         private GeometryGroup _crossHairGroup;
         private double _size = 7;
+        private double _wavelength = 0;
         private double _zValue = 0;
 
         #endregion Fields
@@ -29,7 +30,6 @@
             _centerPoint = new Point(0, 0);
             _crossHairGroup = new GeometryGroup();
             RedrawShape();
-            
         }
 
         public ROICrosshair(Point center)
@@ -37,7 +37,6 @@
             _centerPoint = center;
             _crossHairGroup = new GeometryGroup();
             RedrawShape();
-            
         }
 
         #endregion Constructors
@@ -54,21 +53,22 @@
             }
         }
 
-        protected override Geometry DefiningGeometry
+        public double Wavelength
         {
-            get { return _crossHairGroup; }
+            get { return _wavelength; }
+            set { _wavelength = value; }
         }
-
 
         public double ZValue
         {
             get { return _zValue; }
-            set
-            {
-                _zValue = value;
-                
-            }
-        } 
+            set { _zValue = value; }
+        }
+
+        protected override Geometry DefiningGeometry
+        {
+            get { return _crossHairGroup; }
+        }
 
         #endregion Properties
 

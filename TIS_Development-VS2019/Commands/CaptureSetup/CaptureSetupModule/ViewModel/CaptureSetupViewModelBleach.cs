@@ -128,7 +128,7 @@
             }
         }
 
-        public double BleachCalibratePockelsVoltageMax0
+        public double[] BleachCalibratePockelsVoltageMax0
         {
             get
             {
@@ -136,7 +136,7 @@
             }
         }
 
-        public double BleachCalibratePockelsVoltageMin0
+        public double[] BleachCalibratePockelsVoltageMin0
         {
             get
             {
@@ -389,17 +389,6 @@
             }
         }
 
-        //GALVO_RESONANCE == 0, GALVO_GALVO == 1
-        public long BleachScannerType
-        {
-            get
-            {
-                long _bleachScannerType = 0;
-                this._captureSetup.GetBleacherType(ref _bleachScannerType);
-                return _bleachScannerType;
-            }
-        }
-
         public int BleachWavelength
         {
             get
@@ -411,6 +400,11 @@
                 this._captureSetup.BleachWavelength = value;
                 OnPropertyChanged("BleachWavelength");
             }
+        }
+
+        public int BleachInternalClockRate
+        {
+            get { return this._captureSetup.BleachInternalClockRate; }
         }
 
         public int BleachWavelengthEnable
@@ -568,7 +562,7 @@
             { return _pixelDensity; }
             set
             {
-                double rate = (double)this.BleachLSMPixelXY[0] / value;
+                double rate = (null == this.BleachLSMPixelXY) ? 1.0 / value : (double)this.BleachLSMPixelXY[0] / value;
                 if ((rate >= 20) && (rate <= 1540))
                 {
                     for (int i = 0; i < BleachParamList.Count; i++)
@@ -690,19 +684,9 @@
             }
         }
 
-        public bool GetBleacherType(ref long bleacherType)
-        {
-            return this._captureSetup.GetBleacherType(ref bleacherType);
-        }
-
         public int GetLSMBleacherFieldSizeCalibration(ref double calibration)
         {
             return this._captureSetup.GetBleacherFieldSizeCalibration(ref calibration);
-        }
-
-        public void InitializeWaveformBuilder(int clockRateHz)
-        {
-            _captureSetup.InitializeWaveformBuilder(clockRateHz);
         }
 
         public void ReleaseBleachWaveform()
@@ -753,7 +737,7 @@
                         BleachClass.SetBleachAttribute(xnodes[i], doc, 4, BleachParamList[idx].Fill.ToString());
                         str = (BleachParamList[idx].PixelMode) ? "1" : "0";
                         BleachClass.SetBleachAttribute(xnodes[i], doc, 5, str);
-                        BleachClass.SetBleachAttribute(xnodes[i], doc, 6, BleachParamList[idx].Power.ToString());
+                        BleachClass.SetBleachAttribute(xnodes[i], doc, 6, BleachParamList[idx].Power[0].ToString());    //single pockel bleach, may extend
                         BleachClass.SetBleachAttribute(xnodes[i], doc, 7, BleachParamList[idx].ClockRate.ToString());
                         BleachClass.SetBleachAttribute(xnodes[i], doc, 8, BleachParamList[idx].LongIdleTime.ToString());
                         BleachClass.SetBleachAttribute(xnodes[i], doc, 9, BleachParamList[idx].PrePatIdleTime.ToString());
@@ -1076,8 +1060,7 @@
         private bool StartBleach()
         {
             //Return when no bleach scanner is selected:
-            long bleacherType = 0;
-            if (false == _captureSetup.GetBleacherType(ref bleacherType))
+            if ((int)ICamera.LSMType.LSMTYPE_LAST == ResourceManagerCS.GetBleacherType())
             {
                 System.Windows.MessageBox.Show("Bleach Scanner has not been selected!");
                 return false;

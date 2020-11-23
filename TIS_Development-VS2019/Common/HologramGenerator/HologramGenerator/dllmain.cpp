@@ -27,9 +27,9 @@ DllExportHoloGen Set3DParam(double na,double wavelength)
 
 
 
-DllExportHoloGen SetSize(int width, int height)
+DllExportHoloGen SetSize(int width, int height, double pixelUM)
 {
-	return HologramGen::getInstance()->SetSize(width, height);
+	return HologramGen::getInstance()->SetSize(width, height, pixelUM);
 }
 
 DllExportHoloGen SetAlgorithm(int algorithmID)
@@ -37,9 +37,9 @@ DllExportHoloGen SetAlgorithm(int algorithmID)
 	return HologramGen::getInstance()->SetAlgorithm(algorithmID);
 }
 
-DllExportHoloGen SetPathandFilename(const wchar_t * pathAndFilename)
+DllExportHoloGen CombineHologramFiles(const wchar_t * pathAndFilename1, const wchar_t * pathAndFilename2)
 {
-	return HologramGen::getInstance()->SetPathandFilename(pathAndFilename);
+	return HologramGen::getInstance()->CombineHologramFiles(pathAndFilename1, pathAndFilename2);
 }
 
 DllExportHoloGen SetCoeffs(long fittingAlgorithm, double* affCoeffs)

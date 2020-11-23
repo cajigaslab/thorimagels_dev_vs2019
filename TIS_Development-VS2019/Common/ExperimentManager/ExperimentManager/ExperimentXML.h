@@ -7,6 +7,7 @@ private:
 	string _currentPathAndFile;
 public:
 	static const char * const ROOT_TAG;
+	static const char * const ZFILEPOSTAG;
 
 	static const char * const NAME;
 	enum {NUM_NAME_ATTRIBUTES = 1};
@@ -37,7 +38,7 @@ public:
 	static const char * const CAMERA_ATTR[NUM_CAMERA_ATTRIBUTES];
 
 	static const char * const LSM;
-	enum {NUM_LSM_ATTRIBUTES = 31};
+	enum {NUM_LSM_ATTRIBUTES = 33};
 	static const char * const LSM_ATTR[NUM_LSM_ATTRIBUTES];
 
 	static const char * const RAW;
@@ -198,10 +199,10 @@ public:
 	long GetCamera(string &name,long &width,long &height,double &pixelSizeUM,double &exposureTimeMS, long &gain, long &blackLevel, long &lightMode, long &left, long &top, long &right, long &bottom, long &binningX, long &binningY, long &tapsIndex, long &tapsBalance, long &readOutSpeedIndex, long &averageMode, long &averageNum, long &verticalFlip, long &horizontalFlip, long &imageAngle);///camera information
 	long SetCamera(string name, long width, long height, double pixelSizeUM, long binning, long gain, long lightMode);
 
-	long GetLSM(long &areaMode, double &areaAngle, long &scanMode,long &interleave,long &pixelX,long &pixelY,long &channel, long &fieldSize, long &offsetX, long &offsetY,
-		long &averageMode, long &averageNum, long &clockSource, long &inputRange1, long &inputRange2, long &twoWayAlignment, long &extClockRate, double &dwellTime, 
-		long &flybackCycles, long &inputRange3, long &inputRange4, long &minimizeFlybackCycles, long &polarity1, long &polarity2, long &polarity3, long &polarity4,
-		long &verticalFlip, long &horizontalFlip, double &crsFrequencyHz, long &timeBasedLineScan, long &timeBasedLSTimeMS);
+	long GetLSM(long& areaMode, double& areaAngle, long& scanMode, long& interleave, long& pixelX, long& pixelY, long& channel, long& fieldSize, long& offsetX, long& offsetY,
+		long& averageMode, long& averageNum, long& clockSource, long& inputRange1, long& inputRange2, long& twoWayAlignment, long& extClockRate, double& dwellTime,
+		long& flybackCycles, long& inputRange3, long& inputRange4, long& minimizeFlybackCycles, long& polarity1, long& polarity2, long& polarity3, long& polarity4,
+		long& verticalFlip, long& horizontalFlip, double& crsFrequencyHz, long& timeBasedLineScan, long& timeBasedLSTimeMS, long& threePhotonEnable, long& numberOfPlanes);
 	long SetLSM(long areaMode, double areaAngle,long scanMode,long interleave,long pixelX,long pixelY,long channel, long fieldSize, long offsetX, long offsetY,
 		long averageMode, long averageNum, long clockSource, long inputRange1, long inputRange2, long twoWayAlignment, long extClockRate,double dwellTime, long flybackCycles, long inputRange3, long inputRange4, long minimizeFlybackCycles, long polarity1, long polarity2, long polarity3, long polarity4, long verticalFlip, long horizontalFlip);
 
@@ -287,12 +288,16 @@ public:
 	long GetSpectralFilter(long &startWavelength, long &stopWavelength, long &stepsSizeWavelength, long &bandwidthMode, string &path);
 	long SetSpectralFilter(long startWavelength, long stopWavelength, long stepsSizeWavelength, long bandwidthMode, string path);
 
-	long GetLampLED(long& led1enable, double& led1power, long& led2enable, double& led2power, long& led3enable, double& led3power, long& led4enable, double& led4power, long& led5enable, double& led5power, long& led6enable, double& led6power);
+	long GetLampLED(long& led1enable, double& led1power, long& led2enable, double& led2power, long& led3enable, double& led3power, long& led4enable, double& led4power, long& led5enable, double& led5power, long& led6enable, double& led6power, double& mainPower);
 
 	long GetSampleRegions(long &viewMode, vector<SampleRegion> &sregions);
 	long GetScanRegions(long &viewMode, vector<ScanRegion> &sregions);
 	long GetScanAttribute(long viewMode, string attribute, double &value);
 	long SetAllScanAreas(long viewMode, long enable);
+
+	long GetZPosList(vector<double>& vec);
+	long GetZFileInfo(int& enable, double& scale);
+
 	void Update();
 
 	long GetAttribute(string tagName, string attribute, string &attributeValue);
@@ -303,6 +308,7 @@ public:
 	long OpenConfigFile(string path);
 	long CreateTag(string parentTag, string tag);
 	long GetTagCount(string tagParent, string tagName, long &count);
+	long GetElementList(string tagParent, string tagName, vector<double>& vect);
 	long Save();
 	string GetPath();
 };

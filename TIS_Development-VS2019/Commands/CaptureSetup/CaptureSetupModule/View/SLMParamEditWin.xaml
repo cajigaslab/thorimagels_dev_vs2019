@@ -10,10 +10,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        d:DesignWidth="470"
+        d:DesignWidth="500"
         d:DesignHeight="780"
         MaxHeight="780"
-        MaxWidth="470"
+        MaxWidth="500"
         WindowStyle="ThreeDBorderWindow"
         SizeToContent="WidthAndHeight"
         ResizeMode="NoResize"
@@ -25,7 +25,8 @@
             </ResourceDictionary.MergedDictionaries>
             <ViewModel:DoubleCultureConverter x:Key="doubleCulture" />
             <ViewModel:BrushColorConverter x:Key="brushColorConverter" />
-            <sharedType:StringToVisibilityConverter x:Key="stringToVisConverter"/>
+            <sharedType:StringToVisibilityConverter x:Key="stringToVisConverter" />
+            <sharedType:BooleanToVisibilityConverter x:Key="boolToVisConverter" />
         </ResourceDictionary>
     </Window.Resources>
     <Grid Margin="3">
@@ -102,7 +103,8 @@
                         </Label.Background>
                     </Label>
                 </StackPanel>
-                <Border Width="200"
+                <Border Name="bdrROI"
+                        Width="200"
                         Height="Auto"
                         Margin="3">
                     <StackPanel Orientation="Vertical"
@@ -195,13 +197,14 @@
                     </StackPanel>
                 </Border>
             </StackPanel>
-            <StackPanel Name="stpSpacing"
+            <StackPanel Name="stpSpec"
                         Grid.Column="0"
                         Grid.Row="1"
                         Orientation="Vertical"
                         Margin="3"
                         HorizontalAlignment="Center">
-                <StackPanel Orientation="Horizontal"
+                <StackPanel Name="stpSpacing"
+                            Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             ToolTip="Pixel spacing per step.">
                     <Label Content="Pixel Spacing"
@@ -323,6 +326,29 @@
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center" />
                 </StackPanel>
+                <StackPanel Name="stpWavelength"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right">
+                    <Label Content="Wavelength"
+                           Height="30"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" />
+                    <ToggleButton x:Name="btnLamda"
+                                  Width="60"
+                                  Height="20"
+                                  Margin="3"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  IsEnabled="{Binding Path=IsStimulator, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"
+                                  IsChecked="{Binding Path=SLMSelectWavelength,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                  Content="{Binding Path=SLMWavelengthNM, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}">
+                    </ToggleButton>
+                    <Label Content="[nm]"
+                           Width="50"
+                           Height="30"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" />
+                </StackPanel>
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right">
                     <Label Content="Power"
@@ -339,7 +365,7 @@
                              validator:Validation.MinValue="0.0"
                              validator:Validation.NoEmptyValue="True"
                              validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
-                             Text="{Binding Path=.BleachWaveParams.Power, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}" />
+                             Text="{Binding Path=.BleachWaveParams.Power[0], Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}" />
                     <Button Width="25"
                             Height="25"
                             Content="✓">
@@ -349,6 +375,49 @@
                                         Value="Collapsed" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txtPower}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <TextBox Name="txtPower1"
+                             Width="60"
+                             Foreground="White"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center"
+                             Margin="3,3,3,3"
+                             validator:Validation.ValidationType="{x:Type system:Double}"
+                             validator:Validation.MinValue="0.0"
+                             validator:Validation.NoEmptyValue="True"
+                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                             Text="{Binding Path=.BleachWaveParams.Power[1], Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox"
+                                   BasedOn="{StaticResource {x:Type TextBox}}">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ElementName=btnLamda, Path=IsChecked}"
+                                                 Value="false">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+                    <Button Width="25"
+                            Height="25"
+                            Content="✓">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txtPower1}"
                                                  Value="True">
                                         <Setter Property="Visibility"
                                                 Value="Visible" />
@@ -372,15 +441,14 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Top">
                 <StackPanel Orientation="Horizontal"
-                            HorizontalAlignment="Right"
-                            Width="240"
+                            HorizontalAlignment="Center"
                             Margin="3">
-                    <Label Content="Measured Power"
+                    <Label Content="    Measured Power"
                            Height="30"
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center" />
                     <TextBox Name="txtmPower"
-                             Width="60"
+                             Width="55"
                              Foreground="White"
                              HorizontalAlignment="Center"
                              VerticalAlignment="Center"
@@ -389,7 +457,7 @@
                              validator:Validation.MinValue="0.0"
                              validator:Validation.NoEmptyValue="False"
                              validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
-                             Text="{Binding Path=.BleachWaveParams.MeasurePower, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}" />
+                             Text="{Binding Path=.BleachWaveParams.MeasurePower[0], Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}" />
                     <Button Width="25"
                             Height="25"
                             Content="✓">
@@ -407,6 +475,49 @@
                             </Style>
                         </Button.Style>
                     </Button>
+                    <TextBox Name="txtmPower1"
+                             Width="55"
+                             Foreground="White"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center"
+                             Margin="3,3,3,3"
+                             validator:Validation.ValidationType="{x:Type system:Double}"
+                             validator:Validation.MinValue="0.0"
+                             validator:Validation.NoEmptyValue="False"
+                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                             Text="{Binding Path=.BleachWaveParams.MeasurePower[1], Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox"
+                                   BasedOn="{StaticResource {x:Type TextBox}}">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ElementName=btnLamda, Path=IsChecked}"
+                                                 Value="false">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+                    <Button Width="25"
+                            Height="25"
+                            Content="✓">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txtmPower1}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                     <Label Content="[mW]"
                            Width="50"
                            Height="30"
@@ -414,21 +525,42 @@
                            VerticalAlignment="Center" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal"
-                            HorizontalAlignment="Right"
-                            Width="280"
+                            HorizontalAlignment="Center"
                             Margin="3">
                     <Label Content="Approx. Power Density"
                            Width="140"
                            Height="30"
                            HorizontalContentAlignment="Right"
                            VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding Path=.SLMMeasurePowerArea, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                    <TextBlock Text="{Binding Path=.SLMMeasurePowerArea[0], StringFormat=N3, Converter={StaticResource doubleCulture}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                Foreground="White"
                                Background="#FF595959"
-                               Width="60"
+                               Width="55"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"
                                Margin="3,3,3,3" />
+                    <TextBlock Text="{Binding Path=.SLMMeasurePowerArea[1], StringFormat=N3, Converter={StaticResource doubleCulture}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                               Foreground="White"
+                               Background="#FF595959"
+                               Width="55"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Margin="3,3,3,3">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock"
+                                   BasedOn="{StaticResource {x:Type TextBlock}}">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ElementName=btnLamda, Path=IsChecked}"
+                                                 Value="false">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                     <Label Content="[mW/um^2]"
                            Width="80"
                            Height="30"
@@ -801,12 +933,15 @@
                         Content="Add Epoch"
                         Foreground="White"
                         Margin="130,0,0,0"
-                        HorizontalContentAlignment="Right"                            
+                        HorizontalContentAlignment="Right"
                         VerticalAlignment="Center"
-                        Width="100" Click="AddEpochLine_Click"></Button>
+                        Width="100"
+                        Click="AddEpochLine_Click"></Button>
             </StackPanel>
-            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="600">
-                <StackPanel Name="linePanel" Orientation="Vertical"/>
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          MaxHeight="600">
+                <StackPanel Name="linePanel"
+                            Orientation="Vertical" />
             </ScrollViewer>
         </StackPanel>
         <StackPanel Name="stpSLMStatus"

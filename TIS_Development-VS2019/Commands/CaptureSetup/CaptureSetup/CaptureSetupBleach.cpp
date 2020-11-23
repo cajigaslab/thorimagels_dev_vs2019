@@ -435,7 +435,7 @@ UINT BleachThreadProc(LPVOID pParam)
 		PostflightCamera(SelectedHardware::SELECTED_BLEACHINGSCANNER);
 		StringCbPrintfW(message,MSG_SIZE,L"CaptureSetup SLMBleach SetupAcquisition failed");
 		logDll->TLTraceEvent(ERROR_EVENT,1,message);	
-		MessageBox(NULL,L"When bleacing and imaging at the same time, the pockels cell cannot be controlled by the same board as the Image Detector. A separate board is necessary.",L"Bleach Error", MB_OK | MB_DEFAULT_DESKTOP_ONLY | MB_ICONERROR);
+		MessageBox(NULL,L"When bleaching and imaging at the same time, the pockels cell cannot be controlled by the same board as the Image Detector. A separate board is necessary.",L"Bleach Error", MB_OK | MB_DEFAULT_DESKTOP_ONLY | MB_ICONERROR);
 		SetEvent(hEventBleach);
 		return FALSE;
 	}
@@ -490,7 +490,7 @@ void CreateThenWaitBleacherThread()
 	SAFE_DELETE_HANDLE(hBleachThread);
 }
 
-BOOL CheckBleacherIsGalvo()
+BOOL ValidateBleacher()
 {
 	////Check active camera to do bleach:
 	if(0 == GetCamera(SelectedHardware::SELECTED_BLEACHINGSCANNER))
@@ -501,7 +501,7 @@ BOOL CheckBleacherIsGalvo()
 	double lsmType;
 	if(TRUE == GetCameraParamDouble(SelectedHardware::SELECTED_BLEACHINGSCANNER,ICamera::PARAM_LSM_TYPE,lsmType))
 	{
-		if(ICamera::LSMType::GALVO_GALVO != lsmType)
+		if(ICamera::LSMType::GALVO_GALVO != lsmType && ICamera::LSMType::STIMULATE_MODULATOR != lsmType)
 		{
 			logDll->TLTraceEvent(ERROR_EVENT,1,L"CaptureSetup bleach scanner can only be galvo-galvo");
 			return FALSE;
@@ -522,7 +522,7 @@ BOOL CheckBleacherIsGalvo()
 
 DllExportLiveImage Bleach(const wchar_t* bleachfilePathName, int cycleNum)
 {	
-	if(FALSE == CheckBleacherIsGalvo())
+	if(FALSE == ValidateBleacher())
 	{
 		return FALSE;
 	}
@@ -689,7 +689,7 @@ DllExportLiveImage PostflightSLMBleachScanner()
 
 DllExportLiveImage SLMBleach()
 {		
-	if(FALSE == CheckBleacherIsGalvo())
+	if(FALSE == ValidateBleacher())
 	{
 		return FALSE;
 	}
@@ -782,7 +782,7 @@ DllExportLiveImage CalibrateSLM(const wchar_t* bmpPatternName, float* xyPointFro
 	ReleaseMutex(CaptureSetup::getInstance()->bleachParams[0]->bufferHandle);
 
 	//check scanner is Galvo-Galvo:
-	if(FALSE == CheckBleacherIsGalvo())
+	if(FALSE == ValidateBleacher())
 	{
 		return FALSE;
 	}
@@ -833,20 +833,9 @@ DllExportLiveImage SaveSLMPattern(const wchar_t* bmpPatternName)
 	SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_FUNC_MODE,IDevice::SLMFunctionMode::SAVE_PHASE, IDevice::DeviceSetParamType::NO_EXECUTION);
 	ret = SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_ARRAY_ID,0,IDevice::DeviceSetParamType::NO_EXECUTION);
 	ret = SetDeviceParamString(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_BMP_FILENAME,(wchar_t*)bmpPatternName,IDevice::DeviceSetParamType::EXECUTION_WAIT);
-	
+
 	return ret;
 }
-
-DllExportLiveImage SetSLM3DParam(double na, double wavelength)
-{
-	long ret = TRUE;
-	
-	ret= SetDeviceParamDouble(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_NA,na,IDevice::DeviceSetParamType::NO_EXECUTION);
-	ret= SetDeviceParamDouble(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_WAVELENGTH,wavelength,IDevice::DeviceSetParamType::NO_EXECUTION);
-	return ret;
-}
-
-
 
 DllExportLiveImage ResetAffineCalibration()
 {

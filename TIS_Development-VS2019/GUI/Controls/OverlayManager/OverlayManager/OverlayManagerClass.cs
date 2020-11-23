@@ -30,6 +30,8 @@
     {
         #region Fields
 
+        public static Byte ATTENUATE_VALUE = (Byte)(Byte.MaxValue / 2);
+
         //save RGB in int32 in order: [A-B-G-R]
         //byte sections will be used in all necessary cases:
         //Mode:SecR, Version:SecA
@@ -73,6 +75,7 @@
         private bool _showPolylineLength = false;
         private double _umPerPixel;
         private bool _visible = true;
+        private int _wavelengthNM = 0;
         private double _zValue = 0;
 
         #endregion Fields
@@ -253,6 +256,12 @@
             set { _visible = value; }
         }
 
+        public int WavelengthNM
+        {
+            get { return _wavelengthNM; }
+            set { _wavelengthNM = value; }
+        }
+
         public double ZValue
         {
             get { return _zValue; }
@@ -262,12 +271,6 @@
         #endregion Properties
 
         #region Methods
-
-        [DllImport(".\\ResourceManager.dll", EntryPoint = "GetApplicationSettingsFilePathAndName", CharSet = CharSet.Unicode)]
-        public static extern int GetApplicationSettingsFilePathAndName(StringBuilder sb, int length);
-
-        [DllImport(".\\ResourceManager.dll", EntryPoint = "GetHardwareSettingsFilePathAndName", CharSet = CharSet.Unicode)]
-        public static extern int GetHardwareSettingsFilePathAndName(StringBuilder sb, int length);
 
         public static byte GetTagByteSection(object tag, Tag tagID, BitVector32.Section section)
         {
@@ -603,6 +606,7 @@
             List<Shape> roiListKeep = new List<Shape>();
             for (int i = 0; i < _roiList.Count; i++)
             {
+                Mode md = (Mode)(GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR));
                 switch (_currentMode)
                 {
                     case Mode.MICRO_SCANAREA:
@@ -612,8 +616,9 @@
                         }
                         break;
                     case Mode.PATTERN_NOSTATS:
+                    case Mode.PATTERN_WIDEFIELD:
                     case Mode.STATSONLY:
-                        if ((Mode.PATTERN_NOSTATS == (Mode)(GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR))) &&
+                        if ((Mode.PATTERN_NOSTATS == md || Mode.PATTERN_WIDEFIELD == md) &&
                             (_patternID != ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID]))
                         {
                             roiListKeep.Add(_roiList[i]);
@@ -707,13 +712,13 @@
             int[] tag = DefaultTags(_roiCount);
             tag[(int)Tag.SUB_PATTERN_ID] = 0;
 
-            _bitVec32 = new BitVector32(_colorRGB);
+            _bitVec32 = new BitVector32(tag[(int)Tag.RGB]);
             if (typeof(ROICrosshair) == _roiList[_roiList.Count - 1].GetType())
             {
                 ROICrosshair crosshair = new ROICrosshair()
                 {
                     Stroke = (Mode.PATTERN_NOSTATS == _currentMode) ?
-                        new SolidColorBrush(Color.FromRgb(Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
+                        new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
                         GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8),
                     StrokeThickness = 1,
                     Fill = Brushes.Transparent
@@ -728,7 +733,7 @@
                 ROIEllipse ellipse = new ROIEllipse(_roiList[_roiList.Count - 1] as ROIEllipse)
                 {
                     Stroke = (Mode.PATTERN_NOSTATS == _currentMode) ?
-                        new SolidColorBrush(Color.FromRgb(Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
+                        new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
                         GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8),
                     StrokeThickness = 1,
                     Fill = Brushes.Transparent
@@ -781,6 +786,7 @@
                     _save = true;
                     break;
                 case Mode.PATTERN_NOSTATS:
+                case Mode.PATTERN_WIDEFIELD:
                     _save = false;
                     break;
                 default:
@@ -788,7 +794,7 @@
             }
         }
 
-        public void DeletePatternROI(ref Canvas canvas, int patternID = -1)
+        public void DeletePatternROI(ref Canvas canvas, int patternID = -1, Mode pMode = Mode.PATTERN_NOSTATS)
         {
             //keep other patterns and stats:
             List<Shape> localListToKeep = new List<Shape>();
@@ -797,12 +803,12 @@
             {
                 Mode roiMode = (Mode)GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR);
                 // [patternID: -1, delete all]
-                if ((Mode.PATTERN_NOSTATS != roiMode) || (0 < patternID && (patternID != ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID])))
+                if ((pMode != roiMode) || (0 < patternID && (patternID != ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID])))
                 {
                     localListToKeep.Add(_roiList[i]);
                 }
                 //reassign later pattern IDs forward
-                if ((Mode.PATTERN_NOSTATS == roiMode) && (0 < patternID) && (patternID < ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID]))
+                if ((pMode == roiMode) && (0 < patternID) && (patternID < ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID]))
                 {
                     int[] tag = (int[])_roiList[i].Tag;
                     tag[(int)Tag.PATTERN_ID]--;
@@ -875,6 +881,25 @@
             }
         }
 
+        /// <summary>
+        /// dim wavelength ROIs other than target wavelength to attenuation value
+        /// </summary>
+        /// <param name="canvas"></param>
+        /// <param name="wavelength"></param>
+        /// <param name="attenuation"></param>
+        public void DimWavelengthROI(ref Canvas canvas)
+        {
+            for (int i = 0; i < _roiList.Count; i++)
+            {
+                _roiList[i].Stroke = new SolidColorBrush(Color.FromArgb(
+                    (_wavelengthNM == ((int[])_roiList[i].Tag)[(int)Tag.WAVELENGTH_NM]) ? Byte.MaxValue : ATTENUATE_VALUE,
+                    ((SolidColorBrush)_roiList[i].Stroke).Color.R,
+                    ((SolidColorBrush)_roiList[i].Stroke).Color.G,
+                    ((SolidColorBrush)_roiList[i].Stroke).Color.B));
+            }
+            UpdateVisibleROIs(ref canvas);
+        }
+
         public void DisplayModeROI(ref Canvas canvas, Mode mode, bool setVisible)
         {
             for (int i = 0; i < _roiList.Count; i++)
@@ -901,13 +926,21 @@
             UpdateVisibleROIs(ref canvas);
         }
 
-        public List<Shape> GetModeROIs(Mode mode)
+        /// <summary>
+        /// get lists of shapes with the same mode, all if no pattern ID or wavelengthNM specified.
+        /// </summary>
+        /// <param name="mode"></param>
+        /// <param name="patternID"></param>
+        /// <returns></returns>
+        public List<Shape> GetModeROIs(Mode mode, int patternID = -1, int wavelengthNM = -1)
         {
             List<Shape> roiList = new List<Shape>();
 
             for (int i = 0; i < _roiList.Count; i++)
             {
-                if (mode == (Mode)(GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR)))
+                if (mode == (Mode)(GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR)) &&
+                    (0 < patternID && patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID]) &&
+                    (0 < wavelengthNM && wavelengthNM == ((int[])_roiList[i].Tag)[(int)Tag.WAVELENGTH_NM]))
                 {
                     roiList.Add(_roiList[i]);
                 }
@@ -1727,11 +1760,11 @@
             SelectROIIndexWithErrorChecking(nextIndex);
         }
 
-        public void SetPatternToSaveROI(int patternID)
+        public void SetPatternToSaveROI(int patternID, Mode pMode = Mode.PATTERN_NOSTATS)
         {
             for (int i = 0; i < _roiList.Count; i++)
             {
-                if ((Mode.PATTERN_NOSTATS == (Mode)(GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR))) &&
+                if ((pMode == (Mode)(GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR))) &&
                     (patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID]))
                 {
                     int[] tag = SetTagBit(_roiList[i].Tag, Tag.FLAGS, Flag.SAVE, true);
@@ -1774,11 +1807,11 @@
             }
         }
 
-        public void UpdatePatternROIColor(ref Canvas canvas)
+        public void UpdatePatternROIColor(ref Canvas canvas, Mode pMode = Mode.PATTERN_NOSTATS)
         {
             for (int i = 0; i < _roiList.Count; i++)
             {
-                if ((Mode.PATTERN_NOSTATS == _currentMode) && (_patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID]))
+                if ((pMode == _currentMode) && (_patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID]))
                 {
                     //update pattern roi color tag:
                     int[] tag = (int[])_roiList[i].Tag;
@@ -1787,7 +1820,8 @@
 
                     //update pattern roi color:
                     _bitVec32 = new BitVector32(_colorRGB);
-                    _roiList[i].Stroke = new SolidColorBrush(Color.FromRgb(Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB])));
+                    _roiList[i].Stroke = new SolidColorBrush(Color.FromArgb((_wavelengthNM == ((int[])_roiList[i].Tag)[(int)Tag.WAVELENGTH_NM]) ? Byte.MaxValue : ATTENUATE_VALUE,
+                        Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB])));
                 }
             }
 
@@ -1914,6 +1948,7 @@
                             roiList.Add(_roiList[i]);
                         }
                         break;
+                    case Mode.PATTERN_WIDEFIELD:
                     case Mode.STATSONLY:
                     case Mode.LAST_MODE:
                         roiList.Add(_roiList[i]);
@@ -2023,7 +2058,7 @@
                     IndexAdornerProvider IndexAdornerProvider = new IndexAdornerProvider(roi, roi.Stroke, _pixelX, _pixelY);
                     IndexAdornerProvider.Index = ((int[])roi.Tag)[(int)Tag.SUB_PATTERN_ID];
                     _bitVec32 = new BitVector32(((int[])roi.Tag)[(int)Tag.RGB]);
-                    IndexAdornerProvider.ForeGround = new SolidColorBrush(Color.FromRgb(Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB])));
+                    IndexAdornerProvider.ForeGround = new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB])));
                     _roiAdornerLayer.Add(IndexAdornerProvider);
                 }
             }
@@ -2178,7 +2213,7 @@
         {
             if ((roi is Reticle) || (roi is Scale) ||
                 (Mode.STATSONLY == _currentMode || Mode.MICRO_SCANAREA == _currentMode) && (0 != ((int[])roi.Tag)[(int)Tag.PATTERN_ID]) ||
-                ((Mode.PATTERN_NOSTATS == _currentMode) && (_patternID != ((int[])roi.Tag)[(int)Tag.PATTERN_ID])))
+                ((Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) && (_patternID != ((int[])roi.Tag)[(int)Tag.PATTERN_ID])))
             {
                 return false;
             }
@@ -2442,14 +2477,14 @@
             int imgWidth = _pixelX;
             int imgHeight = _pixelY;
             _selectedPolygon = null;
-            _bitVec32 = new BitVector32(_colorRGB);
             int[] tag = DefaultTags(_roiCount);
             Shape roi = new Reticle();
             tag[(int)Tag.SUB_PATTERN_ID] = GetCurrentSubPatternCount(ref roi) + 1;
+            _bitVec32 = new BitVector32(tag[(int)Tag.RGB]);
             Reticle reticle = new Reticle()
             {
-                Stroke = (Mode.PATTERN_NOSTATS == _currentMode) ?
-                    new SolidColorBrush(Color.FromRgb(Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
+                Stroke = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ?
+                    new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
                     GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8),
                 StrokeThickness = 1
             };
@@ -2481,11 +2516,11 @@
             if ((Mode.PATTERN_NOSTATS == _currentMode) && (null == (roi as ROICrosshair)))
                 return;
 
-            _bitVec32 = new BitVector32(_colorRGB);
+            _bitVec32 = new BitVector32(tag[(int)Tag.RGB]);
             ROICrosshair crosshair = new ROICrosshair()
             {
-                Stroke = (Mode.PATTERN_NOSTATS == _currentMode) ?
-                    new SolidColorBrush(Color.FromRgb(Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
+                Stroke = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ?
+                    new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
                     GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8),
                 StrokeThickness = 1,
                 Fill = Brushes.Transparent
@@ -2543,9 +2578,9 @@
             ellipse.ZValue = (Mode.PATTERN_NOSTATS == _currentMode) ? (double)MVMManager.Instance["ZControlViewModel", "ZPosition"] : 0;
 
             ellipse.Fill = new SolidColorBrush(Colors.Transparent);
-            _bitVec32 = new BitVector32(_colorRGB);
-            ellipse.Stroke = (Mode.PATTERN_NOSTATS == _currentMode) ?
-                new SolidColorBrush(Color.FromRgb(Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
+            _bitVec32 = new BitVector32(tag[(int)Tag.RGB]);
+            ellipse.Stroke = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ?
+                new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
                 GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8);
             ellipse.StrokeThickness = 1;
 
@@ -2569,22 +2604,23 @@
         //create an ROI Line
         private void CreateROILine(ref Canvas canvas, Point pt)
         {
-            Line line = new Line();
-            line.Name = "Line" + _roiList.Count + 1;
             _selectedPolygon = null;
-
-            line.X1 = pt.X;
-            line.Y1 = pt.Y;
-            line.X2 = pt.X + 1;
-            line.Y2 = pt.Y + 1;
-            _bitVec32 = new BitVector32(_colorRGB);
             int[] tag = DefaultTags(_roiCount);
             Shape roi = new Line();
             tag[(int)Tag.SUB_PATTERN_ID] = GetCurrentSubPatternCount(ref roi) + 1;
-            line.Stroke = (Mode.PATTERN_NOSTATS == _currentMode) ?
-                new SolidColorBrush(Color.FromRgb(Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
-                GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8);
-            line.StrokeThickness = 1;
+            _bitVec32 = new BitVector32(tag[(int)Tag.RGB]);
+            Line line = new Line
+            {
+                Stroke = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ?
+                    new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
+                    GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8),
+                StrokeThickness = 1,
+                Name = "Line" + _roiList.Count + 1,
+                X1 = pt.X,
+                Y1 = pt.Y,
+                X2 = pt.X + 1,
+                Y2 = pt.Y + 1,
+            };
             line.MouseLeftButtonDown += ROI_MouseDown;
             _roiList.Add(line);
 
@@ -2608,14 +2644,14 @@
         {
             _selectedPolygon = new Polygon { Stroke = Brushes.Goldenrod, StrokeThickness = 1, StrokeDashArray = new DoubleCollection { 3, 3 } };
             _selectedPolygon.Name = "Polygon";
-            _bitVec32 = new BitVector32(_colorRGB);
             int[] tag = DefaultTags(_roiCount);
             Shape roi = new Polygon();
             tag[(int)Tag.SUB_PATTERN_ID] = GetCurrentSubPatternCount(ref roi) + 1;
+            _bitVec32 = new BitVector32(tag[(int)Tag.RGB]);
             ROIPoly roundedPolygon = new ROIPoly
             {
-                Stroke = (Mode.PATTERN_NOSTATS == _currentMode) ?
-                    new SolidColorBrush(Color.FromRgb(Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
+                Stroke = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ?
+                    new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
                     GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8),
                 StrokeThickness = 1,
                 UseRoundnessPercentage = true,
@@ -2644,14 +2680,14 @@
         //create an ROI Polyline
         private void CreateROIPolyLine(ref Canvas canvas, Point pt)
         {
-            _bitVec32 = new BitVector32(_colorRGB);
             int[] tag = DefaultTags(_roiCount);
             Shape roi = new Polyline();
             tag[(int)Tag.SUB_PATTERN_ID] = GetCurrentSubPatternCount(ref roi) + 1;
+            _bitVec32 = new BitVector32(tag[(int)Tag.RGB]);
             Polyline polyLine = new Polyline
             {
-                Stroke = (Mode.PATTERN_NOSTATS == _currentMode) ?
-                    new SolidColorBrush(Color.FromRgb(Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
+                Stroke = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ?
+                    new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
                     GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8),
                 StrokeThickness = 1
             };
@@ -2680,18 +2716,20 @@
         private void CreateROIRect(ref Canvas canvas, Point pt)
         {
             _selectedPolygon = null;
-
-            ROIRect rectangle = new ROIRect();
-            rectangle.StartPoint = pt;
-            rectangle.Fill = new SolidColorBrush(Colors.Transparent);
-            _bitVec32 = new BitVector32(_colorRGB);
             int[] tag = DefaultTags(_roiCount);
+
             Shape roi = new ROIRect();
             tag[(int)Tag.SUB_PATTERN_ID] = GetCurrentSubPatternCount(ref roi) + 1;
-            rectangle.Stroke = (Mode.PATTERN_NOSTATS == _currentMode) ?
-                new SolidColorBrush(Color.FromRgb(Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
-                GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8);
-            rectangle.StrokeThickness = 1;
+            _bitVec32 = new BitVector32(tag[(int)Tag.RGB]);
+            ROIRect rectangle = new ROIRect
+            {
+                Stroke = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ?
+                   new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
+                   GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8),
+                StrokeThickness = 1,
+                StartPoint = pt,
+                Fill = new SolidColorBrush(Colors.Transparent)
+            };
             rectangle.MouseLeftButtonDown += ROI_MouseDown;
             _roiList.Add(rectangle);
 
@@ -2708,7 +2746,6 @@
         private void CreateScale(ref Canvas canvas)
         {
             _selectedPolygon = null;
-            _bitVec32 = new BitVector32(_colorRGB);
             int[] tag = DefaultTags(_roiCount);
             Shape roi = new Scale();
             tag[(int)Tag.SUB_PATTERN_ID] = GetCurrentSubPatternCount(ref roi) + 1;
@@ -2717,8 +2754,9 @@
             Shape roi2 = new Scale();
             tag2[(int)Tag.SUB_PATTERN_ID] = GetCurrentSubPatternCount(ref roi2) + 1;
 
-            Brush scaleStroke = (Mode.PATTERN_NOSTATS == _currentMode) ?
-                    new SolidColorBrush(Color.FromRgb(Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
+            _bitVec32 = new BitVector32(tag[(int)Tag.RGB]);
+            Brush scaleStroke = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ?
+                    new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
                     GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8);
             ScaleLines scaleL = new ScaleLines()
             {
@@ -2841,6 +2879,7 @@
                     _bitVec32[SecG] = cBrush.Color.G;
                     _bitVec32[SecB] = cBrush.Color.B;
                     newTag[(int)Tag.RGB] = _bitVec32.Data;                                              // RGB for brush color, R starts from lower bits.
+                    newTag[(int)Tag.WAVELENGTH_NM] = 0;                                                 // Wavelength of light in [nm]
                     return newTag;
                 }
             }
@@ -2862,6 +2901,7 @@
 
             newTag[(int)Tag.SUB_PATTERN_ID] = 0;                                                        // Sub-Pattern ROI Index, 1-based if used, 0: center
             newTag[(int)Tag.RGB] = _colorRGB;                                                           // RGB for brush color, R starts from lower bits.
+            newTag[(int)Tag.WAVELENGTH_NM] = _wavelengthNM;                                             // Wavelength of light in [nm]
             return newTag;
         }
 
@@ -2993,8 +3033,8 @@
             var path = new System.Windows.Shapes.Path
             {
                 Data = geometry,
-                Fill = (Mode.PATTERN_NOSTATS == _currentMode) ?
-                    new SolidColorBrush(Color.FromRgb(Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
+                Fill = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ?
+                    new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
                     GetROIColor((((int[])(_roiList[_roiList.Count - 1].Tag))[(int)Tag.SUB_PATTERN_ID] - 1) % 8)
             };
             int[] pointAndObjectIndex = new int[2];
@@ -3105,7 +3145,7 @@
             if ((null != tag) && ((int)Tag.RGB < ((int[])tag).Length))
             {
                 _bitVec32 = new BitVector32(((int[])tag)[(int)Tag.RGB]);
-                Color newColor = Color.FromRgb(Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]));
+                Color newColor = Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]));
                 return new SolidColorBrush(newColor);
             }
 
@@ -3591,7 +3631,7 @@
         private void ReorderROIs()
         {
             int[] tag = null;
-            int[] id = new int[(int)Mode.LAST_MODE] { 1, 1, 1 };
+            int[] id = new int[(int)Mode.LAST_MODE] { 1, 1, 1, 1 };
             Dictionary<int, int> patID = new Dictionary<int, int>();
 
             for (int i = 0; i < _roiList.Count; i++)
@@ -3611,6 +3651,7 @@
                         id[(int)mode]++;
                         break;
                     case Mode.PATTERN_NOSTATS:
+                    case Mode.PATTERN_WIDEFIELD:
                         //add key of Pattern ID:
                         if (!patID.ContainsKey(((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID]))
                         {
@@ -3715,7 +3756,7 @@
         {
             //limit user select roi:
             if ((Mode.STATSONLY == _currentMode || Mode.MICRO_SCANAREA == _currentMode) && (0 != ((int[])(sender as Shape).Tag)[(int)Tag.PATTERN_ID]) ||
-                ((Mode.PATTERN_NOSTATS == _currentMode) && (_patternID != ((int[])(sender as Shape).Tag)[(int)Tag.PATTERN_ID])))
+                ((Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) && (_patternID != ((int[])(sender as Shape).Tag)[(int)Tag.PATTERN_ID])))
                 return;
 
             if (true == _isObjectComplete)
@@ -3805,11 +3846,11 @@
 
         private int[] SetTagRGB(Shape roi)
         {
+            int[] tag = (int[])roi.Tag;
             SolidColorBrush cBrush = roi.Stroke as SolidColorBrush;
             _bitVec32 = new BitVector32(cBrush.Color.R);
             _bitVec32[SecG] = cBrush.Color.G;
             _bitVec32[SecB] = cBrush.Color.B;
-            int[] tag = (int[])roi.Tag;
             tag[(int)Tag.RGB] = _bitVec32.Data;
             return tag;
         }

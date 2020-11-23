@@ -108,7 +108,7 @@
                 vm.EnableHandlers();
 
                 string str = string.Empty;
-                int iVal = 0; uint uiVal = 0; double dVal = 0;
+                int iVal = 0; uint uiVal = 0; double dVal = 0, dVal1 = 0;
                 XmlNodeList nodeList;
                 string expPath = ResourceManagerCS.GetCaptureTemplatePathString() + "\\Active.xml";
 
@@ -263,6 +263,18 @@
                     vm.ZStreamFrames = Convert.ToInt32(nodeList[0].Attributes["zStreamFrames"].Value);
                     vm.CurrentZCount = 0;
                     vm.ZPosition = vm.ZStartPosition;
+
+                    // diregard what's in the file, always set the file read checkbox to off
+                    vm.ZFileEnable = 0;
+
+                    if (XmlManager.GetAttribute(nodeList[0], expDoc, "zFilePosScale", ref str))
+                    {
+                        vm.ZFilePosScale = Convert.ToDouble(nodeList[0].Attributes["zFilePosScale"].Value, CultureInfo.InvariantCulture);
+                    }
+                    else
+                    {
+                        vm.ZFilePosScale = 1.0;
+                    };
                 }
 
                 nodeList = expDoc.SelectNodes("/ThorImageExperiment/Magnification");
@@ -322,6 +334,24 @@
                     if (XmlManager.GetAttribute(nodeList[0], expDoc, "tbLineScanTimeMS", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal))
                     {
                         vm.TimeBasedLSTimeMS = dVal;
+                    }
+
+                    if (XmlManager.GetAttribute(nodeList[0], expDoc, "ThreePhotonEnable", ref str))
+                    {
+                        vm.ThreePhotonEnable = str == "1";
+                    }
+                    else
+                    {
+                        vm.ThreePhotonEnable = false;
+                    }
+
+                    if (XmlManager.GetAttribute(nodeList[0], expDoc, "NumberOfPlanes", ref str) && int.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out int nplanes))
+                    {
+                        vm.NumberOfPlanes = nplanes;
+                    }
+                    else
+                    {
+                        vm.NumberOfPlanes = 1;
                     }
                 }
 
@@ -696,11 +726,13 @@
                         }
                         if (XmlManager.GetAttribute(nodeList[i], expDoc, "power", ref str) && (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)))
                         {
-                            sparam.BleachWaveParams.Power = dVal;
+                            sparam.BleachWaveParams.Power = (XmlManager.GetAttribute(nodeList[i], expDoc, "power1", ref str) && (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))) ?
+                                new double[2] { dVal, dVal1 } : new double[1] { dVal };
                         }
                         if (XmlManager.GetAttribute(nodeList[i], expDoc, "measurePowerMW", ref str) && (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)))
                         {
-                            sparam.BleachWaveParams.MeasurePower = dVal;
+                            sparam.BleachWaveParams.MeasurePower = (XmlManager.GetAttribute(nodeList[i], expDoc, "measurePower1MW", ref str) && (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))) ?
+                                 new double[2] { dVal, dVal1 } : new double[1] { dVal };
                         }
                         if (XmlManager.GetAttribute(nodeList[i], expDoc, "red", ref str) && (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)))
                         {
@@ -988,6 +1020,9 @@
         void RunSampleLSView_Unloaded(object sender, RoutedEventArgs e)
         {
             RunSampleLSViewModel vm = (RunSampleLSViewModel)this.DataContext;
+
+            // make sure z file read button is off
+            vm.ZFileEnable = 0;
 
             // -do not update experiment file if no camera available because many values
             //  in that case are zeros
@@ -1356,6 +1391,13 @@
             {
                 vm.ROIStatsChartActive = (XmlManager.GetAttribute(nodeList[0], appDoc, "display", ref str) && ("1" == str || Boolean.TrueString == str)) ?
                     true : false;
+            }
+
+            vm.ZFileVisibility = Visibility.Collapsed;
+            nodeList = appDoc.SelectNodes("/ApplicationSettings/DisplayOptions/RunSample/ZReadFromFile");
+            if (XmlManager.GetAttribute(nodeList[0], appDoc, "Visibility", ref str) && (str.EndsWith("Visible")))
+            {
+                vm.ZFileVisibility = Visibility.Visible;
             }
         }
 

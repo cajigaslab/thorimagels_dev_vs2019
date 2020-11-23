@@ -12,6 +12,8 @@
 #define DAQmxErrChk(fnName,fnCall) if ((error=(fnCall)) < 0){StringCbPrintfW(message,_MAX_PATH,L"DAQMX failed %s Error code %d ",fnName, error);LogMessage(message, ERROR_EVENT); throw "fnCall";}//else{StringCbPrintfW(message,_MAX_PATH,L"DAQMX %s return code %d ",fnName, error); LogMessage(message,VERBOSE_EVENT);}
 #define DAQmxFailed(error)              ((error)<0)
 
+#define MAX_AO_VOLTAGE			10.0
+#define MIN_AO_VOLTAGE			-10.0
 #define MAX_TASK_WAIT_TIME		10.0
 
 typedef std::chrono::high_resolution_clock Clock;
@@ -70,7 +72,9 @@ enum LineTypeNI
 	FIRST_SIGNALTYPE,
 	ANALOG_IN = 0,
 	DIGITAL_IN = 1,
-	COUNTER_IN = 2,
+	TERMINAL = 2,
+	ANALOG_OUT = 3,
+	COUNTER =4,
 	LAST_SIGNAL_TYPE
 };
 
@@ -80,6 +84,7 @@ struct BoardInfo
 	std::string	devType;
 	BoardStyle	boardStyle;
 	long		rtsiConfigure;
+	long		counterCount;
 };
 
 static std::string GetDevIDName(std::string input)
@@ -121,6 +126,37 @@ static std::string GetNIDeviceAttribute(std::string devName, int32 attribute)
 	return str;
 }
 
+static std::string GetNIDeviceProductType(std::string devName)
+{
+	std::string str="";
+	char cardType[_MAX_PATH];
+	try
+	{
+		if( DAQmxSuccess == DAQmxGetDevProductType(devName.c_str(),cardType,_MAX_PATH))
+			str = cardType;
+	}
+	catch(...)
+	{
+	}
+	return str;
+}
+
+static std::string GetNIDeviceCIPhysicalChans(std::string devName)
+{
+	std::string str="";
+	char ciChans[_MAX_PATH];
+	uInt32 bsize = _MAX_PATH;
+	try
+	{
+		if( DAQmxSuccess == DAQmxGetDevCIPhysicalChans(devName.c_str(), ciChans, bsize))
+			str = ciChans;
+	}
+	catch(...)
+	{
+	}
+	return str;
+}
+
 static void LogMessage(wchar_t *message, long eventLevel)
 {
 #ifdef LOGGING_ENABLED
@@ -130,18 +166,51 @@ static void LogMessage(wchar_t *message, long eventLevel)
 
 static void TerminateTask(TaskHandle& handle)
 {
-	if(NULL != handle)
+	try
 	{
-		DAQmxStopTask(handle);
-		DAQmxClearTask(handle);
-		handle = NULL;
+		if(NULL != handle)
+		{
+			DAQmxStopTask(handle);
+			DAQmxClearTask(handle);
+			handle = NULL;
+		}
 	}
+	catch(...)
+	{
+	}
+}
+
+/// <summary> write voltage values to analog lines, one value per line in order </summary>
+static long SetVoltageToAnalogLine(TaskHandle handle, std::string lineName, double* dataArray)
+{
+	int32 retVal = DAQmxSuccess, error = 0, written = 0;
+	if (NULL == dataArray || 0 == lineName.size())
+		return FALSE;
+	try
+	{
+		DAQmxErrChk(L"DAQmxCreateTask", retVal = DAQmxCreateTask("", &handle));
+
+		DAQmxErrChk(L"DAQmxCreateAOVoltageChan", retVal = DAQmxCreateAOVoltageChan(handle, lineName.c_str(), "", MIN_AO_VOLTAGE, MAX_AO_VOLTAGE, DAQmx_Val_Volts, NULL));
+
+		DAQmxErrChk(L"DAQmxWriteAnalogF64", retVal = DAQmxWriteAnalogF64(handle, 1, true, MAX_TASK_WAIT_TIME, DAQmx_Val_GroupByScanNumber, dataArray, &written, NULL));
+
+		DAQmxErrChk(L"DAQmxWaitUntilTaskDone", retVal = DAQmxWaitUntilTaskDone(handle, MAX_TASK_WAIT_TIME));
+
+		TerminateTask(handle);
+	}
+	catch(...)
+	{
+		DAQmxFailed(error);
+		StringCbPrintfW(message,_MAX_PATH,L"%hs failed: (%d)",__FUNCTION__, error);
+		LogMessage(message,ERROR_EVENT);
+	}
+	return (DAQmxSuccess == retVal) ? TRUE : FALSE;
 }
 
 /// <summary> send a pulse or toggle designated digital line </summary>
 static long TogglePulseToDigitalLine(TaskHandle handle, std::string lineName, long lineCount, TogglePulseMode tpMode, long idleMS = 0)
 {
-	int32 retVal = 0, error = 0, written = 0;
+	int32 retVal = DAQmxSuccess, error = 0, written = 0;
 	uInt8* outHigh = NULL;
 	uInt8* outLow = NULL;
 
@@ -201,7 +270,7 @@ static long TogglePulseToDigitalLine(TaskHandle handle, std::string lineName, lo
 		if (outHigh != NULL) { delete[] outHigh; outHigh = NULL; }
 		if (outLow != NULL) { delete[] outLow; outLow = NULL; }
 	}
-	return retVal;
+	return (DAQmxSuccess == retVal) ? TRUE : FALSE;
 }
 
 class BoardInfoNI

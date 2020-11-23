@@ -431,7 +431,7 @@
                     }
                     MessageBox.Show("Template " + _liveVM.SettingsTemplateName + " successfully created");
                 }
-                string[] reloadMVMs = new string[] {"LightEngineControlViewModel"};
+                string[] reloadMVMs = new string[] { "LightEngineControlViewModel" };
                 MVMManager.Instance.LoadMVMSettings(reloadMVMs);
             }
         }
@@ -1139,8 +1139,7 @@
 
                 if (ndList.Count > 0)
                 {
-                    long bleacherType = 0;
-                    if (_liveVM.GetBleacherType(ref bleacherType))
+                    if ((int)ICamera.LSMType.LSMTYPE_LAST != ResourceManagerCS.GetBleacherType())
                     {
                         BleachBorder.Visibility = ndList[0].Attributes["Visibility"].Value.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
                         if (ndList[0].Attributes["Visibility"].Value.Equals("Visible"))
@@ -1570,6 +1569,11 @@
                 {
                     LightEngineControlBorder.Visibility = ndList[0].Attributes["Visibility"].Value.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
                 }
+                ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/EpiturretControlView");
+                if (ndList.Count > 0)
+                {
+                    EpiturretControlBorder.Visibility = ndList[0].Attributes["Visibility"].Value.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
+                }
                 ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/DFLIMView");
                 if (ndList.Count > 0)
                 {
@@ -1746,12 +1750,6 @@
                 else
                 {
                     PowerControlView.powerReg.Visibility = Visibility.Collapsed;
-                }
-
-                ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/EpiturretControlView");
-                if (ndList.Count > 0)
-                {
-                    EpiturretControlBorder.Visibility = ndList[0].Attributes["Visibility"].Value.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
                 }
 
                 ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/PowerReg2");

@@ -1178,6 +1178,11 @@
                         _whitePointMaxVal = 255;
                     }
                 }
+
+                if (XmlManager.GetAttribute(node[0], vm.ApplicationDoc, "saturationCountVisibility", ref str))
+                {
+                    vm.PMTSaturationsVisibility = str.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
+                }
             }
 
             //Capture Setup is loaded, the closing should only persist if it is being closed form Capture Setup

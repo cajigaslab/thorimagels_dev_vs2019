@@ -5,6 +5,7 @@
     using System.Collections.ObjectModel;
     using System.ComponentModel;
     using System.Diagnostics;
+    using System.Drawing.Design;
     using System.Globalization;
     using System.IO;
     using System.Linq;
@@ -91,6 +92,7 @@
         private OrthogonalViewStatus _orthogonalViewStat = OrthogonalViewStatus.INACTIVE;
         private byte[] _pdXZ;
         private byte[] _pdYZ;
+        private Visibility _pmtSaturationsVisibility = Visibility.Visible;
         private int _progressPercentage;
         private bool _rebuildBitmap = false;
         BitmapPalette _roiPalette = null;
@@ -289,6 +291,8 @@
                         int height = this._captureSetup.DataHeight;
                         int rawStride = (width * pf.BitsPerPixel + 7) / 8;
 
+                        int planes = CaptureSetup.ImageInfo.numberOfPlanes > 1 ? CaptureSetup.ImageInfo.numberOfPlanes : 1;
+
                         int outputBitmapWidth = width;
                         int outputBitmapHeight = height;
                         bool dflimDisplayLifetimeImage = (bool)MVMManager.Instance["DFLIMControlViewModel", "DFLIMDisplayLifetimeImage", (object)false];
@@ -308,35 +312,42 @@
                         if (TileDisplay && (_colorChannelsHistory > 1 || doLifetime))
                         {
 
-                            switch (channelNum)
+                            if (planes > 1)
                             {
-                                case 1:
-                                    {
-                                        if (doLifetime)
+                                outputBitmapWidth *= channelNum + 1;
+                            }
+                            else
+                            {
+                                switch (channelNum)
+                                {
+                                    case 1:
                                         {
-                                            outputBitmapWidth *= 2;
+                                            if (doLifetime)
+                                            {
+                                                outputBitmapWidth *= 2;
+                                                outputBitmapHeight *= 1;
+                                            }
+                                        }
+                                        break;
+                                    case 2:
+                                        {
+                                            outputBitmapWidth *= 3;
                                             outputBitmapHeight *= 1;
                                         }
-                                    }
-                                    break;
-                                case 2:
-                                    {
-                                        outputBitmapWidth *= 3;
-                                        outputBitmapHeight *= 1;
-                                    }
-                                    break;
-                                case 3:
-                                    {
-                                        outputBitmapWidth *= 2;
-                                        outputBitmapHeight *= 2;
-                                    }
-                                    break;
-                                default:
-                                    {// All 4 Channels enabled
-                                        outputBitmapWidth *= 3;
-                                        outputBitmapHeight *= 2;
-                                    }
-                                    break;
+                                        break;
+                                    case 3:
+                                        {
+                                            outputBitmapWidth *= 2;
+                                            outputBitmapHeight *= 2;
+                                        }
+                                        break;
+                                    default:
+                                        {// All 4 Channels enabled
+                                            outputBitmapWidth *= 3;
+                                            outputBitmapHeight *= 2;
+                                        }
+                                        break;
+                                }
                             }
                         }
                         //create a new bitmpap when one does not exist or the size of the image changes
@@ -1567,6 +1578,51 @@
             get
             {
                 return CaptureSetup.PixelBitShiftValue;
+            }
+        }
+
+        public int PMT1Saturations
+        {
+            get
+            {
+                return (int)MVMManager.Instance["ScanControlViewModel", "PMT1Saturations", (object)false];
+            }
+        }
+
+        public int PMT2Saturations
+        {
+            get
+            {
+                return (int)MVMManager.Instance["ScanControlViewModel", "PMT2Saturations", (object)false];
+            }
+        }
+
+        public int PMT3Saturations
+        {
+            get
+            {
+                return (int)MVMManager.Instance["ScanControlViewModel", "PMT3Saturations", (object)false];
+            }
+        }
+
+        public int PMT4Saturations
+        {
+            get
+            {
+                return (int)MVMManager.Instance["ScanControlViewModel", "PMT4Saturations", (object)false];
+            }
+        }
+
+        public Visibility PMTSaturationsVisibility
+        {
+            get
+            {
+                return _pmtSaturationsVisibility;
+            }
+            set
+            {
+                _pmtSaturationsVisibility = value;
+                OnPropertyChanged("PMTSaturationsVisibility");
             }
         }
 

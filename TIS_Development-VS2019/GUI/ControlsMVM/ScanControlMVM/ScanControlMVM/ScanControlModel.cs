@@ -420,6 +420,18 @@
             }
         }
 
+        public int PMT1Saturations
+        {
+            get
+            {
+                int val = 0;
+
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_PMT1, (int)IDevice.Params.PARAM_PMT1_SATURATIONS, ref val);
+
+                return val;
+            }
+        }
+
         public int PMT2GainMax
         {
             get
@@ -445,6 +457,18 @@
                 ResourceManagerCS.GetDeviceParamRangeInt((int)SelectedHardware.SELECTED_PMT2, (int)IDevice.Params.PARAM_PMT2_GAIN_POS, ref valMin, ref valMax, ref valDefault);
 
                 return valMin;
+            }
+        }
+
+        public int PMT2Saturations
+        {
+            get
+            {
+                int val = 0;
+
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_PMT2, (int)IDevice.Params.PARAM_PMT2_SATURATIONS, ref val);
+
+                return val;
             }
         }
 
@@ -476,6 +500,18 @@
             }
         }
 
+        public int PMT3Saturations
+        {
+            get
+            {
+                int val = 0;
+
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_PMT3, (int)IDevice.Params.PARAM_PMT3_SATURATIONS, ref val);
+
+                return val;
+            }
+        }
+
         public int PMT4GainMax
         {
             get
@@ -501,6 +537,18 @@
                 ResourceManagerCS.GetDeviceParamRangeInt((int)SelectedHardware.SELECTED_PMT4, (int)IDevice.Params.PARAM_PMT4_GAIN_POS, ref valMin, ref valMax, ref valDefault);
 
                 return valMin;
+            }
+        }
+
+        public int PMT4Saturations
+        {
+            get
+            {
+                int val = 0;
+
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_PMT4, (int)IDevice.Params.PARAM_PMT4_SATURATIONS, ref val);
+
+                return val;
             }
         }
 

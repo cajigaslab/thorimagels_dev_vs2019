@@ -17,11 +17,15 @@
 
 #define HOLOGEN_EXPORTS
 
+using namespace std;
+
 // TODO: reference additional headers your program requires here
-#include "..\..\..\common\thread.h"
+#include "..\..\thread.h"
 #include "..\..\..\Tools\Intel IPP\intel64\include\IPPlib.h"
 #include "..\..\Log.h"
 #include "..\..\ThorSharedTypesCPP.h"
+#include "..\..\bmpCpp.h"
+#include "..\..\WinDVI\WinDVI\WinDVIlib.h"
 
 //#define LOGGING_ENABLED
 #define MSG_LENGTH		256

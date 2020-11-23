@@ -669,18 +669,9 @@
             {
                 if (_pixelData != null)
                 {
-                    int width = 0;
-                    int height = 0;
-
-                    if (false == GetImageDimensions(ref width, ref height))
-                    {
-                        return 0;
-                    }
-                    _dataWidth = width;
-                    _dataHeight = height;
 
                     //if the requested pixel is within the buffer size
-                    int location = (int)(_rollOverPointX + (width) * _rollOverPointY);
+                    int location = (int)(_rollOverPointX + (_dataWidth) * _rollOverPointY);
 
                     if ((_rollOverPointX < _dataWidth) && (_rollOverPointY < _dataHeight) && (location >= 0) && (location < _pixelData.Length))
                     {
@@ -696,16 +687,6 @@
         {
             get
             {
-                int width = 0;
-                int height = 0;
-
-                if (false == GetImageDimensions(ref width, ref height))
-                {
-                    return 0;
-                }
-                _dataWidth = width;
-                _dataHeight = height;
-                _dataLength = width * height;
 
                 if (_pixelData != null && _dataHeight != 0 && _colorChannels >= 2)
                 {
@@ -726,16 +707,6 @@
         {
             get
             {
-                int width = 0;
-                int height = 0;
-
-                if (false == GetImageDimensions(ref width, ref height))
-                {
-                    return 0;
-                }
-                _dataWidth = width;
-                _dataHeight = height;
-                _dataLength = width * height;
 
                 if (_pixelData != null && _dataHeight != 0 && _colorChannels >= 3)
                 {
@@ -756,16 +727,6 @@
         {
             get
             {
-                int width = 0;
-                int height = 0;
-
-                if (false == GetImageDimensions(ref width, ref height))
-                {
-                    return 0;
-                }
-                _dataWidth = width;
-                _dataHeight = height;
-                _dataLength = width * height;
 
                 if (_pixelData != null && _dataHeight != 0 && _colorChannels >= 4)
                 {
@@ -1240,6 +1201,7 @@
                                 {
                                     Array.Clear(_pixelDataHistogram[k], 0, _pixelDataHistogram[k].Length);
                                 }
+
                                 var rangePartitioner = Partitioner.Create(0, _dataLength, (_dataLength >> 2) + 1);
                                 Parallel.ForEach
                                     (rangePartitioner, new ParallelOptions { MaxDegreeOfParallelism = 4 }, range =>
@@ -1633,7 +1595,14 @@
                     return;
                 }
 
+                int planes = imageInfo.numberOfPlanes > 1 ? imageInfo.numberOfPlanes : 1;
+
+                //width *= planes;
+                height *= planes;
                 _dataLength = width * height;
+
+                _dataWidth = width;
+                _dataHeight = height;
 
                 if ((_pixelData == null) ||
                     (_pixelData.Length != (_dataLength * _colorChannels)) ||
@@ -1781,8 +1750,6 @@
                     }
                 }
 
-                _dataWidth = width;
-                _dataHeight = height;
                 _pixelDataReady = true;
                 ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, "ImageUpdate pixeldata updated");
             }

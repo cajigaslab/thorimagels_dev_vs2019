@@ -101,24 +101,19 @@
             }
         }
 
-        public int LSMSelectedPlaneIndex
+        public int FIR1ManualControlEnable
         {
             get
             {
-                int temp = 1;
-
-                if (1 == ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_SELECTED_PLANE, ref temp))
-                {
-                    return temp - 1;
-                }
-                return 0;
+                int temp = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_MANUAL_FIR1_CONTROL_ENABLE, ref temp);
+                return temp;
             }
             set
             {
-                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_SELECTED_PLANE, value + 1);
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_MANUAL_FIR1_CONTROL_ENABLE, value);
             }
         }
-
         public int ThreePhotonEnable
         {
             get
@@ -144,19 +139,19 @@
             }
         }
 
-        public int ThreePhotonPhaseCourse
+        public int ThreePhotonPhaseCoarse
         {
             get
             {
                 int temp = 0;
 
-                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_ALIGN_COURSE, ref temp);
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_ALIGN_COARSE, ref temp);
 
                 return temp;
             }
             set
             {
-                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_ALIGN_COURSE, value);
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_ALIGN_COARSE, value);
             }
         }
 

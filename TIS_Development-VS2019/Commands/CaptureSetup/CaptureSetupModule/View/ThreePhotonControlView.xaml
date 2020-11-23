@@ -18,16 +18,18 @@
                                         ThreePhotonPhaseFineMinusCommand="{Binding Path=ThreePhotonPhaseFineMinusCommand}"
                                         ThreePhotonPhaseFinePlusCommand="{Binding Path=ThreePhotonPhaseFinePlusCommand}"
                                         ThreePhotonPhaseFine="{Binding Path=ThreePhotonPhaseFine, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                        ThreePhotonPhaseCourse="{Binding Path=ThreePhotonPhaseCourse, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                        ThreePhotonPhaseCourseMinusCommand="{Binding Path=ThreePhotonPhaseCourseMinusCommand}"
-                                        ThreePhotonPhaseCoursePlusCommand="{Binding Path=ThreePhotonPhaseCoursePlusCommand}"
+                                        ThreePhotonPhaseCoarse="{Binding Path=ThreePhotonPhaseCoarse, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        ThreePhotonPhaseCoarseMinusCommand="{Binding Path=ThreePhotonPhaseCoarseMinusCommand}"
+                                        ThreePhotonPhaseCoarsePlusCommand="{Binding Path=ThreePhotonPhaseCoarsePlusCommand}"
                                         ThreePhotonMeasureFrequencyCommand="{Binding Path=ThreePhotonMeasureFrequencyCommand}"
                                         ThreePhotonFreq="{Binding Path=ThreePhotonFreq, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"                                                                                
                                         LSMFIRFilterIndex="{Binding Path=LSMFIRFilterIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                         LSMFIRFilterTapIndex="{Binding Path=LSMFIRFilterTapIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                         LSMFIRFilterTapValue="{Binding Path=LSMFIRFilterTapValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                         FIRSettingsVisibility="{Binding Path=FIRSettingsVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                                        ThreePhotonPhaseCourseVisibility="{Binding Path=ThreePhotonPhaseCourseVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                        ThreePhotonPhaseCoarseVisibility="{Binding Path=ThreePhotonPhaseCoarseVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                        FIR1ManualControlEnable="{Binding Path=FIR1ManualControlEnable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        LSMNumberOfPlanes="{Binding Path=LSMNumberOfPlanes, Mode=TwoWay}">
         </tpControl:ThreePhotonControlUC>
     </Grid>
 </UserControl>

@@ -101,7 +101,9 @@ long AcquireSequence::Execute(long index, long subWell)
 	double areaAngle,dwellTime,crsFrequencyHz = 0;
 	long timeBasedLineScan = FALSE;
 	long timeBasedLineScanMS = 0;
-	_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,channel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS);
+	long threePhotonEnable = FALSE;
+	long numberOfPlanes = 1;
+	_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,channel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes);
 
 	//Get all the PMT Settings
 	long enableA,gainA,bandwidthA,enableB,gainB,bandwidthB,enableC,gainC,bandwidthC,enableD,gainD,bandwidthD;
@@ -229,6 +231,8 @@ void AcquireSequence::SetAcquire(long captureMode, size_t timePoints, long zStre
 	case IExperiment::Z_AND_T:
 	default:
 		{
+		//:TODO: This will always go onto the first if statement because timepoints is always at least 1. This means
+		//AcquireZStack is not used at all.
 			if((timePoints >= 1)||(1 == zStreamMode))
 			{
 				acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_T_SERIES,_pAF,NULL,_pExp,_path));

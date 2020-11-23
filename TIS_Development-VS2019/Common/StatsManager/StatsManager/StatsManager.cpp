@@ -14,7 +14,6 @@ wchar_t message[256];
 StatsManager::StatsManager()
 {
 	Init();
-	_syncFlag = 0;
 }
 
 typedef void (_cdecl *statsPrototype)(long chan, long &numROI, long * min, long *max, double *mean, double *stdDev);
@@ -1098,7 +1097,10 @@ long StatsManager::ComputeStats(unsigned short *data, FrameInfoStruct frameInfo,
 	_includeRegularStats = includeRegularStats;
 	_channelEnableBinary = channelEnable;
 	_imgWidth = frameInfo.imageWidth;
-	_imgHeight = frameInfo.imageHeight;
+
+	long planes = frameInfo.numberOfPlanes > 1 ? frameInfo.numberOfPlanes : 1;
+
+	_imgHeight = frameInfo.imageHeight * planes;
 	_bufferType =  (BufferType)frameInfo.bufferType;
 	_includeLineProfileInStatsCalc = includeLineProfile;
 
@@ -1388,7 +1390,6 @@ long StatsManager::ComputeStats(unsigned short *data, FrameInfoStruct frameInfo,
 			}
 		}
 
-		_syncFlag = 0;
 		_newImageForLineProfile = TRUE;
 		if (_imgWidth == _mskWidth && _imgHeight == _mskHeight)
 		{	
@@ -1453,7 +1454,6 @@ long StatsManager::SetStatsMask(unsigned short* mask, long mskWidth, long mskHei
 
 	_mskWidth = mskWidth;
 	_mskHeight = mskHeight;
-	_syncFlag = 1;
 
 	//memcpy the mask to the new buffer
 	if(NULL == mask)
@@ -1619,10 +1619,9 @@ long StatsManager::CopyStatsImageDataToLineImageData()
 				_pDataForLine = new unsigned short[bufferSize];
 				_lineProfileImgBufferSize = bufferSize;
 			}
-			if(0 == _syncFlag)
-			{
-				memcpy_s(_pDataForLine, sizeof(unsigned short)*bufferSize, _pData, sizeof(unsigned short)*bufferSize);
-			}
+
+			memcpy_s(_pDataForLine, sizeof(unsigned short)*bufferSize, _pData, sizeof(unsigned short)*bufferSize);
+			
 		}
 		else
 		{
@@ -1638,10 +1637,9 @@ long StatsManager::CopyStatsImageDataToLineImageData()
 				_pDataForLine = new unsigned short[bufferSize];
 				_lineProfileImgBufferSize = bufferSize;
 			}
-			if(0 == _syncFlag)
-			{
-				memcpy_s(_pDataForLine, sizeof(unsigned short)*bufferSize, _pData, sizeof(unsigned short)*bufferSize);
-			}
+			
+			memcpy_s(_pDataForLine, sizeof(unsigned short)*bufferSize, _pData, sizeof(unsigned short)*bufferSize);
+			
 		}
 		_newImageForLineProfile = FALSE;
 	}

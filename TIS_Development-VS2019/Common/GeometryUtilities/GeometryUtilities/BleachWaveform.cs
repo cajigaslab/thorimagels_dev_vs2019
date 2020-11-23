@@ -42,7 +42,7 @@
         private List<Byte> _iterEnvelope = null;
         private List<Byte> _patnComplete = null;
         private List<Byte> _patnEnvelope = null;
-        private List<double> _pockel = null;
+        private List<List<double>> _pockel = null;
         private List<Byte> _pockelDig = null;
         private List<ushort> _pockel_16bit = null;
         private List<double> _x_volt = null;
@@ -58,7 +58,7 @@
         {
             _x_volt = new List<double>();
             _y_volt = new List<double>();
-            _pockel = new List<double>();
+            _pockel = new List<List<double>>();
             _pockelDig = new List<Byte>();
             _activeEnvelope = new List<byte>();
             _cycleComplete = new List<Byte>();
@@ -93,7 +93,15 @@
 
         public int Count
         {
-            get { return _x_volt.Count; }
+            get
+            {
+                int count = _x_volt.Count;
+                for (int i = 0; i < _pockel.Count; i++)
+                {
+                    count = Math.Max(count, _pockel[i].Count);
+                }
+                return count;
+            }
         }
 
         public List<byte> CycleComplementary
@@ -131,7 +139,7 @@
             get { return _patnEnvelope; }
         }
 
-        public List<double> Pockel
+        public List<List<double>> Pockel
         {
             get { return _pockel; }
         }
@@ -141,7 +149,7 @@
             get { return _pockelDig; }
         }
 
-        public double PockelIdle
+        public double[] PockelIdle
         {
             get;
             set;
@@ -181,16 +189,24 @@
 
         #region Methods
 
-        public void AddValues(double x_Volt, double y_Volt, double pockel, byte cycleComp, byte cycleEnv, byte iterEnv, byte patnEnv, byte patnComp, byte epochEnv, byte activeEnv)
+        public void AddValues(double? x_Volt, double? y_Volt, double[] pockel, byte cycleComp, byte cycleEnv, byte iterEnv, byte patnEnv, byte patnComp, byte epochEnv, byte activeEnv)
         {
-            double valX = Math.Min(MAX_GALVO_VOLTAGE, Math.Max(x_Volt, MIN_GALVO_VOLTAGE));
-            _x_volt.Add(valX);
+            if (null != x_Volt)
+                _x_volt.Add(Math.Min(MAX_GALVO_VOLTAGE, Math.Max((double)x_Volt, MIN_GALVO_VOLTAGE)));
 
-            double valY = Math.Min(MAX_GALVO_VOLTAGE, Math.Max(y_Volt, MIN_GALVO_VOLTAGE));
-            _y_volt.Add(valY);
+            if (null != y_Volt)
+                _y_volt.Add(Math.Min(MAX_GALVO_VOLTAGE, Math.Max((double)y_Volt, MIN_GALVO_VOLTAGE)));
 
-            _pockel.Add(pockel);
-            _pockelDig.Add((PockelIdle < pockel) ? (byte)(1) : (byte)(0));
+            byte pDig = (byte)(0);
+            for (int i = 0; i < pockel.Length; i++)
+            {
+                if (i + 1 > _pockel.Count)
+                    _pockel.Add(new List<double>());
+                _pockel[i].Add(pockel[i]);
+                if (PockelIdle[i] < pockel[i])
+                    pDig = (byte)(1);
+            }
+            _pockelDig.Add(pDig);
 
             _activeEnvelope.Add(activeEnv);
 
@@ -212,9 +228,11 @@
             //add the unsigned 16bit equivalent voltage value
             if (WaveformDriverType.WaveformDriver_ThorDAQ == _waveformDriverType)
             {
-                _x_volt_16bit.Add((ushort)Math.Min(Math.Max(((valX + THORDAQ_VOLT_OFFSET) * VOLT_TO_THORDAQ_VAL), 0), ushort.MaxValue));
-                _y_volt_16bit.Add((ushort)Math.Min(Math.Max(((valY + THORDAQ_VOLT_OFFSET) * VOLT_TO_THORDAQ_VAL), 0), ushort.MaxValue));
-                _pockel_16bit.Add((ushort)Math.Min(Math.Max(((pockel + THORDAQ_VOLT_OFFSET) * VOLT_TO_THORDAQ_VAL), 0), ushort.MaxValue));
+                if (null != x_Volt)
+                    _x_volt_16bit.Add((ushort)Math.Min(Math.Max(((Math.Min(MAX_GALVO_VOLTAGE, Math.Max((double)x_Volt, MIN_GALVO_VOLTAGE)) + THORDAQ_VOLT_OFFSET) * VOLT_TO_THORDAQ_VAL), 0), ushort.MaxValue));
+                if (null != y_Volt)
+                    _y_volt_16bit.Add((ushort)Math.Min(Math.Max(((Math.Min(MAX_GALVO_VOLTAGE, Math.Max((double)y_Volt, MIN_GALVO_VOLTAGE)) + THORDAQ_VOLT_OFFSET) * VOLT_TO_THORDAQ_VAL), 0), ushort.MaxValue));
+                _pockel_16bit.Add((ushort)Math.Min(Math.Max(((pockel[0] + THORDAQ_VOLT_OFFSET) * VOLT_TO_THORDAQ_VAL), 0), ushort.MaxValue));
             }
         }
 

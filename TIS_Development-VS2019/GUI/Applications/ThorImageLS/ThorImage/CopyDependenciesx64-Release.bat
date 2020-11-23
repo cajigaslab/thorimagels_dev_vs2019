@@ -290,7 +290,7 @@ echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocalSimulator\x64\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocalGalvoSimulator\x64\Release\ThorConfocalGalvoSimulator.dll .\bin\Release\Modules_Native
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorZStepperSimulator\x64\Release\ThorZStepperSimulator.dll .\bin\Release\Modules_Native
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorPMTSimulator\x64\Release\ThorPMTSimulator.dll .\bin\Release\Modules_Native
-echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorPowerSimulator\x64\Release\ThorPowerSimulator.dll .\bin\Release\Modules_Native
+echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorTDCSimulator\x64\Release\ThorTDCSimulator.dll .\bin\Release\Modules_Native
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\SimDeviceXY\x64\Release\SimDeviceXY.dll .\bin\Release\Modules_Native
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\SimDeviceFW\x64\Release\SimDeviceFW.dll .\bin\Release\Modules_Native
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorBmExpanSimulator\x64\Release\ThorBmExpanSimulator.dll .\bin\Release\Modules_Native
@@ -314,6 +314,7 @@ REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocal\x64\Release\Thor
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocalGalvo\x64\Release\ThorConfocalGalvo.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorGGNI\x64\Release\ThorGGNI.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorMesoScan\x64\Release\ThorMesoScan.dll .\bin\Release\Modules_Native
+REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorStim\x64\Release\ThorStim.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorTSI\x64\Release\ThorTSI.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Common\Camera-TSI\dlls\Native_64_lib\bin_CCD_mono\*.dll .\bin\Release\Lib
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorTSI_CS\x64\Release\ThorTSI_CS.dll .\bin\Release\Modules_Native
@@ -383,6 +384,7 @@ echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocalGalvoSimulator\ThorCo
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocalSimulator\ThorConfocalSimulatorSettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorGGNI\ThorGGNISettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorMesoScan\ThorMesoScanSettings.xml .\bin\Release
+echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorStim\ThorStimSettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorECU\ThorECUSettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorEpiTurret\ThorEpiTurretSettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\GUI\Applications\ThorImageLS\ThorImage\ThorImageLS.ico .\bin\Release

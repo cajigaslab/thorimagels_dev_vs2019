@@ -279,7 +279,7 @@
 
                             System.Windows.Application.Current.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal,
                         new Action(
-                            delegate()
+                            delegate ()
                             {
                                 CloseProgressWindow();
                             }
@@ -513,7 +513,7 @@
             if ((IsBleaching || (bool)MVMManager.Instance["ZControlViewModel", "IsZStackCapturing", (object)false]) &&
                 ((int)ICamera.CameraType.LSM == ResourceManagerCS.GetCameraType()) &&
                 ((int)ICamera.LSMType.GALVO_GALVO == ResourceManagerCS.GetLSMType()) &&
-                ((int)ICamera.LSMType.GALVO_GALVO == BleachScannerType))
+                ((int)ICamera.LSMType.GALVO_GALVO == ResourceManagerCS.GetBleacherType()))
             {
                 //cannot snapshot while bleaching with the same lsm type:
                 return;
@@ -525,51 +525,51 @@
             snapshotWorker.WorkerSupportsCancellation = true;
 
             snapshotWorker.DoWork += (obj, eventArg) =>
+            {
+                do
                 {
-                    do
-                    {
-                        if (CaptureSetup.IsPixelDataReady())
-                        {
-                            OnPropertyChanged("Bitmap");
-                        }
-                        System.Threading.Thread.Sleep(30);
-                        if (!CaptureStatus)
-                            break;
-                    }
-                    while (IsLiveSnapshot);
-                };
-
-            snapshotWorker.RunWorkerCompleted += (obj, eventArg) =>
-                {
-                    this._captureSetup.SnapshotIsDone();
-
-                    if ((int)ICamera.LSMAreaMode.LINE == (int)MVMManager.Instance["AreaControlViewModel", "LSMAreaMode", (object)0])
-                    {
-                        if (null != DrawLineForLineScanEvent)
-                        {
-                            DrawLineForLineScanEvent();
-                        }
-                    }
                     if (CaptureSetup.IsPixelDataReady())
                     {
                         OnPropertyChanged("Bitmap");
-                        OnPropertyChanged("BitmapPresentation");
                     }
-                    UpdateOverlayManager();
-                    RequestROIData();
+                    System.Threading.Thread.Sleep(30);
+                    if (!CaptureStatus)
+                        break;
+                }
+                while (IsLiveSnapshot);
+            };
 
-                    //user has chosen to save without the experiment info
-                    //save the image with the viewmodel bitmap when not more than 3 channels:
-                    if (this._captureSetup.SaveSnapshot && !this._captureSetup.SnapshotIncludeExperimentInfo && (0xF > this._captureSetup.GetChannelEnabledBitmask()))
+            snapshotWorker.RunWorkerCompleted += (obj, eventArg) =>
+            {
+                this._captureSetup.SnapshotIsDone();
+
+                if ((int)ICamera.LSMAreaMode.LINE == (int)MVMManager.Instance["AreaControlViewModel", "LSMAreaMode", (object)0])
+                {
+                    if (null != DrawLineForLineScanEvent)
                     {
-                        SaveNow();
+                        DrawLineForLineScanEvent();
                     }
-                    IsLiveSnapshot = false;
-                    LiveImageCapturing(!CaptureStatus);
-                    ((IMVM)MVMManager.Instance["ObjectiveControlViewModel", this]).OnPropertyChange("FramesPerSecondText");
-                    ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("FramesPerSecondAverage");
-                    CloseProgressWindow();
-                };
+                }
+                if (CaptureSetup.IsPixelDataReady())
+                {
+                    OnPropertyChanged("Bitmap");
+                    OnPropertyChanged("BitmapPresentation");
+                }
+                UpdateOverlayManager();
+                RequestROIData();
+
+                //user has chosen to save without the experiment info
+                //save the image with the viewmodel bitmap when not more than 3 channels:
+                if (this._captureSetup.SaveSnapshot && !this._captureSetup.SnapshotIncludeExperimentInfo && (0xF > this._captureSetup.GetChannelEnabledBitmask()))
+                {
+                    SaveNow();
+                }
+                IsLiveSnapshot = false;
+                LiveImageCapturing(!CaptureStatus);
+                ((IMVM)MVMManager.Instance["ObjectiveControlViewModel", this]).OnPropertyChange("FramesPerSecondText");
+                ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("FramesPerSecondAverage");
+                CloseProgressWindow();
+            };
 
             //Snapshots don't currentlty do sequential captures
             //Change to non sequential capture, so the settings file is correct.
@@ -646,7 +646,7 @@
                 if ((IsBleaching || (bool)MVMManager.Instance["ZControlViewModel", "IsZStackCapturing", (object)false] || IsLiveSnapshot) &&
                     ((int)ICamera.CameraType.LSM == ResourceManagerCS.GetCameraType()) &&
                     ((int)ICamera.LSMType.GALVO_GALVO == ResourceManagerCS.GetLSMType()) &&
-                    ((int)ICamera.LSMType.GALVO_GALVO == BleachScannerType))
+                    ((int)ICamera.LSMType.GALVO_GALVO == ResourceManagerCS.GetBleacherType()))
                 {
                     //cannot capture while bleaching with the same lsm type:
                     return;
@@ -791,21 +791,21 @@
                 }
                 stopPreviewWorker = new BackgroundWorker();
                 stopPreviewWorker.DoWork += (obj, eventArg) =>
+                {
+                    StopBleach();
+                    _bleachWorker.CancelAsync();
+                    _slmBleachWorker.CancelAsync();
+                    while ((this._captureSetup.IsPreBleachBuilding) || (!this._captureSetup.IsBleachFinished))
                     {
-                        StopBleach();
-                        _bleachWorker.CancelAsync();
-                        _slmBleachWorker.CancelAsync();
-                        while ((this._captureSetup.IsPreBleachBuilding) || (!this._captureSetup.IsBleachFinished))
-                        {
-                            System.Threading.Thread.Sleep(10);
-                        }
-                    };
+                        System.Threading.Thread.Sleep(10);
+                    }
+                };
 
                 stopPreviewWorker.RunWorkerCompleted += (obj, eventArg) =>
-                    {
-                        IsBleaching = false;
-                        CloseProgressWindow();
-                    };
+                {
+                    IsBleaching = false;
+                    CloseProgressWindow();
+                };
 
                 stopPreviewWorker.RunWorkerAsync();
             }

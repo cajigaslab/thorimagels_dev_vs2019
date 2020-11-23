@@ -467,54 +467,54 @@ long ThorPMT2100::GetParam(const long paramID, double &param)
 {
 	if (NULL != _tableParams[paramID])
 	{
-		if(FALSE == _tableParams[paramID]->GetParamAvailable())
+		if (FALSE == _tableParams[paramID]->GetParamAvailable())
 		{
 			return FALSE;
 		}
-		switch(_tableParams[paramID]->GetParamID())
+		switch (_tableParams[paramID]->GetParamID())
 		{
-		case PARAM_PMT1_SAFETY:
-		case PARAM_PMT2_SAFETY:
-		case PARAM_PMT3_SAFETY:
-		case PARAM_PMT4_SAFETY:
-		case PARAM_PMT5_SAFETY:
-		case PARAM_PMT6_SAFETY:
+			case PARAM_PMT1_SAFETY:
+			case PARAM_PMT2_SAFETY:
+			case PARAM_PMT3_SAFETY:
+			case PARAM_PMT4_SAFETY:
+			case PARAM_PMT5_SAFETY:
+			case PARAM_PMT6_SAFETY:
 			{
 				long status = 0;
-				long ret = QueryPMTStatus(_tableParams[paramID]->GetDeviceIndex(), status);				
-				param = status;				
+				long ret = QueryPMTStatus(_tableParams[paramID]->GetDeviceIndex(), status);
+				param = status;
 				return ret;
 			}
-		case PARAM_PMT1_GAIN_POS_CURRENT_VOLTS:
-		case PARAM_PMT2_GAIN_POS_CURRENT_VOLTS:
-		case PARAM_PMT3_GAIN_POS_CURRENT_VOLTS:
-		case PARAM_PMT4_GAIN_POS_CURRENT_VOLTS:
-		case PARAM_PMT5_GAIN_POS_CURRENT_VOLTS:
-		case PARAM_PMT6_GAIN_POS_CURRENT_VOLTS:
-		case PARAM_PMT1_OUTPUT_OFFSET_CURRENT:
-		case PARAM_PMT2_OUTPUT_OFFSET_CURRENT:
-		case PARAM_PMT3_OUTPUT_OFFSET_CURRENT:
-		case PARAM_PMT4_OUTPUT_OFFSET_CURRENT:
-		case PARAM_PMT5_OUTPUT_OFFSET_CURRENT:
-		case PARAM_PMT6_OUTPUT_OFFSET_CURRENT:
-		case PARAM_PMT1_BANDWIDTH_POS_CURRENT:
-		case PARAM_PMT2_BANDWIDTH_POS_CURRENT:
-		case PARAM_PMT3_BANDWIDTH_POS_CURRENT:
-		case PARAM_PMT4_BANDWIDTH_POS_CURRENT:
-		case PARAM_PMT5_BANDWIDTH_POS_CURRENT:
-		case PARAM_PMT6_BANDWIDTH_POS_CURRENT:
+			case PARAM_PMT1_GAIN_POS_CURRENT_VOLTS:
+			case PARAM_PMT2_GAIN_POS_CURRENT_VOLTS:
+			case PARAM_PMT3_GAIN_POS_CURRENT_VOLTS:
+			case PARAM_PMT4_GAIN_POS_CURRENT_VOLTS:
+			case PARAM_PMT5_GAIN_POS_CURRENT_VOLTS:
+			case PARAM_PMT6_GAIN_POS_CURRENT_VOLTS:
+			case PARAM_PMT1_OUTPUT_OFFSET_CURRENT:
+			case PARAM_PMT2_OUTPUT_OFFSET_CURRENT:
+			case PARAM_PMT3_OUTPUT_OFFSET_CURRENT:
+			case PARAM_PMT4_OUTPUT_OFFSET_CURRENT:
+			case PARAM_PMT5_OUTPUT_OFFSET_CURRENT:
+			case PARAM_PMT6_OUTPUT_OFFSET_CURRENT:
+			case PARAM_PMT1_BANDWIDTH_POS_CURRENT:
+			case PARAM_PMT2_BANDWIDTH_POS_CURRENT:
+			case PARAM_PMT3_BANDWIDTH_POS_CURRENT:
+			case PARAM_PMT4_BANDWIDTH_POS_CURRENT:
+			case PARAM_PMT5_BANDWIDTH_POS_CURRENT:
+			case PARAM_PMT6_BANDWIDTH_POS_CURRENT:
 			{
 				long ret = QueryPMTSetting(_tableParams[paramID], param);
 				return ret;
 			}
-		case PARAM_CONNECTION_STATUS:
+			case PARAM_CONNECTION_STATUS:
 			{
 				param = (_deviceDetected[DEVICE_NUM]) ? CONNECTION_READY : CONNECTION_UNAVAILABLE;
 				return TRUE;
 			}
-		default:
-			param = _tableParams[paramID]->GetParamVal();
-			return TRUE;
+			default:
+				param = _tableParams[paramID]->GetParamVal();
+				return TRUE;
 		}
 	}
 
@@ -819,13 +819,35 @@ long ThorPMT2100::QueryPMTSafety(const long pmtIndex, long &safetyStatus)
 	if (0 != strcmp(response.c_str(), "error"))
 	{
 		safetyStatus = 1;
+		_tableParams[PARAM_PMT1_SATURATIONS + pmtIndex]->UpdateParam(0);
+		_tableParams[PARAM_PMT1_SATURATIONS + pmtIndex]->UpdateParam_C();
 	}
 	else
 	{
 		string command = "SENS:CURR:PROT:TRIP?\n";
 
 		ret = ExecuteCmd(command, pmtIndex, TRUE, response);
-		safetyStatus = ("0" == response) ? 1 : 0;
+		
+		safetyStatus = ('0' == response[0]) ? 1 : 0;
+
+		//the error might also be that there are saturations
+		//the number of saturations will be after the letter s
+		auto saturationsStrPos = response.find("s");
+
+		if (saturationsStrPos != std::string::npos && response.length() > 2)
+		{
+			string saturationsStr = response.substr(saturationsStrPos + 1);
+			stringstream ss(saturationsStr);
+			int saturations = 0;
+			ss >> saturations;
+			_tableParams[PARAM_PMT1_SATURATIONS + pmtIndex]->UpdateParam(saturations);
+			_tableParams[PARAM_PMT1_SATURATIONS + pmtIndex]->UpdateParam_C();
+		}
+		else
+		{
+			_tableParams[PARAM_PMT1_SATURATIONS + pmtIndex]->UpdateParam(0);
+			_tableParams[PARAM_PMT1_SATURATIONS + pmtIndex]->UpdateParam_C();
+		}
 	}
 
 	return ret;
@@ -1828,6 +1850,97 @@ long ThorPMT2100::CreateParamTable()
 		safetyTrippedCmd,
 		5);
 	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT6_SAFETY,tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT1_SATURATIONS,
+		0,
+		0,
+		FALSE,
+		TYPE_LONG,
+		TRUE,
+		TRUE,
+		0,
+		1,
+		0,
+		safetyTrippedCmd,
+		0);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT1_SATURATIONS, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT2_SATURATIONS,
+		0,
+		0,
+		FALSE,
+		TYPE_LONG,
+		TRUE,
+		TRUE,
+		0,
+		1,
+		0,
+		safetyTrippedCmd,
+		1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT2_SATURATIONS, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT3_SATURATIONS,
+		0,
+		0,
+		FALSE,
+		TYPE_LONG,
+		TRUE,
+		TRUE,
+		0,
+		1,
+		0,
+		safetyTrippedCmd,
+		2);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT3_SATURATIONS, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT4_SATURATIONS,
+		0,
+		0,
+		FALSE,
+		TYPE_LONG,
+		TRUE,
+		TRUE,
+		0,
+		1,
+		0,
+		safetyTrippedCmd,
+		3);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT4_SATURATIONS, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT5_SATURATIONS,
+		0,
+		0,
+		FALSE,
+		TYPE_LONG,
+		TRUE,
+		TRUE,
+		0,
+		1,
+		0,
+		safetyTrippedCmd,
+		4);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT5_SATURATIONS, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT6_SATURATIONS,
+		0,
+		0,
+		FALSE,
+		TYPE_LONG,
+		TRUE,
+		TRUE,
+		0,
+		1,
+		0,
+		safetyTrippedCmd,
+		5);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT6_SATURATIONS, tempParamInfo));
+
 	//***end Safety Tripped Commands***//
 
 	//***Frequency Commands***//

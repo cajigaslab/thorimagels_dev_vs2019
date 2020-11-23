@@ -35,7 +35,7 @@
         private int _epochCount = 1;
         private int _fill = (int)FillChoice.Tornado;
         private int _iterations = 1;
-        private double _measurePower = 0.0;
+        private double[] _measurePower = { 0.0 };
         private bool _pixelMode = false;
         private double _postCycleIdleMS = 0;
         private double _postEpochIdleMS = 0;
@@ -321,7 +321,7 @@
             set;
         }
 
-        public double MeasurePower
+        public double[] MeasurePower
         {
             get { return _measurePower; }
             set
@@ -388,7 +388,7 @@
         }
 
         //[percent]
-        public double Power
+        public double[] Power
         {
             get;
             set;

@@ -310,6 +310,9 @@ long AcquireTStream::SetupZStage(int setupMode, ICamera *pCamera, ZRangeInfo* zR
 	double* zPosBuffer = NULL;
 	long areaMode,scanMode,interleave,pixelX,pixelY,chan,lsmFieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[4], verticalFlip, horizontalFlip, timebasedLineScan = FALSE, timebasedLineScanMS = 0;
 	double cameraType,lsmType,lsmFlybackLines,areaAngle,dwellTime,crsFrequencyHz = 0;
+	long threePhotonEnable = FALSE;
+	long numberOfPlanes = 1;
+	long selectedPlane = 0;
 	long displayCumulativeAveragePreview = FALSE;
 
 	switch(setupMode)
@@ -420,7 +423,7 @@ long AcquireTStream::SetupZStage(int setupMode, ICamera *pCamera, ZRangeInfo* zR
 			)
 		{
 			_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,chan,lsmFieldSize,offsetX,offsetY,averageMode,averageNum,clockSource, inputRange1, inputRange2, 
-				twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timebasedLineScan, timebasedLineScanMS);
+				twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timebasedLineScan, timebasedLineScanMS, threePhotonEnable, numberOfPlanes);
 
 			//if its a timebased line scan then we want to get the pixel Y from the camera instead of assuming that it is what we set it as
 			if (timebasedLineScan)
@@ -660,17 +663,18 @@ void AcquireTStream::SaveImagesPostCapture(long index, long subWell, long stream
 	}
 }
 
-void AcquireTStream::SetupSaveParams(long index, long subWell, long streamFrames, double exposureTimeMS, long width, long height, double umPerPixel, long zFastEnableGUI, long zStageSteps, long zFlybackFrames,long bufferChannels, long lsmChannels, long storageMode, long hyperSpectralWavelengths, long rawData, long previewID, SaveParams* sp)
+void AcquireTStream::SetupSaveParams(long index, long subWell, long streamFrames, double exposureTimeMS, long width, long height, long numberOfPlanes, double umPerPixel, long zFastEnableGUI, long zStageSteps, long zFlybackFrames,long bufferChannels, long lsmChannels, long storageMode, long hyperSpectralWavelengths, long rawData, long previewID, SaveParams* sp)
 {
 	ScanRegion sregionMap;
 	sregionMap.ScanID = 1;
 	sregionMap.RegionID = 0;
 	sregionMap.SizeX = width;
-	sregionMap.SizeY = height;
+	sregionMap.SizeY = height * numberOfPlanes;
 	sregionMap.SizeZ = (TRUE == zFastEnableGUI) ? zStageSteps : 1;
 	sregionMap.SizeT = streamFrames;
 	sregionMap.SizeS = 1;
-	sregionMap.BufferSize = width * height * bufferChannels * sizeof(USHORT);
+	sregionMap.BufferSize = (size_t)width * height * bufferChannels * numberOfPlanes * sizeof(USHORT);
+	sregionMap.NumberOfPlanes = 1;//numberOfPlanes;
 	sp->regionMap.clear();
 	sp->imageIDsMap.clear();
 	sp->dimensionsMap.clear();
@@ -986,7 +990,7 @@ long AcquireTStream::GetStimulusActive()
 	return FALSE;
 }
 
-long AcquireTStream::SetGetCameraSettings(ICamera* pCamera, long &channel, long &bufferChannels, long &width, long &height, long &avgMode, long &avgNum, double &umPerPixel, long &fieldSize, double &pixelDwellTime)
+long AcquireTStream::SetGetCameraSettings(ICamera* pCamera, long &channel, long &bufferChannels, long &width, long &height, long &avgMode, long &avgNum, double &umPerPixel, long &fieldSize, double &pixelDwellTime, long& numPlanes)
 {
 	long cameraType = ICamera::CameraType::LAST_CAMERA_TYPE;
 	cameraType = (GetCameraParamLong(SelectedHardware::SELECTED_CAMERA1,ICamera::PARAM_CAMERA_TYPE,cameraType)) ? cameraType : ICamera::CameraType::LAST_CAMERA_TYPE;
@@ -1049,11 +1053,14 @@ long AcquireTStream::SetGetCameraSettings(ICamera* pCamera, long &channel, long 
 	{
 		long areaMode,scanMode,interleave,pixelX,pixelY,chan,lsmFieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[4], verticalFlip, horizontalFlip, timebasedLineScan = FALSE, timebasedLineScanMS = 0;
 		double areaAngle,dwellTime, crsFrequencyHz = 0;
+		long threePhotonEnable = FALSE;
+		long numberOfPlanes = 1;
+		long selectedPlane = 0;
 		wstring pathAndName;
 		_pExp->GetPathAndName(pathAndName);
 		//getting the values from the experiment setup XML files
 		_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,chan,lsmFieldSize,offsetX,offsetY,averageMode,averageNum,clockSource, inputRange1, inputRange2, 
-			twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timebasedLineScan, timebasedLineScanMS);
+			twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timebasedLineScan, timebasedLineScanMS, threePhotonEnable, numberOfPlanes);
 		switch (areaMode)
 		{
 		case 0: //Square
@@ -1122,6 +1129,9 @@ long AcquireTStream::SetGetCameraSettings(ICamera* pCamera, long &channel, long 
 		pCamera->SetParam(ICamera::PARAM_LSM_VERTICAL_SCAN_DIRECTION, verticalFlip);
 		pCamera->SetParam(ICamera::PARAM_LSM_HORIZONTAL_FLIP, horizontalFlip);
 		
+		pCamera->SetParam(ICamera::PARAM_LSM_3P_ENABLE, threePhotonEnable);
+		pCamera->SetParam(ICamera::PARAM_LSM_NUMBER_OF_PLANES, numberOfPlanes);
+
 		long typePower,blankPercent;
 		double startPower,stopPower;
 		string pathPower;
@@ -1183,6 +1193,7 @@ long AcquireTStream::SetGetCameraSettings(ICamera* pCamera, long &channel, long 
 		umPerPixel = (lsmFieldSize * fieldSizeCalibration)/(pixelX * magnification);		
 		fieldSize = lsmFieldSize;
 		pixelDwellTime = dwellTime;
+		numPlanes = numberOfPlanes >= 1 && TRUE == threePhotonEnable ? numberOfPlanes : 1;
 	}
 
 	return TRUE;
@@ -1602,9 +1613,9 @@ long AcquireTStream::Execute(long index, long subWell)
 
 	long width, height, channel, bufferChannels, averageMode, averageNum, fieldSize;
 	double umPerPixel, dwelltime;
-
+	long numberOfPlanes = 1;
 	//Set camera settings and get settings needed in this function
-	SetGetCameraSettings(pCamera, channel, bufferChannels, width, height, averageMode, averageNum, umPerPixel, fieldSize, dwelltime);
+	SetGetCameraSettings(pCamera, channel, bufferChannels, width, height, averageMode, averageNum, umPerPixel, fieldSize, dwelltime, numberOfPlanes);
 
 	long saveEnabledChannelsOnlyLong;
 	_pExp->GetRaw(saveEnabledChannelsOnlyLong);
@@ -1766,7 +1777,7 @@ long AcquireTStream::Execute(long index, long subWell)
 	//activeScanAreas will be decedent order by frame size afterward:
 	std::sort(activeScanAreas.begin(),activeScanAreas.end(),[](const ScanRegion &lhs, const ScanRegion &rhs){ return lhs.SizeX * lhs.SizeY > rhs.SizeX * rhs.SizeY; });
 
-	SetupSaveParams(index, subWell, setupFrames, exposureTimeMS, width, height, umPerPixel, zFastEnableGUI, zstageSteps, flybackFrames, totalBufferChannels, channel, storageMode, hyperSpectralWavelengths, rawData, previewScanAreaID, &sp);
+	SetupSaveParams(index, subWell, setupFrames, exposureTimeMS, width, height, numberOfPlanes, umPerPixel, zFastEnableGUI, zstageSteps, flybackFrames, totalBufferChannels, channel, storageMode, hyperSpectralWavelengths, rawData, previewScanAreaID, &sp);
 
 	if(FALSE == SetupImageData(streamPath, pCamera, averageMode, &sp, zFastEnableGUI, bufferChannels, dwelltime, avgFrames ,d))
 	{
@@ -1951,10 +1962,14 @@ long AcquireTStream::Execute(long index, long subWell)
 	long imageMode = TRUE;
 	//this is the dropped frame count:
 	double droppedFrameCnt = 0;
+	//this is the number of frames available to be copied in the lower level DMA circular buffer:
+	double dmaBufferAvailableFrames = 0;
 	//This is the total number of frames put in to the final raw file (including flyback frames)
 	long totalSavedImages = 0;
 	//This is the total number of captured frames used to update the GUI
 	long capturedImagesCtrStimulusGUI = 1;
+	//This is the type of CCD camera that is currently selected
+	double ccdType = ICamera::CMOS;
 	//This is the thread handle collection of saving threads
 	_threadHandles.clear();
 
@@ -2018,6 +2033,15 @@ long AcquireTStream::Execute(long index, long subWell)
 
 	//No preview if occupied buffer is over the limit
 	double dmaInUseLimit = (20 <= dmaFrames) ? 0.90 : 0.60;
+
+	//Change the limit if it is an ORCA to throttle the preview image rate sooner if the dma buffer is filling up quickly
+	pCamera->GetParam(ICamera::PARAM_CCD_TYPE, ccdType);
+	dmaInUseLimit = (ICamera::ORCA == ccdType) ? 0.3 : dmaInUseLimit;
+
+	//Read the size of the dma buffer from the lower level and use that if it is larger
+	double dmaFrm = 0;
+	pCamera->GetParam(ICamera::PARAM_CAMERA_DMA_BUFFER_COUNT, dmaFrm);
+	dmaFrames = max(static_cast<long>(dmaFrm), dmaFrames);
 
 	//=================================================
 	//    Aqcuire Loop
@@ -2085,8 +2109,9 @@ long AcquireTStream::Execute(long index, long subWell)
 			DWORD frameStartTime = GetTickCount();
 
 			if (TRUE == BreakOutWaitCameraStatus(pCamera, sp, status, droppedFrameCnt, totalFrame, zFastEnableGUI, saveEnabledChannelsOnly, captureMode))
+			{
 				break;
-
+			}
 			//=================================================
 			//    Copy Buffer from Camera
 			//=================================================
@@ -2181,7 +2206,7 @@ long AcquireTStream::Execute(long index, long subWell)
 			//==============================================================================================================================
 			if((0 == _lastImageUpdateTime) || (GetTickCount() - _lastImageUpdateTime) > Constants::MS_TO_SEC*(1 / previewRate))
 			{
-				if((displayImage) && (dmaInUseLimit > static_cast<double>(droppedFrameCnt / dmaFrames)))	//no preview if camera is close to overflow limit
+				if((displayImage) && (dmaInUseLimit > static_cast<double>(droppedFrameCnt / dmaFrames)) && (dmaInUseLimit > static_cast<double>(dmaBufferAvailableFrames / dmaFrames)))	//no preview if camera is close to overflow limit
 				{
 					//only preview on selected scan area by get-then-unlock
 					if (MesoScanTypes::Micro == viewMode && sp.regionImageIDsMap.find(sp.previewRegionID) != sp.regionImageIDsMap.end())
@@ -2400,6 +2425,11 @@ long AcquireTStream::Execute(long index, long subWell)
 
 			pCamera->GetParam(ICamera::PARAM_DROPPED_FRAMES,droppedFrameCnt);
 
+			if(ICamera::ORCA == ccdType)
+			{
+				pCamera->GetParam(ICamera::PARAM_DMA_BUFFER_AVAILABLE_FRAMES, dmaBufferAvailableFrames);
+			}
+
 			//Repeat commands done while camera is busy in case of missing:
 			if(STORAGE_STIMULUS == storageMode)
 			{
@@ -2439,334 +2469,334 @@ long AcquireTStream::Execute(long index, long subWell)
 				CallSaveImage(capturedImagesCtrStimulusGUI, FALSE);
 			}
 		}
-
-		switch(storageMode)
+		switch (storageMode)
 		{
 		case STORAGE_FINITE:
-			{
-				//======================================================
-				// Save Image, no compression, no average, Big Tiff only
-				//======================================================
-				char* bufferAtPos = NULL;
-				if ((FALSE == sp.doCompression) && 
-					(((1 == avgFrames) && (FALSE == zFastEnableGUI)) || 
+		{
+
+			//======================================================
+			// Save Image, no compression, no average, Big Tiff only
+			//======================================================
+			char* bufferAtPos = NULL;
+			if ((FALSE == sp.doCompression) &&
+				(((1 == avgFrames) && (FALSE == zFastEnableGUI)) ||
 					((tFastZStimulus <= zstageSteps) && (TRUE == zFastEnableGUI))))	//ignore flyback frames since (tFastZStimulus % (zstageSteps+flybackFrames))
+			{
+				for (map<long, ScanRegion>::iterator imageIt = sp.regionMap.begin(); imageIt != sp.regionMap.end(); imageIt++) //regionMap available for both meso and micro scans
 				{
-					for(map<long,ScanRegion>::iterator imageIt = sp.regionMap.begin(); imageIt != sp.regionMap.end(); imageIt++) //regionMap available for both meso and micro scans
-					{
-						long tVolume = static_cast<long>(floor(t/(double)(imageIt->second.SizeZ+sp.fastFlybackFrames))) + (TRUE == zFastEnableGUI);	//1-based
-						long zIndex = (FALSE == zFastEnableGUI) ? 1 : tFastZStimulus;																//1-based
+					long tVolume = static_cast<long>(floor(t / (double)(imageIt->second.SizeZ + sp.fastFlybackFrames))) + (TRUE == zFastEnableGUI);	//1-based
+					long zIndex = (FALSE == zFastEnableGUI) ? 1 : tFastZStimulus;																//1-based
 
-						//Call Save
-						if(useVirtualMemory)
-							bufferAtPos = pVirtualMemory + imageIt->second.SizeX * imageIt->second.SizeY * sp.bufferChannels[imageIt->first] * (t-1) * 2;
-						else
-							bufferAtPos = ImageManager::getInstance()->GetImagePtr((MesoScanTypes::Micro == viewMode) ? sp.regionImageIDsMap[imageIt->first] : sp.imageIDsMap[BufferType::INTENSITY], 0, 0, 0, t-1);
-
-						bigTiff->SetRegion(max(0, imageIt->first));
-						for(auto it=activeChannels.begin(); it!=activeChannels.end(); ++it)
-						{
-							long i=it->first;														//channel count index
-							long channel=(sp.bufferChannels[imageIt->first] > 1 ? it->second : 0);	//channel ID
-
-							//=== Save Tiff ===
-							if((sp.wavelengthName[i].size() > 0))
-							{
-								char* pBuf = (saveEnabledChannelsOnly) ? bufferAtPos + (imageIt->second.SizeX * imageIt->second.SizeY * sizeof(short) * i) : bufferAtPos + (imageIt->second.SizeX * imageIt->second.SizeY * sizeof(short) * channel);
-								switch ((CaptureFile)sp.fileType)
-								{
-								case CaptureFile::FILE_BIG_TIFF:
-									if (IExperiment::HYPERSPECTRAL == captureMode)
-									{
-										bigTiff->SaveData(pBuf, static_cast<uint16_t>(i), static_cast<uint16_t>(zIndex), 1, static_cast<uint16_t>(tVolume));
-									}
-									else
-									{
-										bigTiff->SaveData(pBuf, static_cast<uint16_t>(i), static_cast<uint16_t>(zIndex), static_cast<uint16_t>(tVolume), 1);
-									}
-									break;
-								default:
-									break;
-								}
-							}
-						}
-						if (!useVirtualMemory)
-							ImageManager::getInstance()->UnlockImagePtr(((MesoScanTypes::Micro == viewMode) ? sp.regionImageIDsMap[imageIt->first] : sp.imageIDsMap[BufferType::INTENSITY]),0,0,0,t-1);
-					}
-				}
-
-				//advance to the next frame
-				t++;
-			}
-			break;
-		case STORAGE_STIMULUS:
-			{			
-				//if the software trigger or hardware stimulus lines are active
-				//save the data
-				if(TRUE == _hwStimulusActive)
-				{	
-					//delayFrames == total fastZ scan - tFastZStimulus location
-					long delayFrames = (zstageSteps + flybackFrames) - tFastZStimulus + 1;
-					StringCbPrintfW(message,MSG_LENGTH,L"AcquireTStream POINT 2 tFastZStimulus %d stimulusActive %d zFastEnableGUI %d",tFastZStimulus,_swStimulusActive,zFastEnableGUI);
-					logDll->TLTraceEvent(INFORMATION_EVENT,1,message);
-
-					//this is the first index of the cycle
-					//store this for the save thread
-					if(FALSE == _swStimulusActive)
-					{
-						StringCbPrintfW(message,MSG_LENGTH,L"AcquireTStream POINT 3 tFastZStimulus %d stimulusActive %d zFastEnableGUI %d",tFastZStimulus,_swStimulusActive,zFastEnableGUI);
-						logDll->TLTraceEvent(INFORMATION_EVENT,1,message);
-
-						spThread.firstFrameIndex = tStimulus;
-						avgStimulusFrames = static_cast<long>(floor((double)streamFrames / avgFrames));
-						if(1 == zFastEnableGUI)
-						{							
-							fastzVolumeNum = static_cast<long>(floor((double)(streamFrames)/(zstageSteps + flybackFrames)));
-							if(fastzVolumeNum < 1)
-							{
-								FailedAcquisition(pCamera, sp, zFastEnableGUI);
-								return FALSE;
-							}
-							fastzLastFrameID = delayFrames + fastzVolumeNum * (zstageSteps + flybackFrames);
-						}
-
-						StringCbPrintfW(message,MSG_LENGTH,L"AcquireTStream stimulus activated on index %d",tStimulus);
-						logDll->TLTraceEvent(INFORMATION_EVENT,1,message);	
-						_swStimulusActive = TRUE;	
-						//open shutter at rising edge if not already opened:
-						OpenShutter();					
-					}
-
-					StringCbPrintfW(message,MSG_LENGTH,L"AcquireTStream POINT 4 tFastZStimulus %d stimulusActive %d zFastEnableGUI %d",tFastZStimulus,_swStimulusActive,zFastEnableGUI);
-					logDll->TLTraceEvent(INFORMATION_EVENT,1,message);
-
-					if((1 == tFastZStimulus))	//Only active when zFastEnableGUI == 1
-					{
-						fastZActive = TRUE;
-					}					
-
-					//reach max stimulus stream frames: (fastzLastFrameID = 0 if not fastZ; avgStimulusFrames could be 1.)
-					if((avgStimulusFrames == 1) || (avgStimulusFrames == t) || (fastzLastFrameID == t))
-					{						
-						StringCbPrintfW(message,MSG_LENGTH,L"AcquireTStream stimulus reached the end of the buffer %d or fast z last frame %d",streamFrames,fastzLastFrameID);
-						logDll->TLTraceEvent(INFORMATION_EVENT,1,message);	
-
-						if(1 == zFastEnableGUI)
-						{
-							fastzVolumeNum = static_cast<long>(floor((double)streamFrames/(zstageSteps + flybackFrames)));
-							fastzLastFrameID = fastzVolumeNum * (zstageSteps + flybackFrames);	
-						}
-						spThread.firstFrameIndex = tStimulus - t + 1;
-						spThread.numFramesToSave = tStimulus-spThread.firstFrameIndex + 1;
-						totalSavedImages += spThread.numFramesToSave;
-						capturedImagesCtrStimulusGUI = totalSavedImages;
-						AcquireTStream::savedFrameNumVec.push_back(tStimulus);
-						spThread.deleteFileOnThreadCompletion = TRUE;//(0 == stimulusTransitionCount) ? FALSE : TRUE;
-
-						if(TRUE == CreateSaveThread(spThread, pVirtualMemory))
-							saveMaxStreamFramesCount++;
-
-						t = 1;	//currentStreamCount
-						tStimulus = tStimulus + 1;
-
-						//Update the GUI with current image index
-						//stay below the maximum number of frames
-						if(tStimulus < streamCount)
-						{
-							CallSaveTImage(capturedImagesCtrStimulusGUI);
-							CallSaveImage(capturedImagesCtrStimulusGUI, FALSE);
-						}
-
-						//need to rearm only for trigger first mode:
-						if(ICamera::HW_MULTI_FRAME_TRIGGER_FIRST == _triggerMode)
-						{
-							pCamera->PostflightAcquisition(NULL);
-							pCamera->PreflightAcquisition(_pMemoryBuffer);
-							startCamStatus = pCamera->StartAcquisition(_pMemoryBuffer);
-							//break out of the case since it is done saving and rearming
-							break;
-						}
-					}
+					//Call Save
+					if (useVirtualMemory)
+						bufferAtPos = pVirtualMemory + imageIt->second.SizeX * imageIt->second.SizeY * sp.bufferChannels[imageIt->first] * (t - 1) * 2;
 					else
-					{						
-						StringCbPrintfW(message,MSG_LENGTH,L"AcquireTStream (HWStimulusActive==TRUE) stimulus incrementing t frame %d tStimulus %d",t,tStimulus);
-						logDll->TLTraceEvent(INFORMATION_EVENT,1,message);	
-						tStimulus++;
-						t++;						
-					}
-				}
-				else
-				{
-					//***no lines are active***//
+						bufferAtPos = ImageManager::getInstance()->GetImagePtr((MesoScanTypes::Micro == viewMode) ? sp.regionImageIDsMap[imageIt->first] : sp.imageIDsMap[BufferType::INTENSITY], 0, 0, 0, t - 1);
 
-					//Postpone stop saving until complete of current z volume:
-					if(TRUE == fastZActive)
+					bigTiff->SetRegion(max(0, imageIt->first));
+					for (auto it = activeChannels.begin(); it != activeChannels.end(); ++it)
 					{
-						if(1 == tFastZStimulus)		//finished z volume
-						{	
-							fastZActive = FALSE;
-							StringCbPrintfW(message,MSG_LENGTH,L"AcquireTStream Finished stimulus FastZ volume frame %d",tFastZStimulus);
-							logDll->TLTraceEvent(INFORMATION_EVENT,1,message);	
-						}
-						else						//not yet finish z volume
+						long i = it->first;														//channel count index
+						long channel = (sp.bufferChannels[imageIt->first] > 1 ? it->second : 0);	//channel ID
+
+						//=== Save Tiff ===
+						if ((sp.wavelengthName[i].size() > 0))
 						{
-							StringCbPrintfW(message,MSG_LENGTH,L"AcquireTStream stimulus FastZ frame %d after falling edge",tFastZStimulus);
-							logDll->TLTraceEvent(INFORMATION_EVENT,1,message);					
-
-							//reach max stimulus stream frames: (fastzLastFrameID = 0 if not fastZ; avgStimulusFrames could be 1.)
-							if((avgStimulusFrames == 1)  || (avgStimulusFrames == t) || (fastzLastFrameID == t))
-							{	
-								//Reset the swStimulusActive flag
-								_swStimulusActive = FALSE;
-								StringCbPrintfW(message,MSG_LENGTH,L"AcquireTStream stimulus reached the end of the buffer %d or fast z last frame %d",streamFrames,fastzLastFrameID);
-								logDll->TLTraceEvent(INFORMATION_EVENT,1,message);	
-
-								if(1 == zFastEnableGUI)
-								{
-									fastzVolumeNum = static_cast<long>(floor((double)streamFrames/(zstageSteps + flybackFrames)));
-									fastzLastFrameID = fastzVolumeNum * (zstageSteps + flybackFrames);
-								}
-								spThread.firstFrameIndex = tStimulus - t + 1;
-								spThread.numFramesToSave = tStimulus-spThread.firstFrameIndex + 1;
-								totalSavedImages += spThread.numFramesToSave;
-								capturedImagesCtrStimulusGUI = totalSavedImages;
-								AcquireTStream::savedFrameNumVec.push_back(tStimulus);
-								spThread.deleteFileOnThreadCompletion = TRUE;//(0 == stimulusTransitionCount) ? FALSE : TRUE;
-
-								if(TRUE == CreateSaveThread(spThread, pVirtualMemory))
-									saveMaxStreamFramesCount++;
-
-								t = 1;	//currentStreamCount
-								tStimulus = tStimulus + 1;
-
-								//Update the GUI with current image index
-								//stay below the maximum number of frames
-								if(tStimulus < streamCount)
-								{
-									CallSaveTImage(capturedImagesCtrStimulusGUI);
-									CallSaveImage(capturedImagesCtrStimulusGUI, FALSE);
-								}
-
-								//need to rearm only for trigger first mode:
-								if(ICamera::HW_MULTI_FRAME_TRIGGER_FIRST == _triggerMode)
-								{
-									pCamera->PostflightAcquisition(NULL);
-									pCamera->PreflightAcquisition(_pMemoryBuffer);
-									startCamStatus = pCamera->StartAcquisition(_pMemoryBuffer);
-									//break out of the case since it is done saving and rearming
-									break;
-								}								
-							}
-						}
-					}
-
-					//postpone stop saving until fulfilled average stimulus,
-					//only in HW trigger mode since it does rearm every falling edge:
-					if(ICamera::HW_MULTI_FRAME_TRIGGER_FIRST == _triggerMode)
-					{						
-						//stop scanner and zstage once
-						if (FALSE == scannerStopped)
-						{
-							pCamera->PostflightAcquisition(NULL);
-							IDevice *pZStage = GetDevice(SelectedHardware::SELECTED_ZSTAGE);
-							if (NULL != pZStage)
+							char* pBuf = (saveEnabledChannelsOnly) ? bufferAtPos + (imageIt->second.SizeX * imageIt->second.SizeY * sizeof(short) * i) : bufferAtPos + (imageIt->second.SizeX * imageIt->second.SizeY * sizeof(short) * channel);
+							switch ((CaptureFile)sp.fileType)
 							{
-								pZStage->SetupPosition();
-								pZStage->StartPosition();
+							case CaptureFile::FILE_BIG_TIFF:
+								if (IExperiment::HYPERSPECTRAL == captureMode)
+								{
+									bigTiff->SaveData(pBuf, static_cast<uint16_t>(i), static_cast<uint16_t>(zIndex), 1, static_cast<uint16_t>(tVolume));
+								}
+								else
+								{
+									bigTiff->SaveData(pBuf, static_cast<uint16_t>(i), static_cast<uint16_t>(zIndex), static_cast<uint16_t>(tVolume), 1);
+								}
+								break;
+							default:
+								break;
 							}
-							scannerStopped = TRUE;
-						}
-						if(0 < static_cast<long>(droppedFrameCnt))
-						{
-							StringCbPrintfW(message,MSG_LENGTH,L"AcquireTStream Dropped (HWStimulusActive==FALSE) stimulus incrementing t frame %d tStimulus %d droppedFrames %d",t,tStimulus,static_cast<long>(droppedFrameCnt));
-							logDll->TLTraceEvent(INFORMATION_EVENT,1,message);
-							tStimulus++;
-							t++;
 						}
 					}
+					if (!useVirtualMemory)
+						ImageManager::getInstance()->UnlockImagePtr(((MesoScanTypes::Micro == viewMode) ? sp.regionImageIDsMap[imageIt->first] : sp.imageIDsMap[BufferType::INTENSITY]), 0, 0, 0, t - 1);
+				}
+			}
 
-					//create a save thread if this is a stimulus falling edge
-					if((TRUE == _swStimulusActive) && (0 >= static_cast<long>(droppedFrameCnt)))
-					{	
-						StringCbPrintfW(message,MSG_LENGTH,L"AcquireTStream stimulus finished. Saving images");
-						logDll->TLTraceEvent(INFORMATION_EVENT,1,message);
-						_swStimulusActive = FALSE;
-						//closing of the shutter at falling edge if not already closed,
-						//for either fast z or stimulus
-						CloseShutter();
+			//advance to the next frame
+			t++;
+		}
+		break;
+		case STORAGE_STIMULUS:
+		{
+			//if the software trigger or hardware stimulus lines are active
+			//save the data
+			if (TRUE == _hwStimulusActive)
+			{
+				//delayFrames == total fastZ scan - tFastZStimulus location
+				long delayFrames = (zstageSteps + flybackFrames) - tFastZStimulus + 1;
+				StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream POINT 2 tFastZStimulus %d stimulusActive %d zFastEnableGUI %d", tFastZStimulus, _swStimulusActive, zFastEnableGUI);
+				logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
 
-						long framesToCut = 0;	//cut non-complete volume frames
-						if ((TRUE==zFastEnableGUI) && ((t % (zstageSteps+flybackFrames)) != 0))
+				//this is the first index of the cycle
+				//store this for the save thread
+				if (FALSE == _swStimulusActive)
+				{
+					StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream POINT 3 tFastZStimulus %d stimulusActive %d zFastEnableGUI %d", tFastZStimulus, _swStimulusActive, zFastEnableGUI);
+					logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
+
+					spThread.firstFrameIndex = tStimulus;
+					avgStimulusFrames = static_cast<long>(floor((double)streamFrames / avgFrames));
+					if (1 == zFastEnableGUI)
+					{
+						fastzVolumeNum = static_cast<long>(floor((double)(streamFrames) / (zstageSteps + flybackFrames)));
+						if (fastzVolumeNum < 1)
 						{
-							framesToCut = tFastZStimulus;
+							FailedAcquisition(pCamera, sp, zFastEnableGUI);
+							return FALSE;
 						}
-
-						spThread.firstFrameIndex = tStimulus - t + 1;
-						long numImagesBeforCut = tStimulus-spThread.firstFrameIndex + 1;
-
-						//removed time data for extra points that will not go into the final experiment						
-						for(long j=(totalSavedImages + numImagesBeforCut - 1); j>=(numImagesBeforCut + totalSavedImages - framesToCut); j--)
-						{
-							_acquireSaveInfo->getInstance()->RemoveTimestampAt(j);
-							_acquireSaveInfo->getInstance()->RemoveTimingInfoAt(j);
-						}
-
-						spThread.numFramesToSave = numImagesBeforCut - framesToCut;
-						totalSavedImages += spThread.numFramesToSave;
-						capturedImagesCtrStimulusGUI = totalSavedImages;
-						AcquireTStream::savedFrameNumVec.push_back(tStimulus - framesToCut);
-						spThread.deleteFileOnThreadCompletion = TRUE;
-
-						StringCbPrintfW(message,MSG_LENGTH,L"t:%d, spThread.numFramesToSave:%d", t,spThread.numFramesToSave);
-						logDll->TLTraceEvent(INFORMATION_EVENT,1,message);
-
-						if(TRUE == CreateSaveThread(spThread, pVirtualMemory))
-							saveMaxStreamFramesCount++;
-
-						//move the T back to the start
-						t = 1;	//currentStreamCount
-						saveMaxStreamFramesCount = 0;
-						fastzLastFrameID = 0;
-						tFastZStimulus = 0;
+						fastzLastFrameID = delayFrames + fastzVolumeNum * (zstageSteps + flybackFrames);
 					}
 
+					StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream stimulus activated on index %d", tStimulus);
+					logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
+					_swStimulusActive = TRUE;
+					//open shutter at rising edge if not already opened:
+					OpenShutter();
+				}
+
+				StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream POINT 4 tFastZStimulus %d stimulusActive %d zFastEnableGUI %d", tFastZStimulus, _swStimulusActive, zFastEnableGUI);
+				logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
+
+				if ((1 == tFastZStimulus))	//Only active when zFastEnableGUI == 1
+				{
+					fastZActive = TRUE;
+				}
+
+				//reach max stimulus stream frames: (fastzLastFrameID = 0 if not fastZ; avgStimulusFrames could be 1.)
+				if ((avgStimulusFrames == 1) || (avgStimulusFrames == t) || (fastzLastFrameID == t))
+				{
+					StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream stimulus reached the end of the buffer %d or fast z last frame %d", streamFrames, fastzLastFrameID);
+					logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
+
+					if (1 == zFastEnableGUI)
+					{
+						fastzVolumeNum = static_cast<long>(floor((double)streamFrames / (zstageSteps + flybackFrames)));
+						fastzLastFrameID = fastzVolumeNum * (zstageSteps + flybackFrames);
+					}
+					spThread.firstFrameIndex = tStimulus - t + 1;
+					spThread.numFramesToSave = tStimulus - spThread.firstFrameIndex + 1;
+					totalSavedImages += spThread.numFramesToSave;
+					capturedImagesCtrStimulusGUI = totalSavedImages;
+					AcquireTStream::savedFrameNumVec.push_back(tStimulus);
+					spThread.deleteFileOnThreadCompletion = TRUE;//(0 == stimulusTransitionCount) ? FALSE : TRUE;
+
+					if (TRUE == CreateSaveThread(spThread, pVirtualMemory))
+						saveMaxStreamFramesCount++;
+
+					t = 1;	//currentStreamCount
+					tStimulus = tStimulus + 1;
+
+					//Update the GUI with current image index
 					//stay below the maximum number of frames
-					if(tStimulus < streamCount)
+					if (tStimulus < streamCount)
 					{
 						CallSaveTImage(capturedImagesCtrStimulusGUI);
 						CallSaveImage(capturedImagesCtrStimulusGUI, FALSE);
 					}
 
-					//restart scanner when done with all dropped frames:
-					if((ICamera::HW_MULTI_FRAME_TRIGGER_FIRST == _triggerMode) && (0 >= static_cast<long>(droppedFrameCnt)))
+					//need to rearm only for trigger first mode:
+					if (ICamera::HW_MULTI_FRAME_TRIGGER_FIRST == _triggerMode)
 					{
-						StringCbPrintfW(message,MSG_LENGTH,L"AcquireTStream (HWStimulusActive==FALSE) all frames accounted for retrieved all dropped frames. Postflight and Rearm");
-						logDll->TLTraceEvent(INFORMATION_EVENT,1,message);
+						pCamera->PostflightAcquisition(NULL);
 						pCamera->PreflightAcquisition(_pMemoryBuffer);
 						startCamStatus = pCamera->StartAcquisition(_pMemoryBuffer);
-						scannerStopped = FALSE;
+						//break out of the case since it is done saving and rearming
 						break;
 					}
-				}				
-
-				//we've reached the end of the defined number
-				//of stream counts for the stimulus. We will
-				//restart another.
-				if((currentStreamCount == streamCount))					
+				}
+				else
 				{
-					StringCbPrintfW(message,MSG_LENGTH,L"AcquireTStream stimulus currentStreamCount reached the streamCount %d",streamCount);
-					logDll->TLTraceEvent(INFORMATION_EVENT,1,message);
+					StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream (HWStimulusActive==TRUE) stimulus incrementing t frame %d tStimulus %d", t, tStimulus);
+					logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
+					tStimulus++;
+					t++;
+				}
+			}
+			else
+			{
+				//***no lines are active***//
 
-					currentStreamCount = 1;
-					pCamera->PostflightAcquisition(NULL);
-					pCamera->PreflightAcquisition(_pMemoryBuffer);
-					startCamStatus = pCamera->StartAcquisition(_pMemoryBuffer);
+				//Postpone stop saving until complete of current z volume:
+				if (TRUE == fastZActive)
+				{
+					if (1 == tFastZStimulus)		//finished z volume
+					{
+						fastZActive = FALSE;
+						StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream Finished stimulus FastZ volume frame %d", tFastZStimulus);
+						logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
+					}
+					else						//not yet finish z volume
+					{
+						StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream stimulus FastZ frame %d after falling edge", tFastZStimulus);
+						logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
+
+						//reach max stimulus stream frames: (fastzLastFrameID = 0 if not fastZ; avgStimulusFrames could be 1.)
+						if ((avgStimulusFrames == 1) || (avgStimulusFrames == t) || (fastzLastFrameID == t))
+						{
+							//Reset the swStimulusActive flag
+							_swStimulusActive = FALSE;
+							StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream stimulus reached the end of the buffer %d or fast z last frame %d", streamFrames, fastzLastFrameID);
+							logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
+
+							if (1 == zFastEnableGUI)
+							{
+								fastzVolumeNum = static_cast<long>(floor((double)streamFrames / (zstageSteps + flybackFrames)));
+								fastzLastFrameID = fastzVolumeNum * (zstageSteps + flybackFrames);
+							}
+							spThread.firstFrameIndex = tStimulus - t + 1;
+							spThread.numFramesToSave = tStimulus - spThread.firstFrameIndex + 1;
+							totalSavedImages += spThread.numFramesToSave;
+							capturedImagesCtrStimulusGUI = totalSavedImages;
+							AcquireTStream::savedFrameNumVec.push_back(tStimulus);
+							spThread.deleteFileOnThreadCompletion = TRUE;//(0 == stimulusTransitionCount) ? FALSE : TRUE;
+
+							if (TRUE == CreateSaveThread(spThread, pVirtualMemory))
+								saveMaxStreamFramesCount++;
+
+							t = 1;	//currentStreamCount
+							tStimulus = tStimulus + 1;
+
+							//Update the GUI with current image index
+							//stay below the maximum number of frames
+							if (tStimulus < streamCount)
+							{
+								CallSaveTImage(capturedImagesCtrStimulusGUI);
+								CallSaveImage(capturedImagesCtrStimulusGUI, FALSE);
+							}
+
+							//need to rearm only for trigger first mode:
+							if (ICamera::HW_MULTI_FRAME_TRIGGER_FIRST == _triggerMode)
+							{
+								pCamera->PostflightAcquisition(NULL);
+								pCamera->PreflightAcquisition(_pMemoryBuffer);
+								startCamStatus = pCamera->StartAcquisition(_pMemoryBuffer);
+								//break out of the case since it is done saving and rearming
+								break;
+							}
+						}
+					}
 				}
 
-			}
-			break;
-		}
+				//postpone stop saving until fulfilled average stimulus,
+				//only in HW trigger mode since it does rearm every falling edge:
+				if (ICamera::HW_MULTI_FRAME_TRIGGER_FIRST == _triggerMode)
+				{
+					//stop scanner and zstage once
+					if (FALSE == scannerStopped)
+					{
+						pCamera->PostflightAcquisition(NULL);
+						IDevice* pZStage = GetDevice(SelectedHardware::SELECTED_ZSTAGE);
+						if (NULL != pZStage)
+						{
+							pZStage->SetupPosition();
+							pZStage->StartPosition();
+						}
+						scannerStopped = TRUE;
+					}
+					if (0 < static_cast<long>(droppedFrameCnt))
+					{
+						StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream Dropped (HWStimulusActive==FALSE) stimulus incrementing t frame %d tStimulus %d droppedFrames %d", t, tStimulus, static_cast<long>(droppedFrameCnt));
+						logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
+						tStimulus++;
+						t++;
+					}
+				}
 
+				//create a save thread if this is a stimulus falling edge
+				if ((TRUE == _swStimulusActive) && (0 >= static_cast<long>(droppedFrameCnt)))
+				{
+					StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream stimulus finished. Saving images");
+					logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
+					_swStimulusActive = FALSE;
+					//closing of the shutter at falling edge if not already closed,
+					//for either fast z or stimulus
+					CloseShutter();
+
+					long framesToCut = 0;	//cut non-complete volume frames
+					if ((TRUE == zFastEnableGUI) && ((t % (zstageSteps + flybackFrames)) != 0))
+					{
+						framesToCut = tFastZStimulus;
+					}
+
+					spThread.firstFrameIndex = tStimulus - t + 1;
+					long numImagesBeforCut = tStimulus - spThread.firstFrameIndex + 1;
+
+					//removed time data for extra points that will not go into the final experiment						
+					for (long j = (totalSavedImages + numImagesBeforCut - 1); j >= (numImagesBeforCut + totalSavedImages - framesToCut); j--)
+					{
+						_acquireSaveInfo->getInstance()->RemoveTimestampAt(j);
+						_acquireSaveInfo->getInstance()->RemoveTimingInfoAt(j);
+					}
+
+					spThread.numFramesToSave = numImagesBeforCut - framesToCut;
+					totalSavedImages += spThread.numFramesToSave;
+					capturedImagesCtrStimulusGUI = totalSavedImages;
+					AcquireTStream::savedFrameNumVec.push_back(tStimulus - framesToCut);
+					spThread.deleteFileOnThreadCompletion = TRUE;
+
+					StringCbPrintfW(message, MSG_LENGTH, L"t:%d, spThread.numFramesToSave:%d", t, spThread.numFramesToSave);
+					logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
+
+					if (TRUE == CreateSaveThread(spThread, pVirtualMemory))
+						saveMaxStreamFramesCount++;
+
+					//move the T back to the start
+					t = 1;	//currentStreamCount
+					saveMaxStreamFramesCount = 0;
+					fastzLastFrameID = 0;
+					tFastZStimulus = 0;
+				}
+
+				//stay below the maximum number of frames
+				if (tStimulus < streamCount)
+				{
+					CallSaveTImage(capturedImagesCtrStimulusGUI);
+					CallSaveImage(capturedImagesCtrStimulusGUI, FALSE);
+				}
+
+				//restart scanner when done with all dropped frames:
+				if ((ICamera::HW_MULTI_FRAME_TRIGGER_FIRST == _triggerMode) && (0 >= static_cast<long>(droppedFrameCnt)))
+				{
+					StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream (HWStimulusActive==FALSE) all frames accounted for retrieved all dropped frames. Postflight and Rearm");
+					logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
+					pCamera->PreflightAcquisition(_pMemoryBuffer);
+					startCamStatus = pCamera->StartAcquisition(_pMemoryBuffer);
+					scannerStopped = FALSE;
+					break;
+				}
+			}
+
+			//we've reached the end of the defined number
+			//of stream counts for the stimulus. We will
+			//restart another.
+			if ((currentStreamCount == streamCount))
+			{
+				StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream stimulus currentStreamCount reached the streamCount %d", streamCount);
+				logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
+
+				currentStreamCount = 1;
+				pCamera->PostflightAcquisition(NULL);
+				pCamera->PreflightAcquisition(_pMemoryBuffer);
+				startCamStatus = pCamera->StartAcquisition(_pMemoryBuffer);
+			}
+
+		}
+		break;
+		}
+		
 		//=================================================
 		//   Handle Premature Stopping Of Capture
 		//=================================================

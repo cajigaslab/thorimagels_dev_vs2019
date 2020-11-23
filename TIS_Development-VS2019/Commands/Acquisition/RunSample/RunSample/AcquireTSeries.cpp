@@ -7,9 +7,12 @@
 #include "AcquireTSeries.h"
 #include "AcquireFactory.h"
 #include "ImageCorrection.h"
+#include <functional>
 
 extern auto_ptr<CommandDll> shwDll;
 extern auto_ptr<TiffLibDll> tiffDll;
+extern "C" long __declspec(dllimport) GetZRange(double& zMin, double& zMax, double& zDefault);
+
 
 int Call_TiffVSetField(TIFF* out, uint32 ttag_t, ...);
 long SaveTIFF(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height, unsigned short * rlut, unsigned short * glut,unsigned short * blut, double umPerPixel,int nc, int nt, int nz, double timeIncrement, int c, int t, int z,string *acquiredDate,double dt, string * omeTiffData, PhysicalSize physicalSize, long doCompression);
@@ -18,7 +21,7 @@ long SaveTIFFWithoutOME(wchar_t *filePathAndName, char * pMemoryBuffer, long wid
 long SaveJPEG(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height,unsigned short * rlut, unsigned short * glut, unsigned short * blut,long bitDepth);
 void GetColorInfo(HardwareSetupXML *pHardware,string wavelengthName, long &red, long &green, long &blue,long &bp, long &wp);
 void GetLookUpTables(unsigned short * rlut, unsigned short * glut, unsigned short *blut,long red, long green, long blue, long bp, long wp, long bitdepth);
-long SetupDimensions(ICamera *pCamera,IExperiment *pExperiment,double fieldSizeCalibration, double magnification, Dimensions &d, long &avgFrames, long &bufferChannels, long &avgMode, double &umPerPixel);
+long SetupDimensions(ICamera *pCamera,IExperiment *pExperiment,double fieldSizeCalibration, double magnification, Dimensions &d, long &avgFrames, long &bufferChannels, long &avgMode, double &umPerPixel, long& numOfPlanes);
 long SetDeviceParameterValue(IDevice *pDevice,long paramID, double val,long bWait,HANDLE hEvent,long waitTime);
 extern string ConvertWStringToString(wstring ws);
 AcquireTSeries::AcquireTSeries(IAutoFocus * pAF,IExperiment *exp,wstring path)
@@ -357,9 +360,11 @@ long AcquireTSeries::Execute(long index, long subWell)
 		double areaAngle,dwellTime, crsFrequencyHz = 0;
 		long timeBasedLineScan = FALSE;
 		long timeBasedLineScanMS = 0;
+		long threePhotonEnable = FALSE;
+		long numberOfPlanes = 1;
 		//getting the values from the experiment setup XML files
 		_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,chan,lsmFieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,
-			flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS);
+			flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes);
 		_lsmChannel = chan;
 		switch (areaMode)
 		{
@@ -433,6 +438,10 @@ long AcquireTSeries::Execute(long index, long subWell)
 		_pCamera->SetParam(ICamera::PARAM_LSM_HORIZONTAL_FLIP, horizontalFlip);
 		_pCamera->SetParam(ICamera::PARAM_LSM_TIME_BASED_LINE_SCAN, timeBasedLineScan);
 		_pCamera->SetParam(ICamera::PARAM_LSM_TB_LINE_SCAN_TIME_MS, timeBasedLineScanMS);
+
+		_pCamera->SetParam(ICamera::PARAM_LSM_3P_ENABLE, threePhotonEnable);
+		_pCamera->SetParam(ICamera::PARAM_LSM_NUMBER_OF_PLANES, numberOfPlanes);
+		
 		//notify the ECU of the zoom change also
 		IDevice *pControlUnitDevice = NULL;
 		pControlUnitDevice = GetDevice(SelectedHardware::SELECTED_CONTROLUNIT);
@@ -465,6 +474,7 @@ long AcquireTSeries::CaptureTSeries(long index, long subWell, auto_ptr<IAcquire>
 	_stopTCapture = FALSE;
 
 	double zStartPos, zStopPos, zTiltPos, zStepSizeMM;
+	double zMin, zMax, zDefault;
 	long zstageSteps, zStreamFrames, zStreamMode;
 	GetZPositions(_pExp, NULL, zStartPos, zStopPos, zTiltPos, zStepSizeMM, zstageSteps, zStreamFrames, zStreamMode);
 
@@ -485,6 +495,40 @@ long AcquireTSeries::CaptureTSeries(long index, long subWell, auto_ptr<IAcquire>
 	const long TIMLAPSE_TRIG_MODE_TRIG_FIRST = 1;
 	const long TIMLAPSE_TRIG_MODE_TRIG_EACH = 2;
 	const long TIMLAPSE_TRIG_MODE_TRIG_BULB = 3;
+
+	//Setup the 'read from file' ZStack acquisition
+	vector<double> posList;
+	// check if the read from file mode is enabled
+	int zFileEnable = FALSE;
+	double zFilePosScale = 1.0;
+	_pExp->GetZFileInfo(zFileEnable, zFilePosScale);
+	// create list of positions
+	if (TRUE == zFileEnable)
+	{
+		_pExp->GetZPosList(posList);
+		// multiply the whole vector by zFilePosScale
+		std::transform(posList.begin(), posList.end(), posList.begin(),
+			std::bind(std::multiplies<double>(), std::placeholders::_1, zFilePosScale));
+		// make sure that the list of positions has the correct size
+		if (zstageSteps != posList.size())
+		{
+			logDll->TLTraceEvent(WARNING_EVENT, 1, L"AcquireTSeries Mismatched position list size");
+			return FALSE;
+		}
+		logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"AcquireTSeries Executed with posList read from file");
+
+		// check to make sure the z-positions are within range
+		GetZRange(zMin, zMax, zDefault);
+		for (long z = 0; z < zstageSteps; z++)
+		{
+			if (posList[z]<zMin || posList[z] > zMax)
+			{
+				logDll->TLTraceEvent(WARNING_EVENT, 1, L"AcquireZStack Requested position outside allowed z-range");
+				MessageBox(NULL, L"At least one of the positions is out of range.", L"", MB_OK);
+				return FALSE;
+			}
+		}
+	}
 
 	switch(triggerModeTimelapse)
 	{
@@ -566,6 +610,12 @@ long AcquireTSeries::CaptureTSeries(long index, long subWell, auto_ptr<IAcquire>
 				//update progress to observer.
 				updateIndex = index + (z-1) + (zstageSteps)*(t+tOffset-1);
 
+				//Set the position to the next position of the list if z position read from file is enabled
+				if (TRUE == zFileEnable)
+				{
+					pos = posList[(long long)z - 1];
+				}
+
 				if(FALSE == SetZPosition(pos,TRUE,FALSE))
 				{
 					logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AcquireTSeries Execute SetZPosition failed ");
@@ -616,7 +666,10 @@ long AcquireTSeries::CaptureTSeries(long index, long subWell, auto_ptr<IAcquire>
 					}
 				}
 
-				pos += zStepSizeMM;
+				if (TRUE != zFileEnable)
+				{
+					pos += zStepSizeMM;
+				}
 
 				//update progress to observer.
 				CallSaveImage(updateIndex, TRUE);			
@@ -1239,7 +1292,8 @@ long AcquireTSeries::ZStreamExecute(long index, long subWell)
 	long bufferChannels = 4;
 	long avgMode=ICamera::AVG_MODE_NONE;
 	double umPerPixel = 1.0;
-	SetupDimensions(pCamera,_pExp, fieldSizeCalibration,magnification, d, avgFrames,bufferChannels, avgMode, umPerPixel);
+	long numberOfPlanes = 1;
+	SetupDimensions(pCamera,_pExp, fieldSizeCalibration,magnification, d, avgFrames,bufferChannels, avgMode, umPerPixel, numberOfPlanes);
 	d.t = zStreamFrames;
 
 	string strOME;

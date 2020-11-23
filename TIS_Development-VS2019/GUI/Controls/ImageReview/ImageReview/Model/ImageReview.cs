@@ -1228,6 +1228,7 @@
                 frameInfo.bufferType = (int)BufferType.INTENSITY;
                 frameInfo.imageWidth = _imageWidth;
                 frameInfo.imageHeight = _imageHeight;
+                frameInfo.numberOfPlanes = 1;
                 if (onlyOneEnabled)
                 {
                     int skip = 0;
@@ -1239,7 +1240,7 @@
                         case 8: skip = 3 * _imageWidth * _imageHeight; break;
                     }
                     IEnumerable<ushort> pixelDataOneChannel = _pixelData.Skip(skip).Take(_imageWidth * _imageHeight);
-
+                    var ta = pixelDataOneChannel.ToArray();
                     ComputeStats(pixelDataOneChannel.ToArray(), frameInfo, _lsmChannel, 1, 0, 0);
                 }
                 else

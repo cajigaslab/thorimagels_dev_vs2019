@@ -575,6 +575,7 @@
                 OnPropertyChanged("LSMFlybackCycles");
                 OnPropertyChanged("LSMFlybackTime");
                 OnPropertyChanged("LSMTwoWayAlignment");
+                OnPropertyChanged("NumberOfPulsesPerPixel");
                 if ((bool)MVMManager.Instance["AreaControlViewModel", "TimeBasedLineScan", (object)false])
                 {
                     //If time based line scan is enabled and the dwell time is changed, recalculate the size of pixel y
@@ -839,6 +840,47 @@
             }
         }
 
+        public int NumberOfPulsesPerPixel
+        {
+            get
+            {
+                //There are only 16 taps in the FIR filter, so the maximum number of pulses we can read per pixel is 16
+                return Math.Min(16, (int)Math.Round(LSMPixelDwellTimeIndex) + 1);
+            }
+        }
+
+        public int PMT1Saturations
+        {
+            get
+            {
+                return this._scanControlModel.PMT1Saturations;
+            }
+        }
+
+        public int PMT2Saturations
+        {
+            get
+            {
+                return this._scanControlModel.PMT2Saturations;
+            }
+        }
+
+        public int PMT3Saturations
+        {
+            get
+            {
+                return this._scanControlModel.PMT3Saturations;
+            }
+        }
+
+        public int PMT4Saturations
+        {
+            get
+            {
+                return this._scanControlModel.PMT4Saturations;
+            }
+        }
+
         public CustomCollection<HwVal<int>> PMTBandwidth
         {
             get;
@@ -1059,6 +1101,14 @@
             set
             {
                 this._scanControlModel.PMTVoltage = value;
+            }
+        }
+
+        public Visibility PulsesPerPixelVisibility
+        {
+            get
+            {
+                return (1 == (int)MVMManager.Instance["ThreePhotonControlViewModel", "ThreePhotonEnable", (object)0]) ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 

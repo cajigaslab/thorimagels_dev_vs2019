@@ -17,6 +17,7 @@
                                  LinearModeSettingsSelectedIdx="{Binding LinearModeSettingsSelectedIdx}"
                                  TemperatureUnit="{Binding TemperatureUnit, Mode=OneWay}"
                                  ShowTemperatures="{Binding ShowTemperatures, Mode=OneWay}"
+                                 EnableDisableLEDs="{Binding EnableDisableLEDs, Mode=TwoWay}"
                                  LED1SockelID="{Binding LED1SockelID, Mode=OneWay}"
                                  LED1ControlName="{Binding LED1ControlName, Mode=TwoWay}"
                                  LED1LightColor="{Binding LED1LightColor, Mode=OneWay}"

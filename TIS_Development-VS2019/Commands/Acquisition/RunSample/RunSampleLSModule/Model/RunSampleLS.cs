@@ -25,6 +25,7 @@
     using System.Windows.Media.Imaging;
     using System.Windows.Threading;
     using System.Xml;
+    using System.Xml.Linq;
 
     using CustomMessageBox;
 
@@ -236,6 +237,10 @@
         private double[] _whitePoint;
         private int _zEnable;
         private bool _zFastEnable = false;
+        private int _zFileEnable;
+        private List<double> _zFilePosList;
+        private int _zFilePosRead;
+        private double _zFilePosScale;
         private int _zNumSteps;
         private double _zStartPosition;
         private double _zStepSize;
@@ -332,6 +337,8 @@
             _experimentXMLPath = ActiveExperimentPath = ResourceManagerCS.GetCaptureTemplatePathString() + "Active.xml";
             _templatesFolder = ResourceManagerCS.GetCaptureTemplatePathString();
             IsDisplayImageReady = false;
+            _zFilePosList = new List<double>();
+            _zFilePosRead = 0;
 
             ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Created");
         }
@@ -463,7 +470,7 @@
             get
             {
                 int imageMethod = 0;
-                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_DFLIM_ACQUISITION_TYPE, ref imageMethod);
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_DFLIM_FRAME_TYPE, ref imageMethod);
                 return imageMethod;
             }
         }
@@ -1303,7 +1310,7 @@
         public bool LSMChannelEnable0
         {
             get { return _lsmEnableChannel[0]; }
-            set{ _lsmEnableChannel[0] = value; }
+            set { _lsmEnableChannel[0] = value; }
         }
 
         public bool LSMChannelEnable1
@@ -1516,6 +1523,11 @@
             {
                 _numberOfImageTiles = value;
             }
+        }
+
+        public int NumberOfPlanes
+        {
+            get;set;
         }
 
         public string OutputPath
@@ -1988,7 +2000,14 @@
             {
                 if ((int)ICamera.CameraType.LSM == this.ActiveCameraType)
                 {
-                    return LSMPixelY;
+                    if (ThreePhotonEnable && NumberOfPlanes > 1)
+                    {
+                        return LSMPixelY * NumberOfPlanes;
+                    }
+                    else
+                    {
+                        return LSMPixelY;
+                    }
                 }
                 else
                 {
@@ -2275,7 +2294,7 @@
             }
             set
             {
-                 _streamingDisplayRollingAverage = value;
+                _streamingDisplayRollingAverage = value;
             }
         }
 
@@ -2395,6 +2414,11 @@
         {
             get { return _tFrames; }
             set { _tFrames = value; }
+        }
+
+        public bool ThreePhotonEnable
+        {
+            get;set;
         }
 
         public int TileHeight
@@ -2713,6 +2737,24 @@
             }
         }
 
+        public int ZFileEnable
+        {
+            get { return _zFileEnable; }
+            set { _zFileEnable = value; }
+        }
+
+        public int ZFilePosRead
+        {
+            get { return _zFilePosRead; }
+            set { _zFilePosRead = value; }
+        }
+
+        public double ZFilePosScale
+        {
+            get { return _zFilePosScale; }
+            set { _zFilePosScale = value; }
+        }
+
         public double ZMax
         {
             get
@@ -2759,7 +2801,18 @@
                 {
                     case CaptureModes.T_AND_Z:
                         //stepping less than one is not realistic experiment configuration.
-                        _zNumSteps = Math.Max(1, (int)Math.Round(Math.Abs(Math.Round((_zStopPosition - _zStartPosition), 5) / (_zStepSize / (double)Constants.UM_TO_MM)) + 1));
+                        if (_zFileEnable == 1)
+                        {
+                            if (_zFilePosRead != 1)
+                            {
+                                getZPosFromFile();
+                            }
+                            return _zNumSteps;
+                        }
+                        else
+                        {
+                            _zNumSteps = Math.Max(1, (int)Math.Round(Math.Abs(Math.Round((_zStopPosition - _zStartPosition), 5) / (_zStepSize / (double)Constants.UM_TO_MM)) + 1));
+                        }
                         break;
                     case CaptureModes.STREAMING:
                         //stepping less than one is not realistic experiment configuration,
@@ -3558,6 +3611,51 @@
             return false;
         }
 
+        // read the position list from a file
+        public bool getZPosFromFile()
+        {
+            // clear the list and flags
+            _zNumSteps = 0;
+            _zFilePosRead = 0;
+            if (_zFilePosList != null) _zFilePosList.Clear();
+
+            string posFileName = Application.Current.Resources["ApplicationSettingsFolder"].ToString() + "\\CustomZPos\\PositionList.txt";
+            StreamReader fs;
+            try
+            {
+                fs = new StreamReader(posFileName);
+            }
+            catch (Exception ex)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, ex.Message);
+                MessageBox.Show("File load error: " + ex.Message);
+                return false;
+            }
+
+            try
+            {
+                string line;
+                while ((line = fs.ReadLine()) != null)
+                {
+                    if (Double.TryParse(line, NumberStyles.Any, CultureInfo.InvariantCulture, out double dVal))
+                    {
+                        _zFilePosList.Add(dVal);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, ex.Message);
+                MessageBox.Show("File read error: " + ex.Message);
+                fs.Close();
+                return false;
+            }
+            fs.Close();
+            _zNumSteps = _zFilePosList.Count;
+            _zFilePosRead = 1;
+            return true;
+        }
+
         public bool LIGetFieldSizeCalibration(ref double fieldSizeCal)
         {
             return (1 == ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_FIELD_SIZE_CALIBRATION, ref fieldSizeCal));
@@ -4074,28 +4172,28 @@
         private static extern IntPtr memset(IntPtr dest, int c, int count);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadChannelImages")]
-        private static extern int ReadChannelImages([MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr)]string[] fileNames, int size, ref IntPtr outputBuffer, int cameraWidth, int cameraHeight);
+        private static extern int ReadChannelImages([MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr)] string[] fileNames, int size, ref IntPtr outputBuffer, int cameraWidth, int cameraHeight);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadChannelRawImages")]
-        private static extern int ReadChannelRawImages([MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr)]string[] fileNames, int size, ref IntPtr outputBuffer, int cameraWidth, int cameraHeight);
+        private static extern int ReadChannelRawImages([MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr)] string[] fileNames, int size, ref IntPtr outputBuffer, int cameraWidth, int cameraHeight);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadChannelTiledImages")]
-        private static extern int ReadChannelTiledImages([MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr)]string[] fileNames, int size, ref IntPtr outputBuffer);
+        private static extern int ReadChannelTiledImages([MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr)] string[] fileNames, int size, ref IntPtr outputBuffer);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadColorImage")]
-        private static extern int ReadColorImage([MarshalAs(UnmanagedType.LPWStr)]string rPath, [MarshalAs(UnmanagedType.LPWStr)]string gPath, [MarshalAs(UnmanagedType.LPWStr)]string bPath, ref IntPtr outputBuffer, int cameraWidth, int cameraHeight);
+        private static extern int ReadColorImage([MarshalAs(UnmanagedType.LPWStr)] string rPath, [MarshalAs(UnmanagedType.LPWStr)] string gPath, [MarshalAs(UnmanagedType.LPWStr)] string bPath, ref IntPtr outputBuffer, int cameraWidth, int cameraHeight);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadImage")]
-        private static extern int ReadImage([MarshalAs(UnmanagedType.LPWStr)]string path, ref IntPtr outputBuffer);
+        private static extern int ReadImage([MarshalAs(UnmanagedType.LPWStr)] string path, ref IntPtr outputBuffer);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadImageInfo")]
-        private static extern int ReadImageInfo([MarshalAs(UnmanagedType.LPWStr)]string path, ref int width, ref int height, ref int colorChannels);
+        private static extern int ReadImageInfo([MarshalAs(UnmanagedType.LPWStr)] string path, ref int width, ref int height, ref int colorChannels);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadImageInfo2")]
-        private static extern int ReadImageInfo2([MarshalAs(UnmanagedType.LPWStr)]string path, ref int width, ref int height, ref int colorChannels, ref int numOfTiles, ref int tileWidth, ref int tileHeight);
+        private static extern int ReadImageInfo2([MarshalAs(UnmanagedType.LPWStr)] string path, ref int width, ref int height, ref int colorChannels, ref int numOfTiles, ref int tileWidth, ref int tileHeight);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadImagesRaw")]
-        private static extern int ReadRawImages([MarshalAs(UnmanagedType.LPWStr)]string path, long size, ref IntPtr outputBuffer, long offset);
+        private static extern int ReadRawImages([MarshalAs(UnmanagedType.LPWStr)] string path, long size, ref IntPtr outputBuffer, long offset);
 
         [DllImport(".\\Modules_Native\\RunSample.dll", EntryPoint = "ReleaseBleachParams")]
         private static extern int ReleaseBleachParams();
@@ -4710,13 +4808,14 @@
 
         private void InitializeBleachPixelArrayParams()
         {
-            double bFieldSize = 0, bScaleYScan = 0, bVerticalScan = 0, bHorizontalFlip = 0, bPowerMin = 0, bPixelX = 0, bPixelY = 0, bFieldOffsetXActual = 0, bFieldOffsetYActual = 0;
+            double bFieldSize = 0, bScaleYScan = 0, bVerticalScan = 0, bHorizontalFlip = 0, bPixelX = 0, bPixelY = 0, bFieldOffsetXActual = 0, bFieldOffsetYActual = 0;
             double bFieldOffsetXFine = 0, bFieldOffsetYFine = 0, bFieldScaleXFine = 0, bFieldScaleYFine = 0;
+            double[] bPowerMin = new double[1] { 0 };
             ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_FIELD_SIZE, ref bFieldSize);
             ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_Y_AMPLITUDE_SCALER, ref bScaleYScan);
             ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_VERTICAL_SCAN_DIRECTION, ref bVerticalScan);
             ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_HORIZONTAL_FLIP, ref bHorizontalFlip);
-            ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_POCKELS_MIN_VOLTAGE_0, ref bPowerMin);
+            ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_POCKELS_MIN_VOLTAGE_0, ref bPowerMin[0]);
             ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_PIXEL_X, ref bPixelX);
             ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_PIXEL_Y, ref bPixelY);
             ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_OFFSET_X, ref bFieldOffsetXActual);
@@ -6038,6 +6137,8 @@
                 XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "zStreamMode", zStreamMode.ToString());
                 _zStreamFrames = (true == ZStreamEnable) ? _zStreamFrames : 1;
                 XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "zStreamFrames", _zStreamFrames.ToString());
+                XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "zFileEnable", _zFileEnable.ToString());
+                XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "zFilePosScale", _zFilePosScale.ToString());
             }
 
             nodeList = ExperimentDoc.SelectNodes("/ThorImageExperiment/EPITurret");
@@ -6269,6 +6370,44 @@
             if (!expXML.Equals(ActiveExperimentPath))
             {
                 File.Copy(expXML, ActiveExperimentPath, true);
+            }
+
+            // save the z-position list if read from file enabled
+            // I only want to do this for the Experiment.xml file, not for the Active.xml
+            if (_zFileEnable == 1 && expXML.Contains("Experiment.xml"))
+            {
+                // save to xml file
+                //XmlDocument doc = new XmlDocument();
+                //doc.Load(expXML);
+                //XmlNode node = doc.SelectSingleNode("/ThorImageExperiment/PosList");
+                //if(node == null)
+                //{
+                //    node = doc.SelectSingleNode("/ThorImageExperiment");
+                //    if(node != null)
+                //    {
+                //        XmlNode newNode = doc.CreateNode(XmlNodeType.Element, "PosList", null);
+                //        node.AppendChild(newNode);
+                //        node = doc.SelectSingleNode("/ThorImageExperiment/PosList");
+                //    }
+                //}
+                ////Delete any previously stored positions in Experiment.xml
+                //node.RemoveAll();
+                ////Add all new positions to Experiment.xml
+                //for (int i = 0; i < _zFilePosList.Count; i++)
+                //{
+                //    //XmlManager.SetAttribute(node, doc, "item", _zFilePosList.ElementAt(i).ToString());
+                //    XmlAttribute attr = doc.CreateAttribute("item");
+                //    attr.Value = _zFilePosList.ElementAt(i).ToString();
+                //    node.Attributes.Append(attr);
+                //}
+                //doc.Save(expXML);
+                // save to xml file
+                XDocument doc = XDocument.Load(expXML);
+                XElement q = doc.Root;
+                XElement pl = doc.Root.Element("PosList");
+                if (pl != null) pl.Remove();
+                q.Add(new XElement("PosList", _zFilePosList.Select(x => new XElement("item", x))));
+                doc.Save(expXML);
             }
 
             //give back CultureInfo:

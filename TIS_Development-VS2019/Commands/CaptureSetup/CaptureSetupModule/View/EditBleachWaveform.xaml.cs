@@ -119,7 +119,7 @@
             }
         }
 
-        public double bleachPowerVal
+        public double[] bleachPowerVal
         {
             get;
             set;
@@ -217,8 +217,8 @@
             }
 
             bleachPowerVal = (1 == vm.BleachPowerEnable) ?
-                WaveformBuilder.GetPockelsPowerValue(vm.BleachPower, vm.BleachCalibratePockelsVoltageMin0, vm.BleachCalibratePockelsVoltageMax0, (PockelsResponseType)MVMManager.Instance["PowerControlViewModel", "BleacherPowerResponse0", 0]) :
-                WaveformBuilder.GetPockelsPowerValue((double)MVMManager.Instance["PowerControlViewModel", "BleacherPower0", 0], vm.BleachCalibratePockelsVoltageMin0, vm.BleachCalibratePockelsVoltageMax0, (PockelsResponseType)MVMManager.Instance["PowerControlViewModel", "BleacherPowerResponse0", 0]);
+                new double[1] { WaveformBuilder.GetPockelsPowerValue(vm.BleachPower, vm.BleachCalibratePockelsVoltageMin0[0], vm.BleachCalibratePockelsVoltageMax0[0], (PockelsResponseType)MVMManager.Instance["PowerControlViewModel", "BleacherPowerResponse0", 0]) } :
+                new double[1] { WaveformBuilder.GetPockelsPowerValue((double)MVMManager.Instance["PowerControlViewModel", "BleacherPower0", 0], vm.BleachCalibratePockelsVoltageMin0[0], vm.BleachCalibratePockelsVoltageMax0[0], (PockelsResponseType)MVMManager.Instance["PowerControlViewModel", "BleacherPowerResponse0", 0]) };
 
             if (false == UpdateBleachWaveParams(WaveformBuilder.ClkRate))
             { return; }

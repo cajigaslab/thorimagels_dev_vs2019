@@ -106,6 +106,13 @@ ThorLSMCam::ThorLSMCam():
 	_longLineScanTime = 0;
 	_longLineScan = FALSE;
 
+	_numberOfPlanes = 1;
+	_selectedPlane = 0;
+
+	_threePhotonEnabled = FALSE;
+
+	_dwellTime = DEFAULT_DWELL_TIME;
+
 	_indexOfLastFrame = -1;
 
 	_pMemoryBuffer = NULL;
@@ -1233,12 +1240,22 @@ long ThorLSMCam::GetParamInfo(const long paramID, long &paramType, long &paramAv
 		{
 			paramType = ICamera::TYPE_DOUBLE;
 			paramAvailable = TRUE;
-			paramMin = 1;
-			paramMax = 1;
-			paramDefault = 1;
+			paramMin = MIN_DWELL_TIME;
+			paramMax = MAX_DWELL_TIME;
+			paramDefault = DEFAULT_DWELL_TIME;
 			paramReadOnly = FALSE;
 		}
 		break;
+	case ICamera::PARAM_LSM_DWELL_TIME_STEP:
+	{
+		paramType = ICamera::TYPE_DOUBLE;
+		paramAvailable = TRUE;
+		paramMax = DWELL_TIME_STEP;
+		paramMin = DWELL_TIME_STEP;
+		paramDefault = DWELL_TIME_STEP;
+		paramReadOnly = TRUE;
+	}
+	break;
 	case ICamera::PARAM_LSM_SIM_INDEX:
 		{
 			paramType = ICamera::TYPE_LONG;
@@ -1269,6 +1286,26 @@ long ThorLSMCam::GetParamInfo(const long paramID, long &paramType, long &paramAv
 			paramReadOnly = FALSE;
 		}
 		break;
+	case ICamera::PARAM_LSM_3P_ENABLE:
+	{
+		paramType = ICamera::TYPE_LONG;
+		paramAvailable = TRUE;
+		paramMin = 0;
+		paramMax = 1;
+		paramDefault = 0;
+		paramReadOnly = FALSE;
+	}
+	break;
+	case ICamera::PARAM_LSM_NUMBER_OF_PLANES:
+	{
+		paramType = ICamera::TYPE_LONG;
+		paramAvailable = TRUE;
+		paramMax = MAX_NUMBER_OF_PLANES;
+		paramMin = MIN_NUMBER_OF_PLANES;
+		paramDefault = MIN_NUMBER_OF_PLANES;
+		paramReadOnly = FALSE;
+	}
+	break;
 	default:
 		{
 			ret = TRUE;
@@ -1518,7 +1555,34 @@ long ThorLSMCam::SetParam(const long paramID, const double param)
 			}
 		}
 		break;
+	case ICamera::PARAM_LSM_DWELL_TIME:
+	{
+		if ((param >= MIN_DWELL_TIME) && (param <= MAX_DWELL_TIME))
+		{
+			_dwellTime = param;
+			ret = TRUE;
+		}
+	}
+	break;
 
+	case ICamera::PARAM_LSM_3P_ENABLE:
+	{
+		if ((param >= FALSE) && (param <= TRUE))
+		{
+			_threePhotonEnabled = static_cast<long> (param);
+			ret = TRUE;
+		}
+	}
+	break;
+	case ICamera::PARAM_LSM_NUMBER_OF_PLANES:
+	{
+		if (MIN_NUMBER_OF_PLANES <= param && MAX_NUMBER_OF_PLANES >= param)
+		{
+			_numberOfPlanes = static_cast<long>(param);
+			ret = TRUE;
+		}
+	}
+	break;
 	case ICamera::PARAM_LSM_OFFSET_X:
 		{
 			if ((param >= -(MAX_FIELD_SIZE_X - _fieldSize) / 2) && (param <= (MAX_FIELD_SIZE_X - _fieldSize) / 2))
@@ -2919,9 +2983,24 @@ long ThorLSMCam::GetParam(const long paramID, double &param)
 		break;
 	case ICamera::PARAM_LSM_DWELL_TIME:
 		{
-			param = 1.0;
+			param = _dwellTime;
 		}
 		break;
+	case ICamera::PARAM_LSM_DWELL_TIME_STEP:
+	{
+		param = DWELL_TIME_STEP;
+	}
+	break;
+	case ICamera::PARAM_LSM_3P_ENABLE:
+	{
+		param = _threePhotonEnabled;
+	}
+	break;
+	case ICamera::PARAM_LSM_NUMBER_OF_PLANES:
+	{
+		param = _numberOfPlanes;
+	}
+	break;
 	default:
 		{
 			ret = FALSE;

@@ -76,6 +76,7 @@ namespace ThorSharedTypes
     {
         AREA_UNDER_CURVE = 2,
         GALVO_DATA_POINT_MULTIPLIER = 2,
+        MAX_WIDEFIELD_WAVELENGTH_COUNT = 2,
         MAX_IMG_DIG_LINE_COUNT = 3,
         MAX_GG_POCKELS_CELL_COUNT = 4,
         DEFAULT_FILE_FORMAT_DIGITS = 4,
@@ -90,10 +91,12 @@ namespace ThorSharedTypes
         DEFAULT_GALVO_HZ = 1000,
         MS_TO_SEC = 1000,
         UM_TO_MM = 1000,
+        KHZ = 1000,
         TIMEOUT_MS = 1500,
         EVENT_WAIT_TIME = 5000,                     //[ms]
         MHZ = 1000000,
-        US_TO_SEC = 1000000
+        US_TO_SEC = 1000000,
+        M_TO_UM = 1000000
     };
 
     public enum GlobalExpAttribute
@@ -121,7 +124,7 @@ namespace ThorSharedTypes
     public enum BufferType
     {
         INTENSITY,
-        DFLIM_IMAGE,        
+        DFLIM_IMAGE,
         DFLIM_HISTOGRAM,
         DFLIM_IMAGE_SINGLE_PHOTON,
         DFLIM_IMAGE_ARRIVAL_TIME_SUM,
@@ -174,6 +177,17 @@ namespace ThorSharedTypes
         MANUAL = 6,
         CUSTOM = 7,
         EPHYS_LAST_TRIGGER_MODE
+    };
+
+    /// <summary>
+    /// signal types for analog or digital lines
+    /// </summary>
+    public enum SignalType
+    {
+        ANALOG_XY = 0,
+        ANALOG_POCKEL = 1,
+        DIGITAL_LINES = 2,
+        SIGNALTYPE_LAST
     };
 
     /// <summary>

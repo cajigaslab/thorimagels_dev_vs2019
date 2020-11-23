@@ -222,41 +222,81 @@
             }
         }
 
-        public double BleachCalibratePockelsVoltageMax0
+        public double[] BleachCalibratePockelsVoltageMax0
         {
             get
             {
-                if (null == ExperimentDoc)
-                { return 0; }
-
-                XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/Photobleaching");
-                double dVal = 0;
-                if (0 < ndList.Count)
+                if (IsStimulator)
                 {
-                    string str = string.Empty;
-                    GetAttribute(ndList[0], ExperimentDoc, "powerMax", ref str);
-                    Double.TryParse(str, out dVal);
+                    //no calibration will be done in stimulator mode,
+                    //get from configuration instead and only build waveform for in order of configured
+                    double dVal = 0.0;
+                    List<double> dList = new List<double>();
+                    for (int i = 0; i < (int)Constants.MAX_GG_POCKELS_CELL_COUNT; i++)
+                    {
+                        ICamera.Params pwrLevel;
+                        Enum.TryParse("PARAM_LSM_POCKELS_MAX_VOLTAGE_" + i, false, out pwrLevel);
+                        if (1 == ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)pwrLevel, ref dVal) && dVal >= 0)
+                        {
+                            dList.Add(dVal);
+                        }
+                    }
+                    return dList.ToArray();
                 }
-                return dVal;
+                else
+                {
+                    if (null == ExperimentDoc)
+                    { return new double[1] { 0 }; }
+
+                    XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/Photobleaching");
+                    double dVal = 0;
+                    if (0 < ndList.Count)
+                    {
+                        string str = string.Empty;
+                        GetAttribute(ndList[0], ExperimentDoc, "powerMax", ref str);
+                        Double.TryParse(str, out dVal);
+                    }
+                    return new double[1] { dVal };
+                }
             }
         }
 
-        public double BleachCalibratePockelsVoltageMin0
+        public double[] BleachCalibratePockelsVoltageMin0
         {
             get
             {
-                if (null == ExperimentDoc)
-                { return 0; }
-
-                XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/Photobleaching");
-                double dVal = 0;
-                if (0 < ndList.Count)
+                if (IsStimulator)
                 {
-                    string str = string.Empty;
-                    GetAttribute(ndList[0], ExperimentDoc, "powerMin", ref str);
-                    Double.TryParse(str, out dVal);
+                    //no calibration will be done in stimulator mode,
+                    //get from configuration instead and only build waveform for in order of configured
+                    double dVal = 0.0;
+                    List<double> dList = new List<double>();
+                    for (int i = 0; i < (int)Constants.MAX_GG_POCKELS_CELL_COUNT; i++)
+                    {
+                        ICamera.Params pwrLevel;
+                        Enum.TryParse("PARAM_LSM_POCKELS_MIN_VOLTAGE_" + i, false, out pwrLevel);
+                        if (1 == ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)pwrLevel, ref dVal) && dVal >= 0)
+                        {
+                            dList.Add(dVal);
+                        }
+                    }
+                    return dList.ToArray();
                 }
-                return dVal;
+                else
+                {
+                    if (null == ExperimentDoc)
+                    { return new double[1] { 0 }; }
+
+                    XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/Photobleaching");
+                    double dVal = 0;
+                    if (0 < ndList.Count)
+                    {
+                        string str = string.Empty;
+                        GetAttribute(ndList[0], ExperimentDoc, "powerMin", ref str);
+                        Double.TryParse(str, out dVal);
+                    }
+                    return new double[1] { dVal };
+                }
             }
         }
 
@@ -285,6 +325,16 @@
         {
             get { return _bleachFrames; }
             set { _bleachFrames = value; }
+        }
+
+        public int BleachInternalClockRate
+        {
+            get
+            {
+                int temp = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_INTERNALCLOCKRATE, ref temp);
+                return temp;
+            }
         }
 
         public DateTime BleachLastRunTime
@@ -444,17 +494,11 @@
             int centerOffset = (centerWithOffset) ? 1 : 0;
             SetCameraParamInt(selectedCamera, (int)ICamera.Params.PARAM_LSM_CENTER_WITH_OFFSET, centerOffset);
             CenterLSMScanners(selectedCamera);
-        }  
+        }
 
         public int GetBleacherFieldSizeCalibration(ref double fieldSizeCal)
         {
             return GetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_FIELD_SIZE_CALIBRATION, ref fieldSizeCal);
-        }
-
-        public bool GetBleacherType(ref long bleachScannerType)
-        {
-            bool getBleachScanner = GetBleachScannerType(ref bleachScannerType);
-            return getBleachScanner;
         }
 
         public int GetBleachFlipScanHV(int i, ref int horizontalVertical)
@@ -550,13 +594,6 @@
             return (1 == GetIsBleach()) ? true : false;
         }
 
-        public void InitializeWaveformBuilder(int clockRateHz)
-        {
-            WaveformBuilder.ClkRate = clockRateHz;
-            WaveformBuilder.Field2Volts = (double)MVMManager.Instance["AreaControlViewModel", "LSMField2Theta", (object)1.0];
-            WaveformBuilder.InitializeParams(BleachCalibrateFieldSize, BleachCalibrateFineScaleXY, BleachCalibratePixelXY, BleachCalibrateOffsetXY, BleachCalibrateFineOffsetXY, BleachCalibrateScaleYScan, BleachCalibrateFlipHV[1], BleachCalibrateFlipHV[0], BleachCalibratePockelsVoltageMin0, WaveformDriverType);
-        }
-
         public bool LoadBleachWaveformFile(string bleachfilePathName, int CycleNum)
         {
             return ((1 == SetBleachWaveform(bleachfilePathName, CycleNum)) ? true : false);
@@ -616,9 +653,6 @@
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "CenterLSMScanners")]
         private static extern bool CenterLSMScanners(int selectedCamera);
-
-        [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "GetBleachScannerType")]
-        private static extern bool GetBleachScannerType(ref long type);
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "GetIsBleach")]
         private static extern int GetIsBleach();
@@ -706,7 +740,7 @@
                 }
 
                 //save waveform:
-                WaveformBuilder.SaveWaveform(filePathName, false);
+                WaveformBuilder.SaveWaveform(filePathName, false, new bool[3] { !IsStimulator, true, true });
 
                 while (!WaveformBuilder.CheckSaveState())
                 {

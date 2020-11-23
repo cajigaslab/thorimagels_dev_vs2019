@@ -21,7 +21,7 @@ private:
 	int _mtrxHeight; 
 	int _mtrxLength;
 	int _holoGenMethod;
-	std::wstring _pathAndFilename;
+	double _pixelUM;
 	double* _coeffs;
 	long _fittingMethod;
 
@@ -36,9 +36,9 @@ public:
 	double* CalculateZernikePoly(double u, double v);
 	long NormalizePhase(float* img);
 	long Set3DParam(double na, double wavelength);
-	long SetSize(int width, int height);
+	long SetSize(int width, int height, double pixelUM);
 	long SetAlgorithm(int algorithmID);
-	long SetPathandFilename(const wchar_t * pathAndFilename);
+	long CombineHologramFiles(const wchar_t * pathAndFilename1, const wchar_t * pathAndFilename2);
 	long SetCoeffs(long algorithm, double* affCoeffs);
 	long VerticalFlip(float* pImgDst);
 	long RotateForAngle(float* pImgDst, double angle);

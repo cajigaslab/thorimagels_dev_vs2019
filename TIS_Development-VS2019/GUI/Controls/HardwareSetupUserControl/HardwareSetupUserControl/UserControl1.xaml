@@ -65,7 +65,9 @@
                          SelectionChanged="lbModalities_SelectionChanged"
                          ItemContainerStyle="{StaticResource myLBStyle}">
                     <ListBox.Resources>
-                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#007ACC" Opacity="0.5"/>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
+                                         Color="#007ACC"
+                                         Opacity="0.5" />
                         <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}">#007ACC</SolidColorBrush>
                     </ListBox.Resources>
                     <ListBox.ItemsPanel>
@@ -115,7 +117,7 @@
                                 <ComboBox Name="cbCamera"
                                           Width="180"
                                           SelectionChanged="cbCamera_SelectionChanged"
-                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/ImageDetectors/*}">
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/ImageDetectors/LSM[not(contains(@cameraName\,\'Stim\'))]}">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal">
@@ -898,7 +900,7 @@
                                 Height="35"
                                 Margin="1"
                                 Click="btnObjectives_Click" />
-                        <Button Name="btnRenameDetector" 
+                        <Button Name="btnRenameDetector"
                                 Visibility="Collapsed"
                                 Content="Rename Selected Detector"
                                 Height="35"

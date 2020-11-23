@@ -25,7 +25,7 @@
         #region Fields
 
         private int _pixelSpacing = 1;
-        private double _slmMeasurePowerArea = 0.0;
+        private double[] _slmMeasurePowerArea = { 0.0 };
 
         #endregion Fields
 
@@ -104,7 +104,7 @@
             set;
         }
 
-        public double SLMMeasurePowerArea
+        public double[] SLMMeasurePowerArea
         {
             get { return _slmMeasurePowerArea; }
             set

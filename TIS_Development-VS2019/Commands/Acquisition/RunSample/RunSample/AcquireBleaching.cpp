@@ -336,12 +336,14 @@ long AcquireBleaching::SetupCameraParams(ICamera * pCamera,long &bufferChannels,
 	}
 	else
 	{
-		long areaMode,scanMode,interleave,pixelX,pixelY,chan,lsmFieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[4], verticalFlip, horizontalFlip;
+		long areaMode, scanMode, interleave, pixelX, pixelY, chan, lsmFieldSize, offsetX, offsetY, averageMode, averageNum, clockSource, inputRange1, inputRange2, twoWayAlignment, extClockRate, flybackCycles, inputRange3, inputRange4, minimizeFlybackCycles, polarity[4], verticalFlip, horizontalFlip;
 		double areaAngle,dwellTime,crsFrequencyHz = 0;
 		long timeBasedLineScan = FALSE;
 		long timeBasedLineScanMS = 0;
+		long threePhotonEnable = FALSE;
+		long numberOfPlanes = 1;
 		//getting the values from the experiment setup XML files
-		_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,chan,lsmFieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS);
+		_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,chan,lsmFieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes);
 
 		//notify the ECU of the zoom change also
 		IDevice * pControlUnitDevice = NULL;
@@ -432,6 +434,8 @@ long AcquireBleaching::SetupCameraParams(ICamera * pCamera,long &bufferChannels,
 		pCamera->SetParam(ICamera::PARAM_LSM_POCKELS_OUTPUT_USE_REF,FALSE);
 		pCamera->SetParam(ICamera::PARAM_LSM_VERTICAL_SCAN_DIRECTION, verticalFlip);
 		pCamera->SetParam(ICamera::PARAM_LSM_HORIZONTAL_FLIP, horizontalFlip);
+		pCamera->SetParam(ICamera::PARAM_LSM_3P_ENABLE, threePhotonEnable);
+		pCamera->SetParam(ICamera::PARAM_LSM_NUMBER_OF_PLANES, numberOfPlanes);
 
 		switch(chan)
 		{
@@ -1436,8 +1440,10 @@ long AcquireBleaching::Execute(long index, long subWell)
 	long verticalFlip, horizontalFlip;
 	long timeBasedLineScan = FALSE;
 	long timeBasedLineScanMS = 0;
+	long threePhotonEnable = FALSE;
+	long numberOfPlanes = 1;
 	_pExp->GetPhotobleaching(photoBleachingEnable, laserPositiion, durationMS, powerPosition, bleachWidth,bleachHeight,bleachOffsetX,bleachOffsetY, bleachingFrames, bleachFieldSize, bleachTrigger,preBleachingFrames, preBleachingInterval,preBleachingStream, postBleachingFrames1, postBleachingInterval1,postBleachingStream1, postBleachingFrames2, postBleachingInterval2,postBleachingStream2,powerEnable,laserEnable,bleachQuery,bleachPostTrigger,enableSimultaneousBleachingAndImaging,pmtEnableDuringBleach[0],pmtEnableDuringBleach[1],pmtEnableDuringBleach[2],pmtEnableDuringBleach[3]);
-	_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,channel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS);
+	_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,channel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes);
 	pCamera->SetParam(ICamera::PARAM_LSM_VERTICAL_SCAN_DIRECTION, verticalFlip);
 	pCamera->SetParam(ICamera::PARAM_LSM_HORIZONTAL_FLIP, horizontalFlip);
 	//convert bleach trigger mode into a bleach scanner trigger mode

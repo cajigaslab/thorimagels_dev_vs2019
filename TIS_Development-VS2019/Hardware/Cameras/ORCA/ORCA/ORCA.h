@@ -38,7 +38,7 @@ extern "C"
 		//int tapsIndex;
 		//int tapBalanceEnable;
 		int numImagesToBuffer;
-		int readOutSpeedIndex; // 0=60MHz, 1=100MHz
+		int readOutSpeedIndex; // 1 = Ultra Quiet, 2 = Standard, 3 = Fast
 		int channel; ///<Bitwise selection of channels.		
 		int averageMode; ///< average mode, see enumeration of AverageMode;
 		int averageNum;///< number of frame, lines to average		
@@ -85,6 +85,8 @@ extern "C"
 
 		static bool _instanceFlag;
 		static std::shared_ptr <ORCA> _single;
+		static HANDLE _hFrameAcqThread;	
+		static HANDLE _hFrmBufReady; ///<Signals if the frame data buffer is ready to copy
 
 		static bool _sdkIsOpen;
 		static HDCAM _hdcam[MAX_CAM_NUM]; ///<DCAM  handle, one per camera
@@ -95,6 +97,7 @@ extern "C"
 		static std::string _camSerial[MAX_CAM_NUM];
 		static std::string _cameraInterfaceType[MAX_CAM_NUM];
 		static unsigned long long _bufferImageIndex;
+		static unsigned long long _copiedFrameNumber;
 		static ThreadSafeMem<USHORT> _pFrmDllBuffer[MAX_DMABUFNUM];
 		static ThreadSafeQueue<ImageProperties> _imagePropertiesQueue;
 		static ImgPty _imgPtyDll;///<settings data structure
@@ -109,6 +112,9 @@ extern "C"
 		static HANDLE _hStopAcquisition; ///<event to stop frame acquisition
 		static long _maxFrameCountReached; ///<flag after exceed max frame count
 		static HANDLE _hFrmBufHandle; ///<Mutex to claim the exclusive access to the buffer
+		static std::atomic<long> _frameReady;
+		static long _statusError;
+		static long _threadRunning;
 		void**	_pFrames;
 
 		USHORT* _intermediateBuffer;
@@ -120,12 +126,14 @@ extern "C"
 		unsigned long long _lastImage;
 		unsigned long long _previousLastImage; ///<index of copied frame
 		unsigned long long _availableFramesCnt; ///<available frame count to be copied
+		unsigned long long _frameNumberLiveImage;
 		long _lastDMABufferCount;
 		std::map<long, TSI_ParamInfo*> _cameraMapParams;
 		long _forceSettingsUpdate;
 		long _singleBinning;
 		long _readInitialValues;
 		long _paramHotPixelAvailable;
+		long _timeoutMS;
 
 		//range values
 		int _binRange[2];
@@ -150,6 +158,7 @@ extern "C"
 		int _widthRange[2];
 		const int DEFAULT_WIDTH;
 		int _heightRange[2];
+		int _readOutSpeedRange[2];
 		const int DEFAULT_HEIGHT;
 		const int MIN_CHANNEL;
 		const int MAX_CHANNEL;
@@ -158,6 +167,8 @@ extern "C"
 		const int MIN_BITS_PERPIXEL;
 
 		//private functions:
+		HANDLE  FrameAcqThread(DWORD &threadID);
+
 		void ClearAllCameras();
 		void ClearMem();
 		static long DeSelectCamera(long cameraIndex);
@@ -171,6 +182,7 @@ extern "C"
 		static inline const int get_dcamdev_string( DCAMERR& err, HDCAM hdcam, int32 idStr, char* text, int32 textbytes );
 		static void GetCameraInfo(HDCAM hdcam, long index);
 		static long GetAttributeFromCamera(HDCAM hdcam, long requestedProperty, DCAMPROP_ATTR& returnedAttr);
+		static void ReadFramesFromCamera(void *instance);
 
 	public:
 		static ORCA* getInstance();
