@@ -38,7 +38,7 @@ rem CopyDependenciesx64-Release.bat
 )
 )`
 9.	Comment out (remove the “rem”) from the line 'rem CopyDependenciesx64-Release.bat'.
-10. If this is the first time you run it, skip to step 14.  
+10. If this is the first time you run the ThorImageLS.exe. of this repo, skip to step 14.  
 12. Open CopyDependenciesx64.bat or CopyDependenciesx64-Release.bat depending on the configuration that you choose.
 13. Uncomment the copy commands of the devices you want to include in the run. We recommend not including any the first time you run it.
 14. Buld the ThorImage project.
