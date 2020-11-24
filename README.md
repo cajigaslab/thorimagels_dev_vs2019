@@ -28,15 +28,15 @@ Building ThorImageLS
 6.	Open the Solution Properties window set the configuration to desired Configuration
 7.	If you want to build ThorImageLS in Release follow the next steps, otherwise skip 10 to step.
 8.	Open the ThorImage project properties window. In the Build Events window you will see various Pre-build event command Line entries.
-	if $(SolutionName) == ThorImage (
-    cd ..\..\
-    if $(ConfigurationName) == Debug (
-    CopyDependenciesx64.bat
-    )
-    if $(ConfigurationName) == Release (
-    rem CopyDependenciesx64-Release.bat
-    )
-    )
+`if $(SolutionName) == ThorImage (
+cd ..\..\
+if $(ConfigurationName) == Debug (
+CopyDependenciesx64.bat
+)
+if $(ConfigurationName) == Release (
+rem CopyDependenciesx64-Release.bat
+)
+)`
 9.	Comment out (remove the “rem”) from the line 'rem CopyDependenciesx64-Release.bat'.
 10. If this is the first time you run it, skip to step 14.  
 12. Open CopyDependenciesx64.bat or CopyDependenciesx64-Release.bat depending on the configuration that you choose.
