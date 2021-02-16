@@ -245,6 +245,11 @@
             }
         }
 
+        public string SLMCalibFile
+        {
+            get { return "SLMCalibROIs.xaml"; }
+        }
+
         public double SLMCalibPower
         {
             get { return _slmCalibPower; }
@@ -354,8 +359,7 @@
             {
                 _slmPatternsVisible = value;
                 OverlayManagerClass.Instance.InitSelectROI(ref CaptureSetupViewModel.OverlayCanvas);
-                OverlayManagerClass.Instance.DisplayModeROI(ref CaptureSetupViewModel.OverlayCanvas,
-                    IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS, _slmPatternsVisible);
+                OverlayManagerClass.Instance.DisplayModeROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.CurrentMode, _slmPatternsVisible);
             }
         }
 
@@ -365,22 +369,32 @@
             set { this._captureSetup.SLMPhaseDirect = value; }
         }
 
-        public int[] SLMPixelXY
+        public bool SLMSelectWavelength
         {
-            get { return this._captureSetup.SLMPixelXY; }
+            get { return SLMSelectWavelengthProp; }
+            set
+            {
+                if (value != SLMSelectWavelengthProp)
+                {
+                    SLMSelectWavelengthProp = value;
+                    //update for wavelength selection
+                    OverlayManagerClass.Instance.WavelengthNM = SLMWavelengthNM;
+                    OverlayManagerClass.Instance.DimWavelengthROI(ref CaptureSetupViewModel.OverlayCanvas);
+                }
+            }
         }
 
-        public bool SLMSelectWavelength
+        public bool SLMSelectWavelengthProp
         {
             get { return this._captureSetup.SLMSelectWavelength; }
             set
             {
-                this._captureSetup.SLMSelectWavelength = value;
-                OnPropertyChanged("SLMSelectWavelength");
-                OnPropertyChanged("SLMWavelengthNM");
-                //update for wavelength selection
-                OverlayManagerClass.Instance.WavelengthNM = SLMWavelengthNM;
-                OverlayManagerClass.Instance.DimWavelengthROI(ref CaptureSetupViewModel.OverlayCanvas);
+                if (value != this._captureSetup.SLMSelectWavelength)
+                {
+                    this._captureSetup.SLMSelectWavelength = value;
+                    OnPropertyChanged("SLMSelectWavelength");
+                    OnPropertyChanged("SLMWavelengthNM");
+                }
             }
         }
 
@@ -827,8 +841,11 @@
                             _slmParamEditWin.SLMParamsCurrent.Blue = 0;
                             _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.Iterations = 10;
                             _slmParamEditWin.SLMParamsCurrent.Duration = 100;
-                            _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.Power = (1 == BleachCalibratePockelsVoltageMin0.Length) ? new double[1] { 0.0 } : new double[2] { 10.0, 0.0 };
-                            _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.MeasurePower = (1 == BleachCalibratePockelsVoltageMin0.Length) ? new double[1] { 0.0 } : new double[2] { 0.0, 0.0 };
+                            _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.Power = 0.0;
+                            _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.Power1 = (1 < BleachCalibratePockelsVoltageMin0.Length) ? 0.0 : -1.0;
+                            _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.MeasurePower = 0.0;
+                            if (1 < BleachCalibratePockelsVoltageMin0.Length)
+                                _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.MeasurePower1 = 0.0;
                         }
                         _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.UMPerPixel = (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0];
                         _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.UMPerPixelRatio = this.BleachPixelSizeUMRatio;
@@ -837,8 +854,7 @@
                         _slmParamEditWin.Title = "Add SLM Pattern";
                         _slmParamEditWin.SLMParamID = -1;
 
-                        OverlayManagerClass.Instance.CurrentMode = IsStimulator ?
-                            ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS;
+                        OverlayManagerClass.Instance.CurrentMode = IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS;
                         OverlayManagerClass.Instance.PatternID = SLMBleachWaveParams.Count + 1;
                         bitVec32 = new System.Collections.Specialized.BitVector32(Convert.ToByte(_slmParamEditWin.SLMParamsCurrent.Red));
                         bitVec32[OverlayManagerClass.SecG] = Convert.ToByte(_slmParamEditWin.SLMParamsCurrent.Green);
@@ -962,12 +978,16 @@
                         //set overlay. Going to use a different ROI file,
                         //persist ActiveROIs first:
                         OverlayManagerClass.Instance.PersistSaveROIs();
-                        if (!DisplayROI(BleachROIPath + "SLMCalibROIs.xaml"))
+
+                        //scale ROIs to current image
+                        OverlayManagerClass.Instance.ScaleROIs(BleachROIPath + SLMCalibFile, new int[] { ImageWidth, ImageHeight });
+
+                        if (!DisplayROI(BleachROIPath + SLMCalibFile))
                             return;
 
                         ROIToolVisible = new bool[14] { true, false, false, false, false, false, true, false, false, true, true, true, true, false };
 
-                        OverlayManagerClass.Instance.CurrentMode = IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS;
+                        OverlayManagerClass.Instance.CurrentMode = ThorSharedTypes.Mode.PATTERN_NOSTATS;    //keep mode unchanged due to "SLMCalibROIs.xaml"
                         OverlayManagerClass.Instance.PatternID = 2;      //for user-selection, target is on PatterID 1
                         bitVec32 = new System.Collections.Specialized.BitVector32(Convert.ToByte(255));
                         bitVec32[OverlayManagerClass.SecG] = Convert.ToByte(0);

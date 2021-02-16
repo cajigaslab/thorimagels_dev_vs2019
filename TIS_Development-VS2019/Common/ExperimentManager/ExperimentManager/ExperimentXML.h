@@ -176,7 +176,7 @@ public:
 	ExperimentXML();
 	~ExperimentXML();
 
-	long GetPathAndName(wstring &pathAndName);///Experiment file path
+	wstring GetPathAndName();///Experiment file path
 
 	long GetName(string &name);///Experiment Name
 	long SetName(string name); 

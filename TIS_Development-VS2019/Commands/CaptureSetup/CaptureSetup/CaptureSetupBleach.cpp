@@ -806,21 +806,22 @@ DllExportLiveImage CalibrateSLM(const wchar_t* bmpPatternName, float* xyPointFro
 	return ret;
 }
 
-DllExportLiveImage LoadSLMPattern(long runtimeCal, long id, const wchar_t* bmpPatternName, long doStart, long timeout)
+DllExportLiveImage LoadSLMPattern(long runtimeCal, long id, const wchar_t* bmpPatternName, long doStart, long phaseDirect, long timeout)
 {
 	long ret = TRUE;
-	SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_RUNTIME_CALC, runtimeCal, IDevice::DeviceSetParamType::NO_EXECUTION);
-	SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_FUNC_MODE,IDevice::SLMFunctionMode::LOAD_PHASE_ONLY, IDevice::DeviceSetParamType::NO_EXECUTION);
-	ret = SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_ARRAY_ID,id,IDevice::DeviceSetParamType::NO_EXECUTION);
-	ret = SetDeviceParamString(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_BMP_FILENAME,(wchar_t*)bmpPatternName,IDevice::DeviceSetParamType::NO_EXECUTION);
-	ret = SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_TIMEOUT,timeout,IDevice::DeviceSetParamType::NO_EXECUTION);
+	SetDeviceParamLong(SelectedHardware::SELECTED_SLM, IDevice::PARAM_SLM_RUNTIME_CALC, runtimeCal, IDevice::DeviceSetParamType::NO_EXECUTION);
+	SetDeviceParamLong(SelectedHardware::SELECTED_SLM, IDevice::PARAM_SLM_FUNC_MODE, IDevice::SLMFunctionMode::LOAD_PHASE_ONLY, IDevice::DeviceSetParamType::NO_EXECUTION);
+	ret = SetDeviceParamLong(SelectedHardware::SELECTED_SLM, IDevice::PARAM_SLM_ARRAY_ID, id, IDevice::DeviceSetParamType::NO_EXECUTION);
+	ret = SetDeviceParamString(SelectedHardware::SELECTED_SLM, IDevice::PARAM_SLM_BMP_FILENAME, (wchar_t*)bmpPatternName, IDevice::DeviceSetParamType::NO_EXECUTION);
+	ret = SetDeviceParamLong(SelectedHardware::SELECTED_SLM, IDevice::PARAM_SLM_PHASE_DIRECT, phaseDirect, IDevice::DeviceSetParamType::NO_EXECUTION);
+	ret = SetDeviceParamLong(SelectedHardware::SELECTED_SLM, IDevice::PARAM_SLM_TIMEOUT, timeout, IDevice::DeviceSetParamType::NO_EXECUTION);
 
 	IDevice* slm = GetDevice(SelectedHardware::SELECTED_SLM);
-	if(NULL != slm)
+	if (NULL != slm)
 	{
 		slm->PreflightPosition();
 		ret = slm->SetupPosition();
-		if(TRUE == doStart)
+		if (TRUE == doStart)
 			ret = slm->StartPosition();
 	}
 

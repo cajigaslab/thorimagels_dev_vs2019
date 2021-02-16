@@ -41,6 +41,7 @@
         private double _postEpochIdleMS = 0;
         private double _postIdleTime = 0;
         private double _postPatIdleTime = 0;
+        private double[] _power = { 0.0 };
         private double _preCycleIdleMS = 0;
         private double _preEpochIdleMS = 0;
         private double _preIdleTime = 0;
@@ -209,24 +210,7 @@
                             Point rootTranslate = new Point();
                             System.Drawing.Bitmap aMap = ProcessBitmap.CreateBitmap(Vertices, true, true, 0, ref rootTranslate);
                             //aMap.SaveMap("C:/Temp/SourcePoly");
-                            byte[] buffer = ProcessBitmap.LoadBinaryBitmap(aMap);
-
-                            int imageIdxOffset = 0;
-                            byte white = 0xFF;               //Color order: BGR instead of RGB
-                            int stride = aMap.Width * 4;
-
-                            for (int j = 0; j < aMap.Height; j++)
-                            {
-                                for (int i = 0; i < aMap.Width; i++)
-                                {
-                                    imageIdxOffset = j * stride + i * 4;
-                                    if ((white == buffer[imageIdxOffset]) && (white == buffer[imageIdxOffset + 1]) && (white == buffer[imageIdxOffset + 2]))
-                                    {
-                                        pArea++;
-                                    }
-                                }
-                            }
-
+                            pArea = ProcessBitmap.BinaryBitmapNonZeroCount(aMap);
                             stepCount = Math.Max(1, (int)(pArea / unitArea * SQUARE_SIDE_COUNT * FILL_FACTOR));
                         }
                         else
@@ -321,13 +305,52 @@
             set;
         }
 
-        public double[] MeasurePower
+        //[mW/mm^2]
+        public double MeasurePower
         {
-            get { return _measurePower; }
+            get
+            {
+                if (1 <= _measurePower.Length)
+                    return _measurePower[0];
+                else
+                    return 0.0;
+            }
             set
             {
-                _measurePower = value;
+                if (0 >= _measurePower.Length)
+                {
+                    _measurePower = new double[1] { value };
+                }
+                else
+                {
+                    _measurePower[0] = value;
+                }
                 OnPropertyChanged("MeasurePower");
+            }
+        }
+
+        //[mW/mm^2]
+        public double MeasurePower1
+        {
+            get
+            {
+                if (2 <= _measurePower.Length)
+                    return _measurePower[1];
+                else
+                    return 0.0;
+            }
+            set
+            {
+                if (1 >= _measurePower.Length)
+                {
+                    double tmp = _measurePower[0];
+                    _measurePower = new double[2] { tmp, value };
+                }
+                else
+                {
+                    _measurePower[1] = value;
+                }
+                OnPropertyChanged("MeasurePower1");
             }
         }
 
@@ -388,10 +411,52 @@
         }
 
         //[percent]
-        public double[] Power
+        public double Power
         {
-            get;
-            set;
+            get
+            {
+                if (1 <= _power.Length)
+                    return _power[0];
+                else
+                    return 0.0;
+            }
+            set
+            {
+                if (0 >= _power.Length)
+                {
+                    _power = new double[1] { value };
+                }
+                else
+                {
+                    _power[0] = value;
+                }
+                OnPropertyChanged("Power");
+            }
+        }
+
+        //[percent]
+        public double Power1
+        {
+            get
+            {
+                if (2 <= _power.Length)
+                    return _power[1];
+                else
+                    return 0.0;
+            }
+            set
+            {
+                if (1 >= _power.Length)
+                {
+                    double tmp = _power[0];
+                    _power = new double[2] { tmp, value };
+                }
+                else
+                {
+                    _power[1] = value;
+                }
+                OnPropertyChanged("Power1");
+            }
         }
 
         //[ms]
@@ -844,6 +909,8 @@
             outParams.VerticeCount = this.VerticeCount;
             outParams.LongIdleTime = this.LongIdleTime;
             outParams.MeasurePower = this.MeasurePower;
+            if (1 < this._measurePower.Length)
+                outParams.MeasurePower1 = this.MeasurePower1;
             outParams.EpochCount = this.EpochCount;
             for (int i = 0; i < outParams.VerticeCount; i++)
             {

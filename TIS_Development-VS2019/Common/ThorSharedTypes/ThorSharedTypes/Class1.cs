@@ -106,7 +106,9 @@
     public enum WAVEFORM_FILETYPE
     {
         H5 = 0,
-        MEMORY_MAP = 1
+        MEMORY_MAP = 1,
+        CSV = 2,
+        LAST_FILE_TYPE
     }
 
     #endregion Enumerations
@@ -137,12 +139,14 @@
         public UInt64 analogXYSize;
         public UInt64 analogPockelSize;
         public UInt64 digitalSize;
+        public UInt64 analogZSize;
         public double stepVolt;
         public byte pockelsCount;
         public byte driverType;
         public IntPtr GalvoWaveformXY;
         public IntPtr GalvoWaveformPockel;
         public IntPtr DigBufWaveform;
+        public IntPtr PiezoWaveformZ;
         public int digitalLineCnt;
         public int Scanmode;
         public int Triggermode;
@@ -1105,6 +1109,7 @@
             PARAM_MESO_CAMERA_CONFIG,
             PARAM_MESO_RESONANT_AMPLITUDE,
             PARAM_MESO_EXP_PATH,
+            PARAM_WAVEFORM_OUTPATH,
 
             PARAM_FIRST_RESEARCH_CAMERA = 6000,	///Temporary parameters for research group
             PARAM_DFLIM_ACQUISITION_MODE = 6000,
@@ -1275,6 +1280,34 @@
     public static class IDevice
     {
         #region Enumerations
+        public enum ThorDAQ_DBB1_DIO_SLAVE_PORTS
+        {
+            Resonant_scanner_line_trigger_input = 0x00,
+            Extern_line_trigger_input = 0x01,
+            Extern_pixel_clock_input = 0x02,
+            Scan_direction_output = 0x03,
+            Horizontal_line_pulse_output = 0x04,
+            Pixel_integration_output = 0x05,
+            Start_of_frame_output = 0x06,
+            Hardware_trigger_input = 0x07,
+            External_SOF_input = 0x08,
+            Pixel_clock_pulse_output = 0x09,
+            Digital_Output_0 = 0x0A,
+            Digital_Output_1 = 0x0B,
+            Digital_Output_2 = 0x0C,
+            Digital_Output_3 = 0x0D,
+            Digital_Output_4 = 0x0E,
+            Digital_Output_5 = 0x0F,
+            Digital_Output_6 = 0x10,
+            Digital_Output_7 = 0x11,
+            Capture_Active = 0x12,
+            Aux_GPIO_0 = 0x13,
+            Aux_GPIO_1 = 0x14,
+            Aux_GPIO_2 = 0x15,
+            Aux_GPIO_3 = 0x16,
+            Aux_GPIO_4 = 0x17
+        };
+
 
         public enum ConnectionStatusType
         {
@@ -2392,6 +2425,7 @@
             PARAM_TTL_ADD4_CYCLE_COUNT,
 
             PARAM_EPHYS_TRIG_BUFFER,
+            PARAM_WAVEFORM_OUTPATH,
 
             PARAM_HPD1_GAIN_VOLTS = 7000,	///Temporary parameters for research group
             PARAM_HPD2_GAIN_VOLTS,

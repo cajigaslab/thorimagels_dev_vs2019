@@ -792,7 +792,7 @@ long ThorSLM::SetupPosition()
 		switch (_slmFuncMode)
 		{
 		case SLMFunctionMode::LOAD_PHASE_ONLY:
-			_doHologram = (FALSE == _loadPhaseDirectly || FALSE == _dmdMode);
+			_doHologram = (FALSE == _loadPhaseDirectly && FALSE == _dmdMode);
 			ret = LoadHologram();
 			break;
 		case SLMFunctionMode::PHASE_CALIBRATION:
@@ -1447,12 +1447,20 @@ unsigned char* ThorSLM::MapImageHologram(const wchar_t* pathAndFilename, PBITMAP
 	if (NULL == imgRead)
 		return NULL;
 
+	//return if the same size
+	if (_pixelRange[1] == imgWidth && _pixelRange[3] == imgHeight)
+	{
+		_pixelY = imgHeight;
+		_pixelX = imgWidth;
+		return imgRead;
+	}
+
 	//convert buffer
 	long newSize;
 	unsigned char* imgRGB = ConvertBGRToRGBBuffer(imgRead, pbmi->bmiHeader, &newSize);
 	double pixelUM = (double)Constants::M_TO_UM / pbmi->bmiHeader.biXPelsPerMeter; //[um]
 
-	//--- START mapping to maximum SLM image size ---//
+	//--- START mapping to maximum SLM image size ---//	
 	int channelCnt = static_cast<int>(pbmi->bmiHeader.biBitCount/CHAR_BIT);
 	size_t imgMapRGBBufSize = _pixelRange[1]*_pixelRange[3]*channelCnt;
 	BYTE* imgMapRGB = new BYTE[imgMapRGBBufSize];
@@ -1512,46 +1520,39 @@ unsigned char* ThorSLM::MapImageHologram(const wchar_t* pathAndFilename, PBITMAP
 	delete[] imgRead;
 
 	//set bmi header to SLM dimension
-	pbmi->bmiHeader.biWidth = _pixelRange[1];
-	pbmi->bmiHeader.biHeight = _pixelRange[3];
+	_pixelX = pbmi->bmiHeader.biWidth = _pixelRange[1];
+	_pixelY = pbmi->bmiHeader.biHeight = _pixelRange[3];
 	pbmi->bmiHeader.biSizeImage = _pixelRange[1] * _pixelRange[3] * channelCnt + 2;
 	pbmi->bmiHeader.biXPelsPerMeter = static_cast<LONG>((double)Constants::M_TO_UM/_pixelUM);
 	pbmi->bmiHeader.biYPelsPerMeter = pbmi->bmiHeader.biXPelsPerMeter;
 
-	return imgMapRGB;
+	//return after convert back
+	unsigned char* bufRead = ConvertRGBToBGRBuffer(imgMapRGB, pbmi->bmiHeader, &newSize);
+	delete[] imgMapRGB;
+	return bufRead;
 }
 
 unsigned char* ThorSLM::GetAndProcessBMP(long& size, BITMAPINFO& bmi)
 {
 	long ret = TRUE;
 	const int ITERATIONS_2D = 10;
-	unsigned char* imgRGB = MapImageHologram(_bmpPathAndName.c_str(), &bmi);
-
-	//update local sizes:	
-	if ((bmi.bmiHeader.biHeight >= _pixelRange[2]) && (bmi.bmiHeader.biHeight <= _pixelRange[3]) && 
-		(bmi.bmiHeader.biWidth >= _pixelRange[0]) && (bmi.bmiHeader.biWidth <= _pixelRange[1]))
-	{
-		_pixelY = bmi.bmiHeader.biHeight;
-		_pixelX = bmi.bmiHeader.biWidth;
-	}
-	else
-	{
-		//delete[] imgRead;
-		delete[] imgRGB;
-		StringCbPrintfW(_errMsg,MSG_SIZE,L"ThorSLMPDM512 GetAndProcessBMP: invalid bmp size.");
-		LogMessage(_errMsg, ERROR_EVENT);
+	unsigned char* imgRead = MapImageHologram(_bmpPathAndName.c_str(), &bmi);
+	if (NULL == imgRead)
 		return NULL;
-	}
+
+	//convert buffer:
+	long newSize;
+	unsigned char* imgRGB = ConvertBGRToRGBBuffer(imgRead, bmi.bmiHeader, &newSize);
 
 	//return if no need to apply hologram & transform, [LoadPhaseDirect or DMD]
 	if (!_doHologram)
 	{
+		delete[] imgRead;
 		return imgRGB;
 	}
 
 	//apply affine & generate phase:
-	double pixelUM = 6.4; // [um]
-	ret = holoGen->SetSize(_pixelX, _pixelY, pixelUM);
+	ret = holoGen->SetSize(_pixelX, _pixelY, _pixelUM);
 	ret = holoGen->SetCoeffs(GeoFittingAlg::PROJECTIVE, _fitCoeff[_selectWavelength]);
 	ret = holoGen->SetAlgorithm(HoloGenAlg::GerchbergSaxton);
 
@@ -1566,7 +1567,7 @@ unsigned char* ThorSLM::GetAndProcessBMP(long& size, BITMAPINFO& bmi)
 		pDst++;
 		pSrc++;
 	}
-	//delete[] imgRGB;
+	delete[] imgRGB;
 
 	//pre-offset, flip, scale or rotate before affine:
 	if((0 != _offsetPixels[0]) || (0 != _offsetPixels[1]))
@@ -1590,7 +1591,7 @@ unsigned char* ThorSLM::GetAndProcessBMP(long& size, BITMAPINFO& bmi)
 	ret = holoGen->GenerateHologram(fImg, ITERATIONS_2D, 0);
 
 	//copy back from buffer, scale if necessary:
-	pSrc = imgRGB;
+	pSrc = imgRead;
 	pDst = fImg;
 	for (int i = 0; i < _pixelX*_pixelY; i++)
 	{
@@ -1600,7 +1601,7 @@ unsigned char* ThorSLM::GetAndProcessBMP(long& size, BITMAPINFO& bmi)
 	}
 	std::free(fImg);
 
-	return imgRGB;
+	return imgRead;
 }
 
 unsigned char* ThorSLM::GetAndProcessText(long& size, BITMAPINFO& bmi)	//for 3D pattern, we should use textfile instead of bmp
@@ -1708,7 +1709,7 @@ unsigned char* ThorSLM::GetAndProcessText(long& size, BITMAPINFO& bmi)	//for 3D 
 			}
 			free(fImg);
 		}
-		myReadFile.close();
+
 	}
 	else
 	{
@@ -1716,11 +1717,8 @@ unsigned char* ThorSLM::GetAndProcessText(long& size, BITMAPINFO& bmi)	//for 3D 
 		LogMessage(_errMsg, ERROR_EVENT);
 		return NULL;
 	}
-
+	myReadFile.close();
 	//free(fullFileName);
-
-
-
 
 	unsigned char* pSrc = txtRead;
 	float* pDst = mImg;

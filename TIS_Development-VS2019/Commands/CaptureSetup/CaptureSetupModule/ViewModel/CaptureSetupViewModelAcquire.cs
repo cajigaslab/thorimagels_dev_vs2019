@@ -46,8 +46,10 @@
         private string _snapshotKey;
         private string _snapshotModifier;
         ICommand _snapshotSettingsCommand;
+        bool _stackPreviewStopped = false;
         private ICommand _startCommand;
         private ICommand _startFastFocusCommand;
+        bool _startingContinuousZStackPreview = false;
         private string _startKey;
         private string _startModifier;
         private ICommand _stopCommand;
@@ -262,10 +264,12 @@
                             ZStackCapturing((bool)MVMManager.Instance["ZControlViewModel", "IsZStackCapturing", (object)false]);
                             _bw.RunWorkerAsync();
                             CreateProgressWindow();
+                            _stackPreviewStopped = false;
                         }
                         break;
                     case "ZStackPreviewStop":
                         {
+                            _bw.CancelAsync(); // stop background worker when z stack captured
 
                             ZStackCapturing((bool)MVMManager.Instance["ZControlViewModel", "IsZStackCapturing", (object)false]);
 
@@ -277,15 +281,39 @@
                                 }
                             }
 
+                            //sleep to allow the bw to stop, the background worker has a 10ms sleep in a while loop, wait 1ms longer to ensure it has passed
+                            System.Threading.Thread.Sleep(11);
+
                             System.Windows.Application.Current.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal,
                         new Action(
                             delegate ()
                             {
-                                CloseProgressWindow();
+                                bool continuousZStackPreview = (bool)MVMManager.Instance["ZControlViewModel", "EnableContinuousZStackPreview", (object)false];
+
+                                //if continuous zstack is checked then continuosly update
+                                if (continuousZStackPreview == true && !IsOrthogonalViewChecked)
+                                {
+                                    CloseProgressWindow();
+                                    _startingContinuousZStackPreview = true;
+                                    ICommand zStackPreviewCommand = (ICommand)MVMManager.Instance["ZControlViewModel", "PreviewZStackCommand", (object)null];
+                                    if (null !=  zStackPreviewCommand)
+                                    {
+                                        zStackPreviewCommand.Execute(null);
+                                    }
+                                }
+                                else if (!continuousZStackPreview)
+                                {
+                                    CloseProgressWindow();
+                                }
+
+                                _startingContinuousZStackPreview = false;
+                                if (IsOrthogonalViewChecked)
+                                {
+                                    UpdateOrthogonalView();
+                                }
                             }
                         )
                     );
-                            _bw.CancelAsync(); // stop background worker when z stack captured
                         }
                         break;
                     default:
@@ -772,6 +800,7 @@
 
             if (true == (bool)MVMManager.Instance["ZControlViewModel", "IsZStackCapturing", (object)false])
             {
+                _stackPreviewStopped = true;
                 MVMManager.Instance["ZControlViewModel", "IsZCaptureStopped"] = true;
                 this._captureSetup.StopZStackPreview();
                 _bw.CancelAsync();

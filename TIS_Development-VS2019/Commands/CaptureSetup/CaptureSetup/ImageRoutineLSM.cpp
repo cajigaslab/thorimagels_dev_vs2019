@@ -73,6 +73,8 @@ long ImageRoutineLSM::Snapshot(SnapshotSaveParams *sParam)
 		logDll->TLTraceEvent(ERROR_EVENT,1,message);
 	}
 
+	SetCameraParamString(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_WAVEFORM_OUTPATH, sParam->path);
+
 	//snapshot shared the parameters with the live mode
 	SAFE_DELETE_HANDLE(hCaptureActive);
 

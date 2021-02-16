@@ -258,8 +258,11 @@ long HDF5IO::DestroyFileIO()
 }
 
 ///extend data from the last:
-long HDF5IO::ExtendData(const char* groupnm,const char* datasetnm,void* buf,long datatype, bool extend,unsigned long writesize)
+long HDF5IO::ExtendData(const char* groupnm, const char* datasetnm, void* buf, long datatype, bool extend, unsigned long writesize)
 {
+	if (NULL == buf)
+		return FALSE;
+
 	long ret = TRUE;
 	hsize_t extdims[RANK] ={writesize,1};
 	offset[0] = 0;

@@ -1982,18 +1982,21 @@
                     }
                     if (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "power", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
                     {
-                        sparam.BleachWaveParams.Power = (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "power1", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp1)) ?
-                            new double[2] { dTmp, dTmp1 } : new double[1] { dTmp };
+                        sparam.BleachWaveParams.Power = dTmp;
+                        sparam.BleachWaveParams.Power1 = (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "power1", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp1)) ?
+                                                        dTmp1 : -1.0;
                     }
                     if (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "measurePowerMW", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
                     {
-                        sparam.BleachWaveParams.MeasurePower = (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "measurePower1MW", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp1)) ?
-                            new double[2] { dTmp, dTmp1 } : new double[1] { dTmp };
+                        sparam.BleachWaveParams.MeasurePower = dTmp;
+                        if (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "measurePower1MW", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp1))
+                            sparam.BleachWaveParams.MeasurePower1 = dTmp1;
                     }
                     if (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "measurePowerMWPerUM2", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
                     {
-                        sparam.SLMMeasurePowerArea = (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "measurePower1MWPerUM2", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp1)) ?
-                             new double[2] { dTmp, dTmp1 } : new double[1] { dTmp };
+                        sparam.SLMMeasurePowerArea = dTmp;
+                        if (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "measurePower1MWPerUM2", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp1))
+                            sparam.SLMMeasurePowerArea1 = dTmp1;
                     }
                     if (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "red", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
                     {
@@ -2458,7 +2461,8 @@
                 else
                 {
                     // Perform a time consuming operation and report progress.
-                    System.Threading.Thread.Sleep(30);
+                    //TODO: changed from 30ms to 10ms, should be tested well.
+                    System.Threading.Thread.Sleep(10);
                     worker.ReportProgress(0);
                 }
             };

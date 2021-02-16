@@ -1103,6 +1103,12 @@ long ThorLSMCam::SetParamString(const long paramID, wchar_t * str)
 			ret = TRUE;
 		}
 		break;
+	case ICamera::PARAM_WAVEFORM_OUTPATH:
+		if (NULL != str)
+			_waveformOutPath = std::wstring(str);
+		break;
+	default:
+		ret = FALSE;
 	}
 
 	return ret;
@@ -1178,14 +1184,25 @@ long ThorLSMCam::SetAction(ActionType actionType)
 		BuildTaskMaterDigital();						//determine digital line selections
 		return TryBuildTaskMaster();
 	case WRITE_TASK_MASTER_GALVO:
-		TryWriteTaskMasterGalvoWaveform(FALSE);
+		for (int i = 0; i < _imageActiveLoadCount; i++)
+		{
+			if (FALSE == TryWriteTaskMasterGalvoWaveform(FALSE))
+				break;
+		}
 		break;
 	case WRITE_TASK_MASTER_POCKEL:
-		TryWriteTaskMasterPockelWaveform(FALSE);
+		for (int i = 0; i < _imageActiveLoadCount; i++)
+		{
+			if (FALSE == TryWriteTaskMasterPockelWaveform(FALSE))
+				break;
+		}
 		break;
 	case WRITE_TASK_MASTER_LINE:
-		TryWriteTaskMasterLineWaveform(FALSE);
-		break;
+		for (int i = 0; i < _imageActiveLoadCount; i++)
+		{
+			if (FALSE == TryWriteTaskMasterLineWaveform(FALSE))
+				break;
+		}
 	case DONE_SETUP:
 		ResetEvent(ThorLSMCam::_hStopAcquisition); 
 		break;

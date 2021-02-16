@@ -699,10 +699,10 @@ void HologramGen::FilterGauss(float* pImgDst, int kernelSize, double diaRatio)
 	nRoiSize.width = min(_mtrxWidth - 2*static_cast<int>(kernelSize/2), static_cast<int>(_mtrxWidth*diaRatio));
 	nRoiSize.height =min(_mtrxHeight - 2*static_cast<int>(kernelSize/2), static_cast<int>(_mtrxHeight*diaRatio));
 
-	Ipp32f* pSrcStart = &pImgDst[nOffset.width * _mtrxHeight + nOffset.height];
+	Ipp32f* pSrcStart = &pImgDst[nOffset.width * _mtrxWidth + nOffset.height];
 
 	Ipp32f* pGauss = ippiDll->ippiMalloc_32f_C1(_mtrxWidth, _mtrxHeight, &stepBytes);
-	Ipp32f* pDstStart = &pGauss[nOffset.width * _mtrxHeight + nOffset.height];
+	Ipp32f* pDstStart = &pGauss[nOffset.width * _mtrxWidth + nOffset.height];
 	switch (kernelSize)
 	{
 	case 3:

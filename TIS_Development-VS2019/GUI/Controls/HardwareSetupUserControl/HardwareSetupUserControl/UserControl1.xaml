@@ -117,7 +117,7 @@
                                 <ComboBox Name="cbCamera"
                                           Width="180"
                                           SelectionChanged="cbCamera_SelectionChanged"
-                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/ImageDetectors/LSM[not(contains(@cameraName\,\'Stim\'))]}">
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/ImageDetectors/*[not(contains(@cameraName\,\'Stim\'))]}">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal">

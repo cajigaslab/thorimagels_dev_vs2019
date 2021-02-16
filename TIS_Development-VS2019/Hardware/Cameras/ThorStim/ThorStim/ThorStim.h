@@ -21,24 +21,24 @@ public:
 	~ThorStim();
 
 	///<function implementation
-	long FindCameras(long &cameraCount); ///<Search system to find daq board
+	long FindCameras(long& cameraCount); ///<Search system to find daq board
 	long SelectCamera(const long camera);
 	long TeardownCamera(); ///<close handles for daq board
-	long GetParamInfo(const long paramID, long &paramType, long &paramAvailable, long &paramReadOnly, double &paramMin, double &paramMax, double &paramDefault); ///<get the information for each parameter
+	long GetParamInfo(const long paramID, long& paramType, long& paramAvailable, long& paramReadOnly, double& paramMin, double& paramMax, double& paramDefault); ///<get the information for each parameter
 	long SetParam(const long paramID, const double param);///<set parameter value
-	long GetParam(const long paramID, double &param);///<get the parameter value
-	long PreflightAcquisition(char * pDataBuffer);///<Setup for , should be called before each experiment, or whenever trigger mode has been changed
-	long SetupAcquisition(char * pDataBuffer);
-	long StartAcquisition(char * pDataBuffer);///<Start an experiment
-	long StatusAcquisition(long &status);///<Status of a stimulation 
-	long StatusAcquisitionEx(long &status,long &indexOfLastCompletedFrame);
-	long CopyAcquisition(char * pDataBuffer, void* frameInfo);
-	long PostflightAcquisition(char * pDataBuffer);
-	long GetLastErrorMsg(wchar_t * msg, long size);
-	long SetParamString(const long paramID, wchar_t * str);
-	long GetParamString(const long paramID, wchar_t * str, long size);
-	long GetParamBuffer(const long paramID, char * pBuffer, long size);
-	long SetParamBuffer(const long paramID, char * pBuffer, long size);
+	long GetParam(const long paramID, double& param);///<get the parameter value
+	long PreflightAcquisition(char* pDataBuffer);///<Setup for , should be called before each experiment, or whenever trigger mode has been changed
+	long SetupAcquisition(char* pDataBuffer);
+	long StartAcquisition(char* pDataBuffer);///<Start an experiment
+	long StatusAcquisition(long& status);///<Status of a stimulation 
+	long StatusAcquisitionEx(long& status, long& indexOfLastCompletedFrame);
+	long CopyAcquisition(char* pDataBuffer, void* frameInfo);
+	long PostflightAcquisition(char* pDataBuffer);
+	long GetLastErrorMsg(wchar_t* msg, long size);
+	long SetParamString(const long paramID, wchar_t* str);
+	long GetParamString(const long paramID, wchar_t* str, long size);
+	long GetParamBuffer(const long paramID, char* pBuffer, long size);
+	long SetParamBuffer(const long paramID, char* pBuffer, long size);
 
 private:
 	const static long RATE6321 = 250000;
@@ -64,10 +64,10 @@ private:
 	static long SetupTaskMasterPockel(void);
 	static long SetupTaskMasterDigital(void);
 	static long SetupFrameTriggerInput(void);
-	static int32 CVICALLBACK HWTriggerCallback(TaskHandle taskHandle, int32 signalID, void *callbackData);
-	static int32 CVICALLBACK CycleDoneCallback(TaskHandle taskHandle, int32 status, void *callbackData);
-	static int32 CVICALLBACK EveryNDigitalOutCallback(TaskHandle taskHandle, int32 everyNsamplesEventType, uInt32 nSamples, void *callbackData);
-	static int32 CVICALLBACK EveryNPockelOutCallback(TaskHandle taskHandle, int32 everyNsamplesEventType, uInt32 nSamples, void *callbackData);
+	static int32 CVICALLBACK HWTriggerCallback(TaskHandle taskHandle, int32 signalID, void* callbackData);
+	static int32 CVICALLBACK CycleDoneCallback(TaskHandle taskHandle, int32 status, void* callbackData);
+	static int32 CVICALLBACK EveryNDigitalOutCallback(TaskHandle taskHandle, int32 everyNsamplesEventType, uInt32 nSamples, void* callbackData);
+	static int32 CVICALLBACK EveryNPockelOutCallback(TaskHandle taskHandle, int32 everyNsamplesEventType, uInt32 nSamples, void* callbackData);
 
 	///<NI actions
 	long MovePockelsToPowerLevel(long index);
@@ -93,11 +93,10 @@ private:
 	long _numDigiLines;
 	static long _driverType;
 	static long _activeLoadMS;///<user defined unit load callback time
-	static long _activeLoadCount;///<user defined block ring buffer count
+	long _activeLoadCount;///<user defined block ring buffer count
 
 	///<Get/Set params
 	static long  _sampleRateHz;
-	double _riseTimeUS;
 	static long _frameCount;
 	static long _triggerMode;
 	static std::wstring _waveformPathName; ///<waveform file's path and name

@@ -276,26 +276,6 @@ public:
 	//persist global OTM settings
 	void UpdateOTM();
 
-	static const char ** ConvertStrVec(std::vector<std::string> StrVec)
-	{
-		char ** charArr = new char*[StrVec.size()];
-		for(size_t i = 0; i < StrVec.size(); i++)
-		{
-			charArr[i] = new char[StrVec[i].size() + 1];
-			strcpy_s(charArr[i], StrVec[i].size() + 1, StrVec[i].c_str());
-		}
-		return (const char **)charArr;
-	};
-
-	static void FreeCharVec(const char ** charArr,size_t size)
-	{
-		for(size_t i = 0; i < size; i++)
-		{
-			delete [] charArr[i];
-		}
-		delete [] charArr;
-	};
-
 };
 
 template <typename T>								//output = vector1 + vector2

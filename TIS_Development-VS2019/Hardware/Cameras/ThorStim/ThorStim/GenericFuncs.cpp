@@ -96,11 +96,16 @@ long ThorStim::SetupProtocol()
 			//open bleach shutter at setup, and set cycle complementary (cycleInverse) high,
 			//before set digital task due to shared NI task
 			//TogglePulseToDigitalLine(_taskHandleDO, _bleachShutterLine, 1, TogglePulseMode::ToggleHigh, _bleachShutterIdle[0]);
-			TogglePulseToDigitalLine(_taskHandleDO, _digiLines[ThorStimXML::NUM_WAVEFORM_ATTRIBUTES-1], 1, TogglePulseMode::ToggleHigh);
+			TogglePulseToDigitalLine(_taskHandleDO, _digiLines[(int)BLEACHSCAN_DIGITAL_LINENAME::CYCLE_COMPLEMENTARY-1], 1, TogglePulseMode::ToggleHigh);
 			SetupTaskMasterDigital();
 
-			TryWriteTaskMasterPockelWaveform(FALSE);
-			TryWriteTaskMasterLineWaveform(FALSE);
+			//push in more buffer initially then one-per-callback after start
+			for (int i = 0; i < _activeLoadCount; i++)
+			{
+				TryWriteTaskMasterLineWaveform(FALSE);
+				if(!TryWriteTaskMasterPockelWaveform(FALSE))
+					break;
+			}
 			SetupFrameTriggerInput();
 		}
 		break;

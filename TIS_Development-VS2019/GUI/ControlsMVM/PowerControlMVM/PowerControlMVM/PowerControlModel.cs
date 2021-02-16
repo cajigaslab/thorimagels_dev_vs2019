@@ -173,6 +173,16 @@
             }
         }
 
+        public PockelsResponseType BleacherPowerResponse1
+        {
+            get
+            {
+                int pos = 0;
+                ThorSharedTypes.ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_POCKELS_RESPONSE_TYPE_1, ref pos);
+                return (PockelsResponseType)pos;
+            }
+        }
+
         public double BleachPockelsVoltageMax0
         {
             get
@@ -900,7 +910,7 @@
         private static extern bool PowerCalibrateZero();
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "SetPockelsMaskFile")]
-        private static extern bool SetPockelsMaskFile([MarshalAs(UnmanagedType.LPStr)]string path);
+        private static extern bool SetPockelsMaskFile([MarshalAs(UnmanagedType.LPStr)] string path);
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "SetShutterPosition")]
         private static extern bool SetShutterPosition(int pos);

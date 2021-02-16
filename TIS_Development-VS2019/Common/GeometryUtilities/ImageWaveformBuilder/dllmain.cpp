@@ -3,6 +3,7 @@
 #include "ImageWaveformBuilder.h"
 #include "WaveformMemory.h"
 #include "WaveformBuilderFactory.h"
+#include "WaveformSaver.h"
 
 #ifdef IMGWFBUILDER_EXPORTS
 #define DllExport_IMGWFBUILDER extern "C" __declspec( dllexport )
@@ -138,9 +139,9 @@ DllExport_IMGWFBUILDER long BuildSpiral(long count)
 	return ImageWaveformBuilder::getInstance(_boardID)->BuildSpiral(count);
 }
 
-DllExport_IMGWFBUILDER long BuildImageWaveform(double* startXY, long* countPerCallback, uint64_t* total)
+DllExport_IMGWFBUILDER long BuildImageWaveform(double* startXY, long* countPerCallback, uint64_t* total, wstring outPath)
 {
-	return ImageWaveformBuilder::getInstance(_boardID)->BuildImageWaveform(startXY, countPerCallback, total);
+	return ImageWaveformBuilder::getInstance(_boardID)->BuildImageWaveform(startXY, countPerCallback, total, outPath);
 }
 
 DllExport_IMGWFBUILDER long BuildImageWaveformFromStart(long rebuild, double stepSize, double* currentVxy, long* countPerCallback, uint64_t* total)
@@ -185,9 +186,9 @@ DllExport_IMGWFBUILDER uint64_t GetCounter(SignalType sType)
 
 // *** WaveformMemory Class	*** ///
 
-DllExport_IMGWFBUILDER long AllocateMem(GGalvoWaveformParams gWParams, const wchar_t* memMapPath)
+DllExport_IMGWFBUILDER long AllocateMem(GGalvoWaveformParams gWParams, const wchar_t* memMapPath, long lpSecurityAttributes)
 {
-	return WaveformMemory::getInstance()->AllocateMem(gWParams, memMapPath);
+	return WaveformMemory::getInstance()->AllocateMem(gWParams, memMapPath, lpSecurityAttributes);
 }
 
 DllExport_IMGWFBUILDER long OpenMem(GGalvoWaveformParams& gWParams, const wchar_t* memMapPathName)
@@ -255,4 +256,13 @@ DllExport_IMGWFBUILDER long TryBuildWaveform (uint64_t& totalLength)
 DllExport_IMGWFBUILDER HANDLE GetSignalHandle ()
 {
 	return WaveformBuilderFactory::GetBuilderInstance(type)->GetSignalHandle();
+}
+
+// ******************************************************** ///
+// **************** WaveformSaver Class ******************* ///
+// ******************************************************** ///
+
+DllExport_IMGWFBUILDER long SaveData(wstring outPath, SignalType stype, void* gparam, unsigned long long length)
+{
+	return WaveformSaver::getInstance()->SaveData(outPath, stype, gparam, length);
 }

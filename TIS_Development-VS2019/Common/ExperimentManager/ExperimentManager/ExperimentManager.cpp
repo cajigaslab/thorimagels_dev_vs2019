@@ -116,9 +116,7 @@ wstring ExperimentManager::GetActiveExperimentPath()
 
 wstring ExperimentManager::GetActiveExperimentPathAndName()
 {
-	wstring ws;
-	activeExperiment->GetPathAndName(ws);
-	return ws;
+	return activeExperiment->GetPathAndName();
 }
 
 long  ExperimentManager::GetTotalSampleRowsAndColumns(IExperiment::SampleType type, long &totalRows,long &totalCols)

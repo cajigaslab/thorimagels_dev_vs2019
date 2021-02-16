@@ -5,7 +5,6 @@
 #include "ThorZPiezo.h"
 #include "ZPiezoSetupXML.h"
 
-
 /// <summary>
 /// Prevents a default instance of the <see cref="ThorZPiezo" /> class from being created.
 /// </summary>
@@ -16,6 +15,7 @@ ThorZPiezo::ThorZPiezo()
 	_devName = "/Dev1/";
 	_analogLine = "ao0";
 	_triggerLine = "PFI0";
+	_waveformOutPath = L"";
 
 	_zPos = 0;
 	_zPos_C = 0;
@@ -78,6 +78,7 @@ long ThorZPiezo::_outputLineCount = 1;
 float64* ThorZPiezo::_pWaveform = NULL;
 wchar_t ThorZPiezo::_errMsg[MAX_PATH] = {NULL};
 wchar_t message[MAX_PATH];
+std::unique_ptr<WaveformSaverDLL> WaveformSaver(new WaveformSaverDLL(L".\\Modules_Native\\GeometryUtilitiesCPP.dll"));
 
 /// <summary>
 /// Gets the instance.
@@ -426,6 +427,13 @@ long ThorZPiezo::GetParamInfo
 			paramDefault = 0.0;
 		}
 		break;
+	case PARAM_WAVEFORM_OUTPATH:
+		{
+			paramType		= TYPE_STRING;
+			paramAvailable	= TRUE;
+			paramReadOnly	= FALSE;
+		}
+		break;
 	default:
 		paramAvailable = FALSE;
 		ret = TRUE;
@@ -762,8 +770,16 @@ long ThorZPiezo::GetParamBuffer(const long paramID, char* pBuffer, long size)
 /// <returns>long.</returns>
 long ThorZPiezo::SetParamString(const long paramID, wchar_t* str)
 {
-	long ret = FALSE;
-
+	long ret = TRUE;
+	switch (paramID)
+	{
+	case IDevice::PARAM_WAVEFORM_OUTPATH:
+		_waveformOutPath = std::wstring(str);
+		break;
+	default:
+		ret = FALSE;
+		break;
+	}
 	return ret;
 }
 
@@ -776,8 +792,16 @@ long ThorZPiezo::SetParamString(const long paramID, wchar_t* str)
 /// <returns>long.</returns>
 long ThorZPiezo::GetParamString(const long paramID, wchar_t* str, long size)
 {
-	long ret = FALSE;
-
+	long ret = TRUE;
+	switch (paramID)
+	{
+	case IDevice::PARAM_WAVEFORM_OUTPATH:
+		wcscpy_s(str, size, _waveformOutPath.c_str());
+		break;
+	default:
+		ret = FALSE;
+		break;
+	}
 	return ret;
 }
 
@@ -1212,6 +1236,10 @@ long ThorZPiezo::BuildWaveforms()
 	//return if waveform building failed
 	if(NULL == zWaveform)
 		return FALSE;
+
+	//save waveform if requested, once only
+	if (0 <_waveformOutPath.length() && TRUE == WaveformSaver.get()->SaveData(_waveformOutPath, SignalType::ANALOG_Z, zWaveform, _totalPoints))
+		_waveformOutPath = L"";
 
 	_pWaveform = (float64*)realloc(_pWaveform, _outputLineCount * _totalPoints * sizeof(float64));
 

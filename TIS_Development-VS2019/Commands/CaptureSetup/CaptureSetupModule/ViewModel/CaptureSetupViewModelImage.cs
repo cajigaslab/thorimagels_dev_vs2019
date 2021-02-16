@@ -78,6 +78,7 @@
         private Visibility _isChannelVisible1 = Visibility.Visible;
         private Visibility _isChannelVisible2 = Visibility.Visible;
         private Visibility _isChannelVisible3 = Visibility.Visible;
+        bool _isOrthogonalViewChecked = false;
         private Visibility _isTileDisplayButtonVisible = Visibility.Visible;
         private bool _largeHistogram1 = false;
         private bool _largeHistogram2 = false;
@@ -90,16 +91,18 @@
         private bool _logScaleEnabled3 = false;
         private Brush[] _lsmChannelColor = new Brush[CaptureSetup.MAX_CHANNELS];
         private OrthogonalViewStatus _orthogonalViewStat = OrthogonalViewStatus.INACTIVE;
+        double _orthogonalViewZMultiplier = 1.0;
         private byte[] _pdXZ;
         private byte[] _pdYZ;
         private Visibility _pmtSaturationsVisibility = Visibility.Visible;
         private int _progressPercentage;
         private bool _rebuildBitmap = false;
         BitmapPalette _roiPalette = null;
-        private CaptureSetupDll.View.SplashScreen _splash;
+        private CaptureSetupDll.View.SplashScreen _splashOrthogonalView;
         private ushort[][] _tiffBufferArray;
         private bool _tileDisplay = false;
-        private bool _updateVirtualStack = true;
+
+        //private bool _updateVirtualStack = true; //TODO:see if needed
         private bool _virtualZStack = true;
         private string _wavelengthName;
         private string[] _wavelengthNames = new string[CaptureSetup.MAX_CHANNELS];
@@ -125,9 +128,6 @@
         #region Events
 
         public event Action ChannelChanged;
-
-        //notify ImageView to enable/disable orthogonal view
-        public event Action CloseOrthogonalView;
 
         //notify 3D VolumeView that the color mapping has changed
         public event Action<bool> ColorMappingChanged;
@@ -497,10 +497,20 @@
                     // Define parameters used to create the BitmapSource.
                     int rawStrideXZ = (width * pf.BitsPerPixel + 7) / 8; //_bitmapXZ
 
+                    double pixelSizeUM = (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (double)1.0];
+                    double zStepSizeUM = (double)MVMManager.Instance["ZControlViewModel", "ZScanStep", (object)0.0];
+
+                    double yMultiplier = pixelSizeUM / zStepSizeUM / _orthogonalViewZMultiplier;
+
+                    double dpiX = 96;
+                    double dpiY = 96 * yMultiplier;
+
                     //create a new bitmpap when one does not exist or the size of the image changes
-                    if ((_bitmapXZ == null) || (_bitmapXZ.PixelWidth != width) || (_bitmapXZ.Format != pf) || (totalNumOfZstack != _bitmapXZ.PixelHeight))
+                    //need to round the dpi because they are changed internally, and more than 3 decimal places shouldn't make a real difference
+                    if ((_bitmapXZ == null) || (_bitmapXZ.PixelWidth != width) || (_bitmapXZ.Format != pf) || (totalNumOfZstack != _bitmapXZ.PixelHeight) ||
+                        (Math.Round(_bitmapXZ.DpiX, 3) != Math.Round(dpiX, 3)) || (Math.Round(_bitmapXZ.DpiY, 3) != Math.Round(dpiY, 3)))
                     {
-                        _bitmapXZ = new WriteableBitmap(width, totalNumOfZstack, 96, 96, pf, null);
+                        _bitmapXZ = new WriteableBitmap(width, totalNumOfZstack, dpiX, dpiY, pf, null);
                     }
                     _bitmapXZ.WritePixels(new Int32Rect(0, 0, width, totalNumOfZstack), _pdXZ, rawStrideXZ, 0);
 
@@ -524,14 +534,24 @@
                     // Define parameters used to create the BitmapSource.
                     int rawStrideYZ = (totalNumOfZstack * pf.BitsPerPixel + 7) / 8;
 
+                    double pixelSizeUM = (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (double)1.0];
+                    double zStepSizeUM = (double)MVMManager.Instance["ZControlViewModel", "ZScanStep", (object)0.0];
+
+                    double xMultiplier = pixelSizeUM / zStepSizeUM / _orthogonalViewZMultiplier;
+
+                    double dpiX = 96.0 * xMultiplier;
+                    double dpiY = 96.0;
+
                     //create a new bitmpap when one does not exist or the size of the image changes
-                    if ((_bitmapYZ == null) || (_bitmapYZ.PixelHeight != height) || (_bitmapYZ.Format != pf) || (totalNumOfZstack != _bitmapYZ.PixelWidth))
+                    //need to round the dpi because they are changed internally, and more than 3 decimal places shouldn't make a real difference
+                    if ((_bitmapYZ == null) || (_bitmapYZ.PixelHeight != height) || (_bitmapYZ.Format != pf) || (totalNumOfZstack != _bitmapYZ.PixelWidth) ||
+                        (Math.Round(_bitmapYZ.DpiX, 3) != Math.Round(dpiX, 3)) || (Math.Round(_bitmapYZ.DpiY, 3) != Math.Round(dpiY, 3)))
                     {
-                        _bitmapYZ = new WriteableBitmap(totalNumOfZstack, height, 96, 96, pf, null);
+                        _bitmapYZ = new WriteableBitmap(totalNumOfZstack, height, dpiX, dpiY, pf, null);
                     }
                     _bitmapYZ.WritePixels(new Int32Rect(0, 0, totalNumOfZstack, height), _pdYZ, rawStrideYZ, 0);
 
-                    return this._bitmapYZ;
+                    return _bitmapYZ;
                 }
                 return null;
             }
@@ -1053,8 +1073,15 @@
 
         public bool IsOrthogonalViewChecked
         {
-            get;
-            set;
+            get
+            {
+                return _isOrthogonalViewChecked;
+            }
+            set
+            {
+                _isOrthogonalViewChecked = value;
+                OnPropertyChanged("IsOrthogonalViewChecked");
+            }
         }
 
         public bool IsSingleChannel
@@ -1570,6 +1597,21 @@
             set
             {
                 _orthogonalViewStat = value;
+            }
+        }
+
+        public double OrthogonalViewZMultiplier
+        {
+            get
+            {
+                return _orthogonalViewZMultiplier;
+            }
+            set
+            {
+                if (_orthogonalViewZMultiplier > 0)
+                {
+                    _orthogonalViewZMultiplier = value;
+                }
             }
         }
 
@@ -2091,7 +2133,7 @@
             return this._captureSetup.GetImageProcessData(width, height);
         }
 
-        public void InitOrthogonalView()
+        public void InitiOrthogonalBuffers()
         {
             PixelFormat pf = PixelFormats.Rgb24;
             int step = pf.BitsPerPixel / 8;
@@ -2112,6 +2154,10 @@
             {
                 _pdYZ = new byte[pdYZ_DataLength];
             }
+        }
+
+        public void InitOrthogonalView()
+        {
             UpdateOrthogonalView();
         }
 
@@ -2266,85 +2312,106 @@
             SaveImage(saveStr, 2);
         }
 
-        public void UpdateChannelData(string[] fileNames, int zIndexToRead, int tIndexToRead)
+        public bool UpdateChannelData(string[] fileNames, int zIndexToRead, int tIndexToRead)
         {
             int pixelX = (int)MVMManager.Instance["AreaControlViewModel", "LSMPixelX", (object)0];
             int pixelY = (int)MVMManager.Instance["AreaControlViewModel", "LSMPixelY", (object)0];
             int zSteps = (int)MVMManager.Instance["ZControlViewModel", "ZScanNumSteps", (object)1];
             byte enabledChannels = (byte)ColorChannels;
-            _captureSetup.UpdateChannelData(fileNames, enabledChannels, 4, zIndexToRead, tIndexToRead, pixelX, pixelY, zSteps, GetRawContainsDisabledChannels());
+            return _captureSetup.UpdateChannelData(fileNames, enabledChannels, 4, zIndexToRead, tIndexToRead, pixelX, pixelY, zSteps, GetRawContainsDisabledChannels());
         }
 
-        public void UpdateOrthogonalView()
+        public void UpdateOrthogonalView(bool displaySplash = true)
         {
             BackgroundWorker splashWkr = new BackgroundWorker();
             splashWkr.WorkerSupportsCancellation = true;
             _bwOrthogonalImageLoaderDone = false;
             ProgressPercentage = 0;
-            _splash = new CaptureSetupDll.View.SplashScreen();
+
+            if (displaySplash)
+            {
+                _splashOrthogonalView = new CaptureSetupDll.View.SplashScreen();
+            }
             try
             {
-                _splash.DisplayText = "Please wait while loading images ...";
-                _splash.ShowInTaskbar = false;
-                _splash.Owner = Application.Current.MainWindow;
-                _splash.Show();
-                _splash.CancelSplashProgress += delegate(object sender, EventArgs e)
+                if (displaySplash)
                 {
-                    splashWkr.CancelAsync();
-                };
+                    _splashOrthogonalView.DisplayText = "Please wait while loading images ...";
+                    _splashOrthogonalView.ShowInTaskbar = false;
+                    _splashOrthogonalView.Owner = Application.Current.MainWindow;
+                    _splashOrthogonalView.Show();
+                    _splashOrthogonalView.CancelSplashProgress += delegate (object sender, EventArgs e)
+                    {
+                        splashWkr.CancelAsync();
+                    };
+                }
+                System.Windows.Threading.Dispatcher spDispatcher = null;
 
-                //get dispatcher to update the contents that was created on the UI thread:
-                System.Windows.Threading.Dispatcher spDispatcher = _splash.Dispatcher;
+                if (displaySplash)
+                {
+                    //get dispatcher to update the contents that was created on the UI thread:
+                   spDispatcher = _splashOrthogonalView.Dispatcher;
+                }
 
-                splashWkr.DoWork += delegate(object sender, DoWorkEventArgs e)
+                splashWkr.DoWork += delegate (object sender, DoWorkEventArgs e)
                 {
                     PixelFormat pf = PixelFormats.Rgb24;
                     int step = pf.BitsPerPixel / 8;
                     int totalNumOfZstack = (int)MVMManager.Instance["ZControlViewModel", "ZScanNumSteps", (object)1];
 
-                    if ((false == VirtualZStack || true == _updateVirtualStack) ||
-                        (null == _tiffBufferArray) || (_tiffBufferArray.Length != totalNumOfZstack))
-                    {
-                        if ((null == _tiffBufferArray) || (_tiffBufferArray.Length != totalNumOfZstack))
-                        {
-                            _tiffBufferArray = new ushort[totalNumOfZstack][];
-                        }
-                        for (int i = 0; i < totalNumOfZstack; i++)
-                        {
-                            if (splashWkr.CancellationPending == true)
-                            {
-                                e.Cancel = true;
-                                break;
-                            }
-                            //load the images
-                            string[] fileNames = GetFileNames(i); // get first image
-                            UpdateChannelData(fileNames, i, 1);
-                            if (VirtualZStack)
-                            {
-                                if (null == _tiffBufferArray[i] || _tiffBufferArray[i].Length != _captureSetup.PixelData.Length)
-                                {
-                                    _tiffBufferArray[i] = new ushort[_captureSetup.PixelData.Length];
-                                }
-                                Buffer.BlockCopy(_captureSetup.PixelData, 0, _tiffBufferArray[i], 0, _captureSetup.PixelData.Length * sizeof(short));
-                            }
-                            CreateOrthogonalBitmap(i);
+                    _captureSetup.InitializeDataBufferOffset();
+                    _captureSetup.InitializePixelDataLut();
 
-                            CaptureSetup.FinishedCopyingPixel();
+                    InitiOrthogonalBuffers();
+
+                    if ((null == _tiffBufferArray) || (_tiffBufferArray.Length != totalNumOfZstack))
+                    {
+                        _tiffBufferArray = new ushort[totalNumOfZstack][];
+                    }
+                    for (int i = 0; i < totalNumOfZstack; i++)
+                    {
+                        if (splashWkr.CancellationPending == true)
+                        {
+                            e.Cancel = true;
+                            break;
+                        }
+
+                        //load the images
+                        string[] fileNames = GetZImageFileNames(i + 1); // get first image
+                        bool result = UpdateChannelData(fileNames, i, 1);
+
+                        if (result)
+                        {
+
+                            if (null == _tiffBufferArray[i] || _tiffBufferArray[i].Length != _captureSetup.ZPreviewPixelData.Length)
+                            {
+                                _tiffBufferArray[i] = new ushort[_captureSetup.ZPreviewPixelData.Length];
+                            }
+                            Buffer.BlockCopy(_captureSetup.ZPreviewPixelData, 0, _tiffBufferArray[i], 0, _captureSetup.ZPreviewPixelData.Length * sizeof(short));
+
+                            CreateOrthogonalBitmap(i, totalNumOfZstack);
                             //report progress:
                             _progressPercentage = (int)(i * 100 / totalNumOfZstack);
                             //create a new delegate for updating our progress text
-                            UpdateProgressDelegate update = new UpdateProgressDelegate(UpdateProgressText);
+                            UpdateProgressDelegate update = new UpdateProgressDelegate(UpdateProgressTextOrthogonal);
 
-                            //invoke the dispatcher and pass the percentage
-                            spDispatcher.BeginInvoke(update, ProgressPercentage);
+                            if (displaySplash)
+                            {
+                                //invoke the dispatcher and pass the percentage
+                                spDispatcher.BeginInvoke(update, ProgressPercentage);
+                            }
                         }
-                        //_maxChannel = CaptureSetup.MAX_CHANNELS;
-                        _updateVirtualStack = false;
                     }
+                    //_maxChannel = CaptureSetup.MAX_CHANNELS;
+                    //_updateVirtualStack = false;
+
                 };
-                splashWkr.RunWorkerCompleted += delegate(object sender, RunWorkerCompletedEventArgs e)
+                splashWkr.RunWorkerCompleted += delegate (object sender, RunWorkerCompletedEventArgs e)
                 {
-                    _splash.Close();
+                    if (displaySplash)
+                    {
+                        _splashOrthogonalView.Close();
+                    }
                     // App inherits from Application, and has a Window property called MainWindow
                     // and a List<Window> property called OpenWindows.
                     Application.Current.MainWindow.Activate();
@@ -2361,6 +2428,24 @@
                         OrthogonalViewImagesLoaded(e.Cancelled);
                     }
 
+                    bool continuousZStackPreview = (bool)MVMManager.Instance["ZControlViewModel", "EnableContinuousZStackPreview", (object)false];
+
+                    //if continuous zstack is checked then continuosly update, if it has been manually stopped then don't start it again
+                    if (continuousZStackPreview == true && IsOrthogonalViewChecked && !_stackPreviewStopped)
+                    {
+                        //need this flag to not allow the xml persistance to close the progress window
+                        _startingContinuousZStackPreview = true;
+                        ICommand zStackPreviewCommand = (ICommand)MVMManager.Instance["ZControlViewModel", "PreviewZStackCommand", (object)null];
+                        if (null != zStackPreviewCommand)
+                        {
+                            zStackPreviewCommand.Execute(null);
+                        }
+                        _startingContinuousZStackPreview = false;
+                    }
+                    else if (!continuousZStackPreview)
+                    {
+                        CloseProgressWindow();
+                    }
                 };
                 splashWkr.RunWorkerAsync();
             }
@@ -2373,35 +2458,31 @@
 
         public void UpdateOrthogonalViewImages()
         {
-            //Check image files.
-            string[] fileNames = GetFileNames(0);
-            bool bEmpty = true;
-            foreach (string file in fileNames)
-            {
-                if (null != file && 0 != file.Length && file != string.Empty) // If first image is not existed
-                {
-                    bEmpty = false;
-                    break;
-                }
-            }
-            if (true == bEmpty)
-            {
-                MessageBox.Show("No Image is found", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
             //Set Click time-Gap
             TimeSpan ts;
             ts = DateTime.Now - _lastOrthogonalViewUpdateTime;
+            _captureSetup.InitializeDataBufferOffset();
+            _captureSetup.InitializePixelDataLut();
+
+            InitiOrthogonalBuffers();
             if (ts.TotalSeconds > 0.01 && _bwOrthogonalImageLoaderDone == true)
             {
                 if (VirtualZStack == true)
                 {
-                    PixelFormat pf = PixelFormats.Rgb24;
-                    int step = pf.BitsPerPixel / 8;
                     int totalNumOfZstack = (int)MVMManager.Instance["ZControlViewModel", "ZScanNumSteps", (object)1];
+
+                    if ((null == _tiffBufferArray) || (_tiffBufferArray.Length != totalNumOfZstack))
+                    {
+                        return;
+                    }
+
                     for (int i = 0; i < totalNumOfZstack; i++)
                     {
-                        CreateOrthogonalBitmap(i); // create Bitmap
+                        if (null == _tiffBufferArray[i])
+                        {
+                            return;
+                        }
+                        CreateOrthogonalBitmap(i, totalNumOfZstack); // create Bitmap
                     }
                     OnPropertyChanged("BitmapXZ");
                     OnPropertyChanged("BitmapYZ");
@@ -2414,11 +2495,11 @@
             }
         }
 
-        public void UpdateProgressText(int percentage)
+        public void UpdateProgressTextOrthogonal(int percentage)
         {
             //set our progress dialog text and value
-            _splash.ProgressText = string.Format("{0}%", percentage.ToString());
-            _splash.ProgressValue = percentage;
+            _splashOrthogonalView.ProgressText = string.Format("{0}%", percentage.ToString());
+            _splashOrthogonalView.ProgressValue = percentage;
         }
 
         private void ApplyOrRevertFastFocusParams(bool isLive)
@@ -2766,14 +2847,10 @@
             return tagData;
         }
 
-        private void CreateOrthogonalBitmap(int index)
+        private void CreateOrthogonalBitmap(int index, int totalNumOfZstack)
         {
-            _captureSetup.InitializeDataBufferOffset();
-            _captureSetup.InitializePixelDataLut();
-
             PixelFormat pf = PixelFormats.Rgb24;
             int step = pf.BitsPerPixel / 8;
-            int totalNumOfZstack = (int)MVMManager.Instance["ZControlViewModel", "ZScanNumSteps", (object)1];
 
             int length = this._captureSetup.DataWidth * this._captureSetup.DataHeight;
             ushort[] position = new ushort[CaptureSetup.MAX_CHANNELS]; //store the point of grayscale image which used to calculate the RGB value
@@ -2836,8 +2913,26 @@
             HistogramWidth4 = MAX_HISTOGRAM_WIDTH;
         }
 
+        private bool GetRawContainsDisabledChannels()
+        {
+            XmlDocument experimentDoc = new XmlDocument();
+            if (File.Exists(ResourceManagerCS.GetMyDocumentsThorImageFolderString() + "ZStackCache\\Experiment.xml"))
+            {
+                experimentDoc.Load(ResourceManagerCS.GetMyDocumentsThorImageFolderString() + "ZStackCache\\Experiment.xml");
+                XmlNodeList ndList = experimentDoc.SelectNodes("/ThorImageExperiment/RawData");
+                if (ndList.Count > 0)
+                {
+                    string value = "";
+                    XmlManager.GetAttribute(ndList[0], experimentDoc, "onlyEnabledChannels", ref value);
+                    if (value == "1")
+                        return false;
+                }
+            }
+            return true;
+        }
+
         // Get the file name
-        private string[] GetFileNames(int zValue)
+        private string[] GetZImageFileNames(int zValue)
         {
             string[] fileNames = new string[CaptureSetup.MAX_CHANNELS];
 
@@ -2921,33 +3016,11 @@
                                 }
                             }
                         }
-                        if (false == File.Exists(strTemp))
-                        {
-                            return fileNames;
-                        }
                     }
                 }
             }
 
             return fileNames;
-        }
-
-        private bool GetRawContainsDisabledChannels()
-        {
-            XmlDocument experimentDoc = new XmlDocument();
-            if (File.Exists(ResourceManagerCS.GetMyDocumentsThorImageFolderString() + "ZStackCache\\Experiment.xml"))
-            {
-                experimentDoc.Load(ResourceManagerCS.GetMyDocumentsThorImageFolderString() + "ZStackCache\\Experiment.xml");
-                XmlNodeList ndList = experimentDoc.SelectNodes("/ThorImageExperiment/RawData");
-                if (ndList.Count > 0)
-                {
-                    string value = "";
-                    XmlManager.GetAttribute(ndList[0], experimentDoc, "onlyEnabledChannels", ref value);
-                    if (value == "1")
-                        return false;
-                }
-            }
-            return true;
         }
 
         private void RemoteCaptureNow()

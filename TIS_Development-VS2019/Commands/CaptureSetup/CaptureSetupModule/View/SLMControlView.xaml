@@ -496,6 +496,20 @@
                                     <StackPanel Orientation="Vertical"
                                                 HorizontalAlignment="Stretch">
                                         <StackPanel Orientation="Horizontal">
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel"
+                                                       BasedOn="{StaticResource {x:Type StackPanel}}">
+                                                    <Setter Property="Visibility"
+                                                            Value="Visible" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsStimulator}"
+                                                                     Value="true">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
                                             <Label Content="GG:"
                                                    Foreground="Yellow" />
                                             <Label Content="{Binding Path=LSMLastCalibrationDateForSLM}"
@@ -666,22 +680,38 @@
                                     Name="stpSLMBleacherControl"
                                     Orientation="Horizontal"
                                     HorizontalAlignment="Left">
-                            <Button Content="UnCalib.&#x0a; Center"
-                                    ToolTip="Center bleach scanner at non-calibrated imaging center"
-                                    Width="50"
-                                    Height="40"
-                                    Margin="1"
-                                    IsEnabled="{Binding LiveStartButtonStatus}"
-                                    Command="{Binding CenterScannersCommand}"
-                                    CommandParameter="{x:Static sharedTypes:SelectedHardware.SELECTED_BLEACHINGSCANNER}" />
-                            <Button Content=" Calib.&#x0a;Center"
-                                    ToolTip="Center bleach scanner at calibrated center"
-                                    Width="50"
-                                    Height="40"
-                                    Margin="1"
-                                    IsEnabled="{Binding LiveStartButtonStatus}"
-                                    Command="{Binding ImagingCenterScannersCommand}"
-                                    CommandParameter="{x:Static sharedTypes:SelectedHardware.SELECTED_BLEACHINGSCANNER}" />
+                            <StackPanel Orientation="Horizontal">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel"
+                                           BasedOn="{StaticResource {x:Type StackPanel}}">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsStimulator}"
+                                                         Value="true">
+                                                <Setter Property="Visibility"
+                                                        Value="Hidden" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
+                                <Button Content="UnCalib.&#x0a; Center"
+                                        ToolTip="Center bleach scanner at non-calibrated imaging center"
+                                        Width="50"
+                                        Height="40"
+                                        Margin="1"
+                                        IsEnabled="{Binding LiveStartButtonStatus}"
+                                        Command="{Binding CenterScannersCommand}"
+                                        CommandParameter="{x:Static sharedTypes:SelectedHardware.SELECTED_BLEACHINGSCANNER}" />
+                                <Button Content=" Calib.&#x0a;Center"
+                                        ToolTip="Center bleach scanner at calibrated center"
+                                        Width="50"
+                                        Height="40"
+                                        Margin="1"
+                                        IsEnabled="{Binding LiveStartButtonStatus}"
+                                        Command="{Binding ImagingCenterScannersCommand}"
+                                        CommandParameter="{x:Static sharedTypes:SelectedHardware.SELECTED_BLEACHINGSCANNER}" />
+                            </StackPanel>
                             <Button Name="btnSLMBlank"
                                     ToolTip="Command to set SLM blank"
                                     HorizontalAlignment="Center"

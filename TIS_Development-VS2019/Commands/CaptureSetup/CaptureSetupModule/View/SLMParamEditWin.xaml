@@ -349,8 +349,10 @@
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center" />
                 </StackPanel>
-                <StackPanel Orientation="Horizontal"
-                            HorizontalAlignment="Right">
+                <StackPanel Name="stpPowerTextBox"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Visibility="{Binding Path=.PowerEntryPreferred, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVisConverter}, ConverterParameter=Normal}">
                     <Label Content="Power"
                            Height="30"
                            HorizontalAlignment="Center"
@@ -365,7 +367,22 @@
                              validator:Validation.MinValue="0.0"
                              validator:Validation.NoEmptyValue="True"
                              validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
-                             Text="{Binding Path=.BleachWaveParams.Power[0], Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}" />
+                             Text="{Binding Path=.BleachWaveParams.Power, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox"
+                                   BasedOn="{StaticResource {x:Type TextBox}}">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ElementName=btnLamda, Path=IsChecked}"
+                                                 Value="true">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
                     <Button Width="25"
                             Height="25"
                             Content="✓">
@@ -393,7 +410,7 @@
                              validator:Validation.MinValue="0.0"
                              validator:Validation.NoEmptyValue="True"
                              validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
-                             Text="{Binding Path=.BleachWaveParams.Power[1], Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}">
+                             Text="{Binding Path=.BleachWaveParams.Power1, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}">
                         <TextBox.Style>
                             <Style TargetType="TextBox"
                                    BasedOn="{StaticResource {x:Type TextBox}}">
@@ -432,6 +449,64 @@
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center" />
                 </StackPanel>
+                <StackPanel Name="stpPowerLabel"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Visibility="{Binding Path=.PowerEntryPreferred, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVisConverter}, ConverterParameter=Inverted}">
+                    <Label Content="Power"
+                           Height="30"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding Path=.BleachWaveParams.Power, StringFormat=N3, Converter={StaticResource doubleCulture}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                               Foreground="White"
+                               Background="#FF595959"
+                               Width="60"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Margin="3,3,3,3">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock"
+                                   BasedOn="{StaticResource {x:Type TextBlock}}">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ElementName=btnLamda, Path=IsChecked}"
+                                                 Value="true">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="{Binding Path=.BleachWaveParams.Power1, StringFormat=N3, Converter={StaticResource doubleCulture}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                               Foreground="White"
+                               Background="#FF595959"
+                               Width="60"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Margin="3,3,3,3">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock"
+                                   BasedOn="{StaticResource {x:Type TextBlock}}">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ElementName=btnLamda, Path=IsChecked}"
+                                                 Value="false">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <Label Content="[%]"
+                           Width="50"
+                           Height="30"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" />
+                </StackPanel>
             </StackPanel>
             <StackPanel Name="stpMPower"
                         Grid.Column="0"
@@ -441,9 +516,10 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Top">
                 <StackPanel Orientation="Horizontal"
-                            HorizontalAlignment="Center"
+                            HorizontalAlignment="Left"
                             Margin="3">
-                    <Label Content="    Measured Power"
+                    <Label Content="Measured Power at 100%"
+                           Width="145"
                            Height="30"
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center" />
@@ -457,7 +533,22 @@
                              validator:Validation.MinValue="0.0"
                              validator:Validation.NoEmptyValue="False"
                              validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
-                             Text="{Binding Path=.BleachWaveParams.MeasurePower[0], Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}" />
+                             Text="{Binding Path=.BleachWaveParams.MeasurePower, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox"
+                                   BasedOn="{StaticResource {x:Type TextBox}}">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ElementName=btnLamda, Path=IsChecked}"
+                                                 Value="true">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
                     <Button Width="25"
                             Height="25"
                             Content="✓">
@@ -485,7 +576,7 @@
                              validator:Validation.MinValue="0.0"
                              validator:Validation.NoEmptyValue="False"
                              validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
-                             Text="{Binding Path=.BleachWaveParams.MeasurePower[1], Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}">
+                             Text="{Binding Path=.BleachWaveParams.MeasurePower1, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}">
                         <TextBox.Style>
                             <Style TargetType="TextBox"
                                    BasedOn="{StaticResource {x:Type TextBox}}">
@@ -524,22 +615,39 @@
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center" />
                 </StackPanel>
-                <StackPanel Orientation="Horizontal"
-                            HorizontalAlignment="Center"
-                            Margin="3">
+                <StackPanel Name="stPowerDenLabel"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Left"
+                            Margin="3"
+                            Visibility="{Binding Path=.PowerEntryPreferred, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVisConverter}, ConverterParameter=Normal}">
                     <Label Content="Approx. Power Density"
-                           Width="140"
+                           Width="145"
                            Height="30"
                            HorizontalContentAlignment="Right"
                            VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding Path=.SLMMeasurePowerArea[0], StringFormat=N3, Converter={StaticResource doubleCulture}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                    <TextBlock Text="{Binding Path=.SLMMeasurePowerArea, StringFormat=N3, Converter={StaticResource doubleCulture}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                Foreground="White"
                                Background="#FF595959"
                                Width="55"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"
-                               Margin="3,3,3,3" />
-                    <TextBlock Text="{Binding Path=.SLMMeasurePowerArea[1], StringFormat=N3, Converter={StaticResource doubleCulture}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                               Margin="3,3,3,3">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock"
+                                   BasedOn="{StaticResource {x:Type TextBlock}}">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ElementName=btnLamda, Path=IsChecked}"
+                                                 Value="true">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="{Binding Path=.SLMMeasurePowerArea1, StringFormat=N3, Converter={StaticResource doubleCulture}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                Foreground="White"
                                Background="#FF595959"
                                Width="55"
@@ -561,7 +669,109 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
-                    <Label Content="[mW/um^2]"
+                    <Label Content="[mW/mm^2]"
+                           Width="80"
+                           Height="30"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Name="stpPowerDenTextBox"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Left"
+                            Margin="3"
+                            Visibility="{Binding Path=.PowerEntryPreferred, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVisConverter}, ConverterParameter=Inverted}">
+                    <Label Content="Approx. Power Density"
+                           Width="145"
+                           Height="30"
+                           HorizontalContentAlignment="Right"
+                           VerticalAlignment="Center" />
+                    <TextBox Name="txtPowerDen"
+                             Text="{Binding Path=.SLMMeasurePowerArea, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}"
+                             Foreground="White"
+                             Width="55"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center"
+                             Margin="3,3,3,3"
+                             validator:Validation.ValidationType="{x:Type system:Double}"
+                             validator:Validation.MinValue="0.0"
+                             validator:Validation.NoEmptyValue="True"
+                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox"
+                                   BasedOn="{StaticResource {x:Type TextBox}}">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ElementName=btnLamda, Path=IsChecked}"
+                                                 Value="true">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+                    <Button Width="25"
+                            Height="25"
+                            Content="✓">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txtPowerDen}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <TextBox Name="txtPower1Den"
+                             Text="{Binding Path=.SLMMeasurePowerArea1, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}"
+                             Foreground="White"
+                             Width="55"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center"
+                             Margin="3,3,3,3"
+                             validator:Validation.ValidationType="{x:Type system:Double}"
+                             validator:Validation.MinValue="0.0"
+                             validator:Validation.NoEmptyValue="True"
+                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox"
+                                   BasedOn="{StaticResource {x:Type TextBox}}">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ElementName=btnLamda, Path=IsChecked}"
+                                                 Value="false">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+                    <Button Width="25"
+                            Height="25"
+                            Content="✓">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txtPower1Den}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Label Content="[mW/mm^2]"
                            Width="80"
                            Height="30"
                            HorizontalAlignment="Center"

@@ -3,11 +3,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:View="clr-namespace:CaptureSetupDll.View"
         xmlns:ViewModel="clr-namespace:CaptureSetupDll.ViewModel"
+        xmlns:Valid="clr-namespace:Validations;assembly=Validations"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
         WindowStyle="ThreeDBorderWindow"
         Title="Display Option"
-        Height="200"
-        Width="380"
-        ResizeMode="CanResize"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="NoResize"
         Background="#FF595959">
     <Window.Resources>
         <ResourceDictionary>
@@ -41,7 +42,7 @@
                         Content="Color"
                         HorizontalContentAlignment="Center"
                         VerticalAlignment="Center"
-                        Width="55"></Label>
+                        Width="55" />
                 <ComboBox Name="lineColor"
                           Grid.Row="0"
                           Grid.Column="1"
@@ -49,8 +50,26 @@
                           Width="290"
                           Height="35"
                           HorizontalAlignment="Left"
-                          VerticalAlignment="Center">
-                </ComboBox>
+                          VerticalAlignment="Center" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Label  Grid.Row="0"
+                        Grid.Column="0"
+                        Content="Z Pixel Multiplier"
+                        HorizontalContentAlignment="Center"
+                        VerticalAlignment="Center" />
+                <TextBox Name="zPixelMultiplierTextBox"
+                         Width="100"
+                         Grid.Row="0"
+                         Grid.Column="1"
+                         Margin="5"
+                         HorizontalAlignment="Left"
+                         VerticalAlignment="Center"
+                         ToolTip="Min value is 0.0001, Max value is 1000"
+                         Valid:Validation.MinValue="0.0001"
+                         Valid:Validation.MaxValue="1000"
+                         Valid:Validation.NoEmptyValue="True"
+                         Valid:Validation.ValidationType="{x:Type system:Double}" />
             </StackPanel>
             <StackPanel Orientation="Horizontal"
                         HorizontalAlignment="Right">

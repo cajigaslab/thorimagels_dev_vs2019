@@ -109,6 +109,8 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>..\..\..\Common\ResourceManager\x64\$(Configuration);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ResourceManager.lib;..\..\..\Tools\tinyxml2\lib\x64-Debug-Lib\tinyxml2d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>if $(Configuration) == Debug  copy $(TargetPath) $(SolutionDir)..\..\GUI\Applications\ThorImageLS\ThorImage\bin\Debug\Modules_Native</Command>
@@ -146,6 +148,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>..\..\..\Common\ResourceManager\x64\$(Configuration);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ResourceManager.lib;..\..\..\Tools\tinyxml2\lib\x64-Release-Lib\tinyxml2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -161,6 +165,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="WaveformBuilderFactory.h" />
     <ClInclude Include="WaveformMemory.h" />
+    <ClInclude Include="WaveformSaver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -189,6 +194,7 @@
     <ClCompile Include="ImageWaveformGen.cpp" />
     <ClCompile Include="WaveformBuilderFactory.cpp" />
     <ClCompile Include="WaveformMemory.cpp" />
+    <ClCompile Include="WaveformSaver.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GeometryUtilitiesCPP.rc" />

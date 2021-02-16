@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "RealTimeDataXML.h"
 #include "strsafe.h"
+#include "..\..\..\..\Common\StringCPP.h"
 
 #ifdef LOGGING_ENABLED
 std::auto_ptr<LogDll> logDll(new LogDll(L".\\Modules_Native\\ThorLoggingUnmanaged.dll"));

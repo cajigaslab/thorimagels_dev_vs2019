@@ -70,6 +70,7 @@
         const double MAX_Z_STEP_SIZE = 1;
         const double MIN_Z_STEP_SIZE = .0001;
 
+        private bool _enableContinuousZStackPreview = false;
         private bool _isZCaptureStopped = false;
         private double _lastZPositionVal = 0.0;
         private CustomCollection<DateTime> _lastZSetTime = new CustomCollection<DateTime>(new DateTime[3] { DateTime.Now, DateTime.Now, DateTime.Now }); //Z, Z2, R
@@ -163,6 +164,19 @@
         #endregion Enumerations
 
         #region Properties
+
+        public bool EnableContinuousZStackPreview
+        {
+            get
+            {
+                return _enableContinuousZStackPreview;
+            }
+            set
+            {
+                _enableContinuousZStackPreview = value;
+                OnPropertyChanged("EnableContinuousZStackPreview");
+            }
+        }
 
         public CustomCollection<bool> EnableRead
         {

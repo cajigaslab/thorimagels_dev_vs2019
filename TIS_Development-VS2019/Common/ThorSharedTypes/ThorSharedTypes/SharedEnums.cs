@@ -68,7 +68,10 @@ namespace ThorSharedTypes
         PATTERN_TRIGGER,
         PATTERN_COMPLETE,
         EPOCH_ENVELOPE,
-        CYCLE_COMPLEMENTARY,
+        CYCLE_COMPLEMENTARY = 9,
+        POCKEL_DIG_1,
+        POCKEL_DIG_2,
+        POCKEL_DIG_3,
         DIGITAL_LINENAME_LAST
     };
 
@@ -88,12 +91,14 @@ namespace ThorSharedTypes
         ACTIVE_LOAD_UNIT_SIZE = 100,
         HUNDRED_PERCENT = 100,
         GALVO_MIN_RETRACE_TIME = 200,
+        DEFAULT_PIXEL_X = 512,
         DEFAULT_GALVO_HZ = 1000,
         MS_TO_SEC = 1000,
         UM_TO_MM = 1000,
         KHZ = 1000,
         TIMEOUT_MS = 1500,
         EVENT_WAIT_TIME = 5000,                     //[ms]
+        UM_PER_INCH = 25400,
         MHZ = 1000000,
         US_TO_SEC = 1000000,
         M_TO_UM = 1000000
@@ -187,6 +192,7 @@ namespace ThorSharedTypes
         ANALOG_XY = 0,
         ANALOG_POCKEL = 1,
         DIGITAL_LINES = 2,
+        ANALOG_Z = 3,
         SIGNALTYPE_LAST
     };
 

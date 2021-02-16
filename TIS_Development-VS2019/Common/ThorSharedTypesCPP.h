@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <windows.h>
+
 using namespace std;
 
 #define HALF_CIRCLE					180.0
@@ -26,23 +27,24 @@ extern "C" _declspec(dllexport) typedef struct GGalvoWaveformParams
 	unsigned long long analogXYSize;
 	unsigned long long analogPockelSize;
 	unsigned long long digitalSize;
+	unsigned long long analogZSize;
 	double stepVolt;
 	unsigned char pockelsCount;
 	unsigned char driverType;
 	double* GalvoWaveformXY;
 	double* GalvoWaveformPockel;
 	unsigned char* DigBufWaveform;
+	double* PiezoWaveformZ;
 	long digitalLineCnt;
 	long Scanmode;
 	long Triggermode;
 	long CycleNum;
 	HANDLE bufferHandle;
 	long lastLoaded;
-	long PreCapStatus;						//sync above order with the one defined at C#
-	unsigned long long unitSize[3];			//unit data length for each SignalType, only used at C++
+	long PreCapStatus;											//sync above order with the one defined at C#
+	unsigned long long unitSize[SignalType::SIGNALTYPE_LAST];	//unit data length for each SignalType, only used at C++
 	wchar_t WaveFileName[_MAX_PATH];
 }GalvoWaveformParams;
-
 
 extern "C" _declspec(dllexport) typedef struct ThorDAQGGWaveformParams
 {

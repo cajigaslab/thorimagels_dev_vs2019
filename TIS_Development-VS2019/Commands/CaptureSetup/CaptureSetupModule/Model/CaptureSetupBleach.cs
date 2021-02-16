@@ -727,7 +727,7 @@
                 InitializeWaveformBuilder(BleachParamList[_bleachPixelArrayIndex].ClockRate);
                 WaveformBuilder.ResetWaveform();
                 WaveformBuilder.BuildTravel(pt, 0, 0, 0);
-                WaveformBuilder.BuildSpot(BleachParamList[_bleachPixelArrayIndex], BleachParamList[_bleachPixelArrayIndex].Power);
+                WaveformBuilder.BuildSpot(BleachParamList[_bleachPixelArrayIndex], new double[1] { BleachParamList[_bleachPixelArrayIndex].Power });
                 if (((BleachFrames - 1) == _bleachFrameIndex) && (_bleachPixelArrayIndex == _bleachPixelArrayList.Count - 1) && (_bleachPixelIndex == _bleachPixelArrayList[_bleachPixelArrayIndex].Size - 1))
                 {
                     WaveformBuilder.ReturnHome(true);
@@ -740,7 +740,7 @@
                 }
 
                 //save waveform:
-                WaveformBuilder.SaveWaveform(filePathName, false, new bool[3] { !IsStimulator, true, true });
+                WaveformBuilder.SaveWaveform(filePathName, false, new bool[(int)SignalType.SIGNALTYPE_LAST] { !IsStimulator, true, true, false });
 
                 while (!WaveformBuilder.CheckSaveState())
                 {

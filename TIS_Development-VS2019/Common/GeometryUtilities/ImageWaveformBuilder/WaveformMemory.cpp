@@ -48,11 +48,11 @@ WaveformMemory* WaveformMemory::getInstance()
 }
 
 // create memory map file at folder path
-long WaveformMemory::AllocateMem(GGalvoWaveformParams gWParams, const wchar_t* memMapPath)
+long WaveformMemory::AllocateMem(GGalvoWaveformParams gWParams, const wchar_t* memMapPath, long lpSecurityAttributes)
 {
 	DWORD dwError;
 
-	if((0 >= gWParams.ClockRate) || ((0 >= gWParams.analogXYSize) && (0 >= gWParams.analogPockelSize) && (0 >= gWParams.digitalSize)) 
+	if ((0 >= gWParams.ClockRate) || ((0 >= gWParams.analogXYSize) && (0 >= gWParams.analogPockelSize) && (0 >= gWParams.digitalSize))
 		|| (0 >= gWParams.stepVolt))
 	{
 		return FALSE;
@@ -63,22 +63,28 @@ long WaveformMemory::AllocateMem(GGalvoWaveformParams gWParams, const wchar_t* m
 		std::wstring mPath(memMapPath);
 
 		//if a path is passed in use it. otherwise default to standard temp path
-		if(mPath.size() > 0)
-		{	_memMapPath = mPath.c_str();	}
+		if (mPath.size() > 0)
+		{
+			_memMapPath = mPath.c_str();
+		}
 
-		if(_tempFileName.size()>0)
-		{	StringCbPrintfW(uniqueFileName,_MAX_PATH,L"%s%s",_memMapPath.c_str(),_tempFileName.c_str());	}
+		if (_tempFileName.size() > 0)
+		{
+			StringCbPrintfW(uniqueFileName, _MAX_PATH, L"%s%s", _memMapPath.c_str(), _tempFileName.c_str());
+		}
 		else
-		{	::GetTempFileName(_memMapPath.c_str(),L"tis",0,uniqueFileName);		}
+		{
+			::GetTempFileName(_memMapPath.c_str(), L"tis", 0, uniqueFileName);
+		}
 
 		CloseMem();
 		hFileArray = new HANDLE[1];
 		hFileMapArray = new HANDLE[1];
 		//Create file
-		hFileArray[0] = CreateFile(uniqueFileName, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, CREATE_ALWAYS, FILE_FLAG_WRITE_THROUGH|FILE_FLAG_NO_BUFFERING|FILE_FLAG_OVERLAPPED ,NULL);	
+		hFileArray[0] = CreateFile(uniqueFileName, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, lpSecurityAttributes, FILE_FLAG_WRITE_THROUGH | FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL);
 
-		if(NULL == hFileArray[0])
-		{	
+		if (NULL == hFileArray[0])
+		{
 			dwError = GetLastError();
 			return FALSE;
 		}
@@ -87,27 +93,28 @@ long WaveformMemory::AllocateMem(GGalvoWaveformParams gWParams, const wchar_t* m
 		_dwlAnalogXYSize = _doubleByteSize * gWParams.analogXYSize;
 		_dwlAnalogPoSize = _doubleByteSize * gWParams.analogPockelSize;
 		_dwlDigitalLSize = _byteByteSize * gWParams.digitalSize;
+		_dwlAnalogPZSize = _doubleByteSize * gWParams.analogZSize;
 
 
-		DWORDLONG sizeLong = _dwlHeaderSize + _dwlAnalogXYSize + _dwlAnalogPoSize + _dwlDigitalLSize;
+		DWORDLONG sizeLong = _dwlHeaderSize + _dwlAnalogXYSize + _dwlAnalogPoSize + _dwlDigitalLSize + _dwlAnalogPZSize;
 		DWORDLONG dwllowOrderSize = sizeLong & 0xFFFFFFFF;					//0xFFFFFFFFul	
-		DWORDLONG dwlhighOrderSize = (sizeLong & 0xFFFFFFFF00000000)>>32;	//0xFFFFFFFFul	
+		DWORDLONG dwlhighOrderSize = (sizeLong & 0xFFFFFFFF00000000) >> 32;	//0xFFFFFFFFul	
 		DWORD lowOrderSize = static_cast<DWORD>(dwllowOrderSize);
 		DWORD highOrderSize = static_cast<DWORD>(dwlhighOrderSize);
 		//Open file mapping called WaveformMapping
-		hFileMapArray[0] = CreateFileMapping(hFileArray[0], NULL, PAGE_READWRITE, highOrderSize, lowOrderSize,L"WaveformMapping");
+		hFileMapArray[0] = CreateFileMapping(hFileArray[0], NULL, PAGE_READWRITE, highOrderSize, lowOrderSize, L"WaveformMapping");
 
 
-		if(NULL == hFileMapArray[0])
-		{	
+		if (NULL == hFileMapArray[0])
+		{
 			dwError = GetLastError();
 
-			switch(dwError)
+			switch (dwError)
 			{
-			case ERROR_DISK_FULL:
-				break;
-			default:
-				break;
+				case ERROR_DISK_FULL:
+					break;
+				default:
+					break;
 			}
 			return FALSE;
 		}
@@ -117,21 +124,22 @@ long WaveformMemory::AllocateMem(GGalvoWaveformParams gWParams, const wchar_t* m
 		_granularityOfMapView = si.dwAllocationGranularity;
 
 		//fill header: clockRate, xySize, pockelSize, digLineSize, deltaVolt
-		char *p = (char*)MapViewOfFile(hFileMapArray[0], FILE_MAP_ALL_ACCESS, 0x0, 0x0, _dwlHeaderSize);
+		char* p = (char*)MapViewOfFile(hFileMapArray[0], FILE_MAP_ALL_ACCESS, 0x0, 0x0, _dwlHeaderSize);
 		SAFE_MEMCPY(p, _uint64ByteSize, &(gWParams.ClockRate));
 		SAFE_MEMCPY(p + 1 * _uint64ByteSize, _uint64ByteSize, &(gWParams.analogXYSize));
 		SAFE_MEMCPY(p + 2 * _uint64ByteSize, _uint64ByteSize, &(gWParams.analogPockelSize));
 		SAFE_MEMCPY(p + 3 * _uint64ByteSize, _uint64ByteSize, &(gWParams.digitalSize));
-		SAFE_MEMCPY(p + 4 * _uint64ByteSize, _doubleByteSize, &(gWParams.stepVolt));
-		SAFE_MEMCPY(p + 4 * _uint64ByteSize + _doubleByteSize, _byteByteSize, &(gWParams.pockelsCount));
-		SAFE_MEMCPY(p + 4 * _uint64ByteSize + _doubleByteSize + _byteByteSize, _byteByteSize, &(gWParams.driverType));
+		SAFE_MEMCPY(p + 4 * _uint64ByteSize, _uint64ByteSize, &(gWParams.analogZSize));
+		SAFE_MEMCPY(p + 5 * _uint64ByteSize, _doubleByteSize, &(gWParams.stepVolt));
+		SAFE_MEMCPY(p + 5 * _uint64ByteSize + _doubleByteSize, _byteByteSize, &(gWParams.pockelsCount));
+		SAFE_MEMCPY(p + 5 * _uint64ByteSize + _doubleByteSize + _byteByteSize, _byteByteSize, &(gWParams.driverType));
 
-		if(FALSE == UnmapViewOfFile(p))
+		if (FALSE == UnmapViewOfFile(p))
 		{
 			DWORD err = GetLastError();
 		}
 	}
-	catch(...)
+	catch (...)
 	{
 		//system low on resources. unable to fully allocate waveform buffer
 		return FALSE;
@@ -271,8 +279,8 @@ long WaveformMemory::OpenMem(GGalvoWaveformParams& gWParams, const wchar_t* memM
 {
 	std::wstring mPathName(memMapPathName);
 
-	if(0 >= mPathName.size())
-		return FALSE;	
+	if (0 >= mPathName.size())
+		return FALSE;
 
 	DWORD dwError;
 
@@ -283,25 +291,25 @@ long WaveformMemory::OpenMem(GGalvoWaveformParams& gWParams, const wchar_t* memM
 		hFileArray = new HANDLE[1];
 		hFileMapArray = new HANDLE[1];
 
-		hFileArray[0] = CreateFile(mPathName.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED ,NULL);	
-		if(NULL == hFileArray[0])
-		{	
+		hFileArray[0] = CreateFile(mPathName.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+		if (NULL == hFileArray[0])
+		{
 			dwError = GetLastError();
 			return FALSE;
 		}
 
 		_dwlHeaderSize = (63 * _uint64ByteSize) + _doubleByteSize;			//keep header size 512 bytes, now used: 42
 
-		DWORDLONG dwllowOrderSize = _dwlHeaderSize & 0xFFFFFFFF;					
-		DWORDLONG dwlhighOrderSize = (_dwlHeaderSize & 0xFFFFFFFF00000000)>>32;	
+		DWORDLONG dwllowOrderSize = _dwlHeaderSize & 0xFFFFFFFF;
+		DWORDLONG dwlhighOrderSize = (_dwlHeaderSize & 0xFFFFFFFF00000000) >> 32;
 		DWORD lowOrderSize = static_cast<DWORD>(dwllowOrderSize);
 		DWORD highOrderSize = static_cast<DWORD>(dwlhighOrderSize);
 		//Open file mapping called WaveformRead
 		hFileMapArray[0] = CreateFileMapping(hFileArray[0], NULL, PAGE_READONLY, highOrderSize, lowOrderSize, L"WaveformRead");
 
 
-		if(NULL == hFileMapArray[0] || (INVALID_HANDLE_VALUE == hFileMapArray[0]))
-		{	
+		if (NULL == hFileMapArray[0] || (INVALID_HANDLE_VALUE == hFileMapArray[0]))
+		{
 			throw;
 		}
 
@@ -310,20 +318,22 @@ long WaveformMemory::OpenMem(GGalvoWaveformParams& gWParams, const wchar_t* memM
 		_granularityOfMapView = si.dwAllocationGranularity;
 
 		//fill header:
-		char *p = (char*)MapViewOfFile(hFileMapArray[0], FILE_MAP_READ, 0x0, 0x0, _dwlHeaderSize);
+		char* p = (char*)MapViewOfFile(hFileMapArray[0], FILE_MAP_READ, 0x0, 0x0, _dwlHeaderSize);
 		SAFE_MEMCPY((void*)(&(gWParams.ClockRate)), _uint64ByteSize, p);
-		SAFE_MEMCPY((void*)(&(gWParams.analogXYSize)),		_uint64ByteSize, (p + 1 * _uint64ByteSize));
-		SAFE_MEMCPY((void*)(&(gWParams.analogPockelSize)),	_uint64ByteSize, (p + 2 * _uint64ByteSize));
-		SAFE_MEMCPY((void*)(&(gWParams.digitalSize)),		_uint64ByteSize, (p + 3 * _uint64ByteSize));
-		SAFE_MEMCPY((void*)(&(gWParams.stepVolt)),			_doubleByteSize, (p + 4 * _uint64ByteSize));
-		SAFE_MEMCPY((void*)(&(gWParams.pockelsCount)),		_byteByteSize, (p + 4 * _uint64ByteSize + _doubleByteSize));
-		SAFE_MEMCPY((void*)(&(gWParams.driverType)),		_byteByteSize, (p + 4 * _uint64ByteSize + _doubleByteSize + _byteByteSize));
+		SAFE_MEMCPY((void*)(&(gWParams.analogXYSize)), _uint64ByteSize, (p + 1 * _uint64ByteSize));
+		SAFE_MEMCPY((void*)(&(gWParams.analogPockelSize)), _uint64ByteSize, (p + 2 * _uint64ByteSize));
+		SAFE_MEMCPY((void*)(&(gWParams.digitalSize)), _uint64ByteSize, (p + 3 * _uint64ByteSize));
+		SAFE_MEMCPY((void*)(&(gWParams.analogZSize)), _uint64ByteSize, (p + 4 * _uint64ByteSize));
+		SAFE_MEMCPY((void*)(&(gWParams.stepVolt)), _doubleByteSize, (p + 5 * _uint64ByteSize));
+		SAFE_MEMCPY((void*)(&(gWParams.pockelsCount)), _byteByteSize, (p + 5 * _uint64ByteSize + _doubleByteSize));
+		SAFE_MEMCPY((void*)(&(gWParams.driverType)), _byteByteSize, (p + 5 * _uint64ByteSize + _doubleByteSize + _byteByteSize));
 
 		_dwlAnalogXYSize = _doubleByteSize * gWParams.analogXYSize;
 		_dwlAnalogPoSize = _doubleByteSize * gWParams.analogPockelSize;
 		_dwlDigitalLSize = _byteByteSize * gWParams.digitalSize;
+		_dwlAnalogPZSize = _doubleByteSize * gWParams.analogZSize;
 
-		if(FALSE == UnmapViewOfFile(p))
+		if (FALSE == UnmapViewOfFile(p))
 		{
 			dwError = GetLastError();
 		}
@@ -334,32 +344,32 @@ long WaveformMemory::OpenMem(GGalvoWaveformParams& gWParams, const wchar_t* memM
 		hFileArray = new HANDLE[1];
 		hFileMapArray = new HANDLE[1];
 
-		hFileArray[0] = CreateFile(mPathName.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED ,NULL);	
+		hFileArray[0] = CreateFile(mPathName.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
 
-		DWORDLONG sizeLong = _dwlHeaderSize + _dwlAnalogXYSize + _dwlAnalogPoSize + _dwlDigitalLSize;
-		dwllowOrderSize = sizeLong & 0xFFFFFFFF;					
-		dwlhighOrderSize = (sizeLong & 0xFFFFFFFF00000000)>>32;	
+		DWORDLONG sizeLong = _dwlHeaderSize + _dwlAnalogXYSize + _dwlAnalogPoSize + _dwlDigitalLSize + _dwlAnalogPZSize;
+		dwllowOrderSize = sizeLong & 0xFFFFFFFF;
+		dwlhighOrderSize = (sizeLong & 0xFFFFFFFF00000000) >> 32;
 		lowOrderSize = static_cast<DWORD>(dwllowOrderSize);
 		highOrderSize = static_cast<DWORD>(dwlhighOrderSize);
 		//Open file mapping called WaveformRead
 		hFileMapArray[0] = CreateFileMapping(hFileArray[0], NULL, PAGE_READWRITE, highOrderSize, lowOrderSize, L"WaveformRead");
 
-		if(NULL == hFileMapArray[0] || (INVALID_HANDLE_VALUE == hFileMapArray[0]))
-		{	
+		if (NULL == hFileMapArray[0] || (INVALID_HANDLE_VALUE == hFileMapArray[0]))
+		{
 			throw;
 		}
 
 	}
-	catch(...)
+	catch (...)
 	{
 		dwError = GetLastError();
 
-		switch(dwError)
+		switch (dwError)
 		{
-		case ERROR_OPEN_FAILED:
-			break;
-		default:
-			break;
+			case ERROR_OPEN_FAILED:
+				break;
+			default:
+				break;
 		}
 		return FALSE;
 	}
@@ -485,6 +495,10 @@ char *WaveformMemory::GetMemMapPtr(SignalType stype, uint64_t offset, uint64_t s
 		mapOffset += _dwlAnalogXYSize + _dwlAnalogPoSize + offset * _byteByteSize;
 		mapSize *= _byteByteSize;
 		break;
+	case SignalType::ANALOG_Z:
+		mapOffset += _dwlAnalogXYSize + _dwlAnalogPoSize + _dwlDigitalLSize + offset * _doubleByteSize;
+		mapSize *= _doubleByteSize;
+		break;
 	case SignalType::SIGNALTYPE_LAST:
 	default:
 		return NULL;
@@ -600,7 +614,7 @@ long WaveformMemory::SaveWaveformDataStruct(const wchar_t* tPathName, GGalvoWave
 	StringCbPrintfW(rawPath,_MAX_PATH,L"%s%s",drive,dir);
 
 	//save to file:
-	if (TRUE == AllocateMem(waveformParams, rawPath))
+	if (TRUE == AllocateMem(waveformParams, rawPath, CREATE_ALWAYS))
 	{
 		char* ptr = NULL;
 		//analogXY, interleave XY:

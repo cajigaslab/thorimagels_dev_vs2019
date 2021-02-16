@@ -302,6 +302,7 @@ extern "C"
 		static double _maxSignalInputVoltage;
 		static long _timeBasedLineScanEnabled; ///< Flag to enable or disable time based line scan
 		static long _isLiveScan; ///<Flag used to indicate if the current acquisition is a live scan in Capture Setup
+		wstring _waveformOutPath; ///<Output waveform file path if user configured
 
 		///<buffer members
 		static CRITICAL_SECTION _remapSection; ///<critical section control for process buffer and setupAcquisition

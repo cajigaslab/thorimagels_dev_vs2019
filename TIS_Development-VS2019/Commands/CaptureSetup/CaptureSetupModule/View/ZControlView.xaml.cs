@@ -33,6 +33,8 @@
         public ZControlView()
         {
             InitializeComponent();
+            Loaded += ZControlView_Loaded;
+            Unloaded += ZControlView_Unloaded;
         }
 
         #endregion Constructors
@@ -57,6 +59,33 @@
                         MVMManager.Instance["ZControlViewModel", "ZStage2LocationNames", i] = str;
                     }
                 }
+            }
+
+            var appSettingsDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+
+            ndList = appSettingsDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/ZView");
+            if (0 < ndList.Count)
+            {
+                string str = string.Empty;
+                if (XmlManager.GetAttribute(ndList[0], appSettingsDoc, "enableContinuousZStackPreview", ref str))
+                {
+                    MVMManager.Instance["ZControlViewModel", "EnableContinuousZStackPreview"] = str == "1";
+                }
+            }
+        }
+
+        private void ZControlView_Unloaded(object sender, RoutedEventArgs e)
+        {
+            var appSettingsDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+
+            XmlNodeList ndList = appSettingsDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/ZView");
+
+            if (ndList.Count > 0)
+            {
+                int val = (bool)MVMManager.Instance["ZControlViewModel", "EnableContinuousZStackPreview", (object)false] ? 1 : 0;
+                XmlManager.SetAttribute(ndList[0], appSettingsDoc, "enableContinuousZStackPreview", val.ToString());
+
+                MVMManager.Instance.SaveSettings(SettingsFileType.APPLICATION_SETTINGS);
             }
         }
 

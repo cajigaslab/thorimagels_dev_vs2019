@@ -638,6 +638,8 @@ long ThorLSMCam::TryWriteTaskMasterGalvoWaveform(long checkStop)
 		//retrieve waveform:
 		if(FALSE == ImageWaveformBuilder->GetGGalvoWaveformParamsWithStatus(SignalType::ANALOG_XY,&_gGalvoWaveParams, _precaptureStatus, ThorLSMCam::_currentIndex[SignalType::ANALOG_XY]))
 		{
+			StringCbPrintfW(message, _MAX_PATH, L"ThorGGNI:%hs@%u: failed to get buffer for Galvo.", __FILE__, __LINE__);
+			LogMessage(message, ERROR_EVENT);
 			return FALSE;
 		}
 
@@ -686,6 +688,8 @@ long ThorLSMCam::TryWriteTaskMasterPockelWaveform(long checkStop)
 		//retrieve waveform:
 		if(FALSE == ImageWaveformBuilder->GetGGalvoWaveformParamsWithStatus(SignalType::ANALOG_POCKEL,&_gGalvoWaveParams, _precaptureStatus, ThorLSMCam::_currentIndex[SignalType::ANALOG_POCKEL]))
 		{
+			StringCbPrintfW(message, _MAX_PATH, L"ThorGGNI:%hs@%u: failed to get buffer for Pockels.", __FILE__, __LINE__);
+			LogMessage(message, ERROR_EVENT);
 			return FALSE;
 		}
 
@@ -733,6 +737,8 @@ long ThorLSMCam::TryWriteTaskMasterLineWaveform(long checkStop)
 		//retrieve waveform:
 		if(FALSE == ImageWaveformBuilder->GetGGalvoWaveformParamsWithStatus(SignalType::DIGITAL_LINES,&_gGalvoWaveParams, _precaptureStatus, ThorLSMCam::_currentIndex[SignalType::DIGITAL_LINES]))
 		{
+			StringCbPrintfW(message, _MAX_PATH, L"ThorGGNI:%hs@%u: failed to get buffer for Digital lines.", __FILE__, __LINE__);
+			LogMessage(message, ERROR_EVENT);
 			return FALSE;
 		}
 

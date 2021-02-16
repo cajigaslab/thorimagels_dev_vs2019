@@ -1366,9 +1366,16 @@ long ThorLSMCam::GetParamInfo(const long paramID, long &paramType, long &paramAv
 			paramReadOnly = FALSE;
 		}
 		break;
+	case ICamera::PARAM_WAVEFORM_OUTPATH:
+		{
+			paramType = ICamera::TYPE_STRING;
+			paramAvailable = TRUE;
+			paramReadOnly = FALSE;
+		}
+		break;
 	default:
 		{
-			ret = TRUE;
+			ret = FALSE;
 			paramAvailable = FALSE;
 			paramReadOnly = TRUE;
 		}
@@ -1379,7 +1386,7 @@ long ThorLSMCam::GetParamInfo(const long paramID, long &paramType, long &paramAv
 
 long ThorLSMCam::GetParamString(const long paramID, wchar_t * str, long size)
 {
-	long ret = FALSE;
+	long ret = TRUE;
 
 	switch(paramID)
 	{
@@ -1387,7 +1394,6 @@ long ThorLSMCam::GetParamString(const long paramID, wchar_t * str, long size)
 		{
 			std::wregex wreg (L"\\b(Thor)([^ ]*)"); 
 			wcscpy_s(str,size, std::regex_replace(GetDLLName(ThorLSMCam::getInstance()->hDLLInstance), wreg, L"$2").c_str());
-			ret = TRUE;
 		}
 		break;
 	case ICamera::PARAM_LSM_POCKELS_LINE_0:
@@ -1417,10 +1423,15 @@ long ThorLSMCam::GetParamString(const long paramID, wchar_t * str, long size)
 	case ICamera::PARAM_LSM_WAVEFORM_PATH_NAME:
 		{
 			wcscpy_s(str,size, _waveformPathName.c_str());
-			ret = TRUE;
+		}
+		break;
+	case ICamera::PARAM_WAVEFORM_OUTPATH:
+		{
+			wcscpy_s(str, size, _waveformOutPath.c_str());
 		}
 		break;
 	default:
+		ret = FALSE;
 		break;
 	}
 

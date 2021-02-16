@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{EAA5B716-5782-4BBE-A141-774379831570}</ProjectGuid>
+    <ProjectGuid>{70958CF1-C83F-4FEE-9B64-0772F43FA712}</ProjectGuid>
     <RootNamespace>ThorElectroPhys</RootNamespace>
     <SccProjectName>SAK</SccProjectName>
     <SccAuxPath>SAK</SccAuxPath>

@@ -21,6 +21,7 @@
 #include <string>
 #include <Strsafe.h>
 #include <vector>
+#include <algorithm>
 #include "..\..\..\Common\ThorSharedTypesCPP.h"
 #include "..\..\..\Common\BlockRingBuffer.h"
 #include "..\..\..\Common\CircularBuffer.h"

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include "./PDLL/pdll.h"
 #include "BlockRingBuffer.h"
 
@@ -74,7 +75,7 @@ class ImageWaveformBuilderDLL : public PDLL
 	DECLARE_FUNCTION1(long, BuildSpiral, long)
 	DECLARE_FUNCTION1(uint64_t, GetCounter, SignalType)
 	DECLARE_FUNCTION0(void, ResetCounter)
-	DECLARE_FUNCTION3(long, BuildImageWaveform, double*, long*, uint64_t*)
+	DECLARE_FUNCTION4(long, BuildImageWaveform, double*, long*, uint64_t*, wstring)
 	DECLARE_FUNCTION5(long, BuildImageWaveformFromStart, long, double, double*, long*, uint64_t*)
 	DECLARE_FUNCTION2(void, BufferAvailableCallbackFunc, long, long)
 	DECLARE_FUNCTION2(void, ConnectBufferCallback, SignalType, BlockRingBuffer*)
@@ -93,7 +94,7 @@ class WaveformMemoryDLL : public PDLL
 	DECLARE_CLASS(WaveformMemoryDLL)
 #pragma warning(pop)
 
-	DECLARE_FUNCTION2(long, AllocateMem, GGalvoWaveformParams, const wchar_t*)
+	DECLARE_FUNCTION3(long, AllocateMem, GGalvoWaveformParams, const wchar_t*, long)
 	DECLARE_FUNCTION2(long, OpenMem, GGalvoWaveformParams& , const wchar_t*)
 	DECLARE_FUNCTION0(void, CloseMem)
 	DECLARE_FUNCTION3(char*, GetMemMapPtr, SignalType, uint64_t, uint64_t)
@@ -118,4 +119,25 @@ class WaveformBuilderDLL : public PDLL, IWaveformBuilder
 	DECLARE_FUNCTION1(void, SetWaveformParams, void*)
 	DECLARE_FUNCTION1(long, TryBuildWaveform, uint64_t&)
 	DECLARE_FUNCTION0(HANDLE, GetSignalHandle)
+};
+
+/// <summary>
+/// class to save waveform, use bleach waveforom data structure to maintain raw file header consistency.
+/// </summary>
+class IWaveformSaver
+{
+public:
+	virtual long SaveData(wstring outPath, SignalType stype, void* gparam, unsigned long long length) = 0; ///<save data to file based on settings
+};
+
+class WaveformSaverDLL : public PDLL, IWaveformSaver
+{
+#pragma warning(push)
+#pragma warning(disable:26495)
+#pragma warning(disable:26444)
+	//call the macro and pass your class name
+	DECLARE_CLASS(WaveformSaverDLL)
+#pragma warning(pop)
+
+	DECLARE_FUNCTION4(long, SaveData, wstring, SignalType, void*, unsigned long long)
 };

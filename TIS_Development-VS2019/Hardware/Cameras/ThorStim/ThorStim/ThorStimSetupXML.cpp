@@ -23,9 +23,9 @@ wchar_t ThorStimXML::_libName[_MAX_PATH];
 
 const char * const ThorStimXML::CONFIGURES = "Configures";
 
-const char * const ThorStimXML::CONFIGURES_ATTR[NUM_CONFIGURES_ATTRIBUTES] = {"driverType", "activeLoadMS", "activeLoadCount", "sampleRateKHz", "riseTimeUS"};
+const char * const ThorStimXML::CONFIGURES_ATTR[NUM_CONFIGURES_ATTRIBUTES] = {"driverType", "activeLoadMS", "activeLoadCount", "sampleRateKHz"};
 
-long ThorStimXML::GetConfigures(long &driverType, long &activeLoadMS, long &activeLoadCount, long &sampleRateKHz, double &riseTimeUS)
+long ThorStimXML::GetConfigures(long &driverType, long &activeLoadMS, long &activeLoadCount, long &sampleRateKHz)
 {	
 	if (NULL == _xmlObj)
 		return FALSE;
@@ -72,11 +72,6 @@ long ThorStimXML::GetConfigures(long &driverType, long &activeLoadMS, long &acti
 							ss>>sampleRateKHz;
 						}
 						break;
-					case 4:
-						{
-							ss>>riseTimeUS;
-						}
-						break;
 					}
 				}
 
@@ -95,16 +90,16 @@ long ThorStimXML::GetConfigures(long &driverType, long &activeLoadMS, long &acti
 const char * const ThorStimXML::MODULATION = "Modulations";
 
 const char * const ThorStimXML::MODULATION_ATTR[NUM_MODULATION_ATTRIBUTES] = {"counter", "triggerIn",
-	"line1", "lineMinVoltage1", "lineMaxVoltage1",
-	"line2", "lineMinVoltage2", "lineMaxVoltage2",
-	"line3", "lineMinVoltage3", "lineMaxVoltage3",
-	"line4", "lineMinVoltage4", "lineMaxVoltage4"};
+	"line1", "lineMinVoltage1", "lineMaxVoltage1", "responseType1",
+	"line2", "lineMinVoltage2", "lineMaxVoltage2", "responseType2",
+	"line3", "lineMinVoltage3", "lineMaxVoltage3", "responseType3",
+	"line4", "lineMinVoltage4", "lineMaxVoltage4", "responseType4"};
 
 long ThorStimXML::GetModulations(string &counter, string &triggerIn, 
-								 string &line1, double &lineMinVoltage1, double &lineMaxVoltage1,
-								 string &line2, double &lineMinVoltage2, double &lineMaxVoltage2,
-								 string &line3, double &lineMinVoltage3, double &lineMaxVoltage3,
-								 string &line4, double &lineMinVoltage4, double &lineMaxVoltage4)
+								 string &line1, double &lineMinVoltage1, double &lineMaxVoltage1, long &responseType1,
+								 string &line2, double &lineMinVoltage2, double &lineMaxVoltage2, long &responseType2,
+								 string &line3, double &lineMinVoltage3, double &lineMaxVoltage3, long &responseType3,
+								 string &line4, double &lineMinVoltage4, double &lineMaxVoltage4, long &responseType4)
 {	
 	if (NULL == _xmlObj)
 		return FALSE;
@@ -164,10 +159,18 @@ long ThorStimXML::GetModulations(string &counter, string &triggerIn,
 						break;
 					case 5:
 						{
-							line2 = ('/' == str[0]) ? str.substr(1,str.length()-1) : str;
+							if (0 < str.length())
+								ss>>responseType1;
+							else
+								responseType1 = 1;
 						}
 						break;
 					case 6:
+						{
+							line2 = ('/' == str[0]) ? str.substr(1,str.length()-1) : str;
+						}
+						break;
+					case 7:
 						{
 							if (!line2.empty())
 							{
@@ -180,7 +183,7 @@ long ThorStimXML::GetModulations(string &counter, string &triggerIn,
 								lineMinVoltage2 = -1;
 						}
 						break;
-					case 7:
+					case 8:
 						{
 							if (!line2.empty())
 							{
@@ -192,12 +195,20 @@ long ThorStimXML::GetModulations(string &counter, string &triggerIn,
 								lineMaxVoltage2 = -1;
 						}
 						break;
-					case 8:
+					case 9:
+						{
+							if (0 < str.length())
+								ss>>responseType2;
+							else
+								responseType2 = 1;
+						}
+						break;
+					case 10:
 						{
 							line3 = ('/' == str[0]) ? str.substr(1,str.length()-1) : str;
 						}
 						break;
-					case 9:
+					case 11:
 						{
 							if (!line3.empty())
 							{
@@ -209,7 +220,7 @@ long ThorStimXML::GetModulations(string &counter, string &triggerIn,
 								lineMinVoltage3 = -1;
 						}
 						break;
-					case 10:
+					case 12:
 						{
 							if (!line3.empty())
 							{
@@ -221,12 +232,20 @@ long ThorStimXML::GetModulations(string &counter, string &triggerIn,
 								lineMaxVoltage3 = -1;
 						}
 						break;
-					case 11:
+					case 13:
+						{
+							if (0 < str.length())
+								ss>>responseType3;
+							else
+								responseType3 = 1;
+						}
+						break;
+					case 14:
 						{
 							line4 = ('/' == str[0]) ? str.substr(1,str.length()-1) : str;
 						}
 						break;
-					case 12:
+					case 15:
 						{
 							if (!line4.empty())
 							{
@@ -238,7 +257,7 @@ long ThorStimXML::GetModulations(string &counter, string &triggerIn,
 								lineMinVoltage4 = -1;
 						}
 						break;
-					case 13:
+					case 16:
 						{
 							if (!line4.empty())
 							{
@@ -248,6 +267,14 @@ long ThorStimXML::GetModulations(string &counter, string &triggerIn,
 							}
 							else
 								lineMaxVoltage4 = -1;
+						}
+						break;
+					case 17:
+						{
+							if (0 < str.length())
+								ss>>responseType4;
+							else
+								responseType4 = 1;
 						}
 						break;
 					}
@@ -308,7 +335,7 @@ long ThorStimXML::SetModulations(double lineMinVoltage1, double lineMaxVoltage1,
 					getline(ss,strValue);
 					attribute->SetValue(strValue);
 				}
-				if(0 == str.compare(MODULATION_ATTR[6]))
+				if(0 == str.compare(MODULATION_ATTR[7]))
 				{
 					ss.clear();
 					ss << lineMinVoltage2;
@@ -316,7 +343,7 @@ long ThorStimXML::SetModulations(double lineMinVoltage1, double lineMaxVoltage1,
 					getline(ss,strValue);
 					attribute->SetValue(strValue);
 				}
-				if(0 == str.compare(MODULATION_ATTR[7]))
+				if(0 == str.compare(MODULATION_ATTR[8]))
 				{
 					ss.clear();
 					ss << lineMaxVoltage2;
@@ -324,7 +351,7 @@ long ThorStimXML::SetModulations(double lineMinVoltage1, double lineMaxVoltage1,
 					getline(ss,strValue);
 					attribute->SetValue(strValue);
 				}
-				if(0 == str.compare(MODULATION_ATTR[9]))
+				if(0 == str.compare(MODULATION_ATTR[11]))
 				{
 					ss.clear();
 					ss << lineMinVoltage3;
@@ -332,7 +359,7 @@ long ThorStimXML::SetModulations(double lineMinVoltage1, double lineMaxVoltage1,
 					getline(ss,strValue);
 					attribute->SetValue(strValue);
 				}
-				if(0 == str.compare(MODULATION_ATTR[10]))
+				if(0 == str.compare(MODULATION_ATTR[12]))
 				{
 					ss.clear();
 					ss << lineMaxVoltage3;
@@ -340,7 +367,7 @@ long ThorStimXML::SetModulations(double lineMinVoltage1, double lineMaxVoltage1,
 					getline(ss,strValue);
 					attribute->SetValue(strValue);
 				}
-				if(0 == str.compare(MODULATION_ATTR[12]))
+				if(0 == str.compare(MODULATION_ATTR[15]))
 				{
 					ss.clear();
 					ss << lineMinVoltage4;
@@ -348,7 +375,7 @@ long ThorStimXML::SetModulations(double lineMinVoltage1, double lineMaxVoltage1,
 					getline(ss,strValue);
 					attribute->SetValue(strValue);
 				}
-				if(0 == str.compare(MODULATION_ATTR[13]))
+				if(0 == str.compare(MODULATION_ATTR[16]))
 				{
 					ss.clear();
 					ss << lineMaxVoltage4;
@@ -364,7 +391,7 @@ long ThorStimXML::SetModulations(double lineMinVoltage1, double lineMaxVoltage1,
 }
 const char * const ThorStimXML::WAVEFORM = "Waveform";
 
-const char * const ThorStimXML::WAVEFORM_ATTR[NUM_WAVEFORM_ATTRIBUTES] = {"pockelDigOutput","completeOutput","cycleOutput","iterationOutput", "patternOutput", "patternComplete","activeOutput","epochOutput","cycleInverse"};
+const char * const ThorStimXML::WAVEFORM_ATTR[NUM_WAVEFORM_ATTRIBUTES] = {"pockelDigOutput1","completeOutput","cycleOutput","iterationOutput", "patternOutput", "patternComplete","activeOutput","epochOutput","cycleInverse","pockelDigOutput2","pockelDigOutput3","pockelDigOutput4"};
 
 long ThorStimXML::GetWaveform(std::vector<std::string> *digiLines)
 {	

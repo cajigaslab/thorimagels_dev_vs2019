@@ -46,7 +46,7 @@ extern "C"
 		double* _fitCoeff[2]; ///<fitting coefficients for two wavelengths in order of [0][0],[0][1],[0][2],[1][0],[1][1],[1][2],[2[0],[2][1]
 		long _deviceCount; ///<how many SLM being detected
 		bool _deviceDetected;
-		long _pixelUM; ///<pixel unit size in [UM], assuming square in shape
+		double _pixelUM; ///<pixel unit size in [UM], assuming square in shape
 		long* _pixelRange; ///<pixel range of Xmin, Xmax, Ymin, Ymax
 		long _overDrive; ///<overdrive mode for meadowlark slm
 		unsigned int _transientFrames; ///<transient frame counts in overdrive mode for meadowlark slm

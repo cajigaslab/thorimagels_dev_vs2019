@@ -110,7 +110,7 @@ public:
 	long BuildSpiral(long count); ///<test function for active load to move galvo in spiral
 	void ConnectBufferCallback(SignalType sType, BlockRingBuffer* brBuf); ///<register to buffer available callback
 	uint64_t GetCounter(SignalType sType);
-	long BuildImageWaveform(double* startXY, long* countPerCallback, uint64_t* total); ///<build image waveform
+	long BuildImageWaveform(double* startXY, long* countPerCallback, uint64_t* total, wstring outPath); ///<build image waveform and save if outPath configured
 	long BuildImageWaveformFromStart(long rebuild, double stepVolts, double * currentVxy, long* countPerCallback, uint64_t* total); ///<rebuild image waveform from current position
 	uint64_t RebuildWaveformFromFile(const wchar_t* waveformFileName, double * currentVxy, int digLineSelection, long* countPerCallback); ///<rebuild waveform from current position to complete waveform file, return total counts
 	uint64_t RebuildThorDAQWaveformFromFile(const wchar_t* waveformFileName, unsigned short * currentVxy, int digLineSelection, long* countPerCallback); ///<rebuild waveform from current position to complete waveform file, return total counts

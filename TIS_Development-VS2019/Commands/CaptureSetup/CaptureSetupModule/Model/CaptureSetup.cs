@@ -271,7 +271,7 @@
             {
                 if ((int)ICamera.CameraType.LSM == ResourceManagerCS.GetCameraType())
                 {
-                    return (int)MVMManager.Instance["AreaControlViewModel", "LSMPixelY", 0];
+                    return (int)MVMManager.Instance["AreaControlViewModel", "LSMPixelY", (object)0];
                 }
                 else
                 {

@@ -36,7 +36,9 @@
         public OrthoViewDispOptWin()
         {
             InitializeComponent();
+            PopulateComboBoxes();
             this.Owner = Application.Current.MainWindow;
+            WindowStartupLocation = Application.Current.MainWindow.WindowStartupLocation;
             this.Loaded += OrthoViewDispOptWin_Loaded;
             this.Closed += OrthoViewDispOptWin_Closed;
         }
@@ -57,6 +59,10 @@
             {
                 return lineColor.SelectedIndex;
             }
+            set
+            {
+                lineColor.SelectedIndex = value;
+            }
         }
 
         public int LineIndex
@@ -65,6 +71,10 @@
             {
                 return lineType.SelectedIndex;
             }
+            set
+            {
+                lineType.SelectedIndex = value;
+            }
         }
 
         public bool SetFlag
@@ -72,6 +82,24 @@
             get
             {
                 return _setFlag;
+            }
+        }
+
+        public double ZPixelMultiplier
+        {
+            get
+            {
+                double value;
+                if (double.TryParse(zPixelMultiplierTextBox.Text, out value))
+                {
+                    return value;
+                }
+
+                return 1.0;
+            }
+            set
+            {
+                zPixelMultiplierTextBox.Text = value.ToString();
             }
         }
 
@@ -109,8 +137,10 @@
 
         void OrthoViewDispOptWin_Loaded(object sender, RoutedEventArgs e)
         {
-            //throw new NotImplementedException();
+        }
 
+        void PopulateComboBoxes()
+        {
             lineType.Items.Clear();   //clear the contextmenu
             lineColor.Items.Clear();  //clear the contextmenu
 

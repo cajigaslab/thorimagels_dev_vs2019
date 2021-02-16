@@ -34,7 +34,7 @@ public:
 	long GetCalibration(int id, double& wavelengthNM, double &affineCoeff1, double &affineCoeff2, double &affineCoeff3, double &affineCoeff4, double &affineCoeff5, double &affineCoeff6, double &affineCoeff7, double &affineCoeff8);
 	long SetCalibration(int id, double affineCoeff1, double affineCoeff2, double affineCoeff3, double affineCoeff4, double affineCoeff5, double affineCoeff6, double affineCoeff7, double affineCoeff8);
 
-	long GetSpec(string &name, long &dmdMode, long &overDrive, unsigned int &transientFrames, long &pixelUM, long &pixelXmin, long &pixelXmax, long &pixelYmin, long &pixelYmax, string &lut, string &odLUT, string &wavefront);
+	long GetSpec(string &name, long &dmdMode, long &overDrive, unsigned int &transientFrames, double &pixelUM, long &pixelXmin, long &pixelXmax, long &pixelYmin, long &pixelYmax, string &lut, string &odLUT, string &wavefront);
 	long GetTrigger(string &counterLine, string &triggerInput);
 
 	long OpenConfigFile(string path);

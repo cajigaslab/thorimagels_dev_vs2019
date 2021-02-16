@@ -191,7 +191,7 @@
             {
                 double[] val = new double[2] { 0, 0 };
                 ResourceManagerCS.GetDeviceParamBuffer<double>((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_WAVELENGTH, val, (int)Constants.MAX_WIDEFIELD_WAVELENGTH_COUNT);
-                return (0 < val[1] ? 2 : (0 < val[0] ? 1 : 0));
+                return (0 < Array.FindLastIndex(val, element => 0 >= element) ? Array.FindLastIndex(val, element => 0 >= element) : val.Length);
             }
         }
 
@@ -222,9 +222,9 @@
                 BleachCalibrateFlipHV[1], BleachCalibrateFlipHV[0], BleachCalibratePockelsVoltageMin0, WaveformDriverType);
         }
 
-        public bool LoadSLMPatternName(int runtimeCal, int id, string bmpPatternName, bool start, int timeoutVal = 0)
+        public bool LoadSLMPatternName(int runtimeCal, int id, string bmpPatternName, bool start, bool phaseDirect = false, int timeoutVal = 0)
         {
-            return ((1 == LoadSLMPattern(runtimeCal, id, bmpPatternName, (start) ? 1 : 0, timeoutVal)) ? true : false);
+            return ((1 == LoadSLMPattern(runtimeCal, id, bmpPatternName, (start) ? 1 : 0, phaseDirect ? 1 : 0, timeoutVal)) ? true : false);
         }
 
         public bool ResetSLMCalibration()
@@ -302,7 +302,7 @@
         private static extern void InitializeBleach();
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "LoadSLMPattern", CharSet = CharSet.Unicode)]
-        private static extern int LoadSLMPattern(int runtimeCal, int id, string bmpPatternName, int doStart, int timeout);
+        private static extern int LoadSLMPattern(int runtimeCal, int id, string bmpPatternName, int doStart, int phaseDirect, int timeout);
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "ResetAffineCalibration")]
         private static extern int ResetAffineCalibration();
@@ -466,7 +466,7 @@
                     return false;
                 }
                 bool doStart = (i == (_loadedSLMPatternsCnt - 1)) ? true : false;
-                this.LoadSLMPatternName(_slmSequenceOn ? 1 : 0, i, _loadedSLMPatterns[i], doStart, timeoutVal);
+                this.LoadSLMPatternName(_slmSequenceOn ? 1 : 0, i, _loadedSLMPatterns[i], doStart, IsStimulator, timeoutVal);
             }
 
             return (0 < _loadedSLMPatternsCnt) ? true : false;
@@ -535,7 +535,7 @@
             List<string> addedFiles = slmPatternsInFolder.Except(_loadedSLMPatterns).OrderBy(s => s).ToList();
             for (int i = 0; i < addedFiles.Count; i++)
             {
-                if (this.LoadSLMPatternName(_slmSequenceOn ? 1 : 0, _loadedSLMPatternsCnt, addedFiles[i], true))
+                if (this.LoadSLMPatternName(_slmSequenceOn ? 1 : 0, _loadedSLMPatternsCnt, addedFiles[i], true, IsStimulator))
                 {
                     _loadedSLMPatternsCnt++;
                     _loadedSLMPatterns.Add(addedFiles[i]);

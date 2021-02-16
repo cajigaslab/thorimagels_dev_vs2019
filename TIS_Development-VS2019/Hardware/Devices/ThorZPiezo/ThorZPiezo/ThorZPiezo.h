@@ -86,6 +86,7 @@ private:
 	string _analogLine;
 	string _triggerLine;
 	string _pockelsReferenceAnalogLine;
+	wstring _waveformOutPath;
 
 	static bool _instanceFlag;
 	static auto_ptr<ThorZPiezo> _single;

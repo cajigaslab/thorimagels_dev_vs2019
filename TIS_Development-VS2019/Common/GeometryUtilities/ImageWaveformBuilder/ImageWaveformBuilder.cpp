@@ -232,7 +232,8 @@ void ImageWaveformBuilder::ConnectBufferCallback(SignalType sType, BlockRingBuff
 	_scanAreaId = 0;
 
 	_bRingBuffer[sType] = brBuf;
-	_bRingBuffer[sType]->SpaceAvailableCallback = &(BufferAvailableCallbackFunc);
+	if (NULL != _bRingBuffer[sType])
+		_bRingBuffer[sType]->SpaceAvailableCallback = &(BufferAvailableCallbackFunc);
 }
 
 // singleton
@@ -264,7 +265,7 @@ void ImageWaveformBuilder::ResetGGalvoWaveformParams()
 {
 	for (int i = 0; i < MAX_MULTI_AREA_SCAN_COUNT; i++)
 	{
-		long unitSize[3] = {0, 0, 0};
+		long unitSize[SignalType::SIGNALTYPE_LAST] = { 0 };
 		ResetGGalvoWaveformParam(&_gParams[i], unitSize, 0, 0);
 		ResetGGalvoWaveformParam(&_gWaveXY[i], unitSize, 0, 0);
 	}
@@ -293,7 +294,7 @@ long ImageWaveformBuilder::GetGGalvoWaveformParams(SignalType sType, void* param
 		if(WAIT_OBJECT_0 != WaitForSingleObject(_gParams[_scanAreaId].bufferHandle, 3*EVENT_WAIT_TIME))					//timeout: 15 seconds
 			return FALSE;
 	}
-	long unitSize[3] = { static_cast<long>(_countPerCallback[sType]), static_cast<long>(_countPerCallback[sType]), static_cast<long>(_countPerCallback[sType])};
+	long unitSize[SignalType::SIGNALTYPE_LAST] = { _countPerCallback[sType], _countPerCallback[sType], _countPerCallback[sType], 0 };
 	if(FALSE == ResetGGalvoWaveformParam(&_gParams[_scanAreaId], unitSize, _gWaveXY[_scanAreaId].pockelsCount, _gWaveXY[_scanAreaId].digitalLineCnt))	//count to be copied before return is _countPerCallback
 	{
 		ReleaseMutex(_gParams[_scanAreaId].bufferHandle);
@@ -1092,7 +1093,6 @@ long ImageWaveformBuilder::ResetGGalvoWaveformParam(GGalvoWaveformParams * param
 	for (int i = 0; i < static_cast<int>(SignalType::SIGNALTYPE_LAST); i++)
 	{
 		params->unitSize[i] = unitSize[i];
-
 	}
 	params->digitalLineCnt = digitalLineCnt;
 
@@ -1157,9 +1157,28 @@ long ImageWaveformBuilder::ResetGGalvoWaveformParam(GGalvoWaveformParams * param
 				params->DigBufWaveform = NULL;
 			}
 		}
+		//z piezo:
+		params->analogZSize = std::max(params->unitSize[SignalType::ANALOG_Z], (unsigned long long)0);	//z
+		if (0 < params->analogZSize)
+		{
+			params->PiezoWaveformZ = (double*)realloc(params->PiezoWaveformZ, params->analogZSize * sizeof(double));
+			if (NULL == params->PiezoWaveformZ)
+			{
+				ReleaseMutex(params->bufferHandle);
+				return FALSE;
+			}
+		}
+		else
+		{
+			if (NULL != params->PiezoWaveformZ)
+			{
+				free(params->PiezoWaveformZ);
+				params->PiezoWaveformZ = NULL;
+			}
+		}
 
 		//single mutex:
-		if((0 == params->analogXYSize) && (0 == params->analogPockelSize) && (0 == params->digitalSize))
+		if ((0 == params->analogXYSize) && (0 == params->analogPockelSize) && (0 == params->digitalSize)) // && (0 == params->analogZSize)) - not include Z yet
 		{
 			if(NULL != params->bufferHandle)
 			{

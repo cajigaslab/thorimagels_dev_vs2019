@@ -65,6 +65,7 @@
         private int _roiCount;
         private List<Shape> _roiList;
         private List<Shape> _roiListBackup;
+        private List<Shape> _roiSpec;
         private bool _save = true;
         int _savedSelectedIndex = 0;
         private bool _saveEveryChange;
@@ -927,6 +928,15 @@
         }
 
         /// <summary>
+        /// get current shape
+        /// </summary>
+        /// <returns></returns>
+        public Shape GetCurrentROI()
+        {
+            return (0 < _roiList.Count) ? _roiList.Last() : null;
+        }
+
+        /// <summary>
         /// get lists of shapes with the same mode, all if no pattern ID or wavelengthNM specified.
         /// </summary>
         /// <param name="mode"></param>
@@ -1056,6 +1066,7 @@
             _roiList = new List<Shape>();
             _roiListBackup = null;
             _scanAreaROIList = new List<Shape>();
+            _roiSpec = new List<Shape>();
             _isObjectComplete = true;
             _isObjectCreated = false;
             _objectUpdated = false;
@@ -1381,6 +1392,11 @@
                         canvas.Children.Clear();
                     }
 
+                    if (null != roiCapsule.ROIspec)
+                    {
+                        _roiSpec = roiCapsule.ROIspec.ToList();
+                    }
+
                     if (null != roiCapsule.ScanAreaROIs)
                     {
                         _scanAreaROIList = roiCapsule.ScanAreaROIs.ToList();
@@ -1661,7 +1677,7 @@
             }
         }
 
-        public void SaveROIs(string pathAndName)
+        public void SaveROIs(string pathAndName, ROICapsule capsule = null)
         {
             if (true == _saveEveryChange)
             {
@@ -1670,37 +1686,46 @@
 
             try
             {
-                if (_roiList.Count > 0 || _scanAreaROIList.Count > 0)
+                using (FileStream f = new FileStream(pathAndName, FileMode.Create, FileAccess.Write))
                 {
-                    FileStream f = new FileStream(pathAndName, FileMode.Create, FileAccess.Write);
-                    ROICapsule roiCapsule = new ROICapsule();
-
-                    roiCapsule.ROIs = new Shape[_roiList.Count];
-
-                    for (int i = 0; i < _roiList.Count; i++)
+                    if (null != capsule)
                     {
-                        if (true == GetTagBit(_roiList[i].Tag, Tag.FLAGS, Flag.SAVE))
+                        XamlWriter.Save(capsule, f);
+                    }
+                    else
+                    {
+                        ROICapsule roiCapsule = new ROICapsule();
+                        if (0 < _roiList.Count)
                         {
-                            _roiList[i].Tag = SetTagRGB(_roiList[i]);
+                            roiCapsule.ROIs = new Shape[_roiList.Count];
+                            for (int i = 0; i < _roiList.Count; i++)
+                            {
+                                if (true == GetTagBit(_roiList[i].Tag, Tag.FLAGS, Flag.SAVE))
+                                {
+                                    _roiList[i].Tag = SetTagRGB(_roiList[i]);
 
-                            roiCapsule.ROIs[i] = _roiList[i];
+                                    roiCapsule.ROIs[i] = _roiList[i];
+                                }
+                            }
                         }
+                        if (0 < _scanAreaROIList.Count)
+                        {
+                            roiCapsule.ScanAreaROIs = new Shape[_scanAreaROIList.Count];
+                            for (int i = 0; i < _scanAreaROIList.Count; i++)
+                            {
+                                roiCapsule.ScanAreaROIs[i] = _scanAreaROIList[i];
+                            }
+                        }
+                        if (0 < _roiSpec.Count)
+                        {
+                            roiCapsule.ROIspec = new Shape[_roiSpec.Count];
+                            for (int i = 0; i < _roiSpec.Count; i++)
+                            {
+                                roiCapsule.ROIspec[i] = _roiSpec[i];
+                            }
+                        }
+                        XamlWriter.Save(roiCapsule, f);
                     }
-
-                    roiCapsule.ScanAreaROIs = new Shape[_scanAreaROIList.Count];
-                    for (int i = 0; i < _scanAreaROIList.Count; i++)
-                    {
-                        roiCapsule.ScanAreaROIs[i] = _scanAreaROIList[i];
-                    }
-
-                    XamlWriter.Save(roiCapsule, f);
-                    f.Close();
-                }
-                else
-                {
-                    FileStream f = new FileStream(pathAndName, FileMode.Create, FileAccess.Write);
-                    ROICapsule roiCapsule = new ROICapsule();
-                    XamlWriter.Save(roiCapsule, f);
                     f.Close();
                 }
                 PersistSettings();
@@ -1708,6 +1733,48 @@
             catch (Exception ex)
             {
                 ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + "SaveROIs exception " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Scale ROIs to new boundary(pixels) based on scaleTo[PixelX, PixelY]
+        /// </summary>
+        /// <param name="pathandName"></param>
+        /// <param name="scaleTo"></param>
+        public void ScaleROIs(string pathandName, int[] scaleTo)
+        {
+            ROICapsule roiCapsule = LoadXamlROIs(pathandName);
+            if (roiCapsule != null)
+            {
+                if (null == roiCapsule.ROIspec || null == roiCapsule.ROIspec[0])
+                {
+                    roiCapsule.ROIspec = new Shape[] { new Rectangle { Width = (int)Constants.DEFAULT_PIXEL_X, Height = (int)Constants.DEFAULT_PIXEL_X } };
+                }
+                if (null == scaleTo)
+                {
+                    scaleTo = new int[] { (int)((Rectangle)roiCapsule.ROIspec[0]).Width, (int)((Rectangle)roiCapsule.ROIspec[0]).Height };
+                }
+                if (null != roiCapsule.ROIs)
+                {
+                    for (int i = 0; i < roiCapsule.ROIs.Length; i++)
+                    {
+                        switch (roiCapsule.ROIs[i].GetType().ToString())
+                        {
+                            case "OverlayManager.ROIEllipse":
+                                ((OverlayManager.ROIEllipse)(roiCapsule.ROIs[i])).Center =
+                                    new Point((((OverlayManager.ROIEllipse)(roiCapsule.ROIs[i])).ROICenter.X - ((Rectangle)roiCapsule.ROIspec[0]).Width / 2) * scaleTo[0] / ((Rectangle)roiCapsule.ROIspec[0]).Width + (scaleTo[0] / 2),
+                                        (((OverlayManager.ROIEllipse)(roiCapsule.ROIs[i])).ROICenter.Y - ((Rectangle)roiCapsule.ROIspec[0]).Height / 2) * scaleTo[1] / ((Rectangle)roiCapsule.ROIspec[0]).Height + (scaleTo[1] / 2));
+                                break;
+                            case "OverlayManager.ROICrosshair":
+                                ((OverlayManager.ROICrosshair)(roiCapsule.ROIs[i])).CenterPoint =
+                                    new Point((((OverlayManager.ROICrosshair)(roiCapsule.ROIs[i])).CenterPoint.X - ((Rectangle)roiCapsule.ROIspec[0]).Width / 2) * scaleTo[0] / ((Rectangle)roiCapsule.ROIspec[0]).Width + (scaleTo[0] / 2),
+                                        (((OverlayManager.ROICrosshair)(roiCapsule.ROIs[i])).CenterPoint.Y - ((Rectangle)roiCapsule.ROIspec[0]).Height / 2) * scaleTo[1] / ((Rectangle)roiCapsule.ROIspec[0]).Height + (scaleTo[1] / 2));
+                                break;
+                        }
+                    }
+                    roiCapsule.ROIspec[0] = new Rectangle { Width = scaleTo[0], Height = scaleTo[1] };
+                }
+                SaveROIs(pathandName, roiCapsule);
             }
         }
 
@@ -4073,6 +4140,15 @@
         #region Properties
 
         public Shape[] ROIs
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// [0]RecBound[Width,Height]
+        /// </summary>
+        public Shape[] ROIspec
         {
             get;
             set;

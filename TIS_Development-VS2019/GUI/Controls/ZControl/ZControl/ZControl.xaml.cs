@@ -358,6 +358,11 @@
             "ZScanStopNotValid",
             typeof(bool),
             typeof(ZControlUC));
+        public static readonly DependencyProperty ZEnableContinuousZStackPreviewProperty =
+           DependencyProperty.Register(
+           "EnableContinuousZStackPreview",
+           typeof(bool),
+           typeof(ZControlUC));
         public static readonly DependencyProperty ZScanStopProperty = 
             DependencyProperty.Register(
             "ZScanStop",
@@ -422,6 +427,12 @@
         {
             get { return (bool)GetValue(PreviewButtonEnabledProperty); }
             set { SetValue(PreviewButtonEnabledProperty, value); }
+        }
+
+        public bool EnableContinuousZStackPreview
+        {
+            get { return (bool)GetValue(ZEnableContinuousZStackPreviewProperty); }
+            set { SetValue(ZEnableContinuousZStackPreviewProperty, value); }
         }
 
         public ICommand PreviewZStackCommand

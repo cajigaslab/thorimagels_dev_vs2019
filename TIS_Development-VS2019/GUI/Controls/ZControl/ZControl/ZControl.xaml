@@ -361,6 +361,7 @@
                                         ToolTip="Go to entered Z-axis position" />
                                 </StackPanel>
                             </StackPanel>
+                            <StackPanel Margin="5,0,0,0">
                             <Button Name="btnZStackPreview"
                                 Width="55"
                                 Height="50"
@@ -368,8 +369,14 @@
                                 Command="{Binding Path=PreviewZStackCommand}"
                                 Content="Preview"
                                 Foreground="White"
+                                HorizontalAlignment="Left"
                                 Style="{x:Null}"
                                 IsEnabled="{Binding Path=PreviewButtonEnabled, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" />
+                                <CheckBox Content="Continuous"
+                                          Margin="0,1"
+                                          ToolTip="Select for continuous Z Stack preview"
+                                          IsChecked="{Binding Path=EnableContinuousZStackPreview}"/>
+                            </StackPanel>
                         </StackPanel>
                         <StackPanel Margin="1"
                                 Orientation="Horizontal"

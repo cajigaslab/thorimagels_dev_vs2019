@@ -191,6 +191,13 @@
         [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "GetCameraParamReadOnly")]
         public static extern int GetCameraParamReadOnly(int cameraSelection, int paramId);
 
+        public static string GetCameraParamString(int cameraSelction, int param)
+        {
+            StringBuilder sb = new StringBuilder(PATH_LENGTH);
+            GetCameraParamStr(cameraSelction, param, sb, PATH_LENGTH);
+            return sb.ToString();
+        }
+
         public static int GetCameraType()
         {
             int cameraType = 0;
@@ -239,7 +246,8 @@
             }
             finally
             {
-                if (gch.IsAllocated) gch.Free();
+                if (gch.IsAllocated)
+                    gch.Free();
             }
             return ret;
         }
@@ -673,6 +681,9 @@
 
         [DllImport(".\\ResourceManager.dll", EntryPoint = "GetApplicationSettingsFilePathAndName", CharSet = CharSet.Unicode)]
         private static extern int GetApplicationSettingsFilePathAndName(StringBuilder sb, int length);
+
+        [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "GetCameraParamString", CharSet = CharSet.Unicode)]
+        private static extern int GetCameraParamStr(int cameraSelection, int param, StringBuilder str, int size);
 
         [DllImport(".\\ResourceManager.dll", EntryPoint = "GetCaptureTemplatePath", CharSet = CharSet.Unicode)]
         private static extern int GetCaptureTemplatePath(StringBuilder sb, int length);

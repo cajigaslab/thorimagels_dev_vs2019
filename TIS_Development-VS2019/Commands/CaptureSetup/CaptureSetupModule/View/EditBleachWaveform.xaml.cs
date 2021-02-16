@@ -119,7 +119,7 @@
             }
         }
 
-        public double[] bleachPowerVal
+        public double BleachPowerVal
         {
             get;
             set;
@@ -216,9 +216,9 @@
                 WaveformBuilder.ClkRate = (int)(vm.BleachLSMPixelXY[0] * (int)WaveformBuilder.MS_TO_S / vm.PixelDensity);
             }
 
-            bleachPowerVal = (1 == vm.BleachPowerEnable) ?
-                new double[1] { WaveformBuilder.GetPockelsPowerValue(vm.BleachPower, vm.BleachCalibratePockelsVoltageMin0[0], vm.BleachCalibratePockelsVoltageMax0[0], (PockelsResponseType)MVMManager.Instance["PowerControlViewModel", "BleacherPowerResponse0", 0]) } :
-                new double[1] { WaveformBuilder.GetPockelsPowerValue((double)MVMManager.Instance["PowerControlViewModel", "BleacherPower0", 0], vm.BleachCalibratePockelsVoltageMin0[0], vm.BleachCalibratePockelsVoltageMax0[0], (PockelsResponseType)MVMManager.Instance["PowerControlViewModel", "BleacherPowerResponse0", 0]) };
+            BleachPowerVal = (1 == vm.BleachPowerEnable) ?
+                WaveformBuilder.GetPockelsPowerValue(vm.BleachPower, vm.BleachCalibratePockelsVoltageMin0[0], vm.BleachCalibratePockelsVoltageMax0[0], (PockelsResponseType)MVMManager.Instance["PowerControlViewModel", "BleacherPowerResponse0", 0]) :
+                WaveformBuilder.GetPockelsPowerValue((double)MVMManager.Instance["PowerControlViewModel", "BleacherPower0", 0], vm.BleachCalibratePockelsVoltageMin0[0], vm.BleachCalibratePockelsVoltageMax0[0], (PockelsResponseType)MVMManager.Instance["PowerControlViewModel", "BleacherPowerResponse0", 0]);
 
             if (false == UpdateBleachWaveParams(WaveformBuilder.ClkRate))
             { return; }
@@ -331,10 +331,10 @@
                                     switch (bw.Fill)
                                     {
                                         case (int)BleachWaveParams.FillChoice.Raster:
-                                            WaveformBuilder.BuildRectTopDown(bw, bleachPowerVal);
+                                            WaveformBuilder.BuildRectTopDown(bw, new double[1] { BleachPowerVal });
                                             break;
                                         default:
-                                            WaveformBuilder.BuildRectContour(bw, bleachPowerVal);
+                                            WaveformBuilder.BuildRectContour(bw, new double[1] { BleachPowerVal });
                                             break;
                                     }
                                     //volt.AddRange(tmpvolt);
@@ -342,27 +342,27 @@
                                 case "Polygon":
                                     //Dwell duing contour fill:
                                     Status = String.Format("Building Polygon ...\n");
-                                    WaveformBuilder.BuildPolygon(bw, bleachPowerVal);
+                                    WaveformBuilder.BuildPolygon(bw, new double[1] { BleachPowerVal });
                                     break;
                                 case "Crosshair":
                                     //Dwell at location:
                                     Status = String.Format("Building Crosshair ...\n");
-                                    WaveformBuilder.BuildSpot(bw, bleachPowerVal);
+                                    WaveformBuilder.BuildSpot(bw, new double[1] { BleachPowerVal });
                                     break;
                                 case "Line":
                                     //Dwell during transition:
                                     Status = String.Format("Building Line ...\n");
-                                    WaveformBuilder.BuildLine(new Point(bw.ROIRight, bw.ROIBottom), bw, bleachPowerVal);
+                                    WaveformBuilder.BuildLine(new Point(bw.ROIRight, bw.ROIBottom), bw, new double[1] { BleachPowerVal });
                                     break;
                                 case "Polyline":
                                     //Dwell boundary trace:
                                     Status = String.Format("Building PolyLine ...\n");
-                                    WaveformBuilder.BuildPolyTrace(bw, false, bleachPowerVal);
+                                    WaveformBuilder.BuildPolyTrace(bw, false, new double[1] { BleachPowerVal });
                                     break;
                                 case "Ellipse":
                                     //Dwell during contour fill:
                                     Status = String.Format("Building Ellipse ...\n");
-                                    WaveformBuilder.BuildEllipse(bw, bleachPowerVal);
+                                    WaveformBuilder.BuildEllipse(bw, new double[1] { BleachPowerVal });
                                     break;
                                 default:
                                     break;
@@ -543,7 +543,7 @@
                 }
                 vm.BleachParamList[idx].ClockRate = clkRate;
                 vm.BleachParamList[idx].LongIdleTime = (vm.PixelUnitMode) ? vm.PixelLongIdleTime : 0.0;
-                vm.BleachParamList[idx].Power = bleachPowerVal;
+                vm.BleachParamList[idx].Power = BleachPowerVal;
                 vm.BleachParamList[idx].PreCycleIdleMS = vm.PreCycleIdleTime;
                 vm.BleachParamList[idx].PostCycleIdleMS = vm.PostCycleIdleTime;
                 vm.BleachParamList[idx].PreEpochIdleMS = vm.PreEpochIdleTime;
@@ -573,7 +573,7 @@
 
                 string filePathName = ROIPath + "BleachWaveform.raw";
 
-                WaveformBuilder.SaveWaveform(filePathName, true);
+                WaveformBuilder.SaveWaveform(filePathName, true, new bool[(int)SignalType.SIGNALTYPE_LAST] { true, true, true, false });
 
                 while (!WaveformBuilder.CheckSaveState())
                 {

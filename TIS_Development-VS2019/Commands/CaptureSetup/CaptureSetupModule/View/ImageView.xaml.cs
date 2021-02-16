@@ -47,20 +47,20 @@
         private string _appDocPath;
         private BackgroundWorker _bleachROIChecker;
         private SolidColorBrush[] _brushColors = new SolidColorBrush[] { Brushes.White, Brushes.Black, Brushes.Green, Brushes.Blue, Brushes.Yellow, Brushes.Red };
-        private int _colorType = 0;
         private double _currentScale;
         private DispatcherTimer _histogramUpdateTimer;
         private bool _imageDataChanged;
         private double _imageHeight;
         private double _imageWidth;
-        private int _lineType = 0;
         Point _newOrigin;
         Point _newStart;
         bool _nonVitualStackObjectMovingFlag = false;
+        private int _orthogonalLineColorType = 0;
+        private int _orthogonalLineType = 0;
         private Line[] _orthogonalViewLine = new Line[2];
         private Matrix _orthogonalViewMatrix;
-        private Line[] _orthogonalXZViewLine = new Line[2];
-        private Line[] _orthogonalYZViewLine = new Line[2];
+        private Line[] _orthogonalXZViewLine = new Line[1];
+        private Line[] _orthogonalYZViewLine = new Line[1];
         private bool _persistWhileClosing = false;
         bool _roiToolMouseDoubleClickFlag = false;
         private int _saveDlgFilterIndex = 0;
@@ -123,6 +123,17 @@
         }
 
         #endregion Constructors
+
+        #region Enumerations
+
+        enum LineDirection
+        {
+            horizontal,
+            vertical,
+            horizontalAndVertical
+        }
+
+        #endregion Enumerations
 
         #region Delegates
 
@@ -456,10 +467,7 @@
                 vm.IVScrollBarHeight = (null != this.image1.ImageSource && null != _translateTransform) ? ((this.image1.ImageSource.Height + 0.001) * _currentScale + _translateTransform.Y) : vm.IVScrollBarHeight;
 
                 Cursor = Cursors.Arrow;
-                if (e.ChangedButton == MouseButton.Right)
-                {
-                    ImageCanvasContextMenu.IsOpen = true;
-                }
+
                 ReleaseMouseCapture();
             }
 
@@ -519,15 +527,55 @@
             presentationCanvas.RenderTransform = new MatrixTransform(m);
             xyOrthogonalImageCanvas.RenderTransform = new MatrixTransform(m);
             zoomSlider.Value = m.M22;
-
-            e.Handled = true;
-
             CaptureSetupViewModel vm = (CaptureSetupViewModel)this.DataContext;
+
             if (vm == null)
             {
                 return;
             }
+            if (vm.OrthogonalViewStat == CaptureSetupViewModel.OrthogonalViewStatus.ACTIVE)
+            {
+                Point startPoint;
+                startPoint = this.TranslatePoint(e.GetPosition(this), imageCanvas);
+
+                startPoint.X = Math.Max(0, Math.Min(startPoint.X, image1.ImageSource.Width - 0.001));
+                startPoint.Y = Math.Max(0, Math.Min(startPoint.Y, image1.ImageSource.Height - 0.001));
+
+                if (vm.VirtualZStack)
+                {
+                    SetupOrthogonalView(startPoint);
+                    UpdateOrthogonalView(startPoint);
+                }
+            }
+
+            e.Handled = true;
+
             vm.IVScrollBarHeight = (null != this.image1.ImageSource && null != _translateTransform) ? ((this.image1.ImageSource.Height + 0.001) * _currentScale + _translateTransform.Y) : vm.IVScrollBarHeight;
+        }
+
+        private void ActivateDeactivateOrthogonalView()
+        {
+            CaptureSetupViewModel vm = (CaptureSetupViewModel)this.DataContext;
+
+            if (image1 != null && image1.ImageSource != null)
+            {
+                vm.BitmapPoint = new Point(image1.ImageSource.Width / 2, image1.ImageSource.Height / 2); //initiation with middle point
+            }
+
+            if (vm.LiveStartButtonStatus == true)
+            {
+                if (vm != null && image1.ImageSource != null && OrthogonalViewEnable.IsChecked == true)
+                {
+                    vm.InitOrthogonalView();
+                    this.lockPosition.Visibility = Visibility.Visible; // contextMenu lock position is visible
+                    this.lockPosition.IsChecked = false;
+                }
+            }
+
+            if (false == OrthogonalViewEnable.IsChecked)
+            {
+                vm_CloseOrthogonalView();
+            }
         }
 
         private void AutoEnhance1()
@@ -686,9 +734,6 @@
             histogram1.WhitePoint = LUT_MAX;
             sliderBP0.Value = LUT_MIN;
             sliderWP0.Value = LUT_MAX;
-            //SendUpdateToBitmap();
-
-            //            histogram1.LogScaleData = false;
         }
 
         private void ButtonReset_Click2(object sender, RoutedEventArgs e)
@@ -699,9 +744,6 @@
             histogram2.WhitePoint = LUT_MAX;
             sliderBP1.Value = LUT_MIN;
             sliderWP1.Value = LUT_MAX;
-            //SendUpdateToBitmap();
-
-            //            histogram2.LogScaleData = false;
         }
 
         private void ButtonReset_Click3(object sender, RoutedEventArgs e)
@@ -712,9 +754,6 @@
             histogram3.WhitePoint = LUT_MAX;
             sliderBP2.Value = LUT_MIN;
             sliderWP2.Value = LUT_MAX;
-            //SendUpdateToBitmap();
-
-            //            histogram3.LogScaleData = false;
         }
 
         private void ButtonReset_Click4(object sender, RoutedEventArgs e)
@@ -725,9 +764,6 @@
             histogram4.WhitePoint = LUT_MAX;
             sliderBP3.Value = LUT_MIN;
             sliderWP3.Value = LUT_MAX;
-            //SendUpdateToBitmap();
-
-            //            histogram4.LogScaleData = false;
         }
 
         private void ClearAllROIs_Click(object sender, RoutedEventArgs e)
@@ -1023,7 +1059,6 @@
                 vm.ROIUpdateRequested -= new Action<string>(VM_ROIUpdateRequested);
                 vm.ActiveSettingsReplaced -= new Action(VM_ActiveSettingsReplaced);
                 vm.OrthogonalViewImagesLoaded -= vm_OrthogonalViewImagesLoaded;
-                vm.CloseOrthogonalView -= vm_CloseOrthogonalView;
                 this.SizeChanged -= new SizeChangedEventHandler(ImageView_SizeChanged);
 
                 //persist application settings
@@ -1104,7 +1139,6 @@
             vm.ActiveSettingsReplaced += new Action(VM_ActiveSettingsReplaced);
             this.SizeChanged += new SizeChangedEventHandler(ImageView_SizeChanged);
             vm.OrthogonalViewImagesLoaded += vm_OrthogonalViewImagesLoaded;
-            vm.CloseOrthogonalView += vm_CloseOrthogonalView;
 
             ROIDrawingTools.SelectedIndex = 0;
 
@@ -1185,6 +1219,45 @@
                 }
             }
 
+            node = vm.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/General/OrthogonalViewSettings");
+            if (0 < node.Count)
+            {
+                if (XmlManager.GetAttribute(node[0], vm.ApplicationDoc, "lineColorIndex", ref str))
+                {
+                    int temp;
+                    if (int.TryParse(str, out temp))
+                    {
+                        _orthogonalLineColorType = temp;
+                    }
+                }
+
+                if (XmlManager.GetAttribute(node[0], vm.ApplicationDoc, "lineTypeIndex", ref str))
+                {
+                    int temp;
+                    if (int.TryParse(str, out temp))
+                    {
+                        _orthogonalLineType = temp;
+                    }
+                }
+
+                if (XmlManager.GetAttribute(node[0], vm.ApplicationDoc, "zMultiplier", ref str))
+                {
+                    double temp;
+                    if (double.TryParse(str, out temp))
+                    {
+                        vm.OrthogonalViewZMultiplier = temp;
+                    }
+                }
+
+                if (XmlManager.GetAttribute(node[0], vm.ApplicationDoc, "enableOrthogonalView", ref str))
+                {
+                    OrthogonalViewEnable.IsChecked = str == "1";
+                    this.lockPosition.Visibility = true == OrthogonalViewEnable.IsChecked ? Visibility.Visible : Visibility.Collapsed;
+                }
+
+                ActivateDeactivateOrthogonalView();
+            }
+
             //Capture Setup is loaded, the closing should only persist if it is being closed form Capture Setup
             // Need to refactor this. Should persist in the View Model side not in the View.
             _persistWhileClosing = true;
@@ -1220,7 +1293,7 @@
             vm.ROIUpdateRequested -= new Action<string>(VM_ROIUpdateRequested);
             vm.ActiveSettingsReplaced -= new Action(VM_ActiveSettingsReplaced);
             vm.OrthogonalViewImagesLoaded -= vm_OrthogonalViewImagesLoaded;
-            vm.CloseOrthogonalView -= vm_CloseOrthogonalView;
+
             this.SizeChanged -= new SizeChangedEventHandler(ImageView_SizeChanged);
 
             //persist application settings
@@ -1272,6 +1345,29 @@
                 bool tileViewIsEnabled = vm.TileDisplay;
                 XmlManager.SetAttribute(node[0], vm.ApplicationDoc, "TilingEnableOption", tileViewIsEnabled.ToString());
             }
+
+            ndList = vm.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/General/OrthogonalViewSettings");
+
+            if (ndList.Count <= 0)
+            {
+                XmlNode nodeGen = vm.ApplicationDoc.SelectSingleNode("/ApplicationSettings/DisplayOptions/General");
+                if (nodeGen != null)
+                {
+                    XmlNode nodeOrtho = vm.ApplicationDoc.CreateElement("OrthogonalViewSettings");
+                    nodeGen.AppendChild(nodeOrtho);
+                    ndList = vm.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/General/OrthogonalViewSettings");
+                }
+            }
+
+            if (0 < ndList.Count)
+            {
+                XmlManager.SetAttribute(ndList[0], vm.ApplicationDoc, "lineColorIndex", _orthogonalLineColorType.ToString());
+                XmlManager.SetAttribute(ndList[0], vm.ApplicationDoc, "lineTypeIndex", _orthogonalLineType.ToString());
+                XmlManager.SetAttribute(ndList[0], vm.ApplicationDoc, "zMultiplier", vm.OrthogonalViewZMultiplier.ToString());
+                string enableStr = true == OrthogonalViewEnable.IsChecked ? "1" : "0";
+                XmlManager.SetAttribute(ndList[0], vm.ApplicationDoc, "enableOrthogonalView", enableStr);
+            }
+
             MVMManager.Instance.SaveSettings(SettingsFileType.APPLICATION_SETTINGS);
 
             _persistWhileClosing = false;
@@ -1350,23 +1446,35 @@
                 return;
             }
             OrthoViewDispOptWin dlg = new OrthoViewDispOptWin();
-            int colorIndex = 0;
-            int lineTypeIndex = 0;
+            dlg.ColorIndex = _orthogonalLineColorType;
+            dlg.LineIndex = _orthogonalLineType;
+            dlg.ZPixelMultiplier = vm.OrthogonalViewZMultiplier;
             if (false == dlg.ShowDialog())
             {
                 if (dlg.SetFlag == true)
                 {
-                    colorIndex = dlg.ColorIndex;
-                    lineTypeIndex = dlg.LineIndex;
-                    if (colorIndex != _colorType || lineTypeIndex != _lineType)
+                    int colorIndex = dlg.ColorIndex;
+                    int lineTypeIndex = dlg.LineIndex;
+                    if (vm.OrthogonalViewZMultiplier != dlg.ZPixelMultiplier)
                     {
-                        _colorType = colorIndex;
-                        _lineType = lineTypeIndex;
+                        _orthogonalLineColorType = colorIndex;
+                        _orthogonalLineType = lineTypeIndex;
+                        vm.OrthogonalViewZMultiplier = dlg.ZPixelMultiplier;
+                        if (vm.OrthogonalViewStat != CaptureSetupViewModel.OrthogonalViewStatus.INACTIVE)
+                        {
+                            SetupOrthogonalView(this.lockPoint);
+                            UpdateOrthogonalView(vm.BitmapPoint);
+                        }
+                    }
+                    else   if (colorIndex != _orthogonalLineColorType || lineTypeIndex != _orthogonalLineType)
+                    {
+                        _orthogonalLineColorType = colorIndex;
+                        _orthogonalLineType = lineTypeIndex;
+
                         if (vm.OrthogonalViewStat != CaptureSetupViewModel.OrthogonalViewStatus.INACTIVE)
                         {
                             UpdateOrthogonalView(vm.BitmapPoint);
                         }
-
                     }
                 }
             }
@@ -1394,34 +1502,7 @@
 
         private void OrthogonalViewEnable_Click(object sender, RoutedEventArgs e)
         {
-            CaptureSetupViewModel vm = (CaptureSetupViewModel)this.DataContext;
-
-            if (vm.LiveStartButtonStatus == true)
-            {
-                if (vm != null && image1.ImageSource != null && OrthogonalViewEnable.IsChecked == true)
-                {
-
-                    vm.BitmapPoint = new Point(image1.ImageSource.Width / 2, image1.ImageSource.Height / 2); //initiation with middle point
-
-                    vm.InitOrthogonalView();
-
-                    if (vm.VirtualZStack == true)
-                    {
-                        this.lockPosition.Visibility = Visibility.Visible; // contextMenu lock position is visible
-                        this.lockPosition.IsChecked = false;
-                    }
-                }
-                else//disable the orthogonal view
-                {
-                    vm_CloseOrthogonalView();
-                }
-                //vm.ForceUpdateBitmap();
-            }
-
-            else
-            {
-                vm.IsOrthogonalViewChecked = false;
-            }
+            ActivateDeactivateOrthogonalView();
         }
 
         private void OrthogonalVirtualStack_Click(object sender, RoutedEventArgs e)
@@ -1440,11 +1521,8 @@
 
                 vm.InitOrthogonalView();
 
-                if (this.virtualStack.IsChecked)
-                {
-                    this.lockPosition.Visibility = Visibility.Visible; // contextMenu lock position is visible
-                    this.lockPosition.IsChecked = false;
-                }
+                this.lockPosition.Visibility = Visibility.Visible; // contextMenu lock position is visible
+                this.lockPosition.IsChecked = false;
             }
         }
 
@@ -1748,21 +1826,6 @@
             OverlayManagerClass.Instance.InitSelectROI(ref overlayCanvas);
         }
 
-        //:TODO: Verify if this is necessary
-        //private void SendUpdateToBitmap()
-        //{
-        ////logic in bitmap prevents it from being updated
-        ////rapidly. Therefore when the blackpoint and whitepoint
-        ////are set in succession the second property may get
-        ////reject by the bitmap. To work around this introduce
-        ////a delay before telling the bitmap to update
-        // CaptureSetupViewModel vm = (CaptureSetupViewModel)this.DataContext;
-        ////verify the data context
-        //if (vm == null)
-        //    return;
-        //System.Threading.Thread.Sleep(10);
-        //vm.UpdateBitmapAndEventSubscribers();
-        //}
         private void SetupOrthogonalView(Point point)
         {
             CaptureSetupViewModel vm = (CaptureSetupViewModel)this.DataContext;
@@ -1987,9 +2050,9 @@
                 return;
             }
 
-            UpdateOrthogonalViewLines(xzOrthogonalImageCanvas, xzOrthogonalImageCanvas, new Point(point.X, vm.ZNumSteps - 1), _orthogonalXZViewLine);
-            UpdateOrthogonalViewLines(yzOrthogonalImageCanvas, yzOrthogonalImageCanvas, new Point(vm.ZNumSteps - 1, point.Y), _orthogonalYZViewLine);
-            UpdateOrthogonalViewLines(imageCanvas, xyOrthogonalImageCanvas, point, _orthogonalViewLine);
+            UpdateOrthogonalViewLines(xzOrthogonalImageCanvas, xzOrthogonalImageCanvas, new Point(point.X, vm.ZNumSteps - 1), _orthogonalXZViewLine, LineDirection.vertical);
+            UpdateOrthogonalViewLines(yzOrthogonalImageCanvas, yzOrthogonalImageCanvas, new Point(vm.ZNumSteps - 1, point.Y), _orthogonalYZViewLine, LineDirection.horizontal);
+            UpdateOrthogonalViewLines(imageCanvas, xyOrthogonalImageCanvas, point, _orthogonalViewLine, LineDirection.horizontalAndVertical);
 
             _orthogonalViewMatrix = imageCanvas.RenderTransform.Value;
             _orthogonalViewMatrix.OffsetY += _currentScale * image1.ImageSource.Height + 10;
@@ -1999,51 +2062,79 @@
             yzOrthogonalImageCanvas.RenderTransform = new MatrixTransform(_orthogonalViewMatrix);
         }
 
-        private void UpdateOrthogonalViewLines(Canvas srcCanvas, Canvas dstCanvas, Point point, Line[] line)
+        private void UpdateOrthogonalViewLines(Canvas srcCanvas, Canvas dstCanvas, Point point, Line[] line, LineDirection lineDirection)
         {
-            for (int i = 0; i < 2; i++)
+            try
             {
-                if (line[i] == null)
+                for (int i = 0; i < line.Length; i++)
                 {
-                    line[i] = new Line();
-                    line[i].Stroke = _brushColors[0];
-                    line[i].StrokeDashArray = new DoubleCollection() { 2 };
-                    line[i].SnapsToDevicePixels = true;
-                    line[i].SetValue(RenderOptions.EdgeModeProperty, EdgeMode.Aliased);
-                    line[i].StrokeThickness = Math.Max(1, Math.Min(1 / _currentScale, 10));
-                    line[i].IsHitTestVisible = false; // block all the hit handled of line and raise from canvas
-                    line[i].Uid = "OrthogonalViewLine" + i.ToString();
-                }
-                for (int j = 0; j < dstCanvas.Children.Count; j++)
-                {
-                    if (dstCanvas.Children[j].Uid == "OrthogonalViewLine" + i.ToString())
+                    if (line[i] == null)
                     {
-                        dstCanvas.Children.RemoveAt(j);
-                        line[i].Stroke = _brushColors[_colorType];
+                        line[i] = new Line();
+                        line[i].Stroke = _brushColors[_orthogonalLineColorType];
+                        line[i].StrokeDashArray = _orthogonalLineType == 0 ? new DoubleCollection() { 2 } : null;
+                        line[i].SnapsToDevicePixels = true;
+                        line[i].SetValue(RenderOptions.EdgeModeProperty, EdgeMode.Aliased);
                         line[i].StrokeThickness = Math.Max(1, Math.Min(1 / _currentScale, 10));
-                        if (_lineType == 0)
+                        line[i].IsHitTestVisible = false; // block all the hit handled of line and raise from canvas
+                        line[i].Uid = "OrthogonalViewLine" + i.ToString();
+                    }
+                    for (int j = 0; j < dstCanvas.Children.Count; j++)
+                    {
+                        if (dstCanvas.Children[j].Uid == "OrthogonalViewLine" + i.ToString())
                         {
-                            line[i].StrokeDashArray = new DoubleCollection() { 2 };
-                        }
-                        else
-                        {
-                            line[i].StrokeDashArray = null;
+                            dstCanvas.Children.RemoveAt(j);
+                            line[i].Stroke = _brushColors[_orthogonalLineColorType];
+                            line[i].StrokeThickness = Math.Max(1, Math.Min(1 / _currentScale, 10));
+                            if (_orthogonalLineType == 0)
+                            {
+                                line[i].StrokeDashArray = new DoubleCollection() { 2 };
+                            }
+                            else
+                            {
+                                line[i].StrokeDashArray = null;
+                            }
                         }
                     }
                 }
-            }
 
-            ImageBrush brush = (ImageBrush)srcCanvas.Background;
-            line[0].X1 = 0;
-            line[0].X2 = brush.ImageSource.Width;
-            line[0].Y2 = point.Y;
-            line[0].Y1 = point.Y;
-            line[1].X1 = point.X;
-            line[1].X2 = point.X;
-            line[1].Y2 = 0;
-            line[1].Y1 = brush.ImageSource.Height;
-            dstCanvas.Children.Add(line[0]);
-            dstCanvas.Children.Add(line[1]);
+                switch (lineDirection)
+                {
+                    case LineDirection.vertical:
+                        {
+                            ImageBrush brush = (ImageBrush)srcCanvas.Background;
+                            line[0].X1 = point.X;
+                            line[0].X2 = point.X;
+                            line[0].Y2 = 0;
+                            line[0].Y1 = brush.ImageSource.Height;
+                            dstCanvas.Children.Add(line[0]);
+                        }
+                        break;
+                    default:
+                        {
+                            ImageBrush brush = (ImageBrush)srcCanvas.Background;
+                            line[0].X1 = 0;
+                            line[0].X2 = brush.ImageSource.Width;
+                            line[0].Y2 = point.Y;
+                            line[0].Y1 = point.Y;
+
+                            dstCanvas.Children.Add(line[0]);
+                            if (line.Length > 1)
+                            {
+                                line[1].X1 = point.X;
+                                line[1].X2 = point.X;
+                                line[1].Y2 = 0;
+                                line[1].Y1 = brush.ImageSource.Height;
+                                dstCanvas.Children.Add(line[1]);
+                            }
+                        }
+                        break;
+                }
+            }
+            catch(Exception ex)
+            {
+                ex.ToString();
+            }
         }
 
         private void UpdateRollOverPixelData(Point imagePixelLocation)

@@ -1102,7 +1102,6 @@ UINT RunSampleThreadProc( LPVOID pParam )
 			long streamEnable,streamFrames,rawData,triggerMode,triggerModeTimelapse,displayImage,storageMode,zFastEnable,zFastMode,flybackFrames,flybackLines,previewIndex,stimulusTriggering,dmaFrames,stimulusMaxFrames,useReferenceVoltageForFastZPockels;
 			long photoBleachingEnable,laserPositiion,durationMS, bleachTrigger, preBleachingFrames,bleachWidth,bleachHeight,bleachOffsetX,bleachOffsetY, bleachingFrames,fieldSize, postBleachingFrames1, postBleachingFrames2,preBleachingStream,postBleachingStream1,postBleachingStream2,powerEnable,laserEnable,bleachQuery,bleachPostTrigger,enableSimultaneousBleachingAndImaging,pmtEnableDuringBleach[4];
 			double powerPosition,preBleachingInterval,postBleachingInterval1,postBleachingInterval2;
-			long displayRollingAveragePreview;
 			long zStreamFrames,zStreamMode,zEnable;
 			long streamDisplayCumulativeAveragePreview = FALSE;
 			exp->GetZStage(zstageName,zEnable,zstageSteps,zstageStepSize,zStartPos,zStreamFrames,zStreamMode);

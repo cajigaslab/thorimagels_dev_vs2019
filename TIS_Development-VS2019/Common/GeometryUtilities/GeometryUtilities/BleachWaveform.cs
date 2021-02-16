@@ -43,7 +43,7 @@
         private List<Byte> _patnComplete = null;
         private List<Byte> _patnEnvelope = null;
         private List<List<double>> _pockel = null;
-        private List<Byte> _pockelDig = null;
+        private List<List<Byte>> _pockelDig = null;
         private List<ushort> _pockel_16bit = null;
         private List<double> _x_volt = null;
         private List<ushort> _x_volt_16bit = null;
@@ -59,7 +59,7 @@
             _x_volt = new List<double>();
             _y_volt = new List<double>();
             _pockel = new List<List<double>>();
-            _pockelDig = new List<Byte>();
+            _pockelDig = new List<List<Byte>>();
             _activeEnvelope = new List<byte>();
             _cycleComplete = new List<Byte>();
             _cycleEnvelope = new List<Byte>();
@@ -144,7 +144,7 @@
             get { return _pockel; }
         }
 
-        public List<byte> PockelDig
+        public List<List<byte>> PockelDig
         {
             get { return _pockelDig; }
         }
@@ -197,16 +197,16 @@
             if (null != y_Volt)
                 _y_volt.Add(Math.Min(MAX_GALVO_VOLTAGE, Math.Max((double)y_Volt, MIN_GALVO_VOLTAGE)));
 
-            byte pDig = (byte)(0);
             for (int i = 0; i < pockel.Length; i++)
             {
                 if (i + 1 > _pockel.Count)
+                {
                     _pockel.Add(new List<double>());
+                    _pockelDig.Add(new List<byte>());
+                }
                 _pockel[i].Add(pockel[i]);
-                if (PockelIdle[i] < pockel[i])
-                    pDig = (byte)(1);
+                _pockelDig[i].Add(PockelIdle[i] < pockel[i] ? (byte)1 : (byte)0);
             }
-            _pockelDig.Add(pDig);
 
             _activeEnvelope.Add(activeEnv);
 

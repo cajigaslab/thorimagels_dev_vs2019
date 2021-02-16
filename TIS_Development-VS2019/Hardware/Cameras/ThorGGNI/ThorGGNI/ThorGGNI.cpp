@@ -279,6 +279,7 @@ ThorLSMCam::ThorLSMCam() :
 	_lastBufferSize = 0;
 	_lastDMABufferCount = 0;
 	_analogXYmode[0][0] = _analogXYmode[0][1] = _analogXYmode[1][1] = _analogXYmode[1][1] = 1;
+	_waveformOutPath = L"";
 }
 
 ///Initialize Static Members
@@ -640,12 +641,15 @@ long ThorLSMCam::SetWaveform(VCMImgPty *pImgPty)
 		ImageWaveformBuilder->SetWaveformGenParams(&_waveGenParams);
 
 		_pGalvoStartPos = (float64*)realloc((void*)_pGalvoStartPos, 2 * sizeof(double));
-		if(0 == ImageWaveformBuilder->BuildImageWaveform(_pGalvoStartPos, _dLengthPerAOCallback, _totalLength))
+		if (0 == ImageWaveformBuilder->BuildImageWaveform(_pGalvoStartPos, _dLengthPerAOCallback, _totalLength, _waveformOutPath))
 		{
 			StringCbPrintfW(_errMsg,_MAX_PATH,L"ImageWaveformBuilder unable to build image waveform.");
 			LogMessage(_errMsg,ERROR_EVENT);
 			return FALSE;
 		}
+
+		//reset output path after build
+		_waveformOutPath = L"";
 
 		//Setup buffers for active load
 		CreateWaveBuffers();
@@ -753,7 +757,8 @@ void ThorLSMCam::ConnectWaveBufferCallbacks()
 {
 	for (int i = 0; i < static_cast<int>(SignalType::SIGNALTYPE_LAST); i++)
 	{
-		ImageWaveformBuilder->ConnectBufferCallback((SignalType)i, _wBuffer[i].get());
+		if (NULL != _wBuffer[i].get())
+			ImageWaveformBuilder->ConnectBufferCallback((SignalType)i, _wBuffer[i].get());
 	}
 }
 
@@ -761,7 +766,8 @@ void ThorLSMCam::FillWaveBuffers()
 {
 	for (int i = 0; i < static_cast<int>(SignalType::SIGNALTYPE_LAST); i++)
 	{
-		ImageWaveformBuilder->BufferAvailableCallbackFunc(i, _wBuffer[i].get()->CheckWritableBlockCounts(FALSE));
+		if (NULL != _wBuffer[i].get())
+			ImageWaveformBuilder->BufferAvailableCallbackFunc(i, _wBuffer[i].get()->CheckWritableBlockCounts(FALSE));
 	}
 }
 

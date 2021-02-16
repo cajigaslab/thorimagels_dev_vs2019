@@ -310,7 +310,7 @@ const char * const ThorSLMPDM512XML::SPEC = "Spec";
 
 const char * const ThorSLMPDM512XML::SPEC_ATTR[NUM_SPEC_ATTRIBUTES] = {"Name","dmdMode","overDrive","transientFrames","pixelUM","pixelXmin","pixelXmax","pixelYmin","pixelYmax","LUT","overDriveLUT","waveFront"};
 
-long ThorSLMPDM512XML::GetSpec(string &name, long &dmdMode, long &overDrive, unsigned int &transientFrames, long &pixelUM, long &pixelXmin, long &pixelXmax, long &pixelYmin, long &pixelYmax, string &lut, string &odLUT, string &wavefront)
+long ThorSLMPDM512XML::GetSpec(string &name, long &dmdMode, long &overDrive, unsigned int &transientFrames, double &pixelUM, long &pixelXmin, long &pixelXmax, long &pixelYmin, long &pixelYmax, string &lut, string &odLUT, string &wavefront)
 {
 	StringCbPrintfW(_currentPathAndFile,MAX_PATH,L"ThorSLMPDM512Settings.xml");		
 

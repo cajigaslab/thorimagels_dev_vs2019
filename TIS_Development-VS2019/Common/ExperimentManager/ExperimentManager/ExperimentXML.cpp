@@ -15,10 +15,9 @@ const char * const ExperimentXML::NAME = "Name";
 
 const char * const ExperimentXML::NAME_ATTR[NUM_NAME_ATTRIBUTES] = {"name"};
 
-long ExperimentXML::GetPathAndName(wstring &pathAndName)
+wstring ExperimentXML::GetPathAndName()
 {
-	pathAndName = StringToWString(_currentPathAndFile);
-	return TRUE;
+	return StringToWString(_currentPathAndFile);
 }
 
 long ExperimentXML::GetName(string &name)

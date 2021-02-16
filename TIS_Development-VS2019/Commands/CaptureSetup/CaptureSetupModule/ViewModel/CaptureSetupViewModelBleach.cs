@@ -197,6 +197,11 @@
             }
         }
 
+        public int BleachInternalClockRate
+        {
+            get { return this._captureSetup.BleachInternalClockRate; }
+        }
+
         public double BleachLSMAreaAngle
         {
             get
@@ -259,12 +264,19 @@
         {
             get
             {
-                int[] val = new int[2];
-                if ((0 == _captureSetup.GetBleachLSMPixelXY(0, ref val[0])) || (0 == _captureSetup.GetBleachLSMPixelXY(1, ref val[1])))
+                if (IsStimulator)
                 {
-                    return null;
+                    return _captureSetup.SLMPixelXY;
                 }
-                return val;
+                else
+                {
+                    int[] val = new int[2];
+                    if ((0 == _captureSetup.GetBleachLSMPixelXY(0, ref val[0])) || (0 == _captureSetup.GetBleachLSMPixelXY(1, ref val[1])))
+                    {
+                        return null;
+                    }
+                    return val;
+                }
             }
         }
 
@@ -400,11 +412,6 @@
                 this._captureSetup.BleachWavelength = value;
                 OnPropertyChanged("BleachWavelength");
             }
-        }
-
-        public int BleachInternalClockRate
-        {
-            get { return this._captureSetup.BleachInternalClockRate; }
         }
 
         public int BleachWavelengthEnable
@@ -737,7 +744,7 @@
                         BleachClass.SetBleachAttribute(xnodes[i], doc, 4, BleachParamList[idx].Fill.ToString());
                         str = (BleachParamList[idx].PixelMode) ? "1" : "0";
                         BleachClass.SetBleachAttribute(xnodes[i], doc, 5, str);
-                        BleachClass.SetBleachAttribute(xnodes[i], doc, 6, BleachParamList[idx].Power[0].ToString());    //single pockel bleach, may extend
+                        BleachClass.SetBleachAttribute(xnodes[i], doc, 6, BleachParamList[idx].Power.ToString());           //single pockel bleach, may extend
                         BleachClass.SetBleachAttribute(xnodes[i], doc, 7, BleachParamList[idx].ClockRate.ToString());
                         BleachClass.SetBleachAttribute(xnodes[i], doc, 8, BleachParamList[idx].LongIdleTime.ToString());
                         BleachClass.SetBleachAttribute(xnodes[i], doc, 9, BleachParamList[idx].PrePatIdleTime.ToString());

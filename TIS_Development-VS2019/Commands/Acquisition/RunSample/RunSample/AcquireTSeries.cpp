@@ -352,9 +352,9 @@ long AcquireTSeries::Execute(long index, long subWell)
 	}
 	else
 	{
-		wstring pathAndName;
-		_pExp->GetPathAndName(pathAndName);
-		_pCamera->SetParamString(ICamera::PARAM_MESO_EXP_PATH,(wchar_t*)pathAndName.c_str());
+		wstring pathAndName = _pExp->GetPathAndName();
+		_pCamera->SetParamString(ICamera::PARAM_MESO_EXP_PATH, (wchar_t*)pathAndName.c_str());
+		_pCamera->SetParamString(ICamera::PARAM_WAVEFORM_OUTPATH, (wchar_t*)GetDir(pathAndName).c_str());
 
 		long areaMode,scanMode,interleave,pixelX,pixelY,chan,lsmFieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[4], verticalFlip, horizontalFlip;
 		double areaAngle,dwellTime, crsFrequencyHz = 0;

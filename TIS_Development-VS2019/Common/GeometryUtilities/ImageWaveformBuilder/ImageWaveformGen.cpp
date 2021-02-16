@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "ImageWaveformBuilder.h"
+#include "WaveformSaver.h"
 
 ///	***************************************** <summary> Build Line			</summary>	********************************************** ///
 
@@ -105,7 +106,7 @@ long ImageWaveformBuilder::BuildTravelToStartImagePos(long sAreaId, double stepV
 	double dV_sub_Y = *(srcDstVxy+3) -(*(srcDstVxy+1) + (Nd-1) * yDirection * (float)std::min(deltaY_volt, DistanceVy / Nd));
 	long outCount = (dV_sub_X != 0 || dV_sub_Y != 0) ? (Nd + 1) : Nd;
 	unsigned char pockelsCount = GetPockelsCount();
-	long unitSize[SignalType::SIGNALTYPE_LAST] = {outCount, outCount, outCount}; 
+	long unitSize[SignalType::SIGNALTYPE_LAST] = {outCount, outCount, outCount, 0}; 
 	ReleaseMutex(_gWaveXY[sAreaId].bufferHandle);
 
 	if(FALSE == ResetGGalvoWaveformParam(&_gWaveXY[sAreaId], unitSize, pockelsCount, _wParams.digLineSelect))
@@ -944,7 +945,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 
 // build waveform based on SetWaveformGenParams, receive start location and total length.
 // [Note]: must SetWaveformGenParams before this function
-long ImageWaveformBuilder::BuildImageWaveform(double* startXY, long* countPerCallback, uint64_t* total)
+long ImageWaveformBuilder::BuildImageWaveform(double* startXY, long* countPerCallback, uint64_t* total, wstring outPath)
 {
 	long ret = FALSE;
 	long pockelsCount = GetPockelsCount();
@@ -990,6 +991,21 @@ long ImageWaveformBuilder::BuildImageWaveform(double* startXY, long* countPerCal
 			break;
 		}
 
+		//save XY waveforms without interleave if outPath configured
+		if (0 < outPath.length())
+		{
+			double* pTemp = (double *)malloc((1 + _galvoDataLength * 2) * sizeof(double));
+			if(NULL != pTemp)
+			{
+				//save header before waveform, must coordinate with WaveformSaver
+				double clkRate = (double)Constants::MHZ/_wParams.dwellTime;
+				SAFE_MEMCPY(pTemp, 1 * sizeof(double), &clkRate);
+				SAFE_MEMCPY(pTemp + 1, _galvoDataLength * sizeof(double), _pGalvoWaveformX);
+				SAFE_MEMCPY(pTemp + 1 + _galvoDataLength, _galvoDataLength * sizeof(double), _pGalvoWaveformY);
+				WaveformSaver::getInstance()->SaveData(outPath, SignalType::ANALOG_XY, pTemp, _galvoDataLength);
+				SAFE_DELETE_MEMORY(pTemp);
+			}
+		}
 		//set start position
 		SAFE_MEMCPY(startXY, 2 * sizeof(double) ,_gParams[_scanAreaId].GalvoWaveformXY);
 		ResetCounter();
@@ -1041,7 +1057,7 @@ long ImageWaveformBuilder::BuildImageWaveformFromStart(long rebuild, double step
 	if(rebuild)
 	{
 		double startXY[2];
-		if(FALSE == BuildImageWaveform(startXY, countPerCallback, total))
+		if(FALSE == BuildImageWaveform(startXY, countPerCallback, total, L""))
 			return FALSE;
 	}
 
@@ -1347,7 +1363,7 @@ long ImageWaveformBuilder::SetupParamsForArea()
 	}
 
 	//prepare params for later build
-	long unitSize[3] = {_galvoDataLength, _pockelsSamplesEffective, _frameDataLength};
+	long unitSize[SignalType::SIGNALTYPE_LAST] = {_galvoDataLength, _pockelsSamplesEffective, _frameDataLength, 0};
 	if(FALSE == ResetGGalvoWaveformParam(&_gParams[_scanAreaId], unitSize, pockelsCnt, _wParams.digLineSelect))
 	{
 		StringCbPrintfW(message,_MAX_PATH, L"ResetGGalvoWaveformParam failed.");

@@ -76,15 +76,17 @@
         private static ReportImageProcessData _reportImageProcessData;
         private static int _shiftValue = 6;
         private static double[] _whitePoint;
+        private static ushort[] _zPreviewPixelData;
 
         private int _autoROIDisplayChannel = 0;
-        private IntPtr _imageData;
         private int _maxRoiNum;
         private bool _minAreaActive;
         private int _minAreaValue;
         private int _minSnr;
         private int _rollOverPointX;
         private int _rollOverPointY;
+        private IntPtr _zPreviewImageData = IntPtr.Zero;
+        private UInt64 _zPreviewImageDataSize;
 
         #endregion Fields
 
@@ -859,6 +861,14 @@
             }
         }
 
+        public ushort[] ZPreviewPixelData
+        {
+            get
+            {
+                return _zPreviewPixelData;
+            }
+        }
+
         #endregion Properties
 
         #region Methods
@@ -1387,21 +1397,23 @@
         public byte[] UpdataPixelDatabyte(ushort[] savePixelData)
         {
             byte[] pixelData = new byte[3] { 0, 0, 0 };
-            byte valNormalized;
+
             for (int k = 0; k < _dataBufferOffsetIndex.Count; k++)
             {
-                valNormalized = _pixelDataLUT[_dataBufferOffsetIndex[k]][savePixelData[k]];
+                byte valNormalized = _pixelDataLUT[_dataBufferOffsetIndex[k]][savePixelData[k]];
 
-                pixelData[0] = Math.Max(pixelData[0], ChannelLuts[_dataBufferOffsetIndex[k]][valNormalized].R);
-                pixelData[1] = Math.Max(pixelData[1], ChannelLuts[_dataBufferOffsetIndex[k]][valNormalized].G);
-                pixelData[2] = Math.Max(pixelData[2], ChannelLuts[_dataBufferOffsetIndex[k]][valNormalized].B);
+                Color col = 1 == _colorChannels && true == _grayscaleForSingleChannel ? _grayscaleLUT.Colors[valNormalized] : ChannelLuts[_dataBufferOffsetIndex[k]][valNormalized];
+
+                pixelData[0] = Math.Max(pixelData[0], col.R);
+                pixelData[1] = Math.Max(pixelData[1], col.G);
+                pixelData[2] = Math.Max(pixelData[2], col.B);
             }
             return pixelData;
         }
 
-        public void UpdateChannelData(string[] fileNames, byte enabledChannels = 0, byte channelToRead = 0, int zToRead = 0, int timeToRead = 0, int imageWidth = 0, int imageHeight = 0, int imageDepth = 0, bool rawContainsDisabledChannels = true)
+        public bool UpdateChannelData(string[] fileNames, byte enabledChannels = 0, byte channelToRead = 0, int zToRead = 0, int timeToRead = 0, int imageWidth = 0, int imageHeight = 0, int imageDepth = 0, bool rawContainsDisabledChannels = true)
         {
-            UpdateExperimentFileFormatChannelData(fileNames, enabledChannels, channelToRead, zToRead, timeToRead, imageWidth, imageHeight, imageDepth, rawContainsDisabledChannels);
+            return UpdateExperimentFileFormatChannelData(fileNames, enabledChannels, channelToRead, zToRead, timeToRead, imageWidth, imageHeight, imageDepth, rawContainsDisabledChannels);
         }
 
         ///// <summary>
@@ -1417,9 +1429,14 @@
         ///// <param name="imageDepth"> The total depth(z) of the image in pixels </param>
         ///// <param name="rawContainsDisabledChannels"> Boolean describing is a raw file is structured with blank data for disabled channels, or excludes
         /////  the data blocks for disabled channels all togeather </param>
-        public void UpdateExperimentFileFormatChannelData(string[] fileNames, byte chEnabled = 0, int selectedChannel = 0, int selectedZ = 0, int selectedTime = 0,
+        public bool UpdateExperimentFileFormatChannelData(string[] fileNames, byte chEnabled = 0, int selectedChannel = 0, int selectedZ = 0, int selectedTime = 0,
             int imageWidth = 0, int imageHeight = 0, int imageDepth = 0, bool rawContainsDisabledChannels = true)
         {
+            bool ret = true;
+
+            int width = 0;
+            int height = 0;
+            int colorChannels = 0;
             try
             {
                 //=== First non null file in fileNames ===
@@ -1431,78 +1448,56 @@
                         break;
                     }
                 }
-                if (i == MAX_CHANNELS) return;
-
-                int width = 0;
-                int height = 0;
-                int colorChannels = 0;
+                if (i == MAX_CHANNELS) return false;
 
                 //=== Read File ===
                 if (File.Exists(fileNames[i]))
                 {
-                    //=== Image Parameters ===
-                    _dataWidth = imageWidth;
-                    _dataHeight = imageHeight;
-                    _colorChannels = MAX_CHANNELS;
 
-                    CaptureFile imageType = CaptureFile.FILE_TIFF; // Hardcode imageType to TIFF since it is was ZStack is saved as
-                    switch (imageType)
+                    ReadImageInfo(fileNames[i], ref width, ref height, ref colorChannels);
+                    if ((width > 0) && (height > 0))
                     {
-                        //                case CaptureFile.FILE_BIG_TIFF:
-                        //                    _imageData = Marshal.AllocHGlobal(_dataWidth * _dataHeight * _colorChannels * 2);
-                        //                    RtlZeroMemory(_imageData, _dataWidth * _dataHeight * _colorChannels * 2);
-                        //                    if (!_lastFileNames.SequenceEqual(fileNames))
-                        //                    {
-                        //                        //load OME at first load, sliders were reset
-                        //                        int tileCount = 0, chCount = 0, zMaxCount = 0, timeCount = 0, specCount = 0;
-                        //                        CaptureSetup.GetImageStoreInfo(fileNames[i], ref tileCount, ref width, ref height, ref chCount, ref zMaxCount, ref timeCount, ref specCount);
-                        //                        _lastFileNames = fileNames;
-                        //                    }
-                        //                    if (CaptureModes.HYPERSPECTRAL == ExperimentData.CaptureMode)
-                        //                    {
-                        //                        ReadImageStoreData(_imageData, _colorChannels, imageWidth, imageHeight, selectedZ, 0, selectedTime);
-                        //                    }
-                        //                    else
-                        //{
-                        //                        ReadImageStoreData(_imageData, _colorChannels, imageWidth, imageHeight, selectedZ, selectedTime, 0);
-                        //}
-                        //                    break;
-                        //                case CaptureFile.FILE_RAW:
-                        //                    _imageData = Marshal.AllocHGlobal(_dataWidth * _dataHeight * _colorChannels * 2);
-                        //                    RtlZeroMemory(_imageData, _dataWidth * _dataHeight * _colorChannels * 2);
 
-                        //                    LoadImageIntoBufferFromRawFile(_imageData, fileNames[i], chEnabled, selectedChannel, selectedZ, selectedTime, imageWidth, imageHeight, imageDepth, rawContainsDisabledChannels);
-                        //                    break;
-                        case CaptureFile.FILE_TIFF:
-                            ReadImageInfo(fileNames[i], ref width, ref height, ref colorChannels);
-                            if ((width > 0) && (height > 0))
-                            {
-                                // setting the parameters to be used in the View Model
-                                _dataWidth = width;
-                                _dataHeight = height;
+                        int size = width * height * MAX_CHANNELS * 2;
 
-                                _imageData = Marshal.AllocHGlobal(_dataWidth * _dataHeight * _colorChannels * 2);
-                                RtlZeroMemory(_imageData, _dataWidth * _dataHeight * _colorChannels * 2);
+                        if (IntPtr.Zero == _zPreviewImageData)
+                        {
 
-                                //read the image and output the buffer with image data
-                                ReadChannelImages(fileNames, _colorChannels, ref _imageData, _dataWidth, _dataHeight);
-                            }
-                            break;
-                        default:
-                            break;
+                            _zPreviewImageData = Marshal.AllocHGlobal(size);
+                        }
+                        else if (_zPreviewImageDataSize != (UInt64)size)
+                        {
+                            Marshal.FreeHGlobal(_zPreviewImageData);
+                            _zPreviewImageData = Marshal.AllocHGlobal(size);
+                        }
+
+                        _zPreviewImageDataSize = (UInt64)size;
+
+                        //read the image and output the buffer with image data
+                        ReadChannelImages(fileNames, MAX_CHANNELS, ref _zPreviewImageData, width, height);
                     }
-                    CopyChannelData();
+
+                    int length = (width * height);
+
+                    if ((_zPreviewPixelData == null) || (_zPreviewPixelData.Length != (length * MAX_CHANNELS)))
+                    {
+                        _zPreviewPixelData = new ushort[length * MAX_CHANNELS];
+                    }
+
+                    MemoryCopyManager.CopyIntPtrMemory(_zPreviewImageData, _zPreviewPixelData, 0, length * MAX_CHANNELS);
                 }
             }
             catch
             {
                 ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + "File not found exception");
+                ret = false;
             }
-            finally
+            if (width != imageWidth || height != imageHeight)
             {
-                Marshal.FreeHGlobal(_imageData);
-                _imageData = IntPtr.Zero;
+                ret = false;
             }
+
+            return ret;
         }
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "AutoTrackingEnable")]
@@ -1770,30 +1765,6 @@
 
         [DllImport("kernel32.dll")]
         static extern void RtlZeroMemory(IntPtr dst, int length);
-
-        private void CopyChannelData()
-        {
-            //only copy to the buffer when pixel data is not being read
-            if (_pixelDataReady == false)
-            {
-                _dataLength = (_dataWidth * _dataHeight);
-
-                if ((_pixelData == null) || (_pixelData.Length != (_dataLength * MAX_CHANNELS)))
-                {
-                    _pixelData = new ushort[_dataLength * MAX_CHANNELS];
-                    _pixelDataByte = new byte[_dataLength * 3];
-                    _pixelDataHistogram = new int[MAX_CHANNELS][];
-
-                    for (int i = 0; i < MAX_CHANNELS; i++)
-                    {
-                        _pixelDataHistogram[i] = new int[PIXEL_DATA_HISTOGRAM_SIZE];
-                    }
-                }
-
-                MemoryCopyManager.CopyIntPtrMemory(_imageData, _pixelData, 0, _dataLength * MAX_CHANNELS);
-                _pixelDataReady = true;
-            }
-        }
 
         private void ImageProcessDataUpdata(IntPtr returnArray, IntPtr returnRawArray, ref int width, ref int height, ref int colorChannels, ref int numOfROIs)
         {

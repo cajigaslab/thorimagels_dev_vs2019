@@ -136,7 +136,7 @@ public:
 		HYPERSPECTRAL = 4
 	};
 
-	virtual long GetPathAndName(wstring &pathAndName)=0;///Experiment file path
+	virtual wstring GetPathAndName()=0;///Experiment file path
 
 	virtual long GetName(string &name)=0;///Experiment Name
 	virtual long SetName(string name)=0; 

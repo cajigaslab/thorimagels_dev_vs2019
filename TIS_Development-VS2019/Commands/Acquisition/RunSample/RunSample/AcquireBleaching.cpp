@@ -1607,10 +1607,10 @@ long AcquireBleaching::Execute(long index, long subWell)
 	cameraType = (ICamera::CameraType)static_cast<long> (val);
 	pBleachScanner->GetParam(ICamera::PARAM_LSM_TYPE,val);
 	lsmType = (ICamera::LSMType)static_cast<long>(val);
-	if((ICamera::LSM != cameraType) || (ICamera::LSMType::GALVO_GALVO != lsmType))
+	if ((ICamera::LSM != cameraType) || ((ICamera::LSMType::GALVO_GALVO != lsmType) && (ICamera::LSMType::STIMULATE_MODULATOR != lsmType)))
 	{
-		StringCbPrintfW(message,MSG_LENGTH,L"RunSample Bleach scanner is not Galvo-Galvo");
-		logDll->TLTraceEvent(ERROR_EVENT,1,message);
+		StringCbPrintfW(message, MSG_LENGTH, L"RunSample Bleach scanner is not Galvo-Galvo or Stimulator.");
+		logDll->TLTraceEvent(ERROR_EVENT, 1, message);
 		return FALSE;
 	}
 
@@ -1619,13 +1619,6 @@ long AcquireBleaching::Execute(long index, long subWell)
 	//i.e. forcing the galvos to be at the park position as well as the pockels
 	//this is necessary when GG prebleach imaging since the power may differ
 	pBleachScanner->PostflightAcquisition(NULL);
-
-	//SLM will share with bleach:
-	const int GALVO_BLEACH = 0;
-	const int SLM_BLEACH = 1;
-	std::string dllName;
-	pHardware->GetActiveHardwareDllName("Devices","SLM",dllName);
-	long bleachMode = (0 == dllName.compare("ThorSLMPDM512"))? SLM_BLEACH : GALVO_BLEACH;
 
 	do
 	{
@@ -2781,7 +2774,7 @@ DllExport_RunSample SetBleachWaveformFile(const wchar_t* bleachH5PathName, int C
 	return TRUE;
 }
 
-DllExport_RunSample LoadSLMPattern(long runtimeCal, long id, const wchar_t* bleachH5PathName, long doStart, long timeout)
+DllExport_RunSample LoadSLMPattern(long runtimeCal, long id, const wchar_t* bleachH5PathName, long doStart, long phaseDirect, long timeout)
 {
 	long ret = TRUE;
 	string slmDLLName;
@@ -2792,6 +2785,7 @@ DllExport_RunSample LoadSLMPattern(long runtimeCal, long id, const wchar_t* blea
 		SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_FUNC_MODE,IDevice::SLMFunctionMode::LOAD_PHASE_ONLY, IDevice::DeviceSetParamType::NO_EXECUTION);
 		ret = SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_ARRAY_ID,id,IDevice::DeviceSetParamType::NO_EXECUTION);
 		ret = SetDeviceParamString(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_BMP_FILENAME,(wchar_t*)bleachH5PathName,IDevice::DeviceSetParamType::NO_EXECUTION);
+		ret = SetDeviceParamLong(SelectedHardware::SELECTED_SLM, IDevice::PARAM_SLM_PHASE_DIRECT, phaseDirect, IDevice::DeviceSetParamType::NO_EXECUTION);
 		ret = SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_TIMEOUT,timeout,IDevice::DeviceSetParamType::NO_EXECUTION);
 
 		IDevice* slm = GetDevice(SelectedHardware::SELECTED_SLM);

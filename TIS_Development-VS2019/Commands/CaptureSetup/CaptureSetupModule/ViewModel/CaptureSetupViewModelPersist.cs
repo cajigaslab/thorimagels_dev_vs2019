@@ -299,15 +299,18 @@
                                 XmlManager.SetAttribute(ndList[i], experimentFile, "postPatIdleMS", this.SLMBleachWaveParams[i].BleachWaveParams.PostPatIdleTime.ToString());
                                 XmlManager.SetAttribute(ndList[i], experimentFile, "preIteIdleMS", this.SLMBleachWaveParams[i].BleachWaveParams.PreIdleTime.ToString());
                                 XmlManager.SetAttribute(ndList[i], experimentFile, "postIteIdleMS", this.SLMBleachWaveParams[i].BleachWaveParams.PostIdleTime.ToString());
-                                for (int j = 0; j < this.SLMBleachWaveParams[i].BleachWaveParams.Power.Count(); j++)
+                                for (int j = 0; j < BleachCalibratePockelsVoltageMin0.Length; j++)
                                 {
-                                    string pwrStr = (0 < j) ? "power" + j : "power";
-                                    XmlManager.SetAttribute(ndList[i], experimentFile, pwrStr, this.SLMBleachWaveParams[i].BleachWaveParams.Power[j].ToString());
-                                    pwrStr = (0 < j) ? "measurePower" + j + "MW" : "measurePowerMW";
-                                    XmlManager.SetAttribute(ndList[i], experimentFile, "measurePowerMW", this.SLMBleachWaveParams[i].BleachWaveParams.MeasurePower[j].ToString());
-                                    pwrStr = (0 < j) ? "measurePower" + j + "MWPerUM2" : "measurePowerMWPerUM2";
-                                    XmlManager.SetAttribute(ndList[i], experimentFile, pwrStr, this.SLMBleachWaveParams[i].SLMMeasurePowerArea[j].ToString());
-
+                                    //only persist when power is valid
+                                    if (0 <= (double)this.SLMBleachWaveParams[i].BleachWaveParams.GetType().GetProperty((0 < j) ? "Power" + j : "Power").GetValue(this.SLMBleachWaveParams[i].BleachWaveParams))
+                                    {
+                                        XmlManager.SetAttribute(ndList[i], experimentFile, (0 < j) ? "power" + j : "power",
+                                           this.SLMBleachWaveParams[i].BleachWaveParams.GetType().GetProperty((0 < j) ? "Power" + j : "Power").GetValue(this.SLMBleachWaveParams[i].BleachWaveParams).ToString());
+                                        XmlManager.SetAttribute(ndList[i], experimentFile, (0 < j) ? "measurePower" + j + "MW" : "measurePowerMW",
+                                            this.SLMBleachWaveParams[i].BleachWaveParams.GetType().GetProperty((0 < j) ? "MeasurePower" + j : "MeasurePower").GetValue(this.SLMBleachWaveParams[i].BleachWaveParams).ToString());
+                                        XmlManager.SetAttribute(ndList[i], experimentFile, (0 < j) ? "measurePower" + j + "MWPerUM2" : "measurePowerMWPerUM2",
+                                            this.SLMBleachWaveParams[i].GetType().GetProperty((0 < j) ? "SLMMeasurePowerArea" + j : "SLMMeasurePowerArea").GetValue(this.SLMBleachWaveParams[i]).ToString());
+                                    }
                                 }
                                 XmlManager.SetAttribute(ndList[i], experimentFile, "red", this.SLMBleachWaveParams[i].Red.ToString());
                                 XmlManager.SetAttribute(ndList[i], experimentFile, "green", this.SLMBleachWaveParams[i].Green.ToString());
@@ -367,8 +370,12 @@
                 if ((int)ICamera.CameraType.LAST_CAMERA_TYPE == ResourceManagerCS.GetCameraType())
                     return;
 
-                //stop preview before persistance, since it could switch modality afterward
-                CloseProgressWindow();
+                //if we are starting a new zstackpreview it means we are not swithing modalities, and we don't want to close the progress window
+                if (!_startingContinuousZStackPreview)
+                {
+                    //stop preview before persistance, since it could switch modality afterward
+                    CloseProgressWindow();
+                }
 
                 //Persist ROIs that are in the canvas
                 OverlayManagerClass.Instance.PersistSaveROIs();

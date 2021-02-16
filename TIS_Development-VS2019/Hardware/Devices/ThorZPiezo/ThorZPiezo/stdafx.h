@@ -23,6 +23,7 @@ using namespace std;
 
 #include "..\..\..\..\Common\Device.h"
 #include "..\..\..\..\Common\ThorSharedTypesCPP.h"
+#include "..\..\..\..\Common\ImageWaveformBuilderDll.h"
 
 
 #ifndef TIXML_USE_TICPP

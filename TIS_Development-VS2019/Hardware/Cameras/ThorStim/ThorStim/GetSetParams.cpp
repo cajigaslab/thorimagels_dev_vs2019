@@ -78,6 +78,16 @@ long ThorStim::GetParamInfo
 			paramReadOnly = TRUE;
 		}
 		break;
+	case ICamera::PARAM_LSM_WAVEFORM_PRECAPTURESTATUS:
+		{
+			paramType = ICamera::TYPE_LONG;
+			paramAvailable = TRUE;
+			paramMin = PreCaptureStatus::PRECAPTURE_BLEACHER_IDLE;
+			paramMax = PreCaptureStatus::PRECAPTURE_DONE;
+			paramDefault = PreCaptureStatus::PRECAPTURE_BLEACHER_IDLE;
+			paramReadOnly = FALSE;
+		}
+		break;
 	case ICamera::PARAM_LSM_WAVEFORM_PATH_NAME:
 		{
 			paramType = ICamera::TYPE_STRING;
@@ -165,6 +175,19 @@ long ThorStim::GetParamInfo
 			paramReadOnly = FALSE;
 		}
 		break;
+	case ICamera::PARAM_LSM_POCKELS_CONNECTED_0:
+	case ICamera::PARAM_LSM_POCKELS_CONNECTED_1:
+	case ICamera::PARAM_LSM_POCKELS_CONNECTED_2:
+	case ICamera::PARAM_LSM_POCKELS_CONNECTED_3:
+		{
+			paramType = ICamera::TYPE_LONG;
+			paramAvailable = TRUE;
+			paramMin = FALSE;
+			paramMax = TRUE;
+			paramDefault = FALSE;
+			paramReadOnly = TRUE;
+		}
+		break;
 	default:
 		paramAvailable = FALSE;
 		ret = FALSE;
@@ -181,7 +204,7 @@ long ThorStim::GetParam(const long paramID, double &param)
 	int32 samplesRead = 0;
 	int32 bytesPerSamp = 0;
 	uInt8 readVal[1] = {0};
-	long count = 0;
+	long count = 0, index = 0;
 	double dVal = 0, dAvg = 0;
 	param = static_cast<double>(samples[0]);
 	try
@@ -311,6 +334,26 @@ long ThorStim::GetParam(const long paramID, double &param)
 				}
 				else
 					ret = FALSE;
+			}
+			break;
+		case ICamera::PARAM_LSM_POCKELS_CONNECTED_0:
+		case ICamera::PARAM_LSM_POCKELS_CONNECTED_1:
+		case ICamera::PARAM_LSM_POCKELS_CONNECTED_2:
+		case ICamera::PARAM_LSM_POCKELS_CONNECTED_3:
+			{
+				switch(paramID)
+				{
+				case ICamera::PARAM_LSM_POCKELS_CONNECTED_0:index = 0;break;
+				case ICamera::PARAM_LSM_POCKELS_CONNECTED_1:index = 1;break;
+				case ICamera::PARAM_LSM_POCKELS_CONNECTED_2:index = 2;break;
+				case ICamera::PARAM_LSM_POCKELS_CONNECTED_3:index = 3;break;
+				}
+				param = (0 < _pockelsLine[index].length()) ? TRUE : FALSE;
+			}
+			break;
+		case ICamera::PARAM_LSM_WAVEFORM_PRECAPTURESTATUS:
+			{
+				param = _precaptureStatus;
 			}
 			break;
 		default:
@@ -445,6 +488,14 @@ long ThorStim::SetParam(const long paramID, const double param)
 				CheckNewValue<double>(_pockelsMaxVoltage[index], param);
 			else
 				ret = FALSE;
+		}
+		break;
+	case ICamera::PARAM_LSM_WAVEFORM_PRECAPTURESTATUS:
+		{
+			if((PreCaptureStatus::PRECAPTURE_BLEACHER_IDLE <= param) || (PreCaptureStatus::PRECAPTURE_DONE >= param))
+			{
+				_precaptureStatus = static_cast<long>(param);
+			}
 		}
 		break;
 	default:

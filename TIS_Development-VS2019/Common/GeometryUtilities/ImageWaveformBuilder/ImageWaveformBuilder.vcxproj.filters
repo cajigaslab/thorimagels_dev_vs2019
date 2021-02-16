@@ -45,6 +45,9 @@
     <ClInclude Include="WaveformBuilderFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="WaveformSaver.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -69,6 +72,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ImageWaveformBuilder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WaveformSaver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

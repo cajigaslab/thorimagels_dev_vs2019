@@ -69,7 +69,7 @@
                         </ContextMenu>
                     </Canvas.ContextMenu>
                 </Canvas>
-                <Canvas x:Name="presentationCanvas"
+                <Canvas x:Name="presentationCanvas" Visibility="Collapsed"
                         MouseMove="presentationCanvas_MouseMove">
                     <Canvas.Background>
                         <ImageBrush x:Name="presentationImage"
@@ -476,10 +476,9 @@
                                                                      UpdateSourceTrigger=PropertyChanged}"
                                                 LogScaleData="{Binding Path=LogScaleEnabled0,
                                                                      Mode=TwoWay,
-                                                                     UpdateSourceTrigger=PropertyChanged}" 
+                                                                     UpdateSourceTrigger=PropertyChanged}"
                                                 Saturations="{Binding Path=PMT1Saturations}"
-                                                SaturationsVisibility="{Binding Path=PMTSaturationsVisibility}"
-                                                />
+                                                SaturationsVisibility="{Binding Path=PMTSaturationsVisibility}" />
                             </Grid>
                         </Grid>
                         <StackPanel Orientation="Horizontal">
@@ -1207,14 +1206,14 @@
                 <Image Source="/CaptureSetupModule;component/Icons/orthogonal.png" />
                 <ToggleButton.ContextMenu>
                     <ContextMenu>
-                        <MenuItem x:Name="virtualStack"
+                        <!--<MenuItem x:Name="virtualStack"
                                   Click="OrthogonalVirtualStack_Click"
                                   Header="Virtual Stack"
                                   IsCheckable="True"
-                                  IsChecked="{Binding Path=VirtualZStack}" />
+                                  IsChecked="{Binding Path=VirtualZStack}" />-->
                         <MenuItem x:Name="displayOption"
                                   Click="OrthogonalDisplayOption_Click"
-                                  Header="Display Option" />
+                                  Header="Display Options" />
                     </ContextMenu>
                 </ToggleButton.ContextMenu>
             </ToggleButton>

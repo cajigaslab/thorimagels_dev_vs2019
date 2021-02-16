@@ -10,7 +10,7 @@ ThorStim::ThorStim()
 {
 	_numCam = _numDigiLines = 0;
 	_counter = "";
-	_riseTimeUS = 0;
+	_activeLoadCount = Constants::ACTIVE_LOAD_BLKSIZE_DEFAULT;
 
 	for(long i=0; i<MAX_GG_POCKELS_CELL_COUNT; i++)
 	{
@@ -48,7 +48,6 @@ std::unique_ptr<ImageWaveformBuilderDLL> ImageWaveformBuilder(new ImageWaveformB
 int ThorStim::_digiLineSelect = 0x0;
 int ThorStim::_numPockelsLines = 0x0;
 long ThorStim::_activeLoadMS = 1;
-long ThorStim::_activeLoadCount = 1;
 long ThorStim::_sampleRateHz = 250000;
 long ThorStim::_triggerMode = ICamera::SW_FREE_RUN_MODE;
 long ThorStim::_frameCount = 1;
@@ -77,7 +76,7 @@ long ThorStim::FindCameras(long &cameraCount)
 	{
 		try
 		{
-			if(FALSE == settings->GetConfigures(_driverType, _activeLoadMS, _activeLoadCount, _sampleRateHz, _riseTimeUS))
+			if(FALSE == settings->GetConfigures(_driverType, _activeLoadMS, _activeLoadCount, _sampleRateHz))
 			{
 				StringCbPrintfW(message,_MAX_PATH,L"GetConfigures from Thor%sSettings failed", ThorStimXML::_libName);
 				LogMessage(message,ERROR_EVENT);
@@ -216,10 +215,10 @@ long ThorStim::CheckConfigNI()
 
 	// get pockels lines
 	if(FALSE == settings->GetModulations(_counter, _triggerIn, 
-		_pockelsLine[0], _pockelsMinVoltage[0], _pockelsMaxVoltage[0],
-		_pockelsLine[1], _pockelsMinVoltage[1], _pockelsMaxVoltage[1],
-		_pockelsLine[2], _pockelsMinVoltage[2], _pockelsMaxVoltage[2],
-		_pockelsLine[3], _pockelsMinVoltage[3], _pockelsMaxVoltage[3]))
+		_pockelsLine[0], _pockelsMinVoltage[0], _pockelsMaxVoltage[0], _pockelsResponseType[0],
+		_pockelsLine[1], _pockelsMinVoltage[1], _pockelsMaxVoltage[1], _pockelsResponseType[1],
+		_pockelsLine[2], _pockelsMinVoltage[2], _pockelsMaxVoltage[2], _pockelsResponseType[2],
+		_pockelsLine[3], _pockelsMinVoltage[3], _pockelsMaxVoltage[3], _pockelsResponseType[3]))
 	{
 		StringCbPrintfW(message,_MAX_PATH,L"GetModulations from Thor%sSettings failed, no gap line is allowed.", ThorStimXML::_libName);
 		LogMessage(message,ERROR_EVENT);
@@ -246,8 +245,6 @@ long ThorStim::CheckConfigNI()
 		}
 		rtsiAvailable[1 == bInfo->rtsiConfigure]++;
 	}
-
-	TryFrameTriggerInputwCounter((_counter.at(_counter.length()-1) + 1) % (NULL != bInfo ? bInfo->counterCount : 4));
 
 	//verify trigger
 	compStr[0] = GetDevIDName(_triggerIn);
@@ -276,6 +273,7 @@ long ThorStim::CheckConfigNI()
 			{
 				StringCbPrintfW(message,_MAX_PATH,L"GetModulations from Thor%sSettings failed, pockelsLine(%d) not available.", ThorStimXML::_libName, i+1);
 				LogMessage(message,ERROR_EVENT);
+				_pockelsLine[i] = "";
 				return FALSE;
 			}
 			if (0 < _pockelsLineStr.size()) _pockelsLineStr += ",";

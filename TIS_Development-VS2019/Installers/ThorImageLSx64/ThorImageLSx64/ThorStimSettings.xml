@@ -1,14 +1,14 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
 <ThorStimSettings>
-  <Configures driverType="0" activeLoadMS="50" activeLoadCount="8" sampleRateKHz="250" riseTimeUS="5.5"/>
-  <!--
-  <Modulations counter="/Dev1/ctr0" triggerIn="/Dev1/PFI4" line1="/Dev1/ao0" lineMinVoltage1="0" lineMaxVoltage1="5.0" line2="/Dev1/ao1" lineMinVoltage2="0" lineMaxVoltage2="5.0" />
+	<Configures driverType="0" activeLoadMS="20" activeLoadCount="4" sampleRateKHz="250"/>
+	<!--
+  <Modulations counter="/Dev1/ctr0" triggerIn="/Dev2/PFI4" line1="/Dev2/ao0" lineMinVoltage1="0" lineMaxVoltage1="5.0" responseType1="1" line2="/Dev2/ao1" lineMinVoltage2="0" lineMaxVoltage2="5.0" responseType2="1" />
  -->
-  <Modulations counter="/Dev1/ctr0" triggerIn="/Dev2/PFI4" line1="/Dev2/ao2" lineMinVoltage1="0" lineMaxVoltage1="5.0" line2="/Dev2/ao3" lineMinVoltage2="0" lineMaxVoltage2="5.0" line3="" lineMinVoltage3="" lineMaxVoltage3="" line4="" lineMinVoltage4="" lineMaxVoltage4="" />
+	<Modulations counter="/Dev2/ctr0" triggerIn="/Dev2/PFI4" line1="/Dev2/ao2" lineMinVoltage1="0" lineMaxVoltage1="5.0" responseType1="1" line2="/Dev2/ao3" lineMinVoltage2="0" lineMaxVoltage2="5.0" responseType2="1" line3="" lineMinVoltage3="" lineMaxVoltage3="" responseType3="1" line4="" lineMinVoltage4="" lineMaxVoltage4="" responseType4="1" />
 
-  <!-- 
-   <Waveform pockelDigOutput="/Dev2/port0/line8" completeOutput="/Dev2/port0/line9" cycleOutput="/Dev2/port0/line10" iterationOutput="/Dev2/port0/line11" patternOutput="/Dev2/port0/line12" patternComplete="/Dev2/port0/line13" activeOutput="/Dev2/port0/line14" epochOutput="/Dev2/port0/line15" cycleInverse="/Dev2/port0/line16"/>
-    -->
-  <Waveform pockelDigOutput="/Dev2/port0/line8" completeOutput="" cycleOutput="" iterationOutput="/Dev2/port0/line10" patternOutput="" patternComplete="" activeOutput="" epochOutput="" cycleInverse=""/>
+	<!-- 
+   <Waveform pockelDigOutput1="/Dev2/port0/line8" completeOutput="/Dev2/port0/line9" cycleOutput="/Dev2/port0/line10" iterationOutput="/Dev2/port0/line11" patternOutput="/Dev2/port0/line12" patternComplete="/Dev2/port0/line13" activeOutput="/Dev2/port0/line14" epochOutput="/Dev2/port0/line15" cycleInverse="/Dev2/port0/line16" pockelDigOutput2="/Dev2/port0/line17" pockelDigOutput3="/Dev2/port0/line18" pockelDigOutput4="/Dev2/port0/line19" />
+   -->
+	<Waveform pockelDigOutput1="" completeOutput="" cycleOutput="" iterationOutput="" patternOutput="" patternComplete="" activeOutput="" epochOutput="" cycleInverse="" pockelDigOutput2="" pockelDigOutput3="" pockelDigOutput4="" />
 
 </ThorStimSettings>

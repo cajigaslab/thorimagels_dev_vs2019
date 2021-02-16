@@ -3661,9 +3661,9 @@
             return (1 == ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_FIELD_SIZE_CALIBRATION, ref fieldSizeCal));
         }
 
-        public bool LoadSLMPatternName(int runtimeCal, int id, string bmpPatternName, bool start, int timeoutVal = 0)
+        public bool LoadSLMPatternName(int runtimeCal, int id, string bmpPatternName, bool start, bool phaseDirect = false, int timeoutVal = 0)
         {
-            return ((1 == LoadSLMPattern(runtimeCal, id, bmpPatternName, (start) ? 1 : 0, timeoutVal)) ? true : false);
+            return ((1 == LoadSLMPattern(runtimeCal, id, bmpPatternName, (start) ? 1 : 0, (phaseDirect) ? 1 : 0, timeoutVal)) ? true : false);
         }
 
         public void MarshalStrArray(IntPtr pUnStrArray, int AryCnt, out string[] StrArray)
@@ -4166,7 +4166,7 @@
         private static extern void InitCallBackROIDataStore(ReportMultiROIStats reportMultiROIStats);
 
         [DllImport(".\\Modules_Native\\RunSample.dll", EntryPoint = "LoadSLMPattern", CharSet = CharSet.Unicode)]
-        private static extern int LoadSLMPattern(int runtimeCal, int id, string bmpPatternName, int doStart, int timeoutVal);
+        private static extern int LoadSLMPattern(int runtimeCal, int id, string bmpPatternName, int doStart, int phaseDirect, int timeoutVal);
 
         [DllImport("msvcrt.dll", EntryPoint = "memset", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private static extern IntPtr memset(IntPtr dest, int c, int count);
@@ -5062,10 +5062,11 @@
             }
 
             //load to SLM:
+            bool phaseDirect = (int)ICamera.LSMType.STIMULATE_MODULATOR == ResourceManagerCS.GetBleacherType();
             for (int i = 0; i < _loadedSLMPatternsCnt; i++)
             {
                 bool doStart = (i == (_loadedSLMPatternsCnt - 1)) ? true : false;
-                this.LoadSLMPatternName(SLMSequenceOn ? 1 : 0, i, _loadedSLMPatterns[i], doStart, timeoutVal);
+                this.LoadSLMPatternName(SLMSequenceOn ? 1 : 0, i, _loadedSLMPatterns[i], doStart, phaseDirect, timeoutVal);
             }
 
             return (0 < _loadedSLMPatternsCnt) ? true : false;
@@ -5538,7 +5539,7 @@
                             InitializeBleachPixelArrayParams();
                             WaveformBuilder.ResetWaveform();
                             WaveformBuilder.BuildTravel(pt, 0, 0, 0);
-                            WaveformBuilder.BuildSpot(BleachWParams[_bleachPixelArrayIndex], BleachWParams[_bleachPixelArrayIndex].Power);
+                            WaveformBuilder.BuildSpot(BleachWParams[_bleachPixelArrayIndex], new double[1] { BleachWParams[_bleachPixelArrayIndex].Power });
                             if (((BleachFrames - 1) == _bleachFrameIndex) && (_bleachPixelArrayIndex == _bleachPixelArrayList.Count - 1) && (_bleachPixelIndex == _bleachPixelArrayList[_bleachPixelArrayIndex].Size - 1))
                             {
                                 WaveformBuilder.ReturnHome(true);

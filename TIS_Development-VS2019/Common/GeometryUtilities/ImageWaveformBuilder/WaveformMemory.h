@@ -9,7 +9,7 @@ public:
 	//singleton:
 	static WaveformMemory* getInstance();
 
-	long AllocateMem(GGalvoWaveformParams gWParams, const wchar_t* memMapPath);
+	long AllocateMem(GGalvoWaveformParams gWParams, const wchar_t* memMapPath, long lpSecurityAttributes);
 	long AllocateMemThorDAQ(ThorDAQGGWaveformParams gWParams, const wchar_t* memMapPath);
 	long OpenMem(GGalvoWaveformParams& gWParams, const wchar_t* memMapPathName);
 	long OpenMemThorDAQ(ThorDAQGGWaveformParams& gWParams, const wchar_t* memMapPathName);
@@ -36,6 +36,7 @@ private:
 	DWORDLONG _dwlAnalogPo2Size;
 	DWORDLONG _dwlAnalogPo3Size;
 	DWORDLONG _dwlDigitalLSize;
+	DWORDLONG _dwlAnalogPZSize;
 	long	  _granularityOfMapView;
 	long	  _doubleByteSize;
 	long	  _ushortByteSize;

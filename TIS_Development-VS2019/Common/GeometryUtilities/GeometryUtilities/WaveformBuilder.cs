@@ -668,6 +668,12 @@
                 _gWaveParams.DigBufWaveform = IntPtr.Zero;
             }
 
+            if (_gWaveParams.PiezoWaveformZ != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(_gWaveParams.PiezoWaveformZ);
+                _gWaveParams.PiezoWaveformZ = IntPtr.Zero;
+            }
+
             if (_thorDAQGGWaveformParams.GalvoWaveformXY != IntPtr.Zero)
             {
                 Marshal.FreeHGlobal(_thorDAQGGWaveformParams.GalvoWaveformXY);
@@ -685,6 +691,7 @@
                 Marshal.FreeHGlobal(_thorDAQGGWaveformParams.DigBufWaveform);
                 _thorDAQGGWaveformParams.DigBufWaveform = IntPtr.Zero;
             }
+
         }
 
         public static PixelArray GetPixelArray()
@@ -795,7 +802,7 @@
                 { rec.PixelMode = (1 == Convert.ToInt32(str, CultureInfo.CurrentCulture)) ? true : false; }
                 else
                 { rec.PixelMode = false; }
-                rec.Power = new double[1] { (OverlayManager.BleachClass.GetBleachAttribute(node, doc, 6, ref str)) ? (Convert.ToDouble(str, CultureInfo.CurrentCulture)) : 0 };
+                rec.Power = (OverlayManager.BleachClass.GetBleachAttribute(node, doc, 6, ref str)) ? (Convert.ToDouble(str, CultureInfo.CurrentCulture)) : 0.0;
                 rec.LongIdleTime = (OverlayManager.BleachClass.GetBleachAttribute(node, doc, 8, ref str)) ? (Convert.ToDouble(str, CultureInfo.CurrentCulture)) : 0.0;
                 rec.PrePatIdleTime = (OverlayManager.BleachClass.GetBleachAttribute(node, doc, 9, ref str)) ? (Convert.ToDouble(str, CultureInfo.CurrentCulture)) : 0.0;
                 rec.PostPatIdleTime = (OverlayManager.BleachClass.GetBleachAttribute(node, doc, 10, ref str)) ? (Convert.ToDouble(str, CultureInfo.CurrentCulture)) : 0.0;
@@ -1393,7 +1400,7 @@
                         //offset the IntPtr using the IntPtr.Add() function
                         if (IntPtr.Zero != _gWaveParams.DigBufWaveform)
                         {
-                            Marshal.Copy(_waveform.PockelDig.ToArray(), 0, _gWaveParams.DigBufWaveform, _waveform.Count);
+                            Marshal.Copy(_waveform.PockelDig[0].ToArray(), 0, _gWaveParams.DigBufWaveform, _waveform.Count);
                             Marshal.Copy(_waveform.ActiveEnvelope.ToArray(), 0, IntPtr.Add(_gWaveParams.DigBufWaveform, 1 * _waveform.Count), _waveform.Count);
                             Marshal.Copy(_waveform.CycleComplete.ToArray(), 0, IntPtr.Add(_gWaveParams.DigBufWaveform, 2 * _waveform.Count), _waveform.Count);
                             Marshal.Copy(_waveform.CycleEnvelope.ToArray(), 0, IntPtr.Add(_gWaveParams.DigBufWaveform, 3 * _waveform.Count), _waveform.Count);
@@ -1402,30 +1409,34 @@
                             Marshal.Copy(_waveform.PatternComplete.ToArray(), 0, IntPtr.Add(_gWaveParams.DigBufWaveform, 6 * _waveform.Count), _waveform.Count);
                             Marshal.Copy(_waveform.EpochEnvelope.ToArray(), 0, IntPtr.Add(_gWaveParams.DigBufWaveform, 7 * _waveform.Count), _waveform.Count);
                             Marshal.Copy(_waveform.CycleComplementary.ToArray(), 0, IntPtr.Add(_gWaveParams.DigBufWaveform, 8 * _waveform.Count), _waveform.Count);
+                            for (int p = 1; p < _waveform.PockelDig.Count; p++)
+                            {
+                                Marshal.Copy(_waveform.PockelDig[p].ToArray(), 0, IntPtr.Add(_gWaveParams.DigBufWaveform, ((int)BLEACHSCAN_DIGITAL_LINENAME.CYCLE_COMPLEMENTARY + p - 1) * _waveform.Count), _waveform.Count);
+                            }
                         }
                     }
                     break;
                 case WaveformDriverType.WaveformDriver_ThorDAQ:
                     {
-                        if (IntPtr.Zero != _gWaveParams.GalvoWaveformXY && 0 < _waveform.X_Volt.Count)
+                        if (IntPtr.Zero != _thorDAQGGWaveformParams.GalvoWaveformXY && 0 < _waveform.X_Volt.Count)
                         {
                             //copy the XY analog lines into a single IntPtr buffer _thorDAQGGWaveformParams.GalvoWaveformXY
                             //offset the IntPtr using the IntPtr.Add() function
-                            CopyUShortToIntPtr(_waveform.X_Volt_16bit.ToArray(), 0, _gWaveParams.GalvoWaveformXY, _waveform.Count);
-                            CopyUShortToIntPtr(_waveform.Y_Volt_16bit.ToArray(), 0, IntPtr.Add(_gWaveParams.GalvoWaveformXY, _waveform.Count * sizeof(ushort)), _waveform.Count);
+                            CopyUShortToIntPtr(_waveform.X_Volt_16bit.ToArray(), 0, _thorDAQGGWaveformParams.GalvoWaveformXY, _waveform.Count);
+                            CopyUShortToIntPtr(_waveform.Y_Volt_16bit.ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.GalvoWaveformXY, _waveform.Count * sizeof(ushort)), _waveform.Count);
                         }
                         //copy the pockels analog line into a single IntPtr buffer _gWaveParams.GalvoWaveformPockel
                         for (int i = 0; i < _waveform.Pockel.Count; i++)
                         {
                             if (0 < _waveform.Pockel[i].Count)
-                                Marshal.Copy(_waveform.Pockel[i].ToArray(), 0, IntPtr.Add(_gWaveParams.GalvoWaveformPockel, i * (int)_gWaveParams.analogPockelSize * sizeof(double)), (int)_gWaveParams.analogPockelSize);
+                                Marshal.Copy(_waveform.Pockel[i].ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.GalvoWaveformPockel, i * (int)_thorDAQGGWaveformParams.analogPockelSize * sizeof(double)), (int)_thorDAQGGWaveformParams.analogPockelSize);
                         }
 
                         //copy the digital lines into a single IntPtr buffer _thorDAQGGWaveformParams.DigBufWaveform
                         //offset the IntPtr using the IntPtr.Add() function
                         if (IntPtr.Zero != _thorDAQGGWaveformParams.DigBufWaveform)
                         {                            
-                            Marshal.Copy(_waveform.PockelDig.ToArray(), 0, _thorDAQGGWaveformParams.DigBufWaveform, _waveform.Count);
+                            Marshal.Copy(_waveform.PockelDig[0].ToArray(), 0, _thorDAQGGWaveformParams.DigBufWaveform, _waveform.Count);
                             Marshal.Copy(_waveform.ActiveEnvelope.ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.DigBufWaveform, _waveform.Count), _waveform.Count);
                             Marshal.Copy(_waveform.CycleComplete.ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.DigBufWaveform, 2 * _waveform.Count), _waveform.Count);
                             Marshal.Copy(_waveform.CycleEnvelope.ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.DigBufWaveform, 3 * _waveform.Count), _waveform.Count);
@@ -1434,6 +1445,10 @@
                             Marshal.Copy(_waveform.PatternComplete.ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.DigBufWaveform, 6 * _waveform.Count), _waveform.Count);
                             Marshal.Copy(_waveform.EpochEnvelope.ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.DigBufWaveform, 7 * _waveform.Count), _waveform.Count);
                             Marshal.Copy(_waveform.CycleComplementary.ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.DigBufWaveform, 8 * _waveform.Count), _waveform.Count);
+                            for (int p = 1; p < _waveform.PockelDig.Count; p++)
+                            {
+                                Marshal.Copy(_waveform.PockelDig[p].ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.DigBufWaveform, ((int)BLEACHSCAN_DIGITAL_LINENAME.CYCLE_COMPLEMENTARY + p - 1) * _waveform.Count), _waveform.Count);
+                            }
                         }
                     }
                     break;
@@ -1575,8 +1590,12 @@
             {
                 aDsetNames.Add("/Pockel" + i);
             }
-            string[] dDsetNames = { "/PockelDig", "/ActiveEnvelope", "/CycleComplete", "/CycleEnvelope", "/IterationEnvelope",
+            List<string> dDsetNames = new List<string> { "/PockelDig", "/ActiveEnvelope", "/CycleComplete", "/CycleEnvelope", "/IterationEnvelope",
                                               "/PatternEnvelope", "/PatternComplete", "/EpochEnvelope", "/CycleInverse" };
+            for (int i = 1; i < _waveform.PockelDig.Count; i++)
+            {
+                dDsetNames.Add("PockelDig" + i);
+            }
             UInt32[] clk = { _waveform.ClockRate };
 
             //Copy the different array depending on the waveform driver Type
@@ -1586,7 +1605,7 @@
                     {
                         h5io.CreateGroupDatasetNames<UInt32>(grpName[0], rtNames, rtNames.Length);
                         h5io.CreateGroupDatasetNames<Double>(grpName[1], aDsetNames.ToArray(), aDsetNames.Count);
-                        h5io.CreateGroupDatasetNames<Byte>(grpName[2], dDsetNames, dDsetNames.Length);
+                        h5io.CreateGroupDatasetNames<Byte>(grpName[2], dDsetNames.ToArray(), dDsetNames.Count);
                         h5io.WriteDataset<UInt32>(grpName[0], rtNames[0], clk, 0, (UInt32)1);
                         h5io.ExtendDataset<Double>(grpName[1], aDsetNames[0], _waveform.X_Volt.ToArray(), true, (UInt32)_waveform.X_Volt.Count);
                         h5io.ExtendDataset<Double>(grpName[1], aDsetNames[1], _waveform.Y_Volt.ToArray(), true, (UInt32)_waveform.Y_Volt.Count);
@@ -1600,7 +1619,7 @@
                     {
                         h5io.CreateGroupDatasetNames<UInt32>(grpName[0], rtNames, rtNames.Length);
                         h5io.CreateGroupDatasetNames<UInt16>(grpName[1], aDsetNames.ToArray(), aDsetNames.Count);
-                        h5io.CreateGroupDatasetNames<Byte>(grpName[2], dDsetNames, dDsetNames.Length);
+                        h5io.CreateGroupDatasetNames<Byte>(grpName[2], dDsetNames.ToArray(), dDsetNames.Count);
                         h5io.WriteDataset<UInt32>(grpName[0], rtNames[0], clk, 0, (UInt32)1);
                         h5io.ExtendDataset<UInt16>(grpName[1], aDsetNames[0], _waveform.X_Volt_16bit.ToArray(), true, (UInt32)_waveform.X_Volt_16bit.Count);
                         h5io.ExtendDataset<UInt16>(grpName[1], aDsetNames[1], _waveform.Y_Volt_16bit.ToArray(), true, (UInt32)_waveform.Y_Volt_16bit.Count);
@@ -1609,7 +1628,7 @@
                     break;
             }
 
-            h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[0], _waveform.PockelDig.ToArray(), true, (UInt32)_waveform.PockelDig.Count);
+            h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[0], _waveform.PockelDig[0].ToArray(), true, (UInt32)_waveform.PockelDig[0].Count);
             h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[1], _waveform.ActiveEnvelope.ToArray(), true, (UInt32)_waveform.ActiveEnvelope.Count);
             h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[2], _waveform.CycleComplete.ToArray(), true, (UInt32)_waveform.CycleComplete.Count);
             h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[3], _waveform.CycleEnvelope.ToArray(), true, (UInt32)_waveform.CycleEnvelope.Count);
@@ -1618,6 +1637,10 @@
             h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[6], _waveform.PatternComplete.ToArray(), true, (UInt32)_waveform.PatternComplete.Count);
             h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[7], _waveform.EpochEnvelope.ToArray(), true, (UInt32)_waveform.EpochEnvelope.Count);
             h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[8], _waveform.CycleComplementary.ToArray(), true, (UInt32)_waveform.CycleComplementary.Count);
+            for (int p = 1; p < _waveform.PockelDig.Count; p++)
+            {
+                h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[8 + p], _waveform.PockelDig[p].ToArray(), true, (UInt32)_waveform.PockelDig[p].Count);
+            }
             h5io.CloseH5();
         }
 
@@ -1643,7 +1666,12 @@
             {
                 aDsetNames.Add("/Pockel" + i);
             }
-            string[] dDsetNames = { "/PockelDig", "/ActiveEnvelope", "/CycleComplete", "/CycleEnvelope", "/IterationEnvelope", "/PatternEnvelope", "/PatternComplete", "/EpochEnvelope", "/CycleInverse" };
+            List<string> dDsetNames = new List<string>() { "/PockelDig", "/ActiveEnvelope", "/CycleComplete", "/CycleEnvelope",
+                                         "/IterationEnvelope", "/PatternEnvelope", "/PatternComplete", "/EpochEnvelope", "/CycleInverse" };
+            for (int i = 1; i < _waveform.PockelDig.Count; i++)
+            {
+                dDsetNames.Add("/PockelDig" + i);
+            }
             UInt32[] clk = { _waveform.ClockRate };
 
             //Save the waveform using a different data types depending on the waveform driver Type
@@ -1654,7 +1682,7 @@
                     {
                         h5io.CreateGroupDatasetNames<UInt32>(grpName[0], rtNames, rtNames.Length);
                         h5io.CreateGroupDatasetNames<Double>(grpName[1], aDsetNames.ToArray(), aDsetNames.Count);
-                        h5io.CreateGroupDatasetNames<Byte>(grpName[2], dDsetNames, dDsetNames.Length);
+                        h5io.CreateGroupDatasetNames<Byte>(grpName[2], dDsetNames.ToArray(), dDsetNames.Count);
 
                         if (_waveformSaver.CancellationPending != true)
                         {
@@ -1705,7 +1733,7 @@
                     {
                         h5io.CreateGroupDatasetNames<UInt32>(grpName[0], rtNames, rtNames.Length);
                         h5io.CreateGroupDatasetNames<UInt16>(grpName[1], aDsetNames.ToArray(), aDsetNames.Count);
-                        h5io.CreateGroupDatasetNames<Byte>(grpName[2], dDsetNames, dDsetNames.Length);
+                        h5io.CreateGroupDatasetNames<Byte>(grpName[2], dDsetNames.ToArray(), dDsetNames.Count);
 
                         if (_waveformSaver.CancellationPending != true)
                         {
@@ -1752,7 +1780,7 @@
             }
             if (_waveformSaver.CancellationPending != true)
             {
-                h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[0], _waveform.PockelDig.ToArray(), true, (UInt32)_waveform.PockelDig.Count);
+                h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[(int)BLEACHSCAN_DIGITAL_LINENAME.POCKEL_DIG - 1], _waveform.PockelDig[0].ToArray(), true, (UInt32)_waveform.PockelDig.Count);
             }
             else
             {
@@ -1762,7 +1790,7 @@
             }
             if (_waveformSaver.CancellationPending != true)
             {
-                h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[1], _waveform.ActiveEnvelope.ToArray(), true, (UInt32)_waveform.ActiveEnvelope.Count);
+                h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[(int)BLEACHSCAN_DIGITAL_LINENAME.ACTIVE_ENVELOPE - 1], _waveform.ActiveEnvelope.ToArray(), true, (UInt32)_waveform.ActiveEnvelope.Count);
             }
             else
             {
@@ -1772,7 +1800,7 @@
             }
             if (_waveformSaver.CancellationPending != true)
             {
-                h5io.WriteDataset<Byte>(grpName[2], dDsetNames[2], _waveform.CycleComplete.ToArray(), 0, (UInt32)_waveform.CycleComplete.Count);
+                h5io.WriteDataset<Byte>(grpName[2], dDsetNames[(int)BLEACHSCAN_DIGITAL_LINENAME.CYCLE_COMPLETE - 1], _waveform.CycleComplete.ToArray(), 0, (UInt32)_waveform.CycleComplete.Count);
             }
             else
             {
@@ -1782,7 +1810,7 @@
             }
             if (_waveformSaver.CancellationPending != true)
             {
-                h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[3], _waveform.CycleEnvelope.ToArray(), true, (UInt32)_waveform.CycleEnvelope.Count);
+                h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[(int)BLEACHSCAN_DIGITAL_LINENAME.CYCLE_ENVELOPE - 1], _waveform.CycleEnvelope.ToArray(), true, (UInt32)_waveform.CycleEnvelope.Count);
             }
             else
             {
@@ -1792,7 +1820,7 @@
             }
             if (_waveformSaver.CancellationPending != true)
             {
-                h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[4], _waveform.IterationEnvelope.ToArray(), true, (UInt32)_waveform.IterationEnvelope.Count);
+                h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[(int)BLEACHSCAN_DIGITAL_LINENAME.ITERATION_ENVELOPE - 1], _waveform.IterationEnvelope.ToArray(), true, (UInt32)_waveform.IterationEnvelope.Count);
             }
             else
             {
@@ -1802,7 +1830,7 @@
             }
             if (_waveformSaver.CancellationPending != true)
             {
-                h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[5], _waveform.PatternEnvelope.ToArray(), true, (UInt32)_waveform.PatternEnvelope.Count);
+                h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[(int)BLEACHSCAN_DIGITAL_LINENAME.PATTERN_TRIGGER - 1], _waveform.PatternEnvelope.ToArray(), true, (UInt32)_waveform.PatternEnvelope.Count);
             }
             else
             {
@@ -1812,7 +1840,7 @@
             }
             if (_waveformSaver.CancellationPending != true)
             {
-                h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[6], _waveform.PatternComplete.ToArray(), true, (UInt32)_waveform.PatternComplete.Count);
+                h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[(int)BLEACHSCAN_DIGITAL_LINENAME.PATTERN_COMPLETE - 1], _waveform.PatternComplete.ToArray(), true, (UInt32)_waveform.PatternComplete.Count);
             }
             else
             {
@@ -1822,7 +1850,7 @@
             }
             if (_waveformSaver.CancellationPending != true)
             {
-                h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[7], _waveform.EpochEnvelope.ToArray(), true, (UInt32)_waveform.EpochEnvelope.Count);
+                h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[(int)BLEACHSCAN_DIGITAL_LINENAME.EPOCH_ENVELOPE - 1], _waveform.EpochEnvelope.ToArray(), true, (UInt32)_waveform.EpochEnvelope.Count);
             }
             else
             {
@@ -1832,13 +1860,26 @@
             }
             if (_waveformSaver.CancellationPending != true)
             {
-                h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[8], _waveform.CycleComplementary.ToArray(), true, (UInt32)_waveform.CycleComplementary.Count);
+                h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[(int)BLEACHSCAN_DIGITAL_LINENAME.CYCLE_COMPLEMENTARY - 1], _waveform.CycleComplementary.ToArray(), true, (UInt32)_waveform.CycleComplementary.Count);
             }
             else
             {
                 h5io.CloseH5();
                 e.Cancel = true;
                 return false;
+            }
+            for (int p = 1; p < _waveform.PockelDig.Count; p++)
+            {
+                if (_waveformSaver.CancellationPending != true)
+                {
+                    h5io.ExtendDataset<Byte>(grpName[2], dDsetNames[(int)BLEACHSCAN_DIGITAL_LINENAME.CYCLE_COMPLEMENTARY + p - 1], _waveform.PockelDig[p].ToArray(), true, (UInt32)_waveform.PockelDig[p].Count);
+                }
+                else
+                {
+                    h5io.CloseH5();
+                    e.Cancel = true;
+                    return false;
+                }
             }
             h5io.CloseH5();
 
@@ -1862,15 +1903,17 @@
                         _gWaveParams.analogXYSize = SaveType[(int)SignalType.ANALOG_XY] ? (UInt64)(_waveform.Count) * 2 : 0;
                         _gWaveParams.pockelsCount = SaveType[(int)SignalType.ANALOG_POCKEL] ? (byte)(_waveform.Pockel.Count) : (byte)0;
                         _gWaveParams.analogPockelSize = SaveType[(int)SignalType.ANALOG_POCKEL] ? (UInt64)(_waveform.Count) * _gWaveParams.pockelsCount : 0;
-                        _gWaveParams.digitalSize = SaveType[(int)SignalType.DIGITAL_LINES] ? (UInt64)(_waveform.Count) * ((int)(ThorSharedTypes.BLEACHSCAN_DIGITAL_LINENAME.DIGITAL_LINENAME_LAST) - 1) : 0; //no need to save dummy
+                        _gWaveParams.digitalSize = SaveType[(int)SignalType.DIGITAL_LINES] ? (UInt64)(_waveform.Count) * (byte)(ThorSharedTypes.BLEACHSCAN_DIGITAL_LINENAME.CYCLE_COMPLEMENTARY + _waveform.PockelDig.Count - 1) : 0; //no need to save dummy
+                        _gWaveParams.analogZSize = 0;
                         _gWaveParams.stepVolt = DeltaX_volt;
-                        _gWaveParams.digitalLineCnt = SaveType[(int)SignalType.DIGITAL_LINES] ? ((int)(ThorSharedTypes.BLEACHSCAN_DIGITAL_LINENAME.DIGITAL_LINENAME_LAST) - 1) : 0;
+                        _gWaveParams.digitalLineCnt = SaveType[(int)SignalType.DIGITAL_LINES] ? ((int)(ThorSharedTypes.BLEACHSCAN_DIGITAL_LINENAME.CYCLE_COMPLEMENTARY) + _waveform.PockelDig.Count - 1) : 0;
                         //alloc here and release when completed:
 
                         //Alloc the unmanaged memory in the corresponding size depending on the waveform driver Type
                         _gWaveParams.GalvoWaveformXY = SaveType[(int)SignalType.ANALOG_XY] ? Marshal.AllocHGlobal((int)_gWaveParams.analogXYSize * sizeof(double)) : IntPtr.Zero;
                         _gWaveParams.GalvoWaveformPockel = SaveType[(int)SignalType.ANALOG_POCKEL] ? Marshal.AllocHGlobal((int)_gWaveParams.analogPockelSize *  sizeof(double)) : IntPtr.Zero;
                         _gWaveParams.DigBufWaveform = SaveType[(int)SignalType.DIGITAL_LINES] ? Marshal.AllocHGlobal((int)_gWaveParams.digitalSize * sizeof(byte)) : IntPtr.Zero;
+                        _gWaveParams.PiezoWaveformZ = IntPtr.Zero;
                     }
                     break;
                 case WaveformDriverType.WaveformDriver_ThorDAQ:

@@ -206,7 +206,7 @@ long AcquireTStream::CallStartProgressBar(long index, long resetTotalCount)
 }
 
 /// <return> return next created image ID, -1 if failed. </return>
-long AcquireTStream::CreateSaveThread(SaveParams sp, char* pMem)
+long AcquireTStream::CreateSaveThread(SaveParams& sp, char* pMem)
 {
 	long ret = FALSE;
 	DWORD dwThread;
@@ -249,12 +249,12 @@ long AcquireTStream::CreateSaveThread(SaveParams sp, char* pMem)
 		{
 			//TODO: still need to name the stream string correctly
 			ImageManager::getInstance()->CreateImage(imageID,it->second,L"Stream");
-			sp.imageIDsMap.insert(std::pair<long, long>(it->first, imageID));
+			sp.imageIDsMap[it->first] = imageID;
 		}
 		for (std::map<long, Dimensions>::iterator it = sp.regionDimensionsMap.begin(); it != sp.regionDimensionsMap.end(); it++)
 		{
 			ImageManager::getInstance()->CreateImage(imageID,it->second,L"Stream");
-			sp.regionImageIDsMap.insert(std::pair<long, long>(it->first, imageID));
+			sp.regionImageIDsMap[it->first] = imageID;
 		}
 	}
 	//#endif
@@ -510,6 +510,7 @@ long AcquireTStream::SetupZStage(int setupMode, ICamera *pCamera, ZRangeInfo* zR
 		if (FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_FLYBACK_TIME,flybackFrames/frameRate))
 		{
 			pZStage->GetParamInfo(IDevice::PARAM_Z_FAST_FLYBACK_TIME,paramType,paramAvailable,paramReadOnly,paramMin,paramMax,paramDefault);
+			pZStage->SetParamString(IDevice::PARAM_WAVEFORM_OUTPATH, (wchar_t*)GetDir(_pExp->GetPathAndName()).c_str());
 			minZFrames = static_cast<long>(ceil(paramMin * frameRate));
 			maxZFrames = static_cast<long>(floor(paramMax * frameRate));
 			if(minZFrames > flybackFrames)
@@ -785,8 +786,12 @@ long AcquireTStream::SetupImageData(wstring streamPath, ICamera *pCamera, long a
 					logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create memory buffer, disc space may not be sufficient.");
 					return FALSE;
 				}
-				sp->imageIDsMap.insert(std::pair<long, long>(BufferType::INTENSITY, tempImageID));
-				sp->dimensionsMap.insert(std::pair<long, Dimensions>(BufferType::INTENSITY, ddflimIntensity));					
+
+				sp->imageIDsMap[BufferType::INTENSITY] = tempImageID;
+				sp->dimensionsMap[BufferType::INTENSITY] = ddflimIntensity;
+
+				//sp->imageIDsMap.insert(std::pair<long, long>(BufferType::INTENSITY, tempImageID));
+				//sp->dimensionsMap.insert(std::pair<long, Dimensions>(BufferType::INTENSITY, ddflimIntensity));					
 
 				const long DFLIM_HISTOGRAM_BINS = 256;
 				Dimensions ddflimHisto= baseDimensions;
@@ -836,8 +841,8 @@ long AcquireTStream::SetupImageData(wstring streamPath, ICamera *pCamera, long a
 					logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create memory buffer, disc space may not be sufficient.");
 					return FALSE;
 				}
-				sp->imageIDsMap.insert(std::pair<long, long>(BufferType::DFLIM_PHOTONS, tempImageID));
-				sp->dimensionsMap.insert(std::pair<long, Dimensions>(BufferType::DFLIM_PHOTONS, ddflimPhotons));					
+				sp->imageIDsMap[BufferType::DFLIM_PHOTONS] = tempImageID;
+				sp->dimensionsMap[BufferType::DFLIM_PHOTONS] = ddflimPhotons;					
 			}
 			if (MesoScanTypes::Micro != viewMode)	//single area (meso) scan
 			{
@@ -846,8 +851,8 @@ long AcquireTStream::SetupImageData(wstring streamPath, ICamera *pCamera, long a
 					logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create memory buffer, disc space may not be sufficient.");
 					return FALSE;
 				}
-				sp->imageIDsMap.insert(std::pair<long, long>(BufferType::INTENSITY, tempImageID));
-				sp->dimensionsMap.insert(std::pair<long, Dimensions>(BufferType::INTENSITY, baseDimensions));
+				sp->imageIDsMap[BufferType::INTENSITY] = tempImageID;
+				sp->dimensionsMap[BufferType::INTENSITY] = baseDimensions;
 			}
 
 			//add scan to big tiff before save data in finite mode, will add more scans in each stimulus
@@ -868,8 +873,8 @@ long AcquireTStream::SetupImageData(wstring streamPath, ICamera *pCamera, long a
 					logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create memory buffer, disc space may not be sufficient.");
 					return FALSE;
 				}
-				sp->imageIDsMap.insert(std::pair<long, long>(BufferType::INTENSITY, tempImageID));
-				sp->dimensionsMap.insert(std::pair<long, Dimensions>(BufferType::INTENSITY, baseDimensions));
+				sp->imageIDsMap[BufferType::INTENSITY] =  tempImageID;
+				sp->dimensionsMap[BufferType::INTENSITY] = baseDimensions;
 			}
 		}
 		//multi-area scan: (imageIDsMap already kept meso scan, reserve regionImageIDsMap for micro scan only)
@@ -1056,8 +1061,7 @@ long AcquireTStream::SetGetCameraSettings(ICamera* pCamera, long &channel, long 
 		long threePhotonEnable = FALSE;
 		long numberOfPlanes = 1;
 		long selectedPlane = 0;
-		wstring pathAndName;
-		_pExp->GetPathAndName(pathAndName);
+		wstring pathAndName = _pExp->GetPathAndName();
 		//getting the values from the experiment setup XML files
 		_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,chan,lsmFieldSize,offsetX,offsetY,averageMode,averageNum,clockSource, inputRange1, inputRange2, 
 			twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timebasedLineScan, timebasedLineScanMS, threePhotonEnable, numberOfPlanes);
@@ -1101,6 +1105,7 @@ long AcquireTStream::SetGetCameraSettings(ICamera* pCamera, long &channel, long 
 			break;
 		}
 		pCamera->SetParamString(ICamera::PARAM_MESO_EXP_PATH,(wchar_t*)pathAndName.c_str());
+		pCamera->SetParamString(ICamera::PARAM_WAVEFORM_OUTPATH, (wchar_t*)GetDir(pathAndName).c_str());
 		pCamera->SetParam(ICamera::PARAM_LSM_AREAMODE,areaMode);
 		pCamera->SetParam(ICamera::PARAM_LSM_SCANAREA_ANGLE,areaAngle);
 		pCamera->SetParam(ICamera::PARAM_LSM_PIXEL_X,pixelX);
@@ -2596,6 +2601,11 @@ long AcquireTStream::Execute(long index, long subWell)
 					if (TRUE == CreateSaveThread(spThread, pVirtualMemory))
 						saveMaxStreamFramesCount++;
 
+					for (std::map<long, long>::iterator it = spThread.imageIDsMap.begin(); it != spThread.imageIDsMap.end(); it++)
+					{
+						sp.imageIDsMap[it->first] = it->second;
+					}
+
 					t = 1;	//currentStreamCount
 					tStimulus = tStimulus + 1;
 
@@ -2666,6 +2676,11 @@ long AcquireTStream::Execute(long index, long subWell)
 							if (TRUE == CreateSaveThread(spThread, pVirtualMemory))
 								saveMaxStreamFramesCount++;
 
+							for (std::map<long, long>::iterator it = spThread.imageIDsMap.begin(); it != spThread.imageIDsMap.end(); it++)
+							{
+								sp.imageIDsMap[it->first] = it->second;
+							}
+
 							t = 1;	//currentStreamCount
 							tStimulus = tStimulus + 1;
 
@@ -2689,7 +2704,7 @@ long AcquireTStream::Execute(long index, long subWell)
 						}
 					}
 				}
-
+				
 				//postpone stop saving until fulfilled average stimulus,
 				//only in HW trigger mode since it does rearm every falling edge:
 				if (ICamera::HW_MULTI_FRAME_TRIGGER_FIRST == _triggerMode)
@@ -2753,6 +2768,11 @@ long AcquireTStream::Execute(long index, long subWell)
 					if (TRUE == CreateSaveThread(spThread, pVirtualMemory))
 						saveMaxStreamFramesCount++;
 
+					for (std::map<long, long>::iterator it = spThread.imageIDsMap.begin(); it != spThread.imageIDsMap.end(); it++)
+					{
+						sp.imageIDsMap[it->first] = it->second;
+					}
+
 					//move the T back to the start
 					t = 1;	//currentStreamCount
 					saveMaxStreamFramesCount = 0;
@@ -2776,7 +2796,7 @@ long AcquireTStream::Execute(long index, long subWell)
 					startCamStatus = pCamera->StartAcquisition(_pMemoryBuffer);
 					scannerStopped = FALSE;
 					break;
-				}
+				}				
 			}
 
 			//we've reached the end of the defined number
@@ -2792,7 +2812,6 @@ long AcquireTStream::Execute(long index, long subWell)
 				pCamera->PreflightAcquisition(_pMemoryBuffer);
 				startCamStatus = pCamera->StartAcquisition(_pMemoryBuffer);
 			}
-
 		}
 		break;
 		}
@@ -2882,6 +2901,11 @@ long AcquireTStream::Execute(long index, long subWell)
 
 					if(TRUE == CreateSaveThread(spThread, pVirtualMemory))
 						saveMaxStreamFramesCount++;
+
+					for (std::map<long, long>::iterator it = spThread.imageIDsMap.begin(); it != spThread.imageIDsMap.end(); it++)
+					{
+						sp.imageIDsMap[it->first] = it->second;
+					}
 				}
 				//ready to stop
 				break;

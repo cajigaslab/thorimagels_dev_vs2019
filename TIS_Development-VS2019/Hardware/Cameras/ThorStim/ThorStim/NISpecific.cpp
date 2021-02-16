@@ -200,7 +200,7 @@ long ThorStim::SetupTaskMasterPockel(void)
 
 		DAQmxErrChk (L"DAQmxSetAODataXferMech", retVal = DAQmxSetAODataXferMech(_taskHandleAOPockels,"",dataXferType));
 
-		DAQmxErrChk (L"DAQmxCfgOutputBuffer",retVal = DAQmxCfgOutputBuffer(_taskHandleAOPockels,static_cast<uInt32>(min(_totalLength[SignalType::ANALOG_POCKEL], _dLengthPerAOCallback[SignalType::ANALOG_POCKEL] * _activeLoadCount))));
+		DAQmxErrChk (L"DAQmxCfgOutputBuffer",retVal = DAQmxCfgOutputBuffer(_taskHandleAOPockels,static_cast<uInt32>(_totalLength[SignalType::ANALOG_POCKEL])));
 
 		//AO cannot be armStarted:
 		SetFrameInTriggerableTask(_taskHandleAOPockels, FALSE);
@@ -226,7 +226,7 @@ long ThorStim::SetupTaskMasterPockel(void)
 /// <summary> generate digital output task after digital waveform being built </summary>
 long ThorStim::SetupTaskMasterDigital(void)
 {
-	int32 retVal, error = 0;	
+	int32 retVal = DAQmxSuccess, error = 0;	
 
 	TerminateTask(_taskHandleDO);
 
@@ -256,7 +256,7 @@ long ThorStim::SetupTaskMasterDigital(void)
 				DAQmxErrChk (L"DAQmxSetWriteAttribute",retVal = DAQmxSetWriteAttribute (_taskHandleDO, DAQmx_Write_RegenMode, DAQmx_Val_DoNotAllowRegen));
 			}
 			DAQmxErrChk (L"DAQmxCfgSampClkTiming",retVal = DAQmxCfgSampClkTiming(_taskHandleDO,controllerInternalOutput.c_str(),static_cast<float64>(_gGalvoWaveParams.ClockRate),DAQmx_Val_Rising,DAQmx_Val_FiniteSamps,_totalLength[SignalType::DIGITAL_LINES]));
-			DAQmxErrChk (L"DAQmxCfgOutputBuffer",retVal = DAQmxCfgOutputBuffer(_taskHandleDO,static_cast<uInt32>(min(_totalLength[SignalType::DIGITAL_LINES], _dLengthPerAOCallback[SignalType::DIGITAL_LINES] * _activeLoadCount))));	
+			DAQmxErrChk (L"DAQmxCfgOutputBuffer",retVal = DAQmxCfgOutputBuffer(_taskHandleDO,static_cast<uInt32>(_totalLength[SignalType::DIGITAL_LINES])));	
 			//DO cannot be armStarted:
 			SetFrameInTriggerableTask(_taskHandleDO, FALSE);
 
@@ -270,7 +270,7 @@ long ThorStim::SetupTaskMasterDigital(void)
 			LogMessage(message,ERROR_EVENT);
 		}
 	}
-	return retVal;
+	return DAQmxSuccess == retVal ? TRUE : FALSE;
 }
 
 /// <summary> setup frame trigger input callback for trigger counting </summary>
@@ -456,6 +456,8 @@ long ThorStim::TryWriteTaskMasterPockelWaveform(long checkStop)
 		//retrieve waveform:
 		if(FALSE == ImageWaveformBuilder->GetGGalvoWaveformParamsWithStatus(SignalType::ANALOG_POCKEL,&_gGalvoWaveParams, _precaptureStatus, ThorStim::_currentIndex[SignalType::ANALOG_POCKEL]))
 		{
+			StringCbPrintfW(message,_MAX_PATH,L"%hs@%u: failed to get buffer for Pockels.", __FUNCTION__, __LINE__);
+			LogMessage(message,ERROR_EVENT);
 			return FALSE;
 		}
 
@@ -503,6 +505,8 @@ long ThorStim::TryWriteTaskMasterLineWaveform(long checkStop)
 		//retrieve waveform:
 		if(FALSE == ImageWaveformBuilder->GetGGalvoWaveformParamsWithStatus(SignalType::DIGITAL_LINES,&_gGalvoWaveParams, _precaptureStatus, ThorStim::_currentIndex[SignalType::DIGITAL_LINES]))
 		{
+			StringCbPrintfW(message,_MAX_PATH,L"%hs@%u: failed to get buffer for Digital lines.", __FUNCTION__, __LINE__);
+			LogMessage(message,ERROR_EVENT);
 			return FALSE;
 		}
 

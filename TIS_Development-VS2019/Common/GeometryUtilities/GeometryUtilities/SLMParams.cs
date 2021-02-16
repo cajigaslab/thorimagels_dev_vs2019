@@ -98,19 +98,86 @@
             set { _pixelSpacing = value; }
         }
 
+        /// <summary>
+        /// Configurable property to enter power to calculate measured power density or vice versa.
+        /// </summary>
+        public bool PowerEntryPreferred
+        {
+            get
+            {
+                int iVal = ((int)ICamera.LSMType.STIMULATE_MODULATOR == ResourceManagerCS.GetBleacherType()) ? 0 : 1;
+                string str = iVal.ToString();
+                try
+                {
+                    MVMManager.Instance.ReloadSettings(SettingsFileType.APPLICATION_SETTINGS, true);
+                    XmlDocument appDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+                    XmlNodeList nlA = appDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView");
+                    if (0 < nlA.Count && !XmlManager.GetAttribute(nlA[0], appDoc, "PowerEntryPreferred", ref str))
+                    {
+                        XmlManager.SetAttribute(nlA[0], appDoc, "PowerEntryPreferred", iVal.ToString());
+                        MVMManager.Instance.SaveSettings(SettingsFileType.APPLICATION_SETTINGS, true);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ThorLogging.ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Verbose, 1, "Get PowerEntryPreferred: " + ex.Message);
+                }
+                return (Int32.TryParse(str, out iVal) && 1 == iVal);
+            }
+        }
+
         public double Red
         {
             get;
             set;
         }
 
-        public double[] SLMMeasurePowerArea
+        public double SLMMeasurePowerArea
         {
-            get { return _slmMeasurePowerArea; }
+            get
+            {
+                if (1 <= _slmMeasurePowerArea.Length)
+                    return _slmMeasurePowerArea[0];
+                else
+                    return 0.0;
+            }
             set
             {
-                _slmMeasurePowerArea = value;
-                OnPropertyChanged("SLMMeasurePowerArea");
+                if (0 >= _slmMeasurePowerArea.Length)
+                {
+                    _slmMeasurePowerArea = new double[1] { value };
+                    OnPropertyChanged("SLMMeasurePowerArea");
+                }
+                else if (_slmMeasurePowerArea[0] != value)
+                {
+                    _slmMeasurePowerArea[0] = value;
+                    OnPropertyChanged("SLMMeasurePowerArea");
+                }
+            }
+        }
+
+        public double SLMMeasurePowerArea1
+        {
+            get
+            {
+                if (2 <= _slmMeasurePowerArea.Length)
+                    return _slmMeasurePowerArea[1];
+                else
+                    return 0.0;
+            }
+            set
+            {
+                if (1 >= _slmMeasurePowerArea.Length)
+                {
+                    double tmp = _slmMeasurePowerArea[0];
+                    _slmMeasurePowerArea = new double[2] { tmp, value };
+                    OnPropertyChanged("SLMMeasurePowerArea1");
+                }
+                else if (_slmMeasurePowerArea[1] != value)
+                {
+                    _slmMeasurePowerArea[1] = value;
+                    OnPropertyChanged("SLMMeasurePowerArea1");
+                }
             }
         }
 
@@ -131,13 +198,20 @@
         protected virtual void OnPropertyChanged(string propertyName)
         {
             PropertyChangedEventHandler handler = PropertyChanged;
-            if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+            if (handler != null)
+            {
+                handler(this, new PropertyChangedEventArgs(propertyName));
+                if (null != BleachParamsChangedEvent &&
+                    (0 == propertyName.CompareTo("SLMMeasurePowerArea") || 0 == propertyName.CompareTo("SLMMeasurePowerArea1")))
+                    BleachParamsChangedEvent();
+            }
         }
 
         void BleachWaveParams_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if ((null != BleachParamsChangedEvent) &&
-                ((0 == e.PropertyName.CompareTo("ROIWidthUM")) || (0 == e.PropertyName.CompareTo("ROIHeightUM")) || (0 == e.PropertyName.CompareTo("MeasurePower"))))
+                ((0 == e.PropertyName.CompareTo("ROIWidthUM")) || (0 == e.PropertyName.CompareTo("ROIHeightUM")) ||
+                (0 == e.PropertyName.CompareTo("MeasurePower")) || (0 == e.PropertyName.CompareTo("MeasurePower1"))))
             {
                 BleachParamsChangedEvent();
             }

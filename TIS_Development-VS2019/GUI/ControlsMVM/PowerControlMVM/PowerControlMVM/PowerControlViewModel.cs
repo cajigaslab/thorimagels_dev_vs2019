@@ -155,6 +155,11 @@
             get { return this._powerControlModel.BleacherPowerResponse0; }
         }
 
+        public PockelsResponseType BleacherPowerResponse1
+        {
+            get { return this._powerControlModel.BleacherPowerResponse1; }
+        }
+
         public double BleachPockelsVoltageMax0
         {
             get
@@ -2733,7 +2738,7 @@
 
             if (0 == step)
             {
-                MessageBox.Show("Could not record data point. The Start and Stop positions of the Z Stack are the same. Please change the values of Start and/or Stop in Z Control.", "Z Stack range is 0",MessageBoxButton.OK,MessageBoxImage.Error);
+                MessageBox.Show("Could not record data point. The Start and Stop positions of the Z Stack are the same. Please change the values of Start and/or Stop in Z Control.", "Z Stack range is 0", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 

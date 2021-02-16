@@ -726,13 +726,15 @@
                         }
                         if (XmlManager.GetAttribute(nodeList[i], expDoc, "power", ref str) && (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)))
                         {
-                            sparam.BleachWaveParams.Power = (XmlManager.GetAttribute(nodeList[i], expDoc, "power1", ref str) && (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))) ?
-                                new double[2] { dVal, dVal1 } : new double[1] { dVal };
+                            sparam.BleachWaveParams.Power = dVal;
+                            sparam.BleachWaveParams.Power1 = (XmlManager.GetAttribute(nodeList[i], expDoc, "power1", ref str) && (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))) ?
+                                                            dVal1 : -1.0;
                         }
                         if (XmlManager.GetAttribute(nodeList[i], expDoc, "measurePowerMW", ref str) && (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)))
                         {
-                            sparam.BleachWaveParams.MeasurePower = (XmlManager.GetAttribute(nodeList[i], expDoc, "measurePower1MW", ref str) && (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))) ?
-                                 new double[2] { dVal, dVal1 } : new double[1] { dVal };
+                            sparam.BleachWaveParams.MeasurePower = dVal;
+                            if (XmlManager.GetAttribute(nodeList[i], expDoc, "measurePower1MW", ref str) && (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)))
+                                sparam.BleachWaveParams.MeasurePower1 = dVal1;
                         }
                         if (XmlManager.GetAttribute(nodeList[i], expDoc, "red", ref str) && (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)))
                         {

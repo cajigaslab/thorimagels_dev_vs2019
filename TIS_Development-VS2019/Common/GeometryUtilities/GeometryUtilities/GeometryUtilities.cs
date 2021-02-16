@@ -19,6 +19,8 @@ namespace GeometryUtilities
 
     using OverlayManager;
 
+    using ThorLogging;
+
     public class GeometryTypes
     {
         #region Fields
@@ -434,6 +436,33 @@ namespace GeometryUtilities
         }
 
         /// <summary>
+        /// return total number of non-zero pixel counts of indexed bitmap
+        /// </summary>
+        /// <param name="inputMap"></param>
+        /// <returns></returns>
+        public static int BinaryBitmapNonZeroCount(System.Drawing.Bitmap inputMap)
+        {
+            byte[] buffer = ProcessBitmap.LoadBinaryBitmap(inputMap);
+
+            int imageIdxOffset = 0;
+            byte white = 0xFF;               //Color order: BGR instead of RGB
+            int stride = inputMap.Width * 4;
+            int nonZeroCount = 0;
+            for (int j = 0; j < inputMap.Height; j++)
+            {
+                for (int i = 0; i < inputMap.Width; i++)
+                {
+                    imageIdxOffset = j * stride + i * 4;
+                    if ((white == buffer[imageIdxOffset]) && (white == buffer[imageIdxOffset + 1]) && (white == buffer[imageIdxOffset + 2]))
+                    {
+                        nonZeroCount++;
+                    }
+                }
+            }
+            return nonZeroCount;
+        }
+
+        /// <summary>
         /// Do morphologic processing on binary bitmap (filter bounary included), dilate, erode, with or without detecting edge.
         /// </summary>
         /// <param name="inputMap"></param>
@@ -538,6 +567,39 @@ namespace GeometryUtilities
         }
 
         /// <summary>
+        /// Convert color bitmap to indexed bitmap
+        /// </summary>
+        /// <param name="bmp"></param>
+        /// <returns></returns>
+        public static System.Drawing.Bitmap ConvertBmpToGrayscale(System.Drawing.Bitmap bmp)
+        {
+            var result = new System.Drawing.Bitmap(bmp.Width, bmp.Height, System.Drawing.Imaging.PixelFormat.Format8bppIndexed);
+            try
+            {
+                System.Drawing.Imaging.BitmapData data = result.LockBits(new System.Drawing.Rectangle(0, 0, result.Width, result.Height), System.Drawing.Imaging.ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format8bppIndexed);
+                byte[] bytes = new byte[data.Height * data.Stride];
+                Marshal.Copy(data.Scan0, bytes, 0, bytes.Length);
+
+                for (int y = 0; y < bmp.Height; y++)
+                {
+                    for (int x = 0; x < bmp.Width; x++)
+                    {
+                        var c = bmp.GetPixel(x, y);
+                        var rgb = (byte)((c.R + c.G + c.B) / 3);
+                        bytes[y * data.Stride + x] = rgb;
+                    }
+                }
+                Marshal.Copy(bytes, 0, data.Scan0, bytes.Length);
+                result.UnlockBits(data);
+            }
+            catch (Exception ex)
+            {
+                ThorLogging.ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Verbose, 1, "ConvertBmpToGrayscale: " + ex.Message);
+            }
+            return result;
+        }
+
+        /// <summary>
         /// Create a binary mask of 8bppIndexed bitmap based on provided shapes
         /// </summary>
         /// <param name="ptGroups"></param>
@@ -572,40 +634,47 @@ namespace GeometryUtilities
             if (null == shapeGroups)
                 return bitmap;
 
-            foreach (Shape shape in shapeGroups)
+            try
             {
-                if (typeof(ROICrosshair) == shape.GetType())
+                foreach (Shape shape in shapeGroups)
                 {
-                    bitmap.SetPixel(((int)((ROICrosshair)shape).CenterPoint.X), ((int)((ROICrosshair)shape).CenterPoint.Y), System.Drawing.Color.White);
-                }
-                else
-                {
-                    using (System.Drawing.Graphics gr = System.Drawing.Graphics.FromImage(bitmap))
+                    if (typeof(ROICrosshair) == shape.GetType())
                     {
-                        if (typeof(ROIEllipse) == shape.GetType())
+                        bitmap.SetPixel(((int)((ROICrosshair)shape).CenterPoint.X), ((int)((ROICrosshair)shape).CenterPoint.Y), System.Drawing.Color.White);
+                    }
+                    else
+                    {
+                        using (System.Drawing.Graphics gr = System.Drawing.Graphics.FromImage(bitmap))
                         {
-                            gr.FillEllipse(new System.Drawing.SolidBrush(System.Drawing.Color.White),
-                                new System.Drawing.RectangleF((float)((ROIEllipse)shape).StartPoint.X, (float)((ROIEllipse)shape).StartPoint.Y, (float)((ROIEllipse)shape).ROIWidth, (float)((ROIEllipse)shape).ROIHeight));
-                        }
-                        else if (typeof(ROIRect) == shape.GetType())
-                        {
-                            gr.FillRectangle(new System.Drawing.SolidBrush(System.Drawing.Color.White),
-                                new System.Drawing.RectangleF((float)((ROIRect)shape).StartPoint.X, (float)((ROIRect)shape).StartPoint.Y, (float)((ROIRect)shape).ROIWidth, (float)((ROIRect)shape).ROIHeight));
-                        }
-                        else if (typeof(ROIPoly) == shape.GetType())
-                        {
-                            gr.FillPolygon(new System.Drawing.SolidBrush(System.Drawing.Color.White),
-                                ((ROIPoly)shape).Points.Select(elm => new System.Drawing.Point((int)elm.X, (int)elm.Y)).ToArray());
-                        }
-                        else if (typeof(Line) == shape.GetType())
-                        {
-                            gr.DrawLine(new System.Drawing.Pen(new System.Drawing.SolidBrush(System.Drawing.Color.White), 1),
-                                new System.Drawing.Point((int)((Line)shape).X1, (int)((Line)shape).Y1), new System.Drawing.Point((int)((Line)shape).X2, (int)((Line)shape).Y2));
+                            if (typeof(ROIEllipse) == shape.GetType())
+                            {
+                                gr.FillEllipse(new System.Drawing.SolidBrush(System.Drawing.Color.White),
+                                    new System.Drawing.RectangleF((float)((ROIEllipse)shape).StartPoint.X, (float)((ROIEllipse)shape).StartPoint.Y, (float)((ROIEllipse)shape).ROIWidth, (float)((ROIEllipse)shape).ROIHeight));
+                            }
+                            else if (typeof(ROIRect) == shape.GetType())
+                            {
+                                gr.FillRectangle(new System.Drawing.SolidBrush(System.Drawing.Color.White),
+                                    new System.Drawing.RectangleF((float)((ROIRect)shape).StartPoint.X, (float)((ROIRect)shape).StartPoint.Y, (float)((ROIRect)shape).ROIWidth, (float)((ROIRect)shape).ROIHeight));
+                            }
+                            else if (typeof(ROIPoly) == shape.GetType())
+                            {
+                                gr.FillPolygon(new System.Drawing.SolidBrush(System.Drawing.Color.White),
+                                    ((ROIPoly)shape).Points.Select(elm => new System.Drawing.Point((int)elm.X, (int)elm.Y)).ToArray());
+                            }
+                            else if (typeof(Line) == shape.GetType())
+                            {
+                                gr.DrawLine(new System.Drawing.Pen(new System.Drawing.SolidBrush(System.Drawing.Color.White), 1),
+                                    new System.Drawing.Point((int)((Line)shape).X1, (int)((Line)shape).Y1), new System.Drawing.Point((int)((Line)shape).X2, (int)((Line)shape).Y2));
+                            }
                         }
                     }
                 }
             }
-            return bitmap;
+            catch (Exception ex)
+            {
+                ThorLogging.ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Error, 1, "CreateBinaryBitmap: " + ex.Message);
+            }
+            return ConvertBmpToGrayscale(bitmap);
         }
 
         public static System.Drawing.Bitmap CreateBitmap(List<Point> ptGroups, bool fillByGraphic, bool offsetToZero, int extendPx, ref Point translate)

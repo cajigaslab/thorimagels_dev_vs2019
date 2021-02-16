@@ -47,6 +47,7 @@ using namespace std;
 #include "..\..\..\..\Common\Log.h"
 #include "..\..\..\..\Common\SigSlot.h"
 #include "..\..\..\..\Common\Experiment.h"
+#include "..\..\..\..\Common\StringCpp.h"
 
 using namespace sigslot;
 

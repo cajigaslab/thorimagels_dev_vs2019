@@ -187,5 +187,5 @@
     <CamLightPath ctrl="0" alt="1" shift="0" key="c" />
   </KeyboardOptions>
   <RawFileOptions saveEnabledChannelsOnly="1" />
-  <ExperimentSaving generateUniqueNameWithoutAsking="0" />
+  <ExperimentSaving generateUniqueNameWithoutAsking="0"  saveWaveformRawH5Csv=""/>
 </ApplicationSettings>

@@ -231,7 +231,7 @@ public:
 private:
 	static vector<pair<long,long> > getActiveChannels(SaveParams& sp);
 	static vector<int> getEnabledChannelIndices(SaveParams& sp);
-	long CreateSaveThread(SaveParams sp, char* pMem);
+	long CreateSaveThread(SaveParams& sp, char* pMem);
 	void ResumeSaveThread(int threadPriority);
 
 	long SetAutoFocusStartZPosition(double afStartPos,BOOL bWait,BOOL afFound);
