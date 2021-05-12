@@ -188,7 +188,7 @@
       </AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>if $(Configuration) == Debug  copy "$(ProjectDir)..\x64\Debug\ThorDC2200.dll" "$(ProjectDir)..\..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\Debug\Modules_Native"</Command>
+      <Command>if $(Configuration) == Debug  copy "$(SolutionDir)$(Platform)\$(Configuration)\ThorDC2200.dll" "$(ProjectDir)..\..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\Debug\Modules_Native</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
