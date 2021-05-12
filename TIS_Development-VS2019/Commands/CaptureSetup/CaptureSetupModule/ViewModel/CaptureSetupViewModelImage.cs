@@ -1623,6 +1623,18 @@
             }
         }
 
+        public bool PixelDataReady
+        {
+            get
+            {
+                return CaptureSetup.PixelDataReady;
+            }
+            set
+            {
+                CaptureSetup.PixelDataReady = value;
+            }
+        }
+
         public int PMT1Saturations
         {
             get

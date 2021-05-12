@@ -18,10 +18,11 @@ ThorSLMPDM512XML::~ThorSLMPDM512XML()
 }
 
 const char * const ThorSLMPDM512XML::POSTTRANSFORM = "PostCalibration";
+const char * const ThorSLMPDM512XML::POSTTRANSFORM2 = "PostCalibration2";
 
 const char * const ThorSLMPDM512XML::POSTTRANSFORM_ATTR[NUM_POSTTRANSFORM_ATTRIBUTES] = {"verticalFlip","rotateAngle","scaleX","scaleY","offsetX","offsetY"};
 
-long ThorSLMPDM512XML::GetPostTransform(long &verticalFlip, double &rotateAngle, double &scaleX, double &scaleY, long &offsetX, long &offsetY)
+long ThorSLMPDM512XML::GetPostTransform(int id, long &verticalFlip, double &rotateAngle, double &scaleX, double &scaleY, long &offsetX, long &offsetY)
 {	
 	StringCbPrintfW(_currentPathAndFile,MAX_PATH,L"ThorSLMPDM512Settings.xml");		
 
@@ -41,7 +42,7 @@ long ThorSLMPDM512XML::GetPostTransform(long &verticalFlip, double &rotateAngle,
 	{
 		try
 		{
-			ticpp::Iterator< ticpp::Element > child(configObj,POSTTRANSFORM);
+			ticpp::Iterator< ticpp::Element > child(configObj, 1 == id ? POSTTRANSFORM : POSTTRANSFORM2);
 
 			for ( child = child.begin( configObj ); child != child.end(); child++)
 			{
@@ -99,7 +100,7 @@ long ThorSLMPDM512XML::GetPostTransform(long &verticalFlip, double &rotateAngle,
 	return TRUE;
 }
 
-long ThorSLMPDM512XML::SetPostTransform(long verticalFlip, double rotateAngle, double scaleX, double scaleY, long offsetX, long offsetY)
+long ThorSLMPDM512XML::SetPostTransform(int id, long verticalFlip, double rotateAngle, double scaleX, double scaleY, long offsetX, long offsetY)
 {
 	long ret = TRUE;
 
@@ -143,7 +144,7 @@ long ThorSLMPDM512XML::SetPostTransform(long verticalFlip, double rotateAngle, d
 			getline(ss,str);
 
 			// iterate over to get the particular tag element specified as a parameter(tagName)
-			ticpp::Iterator<ticpp::Element> child(configObj->FirstChildElement(POSTTRANSFORM), POSTTRANSFORM);
+			ticpp::Iterator<ticpp::Element> child(configObj->FirstChildElement(1 == id ? POSTTRANSFORM : POSTTRANSFORM2), 1 == id ? POSTTRANSFORM : POSTTRANSFORM2);
 			//get the attribute value for the specified attribute name
 			child->SetAttribute(POSTTRANSFORM_ATTR[index], str);
 		}
@@ -308,9 +309,9 @@ long ThorSLMPDM512XML::SetCalibration(int id, double coeff1, double coeff2, doub
 
 const char * const ThorSLMPDM512XML::SPEC = "Spec";
 
-const char * const ThorSLMPDM512XML::SPEC_ATTR[NUM_SPEC_ATTRIBUTES] = {"Name","dmdMode","overDrive","transientFrames","pixelUM","pixelXmin","pixelXmax","pixelYmin","pixelYmax","LUT","overDriveLUT","waveFront"};
+const char * const ThorSLMPDM512XML::SPEC_ATTR[NUM_SPEC_ATTRIBUTES] = {"Name","dmdMode","overDrive","transientFrames","pixelXmin","pixelXmax","pixelYmin","pixelYmax","LUT","overDriveLUT","waveFront"};
 
-long ThorSLMPDM512XML::GetSpec(string &name, long &dmdMode, long &overDrive, unsigned int &transientFrames, double &pixelUM, long &pixelXmin, long &pixelXmax, long &pixelYmin, long &pixelYmax, string &lut, string &odLUT, string &wavefront)
+long ThorSLMPDM512XML::GetSpec(string &name, long &dmdMode, long &overDrive, unsigned int &transientFrames, long &pixelXmin, long &pixelXmax, long &pixelYmin, long &pixelYmax, string &lut, string &odLUT, string &wavefront)
 {
 	StringCbPrintfW(_currentPathAndFile,MAX_PATH,L"ThorSLMPDM512Settings.xml");		
 
@@ -363,40 +364,35 @@ long ThorSLMPDM512XML::GetSpec(string &name, long &dmdMode, long &overDrive, uns
 						break;
 					case 4:
 						{
-							ss>>pixelUM;
-						}
-						break;						
-					case 5:
-						{
 							ss>>pixelXmin;
 						}
 						break;
-					case 6:
+					case 5:
 						{
 							ss>>pixelXmax;
 						}
 						break;
-					case 7:
+					case 6:
 						{
 							ss>>pixelYmin;
 						}
 						break;
-					case 8:
+					case 7:
 						{
 							ss>>pixelYmax;
 						}
 						break;
-					case 9:
+					case 8:
 						{
 							lut = str;
 						}
 						break;
-					case 10:
+					case 9:
 						{
 							odLUT = str;
 						}
 						break;
-					case 11:
+					case 10:
 						{
 							wavefront = str;
 						}

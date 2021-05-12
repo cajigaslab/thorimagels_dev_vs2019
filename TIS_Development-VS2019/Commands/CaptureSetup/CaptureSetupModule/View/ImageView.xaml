@@ -493,11 +493,13 @@
                                     HorizontalAlignment="Stretch"
                                     Maximum="255"
                                     Minimum="0"
+                                    TickFrequency="1"
                                     Orientation="Horizontal"
                                     Value="{Binding Path=BlackPoint0,
                                                     Mode=TwoWay,
                                                     UpdateSourceTrigger=PropertyChanged}"
-                                    Thumb.DragStarted="slider0_DragStarted" />
+                                    Thumb.DragStarted="slider0_DragStarted"
+                                    PreviewMouseLeftButtonDown ="slider0_MouseLeftClick"/>
                             <RepeatButton Name="btnBPUp0"
                                           Width="16"
                                           Click="btnBPUp0_Click"
@@ -514,11 +516,13 @@
                                                     UpdateSourceTrigger=PropertyChanged}"
                                     Maximum="255"
                                     Minimum="0"
+                                    TickFrequency="1"
                                     Orientation="Horizontal"
                                     Value="{Binding Path=WhitePoint0,
                                                     Mode=TwoWay,
                                                     UpdateSourceTrigger=PropertyChanged}"
-                                    Thumb.DragStarted="slider0_DragStarted" />
+                                    Thumb.DragStarted="slider0_DragStarted" 
+                                    PreviewMouseLeftButtonDown ="slider0_MouseLeftClick"/>
                             <RepeatButton Name="btnWPUp0"
                                           Width="16"
                                           Click="btnWPUp0_Click"
@@ -640,12 +644,13 @@
                                                     UpdateSourceTrigger=PropertyChanged}"
                                     Maximum="255"
                                     Minimum="0"
+                                    TickFrequency="1"
                                     Orientation="Horizontal"
                                     Value="{Binding Path=BlackPoint1,
                                                     Mode=TwoWay,
                                                     UpdateSourceTrigger=PropertyChanged}"
-                                    Thumb.DragStarted="slider1_DragStarted" />
-
+                                    Thumb.DragStarted="slider1_DragStarted" 
+                                    PreviewMouseLeftButtonDown ="slider1_MouseLeftClick"/>
                             <RepeatButton Name="btnBPUp1"
                                           Width="16"
                                           Click="btnBPUp1_Click"
@@ -662,12 +667,13 @@
                                                     UpdateSourceTrigger=PropertyChanged}"
                                     Maximum="255"
                                     Minimum="0"
+                                    TickFrequency="1"
                                     Orientation="Horizontal"
                                     Value="{Binding Path=WhitePoint1,
                                                     Mode=TwoWay,
                                                     UpdateSourceTrigger=PropertyChanged}"
-                                    Thumb.DragStarted="slider1_DragStarted" />
-
+                                    Thumb.DragStarted="slider1_DragStarted" 
+                                    PreviewMouseLeftButtonDown ="slider1_MouseLeftClick"/>
                             <RepeatButton Name="btnWPUp1"
                                           Width="16"
                                           Click="btnWPUp1_Click"
@@ -789,11 +795,13 @@
                                                     UpdateSourceTrigger=PropertyChanged}"
                                     Maximum="255"
                                     Minimum="0"
+                                    TickFrequency="1"
                                     Orientation="Horizontal"
                                     Value="{Binding Path=BlackPoint2,
                                                     Mode=TwoWay,
                                                     UpdateSourceTrigger=PropertyChanged}"
-                                    Thumb.DragStarted="slider2_DragStarted" />
+                                    Thumb.DragStarted="slider2_DragStarted" 
+                                    PreviewMouseLeftButtonDown ="slider2_MouseLeftClick"/>
                             <RepeatButton Name="btnBPUp2"
                                           Width="16"
                                           Click="btnBPUp2_Click"
@@ -810,11 +818,13 @@
                                                     UpdateSourceTrigger=PropertyChanged}"
                                     Maximum="255"
                                     Minimum="0"
+                                    TickFrequency="1"
                                     Orientation="Horizontal"
                                     Value="{Binding Path=WhitePoint2,
                                                     Mode=TwoWay,
                                                     UpdateSourceTrigger=PropertyChanged}"
-                                    Thumb.DragStarted="slider2_DragStarted" />
+                                    Thumb.DragStarted="slider2_DragStarted" 
+                                    PreviewMouseLeftButtonDown ="slider2_MouseLeftClick"/>
                             <RepeatButton Name="btnWPUp2"
                                           Width="16"
                                           Click="btnWPUp2_Click"
@@ -936,11 +946,13 @@
                                                     UpdateSourceTrigger=PropertyChanged}"
                                     Maximum="255"
                                     Minimum="0"
+                                    TickFrequency="1"
                                     Orientation="Horizontal"
                                     Value="{Binding Path=BlackPoint3,
                                                     Mode=TwoWay,
                                                     UpdateSourceTrigger=PropertyChanged}"
-                                    Thumb.DragStarted="slider3_DragStarted" />
+                                    Thumb.DragStarted="slider3_DragStarted" 
+                                    PreviewMouseLeftButtonDown ="slider3_MouseLeftClick"/>
                             <RepeatButton Name="btnBPUp3"
                                           Width="16"
                                           Click="btnBPUp3_Click"
@@ -957,11 +969,13 @@
                                                     UpdateSourceTrigger=PropertyChanged}"
                                     Maximum="255"
                                     Minimum="0"
+                                    TickFrequency="1"
                                     Orientation="Horizontal"
                                     Value="{Binding Path=WhitePoint3,
                                                     Mode=TwoWay,
                                                     UpdateSourceTrigger=PropertyChanged}"
-                                    Thumb.DragStarted="slider3_DragStarted" />
+                                    Thumb.DragStarted="slider3_DragStarted" 
+                                    PreviewMouseLeftButtonDown ="slider3_MouseLeftClick"/>
                             <RepeatButton Name="btnWPUp3"
                                           Width="16"
                                           Click="btnWPUp3_Click"

@@ -23,12 +23,17 @@ public:
 	long CopyAcquisition(long isFullFrame = 1);
 	long GetImageDimensions(long &width, long &height);
 	long CaptureSingleImageWithAverage(char *buffer, double exposureTime, long binningX, long binningY , long avgFrames, long snapshotFlag);
+	long StartAutoFocus(double magnification, long autoFocusType, BOOL& afFound);
+
+	static BOOL _enableCopy;
 
 private:	
-	BOOL _enableCopy;
 	long _channelEnable;
 	long _captureActive;
 };
 
 UINT ZStackCaptureThreadProcSciCam( LPVOID pParam );
 UINT SnapshotThreadProcSciCam(LPVOID pParam);
+
+UINT AutoFocusCaptureThreadProcSciCam(LPVOID pParam);
+UINT AutoFocusStatusThreadProcSciCam();

@@ -11,9 +11,8 @@
 #define MSG_SIWlE 256
 #define WL_MAX_COUNT 310
 
-AcquireHyperspectral::AcquireHyperspectral(IAutoFocus* pAF,IExperiment* pExperiment,wstring path)
+AcquireHyperspectral::AcquireHyperspectral(IExperiment* pExperiment,wstring path)
 {
-	_pAF = pAF;
 	_pExp = pExperiment;
 	_zFrame = 1;
 	_tFrame = 1;
@@ -200,7 +199,7 @@ long AcquireHyperspectral::Execute(long index, long subWell)
 	//create a stream acquisition and execute it
 	auto_ptr<IAcquire> acq(NULL);
 	AcquireFactory factory;
-	acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_T_STREAM,_pAF,NULL,_pExp,_path));
+	acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_T_STREAM,NULL,_pExp,_path));
 	acq->Execute(index,subWell,_zFrame,_tFrame);
 
 	//when the experiment is done, then set the curios back to MANUAL mode

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "..\..\..\..\Common\Sample\Sample\Acquire.h"
-#include "AutoFocus.h"
 #include "AcquireSaveInfo.h"
 
 class AcquireSingle : public IAcquire
@@ -15,7 +14,7 @@ public:
 		long doJPEG;
 	};
 
-	AcquireSingle(IAutoFocus *,IExperiment *pExperiment,wstring path);
+	AcquireSingle(IExperiment *pExperiment,wstring path);
 
 	virtual long Execute(long index, long subWell);//Synchrnous acquisition of data
 	virtual	long Execute(long index, long subWell, long zFrame, long tFrame);
@@ -33,16 +32,12 @@ public:
 	virtual long CallStartProgressBar(long index, long resetTotalCount = 0);
 
 	static HANDLE hEvent;
-	static HANDLE hEventAutoFocus;
 	static HANDLE hEventZ;
 
 private:
 
-	long SetAutoFocusStartZPosition(double afStartPos,BOOL bWait,BOOL afFound);
-	long AutoFocusAndRetry(long index, IDevice *pAutoFocusDevice, BOOL &afFound);
 	string uUIDSetup(auto_ptr<HardwareSetupXML> &pHardware, long timePoints, long zstageSteps, long index, long subWell);
 
-	IAutoFocus * _pAutoFocus;
 	IExperiment * _pExp;
 
 	static BOOL _evenOdd;

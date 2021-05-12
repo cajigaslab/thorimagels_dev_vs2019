@@ -914,35 +914,37 @@ long ThorPMT2100::ExecuteCmd(ParamInfo* pParamInfo)
 			if (TRUE == paramVal)
 			{
 				StringCbPrintf(wsCommand, CMD_LEN, pParamInfo->GetCmdStr().c_str(), "ON");
-				wstring wcommand(wsCommand);
+				wstring wcommandEnable(wsCommand);
 				string response = "";
-				long r = ExecuteCmd(ConvertWStringToString(wcommand),pmtIndex,FALSE,response);
+				long r = ExecuteCmd(ConvertWStringToString(wcommandEnable),pmtIndex,FALSE,response);
 
+				//also set the gain voltage after enabling the detector
 				if(0.0 != tmpInfo->GetParamVal())
 				{
 					v = GainPercentToVolts(pmtIndex, static_cast<long>(tmpInfo->GetParamVal()));
 					StringCbPrintf(wsCommand, CMD_LEN, tmpInfo->GetCmdStr().c_str(), v);
-					wstring wcommand_v(wsCommand);
+					wstring wcommandGainV(wsCommand);
 					string response_v = "";
-					ExecuteCmd(ConvertWStringToString(wcommand),pmtIndex,FALSE,response_v);
+					ExecuteCmd(ConvertWStringToString(wcommandGainV),pmtIndex,FALSE,response_v);
 				}
 
 				return r;
 			}
 			else
 			{
+				//set the gain voltage to zero before desabling the detector
 				if(tmpInfo->GetParamCurrent() > v)
 				{
 					StringCbPrintf(wsCommand, CMD_LEN, tmpInfo->GetCmdStr().c_str(), v);
-					wstring wcommand_v(wsCommand);
+					wstring wcommandGainV(wsCommand);
 					string response_v = "";
-					ExecuteCmd(ConvertWStringToString(wcommand_v),pmtIndex,FALSE,response_v);
+					ExecuteCmd(ConvertWStringToString(wcommandGainV),pmtIndex,FALSE,response_v);
 				}
 
 				StringCbPrintf(wsCommand, CMD_LEN, pParamInfo->GetCmdStr().c_str(), "OFF");
-				wstring wcommand(wsCommand);
+				wstring wcommandEnable(wsCommand);
 				string response = "";
-				long ret = ExecuteCmd(ConvertWStringToString(wcommand),pmtIndex,FALSE,response);
+				long ret = ExecuteCmd(ConvertWStringToString(wcommandEnable),pmtIndex,FALSE,response);
 				//clear the safety trip after disabling the PMT
 				if (TRUE == ret)
 				{

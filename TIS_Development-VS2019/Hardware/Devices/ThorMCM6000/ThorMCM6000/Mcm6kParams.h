@@ -43,47 +43,59 @@ struct Mcm6kParams
 	UCHAR lp_slot_id; // Light Path
 	UCHAR et_slot_id; // Epi Turret
 	UCHAR inverted_lp_slot_id; // Inverted Light Path
+	UCHAR condenser_slot_id; // Condenser
+	UCHAR shutter_slot_id; //Shutter
+	UCHAR piezo_slot_id;
+	UCHAR ndd_slot_id;
 
 	double xPositionCurrent;
 	double yPositionCurrent;
 	double zPositionCurrent;
 	double rPositionCurrent;
 	double zePositionCurrent;
+	double condenserPositionCurrent;
 
 	double xMax;
 	double yMax;
 	double zMax;
 	double rMax;
+	double condenserMax;
 
 	double xMin;
 	double yMin;
 	double zMin;
 	double rMin;
+	double condenserMin;
 
 	double xThreshold;
 	double yThreshold;
 	double zThreshold;
 	double rThreshold;
+	double condenserThreshold;
 
 	double xMoveByThreshold;
 	double yMoveByThreshold;
 	double zMoveByThreshold;
 	double rMoveByThreshold;
+	double condenserMoveByThreshold;
 
 	bool xInvert;
 	bool yInvert;
 	bool zInvert;
 	bool rInvert;
+	bool condenserInvert;
 
 	bool xPidEnable;
 	bool yPidEnable;
 	bool zPidEnable;
 	bool rPidEnable;
+	bool condenserPidEnable;
 
 	bool xPidKickoutEnable;
 	bool yPidKickoutEnable;
 	bool zPidKickoutEnable;
 	bool rPidKickoutEnable;
+	bool condenserPidKickoutEnable;
 
 	bool x_ccw_moving;
 	bool x_cw_moving;
@@ -95,18 +107,45 @@ struct Mcm6kParams
 	bool r_cw_moving;
 	bool ze_ccw_moving;
 	bool ze_cw_moving;
+	bool condenser_ccw_moving;
+	bool condenser_cw_moving;
+	bool epiTurret_ccw_moving;
+	bool epiTurret_cw_moving;
+	bool lightPath_ccw_moving;
+	bool lightPath_cw_moving;
+	bool ndd_ccw_moving;
+	bool ndd_cw_moving;
 
-	byte xParams[96];
-	byte yParams[96];
-	byte zParams[96];
-	byte rParams[96];
+	BYTE xParams[96];
+	BYTE yParams[96];
+	BYTE zParams[96];
+	BYTE rParams[96];
+	BYTE condenserParams[96];
 
 	long invertedLightPathPos;
 	long epiTurretCurrentPos;
+	long nddCurrentPos;
 
 	long lightpathGGPosition;
 	long lightpathGRPosition;
 	long lightpathCameraPosition;
 
-	long zeAvailable;
+	long xConfigured;
+	long yConfigured;
+	long zConfigured;
+	long rConfigured;
+	long lightPathConfigured;
+	long epiTurretConfigured;
+	long zeConfigured;
+	long condenserConfigured;
+	long piezoConfigured;
+	long nddConfigured;
+	long shutterConfigured;
+
+	long piezoMode;
+
+	long shuttersPositions[4];
+	long safetyInterlockState; // 0 means interlock not installed or trinoc in eyepiece mode, 1 means interlock good and trinoc in camera mode
+
+	char slotName[TOTAL_CARD_SLOTS][16];
 };

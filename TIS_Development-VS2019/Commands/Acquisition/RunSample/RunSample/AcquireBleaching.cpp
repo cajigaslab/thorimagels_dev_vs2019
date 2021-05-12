@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "..\..\..\..\Commands\General\SelectHardware\SelectHardware\SelectHardware.h"
 #include "RunSample.h"
-#include "AutoFocus.h"
-#include "AutoFocusNone.h"
 #include "AcquireBleaching.h"
 #include "AcquireFactory.h"
 #include "ImageCorrection.h"
@@ -18,9 +16,8 @@ long SaveTIFF(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long h
 long SetDeviceParameterValue(IDevice *pDevice,long paramID, double val,long bWait,HANDLE hEvent,long waitTime);
 string ConvertWStringToString(wstring ws);
 
-AcquireBleaching::AcquireBleaching(IAutoFocus * pAF,IExperiment *exp,wstring path)
+AcquireBleaching::AcquireBleaching(IExperiment *exp,wstring path)
 {
-	_pAutoFocus = pAF;
 	_pExp = exp;
 	_counter = 0;
 	_tFrame = 1;
@@ -133,7 +130,6 @@ bool FindAllFilesInFolder(wstring wpath)
 
 ///******************	static members		******************///
 HANDLE AcquireBleaching::hEvent = NULL;
-HANDLE AcquireBleaching::hEventAutoFocus = NULL;
 HANDLE AcquireBleaching::hEventZ = NULL;
 HANDLE AcquireBleaching::hEventBleach = NULL;
 HANDLE AcquireBleaching::hStopBleach = NULL;
@@ -705,9 +701,10 @@ long AcquireBleaching::PreCaptureAutoFocus(long index, long subWell)
 	long turretPosition=0;
 	long zAxisToEscape=0;
 	double zAxisEscapeDistance=0;
+	double fineAutoFocusPercentage = 0.15;
 
 	//Get filter parameters from hardware setup.xml
-	pHardware->GetMagInfoFromName(objName,magnification,position,numAperture,afStartPos,afFocusOffset,afAdaptiveOffset,beamExpPos,beamExpWavelength,beamExpPos2,beamExpWavelength2,turretPosition,zAxisToEscape,zAxisEscapeDistance);
+	pHardware->GetMagInfoFromName(objName,magnification,position,numAperture,afStartPos,afFocusOffset,afAdaptiveOffset,beamExpPos,beamExpWavelength,beamExpPos2,beamExpWavelength2,turretPosition,zAxisToEscape,zAxisEscapeDistance,fineAutoFocusPercentage);
 	_adaptiveOffset = afAdaptiveOffset;
 
 	long aftype,repeat;
@@ -728,25 +725,14 @@ long AcquireBleaching::PreCaptureAutoFocus(long index, long subWell)
 		}
 	}
 
-	IDevice *pAutoFocusDevice = NULL;
-
-	pAutoFocusDevice = GetDevice(SelectedHardware::SELECTED_AUTOFOCUS);
-
-	if(NULL == pAutoFocusDevice)
-	{
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create autofocus device");
-		return FALSE;
-	}
 	BOOL afFound = FALSE;
 
-	if(aftype != IAutoFocus::AF_NONE)
+	if (FALSE == RunAutofocus(index, aftype, afFound))
 	{
-		if (FALSE == AutoFocusAndRetry(index, pAutoFocusDevice, afFound))
-		{
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample AutoFocusAndRetry failed");
-			return FALSE;
-		}
+		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample RunAutoFocus failed");
+		return FALSE;
 	}
+
 	return TRUE;
 }
 
@@ -887,8 +873,6 @@ long AcquireBleaching::CaptureTSeries(ICamera *pCamera, long currentT, long tFra
 	//Force the averaging mode to be NONE for all bleaching captures
 	avgFrames = 1;
 
-	auto_ptr<AutoFocusNone> afNone(new AutoFocusNone());
-
 	AcquireFactory factory;
 
 	auto_ptr<IAcquire> acqFrame(NULL);
@@ -906,18 +890,18 @@ long AcquireBleaching::CaptureTSeries(ICamera *pCamera, long currentT, long tFra
 		{				
 			if(_pExp->GetNumberOfWavelengths() > 1)
 			{
-				acqFrame.reset(factory.getAcquireInstance(AcquireFactory::ACQ_MULTI_WAVELENGTH,afNone.get(),NULL,_pExp,_path));
+				acqFrame.reset(factory.getAcquireInstance(AcquireFactory::ACQ_MULTI_WAVELENGTH,NULL,_pExp,_path));
 			}
 			else
 			{
-				acqFrame.reset(factory.getAcquireInstance(AcquireFactory::ACQ_SINGLE,afNone.get(),NULL,_pExp,_path));
+				acqFrame.reset(factory.getAcquireInstance(AcquireFactory::ACQ_SINGLE,NULL,_pExp,_path));
 			}
 
 		}
 		break;
 	case ICamera::LSM:
 		{			
-			acqFrame.reset(factory.getAcquireInstance(AcquireFactory::ACQ_SINGLE,afNone.get(),NULL,_pExp,_path));
+			acqFrame.reset(factory.getAcquireInstance(AcquireFactory::ACQ_SINGLE,NULL,_pExp,_path));
 		}
 		break;
 	}
@@ -1712,6 +1696,7 @@ long AcquireBleaching::Execute(long index, long subWell)
 			StopCaptureEventCheck(_stopStatus);
 			if(1 == _stopStatus)
 			{
+				pBleachScanner->PostflightAcquisition(NULL);
 				SetEvent(hStopBleach);
 			}
 		};
@@ -2362,167 +2347,6 @@ long AcquireBleaching::ScannerEnable(long cameraOrBleachScanner, long enable)
 long AcquireBleaching::SetPMT()
 {
 	return SetPMTProc( _pExp);
-}
-
-long AcquireBleaching::SetAutoFocusStartZPosition(double afStartPos,BOOL bWait,BOOL afFound)
-{
-	IDevice * pZStage = NULL;
-
-	pZStage = GetDevice(SelectedHardware::SELECTED_ZSTAGE);
-
-	if(NULL == pZStage)
-	{	
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AcquireMultiWavelength Execute could not create z stage");
-		return FALSE;
-	}
-
-	//if found use a relative offset from the current position
-	if(afFound)
-	{
-		double pos;
-		pZStage->GetParam(IDevice::PARAM_Z_POS_CURRENT,pos);
-
-		_lastGoodFocusPosition = pos;
-
-		pos -= _adaptiveOffset;
-
-		pZStage->SetParam(IDevice::PARAM_Z_POS, pos);
-
-		StringCbPrintfW(message,MSG_LENGTH,L"ThorImager SetAutoFocusStartZPosition new af start position %d.%d",(int)pos,(int)((pos - static_cast<long>(pos))*1000));
-	}
-	else
-	{
-		double pos = _lastGoodFocusPosition;
-
-		//modify the last good focus position each pass to ensure its unique
-		_lastGoodFocusPosition = _lastGoodFocusPosition - .001;
-
-		pos -= _adaptiveOffset;
-
-		pZStage->SetParam(IDevice::PARAM_Z_POS, pos);
-
-		StringCbPrintfW(message,MSG_LENGTH,L"ThorImager SetAutoFocusStartZPosition new af start position %d.%d",(int)pos,(int)((pos - static_cast<long>(pos))*1000));
-	}
-
-	pZStage->PreflightPosition();
-
-	pZStage->SetupPosition ();
-
-	pZStage->StartPosition();
-
-	if(TRUE == bWait)
-	{
-		//don't wait for the z to finish its motion will overlap with the next XY movement
-		hEventZ = CreateEvent(0, FALSE, FALSE, 0);
-
-		DWORD dwThread;
-
-		HANDLE hThread = ::CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE) StatusZThreadProc7, pZStage, 0, &dwThread );
-
-		const long MAX_Z_WAIT_TIME = 5000;
-
-		DWORD dwWait = WaitForSingleObject( hEventZ, MAX_Z_WAIT_TIME);
-
-		if(dwWait != WAIT_OBJECT_0)
-		{
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AcquireMultiWavelength Execute Z failed");
-			//return FALSE;
-		}		
-
-		CloseHandle(hThread);
-		CloseHandle(hEventZ);
-	}
-	pZStage->PostflightPosition();	
-
-	return TRUE;
-}
-
-long AcquireBleaching::AutoFocusAndRetry(long index, IDevice *pAutoFocusDevice, BOOL &afFound)
-{
-	IDevice * pZStage = NULL;
-
-	pZStage = GetDevice(SelectedHardware::SELECTED_ZSTAGE);
-
-	if(NULL == pZStage)
-	{
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AutoFocusAndRetry Execute could not create z stage");
-		return FALSE;
-	}
-
-	afFound = FALSE;
-
-	_pAutoFocus->Execute(index, pAutoFocusDevice,afFound);
-
-	double val;
-
-	pZStage->GetParam(IDevice::PARAM_Z_POS,val);
-
-	const long RETRIES = 1;
-	const double RESULT_LOCATION_THREASHOLD_MM = .1;//must be within 50um of the previous location
-	const long SIG_DIGITS_MULTIPLIER = 1000;
-	long count = 0;
-	double lower=0;
-	double upper=0;
-
-	do
-	{
-		lower = _lastGoodFocusPosition - RESULT_LOCATION_THREASHOLD_MM;
-		upper = _lastGoodFocusPosition + RESULT_LOCATION_THREASHOLD_MM;
-
-		//check if the focus was found or if the result location is within the threshold
-		//if not perform retires for the count of retries specified
-		if((val <lower)||(val >upper)||(FALSE == afFound))
-		{
-
-			StringCbPrintfW(message,MSG_LENGTH,L"AutoFocusAndRetry z position val %d.%03d outside lower %d.%03d upper %d.%03d",(int)val,(int)((val - static_cast<long>(val))*SIG_DIGITS_MULTIPLIER),(int)lower,(int)((lower - static_cast<long>(lower))*SIG_DIGITS_MULTIPLIER),(int)upper,(int)((upper - static_cast<long>(upper))*SIG_DIGITS_MULTIPLIER));
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,message);
-
-			_pAutoFocus->Execute(index, pAutoFocusDevice,afFound);
-			pZStage->GetParam(IDevice::PARAM_Z_POS,val);
-		}
-		else
-		{
-			StringCbPrintfW(message,MSG_LENGTH,L"AutoFocusAndRetry passed z position %d.%03d",(int)val,(int)((val - static_cast<long>(val))*SIG_DIGITS_MULTIPLIER));
-			logDll->TLTraceEvent(VERBOSE_EVENT,1,message);
-			break;
-		}
-		count++;
-	}
-	while(count <= RETRIES);
-
-	if((val <lower)||(val >upper)||(FALSE == afFound))
-	{
-		pZStage->SetParam(IDevice::PARAM_Z_POS,_lastGoodFocusPosition);
-
-		pZStage->PreflightPosition();
-
-		pZStage->SetupPosition ();
-
-		pZStage->StartPosition();
-
-		//don't wait for the z to finish its motion will overlap with the next XY movement
-		hEventZ = CreateEvent(0, FALSE, FALSE, 0);
-
-		DWORD dwThread;
-
-		HANDLE hThread = ::CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE) StatusZThreadProc7, pZStage, 0, &dwThread );
-
-		const long MAX_Z_WAIT_TIME = 5000;
-
-		DWORD dwWait = WaitForSingleObject( hEventZ, MAX_Z_WAIT_TIME);
-
-		if(dwWait != WAIT_OBJECT_0)
-		{
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AcquireMultiWavelength Execute Z failed");
-			//return FALSE;
-		}
-
-		CloseHandle(hThread);
-		CloseHandle(hEventZ);
-		pZStage->PostflightPosition();
-	}
-
-	return TRUE;
 }
 
 void AcquireBleaching::PreBleachProtocol(IExperiment  *exp, ICamera * pBleachScanner)

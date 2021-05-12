@@ -9,6 +9,7 @@ private:
 public:
 
 	static const char * const POSTTRANSFORM;
+	static const char * const POSTTRANSFORM2;
 	enum {NUM_POSTTRANSFORM_ATTRIBUTES = 6};
 	static const char * const POSTTRANSFORM_ATTR[NUM_POSTTRANSFORM_ATTRIBUTES];
 
@@ -18,7 +19,7 @@ public:
 	static const char * const CALIBRATION_ATTR[NUM_CALIBRATION_ATTRIBUTES];
 
 	static const char * const SPEC;
-	enum {NUM_SPEC_ATTRIBUTES = 12};
+	enum {NUM_SPEC_ATTRIBUTES = 11};
 	static const char * const SPEC_ATTR[NUM_SPEC_ATTRIBUTES];
 
 	static const char * const TRIGGER;
@@ -28,13 +29,13 @@ public:
 	ThorSLMPDM512XML();
 	~ThorSLMPDM512XML();
 
-	long GetPostTransform(long &verticalFlip, double &rotateAngle, double &scaleX, double &scaleY, long &offsetX, long &offsetY);
-	long SetPostTransform(long verticalFlip, double rotateAngle, double scaleX, double scaleY, long offsetX, long offsetY);
+	long GetPostTransform(int id, long &verticalFlip, double &rotateAngle, double &scaleX, double &scaleY, long &offsetX, long &offsetY);
+	long SetPostTransform(int id, long verticalFlip, double rotateAngle, double scaleX, double scaleY, long offsetX, long offsetY);
 
 	long GetCalibration(int id, double& wavelengthNM, double &affineCoeff1, double &affineCoeff2, double &affineCoeff3, double &affineCoeff4, double &affineCoeff5, double &affineCoeff6, double &affineCoeff7, double &affineCoeff8);
 	long SetCalibration(int id, double affineCoeff1, double affineCoeff2, double affineCoeff3, double affineCoeff4, double affineCoeff5, double affineCoeff6, double affineCoeff7, double affineCoeff8);
 
-	long GetSpec(string &name, long &dmdMode, long &overDrive, unsigned int &transientFrames, double &pixelUM, long &pixelXmin, long &pixelXmax, long &pixelYmin, long &pixelYmax, string &lut, string &odLUT, string &wavefront);
+	long GetSpec(string &name, long &dmdMode, long &overDrive, unsigned int &transientFrames, long &pixelXmin, long &pixelXmax, long &pixelYmin, long &pixelYmax, string &lut, string &odLUT, string &wavefront);
 	long GetTrigger(string &counterLine, string &triggerInput);
 
 	long OpenConfigFile(string path);

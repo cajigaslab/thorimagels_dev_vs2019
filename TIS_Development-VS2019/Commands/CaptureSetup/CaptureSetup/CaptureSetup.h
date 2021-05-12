@@ -66,6 +66,12 @@ struct CaptureSetupZCaptureParams
 	long numOfSteps;
 };
 
+struct AutoFocusCaptureParams
+{
+	double magnification;
+	long autoFocusType;
+};
+
 typedef vector<IDevice*>::iterator DeviceIterator;
 typedef vector<ICamera*>::iterator CameraIterator;
 typedef vector<ICamera*> Cameras;
@@ -174,6 +180,7 @@ public:
 	long GetHeight();
 	long GetColorChannels();
 	unsigned short * GetBuffer();
+
 private:
 
 	unsigned short *_pBuffer;
@@ -237,6 +244,12 @@ extern DWORD dwZStackCaptureThreadId;
 extern HANDLE hZStackCaptureThread;
 extern DWORD dwBleachThreadId;
 extern HANDLE hBleachThread;
+extern DWORD _dwAutoFocusCaptureThreadId;
+extern HANDLE _hAutoFocusCaptureThread;
+extern DWORD _dwAutoFocusStatusThreadId;
+extern HANDLE _hAutoFocusStatusThread;
+extern DWORD _dwSafetyInterLockCheckThreadId;
+extern HANDLE _hSafetyInterLockCheckThread;
 extern HANDLE hStatusEvent[3];
 extern HANDLE hCaptureActive;
 extern BOOL stopCapture;
@@ -251,6 +264,7 @@ extern long disableZRead;
 extern DWORD dwBleachThreadId;
 extern char * pChan[32];
 extern auto_ptr<CommandDll> shwDll;
+extern std::atomic<BOOL> _shutterOpened;
 
 const long SHUTTER_OPEN = 0;
 const long SHUTTER_CLOSE = 1;

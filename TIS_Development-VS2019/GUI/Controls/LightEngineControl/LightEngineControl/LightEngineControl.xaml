@@ -84,7 +84,8 @@
                             TemperatureUnit="{Binding TemperatureUnit, Mode=OneWay}"
                             ShowTemperature="{Binding ShowTemperatures, Mode=OneWay}"
                             LampPowerPlusCommand="{Binding LED1PowerPlusCommand}"
-                            LampPowerMinusCommand="{Binding LED1PowerMinusCommand}" />
+                            LampPowerMinusCommand="{Binding LED1PowerMinusCommand}"
+                            PeakWavelengthToolTip="{Binding LED1PeakToolTip, Mode=OneWay}" />
             <ctrl:LEDSlider x:Name="LED_CTRL_2"
                             Grid.Row="2"
                             Margin="0 2 0 2"
@@ -99,7 +100,8 @@
                             TemperatureUnit="{Binding TemperatureUnit, Mode=OneWay}"
                             ShowTemperature="{Binding ShowTemperatures, Mode=OneWay}"
                             LampPowerPlusCommand="{Binding LED2PowerPlusCommand}"
-                            LampPowerMinusCommand="{Binding LED2PowerMinusCommand}" />
+                            LampPowerMinusCommand="{Binding LED2PowerMinusCommand}"
+                            PeakWavelengthToolTip="{Binding LED2PeakToolTip, Mode=OneWay}" />
             <ctrl:LEDSlider x:Name="LED_CTRL_3"
                             Grid.Row="3"
                             Margin="0 2 0 2"
@@ -114,7 +116,8 @@
                             TemperatureUnit="{Binding TemperatureUnit, Mode=OneWay}"
                             ShowTemperature="{Binding ShowTemperatures, Mode=OneWay}"
                             LampPowerPlusCommand="{Binding LED3PowerPlusCommand}"
-                            LampPowerMinusCommand="{Binding LED3PowerMinusCommand}" />
+                            LampPowerMinusCommand="{Binding LED3PowerMinusCommand}"
+                            PeakWavelengthToolTip="{Binding LED3PeakToolTip, Mode=OneWay}" />
             <ctrl:LEDSlider x:Name="LED_CTRL_4"
                             Grid.Row="4"
                             Margin="0 2 0 2"
@@ -129,7 +132,8 @@
                             TemperatureUnit="{Binding TemperatureUnit, Mode=OneWay}"
                             ShowTemperature="{Binding ShowTemperatures, Mode=OneWay}"
                             LampPowerPlusCommand="{Binding LED4PowerPlusCommand}"
-                            LampPowerMinusCommand="{Binding LED4PowerMinusCommand}" />
+                            LampPowerMinusCommand="{Binding LED4PowerMinusCommand}"
+                            PeakWavelengthToolTip="{Binding LED4PeakToolTip, Mode=OneWay}" />
             <ctrl:LEDSlider x:Name="LED_CTRL_5"
                             Grid.Row="5"
                             Margin="0 2 0 2"
@@ -144,7 +148,8 @@
                             TemperatureUnit="{Binding TemperatureUnit, Mode=OneWay}"
                             ShowTemperature="{Binding ShowTemperatures, Mode=OneWay}"
                             LampPowerPlusCommand="{Binding LED5PowerPlusCommand}"
-                            LampPowerMinusCommand="{Binding LED5PowerMinusCommand}" />
+                            LampPowerMinusCommand="{Binding LED5PowerMinusCommand}"
+                            PeakWavelengthToolTip="{Binding LED5PeakToolTip, Mode=OneWay}" />
             <ctrl:LEDSlider x:Name="LED_CTRL_6"
                             Grid.Row="6"
                             Margin="0 2 0 2"
@@ -159,7 +164,8 @@
                             TemperatureUnit="{Binding TemperatureUnit, Mode=OneWay}"
                             ShowTemperature="{Binding ShowTemperatures, Mode=OneWay}"
                             LampPowerPlusCommand="{Binding LED6PowerPlusCommand}"
-                            LampPowerMinusCommand="{Binding LED6PowerMinusCommand}" />
+                            LampPowerMinusCommand="{Binding LED6PowerMinusCommand}"
+                            PeakWavelengthToolTip="{Binding LED6PeakToolTip, Mode=OneWay}" />
         </Grid>
         <!-- Style="{DynamicResource Thorlabs.MahControls.ToggleSwitch}" -->
         <StackPanel Grid.Column="0" 

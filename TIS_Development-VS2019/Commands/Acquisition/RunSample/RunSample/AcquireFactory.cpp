@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include "AutoFocus.h"
 #include "AcquireSingle.h"
 #include "AcquireMultiWavelength.h"
 #include "AcquireZStack.h"
@@ -19,54 +18,54 @@ const char* const AcquireFactory::bufferChannelName[] = {"ChanA","ChanB","ChanC"
 
 Observer * AcquireFactory::pDefaultObserver = NULL;
 
-IAcquire * AcquireFactory::getAcquireInstance(AcquireType type,IAutoFocus *pAF,Observer *pOb, IExperiment *pExp,wstring path)
+IAcquire * AcquireFactory::getAcquireInstance(AcquireType type, Observer *pOb, IExperiment *pExp,wstring path)
 {
 	IAcquire *pAcquire;
 	switch(type)
 	{
 	case ACQ_SINGLE:
 		{
-			pAcquire = new AcquireSingle(pAF,pExp,path);
+			pAcquire = new AcquireSingle(pExp,path);
 		}
 		break;
 	case ACQ_MULTI_WAVELENGTH:
 		{
-			pAcquire = new AcquireMultiWavelength(pAF,pExp,path);
+			pAcquire = new AcquireMultiWavelength(pExp,path);
 		}
 		break;
 	case ACQ_Z_STACK:
 		{			
-			pAcquire = new AcquireZStack(pAF,pExp,path);
+			pAcquire = new AcquireZStack(pExp,path);
 		}
 		break;
 	case ACQ_T_SERIES:
 		{			
-			pAcquire = new AcquireTSeries(pAF,pExp,path);
+			pAcquire = new AcquireTSeries(pExp,path);
 		}
 		break;
 	case ACQ_T_STREAM:
 		{
-			pAcquire = new AcquireTStream(pAF,pExp,path);
+			pAcquire = new AcquireTStream(pExp,path);
 		}
 		break;
 	case ACQ_BLEACHING:
 		{
-			pAcquire = new AcquireBleaching(pAF,pExp,path);
+			pAcquire = new AcquireBleaching(pExp,path);
 		}
 		break;
 	case ACQ_SEQUENCE:
 		{
-			pAcquire = new AcquireSequence(pAF,pExp,path);	
+			pAcquire = new AcquireSequence(pExp,path);	
 		}
 		break;
 	case ACQ_HYPERSPECTRAL:
 		{
-			pAcquire = new AcquireHyperspectral(pAF,pExp,path);	
+			pAcquire = new AcquireHyperspectral(pExp,path);	
 		}
 		break;
 	default:
 		{
-			pAcquire = new AcquireSingle(pAF,pExp,path);
+			pAcquire = new AcquireSingle(pExp,path);
 		}
 	}
 

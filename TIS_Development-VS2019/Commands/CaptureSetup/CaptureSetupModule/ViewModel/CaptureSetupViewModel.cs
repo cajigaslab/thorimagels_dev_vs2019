@@ -77,7 +77,6 @@
         private Visibility _collapsedPowerRegVisibility = Visibility.Collapsed;
         private Visibility _collapsedShutter2Visibility = Visibility.Collapsed;
         private IUnityContainer _container;
-        private DispatcherTimer _deviceReadTimer;
         private ICommand _displayROIStatsOptionsCommand;
         private bool _enableDeviceQuery = true;
         private IEventAggregator _eventAggregator;
@@ -203,12 +202,8 @@
 
             _showingPMTSafetyMessage = false;
 
-            _deviceReadTimer = new DispatcherTimer();
-            _deviceReadTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
-
             _pmtSafetyTimer = new DispatcherTimer();
             _pmtSafetyTimer.Interval = TimeSpan.FromMilliseconds(10000);
-            EnableDeviceReading = true;
 
             this._captureSetup.PropertyChanged += new PropertyChangedEventHandler(LiveImage_PropertyChanged);
 
@@ -412,7 +407,7 @@
                     {
                         File.Delete(value + "/jpeg/DeepZoomViewTestPage.html");
                     }
-                    DeleteDirectory(value);
+                    ResourceManagerCS.DeleteDirectory(value);
 
                     Directory.CreateDirectory(value);
                     Directory.CreateDirectory(value + "/jpeg");
@@ -844,13 +839,6 @@
                 _enableDeviceQuery = value;
             }
         }
-
-        public bool EnableDeviceReading
-        {
-            get;
-            set;
-        }
-
         public XmlDocument ExperimentDoc
         {
             get
@@ -1451,45 +1439,6 @@
 
         #region Methods
 
-        public static void DeleteDirectory(string target_dir)
-        {
-            DirectoryInfo dirInfo = new DirectoryInfo(target_dir);
-            foreach (FileInfo file in dirInfo.GetFiles())
-            {
-                file.Delete();
-            }
-            foreach (DirectoryInfo dir in dirInfo.GetDirectories())
-            {
-                dir.Delete(true);
-            }
-
-            //string[] files = Directory.GetFiles(target_dir);
-            //string[] dirs = Directory.GetDirectories(target_dir);
-
-            //foreach (string file in files)
-            //{
-            //    File.SetAttributes(file, FileAttributes.Normal);
-            //    File.Delete(file);
-            //}
-
-            //foreach (string dir in dirs)
-            //{
-            //    DeleteDirectory(dir);
-            //}
-
-            //try
-            //{
-            //    Directory.Delete(target_dir, false);
-            //}
-            //catch (System.IO.IOException)
-            //{
-            //    //This gives a locking application (Ex. Windows Explorer) an
-            //    //opportunity to release the directory handle
-            //    System.Threading.Thread.Sleep(1000);
-            //    Directory.Delete(target_dir, false);
-            //}
-        }
-
         public static string GetValueString(string xPath, string attrName)
         {
             XmlDocument appSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
@@ -1584,8 +1533,6 @@
             _bleachWorker.DoWork += new DoWorkEventHandler(bleachWorker_DoWork);
             _slmBleachWorker.DoWork += new DoWorkEventHandler(slmBleachWorker_DoWork);
 
-            _deviceReadTimer.Tick += new EventHandler(_deviceReadTimer_Tick);
-            _deviceReadTimer.Start();
             _pmtSafetyTimer.Tick += new EventHandler(_pmtSafetyTimer_Tick);
             _pmtSafetyTimer.Start();
 
@@ -2126,6 +2073,10 @@
                             break;
                     }
                 }
+                if (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "NDD", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iTmp))
+                {
+                    PositionNDD = iTmp;
+                }
             }
 
             ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/CaptureSequence");
@@ -2240,8 +2191,6 @@
             _bw.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(bw_RunWorkerCompleted);
             _bleachWorker.DoWork -= new DoWorkEventHandler(bleachWorker_DoWork);
             _slmBleachWorker.DoWork -= new DoWorkEventHandler(slmBleachWorker_DoWork);
-            _deviceReadTimer.Stop();
-            _deviceReadTimer.Tick -= new EventHandler(_deviceReadTimer_Tick);
             _pmtSafetyTimer.Stop();
             _pmtSafetyTimer.Tick -= new EventHandler(_pmtSafetyTimer_Tick);
             if (_bwHardware != null)
@@ -3002,6 +2951,7 @@
             DateTime lastX = DateTime.Now;
             DateTime lastY = DateTime.Now;
             DateTime lastR = DateTime.Now;
+            DateTime lastBulk = DateTime.Now;
             for (int i = 0; i < 3; i++)
             {
                 MVMManager.Instance["ZControlViewModel", "LastZUpdateTime", i] = DateTime.Now;
@@ -3038,6 +2988,7 @@
                         }
                         ((ThorSharedTypes.IMVM)MVMManager.Instance["ZControlViewModel", this]).OnPropertyChange("ZPosition");
                         ((ThorSharedTypes.IMVM)MVMManager.Instance["ZControlViewModel", this]).OnPropertyChange("ZPositionBar");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["AutoFocusControlViewModel", this]).OnPropertyChange("CurrentZPosition");
                     }
 
                     if ((bool)MVMManager.Instance["ZControlViewModel", "EnableRead", 1, (object)false])
@@ -3126,6 +3077,11 @@
                         OnPropertyChanged("LightPathGRDisplayOff");
                         OnPropertyChanged("LightPathCamDisplayOn");
                         OnPropertyChanged("LightPathCamDisplayOff");
+                        if (IsNDDAvailable)
+                        {
+                            OnPropertyChanged("DisplayOnNDD");
+                            OnPropertyChanged("DisplayOffNDD");
+                        }
                         //Update the Chrolis led temperature values
                         if ((bool)MVMManager.Instance["LightEngineControlViewModel", "UpdateTemperatures", (object)false])
                         {
@@ -3140,6 +3096,83 @@
 
                     //update beam stablizer from device
                     MVMManager.Instance["MultiphotonControlViewModel", "BeamStablizerQuery"] = true;
+
+                    ts = DateTime.Now - lastBulk;
+
+                    if (ts.TotalMilliseconds > 100)
+                    {
+                        lastBulk = DateTime.Now;
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["ZControlViewModel", this]).OnPropertyChange("ZPosOutOfBounds");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["ZControlViewModel", this]).OnPropertyChange("Z2PosOutOfBounds");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["PowerControlViewModel", this]).OnPropertyChange("PowerReg");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["PowerControlViewModel", this]).OnPropertyChange("PowerReg2");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["PowerControlViewModel", this]).OnPropertyChange("PowerRegEncoderPosition");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["PowerControlViewModel", this]).OnPropertyChange("PowerReg2EncoderPosition");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["XYTileControlViewModel", this]).OnPropertyChange("XPosition");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["XYTileControlViewModel", this]).OnPropertyChange("XPosOutOfBounds");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["XYTileControlViewModel", this]).OnPropertyChange("YPosition");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["XYTileControlViewModel", this]).OnPropertyChange("YPosOutOfBounds");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("PMTOn");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["ObjectiveControlViewModel", this]).OnPropertyChange("EpiTurretPosName");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["ObjectiveControlViewModel", this]).OnPropertyChange("ObjectiveChangerStatus");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["ObjectiveControlViewModel", this]).OnPropertyChange("MagComboBoxEnabled");
+                        OnPropertyChanged("CollapsedZPosition");
+                        OnPropertyChanged("CollapsedZPosOutOfBounds");
+                        OnPropertyChanged("CollapsedPower0");
+                        OnPropertyChanged("CollapsedPower1");
+                        OnPropertyChanged("CollapsedPower2");
+                        OnPropertyChanged("CollapsedPower3");
+                        OnPropertyChanged("CollapsedPowerReg");
+                        OnPropertyChanged("CollapsedPowerReg2");
+                        OnPropertyChanged("CollapsedXPosition");
+                        OnPropertyChanged("CollapsedXPosOutOfBounds");
+                        OnPropertyChanged("CollapsedYPosition");
+                        OnPropertyChanged("CollapsedYPosOutOfBounds");
+                        //The pixel bit depth might change when changing the taps index.
+                        //The update doesn't happen until the next image after the settings have
+                        //been pushed to the camera. Use onpropertyChanged at this location to
+                        //ensure the pixel bit depth (which has a direct effect on the PixelBitShiftValue)
+                        OnPropertyChanged("PixelBitShiftValue");
+
+                        //Only update view when reading from BeamStabilizer is enabled
+                        if (true == (bool)MVMManager.Instance["MultiphotonControlViewModel", "BeamStabilizerEnableReadData", (object)false])
+                        {
+                            ((ThorSharedTypes.IMVM)MVMManager.Instance["MultiphotonControlViewModel", this]).OnPropertyChange("BeamStabilizerBPACentroidX");
+                            ((ThorSharedTypes.IMVM)MVMManager.Instance["MultiphotonControlViewModel", this]).OnPropertyChange("BeamStabilizerBPACentroidY");
+                            ((ThorSharedTypes.IMVM)MVMManager.Instance["MultiphotonControlViewModel", this]).OnPropertyChange("BeamStabilizerBPAExposure");
+                            ((ThorSharedTypes.IMVM)MVMManager.Instance["MultiphotonControlViewModel", this]).OnPropertyChange("BeamStabilizerBPBCentroidX");
+                            ((ThorSharedTypes.IMVM)MVMManager.Instance["MultiphotonControlViewModel", this]).OnPropertyChange("BeamStabilizerBPBCentroidY");
+                            ((ThorSharedTypes.IMVM)MVMManager.Instance["MultiphotonControlViewModel", this]).OnPropertyChange("BeamStabilizerBPBExposure");
+
+                            ((ThorSharedTypes.IMVM)MVMManager.Instance["MultiphotonControlViewModel", this]).OnPropertyChange("BeamStabilizerPiezo1Pos");
+                            ((ThorSharedTypes.IMVM)MVMManager.Instance["MultiphotonControlViewModel", this]).OnPropertyChange("BeamStabilizerPiezo2Pos");
+                            ((ThorSharedTypes.IMVM)MVMManager.Instance["MultiphotonControlViewModel", this]).OnPropertyChange("BeamStabilizerPiezo3Pos");
+                            ((ThorSharedTypes.IMVM)MVMManager.Instance["MultiphotonControlViewModel", this]).OnPropertyChange("BeamStabilizerPiezo4Pos");
+                        }
+
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["EpiTurretControlViewModel", this]).OnPropertyChange("EpiPosition1");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["EpiTurretControlViewModel", this]).OnPropertyChange("EpiPosition2");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["EpiTurretControlViewModel", this]).OnPropertyChange("EpiPosition3");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["EpiTurretControlViewModel", this]).OnPropertyChange("EpiPosition4");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["EpiTurretControlViewModel", this]).OnPropertyChange("EpiPosition5");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["EpiTurretControlViewModel", this]).OnPropertyChange("EpiPosition6");
+                        OnPropertyChanged("InvertedLpLeftDisplay");
+                        OnPropertyChanged("InvertedLpCenterDisplay");
+                        OnPropertyChanged("InvertedLpRightDisplay");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("EnableDisableLEDs");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("MasterBrightness");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED1Power");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED2Power");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED3Power");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED4Power");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED5Power");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED6Power");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LampControlViewModel", this]).OnPropertyChange("LampON");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LampControlViewModel", this]).OnPropertyChange("LampPosition");
+
+                        //Update any stats
+                        RequestROIData();
+                    }
 
                     //sleep to lessen CPU load
                     System.Threading.Thread.Sleep(2);
@@ -3184,128 +3217,57 @@
 
         void _captureSetup_ROIStatsChanged(object sender, EventArgs e)
         {
-            if (OverlayCanvas.Children.Count == 0) return;
-            if (ROIStatsChartActive && _roiStatsChart != null)
-            {
-                try
-                {
-                    ROIStatsChart.Show();
-                }
-                catch
-                {
-                    return;
-                }
-            }
-            else
-            {
-                CreateStatsChartWindow();
-            }
-            if (null != _roiStatsChart)
-            {
-                if (!_statChartFrz)
-                {
-                    _roiStatsChart.SetData(_captureSetup.StatsNames, _captureSetup.Stats, true);
-                }
-                if (ROIStatsTableActive && _multiROIStats != null)
-                {
-                    try
+            //ensure this logic runs in the GUI thread and with a Render priority
+            System.Windows.Application.Current.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Render,
+                new Action(
+                    delegate ()
                     {
-                        MultiROIStats.Show();
-                    }
-                    catch
-                    {
-                        return;
-                    }
-                }
-                else
-                {
-                    CreateMultiStatsWindow();
-                }
-                if (null != _multiROIStats)
-                {
-                    _multiROIStats.SetData(_captureSetup.StatsNames, _captureSetup.Stats);
-                    _multiROIStats.SetArithmeticsData(_roiStatsChart.ROIChart.ArithmeticNames, _roiStatsChart.ROIChart.ArithmeticStats);
-                    _multiROIStats.SetFieldSize((int)MVMManager.Instance["AreaControlViewModel", "LSMFieldSize", (object)5]);
-                }
-            }
-        }
-
-        void _deviceReadTimer_Tick(object sender, EventArgs e)
-        {
-            if (EnableDeviceReading)
-            {
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["ZControlViewModel", this]).OnPropertyChange("ZPosition");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["ZControlViewModel", this]).OnPropertyChange("ZPosOutOfBounds");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["ZControlViewModel", this]).OnPropertyChange("Z2Position");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["ZControlViewModel", this]).OnPropertyChange("Z2PosOutOfBounds");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["ZControlViewModel", this]).OnPropertyChange("RPosition");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["PowerControlViewModel", this]).OnPropertyChange("PowerReg");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["PowerControlViewModel", this]).OnPropertyChange("PowerReg2");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["PowerControlViewModel", this]).OnPropertyChange("PowerRegEncoderPosition");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["PowerControlViewModel", this]).OnPropertyChange("PowerReg2EncoderPosition");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["XYTileControlViewModel", this]).OnPropertyChange("XPosition");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["XYTileControlViewModel", this]).OnPropertyChange("XPosOutOfBounds");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["XYTileControlViewModel", this]).OnPropertyChange("YPosition");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["XYTileControlViewModel", this]).OnPropertyChange("YPosOutOfBounds");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("PMTOn");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["ObjectiveControlViewModel", this]).OnPropertyChange("EpiTurretPosName");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["ObjectiveControlViewModel", this]).OnPropertyChange("ObjectiveChangerStatus");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["ObjectiveControlViewModel", this]).OnPropertyChange("MagComboBoxEnabled");
-                OnPropertyChanged("CollapsedZPosition");
-                OnPropertyChanged("CollapsedZPosOutOfBounds");
-                OnPropertyChanged("CollapsedPower0");
-                OnPropertyChanged("CollapsedPower1");
-                OnPropertyChanged("CollapsedPower2");
-                OnPropertyChanged("CollapsedPower3");
-                OnPropertyChanged("CollapsedPowerReg");
-                OnPropertyChanged("CollapsedPowerReg2");
-                OnPropertyChanged("CollapsedXPosition");
-                OnPropertyChanged("CollapsedXPosOutOfBounds");
-                OnPropertyChanged("CollapsedYPosition");
-                OnPropertyChanged("CollapsedYPosOutOfBounds");
-                //The pixel bit depth might change when changing the taps index.
-                //The update doesn't happen until the next image after the settings have
-                //been pushed to the camera. Use onpropertyChanged at this location to
-                //ensure the pixel bit depth (which has a direct effect on the PixelBitShiftValue)
-                OnPropertyChanged("PixelBitShiftValue");
-
-                //Only update view when reading from BeamStabilizer is enabled
-                if (true == (bool)MVMManager.Instance["MultiphotonControlViewModel", "BeamStabilizerEnableReadData", (object)false])
-                {
-                    ((ThorSharedTypes.IMVM)MVMManager.Instance["MultiphotonControlViewModel", this]).OnPropertyChange("BeamStabilizerBPACentroidX");
-                    ((ThorSharedTypes.IMVM)MVMManager.Instance["MultiphotonControlViewModel", this]).OnPropertyChange("BeamStabilizerBPACentroidY");
-                    ((ThorSharedTypes.IMVM)MVMManager.Instance["MultiphotonControlViewModel", this]).OnPropertyChange("BeamStabilizerBPAExposure");
-                    ((ThorSharedTypes.IMVM)MVMManager.Instance["MultiphotonControlViewModel", this]).OnPropertyChange("BeamStabilizerBPBCentroidX");
-                    ((ThorSharedTypes.IMVM)MVMManager.Instance["MultiphotonControlViewModel", this]).OnPropertyChange("BeamStabilizerBPBCentroidY");
-                    ((ThorSharedTypes.IMVM)MVMManager.Instance["MultiphotonControlViewModel", this]).OnPropertyChange("BeamStabilizerBPBExposure");
-
-                    ((ThorSharedTypes.IMVM)MVMManager.Instance["MultiphotonControlViewModel", this]).OnPropertyChange("BeamStabilizerPiezo1Pos");
-                    ((ThorSharedTypes.IMVM)MVMManager.Instance["MultiphotonControlViewModel", this]).OnPropertyChange("BeamStabilizerPiezo2Pos");
-                    ((ThorSharedTypes.IMVM)MVMManager.Instance["MultiphotonControlViewModel", this]).OnPropertyChange("BeamStabilizerPiezo3Pos");
-                    ((ThorSharedTypes.IMVM)MVMManager.Instance["MultiphotonControlViewModel", this]).OnPropertyChange("BeamStabilizerPiezo4Pos");
-                }
-
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["EpiTurretControlViewModel", this]).OnPropertyChange("EpiPosition1");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["EpiTurretControlViewModel", this]).OnPropertyChange("EpiPosition2");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["EpiTurretControlViewModel", this]).OnPropertyChange("EpiPosition3");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["EpiTurretControlViewModel", this]).OnPropertyChange("EpiPosition4");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["EpiTurretControlViewModel", this]).OnPropertyChange("EpiPosition5");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["EpiTurretControlViewModel", this]).OnPropertyChange("EpiPosition6");
-                OnPropertyChanged("InvertedLpLeftDisplay");
-                OnPropertyChanged("InvertedLpCenterDisplay");
-                OnPropertyChanged("InvertedLpRightDisplay");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("EnableDisableLEDs");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("MasterBrightness");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED1Power");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED2Power");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED3Power");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED4Power");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED5Power");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED6Power");
-            }
-
-            //Update any stats
-            RequestROIData();
+                        if (OverlayCanvas.Children.Count == 0) return;
+                        if (ROIStatsChartActive && _roiStatsChart != null)
+                        {
+                            try
+                            {
+                                ROIStatsChart.Show();
+                            }
+                            catch
+                            {
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            CreateStatsChartWindow();
+                        }
+                        if (null != _roiStatsChart)
+                        {
+                            if (!_statChartFrz)
+                            {
+                                _roiStatsChart.SetData(_captureSetup.StatsNames, _captureSetup.Stats, true);
+                            }
+                            if (ROIStatsTableActive && _multiROIStats != null)
+                            {
+                                try
+                                {
+                                    MultiROIStats.Show();
+                                }
+                                catch
+                                {
+                                    return;
+                                }
+                            }
+                            else
+                            {
+                                CreateMultiStatsWindow();
+                            }
+                            if (null != _multiROIStats)
+                            {
+                                _multiROIStats.SetData(_captureSetup.StatsNames, _captureSetup.Stats);
+                                _multiROIStats.SetArithmeticsData(_roiStatsChart.ROIChart.ArithmeticNames, _roiStatsChart.ROIChart.ArithmeticStats);
+                                _multiROIStats.SetFieldSize((int)MVMManager.Instance["AreaControlViewModel", "LSMFieldSize", (object)5]);
+                            }
+                        }
+                    }));
+            
         }
 
         void _lineProfile_Closed(object sender, EventArgs e)

@@ -45,7 +45,7 @@
     {
         #region Fields
 
-        const int DISPLAY_PANELS = 20;
+        const int DISPLAY_PANELS = 21;
         const int NUM_CHANNELS = 4;
 
         private bool zExpander_MouseGotFocus = false;
@@ -73,7 +73,8 @@
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/ThreePhotonView","ThreePhotonControlView","ThreePhotonControlBorder"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/DFLIMView","DFLIMViewControl","DFLIMControlBorder"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/LightEngineView","LightEngineControlView","LightEngineControlBorder"},
-                {"/ApplicationSettings/DisplayOptions/CaptureSetup/EpiturretControlView","EpiturretControlView","EpiturretControlBorder"}
+                {"/ApplicationSettings/DisplayOptions/CaptureSetup/EpiturretControlView","EpiturretControlView","EpiturretControlBorder"},
+                {"/ApplicationSettings/DisplayOptions/CaptureSetup/AutoFocusControlView","AutoFocusControlView","AutoFocusControlBorder"}
             };
         Dictionary<int, string> _powerTabVisibility = new Dictionary<int, string>
          {
@@ -269,6 +270,7 @@
             zExpander_MouseGotFocus = false;
         }
 
+        //:TODO: Check if we need this later
         void AFScanStart_Update(string scanstart, string focusoffset)
         {
             XmlNodeList ndList = _liveVM.HardwareDoc.DocumentElement["Objectives"].GetElementsByTagName("Objective");
@@ -340,12 +342,12 @@
                     }
                 }
 
-                if (false == _liveVM.AutoFocus())
-                {
-                    ThorLog.Instance.TraceEvent(TraceEventType.Information, 1, this.GetType().Name + " Autofocus failed returning to previous Z position");
+                //if (false == _liveVM.AutoFocus())
+                //{
+                //    ThorLog.Instance.TraceEvent(TraceEventType.Information, 1, this.GetType().Name + " Autofocus failed returning to previous Z position");
 
-                    MVMManager.Instance["ZControlViewModel", "ZPosition"] = currentPosition;
-                }
+                //    MVMManager.Instance["ZControlViewModel", "ZPosition"] = currentPosition;
+                //}
 
                 MVMManager.Instance.SaveSettings(SettingsFileType.HARDWARE_SETTINGS);
             }
@@ -1578,6 +1580,11 @@
                 if (ndList.Count > 0)
                 {
                     DFLIMControlBorder.Visibility = ndList[0].Attributes["Visibility"].Value.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
+                }
+                ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/AutoFocusControlView");
+                if (ndList.Count > 0)
+                {
+                    AutoFocusControlBorder.Visibility = ndList[0].Attributes["Visibility"].Value.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
                 }
 
                 ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/TwoColumnDisplay");

@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "..\..\..\..\Commands\General\SelectHardware\SelectHardware\SelectHardware.h"
 #include "RunSample.h"
-#include "AutoFocus.h"
-#include "AutoFocusNone.h"
 #include "AcquireTStream.h"
 #include "AcquireFactory.h"
 #include "AcquireSingle.h"
@@ -31,9 +29,8 @@ bool threadRawFileContainsDisabledChannels = false;
 //intensity capture image extraction (0), or a dflim image extraction (1)
 long imageMethod = 0;
 
-AcquireTStream::AcquireTStream(IAutoFocus * pAF,IExperiment *exp,wstring path)
+AcquireTStream::AcquireTStream(IExperiment *exp,wstring path)
 {
-	_pAutoFocus = pAF;
 	_pExp = exp;
 	_counter = 0;
 	_tFrame = 1;
@@ -128,7 +125,6 @@ string WStringToStringATST(wstring ws)	//ATS: AcquireTStream
 }
 
 HANDLE AcquireTStream::hEvent = NULL;
-HANDLE AcquireTStream::hEventAutoFocus = NULL;
 HANDLE AcquireTStream::hEventZ = NULL;
 unsigned long AcquireTStream::_saveIndex = 0;
 volatile unsigned long AcquireTStream::_saveThreadCount = 0;
@@ -289,17 +285,17 @@ long AcquireTStream::Execute(long index, long subWell, long zFrame, long tFrame)
 	return result;
 }
 
-long AcquireTStream::SetupZStage(int setupMode, ICamera *pCamera, ZRangeInfo* zRange)
+long AcquireTStream::SetupZStage(int setupMode, ICamera* pCamera, ZRangeInfo* zRange)
 {
-	IDevice * pZStage = GetDevice(SelectedHardware::SELECTED_ZSTAGE);
-	if(NULL == pZStage)
+	IDevice* pZStage = GetDevice(SelectedHardware::SELECTED_ZSTAGE);
+	if (NULL == pZStage)
 	{
-		StringCbPrintfW(message,MSG_LENGTH,L"RunSample Execute Z stage invalid");
-		logDll->TLTraceEvent(ERROR_EVENT,1,message);
+		StringCbPrintfW(message, MSG_LENGTH, L"RunSample Execute Z stage invalid");
+		logDll->TLTraceEvent(ERROR_EVENT, 1, message);
 		return FALSE;
 	}
 
-	long streamEnable,streamFramesRead,rawData,triggerMode,displayImage,storageMode,zFastEnableGUI,zFastMode,flybackFrames,flybackLines,previewIndex,stimulusTriggering,stimulusMaxFrames,useReferenceVoltageForFastZPockels,dmaFrames;
+	long streamEnable, streamFramesRead, rawData, triggerMode, displayImage, storageMode, zFastEnableGUI, zFastMode, flybackFrames, flybackLines, previewIndex, stimulusTriggering, stimulusMaxFrames, useReferenceVoltageForFastZPockels, dmaFrames;
 	double flybackTimeAdjustMS = 0, volumeTimeAdjustMS = 0, stepTimeAdjustMS = 0;
 	double z_max = 0, z_min = 0, zDefault = 0;
 	long zType = 0, zAvailable = 0, zReadOnly = 0;
@@ -308,245 +304,269 @@ long AcquireTStream::SetupZStage(int setupMode, ICamera *pCamera, ZRangeInfo* zR
 	double frameRate = 1.0;
 	double flybackTime = 0.0;
 	double* zPosBuffer = NULL;
-	long areaMode,scanMode,interleave,pixelX,pixelY,chan,lsmFieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[4], verticalFlip, horizontalFlip, timebasedLineScan = FALSE, timebasedLineScanMS = 0;
-	double cameraType,lsmType,lsmFlybackLines,areaAngle,dwellTime,crsFrequencyHz = 0;
+	long areaMode, scanMode, interleave, pixelX, pixelY, chan, lsmFieldSize, offsetX, offsetY, averageMode, averageNum, clockSource, inputRange1, inputRange2, twoWayAlignment, extClockRate, flybackCycles, inputRange3, inputRange4, minimizeFlybackCycles, polarity[4], verticalFlip, horizontalFlip, timebasedLineScan = FALSE, timebasedLineScanMS = 0;
+	double cameraType, lsmType, lsmFlybackLines, areaAngle, dwellTime, crsFrequencyHz = 0;
 	long threePhotonEnable = FALSE;
 	long numberOfPlanes = 1;
 	long selectedPlane = 0;
 	long displayCumulativeAveragePreview = FALSE;
 
-	switch(setupMode)
+	switch (setupMode)
 	{
-	case 0:
-		//get fast z params
-		_pExp->GetStreaming(streamEnable,streamFramesRead,rawData,triggerMode,displayImage,storageMode,zFastEnableGUI,zFastMode,flybackFrames,flybackLines,flybackTimeAdjustMS,volumeTimeAdjustMS,stepTimeAdjustMS,previewIndex,stimulusTriggering,dmaFrames,stimulusMaxFrames,useReferenceVoltageForFastZPockels, displayCumulativeAveragePreview);
-
-		//get z positions
-		GetZPositions(_pExp, pZStage, zStartPos, zStopPos, zTiltPos, zStepSizeMM, zstageSteps, zStreamFrames, zStreamMode);
-		if(zRange)
-		{ 
-			zRange->zFramesPerVolume = zstageSteps; 
-			zRange->zStartPosUM = zStartPos * Constants::UM_TO_MM;
-			zRange->zStopPosUM = zStopPos * Constants::UM_TO_MM;
-			zRange->zStepSizeUM = zStepSizeMM * Constants::UM_TO_MM;
-		}
-
-		//set z stage range
-		if((TRUE == pZStage->GetParam(IDevice::PARAM_Z_FAST_START_POS,z_max)) && (FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_START_POS,zStartPos)))
+		case 0:
 		{
-			//MessageBox(NULL,L"Invalid Z start position.",L"Z Stage Error",MB_OK | MB_SETFOREGROUND | MB_ICONERROR);	
-			//return FALSE;
-		}
+			//get fast z params
+			_pExp->GetStreaming(streamEnable, streamFramesRead, rawData, triggerMode, displayImage, storageMode, zFastEnableGUI, zFastMode, flybackFrames, flybackLines, flybackTimeAdjustMS, volumeTimeAdjustMS, stepTimeAdjustMS, previewIndex, stimulusTriggering, dmaFrames, stimulusMaxFrames, useReferenceVoltageForFastZPockels, displayCumulativeAveragePreview);
 
-		pZStage->SetParam(IDevice::PARAM_Z_ANALOG_MODE, zFastMode);
-		switch (static_cast<ZPiezoAnalogMode>(zFastMode))
-		{
-		case ZPiezoAnalogMode::ANALOG_MODE_SINGLE_WAVEFORM:
-			break;
-		case ZPiezoAnalogMode::ANALOG_MODE_STAIRCASE_WAVEFORM:
-			//allow change flyback cycles in camera if in z staircase mode
-			if(FALSE == pCamera->SetParam(ICamera::Params::PARAM_LSM_MINIMIZE_FLYBACK_CYCLES, 0))
+			//get z positions
+			GetZPositions(_pExp, pZStage, zStartPos, zStopPos, zTiltPos, zStepSizeMM, zstageSteps, zStreamFrames, zStreamMode);
+			if (zRange)
 			{
-				StringCbPrintfW(message,MSG_LENGTH,L"RunSample Execute Minimize Flyback Cycles not implemented for camera");
-				logDll->TLTraceEvent(ERROR_EVENT,1,message);
-			}			
-			if(FALSE == pCamera->SetParam(ICamera::Params::PARAM_LSM_FLYBACK_CYCLE, flybackLines))
-			{
-				StringCbPrintfW(message,MSG_LENGTH,L"RunSample Execute Flyback Cycle not implemented for camera");
-				logDll->TLTraceEvent(ERROR_EVENT,1,message);
+				zRange->zFramesPerVolume = zstageSteps;
+				zRange->zStartPosUM = zStartPos * Constants::UM_TO_MM;
+				zRange->zStopPosUM = zStopPos * Constants::UM_TO_MM;
+				zRange->zStepSizeUM = zStepSizeMM * Constants::UM_TO_MM;
 			}
-			break;
-		}
 
-		//set z stage positions for staircase mode, allow future random z positions
-		//min steps of 2 for ramping reference voltage
-		zstageSteps = (1 >= zstageSteps) ? 2 : zstageSteps;
-		zPosBuffer = new double[zstageSteps];
-		for(long z = 0; z < zstageSteps; z++) //looping through all Z positions
-		{
-			zPosBuffer[z] = zStartPos + z*zStepSizeMM;
-		}
-		pZStage->SetParamBuffer(IDevice::PARAM_Z_FAST_STEP_BUFFER,(char*)zPosBuffer,zstageSteps);
-		pZStage->SetParam(IDevice::PARAM_Z_OUTPUT_POCKELS_REFERENCE, useReferenceVoltageForFastZPockels);
-		if(TRUE == useReferenceVoltageForFastZPockels)
-		{
-			long typePower,blankPercent;
-			double startPower,stopPower;
+			//set z stage range
+			if ((TRUE == pZStage->GetParam(IDevice::PARAM_Z_FAST_START_POS, z_max)) && (FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_START_POS, zStartPos)))
+			{
+				//MessageBox(NULL,L"Invalid Z start position.",L"Z Stage Error",MB_OK | MB_SETFOREGROUND | MB_ICONERROR);	
+				//return FALSE;
+			}
+
+			long powerRampMode = ICamera::PowerRampMode::POWER_RAMP_MODE_CONTINUOUS;
+			pZStage->SetParam(IDevice::PARAM_Z_ANALOG_MODE, zFastMode);
+			switch (static_cast<ZPiezoAnalogMode>(zFastMode))
+			{
+				case ZPiezoAnalogMode::ANALOG_MODE_SINGLE_WAVEFORM:
+					break;
+				case ZPiezoAnalogMode::ANALOG_MODE_STAIRCASE_WAVEFORM:
+					//allow change flyback cycles in camera if in z staircase mode
+					if (FALSE == pCamera->SetParam(ICamera::Params::PARAM_LSM_MINIMIZE_FLYBACK_CYCLES, 0))
+					{
+						StringCbPrintfW(message, MSG_LENGTH, L"RunSample Execute Minimize Flyback Cycles not implemented for camera");
+						logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+					}
+					if (FALSE == pCamera->SetParam(ICamera::Params::PARAM_LSM_FLYBACK_CYCLE, flybackLines))
+					{
+						StringCbPrintfW(message, MSG_LENGTH, L"RunSample Execute Flyback Cycle not implemented for camera");
+						logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+					}
+					powerRampMode = ICamera::PowerRampMode::POWER_RAMP_MODE_STAIRCASE;
+					break;
+			}
+
+			//set z stage positions for staircase mode, allow future random z positions
+			//min steps of 2 for ramping reference voltage
+			zstageSteps = (1 >= zstageSteps) ? 2 : zstageSteps;
+			zPosBuffer = new double[zstageSteps];
+			for (long z = 0; z < zstageSteps; z++) //looping through all Z positions
+			{
+				zPosBuffer[z] = zStartPos + z * zStepSizeMM;
+			}
+			pZStage->SetParamBuffer(IDevice::PARAM_Z_FAST_STEP_BUFFER, (char*)zPosBuffer, zstageSteps);
+			long typePower, blankPercent;
+			double startPower, stopPower;
 			string pathPower;
-			_pExp->GetPockels(0,typePower,startPower,stopPower,pathPower,blankPercent);
+			_pExp->GetPockels(0, typePower, startPower, stopPower, pathPower, blankPercent);
 			//Only user reference voltage if pockels power type is custom power ramp
 			const long EXPONENTIAL_POWER_RAMP = 1;
-			if(EXPONENTIAL_POWER_RAMP == typePower)
-			{				
+			if (EXPONENTIAL_POWER_RAMP == typePower)
+			{
 				//pass pockels response type from camera to zStage
-				double pockelsResType = 0.0, pockelsMin = 0.0;
-				if(TRUE == pCamera->GetParam(ICamera::PARAM_LSM_POCKELS_RESPONSE_TYPE_0, pockelsResType))
+				double pockelsResType = 0.0;
+				if (TRUE == pCamera->GetParam(ICamera::PARAM_LSM_POCKELS_RESPONSE_TYPE_0, pockelsResType))
 				{
 					pZStage->SetParam(IDevice::PARAM_Z_OUTPUT_POCKELS_RESPONSE_TYPE, pockelsResType);
 				}
 				//set power ramp buffer
 				double* zPowerBuffer = new double[zstageSteps];
-				for(long z = 0; z < zstageSteps; z++) //looping through all Z positions
+				for (long z = 0; z < zstageSteps; z++) //looping through all Z positions
 				{
-					zPowerBuffer[z] = GetCustomPowerValue(zStartPos,zStopPos,zPosBuffer[z],pathPower);
+					zPowerBuffer[z] = GetCustomPowerValue(zStartPos, zStopPos, zPosBuffer[z], pathPower);
 				}
-				pZStage->SetParamBuffer(IDevice::PARAM_POWER_RAMP_BUFFER,(char*)zPowerBuffer,zstageSteps);
-				delete[] zPowerBuffer;
 
-				if(TRUE == pCamera->GetParam(ICamera::PARAM_LSM_POCKELS_MIN_VOLTAGE_0, pockelsMin))
+				long paramType, powerRampAvailable, paramReadOnly;
+				double paramMax, paramMin, paramDefault;
+				//if power ramp is available in the camera then allow the camera to control the pockels power ramp
+				if (TRUE == pCamera->GetParamInfo(ICamera::PARAM_LSM_POWER_RAMP_ENABLE, paramType, powerRampAvailable, paramReadOnly, paramMin, paramMax, paramDefault))
 				{
-					pZStage->SetParam(IDevice::PARAM_Z_POCKELS_MIN, pockelsMin);		
+					if (TRUE == powerRampAvailable)
+					{
+						pCamera->SetParam(ICamera::PARAM_LSM_POWER_RAMP_ENABLE, TRUE);
+						pCamera->SetParam(ICamera::PARAM_LSM_POWER_RAMP_NUM_FRAMES, zstageSteps);
+						pCamera->SetParam(ICamera::PARAM_LSM_POWER_RAMP_NUM_FLYBACK_FRAMES, flybackFrames);
+						pCamera->SetParam(ICamera::PARAM_LSM_POWER_RAMP_MODE, powerRampMode);
+						pCamera->SetParamBuffer(ICamera::PARAM_LSM_POWER_RAMP_PERCENTAGE_BUFFER, (char*)zPowerBuffer, zstageSteps);
+					}
 				}
+
+				if (FALSE == powerRampAvailable && TRUE == useReferenceVoltageForFastZPockels)
+				{
+					pZStage->SetParam(IDevice::PARAM_Z_OUTPUT_POCKELS_REFERENCE, useReferenceVoltageForFastZPockels);
+
+					pZStage->SetParamBuffer(IDevice::PARAM_POWER_RAMP_BUFFER, (char*)zPowerBuffer, zstageSteps);
+
+					double pockelsMin = 0.0;
+					if (TRUE == pCamera->GetParam(ICamera::PARAM_LSM_POCKELS_MIN_VOLTAGE_0, pockelsMin))
+					{
+						pZStage->SetParam(IDevice::PARAM_Z_POCKELS_MIN, pockelsMin);
+					}
+				}
+
+				delete[] zPowerBuffer;
 			}
 			else
 			{
 				pZStage->SetParam(IDevice::PARAM_Z_OUTPUT_POCKELS_REFERENCE, FALSE);
 			}
+
+			delete[] zPosBuffer;
 		}
-		delete[] zPosBuffer;
 		break;
-	case 1:
-		//get fast z params
-		_pExp->GetStreaming(streamEnable,streamFramesRead,rawData,triggerMode,displayImage,storageMode,zFastEnableGUI,zFastMode,flybackFrames,flybackLines,flybackTimeAdjustMS,volumeTimeAdjustMS,stepTimeAdjustMS,previewIndex,stimulusTriggering,dmaFrames,stimulusMaxFrames,useReferenceVoltageForFastZPockels, displayCumulativeAveragePreview);
-		//get z positions
-		GetZPositions(_pExp, pZStage, zStartPos, zStopPos, zTiltPos, zStepSizeMM, zstageSteps, zStreamFrames, zStreamMode);
+		case 1:
+			//get fast z params
+			_pExp->GetStreaming(streamEnable, streamFramesRead, rawData, triggerMode, displayImage, storageMode, zFastEnableGUI, zFastMode, flybackFrames, flybackLines, flybackTimeAdjustMS, volumeTimeAdjustMS, stepTimeAdjustMS, previewIndex, stimulusTriggering, dmaFrames, stimulusMaxFrames, useReferenceVoltageForFastZPockels, displayCumulativeAveragePreview);
+			//get z positions
+			GetZPositions(_pExp, pZStage, zStartPos, zStopPos, zTiltPos, zStepSizeMM, zstageSteps, zStreamFrames, zStreamMode);
 
-		//set frame rate or others which is acurate only after preflight of camera
-		if(FALSE == pCamera->GetParam(ICamera::PARAM_FRAME_RATE,frameRate))
-		{
-			StringCbPrintfW(message,MSG_LENGTH,L"RunSample Execute Frame Rate not implemented for camera");
-			logDll->TLTraceEvent(ERROR_EVENT,1,message);
-		}
-		//update frame rate if resonance frequency is measured
-		if ((pCamera->GetParam(ICamera::PARAM_CAMERA_TYPE,cameraType) && (double)ICamera::CameraType::LSM == cameraType) && 
-			(pCamera->GetParam(ICamera::PARAM_LSM_TYPE,lsmType) && ((double)ICamera::LSMType::GALVO_RESONANCE == lsmType || (double)ICamera::LSMType::RESONANCE_GALVO_GALVO == lsmType))
-			)
-		{
-			_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,chan,lsmFieldSize,offsetX,offsetY,averageMode,averageNum,clockSource, inputRange1, inputRange2, 
-				twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timebasedLineScan, timebasedLineScanMS, threePhotonEnable, numberOfPlanes);
-
-			//if its a timebased line scan then we want to get the pixel Y from the camera instead of assuming that it is what we set it as
-			if (timebasedLineScan)
+			//set frame rate or others which is acurate only after preflight of camera
+			if (FALSE == pCamera->GetParam(ICamera::PARAM_FRAME_RATE, frameRate))
 			{
-				pCamera->SetParam(ICamera::PARAM_LSM_TB_LINE_SCAN_TIME_MS, timebasedLineScanMS);
-				double lsmHeight;
-				pCamera->GetParam(ICamera::PARAM_LSM_PIXEL_Y, lsmHeight);
-				pixelY = static_cast<long>(lsmHeight);
+				StringCbPrintfW(message, MSG_LENGTH, L"RunSample Execute Frame Rate not implemented for camera");
+				logDll->TLTraceEvent(ERROR_EVENT, 1, message);
 			}
-
-			if(pCamera->GetParam(ICamera::Params::PARAM_LSM_FLYBACK_CYCLE, lsmFlybackLines))
+			//update frame rate if resonance frequency is measured
+			if ((pCamera->GetParam(ICamera::PARAM_CAMERA_TYPE, cameraType) && (double)ICamera::CameraType::LSM == cameraType) &&
+				(pCamera->GetParam(ICamera::PARAM_LSM_TYPE, lsmType) && ((double)ICamera::LSMType::GALVO_RESONANCE == lsmType || (double)ICamera::LSMType::RESONANCE_GALVO_GALVO == lsmType))
+				)
 			{
-				frameRate = (0 < crsFrequencyHz) ? (crsFrequencyHz / ((((long)ScanMode::TWO_WAY_SCAN == scanMode) ? (pixelY / 2) : pixelY) + lsmFlybackLines)) : frameRate;
-			}
-		}
-		StringCbPrintfW(message,MSG_LENGTH,L"AcquireTStream SetupZStage frame rate %d.%d", static_cast<long>(frameRate),static_cast<long>(1000 * (frameRate - static_cast<long>(frameRate))));
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,message);
+				_pExp->GetLSM(areaMode, areaAngle, scanMode, interleave, pixelX, pixelY, chan, lsmFieldSize, offsetX, offsetY, averageMode, averageNum, clockSource, inputRange1, inputRange2,
+					twoWayAlignment, extClockRate, dwellTime, flybackCycles, inputRange3, inputRange4, minimizeFlybackCycles, polarity[0], polarity[1], polarity[2], polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timebasedLineScan, timebasedLineScanMS, threePhotonEnable, numberOfPlanes);
 
-		long paramType, paramAvailable, paramReadOnly, minZFrames, maxZFrames;
-		double paramMin, paramMax, paramDefault;
-		switch (static_cast<ZPiezoAnalogMode>(zFastMode))
-		{
-		case ZPiezoAnalogMode::ANALOG_MODE_SINGLE_WAVEFORM:
-			{
-				StringCbPrintfW(message,MSG_LENGTH,L"AcquireTStream SetupZStage volume frames %d flyback frames %d", zstageSteps, flybackFrames);
-				logDll->TLTraceEvent(INFORMATION_EVENT,1,message);
-
-				if(FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_VOLUME_TIME, zstageSteps/frameRate))
+				//if its a timebased line scan then we want to get the pixel Y from the camera instead of assuming that it is what we set it as
+				if (timebasedLineScan)
 				{
-					pZStage->GetParamInfo(IDevice::PARAM_Z_FAST_VOLUME_TIME,paramType,paramAvailable,paramReadOnly,paramMin,paramMax,paramDefault);
-					if (FALSE == paramAvailable)
+					pCamera->SetParam(ICamera::PARAM_LSM_TB_LINE_SCAN_TIME_MS, timebasedLineScanMS);
+					double lsmHeight;
+					pCamera->GetParam(ICamera::PARAM_LSM_PIXEL_Y, lsmHeight);
+					pixelY = static_cast<long>(lsmHeight);
+				}
+
+				if (pCamera->GetParam(ICamera::Params::PARAM_LSM_FLYBACK_CYCLE, lsmFlybackLines))
+				{
+					frameRate = (0 < crsFrequencyHz) ? (crsFrequencyHz / ((((long)ScanMode::TWO_WAY_SCAN == scanMode) ? (pixelY / 2) : pixelY) + lsmFlybackLines)) : frameRate;
+				}
+			}
+			StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream SetupZStage frame rate %d.%d", static_cast<long>(frameRate), static_cast<long>(1000 * (frameRate - static_cast<long>(frameRate))));
+			logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
+
+			long paramType, paramAvailable, paramReadOnly, minZFrames, maxZFrames;
+			double paramMin, paramMax, paramDefault;
+			switch (static_cast<ZPiezoAnalogMode>(zFastMode))
+			{
+				case ZPiezoAnalogMode::ANALOG_MODE_SINGLE_WAVEFORM:
+				{
+					StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream SetupZStage volume frames %d flyback frames %d", zstageSteps, flybackFrames);
+					logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
+
+					if (FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_VOLUME_TIME, zstageSteps / frameRate))
 					{
-						StringCbPrintfW(message,MSG_LENGTH,L"Invalid Z Stage.");
-					}
-					else
-					{
-						minZFrames = static_cast<long>(ceil(paramMin * frameRate));
-						maxZFrames = static_cast<long>(floor(paramMax * frameRate));
-						if(minZFrames > zstageSteps)
+						pZStage->GetParamInfo(IDevice::PARAM_Z_FAST_VOLUME_TIME, paramType, paramAvailable, paramReadOnly, paramMin, paramMax, paramDefault);
+						if (FALSE == paramAvailable)
 						{
-							StringCbPrintfW(message,MSG_LENGTH,L"Invalid Number of Slices.\nAcceptable minimum under current configuraton: %d", minZFrames);
-						}
-						else if (maxZFrames < zstageSteps)
-						{
-							StringCbPrintfW(message,MSG_LENGTH,L"Invalid Number of Slices.\nAcceptable maximum under current configuraton: %d", maxZFrames);
+							StringCbPrintfW(message, MSG_LENGTH, L"Invalid Z Stage.");
 						}
 						else
 						{
-							StringCbPrintfW(message,MSG_LENGTH,L"Invalid Number of Slices.");
+							minZFrames = static_cast<long>(ceil(paramMin * frameRate));
+							maxZFrames = static_cast<long>(floor(paramMax * frameRate));
+							if (minZFrames > zstageSteps)
+							{
+								StringCbPrintfW(message, MSG_LENGTH, L"Invalid Number of Slices.\nAcceptable minimum under current configuraton: %d", minZFrames);
+							}
+							else if (maxZFrames < zstageSteps)
+							{
+								StringCbPrintfW(message, MSG_LENGTH, L"Invalid Number of Slices.\nAcceptable maximum under current configuraton: %d", maxZFrames);
+							}
+							else
+							{
+								StringCbPrintfW(message, MSG_LENGTH, L"Invalid Number of Slices.");
+							}
 						}
+						MessageBox(NULL, message, L"Capture Streaming FastZ Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
+						return FALSE;
 					}
-					MessageBox(NULL,message,L"Capture Streaming FastZ Error",MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);	
-					return FALSE;
+					//set volume time adjustment
+					pZStage->SetParam(IDevice::PARAM_Z_FAST_VOLUME_TIME_ADJUST_MS, volumeTimeAdjustMS);
 				}
-				//set volume time adjustment
-				pZStage->SetParam(IDevice::PARAM_Z_FAST_VOLUME_TIME_ADJUST_MS,volumeTimeAdjustMS);
-			}
-			break;
-		case ZPiezoAnalogMode::ANALOG_MODE_STAIRCASE_WAVEFORM:
-			{
-				if(FALSE == pCamera->GetParam(ICamera::Params::PARAM_LSM_FLYBACK_TIME, flybackTime))
+				break;
+				case ZPiezoAnalogMode::ANALOG_MODE_STAIRCASE_WAVEFORM:
 				{
-					StringCbPrintfW(message,MSG_LENGTH,L"RunSample Execute Flyback Time not implemented for camera");
-					logDll->TLTraceEvent(ERROR_EVENT,1,message);
+					if (FALSE == pCamera->GetParam(ICamera::Params::PARAM_LSM_FLYBACK_TIME, flybackTime))
+					{
+						StringCbPrintfW(message, MSG_LENGTH, L"RunSample Execute Flyback Time not implemented for camera");
+						logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+					}
+					if (FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_INTRA_STEP_TIME, flybackTime))
+					{
+						StringCbPrintfW(message, MSG_LENGTH, L"RunSample Intra Step Time not implemented for z stage.");
+						logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+					}
+					double frameTime = 1.0 / frameRate - flybackTime;
+					if (FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_STEP_TIME, frameTime))
+					{
+						StringCbPrintfW(message, MSG_LENGTH, L"Invalid Z Stage for Staircase mode.");
+						MessageBox(NULL, message, L"Capture Streaming FastZ Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
+						return FALSE;
+					}
+					//set frame time adjustment
+					pZStage->SetParam(IDevice::PARAM_Z_FAST_STEP_TIME_ADJUST_MS, stepTimeAdjustMS);
 				}
-				if(FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_INTRA_STEP_TIME, flybackTime))
+				break;
+			}
+			//set fast z flyback time
+			if (FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_FLYBACK_TIME, flybackFrames / frameRate))
+			{
+				pZStage->GetParamInfo(IDevice::PARAM_Z_FAST_FLYBACK_TIME, paramType, paramAvailable, paramReadOnly, paramMin, paramMax, paramDefault);
+				pZStage->SetParamString(IDevice::PARAM_WAVEFORM_OUTPATH, (wchar_t*)GetDir(_pExp->GetPathAndName()).c_str());
+				minZFrames = static_cast<long>(ceil(paramMin * frameRate));
+				maxZFrames = static_cast<long>(floor(paramMax * frameRate));
+				if (minZFrames > flybackFrames)
 				{
-					StringCbPrintfW(message,MSG_LENGTH,L"RunSample Intra Step Time not implemented for z stage.");
-					logDll->TLTraceEvent(ERROR_EVENT,1,message);
+					StringCbPrintfW(message, MSG_LENGTH, L"Invalid Flyback Frames.\nAcceptable minimum under current configuraton: %d", minZFrames);
 				}
-				double frameTime = 1.0/frameRate - flybackTime;			
-				if(FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_STEP_TIME, frameTime))
+				else if (maxZFrames < flybackFrames)
 				{
-					StringCbPrintfW(message,MSG_LENGTH,L"Invalid Z Stage for Staircase mode.");
-					MessageBox(NULL,message,L"Capture Streaming FastZ Error",MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
-					return FALSE;
+					StringCbPrintfW(message, MSG_LENGTH, L"Invalid Flyback Frames.\nAcceptable maximum under current configuraton: %d", maxZFrames);
 				}
-				//set frame time adjustment
-				pZStage->SetParam(IDevice::PARAM_Z_FAST_STEP_TIME_ADJUST_MS,stepTimeAdjustMS);
+				else
+				{
+					StringCbPrintfW(message, MSG_LENGTH, L"Invalid Flyback Frames.");
+				}
+				MessageBox(NULL, message, L"Capture Streaming FastZ Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
+				return FALSE;
 			}
-			break;
-		}
-		//set fast z flyback time
-		if (FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_FLYBACK_TIME,flybackFrames/frameRate))
-		{
-			pZStage->GetParamInfo(IDevice::PARAM_Z_FAST_FLYBACK_TIME,paramType,paramAvailable,paramReadOnly,paramMin,paramMax,paramDefault);
-			pZStage->SetParamString(IDevice::PARAM_WAVEFORM_OUTPATH, (wchar_t*)GetDir(_pExp->GetPathAndName()).c_str());
-			minZFrames = static_cast<long>(ceil(paramMin * frameRate));
-			maxZFrames = static_cast<long>(floor(paramMax * frameRate));
-			if(minZFrames > flybackFrames)
+			pZStage->SetParam(IDevice::PARAM_Z_FAST_FLYBACK_TIME_ADJUST_MS, flybackTimeAdjustMS);
+			pZStage->PreflightPosition();
+			pZStage->SetupPosition();
+			if (FALSE == pZStage->StartPosition())
 			{
-				StringCbPrintfW(message,MSG_LENGTH,L"Invalid Flyback Frames.\nAcceptable minimum under current configuraton: %d", minZFrames);
+				pZStage->GetLastErrorMsg(message, MSG_LENGTH);
+				MessageBox(NULL, message, L"Capture Streaming FastZ Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
+				return FALSE;
 			}
-			else if (maxZFrames < flybackFrames)
-			{
-				StringCbPrintfW(message,MSG_LENGTH,L"Invalid Flyback Frames.\nAcceptable maximum under current configuraton: %d", maxZFrames);
-			}
-			else
-			{
-				StringCbPrintfW(message,MSG_LENGTH,L"Invalid Flyback Frames.");
-			}
-			MessageBox(NULL,message,L"Capture Streaming FastZ Error",MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);	
-			return FALSE;
-		}
-		pZStage->SetParam(IDevice::PARAM_Z_FAST_FLYBACK_TIME_ADJUST_MS,flybackTimeAdjustMS);
-		pZStage->PreflightPosition();
-		pZStage->SetupPosition();
-		if(FALSE == pZStage->StartPosition())
-		{
-			pZStage->GetLastErrorMsg(message, MSG_LENGTH);
-			MessageBox(NULL,message,L"Capture Streaming FastZ Error",MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
-			return FALSE;
-		}
 
-		StringCbPrintfW(message,MSG_LENGTH,L"AcquireTStream SetupZStage complete");
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,message);
+			StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream SetupZStage complete");
+			logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
 
-		break;
-	case 2:
-		//stop z stage:
-		pZStage->PostflightPosition();
-		pZStage->SetParam(IDevice::PARAM_Z_ANALOG_MODE, ZPiezoAnalogMode::ANALOG_MODE_SINGLE_POINT);
-		break;
+			break;
+		case 2:
+			//stop z stage:
+			pZStage->PostflightPosition();
+			pZStage->SetParam(IDevice::PARAM_Z_ANALOG_MODE, ZPiezoAnalogMode::ANALOG_MODE_SINGLE_POINT);
+			break;
 	}
 	return TRUE;
 }
@@ -927,26 +947,14 @@ long AcquireTStream::PreCaptureAutoFocus(long index, long subWell, double afStar
 		}
 	}
 
-	IDevice * pAutoFocusDevice = NULL;
-	pAutoFocusDevice = GetDevice(SelectedHardware::SELECTED_AUTOFOCUS);
-
-
-	if(NULL == pAutoFocusDevice)
-	{
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create autofocus device");
-
-		return FALSE;
-	}
 	BOOL afFound = FALSE;
 
-	if(aftype != IAutoFocus::AF_NONE)
+	if (FALSE == RunAutofocus(index, aftype, afFound))
 	{
-		if (FALSE == AutoFocusAndRetry(index, pAutoFocusDevice, afFound))
-		{
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample AutoFocusAndRetry failed");
-			return FALSE;
-		}
+		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample RunAutofocus failed");
+		return FALSE;
 	}
+
 	return TRUE;
 }
 
@@ -1448,7 +1456,7 @@ void AcquireTStream::FailedAcquisition(ICamera* pCamera, SaveParams& sp, long zF
 		pZStage->SetParam(IDevice::PARAM_Z_ANALOG_MODE, ZPiezoAnalogMode::ANALOG_MODE_SINGLE_POINT);
 	}
 	pCamera->SetParam(ICamera::PARAM_RAW_SAVE_ENABLED_CHANNELS_ONLY, FALSE);
-
+	pCamera->SetParam(ICamera::PARAM_LSM_POWER_RAMP_ENABLE, FALSE);
 	//revert back to not using pockels reference
 	pCamera->SetParam(ICamera::PARAM_LSM_POCKELS_OUTPUT_USE_REF,FALSE);
 }
@@ -1560,8 +1568,9 @@ long AcquireTStream::Execute(long index, long subWell)
 	long turretPosition=0;
 	long zAxisToEscape=0;
 	double zAxisEscapeDistance=0;
+	double fineAutoFocusPercentage = 0.15;
 
-	pHardware->GetMagInfoFromName(objName,magnification,position,numAperture,afStartPos,afFocusOffset,afAdaptiveOffset,beamExpPos,beamExpWavelength,beamExpPos2,beamExpWavelength2,turretPosition,zAxisToEscape,zAxisEscapeDistance);
+	pHardware->GetMagInfoFromName(objName,magnification,position,numAperture,afStartPos,afFocusOffset,afAdaptiveOffset,beamExpPos,beamExpWavelength,beamExpPos2,beamExpWavelength2,turretPosition,zAxisToEscape,zAxisEscapeDistance,fineAutoFocusPercentage);
 
 	if(FALSE == PreCaptureAutoFocus(index, subWell,  afStartPos, afAdaptiveOffset))
 	{
@@ -2855,7 +2864,7 @@ long AcquireTStream::Execute(long index, long subWell)
 						HandleStimStreamRawFile(&sp,DELETE_TIF, std::wstring(), std::wstring(), !saveEnabledChannelsOnly);
 					}
 					pCamera->SetParam(ICamera::PARAM_RAW_SAVE_ENABLED_CHANNELS_ONLY, FALSE);
-
+					pCamera->SetParam(ICamera::PARAM_LSM_POWER_RAMP_ENABLE, FALSE);
 					//revert back to not using pockels reference
 					pCamera->SetParam(ICamera::PARAM_LSM_POCKELS_OUTPUT_USE_REF,FALSE);
 
@@ -3049,7 +3058,7 @@ long AcquireTStream::Execute(long index, long subWell)
 	pCamera->SetParam(ICamera::PARAM_LSM_AVERAGEMODE,averageMode);
 
 	pCamera->SetParam(ICamera::PARAM_RAW_SAVE_ENABLED_CHANNELS_ONLY, FALSE);
-
+	pCamera->SetParam(ICamera::PARAM_LSM_POWER_RAMP_ENABLE, FALSE);
 	//revert back to not using pockels reference
 	pCamera->SetParam(ICamera::PARAM_LSM_POCKELS_OUTPUT_USE_REF,FALSE);
 
@@ -4163,168 +4172,6 @@ long AcquireTStream::ScannerEnable(long enable)
 long AcquireTStream::SetPMT()
 {
 	return SetPMTProc( _pExp);
-}
-
-
-long AcquireTStream::SetAutoFocusStartZPosition(double afStartPos,BOOL bWait,BOOL afFound)
-{
-	IDevice * pZStage = NULL;
-
-	pZStage = GetDevice(SelectedHardware::SELECTED_ZSTAGE);
-
-	if(NULL == pZStage)
-	{	
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AcquireMultiWavelength Execute could not create z stage");
-		return FALSE;
-	}
-
-	//if found use a relative offset from the current position
-	if(afFound)
-	{
-		double pos;
-		pZStage->GetParam(IDevice::PARAM_Z_POS_CURRENT,pos);
-
-		_lastGoodFocusPosition = pos;
-
-		pos -= _adaptiveOffset;
-
-		pZStage->SetParam(IDevice::PARAM_Z_POS, pos);
-
-		StringCbPrintfW(message,MSG_LENGTH,L"ThorImager SetAutoFocusStartZPosition new af start position %d.%d",(int)pos,(int)((pos - static_cast<long>(pos))*1000));
-	}
-	else
-	{
-		double pos = _lastGoodFocusPosition;
-
-		//modify the last good focus position each pass to ensure its unique
-		_lastGoodFocusPosition = _lastGoodFocusPosition - .001;
-
-		pos -= _adaptiveOffset;
-
-		pZStage->SetParam(IDevice::PARAM_Z_POS, pos);
-
-		StringCbPrintfW(message,MSG_LENGTH,L"ThorImager SetAutoFocusStartZPosition new af start position %d.%d",(int)pos,(int)((pos - static_cast<long>(pos))*1000));
-	}
-
-	pZStage->PreflightPosition();
-
-	pZStage->SetupPosition ();
-
-	pZStage->StartPosition();
-
-	if(TRUE == bWait)
-	{
-		//don't wait for the z to finish its motion will overlap with the next XY movement
-		hEventZ = CreateEvent(0, FALSE, FALSE, 0);
-
-		DWORD dwThread;
-
-		HANDLE hThread = ::CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE) StatusZThreadProc5, pZStage, 0, &dwThread );
-
-		const long MAX_Z_WAIT_TIME = 5000;
-
-		DWORD dwWait = WaitForSingleObject( hEventZ, MAX_Z_WAIT_TIME);
-
-		if(dwWait != WAIT_OBJECT_0)
-		{
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AcquireMultiWavelength Execute Z failed");
-			//return FALSE;
-		}		
-
-		SAFE_DELETE_HANDLE(hThread);
-		SAFE_DELETE_HANDLE(hEventZ);
-	}
-	pZStage->PostflightPosition();	
-
-	return TRUE;
-}
-
-long AcquireTStream::AutoFocusAndRetry(long index, IDevice *pAutoFocusDevice, BOOL &afFound)
-{
-	IDevice * pZStage = NULL;
-
-	pZStage = GetDevice(SelectedHardware::SELECTED_ZSTAGE);
-
-	if(NULL == pZStage)
-	{
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AutoFocusAndRetry Execute could not create z stage");
-		return FALSE;
-	}
-
-	afFound = FALSE;
-
-	_pAutoFocus->Execute(index, pAutoFocusDevice,afFound);
-
-	double val;
-
-	pZStage->GetParam(IDevice::PARAM_Z_POS,val);
-
-	const long RETRIES = 1;
-	const double RESULT_LOCATION_THREASHOLD_MM = .1;//must be within 50um of the previous location
-	const long SIG_DIGITS_MULTIPLIER = 1000;
-	long count = 0;
-	double lower=0;
-	double upper=0;
-
-	do
-	{
-		lower = _lastGoodFocusPosition - RESULT_LOCATION_THREASHOLD_MM;
-		upper = _lastGoodFocusPosition + RESULT_LOCATION_THREASHOLD_MM;
-
-		//check if the focus was found or if the result location is within the threshold
-		//if not perform retires for the count of retries specified
-		if((val <lower)||(val >upper)||(FALSE == afFound))
-		{
-
-			StringCbPrintfW(message,MSG_LENGTH,L"AutoFocusAndRetry z position val %d.%03d outside lower %d.%03d upper %d.%03d",(int)val,(int)((val - static_cast<long>(val))*SIG_DIGITS_MULTIPLIER),(int)lower,(int)((lower - static_cast<long>(lower))*SIG_DIGITS_MULTIPLIER),(int)upper,(int)((upper - static_cast<long>(upper))*SIG_DIGITS_MULTIPLIER));
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,message);
-
-			_pAutoFocus->Execute(index, pAutoFocusDevice,afFound);
-			pZStage->GetParam(IDevice::PARAM_Z_POS,val);
-		}
-		else
-		{
-			StringCbPrintfW(message,MSG_LENGTH,L"AutoFocusAndRetry passed z position %d.%03d",(int)val,(int)((val - static_cast<long>(val))*SIG_DIGITS_MULTIPLIER));
-			logDll->TLTraceEvent(VERBOSE_EVENT,1,message);
-			break;
-		}
-		count++;
-	}
-	while(count <= RETRIES);
-
-	if((val <lower)||(val >upper)||(FALSE == afFound))
-	{
-		pZStage->SetParam(IDevice::PARAM_Z_POS,_lastGoodFocusPosition);
-
-		pZStage->PreflightPosition();
-
-		pZStage->SetupPosition ();
-
-		pZStage->StartPosition();
-
-		//don't wait for the z to finish its motion will overlap with the next XY movement
-		hEventZ = CreateEvent(0, FALSE, FALSE, 0);
-
-		DWORD dwThread;
-
-		HANDLE hThread = ::CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE) StatusZThreadProc5, pZStage, 0, &dwThread );
-
-		const long MAX_Z_WAIT_TIME = 5000;
-
-		DWORD dwWait = WaitForSingleObject( hEventZ, MAX_Z_WAIT_TIME);
-
-		if(dwWait != WAIT_OBJECT_0)
-		{
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AcquireMultiWavelength Execute Z failed");
-			//return FALSE;
-		}
-
-		SAFE_DELETE_HANDLE(hThread);
-		SAFE_DELETE_HANDLE(hEventZ);
-		pZStage->PostflightPosition();
-	}
-
-	return TRUE;
 }
 
 vector<int> AcquireTStream::getEnabledChannelIndices(SaveParams& sp)

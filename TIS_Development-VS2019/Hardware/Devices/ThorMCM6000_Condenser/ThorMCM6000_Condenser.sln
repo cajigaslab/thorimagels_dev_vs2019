@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30320.27
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorMCM6000_Condenser", "ThorMCM6000_Condenser\ThorMCM6000_Condenser.vcxproj", "{DEDC7DE5-4B4C-407A-A131-058070CB8D33}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM = Debug|ARM
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|ARM = Release|ARM
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DEDC7DE5-4B4C-407A-A131-058070CB8D33}.Debug|ARM.ActiveCfg = Debug|ARM
+		{DEDC7DE5-4B4C-407A-A131-058070CB8D33}.Debug|ARM.Build.0 = Debug|ARM
+		{DEDC7DE5-4B4C-407A-A131-058070CB8D33}.Debug|x64.ActiveCfg = Debug|x64
+		{DEDC7DE5-4B4C-407A-A131-058070CB8D33}.Debug|x64.Build.0 = Debug|x64
+		{DEDC7DE5-4B4C-407A-A131-058070CB8D33}.Debug|x86.ActiveCfg = Debug|Win32
+		{DEDC7DE5-4B4C-407A-A131-058070CB8D33}.Debug|x86.Build.0 = Debug|Win32
+		{DEDC7DE5-4B4C-407A-A131-058070CB8D33}.Release|ARM.ActiveCfg = Release|ARM
+		{DEDC7DE5-4B4C-407A-A131-058070CB8D33}.Release|ARM.Build.0 = Release|ARM
+		{DEDC7DE5-4B4C-407A-A131-058070CB8D33}.Release|x64.ActiveCfg = Release|x64
+		{DEDC7DE5-4B4C-407A-A131-058070CB8D33}.Release|x64.Build.0 = Release|x64
+		{DEDC7DE5-4B4C-407A-A131-058070CB8D33}.Release|x86.ActiveCfg = Release|Win32
+		{DEDC7DE5-4B4C-407A-A131-058070CB8D33}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6007235B-B746-4883-BD6A-3D0D0E371F73}
+	EndGlobalSection
+EndGlobal

@@ -5,6 +5,16 @@
 #include "ImageWaveformBuilder.h"
 #include "WaveformMemory.h"
 
+#define THORDAQ_DIG_ACTIVE_ENVELOPE 0x101;
+#define THORDAQ_DIG_CYCLE_COMPLETE 0x202;
+#define THORDAQ_DIG_CYCLE_ENVELOPE 0x404;
+#define THORDAQ_DIG_EPOCH_ENVELOPE 0x1010;
+#define THORDAQ_DIG_ITERATION_ENVELOPE 0x2020;
+#define THORDAQ_DIG_LOW 0x0;
+#define THORDAQ_DIG_PATTERN_COMPLETE 0x4040;
+#define THORDAQ_DIG_PATTERN_ENVELOPE 0x8080;
+#define THORDAQ_DIG_POCKELS_DIGI 0x808;
+
 ImageWaveformBuilder::ImageWaveformBuilder(int type)
 {
 	_daqType = type;
@@ -270,6 +280,19 @@ void ImageWaveformBuilder::ResetGGalvoWaveformParams()
 		ResetGGalvoWaveformParam(&_gWaveXY[i], unitSize, 0, 0);
 	}
 }
+
+void ImageWaveformBuilder::ResetThorDAQGGalvoWaveformParams()
+{
+	for (int i = 0; i < MAX_MULTI_AREA_SCAN_COUNT; i++)
+	{
+		long unitSize[SignalType::SIGNALTYPE_LAST] = { 0 };
+		ResetThorDAQGGWaveformParam(&_gThorDAQParams[i], unitSize, 0, 0);
+		ResetThorDAQGGWaveformParam(&_gThorDAQWaveXY[i], unitSize, 0, 0);
+	}
+}
+
+
+
 
 uint64_t ImageWaveformBuilder::GetCounter(SignalType sType)
 {
@@ -542,19 +565,19 @@ long ImageWaveformBuilder::GetGGalvoWaveformParams(SignalType sType, void* param
 // retrieve galvo waveform params from memory map file initlaized by RebuildWaveformFromFile with travel to start
 long ImageWaveformBuilder::GetThorDAQGGWaveformParams(SignalType sType, void* params, long preCaptureStatus, uint64_t& indexNow)
 {
-	if(NULL != _gThorDAQParams[_scanAreaId].bufferHandle)
+	if (NULL != _gThorDAQParams[_scanAreaId].bufferHandle)
 	{
-		if(WAIT_OBJECT_0 != WaitForSingleObject(_gThorDAQParams[_scanAreaId].bufferHandle, 3*EVENT_WAIT_TIME))					//timeout: 15 seconds
+		if (WAIT_OBJECT_0 != WaitForSingleObject(_gThorDAQParams[_scanAreaId].bufferHandle, 3 * EVENT_WAIT_TIME))					//timeout: 15 seconds
 			return FALSE;
 	}
-	long unitSize[3] = { static_cast<long>(_countPerCallback[sType]), static_cast<long>(_countPerCallback[sType]), static_cast<long>(_countPerCallback[sType])};
-	if(FALSE == ResetThorDAQGGWaveformParam(&_gThorDAQParams[_scanAreaId], unitSize, 1, _gThorDAQWaveXY[_scanAreaId].digitalLineCnt))	//count to be copied before return is _countPerCallback
+	long unitSize[3] = { static_cast<long>(_countPerCallback[sType]), static_cast<long>(_countPerCallback[sType]), static_cast<long>(_countPerCallback[sType]) };
+	if (FALSE == ResetThorDAQGGWaveformParam(&_gThorDAQParams[_scanAreaId], unitSize, 1, _gThorDAQWaveXY[_scanAreaId].digitalLineCnt))	//count to be copied before return is _countPerCallback
 	{
 		ReleaseMutex(_gThorDAQParams[_scanAreaId].bufferHandle);
 		return FALSE;
 	}
 	unsigned long currentIdx = 0;										//index within _countPerCallback
-	unsigned long countToCopy[SignalType::SIGNALTYPE_LAST] = {0};		//count to be copied per if/else section
+	unsigned long countToCopy[SignalType::SIGNALTYPE_LAST] = { 0 };		//count to be copied per if/else section
 
 	//update reset params:
 	_gThorDAQParams[_scanAreaId].ClockRate = _gThorDAQWaveXY[_scanAreaId].ClockRate;
@@ -564,66 +587,42 @@ long ImageWaveformBuilder::GetThorDAQGGWaveformParams(SignalType sType, void* pa
 	_gThorDAQParams[_scanAreaId].pockelsCount = _gThorDAQWaveXY[_scanAreaId].pockelsCount;
 
 	//do not continue if user did not reset global index:
-	if((_countTotal[_scanAreaId][sType][0] + _countTotal[_scanAreaId][sType][1] + _countTotal[_scanAreaId][sType][2]) <= _countIndex[_scanAreaId][sType])
+	if ((_countTotal[_scanAreaId][sType][0] + _countTotal[_scanAreaId][sType][1] + _countTotal[_scanAreaId][sType][2]) <= _countIndex[_scanAreaId][sType])
 	{
 		ReleaseMutex(_gThorDAQParams[_scanAreaId].bufferHandle);
 		return FALSE;
 	}
 
+
 	do
 	{
 		//determine current index location among the whole waveform,
 		//Travel to start section:
-		if ((0 < _countTotal[_scanAreaId][sType][0]) && (_countTotal[_scanAreaId][sType][0] > _countIndex[_scanAreaId][sType]))		
+		if ((0 < _countTotal[_scanAreaId][sType][0]) && (_countTotal[_scanAreaId][sType][0] > _countIndex[_scanAreaId][sType]))
 		{
 			countToCopy[sType] = std::min(static_cast<unsigned long>(_countTotal[_scanAreaId][sType][0] - _countIndex[_scanAreaId][sType]), static_cast<unsigned long>(_countPerCallback[sType] - currentIdx));
 
 			int lineIdx = -1;
 			switch (sType)
 			{
-			case ANALOG_XY:
-				//travel to start:
-				SAFE_MEMCPY((void*)(_gThorDAQParams[_scanAreaId].GalvoWaveformXY + (2*currentIdx)), (2*countToCopy[sType]*sizeof(unsigned short)), (void*)(_gThorDAQWaveXY[_scanAreaId].GalvoWaveformXY + (2*currentIdx)));
-				break;
-			case ANALOG_POCKEL:
-				SAFE_MEMCPY((void*)(_gThorDAQParams[_scanAreaId].GalvoWaveformPockel + currentIdx), (countToCopy[sType]*sizeof(unsigned short)), (void*)(_gThorDAQWaveXY[_scanAreaId].GalvoWaveformPockel + currentIdx));
-				break;
-			case DIGITAL_LINES:
-				//digital lines:
-				for (int i = BLEACHSCAN_DIGITAL_LINENAME::DUMMY; i < BLEACHSCAN_DIGITAL_LINENAME::DIGITAL_LINENAME_LAST; i++)
-				{
-					//check if user selected:
-					if(0 < (_digitalLineSelection & (0x1 << i)))
-					{
-						lineIdx++;
-					}
-					else
-					{
-						continue;
-					}
+				case ANALOG_XY:
+					//travel to start:
+					SAFE_MEMCPY((void*)(_gThorDAQParams[_scanAreaId].GalvoWaveformX + currentIdx), (countToCopy[sType] * sizeof(unsigned short)), (void*)(_gThorDAQWaveXY[_scanAreaId].GalvoWaveformX + currentIdx));
+					SAFE_MEMCPY((void*)(_gThorDAQParams[_scanAreaId].GalvoWaveformY + currentIdx), (countToCopy[sType] * sizeof(unsigned short)), (void*)(_gThorDAQWaveXY[_scanAreaId].GalvoWaveformY + currentIdx));
+					break;
+				case ANALOG_POCKEL:
+					SAFE_MEMCPY((void*)(_gThorDAQParams[_scanAreaId].GalvoWaveformPockel + currentIdx), (countToCopy[sType] * sizeof(unsigned short)), (void*)(_gThorDAQWaveXY[_scanAreaId].GalvoWaveformPockel + currentIdx));
+					break;
+				case DIGITAL_LINES:
+					//digital lines:
 
-					if ((BLEACHSCAN_DIGITAL_LINENAME::ACTIVE_ENVELOPE == i)	|| (BLEACHSCAN_DIGITAL_LINENAME::CYCLE_COMPLEMENTARY == i))		//ActiveEnvelope, cycleComplementary set to be high
+					for (unsigned int i = 0; i < countToCopy[sType]; ++i)
 					{
-						std::memset((void*)(_gThorDAQParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), 0x1, (countToCopy[sType]*sizeof(unsigned char)));
+						_gThorDAQParams[_scanAreaId].DigBufWaveform[currentIdx + i] = (unsigned short)THORDAQ_DIG_ACTIVE_ENVELOPE;
 					}
-					else if(BLEACHSCAN_DIGITAL_LINENAME::CYCLE_COMPLETE == i)			//CycleComplete set to be low
-					{						
-						std::memset((void*)(_gThorDAQParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), 0x0, (countToCopy[sType]*sizeof(unsigned char)));
-					}
-					else if(((BLEACHSCAN_DIGITAL_LINENAME::DUMMY == i)) && (0 == _countIndex[_scanAreaId][sType])) //at Dummy and beginning of waveform
-					{
-						//first of Dummy is 1 at the very first:
-						std::memset(_gThorDAQParams[_scanAreaId].DigBufWaveform, 0x0, (countToCopy[sType]*sizeof(unsigned char)));
-						std::memset(_gThorDAQParams[_scanAreaId].DigBufWaveform, 0x1, (1*sizeof(unsigned char)));
-					}
-					else
-					{
-						std::memset((void*)(_gThorDAQParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), 0x0, (countToCopy[sType]*sizeof(unsigned char)));
-					}
-				}			
-				break;
-			default:
-				break;
+					break;
+				default:
+					break;
 			}
 
 			_countIndex[_scanAreaId][sType] += countToCopy[sType];
@@ -635,92 +634,62 @@ long ImageWaveformBuilder::GetThorDAQGGWaveformParams(SignalType sType, void* pa
 			countToCopy[sType] = std::min(static_cast<unsigned long>(_countTotal[_scanAreaId][sType][0] + _countTotal[_scanAreaId][sType][1] - _countIndex[_scanAreaId][sType]), static_cast<unsigned long>(_countPerCallback[sType] - currentIdx));
 
 			//offset from beginning of file
-			long fileStartOffset = std::max((long)0, static_cast<long>(_countIndex[_scanAreaId][sType] - _countTotal[_scanAreaId][sType][0]));	
+			long fileStartOffset = std::max((long)0, static_cast<long>(_countIndex[_scanAreaId][sType] - _countTotal[_scanAreaId][sType][0]));
 
 			char* ptr = NULL;
-			int lineIdx = -1;
-			int fileLineIdx = 0;	//no dummy in file
+			//int lineIdx = -1;
+		//	int fileLineIdx = 0;	//no dummy in file
 			switch (sType)
 			{
-			case ANALOG_XY:
-				//load analogXY:
-				ptr = WaveformMemory::getInstance()->GetMemMapPtrThorDAQ(SignalType::ANALOG_XY, 2*fileStartOffset, 2*countToCopy[sType]);
-				SAFE_MEMCPY((void*)(_gThorDAQParams[_scanAreaId].GalvoWaveformXY + (2*currentIdx)), (2*countToCopy[sType]*sizeof(unsigned short)), (void*)(ptr));
-				WaveformMemory::getInstance()->UnlockMemMapPtr();
-				break;
-			case ANALOG_POCKEL:
-				//analog Pockel:
-				ptr = WaveformMemory::getInstance()->GetMemMapPtrThorDAQ(SignalType::ANALOG_POCKEL, fileStartOffset, countToCopy[sType]);
-				SAFE_MEMCPY((void*)(_gThorDAQParams[_scanAreaId].GalvoWaveformPockel + currentIdx), (countToCopy[sType]*sizeof(unsigned short)), (void*)(ptr));
-				WaveformMemory::getInstance()->UnlockMemMapPtr();
-				break;
-			case DIGITAL_LINES:
-				//digital lines: dummy, pockels digital, complete, cycle, iteration, pattern, patternComplete, active
-				//dummy should be 1 at the very first one:
-				if(0 < (_digitalLineSelection & (0x1 << BLEACHSCAN_DIGITAL_LINENAME::DUMMY)))
-				{
-					lineIdx++;
-					memset((void*)(_gThorDAQParams[_scanAreaId].DigBufWaveform + currentIdx), 0x0, (countToCopy[sType]*sizeof(unsigned char)));
-					if(0 == _countIndex[_scanAreaId][sType])
-					{
-						memset((void*)(_gThorDAQParams[_scanAreaId].DigBufWaveform + currentIdx), 0x1, 1*sizeof(unsigned char));
-					}
-				}
-				if(0 < (_digitalLineSelection & (0x1 << BLEACHSCAN_DIGITAL_LINENAME::POCKEL_DIG)))
-				{
-					ptr = WaveformMemory::getInstance()->GetMemMapPtrThorDAQ(SignalType::DIGITAL_LINES, (fileLineIdx * _countTotal[_scanAreaId][sType][1]) + fileStartOffset, countToCopy[sType]);
-					lineIdx++;
-					SAFE_MEMCPY((void*)(_gThorDAQParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), (countToCopy[sType]*sizeof(unsigned char)), (void*)(ptr));
+				case ANALOG_XY:
+					//load analogGX:
+					ptr = WaveformMemory::getInstance()->GetMemMapPtrThorDAQ(SignalTypeThorDAQ::TDQANALOG_X, fileStartOffset, countToCopy[sType]);
+					SAFE_MEMCPY((void*)(_gThorDAQParams[_scanAreaId].GalvoWaveformX + currentIdx), (countToCopy[sType] * sizeof(unsigned short)), (void*)(ptr));
 					WaveformMemory::getInstance()->UnlockMemMapPtr();
-				}
-				fileLineIdx++;
-				//check complete, cycle:
-				switch (preCaptureStatus)
-				{
-				case (long)PreCaptureStatus::PRECAPTURE_WAVEFORM_MID_CYCLE:			//in cycles, low start means allow cycle envelope to have gap
-					if(0 < (_digitalLineSelection & (0x1 << BLEACHSCAN_DIGITAL_LINENAME::ACTIVE_ENVELOPE)))
-					{
-						lineIdx++;
-						memset((void*)(_gThorDAQParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), 0x1, countToCopy[sType]*sizeof(unsigned char));		//ActiveEnvelope always high if not last
-					}
-					fileLineIdx++;
-					if(0 < (_digitalLineSelection & (0x1 << BLEACHSCAN_DIGITAL_LINENAME::CYCLE_COMPLETE)))
-					{
-						lineIdx++;
-						memset((void*)(_gThorDAQParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), 0x0, countToCopy[sType]*sizeof(unsigned char));		//CycleComplete always low if not last
-					}
-					fileLineIdx++;
-					break;
-				case (long)PreCaptureStatus::PRECAPTURE_WAVEFORM_LAST_CYCLE:			//last cycle, low start means allow cycle envelope to have gap
-					for (int digiID = (int)BLEACHSCAN_DIGITAL_LINENAME::ACTIVE_ENVELOPE; digiID <= (int)BLEACHSCAN_DIGITAL_LINENAME::CYCLE_COMPLETE; digiID++)
-					{
-						if(0 < (_digitalLineSelection & (0x1 << digiID)))
-						{
-							ptr = WaveformMemory::getInstance()->GetMemMapPtrThorDAQ(SignalType::DIGITAL_LINES, (fileLineIdx * _countTotal[_scanAreaId][sType][1]) + fileStartOffset, countToCopy[sType]);
-							lineIdx++;
-							SAFE_MEMCPY((void*)(_gThorDAQParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), (countToCopy[sType]*sizeof(unsigned char)), (void*)(ptr));
-							WaveformMemory::getInstance()->UnlockMemMapPtr();
-						}
-						fileLineIdx++;
-					}
-					break;
-				}
 
-				//load iteration, pattern, patternComplete, epoch, cycleInverse:
-				for (int digiID = (int)BLEACHSCAN_DIGITAL_LINENAME::CYCLE_ENVELOPE; digiID < (int)BLEACHSCAN_DIGITAL_LINENAME::DIGITAL_LINENAME_LAST; digiID++)
-				{
-					if(0 < (_digitalLineSelection & (0x1 << digiID)))
+					//load analogGY:
+					ptr = WaveformMemory::getInstance()->GetMemMapPtrThorDAQ(SignalTypeThorDAQ::TDQANALOG_Y, fileStartOffset, countToCopy[sType]);
+					SAFE_MEMCPY((void*)(_gThorDAQParams[_scanAreaId].GalvoWaveformY + currentIdx), (countToCopy[sType] * sizeof(unsigned short)), (void*)(ptr));
+					WaveformMemory::getInstance()->UnlockMemMapPtr();
+					break;
+				case ANALOG_POCKEL:
+					//analog Pockel:
+					ptr = WaveformMemory::getInstance()->GetMemMapPtrThorDAQ(SignalTypeThorDAQ::TDQANALOG_POCKEL, fileStartOffset, countToCopy[sType]);
+					SAFE_MEMCPY((void*)(_gThorDAQParams[_scanAreaId].GalvoWaveformPockel + currentIdx), (countToCopy[sType] * sizeof(unsigned short)), (void*)(ptr));
+					WaveformMemory::getInstance()->UnlockMemMapPtr();
+					break;
+				case DIGITAL_LINES:
+					ptr = WaveformMemory::getInstance()->GetMemMapPtrThorDAQ(SignalTypeThorDAQ::TDQDIGITAL_LINES, fileStartOffset, countToCopy[sType]);
+					SAFE_MEMCPY((void*)(_gThorDAQParams[_scanAreaId].DigBufWaveform + currentIdx), (countToCopy[sType] * sizeof(unsigned short)), (void*)(ptr));
+					WaveformMemory::getInstance()->UnlockMemMapPtr();
+
+					//check complete, cycle:
+					switch (preCaptureStatus)
 					{
-						ptr = WaveformMemory::getInstance()->GetMemMapPtrThorDAQ(SignalType::DIGITAL_LINES, (fileLineIdx * _countTotal[_scanAreaId][sType][1]) + fileStartOffset, countToCopy[sType]);
-						lineIdx++;
-						SAFE_MEMCPY((void*)(_gThorDAQParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx), (countToCopy[sType]*sizeof(unsigned char)), (void*)(ptr));
-						WaveformMemory::getInstance()->UnlockMemMapPtr();
+						case (long)PreCaptureStatus::PRECAPTURE_WAVEFORM_MID_CYCLE:			//in cycles, low start means allow cycle envelope to have gap
+							if (0 < (_digitalLineSelection & (0x1 << BLEACHSCAN_DIGITAL_LINENAME::ACTIVE_ENVELOPE)))
+							{
+								//ActiveEnvelope always high if not last
+								for (unsigned int i = 0; i < countToCopy[sType]; ++i)
+								{
+									_gThorDAQParams[_scanAreaId].DigBufWaveform[currentIdx + i] |= THORDAQ_DIG_ACTIVE_ENVELOPE;
+								}
+							}
+							if (0 < (_digitalLineSelection & (0x1 << BLEACHSCAN_DIGITAL_LINENAME::CYCLE_COMPLETE)))
+							{
+								for (unsigned int i = 0; i < countToCopy[sType]; ++i)
+								{
+									_gThorDAQParams[_scanAreaId].DigBufWaveform[currentIdx + i] &= ~THORDAQ_DIG_CYCLE_COMPLETE;
+								}
+							}
+							break;
+						case (long)PreCaptureStatus::PRECAPTURE_WAVEFORM_LAST_CYCLE:			//last cycle, low start means allow cycle envelope to have gap
+							//don't change the waveform if at the last cycle
+							break;
 					}
-					fileLineIdx++;
-				}
-				break;
-			default:
-				break;
+					break;
+				default:
+					break;
 			}
 
 			_countIndex[_scanAreaId][sType] += countToCopy[sType];
@@ -730,48 +699,41 @@ long ImageWaveformBuilder::GetThorDAQGGWaveformParams(SignalType sType, void* pa
 		else if ((0 < (_countTotal[_scanAreaId][sType][0] + _countTotal[_scanAreaId][sType][1] + _countTotal[_scanAreaId][sType][2])) && ((_countTotal[_scanAreaId][sType][0] + _countTotal[_scanAreaId][sType][1] + _countTotal[_scanAreaId][sType][2]) > _countIndex[_scanAreaId][sType]))
 		{
 			countToCopy[sType] = std::min(static_cast<unsigned long>(_countTotal[_scanAreaId][sType][0] + _countTotal[_scanAreaId][sType][1] + _countTotal[_scanAreaId][sType][2] - _countIndex[_scanAreaId][sType]), static_cast<unsigned long>(_countPerCallback[sType] - currentIdx));
-			int lastIdx = (1 < currentIdx) ? (currentIdx-1) : currentIdx;
+			int lastIdx = (1 < currentIdx) ? (currentIdx - 1) : currentIdx;
 
 			int lineIdx = -1;
 			switch (sType)
 			{
-			case ANALOG_XY:
-				//patch for callback, repeat last since it should only be hit once:
-				for (unsigned long i = currentIdx; i < (currentIdx + countToCopy[sType]); i++)
-				{
-					_gThorDAQParams[_scanAreaId].GalvoWaveformXY[2*i] = std::max((unsigned short)0, std::min(_gThorDAQParams[_scanAreaId].GalvoWaveformXY[2*lastIdx],std::numeric_limits<unsigned short>::max()));
-					_gThorDAQParams[_scanAreaId].GalvoWaveformXY[2*i+1] = std::max((unsigned short)0, std::min(_gThorDAQParams[_scanAreaId].GalvoWaveformXY[2*lastIdx+1],std::numeric_limits<unsigned short>::max()));
-				}
-				break;
-			case ANALOG_POCKEL:
-				//patch for callback, repeat last since it should only be hit once:
-				for (unsigned long i = currentIdx; i < (currentIdx + countToCopy[sType]); i++)
-				{
-					_gThorDAQParams[_scanAreaId].GalvoWaveformPockel[i] = std::max((unsigned short)0, std::min(_gThorDAQParams[_scanAreaId].GalvoWaveformPockel[lastIdx],std::numeric_limits<unsigned short>::max()));
-				}
-				break;
-			case DIGITAL_LINES:
-				for (int j = BLEACHSCAN_DIGITAL_LINENAME::DUMMY; j < BLEACHSCAN_DIGITAL_LINENAME::DIGITAL_LINENAME_LAST; j++)
-				{
-					if(0 < (_digitalLineSelection & (0x1 << j)))
+				case ANALOG_XY:
+					//patch for callback, repeat last since it should only be hit once:
+					for (unsigned long i = currentIdx; i < (currentIdx + countToCopy[sType]); ++i)
 					{
-						lineIdx++;
+						_gThorDAQParams[_scanAreaId].GalvoWaveformX[i] = _gThorDAQParams[_scanAreaId].GalvoWaveformX[lastIdx];
+						_gThorDAQParams[_scanAreaId].GalvoWaveformY[i] = _gThorDAQParams[_scanAreaId].GalvoWaveformY[lastIdx];
 					}
-					else
+					break;
+				case ANALOG_POCKEL:
+					//patch for callback, repeat last since it should only be hit once:
+					for (unsigned long i = currentIdx; i < (currentIdx + countToCopy[sType]); ++i)
 					{
-						continue;
+						_gThorDAQParams[_scanAreaId].GalvoWaveformPockel[i] = _gThorDAQParams[_scanAreaId].GalvoWaveformPockel[lastIdx];
 					}
-					memset((void*)(_gThorDAQParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + currentIdx),*(_gThorDAQParams[_scanAreaId].DigBufWaveform + (lineIdx*_countPerCallback[sType]) + lastIdx), (countToCopy[sType]*sizeof(unsigned char)));
-				}			
-				break;
-			default:
-				break;
+					break;
+				case DIGITAL_LINES:
+					//patch for callback, repeat last since it should only be hit once:
+					for (unsigned long i = currentIdx; i < (currentIdx + countToCopy[sType]); ++i)
+					{
+						_gThorDAQParams[_scanAreaId].DigBufWaveform[i] = _gThorDAQParams[_scanAreaId].DigBufWaveform[lastIdx];
+					}
+					break;
+				default:
+					break;
 			}
 
 			_countIndex[_scanAreaId][sType] += countToCopy[sType];
 			currentIdx += countToCopy[sType];
 		}
-	}while(_countPerCallback[sType] > currentIdx);
+	} while (_countPerCallback[sType] > currentIdx);
 
 	//done:
 	indexNow = _countIndex[_scanAreaId][sType];
@@ -780,6 +742,30 @@ long ImageWaveformBuilder::GetThorDAQGGWaveformParams(SignalType sType, void* pa
 	ThorDAQGGWaveformParams* param = (ThorDAQGGWaveformParams*)params;
 	*param = _gThorDAQParams[_scanAreaId];
 	LogPerformance(L"ImageWaveformBuilder active load callback MSec");
+	return TRUE;
+}
+
+long ImageWaveformBuilder::GetThorDAQGGWaveformParams(const wchar_t* waveformFileName, void* params)
+{
+	uint64_t ret = 0;
+	_scanAreaId = 0;	//use 1st area id, to be extended in the future
+
+	//wait for mutex:
+	if (FALSE == GetMutex(_gThorDAQWaveXY[_scanAreaId].bufferHandle))
+		return FALSE;
+
+	//open mem map:
+	if (FALSE == WaveformMemory::getInstance()->OpenMemThorDAQ(_gThorDAQWaveXY[_scanAreaId], waveformFileName))
+	{
+		ReleaseMutex(_gThorDAQWaveXY[_scanAreaId].bufferHandle);
+		return FALSE;
+	}
+
+	_waveformFileName = waveformFileName;
+
+	ThorDAQGGWaveformParams* param = (ThorDAQGGWaveformParams*)params;
+	*param = _gThorDAQWaveXY[_scanAreaId];
+	ReleaseMutex(_gThorDAQWaveXY[_scanAreaId].bufferHandle);
 	return TRUE;
 }
 
@@ -837,8 +823,12 @@ long ImageWaveformBuilder::GetThorDAQGGWaveformStartLoc(const wchar_t* waveformF
 	//find first XY location, skip if no current location:
 	if(startXY)
 	{
-		char* ptr = WaveformMemory::getInstance()->GetMemMapPtrThorDAQ(SignalType::ANALOG_XY, 0, 2);
-		SAFE_MEMCPY((void*)(startXY), (2*sizeof(unsigned short)), (void*)(ptr));
+		char* ptr = WaveformMemory::getInstance()->GetMemMapPtrThorDAQ(SignalTypeThorDAQ::TDQANALOG_X, 0, 1);
+		SAFE_MEMCPY((void*)(startXY), (sizeof(unsigned short)), (void*)(ptr));
+		WaveformMemory::getInstance()->UnlockMemMapPtr();
+
+		ptr = WaveformMemory::getInstance()->GetMemMapPtrThorDAQ(SignalTypeThorDAQ::TDQANALOG_Y, 0, 1);
+		SAFE_MEMCPY((void*)(startXY + 1), (sizeof(unsigned short)), (void*)(ptr));
 		WaveformMemory::getInstance()->UnlockMemMapPtr();
 	}
 	ReleaseMutex(_gThorDAQWaveXY[_scanAreaId].bufferHandle);
@@ -1215,22 +1205,35 @@ long ImageWaveformBuilder::ResetThorDAQGGWaveformParam(ThorDAQGGWaveformParams *
 	if(TRUE == GetMutex(params->bufferHandle))
 	{
 		//analog lines:
-		params->analogXYSize = std::max(2 * params->unitSize[SignalType::ANALOG_XY], (unsigned long long)0);	//x,y
+		params->analogXYSize = std::max(params->unitSize[SignalType::ANALOG_XY], (unsigned long long)0);	//x,y
 		if(0 < params->analogXYSize)
 		{
-			params->GalvoWaveformXY = (unsigned short*)realloc(params->GalvoWaveformXY, params->analogXYSize * sizeof(unsigned short));
-			if (NULL == params->GalvoWaveformXY)
+			params->GalvoWaveformX = (unsigned short*)realloc(params->GalvoWaveformX, params->analogXYSize * sizeof(unsigned short));
+			if (NULL == params->GalvoWaveformX)
 			{
 				ReleaseMutex(params->bufferHandle);
 				return FALSE;
 			}
+
+			params->GalvoWaveformY = (unsigned short*)realloc(params->GalvoWaveformY, params->analogXYSize * sizeof(unsigned short));
+			if (NULL == params->GalvoWaveformY)
+			{
+				ReleaseMutex(params->bufferHandle);
+				return FALSE;
+			}		
 		}
 		else
 		{
-			if(NULL != params->GalvoWaveformXY)
+			if(NULL != params->GalvoWaveformX)
 			{
-				free(params->GalvoWaveformXY);
-				params->GalvoWaveformXY = NULL;
+				free(params->GalvoWaveformX);
+				params->GalvoWaveformX = NULL;
+			}
+
+			if (NULL != params->GalvoWaveformY)
+			{
+				free(params->GalvoWaveformY);
+				params->GalvoWaveformY = NULL;
 			}
 		}
 
@@ -1254,10 +1257,10 @@ long ImageWaveformBuilder::ResetThorDAQGGWaveformParam(ThorDAQGGWaveformParams *
 			}
 		}
 		//dig lines:
-		params->digitalSize = std::max(digitalLineCnt * params->unitSize[SignalType::DIGITAL_LINES], (unsigned long long)0);		//[BleachScan]: pockels digital with complete, cycle, iteration, pattern, patternComplete lines
+		params->digitalSize = std::max(params->unitSize[SignalType::DIGITAL_LINES], (unsigned long long)0);		//[BleachScan]: pockels digital with complete, cycle, iteration, pattern, patternComplete lines
 		if(0 < params->digitalSize)
 		{
-			params->DigBufWaveform = (unsigned char*)realloc(params->DigBufWaveform, params->digitalSize * sizeof(unsigned char));
+			params->DigBufWaveform = (unsigned short*)realloc(params->DigBufWaveform, params->digitalSize * sizeof(unsigned short));
 			if (NULL == params->DigBufWaveform)
 			{
 				ReleaseMutex(params->bufferHandle);

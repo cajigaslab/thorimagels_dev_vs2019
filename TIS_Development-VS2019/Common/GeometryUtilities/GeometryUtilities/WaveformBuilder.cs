@@ -32,7 +32,7 @@
 
         private static double _field2Volts = 0.0901639344; // == FIELD2THETA
         static GGalvoWaveformParams _gWaveParams = new GGalvoWaveformParams() { GalvoWaveformXY = IntPtr.Zero, GalvoWaveformPockel = IntPtr.Zero, DigBufWaveform = IntPtr.Zero };
-        static ThorDAQGGWaveformParams _thorDAQGGWaveformParams = new ThorDAQGGWaveformParams() { GalvoWaveformXY = IntPtr.Zero, GalvoWaveformPockel = IntPtr.Zero, DigBufWaveform = IntPtr.Zero };
+        static ThorDAQGGWaveformParams _thorDAQGGWaveformParams = new ThorDAQGGWaveformParams() { GalvoWaveformX = IntPtr.Zero, GalvoWaveformY = IntPtr.Zero, GalvoWaveformPockel = IntPtr.Zero, DigBufWaveform = IntPtr.Zero };
         private static bool _inSaving;
         static PixelArray _pixelArray = new PixelArray();
         private static bool _saveSuccessed;
@@ -674,10 +674,16 @@
                 _gWaveParams.PiezoWaveformZ = IntPtr.Zero;
             }
 
-            if (_thorDAQGGWaveformParams.GalvoWaveformXY != IntPtr.Zero)
+            if (_thorDAQGGWaveformParams.GalvoWaveformX != IntPtr.Zero)
             {
-                Marshal.FreeHGlobal(_thorDAQGGWaveformParams.GalvoWaveformXY);
-                _thorDAQGGWaveformParams.GalvoWaveformXY = IntPtr.Zero;
+                Marshal.FreeHGlobal(_thorDAQGGWaveformParams.GalvoWaveformX);
+                _thorDAQGGWaveformParams.GalvoWaveformX = IntPtr.Zero;
+            }
+
+            if (_thorDAQGGWaveformParams.GalvoWaveformY != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(_thorDAQGGWaveformParams.GalvoWaveformY);
+                _thorDAQGGWaveformParams.GalvoWaveformY = IntPtr.Zero;
             }
 
             if (_thorDAQGGWaveformParams.GalvoWaveformPockel != IntPtr.Zero)
@@ -1418,37 +1424,32 @@
                     break;
                 case WaveformDriverType.WaveformDriver_ThorDAQ:
                     {
-                        if (IntPtr.Zero != _thorDAQGGWaveformParams.GalvoWaveformXY && 0 < _waveform.X_Volt.Count)
+                        if (IntPtr.Zero != _thorDAQGGWaveformParams.GalvoWaveformX && 0 < _waveform.X_Volt_16bit.Count)
                         {
                             //copy the XY analog lines into a single IntPtr buffer _thorDAQGGWaveformParams.GalvoWaveformXY
                             //offset the IntPtr using the IntPtr.Add() function
-                            CopyUShortToIntPtr(_waveform.X_Volt_16bit.ToArray(), 0, _thorDAQGGWaveformParams.GalvoWaveformXY, _waveform.Count);
-                            CopyUShortToIntPtr(_waveform.Y_Volt_16bit.ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.GalvoWaveformXY, _waveform.Count * sizeof(ushort)), _waveform.Count);
+                            CopyUShortToIntPtr(_waveform.X_Volt_16bit.ToArray(), 0, _thorDAQGGWaveformParams.GalvoWaveformX, _waveform.X_Volt_16bit.Count);
                         }
-                        //copy the pockels analog line into a single IntPtr buffer _gWaveParams.GalvoWaveformPockel
-                        for (int i = 0; i < _waveform.Pockel.Count; i++)
+
+                        if (IntPtr.Zero != _thorDAQGGWaveformParams.GalvoWaveformY && 0 < _waveform.Y_Volt_16bit.Count)
                         {
-                            if (0 < _waveform.Pockel[i].Count)
-                                Marshal.Copy(_waveform.Pockel[i].ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.GalvoWaveformPockel, i * (int)_thorDAQGGWaveformParams.analogPockelSize * sizeof(double)), (int)_thorDAQGGWaveformParams.analogPockelSize);
+                            //copy the XY analog lines into a single IntPtr buffer _thorDAQGGWaveformParams.GalvoWaveformXY
+                            //offset the IntPtr using the IntPtr.Add() function
+                            CopyUShortToIntPtr(_waveform.Y_Volt_16bit.ToArray(), 0, _thorDAQGGWaveformParams.GalvoWaveformY, _waveform.Y_Volt_16bit.Count);
+                        }
+
+                        //copy the pockels analog line into a single IntPtr buffer _thorDAQGGWaveformParams.GalvoWaveformPockel
+                        for (int i = 0; i < _waveform.Pockel_16bit.Count; i++)
+                        {
+                            if (0 < _waveform.Pockel_16bit[i].Count)
+                                CopyUShortToIntPtr(_waveform.Pockel_16bit[i].ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.GalvoWaveformPockel, i * (int)_thorDAQGGWaveformParams.analogPockelSize * sizeof(ushort)), (int)_thorDAQGGWaveformParams.analogPockelSize);
                         }
 
                         //copy the digital lines into a single IntPtr buffer _thorDAQGGWaveformParams.DigBufWaveform
                         //offset the IntPtr using the IntPtr.Add() function
                         if (IntPtr.Zero != _thorDAQGGWaveformParams.DigBufWaveform)
-                        {                            
-                            Marshal.Copy(_waveform.PockelDig[0].ToArray(), 0, _thorDAQGGWaveformParams.DigBufWaveform, _waveform.Count);
-                            Marshal.Copy(_waveform.ActiveEnvelope.ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.DigBufWaveform, _waveform.Count), _waveform.Count);
-                            Marshal.Copy(_waveform.CycleComplete.ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.DigBufWaveform, 2 * _waveform.Count), _waveform.Count);
-                            Marshal.Copy(_waveform.CycleEnvelope.ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.DigBufWaveform, 3 * _waveform.Count), _waveform.Count);
-                            Marshal.Copy(_waveform.IterationEnvelope.ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.DigBufWaveform, 4 * _waveform.Count), _waveform.Count);
-                            Marshal.Copy(_waveform.PatternEnvelope.ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.DigBufWaveform, 5 * _waveform.Count), _waveform.Count);
-                            Marshal.Copy(_waveform.PatternComplete.ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.DigBufWaveform, 6 * _waveform.Count), _waveform.Count);
-                            Marshal.Copy(_waveform.EpochEnvelope.ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.DigBufWaveform, 7 * _waveform.Count), _waveform.Count);
-                            Marshal.Copy(_waveform.CycleComplementary.ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.DigBufWaveform, 8 * _waveform.Count), _waveform.Count);
-                            for (int p = 1; p < _waveform.PockelDig.Count; p++)
-                            {
-                                Marshal.Copy(_waveform.PockelDig[p].ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.DigBufWaveform, ((int)BLEACHSCAN_DIGITAL_LINENAME.CYCLE_COMPLEMENTARY + p - 1) * _waveform.Count), _waveform.Count);
-                            }
+                        {
+                            CopyUShortToIntPtr(_waveform.DigitalLines16bit.ToArray(), 0, _thorDAQGGWaveformParams.DigBufWaveform, _waveform.DigitalLines16bit.Count);
                         }
                     }
                     break;
@@ -1623,7 +1624,7 @@
                         h5io.WriteDataset<UInt32>(grpName[0], rtNames[0], clk, 0, (UInt32)1);
                         h5io.ExtendDataset<UInt16>(grpName[1], aDsetNames[0], _waveform.X_Volt_16bit.ToArray(), true, (UInt32)_waveform.X_Volt_16bit.Count);
                         h5io.ExtendDataset<UInt16>(grpName[1], aDsetNames[1], _waveform.Y_Volt_16bit.ToArray(), true, (UInt32)_waveform.Y_Volt_16bit.Count);
-                        h5io.ExtendDataset<UInt16>(grpName[1], aDsetNames[2], _waveform.Pockel_16bit.ToArray(), true, (UInt32)_waveform.Pockel_16bit.Count);
+                        //h5io.ExtendDataset<UInt16>(grpName[1], aDsetNames[2], _waveform.Pockel_16bit.ToArray(), true, (UInt32)_waveform.Pockel_16bit.Count); //TODO add h5 saving
                     }
                     break;
             }
@@ -1767,7 +1768,7 @@
                         }
                         if (_waveformSaver.CancellationPending != true)
                         {
-                            h5io.ExtendDataset<UInt16>(grpName[1], aDsetNames[2], _waveform.Pockel_16bit.ToArray(), true, (UInt32)_waveform.Pockel_16bit.Count);
+                            //h5io.ExtendDataset<UInt16>(grpName[1], aDsetNames[2], _waveform.Pockel_16bit.ToArray(), true, (UInt32)_waveform.Pockel_16bit.Count);
                         }
                         else
                         {
@@ -1919,18 +1920,19 @@
                 case WaveformDriverType.WaveformDriver_ThorDAQ:
                     {
                         _thorDAQGGWaveformParams.clockRate = (UInt64)_waveform.ClockRate;
-                        _thorDAQGGWaveformParams.analogXYSize = SaveType[(int)SignalType.ANALOG_XY] ? (UInt64)(_waveform.Count) * 2 : 0;
-                        _thorDAQGGWaveformParams.pockelsCount = SaveType[(int)SignalType.ANALOG_POCKEL] ? (byte)(_waveform.Pockel.Count) : (byte)0;
-                        _thorDAQGGWaveformParams.analogPockelSize = SaveType[(int)SignalType.ANALOG_POCKEL] ? (UInt64)(_waveform.Count) * _gWaveParams.pockelsCount : 0;
-                        _thorDAQGGWaveformParams.digitalSize = SaveType[(int)SignalType.DIGITAL_LINES] ? (UInt64)(_waveform.Count) * ((int)(ThorSharedTypes.BLEACHSCAN_DIGITAL_LINENAME.DIGITAL_LINENAME_LAST) - 1) : 0; //no need to save dummy
+                        _thorDAQGGWaveformParams.analogXYSize = SaveType[(int)SignalType.ANALOG_XY] ? (UInt64)(_waveform.X_Volt_16bit.Count) : 0;
+                        _thorDAQGGWaveformParams.pockelsCount = SaveType[(int)SignalType.ANALOG_POCKEL] ? (byte)(_waveform.Pockel_16bit.Count) : (byte)0;
+                        _thorDAQGGWaveformParams.analogPockelSize = SaveType[(int)SignalType.ANALOG_POCKEL] ? (UInt64)(_waveform.Count) * _thorDAQGGWaveformParams.pockelsCount : 0;
+                        _thorDAQGGWaveformParams.digitalSize = SaveType[(int)SignalType.DIGITAL_LINES] ? (UInt64)(_waveform.DigitalLines16bit.Count) : 0; //no need to save dummy
                         _thorDAQGGWaveformParams.stepVolt = DeltaX_volt;
                         _thorDAQGGWaveformParams.digitalLineCnt = SaveType[(int)SignalType.DIGITAL_LINES] ? ((int)(ThorSharedTypes.BLEACHSCAN_DIGITAL_LINENAME.DIGITAL_LINENAME_LAST) - 1) : 0;
                         //alloc here and release when completed:
 
                         //Alloc the unmanaged memory in the corresponding size depending on the waveform driver Type
-                        _thorDAQGGWaveformParams.GalvoWaveformXY = SaveType[(int)SignalType.ANALOG_XY] ? Marshal.AllocHGlobal((int)_thorDAQGGWaveformParams.analogXYSize * sizeof(ushort)) : IntPtr.Zero;
+                        _thorDAQGGWaveformParams.GalvoWaveformX = SaveType[(int)SignalType.ANALOG_XY] ? Marshal.AllocHGlobal((int)_thorDAQGGWaveformParams.analogXYSize * sizeof(ushort)) : IntPtr.Zero;
+                        _thorDAQGGWaveformParams.GalvoWaveformY = SaveType[(int)SignalType.ANALOG_XY] ? Marshal.AllocHGlobal((int)_thorDAQGGWaveformParams.analogXYSize * sizeof(ushort)) : IntPtr.Zero;
                         _thorDAQGGWaveformParams.GalvoWaveformPockel = SaveType[(int)SignalType.ANALOG_POCKEL] ? Marshal.AllocHGlobal((int)_thorDAQGGWaveformParams.analogPockelSize * sizeof(ushort)) : IntPtr.Zero;
-                        _thorDAQGGWaveformParams.DigBufWaveform = SaveType[(int)SignalType.DIGITAL_LINES] ? Marshal.AllocHGlobal((int)_thorDAQGGWaveformParams.digitalSize * sizeof(byte)) : IntPtr.Zero;
+                        _thorDAQGGWaveformParams.DigBufWaveform = SaveType[(int)SignalType.DIGITAL_LINES] ? Marshal.AllocHGlobal((int)_thorDAQGGWaveformParams.digitalSize * sizeof(ushort)) : IntPtr.Zero;
                     }
                     break;
             }

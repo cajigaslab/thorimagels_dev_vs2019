@@ -15,7 +15,7 @@ public:
 	long OpenMemThorDAQ(ThorDAQGGWaveformParams& gWParams, const wchar_t* memMapPathName);
 	void CloseMem();
 	char *GetMemMapPtr(SignalType stype, uint64_t offset, uint64_t size);
-	char *GetMemMapPtrThorDAQ(SignalType stype, uint64_t offset, uint64_t size);
+	char *GetMemMapPtrThorDAQ(SignalTypeThorDAQ stype, uint64_t offset, uint64_t size);
 	void UnlockMemMapPtr();
 	long SetTempFileName(const wchar_t* tFileName);
 	long SaveWaveformDataStruct(const wchar_t* tPathName, GGalvoWaveformParams waveformParams);

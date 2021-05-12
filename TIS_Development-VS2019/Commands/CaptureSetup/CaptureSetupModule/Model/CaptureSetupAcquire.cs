@@ -213,17 +213,6 @@
             return true;
         }
 
-        public bool AutoFocus(double magnification)
-        {
-            if (false == StartAutoFocus(magnification))
-            {
-                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + " StartAutoFocus failed");
-                return false;
-            }
-
-            return true;
-        }
-
         /// <summary>
         /// Creates an experiment folder at the specified path, including ROI and XML files. XML files are as is, and not
         /// configured in this method
@@ -553,9 +542,6 @@
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "SetDisplayChannels")]
         private static extern bool SetDisplayChannels(int chan);
-
-        [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "StartAutoFocus")]
-        private static extern bool StartAutoFocus(double magnification);
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "StartLiveCapture")]
         private static extern bool StartLiveCapture();

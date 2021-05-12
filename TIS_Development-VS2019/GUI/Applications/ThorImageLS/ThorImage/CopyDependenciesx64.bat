@@ -127,6 +127,7 @@ echo F | xcopy /F ..\..\..\..\GUI\Controls\RemoteIPCControl\RemoteIPCControl\bin
 echo F | xcopy /F ..\..\..\..\GUI\Controls\DFLIMControl\DFLIMControl\bin\Debug\DFLIMControl.dll .\bin\Debug\Modules
 echo F | xcopy /F ..\..\..\..\GUI\Controls\DFLIMSetupAssistant\DFLIMSetupAssistant\bin\Debug\DFLIMSetupAssistant.dll .\bin\Debug\Modules
 echo F | xcopy /F ..\..\..\..\GUI\Controls\FLIMFitting\FLIMFitting\bin\Debug\FLIMFitting.dll .\bin\Debug\Modules
+echo F | xcopy /F ..\..\..\..\GUI\Controls\AutoFocusControl\AutoFocusControl\bin\Debug\AutoFocusControl.dll .\bin\Debug\Modules
 
 @echo Copying Library MVM
 echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\PowerControlMVM\PowerControlMVM\bin\Debug\PowerControlMVM.dll .\bin\Debug\Modules\MVM
@@ -151,6 +152,7 @@ echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\RemoteIPCControlMVM\RemoteIPCContr
 echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\DFLIMControlMVM\DFLIMControlMVM\bin\Debug\DFLIMControlMVM.dll .\bin\Debug\Modules\MVM
 echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\EpiTurretControlMVM\EpiTurretControlMVM\bin\Debug\EpiTurretControlMVM.dll .\bin\Debug\Modules\MVM
 REM echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\MesoScanMVM\MesoScanMVM\bin\Debug\MesoScanMVM.dll .\bin\Debug\Modules\MVM
+echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\AutoFocusControlMVM\AutoFocusControlMVM\bin\Debug\AutoFocusControlMVM.dll .\bin\Debug\Modules\MVM
 
 echo F | xcopy /F ..\..\..\..\Common\Database\DatabaseInterface\bin\Debug\DatabaseInterface.dll .\bin\Debug\Modules
 echo F | xcopy /F ..\..\..\..\Common\Database\DatabaseInterface\bin\Debug\System.Data.SQLite.dll .\bin\Debug\Modules
@@ -168,6 +170,7 @@ echo F | xcopy /F ..\..\..\..\Tools\DeepZoomGen\DeepZoomGen\bin\Debug\DeepZoomTo
 echo F | xcopy /F ..\..\..\..\Common\ThorSharedTypes\ThorSharedTypes\bin\Debug\ThorSharedTypes.dll .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Common\ThorDiskIO\x64\Debug\ThorDiskIO.dll .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Common\HardwareState\HardwareState\bin\Debug\HardwareState.dll .\bin\Debug\Modules
+echo F | xcopy /F ..\..\..\..\Common\AutoFocusModule\AutoFocusModule\bin\Debug\AutoFocusModule.dll .\bin\Debug\Modules
 
 echo F | xcopy /F ..\..\..\..\Tools\HistogramControl\HistogramControl\bin\Debug\HistogramControl.dll .\bin\Debug\Modules
 echo F | xcopy /F "..\..\..\..\Tools\DynamicDataDisplay v0.3 Binaries & Samples\DynamicDataDisplay\DynamicDataDisplay.dll" .\bin\Debug
@@ -272,6 +275,7 @@ echo F | xcopy /F ..\..\..\..\Common\StatsManager\x64\Debug\StatsManager.dll .\b
 REM echo F | xcopy /F ..\..\..\..\Common\ThorLogging\x64\Debug\ThorLoggingUnmanagedDisabled.dll .\bin\Debug\Modules_Native\ThorLoggingUnmanaged.dll
 REM echo F | xcopy /F ..\..\..\..\Common\WinDVI\x64\Debug\WinDVI.dll .\bin\Debug\Modules_Native
 echo F | xcopy /F ..\..\..\..\Common\ThorLogging\x64\Debug\ThorLoggingUnmanaged.dll .\bin\Debug\Modules_Native\ThorLoggingUnmanaged.dll
+echo F | xcopy /F ..\..\..\..\Common\AutoFocusModule\x64\Debug\AutoFocus.dll .\bin\Debug\Modules_Native
 
 echo F | xcopy /F ..\..\..\..\Commands\ImageAnalysis\PincushionCorrection\x64\Debug\PincushionCorrection.dll .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Commands\ImageAnalysis\FlatField\x64\Debug\FlatField.dll .\bin\Debug
@@ -344,6 +348,7 @@ REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCLS\x64\Debug\ThorMCLS.d
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM3000\x64\Debug\ThorMCM3000.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM3000Aux\x64\Debug\ThorMCM3000Aux.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM6000\x64\Debug\ThorMCM6000.dll .\bin\Debug\Modules_Native
+REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM6000_Condenser\x64\Debug\ThorMCM6000_Condenser.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMLSStage\x64\Debug\ThorMLSStage.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorObjectiveChanger\x64\Debug\ThorObjectiveChanger.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorPinholeStepper\x64\Debug\ThorPinholeStepper.dll .\bin\Debug\Modules_Native
@@ -378,6 +383,7 @@ echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorBCM\ThorBCMSettings.xml .\bin
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorBeamStabilizer\ThorBeamStabilizerSettings.xml .\bin\Debug\
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorBmExpan\ThorBmExpanSettings.xml .\bin\Debug\
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorBScope\ThorBScopeSettings.xml .\bin\Debug
+echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorChrolis\ThorChrolisSettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocal\ThorConfocalSettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocalGalvo\ThorConfocalGalvoSettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocalGalvoSimulator\ThorConfocalGalvoSimulatorSettings.xml .\bin\Debug 

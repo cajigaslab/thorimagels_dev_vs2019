@@ -199,6 +199,12 @@ long ThorZPiezo::SelectDevice(const long device)
 /// <returns>long.</returns>
 long ThorZPiezo::TeardownDevice()
 {
+	// Move Piezo to 0 volts before closing ThorImage
+	if (0 == SetAO0(0))
+	{
+		_zPos_C = _offsetmm;
+	}
+
 	CloseNITasks();
 	SAFE_DELETE_MEMORY (_pWaveform);
 	SAFE_DELETE_ARRAY (_zPockelsPowerBuffer);

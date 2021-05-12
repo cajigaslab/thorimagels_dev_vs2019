@@ -86,7 +86,14 @@ long ThorLSMCam::SetBdDMA(void)
 		//use line post mode when frame rate is lower than 1 fps instead of original memory limit:
 		//_bufferLarge = (16777216 < _vCMBoardDefinition.RecLength*_recsPerBuffer* _numChannel[0]*sizeof(U16));  //16MB
 		_bufferLarge = (1.0 <= ImageWaveformBuilder->GetFrameTime()) ? TRUE : FALSE;
-		_imgPtyDll.dmaBufferCount = (TRUE == _bufferLarge) ? 4 : _dMABufferCount;	//limit dma buffer count to 4 if buffer large
+		if (_imgPtyDll.numFrame > _dMABufferCount)
+		{
+			_imgPtyDll.dmaBufferCount = (TRUE == _bufferLarge) ? 4 : _dMABufferCount;	//limit dma buffer count to 4 if buffer large
+		}
+		else
+		{
+			_imgPtyDll.dmaBufferCount = (TRUE == _bufferLarge && _imgPtyDll.numFrame > 4) ? 4 : _imgPtyDll.numFrame;	//limit dma buffer count to 4 if buffer large
+		}
 
 		for (long i = 0; i < _numNIDAQ; i++)
 		{

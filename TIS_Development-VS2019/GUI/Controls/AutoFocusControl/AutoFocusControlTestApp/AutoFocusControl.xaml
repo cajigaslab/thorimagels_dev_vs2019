@@ -1,0 +1,462 @@
+﻿<UserControl x:Class="AutoFocusControl.AutoFocusControlUC"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:roi="clr-namespace:ROIUserControl;assembly=ROIUserControl"
+             xmlns:local="clr-namespace:AutoFocusControl"
+             xmlns:sharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+             xmlns:MahControls="http://metro.mahapps.com/winfx/xaml/controls"
+             xmlns:ig="http://schemas.infragistics.com/xaml"
+             mc:Ignorable="d"
+             Height="Auto"
+             Width="385">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <sharedTypes:BooleanToVisibilityConverter x:Key="boolToVis" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel HorizontalAlignment="Center" 
+                    Width="385"
+                    Margin="1">
+            <StackPanel Margin="1"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center">
+                <ig:XamNumericRangeSlider Margin="0,0,6,0"
+                                          Height="200"
+                                          Width="55"
+                                          MinValue="{Binding ZMin, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                          MaxValue="{Binding ZMax, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                          IsEnabled="False"
+                                          IsDirectionReversed="{Binding InvertZ, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                          Orientation="Vertical"
+                                          DecreaseButtonVisibility="Collapsed"
+                                          IncreaseButtonVisibility="Collapsed"
+                                          TrackFillBrush="#FF333333">
+                    <ig:XamSliderNumericThumb Value="{Binding Path=AbsoluteStartPosition, UpdateSourceTrigger=PropertyChanged}"
+                                              TrackFillBrush="#FF333333"
+                                              HorizontalAlignment="Right"
+                                              Width="45">
+                        <ig:XamSliderNumericThumb.Style>
+                            <Style TargetType="ig:XamSliderNumericThumb">
+                                <Setter Property="SnapsToDevicePixels" Value="true" />
+                                <Setter Property="OverridesDefaultStyle" Value="true" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ig:XamSliderNumericThumb">
+                                            <StackPanel HorizontalAlignment="Right">
+                                                <TextBlock Text="{Binding Path=AbsoluteStartPosition, UpdateSourceTrigger=PropertyChanged}" 
+                                                           Foreground="White"
+                                                           HorizontalAlignment="Right"/>
+                                            </StackPanel>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ig:XamSliderNumericThumb.Style>
+                    </ig:XamSliderNumericThumb>
+                    <ig:XamSliderNumericThumb Value="{Binding Path=CurrentZPosition, UpdateSourceTrigger=PropertyChanged}"
+                                              TrackFillBrush="#FF333333"
+                                              HorizontalAlignment="Right"
+                                              Width="45">
+                        <ig:XamSliderNumericThumb.Style>
+                            <Style TargetType="ig:XamSliderNumericThumb">
+                                <Setter Property="SnapsToDevicePixels" Value="true" />
+                                <Setter Property="OverridesDefaultStyle" Value="true" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ig:XamSliderNumericThumb">
+                                            <StackPanel HorizontalAlignment="Right">
+                                                <TextBlock Text="{Binding Path=CurrentZPosition, UpdateSourceTrigger=PropertyChanged}" 
+                                                           Foreground="White"
+                                                           HorizontalAlignment="Right"/>
+                                            </StackPanel>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ig:XamSliderNumericThumb.Style>
+                    </ig:XamSliderNumericThumb>
+                    <ig:XamSliderNumericThumb Value="{Binding Path=AbsoluteStopPosition, UpdateSourceTrigger=PropertyChanged}"
+                                              TrackFillBrush="#FF333333"
+                                              HorizontalAlignment="Right"
+                                              Width="45">
+                        <ig:XamSliderNumericThumb.Style>
+                            <Style TargetType="ig:XamSliderNumericThumb">
+                                <Setter Property="SnapsToDevicePixels" Value="true" />
+                                <Setter Property="OverridesDefaultStyle" Value="true" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ig:XamSliderNumericThumb">
+                                            <StackPanel HorizontalAlignment="Right">
+                                                <TextBlock Text="{Binding Path=AbsoluteStopPosition, UpdateSourceTrigger=PropertyChanged}" 
+                                                           Foreground="White"
+                                                           HorizontalAlignment="Right"/>
+                                            </StackPanel>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ig:XamSliderNumericThumb.Style>
+                    </ig:XamSliderNumericThumb>
+                    <ig:XamSliderNumericThumb Value="{Binding Path=ZMax, UpdateSourceTrigger=PropertyChanged}"
+                                              TrackFillBrush="#FF333333"
+                                              Visibility="Collapsed"/>
+                </ig:XamNumericRangeSlider>
+                <StackPanel Margin="1,10,0,0"
+                            Orientation="Vertical"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <Label Content="{Binding ZMin, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                           Visibility="{Binding InvertZ, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVis}, ConverterParameter=false}"/>
+                    <Label Content="{Binding ZMax, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                           Visibility="{Binding InvertZ, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVis}, ConverterParameter=true}"/>
+                    <ig:XamNumericRangeSlider Height="200"
+                                          MinValue="{Binding ZMin, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                          MaxValue="{Binding ZMax, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                          IsDirectionReversed="{Binding InvertZ, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                          IsEnabled="False"
+                                          Orientation="Vertical"
+                                          DecreaseButtonVisibility="Collapsed"
+                                          IncreaseButtonVisibility="Collapsed"
+                                          TrackFillBrush="Transparent">
+                        <!--<ig:XamNumericRangeSlider.TickMarks>
+                        <ig:SliderTickMarks IncludeSliderEnds="True" 
+                                            TickMarksFrequency="{Binding Path=StepSizeUM, UpdateSourceTrigger=PropertyChanged}" 
+                                            UseFrequency="True" />
+                    </ig:XamNumericRangeSlider.TickMarks>-->
+                        <ig:XamSliderNumericThumb InteractionMode="Lock"
+                                              Value="{Binding Path=AbsoluteStartPosition, UpdateSourceTrigger=PropertyChanged}">
+                            <ig:XamSliderNumericThumb.Style>
+                                <Style TargetType="ig:XamSliderNumericThumb">
+                                    <Setter Property="SnapsToDevicePixels" Value="true" />
+                                    <Setter Property="OverridesDefaultStyle" Value="true" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ig:XamSliderNumericThumb">
+                                                <StackPanel>
+                                                    <!--<TextBlock Text="test"
+                                                           FontSize="6"/>-->
+                                                    <Border SnapsToDevicePixels="True" Background="Green"  BorderThickness="1" BorderBrush="ForestGreen" Width="19" Height="3"/>
+                                                </StackPanel>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ig:XamSliderNumericThumb.Style>
+                        </ig:XamSliderNumericThumb>
+                        <ig:XamSliderNumericThumb InteractionMode="Lock"
+                                              Value="{Binding Path=CurrentZPosition, UpdateSourceTrigger=PropertyChanged}"
+                                              TrackFillBrush="Green">
+                            <ig:XamSliderNumericThumb.Style>
+                                <Style TargetType="ig:XamSliderNumericThumb">
+                                    <Setter Property="SnapsToDevicePixels" Value="true" />
+                                    <Setter Property="OverridesDefaultStyle" Value="true" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ig:XamSliderNumericThumb">
+                                                <StackPanel>
+                                                    <Border SnapsToDevicePixels="True" Background="SteelBlue"  BorderThickness="1" BorderBrush="LightSteelBlue" Width="19" Height="3"/>
+                                                </StackPanel>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ig:XamSliderNumericThumb.Style>
+                        </ig:XamSliderNumericThumb>
+                        <ig:XamSliderNumericThumb InteractionMode="Lock"
+                                              Value="{Binding Path=AbsoluteStopPosition, UpdateSourceTrigger=PropertyChanged}"
+                                              TrackFillBrush="Green">
+                            <ig:XamSliderNumericThumb.Style>
+                                <Style TargetType="ig:XamSliderNumericThumb">
+                                    <Setter Property="SnapsToDevicePixels" Value="true" />
+                                    <Setter Property="OverridesDefaultStyle" Value="true" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ig:XamSliderNumericThumb">
+                                                <StackPanel>
+                                                    <Border SnapsToDevicePixels="True" Background="Green"  BorderThickness="1" BorderBrush="ForestGreen" Width="19" Height="3"/>
+                                                </StackPanel>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ig:XamSliderNumericThumb.Style>
+                        </ig:XamSliderNumericThumb>
+                        <ig:XamSliderNumericThumb Value="{Binding Path=ZMin, UpdateSourceTrigger=PropertyChanged}">
+                            <ig:XamSliderNumericThumb.Style>
+                                <Style TargetType="ig:XamSliderNumericThumb">
+                                    <Setter Property="SnapsToDevicePixels" Value="true" />
+                                    <Setter Property="OverridesDefaultStyle" Value="true" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ig:XamSliderNumericThumb">
+                                                <StackPanel>
+                                                    <Border SnapsToDevicePixels="True" Background="Red"  BorderThickness="1" BorderBrush="DarkRed" Width="19" Height="3"/>
+                                                </StackPanel>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ig:XamSliderNumericThumb.Style>
+                        </ig:XamSliderNumericThumb>
+                        <ig:XamSliderNumericThumb Value="{Binding Path=ZMax, UpdateSourceTrigger=PropertyChanged}">
+                            <ig:XamSliderNumericThumb.Style>
+                                <Style TargetType="ig:XamSliderNumericThumb">
+                                    <Setter Property="SnapsToDevicePixels" Value="true" />
+                                    <Setter Property="OverridesDefaultStyle" Value="true" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ig:XamSliderNumericThumb">
+                                                <StackPanel>
+                                                    <Border SnapsToDevicePixels="True" Background="Red"  BorderThickness="1" BorderBrush="DarkRed" Width="19" Height="3"/>
+                                                </StackPanel>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ig:XamSliderNumericThumb.Style>
+                        </ig:XamSliderNumericThumb>
+                    </ig:XamNumericRangeSlider>
+                    <!--<MahControls:RangeSlider Width="200"
+                                         Margin="4"
+                                         AutoToolTipPlacement="TopLeft"
+                                         Background="Gray"
+                                         Foreground="White"
+                                         LargeChange="10"
+                                         LowerValue="40"
+                                         Maximum="100"
+                                         Minimum="0"
+                                         BorderBrush="Aqua"
+                                         
+                                         Orientation="Horizontal"
+                                         SmallChange="1"
+                                         UpperValue="60"
+                                         IsEnabled="True">
+                    <MahControls:RangeSlider.Style>
+                        <Style TargetType="{x:Type MahControls:RangeSlider}">
+                            <Setter Property="Visibility"
+                                    Value="Visible" />
+                        </Style>
+                    </MahControls:RangeSlider.Style>
+                </MahControls:RangeSlider>-->
+                    <Label Content="{Binding ZMax, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                           Visibility="{Binding InvertZ, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVis}, ConverterParameter=false}"/>
+                    <Label Content="{Binding ZMin, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                           Visibility="{Binding InvertZ, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVis}, ConverterParameter=true}"/>
+                </StackPanel>
+                <Grid Margin="30">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="35" />
+                        <RowDefinition Height="35" />
+                        <RowDefinition Height="35" />
+                        <RowDefinition Height="35" />
+                        <RowDefinition Height="35" />
+                        <RowDefinition Height="35" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Margin="1"
+                                Grid.Row="0"
+                                Orientation="Horizontal">
+                        <Label Margin="0"
+                               Content="Autofocus type"/>
+                        <ComboBox MinWidth="96"
+                                  Height="25"
+                                  SelectedIndex="{Binding Path=AutoFocusType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            <ComboBoxItem Content="Hadrware" />
+                            <ComboBoxItem Content="Hardware/Image" />
+                            <ComboBoxItem Content="Image" />
+                            <ComboBoxItem Content="None" />
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Margin="1"
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Orientation="Horizontal"
+                                ToolTip="Start Position is relative to the current Z Position">
+                        <TextBox Name="txtStartPos" 
+                         Text="{Binding Path=StartPosition}" 
+                         Width="50"
+                         Height="25">
+                        </TextBox>
+                        <Button Width="30"
+                        Content="✓"
+                        Margin="0,7.5,0,7.5">
+                            <Button.Style>
+                                <Style TargetType="{x:Type Button}">
+                                    <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsFocused, ElementName=txtStartPos}"
+                                             Value="True">
+                                            <Setter Property="Visibility"
+                                            Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Label Content="Start Position [um]"/>
+                    </StackPanel>
+                    <StackPanel Margin="1"
+                                Grid.Row="2"
+                                Grid.Column="0"
+                                Orientation="Horizontal"
+                                ToolTip="Stop Position is relative to the current Z Position">
+                        <TextBox Name="txtStopPos" 
+                                 Text="{Binding Path=StopPosition}" 
+                                 Width="50"
+                                 Height="25">
+                        </TextBox>
+                        <Button Width="30"
+                                Content="✓"
+                                Margin="0,7.5,0,7.5">
+                            <Button.Style>
+                                <Style TargetType="{x:Type Button}">
+                                    <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsFocused, ElementName=txtStopPos}"
+                                             Value="True">
+                                            <Setter Property="Visibility"
+                                            Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Label Content="Stop Position [um]"/>
+                    </StackPanel>
+                    <StackPanel Margin="1"
+                            Grid.Row="3"
+                            Grid.Column="0"
+                            Orientation="Horizontal">
+                        <TextBox Name="txtRepeats" 
+                         Text="{Binding Path=Repeats}" 
+                         Width="50"
+                         Height="25">
+                        </TextBox>
+                        <Button Width="30"
+                        Content="✓"
+                        Margin="0,7.5,0,7.5">
+                            <Button.Style>
+                                <Style TargetType="{x:Type Button}">
+                                    <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsFocused, ElementName=txtRepeats}"
+                                             Value="True">
+                                            <Setter Property="Visibility"
+                                            Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Label Content="# Of Repeats"/>
+                    </StackPanel>
+                    <StackPanel Margin="1"
+                            Grid.Row="4"
+                            Grid.Column="0"
+                            Orientation="Horizontal">
+                        <TextBox Name="txtStepSize" 
+                         Text="{Binding Path=StepSizeUM}" 
+                         Width="50"
+                         Height="25">
+                        </TextBox>
+                        <Button Width="30"
+                        Content="✓"
+                        Margin="0,7.5,0,7.5">
+                            <Button.Style>
+                                <Style TargetType="{x:Type Button}">
+                                    <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsFocused, ElementName=txtStepSize}"
+                                             Value="True">
+                                            <Setter Property="Visibility"
+                                            Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Label Content="Step size [um]"/>
+                    </StackPanel>
+                    <StackPanel Margin="1"
+                                Grid.Row="5"
+                                Orientation="Horizontal">
+                        <Button MinWidth="40"
+                                Margin="50,0,0,0"
+                                Command="{Binding Path=RunAutoFocusCommand}"
+                                Content="Run Autofocus"
+                                IsEnabled="{Binding Path=AutoFocusButtonEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                ToolTip="Run auto focus process" />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+            <Border>
+                <Expander Header="Image options"
+                          Foreground="White"
+                          ToolTip="Adjustment for bringing pinhole wheel into alignment"
+                          Margin="1">
+                    <StackPanel Margin="5">
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel>
+                                <RepeatButton Name="butPlus"
+                                              Content="+"
+                                              Width="30"
+                                              Height="20"
+                                              Command="{Binding Path=LSMPinholeAlignmentPlusCommand}"
+                                              Delay="500"
+                                              Interval="100" />
+                                <RepeatButton Name="butMinus"
+                                              Content="-"
+                                              Width="30"
+                                              Height="20"
+                                              Command="{Binding Path=LSMPinholeAlignmentMinusCommand}"
+                                              Delay="500"
+                                              Interval="100" />
+                            </StackPanel>
+                            <TextBox Text="{Binding Path=TxtPinholeAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                     Width="75"
+                                     Height="25">
+                            </TextBox>
+                            <Button Width="30"
+                                    Content="✓"
+                                    Margin="0,7.5,0,7.5">
+                                <Button.Style>
+                                    <Style TargetType="{x:Type Button}">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsFocused, ElementName=txtPinholeAlignment}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Button Name="btnSetPinhole"
+                                    Width="120"
+                                    Content="Set Pinhole"
+                                    VerticalAlignment="Center"
+                                    Foreground="White"
+                                    Command="{Binding Path=LSMPinholeAlignmentSetCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Expander>
+            </Border>
+        </StackPanel>
+    </Grid>
+</UserControl>

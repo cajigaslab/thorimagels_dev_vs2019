@@ -36,6 +36,7 @@ using namespace std;
 
 #define MSG_SIZE 256
 
+#define XY_COORD		2
 #define RGB_CNT			3
 #define MAX_ARRAY_CNT	1024
 #define LUT_SIZE		65536
@@ -46,6 +47,7 @@ using namespace std;
 #include "..\..\..\..\Tools\ticpp\ticpprc.h"
 
 #include "..\..\..\..\Common\bmpCpp.h"
+#include "..\..\..\..\Common\PublicFuncs.h"
 #include "..\..\..\..\Common\ThorSharedTypesCPP.h"
 #include "..\..\..\..\Common\HologramGenerator\HologramGenerator\HologramGenerator.h"
 

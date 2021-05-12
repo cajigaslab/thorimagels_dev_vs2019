@@ -483,10 +483,10 @@
                 return;
             histogram0.MaxBinValue = _whitePointMaxVal;
             histogram0.BlackPoint = histogram0.MinValue;
-            histogram0.WhitePoint = histogram0.MaxValue;
+            histogram0.WhitePoint = Math.Max(1, histogram0.MaxValue); //The minimum value a white point can have is 1
 
             slBp0.Value = histogram0.MinValue;
-            slWp0.Value = histogram0.MaxValue;
+            slWp0.Value = Math.Max(1, histogram0.MaxValue);
         }
 
         private void AutoEnhance2()
@@ -498,8 +498,8 @@
             histogram1.MaxBinValue = _whitePointMaxVal;
             histogram1.BlackPoint = histogram1.MinValue;
             slBp1.Value = histogram1.MinValue;
-            histogram1.WhitePoint = histogram1.MaxValue;
-            slWp1.Value = histogram1.MaxValue;
+            histogram1.WhitePoint = Math.Max(1, histogram1.MaxValue); //The minimum value a white point can have is 1
+            slWp1.Value = Math.Max(1, histogram1.MaxValue);
         }
 
         private void AutoEnhance3()
@@ -511,8 +511,8 @@
             histogram2.MaxBinValue = _whitePointMaxVal;
             histogram2.BlackPoint = histogram2.MinValue;
             slBp2.Value = histogram2.MinValue;
-            histogram2.WhitePoint = histogram2.MaxValue;
-            slWp2.Value = histogram2.MaxValue;
+            histogram2.WhitePoint = Math.Max(1, histogram2.MaxValue); //The minimum value a white point can have is 1
+            slWp2.Value = Math.Max(1, histogram2.MaxValue);
         }
 
         private void AutoEnhance4()
@@ -524,120 +524,104 @@
             histogram3.MaxBinValue = _whitePointMaxVal;
             histogram3.BlackPoint = histogram3.MinValue;
             slBp3.Value = histogram3.MinValue;
-            histogram3.WhitePoint = histogram3.MaxValue;
-            slWp3.Value = histogram3.MaxValue;
+            histogram3.WhitePoint = Math.Max(1, histogram3.MaxValue); //The minimum value a white point can have is 1
+            slWp3.Value = Math.Max(1, histogram3.MaxValue);
         }
 
         private void btnBPDown0_Click(object sender, RoutedEventArgs e)
         {
             AutoManualTog1.IsChecked = false;
             histogram0.BlackPoint -= 1;
-            slBp0.Value -= 1;
         }
 
         private void btnBPDown1_Click(object sender, RoutedEventArgs e)
         {
             AutoManualTog2.IsChecked = false;
             histogram1.BlackPoint -= 1;
-            slBp1.Value -= 1;
         }
 
         private void btnBPDown2_Click(object sender, RoutedEventArgs e)
         {
             AutoManualTog3.IsChecked = false;
             histogram2.BlackPoint -= 1;
-            slBp2.Value -= 1;
         }
 
         private void btnBPDown3_Click(object sender, RoutedEventArgs e)
         {
             AutoManualTog4.IsChecked = false;
             histogram3.BlackPoint -= 1;
-            slBp3.Value -= 1;
         }
 
         private void btnBPUp0_Click(object sender, RoutedEventArgs e)
         {
             AutoManualTog1.IsChecked = false;
             histogram0.BlackPoint += 1;
-            slBp0.Value += 1;
         }
 
         private void btnBPUp1_Click(object sender, RoutedEventArgs e)
         {
             AutoManualTog2.IsChecked = false;
             histogram1.BlackPoint += 1;
-            slBp1.Value += 1;
         }
 
         private void btnBPUp2_Click(object sender, RoutedEventArgs e)
         {
             AutoManualTog3.IsChecked = false;
             histogram2.BlackPoint += 1;
-            slBp2.Value += 1;
         }
 
         private void btnBPUp3_Click(object sender, RoutedEventArgs e)
         {
             AutoManualTog4.IsChecked = false;
             histogram3.BlackPoint += 1;
-            slBp3.Value += 1;
         }
 
         private void btnWPDown0_Click(object sender, RoutedEventArgs e)
         {
             AutoManualTog1.IsChecked = false;
             histogram0.WhitePoint -= 1;
-            slWp0.Value -= 1;
         }
 
         private void btnWPDown1_Click(object sender, RoutedEventArgs e)
         {
             AutoManualTog2.IsChecked = false;
             histogram1.WhitePoint -= 1;
-            slWp1.Value -= 1;
         }
 
         private void btnWPDown2_Click(object sender, RoutedEventArgs e)
         {
             AutoManualTog3.IsChecked = false;
             histogram2.WhitePoint -= 1;
-            slWp2.Value -= 1;
         }
 
         private void btnWPDown3_Click(object sender, RoutedEventArgs e)
         {
             AutoManualTog4.IsChecked = false;
             histogram3.WhitePoint -= 1;
-            slWp3.Value -= 1;
         }
 
         private void btnWPUp0_Click(object sender, RoutedEventArgs e)
         {
             AutoManualTog1.IsChecked = false;
             histogram0.WhitePoint += 1;
-            slWp0.Value += 1;
         }
 
         private void btnWPUp1_Click(object sender, RoutedEventArgs e)
         {
             AutoManualTog2.IsChecked = false;
             histogram1.WhitePoint += 1;
-            slWp1.Value += 1;
         }
 
         private void btnWPUp2_Click(object sender, RoutedEventArgs e)
         {
             AutoManualTog3.IsChecked = false;
             histogram2.WhitePoint += 1;
-            slWp2.Value += 1;
         }
 
         private void btnWPUp3_Click(object sender, RoutedEventArgs e)
         {
             AutoManualTog4.IsChecked = false;
             histogram3.WhitePoint += 1;
-            slWp3.Value += 1;
         }
 
         private void ButtonReset_Click0(object sender, RoutedEventArgs e)
@@ -1343,7 +1327,17 @@
             AutoManualTog1.IsChecked = false;
         }
 
+        private void slider0_MouseLeftClick(object sender, MouseButtonEventArgs e)
+        {
+            AutoManualTog1.IsChecked = false;
+        }
+
         private void slider1_DragStarted(object sender, DragStartedEventArgs e)
+        {
+            AutoManualTog2.IsChecked = false;
+        }
+
+        private void slider1_MouseLeftClick(object sender, MouseButtonEventArgs e)
         {
             AutoManualTog2.IsChecked = false;
         }
@@ -1353,7 +1347,17 @@
             AutoManualTog3.IsChecked = false;
         }
 
+        private void slider2_MouseLeftClick(object sender, MouseButtonEventArgs e)
+        {
+            AutoManualTog3.IsChecked = false;
+        }
+
         private void slider3_DragStarted(object sender, DragStartedEventArgs e)
+        {
+            AutoManualTog4.IsChecked = false;
+        }
+
+        private void slider3_MouseLeftClick(object sender, MouseButtonEventArgs e)
         {
             AutoManualTog4.IsChecked = false;
         }
@@ -1581,7 +1585,7 @@
                 return;
             }
 
-            OverlayManagerClass.Instance.UpdateParams(ExperimentData.ImageInfo.pixelX, ExperimentData.ImageInfo.pixelY * ExperimentData.NumberOfPlanes, ExperimentData.LSMUMPerPixel);
+            OverlayManagerClass.Instance.UpdateParams(ExperimentData.ImageInfo.pixelX, ExperimentData.ImageInfo.pixelY, ExperimentData.LSMUMPerPixel);
             vm_CloseOrthogonalView();
 
             bool reticleActive = false;

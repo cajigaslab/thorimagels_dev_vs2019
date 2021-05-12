@@ -3,7 +3,6 @@
 
 #ifndef THORLABS_TSI_BUILD_DLL
 
-//TL_CAMERA_FRAME_AVAILABLE_OrNull tl_is_frame_available_ornull;
 TL_CAMERA_SET_FRAME_AVAILABLE_CALLBACK tl_camera_set_frame_available_callback;
 TL_CAMERA_SET_CAMERA_CONNECT_CALLBACK tl_camera_set_camera_connect_callback;
 TL_CAMERA_SET_CAMERA_DISCONNECT_CALLBACK tl_camera_set_camera_disconnect_callback;
@@ -18,8 +17,6 @@ TL_CAMERA_GET_EXPOSURE_TIME_RANGE tl_camera_get_exposure_time_range;
 TL_CAMERA_GET_FIRMWARE_VERSION tl_camera_get_firmware_version;
 TL_CAMERA_GET_FRAME_TIME tl_camera_get_frame_time;
 TL_CAMERA_GET_MEASURED_FRAME_RATE tl_camera_get_measured_frame_rate;
-//TL_CAMERA_GET_HARDWARE_TRIGGER_MODE tl_camera_get_hardware_trigger_mode;
-//TL_CAMERA_SET_HARDWARE_TRIGGER_MODE tl_camera_set_hardware_trigger_mode;
 TL_CAMERA_GET_TRIGGER_POLARITY tl_camera_get_trigger_polarity;
 TL_CAMERA_SET_TRIGGER_POLARITY tl_camera_set_trigger_polarity;
 TL_CAMERA_GET_BINX tl_camera_get_binx;
@@ -70,7 +67,7 @@ TL_CAMERA_GET_SERIAL_NUMBER_STRING_LENGTH_RANGE tl_camera_get_serial_number_stri
 TL_CAMERA_GET_IS_LED_ON tl_camera_get_is_led_on;
 TL_CAMERA_SET_IS_LED_ON tl_camera_set_is_led_on;
 TL_CAMERA_GET_USB_PORT_TYPE tl_camera_get_usb_port_type;
-TL_CAMERA_GET_COMMUNICATION_INTERFACE tl_camera_get_communication_Interface;
+TL_CAMERA_GET_COMMUNICATION_INTERFACE tl_camera_get_communication_interface;
 TL_CAMERA_GET_EEP_STATUS tl_camera_get_eep_status;
 TL_CAMERA_SET_IS_EEP_ENABLED tl_camera_set_is_eep_enabled;
 TL_CAMERA_GET_BINY tl_camera_get_biny;
@@ -81,6 +78,11 @@ TL_CAMERA_GET_BLACK_LEVEL tl_camera_get_black_level;
 TL_CAMERA_SET_BLACK_LEVEL tl_camera_set_black_level;
 TL_CAMERA_GET_BLACK_LEVEL_RANGE tl_camera_get_black_level_range;
 TL_CAMERA_GET_BINY_RANGE tl_camera_get_biny_range;
+TL_CAMERA_GET_SENSOR_READOUT_TIME tl_camera_get_sensor_readout_time;
+TL_CAMERA_GET_IMAGE_WIDTH tl_camera_get_image_width;
+TL_CAMERA_GET_IMAGE_HEIGHT tl_camera_get_image_height;
+TL_CAMERA_GET_IMAGE_WIDTH_RANGE tl_camera_get_image_width_range;
+TL_CAMERA_GET_IMAGE_HEIGHT_RANGE tl_camera_get_image_height_range;
 TL_CAMERA_OPEN_CAMERA tl_camera_open_camera;
 TL_CAMERA_CLOSE_CAMERA tl_camera_close_camera;
 TL_CAMERA_GET_IMAGE_POLL_TIMEOUT tl_camera_get_image_poll_timeout;
@@ -89,8 +91,22 @@ TL_CAMERA_GET_PENDING_FRAME_OR_NULL tl_camera_get_pending_frame_or_null;
 TL_CAMERA_ARM tl_camera_arm;
 TL_CAMERA_ISSUE_SOFTWARE_TRIGGER tl_camera_issue_software_trigger;
 TL_CAMERA_DISARM tl_camera_disarm;
-TL_CAMERA_GET_IMAGE_WIDTH_RANGE tl_camera_get_image_width_range;
-TL_CAMERA_GET_IMAGE_HEIGHT_RANGE tl_camera_get_image_height_range;
+TL_CAMERA_GET_POLAR_PHASE tl_camera_get_polar_phase;
+TL_CAMERA_GET_TAPS tl_camera_get_taps;
+TL_CAMERA_SET_TAPS tl_camera_set_taps;
+TL_CAMERA_GET_TAP_BALANCE_ENABLE tl_camera_get_tap_balance_enable;
+TL_CAMERA_SET_TAP_BALANCE_ENABLE tl_camera_set_tap_balance_enable;
+TL_CAMERA_GET_NIR_BOOST_ENABLE tl_camera_get_nir_boost_enable;
+TL_CAMERA_SET_NIR_BOOST_ENABLE tl_camera_set_nir_boost_enable;
+TL_CAMERA_GET_COOLING_ENABLE tl_camera_get_cooling_enable;
+TL_CAMERA_SET_COOLING_ENABLE tl_camera_set_cooling_enable;
+TL_CAMERA_GET_FRAME_RATE_CONTROL_VALUE_RANGE tl_camera_get_frame_rate_control_value_range;
+TL_CAMERA_GET_IS_FRAME_RATE_CONTROL_ENABLED tl_camera_get_is_frame_rate_control_enabled;
+TL_CAMERA_SET_FRAME_RATE_CONTROL_VALUE tl_camera_set_frame_rate_control_value;
+TL_CAMERA_SET_IS_FRAME_RATE_CONTROL_ENABLED tl_camera_set_is_frame_rate_control_enabled;
+TL_CAMERA_GET_FRAME_RATE_CONTROL_VALUE tl_camera_get_frame_rate_control_value;
+TL_CAMERA_GET_TIMESTAMP_CLOCK_FREQUENCY tl_camera_get_timestamp_clock_frequency;
+TL_CAMERA_CONVERT_GAIN_TO_DECIBELS tl_camera_convert_gain_to_decibels;
 
 typedef void* (*TL_GET_FUNCTION) (char*);
 typedef void(*TL_MODULE_INITIALIZE)();
@@ -140,8 +156,6 @@ static void init_camera_sdk_function_pointers()
 	tl_camera_get_firmware_version = 0;
 	tl_camera_get_frame_time = 0;
 	tl_camera_get_measured_frame_rate = 0;
-	//tl_camera_get_hardware_trigger_mode = 0;
-	//tl_camera_set_hardware_trigger_mode = 0;
 	tl_camera_get_trigger_polarity = 0;
 	tl_camera_set_trigger_polarity = 0;
 	tl_camera_get_binx = 0;
@@ -192,7 +206,7 @@ static void init_camera_sdk_function_pointers()
 	tl_camera_get_is_led_on = 0;
 	tl_camera_set_is_led_on = 0;
 	tl_camera_get_usb_port_type = 0;
-	tl_camera_get_communication_Interface = 0;
+	tl_camera_get_communication_interface = 0;
 	tl_camera_get_eep_status = 0;
 	tl_camera_set_is_eep_enabled = 0;
 	tl_camera_get_biny = 0;
@@ -203,14 +217,33 @@ static void init_camera_sdk_function_pointers()
 	tl_camera_get_black_level = 0;
 	tl_camera_set_black_level = 0;
 	tl_camera_get_black_level_range = 0;
+	tl_camera_get_sensor_readout_time = 0;
+	tl_camera_get_image_width = 0;
+	tl_camera_get_image_height = 0;
+	tl_camera_get_image_width_range = 0;
+	tl_camera_get_image_height_range = 0;
 	tl_camera_open_camera = 0;
 	tl_camera_close_camera = 0;
 	tl_camera_get_pending_frame_or_null = 0;
 	tl_camera_arm = 0;
 	tl_camera_issue_software_trigger = 0;
 	tl_camera_disarm = 0;
-	tl_camera_get_image_width_range = 0;
-	tl_camera_get_image_height_range = 0;
+	tl_camera_get_polar_phase = 0;
+    tl_camera_get_taps = 0;
+    tl_camera_set_taps = 0;
+    tl_camera_get_tap_balance_enable = 0;
+    tl_camera_set_tap_balance_enable = 0;
+    tl_camera_get_nir_boost_enable = 0;
+    tl_camera_set_nir_boost_enable = 0;
+    tl_camera_get_cooling_enable = 0;
+    tl_camera_set_cooling_enable = 0;
+	tl_camera_get_frame_rate_control_value_range = 0;
+	tl_camera_get_is_frame_rate_control_enabled = 0;
+	tl_camera_set_frame_rate_control_value = 0;
+	tl_camera_set_is_frame_rate_control_enabled = 0;
+	tl_camera_get_frame_rate_control_value = 0;
+	tl_camera_get_timestamp_clock_frequency = 0;
+	tl_camera_convert_gain_to_decibels = 0;
 }
 
 static int init_error_cleanup()
@@ -253,31 +286,25 @@ static int init_error_cleanup()
 /// </returns>
 int tl_camera_sdk_dll_initialize(void)
 {
-	//printf("Entering tl_camera_sdk_dll_initialize");
 	init_camera_sdk_function_pointers();
 
 	// Platform specific code to get a handle to the SDK kernel module.
 #ifdef _WIN32
-	//printf("Before loading unified sdk kernel\n");
 	kernel_obj = LoadLibraryA("thorlabs_unified_sdk_kernel.dll");
-	int lastError = GetLastError();
 	if (!kernel_obj)
 	{
 		return (init_error_cleanup());
 	}
-	//printf("After loading unified sdk kernel\n");
 	get_kernel_function = (TL_GET_FUNCTION)(GetProcAddress(kernel_obj, (char*) "tl_get_function"));
 	if (!get_kernel_function)
 	{
 		return (init_error_cleanup());
 	}
-	//printf("After getting tl_get_function\n");
 	kernel_module_initialize = (TL_MODULE_INITIALIZE)(GetProcAddress(kernel_obj, (char*) "tl_module_initialize"));
 	if (!kernel_module_initialize)
 	{
 		return (init_error_cleanup());
 	}
-	//printf("After getting tl_module_initialize\n");
 	kernel_module_uninitialize = (TL_MODULE_UNINITIALIZE)(GetProcAddress(kernel_obj, (char*) "tl_module_uninitialize"));
 	if (!kernel_module_uninitialize)
 	{
@@ -291,19 +318,16 @@ int tl_camera_sdk_dll_initialize(void)
 	{
 		return (init_error_cleanup());
 	}
-	//printf("After loading unified sdk kernel\n");
 	get_kernel_function = (TL_GET_FUNCTION)(dlsym (kernel_obj, (char*) "tl_get_function"));
 	if (!get_kernel_function)
 	{
 		return (init_error_cleanup());
 	}
-	//printf("After getting tl_get_function\n");
 	kernel_module_initialize = (TL_MODULE_INITIALIZE)(dlsym (kernel_obj, (char*) "tl_module_initialize"));
 	if (!kernel_module_initialize)
 	{
 		return (init_error_cleanup());
 	}
-	//printf("After getting tl_module_initialize\n");
 	kernel_module_uninitialize = (TL_MODULE_UNINITIALIZE)(dlsym (kernel_obj, (char*) "tl_module_uninitialize"));
 	if (!kernel_module_uninitialize)
 	{
@@ -314,11 +338,8 @@ int tl_camera_sdk_dll_initialize(void)
 	// Initialize the kernel module.
 	kernel_module_initialize();
 	load_module = (LOAD_MODULE)get_kernel_function("load_module");
-	//OutputDebugStringW(L"After getting load_module");
 	unload_module = (UNLOAD_MODULE)get_kernel_function("unload_module");
-	//OutputDebugStringW(L"After getting unload_module");
 	get_module_function = (GET_MODULE_FUNCTION)get_kernel_function("get_module_function");
-	//OutputDebugStringW(L"After getting get_module_function");
 
 	// Load camera SDK module.
 	sdk_handle = load_module(CAMERA_SDK_MODULE_NAME);
@@ -326,12 +347,6 @@ int tl_camera_sdk_dll_initialize(void)
 	{
 		return (init_error_cleanup());
 	}
-
-	//tl_is_frame_available_ornull = (TL_CAMERA_FRAME_AVAILABLE_OrNull)get_module_function(sdk_handle, "tl_is_frame_available_ornull");
-	//if (!tl_is_frame_available_ornull)
-	//{
-	//	return (init_error_cleanup());
-	//}
 
 	tl_camera_set_frame_available_callback = (TL_CAMERA_SET_FRAME_AVAILABLE_CALLBACK)get_module_function(sdk_handle, "tl_camera_set_frame_available_callback");
 	if (!tl_camera_set_frame_available_callback)
@@ -411,7 +426,7 @@ int tl_camera_sdk_dll_initialize(void)
 		return (init_error_cleanup());
 	}
 
-	tl_camera_get_exposure_time_range = (TL_CAMERA_GET_EXPOSURE_RANGE)get_module_function(sdk_handle, "tl_camera_get_exposure_time_range");
+	tl_camera_get_exposure_time_range = (TL_CAMERA_GET_EXPOSURE_TIME_RANGE)get_module_function(sdk_handle, "tl_camera_get_exposure_time_range");
 	if (!tl_camera_get_exposure_time_range)
 	{
 		return (init_error_cleanup());
@@ -435,18 +450,6 @@ int tl_camera_sdk_dll_initialize(void)
 		return (init_error_cleanup());
 	}
 
-	//   tl_camera_get_hardware_trigger_mode = (TL_CAMERA_GET_HARDWARE_TRIGGER_MODE)get_module_function(sdk_handle, "tl_camera_get_hardware_trigger_mode");
-	//   if (!tl_camera_get_hardware_trigger_mode)
-	//   {
-	//       return (init_error_cleanup());
-	//   }
-
-	//tl_camera_set_hardware_trigger_mode = (TL_CAMERA_SET_HARDWARE_TRIGGER_MODE)get_module_function(sdk_handle, "tl_camera_set_hardware_trigger_mode");
-	//   if (!tl_camera_set_hardware_trigger_mode)
-	//   {
-	//       return (init_error_cleanup());
-	//   }
-
 	tl_camera_get_trigger_polarity = (TL_CAMERA_GET_TRIGGER_POLARITY)get_module_function(sdk_handle, "tl_camera_get_trigger_polarity");
 	if (!tl_camera_get_trigger_polarity)
 	{
@@ -455,6 +458,12 @@ int tl_camera_sdk_dll_initialize(void)
 
 	tl_camera_set_trigger_polarity = (TL_CAMERA_SET_TRIGGER_POLARITY)get_module_function(sdk_handle, "tl_camera_set_trigger_polarity");
 	if (!tl_camera_set_trigger_polarity)
+	{
+		return (init_error_cleanup());
+	}
+
+	tl_camera_get_polar_phase = (TL_CAMERA_GET_POLAR_PHASE)get_module_function(sdk_handle, "tl_camera_get_polar_phase");
+	if (!tl_camera_get_polar_phase)
 	{
 		return (init_error_cleanup());
 	}
@@ -759,8 +768,8 @@ int tl_camera_sdk_dll_initialize(void)
 		return (init_error_cleanup());
 	}
 
-	tl_camera_get_communication_Interface = (TL_CAMERA_GET_COMMUNICATION_INTERFACE)get_module_function(sdk_handle, "tl_camera_get_communication_Interface");
-	if (!tl_camera_get_communication_Interface)
+	tl_camera_get_communication_interface = (TL_CAMERA_GET_COMMUNICATION_INTERFACE)get_module_function(sdk_handle, "tl_camera_get_communication_interface");
+	if (!tl_camera_get_communication_interface)
 	{
 		return (init_error_cleanup());
 	}
@@ -824,7 +833,37 @@ int tl_camera_sdk_dll_initialize(void)
 	{
 		return (init_error_cleanup());
 	}
-
+	
+	tl_camera_get_sensor_readout_time = (TL_CAMERA_GET_SENSOR_READOUT_TIME)get_module_function(sdk_handle, "tl_camera_get_sensor_readout_time");
+	if (!tl_camera_get_sensor_readout_time)
+	{
+		return (init_error_cleanup());
+	}
+	
+	tl_camera_get_image_width = (TL_CAMERA_GET_IMAGE_WIDTH)get_module_function(sdk_handle, "tl_camera_get_image_width");
+	if (!tl_camera_get_image_width)
+	{
+		return (init_error_cleanup());
+	}
+	
+	tl_camera_get_image_height = (TL_CAMERA_GET_IMAGE_HEIGHT)get_module_function(sdk_handle, "tl_camera_get_image_height");
+	if (!tl_camera_get_image_height)
+	{
+		return (init_error_cleanup());
+	}
+	
+	tl_camera_get_image_width_range = (TL_CAMERA_GET_IMAGE_WIDTH_RANGE)get_module_function(sdk_handle, "tl_camera_get_image_width_range");
+	if (!tl_camera_get_image_width_range)
+	{
+		return (init_error_cleanup());
+	}
+	
+	tl_camera_get_image_height_range = (TL_CAMERA_GET_IMAGE_HEIGHT_RANGE)get_module_function(sdk_handle, "tl_camera_get_image_height_range");
+	if (!tl_camera_get_image_height_range)
+	{
+		return (init_error_cleanup());
+	}
+	
 	tl_camera_open_camera = (TL_CAMERA_OPEN_CAMERA)get_module_function(sdk_handle, "tl_camera_open_camera");
 	if (!tl_camera_open_camera)
 	{
@@ -855,14 +894,92 @@ int tl_camera_sdk_dll_initialize(void)
 		return (init_error_cleanup());
 	}
 
-	tl_camera_get_image_width_range = (TL_CAMERA_GET_IMAGE_WIDTH_RANGE)get_module_function(sdk_handle, "tl_camera_get_image_width_range");
-	if (!tl_camera_get_image_width_range)
+    tl_camera_get_taps = (TL_CAMERA_GET_TAPS)get_module_function(sdk_handle, "tl_camera_get_taps");
+    if (!tl_camera_get_taps)
+    {
+        return (init_error_cleanup());
+    }
+
+    tl_camera_set_taps = (TL_CAMERA_SET_TAPS)get_module_function(sdk_handle, "tl_camera_set_taps");
+    if (!tl_camera_set_taps)
+    {
+        return (init_error_cleanup());
+    }
+
+    tl_camera_get_tap_balance_enable = (TL_CAMERA_GET_TAP_BALANCE_ENABLE)get_module_function(sdk_handle, "tl_camera_get_tap_balance_enable");
+    if (!tl_camera_get_tap_balance_enable)
+    {
+        return (init_error_cleanup());
+    }
+
+    tl_camera_set_tap_balance_enable = (TL_CAMERA_SET_TAP_BALANCE_ENABLE)get_module_function(sdk_handle, "tl_camera_set_tap_balance_enable");
+    if (!tl_camera_set_tap_balance_enable)
+    {
+        return (init_error_cleanup());
+    }
+
+    tl_camera_get_nir_boost_enable = (TL_CAMERA_GET_NIR_BOOST_ENABLE)get_module_function(sdk_handle, "tl_camera_get_nir_boost_enable");
+    if (!tl_camera_get_nir_boost_enable)
+    {
+        return (init_error_cleanup());
+    }
+
+    tl_camera_set_nir_boost_enable = (TL_CAMERA_SET_NIR_BOOST_ENABLE)get_module_function(sdk_handle, "tl_camera_set_nir_boost_enable");
+    if (!tl_camera_set_nir_boost_enable)
+    {
+        return (init_error_cleanup());
+    }
+
+    tl_camera_get_cooling_enable = (TL_CAMERA_GET_COOLING_ENABLE)get_module_function(sdk_handle, "tl_camera_get_cooling_enable");
+    if (!tl_camera_get_cooling_enable)
+    {
+        return (init_error_cleanup());
+    }
+
+    tl_camera_set_cooling_enable = (TL_CAMERA_SET_COOLING_ENABLE)get_module_function(sdk_handle, "tl_camera_set_cooling_enable");
+    if (!tl_camera_set_cooling_enable)
+    {
+        return (init_error_cleanup());
+    }
+
+	tl_camera_get_frame_rate_control_value_range = (TL_CAMERA_GET_FRAME_RATE_CONTROL_VALUE_RANGE)get_module_function(sdk_handle, "tl_camera_get_frame_rate_control_value_range");
+	if (!tl_camera_get_frame_rate_control_value_range)
+    {
+        return (init_error_cleanup());
+    }
+	
+	tl_camera_get_is_frame_rate_control_enabled = (TL_CAMERA_GET_IS_FRAME_RATE_CONTROL_ENABLED)get_module_function(sdk_handle, "tl_camera_get_is_frame_rate_control_enabled");
+	if (!tl_camera_get_is_frame_rate_control_enabled)
 	{
 		return (init_error_cleanup());
 	}
 
-	tl_camera_get_image_height_range = (TL_CAMERA_GET_IMAGE_HEIGHT_RANGE)get_module_function(sdk_handle, "tl_camera_get_image_height_range");
-	if (!tl_camera_get_image_height_range)
+	tl_camera_set_frame_rate_control_value = (TL_CAMERA_SET_FRAME_RATE_CONTROL_VALUE)get_module_function(sdk_handle, "tl_camera_set_frame_rate_control_value");
+	if (!tl_camera_set_frame_rate_control_value)
+	{
+		return (init_error_cleanup());
+	}
+
+	tl_camera_set_is_frame_rate_control_enabled = (TL_CAMERA_SET_IS_FRAME_RATE_CONTROL_ENABLED)get_module_function(sdk_handle, "tl_camera_set_is_frame_rate_control_enabled");
+	if (!tl_camera_set_is_frame_rate_control_enabled)
+	{
+		return (init_error_cleanup());
+	}
+
+	tl_camera_get_frame_rate_control_value = (TL_CAMERA_GET_FRAME_RATE_CONTROL_VALUE)get_module_function(sdk_handle, "tl_camera_get_frame_rate_control_value");
+	if (!tl_camera_get_frame_rate_control_value)
+	{
+		return (init_error_cleanup());
+	}
+
+	tl_camera_get_timestamp_clock_frequency = (TL_CAMERA_GET_TIMESTAMP_CLOCK_FREQUENCY)get_module_function(sdk_handle, "tl_camera_get_timestamp_clock_frequency");
+	if (!tl_camera_get_timestamp_clock_frequency)
+	{
+		return (init_error_cleanup());
+	}
+
+	tl_camera_convert_gain_to_decibels = (TL_CAMERA_CONVERT_GAIN_TO_DECIBELS)get_module_function(sdk_handle, "tl_camera_convert_gain_to_decibels");
+	if (!tl_camera_convert_gain_to_decibels)
 	{
 		return (init_error_cleanup());
 	}

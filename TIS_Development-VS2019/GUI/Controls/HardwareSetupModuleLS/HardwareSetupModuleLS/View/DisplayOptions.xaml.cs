@@ -31,7 +31,7 @@
     {
         #region Fields
 
-        const int DISPLAY_PANELS = 20;
+        const int DISPLAY_PANELS = 21;
         private const int WINDOW_HEIGHT = 400;
         private const int WINDOW_LEFT = 0;
         private const int WINDOW_TOP = 0;
@@ -59,7 +59,8 @@
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/ThreePhotonView","ThreePhoton Control"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/LightEngineView","LightEngine Control"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/DFLIMView","Digital FLIM Control"},
-                {"/ApplicationSettings/DisplayOptions/CaptureSetup/EpiturretControlView","Epiturret Control"}
+                {"/ApplicationSettings/DisplayOptions/CaptureSetup/EpiturretControlView","Epiturret Control"},
+                {"/ApplicationSettings/DisplayOptions/CaptureSetup/AutoFocusControlView","AutoFocus Control"}
             };
 
         #endregion Fields

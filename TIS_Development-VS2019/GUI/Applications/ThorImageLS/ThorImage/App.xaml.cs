@@ -70,6 +70,12 @@ namespace ThorImage
 
                 System.Diagnostics.Process myprocess = System.Diagnostics.Process.GetCurrentProcess();
 
+                //only try to delete files if no other instance of ThorImageLS is running
+                if (process.Length <= 1)
+                {
+                    HandleLogFiles();
+                }
+
                 foreach (System.Diagnostics.Process p in process)
                 {
                     StringBuilder sb = new StringBuilder();
@@ -97,7 +103,6 @@ namespace ThorImage
             catch (Exception e)
             {
                 MessageBox.Show(e.Message);
-
             }
 
             //Search alternate paths for dependency files
@@ -607,6 +612,48 @@ namespace ThorImage
             }
 
             return ret;
+        }
+
+        /// <summary>
+        /// Handles the log files
+        /// </summary>
+        void HandleLogFiles()
+        {
+            try
+            {
+                string appPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+                string pleoraDmp = appPath + "\\pleora_ebus.dmp";
+
+                if (File.Exists(pleoraDmp))
+                {
+                    File.Delete(pleoraDmp);
+                }
+            }
+            catch(Exception ex)
+            {
+                ex.ToString();
+            }
+
+            try
+            {
+                string appPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+                string thordaqLog = appPath +  "\\ThorLog.log";
+                const long MAX_LOG_FILE_SIZE = 536870912; //512MB
+                if (File.Exists(thordaqLog))
+                {
+                    long fileSize = new FileInfo(thordaqLog).Length;
+                    if (MAX_LOG_FILE_SIZE <= fileSize)
+                    {
+                        var lastModified = File.GetLastWriteTime(thordaqLog);
+                        string newThorLogName = appPath + "\\ThorLog" + lastModified.ToString("yyyyMMdd_HHmmss") + ".log";
+                        System.IO.File.Move(thordaqLog, newThorLogName);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ex.ToString();
+            }
         }
 
         /// <summary>

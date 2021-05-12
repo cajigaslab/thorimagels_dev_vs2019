@@ -137,7 +137,8 @@
         <Grid x:Name="HEADER_PART"
               Grid.Column="1"
               Grid.Row="1">
-            <StackPanel Orientation="Horizontal" >
+            <StackPanel Orientation="Horizontal" 
+                        ToolTip="{Binding PeakWavelengthToolTip}">
                 <TextBox x:Name="NAME_PART"
                      Margin="0"
                      TabIndex="2"
@@ -215,14 +216,14 @@
                               Command="{Binding Path=LampPowerPlusCommand}"
                               Delay="500"
                               Interval="100" />
-                              <!--IsEnabled="{Binding ElementName=SWITCH_PART, Path=IsChecked}"-->
+                <!--IsEnabled="{Binding ElementName=SWITCH_PART, Path=IsChecked}"-->
                 <RepeatButton Content="-"
                               Width="30"
                               Height="20"
                               Command="{Binding Path=LampPowerMinusCommand}"
                               Delay="500"
                               Interval="100" />
-                              <!--IsEnabled="{Binding ElementName=SWITCH_PART, Path=IsChecked}"-->
+                <!--IsEnabled="{Binding ElementName=SWITCH_PART, Path=IsChecked}"-->
             </StackPanel>
         </StackPanel>
         <!-- Infos -->

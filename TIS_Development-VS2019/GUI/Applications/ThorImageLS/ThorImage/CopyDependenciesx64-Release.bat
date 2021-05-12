@@ -126,6 +126,7 @@ echo F | xcopy /F ..\..\..\..\GUI\Controls\RemoteIPCControl\RemoteIPCControl\bin
 echo F | xcopy /F ..\..\..\..\GUI\Controls\DFLIMControl\DFLIMControl\bin\Release\DFLIMControl.dll .\bin\Release\Modules
 echo F | xcopy /F ..\..\..\..\GUI\Controls\DFLIMSetupAssistant\DFLIMSetupAssistant\bin\Release\DFLIMSetupAssistant.dll .\bin\Release\Modules
 echo F | xcopy /F ..\..\..\..\GUI\Controls\FLIMFitting\FLIMFitting\bin\Release\FLIMFitting.dll .\bin\Release\Modules
+echo F | xcopy /F ..\..\..\..\GUI\Controls\AutoFocusControl\AutoFocusControl\bin\Release\AutoFocusControl.dll .\bin\Release\Modules
 
 @echo Copying Library MVM
 echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\PowerControlMVM\PowerControlMVM\bin\Release\PowerControlMVM.dll .\bin\Release\Modules\MVM
@@ -150,6 +151,7 @@ echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\RemoteIPCControlMVM\RemoteIPCContr
 echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\DFLIMControlMVM\DFLIMControlMVM\bin\Release\DFLIMControlMVM.dll .\bin\Release\Modules\MVM
 echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\EpiTurretControlMVM\EpiTurretControlMVM\bin\Release\EpiTurretControlMVM.dll .\bin\Release\Modules\MVM
 REM echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\MesoScanMVM\MesoScanMVM\bin\Release\MesoScanMVM.dll .\bin\Release\Modules\MVM
+echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\AutoFocusControlMVM\AutoFocusControlMVM\bin\Release\AutoFocusControlMVM.dll .\bin\Release\Modules\MVM
 
 echo F | xcopy /F ..\..\..\..\Common\Database\DatabaseInterface\bin\Release\DatabaseInterface.dll .\bin\Release\Modules
 echo F | xcopy /F ..\..\..\..\Common\Database\DatabaseInterface\bin\Release\System.Data.SQLite.dll .\bin\Release\Modules
@@ -167,6 +169,7 @@ echo F | xcopy /F ..\..\..\..\Tools\DeepZoomGen\DeepZoomGen\bin\Release\DeepZoom
 echo F | xcopy /F ..\..\..\..\Common\ThorSharedTypes\ThorSharedTypes\bin\Release\ThorSharedTypes.dll .\bin\Release
 echo F | xcopy /F ..\..\..\..\Common\ThorDiskIO\x64\Release\ThorDiskIO.dll .\bin\Release
 echo F | xcopy /F ..\..\..\..\Common\HardwareState\HardwareState\bin\Release\HardwareState.dll .\bin\Release\Modules
+echo F | xcopy /F ..\..\..\..\Common\AutoFocusModule\AutoFocusModule\bin\Release\AutoFocusModule.dll .\bin\Release\Modules
 
 echo F | xcopy /F ..\..\..\..\Tools\HistogramControl\HistogramControl\bin\Release\HistogramControl.dll .\bin\Release\Modules
 echo F | xcopy /F "..\..\..\..\Tools\DynamicDataDisplay v0.3 Binaries & Samples\DynamicDataDisplay\DynamicDataDisplay.dll" .\bin\Release\Modules
@@ -271,6 +274,7 @@ echo F | xcopy /F ..\..\..\..\Common\StatsManager\x64\Release\StatsManager.dll .
 REM echo F | xcopy /F ..\..\..\..\Common\ThorLogging\x64\Release\ThorLoggingUnmanagedDisabled.dll .\bin\Release\Modules_Native\ThorLoggingUnmanaged.dll
 REM echo F | xcopy /F ..\..\..\..\Common\WinDVI\x64\Release\WinDVI.dll .\bin\Release\Modules_Native
 echo F | xcopy /F ..\..\..\..\Common\ThorLogging\x64\Release\ThorLoggingUnmanaged.dll .\bin\Release\Modules_Native\ThorLoggingUnmanaged.dll
+echo F | xcopy /F ..\..\..\..\Common\AutoFocusModule\x64\Release\AutoFocus.dll .\bin\Release\Modules_Native
 
 echo F | xcopy /F ..\..\..\..\Commands\ImageAnalysis\PincushionCorrection\x64\Release\PincushionCorrection.dll .\bin\Release
 echo F | xcopy /F ..\..\..\..\Commands\ImageAnalysis\FlatField\x64\Release\FlatField.dll .\bin\Release
@@ -344,6 +348,7 @@ REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCLS\x64\Release\ThorMCLS
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM3000\x64\Release\ThorMCM3000.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM3000Aux\x64\Release\ThorMCM3000Aux.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM6000\x64\Release\ThorMCM6000.dll .\bin\Release\Modules_Native
+REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM6000_Condenser\x64\Release\ThorMCM6000_Condenser.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMLSStage\x64\Release\ThorMLSStage.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMTS25\x64\Release\ThorMTS25.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorObjectiveChanger\x64\Release\ThorObjectiveChanger.dll .\bin\Release\Modules_Native
@@ -378,6 +383,7 @@ echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorBCM\ThorBCMSettings.xml .\bin
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorBeamStabilizer\ThorBeamStabilizerSettings.xml .\bin\Release\
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorBmExpan\ThorBmExpanSettings.xml .\bin\Release\
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorBScope\ThorBScopeSettings.xml .\bin\Release
+echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorChrolis\ThorChrolisSettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocal\ThorConfocalSettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocalGalvo\ThorConfocalGalvoSettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocalGalvoSimulator\ThorConfocalGalvoSimulatorSettings.xml .\bin\Release

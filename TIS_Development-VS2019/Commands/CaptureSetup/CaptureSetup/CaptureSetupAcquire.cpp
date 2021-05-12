@@ -363,6 +363,7 @@ RETURN:
 	//close the shutter
 	pShutter->SetParam(IDevice::PARAM_SHUTTER_POS,SHUTTER_CLOSE);
 	pShutter->StartPosition();
+	_shutterOpened = FALSE;
 
 	PostflightCamera(SelectedHardware::SELECTED_CAMERA1);
 
@@ -747,29 +748,31 @@ DllExportLiveImage EnableMinAreaFilter(bool minAreaActive, int minAreaValue)
 //	score = sum;
 //}
 
-DllExportLiveImage StartAutoFocus(double magnification)
+DllExportLiveImage StartAutoFocus(double magnification, int autoFocusType, BOOL& afFound)
 {
-	auto_ptr<HardwareSetupXML> pHardware(new HardwareSetupXML);
+	//auto_ptr<HardwareSetupXML> pHardware(new HardwareSetupXML);
 
-	string objName;
-	long position=0;
-	double numAperture;
-	double afStartPos=0;
-	double afFocusOffset=0;
-	double afAdaptiveOffset=0;
-	long beamExpPos=0;
-	long beamExpWavelength=0;
-	long beamExpPos2=0;
-	long beamExpWavelength2=0;
-	long turretPosition=0;
-	long zAxisToEscape=0;
-	double zAxisEscapeDistance=0;
+	//string objName;
+	//long position=0;
+	//double numAperture;
+	//double afStartPos=0;
+	//double afFocusOffset=0;
+	//double afAdaptiveOffset=0;
+	//long beamExpPos=0;
+	//long beamExpWavelength=0;
+	//long beamExpPos2=0;
+	//long beamExpWavelength2=0;
+	//long turretPosition=0;
+	//long zAxisToEscape=0;
+	//double zAxisEscapeDistance=0;
 
-	pHardware->GetMagInfoFromMagVal(magnification,objName,position,numAperture,afStartPos,afFocusOffset,afAdaptiveOffset,beamExpPos,beamExpWavelength,beamExpPos2,beamExpWavelength2, turretPosition, zAxisToEscape, zAxisEscapeDistance);
+	//pHardware->GetMagInfoFromMagVal(magnification,objName,position,numAperture,afStartPos,afFocusOffset,afAdaptiveOffset,beamExpPos,beamExpWavelength,beamExpPos2,beamExpWavelength2, turretPosition, zAxisToEscape, zAxisEscapeDistance);
 
-	SetDeviceParamDouble(SelectedHardware::SELECTED_AUTOFOCUS,IDevice::PARAM_AUTOFOCUS_OFFSET,afFocusOffset,false);
-	//set autofocus to execute
-	double dPos = 1.0;
-	SetDeviceParamDouble(SelectedHardware::SELECTED_AUTOFOCUS,IDevice::PARAM_AUTOFOCUS_POS,dPos,TRUE);
-	return TRUE;
+	//SetDeviceParamDouble(SelectedHardware::SELECTED_AUTOFOCUS,IDevice::PARAM_AUTOFOCUS_OFFSET,afFocusOffset,false);
+	////set autofocus to execute
+	//double dPos = 1.0;
+	//SetDeviceParamDouble(SelectedHardware::SELECTED_AUTOFOCUS,IDevice::PARAM_AUTOFOCUS_POS,dPos,TRUE);
+	//return TRUE;
+
+	CHECK_PACTIVEIMAGEROUTINE(StartAutoFocus(magnification, autoFocusType, afFound));
 }

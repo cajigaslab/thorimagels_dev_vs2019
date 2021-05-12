@@ -57,6 +57,8 @@ ThorCam::ThorCam() :
 	_ImgPty_SetSettings.hotPixelThreshold = 0;
 	_ImgPty_SetSettings.gain = 0;
 	_ImgPty_SetSettings.blackLevel = 0;
+	_ImgPty_SetSettings.frameRateControlEnabled = FALSE;
+	_ImgPty_SetSettings.frameRateControlValue = 0;
 
 	_pDetectorName = NULL;
 	_pSerialNumber = NULL;
@@ -64,6 +66,8 @@ ThorCam::ThorCam() :
 	_availableFramesCnt = 0;
 	_lastDMABufferCount = 0;
 	_forceSettingsUpdate = FALSE;
+	_frameRateControlValueRange[0] = 0;
+	_frameRateControlValueRange[1] = 0;
 }
 
 ///Initialize Static Members
@@ -251,10 +255,18 @@ void ThorCam::InitialParamInfo(void)
 	ThorTSIErrChk(L"tl_camera_get_hot_pixel_correction_threshold_range", tl_camera_get_hot_pixel_correction_threshold_range(_camera[_camID], &_hotPixelRange[0], &_hotPixelRange[1]), 1);
 	ThorTSIErrChk(L"tl_camera_get_hot_pixel_correction_threshold", tl_camera_get_hot_pixel_correction_threshold(_camera[_camID], &_ImgPty_SetSettings.hotPixelThreshold), 1);
 	ThorTSIErrChk(L"tl_camera_get_is_hot_pixel_correction_enabled", tl_camera_get_is_hot_pixel_correction_enabled(_camera[_camID], &_ImgPty_SetSettings.hotPixelEnabled), 1);
+	ThorTSIErrChk(L"tl_camera_get_frame_rate_control_value_range", tl_camera_get_frame_rate_control_value_range(_camera[_camID], &_frameRateControlValueRange[0], &_frameRateControlValueRange[1]), 1);
+	ThorTSIErrChk(L"tl_camera_get_is_frame_rate_control_enabled", tl_camera_get_is_frame_rate_control_enabled(_camera[_camID], &_ImgPty_SetSettings.frameRateControlEnabled), 1);
+	ThorTSIErrChk(L"tl_camera_get_frame_rate_control_value", tl_camera_get_frame_rate_control_value(_camera[_camID], &_ImgPty_SetSettings.frameRateControlValue), 1);
+
 	if(0 != _camName[_camID].compare(0, 6, "CS2100"))
 	{
-		ThorTSIErrChk(L"tl_camera_get_black_level_range", tl_camera_get_black_level_range(_camera[_camID],&_blackLevelRange[0], &_blackLevelRange[1]), 1);
-		ThorTSIErrChk(L"tl_camera_get_black_level", tl_camera_get_black_level(_camera[_camID], &_ImgPty_SetSettings.blackLevel), 1);
+		//CS135 doesn't have a black level parameter
+		if (0 != _camName[_camID].compare(0, 5, "CS135"))
+		{
+			ThorTSIErrChk(L"tl_camera_get_black_level_range", tl_camera_get_black_level_range(_camera[_camID], &_blackLevelRange[0], &_blackLevelRange[1]), 1);
+			ThorTSIErrChk(L"tl_camera_get_black_level", tl_camera_get_black_level(_camera[_camID], &_ImgPty_SetSettings.blackLevel), 1);
+		}
 		ThorTSIErrChk(L"tl_camera_get_gain_range", tl_camera_get_gain_range(_camera[_camID],&_gainRange[0], &_gainRange[1]), 1);
 		ThorTSIErrChk(L"tl_camera_get_gain", tl_camera_get_gain(_camera[_camID], &_ImgPty_SetSettings.gain), 1);
 	}
@@ -410,7 +422,10 @@ long ThorCam::SetBdDMA(ImgPty *pImgPty)
 		}
 		else
 		{
-			ThorTSIErrChk(L"tl_camera_set_black_level", tl_camera_set_black_level(_camera[_camID], (TL_CAMERA_DATA_RATE)_imgPtyDll.blackLevel), 1);
+			if (0 != _camName[_camID].compare(0, 5, "CS135"))
+			{
+				ThorTSIErrChk(L"tl_camera_set_black_level", tl_camera_set_black_level(_camera[_camID], (TL_CAMERA_DATA_RATE)_imgPtyDll.blackLevel), 1);
+			}
 			ThorTSIErrChk(L"tl_camera_set_gain", tl_camera_set_gain(_camera[_camID], (TL_CAMERA_DATA_RATE)_imgPtyDll.gain), 1);
 		}
 
@@ -420,6 +435,10 @@ long ThorCam::SetBdDMA(ImgPty *pImgPty)
 
 		ThorTSIErrChk(L"tl_camera_get_sensor_height", tl_camera_get_sensor_height(_camera[_camID], &_ImgPty_SetSettings.heightPx), 1);
 		_imgPtyDll.heightPx = _ImgPty.heightPx = _ImgPty_SetSettings.heightPx;
+
+		ThorTSIErrChk(L"tl_camera_set_is_frame_rate_control_enabled", tl_camera_set_is_frame_rate_control_enabled(_camera[_camID], _imgPtyDll.frameRateControlEnabled), 1);
+
+		ThorTSIErrChk(L"tl_camera_set_frame_rate_control_value", tl_camera_set_frame_rate_control_value(_camera[_camID], _imgPtyDll.frameRateControlValue), 1);
 
 		//////****End Set/Get Camera Parameters****//////
 
@@ -700,6 +719,8 @@ long ThorCam::PreflightAcquisition(char* pData)
 	_ImgPty.hotPixelThreshold = _ImgPty_SetSettings.hotPixelThreshold;
 	_ImgPty.gain = _ImgPty_SetSettings.gain;
 	_ImgPty.blackLevel = _ImgPty_SetSettings.blackLevel;
+	_ImgPty.frameRateControlEnabled = _ImgPty_SetSettings.frameRateControlEnabled;
+	_ImgPty.frameRateControlValue = _ImgPty_SetSettings.frameRateControlValue;
 
 	//set the the camera settings and allocate the DMA buffer
 	if (TRUE == SetBdDMA(&_ImgPty))
@@ -734,6 +755,8 @@ long ThorCam::PreflightAcquisition(char* pData)
 		_ImgPty_Pre.hotPixelThreshold = _ImgPty.hotPixelThreshold;
 		_ImgPty_Pre.gain = _ImgPty.gain;
 		_ImgPty_Pre.blackLevel = _ImgPty.blackLevel;
+		_ImgPty_Pre.frameRateControlEnabled = _ImgPty.frameRateControlEnabled;
+		_ImgPty_Pre.frameRateControlValue = _ImgPty.frameRateControlValue;
 	}
 	else
 	{
@@ -776,6 +799,8 @@ long ThorCam::SetupAcquisition(char* pData)
 		(_ImgPty_Pre.hotPixelThreshold != _ImgPty_SetSettings.hotPixelThreshold)||
 		(_ImgPty_Pre.gain != _ImgPty_SetSettings.gain) ||
 		(_ImgPty_Pre.blackLevel != _ImgPty_SetSettings.blackLevel) ||
+		(_ImgPty_Pre.frameRateControlEnabled != _ImgPty_SetSettings.frameRateControlEnabled) ||
+		(_ImgPty_Pre.frameRateControlValue != _ImgPty_SetSettings.frameRateControlValue) ||
 		(TRUE == _forceSettingsUpdate)
 		)
 	{
@@ -806,6 +831,8 @@ long ThorCam::SetupAcquisition(char* pData)
 		_ImgPty.hotPixelThreshold = _ImgPty_SetSettings.hotPixelThreshold;
 		_ImgPty.gain = _ImgPty_SetSettings.gain;
 		_ImgPty.blackLevel = _ImgPty_SetSettings.blackLevel;
+		_ImgPty.frameRateControlEnabled = _ImgPty_SetSettings.frameRateControlEnabled;
+		_ImgPty.frameRateControlValue = _ImgPty_SetSettings.frameRateControlValue;
 
 		//set the the camera settings and allocate the DMA buffer
 		if (TRUE == SetBdDMA(&_ImgPty))
@@ -839,6 +866,8 @@ long ThorCam::SetupAcquisition(char* pData)
 			_ImgPty_Pre.hotPixelThreshold = _ImgPty.hotPixelThreshold;
 			_ImgPty_Pre.gain = _ImgPty.gain;
 			_ImgPty_Pre.blackLevel = _ImgPty.blackLevel;
+			_ImgPty_Pre.frameRateControlEnabled = _ImgPty.frameRateControlEnabled;
+			_ImgPty_Pre.frameRateControlValue = _ImgPty.frameRateControlValue;
 		}
 		else
 		{

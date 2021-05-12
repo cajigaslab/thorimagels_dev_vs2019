@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <windows.h>
+#include "EnumString.h"
 
 using namespace std;
 
@@ -19,7 +20,32 @@ using namespace std;
 #define SAFE_DELETE_HANDLE(x) if(NULL != x) { CloseHandle(x); x = NULL;}
 #define SAFE_DELETE_PTR(x) if (x != NULL) { delete x; x = NULL; }
 
-template < class T > inline long CheckNewValue(T &val, T newVal) { if (val != newVal) { val = newVal; return TRUE; } else {	return FALSE; }}
+// *********************************************************************** //
+// Enum Strings: allow convert enum in SharedEnums to string or vice versa //
+// *********************************************************************** //
+Begin_Enum_String(BLEACHSCAN_DIGITAL_LINENAME)
+{
+	Enum_String(DUMMY);
+	Enum_String(POCKEL_DIG);
+	Enum_String(ACTIVE_ENVELOPE);
+	Enum_String(CYCLE_COMPLETE);
+	Enum_String(CYCLE_ENVELOPE);
+	Enum_String(ITERATION_ENVELOPE);
+	Enum_String(PATTERN_TRIGGER);
+	Enum_String(PATTERN_COMPLETE);
+	Enum_String(EPOCH_ENVELOPE);
+	Enum_String(CYCLE_COMPLEMENTARY);
+	Enum_String(POCKEL_DIG_1);
+	Enum_String(POCKEL_DIG_2);
+	Enum_String(POCKEL_DIG_3);
+	Enum_String(DIGITAL_LINENAME_LAST);
+}End_Enum_String;
+
+// *************************************** //
+// shared template structs & functions     //
+// *************************************** //
+
+template < class T > inline long CheckNewValue(T& val, T newVal) { if (val != newVal) { val = newVal; return TRUE; } else { return FALSE; } }
 
 extern "C" _declspec(dllexport) typedef struct GGalvoWaveformParams
 {
@@ -55,9 +81,10 @@ extern "C" _declspec(dllexport) typedef struct ThorDAQGGWaveformParams
 	double stepVolt;
 	unsigned char pockelsCount;
 	unsigned char driverType;
-	unsigned short* GalvoWaveformXY;
+	unsigned short* GalvoWaveformX;
+	unsigned short* GalvoWaveformY;
 	unsigned short* GalvoWaveformPockel;
-	unsigned char* DigBufWaveform;
+	unsigned short* DigBufWaveform;
 	long digitalLineCnt;
 	long Scanmode;
 	long Triggermode;
@@ -94,7 +121,7 @@ extern "C" _declspec(dllexport) typedef struct FrameInfoStruct
 	long	 fullFrame;
 	long	 scanAreaID;
 	long	 bufferType;
-    unsigned long long copySize;
+	unsigned long long copySize;
 	long numberOfPlanes;
 }FrameInfo;
 
@@ -103,7 +130,7 @@ struct WaveformGenParams
 	double	galvoRetraceTime;
 	double	dwellTime;
 	long	PixelX;
-	long	PixelY;	
+	long	PixelY;
 	long	areaMode;
 	long	fieldSize;
 	double	fieldScaleFineX;
@@ -137,31 +164,25 @@ struct WaveformGenParams
 
 };
 
-enum WAVEFORM_FILETYPE
-{
-	H5 = 0,
-	MEMORY_MAP = 1
-};
-
 static double CalculateMinimumDwellTime(double fieldSize, long pixelX, long turnAroundTimeUS, double field2Theta, long maxGalvoOpticalAngle)
 {
-	double minDwell = (4.0*((double)turnAroundTimeUS / 2.0)*fieldSize*field2Theta) / (PI*pixelX*(maxGalvoOpticalAngle - fieldSize*field2Theta));
+	double minDwell = (4.0 * ((double)turnAroundTimeUS / 2.0) * fieldSize * field2Theta) / (PI * pixelX * (maxGalvoOpticalAngle - fieldSize * field2Theta));
 	return minDwell;
 }
 
 static long CalculateMinimumFieldSize(double dwellTime, long pixelX, long turnAroundTimeUS, double field2Theta, long maxGalvoOpticalAngle)
 {
-	long minFieldSize = static_cast<long>((dwellTime * PI * maxGalvoOpticalAngle * pixelX) / (field2Theta *((4.0 * ((double)turnAroundTimeUS / 2.0))+(dwellTime * pixelX * PI))));
+	long minFieldSize = static_cast<long>((dwellTime * PI * maxGalvoOpticalAngle * pixelX) / (field2Theta * ((4.0 * ((double)turnAroundTimeUS / 2.0)) + (dwellTime * pixelX * PI))));
 	return minFieldSize;
 }
 
-static string removeSpaces(string &str) 
-{ 
-    int count = 0; 
-    for (int i = 0; str[i]; i++) 
-        if (str[i] != ' ') 
-			str[count++] = str[i]; 
-    str[count] = '\0';
+static string removeSpaces(string& str)
+{
+	int count = 0;
+	for (int i = 0; str[i]; i++)
+		if (str[i] != ' ')
+			str[count++] = str[i];
+	str[count] = '\0';
 	return str;
 }
 

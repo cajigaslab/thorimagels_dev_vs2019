@@ -24,6 +24,7 @@ private:
 	static wstring _appSettingsFile;
 	static wstring _hwSettingsFile;
 	static wstring _modality;
+	static wstring _autoFocusCacheDir;
 	static const wstring MODALITY_TAG_NAME;
 
 	ResourceManager();
@@ -42,6 +43,8 @@ public:
 	wstring GetMyDocumentsThorImageFolder();
 
 	wstring GetZStackCachePath();
+
+	wstring GetAutoFocusCachePath();
 
 	wstring GetActiveSettingsFilePathAndName(); 
 

@@ -29,6 +29,15 @@ HANDLE hZStackCaptureThread = NULL;
 DWORD dwBleachThreadId = NULL;
 HANDLE hBleachThread = NULL;
 
+DWORD _dwAutoFocusCaptureThreadId = NULL;
+HANDLE _hAutoFocusCaptureThread = NULL;
+
+DWORD _dwAutoFocusStatusThreadId = NULL;
+HANDLE _hAutoFocusStatusThread = NULL;
+
+DWORD _dwSafetyInterLockCheckThreadId = NULL;
+HANDLE _hSafetyInterLockCheckThread = NULL;
+
 //events
 HANDLE hStatusEvent[3];
 HANDLE hStatusBleachScanner = NULL;
@@ -40,6 +49,7 @@ BOOL stopBleach = FALSE;
 BOOL activeBleach = FALSE;
 BOOL InterruptCapture = FALSE;
 BOOL inFileLoading = FALSE;
+atomic<BOOL> _shutterOpened = FALSE;
 
 const long MSG_SIZE = 256;
 wchar_t message[MSG_SIZE];

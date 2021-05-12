@@ -14,6 +14,8 @@ ThorStim::ThorStim()
 
 	for(long i=0; i<MAX_GG_POCKELS_CELL_COUNT; i++)
 	{
+		_paramsPty.pockelsMinVoltage[i] = 0.0;
+		_paramsPty.pockelsMaxVoltage[i] = 0.0;
 		_pockelsPowerLevel[i] = 0.0;
 		_pockelsMinVoltage[i] = 0.0;
 		_pockelsMaxVoltage[i] = 1.0;
@@ -124,12 +126,24 @@ long ThorStim::TeardownCamera()
 {
 	CloseNITasks();
 
-	if(FALSE == settings->SetModulations(_pockelsMinVoltage[0],_pockelsMaxVoltage[0],_pockelsMinVoltage[1],_pockelsMaxVoltage[1],_pockelsMinVoltage[2],_pockelsMaxVoltage[2],_pockelsMinVoltage[3],_pockelsMaxVoltage[3]))
+	bool doSet = false;
+	for (int i = 0; i < MAX_GG_POCKELS_CELL_COUNT; i++)
 	{
-		StringCbPrintfW(message,_MAX_PATH,L"SetModulations from Thor%sSettings failed", ThorStimXML::_libName);
-		LogMessage(message,ERROR_EVENT);
+		if (_paramsPty.pockelsMinVoltage[i] != _pockelsMinVoltage[i] || _paramsPty.pockelsMaxVoltage[i] != _pockelsMaxVoltage[i])
+		{
+			//properties changed by setter, do update settings
+			doSet = true;
+			break;
+		}
 	}
-
+	if (doSet)
+	{
+		if(FALSE == settings->SetModulations(_pockelsMinVoltage[0],_pockelsMaxVoltage[0],_pockelsMinVoltage[1],_pockelsMaxVoltage[1],_pockelsMinVoltage[2],_pockelsMaxVoltage[2],_pockelsMinVoltage[3],_pockelsMaxVoltage[3]))
+		{
+			StringCbPrintfW(message,_MAX_PATH,L"SetModulations from Thor%sSettings failed", ThorStimXML::_libName);
+			LogMessage(message,ERROR_EVENT);
+		}
+	}
 	return TRUE;
 }
 
@@ -224,6 +238,14 @@ long ThorStim::CheckConfigNI()
 		LogMessage(message,ERROR_EVENT);
 		return FALSE;
 	}
+
+	//backup param properties
+	for (int i = 0; i < MAX_GG_POCKELS_CELL_COUNT; i++)
+	{
+		_paramsPty.pockelsMinVoltage[i] = _pockelsMinVoltage[i];
+		_paramsPty.pockelsMaxVoltage[i] = _pockelsMaxVoltage[i];
+	}
+
 	std::map<std::string, int> devMaps;
 	std::map<bool, int> rtsiAvailable;
 	rtsiAvailable[1] = rtsiAvailable[0] = 0;
@@ -306,6 +328,16 @@ long ThorStim::CheckConfigNI()
 		LogMessage(message,ERROR_EVENT);
 		return FALSE;
 	}
+	//verify pockels digital lines count compatible with pockels lines count
+	for (int i = 0; i < MAX_GG_POCKELS_CELL_COUNT; i++)
+	{
+		BLEACHSCAN_DIGITAL_LINENAME eEnum = BLEACHSCAN_DIGITAL_LINENAME::DIGITAL_LINENAME_LAST;
+		string eStr = "POCKEL_DIG";
+		eStr = (0 == i) ? eStr : eStr + "_" + std::to_string(i);
+		if (EnumString<BLEACHSCAN_DIGITAL_LINENAME>::To(eEnum, eStr))
+			_digiLines[eEnum-1] = (0 >= _pockelsLine[i].length()) ? "" : _digiLines[eEnum-1];
+	}
+	//verity pockels digital lines
 	for (int i = 0, j = 0; i < ThorStimXML::NUM_WAVEFORM_ATTRIBUTES; i++)
 	{
 		bInfo = boardInfoNI.get()->getInstance()->GetBoardInfo(GetDevIDName(_digiLines[i]));

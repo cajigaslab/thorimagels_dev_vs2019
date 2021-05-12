@@ -76,6 +76,13 @@
         public static readonly DependencyProperty ExposureTimeCamProperty = DependencyProperty.Register("ExposureTimeCam", typeof(double), typeof(CameraControlUC));
         public static readonly DependencyProperty ExposureTimeMaxProperty = DependencyProperty.Register("ExposureTimeMax", typeof(double), typeof(CameraControlUC));
         public static readonly DependencyProperty ExposureTimeMinProperty = DependencyProperty.Register("ExposureTimeMin", typeof(double), typeof(CameraControlUC));
+        public static readonly DependencyProperty FrameRateControlEnabledProperty = DependencyProperty.Register("FrameRateControlEnabled", typeof(int), typeof(CameraControlUC));
+        public static readonly DependencyProperty FrameRateControlMaxProperty = DependencyProperty.Register("FrameRateControlMax", typeof(double), typeof(CameraControlUC));
+        public static readonly DependencyProperty FrameRateControlMinProperty = DependencyProperty.Register("FrameRateControlMin", typeof(double), typeof(CameraControlUC));
+        public static readonly DependencyProperty FrameRateControlMinusCommandProperty = DependencyProperty.Register("FrameRateControlMinusCommand", typeof(ICommand), typeof(CameraControlUC));
+        public static readonly DependencyProperty FrameRateControlPlusCommandProperty = DependencyProperty.Register("FrameRateControlPlusCommand", typeof(ICommand), typeof(CameraControlUC));
+        public static readonly DependencyProperty FrameRateControlValueProperty = DependencyProperty.Register("FrameRateControlValue", typeof(double), typeof(CameraControlUC));
+        public static readonly DependencyProperty FrameRateControlVisibilityProperty = DependencyProperty.Register("FrameRateControlVisibility", typeof(bool), typeof(CameraControlUC));
         public static readonly DependencyProperty GainProperty = DependencyProperty.Register("Gain", typeof(double), typeof(CameraControlUC));
         public static readonly DependencyProperty HotPixelCBVisibilityProperty = DependencyProperty.Register("HotPixelCBVisibility", typeof(Visibility), typeof(CameraControlUC));
         public static readonly DependencyProperty HotPixelEnabledProperty = DependencyProperty.Register("HotPixelEnabled", typeof(int), typeof(CameraControlUC));
@@ -86,8 +93,8 @@
         public static readonly DependencyProperty HotPixelValProperty = DependencyProperty.Register("HotPixelVal", typeof(double), typeof(CameraControlUC));
         public static readonly DependencyProperty HotPixelVisProperty = DependencyProperty.Register("HotPixelVis", typeof(bool), typeof(CameraControlUC));
         public static readonly DependencyProperty ImageStartStatusCameraProperty = DependencyProperty.Register("ImageStartStatusCamera", typeof(bool), typeof(CameraControlUC));
-        public static readonly DependencyProperty IsGainBLVisibleProperty = DependencyProperty.Register("IsGainBLVisible", typeof(bool), typeof(CameraControlUC));
-        public static readonly DependencyProperty IsReadoutVisibleProperty = DependencyProperty.Register("IsReadoutVisible", typeof(bool), typeof(CameraControlUC));
+        public static readonly DependencyProperty IsBlackLevelVisibleProperty = DependencyProperty.Register("IsBlackLevelVisible", typeof(bool), typeof(CameraControlUC));
+        public static readonly DependencyProperty IsGainVisibleProperty = DependencyProperty.Register("IsGainVisible", typeof(bool), typeof(CameraControlUC)); public static readonly DependencyProperty IsReadoutVisibleProperty = DependencyProperty.Register("IsReadoutVisible", typeof(bool), typeof(CameraControlUC));
         public static readonly DependencyProperty IsTapsVisibleProperty = DependencyProperty.Register("IsTapsVisible", typeof(bool), typeof(CameraControlUC));
         public static readonly DependencyProperty LeftMaxProperty = DependencyProperty.Register("LeftMax", typeof(int), typeof(CameraControlUC));
         public static readonly DependencyProperty LeftMinProperty = DependencyProperty.Register("LeftMin", typeof(int), typeof(CameraControlUC));
@@ -395,6 +402,48 @@
             set { SetValue(ExposureTimeMinProperty, value); }
         }
 
+        public int FrameRateControlEnabled
+        {
+            get { return (int)GetValue(FrameRateControlEnabledProperty); }
+            set { SetValue(FrameRateControlEnabledProperty, value); }
+        }
+
+        public double FrameRateControlMax
+        {
+            get { return (double)GetValue(FrameRateControlMaxProperty); }
+            set { SetValue(FrameRateControlMaxProperty, value); }
+        }
+
+        public double FrameRateControlMin
+        {
+            get { return (double)GetValue(FrameRateControlMinProperty); }
+            set { SetValue(FrameRateControlMinProperty, value); }
+        }
+
+        public ICommand FrameRateControlMinusCommand
+        {
+            get { return (ICommand)GetValue(FrameRateControlMinusCommandProperty); }
+            set { SetValue(FrameRateControlMinusCommandProperty, value); }
+        }
+
+        public ICommand FrameRateControlPlusCommand
+        {
+            get { return (ICommand)GetValue(FrameRateControlPlusCommandProperty); }
+            set { SetValue(FrameRateControlPlusCommandProperty, value); }
+        }
+
+        public double FrameRateControlValue
+        {
+            get { return (double)GetValue(FrameRateControlValueProperty); }
+            set { SetValue(FrameRateControlValueProperty, value); }
+        }
+
+        public bool FrameRateControlVisibility
+        {
+            get { return (bool)GetValue(FrameRateControlVisibilityProperty); }
+            set { SetValue(FrameRateControlVisibilityProperty, value); }
+        }
+
         public double Gain
         {
             get { return (int)GetValue(GainProperty); }
@@ -455,10 +504,16 @@
             set { SetValue(ImageStartStatusCameraProperty, value); }
         }
 
-        public bool IsGainBLVisible
+        public bool IsBlackLevelVisible
         {
-            get { return (bool)GetValue(IsGainBLVisibleProperty); }
-            set { SetValue(IsGainBLVisibleProperty, value); }
+            get { return (bool)GetValue(IsBlackLevelVisibleProperty); }
+            set { SetValue(IsBlackLevelVisibleProperty, value); }
+        }
+
+        public bool IsGainVisible
+        {
+            get { return (bool)GetValue(IsGainVisibleProperty); }
+            set { SetValue(IsGainVisibleProperty, value); }
         }
 
         public bool IsReadoutVisible

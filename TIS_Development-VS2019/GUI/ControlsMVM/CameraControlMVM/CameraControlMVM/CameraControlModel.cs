@@ -522,6 +522,64 @@
             }
         }
 
+        public int FrameRateControlEnabled
+        {
+            get
+            {
+                int val = 1;
+
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_FRAME_RATE_CONTROL_ENABLED, ref val);
+                return val;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_FRAME_RATE_CONTROL_ENABLED, value);
+            }
+        }
+
+        public double FrameRateControlMax
+        {
+            get
+            {
+                int exMin = 0;
+                int exMax = 0;
+                int exDefault = 0;
+
+                ResourceManagerCS.GetCameraParamRangeInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_FRAME_RATE_CONTROL_VALUE, ref exMin, ref exMax, ref exDefault);
+
+                return exMax;
+            }
+        }
+
+        public double FrameRateControlMin
+        {
+            get
+            {
+                int exMin = 0;
+                int exMax = 0;
+                int exDefault = 0;
+
+                ResourceManagerCS.GetCameraParamRangeInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_FRAME_RATE_CONTROL_VALUE, ref exMin, ref exMax, ref exDefault);
+
+                return exMin;
+            }
+        }
+
+        public double FrameRateControlValue
+        {
+            get
+            {
+                double val = 0.0;
+                ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_FRAME_RATE_CONTROL_VALUE, ref val);
+
+                return val;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_FRAME_RATE_CONTROL_VALUE, value);
+            }
+        }
+
         public int Gain
         {
             get

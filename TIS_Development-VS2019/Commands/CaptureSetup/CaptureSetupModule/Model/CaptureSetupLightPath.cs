@@ -26,6 +26,7 @@
         private int _lightPathCamEnable;
         private int _lightPathGGEnable;
         private int _lightPathGREnable;
+        private int _nddPosition;
 
         #endregion Fields
 
@@ -81,6 +82,19 @@
             {
                 if (value)
                     InvertedLightPathPos = 2;
+            }
+        }
+
+        public bool IsNDDAvailable
+        {
+            get
+            {
+                int val = 0;
+                if (1 == GetDeviceParamInt((int)SelectedHardware.SELECTED_LIGHTPATH, (int)IDevice.Params.PARAM_LIGHTPATH_NDD_AVAILABLE, ref val))
+                {
+                    return (1 == val);
+                }
+                return false;
             }
         }
 
@@ -151,6 +165,26 @@
                 int val = 0;
                 GetDeviceParamInt((int)SelectedHardware.SELECTED_LIGHTPATH, (int)IDevice.Params.PARAM_SCOPE_TYPE, ref val);
                 return val;
+            }
+        }
+
+        public int PositionNDD
+        {
+            get
+            {
+                int val = 0;
+                if (1 == GetDeviceParamInt((int)SelectedHardware.SELECTED_LIGHTPATH, (int)IDevice.Params.PARAM_LIGHTPATH_NDD, ref val))
+                {
+                    _nddPosition = (int)val;
+                }
+                return _nddPosition;
+            }
+            set
+            {
+                if (1 == SetDeviceParamInt((int)SelectedHardware.SELECTED_LIGHTPATH, (int)IDevice.Params.PARAM_LIGHTPATH_NDD, value, false))
+                {
+                    _nddPosition = value;
+                }
             }
         }
 

@@ -43,7 +43,7 @@
             DependencyProperty.Register("IsExternalTrigger",
             typeof(bool),
             typeof(LampControlUC));
-        public static DependencyProperty IsLampEnabledProperty = 
+        public static DependencyProperty IsLampEnabledProperty =
             DependencyProperty.Register("IsLampEnabled",
             typeof(bool),
             typeof(LampControlUC));
@@ -54,6 +54,10 @@
         public static DependencyProperty LampMinPositionProperty = 
             DependencyProperty.Register("LampMinPosition",
             typeof(double),
+            typeof(LampControlUC));
+        public static DependencyProperty LampONProperty = 
+            DependencyProperty.Register("LampON",
+            typeof(bool),
             typeof(LampControlUC));
         public static DependencyProperty LampPositionProperty = 
             DependencyProperty.Register("LampPosition",
@@ -86,7 +90,7 @@
         public bool IsExternalTrigger
         {
             get { return (bool)GetValue(IsExternalTriggerProperty); }
-            set { SetValue(IsExternalTriggerProperty, value); }
+                  set { SetValue(IsExternalTriggerProperty, value); }
         }
 
         public bool IsLampEnabled
@@ -105,6 +109,12 @@
         {
             get { return (double)GetValue(LampMinPositionProperty); }
                   set { SetValue(LampMinPositionProperty, value); }
+        }
+
+        public bool LampON
+        {
+            get { return (bool)GetValue(LampONProperty); }
+            set { SetValue(LampONProperty, value); }
         }
 
         public double LampPosition

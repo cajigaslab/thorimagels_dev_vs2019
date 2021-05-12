@@ -745,14 +745,12 @@ DllExportLiveImage SLMBleach()
 	return TRUE;
 }
 
-DllExportLiveImage CalibrateSLM(const wchar_t* bmpPatternName, float* xyPointFrom, float* xyPointTo, long size, long pixelX, long pixelY)
+DllExportLiveImage CalibrateSLM(const wchar_t* bmpPatternName, float* xyPointFrom, float* xyPointTo, long size)
 {
 	long ret = TRUE;
 
 	///***	SLM device	***///
 	SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_FUNC_MODE,IDevice::SLMFunctionMode::PHASE_CALIBRATION, IDevice::DeviceSetParamType::NO_EXECUTION);
-	SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_PIXEL_X,pixelX, IDevice::DeviceSetParamType::NO_EXECUTION);
-	SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_PIXEL_Y,pixelY, IDevice::DeviceSetParamType::NO_EXECUTION);
 	SetDeviceParamString(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_BMP_FILENAME,(wchar_t*)bmpPatternName, IDevice::DeviceSetParamType::NO_EXECUTION);
 	SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_ARRAY_ID, 1, IDevice::DeviceSetParamType::NO_EXECUTION);
 	SetDeviceParamBuffer(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_POINTS_ARRAY,(char*)xyPointTo,size, IDevice::DeviceSetParamType::NO_EXECUTION);

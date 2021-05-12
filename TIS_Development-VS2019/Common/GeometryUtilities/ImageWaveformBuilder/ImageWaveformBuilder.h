@@ -96,12 +96,14 @@ public:
 	long GetGGalvoWaveformParams(void* params);
 	long GetGGalvoWaveformParams(SignalType sType, void* params, long preCaptureStatus, uint64_t& indexNow);
 	long GetThorDAQGGWaveformParams(SignalType sType, void* params, long preCaptureStatus, uint64_t& indexNow);
+	long GetThorDAQGGWaveformParams(const wchar_t* waveformFileName, void* params);
 	long GetGGalvoWaveformStartLoc(const wchar_t* waveformFileName, double* startXY, long& clockRate);
 	long GetThorDAQGGWaveformStartLoc(const wchar_t* waveformFileName, unsigned short* startXY, long& clockRate);
 	static unsigned char GetPockelsCount();
 	double* GetTravelWaveform(double stepSize, long outputInterleave, double* posFromXYToXY, long& count);
 	void SetWaveformGenParams(void* params);
 	void ResetGGalvoWaveformParams();
+	void ResetThorDAQGGalvoWaveformParams();
 	long VerifyPolyLine(std::vector<long> Ptx, std::vector<long> Pty, long fieldSize, double field2Volts, double fieldScaleFineX, double fieldScaleFineY, long PixelY, long &PixelX);
 	long BuildPolyLine();
 

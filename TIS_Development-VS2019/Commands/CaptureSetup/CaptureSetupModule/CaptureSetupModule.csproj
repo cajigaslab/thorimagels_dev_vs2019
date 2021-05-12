@@ -56,6 +56,9 @@
     <Reference Include="AreaControl">
       <HintPath>..\..\..\GUI\Controls\AreaControl\AreaControl\bin\Debug\AreaControl.dll</HintPath>
     </Reference>
+    <Reference Include="AutoFocusControl">
+      <HintPath>..\..\..\GUI\Controls\AutoFocusControl\AutoFocusControl\bin\Debug\AutoFocusControl.dll</HintPath>
+    </Reference>
     <Reference Include="CameraControl">
       <HintPath>..\..\..\GUI\Controls\CameraControl\CameraControl\bin\Debug\CameraControl.dll</HintPath>
     </Reference>
@@ -309,6 +312,9 @@
     <Compile Include="View\OrthoViewDispOptWin.xaml.cs">
       <DependentUpon>OrthoViewDispOptWin.xaml</DependentUpon>
     </Compile>
+    <Compile Include="View\AutoFocusControlView.xaml.cs">
+      <DependentUpon>AutoFocusControlView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="View\RemoteIPCView.xaml.cs">
       <DependentUpon>RemoteIPCView.xaml</DependentUpon>
     </Compile>
@@ -457,6 +463,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="View\OrthoViewDispOptWin.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\AutoFocusControlView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

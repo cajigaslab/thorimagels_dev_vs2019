@@ -1,12 +1,11 @@
 #include "..\..\..\..\Common\Sample\Sample\Acquire.h"
-#include "AutoFocus.h"
 #include "AcquireSaveInfo.h"
 #include "..\..\..\Common\BinaryImageDataUtilities\RawFile.h"
 class AcquireHyperspectral :
 	public IAcquire
 {
 public:
-	AcquireHyperspectral(IAutoFocus *,IExperiment *pExperiment,wstring path);
+	AcquireHyperspectral(IExperiment *pExperiment,wstring path);
 	virtual long Execute(long index, long subWell);//Synchrnous acquisition of data
 	virtual	long Execute(long index, long subWell, long zFrame, long tFrame);
 	virtual long CallCaptureComplete(long captureComplete);
@@ -22,10 +21,8 @@ public:
 	virtual long CallStartProgressBar(long index, long resetTotalCount = 0);
 
 	static HANDLE hEvent;
-	static HANDLE hEventAutoFocus;
 	static HANDLE hEventZ;
 private:
-	IAutoFocus* _pAF;
 	IExperiment* _pExp;
 	long _zFrame;
 	long _tFrame;

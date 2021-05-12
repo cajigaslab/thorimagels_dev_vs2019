@@ -38,6 +38,8 @@
         {"Left", LightPathBtns.Left},
         {"Center", LightPathBtns.Center},
         {"Right", LightPathBtns.Right},
+        {"NDD_IN", LightPathBtns.NDD_IN},
+        {"NDD_OUT", LightPathBtns.NDD_OUT},
         };
 
         private string _camLightPathKey;
@@ -71,9 +73,11 @@
             CAM_PMT = 6,
             CAM_CAM = 7,
             CAM_Flip = 8,
-            Left,
-            Center,
-            Right
+            Left = 9,
+            Center = 10,
+            Right = 11,
+            NDD_IN = 12,
+            NDD_OUT = 13
         }
 
         #endregion Enumerations
@@ -125,6 +129,36 @@
             {
                 _lightPaths = value;
                 OnPropertyChanged("CollectionLightPaths");
+            }
+        }
+
+        public string DisplayOffNDD
+        {
+            get
+            {
+                if (1 == this.PositionNDD)
+                {
+                    return @"/CaptureSetupModule;component/Icons/ToggleOff_up.png";
+                }
+                else
+                {
+                    return @"/CaptureSetupModule;component/Icons/ToggleOff_down.png";
+                }
+            }
+        }
+
+        public string DisplayOnNDD
+        {
+            get
+            {
+                if (1 == this.PositionNDD)
+                {
+                    return @"/CaptureSetupModule;component/Icons/ToggleOn_down.png";
+                }
+                else
+                {
+                    return @"/CaptureSetupModule;component/Icons/ToggleOn_up.png";
+                }
             }
         }
 
@@ -291,6 +325,14 @@
             }
         }
 
+        public bool IsNDDAvailable
+        {
+            get
+            {
+                return _captureSetup.IsNDDAvailable;
+            }
+        }
+
         public Visibility IsTabletModeEnabled
         {
             get
@@ -304,6 +346,14 @@
             get
             {
                 return ((int)ScopeType.UPRIGHT == _captureSetup.LightPathScopeType) ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        public string LabelNDD
+        {
+            get
+            {
+                return GetValueString("/ApplicationSettings/DisplayOptions/CaptureSetup/InvertedLightPathView", "NddNameChange");
             }
         }
 
@@ -518,6 +568,66 @@
                     this._lightPathSwitch = new RelayCommandWithParam(LightPathSwitchVM);
 
                 return this._lightPathSwitch;
+            }
+        }
+
+        public Thickness MarginCenterInvertedButton
+        {
+            get
+            {
+                if (IsNDDAvailable)
+                {
+                    return new Thickness(20, 0, 20, 10);
+                }
+                else
+                {
+                    return new Thickness(45, 0, 45, 10);
+                }
+            }
+        }
+
+        public Thickness MarginLeftInvertedButton
+        {
+            get
+            {
+                if (IsNDDAvailable)
+                {
+                    return new Thickness(30, 0, 20, 10);
+                }
+                else
+                {
+                    return new Thickness(45, 0, 45, 10);
+                }
+            }
+        }
+
+        public Thickness MarginRightInvertedButton
+        {
+            get
+            {
+                if (IsNDDAvailable)
+                {
+                    return new Thickness(20, 0, 20, 10);
+                }
+                else
+                {
+                    return new Thickness(45, 0, 45, 10);
+                }
+            }
+        }
+
+        public int PositionNDD
+        {
+            get
+            {
+                return this._captureSetup.PositionNDD;
+            }
+            set
+            {
+                this._captureSetup.PositionNDD = value;
+                OnPropertyChanged("PositionNDD");
+                OnPropertyChanged("DisplayOnNDD");
+                OnPropertyChanged("DisplayOffNDD");
             }
         }
 
@@ -906,6 +1016,7 @@
             {
                 XmlManager.SetAttribute(innderNdList[0], lightPathListDoc, "InvertedLightPathPos", this.InvertedLightPathPos.ToString());
             }
+            XmlManager.SetAttribute(innderNdList[0], lightPathListDoc, "NDD", this.PositionNDD.ToString());
 
             //set the pockels settings
             innderNdList = stepRootNode.SelectNodes("Pockels");
@@ -1014,6 +1125,12 @@
                     InvertedLpRightEnable = true;
                     InvertedLpLeftEnable = false;
                     InvertedLpCenterEnable = false;
+                    break;
+                case LightPathBtns.NDD_IN:
+                    PositionNDD = 1;
+                    break;
+                case LightPathBtns.NDD_OUT:
+                    PositionNDD = 0;
                     break;
             }
         }

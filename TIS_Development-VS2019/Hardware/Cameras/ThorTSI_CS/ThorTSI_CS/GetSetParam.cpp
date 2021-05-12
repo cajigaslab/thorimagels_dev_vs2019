@@ -4,6 +4,8 @@
 long ThorCam::SetParam(const long paramID, const double param)
 {
 	long ret = TRUE;
+	long widthValidation = (0 == _camName[_camID].compare(0, 5, "CS135")) ? 16 : 4;
+	long heightValidation = (0 == _camName[_camID].compare(0, 5, "CC505")) ? 4 : 2;
 	try
 	{
 		switch (paramID) 
@@ -28,23 +30,17 @@ long ThorCam::SetParam(const long paramID, const double param)
 		case ICamera::PARAM_CAPTURE_REGION_LEFT:
 			{			
 				int val = static_cast<int>(param);
-				if((_xRangeL[1] >= val)&&(_xRangeL[0] <= val)&&(_ImgPty_SetSettings.roiRight >= val))
+				if(_ImgPty_SetSettings.roiRight >= val)
 				{
-					int imgWidth = (_ImgPty_SetSettings.roiRight+1)-val;
-					// Check if the image width is less than the allowed minimum, in this case for the CS2100 the minimum is 8
+					int imgWidth = (_ImgPty_SetSettings.roiRight + 1) - val;
+					// Check if the image width is less than the allowed minimum width
 					if(_xRangeR[0] <= imgWidth)
 					{
-						// Check if the new width of the image is a multiple of 4
-						if(0 != imgWidth%4)
+						// Check if the new width of the image is a multiple of widthValidation
+						if(0 != imgWidth % widthValidation)
 						{
-							// If it isn't, substract from the entered value(round up the width), in order to make the width a multiple of 4
-							_ImgPty_SetSettings.roiLeft = val-(4-(imgWidth%4));
-							// Check if the new value is withing limits, reset to full frame if it isn't
-							if(_ImgPty_SetSettings.roiLeft < _xRangeL[0])
-							{
-								_ImgPty_SetSettings.roiLeft = _xRangeL[0];
-								_ImgPty_SetSettings.roiRight = _xRangeR[1];
-							}
+							// If it isn't, substract from the entered value(round up the width), in order to make the new width a multiple of widthValidation
+							_ImgPty_SetSettings.roiLeft = val - (widthValidation - (imgWidth % widthValidation));
 						}	
 						else
 						{
@@ -53,7 +49,14 @@ long ThorCam::SetParam(const long paramID, const double param)
 					}
 					else
 					{
+						//Change the Left value, so the image size is at the minimum width
 						_ImgPty_SetSettings.roiLeft = _ImgPty_SetSettings.roiRight - _xRangeR[0];
+					}
+
+					// Check if the new value is within limits, reset to full frame value if it isn't
+					if(_ImgPty_SetSettings.roiLeft < _xRangeL[0] || _ImgPty_SetSettings.roiLeft >  _xRangeL[1])
+					{
+						_ImgPty_SetSettings.roiLeft = _xRangeL[0];
 					}
 				}
 			}
@@ -61,23 +64,17 @@ long ThorCam::SetParam(const long paramID, const double param)
 		case ICamera::PARAM_CAPTURE_REGION_RIGHT: 
 			{			
 				int val = static_cast<int>(param) - 1;
-				if((_xRangeR[1] >= val)&&((_xRangeR[0]) <= val)&&(_ImgPty_SetSettings.roiLeft <= val))
+				if(_ImgPty_SetSettings.roiLeft <= val)
 				{
-					int imgWidth = (val+1)-_ImgPty_SetSettings.roiLeft;
-					// Check if the image width is less than the allowed minimum, in this case for the CS2100 the minimum is 8
+					int imgWidth = (val + 1) - _ImgPty_SetSettings.roiLeft;
+					// Check if the image width is less than the allowed minimum width
 					if(_xRangeR[0] <= imgWidth)
 					{
-						// Check if the new width of the image is a multiple of 4
-						if(0!=imgWidth%4)
+						// Check if the new width of the image is a multiple of widthValidation
+						if(0 != imgWidth % widthValidation)
 						{
-							// If it isn't, substract from the entered value(round up the width), in order to make the width a multiple of 4
-							_ImgPty_SetSettings.roiRight = val+(4-(imgWidth%4));
-							// Check if the new value is withing limits, reset to full frame if it isn't
-							if(_ImgPty_SetSettings.roiRight > _xRangeR[1])
-							{
-								_ImgPty_SetSettings.roiLeft = _xRangeL[0];
-								_ImgPty_SetSettings.roiRight = _xRangeR[1];
-							}
+							// If it isn't, substract from the entered value(round up the width), in order to make the new width a multiple of widthValidation
+							_ImgPty_SetSettings.roiRight = val + (widthValidation - (imgWidth % widthValidation));
 						}
 						else
 						{
@@ -86,7 +83,14 @@ long ThorCam::SetParam(const long paramID, const double param)
 					}
 					else
 					{
+						//Change the Right value, so the image size is at the minimum width
 						_ImgPty_SetSettings.roiRight = _ImgPty_SetSettings.roiLeft + _xRangeR[0];
+					}
+
+					// Check if the new value is within limits, reset to full frame if it isn't
+					if(_ImgPty_SetSettings.roiRight < _xRangeR[0] || _ImgPty_SetSettings.roiRight > _xRangeR[1])
+					{
+						_ImgPty_SetSettings.roiRight = _xRangeR[1];
 					}
 				}
 			}
@@ -94,17 +98,33 @@ long ThorCam::SetParam(const long paramID, const double param)
 		case ICamera::PARAM_CAPTURE_REGION_TOP:
 			{			
 				int val = static_cast<int>(param);
-				if((_yRangeT[1] >= val)&&(_yRangeT[0] <= val)&&(_ImgPty_SetSettings.roiBottom >= val))
+				if(_ImgPty_SetSettings.roiBottom >= val)
 				{
 					int imgHeight = (_ImgPty_SetSettings.roiBottom + 1) - val;
-					// Check if the minimun height is less than the allowed minimum (for CS2100 is 2 pixels)
+					// Check if the minimun height is less than the allowed minimum height
 					if(_yRangeB[0] <= imgHeight)
 					{
-						_ImgPty_SetSettings.roiTop = val;
+						// Check if the new height of the image is a multiple of heightValidation
+						if(0 != imgHeight % heightValidation)
+						{
+							// If it isn't, substract from the entered value(round up the height), in order to make the new height a multiple of heightValidation
+							_ImgPty_SetSettings.roiTop = val - (heightValidation - (imgHeight % heightValidation));
+						}	
+						else
+						{
+							_ImgPty_SetSettings.roiTop = val;
+						}
 					}
 					else
 					{
+						//Change the Top value, so the image size is at the minimum height
 						_ImgPty_SetSettings.roiTop = _ImgPty_SetSettings.roiBottom - _yRangeB[0];
+					}
+
+					// Check if the new value is within limits, reset to full frame if it isn't
+					if(_ImgPty_SetSettings.roiTop < _yRangeT[0] || _ImgPty_SetSettings.roiTop  > _yRangeT[1])
+					{
+						_ImgPty_SetSettings.roiTop = _yRangeT[0];
 					}
 				}
 			}
@@ -112,18 +132,33 @@ long ThorCam::SetParam(const long paramID, const double param)
 		case ICamera::PARAM_CAPTURE_REGION_BOTTOM:
 			{			
 				int val = static_cast<int>(param) - 1;
-				if((_yRangeB[1] >= val)&&((_yRangeB[0]) <= val)&&(_ImgPty_SetSettings.roiTop <= val))
+				if(_ImgPty_SetSettings.roiTop <= val)
 				{
 					int imgHeight = (val + 1) - _ImgPty_SetSettings.roiTop;
-					// Check if the minimun height is less than the allowed minimum (for CS2100 is 2 pixels)
+					// Check if the minimun height is less than the allowed minimum height
 					if(_yRangeB[0] <= imgHeight)
 					{
-						_ImgPty_SetSettings.roiBottom = val;	
+						// Check if the new height of the image is a multiple of heightValidation
+						if(0 != imgHeight % heightValidation)
+						{
+							// If it isn't, substract from the entered value(round up the height), in order to make the new height a multiple of heightValidation
+							_ImgPty_SetSettings.roiBottom = val + (heightValidation - (imgHeight % heightValidation));
+						}
+						else
+						{
+							_ImgPty_SetSettings.roiBottom = val;	
+						}
 					}
 					else
 					{
-						// if it isn't, then push the bottom so the height is equal to the minimum
+						//Change the Bottom value, so the image size is at the minimum height
 						_ImgPty_SetSettings.roiBottom = _ImgPty_SetSettings.roiTop + _yRangeB[0];
+					}
+
+					// Check if the new value is within limits, reset to full frame if it isn't
+					if(_ImgPty_SetSettings.roiBottom < _yRangeB[0] || _ImgPty_SetSettings.roiBottom  > _yRangeB[1])
+					{
+						_ImgPty_SetSettings.roiBottom = _yRangeB[1];
 					}
 				}
 			}
@@ -225,7 +260,7 @@ long ThorCam::SetParam(const long paramID, const double param)
 		case ICamera::PARAM_READOUT_SPEED_INDEX:
 			{
 				int val = static_cast<int>(param) + TL_CAMERA_DATA_RATE_FPS_30;
-				if (TL_CAMERA_DATA_RATE_MAX >= param && TL_CAMERA_DATA_RATE_RESERVED1 <= param)
+				if (TL_CAMERA_DATA_RATE_MAX >= param && TL_CAMERA_DATA_RATE_READOUT_FREQUENCY_20 <= param)
 				{
 					_ImgPty_SetSettings.readOutSpeedIndex = static_cast<int>(val);
 				}
@@ -268,7 +303,7 @@ long ThorCam::SetParam(const long paramID, const double param)
 			{
 				if (1 >= param && 0 <= param)
 				{
-					ThorTSIErrChk(L"tl_camera_set_is_hot_pixel_correction_enabled", tl_camera_set_is_hot_pixel_correction_enabled(_camera[_camID], static_cast<int>(param)), 1);
+					ThorTSIErrChk(L"tl_camera_set_is_frame_rate_control_enabled", tl_camera_set_is_hot_pixel_correction_enabled(_camera[_camID], static_cast<int>(param)), 1);
 					_ImgPty_SetSettings.hotPixelEnabled = static_cast<int>(param);
 				}
 			}
@@ -294,6 +329,24 @@ long ThorCam::SetParam(const long paramID, const double param)
 				_forceSettingsUpdate = static_cast<long>(param);
 			}
 			break;
+		case ICamera::PARAM_CAMERA_FRAME_RATE_CONTROL_ENABLED:
+		{
+			if (TRUE >= param && FALSE <= param)
+			{
+				_ImgPty_SetSettings.frameRateControlEnabled = static_cast<long>(param);
+				//ThorTSIErrChk(L"tl_camera_set_is_frame_rate_control_enabled", tl_camera_set_is_frame_rate_control_enabled(_camera[_camID], _imgPtyDll.frameRateControlEnabled), 1);
+			}
+		}
+		break;
+		case ICamera::PARAM_CAMERA_FRAME_RATE_CONTROL_VALUE:
+		{
+			if (_frameRateControlValueRange[1] >= param && _frameRateControlValueRange[0] <= param)
+			{
+				_ImgPty_SetSettings.frameRateControlValue = param;
+				//ThorTSIErrChk(L"tl_camera_set_frame_rate_control_value", tl_camera_set_frame_rate_control_value(_camera[_camID], _imgPtyDll.frameRateControlValue), 1);
+			}
+		}
+		break;
 		default:
 			{
 				ret = FALSE;
@@ -478,7 +531,7 @@ long ThorCam::GetParam(const long paramID, double &param)
 			break;
 		case ICamera::PARAM_CAMERA_LED_AVAILABLE:
 			{
-				bool ledAvailable = FALSE;
+				int ledAvailable = FALSE;
 				ThorTSIErrChk(L"tl_camera_get_is_led_supported", tl_camera_get_is_led_supported(_camera[_camID], &ledAvailable), 1);
 				param = ledAvailable;
 			}
@@ -519,6 +572,22 @@ long ThorCam::GetParam(const long paramID, double &param)
 				param = _forceSettingsUpdate;
 			}
 			break;
+		case ICamera::PARAM_CAMERA_FRAME_RATE_CONTROL_ENABLED:
+		{
+			int frameRateControlEnabled = FALSE;
+			param = _ImgPty_SetSettings.frameRateControlEnabled;
+			//ThorTSIErrChk(L"tl_camera_get_is_frame_rate_control_enabled", tl_camera_get_is_frame_rate_control_enabled(_camera[_camID], &frameRateControlEnabled), 1);
+			//param = frameRateControlEnabled;
+		}
+		break;
+		case ICamera::PARAM_CAMERA_FRAME_RATE_CONTROL_VALUE:
+		{
+			double frameRateControlValue = 0;
+			param = _ImgPty_SetSettings.frameRateControlValue;
+			/*ThorTSIErrChk(L"tl_camera_get_frame_rate_control_value", tl_camera_get_frame_rate_control_value(_camera[_camID], &frameRateControlValue), 1);
+			param = frameRateControlValue;*/
+		}
+		break;
 		default:
 			ret = FALSE;
 			break;
@@ -734,7 +803,7 @@ long ThorCam::GetParamInfo(const long paramID, long &paramType, long &paramAvail
 		case ICamera::PARAM_READOUT_SPEED_INDEX:
 			paramType		= ICamera::TYPE_LONG;
 			paramAvailable	= TRUE;
-			paramMin		= TL_CAMERA_DATA_RATE_RESERVED1;
+			paramMin		= TL_CAMERA_DATA_RATE_READOUT_FREQUENCY_20;
 			paramMax		= TL_CAMERA_DATA_RATE_MAX;
 			paramDefault	= TL_CAMERA_DATA_RATE_FPS_30;
 			paramReadOnly	= FALSE;
@@ -818,6 +887,22 @@ long ThorCam::GetParamInfo(const long paramID, long &paramType, long &paramAvail
 			paramMax		= 1;
 			paramDefault	= 0;
 			paramReadOnly	= FALSE;
+			break;
+		case ICamera::PARAM_CAMERA_FRAME_RATE_CONTROL_ENABLED:
+			paramType = ICamera::TYPE_LONG;
+			paramAvailable = TRUE;
+			paramMin = FALSE;
+			paramMax = TRUE;
+			paramDefault = FALSE;
+			paramReadOnly = FALSE;
+			break;
+		case ICamera::PARAM_CAMERA_FRAME_RATE_CONTROL_VALUE:
+			paramType = ICamera::TYPE_DOUBLE;
+			paramAvailable = TRUE;
+			paramMin = _frameRateControlValueRange[0];
+			paramMax = _frameRateControlValueRange[1];
+			paramDefault = _frameRateControlValueRange[0];
+			paramReadOnly = FALSE;
 			break;
 		default:
 			ret				= FALSE;

@@ -162,7 +162,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -184,13 +184,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\Common\Device.h" />
+    <ClInclude Include="..\..\..\..\Tools\ticpp\ticpp.h" />
+    <ClInclude Include="..\..\..\..\Tools\ticpp\ticpprc.h" />
+    <ClInclude Include="..\..\..\..\Tools\ticpp\tinystr.h" />
+    <ClInclude Include="..\..\..\..\Tools\ticpp\tinyxml.h" />
     <ClInclude Include="..\Driver\TL6WL\incl\TL6WL.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ThorChrolis.h" />
+    <ClInclude Include="ThorChrolisXML.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\Tools\ticpp\ticpp.cpp" />
+    <ClCompile Include="..\..\..\..\Tools\ticpp\tinystr.cpp" />
+    <ClCompile Include="..\..\..\..\Tools\ticpp\tinyxml.cpp" />
+    <ClCompile Include="..\..\..\..\Tools\ticpp\tinyxmlerror.cpp" />
+    <ClCompile Include="..\..\..\..\Tools\ticpp\tinyxmlparser.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -199,9 +210,13 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="ThorChrolis.cpp" />
+    <ClCompile Include="ThorChrolisXML.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ThorChrolis.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\ThorChrolisSettings.xml" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -110,6 +110,8 @@
 
             this.MasterView.DFLIMControlView.DataContext = MVMManager.Instance["DFLIMControlViewModel", captureSetupViewModel];
 
+            this.MasterView.AutoFocusControlView.DataContext = MVMManager.Instance["AutoFocusControlViewModel", captureSetupViewModel];
+
             this.volumeView.DataContext = captureSetupViewModel;
 
             this.imageView.DataContext = captureSetupViewModel;

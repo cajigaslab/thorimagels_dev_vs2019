@@ -131,9 +131,9 @@
       <CallingConvention>Cdecl</CallingConvention>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>CameraManager.lib;DeviceManager.lib;ImageManager.lib;ExperimentManager.lib;PincushionCorrection.lib;FlatField.lib;ThorDiskIO.lib;jpeg.lib;StatsManager.lib;ResourceManager.lib;ippi.lib;shlwapi.lib;HardwareCom.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>CameraManager.lib;DeviceManager.lib;ImageManager.lib;ExperimentManager.lib;PincushionCorrection.lib;FlatField.lib;ThorDiskIO.lib;jpeg.lib;StatsManager.lib;ResourceManager.lib;ippi.lib;shlwapi.lib;HardwareCom.lib;AutoFocus.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(ProjectName).dll</OutputFile>
-      <AdditionalLibraryDirectories>..\..\..\..\Tools\IJGWin32\IJGWin32\x64\$(Configuration);..\..\..\..\Hardware\Cameras\CameraManager\x64\$(Configuration);..\..\..\..\Hardware\Devices\DeviceManager\x64\$(Configuration);..\..\..\..\Common\ExperimentManager\x64\$(Configuration);..\..\..\..\Common\ThorDiskIO\x64\$(Configuration);..\..\..\..\Commands\ImageAnalysis\FlatField\x64\$(Configuration);..\..\..\..\Commands\ImageAnalysis\PincushionCorrection\x64\$(Configuration);..\..\..\..\Common\ImageManager\x64\$(Configuration);..\..\..\..\Common\StatsManager\x64\$(Configuration);..\..\..\..\Common\ResourceManager\x64\$(Configuration);..\..\..\..\Common\HardwareCom\x64\$(Configuration);..\..\..\..\Tools\Intel IPP\intel64\lib;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\..\Tools\IJGWin32\IJGWin32\x64\$(Configuration);..\..\..\..\Hardware\Cameras\CameraManager\x64\$(Configuration);..\..\..\..\Hardware\Devices\DeviceManager\x64\$(Configuration);..\..\..\..\Common\ExperimentManager\x64\$(Configuration);..\..\..\..\Common\ThorDiskIO\x64\$(Configuration);..\..\..\..\Commands\ImageAnalysis\FlatField\x64\$(Configuration);..\..\..\..\Commands\ImageAnalysis\PincushionCorrection\x64\$(Configuration);..\..\..\..\Common\ImageManager\x64\$(Configuration);..\..\..\..\Common\StatsManager\x64\$(Configuration);..\..\..\..\Common\ResourceManager\x64\$(Configuration);..\..\..\..\Common\HardwareCom\x64\$(Configuration);..\..\..\..\Tools\Intel IPP\intel64\lib;$(OutDir);..\..\..\..\Common\AutoFocusModule\\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX64</TargetMachine>
@@ -180,8 +180,8 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Psapi.lib;CameraManager.lib;DeviceManager.lib;ImageManager.lib;ExperimentManager.lib;PincushionCorrection.lib;FlatField.lib;ThorDiskIO.lib;jpeg.lib;StatsManager.lib;ResourceManager.lib;ippi.lib;shlwapi.lib;HardwareCom.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\Tools\IJGWin32\IJGWin32\x64\$(Configuration);..\..\..\..\Hardware\Cameras\CameraManager\x64\$(Configuration);..\..\..\..\Hardware\Devices\DeviceManager\x64\$(Configuration);..\..\..\..\Common\ExperimentManager\x64\$(Configuration);..\..\..\..\Common\ThorDiskIO\x64\$(Configuration);..\..\..\..\Commands\ImageAnalysis\FlatField\x64\$(Configuration);..\..\..\..\Commands\ImageAnalysis\PincushionCorrection\x64\$(Configuration);..\..\..\..\Common\ImageManager\x64\$(Configuration);..\..\..\..\Common\StatsManager\x64\$(Configuration);..\..\..\..\Common\ResourceManager\x64\$(Configuration);..\..\..\..\Common\HardwareCom\x64\$(Configuration);..\..\..\..\Tools\Intel IPP\intel64\lib;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Psapi.lib;CameraManager.lib;DeviceManager.lib;ImageManager.lib;ExperimentManager.lib;PincushionCorrection.lib;FlatField.lib;ThorDiskIO.lib;jpeg.lib;StatsManager.lib;ResourceManager.lib;ippi.lib;shlwapi.lib;HardwareCom.lib;AutoFocus.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\..\Tools\IJGWin32\IJGWin32\x64\$(Configuration);..\..\..\..\Hardware\Cameras\CameraManager\x64\$(Configuration);..\..\..\..\Hardware\Devices\DeviceManager\x64\$(Configuration);..\..\..\..\Common\ExperimentManager\x64\$(Configuration);..\..\..\..\Common\ThorDiskIO\x64\$(Configuration);..\..\..\..\Commands\ImageAnalysis\FlatField\x64\$(Configuration);..\..\..\..\Commands\ImageAnalysis\PincushionCorrection\x64\$(Configuration);..\..\..\..\Common\ImageManager\x64\$(Configuration);..\..\..\..\Common\StatsManager\x64\$(Configuration);..\..\..\..\Common\ResourceManager\x64\$(Configuration);..\..\..\..\Common\HardwareCom\x64\$(Configuration);..\..\..\..\Tools\Intel IPP\intel64\lib;$(OutDir);..\..\..\..\Common\AutoFocusModule\\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -200,10 +200,6 @@
     <ClCompile Include="AcquireTStream.cpp" />
     <ClCompile Include="AcquireZStack.cpp" />
     <ClCompile Include="AcquireHyperspectral.cpp" />
-    <ClCompile Include="AutoFocusHW.cpp" />
-    <ClCompile Include="AutoFocusHWandImage.cpp" />
-    <ClCompile Include="AutoFocusImage.cpp" />
-    <ClCompile Include="AutoFocusNone.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="..\..\..\..\Common\HardwareXML\HardwareSetupXML.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -235,11 +231,6 @@
     <ClInclude Include="AcquireTStream.h" />
     <ClInclude Include="AcquireZStack.h" />
     <ClInclude Include="AcquireHyperspectral.h" />
-    <ClInclude Include="AutoFocus.h" />
-    <ClInclude Include="AutoFocusHW.h" />
-    <ClInclude Include="AutoFocusHWandImage.h" />
-    <ClInclude Include="AutoFocusImage.h" />
-    <ClInclude Include="AutoFocusNone.h" />
     <ClInclude Include="..\..\..\..\Common\Camera.h" />
     <ClInclude Include="..\..\..\..\Common\Command.h" />
     <ClInclude Include="..\..\..\..\Common\HardwareXML\HardwareSetupXML.h" />

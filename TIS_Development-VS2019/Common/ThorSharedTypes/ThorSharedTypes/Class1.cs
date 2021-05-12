@@ -103,14 +103,6 @@
         LAST_TAG
     }
 
-    public enum WAVEFORM_FILETYPE
-    {
-        H5 = 0,
-        MEMORY_MAP = 1,
-        CSV = 2,
-        LAST_FILE_TYPE
-    }
-
     #endregion Enumerations
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
@@ -172,7 +164,8 @@
         public double stepVolt;
         public byte pockelsCount;
         public byte driverType;
-        public IntPtr GalvoWaveformXY;
+        public IntPtr GalvoWaveformX;
+        public IntPtr GalvoWaveformY;
         public IntPtr GalvoWaveformPockel;
         public IntPtr DigBufWaveform;
         public int digitalLineCnt;
@@ -991,6 +984,11 @@
             PARAM_LSM_WAVEFORM_DRIVER_TYPE,
             PARAM_LSM_NUMBER_OF_PLANES,
             PARAM_LSM_3P_MANUAL_FIR1_CONTROL_ENABLE,
+            PARAM_LSM_POWER_RAMP_ENABLE,
+            PARAM_LSM_POWER_RAMP_NUM_FRAMES,
+            PARAM_LSM_POWER_RAMP_NUM_FLYBACK_FRAMES,
+            PARAM_LSM_POWER_RAMP_MODE,
+            PARAM_LSM_POWER_RAMP_PERCENTAGE_BUFFER,
 
             PARAM_FIRST_CCD_PARAM = 1000,
             PARAM_BINNING_X = 1000,///<Binning X
@@ -1044,6 +1042,8 @@
             PARAM_BIN_INDEX,
             PARAM_HOT_PIXEL_INDEX,
             PARAM_DMA_BUFFER_AVAILABLE_FRAMES,
+            PARAM_CAMERA_FRAME_RATE_CONTROL_ENABLED,
+            PARAM_CAMERA_FRAME_RATE_CONTROL_VALUE,
 
             PARAM_MESO_PLATE_INFO = 1500,
             PARAM_MESO_SCAN_INFO,
@@ -1490,6 +1490,7 @@
             PARAM_TURRET_COLLISION = 510,
             PARAM_LAMP_POS = 600,
             PARAM_EPI_TURRET_POS = 601,
+            PARAM_EPI_TURRET_AVAILABLE = 602,
 
             PARAM_PMT1_GAIN_POS = 700,
             PARAM_PMT1_ENABLE,
@@ -1698,6 +1699,15 @@
             PARAM_R_JOG = 1212,
             PARAM_R_INVERT = 1213,
             PARAM_R_POS_MOVE_BY = 1214,
+
+            PARAM_CONDENSER_POS = 1215,
+            PARAM_CONDENSER_JOG = 1216,
+            PARAM_CONDENSER_POS_CURRENT = 1217,
+            PARAM_CONDENSER_STATUS = 1218,
+            PARAM_CONDENSER_ZERO = 1219,
+            PARAM_CONDENSER_INVERT = 1220,
+            PARAM_CONDENSER_STOP = 1221,
+            PARAM_CONDENSER_POS_MOVE_BY = 1222,
 
             PARAM_ECU_TWO_WAY_ZONE_1 = 1300,
             PARAM_ECU_TWO_WAY_ZONE_2,
@@ -2241,6 +2251,8 @@
             PARAM_LIGHTPATH_CAMERA_SERIALNUMBER,
             PARAM_SCOPE_TYPE,
             PARAM_LIGHTPATH_INVERTED_POS,
+            PARAM_LIGHTPATH_NDD,
+            PARAM_LIGHTPATH_NDD_AVAILABLE,
 
             PARAM_KURIOS_WAVELENGTH = 1860,
             PARAM_KURIOS_BANDWIDTHMODE,
@@ -2279,6 +2291,13 @@
             PARAM_FW_DIC_SERIALNUMBER,
 
             PARAM_DEVICE_STATUS,
+
+            PARAM_SHUTTER_1_STATE = 1954,
+            PARAM_SHUTTER_2_STATE,
+            PARAM_SHUTTER_3_STATE,
+            PARAM_SHUTTER_4_STATE,
+            PARAM_SHUTTER_AVAILABLE,
+            PARAM_SHUTTER_SAFETY_INTERLOCK_STATE = 1959,
 
             PARAM_LED1_SOCKEL_ID = 2000,
             PARAM_LED2_SOCKEL_ID,
@@ -2360,12 +2379,19 @@
             PARAM_LED5_TEMP,
             PARAM_LED6_TEMP,
 
-            PARAM_LED1_WAVELENGTH,
-            PARAM_LED2_WAVELENGTH,
-            PARAM_LED3_WAVELENGTH,
-            PARAM_LED4_WAVELENGTH,
-            PARAM_LED5_WAVELENGTH,
-            PARAM_LED6_WAVELENGTH,
+            PARAM_LED1_PEAK_WAVELENGTH,
+            PARAM_LED2_PEAK_WAVELENGTH,
+            PARAM_LED3_PEAK_WAVELENGTH,
+            PARAM_LED4_PEAK_WAVELENGTH,
+            PARAM_LED5_PEAK_WAVELENGTH,
+            PARAM_LED6_PEAK_WAVELENGTH,
+
+            PARAM_LED1_NOMINAL_WAVELENGTH,
+            PARAM_LED2_NOMINAL_WAVELENGTH,
+            PARAM_LED3_NOMINAL_WAVELENGTH,
+            PARAM_LED4_NOMINAL_WAVELENGTH,
+            PARAM_LED5_NOMINAL_WAVELENGTH,
+            PARAM_LED6_NOMINAL_WAVELENGTH,
 
             PARAM_UPDATE_TEMPERATURES,
 

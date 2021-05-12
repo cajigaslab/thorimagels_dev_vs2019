@@ -33,6 +33,9 @@
     <ClInclude Include="..\..\..\..\Common\ThorSharedTypesCPP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MCM6000XML.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThorMCM6000.cpp">
@@ -45,6 +48,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="APT.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MCM6000XML.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -901,13 +901,16 @@
             UpdateVisibleROIs(ref canvas);
         }
 
-        public void DisplayModeROI(ref Canvas canvas, Mode mode, bool setVisible)
+        public void DisplayModeROI(ref Canvas canvas, Mode[] mode, bool setVisible)
         {
             for (int i = 0; i < _roiList.Count; i++)
             {
-                if (mode == (Mode)(GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR)))
+                for (int j = 0; j < mode.Count(); j++)
                 {
-                    SetTagBit(_roiList[i].Tag, Tag.FLAGS, Flag.DISPLAY, setVisible);
+                    if (mode[j] == (Mode)(GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR)))
+                    {
+                        SetTagBit(_roiList[i].Tag, Tag.FLAGS, Flag.DISPLAY, setVisible);
+                    }
                 }
             }
 

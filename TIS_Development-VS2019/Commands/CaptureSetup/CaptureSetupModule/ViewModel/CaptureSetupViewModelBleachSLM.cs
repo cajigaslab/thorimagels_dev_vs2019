@@ -359,7 +359,7 @@
             {
                 _slmPatternsVisible = value;
                 OverlayManagerClass.Instance.InitSelectROI(ref CaptureSetupViewModel.OverlayCanvas);
-                OverlayManagerClass.Instance.DisplayModeROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.CurrentMode, _slmPatternsVisible);
+                OverlayManagerClass.Instance.DisplayModeROI(ref CaptureSetupViewModel.OverlayCanvas, new ThorSharedTypes.Mode[2] { ThorSharedTypes.Mode.PATTERN_NOSTATS, ThorSharedTypes.Mode.PATTERN_WIDEFIELD }, _slmPatternsVisible);
             }
         }
 
@@ -419,6 +419,11 @@
                     OnPropertyChanged("SLMBleachNowEnabled");
                 }
             }
+        }
+
+        public string SLMViewWidth
+        {
+            get { return this._captureSetup.IsStimulator ? "0" : "Auto"; }
         }
 
         public string[] SLMWaveBaseName
@@ -783,9 +788,9 @@
             return _captureSetup.SaveSLMPatternName(phaseMaskName);
         }
 
-        public bool SLMCalibration(string bmpPatternName, float[] ptsFrom, float[] ptsTo, int size, int pixelX, int pixelY, double z)
+        public bool SLMCalibration(string bmpPatternName, float[] ptsFrom, float[] ptsTo, int size)
         {
-            return _captureSetup.SLMCalibration(bmpPatternName, ptsFrom, ptsTo, size, pixelX, pixelY, z);
+            return _captureSetup.SLMCalibration(bmpPatternName, ptsFrom, ptsTo, size);
         }
 
         public bool SLMSetBlank()

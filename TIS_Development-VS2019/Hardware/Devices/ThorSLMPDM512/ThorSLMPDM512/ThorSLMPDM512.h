@@ -46,7 +46,6 @@ extern "C"
 		double* _fitCoeff[2]; ///<fitting coefficients for two wavelengths in order of [0][0],[0][1],[0][2],[1][0],[1][1],[1][2],[2[0],[2][1]
 		long _deviceCount; ///<how many SLM being detected
 		bool _deviceDetected;
-		double _pixelUM; ///<pixel unit size in [UM], assuming square in shape
 		long* _pixelRange; ///<pixel range of Xmin, Xmax, Ymin, Ymax
 		long _overDrive; ///<overdrive mode for meadowlark slm
 		unsigned int _transientFrames; ///<transient frame counts in overdrive mode for meadowlark slm
@@ -60,14 +59,15 @@ extern "C"
 		//params in struct:		
 		long _pixelX; ///<pixel X, limited by device spec
 		long _pixelY;
+		long _power2Px; ///<power of 2 square pixei size for FFT
 		long _slmFuncMode; ///<different function mode of slm
 		std::wstring _bmpPathAndName; ///<current working bmp file path and name
 		std::wstring _seqPathAndName; ///<current sequence file path and name to set pattern sequence
 		static long _arrayOrFileID; ///<index of slm points set or bitmap buffers
-		long _verticalFlip; ///<preset vertical flip before pattern generation
-		double _rotateAngle; ///<preset rotation before pattern generation
-		double _scaleFactor[2]; ///<preset scaling before pattern generation
-		long _offsetPixels[2]; ///<preset offset in pixels before pattern generation
+		long _verticalFlip[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT]; ///<preset vertical flip before pattern generation
+		double _rotateAngle[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT]; ///<preset rotation before pattern generation
+		double _scaleFactor[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT][2]; ///<preset scaling before pattern generation
+		long _offsetPixels[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT][2]; ///<preset offset in pixels before pattern generation
 		static long _bufferCount; ///<total count of pattern buffers in circulation
 		static long _slmRuntimeCalculate; ///<runtime calculation of transient frames
 
@@ -132,8 +132,8 @@ extern "C"
 		long SetIntermediateBuffer(MemoryStruct memStruct);
 		long SetupHWTriggerIn();
 		unsigned char* MapImageHologram(const wchar_t* pathAndFilename, PBITMAPINFO pbmi);
-		unsigned char* GetAndProcessBMP(long& size, BITMAPINFO& bmi);
-		unsigned char* GetAndProcessText(long& size, BITMAPINFO& bmi);
+		unsigned char* GetAndProcessBMP(BITMAPINFO& bmi);
+		unsigned char* GetAndProcessText(BITMAPINFO& bmi);
 
 	};
 

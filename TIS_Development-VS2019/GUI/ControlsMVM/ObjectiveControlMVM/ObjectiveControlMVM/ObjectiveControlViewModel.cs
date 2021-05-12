@@ -253,7 +253,7 @@
 
                 ((IMVM)MVMManager.Instance["PinholeControlViewModel", this]).OnPropertyChange("PinholePosition");
                 //To update the pinhole position combo box, set it to -1 then set it back to the position it was suposed to be in.
-                //this is for GUI purposes only. Otherwise combo box thinks it is fine in the current position and shouln't update 
+                //this is for GUI purposes only. Otherwise combo box thinks it is fine in the current position and shouln't update
                 int pinholePos = (int)MVMManager.Instance["PinholeControlViewModel", "PinholePosition", (object)0];
                 MVMManager.Instance["PinholeControlViewModel", "PinholePosition"] = -1;
                 ((IMVM)MVMManager.Instance["PinholeControlViewModel", this]).OnPropertyChange("ComboBoxItemsList");
@@ -533,14 +533,14 @@
             string na = string.Empty;
             if (ndList.Count > 0)
             {
-                   
-             
+
+
                 if (XmlManager.GetAttribute(ndList[0], hardwareSettings, "lastSavedMagnification", ref magName))
                 {
                     if (ObjectiveNames.Contains(magName))
                     {
                         this._ObjectiveControlModel.SetInitialTurretPosition(ObjectiveNames.IndexOf(magName));
-                        int tempIndex=ObjectiveNames.IndexOf(magName);
+                        int tempIndex = ObjectiveNames.IndexOf(magName);
                         NA = _ObjectiveControlModel.NumericalAperture;
 
                         return;
@@ -705,23 +705,28 @@
 
             }
 
-            ndList = experimentFile.SelectNodes("/ThorImageExperiment/EPITurret");
-            if (ndList.Count > 0)
+            //Only save the position if the Epi Turret moves manually
+            int scopeType = (int)ScopeType.UPRIGHT;
+            if (1 != ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_EPITURRET, (int)IDevice.Params.PARAM_SCOPE_TYPE, ref scopeType) || (int)ScopeType.UPRIGHT == scopeType)
             {
-                XmlManager.SetAttribute(ndList[0], experimentFile, "pos", EpiTurretPosText);
-                XmlManager.SetAttribute(ndList[0], experimentFile, "name", EpiTurretPosName);
-            }
-            else
-            {
-                XmlNode n = experimentFile.CreateNode(XmlNodeType.Element, "EPITurret", null);
-                XmlAttribute ps = experimentFile.CreateAttribute("pos");
-                XmlAttribute nm = experimentFile.CreateAttribute("name");
-                ps.Value = EpiTurretPosText;
-                nm.Value = EpiTurretPosName;
-                n.Attributes.Append(ps);
-                n.Attributes.Append(nm);
-                ndList = experimentFile.SelectNodes("/ThorImageExperiment");
-                ndList[0].AppendChild(n);
+                ndList = experimentFile.SelectNodes("/ThorImageExperiment/EPITurret");
+                if (ndList.Count > 0)
+                {
+                    XmlManager.SetAttribute(ndList[0], experimentFile, "pos", EpiTurretPosText);
+                    XmlManager.SetAttribute(ndList[0], experimentFile, "name", EpiTurretPosName);
+                }
+                else
+                {
+                    XmlNode n = experimentFile.CreateNode(XmlNodeType.Element, "EPITurret", null);
+                    XmlAttribute ps = experimentFile.CreateAttribute("pos");
+                    XmlAttribute nm = experimentFile.CreateAttribute("name");
+                    ps.Value = EpiTurretPosText;
+                    nm.Value = EpiTurretPosName;
+                    n.Attributes.Append(ps);
+                    n.Attributes.Append(nm);
+                    ndList = experimentFile.SelectNodes("/ThorImageExperiment");
+                    ndList[0].AppendChild(n);
+                }
             }
 
             UpdateLastSavedMag();

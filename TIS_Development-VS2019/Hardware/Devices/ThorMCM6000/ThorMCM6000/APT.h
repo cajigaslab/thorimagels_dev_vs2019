@@ -7,20 +7,20 @@
 
 using namespace std;
 
-const byte NO_LIMIT				= 0x01;
-const byte MAKES_ON_CONTACT		= 0x02;
-const byte BREAKS_ON_CONTACT	= 0x03;
-const byte MAKES_HOMING_ONLY	= 0x04;
-const byte BREAKS_HOMING_ONLY	= 0x05;
-const byte REVERSE_LIMITS		= 0x80;
+const BYTE NO_LIMIT = 0x01;
+const BYTE MAKES_ON_CONTACT = 0x02;
+const BYTE BREAKS_ON_CONTACT = 0x03;
+const BYTE MAKES_HOMING_ONLY = 0x04;
+const BYTE BREAKS_HOMING_ONLY = 0x05;
+const BYTE REVERSE_LIMITS = 0x80;
 
-const byte HOME_TO_INDEX = 0x01;
-const byte HOME_TO_LIMIT = 0x02;
+const BYTE HOME_TO_INDEX = 0x01;
+const BYTE HOME_TO_LIMIT = 0x02;
 
-const byte HOME_CW			= 0x01;
-const byte HOME_CCW			= 0x02;
-const byte HOME_CW_FIRST	= 0x03;
-const byte HOME_CCW_FIRST	= 0x04;
+const BYTE HOME_CW = 0x01;
+const BYTE HOME_CCW = 0x02;
+const BYTE HOME_CW_FIRST = 0x03;
+const BYTE HOME_CCW_FIRST = 0x04;
 
 //        #region APT
 const int MGMSG_HW_REQ_INFO = 0x0005;
@@ -103,15 +103,19 @@ const int MGMSG_LA_DISABLEOUTPUT = 0x0812;
 
 //Firmware update command
 const int MGMSG_GET_UPDATE_FIRMWARE = 0x00A6;
+const int MGMSG_RESET_FIRMWARE_LOADCOUNT = 0x00A7;
+const int MGMSG_BL_REQ_FIRMWAREVER = 0x002F;
+const int MGMSG_BL_SET_FLASHPAGE = 0x00A8;
+const int MGMSG_BL_GET_FIRMWAREVER = 0x0030;
 
 //*****************************************************************
 // APT
 // 0x4000 to 0x4fff range are reserved for Sterling VA
 //*****************************************************************
 // System        
-const int MGMSG_MCM_HW_REQ_INFO	= 0x4000;
-const int MGMSG_MCM_HW_GET_INFO	= 0x4001;
-const int MGMSG_CPLD_UPDATE	= 0x4002;		
+const int MGMSG_MCM_HW_REQ_INFO = 0x4000;
+const int MGMSG_MCM_HW_GET_INFO = 0x4001;
+const int MGMSG_CPLD_UPDATE = 0x4002;
 const int MGMSG_SET_HW_REV = 0x4003;
 const int MGMSG_SET_CARD_TYPE = 0x4004;
 const int MGMSG_SET_CABLE = 0x4005;
@@ -142,6 +146,11 @@ const int MGMSG_SET_STORE_POSITION = 0x4021;
 const int MGMSG_REQ_STORE_POSITION = 0x4022;
 const int MGMSG_GET_STORE_POSITION = 0x4023;
 const int MGMSG_SET_GOTO_STORE_POSITION = 0x4024;
+const int MGMSG_MCM_START_LOG = 0x4025;
+const int MGMSG_MCM_POST_LOG = 0x4026;
+const int MGMSG_MCM_SET_ENABLE_LOG = 0x4027;
+const int MGMSG_MCM_REQ_ENABLE_LOG = 0x4028;
+const int MGMSG_MCM_GET_ENABLE_LOG = 0x4029;
 
 // Stepper
 const int MGMSG_MCM_SET_SOFT_LIMITS = 0x403D;
@@ -155,14 +164,19 @@ const int MGMSG_MCM_REQ_STATUSUPDATE = 0x4044;
 const int MGMSG_MCM_GET_STATUSUPDATE = 0x4045;
 const int MGMSG_MCM_SET_ABS_LIMITS = 0x4046;
 const int MGMSG_MCM_MOT_SET_LIMSWITCHPARAMS = 0x4047;
-const int MGMSG_MCM_MOT_REQ_LIMSWITCHPARAMS	= 0x4048;
+const int MGMSG_MCM_MOT_REQ_LIMSWITCHPARAMS = 0x4048;
 const int MGMSG_MCM_MOT_GET_LIMSWITCHPARAMS = 0x4049;
 const int MGMSG_MCM_MOT_MOVE_BY = 0x4050;	// Added for Texas TIDE autofocus
+const int MGMSG_MCM_REQ_STEPPER_LOG = 0x4051;
+const int MGMSG_MCM_GET_STEPPER_LOG = 0x4052;
+const int MGMSG_MCM_MOT_SET_VELOCITY = 0x4053;
 
 // Shutter
 const int MGMSG_MCM_SET_SHUTTERPARAMS = 0x4064;
 const int MGMSG_MCM_REQ_SHUTTERPARAMS = 0x4065;
 const int MGMSG_MCM_GET_SHUTTERPARAMS = 0x4066;
+const int MGMSG_MCM_REQ_INTERLOCK_STATE = 0x4067;
+const int MGMSG_MCM_GET_INTERLOCK_STATE = 0x4068;
 
 // Slider IO
 const int MGMSG_MCM_SET_MIRROR_STATE = 0x4087;
@@ -188,53 +202,71 @@ const int MGMSG_MCM_SET_SYNC_MOTION_POINT = 0x40A6;
 const int MGMSG_LA_DISABLEAIMING = 0x40C7;
 const int MGMSG_LA_ENABLEAIMING = 0x40C8;
 
+// Piezo
+const int MGMSG_MCM_PIEZO_SET_PRAMS = 0x40DC;
+const int MGMSG_MCM_PIEZO_REQ_PRAMS = 0x40DD;
+const int MGMSG_MCM_PIEZO_GET_PRAMS = 0x40DE;
+const int MGMSG_MCM_PIEZO_REQ_VALUES = 0x40DF;
+const int MGMSG_MCM_PIEZO_GET_VALUES = 0x40E0;
+//  const int MGMSG_MCM_PIEZO_REQ_LOG = 0x40E1;
+const int MGMSG_MCM_PIEZO_GET_LOG = 0x40E2;
+const int MGMSG_MCM_PIEZO_SET_ENABLE_PLOT = 0x40E3;
+const int MGMSG_MCM_PIEZO_SET_DAC_VOLTS = 0x40E4;
+const int MGMSG_MCM_PIEZO_SET_PID_PARMS = 0x40E5;
+const int MGMSG_MCM_PIEZO_REQ_PID_PARMS = 0x40E6;
+const int MGMSG_MCM_PIEZO_GET_PID_PARMS = 0x40E7;
+const int MGMSG_MCM_PIEZO_SET_MOVE_BY = 0x40E8;
+const int MGMSG_MCM_PIEZO_SET_MODE = 0x40E9;
+const int MGMSG_MCM_PIEZO_REQ_MODE = 0x40EA;
+const int MGMSG_MCM_PIEZO_GET_MODE = 0x40EB;
+
 //*****************************************************************
 struct MapInfo
 {
-	byte number;
+	BYTE number;
 	short vid;
 	short pid;
-	byte type;
-	byte control_number;
-	byte mode;
-	byte slot_receiver;
-	byte port_receiver;
+	BYTE type;
+	BYTE control_number;
+	BYTE mode;
+	BYTE slot_receiver;
+	BYTE port_receiver;
 };
 
 struct MapInfoIn
 {
-	byte number;
-	//public byte port;
+	BYTE number;
+	//public BYTE port;
 	USHORT vid;
 	USHORT pid;
-	byte control_number;
-	byte mode;
-	byte modify_control_port;
+	BYTE control_number;
+	BYTE mode;
+	BYTE modify_control_port;
 	USHORT modify_control_ctl_num;
-	byte destination_slot;
-	byte destination_bit;
-	byte destination_port;
-	byte destination_virtual;
-	byte modify_speed;
-	byte revserse_dir;
-	byte dead_band;
+	BYTE destination_slot;
+	BYTE destination_bit;
+	BYTE destination_port;
+	BYTE destination_virtual;
+	BYTE modify_speed;
+	BYTE revserse_dir;
+	BYTE dead_band;
 };
 
 struct MapInfoOut
 {
-	byte number;
-	byte control_number;
-	byte type;
+	BYTE number;
+	BYTE control_number;
+	BYTE type;
 	USHORT vid;
 	USHORT pid;
-	byte mode;
-	byte color_1_id;
-	byte color_2_id;
-	byte color_3_id;
-	byte source_slot;
-	byte source_bit;
-	byte source_port;
-	byte source_virtual;
+	BYTE mode;
+	BYTE color_1_id;
+	BYTE color_2_id;
+	BYTE color_3_id;
+	BYTE source_slot;
+	BYTE source_bit;
+	BYTE source_port;
+	BYTE source_virtual;
 };
 
 #define TEMP_SAMPLES	15
@@ -248,15 +280,12 @@ const double MAX_VAL = 4096;    // 12 bit
 const double volts_per_counts = VCC / MAX_VAL;
 const double vin_resistor_div = 0.083170; // R2/(R1+r2)
 
-const byte SHUTTER_CLOSED = 1;
-const byte SHUTTER_OPENED = 0;
-
 class APT
 {
-private:	
-	void clear_all_map_controls_for_port(byte _port);
-	void clear_map_control(byte _port, byte number);
-	void add_map(byte _port, MapInfo* mi);
+private:
+	void clear_all_map_controls_for_port(BYTE _port);
+	void clear_map_control(BYTE _port, BYTE number);
+	void add_map(BYTE _port, MapInfo* mi);
 	vector<vector<MapInfo>> mapping_data;
 	vector<vector<MapInfoIn>> mapping_in_data;
 	vector<vector<MapInfoOut>> mapping_out_data;
@@ -267,11 +296,11 @@ private:
 	short ccw_hardlimit_save[TOTAL_CARD_SLOTS];
 	short limit_mode_save[TOTAL_CARD_SLOTS];
 
-	byte byte_to_read;
-	byte input_control_type[8][25]; // 8 ports, max number of controls
-	byte output_control_type[8][25]; // 8 ports, max number of controls
+	BYTE byte_to_read;
+	BYTE input_control_type[8][25]; // 8 ports, max number of controls
+	BYTE output_control_type[8][25]; // 8 ports, max number of controls
 	int num_of_input_controls[8];
-	int num_of_output_controls[8];	
+	int num_of_output_controls[8];
 
 	double temperatures[TEMP_SAMPLES];
 	int temperatures_index;
@@ -303,7 +332,7 @@ public:
 	void hexapod_update_xyz(char* data, int size, Mcm6kParams* params);
 	void hexapod_update_pid(char* data, int size, Mcm6kParams* params);
 	void shutter_get_state(char* data, int size, Mcm6kParams* params);
-	void shutter_get_params(char* data, int size, Mcm6kParams* params);	
+	void shutter_get_params(char* data, int size, Mcm6kParams* params);
 	void shutter_4_get_params(char* data, int size, Mcm6kParams* params);
 	void get_laser_params(char* data, int size, Mcm6kParams* params);
 	void system_tab_get_cables(char* data, int size, Mcm6kParams* params);
@@ -312,5 +341,6 @@ public:
 	void system_dim_value_req(char* data, int size, Mcm6kParams* params);
 	void mirror_position_get(char* data, int size, Mcm6kParams* params);
 	void mirrors_get_params(char* data, int size, Mcm6kParams* params);
-
+	void piezo_get_mode(char* data, int size, Mcm6kParams* params);
+	void shutter_get_interlock_state(char* data, int size, Mcm6kParams* params);
 };

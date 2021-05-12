@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <ThorSLMPDM512Settings>
-  <Calibration wavelengthNM="488" coeff1="1" coeff2="0" coeff3="0" coeff4="0" coeff5="1" coeff6="0" coeff7="0" coeff8="0"/>
+	<Calibration wavelengthNM="488" coeff1="1" coeff2="0" coeff3="0" coeff4="0" coeff5="1" coeff6="0" coeff7="0" coeff8="0"/>
 
-  <Calibration2 wavelengthNM="633" coeff1="1" coeff2="0" coeff3="0" coeff4="0" coeff5="1" coeff6="0" coeff7="0" coeff8="0"/>
+	<PostCalibration verticalFlip="0" rotateAngle="0" scaleX="1.0" scaleY="1.0" offsetX="0" offsetY="0" />
 
-  <PostCalibration verticalFlip="0" rotateAngle="0" scaleX="1.0" scaleY="1.0" offsetX="0" offsetY="0" />
+	<Calibration2 wavelengthNM="639" coeff1="1" coeff2="0" coeff3="0" coeff4="0" coeff5="1" coeff6="0" coeff7="0" coeff8="0"/>
 
-  <!-- <Spec Name="PDM512" overDrive="0" transientFrames="10" pixelXmin="512" pixelXmax="512" pixelYmin="512" pixelYmax="512" LUT="C:\TIS\TIS_Development\Hardware\Devices\ThorSLMPDM512\slm4266_at1064_DVI.lut" overDriveLUT="" waveFront=""/> -->
+	<PostCalibration2 verticalFlip="0" rotateAngle="0" scaleX="1.0" scaleY="1.0" offsetX="0" offsetY="0" />
 
-  <!--<Spec Name="EXULUS" overDrive="0" transientFrames="10" pixelXmin="512" pixelXmax="512" pixelYmin="512" pixelYmax="512" LUT="" overDriveLUT="" waveFront=""/>  -->
-  <Spec Name="" dmdMode="0" overDrive="0" transientFrames="10" pixelUM="6.4" pixelXmin="512" pixelXmax="512" pixelYmin="512" pixelYmax="512" LUT="" overDriveLUT="" waveFront=""/>
+	<!-- <Spec Name="PDM512" overDrive="0" transientFrames="10" pixelXmin="512" pixelXmax="512" pixelYmin="512" pixelYmax="512" LUT="C:\TIS\TIS_Development\Hardware\Devices\ThorSLMPDM512\slm4266_at1064_DVI.lut" overDriveLUT="" waveFront=""/> -->
 
-  <!--<Trigger counterLine="/Dev4/ctr2" triggerLine="/Dev4/PFI0" />-->
-  <Trigger counterLine="" triggerLine="" />
+	<!--<Spec Name="EXULUS" overDrive="0" transientFrames="10" pixelXmin="512" pixelXmax="512" pixelYmin="512" pixelYmax="512" LUT="" overDriveLUT="" waveFront=""/>  -->
+	<Spec Name="" dmdMode="0" overDrive="0" transientFrames="10" pixelXmin="512" pixelXmax="512" pixelYmin="512" pixelYmax="512" LUT="" overDriveLUT="" waveFront=""/>
+
+	<!--<Trigger counterLine="/Dev4/ctr2" triggerLine="/Dev4/PFI0" />-->
+	<Trigger counterLine="" triggerLine="" />
 </ThorSLMPDM512Settings>

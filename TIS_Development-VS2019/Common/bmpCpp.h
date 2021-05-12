@@ -20,7 +20,7 @@ static std::wstring ConvertStringToWString(std::string s)
 }
 
 //load bmp to memory, remember to delete[] memory after use
-static BYTE* LoadBMP (int* width, int* height, long* size, BITMAPINFOHEADER* bmpinfo, LPCTSTR bmpfile)
+static BYTE* LoadBMP (BITMAPINFOHEADER* bmpinfo, LPCTSTR bmpfile)
 {
 	BITMAPFILEHEADER bmpheader;
 	DWORD bytesread;
@@ -46,13 +46,11 @@ static BYTE* LoadBMP (int* width, int* height, long* size, BITMAPINFOHEADER* bmp
 		return NULL;
 	}
 
-	*width   = bmpinfo->biWidth;
-	*height  = abs ( bmpinfo->biHeight );
-	*size = bmpheader.bfSize - bmpheader.bfOffBits;		//bfOffBits: bit offset for header to beginning of data
-	BYTE* Buffer = new BYTE[*size];
-	
+	long size = bmpheader.bfSize - bmpheader.bfOffBits;		//bfOffBits: bit offset for header to beginning of data
+	BYTE* Buffer = new BYTE[size];
+
 	SetFilePointer(file, bmpheader.bfOffBits, NULL, FILE_BEGIN);
-	if (false == ReadFile(file, Buffer, *size, &bytesread, NULL))
+	if (false == ReadFile(file, Buffer, size, &bytesread, NULL))
 	{
 		delete[] Buffer;
 		CloseHandle(file);
@@ -75,7 +73,7 @@ static BYTE* ConvertBGRToRGBBuffer(BYTE* Buffer, BITMAPINFOHEADER bmpinfo, long*
 	int channelCnt = static_cast<int>(bmpinfo.biBitCount/CHAR_BIT);
 	if ((NULL == Buffer) || (bmpinfo.biWidth <= 0) || (bmpinfo.biHeight <= 0))
 		return NULL;
-	
+
 	int padding = 0;
 	int scanlinebytes = bmpinfo.biWidth*channelCnt;
 	while ((scanlinebytes+padding)%4 != 0)
@@ -153,12 +151,12 @@ static BOOL SaveBMP(T* Buffer, int width, int height, long paddedsize, LPCTSTR b
 	int channel = paddedsize/width/height;
 
 	RGBQUAD palette[PIXEL_LEVEL];
-    for(int i = 0; i < PIXEL_LEVEL; ++i)
-    {
+	for(int i = 0; i < PIXEL_LEVEL; ++i)
+	{
 		palette[i].rgbBlue = (BYTE)i;
-        palette[i].rgbGreen = (BYTE)i;
-        palette[i].rgbRed = (BYTE)i;
-    }
+		palette[i].rgbGreen = (BYTE)i;
+		palette[i].rgbRed = (BYTE)i;
+	}
 
 	BITMAPFILEHEADER bmfh;
 	BITMAPINFOHEADER info;
@@ -177,7 +175,7 @@ static BOOL SaveBMP(T* Buffer, int width, int height, long paddedsize, LPCTSTR b
 	info.biYPelsPerMeter = 0;     
 	info.biClrUsed = 0;	
 	info.biClrImportant = 0; 
-	
+
 	bmfh.bfType = 'B'+('M' << 8);	// 0x4d42 = 'BM' ;
 	bmfh.bfReserved1 = 0;
 	bmfh.bfReserved2 = 0;

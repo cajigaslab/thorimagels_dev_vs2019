@@ -48,7 +48,7 @@
                                      Minimum="{Binding LampMinPosition}"
                                      SmallChange="{Binding LampPositionInterval}"
                                      LargeChange="{Binding LampPositionInterval}" 
-                                     TickFrequency="{Binding LampPositionTickFrequency}"
+                                     TickFrequency="{Binding LampPositionTickFrequency}" 
                                      IsEnabled="{Binding IsLampEnabled}"
                                      Width="24" 
                                      Height="145"
@@ -81,26 +81,26 @@
                            Text="{Binding Path=LampPosition, StringFormat=Lamp Power : {0:0.00}, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal"
-                                HorizontalAlignment="Center"
-                                Margin="0,0,0,10">
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,10">
                         <TextBox Grid.Row="1" 
-                                 Grid.Column="0" 
-                                 Height="25" 
-                                 Width="50"
-                                 Text="{Binding Path=TempLampPosition, StringFormat={}{0:0.00}, Mode=TwoWay, 
-                                  UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                         Grid.Column="0" 
+                         Height="25" 
+                         Width="50"
+                         Text="{Binding Path=TempLampPosition, StringFormat={}{0:0.00}, Mode=TwoWay, 
+                         UpdateSourceTrigger=PropertyChanged}"></TextBox>
                         <Button Grid.Row="1" 
-                                Grid.Column="1" 
-                                Height="25" 
-                                Width="50"
-                                Content="Go"
-                                IsEnabled="{Binding IsLampEnabled}"
-                                Command="{Binding SetLampPosCommand}"/>
+                        Grid.Column="1" 
+                        Height="25" 
+                        Width="50"
+                        Content="Go"
+                        IsEnabled="{Binding IsLampEnabled}"
+                        Command="{Binding SetLampPosCommand}"/>
                     </StackPanel>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="50*"></ColumnDefinition>
-                            <ColumnDefinition Width="50*"></ColumnDefinition>
+                            <ColumnDefinition Width="40*"></ColumnDefinition>
+                            <ColumnDefinition Width="60*"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
                         <StackPanel 
                         Grid.Column="0"    
@@ -111,21 +111,21 @@
             	        Margin="0,0,0,0"
             	        Orientation="Vertical">
                             <RepeatButton Content="+"
-            		          Width="30"
-            		          Height="20"
-            		          Command="{Binding ChangeLampPosCommand}"
-                              IsEnabled="{Binding IsLampEnabled}"
-            		          CommandParameter="+"
-            		          Delay="500"
-            		          Interval="100" />
+            		                      Width="30"          		          
+                                          Height="20"           		          
+                                          Command="{Binding ChangeLampPosCommand}"
+                                          IsEnabled="{Binding IsLampEnabled}"           		          
+                                          CommandParameter="+"        
+                                          Delay="500"   		          
+                                          Interval="100" />
                             <RepeatButton Content="-"
-            		          Width="30"
-            		          Height="20"
-            		          Command="{Binding ChangeLampPosCommand}"
-                              IsEnabled="{Binding IsLampEnabled}"
-            		          CommandParameter="-"
-            		          Delay="500"
-            		          Interval="100" />
+            		                      Width="30"
+            		                      Height="20"
+            		                      Command="{Binding ChangeLampPosCommand}"
+                                          IsEnabled="{Binding IsLampEnabled}"
+            		                      CommandParameter="-"
+            		                      Delay="500"
+            		                      Interval="100" />
                         </StackPanel>
                         <StackPanel Grid.Column="1">
                             <RadioButton                 
@@ -142,11 +142,16 @@
                                   Margin="0,5,0,0"/>
                         </StackPanel>
                     </Grid>
-                    <CheckBox HorizontalAlignment="Center" 
-                      Content="External TTL Trigger"
-                      ToolTip="TTL switching of lamp"
-            	      IsChecked="{Binding IsExternalTrigger}" 
-                      Margin="0,20,0,0"/>
+                    <CheckBox HorizontalAlignment="left" 
+                              Content="External TTL Trigger"
+                              ToolTip="Switch from brightness mode to TTL modulation mode"
+            	              IsChecked="{Binding IsExternalTrigger}" 
+                              Margin="0,20,0,0"/>
+                    <CheckBox HorizontalAlignment="left" 
+                              Content="Lamp ON"
+                              ToolTip="Enable the selected lamp outside of acquistion"
+            	              IsChecked="{Binding LampON}" 
+                              Margin="0,5,0,0"/>
                 </StackPanel>
             </Grid>
         </StackPanel>

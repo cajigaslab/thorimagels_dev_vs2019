@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ThorChrolisSettings>
+	<NominalWavelenghts LED1="365" LED2="405" LED3="475" LED4="565" LED5="625" LED6="780" />
+</ThorChrolisSettings> 

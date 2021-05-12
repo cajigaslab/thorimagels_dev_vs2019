@@ -20,6 +20,7 @@
 using namespace std;
 
 #include "..\..\..\..\Common\Device.h"
+#include "..\..\..\..\Common\Thread.h"
 
 #define MSG_SIZE 256
 

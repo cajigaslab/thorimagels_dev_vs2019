@@ -1,0 +1,9 @@
+﻿<Window x:Class="AutoFocusControlTestApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ac="clr-namespace:AutoFocusControl;assembly=AutoFocusControl"
+        Title="MainWindow" Height="Auto" Width="385">
+    <Grid>
+        <ac:AutoFocusControlUC />        
+    </Grid>
+</Window>

@@ -103,9 +103,9 @@
                 //StringBuilder led1Name = new StringBuilder(LENGTH);
                 //int retCode = ResourceManagerCS.GetDeviceParamString((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED1_HEADS_COLOR_NAME, led1Name, LENGTH);
                 //_lED1ControlName = led1Name.ToString();
-                double peakWavelength = 0;
-                int retCode = ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED1_WAVELENGTH, ref peakWavelength);
-                _lED1ControlName = peakWavelength.ToString();
+                double nominalWavelength = 0;
+                int retCode = ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED1_NOMINAL_WAVELENGTH, ref nominalWavelength);
+                _lED1ControlName = nominalWavelength.ToString();
                 return _lED1ControlName;
             }
             set
@@ -127,12 +127,22 @@
             }
         }
 
+        public String LED1PeakToolTip
+        {
+            get
+            {
+                double peakWavelength = 0;
+                int retCode = ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED1_PEAK_WAVELENGTH, ref peakWavelength);
+                return peakWavelength.ToString();
+            }
+        }
+
         public Double LED1Power
         {
             get
             {
                 Double power = -1.0;
-                int retCode = ResourceManagerCS.GetDeviceParamDouble( (int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED1_POWER, ref power);
+                int retCode = ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED1_POWER, ref power);
                 _lED1Power = Math.Round(power / CHROLIS_RANGE_CONVERSION, 1);
                 return _lED1Power;
             }
@@ -197,9 +207,9 @@
                 //StringBuilder led2Name = new StringBuilder(LENGTH);
                 //int retCode = ResourceManagerCS.GetDeviceParamString((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED2_HEADS_COLOR_NAME, led2Name, LENGTH);
                 //_lED2ControlName = led2Name.ToString();
-                double peakWavelength = 0;
-                int retCode = ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED2_WAVELENGTH, ref peakWavelength);
-                _lED2ControlName = peakWavelength.ToString();
+                double nominalWavelength = 0;
+                int retCode = ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED2_NOMINAL_WAVELENGTH, ref nominalWavelength);
+                _lED2ControlName = nominalWavelength.ToString();
                 return _lED2ControlName;
             }
             set
@@ -219,6 +229,16 @@
             }
             set
             {
+            }
+        }
+
+        public String LED2PeakToolTip
+        {
+            get
+            {
+                double peakWavelength = 0;
+                int retCode = ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED2_PEAK_WAVELENGTH, ref peakWavelength);
+                return peakWavelength.ToString();
             }
         }
 
@@ -289,9 +309,9 @@
                 //StringBuilder led3Name = new StringBuilder(LENGTH);
                 //int retCode = ResourceManagerCS.GetDeviceParamString((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED3_HEADS_COLOR_NAME, led3Name, LENGTH);
                 //_lED3ControlName = led3Name.ToString();
-                double peakWavelength = 0;
-                int retCode = ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED3_WAVELENGTH, ref peakWavelength);
-                _lED3ControlName = peakWavelength.ToString();
+                double nominalWavelength = 0;
+                int retCode = ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED3_NOMINAL_WAVELENGTH, ref nominalWavelength);
+                _lED3ControlName = nominalWavelength.ToString();
                 return _lED3ControlName;
             }
             set
@@ -311,6 +331,16 @@
             }
             set
             {
+            }
+        }
+
+        public String LED3PeakToolTip
+        {
+            get
+            {
+                double peakWavelength = 0;
+                int retCode = ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED3_PEAK_WAVELENGTH, ref peakWavelength);
+                return peakWavelength.ToString();
             }
         }
 
@@ -384,9 +414,9 @@
                 //StringBuilder led4Name = new StringBuilder(LENGTH);
                 //int retCode = ResourceManagerCS.GetDeviceParamString((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED4_HEADS_COLOR_NAME, led4Name, LENGTH);
                 //_lED4ControlName = led4Name.ToString();
-                double peakWavelength = 0;
-                int retCode = ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED4_WAVELENGTH, ref peakWavelength);
-                _lED4ControlName = peakWavelength.ToString();
+                double nominalWavelength = 0;
+                int retCode = ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED4_NOMINAL_WAVELENGTH, ref nominalWavelength);
+                _lED4ControlName = nominalWavelength.ToString();
                 return _lED4ControlName;
             }
             set
@@ -406,6 +436,16 @@
             }
             set
             {
+            }
+        }
+
+        public String LED4PeakToolTip
+        {
+            get
+            {
+                double peakWavelength = 0;
+                int retCode = ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED4_PEAK_WAVELENGTH, ref peakWavelength);
+                return peakWavelength.ToString();
             }
         }
 
@@ -479,9 +519,9 @@
                 //StringBuilder led5Name = new StringBuilder(LENGTH);
                 //int retCode = ResourceManagerCS.GetDeviceParamString((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED5_HEADS_COLOR_NAME, led5Name, LENGTH);
                 //_lED5ControlName = led5Name.ToString();
-                double peakWavelength = 0;
-                int retCode = ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED5_WAVELENGTH, ref peakWavelength);
-                _lED5ControlName = peakWavelength.ToString();
+                double nominalWavelength = 0;
+                int retCode = ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED5_NOMINAL_WAVELENGTH, ref nominalWavelength);
+                _lED5ControlName = nominalWavelength.ToString();
                 return _lED5ControlName;
             }
             set
@@ -501,6 +541,16 @@
             }
             set
             {
+            }
+        }
+
+        public String LED5PeakToolTip
+        {
+            get
+            {
+                double peakWavelength = 0;
+                int retCode = ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED5_PEAK_WAVELENGTH, ref peakWavelength);
+                return peakWavelength.ToString();
             }
         }
 
@@ -574,9 +624,9 @@
                 //StringBuilder led6Name = new StringBuilder(LENGTH);
                 //int retCode = ResourceManagerCS.GetDeviceParamString((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED6_HEADS_COLOR_NAME, led6Name, LENGTH);
                 //_lED6ControlName = led6Name.ToString();
-                double peakWavelength = 0;
-                int retCode = ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED6_WAVELENGTH, ref peakWavelength);
-                _lED6ControlName = peakWavelength.ToString();
+                double nominalWavelength = 0;
+                int retCode = ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED6_NOMINAL_WAVELENGTH, ref nominalWavelength);
+                _lED6ControlName = nominalWavelength.ToString();
                 return _lED6ControlName;
             }
             set
@@ -596,6 +646,16 @@
             }
             set
             {
+            }
+        }
+
+        public String LED6PeakToolTip
+        {
+            get
+            {
+                double peakWavelength = 0;
+                int retCode = ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LED6_PEAK_WAVELENGTH, ref peakWavelength);
+                return peakWavelength.ToString();
             }
         }
 

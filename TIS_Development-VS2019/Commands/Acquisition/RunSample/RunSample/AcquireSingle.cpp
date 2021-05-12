@@ -13,9 +13,8 @@ extern long viewMode;
 
 long _lsmChannel = 0;
 
-AcquireSingle::AcquireSingle(IAutoFocus * pAF,IExperiment *pExperiment, wstring path)
+AcquireSingle::AcquireSingle(IExperiment *pExperiment, wstring path)
 {
-	_pAutoFocus = pAF;
 	_pExp = pExperiment;
 	_counter = 0;
 	_zFrame = 1;
@@ -46,25 +45,6 @@ UINT StatusThreadProc( LPVOID pParam )
 	return 0;
 }
 
-UINT StatusAutoFocusThreadProc2( LPVOID pParam )
-{
-	long status = ICamera::STATUS_BUSY;
-
-	IDevice * pDevice = (IDevice*)pParam;
-
-	while(status == IDevice::STATUS_BUSY)
-	{
-		if(FALSE == pDevice->StatusPosition(status))
-		{
-			break;
-		}
-	}
-
-	SetEvent( AcquireSingle::hEventAutoFocus);
-
-	return 0;
-}
-
 UINT StatusZThreadProc2( LPVOID pParam )
 {
 	long status = IDevice::STATUS_BUSY;
@@ -86,7 +66,6 @@ UINT StatusZThreadProc2( LPVOID pParam )
 
 
 HANDLE AcquireSingle::hEvent = NULL;
-HANDLE AcquireSingle::hEventAutoFocus = NULL;
 HANDLE AcquireSingle::hEventZ = NULL;
 BOOL AcquireSingle::_evenOdd = FALSE;
 double AcquireSingle::_lastGoodFocusPosition = 0.0;
@@ -1430,8 +1409,9 @@ long AcquireSingle::Execute(long index, long subWell)
 	long turretPosition = 0;
 	long zAxisToEscape = 0;
 	double zAxisEscapeDistance = 0;
+	double fineAutoFocusPercentage = 0.15;
 
-	pHardware->GetMagInfoFromName(objName, magnification, position, numAperture, afStartPos, afFocusOffset, afAdaptiveOffset, beamExpPos, beamExpWavelength, beamExpPos2, beamExpWavelength2, turretPosition, zAxisToEscape, zAxisEscapeDistance);
+	pHardware->GetMagInfoFromName(objName, magnification, position, numAperture, afStartPos, afFocusOffset, afAdaptiveOffset, beamExpPos, beamExpWavelength, beamExpPos2, beamExpWavelength2, turretPosition, zAxisToEscape, zAxisEscapeDistance, fineAutoFocusPercentage);
 
 	_adaptiveOffset = afAdaptiveOffset;
 
@@ -1452,25 +1432,12 @@ long AcquireSingle::Execute(long index, long subWell)
 		}
 	}
 
-	IDevice* pAutoFocusDevice = NULL;
-
-	pAutoFocusDevice = GetDevice(SelectedHardware::SELECTED_AUTOFOCUS);
-
-	if (NULL == pAutoFocusDevice)
-	{
-		logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample Execute could not create autofocus device");
-		return FALSE;
-	}
-
 	BOOL afFound = FALSE;
 
-	if (aftype != IAutoFocus::AF_NONE)
+	if (FALSE == RunAutofocus(index, aftype, afFound))
 	{
-		if (FALSE == AutoFocusAndRetry(index, pAutoFocusDevice, afFound))
-		{
-			logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample AutoFocusAndRetry failed");
-			return FALSE;
-		}
+		logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample RunAutoFocus failed");
+		return FALSE;
 	}
 
 	ICamera* pCamera = NULL;
@@ -2053,7 +2020,7 @@ long AcquireSingle::Execute(long index, long subWell)
 		_acquireSaveInfo->getInstance()->ClearTimestamps();
 	}
 
-	if ((aftype != IAutoFocus::AF_NONE) && (TRUE == _pAutoFocus->WillAFExecuteNextIteration()))
+	if ((aftype != IAutoFocus::AF_NONE) && (TRUE == AutofocusExecuteNextIteration(aftype)))
 	{
 		////move to an offset of of the start location	
 		if (FALSE == SetAutoFocusStartZPosition(afStartPos, FALSE, afFound))
@@ -2419,166 +2386,5 @@ long AcquireSingle::Execute(long index, long subWell)
 			Sleep(1);
 		}
 	}
-	return TRUE;
-}
-
-long AcquireSingle::SetAutoFocusStartZPosition(double afStartPos,BOOL bWait,BOOL afFound)
-{
-	IDevice * pZStage = NULL;
-
-	pZStage = GetDevice(SelectedHardware::SELECTED_ZSTAGE);
-
-	if(NULL == pZStage)
-	{	
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AcquireSingle Execute could not create z stage");
-		return FALSE;
-	}
-
-	//if found use a relative offset from the current position
-	if(afFound)
-	{
-		double pos;
-		pZStage->GetParam(IDevice::PARAM_Z_POS_CURRENT,pos);
-
-		_lastGoodFocusPosition = pos;
-
-		pos -= _adaptiveOffset;
-
-		pZStage->SetParam(IDevice::PARAM_Z_POS, pos);
-
-		StringCbPrintfW(message,MSG_LENGTH,L"ThorImager SetAutoFocusStartZPosition new af start position %d.%d",(int)pos,(int)((pos - static_cast<long>(pos))*1000));
-	}
-	else
-	{
-		double pos = _lastGoodFocusPosition;
-
-		//modify the last good focus position each pass to ensure its unique
-		_lastGoodFocusPosition = _lastGoodFocusPosition - .001;
-
-		pos -= _adaptiveOffset;
-
-		pZStage->SetParam(IDevice::PARAM_Z_POS, pos);
-
-		StringCbPrintfW(message,MSG_LENGTH,L"ThorImager SetAutoFocusStartZPosition new af start position %d.%d",(int)pos,(int)((pos - static_cast<long>(pos))*1000));
-	}
-
-	pZStage->PreflightPosition();
-
-	pZStage->SetupPosition ();
-
-	pZStage->StartPosition();
-
-	if(TRUE == bWait)
-	{
-		//don't wait for the z to finish its motion will overlap with the next XY movement
-		hEventZ = CreateEvent(0, FALSE, FALSE, 0);
-
-		DWORD dwThread;
-
-		HANDLE hThread = ::CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE) StatusZThreadProc2, pZStage, 0, &dwThread );
-
-		const long MAX_Z_WAIT_TIME = 5000;
-
-		DWORD dwWait = WaitForSingleObject( hEventZ, MAX_Z_WAIT_TIME);
-
-		if(dwWait != WAIT_OBJECT_0)
-		{
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AcquireSingle Execute Z failed");
-			//return FALSE;
-		}		
-
-		CloseHandle(hThread);
-		CloseHandle(hEventZ);
-	}
-	pZStage->PostflightPosition();	
-
-	return TRUE;
-}
-
-long AcquireSingle::AutoFocusAndRetry(long index, IDevice *pAutoFocusDevice, BOOL &afFound)
-{
-	IDevice * pZStage = NULL;
-
-	pZStage = GetDevice(SelectedHardware::SELECTED_ZSTAGE);
-
-	if(NULL == pZStage)
-	{
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AutoFocusAndRetry Execute could not create z stage");
-		return FALSE;
-	}
-
-	afFound = FALSE;
-
-	_pAutoFocus->Execute(index, pAutoFocusDevice,afFound);
-
-	double val;
-
-	pZStage->GetParam(IDevice::PARAM_Z_POS,val);
-
-	const long RETRIES = 1;
-	const double RESULT_LOCATION_THREASHOLD_MM = .10;//must be within 50um of the previous location
-	const long SIG_DIGITS_MULTIPLIER = 1000;
-	long count = 0;
-	double lower=0;
-	double upper=0;
-
-	do
-	{
-		lower =  _lastGoodFocusPosition - RESULT_LOCATION_THREASHOLD_MM;
-		upper = _lastGoodFocusPosition + RESULT_LOCATION_THREASHOLD_MM;
-
-		//check if the focus was found or if the result location is within the threshold
-		//if not perform retires for the count of retries specified
-		if((val <lower)||(val >upper)||(FALSE == afFound))
-		{
-
-			StringCbPrintfW(message,MSG_LENGTH,L"AutoFocusAndRetry z position val %d.%03d outside lower %d.%03d upper %d.%03d",(int)val,(int)((val - static_cast<long>(val))*SIG_DIGITS_MULTIPLIER),(int)lower,(int)((lower - static_cast<long>(lower))*SIG_DIGITS_MULTIPLIER),(int)upper,(int)((upper - static_cast<long>(upper))*SIG_DIGITS_MULTIPLIER));
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,message);
-
-			_pAutoFocus->Execute(index, pAutoFocusDevice,afFound);
-			pZStage->GetParam(IDevice::PARAM_Z_POS,val);
-		}
-		else
-		{
-			StringCbPrintfW(message,MSG_LENGTH,L"AutoFocusAndRetry passed z position %d.%03d",(int)val,(int)((val - static_cast<long>(val))*SIG_DIGITS_MULTIPLIER));
-			logDll->TLTraceEvent(VERBOSE_EVENT,1,message);
-			break;
-		}
-		count++;
-	}
-	while(count <= RETRIES);
-
-	if((val <lower)||(val >upper)||(FALSE == afFound))
-	{
-		pZStage->SetParam(IDevice::PARAM_Z_POS,_lastGoodFocusPosition);
-
-		pZStage->PreflightPosition();
-
-		pZStage->SetupPosition ();
-
-		pZStage->StartPosition();
-
-		//don't wait for the z to finish its motion will overlap with the next XY movement
-		hEventZ = CreateEvent(0, FALSE, FALSE, 0);
-
-		DWORD dwThread;
-
-		HANDLE hThread = ::CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE) StatusZThreadProc2, pZStage, 0, &dwThread );
-
-		const long MAX_Z_WAIT_TIME = 5000;
-
-		DWORD dwWait = WaitForSingleObject( hEventZ, MAX_Z_WAIT_TIME);
-
-		if(dwWait != WAIT_OBJECT_0)
-		{
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AcquireSingle Execute Z failed");
-			//return FALSE;
-		}
-
-		CloseHandle(hThread);
-		CloseHandle(hEventZ);
-		pZStage->PostflightPosition();
-	}
-
 	return TRUE;
 }

@@ -1,14 +1,13 @@
 #pragma once
 
 #include "..\..\..\..\Common\Sample\Sample\Acquire.h"
-#include "AutoFocus.h"
 #include "AcquireSaveInfo.h"
 
 
 class AcquireTSeries : public IAcquire
 {
 public:
-	AcquireTSeries(IAutoFocus *,IExperiment *,wstring path);
+	AcquireTSeries(IExperiment *,wstring path);
 
 	virtual long Execute(long index, long subWell);//Synchrnous acquisition of data
 	virtual long Execute(long index, long subWell, long zFrame, long tFrame);//
@@ -29,7 +28,6 @@ public:
 	virtual long CallStartProgressBar(long index, long resetTotalCount = 0);
 
 	static HANDLE hEvent;
-	static HANDLE hEventAutoFocus;
 	static HANDLE hEventZ;
 	static long _stopTCapture; //indicates if stop requested by user since start of experiment
 
@@ -56,16 +54,12 @@ private:
 		long totFrames;
 	};
 
-
-	long SetAutoFocusStartZPosition(double afStartPos,BOOL bWait,BOOL afFound);
-	long AutoFocusAndRetry(long index, IDevice *pAutoFocusDevice, BOOL &afFound);
 	long SetZPosition(double pos,BOOL bWait, BOOL bPostflight);
 	long StopZ();
 	long CaptureTSeries(long index, long subWell, auto_ptr<IAcquire> &acqZFrame, ICamera *pCamera);
 	string uUIDSetup(auto_ptr<HardwareSetupXML> &pHardware, long timePoints, long zstageSteps, long zStreamFrames, long index, long subWell);
 	long SetPMT();
 	long ScannerEnable(long enable);
-	IAutoFocus * _pAutoFocus;
 	IExperiment * _pExp;
 	ICamera * _pCamera;
 

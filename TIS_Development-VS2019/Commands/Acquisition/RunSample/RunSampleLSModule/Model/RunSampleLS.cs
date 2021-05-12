@@ -1667,6 +1667,26 @@
             }
         }
 
+        public int PMT1EnableDuringBleach
+        {
+            get; set;
+        }
+
+        public int PMT2EnableDuringBleach
+        {
+            get; set;
+        }
+
+        public int PMT3EnableDuringBleach
+        {
+            get; set;
+        }
+
+        public int PMT4EnableDuringBleach
+        {
+            get; set;
+        }
+
         public bool PockelsOutputReferenceAvailable
         {
             get
@@ -5928,6 +5948,7 @@
             }
 
             //update settings by MVM
+            // This is where devices like the manual EpiTurret save their current position
             MVMManager.Instance.UpdateMVMXMLSettings(ref expDoc, MVMNames);
 
             //used to load color images.
@@ -6091,6 +6112,11 @@
                 XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "postBleachStream2", PostBleachStream2.ToString());
                 XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "rawOption", RawOption.ToString());
                 XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "EnableSimultaneous", SimultaneousBleachingAndImaging.ToString());
+                XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "pmt1EnableDuringBleach", PMT1EnableDuringBleach.ToString());
+                XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "pmt2EnableDuringBleach", PMT2EnableDuringBleach.ToString());
+                XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "pmt3EnableDuringBleach", PMT3EnableDuringBleach.ToString());
+                XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "pmt4EnableDuringBleach", PMT4EnableDuringBleach.ToString());
+
                 if (1 == _photobleachEnable)
                 {
                     //when photobleaching is enabled. Disable the Z frames and match the Tframes
@@ -6140,26 +6166,6 @@
                 XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "zStreamFrames", _zStreamFrames.ToString());
                 XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "zFileEnable", _zFileEnable.ToString());
                 XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "zFilePosScale", _zFilePosScale.ToString());
-            }
-
-            nodeList = ExperimentDoc.SelectNodes("/ThorImageExperiment/EPITurret");
-
-            if (nodeList.Count > 0)
-            {
-                XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "pos", EpiTurretPos.ToString());
-                XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "name", EpiTurretName);
-            }
-            else
-            {
-                XmlNode n = ExperimentDoc.CreateNode(XmlNodeType.Element, "EPITurret", null);
-                XmlAttribute ps = ExperimentDoc.CreateAttribute("pos");
-                XmlAttribute nm = ExperimentDoc.CreateAttribute("name");
-                ps.Value = EpiTurretPos.ToString();
-                nm.Value = EpiTurretName;
-                n.Attributes.Append(ps);
-                n.Attributes.Append(nm);
-                ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment");
-                ndList[0].AppendChild(n);
             }
 
             nodeList = ExperimentDoc.SelectNodes("/ThorImageExperiment/Timelapse");

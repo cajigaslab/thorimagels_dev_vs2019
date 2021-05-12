@@ -27,10 +27,14 @@
 
         private const double TYPE2INCREMENT = 0.2;
 
+        private double _autoFocusAdaptiveOffset = 0.3;
+        private double _autoFocusOffset = 0.1650;
+        private double _autoFocusStart = -6.0;
         private int _beamExp;
         private int _beamExp2;
         private int _beamWavelength;
         private int _beamWavelength2;
+        private double _fineAutoFocusPercentage = 0.15;
         private XmlDocument _hardwareDoc = null;
         private double _maxExp = 2.0;
         private double _minExp = 1.0;
@@ -65,6 +69,48 @@
         #endregion Events
 
         #region Properties
+
+        public double AutoFocusAdaptiveOffset
+        {
+            get
+            {
+                return _autoFocusAdaptiveOffset;
+            }
+            set
+            {
+                _autoFocusAdaptiveOffset = value;
+                OnPropertyChanged("AutoFocusAdaptiveOffset");
+                SaveVisible = Visibility.Visible;
+            }
+        }
+
+        public double AutoFocusOffset
+        {
+            get
+            {
+                return _autoFocusOffset;
+            }
+            set
+            {
+                _autoFocusOffset = value;
+                OnPropertyChanged("AutoFocusOffset");
+                SaveVisible = Visibility.Visible;
+            }
+        }
+
+        public double AutoFocusStart
+        {
+            get
+            {
+                return _autoFocusStart;
+            }
+            set
+            {
+                _autoFocusStart = value;
+                OnPropertyChanged("AutoFocusStart");
+                SaveVisible = Visibility.Visible;
+            }
+        }
 
         public int BeamExp
         {
@@ -118,6 +164,20 @@
             {
                 _beamWavelength2 = value;
                 OnPropertyChanged("BeamWavelength2");
+                SaveVisible = Visibility.Visible;
+            }
+        }
+
+        public double FineAutoFocusPercentage
+        {
+            get
+            {
+                return _fineAutoFocusPercentage;
+            }
+            set
+            {
+                _fineAutoFocusPercentage = value;
+                OnPropertyChanged("FineAutoFocusPercentage");
                 SaveVisible = Visibility.Visible;
             }
         }
@@ -537,6 +597,26 @@
                     {
                         ZAxisEscapeDistance = Convert.ToDouble(str);
                     }
+
+                    if (GetAttribute(ndList[index], _hardwareDoc, "afScanStartMM", ref str))
+                    {
+                        AutoFocusStart = Convert.ToDouble(str);
+                    }
+
+                    if (GetAttribute(ndList[index], _hardwareDoc, "afFocusOffsetMM", ref str))
+                    {
+                        AutoFocusOffset = Convert.ToDouble(str);
+                    }
+
+                    if (GetAttribute(ndList[index], _hardwareDoc, "afAdaptiveOffsetMM", ref str))
+                    {
+                        AutoFocusAdaptiveOffset = Convert.ToDouble(str);
+                    }
+
+                    if (GetAttribute(ndList[index], _hardwareDoc, "fineAfPercentDecrease", ref str))
+                    {
+                        FineAutoFocusPercentage = Convert.ToDouble(str);
+                    }
                 }
             }
 
@@ -567,6 +647,10 @@
                     SetAttribute(ndList[index], _hardwareDoc, "turretPosition", (TurretPosition + 1).ToString());
                     SetAttribute(ndList[index], _hardwareDoc, "zAxisToEscape", ZAxisToEscape.ToString());
                     SetAttribute(ndList[index], _hardwareDoc, "zAxisEscapeDistance", ZAxisEscapeDistance.ToString());
+                    SetAttribute(ndList[index], _hardwareDoc, "afScanStartMM", AutoFocusStart.ToString());
+                    SetAttribute(ndList[index], _hardwareDoc, "afFocusOffsetMM", AutoFocusOffset.ToString());
+                    SetAttribute(ndList[index], _hardwareDoc, "afAdaptiveOffsetMM", AutoFocusAdaptiveOffset.ToString());
+                    SetAttribute(ndList[index], _hardwareDoc, "fineAfPercentDecrease", FineAutoFocusPercentage.ToString());
                     _hardwareDoc.Save(GetHardwareSettingsFileString());
                 }
                 else if (ndList.Count == index)
@@ -594,6 +678,10 @@
                     SetAttribute(ndList[index], _hardwareDoc, "turretPosition", "1");
                     SetAttribute(ndList[index], _hardwareDoc, "zAxisToEscape", "0");
                     SetAttribute(ndList[index], _hardwareDoc, "zAxisEscapeDistance", "0");
+                    SetAttribute(ndList[index], _hardwareDoc, "afScanStartMM", "-6.0");
+                    SetAttribute(ndList[index], _hardwareDoc, "afFocusOffsetMM", "0.1650");
+                    SetAttribute(ndList[index], _hardwareDoc, "afAdaptiveOffsetMM", "0.3");
+                    SetAttribute(ndList[index], _hardwareDoc, "fineAfPercentDecrease", "0.15");
 
                     _hardwareDoc.Save(GetHardwareSettingsFileString());
 

@@ -197,6 +197,20 @@ namespace ThorSharedTypes
     };
 
     /// <summary>
+    /// Thordaq signal types for analog or digital lines
+    /// </summary>
+    public enum SignalTypeThorDAQ
+    {
+        TDQANALOG_X = 0,
+        TDQANALOG_Y = 1,
+        TDQANALOG_POCKEL = 2,
+        TDQDIGITAL_LINES = 3,
+        TDQANALOG_Z = 4,
+        TDQSIGNALTYPE_LAST
+    };
+
+
+    /// <summary>
     /// status type for both ICamera and IDevice
     /// </summary>
     public enum StatusType
@@ -267,6 +281,37 @@ namespace ThorSharedTypes
         WaveformDriver_NI = 0,
         WaveformDriver_ThorDAQ,
         WaveformDriverLast = 1
+    };
+
+    public enum WAVEFORM_FILETYPE
+    {
+        H5 = 0,
+        MEMORY_MAP = 1,
+        CSV = 2,
+        LAST_FILE_TYPE
+    };
+
+    public enum AutoFocusTypes
+    {
+        AF_HARDWARE,
+        AF_HARDWARE_IMAGE,
+        AF_IMAGE,
+        AF_NONE
+    };
+
+    public enum AutoFocusStatusTypes
+    {
+        NOT_RUNNING,
+        STOPPED,
+        COARSE_AUTOFOCUS,
+        FINE_AUTOFOCUS,
+        HARDWARE_AUTOFOCUS
+    };
+
+    public enum ShutterState
+    {
+        SHUTTER_OPENED = 0,
+        SHUTTER_CLOSED = 1
     };
 
 #if __LINE__

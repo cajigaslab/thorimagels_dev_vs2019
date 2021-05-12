@@ -570,7 +570,17 @@
             set
             {
                 double rate = (null == this.BleachLSMPixelXY) ? 1.0 / value : (double)this.BleachLSMPixelXY[0] / value;
-                if ((rate >= 20) && (rate <= 1540))
+
+                double minRate = 20;
+                double maxRate = 1540;
+
+                //if ThorDAQ limit it to correct max and min rates
+                if  (WaveformDriverType.WaveformDriver_ThorDAQ == _captureSetup.WaveformDriverType)
+                {
+                    minRate = 20;
+                    maxRate = 1000;
+                }
+                if ((rate >= minRate) && (rate <= maxRate))
                 {
                     for (int i = 0; i < BleachParamList.Count; i++)
                     {

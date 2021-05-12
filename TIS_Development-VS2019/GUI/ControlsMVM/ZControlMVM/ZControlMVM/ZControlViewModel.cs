@@ -540,6 +540,7 @@
                 OnPropertyChanged("ZInvert");
                 OnPropertyChanged("ZInvertLimits");
                 OnPropertyChanged("ZPosition");
+                ((IMVM)MVMManager.Instance["AutoFocusControlViewModel", this]).OnPropertyChange("InvertZ");
                 PersistZInvert();
             }
         }

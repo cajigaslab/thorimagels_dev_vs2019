@@ -345,7 +345,7 @@ long ThorLSMCam::StatusProtocol(long &status)
 		}
 
 		//for the first frame wait for the thread to signal a completed frame
-		if(0 > _indexOfLastCompletedFrame)
+		if (0 > _indexOfLastCompletedFrame && ICamera::SW_FREE_RUN_MODE == _imgPtyDll.triggerMode)
 		{
 			if (WAIT_OBJECT_0 == WaitForSingleObject(_hFrmBufReady, 0))
 			{
@@ -361,7 +361,7 @@ long ThorLSMCam::StatusProtocol(long &status)
 				status = ThorLSMCam::_acquireStatus;
 			}
 		}
-		else if (_indexOfLastCopiedFrame == _indexOfLastCompletedFrame)
+		else if (_indexOfLastCopiedFrame == _indexOfLastCompletedFrame && ICamera::SW_FREE_RUN_MODE == _imgPtyDll.triggerMode)
 		{
 			//current frame in acquisition
 			status = ThorLSMCam::_acquireStatus;
@@ -376,7 +376,7 @@ long ThorLSMCam::StatusProtocol(long &status)
 			status = ICamera::STATUS_BUSY;
 
 			//move the source pointer if the indexes don't match
-			if(_indexOfLastCopiedFrame < comparisonIndex)
+			if (_indexOfLastCopiedFrame < _indexOfLastCompletedFrame)
 			{
 				//If in live mode, change index to the last acquired image
 				//this allows for a more realtime feel when displaying the latest image
@@ -478,6 +478,8 @@ long ThorLSMCam::CopyProtocol(char *pDataBuffer)
 			}
 			else
 			{
+				StringCbPrintfW(_errMsg, _MAX_PATH, L"buffer index %d, dma buffers %d", ((_bufCompleteID - 1 + _imgPtyDll.dmaBufferCount - frameDifference) % _imgPtyDll.dmaBufferCount), _imgPtyDll.dmaBufferCount);
+				LogMessage(_errMsg, INFORMATION_EVENT);
 				//wait if the frame is locked, must copy completed frame
 				WaitForSingleObject(_hFrmBufHandle, INFINITE);
 

@@ -436,9 +436,9 @@ For full license details, see the accompanying LICENSE file.
 *             , mono_image_height
 *             , 0
 *             , 0
-*             , BAYER_BLUE
-*             , BGR_PLANAR
-*             , BAYER
+*             , TL_COLOR_FILTER_ARRAY_PHASE_BAYER_BLUE
+*             , TL_COLOR_FORMAT_BGR_PLANAR
+*             , TL_COLOR_FILTER_TYPE_BAYER
 *             , 14
 *             , input_monochrome_frame
 *             , demosaic_color_buffer) != TL_COLOR_NO_ERROR)
@@ -479,7 +479,7 @@ For full license details, see the accompanying LICENSE file.
 *         // Color process the demosaic color frame.
 *         if (tl_color_transform_48_to_48(color_processor_inst
 *             , demosaic_color_buffer // input buffer
-*             , BGR_PLANAR          // input buffer format
+*             , TL_COLOR_FORMAT_BGR_PLANAR          // input buffer format
 *             , 0                     // blue minimum clamp value
 *             , 1 << 14               // blue maximum clamp value (14 bit pixel data)
 *             , 0                     // green minimum clamp value
@@ -490,7 +490,7 @@ For full license details, see the accompanying LICENSE file.
 *             , 0                     // green shift distance
 *             , 0                     // red shift distance
 *             , output_color_frame    // output buffer
-*             , BGR_PIXEL       // output buffer format
+*             , TL_COLOR_FORMAT_BGR_PIXEL       // output buffer format
 *             , mono_image_width * mono_image_height) != TL_COLOR_NO_ERROR)
 *         {
 *             printf("Failed to color process the demosaic color frame!\n");
@@ -525,8 +525,6 @@ For full license details, see the accompanying LICENSE file.
 *
 *         return 0;
 *     }
-* \n\n\n\n
-* Rev. B 2018-08-21 ITN003542-D01
 */
 
 #pragma once

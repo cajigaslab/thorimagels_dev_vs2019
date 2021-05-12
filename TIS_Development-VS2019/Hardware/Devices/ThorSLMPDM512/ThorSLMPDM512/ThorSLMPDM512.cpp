@@ -58,6 +58,7 @@ ThorSLM::ThorSLM() :
 	_doHologram = false;
 	_wavelength[0] = _wavelength[1] = 0;
 	_selectWavelength = 0;
+	_power2Px =0;
 }
 
 ThorSLM* ThorSLM::getInstance()
@@ -85,7 +86,6 @@ ThorSLM::~ThorSLM()
 			delete[] _fitCoeff[i];
 			_fitCoeff[i] = NULL;
 		}
-
 	}
 	if(NULL != _pixelRange)
 	{
@@ -110,7 +110,7 @@ long ThorSLM::FindDevices(long &deviceCount)
 	_deviceDetected = TRUE;
 	try
 	{
-		if(FALSE == pSetup->GetSpec(_pSlmName,_dmdMode,_overDrive,_transientFrames,_pixelUM,_pixelRange[0],_pixelRange[1],_pixelRange[2],_pixelRange[3], _lutFile, _overDrivelutFile, _wavefrontFile))
+		if(FALSE == pSetup->GetSpec(_pSlmName,_dmdMode,_overDrive,_transientFrames,_pixelRange[0],_pixelRange[1],_pixelRange[2],_pixelRange[3], _lutFile, _overDrivelutFile, _wavefrontFile))
 		{
 			StringCbPrintfW(_errMsg,MSG_SIZE,L"GetSpec from ThorSLMPDM512Settings failed.");
 			LogMessage(_errMsg,ERROR_EVENT);
@@ -196,11 +196,6 @@ long ThorSLM::SelectDevice(const long device)
 		//catch each independetly so that as many tags as possible can be read
 		try
 		{
-			if(FALSE == pSetup->GetPostTransform(_verticalFlip, _rotateAngle, _scaleFactor[0], _scaleFactor[1], _offsetPixels[0], _offsetPixels[1]))
-			{
-				StringCbPrintfW(_errMsg,MSG_SIZE,L"GetPostTransform from ThorSLMPDM512Settings failed.");
-				LogMessage(_errMsg,ERROR_EVENT);
-			}
 			_wavelength[0] = _wavelength[1] = 0;
 			for (int i = 0; i < Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT; i++)
 			{
@@ -209,8 +204,13 @@ long ThorSLM::SelectDevice(const long device)
 					StringCbPrintfW(_errMsg,MSG_SIZE,L"GetCalibration from ThorSLMPDM512Settings failed.");
 					LogMessage(_errMsg,ERROR_EVENT);
 				}
+				if(FALSE == pSetup->GetPostTransform(i+1,_verticalFlip[i], _rotateAngle[i], _scaleFactor[i][0], _scaleFactor[i][1], _offsetPixels[i][0], _offsetPixels[i][1]))
+				{
+					StringCbPrintfW(_errMsg,MSG_SIZE,L"GetPostTransform from ThorSLMPDM512Settings failed.");
+					LogMessage(_errMsg,ERROR_EVENT);
+				}
 			}
-			if(FALSE == pSetup->GetSpec(_pSlmName,_dmdMode,_overDrive,_transientFrames,_pixelUM,_pixelRange[0],_pixelRange[1],_pixelRange[2],_pixelRange[3], _lutFile, _overDrivelutFile, _wavefrontFile))
+			if(FALSE == pSetup->GetSpec(_pSlmName,_dmdMode,_overDrive,_transientFrames,_pixelRange[0],_pixelRange[1],_pixelRange[2],_pixelRange[3], _lutFile, _overDrivelutFile, _wavefrontFile))
 			{
 				StringCbPrintfW(_errMsg,MSG_SIZE,L"GetSpec from ThorSLMPDM512Settings failed.");
 				LogMessage(_errMsg,ERROR_EVENT);
@@ -551,9 +551,9 @@ long ThorSLM::SetParam(const long paramID, const double param)
 				_fitCoeff[_selectWavelength][6] = 0; _fitCoeff[_selectWavelength][7] = 0; 
 
 				//reset post affine transform params:
-				_rotateAngle = 0.0;
-				_scaleFactor[0] = _scaleFactor[1] = 1.0;
-				_verticalFlip = _offsetPixels[0] = _offsetPixels[1] = 0;
+				_rotateAngle[_selectWavelength] = 0.0;
+				_scaleFactor[_selectWavelength][0] = _scaleFactor[_selectWavelength][1] = 1.0;
+				_verticalFlip[_selectWavelength] = _offsetPixels[_selectWavelength][0] = _offsetPixels[_selectWavelength][1] = 0;
 				PersistAffineValues();
 			}
 		}
@@ -564,7 +564,7 @@ long ThorSLM::SetParam(const long paramID, const double param)
 			if(static_cast<long> (param))
 			{
 				//set blank image:
-				size_t imgSize = _pixelX * _pixelY * RGB_CNT* sizeof(unsigned char);
+				size_t imgSize = _pixelRange[1] * _pixelRange[3] * RGB_CNT* sizeof(unsigned char);
 				unsigned char* pImg = (unsigned char*)malloc(imgSize);
 				memset(pImg, 0, imgSize);
 
@@ -576,8 +576,8 @@ long ThorSLM::SetParam(const long paramID, const double param)
 				{
 					BITMAPINFO bmi;
 					bmi.bmiHeader.biSize = 40;
-					bmi.bmiHeader.biWidth = _pixelX;
-					bmi.bmiHeader.biHeight = _pixelY;
+					bmi.bmiHeader.biWidth = _pixelRange[1];
+					bmi.bmiHeader.biHeight = _pixelRange[3];
 					bmi.bmiHeader.biPlanes = 1;
 					bmi.bmiHeader.biBitCount = CHAR_BIT * RGB_CNT;
 					bmi.bmiHeader.biSizeImage = (DWORD)imgSize;
@@ -587,7 +587,7 @@ long ThorSLM::SetParam(const long paramID, const double param)
 					bmi.bmiHeader.biClrUsed = 256;
 					bmi.bmiHeader.biClrImportant = 256;
 					winDVI->EditBMP(0, pImg, bmi);
-					winDVI->CreateDVIWindow(_pixelX, _pixelY);
+					winDVI->CreateDVIWindow(_pixelRange[1], _pixelRange[3]);
 					winDVI->DisplayBMP(0);
 				}
 
@@ -616,16 +616,33 @@ long ThorSLM::SetParam(const long paramID, const double param)
 long ThorSLM::SetParamBuffer(const long paramID, char * pBuffer, long size)
 {
 	long ret = TRUE;
+	float* pSrc = (float*)pBuffer;
+	long centerTransVec[XY_COORD] = {0}; ///<translate vector [x,y] from image center to power of 2 square center
+
 	switch (paramID)
 	{
 	case IDevice::PARAM_SLM_POINTS_ARRAY:
-		_fpPointsXY[_arrayOrFileID] = (float *) realloc((void*)_fpPointsXY[_arrayOrFileID], size * sizeof(float));
+		//image center at the first [x, y]
+		_power2Px = static_cast<long>(max(max(pow(2, ceil(log2(_pixelRange[1]))), pow(2, ceil(log2(_pixelRange[3])))),
+			max(pow(2, ceil(log2(*pSrc*2))), pow(2, ceil(log2(*(pSrc+1)*2))))));
+
+		for (int i = 0; i < XY_COORD; i++)
+		{
+			centerTransVec[i] = max(0, static_cast<long>(floor(_power2Px/2)) - static_cast<long>(*pSrc));
+			pSrc++;
+		}
+
+		//Expect this waveform include X and Y (interleaved), 
+		//translate both from[0] and target[1] to power of 2 square coordinate
+		_fpPointsXY[_arrayOrFileID] = (float *) realloc((void*)_fpPointsXY[_arrayOrFileID], (size-XY_COORD) * sizeof(float));
 		if(NULL == _fpPointsXY[_arrayOrFileID])
 			return FALSE;
-
-		//Expect this waveform include X and Y (interleaved):
-		std::memcpy((void*)_fpPointsXY[_arrayOrFileID], pBuffer, size * sizeof(float));
-		_fpPointsXYSize[_arrayOrFileID] = size;
+		for (int i = 0; i < (size-XY_COORD); i++)
+		{
+			_fpPointsXY[_arrayOrFileID][i] = *pSrc + centerTransVec[i%2];
+			pSrc++;
+		}
+		_fpPointsXYSize[_arrayOrFileID] = (size-XY_COORD);
 		break;
 	default:
 		ret = FALSE;
@@ -813,21 +830,22 @@ long ThorSLM::SetupPosition()
 				if(doAffine)
 				{
 					//flip, scale & rotate before affine coeffs calculation:
-					if(_verticalFlip)
+					if(_verticalFlip[_selectWavelength])
 					{
 						CoordinatesVerticalFlip(_fpPointsXY[0],_fpPointsXYSize[0]);
 						CoordinatesVerticalFlip(_fpPointsXY[1],_fpPointsXYSize[1]);
 					}
-					if(((1.0 != _scaleFactor[0]) || (1.0 != _scaleFactor[1])) && ((0.0 < _scaleFactor[0]) && (0.0 < _scaleFactor[1])))
+					if(((1.0 != _scaleFactor[_selectWavelength][0]) || (1.0 != _scaleFactor[_selectWavelength][1])) && ((0.0 < _scaleFactor[_selectWavelength][0]) && (0.0 < _scaleFactor[_selectWavelength][1])))
 					{
-						CoordinatesScale(_fpPointsXY[0],_fpPointsXYSize[0],_scaleFactor[0],_scaleFactor[1]);
-						CoordinatesScale(_fpPointsXY[1],_fpPointsXYSize[1],_scaleFactor[0],_scaleFactor[1]);
+						CoordinatesScale(_fpPointsXY[0],_fpPointsXYSize[0],_scaleFactor[_selectWavelength][0],_scaleFactor[_selectWavelength][1]);
+						CoordinatesScale(_fpPointsXY[1],_fpPointsXYSize[1],_scaleFactor[_selectWavelength][0],_scaleFactor[_selectWavelength][1]);
 					}
-					if(0.0 != _rotateAngle)
+					if(0.0 != _rotateAngle[_selectWavelength])
 					{
-						CoordinatesRotate(_fpPointsXY[0],_fpPointsXYSize[0], _rotateAngle);
-						CoordinatesRotate(_fpPointsXY[1],_fpPointsXYSize[1], _rotateAngle);
+						CoordinatesRotate(_fpPointsXY[0],_fpPointsXYSize[0], _rotateAngle[_selectWavelength]);
+						CoordinatesRotate(_fpPointsXY[1],_fpPointsXYSize[1], _rotateAngle[_selectWavelength]);
 					}
+					holoGen->SetSize(_power2Px, _power2Px, 1.0);	//pixel size is not critical in coefficient calculation
 					if(TRUE == holoGen->CalculateCoeffs(_fpPointsXY[0],_fpPointsXY[1],_fpPointsXYSize[1], GeoFittingAlg::PROJECTIVE, _fitCoeff[_selectWavelength]))
 					{
 						PersistAffineValues();
@@ -955,6 +973,7 @@ long ThorSLM::PostflightPosition()
 		//terminate HW trigger task, and clear mem:
 		CloseNITasks();
 		_bufferCount = 1;
+		SetParam((long)(IDevice::PARAM_SLM_BLANK), TRUE);
 		if((_overDrive) && (0 == _pSlmName.compare("PDM512")))
 		{
 			_blinkSDK->Stop_sequence();
@@ -1046,10 +1065,10 @@ long ThorSLM::CoordinatesRotate(float* ptArrays, long size, double angle)
 	//offset to center for rotation:
 	for (long i = 0; i < (size/2); i++)
 	{
-		float x = ptArrays[2*i] - (_pixelX/2);
-		float y = ptArrays[2*i+1] - (_pixelY/2);
-		ptArrays[2*i] = static_cast<float>((x*cos(angleRad)) + (y*sin(angleRad))) + (_pixelX/2);
-		ptArrays[2*i+1] = static_cast<float>((y*cos(angleRad)) - (x*sin(angleRad))) + (_pixelY/2);
+		float x = ptArrays[2*i] - (_power2Px/2);
+		float y = ptArrays[2*i+1] - (_power2Px/2);
+		ptArrays[2*i] = static_cast<float>((x*cos(angleRad)) + (y*sin(angleRad))) + (_power2Px/2);
+		ptArrays[2*i+1] = static_cast<float>((y*cos(angleRad)) - (x*sin(angleRad))) + (_power2Px/2);
 	}
 	return retVal;
 }
@@ -1066,10 +1085,10 @@ long ThorSLM::CoordinatesScale(float* ptArrays, long size, double scaleX, double
 	//offset to center for scale:
 	for (long i = 0; i < (size/2); i++)
 	{
-		float x = ptArrays[2*i] - (_pixelX/2);
-		float y = ptArrays[2*i+1] - (_pixelY/2);
-		ptArrays[2*i] = static_cast<float>(x*scaleX) + (_pixelX/2);
-		ptArrays[2*i+1] = static_cast<float>(y*scaleY) + (_pixelY/2);
+		float x = ptArrays[2*i] - (_power2Px/2);
+		float y = ptArrays[2*i+1] - (_power2Px/2);
+		ptArrays[2*i] = static_cast<float>(x*scaleX) + (_power2Px/2);
+		ptArrays[2*i+1] = static_cast<float>(y*scaleY) + (_power2Px/2);
 	}
 	return retVal;
 }
@@ -1088,7 +1107,7 @@ long ThorSLM::CoordinatesVerticalFlip(float* ptArrays, long size)
 		float x = ptArrays[2*i];
 		float y = ptArrays[2*i+1];
 		ptArrays[2*i] = x;
-		ptArrays[2*i+1] = _pixelY - y;
+		ptArrays[2*i+1] = _power2Px - y;
 	}
 	return retVal;
 }
@@ -1117,7 +1136,7 @@ long ThorSLM::PersistAffineValues()
 		retVal = FALSE;
 	}
 
-	if(FALSE == pSetup->SetPostTransform(_verticalFlip, _rotateAngle, _scaleFactor[0], _scaleFactor[1], _offsetPixels[0], _offsetPixels[1]))
+	if(FALSE == pSetup->SetPostTransform(_selectWavelength+1,_verticalFlip[_selectWavelength], _rotateAngle[_selectWavelength], _scaleFactor[_selectWavelength][0], _scaleFactor[_selectWavelength][1], _offsetPixels[_selectWavelength][0], _offsetPixels[_selectWavelength][1]))
 	{
 		StringCbPrintfW(_errMsg,MSG_SIZE,L"SetPreTransform from ThorSLMPDM512Settings failed");
 		LogMessage(_errMsg,ERROR_EVENT);
@@ -1178,8 +1197,7 @@ BOOL ThorSLM::ReadLUTFile(std::wstring fileName)
 
 BOOL ThorSLM::ReadWavefrontFile(std::wstring fileName)
 {
-	int imgWidth, imgHeight;
-	long size, newSize;
+	long newSize;
 	BITMAPINFO bmi;
 
 	//clear memory:
@@ -1192,7 +1210,7 @@ BOOL ThorSLM::ReadWavefrontFile(std::wstring fileName)
 	//load calibration file:
 	if(0 < fileName.length())
 	{		
-		unsigned char* imgCalRead = LoadBMP(&imgWidth, &imgHeight, &size, &bmi.bmiHeader, fileName.c_str());
+		unsigned char* imgCalRead = LoadBMP(&bmi.bmiHeader, fileName.c_str());
 		if(NULL == imgCalRead)
 		{
 			StringCbPrintfW(_errMsg,MSG_SIZE,L"ThorSLMPDM512 LoadWavefrontFile: load bmp file failed.");
@@ -1217,7 +1235,7 @@ BOOL ThorSLM::ReadAndScaleBitmap(int mode)
 	long ret = TRUE, size;
 	BITMAPINFO bmi;
 
-	unsigned char* imgRead = (FALSE == _slm3D) ? GetAndProcessBMP(size, bmi) : GetAndProcessText(size, bmi);
+	unsigned char* imgRead = (FALSE == _slm3D) ? GetAndProcessBMP(bmi) : GetAndProcessText(bmi);
 	if(NULL == imgRead)
 	{
 		return FALSE;
@@ -1273,7 +1291,8 @@ BOOL ThorSLM::ReadAndScaleBitmap(int mode)
 		return ret;
 	}
 
-	long tSize = _pixelX * _pixelY * RGB_CNT;
+	int channelCount = RGB_CNT;
+	long tSize = bmi.bmiHeader.biWidth * bmi.bmiHeader.biHeight * channelCount;
 	BYTE* pImg = new BYTE[tSize];
 	if(NULL == pImg)
 	{
@@ -1286,55 +1305,56 @@ BOOL ThorSLM::ReadAndScaleBitmap(int mode)
 	switch (mode)
 	{
 	case 0:		//General: RGB are identical
-		for (int row=0; row<_pixelY; row++)
+		for (int row=0; row<bmi.bmiHeader.biHeight; row++)
 		{
-			for (int col=0; col<_pixelX; col++)
+			for (int col=0; col<bmi.bmiHeader.biWidth; col++)
 			{
-				pImg[row*_pixelX*RGB_CNT + col*RGB_CNT + 0] = imgRead[row*_pixelX + col];
-				pImg[row*_pixelX*RGB_CNT + col*RGB_CNT + 1] = pImg[row*_pixelX*RGB_CNT + col*RGB_CNT + 0];
-				pImg[row*_pixelX*RGB_CNT + col*RGB_CNT + 2] = pImg[row*_pixelX*RGB_CNT + col*RGB_CNT + 0];
+				for (int k = 0; k < channelCount; k++)
+				{
+					pImg[row*bmi.bmiHeader.biWidth*channelCount + col*channelCount + k] = imgRead[row*bmi.bmiHeader.biWidth + col];
+				}
 			}
 		}
 		break;
 	case 1:		//Meadowlark: (R: Volt, G: Hologram, B: 0)
-		switch ((int)(size/_pixelX/_pixelY))
+		switch ((int)(size/bmi.bmiHeader.biWidth/bmi.bmiHeader.biHeight))
 		{
 			int PixVal;
 		case 1:
 			//make the info we have our most significan bits - GREEN
-			for (int row=0; row<_pixelY; row++)
+			for (int row=0; row<bmi.bmiHeader.biHeight; row++)
 			{
-				for (int col=0; col<_pixelX; col++)
+				for (int col=0; col<bmi.bmiHeader.biWidth; col++)
 				{
-					PixVal = imgRead[row*_pixelX + col]<<CHAR_BIT;
+					PixVal = imgRead[row*bmi.bmiHeader.biWidth + col]<<CHAR_BIT;
 					PixVal = (NULL == _imgWavefront) ? _tableLUT[PixVal] :	//GREEN (high 8 bits) + RED (low 8 bits)
-						_tableLUT[((PixVal + static_cast<int>((_imgWavefront[row*_pixelX*RGB_CNT + col*RGB_CNT + 1]<<CHAR_BIT) + (_imgWavefront[row*_pixelX*RGB_CNT + col*RGB_CNT + 0]))) % (LUT_SIZE - 1))];
-					pImg[row*_pixelX*RGB_CNT + col*RGB_CNT + 0] = (unsigned char)PixVal;	//RED
-					pImg[row*_pixelX*RGB_CNT + col*RGB_CNT + 1] = (PixVal>>CHAR_BIT);		//GREEN
-					pImg[row*_pixelX*RGB_CNT + col*RGB_CNT + 2] = 0;						//BLUE
+						_tableLUT[((PixVal + static_cast<int>((_imgWavefront[row*bmi.bmiHeader.biWidth*RGB_CNT + col*RGB_CNT + 1]<<CHAR_BIT) + (_imgWavefront[row*bmi.bmiHeader.biWidth*RGB_CNT + col*RGB_CNT + 0]))) % (LUT_SIZE - 1))];
+					pImg[row*bmi.bmiHeader.biWidth*RGB_CNT + col*RGB_CNT + 0] = (unsigned char)PixVal;	//RED
+					pImg[row*bmi.bmiHeader.biWidth*RGB_CNT + col*RGB_CNT + 1] = (PixVal>>CHAR_BIT);		//GREEN
+					pImg[row*bmi.bmiHeader.biWidth*RGB_CNT + col*RGB_CNT + 2] = 0;						//BLUE
 				}
 			}		
 			break;
 		case RGB_CNT:
 			//not tested yet, should already be RGB:
 			BYTE bByte, gByte, rByte;
-			for (int row=0; row<_pixelY; row++)
+			for (int row=0; row<bmi.bmiHeader.biHeight; row++)
 			{
-				for (int col=0; col<_pixelX; col++)
+				for (int col=0; col<bmi.bmiHeader.biWidth; col++)
 				{
-					rByte = imgRead[row*_pixelX*RGB_CNT + col*RGB_CNT + 0];
-					gByte = imgRead[row*_pixelX*RGB_CNT + col*RGB_CNT + 1];
-					bByte = imgRead[row*_pixelX*RGB_CNT + col*RGB_CNT + 2];
+					rByte = imgRead[row*bmi.bmiHeader.biWidth*RGB_CNT + col*RGB_CNT + 0];
+					gByte = imgRead[row*bmi.bmiHeader.biWidth*RGB_CNT + col*RGB_CNT + 1];
+					bByte = imgRead[row*bmi.bmiHeader.biWidth*RGB_CNT + col*RGB_CNT + 2];
 					PixVal = (gByte<<8) + rByte;
 					PixVal = (NULL == _imgWavefront) ? _tableLUT[PixVal] :	//GREEN (high 8 bits) + RED (low 8 bits)
-						_tableLUT[((PixVal + static_cast<int>((_imgWavefront[row*_pixelX*RGB_CNT + col*RGB_CNT + 1]<<CHAR_BIT) + (_imgWavefront[row*_pixelX*RGB_CNT + col*RGB_CNT + 0]))) % (LUT_SIZE - 1))];
-					pImg[row*_pixelX*RGB_CNT + col*RGB_CNT + 0] = (unsigned char)PixVal;	//RED
-					pImg[row*_pixelX*RGB_CNT + col*RGB_CNT + 1] = (PixVal>>8);				//GREEN
-					pImg[row*_pixelX*RGB_CNT + col*RGB_CNT + 2] = 0;						//BLUE
+						_tableLUT[((PixVal + static_cast<int>((_imgWavefront[row*bmi.bmiHeader.biWidth*RGB_CNT + col*RGB_CNT + 1]<<CHAR_BIT) + (_imgWavefront[row*bmi.bmiHeader.biWidth*RGB_CNT + col*RGB_CNT + 0]))) % (LUT_SIZE - 1))];
+					pImg[row*bmi.bmiHeader.biWidth*RGB_CNT + col*RGB_CNT + 0] = (unsigned char)PixVal;	//RED
+					pImg[row*bmi.bmiHeader.biWidth*RGB_CNT + col*RGB_CNT + 1] = (PixVal>>8);			//GREEN
+					pImg[row*bmi.bmiHeader.biWidth*RGB_CNT + col*RGB_CNT + 2] = 0;						//BLUE
 				}
 			}
 			break;
-		} 
+		}
 		break;
 	default:
 		break;
@@ -1342,7 +1362,7 @@ BOOL ThorSLM::ReadAndScaleBitmap(int mode)
 
 	//add to DVI with converted-back bmp:
 	bmi.bmiHeader.biSizeImage = tSize;
-	bmi.bmiHeader.biBitCount = CHAR_BIT * RGB_CNT;
+	bmi.bmiHeader.biBitCount = CHAR_BIT * channelCount;
 	BYTE* imgBGR = ConvertRGBToBGRBuffer(pImg, bmi.bmiHeader, &size);
 	winDVI->EditBMP(_arrayOrFileID, imgBGR, bmi);
 
@@ -1353,7 +1373,7 @@ BOOL ThorSLM::ReadAndScaleBitmap(int mode)
 
 	//create window, let winDVI to decide 
 	//whether to create a new one or not:
-	winDVI->CreateDVIWindow(_pixelX, _pixelY);
+	winDVI->CreateDVIWindow(bmi.bmiHeader.biWidth, bmi.bmiHeader.biHeight);
 	return TRUE;
 }
 
@@ -1402,7 +1422,7 @@ long ThorSLM::SaveHologram(bool saveInSubFolder)
 {
 	long size;
 	BITMAPINFO bmi;
-	unsigned char* imgRead = GetAndProcessBMP(size, bmi);
+	unsigned char* imgRead = GetAndProcessBMP(bmi);
 	if(NULL == imgRead)
 	{
 		return FALSE;
@@ -1430,7 +1450,7 @@ long ThorSLM::SaveHologram(bool saveInSubFolder)
 	}
 
 	unsigned char* imgBGR = ConvertRGBToBGRBuffer(imgRead, bmi.bmiHeader, &size);
-	SaveBMP(imgBGR, _pixelX, _pixelY, size, rawPath);
+	SaveBMP(imgBGR, bmi.bmiHeader.biWidth, bmi.bmiHeader.biHeight, size, rawPath);
 
 	delete[] imgRead;
 	delete[] imgBGR;
@@ -1441,38 +1461,49 @@ long ThorSLM::SaveHologram(bool saveInSubFolder)
 unsigned char* ThorSLM::MapImageHologram(const wchar_t* pathAndFilename, PBITMAPINFO pbmi)
 {
 	//test load of bmp
-	long size;
-	int imgWidth, imgHeight;
-	unsigned char* imgRead = LoadBMP(&imgWidth, &imgHeight, &size, &pbmi->bmiHeader, pathAndFilename);
+	unsigned char* imgRead = LoadBMP(&pbmi->bmiHeader, pathAndFilename);
 	if (NULL == imgRead)
 		return NULL;
 
+	//map to power of 2 square image, then crop later
+	//consider case with image size larger than SLM
+	_power2Px = static_cast<long>(max(max(pow(2, ceil(log2(_pixelRange[1]))), pow(2, ceil(log2(_pixelRange[3])))),
+		max(pow(2, ceil(log2(pbmi->bmiHeader.biWidth))), pow(2, ceil(log2(pbmi->bmiHeader.biHeight))))));
+
 	//return if the same size
-	if (_pixelRange[1] == imgWidth && _pixelRange[3] == imgHeight)
+	if (!_doHologram || _power2Px == pbmi->bmiHeader.biWidth && _power2Px == pbmi->bmiHeader.biHeight)
 	{
-		_pixelY = imgHeight;
-		_pixelX = imgWidth;
+		_pixelX = pbmi->bmiHeader.biWidth;
+		_pixelY = pbmi->bmiHeader.biHeight;
 		return imgRead;
 	}
 
 	//convert buffer
 	long newSize;
 	unsigned char* imgRGB = ConvertBGRToRGBBuffer(imgRead, pbmi->bmiHeader, &newSize);
-	double pixelUM = (double)Constants::M_TO_UM / pbmi->bmiHeader.biXPelsPerMeter; //[um]
+	double pixelUM = (0 >= pbmi->bmiHeader.biXPelsPerMeter) ? 1.0 : (double)Constants::M_TO_UM / pbmi->bmiHeader.biXPelsPerMeter; //[um]
 
-	//--- START mapping to maximum SLM image size ---//	
+	//--- START mapping to maximum image size for hologram calculation ---//	
+	//               power of 2 square               //
+	//          ___________________________          //
+	//          |                         |          //
+	//          |      Image Width        |          //
+	//          |   __________________    |          //
+	//          |   |                |    |          //
+	//          |   |Image Height    |    |power of 2 square //
+	//          |   |                |    |          //
+	//          |   |________________|    |          //
+	//          |                         |          //
+	//          |                         |          //
+	//          |_________________________|          //
 	int channelCnt = static_cast<int>(pbmi->bmiHeader.biBitCount/CHAR_BIT);
-	size_t imgMapRGBBufSize = _pixelRange[1]*_pixelRange[3]*channelCnt;
+	size_t imgMapRGBBufSize = static_cast<int>(pow(_power2Px,2))*channelCnt;
 	BYTE* imgMapRGB = new BYTE[imgMapRGBBufSize];
 	memset(imgMapRGB,0x0,imgMapRGBBufSize*sizeof(BYTE));
 
-	//copy to buffer
-	int centerX = static_cast<int>(floor(imgWidth/2));
-	int centerY = static_cast<int>(floor(imgHeight/2));
-	int newCenterX = static_cast<int>(floor(_pixelRange[1]/2));
-	int newCenterY = static_cast<int>(floor(_pixelRange[3]/2));
-	double vecX = newCenterX * _pixelUM - centerX * pixelUM;
-	double vecY = newCenterY * _pixelUM - centerY * pixelUM;
+	//copy to buffer, vector: center of source image -> center of power of 2 square
+	double vecX = static_cast<int>(floor(_power2Px/2)) - static_cast<int>(floor(pbmi->bmiHeader.biWidth/2));
+	double vecY = static_cast<int>(floor(_power2Px/2)) - static_cast<int>(floor(pbmi->bmiHeader.biHeight/2));
 
 	BYTE* pSrc = imgRGB;
 	BYTE* pDst = imgMapRGB;
@@ -1486,30 +1517,32 @@ unsigned char* ThorSLM::MapImageHologram(const wchar_t* pathAndFilename, PBITMAP
 				int sourceX = (i-(i%channelCnt))/channelCnt;
 				int sourceY = j;
 				target.clear();
-				target.push_back(pair<int,int>(static_cast<int>(floor((sourceX*pixelUM + vecX)/_pixelUM)), static_cast<int>(floor((sourceY*pixelUM + vecY)/_pixelUM))));
+				target.push_back(pair<int,int>(static_cast<int>(floor(sourceX + vecX)), static_cast<int>(floor(sourceY + vecY))));
 				//avoid filling if single dot
-				if (0 < *(imgRGB + ((j-1) * pbmi->bmiHeader.biWidth * channelCnt + (i-channelCnt)))
-					|| 0 < *(imgRGB + (j * pbmi->bmiHeader.biWidth * channelCnt + (i-channelCnt)))
-					|| 0 < *(imgRGB + ((j+1) * pbmi->bmiHeader.biWidth * channelCnt + (i-channelCnt)))
-					|| 0 < *(imgRGB + ((j-1) * pbmi->bmiHeader.biWidth * channelCnt + i))
-					|| 0 < *(imgRGB + ((j+1) * pbmi->bmiHeader.biWidth * channelCnt + i))
-					|| 0 < *(imgRGB + ((j-1) * pbmi->bmiHeader.biWidth * channelCnt + (i+channelCnt)))
+				if ((j > 1 && i > channelCnt && 0 < *(imgRGB + ((j-1) * pbmi->bmiHeader.biWidth * channelCnt + (i-channelCnt))))
+					|| (0 < *(imgRGB + (j * pbmi->bmiHeader.biWidth * channelCnt + (i-channelCnt))))
+					|| (0 < *(imgRGB + ((j+1) * pbmi->bmiHeader.biWidth * channelCnt + (i-channelCnt))))
+					|| (j > 1 && 0 < *(imgRGB + ((j-1) * pbmi->bmiHeader.biWidth * channelCnt + i)))
+					|| (0 < *(imgRGB + ((j+1) * pbmi->bmiHeader.biWidth * channelCnt + i)))
+					|| (j > 1 && 0 < *(imgRGB + ((j-1) * pbmi->bmiHeader.biWidth * channelCnt + (i+channelCnt))))
 					|| 0 < *(imgRGB + (j * pbmi->bmiHeader.biWidth * channelCnt + (i+channelCnt)))
 					|| 0 < *(imgRGB + ((j+1) * pbmi->bmiHeader.biWidth * channelCnt + (i+channelCnt)))
 					)
 				{
-					target.push_back(pair<int,int>(static_cast<int>(ceil((sourceX*pixelUM + vecX)/_pixelUM)), static_cast<int>(ceil((sourceY*pixelUM + vecY)/_pixelUM))));
-					target.push_back(pair<int,int>(static_cast<int>(floor((sourceX*pixelUM + vecX)/_pixelUM)), static_cast<int>(ceil((sourceY*pixelUM + vecY)/_pixelUM))));
-					target.push_back(pair<int,int>(static_cast<int>(ceil((sourceX*pixelUM + vecX)/_pixelUM)), static_cast<int>(floor((sourceY*pixelUM + vecY)/_pixelUM))));
+					target.push_back(pair<int,int>(static_cast<int>(ceil(sourceX + vecX)), static_cast<int>(ceil(sourceY + vecY))));
+					target.push_back(pair<int,int>(static_cast<int>(floor(sourceX + vecX)), static_cast<int>(ceil(sourceY + vecY))));
+					target.push_back(pair<int,int>(static_cast<int>(ceil(sourceX + vecX)), static_cast<int>(floor(sourceY + vecY))));
 				}
 				for (int i = 0; i < target.size(); i++)
 				{
-					//map from image to slm by overlapping center locations
-					if (imgMapRGBBufSize > (target[i].second * _pixelRange[1] + target[i].first) * channelCnt + 2)
+					//map from image to slm by overlapping center locations, validate data range
+					if (imgMapRGBBufSize >= (target[i].second * _power2Px + target[i].first) * channelCnt + 2 && 
+						0 <= (target[i].second * _power2Px + target[i].first))
 					{
-						*(pDst + (target[i].second * _pixelRange[1] + target[i].first) * channelCnt) = *pSrc;
-						*(pDst + (target[i].second * _pixelRange[1] + target[i].first) * channelCnt + 1) = *(pSrc+1);
-						*(pDst + (target[i].second * _pixelRange[1] + target[i].first) * channelCnt + 2) = *(pSrc+2);
+						for (int k = 0; k < channelCnt; k++)
+						{
+							*(pDst + (target[i].second * _power2Px + target[i].first) * channelCnt + k) = *(pSrc + k);
+						}
 					}
 				}
 			}
@@ -1519,11 +1552,15 @@ unsigned char* ThorSLM::MapImageHologram(const wchar_t* pathAndFilename, PBITMAP
 	delete[] imgRGB;
 	delete[] imgRead;
 
-	//set bmi header to SLM dimension
-	_pixelX = pbmi->bmiHeader.biWidth = _pixelRange[1];
-	_pixelY = pbmi->bmiHeader.biHeight = _pixelRange[3];
-	pbmi->bmiHeader.biSizeImage = _pixelRange[1] * _pixelRange[3] * channelCnt + 2;
-	pbmi->bmiHeader.biXPelsPerMeter = static_cast<LONG>((double)Constants::M_TO_UM/_pixelUM);
+	//******************************************************************************//
+	//set pixel size to be SLM dimension and bmi header to hologram power of 2,		//
+	//we will crop from hologram power of 2 to SLM dimension at ReadAndScaleBitmap	//
+	//******************************************************************************//
+	_pixelX = _pixelRange[1];
+	_pixelY = _pixelRange[3];
+	pbmi->bmiHeader.biWidth = pbmi->bmiHeader.biHeight = _power2Px;
+	pbmi->bmiHeader.biSizeImage = static_cast<int>(pow(_power2Px, 2)) * channelCnt + 2;
+	pbmi->bmiHeader.biXPelsPerMeter = static_cast<LONG>((double)Constants::M_TO_UM/pixelUM);
 	pbmi->bmiHeader.biYPelsPerMeter = pbmi->bmiHeader.biXPelsPerMeter;
 
 	//return after convert back
@@ -1532,7 +1569,7 @@ unsigned char* ThorSLM::MapImageHologram(const wchar_t* pathAndFilename, PBITMAP
 	return bufRead;
 }
 
-unsigned char* ThorSLM::GetAndProcessBMP(long& size, BITMAPINFO& bmi)
+unsigned char* ThorSLM::GetAndProcessBMP(BITMAPINFO& bmi)
 {
 	long ret = TRUE;
 	const int ITERATIONS_2D = 10;
@@ -1551,17 +1588,17 @@ unsigned char* ThorSLM::GetAndProcessBMP(long& size, BITMAPINFO& bmi)
 		return imgRGB;
 	}
 
-	//apply affine & generate phase:
-	ret = holoGen->SetSize(_pixelX, _pixelY, _pixelUM);
+	//apply affine & generate phase, hologram size should be power of 2:
+	ret = holoGen->SetSize(bmi.bmiHeader.biWidth, bmi.bmiHeader.biHeight, (double)Constants::M_TO_UM/bmi.bmiHeader.biXPelsPerMeter);
 	ret = holoGen->SetCoeffs(GeoFittingAlg::PROJECTIVE, _fitCoeff[_selectWavelength]);
 	ret = holoGen->SetAlgorithm(HoloGenAlg::GerchbergSaxton);
 
-	float* fImg = (float*)std::malloc(_pixelX*_pixelY*sizeof(float));
+	float* fImg = (float*)std::malloc(bmi.bmiHeader.biWidth*bmi.bmiHeader.biHeight*sizeof(float));
 
 	//copy to buffer:
 	unsigned char* pSrc = imgRGB;
 	float* pDst = fImg;
-	for (int i = 0; i < _pixelX*_pixelY; i++)
+	for (int i = 0; i < bmi.bmiHeader.biWidth*bmi.bmiHeader.biHeight; i++)
 	{
 		*pDst = *pSrc;
 		pDst++;
@@ -1570,22 +1607,22 @@ unsigned char* ThorSLM::GetAndProcessBMP(long& size, BITMAPINFO& bmi)
 	delete[] imgRGB;
 
 	//pre-offset, flip, scale or rotate before affine:
-	if((0 != _offsetPixels[0]) || (0 != _offsetPixels[1]))
+	if((0 != _offsetPixels[_selectWavelength][0]) || (0 != _offsetPixels[_selectWavelength][1]))
 	{
-		ret = holoGen->OffsetByPixels(fImg,_offsetPixels[0],_offsetPixels[1]);
+		ret = holoGen->OffsetByPixels(fImg,_offsetPixels[_selectWavelength][0],_offsetPixels[_selectWavelength][1]);
 	}
-	if(_verticalFlip)
+	if(_verticalFlip[_selectWavelength])
 	{
 		ret = holoGen->VerticalFlip(fImg);
 	}
-	if((0.0 < _scaleFactor[0]) && (0.0 < _scaleFactor[1]) &&  
-		((1.0 != _scaleFactor[0]) || (1.0 != _scaleFactor[1])))
+	if((0.0 < _scaleFactor[_selectWavelength][0]) && (0.0 < _scaleFactor[_selectWavelength][1]) &&  
+		((1.0 != _scaleFactor[_selectWavelength][0]) || (1.0 != _scaleFactor[_selectWavelength][1])))
 	{
-		ret = holoGen->ScaleByFactor(fImg, _scaleFactor[0], _scaleFactor[1]);
+		ret = holoGen->ScaleByFactor(fImg, _scaleFactor[_selectWavelength][0], _scaleFactor[_selectWavelength][1]);
 	}
-	if(0.0 != _rotateAngle)
+	if(0.0 != _rotateAngle[_selectWavelength])
 	{
-		ret = holoGen->RotateForAngle(fImg, _rotateAngle);
+		ret = holoGen->RotateForAngle(fImg, _rotateAngle[_selectWavelength]);
 	}
 	ret = holoGen->FittingTransform(fImg);
 	ret = holoGen->GenerateHologram(fImg, ITERATIONS_2D, 0);
@@ -1593,7 +1630,7 @@ unsigned char* ThorSLM::GetAndProcessBMP(long& size, BITMAPINFO& bmi)
 	//copy back from buffer, scale if necessary:
 	pSrc = imgRead;
 	pDst = fImg;
-	for (int i = 0; i < _pixelX*_pixelY; i++)
+	for (int i = 0; i < bmi.bmiHeader.biWidth*bmi.bmiHeader.biHeight; i++)
 	{
 		*pSrc = ((MAX_ARRAY_CNT-1) < (*pDst)) ? static_cast<unsigned char>((*pDst)*(MAX_ARRAY_CNT-1)/(LUT_SIZE-1)) : static_cast<unsigned char>((*pDst));
 		pSrc++;
@@ -1601,30 +1638,79 @@ unsigned char* ThorSLM::GetAndProcessBMP(long& size, BITMAPINFO& bmi)
 	}
 	std::free(fImg);
 
-	return imgRead;
+	//crop from power of 2 side square to SLM dimension
+	//***** power of 2 square *****//
+	// ___________________________ //
+	// |                         | //
+	// |       SLM Width         | //
+	// |   __________________    | //
+	// |   |                |    | //
+	// |   |SLM Height      |    |power of 2 square //
+	// |   |                |    | //
+	// |   |________________|    | //
+	// |                         | //
+	// |                         | //
+	// |_________________________| //
+	if (_pixelX == bmi.bmiHeader.biWidth && _pixelY == bmi.bmiHeader.biHeight)
+	{
+		return imgRead;
+	}
+	else
+	{
+		int channelCnt = static_cast<int>(bmi.bmiHeader.biBitCount/CHAR_BIT);
+		size_t imgMapRGBBufSize = _pixelX * _pixelY *channelCnt;
+		BYTE* imgMapRGB = new BYTE[imgMapRGBBufSize];
+		memset(imgMapRGB,0x0,imgMapRGBBufSize*sizeof(BYTE));
+
+		int sourceCx = static_cast<int>(floor(bmi.bmiHeader.biWidth/2));
+		int sourceCy = static_cast<int>(floor(bmi.bmiHeader.biHeight/2));
+		int targetCx = static_cast<int>(floor(_pixelX/2));
+		int targetCy = static_cast<int>(floor(_pixelY/2));
+		int vecX = abs(sourceCx - targetCx);
+		int vecY = abs(sourceCy - targetCy);
+
+		BYTE* pSrc = imgRead + static_cast<int>(channelCnt*(bmi.bmiHeader.biWidth * vecY + vecX));
+		BYTE* pDst = imgMapRGB;
+		for (int j = vecY; j < (vecY+_pixelY); j++)
+		{
+			for (int i = vecX; i < (vecX+_pixelX)*channelCnt; i+=channelCnt)
+			{
+				for (int c = 0; c < channelCnt; c++)
+				{
+					*pDst = *pSrc;
+					pSrc++;
+					pDst++;
+				}
+			}
+			pSrc += (2*channelCnt*vecX);
+		}
+		delete[] imgRead;
+
+		//set bmi header to SLM dimension
+		bmi.bmiHeader.biWidth = _pixelX;
+		bmi.bmiHeader.biHeight = _pixelY;
+		bmi.bmiHeader.biSizeImage = _pixelX * _pixelY * channelCnt + 2;
+		return imgMapRGB;
+	}
 }
 
-unsigned char* ThorSLM::GetAndProcessText(long& size, BITMAPINFO& bmi)	//for 3D pattern, we should use textfile instead of bmp
+unsigned char* ThorSLM::GetAndProcessText(BITMAPINFO& bmi)	//for 3D pattern, we should use textfile instead of bmp
 {
 	long ret = TRUE;
-	int imgWidth, imgHeight;
 	const int ITERATIONS_3D = 100;
 
 	ifstream myReadFile;
 
-	imgWidth=512;
-	imgHeight=512;
 	wstring tempPath=L".txt";
-	unsigned char* txtRead = LoadBMP(&imgWidth, &imgHeight, &size, &bmi.bmiHeader, _bmpPathAndName.c_str());
-
+	unsigned char* txtRead = LoadBMP(&bmi.bmiHeader, _bmpPathAndName.c_str());
 	wchar_t* textFileName=(wchar_t*)_bmpPathAndName.c_str();
 	std::wstring temp=textFileName;
 	std::wstring key (L".bmp");
 	std::wstring::size_type found = temp.find(key);
 
 
-	_pixelY = imgHeight;
-	_pixelX = imgWidth;
+	_pixelY = bmi.bmiHeader.biHeight;
+	_pixelX = bmi.bmiHeader.biWidth;
 
 
 	if (found!=std::string::npos)
@@ -1644,7 +1730,7 @@ unsigned char* ThorSLM::GetAndProcessText(long& size, BITMAPINFO& bmi)	//for 3D 
 	float x;
 	float y;
 	float* fImg;
-	float* mImg = (float*)std::calloc(imgWidth*imgHeight,sizeof(float));
+	float* mImg = (float*)std::calloc(bmi.bmiHeader.biWidth*bmi.bmiHeader.biHeight,sizeof(float));
 
 	ret = holoGen->SetAlgorithm(HoloGenAlg::CompressiveSensing);
 	ret = holoGen->Set3DParam(_na, _wavelength[0]);
@@ -1654,7 +1740,7 @@ unsigned char* ThorSLM::GetAndProcessText(long& size, BITMAPINFO& bmi)	//for 3D 
 
 		while (std::getline(myReadFile,tempStr))
 		{
-			fImg = (float*)std::calloc(imgWidth*imgHeight,sizeof(float));
+			fImg = (float*)std::calloc(bmi.bmiHeader.biWidth*bmi.bmiHeader.biHeight,sizeof(float));
 			std::stringstream ss(tempStr);
 			while (std::getline(ss,tempStr,' '))
 			{
@@ -1675,34 +1761,34 @@ unsigned char* ThorSLM::GetAndProcessText(long& size, BITMAPINFO& bmi)	//for 3D 
 			}
 			//apply affine & generate phase:
 			double pixelUM = 6.4;	//[um]
-			ret = holoGen->SetSize(imgWidth, imgHeight, pixelUM);
+			ret = holoGen->SetSize(bmi.bmiHeader.biWidth, bmi.bmiHeader.biHeight, pixelUM);
 			ret	= holoGen->SetCoeffs(GeoFittingAlg::PROJECTIVE, _fitCoeff[0]);
 
 
 
 			//pre-offset, flip, scale or rotate before affine:
-			if((0 != _offsetPixels[0]) || (0 != _offsetPixels[1]))
+			if((0 != _offsetPixels[_selectWavelength][0]) || (0 != _offsetPixels[_selectWavelength][1]))
 			{
-				ret = holoGen->OffsetByPixels(fImg,_offsetPixels[0],_offsetPixels[1]);
+				ret = holoGen->OffsetByPixels(fImg,_offsetPixels[_selectWavelength][0],_offsetPixels[_selectWavelength][1]);
 			}
-			if(_verticalFlip)
+			if(_verticalFlip[_selectWavelength])
 			{
 				ret = holoGen->VerticalFlip(fImg);
 			}
-			if((0.0 < _scaleFactor[0]) && (0.0 < _scaleFactor[1]) &&  
-				((1.0 != _scaleFactor[0]) || (1.0 != _scaleFactor[1])))
+			if((0.0 < _scaleFactor[_selectWavelength][0]) && (0.0 < _scaleFactor[_selectWavelength][1]) &&  
+				((1.0 != _scaleFactor[_selectWavelength][0]) || (1.0 != _scaleFactor[_selectWavelength][1])))
 			{
-				ret = holoGen->ScaleByFactor(fImg, _scaleFactor[0], _scaleFactor[1]);
+				ret = holoGen->ScaleByFactor(fImg, _scaleFactor[_selectWavelength][0], _scaleFactor[_selectWavelength][1]);
 
 			}
-			if(0.0 != _rotateAngle)
+			if(0.0 != _rotateAngle[_selectWavelength])
 			{
-				ret = holoGen->RotateForAngle(fImg, _rotateAngle);
+				ret = holoGen->RotateForAngle(fImg, _rotateAngle[_selectWavelength]);
 			}
 			ret = holoGen->FittingTransform(fImg);
 			//ret = holoGen->GenerateHologram(fImg, ITERATIONS,-z*1000/2.1);	//hardcoding for Nick Robinson
 			ret = holoGen->GenerateHologram(fImg, ITERATIONS_3D,z*Constants::UM_TO_MM);
-			for (int q=0;q<imgHeight*imgWidth;q++)
+			for (int q=0;q<bmi.bmiHeader.biWidth*bmi.bmiHeader.biHeight;q++)
 			{
 				mImg[q]=mImg[q]+fImg[q];
 
@@ -1723,7 +1809,7 @@ unsigned char* ThorSLM::GetAndProcessText(long& size, BITMAPINFO& bmi)	//for 3D 
 	unsigned char* pSrc = txtRead;
 	float* pDst = mImg;
 
-	for (int i = 0; i < imgWidth*imgHeight; i++)
+	for (int i = 0; i < bmi.bmiHeader.biWidth*bmi.bmiHeader.biHeight; i++)
 	{
 		*pSrc = ((MAX_ARRAY_CNT-1) < (*pDst)) ? static_cast<unsigned char>((*pDst)*(MAX_ARRAY_CNT-1)/(LUT_SIZE-1)) : static_cast<unsigned char>((*pDst));
 		pSrc++;

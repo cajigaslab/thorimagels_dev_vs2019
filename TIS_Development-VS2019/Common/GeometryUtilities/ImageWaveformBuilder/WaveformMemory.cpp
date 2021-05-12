@@ -185,9 +185,9 @@ long WaveformMemory::AllocateMemThorDAQ(ThorDAQGGWaveformParams gWParams, const 
 		}
 
 		_dwlHeaderSize = (63 * _uint64ByteSize) + _doubleByteSize;			//keep header size 512 bytes
-		_dwlAnalogXYSize = _ushortByteSize * gWParams.analogXYSize;
+		_dwlAnalogXYSize = _ushortByteSize * gWParams.analogXYSize * 2;
 		_dwlAnalogPoSize = _ushortByteSize * gWParams.analogPockelSize;
-		_dwlDigitalLSize = _byteByteSize * gWParams.digitalSize;
+		_dwlDigitalLSize = _ushortByteSize * gWParams.digitalSize;
 
 
 		DWORDLONG sizeLong = _dwlHeaderSize + _dwlAnalogXYSize + _dwlAnalogPoSize + _dwlDigitalLSize;
@@ -429,9 +429,9 @@ long WaveformMemory::OpenMemThorDAQ(ThorDAQGGWaveformParams& gWParams, const wch
 		SAFE_MEMCPY((void*)(&(gWParams.pockelsCount)),		_byteByteSize, (p + 4 * _uint64ByteSize + _doubleByteSize));
 		SAFE_MEMCPY((void*)(&(gWParams.driverType)),		_byteByteSize, (p + 4 * _uint64ByteSize + _doubleByteSize + _byteByteSize));
 
-		_dwlAnalogXYSize = _ushortByteSize * gWParams.analogXYSize;
+		_dwlAnalogXYSize = _ushortByteSize * gWParams.analogXYSize * 2; // 1 for x and 1 for y
 		_dwlAnalogPoSize = _ushortByteSize * gWParams.analogPockelSize;
-		_dwlDigitalLSize = _byteByteSize * gWParams.digitalSize;
+		_dwlDigitalLSize = _ushortByteSize * gWParams.digitalSize;
 
 		if(FALSE == UnmapViewOfFile(p))
 		{
@@ -532,25 +532,29 @@ char *WaveformMemory::GetMemMapPtr(SignalType stype, uint64_t offset, uint64_t s
 }
 
 // get memory map with offset and size
-char *WaveformMemory::GetMemMapPtrThorDAQ(SignalType stype, uint64_t offset, uint64_t size)
+char *WaveformMemory::GetMemMapPtrThorDAQ(SignalTypeThorDAQ stype, uint64_t offset, uint64_t size)
 {
 	DWORDLONG mapOffset = _dwlHeaderSize;
 	DWORDLONG mapSize = size;
 	switch (stype)
 	{
-	case SignalType::ANALOG_XY:
+		case SignalTypeThorDAQ::TDQANALOG_X:
 		mapOffset += offset * _ushortByteSize;
 		mapSize *= _ushortByteSize;
 		break;
-	case SignalType::ANALOG_POCKEL:
+		case SignalTypeThorDAQ::TDQANALOG_Y:
+		mapOffset += _dwlAnalogXYSize / 2 + offset * _ushortByteSize;
+		mapSize *= _ushortByteSize;
+		break;
+		case SignalTypeThorDAQ::TDQANALOG_POCKEL:
 		mapOffset += _dwlAnalogXYSize + offset * _ushortByteSize;
 		mapSize *= _ushortByteSize;
 		break;
-	case SignalType::DIGITAL_LINES:
-		mapOffset += _dwlAnalogXYSize + _dwlAnalogPoSize + offset * _byteByteSize;
-		mapSize *= _byteByteSize;
+		case SignalTypeThorDAQ::TDQDIGITAL_LINES:
+		mapOffset += _dwlAnalogXYSize + _dwlAnalogPoSize + offset * _ushortByteSize;
+		mapSize *= _ushortByteSize;
 		break;
-	case SignalType::SIGNALTYPE_LAST:
+		case SignalTypeThorDAQ::TDQSIGNALTYPE_LAST:
 	default:
 		return NULL;
 		break;
@@ -670,26 +674,29 @@ long WaveformMemory::SaveThorDAQWaveformDataStruct(const wchar_t* tPathName, Tho
 	//save to file:
 	if (TRUE == AllocateMemThorDAQ(waveformParams, rawPath))
 	{
-		char* ptr = NULL;
 		//analogXY, interleave XY:
 		if (0 < waveformParams.analogXYSize)
 		{
-			char* ptr = GetMemMapPtrThorDAQ(SignalType::ANALOG_XY, 0, waveformParams.analogXYSize);
-			SAFE_MEMCPY(ptr, waveformParams.analogXYSize * _ushortByteSize, waveformParams.GalvoWaveformXY);
+			char* ptr = GetMemMapPtrThorDAQ(SignalTypeThorDAQ::TDQANALOG_X, 0, waveformParams.analogXYSize);
+			SAFE_MEMCPY(ptr, waveformParams.analogXYSize * _ushortByteSize, waveformParams.GalvoWaveformX);
+			UnlockMemMapPtr();
+
+			ptr = GetMemMapPtrThorDAQ(SignalTypeThorDAQ::TDQANALOG_Y, 0, waveformParams.analogXYSize);
+			SAFE_MEMCPY(ptr, waveformParams.analogXYSize * _ushortByteSize, waveformParams.GalvoWaveformY);
 			UnlockMemMapPtr();
 		}
 		//analogPockel:
 		if (0 < waveformParams.analogPockelSize)
 		{
-			ptr = GetMemMapPtrThorDAQ(SignalType::ANALOG_POCKEL, 0, waveformParams.analogPockelSize);
+			char* ptr = GetMemMapPtrThorDAQ(SignalTypeThorDAQ::TDQANALOG_POCKEL, 0, waveformParams.analogPockelSize);
 			SAFE_MEMCPY(ptr, waveformParams.analogPockelSize * _ushortByteSize, waveformParams.GalvoWaveformPockel);
 			UnlockMemMapPtr();
 		}
 		//digital lines:
 		if (0 < waveformParams.digitalSize)
 		{
-			ptr = GetMemMapPtrThorDAQ(SignalType::DIGITAL_LINES, 0, waveformParams.digitalSize);
-			SAFE_MEMCPY(ptr, waveformParams.digitalSize * _byteByteSize, waveformParams.DigBufWaveform);
+			char* ptr = GetMemMapPtrThorDAQ(SignalTypeThorDAQ::TDQDIGITAL_LINES, 0, waveformParams.digitalSize);
+			SAFE_MEMCPY(ptr, waveformParams.digitalSize * _ushortByteSize, waveformParams.DigBufWaveform);
 			UnlockMemMapPtr();
 		}
 		CloseMem();

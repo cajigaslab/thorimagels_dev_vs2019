@@ -237,13 +237,13 @@
             return ((1 == SaveSLMPattern(phaseMaskName)) ? true : false);
         }
 
-        public bool SLMCalibration(string bmpPatternName, float[] ptsFrom, float[] ptsTo, int size, int pixelX, int pixelY, double z)
+        public bool SLMCalibration(string bmpPatternName, float[] ptsFrom, float[] ptsTo, int size)
         {
             IntPtr ptsToPtr = Marshal.AllocHGlobal(size * sizeof(float));
             IntPtr ptsFromPtr = Marshal.AllocHGlobal(size * sizeof(float));
             Marshal.Copy(ptsTo, 0, ptsToPtr, size);
             Marshal.Copy(ptsFrom, 0, ptsFromPtr, size);
-            int ret = CalibrateSLM(bmpPatternName, ptsFromPtr, ptsToPtr, size, pixelX, pixelY, z);
+            int ret = CalibrateSLM(bmpPatternName, ptsFromPtr, ptsToPtr, size);
 
             Marshal.FreeHGlobal(ptsToPtr);
             Marshal.FreeHGlobal(ptsFromPtr);
@@ -290,7 +290,7 @@
         }
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "CalibrateSLM", CharSet = CharSet.Unicode)]
-        private static extern int CalibrateSLM(string bmpPatternName, IntPtr xyPointFrom, IntPtr xyPointTo, int size, int pixelX, int pixelY, double z);
+        private static extern int CalibrateSLM(string bmpPatternName, IntPtr xyPointFrom, IntPtr xyPointTo, int size);
 
         [DllImport(".\\Modules_Native\\HologramGenerator.dll", EntryPoint = "CombineHologramFiles", CharSet = CharSet.Unicode)]
         private static extern int CombineHologramFiles(string bmpPhaseName1, string bmpPhaseName2);

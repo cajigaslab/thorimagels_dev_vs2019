@@ -83,19 +83,19 @@
                                         Width="Auto"
                                         DisplayMemberBinding="{Binding Duration}" />
                         <GridViewColumn Header="CenterX&#x0a;   (um)"
-                                        Width="Auto"
+                                        Width="{Binding Path=SLMViewWidth}"
                                         DisplayMemberBinding="{Binding Path=BleachWaveParams.CenterUM.X}" />
                         <GridViewColumn Header="CenterY&#x0a;   (um)"
-                                        Width="Auto"
+                                        Width="{Binding Path=SLMViewWidth}"
                                         DisplayMemberBinding="{Binding Path=BleachWaveParams.CenterUM.Y}" />
                         <GridViewColumn Header="ROIWidth&#x0a;    (um)"
-                                        Width="Auto"
+                                        Width="{Binding Path=SLMViewWidth}"
                                         DisplayMemberBinding="{Binding Path=BleachWaveParams.ROIWidthUM}" />
                         <GridViewColumn Header="ROIHeight&#x0a;    (um)"
-                                        Width="Auto"
+                                        Width="{Binding Path=SLMViewWidth}"
                                         DisplayMemberBinding="{Binding Path=BleachWaveParams.ROIHeightUM}" />
                         <GridViewColumn Header="Px.Spacing"
-                                        Width="Auto"
+                                        Width="{Binding Path=SLMViewWidth}"
                                         DisplayMemberBinding="{Binding PixelSpacing}" />
                         <GridViewColumn Header="Iterations"
                                         Width="Auto"

@@ -86,6 +86,10 @@ mkdir "..\..\Common\Sample\x64\Release"
 copy .\x64\Release\Sample.dll ..\..\Common\Sample\x64\Release
 copy .\x64\Release\Sample.lib ..\..\Common\Sample\x64\Release
 copy .\x64\Release\Sample.pdb ..\..\Common\Sample\x64\Release
+mkdir "..\..\Common\AutoFocusModule\x64\Release"
+copy .\x64\Release\AutoFocus.dll ..\..\Common\AutoFocusModule\x64\Release
+copy .\x64\Release\AutoFocus.lib ..\..\Common\AutoFocusModule\x64\Release
+copy .\x64\Release\AutoFocus.pdb ..\..\Common\AutoFocusModule\x64\Release
 mkdir "..\..\Commands\General\SelectHardware\x64\Release"
 copy .\x64\Release\SelectHardware.dll ..\..\Commands\General\SelectHardware\x64\Release
 copy .\x64\Release\SelectHardware.lib ..\..\Commands\General\SelectHardware\x64\Release
@@ -213,6 +217,10 @@ mkdir "..\..\Hardware\Devices\ThorMCM6000\x64\Release"
 copy .\x64\Release\ThorMCM6000.dll ..\..\Hardware\Devices\ThorMCM6000\x64\Release
 copy .\x64\Release\ThorMCM6000.lib ..\..\Hardware\Devices\ThorMCM6000\x64\Release
 copy .\x64\Release\ThorMCM6000.pdb ..\..\Hardware\Devices\ThorMCM6000\x64\Release
+mkdir "..\..\Hardware\Devices\ThorMCM6000_Condenser\x64\Release"
+copy .\x64\Release\ThorMCM6000_Condenser.dll ..\..\Hardware\Devices\ThorMCM6000_Condenser\x64\Release
+copy .\x64\Release\ThorMCM6000_Condenser.lib ..\..\Hardware\Devices\ThorMCM6000_Condenser\x64\Release
+copy .\x64\Release\ThorMCM6000_Condenser.pdb ..\..\Hardware\Devices\ThorMCM6000_Condenser\x64\Release
 mkdir "..\..\Hardware\Devices\ThorBCMPA\x64\Release"
 copy .\x64\Release\ThorBCMPA.dll ..\..\Hardware\Devices\ThorBCMPA\x64\Release
 copy .\x64\Release\ThorBCMPA.lib ..\..\Hardware\Devices\ThorBCMPA\x64\Release

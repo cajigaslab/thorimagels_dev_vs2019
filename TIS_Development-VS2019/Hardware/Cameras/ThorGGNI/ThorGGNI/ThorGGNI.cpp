@@ -688,7 +688,7 @@ void ThorLSMCam::CloseLSMCam()
 
 	SAFE_DELETE_MEMORY(_remap_index);
 
-	for(long i=0; i<_imgPtyDll.dmaBufferCount; i++)
+	for(long i=0; i< MAX_DMABUFNUM; i++)
 	{
 		SAFE_DELETE_MEMORY(_pFrmDllBuffer[i]);
 	}

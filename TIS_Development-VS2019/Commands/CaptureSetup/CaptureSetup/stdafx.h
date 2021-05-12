@@ -19,6 +19,7 @@
 #include <fstream>
 #include "Strsafe.h"
 #include <iomanip>
+#include <atomic>
 
 using namespace std;
 
@@ -48,6 +49,7 @@ using namespace std;
 #include "..\..\..\Commands\ImageAnalysis\LineProfile\LineProfile\LineProfile.h"
 #include "..\..\..\Common\ThorDiskIO\ThorDiskIO.h"
 #include "..\..\..\Common\HardwareXML\HardwareSetupXML.h"
+#include "..\..\..\Common\AutoFocusModule\AutoFocus\AutoFocus.h"
 
 #include "..\..\..\Common\StatsManager\StatsManager\StatsManager.h"
 #include "..\..\..\Common\HDF5IOdll.h"

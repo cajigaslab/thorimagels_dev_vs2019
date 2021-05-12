@@ -130,6 +130,13 @@ void APT::ParseApt(char* buf, int len, Mcm6kParams* params)
 	case MGMSG_MCM_GET_MIRROR_PARAMS:
 		mirrors_get_params(header, 6, params);
 		break;
+
+	case MGMSG_MCM_PIEZO_GET_MODE:
+		piezo_get_mode(header, 6, params);
+		break;
+	case MGMSG_MCM_GET_INTERLOCK_STATE:
+		shutter_get_interlock_state(header, 6, params);
+		break;
 	}
 	free(extData);
 }
@@ -170,11 +177,27 @@ void APT::mcm_stepper_status_update(char* data, int size, Mcm6kParams* params)
 
 	if (params->inverted_lp_slot_id == (CARD_ID_START_ADDRESS + _slot))
 	{
+		// ccw moving
+		params->lightPath_ccw_moving = (data[10] & 0x20) > 0;
+		// cw moving
+		params->lightPath_cw_moving = (data[10] & 0x10) > 0;
 		params->invertedLightPathPos = data[14];
 	}
 	if (params->et_slot_id == (CARD_ID_START_ADDRESS + _slot))
 	{
+		// ccw moving
+		params->epiTurret_ccw_moving = (data[10] & 0x20) > 0;
+		// cw moving
+		params->epiTurret_cw_moving = (data[10] & 0x10) > 0;
 		params->epiTurretCurrentPos = data[14];
+	}
+	if (params->ndd_slot_id == (CARD_ID_START_ADDRESS + _slot))
+	{
+		// ccw moving
+		params->ndd_ccw_moving = (data[10] & 0x20) > 0;
+		// cw moving
+		params->ndd_cw_moving = (data[10] & 0x10) > 0;
+		params->nddCurrentPos = data[14];
 	}
 	if (params->x_slot_id == (CARD_ID_START_ADDRESS + _slot))
 	{
@@ -216,7 +239,14 @@ void APT::mcm_stepper_status_update(char* data, int size, Mcm6kParams* params)
 		params->ze_cw_moving = (data[10] & 0x10) > 0;
 		params->zePositionCurrent = enc;
 	}
-
+	if (params->condenser_slot_id == (CARD_ID_START_ADDRESS + _slot))
+	{
+		// ccw moving
+		params->condenser_ccw_moving = (data[10] & 0x20) > 0;
+		// cw moving
+		params->condenser_cw_moving = (data[10] & 0x10) > 0;
+		params->condenserPositionCurrent = enc;
+	}
 }
 
 void APT::usb_device_info(char* data, int size, Mcm6kParams* params)
@@ -499,14 +529,17 @@ void APT::stepper_get_drive_params(char* data, int size, Mcm6kParams* params)
 		memcpy(params->zParams, data, size);
 	else if ((slot + CARD_ID_START_ADDRESS) == params->r_slot_id)
 		memcpy(params->rParams, data, size);
+	else if ((slot + CARD_ID_START_ADDRESS) == params->condenser_slot_id)
+		memcpy(params->condenserParams, data, size);
 
 	short stage_id = (short)(data[2] | data[3] << 8);
 	short axis_id = (short)(data[4] | data[5] << 8); // (not used)
-	char part_no_axis_t[16] = { '\0' };
+	//char part_no_axis_t[16] = { '\0' };
 	// Get the part number
-	memcpy(part_no_axis_t, data + 6, 16);
+	//Get the name of the slot
+	memcpy(params->slotName[slot], data + 6, 16);
 
-	string part_no_string(part_no_axis_t);
+	string part_no_string(params->slotName[slot]);
 
 	int axis_serial_no = (data[22] | data[23] << 8 | data[24] << 16 | data[25] << 24);
 	int counts_per_unit_t;
@@ -673,19 +706,22 @@ void APT::hexapod_update_pid(char* data, int size, Mcm6kParams* params)
 }
 void APT::shutter_get_state(char* data, int size, Mcm6kParams* params)
 {
+	//Save the shutter position to the first one if the type is Shutter_type
+	int channel = 0;
 	if (params->cardType[data[5] - CARD_ID_START_ADDRESS] == (USHORT)Shutter_4_type)
 	{
 		byte slot = (byte)(data[5] - CARD_ID_START_ADDRESS);
 		byte chan_id = (byte)(data[2] + 1);
+		byte state = data[3];
+		channel = chan_id - 1;
 	}
 	else
 	{
 		byte slot = data[2];
+		byte state = data[3];
 	}
 	byte state = data[3];
-	if (state == SHUTTER_OPENED)
-	{
-	}
+	params->shuttersPositions[channel] = state;
 }
 void APT::shutter_4_get_params(char* data, int size, Mcm6kParams* params)
 {
@@ -826,6 +862,21 @@ void APT::mirror_position_get(char* data, int size, Mcm6kParams* params)
 		break;
 	}
 	}
+}
+
+void APT::shutter_get_interlock_state(char* data, int size, Mcm6kParams* params)
+{
+	byte slot = (byte)(data[5] - CARD_ID_START_ADDRESS);
+	int interlockState = data[2];
+
+	params->safetyInterlockState = interlockState;
+}
+
+void APT::piezo_get_mode(char* data, int size, Mcm6kParams* params)
+{
+	int piezo_mode = data[2];
+
+	params->piezoMode = piezo_mode;
 }
 
 void APT::mirrors_get_params(char* data, int size, Mcm6kParams* params)

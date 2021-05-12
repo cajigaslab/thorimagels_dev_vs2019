@@ -8,11 +8,6 @@
 #include "..\..\..\..\Common\Sample\Sample\SampleDllConcrete.h"
 
 #include "RunSample.h"
-#include "AutoFocus.h"
-#include "AutoFocusHW.h"
-#include "AutoFocusHWandImage.h"
-#include "AutoFocusNone.h"
-#include "AutoFocusImage.h"
 #include "AcquireFactory.h"
 #include "ImageCorrection.h"
 #include "ippi.h"
@@ -69,6 +64,9 @@ auto_ptr<TiffLibDll> tiffDll(new TiffLibDll(L"..\\libtiff3.dll"));
 unique_ptr<ImageStoreLibraryDLL> bigTiff(new ImageStoreLibraryDLL(L".\\ImageStoreLibrary.dll"));
 vector<ScanRegion> activeScanAreas;		//for ResonanceGalvoGalvo (multi-area scan) preview on the first active scan area for now
 long viewMode = MesoScanTypes::Meso;
+DWORD _dwSafetyInterLockCheckThreadId = NULL;
+HANDLE _hSafetyInterLockCheckThread = NULL;
+atomic<BOOL> _shutterOpened = FALSE;
 
 DllExport_RunSample InitCallBack(myPrototype dm, myPrototypeBeginImage di, myPrototypeBeginSubImage bsi, myPrototypeEndSubImage esi,myPrototypeSaveZImage szi,myPrototypeSaveTImage sti, myPrototypePreCapture pc, myPrototypeSequenceStepCurrentIndex cs) //myPrototypeCaptureComplete cc,
 {
@@ -457,11 +455,6 @@ long CreateSample(IExperiment *exp)
 	return(totalNumOfTiles);
 }
 
-IAutoFocus* SetupAutoFocus(IExperiment *pExp, long binning)
-{
-	return  NULL;
-}
-
 void SetupImageCorrection(IExperiment *exp, long camWidth, long camHeight)
 {
 	ICamera * pCamera = NULL;
@@ -829,42 +822,107 @@ void PreCaptureProtocol(IExperiment* exp)
 
 	long zPos = 1;
 	myFunctionPointerSaveZImage(&zPos,&p0,&p1,&p2,&p3,&p4,&p5);
-	IDevice * pLightPath = NULL;
+
+	//Set Lighpath mirrors in position
+	IDevice* pLightPath = NULL;
+	double epiTurretAvailable = FALSE;
+	long MAX_LIGHTPATH_WAIT_TIME = 2000;
 
 	pLightPath = GetDevice(SelectedHardware::SELECTED_LIGHTPATH);
 
-	if(NULL == pLightPath)
+	if (NULL == pLightPath)
 	{
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create LightPath for PreCaptureProtocol");
+		logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample Execute could not create LightPath for PreCaptureProtocol");
 	}
 	else
 	{
-		long galvoGalvo,galvoRes,camera,invertedLightPathPos;
-		double scopeType;
-		string path;
+		long galvoGalvo, galvoRes, camera, invertedLightPathPos, ndd;
+		double scopeType = ScopeType::UPRIGHT, nddAvailable = FALSE;
 
-		exp->GetLightPath(galvoGalvo,galvoRes,camera,invertedLightPathPos);
+		exp->GetLightPath(galvoGalvo, galvoRes, camera, invertedLightPathPos, ndd);
 
-		if(TRUE == pLightPath->GetParam(IDevice::PARAM_SCOPE_TYPE,scopeType) && static_cast<long>(ScopeType::INVERTED) == scopeType)
+		if (TRUE == pLightPath->GetParam(IDevice::PARAM_SCOPE_TYPE, scopeType) && static_cast<long>(ScopeType::INVERTED) == scopeType)
 		{
-			pLightPath->SetParam(IDevice::PARAM_LIGHTPATH_INVERTED_POS,invertedLightPathPos);
+			pLightPath->SetParam(IDevice::PARAM_LIGHTPATH_INVERTED_POS, invertedLightPathPos);
+			MAX_LIGHTPATH_WAIT_TIME = 4500;
 		}
 		else
 		{
 			//Set the laser to the position for imaging
-			pLightPath->SetParam(IDevice::PARAM_LIGHTPATH_GG,galvoGalvo);
-			pLightPath->SetParam(IDevice::PARAM_LIGHTPATH_GR,galvoRes);
-			pLightPath->SetParam(IDevice::PARAM_LIGHTPATH_CAMERA,camera);
+			pLightPath->SetParam(IDevice::PARAM_LIGHTPATH_GG, galvoGalvo);
+			pLightPath->SetParam(IDevice::PARAM_LIGHTPATH_GR, galvoRes);
+			pLightPath->SetParam(IDevice::PARAM_LIGHTPATH_CAMERA, camera);
 		}
-		pLightPath->PreflightPosition();
-		pLightPath->SetupPosition();
-		pLightPath->StartPosition();
+		//Move the NDD mirror if the MCM6000 has the card configured
+		if (TRUE == pLightPath->GetParam(IDevice::PARAM_LIGHTPATH_NDD_AVAILABLE, nddAvailable) && TRUE == nddAvailable)
+		{
+			pLightPath->SetParam(IDevice::PARAM_LIGHTPATH_NDD, ndd);
+		}
+
+		//Skip the movement commands for now if this is the MCM6000, the epi turret will move all stages including light path at once
+		if (FALSE == pLightPath->GetParam(IDevice::PARAM_EPI_TURRET_AVAILABLE, epiTurretAvailable) || FALSE == epiTurretAvailable)
+		{
+			pLightPath->PreflightPosition();
+			pLightPath->SetupPosition();
+			pLightPath->StartPosition();
+
+			RunSample::_hEventPowerReg = CreateEvent(0, FALSE, FALSE, 0);
+			StatusHandler(pLightPath, &RunSample::_hEventPowerReg, MAX_LIGHTPATH_WAIT_TIME);
+
+			pLightPath->PostflightPosition();
+		}
+	}
+
+	//Set EpiTurret wheel position
+	IDevice* pEpiTurret = NULL;
+
+	pEpiTurret = GetDevice(SelectedHardware::SELECTED_EPITURRET);
+
+	if (NULL == pEpiTurret)
+	{
+		logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample Execute could not create EpiTurret for PreCaptureProtocol");
+	}
+	else
+	{
+		long position;
+		string name;
+		long MAX_EPITURRET_WAIT_TIME = 2000;
+
+		exp->GetEpiTurret(position, name);
+
+		double pos = max(0, position - 1);
+
+		pEpiTurret->SetParam(IDevice::PARAM_EPI_TURRET_POS, pos);
+
+
+		if (TRUE == epiTurretAvailable)
+		{
+			//Check if the selected epi turret is the MCM6000, if it isn't call the movement commands from lightpath that we skipped
+			if (TRUE == pEpiTurret->GetParam(IDevice::PARAM_EPI_TURRET_AVAILABLE, epiTurretAvailable))
+			{
+				MAX_EPITURRET_WAIT_TIME = 4500;
+			}
+			else
+			{
+				pLightPath->PreflightPosition();
+				pLightPath->SetupPosition();
+				pLightPath->StartPosition();
+
+				RunSample::_hEventPowerReg = CreateEvent(0, FALSE, FALSE, 0);
+				StatusHandler(pLightPath, &RunSample::_hEventPowerReg, MAX_LIGHTPATH_WAIT_TIME);
+
+				pLightPath->PostflightPosition();
+			}
+		}
+
+		pEpiTurret->PreflightPosition();
+		pEpiTurret->SetupPosition();
+		pEpiTurret->StartPosition();
 
 		RunSample::_hEventPowerReg = CreateEvent(0, FALSE, FALSE, 0);
-		const long MAX_LIGHTPATH_WAIT_TIME = 2000;
-		StatusHandler(pLightPath,&RunSample::_hEventPowerReg,MAX_LIGHTPATH_WAIT_TIME);
+		StatusHandler(pEpiTurret, &RunSample::_hEventPowerReg, MAX_EPITURRET_WAIT_TIME);
 
-		pLightPath->PostflightPosition();
+		pEpiTurret->PostflightPosition();
 	}
 
 	//Set the pinhole position
@@ -1021,7 +1079,6 @@ UINT RunSampleThreadProc( LPVOID pParam )
 
 			long wavelengths = exp->GetNumberOfWavelengths();	
 
-			IAutoFocus *pAF;
 			//Get filter parameters from hardware setup.xml
 			auto_ptr<HardwareSetupXML> pHardware(new HardwareSetupXML());
 
@@ -1037,62 +1094,26 @@ UINT RunSampleThreadProc( LPVOID pParam )
 			long turretPosition=0;
 			long zAxisToEscape=0;
 			double zAxisEscapeDistance=0;
+			double fineAutoFocusPercentage = 0.15;
 
 			//make sure the file only gets loaded once
 			pHardware->SetFastLoad(TRUE);
 
-			pHardware->GetMagInfoFromName(objName,magnification,position,numAperture,afStartPos,afFocusOffset,afAdaptiveOffset,beamExpPos,beamExpWavelength,beamExpPos2,beamExpWavelength2,turretPosition,zAxisToEscape,zAxisEscapeDistance);
+			pHardware->GetMagInfoFromName(objName,magnification,position,numAperture,afStartPos,afFocusOffset,afAdaptiveOffset,beamExpPos,beamExpWavelength,beamExpPos2,beamExpWavelength2,turretPosition,zAxisToEscape,zAxisEscapeDistance, fineAutoFocusPercentage);
 
 			long type,repeat;
 			double expTimeMS,stepSizeUM,startPosMM,stopPosMM;
 
 			//retrieve the autofocus parameters
 			exp->GetAutoFocus(type,repeat,expTimeMS,stepSizeUM,startPosMM,stopPosMM);
-
-			auto_ptr<AutoFocusHW> afHW;
-			auto_ptr<AutoFocusHWandImage> afHWImage;
-			auto_ptr<AutoFocusImage> afImage;
-			auto_ptr<AutoFocusNone> afNone;
+			//Setup AutoFocus Module with the active parameters
+			SetupAutofocus(type, repeat, afFocusOffset, expTimeMS, stepSizeUM, startPosMM, stopPosMM, binning, fineAutoFocusPercentage, FALSE);
 
 			ICamera *pCamera = NULL;
 			IDevice *pZStage = NULL;
 
 			pCamera = GetCamera(SelectedHardware::SELECTED_CAMERA1);
 			pZStage = GetDevice(SelectedHardware::SELECTED_ZSTAGE);
-
-			//assign the autofocus type
-			switch(type)
-			{
-			case IAutoFocus::AF_HARDWARE://hardware only
-				{
-					afHW.reset(new AutoFocusHW());
-					pAF = afHW.get();
-					((AutoFocusHW*)pAF)->SetupParameters(repeat,afFocusOffset);
-				}
-				break;
-
-			case IAutoFocus::AF_HARDWARE_IMAGE://hardware + image
-				{
-					afHWImage.reset(new AutoFocusHWandImage());
-					pAF = afHWImage.get();
-					((AutoFocusHWandImage*)pAF)->SetupParameters(pCamera,pZStage,repeat,afFocusOffset,expTimeMS,stepSizeUM,startPosMM,stopPosMM,binning);
-				}
-				break;
-			case IAutoFocus::AF_IMAGE://image
-				{
-					afImage.reset(new AutoFocusImage());
-					pAF = afImage.get();
-					((AutoFocusImage*)pAF)->SetupParameters(pCamera,pZStage,repeat,afFocusOffset,expTimeMS,stepSizeUM,startPosMM,stopPosMM,binning);
-				}
-				break;
-			case IAutoFocus::AF_NONE:
-			default:
-				{
-					afNone.reset(new AutoFocusNone());
-					pAF = afNone.get();
-					((AutoFocusNone*)pAF)->SetupParameters(repeat);
-				}
-			}
 
 			SetupImageCorrection(exp, camImageWidth, camImageHeight);
 
@@ -1176,7 +1197,7 @@ UINT RunSampleThreadProc( LPVOID pParam )
 				}
 			}
 
-			acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_SEQUENCE,pAF,pOb,exp,ws));
+			acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_SEQUENCE,pOb,exp,ws));
 
 			//capture all of the well images
 			sampleDll->GoToAllWellSites(xyStage, acq.get(), exp);
@@ -1217,8 +1238,9 @@ void RunSample::SetMagnification(double mag,string objName)
 	long turretPosition=0;
 	long zAxisToEscape=0;
 	double zAxisEscapeDistance=0;
+	double fineAutoFocusPercentage = 0.15;
 
-	pHardware->GetMagInfoFromName(objName,mag,position,numAperture,afStartPos,afFocusOffset,afAdaptiveOffset,beamExpPos,beamExpWavelength,beamExpPos2,beamExpWavelength2,turretPosition,zAxisToEscape,zAxisEscapeDistance);
+	pHardware->GetMagInfoFromName(objName,mag,position,numAperture,afStartPos,afFocusOffset,afAdaptiveOffset,beamExpPos,beamExpWavelength,beamExpPos2,beamExpWavelength2,turretPosition,zAxisToEscape,zAxisEscapeDistance, fineAutoFocusPercentage);
 	// getting the filter wheel positions
 	IDevice *pBeamExpander = NULL;	
 
@@ -1403,6 +1425,52 @@ long RunSample::TeardownCommand()
 	}
 }
 
+UINT SafetyInterlockStatusCheck()
+{
+	long safetyInterLockState = -1;
+	while (TRUE == _shutterOpened)
+	{
+		if (TRUE == GetDeviceParamLong(SelectedHardware::SELECTED_LIGHTPATH, IDevice::Params::PARAM_SHUTTER_SAFETY_INTERLOCK_STATE, safetyInterLockState))
+		{
+			if (FALSE == safetyInterLockState)
+			{
+				wstring messageWstring = L"Safety Interlock is engaged or not installed. Please check if the trinoc is in eyepiece mode. \nIf error persists please contact techsupport@thorlabs.com.";
+				MessageBox(NULL, messageWstring.c_str(), L"ThorMCM6000 Error: Primary path shutter closed.", MB_OK);
+				RunSample::getInstance()->Stop();
+				return FALSE;
+			}
+		}
+		else
+		{
+			logDll->TLTraceEvent(ERROR_EVENT, 1, L"RunSample SafetyInterlockStatusCheck: unable get param PARAM_SHUTTER_SAFETY_INTERLOCK_STATE");
+			return FALSE;
+		}
+		Sleep(1000);
+	}
+	return TRUE;
+}
+
+void InitiateSafetyInterlockStatusCheck()
+{
+	long scopeType = ScopeType::UPRIGHT;
+	long safetyInterlockCheckEnabled = FALSE;
+	long shutterAvailable = FALSE;
+	long ret = FALSE;
+
+	auto_ptr<HardwareSetupXML> pHardware(new HardwareSetupXML);
+	ret = pHardware->GetInvertedSettings(safetyInterlockCheckEnabled);
+
+	if ((TRUE == GetDeviceParamLong(SelectedHardware::SELECTED_LIGHTPATH, IDevice::Params::PARAM_SCOPE_TYPE, scopeType) && ScopeType::INVERTED == scopeType) &&
+		(TRUE == ret && TRUE == safetyInterlockCheckEnabled) &&
+		(TRUE == GetDeviceParamLong(SelectedHardware::SELECTED_LIGHTPATH, IDevice::Params::PARAM_SHUTTER_AVAILABLE, shutterAvailable) && TRUE == shutterAvailable))
+	{
+		_shutterOpened = TRUE;
+		SAFE_DELETE_HANDLE(_hSafetyInterLockCheckThread);
+		_hSafetyInterLockCheckThread = ::CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SafetyInterlockStatusCheck, NULL, 0, &_dwSafetyInterLockCheckThreadId);
+		SetThreadPriority(_hSafetyInterLockCheckThread, THREAD_PRIORITY_LOWEST);
+	}
+}
+
 long OpenShutter()
 {	
 	long ret = TRUE;
@@ -1435,6 +1503,8 @@ long OpenShutter()
 
 	pShutter->PostflightPosition();	
 
+	InitiateSafetyInterlockStatusCheck();
+
 	if(FALSE == ret)
 	{
 		logDll->TLTraceEvent(ERROR_EVENT,1,L"RunSample Execute could not open shutter");
@@ -1447,6 +1517,9 @@ long CloseShutter()
 	long ret = TRUE;
 
 	IDevice *pShutter = NULL;
+
+	//Notify the safety interlock check thread the shutter is closed
+	_shutterOpened = FALSE;
 
 	pShutter = GetDevice(SelectedHardware::SELECTED_SHUTTER1);
 

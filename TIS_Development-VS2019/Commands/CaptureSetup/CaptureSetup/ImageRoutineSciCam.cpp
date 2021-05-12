@@ -4,7 +4,6 @@
 
 ImageRoutineSciCam::ImageRoutineSciCam()
 {
-	_enableCopy = FALSE;
 	_channelEnable = 0;
 	_captureActive = 0;
 }
@@ -12,6 +11,8 @@ ImageRoutineSciCam::ImageRoutineSciCam()
 ImageRoutineSciCam::~ImageRoutineSciCam()
 {
 }
+
+BOOL ImageRoutineSciCam::_enableCopy = FALSE;
 
 long ImageRoutineSciCam::InitCallbacks(imageCompleteCallback ic, completeCallback cc)
 {	
@@ -695,7 +696,8 @@ UINT ZStackCaptureThreadProcSciCam( LPVOID pParam )
 	long turretPosition=0;
 	long zAxisToEscape=0;
 	double zAxisEscapeDistance=0;
-	pHardware->GetMagInfoFromPosition(turretPos,objName,magnification,numAperture,afStartPos,afFocusOffset,afAdaptiveOffset,beamExpPos,beamExpWavelength,beamExpPos2,beamExpWavelength2, turretPosition, zAxisToEscape, zAxisEscapeDistance);
+	double fineAutoFocusPercentage = 0.15;
+	pHardware->GetMagInfoFromPosition(turretPos,objName,magnification,numAperture,afStartPos,afFocusOffset,afAdaptiveOffset,beamExpPos,beamExpWavelength,beamExpPos2,beamExpWavelength2, turretPosition, zAxisToEscape, zAxisEscapeDistance, fineAutoFocusPercentage);
 
 	long width, height;
 	double umPerPixel = 1;
@@ -874,4 +876,224 @@ UINT ZStackCaptureThreadProcSciCam( LPVOID pParam )
 
 	return 0;
 }
+
+long ImageRoutineSciCam::StartAutoFocus(double magnification, long autoFocusType, BOOL& afFound)
+{
+	if (myFunctionPointer != NULL)
+	{
+		if (GetCaptureActive() == TRUE)
+		{
+			return TRUE;
+		}
+
+		//Set preview buffer, allocate memory for it
+		if (FALSE == SetupCaptureBuffers())
+			return FALSE;
+
+		SAFE_DELETE_HANDLE(_hAutoFocusCaptureThread);
+
+		SAFE_DELETE_HANDLE(_hAutoFocusStatusThread);
+
+		SAFE_DELETE_HANDLE(hCaptureActive);
+
+		hCaptureActive = CreateEvent(0, FALSE, FALSE, 0);
+
+		struct AutoFocusCaptureParams* afParams = static_cast<AutoFocusCaptureParams*>(malloc(sizeof(struct AutoFocusCaptureParams)));
+		afParams->magnification = magnification;
+		afParams->autoFocusType = autoFocusType;
+		//afParams->afFound = afFound;
+
+		stopCapture = FALSE;
+		SetCaptureActive(TRUE);
+		_hAutoFocusCaptureThread = ::CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AutoFocusCaptureThreadProcSciCam, (LPVOID)afParams, 0, &_dwAutoFocusCaptureThreadId);
+		SetThreadPriority(_hAutoFocusCaptureThread, THREAD_PRIORITY_BELOW_NORMAL);
+		_hAutoFocusStatusThread = ::CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AutoFocusStatusThreadProcSciCam, NULL, 0, &_dwAutoFocusStatusThreadId);
+		SetThreadPriority(_hAutoFocusStatusThread, THREAD_PRIORITY_BELOW_NORMAL);
+	}
+
+	return TRUE;
+}
+
+//Start the autofocus routine, it needs to be on it's own thread to run the library AutoFocusModule without hanging the GUI update
+UINT AutoFocusCaptureThreadProcSciCam(LPVOID pParam)
+{
+	struct AutoFocusCaptureParams afParams;
+
+	if (NULL != pParam)
+	{
+		memcpy(&afParams, pParam, sizeof(struct AutoFocusCaptureParams));
+		delete pParam;
+	}
+	else
+	{
+		CHECK_INLINE_PACTIVEIMAGEROUTINE(SetCaptureActive(FALSE));
+		//disableZRead = FALSE;
+		SetEvent(hCaptureActive);
+		return FALSE;
+	}
+
+	PreflightPMT();
+
+	//open shutter
+	SetShutterPosition(SHUTTER_OPEN);
+
+	SetBFLampPosition(ENABLE_LEDS);
+
+	if (SetCameraParamDouble(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_TRIGGER_MODE, ICamera::SW_MULTI_FRAME) != TRUE)
+	{
+		StringCbPrintfW(message, MSG_SIZE, L"CaptureSetup AutoFocusCaptureThreadProcLSM failed");
+		logDll->TLTraceEvent(VERBOSE_EVENT, 1, message);
+	}
+
+	long magnification = static_cast<long>(afParams.magnification);
+	long autoFocusType = afParams.autoFocusType;
+	BOOL afFound;
+
+	RunAutofocus(magnification, autoFocusType, afFound);
+
+	SetShutterPosition(SHUTTER_CLOSE);
+	SetBFLampPosition(DISABLE_LEDS);
+	PostflightPMT();
+
+	CHECK_INLINE_PACTIVEIMAGEROUTINE(SetCaptureActive(FALSE));
+	SetEvent(hCaptureActive);
+	return 0;
+}
+
+//Checks the status of the AutoFocusModule API, checks if an image buffer is ready, retreives it and updates the bitmap in Capture Setup, then saves the frames as TIFF in the Documents AutoFocusCache folder.
+UINT AutoFocusStatusThreadProcSciCam()
+{
+	long imageReadyToCopy = FALSE, autoFocusRunning = FALSE;
+	long frameNumber = 0, currentRepeat = 0, status = 0, numOfZSteps = 0, currentZIndex = 0;
+	int frameNum = 0;
+
+	//shared parameters with live image mode
+	long right = 0, bottom = 0, left = 0, top = 0, binX = 0, binY = 0, lsmPixelX = 0, lsmPixelY = 0;
+	GetCameraParamLong(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_CAPTURE_REGION_RIGHT, right);
+	GetCameraParamLong(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_CAPTURE_REGION_LEFT, left);
+	GetCameraParamLong(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_CAPTURE_REGION_BOTTOM, bottom);
+	GetCameraParamLong(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_CAPTURE_REGION_TOP, top);
+	GetCameraParamLong(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_BINNING_X, binX);
+	GetCameraParamLong(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_BINNING_Y, binY);
+	GetCameraParamLong(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_LSM_PIXEL_X, lsmPixelX);
+	GetCameraParamLong(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_LSM_PIXEL_Y, lsmPixelY);
+	double exposureTime = 0;
+	GetCameraParamDouble(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_EXPOSURE_TIME_MS, exposureTime);
+
+	auto_ptr<HardwareSetupXML> pHardware(new HardwareSetupXML);
+
+	long turretPos;
+	GetTurretPosition(turretPos);
+	turretPos++;
+	string objName;
+	double magnification;
+	double numAperture;
+	double afStartPos = 0;
+	double afFocusOffset = 0;
+	double afAdaptiveOffset = 0;
+	long beamExpPos = 0;
+	long beamExpWavelength = 0;
+	long beamExpPos2 = 0;
+	long beamExpWavelength2 = 0;
+	long turretPosition = 0;
+	long zAxisToEscape = 0;
+	double zAxisEscapeDistance = 0;
+	double fineAutoFocusPercentage = 0.15;
+	pHardware->GetMagInfoFromPosition(turretPos, objName, magnification, numAperture, afStartPos, afFocusOffset, afAdaptiveOffset, beamExpPos, beamExpWavelength, beamExpPos2, beamExpWavelength2, turretPosition, zAxisToEscape, zAxisEscapeDistance, fineAutoFocusPercentage);
+
+	long width, height;
+	double umPerPixel = 1;
+	double cameraPixelSize;
+	GetCameraParamDouble(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_PIXEL_SIZE, cameraPixelSize);
+	umPerPixel = cameraPixelSize / magnification;
+
+	width = static_cast<long>((right - left) / binX);
+	height = static_cast<long>((bottom - top) / binY);
+
+	//double pos = zParams.start;
+
+	wstring autoFocusCacheDir = ResourceManager::getInstance()->GetAutoFocusCachePath();
+
+	double paramValue;
+	std::string strOME;
+	std::wstringstream imgNameFormat;
+	std::vector<wstring> wavelengthNames;
+
+	if (TRUE != GetCameraParamDouble(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_LSM_CHANNEL, paramValue) &&
+		TRUE != GetCameraParamDouble(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_CAMERA_CHANNEL, paramValue))
+	{
+		logDll->TLTraceEvent(VERBOSE_EVENT, 1, L"CaptureSetup AutoFocusStatusThreadProcLSM GetParam failed PARAM_LSM_CHANNEL");
+		return FALSE;
+	}
+	long lsmChan = static_cast<long>(paramValue);
+	long chanCount = ParseLSMChannels(lsmChan, NULL, &wavelengthNames, L"Chan");
+	long doOME = TRUE;
+	long doCompression = TRUE;
+	GetTIFFConfiguration(doOME, doCompression);
+
+	long imgIndxDigiCnts = ResourceManager::getInstance()->GetSettingsParamLong((int)SettingsFileType::APPLICATION_SETTINGS, L"ImageNameFormat", L"indexDigitCounts", (int)Constants::DEFAULT_FILE_FORMAT_DIGITS);
+	imgNameFormat << L"%s%S_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.tif";
+
+	imageInfo.channels = ParseLSMChannels(static_cast<long>(paramValue), NULL, NULL, L"");
+	imageInfo.fullFrame = TRUE;
+
+	imageInfo.imageWidth = static_cast<long>(width);
+	imageInfo.imageHeight = static_cast<long>(height);
+
+	strOME = ""; //(TRUE == doOME) ? uUIDSetup(wavelengthNames, true, chanCount, zParams.numOfSteps, 1, 1) : "";
+
+	//Check constantly for an image buffer from AutoFocusModule, when an image is ready copy it to the local buffer pChan in CaptureSetup
+	GetAutoFocusStatusAndImage(pChan[0], imageReadyToCopy, autoFocusRunning, frameNumber, currentRepeat, status, numOfZSteps, currentZIndex);
+	while (TRUE == autoFocusRunning)
+	{
+		if (FALSE == imageReadyToCopy)
+		{
+			Sleep(1);
+		}
+		else
+		{
+			//get the number of total channels
+			long paramLong;
+			double paramDouble;
+			double paramMax;
+
+			GetCamera(SelectedHardware::SELECTED_CAMERA1)->GetParamInfo(ICamera::PARAM_CAMERA_CHANNEL, paramLong, paramLong, paramLong, paramDouble, paramMax, paramDouble);
+
+			long maxChannels = ParseLSMChannels(static_cast<long>(paramMax), NULL, NULL, L"");
+
+			string wavelengthName;
+			wchar_t filePathAndName[_MAX_PATH];
+
+			wstring savingFolder = (COARSE_AUTOFOCUS == status) ? autoFocusCacheDir + to_wstring(currentRepeat) + L"\\Coarse\\" : autoFocusCacheDir + to_wstring(currentRepeat) + L"\\Fine\\";
+
+			//save each channel to tiff images
+			long count = 0;
+			for (int c = 0; c < maxChannels; c++)
+			{
+				if (lsmChan & (0x1 << c))
+				{
+					pHardware->GetWavelengthName(c, wavelengthName);
+					StringCbPrintfW(filePathAndName, _MAX_PATH, imgNameFormat.str().c_str(), savingFolder.c_str(), wavelengthName.c_str(), 1, 1, currentZIndex, 1);
+					char* pTemp = pChan[0];
+					SaveTIFF(filePathAndName, pTemp + (count * width * height * (long)2), width, height, NULL, NULL, NULL, umPerPixel, imageInfo.channels, 1, numOfZSteps, 0, c, 1, currentZIndex, NULL, 0, &strOME, doCompression);
+					count++;
+				}
+			}
+
+			//try update display buffer
+			(*myFunctionPointer)(pChan[0], imageInfo);
+			ImageRoutineSciCam::_enableCopy = FALSE;
+
+			frameNum++;
+		}
+		GetAutoFocusStatusAndImage(pChan[0], imageReadyToCopy, autoFocusRunning, frameNumber, currentRepeat, status, numOfZSteps, currentZIndex);
+		//pos += zParams.stepSize / (double)Constants::UM_TO_MM;
+	}
+
+	return TRUE;
+}
+
 

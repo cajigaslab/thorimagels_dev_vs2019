@@ -35,4 +35,5 @@ public:
 	virtual long GetCaptureActive()=0;
 	virtual long CopyAcquisition(long)=0;
 	virtual long GetImageDimensions(long&, long&)=0;
+	virtual long StartAutoFocus(double, long, BOOL&) = 0;
 };

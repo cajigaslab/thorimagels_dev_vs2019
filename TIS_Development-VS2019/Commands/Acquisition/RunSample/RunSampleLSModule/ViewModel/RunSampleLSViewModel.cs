@@ -105,10 +105,6 @@
         private bool _newExperiment;
         private int _nPixelBitShiftValueUpdates = 0;
         private bool _paletteChanged;
-        private int _pmt1EnableDuringBleach;
-        private int _pmt2EnableDuringBleach;
-        private int _pmt3EnableDuringBleach;
-        private int _pmt4EnableDuringBleach;
         Visibility _power0Visibility = Visibility.Collapsed;
         Visibility _power1Visibility = Visibility.Collapsed;
         Visibility _power2Visibility = Visibility.Collapsed;
@@ -2354,11 +2350,11 @@
         {
             get
             {
-                return _pmt1EnableDuringBleach;
+                return _RunSampleLS.PMT1EnableDuringBleach;
             }
             set
             {
-                _pmt1EnableDuringBleach = value;
+                _RunSampleLS.PMT1EnableDuringBleach = value;
                 OnPropertyChanged("PMT1EnableDuringBleach");
             }
         }
@@ -2367,11 +2363,11 @@
         {
             get
             {
-                return _pmt2EnableDuringBleach;
+                return _RunSampleLS.PMT2EnableDuringBleach;
             }
             set
             {
-                _pmt2EnableDuringBleach = value;
+                _RunSampleLS.PMT2EnableDuringBleach = value;
                 OnPropertyChanged("PMT2EnableDuringBleach");
             }
         }
@@ -2380,11 +2376,11 @@
         {
             get
             {
-                return _pmt3EnableDuringBleach;
+                return _RunSampleLS.PMT3EnableDuringBleach;
             }
             set
             {
-                _pmt3EnableDuringBleach = value;
+                _RunSampleLS.PMT3EnableDuringBleach = value;
                 OnPropertyChanged("PMT3EnableDuringBleach");
             }
         }
@@ -2393,11 +2389,11 @@
         {
             get
             {
-                return _pmt4EnableDuringBleach;
+                return _RunSampleLS.PMT4EnableDuringBleach;
             }
             set
             {
-                _pmt4EnableDuringBleach = value;
+                _RunSampleLS.PMT4EnableDuringBleach = value;
                 OnPropertyChanged("PMT4EnableDuringBleach");
             }
         }
@@ -4389,20 +4385,6 @@
         {
             this._RunSampleLS.UpdateExperimentFile();
 
-            //not all of properties are available at the model level for saving to the experiment file
-            //save the additional properties here
-            XmlNodeList nodeList = this._RunSampleLS.ExperimentDoc.SelectNodes("/ThorImageExperiment/Photobleaching");
-
-            if (nodeList.Count > 0)
-            {
-                string str = string.Empty;
-
-                XmlManager.SetAttribute(nodeList[0], this._RunSampleLS.ExperimentDoc, "pmt1EnableDuringBleach", PMT1EnableDuringBleach.ToString());
-                XmlManager.SetAttribute(nodeList[0], this._RunSampleLS.ExperimentDoc, "pmt2EnableDuringBleach", PMT2EnableDuringBleach.ToString());
-                XmlManager.SetAttribute(nodeList[0], this._RunSampleLS.ExperimentDoc, "pmt3EnableDuringBleach", PMT3EnableDuringBleach.ToString());
-                XmlManager.SetAttribute(nodeList[0], this._RunSampleLS.ExperimentDoc, "pmt4EnableDuringBleach", PMT4EnableDuringBleach.ToString());
-            }
-
             this._RunSampleLS.ExperimentDoc.Save(ResourceManagerCS.GetCaptureTemplatePathString() + "\\Active.xml");
 
             if (0 == StartAfterLoading.Count)
@@ -4412,7 +4394,7 @@
                 //unload can be asynchronous and the get modality function could be incorrect
                 //for the experiment settings
 
-                nodeList = this._RunSampleLS.ExperimentDoc.SelectNodes("/ThorImageExperiment/Modality");
+                XmlNodeList nodeList = this._RunSampleLS.ExperimentDoc.SelectNodes("/ThorImageExperiment/Modality");
 
                 if (nodeList.Count > 0)
                 {

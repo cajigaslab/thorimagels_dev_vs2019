@@ -2854,9 +2854,9 @@ long ExperimentXML::SetPockelsMask(long enable, long invert, string path)
 
 const char * const ExperimentXML::LIGHTPATH = "LightPath";
 
-const char * const ExperimentXML::LIGHTPATH_ATTR[NUM_LIGHTPATH_ATTRIBUTES] = {"GalvoGalvo","GalvoResonance","Camera","InvertedLightPathPos"};
+const char * const ExperimentXML::LIGHTPATH_ATTR[NUM_LIGHTPATH_ATTRIBUTES] = {"GalvoGalvo","GalvoResonance","Camera","InvertedLightPathPos","NDD"};
 
-long ExperimentXML::GetLightPath(long &galvoGalvo, long &galvoRes, long &camera, long &invertedLightPathPos)
+long ExperimentXML::GetLightPath(long &galvoGalvo, long &galvoRes, long &camera, long &invertedLightPathPos, long& ndd)
 {
 	string str;
 
@@ -2887,6 +2887,9 @@ long ExperimentXML::GetLightPath(long &galvoGalvo, long &galvoRes, long &camera,
 			case 3:
 				ss>>invertedLightPathPos;
 				break;
+			case 4:
+				ss >> ndd;
+				break;
 			}
 		}
 		catch(exception ex)
@@ -2900,7 +2903,7 @@ long ExperimentXML::GetLightPath(long &galvoGalvo, long &galvoRes, long &camera,
 	return TRUE;
 }
 
-long ExperimentXML::SetLightPath(long galvoGalvo, long galvoRes, long camera, long invertedLightPathPos)
+long ExperimentXML::SetLightPath(long galvoGalvo, long galvoRes, long camera, long invertedLightPathPos, long ndd)
 {
 	string str;
 	stringstream ss;
@@ -2912,6 +2915,8 @@ long ExperimentXML::SetLightPath(long galvoGalvo, long galvoRes, long camera, lo
 	ss << camera;
 	ss << endl;
 	ss << invertedLightPathPos;
+	ss << endl;
+	ss << ndd;
 	ss << endl;
 
 	long index;
@@ -3101,6 +3106,9 @@ long ExperimentXML::GetSequenceSteps(vector<SequenceStep>& captureSequence)
 						case 3:
 							ss>>sequenceStep.InvertedLightPathPosition;
 							break;
+						case 4:
+							ss >> sequenceStep.LightPathNDDPosition;
+							break;
 						}
 					}
 					catch(exception ex)
@@ -3219,10 +3227,58 @@ long ExperimentXML::SetSpectralFilter(long startWavelength, long stopWavelength,
 	ss << path;
 	ss << endl;
 
-	for (long index=0; index<NUM_PHOTOBLEACHING_ATTRIBUTES; index++)
+	for (long index=0; index< NUM_SPECTRALFILTER_ATTRIBUTES; index++)
 	{
 		getline(ss,str);
-		if (!SetAttribute(PHOTOBLEACHING, PHOTOBLEACHING_ATTR[index], str))
+		if (!SetAttribute(SPECTRALFILTER, SPECTRALFILTER_ATTR[index], str))
+		{
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+const char* const ExperimentXML::EPITURRET = "EPITurret";
+
+const char* const ExperimentXML::EPITURRET_ATTR[NUM_EPITURRET_ATTRIBUTES] = { "pos", "name" };
+
+long ExperimentXML::GetEpiTurret(long& position, string& name)
+{
+	for (long index = 0; index < NUM_EPITURRET_ATTRIBUTES; index++)
+	{
+		string str;
+		if (!GetAttribute(EPITURRET, EPITURRET_ATTR[index], str))
+		{
+			return FALSE;
+		}
+
+		stringstream ss(str);
+
+		switch (index)
+		{
+		case 0:ss >> position; break;
+		case 1:name = str; break;
+		}
+	}
+
+	return TRUE;
+}
+
+long ExperimentXML::SetEpiTurret(long position, string name)
+{
+	string str;
+	stringstream ss;
+
+	ss << position;
+	ss << endl;
+	ss << name;
+	ss << endl;
+
+	for (long index = 0; index < NUM_EPITURRET_ATTRIBUTES; index++)
+	{
+		getline(ss, str);
+		if (!SetAttribute(EPITURRET, EPITURRET_ATTR[index], str))
 		{
 			return FALSE;
 		}

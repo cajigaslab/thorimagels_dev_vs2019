@@ -164,6 +164,7 @@
     <ClInclude Include="..\..\..\..\Common\ThorSharedTypesCPP.h" />
     <ClInclude Include="APT.h" />
     <ClInclude Include="MCM6000.h" />
+    <ClInclude Include="MCM6000XML.h" />
     <ClInclude Include="Mcm6kParams.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ThorMCM6000.h" />
@@ -172,6 +173,7 @@
     <ClCompile Include="APT.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="MCM6000.cpp" />
+    <ClCompile Include="MCM6000XML.cpp" />
     <ClCompile Include="ThorMCM6000.cpp" />
   </ItemGroup>
   <ItemGroup>

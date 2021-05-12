@@ -27,7 +27,39 @@
 
         #region Properties
         
-        public Visibility CancelVisiable
+        public Brush CancelButtonBackground
+        {
+            set
+            {
+                this.btnCancel.Background = value;
+            }
+        }
+
+        public string CancelButtonContent
+        {
+            set 
+            {
+                this.btnCancel.Content = value;
+            }
+        }
+
+        public Brush CancelButtonForeground
+        {
+            set
+            {
+                this.btnCancel.Foreground = value;
+            }
+        }
+
+        public double CancelButtonHeight
+        {
+            set
+            {
+                this.btnCancel.Height = value;
+            }
+        }
+
+        public Visibility CancelVisible
         {
             set
             {
@@ -43,12 +75,19 @@
             }
         }
 
-        public Visibility ProgressVisible
+        public double CancelButtonWidth
         {
             set
             {
-                this.pbProgress.Visibility = value;
-                this.lblProgress.Visibility = value;
+                this.btnCancel.Width = value;
+            }
+        }
+
+        public string LoadingText
+        {
+            set
+            {
+                this.lblloading.Content = value;
             }
         }
 
@@ -65,6 +104,15 @@
             set
             {
                 this.pbProgress.Value = value;
+            }
+        }
+
+        public Visibility ProgressVisible
+        {
+            set
+            {
+                this.pbProgress.Visibility = value;
+                this.lblProgress.Visibility = value;
             }
         }
 

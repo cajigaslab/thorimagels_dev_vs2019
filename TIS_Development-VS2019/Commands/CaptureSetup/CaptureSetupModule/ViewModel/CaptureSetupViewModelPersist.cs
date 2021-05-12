@@ -512,6 +512,7 @@
                 {
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "InvertedLightPathPos", this.InvertedLightPathPos.ToString());
                 }
+                XmlManager.SetAttribute(ndList[0], xmlDoc, "NDD", this.PositionNDD.ToString());
 
                 //////Capture Sequence
                 ndList = xmlDoc.SelectNodes("/ThorImageExperiment/CaptureSequence");

@@ -210,6 +210,19 @@
             get { return 0; }
         }
 
+        public bool LampON
+        {
+            get
+            {
+                return this._LampControlModel.LampON;
+            }
+            set
+            {
+                this._LampControlModel.LampON = value;
+                OnPropertyChanged("LampON");
+            }
+        }
+
         public double LampPosition
         {
             get
@@ -514,6 +527,7 @@
             XmlManager.SetAttribute(ndList[0], experimentFile, "LampPosition1", this._lampPosition1.ToString());
             XmlManager.SetAttribute(ndList[0], experimentFile, "LampPosition2", this._lampPosition2.ToString());
             XmlManager.SetAttribute(ndList[0], experimentFile, "LampTerminal", this.LampTerminal.ToString());
+            LampON = false;
         }
 
         #endregion Methods

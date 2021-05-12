@@ -139,7 +139,7 @@ public:
 	static const char* const LAMP_ATTR[NUM_LAMP_ATTRIBUTES];
 
 	static const char * const LIGHTPATH;
-	enum {NUM_LIGHTPATH_ATTRIBUTES = 4};
+	enum {NUM_LIGHTPATH_ATTRIBUTES = 5};
 	static const char * const LIGHTPATH_ATTR[NUM_LIGHTPATH_ATTRIBUTES];
 
 	static const char * const CAPTURESEQUENCE;
@@ -169,6 +169,10 @@ public:
 	static const char * const SPECTRALFILTER;
 	enum {NUM_SPECTRALFILTER_ATTRIBUTES = 5};
 	static const char * const SPECTRALFILTER_ATTR[NUM_SPECTRALFILTER_ATTRIBUTES];
+
+	static const char* const EPITURRET;
+	enum { NUM_EPITURRET_ATTRIBUTES = 2 };
+	static const char* const EPITURRET_ATTR[NUM_EPITURRET_ATTRIBUTES];
 
 	enum {NUM_TEMPLATE_LEVELS = 4};
 	static const char * const TEMPLATE_NODES[NUM_TEMPLATE_LEVELS];
@@ -279,14 +283,17 @@ public:
 	long GetCaptureMode(long &mode);
 	long SetCaptureMode(long mode);
 
-	long GetLightPath(long &galvoGalvo, long &galvoRes, long &camera, long &invertedLightPathPos);
-	long SetLightPath(long galvoGalvo, long galvoRes, long camera, long invertedLightPathPos);
+	long GetLightPath(long& galvoGalvo, long& galvoRes, long& camera, long& invertedLightPathPos, long& ndd);
+	long SetLightPath(long galvoGalvo, long galvoRes, long camera, long invertedLightPathPos, long ndd);
 
 	long GetCaptureSequence(long &enable);
 	long GetSequenceSteps(vector<SequenceStep> &captureSequenceSettings);
 
 	long GetSpectralFilter(long &startWavelength, long &stopWavelength, long &stepsSizeWavelength, long &bandwidthMode, string &path);
 	long SetSpectralFilter(long startWavelength, long stopWavelength, long stepsSizeWavelength, long bandwidthMode, string path);
+
+	long GetEpiTurret(long& position, string& name);
+	long SetEpiTurret(long position, string name);
 
 	long GetLampLED(long& led1enable, double& led1power, long& led2enable, double& led2power, long& led3enable, double& led3power, long& led4enable, double& led4power, long& led5enable, double& led5power, long& led6enable, double& led6power, double& mainPower);
 

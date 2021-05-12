@@ -139,6 +139,45 @@
                    new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc)).TotalSeconds;
         }
 
+        public static void DeleteDirectory(string target_dir)
+        {
+            DirectoryInfo dirInfo = new DirectoryInfo(target_dir);
+            foreach (FileInfo file in dirInfo.GetFiles())
+            {
+                file.Delete();
+            }
+            foreach (DirectoryInfo dir in dirInfo.GetDirectories())
+            {
+                dir.Delete(true);
+            }
+
+            //string[] files = Directory.GetFiles(target_dir);
+            //string[] dirs = Directory.GetDirectories(target_dir);
+
+            //foreach (string file in files)
+            //{
+            //    File.SetAttributes(file, FileAttributes.Normal);
+            //    File.Delete(file);
+            //}
+
+            //foreach (string dir in dirs)
+            //{
+            //    DeleteDirectory(dir);
+            //}
+
+            //try
+            //{
+            //    Directory.Delete(target_dir, false);
+            //}
+            //catch (System.IO.IOException)
+            //{
+            //    //This gives a locking application (Ex. Windows Explorer) an
+            //    //opportunity to release the directory handle
+            //    System.Threading.Thread.Sleep(1000);
+            //    Directory.Delete(target_dir, false);
+            //}
+        }
+
         [DllImport(".\\Modules_Native\\SelectHardware.dll", EntryPoint = "DeslectCameras")]
         public static extern int DeslectCameras();
 

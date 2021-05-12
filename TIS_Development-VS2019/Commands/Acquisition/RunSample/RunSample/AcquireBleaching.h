@@ -1,7 +1,6 @@
 #pragma once
 
 #include "..\..\..\..\Common\Sample\Sample\Acquire.h"
-#include "AutoFocus.h"
 #include "AcquireSaveInfo.h"
 #include "..\..\..\Common\ThorSharedTypesCPP.h"
 #include "..\..\..\Common\BinaryImageDataUtilities\RawFile.h"
@@ -12,7 +11,7 @@
 class AcquireBleaching : public IAcquire
 {
 public:
-	AcquireBleaching(IAutoFocus *,IExperiment *,wstring path);
+	AcquireBleaching(IExperiment *,wstring path);
 
 	struct SaveParams
 	{
@@ -79,7 +78,6 @@ public:
 
 	//static members:
 	static HANDLE hEvent;
-	static HANDLE hEventAutoFocus;
 	static HANDLE hEventZ;
 	static HANDLE hEventBleach;
 	static HANDLE hStopBleach;
@@ -98,13 +96,10 @@ public:
 	
 private:
 
-	long SetAutoFocusStartZPosition(double afStartPos,BOOL bWait,BOOL afFound);
-	long AutoFocusAndRetry(long index, IDevice *pAutoFocusDevice, BOOL &afFound);
 	long SetPMT();	
 	long ScannerEnable(long cameraOrBleachScanner, long enable);
 	string uUIDSetup(SaveParams *sp, long bufferChannels, long timePoints, long zstageSteps, long index, long subWell);
 	//void SaveData(SaveParams *sp, long currentT);
-	IAutoFocus * _pAutoFocus;
 	IExperiment * _pExp;
 	long SaveTimingToExperimentFolder();
 	void SavePreviewImage(SaveParams *sp, long tFrame, char * pBuffer);

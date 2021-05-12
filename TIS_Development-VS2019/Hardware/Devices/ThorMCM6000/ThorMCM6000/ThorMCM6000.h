@@ -5,55 +5,24 @@
 #include <strsafe.h>
 #include "MCM6000.h"
 
+#define MCM6000_EXPORT
+
+#if defined(MCM6000_EXPORT)
+#define DllExportMCM6000 __declspec(dllexport)
+#else
+//    definitions used when using DLL
+#define DllExport __declspec(dllimport)
+#endif
 
 using namespace std;
 
 // This class is exported from the ThorMesoScan.dll
-class MCM6000Stage :IDevice
+class DllExportMCM6000 MCM6000Stage :IDevice
 {
-private:
-	double _xPosition;
-	double _yPosition;
-	double _zPosition;
-	double _rPosition;
-	long _lpInvertedPos;
-	long _etInvertedPos;
-	long _ggLightpathPos;
-	long _grLightpathPos;
-	long _camLightpathPos;
-	double _xMoveByDistance;
-	double _yMoveByDistance;
-	double _zMoveByDistance;
-	double _rMoveByDistance;
-
-	bool _xPosition_B;
-	bool _yPosition_B;
-	bool _zPosition_B;
-	bool _rPosition_B;
-	bool _lpInvertedPos_B;
-	bool _etInvertedPos_B;
-	long _ggLightpathPos_B;
-	long _grLightpathPos_B;
-	long _camLightpathPos_B;
-	bool _xMoveByDistance_B;
-	bool _yMoveByDistance_B;
-	bool _zMoveByDistance_B;
-	bool _rMoveByDistance_B;
-
-	double _xPosition_C;
-	double _yPosition_C;
-	double _zPosition_C;
-	double _rPosition_C;
-	double _zePosition_C;
-	long _lpInvertedPos_C;
-	long _etInvertedPos_C;
-
-	MCM6000* _device;
-	static MCM6000Stage* _instance;
-	MCM6000Stage();
 public:
-	static MCM6000Stage* getInstance();
 	~MCM6000Stage();
+
+	static MCM6000Stage* getInstance();
 
 	long FindDevices(long& DeviceCount);
 	long SelectDevice(const long Device);
@@ -72,4 +41,56 @@ public:
 	long ReadPosition(DeviceType deviceType, double& pos);
 	long PostflightPosition();
 	long GetLastErrorMsg(wchar_t* msg, long size);
+	long IsMCM6000Connected();
+	long IsCondenserAvailable();
+
+private:
+	double _xPosition;
+	double _yPosition;
+	double _zPosition;
+	double _rPosition;
+	double _condenserPosition;
+	long _lpInvertedPos;
+	long _etInvertedPos;
+	long _ggLightpathPos;
+	long _grLightpathPos;
+	long _camLightpathPos;
+	long _nddPos;
+	double _xMoveByDistance;
+	double _yMoveByDistance;
+	double _zMoveByDistance;
+	double _rMoveByDistance;
+	double _condenserMoveByDistance;
+
+	bool _xPosition_B;
+	bool _yPosition_B;
+	bool _zPosition_B;
+	bool _rPosition_B;
+	bool _condenserPosition_B;
+	bool _lpInvertedPos_B;
+	bool _etInvertedPos_B;
+	bool _nddPos_B;
+	long _ggLightpathPos_B;
+	long _grLightpathPos_B;
+	long _camLightpathPos_B;
+	bool _xMoveByDistance_B;
+	bool _yMoveByDistance_B;
+	bool _zMoveByDistance_B;
+	bool _rMoveByDistance_B;
+	bool _condenserMoveByDistance_B;
+
+	double _xPosition_C;
+	double _yPosition_C;
+	double _zPosition_C;
+	double _rPosition_C;
+	double _zePosition_C;
+	double _condenserPosition_C;
+	long _lpInvertedPos_C;
+	long _etInvertedPos_C;
+	long _nddPos_C;
+
+	static std::shared_ptr <MCM6000> _device;
+	static bool _instanceFlag;
+	static std::shared_ptr <MCM6000Stage> _instance;
+	MCM6000Stage();
 };

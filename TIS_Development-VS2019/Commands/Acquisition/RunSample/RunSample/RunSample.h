@@ -29,6 +29,7 @@ private:
 
 	long InitializeCustomParameters();
 	long StopCamera();
+
 public:
 
 	static RunSample* getInstance();
@@ -88,3 +89,5 @@ void GetZPositions(IExperiment* exp, IDevice* pZStage, double &zStartPos, double
 void SetPower(IExperiment* exp, ICamera* camera, double zPos, double &power0, double &power1, double &power2, double &power3, double &power4, double &power5);
 void SetLEDs(IExperiment* exp, ICamera* camera, double zPos, double &ledPower1, double &ledPower2, double &ledPower3, double &ledPower4, double &ledPower5, double &ledPower6);
 void PreCaptureProtocol(IExperiment *exp);
+UINT SafetyInterlockStatusCheck();
+void InitiateSafetyInterlockStatusCheck();

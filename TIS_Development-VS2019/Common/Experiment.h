@@ -111,6 +111,7 @@ public:
 		long LightPathGREnable;
 		long LightPathCamEnable;
 		long InvertedLightPathPosition;
+		long LightPathNDDPosition;
 		vector<Wavelength> Wavelength;
 		vector<Pockels> Pockels;
 	};	
@@ -239,14 +240,17 @@ public:
 	virtual long GetCaptureMode(long &mode)=0;///capture mode selection
 	virtual long SetCaptureMode(long mode)=0;
 
-	virtual long GetLightPath(long &galvoGalvo, long &galvoRes, long &camera, long &invertedLightPathPos)=0;
-	virtual long SetLightPath(long galvoGalvo, long galvoRes, long camera, long invertedLightPathPos)=0;
+	virtual long GetLightPath(long& galvoGalvo, long& galvoRes, long& camera, long& invertedLightPathPos, long& ndd) = 0;
+	virtual long SetLightPath(long galvoGalvo, long galvoRes, long camera, long invertedLightPathPos, long ndd) = 0;
 
 	virtual long GetCaptureSequence(long &enable)=0;
 	virtual long GetSequenceSteps(vector<SequenceStep> &captureSequenceSettings)=0;
 
 	virtual long GetSpectralFilter(long &startWavelength, long &stopWavelength, long &stepsSizeWavelength, long &bandwidthMode, string &path)=0;
 	virtual long SetSpectralFilter(long startWavelength, long stopWavelength, long stepsSizeWavelength, long bandwidthMode, string path)=0;
+
+	virtual long GetEpiTurret(long& position, string& name) = 0;
+	virtual long SetEpiTurret(long position, string name) = 0;
 
 	virtual long GetLampLED(long& led1enable, double& led1power, long& led2enable, double& led2power, long& led3enable, double& led3power, long& led4enable, double& led4power, long& led5enable, double& led5power, long& led6enable, double& led6power, double& mainPower) = 0;
 

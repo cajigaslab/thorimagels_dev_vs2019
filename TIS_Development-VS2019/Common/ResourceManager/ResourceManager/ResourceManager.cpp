@@ -148,6 +148,7 @@ wstring ResourceManager::_activeSettingsFile;
 wstring ResourceManager::_appSettingsFile;
 wstring ResourceManager::_hwSettingsFile;
 wstring ResourceManager::_modality;
+wstring ResourceManager::_autoFocusCacheDir;
 const wstring ResourceManager::MODALITY_TAG_NAME = L"Modality";
 
 auto_ptr<ResourceManager> ResourceManager::_single(new ResourceManager());
@@ -315,6 +316,9 @@ void ResourceManager::LocateDirectories()
 		_hwSettingsFile += modalityFolder;
 		_hwSettingsFile += wstring(L"Application Settings\\HardwareSettings.xml");
 
+		_autoFocusCacheDir = wstring(_MyDocumentsThorImageDir);
+		_autoFocusCacheDir += wstring(L"AutoFocusCache\\");
+
 		LoadSettings();
 	}
 }
@@ -347,6 +351,11 @@ wstring ResourceManager::GetMyDocumentsThorImageFolder()
 wstring ResourceManager::GetZStackCachePath()
 {
 	return _zStackCacheDir;
+}
+
+wstring ResourceManager::GetAutoFocusCachePath()
+{
+	return _autoFocusCacheDir;
 }
 
 wstring ResourceManager::GetApplicationSettingsFilePathAndName()

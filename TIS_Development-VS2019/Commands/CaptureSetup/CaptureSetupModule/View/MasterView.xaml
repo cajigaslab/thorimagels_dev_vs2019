@@ -1140,6 +1140,20 @@
                             </StackPanel>
                         </Expander>
                     </Border>
+                    <Border Name="AutoFocusControlBorder"
+                            Width="{Binding Path=PanelBorderWidth}"
+                            Visibility="Visible">
+                        <Expander Name="AutoFocusControlExpander"
+                                  Foreground="#FFFFFFFF"
+                                  IsExpanded="True"
+                                  Margin="1"
+                                  Header="AutoFocus Control"
+                                  Expanded="Expander_Expanded">
+                            <StackPanel Name="AutoFocusControlPanel">
+                                <View:AutoFocusControlView x:Name="AutoFocusControlView"/>
+                            </StackPanel>
+                        </Expander>
+                    </Border>
                 </StackPanel>
                 <StackPanel Name="rightStackPanel"
                             Width="{Binding Path=WrapPanelWidth}"

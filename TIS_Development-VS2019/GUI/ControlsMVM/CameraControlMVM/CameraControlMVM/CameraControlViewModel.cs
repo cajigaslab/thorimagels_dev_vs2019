@@ -46,6 +46,8 @@
         ICommand _camFullFrameCommand;
         ObservableCollection<string> _camReadoutSpeedList;
         ICommand _camRegionFromROICommand;
+        ICommand _frameRateControlMinusCommand;
+        ICommand _frameRateControlPlusCommand;
         ObservableCollection<string> _hotPixelLevelList;
         ICommand _hotPixelMinusCommand;
         ICommand _hotPixelPlusCommand;
@@ -333,8 +335,10 @@
                 OnPropertyChanged("CameraCSType");
                 OnPropertyChanged("CamReadoutSpeedList");
                 OnPropertyChanged("HotPixelVis");
-                OnPropertyChanged("IsGainBLVisible");
+                OnPropertyChanged("IsGainVisible");
+                OnPropertyChanged("IsBlackLevelVisible");
                 OnPropertyChanged("IsReadoutVisible");
+                OnPropertyChanged("IsTapsVisible");
             }
         }
 
@@ -525,6 +529,11 @@
                     _camReadoutSpeedList.Add("Standard");
                     _camReadoutSpeedList.Add("Fast");
                 }
+                else if (ActiveCameraName.Contains("C13440"))
+                {
+                    _camReadoutSpeedList.Add("1");
+                    _camReadoutSpeedList.Add("2");
+                }
                 else
                 {
                     _camReadoutSpeedList.Add("20 MHZ");
@@ -627,6 +636,7 @@
                 OnPropertyChanged("ExposureTimeCam");
                 OnPropertyChanged("ExposureTimeMin");
                 OnPropertyChanged("ExposureTimeMax");
+                OnPropertyChanged("FrameRateControlValue");
             }
         }
 
@@ -673,6 +683,87 @@
             get
             {
                 return _cameraControlModel.ExposureTimeMin;
+            }
+        }
+
+        public int FrameRateControlEnabled
+        {
+            get
+            {
+                return _cameraControlModel.FrameRateControlEnabled;
+            }
+            set
+            {
+                _cameraControlModel.FrameRateControlEnabled = value;
+                OnPropertyChanged("FrameRateControlEnabled");
+                OnPropertyChanged("FrameRateControlValue");
+            }
+        }
+
+        public double FrameRateControlMax
+        {
+            get
+            {
+                return _cameraControlModel.FrameRateControlMax;
+            }
+        }
+
+        public double FrameRateControlMin
+        {
+            get
+            {
+                return _cameraControlModel.FrameRateControlMin;
+            }
+        }
+
+        public ICommand FrameRateControlMinusCommand
+        {
+            get
+            {
+                if (_frameRateControlMinusCommand == null)
+                    _frameRateControlMinusCommand = new RelayCommand(() => FrameRateControlMinus());
+
+                return _frameRateControlMinusCommand;
+            }
+        }
+
+        public ICommand FrameRateControlPlusCommand
+        {
+            get
+            {
+                if (_frameRateControlPlusCommand == null)
+                    _frameRateControlPlusCommand = new RelayCommand(() => FrameRateControlPlus());
+
+                return _frameRateControlPlusCommand;
+            }
+        }
+
+        public double FrameRateControlValue
+        {
+            get
+            {
+                return _cameraControlModel.FrameRateControlValue;
+            }
+            set
+            {
+                // Exposure can limit the frame rate. Check if the new frame rate exceeds this limit (using miliseconds for calculation)
+                if (value > (1000.0 / ExposureTimeCam))
+                {
+                    _cameraControlModel.FrameRateControlValue = 1000.0 / ExposureTimeCam;
+                }
+                else
+                {
+                    _cameraControlModel.FrameRateControlValue = value;
+                }
+                OnPropertyChanged("FrameRateControlValue");
+            }
+        }
+
+        public bool FrameRateControlVisibility
+        {
+            get
+            {
+                return (FrameRateControlMax > 0);
             }
         }
 
@@ -810,7 +901,15 @@
             }
         }
 
-        public bool IsGainBLVisible
+        public bool IsBlackLevelVisible
+        {
+            get
+            {
+                return (false == ActiveCameraName.Contains("CS2100") && false == ActiveCameraName.Contains("CS135") && (int)ICamera.CCDType.ORCA != ResourceManagerCS.GetCCDType());
+            }
+        }
+
+        public bool IsGainVisible
         {
             get
             {
@@ -1125,7 +1224,7 @@
 
             ActiveCameraName = GetCameraName();
 
-            CameraCSType = (ActiveCameraName.Contains("CS2100") || ActiveCameraName.Contains("CS895") || ActiveCameraName.Contains("CS505")) ? true : false;
+            CameraCSType = (ActiveCameraName.Contains("CS") || ActiveCameraName.Contains("CC")) ? true : false;
 
             OnPropertyChanged("CamResolutionPresets");
             //Load the visibilities of the Orca camera
@@ -1133,6 +1232,11 @@
             OnPropertyChanged("BinList");
             OnPropertyChanged("HotPixelCBVisibility");
             OnPropertyChanged("HotPixelLevelList");
+            OnPropertyChanged("FrameRateControlMin");
+            OnPropertyChanged("FrameRateControlMax");
+            OnPropertyChanged("FrameRateControlVisibility");
+            OnPropertyChanged("HotPixelEnabled");
+            OnPropertyChanged("HotPixelVal");
 
             if (ndList.Count > 0)
             {
@@ -1329,6 +1433,22 @@
                 {
                     HotPixelLevelIndex = 0;
                 }
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "frameRateControlEnabled", ref str))
+                {
+                    if (Int32.TryParse(str, out int tmp))
+                    {
+                        FrameRateControlEnabled = tmp;
+                    }
+                }
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "frameRateControlValue", ref str))
+                {
+                    if (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out double tmp))
+                    {
+                        FrameRateControlValue = tmp;
+                    }
+                }
             }
         }
 
@@ -1388,6 +1508,8 @@
                     XmlManager.SetAttribute(ndList[0], experimentFile, "isCSType", this.CameraCSType.ToString());
                     XmlManager.SetAttribute(ndList[0], experimentFile, "binIndex", this.BinIndex.ToString());
                     XmlManager.SetAttribute(ndList[0], experimentFile, "hotPixelLevelIndex", this.HotPixelLevelIndex.ToString());
+                    XmlManager.SetAttribute(ndList[0], experimentFile, "frameRateControlEnabled", this.FrameRateControlEnabled.ToString());
+                    XmlManager.SetAttribute(ndList[0], experimentFile, "frameRateControlValue", this.FrameRateControlValue.ToString());
 
                     Decimal decX = new Decimal((this.Right - this.Left) * this.CamPixelSizeUM);
                     Decimal decY = new Decimal((this.Bottom - this.Top) * this.CamPixelSizeUM);
@@ -1617,6 +1739,16 @@
                     }
                     break;
             }
+        }
+
+        private void FrameRateControlMinus()
+        {
+            this.FrameRateControlValue -= 1;
+        }
+
+        private void FrameRateControlPlus()
+        {
+            this.FrameRateControlValue += 1;
         }
 
         private void HotPixelMinus()

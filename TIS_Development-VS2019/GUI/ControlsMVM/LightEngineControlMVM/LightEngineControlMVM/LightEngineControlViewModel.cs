@@ -123,6 +123,14 @@
             }
         }
 
+        public String LED1PeakToolTip
+        {
+            get
+            {
+                return "Peak Wavelength: " + this._lightEngineControlModel.LED1PeakToolTip;
+            }
+        }
+
         public Double LED1Power
         {
             get
@@ -242,6 +250,14 @@
             }
             set
             {
+            }
+        }
+
+        public String LED2PeakToolTip
+        {
+            get
+            {
+                return "Peak Wavelength: " + this._lightEngineControlModel.LED2PeakToolTip;
             }
         }
 
@@ -367,6 +383,14 @@
             }
         }
 
+        public String LED3PeakToolTip
+        {
+            get
+            {
+                return "Peak Wavelength: " + this._lightEngineControlModel.LED3PeakToolTip;
+            }
+        }
+
         public Double LED3Power
         {
             get
@@ -486,6 +510,14 @@
             }
             set
             {
+            }
+        }
+
+        public String LED4PeakToolTip
+        {
+            get
+            {
+                return "Peak Wavelength: " + this._lightEngineControlModel.LED4PeakToolTip;
             }
         }
 
@@ -611,6 +643,14 @@
             }
         }
 
+        public String LED5PeakToolTip
+        {
+            get
+            {
+                return "Peak Wavelength: " + this._lightEngineControlModel.LED5PeakToolTip;
+            }
+        }
+
         public Double LED5Power
         {
             get
@@ -730,6 +770,14 @@
             }
             set
             {
+            }
+        }
+
+        public String LED6PeakToolTip
+        {
+            get
+            {
+                return "Peak Wavelength: " + this._lightEngineControlModel.LED6PeakToolTip;
             }
         }
 
@@ -1157,7 +1205,7 @@
         public void UpdateExpXMLSettings(ref XmlDocument experimentFile)
         {
             XmlNodeList ndList = experimentFile.SelectNodes("/ThorImageExperiment/LAMP");
-               // XmlNodeList ndListHW = this.HardwareDoc.SelectNodes("/HardwareSettings/ImageDetectors/LSM");
+            // XmlNodeList ndListHW = this.HardwareDoc.SelectNodes("/HardwareSettings/ImageDetectors/LSM");
 
             if (ndList.Count > 0)
             {

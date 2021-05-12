@@ -1,16 +1,26 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <MCM6000Settings>
-  <DeviceInfo serialNumber="" baudRate="115200" portId="54" scopeType="0"/>
-  <FTDIsettings baudRate="921600" portID="55" FTDIMode="0"/>
-  <!--
-   Example configuration for Bergamo Scopes
-   <SlotLayout slot1="X" slot2="Y" slot3="Z" slot4="R" slot5="ZE" slot6="LP" slot7=""/>
-   Configuration for Inverted scope
-    <SlotLayout slot1="ILP" slot2="ET" slot3="Z" slot4="" slot5="" slot6="" slot7=""/>
+	<DeviceInfo baudRate="115200" portId="54"/>
+	<FTDIsettings baudRate="921600" portID="55" FTDIMode="0"/>
+	<!--
+  Possible stage types for SlotLayout: 
+		X Axis:					slot#="X"
+		Y Axis:					slot#="Y"
+		Z Axis:					slot#="Z"
+		Rotation:				slot#="R"
+		LightPath:				slot#="LP"
+		Coarse Z:				slot#="ZElevator"
+		Condenser:				slot#="Condenser"
+		Shutter:				slot#="Shutter"
+		Inverted Epi Turret:	slot#="EpiTurret"
+		Inverted Z:				slot#="InvertedZ"
+		Inverted Lighpath:		slot#="InvertedLP"
+		Auto Focus Switch:		slot#="AFSwitch"
   -->
-  <SlotLayout slot1="" slot2="" slot3="" slot4="" slot5="" slot6="" slot7=""/>
-  <XRangeConfig minMM="-10" maxMM="10" threshold="2" invert="0" pid="1" pidKickout="1" moveByThresholduM="0"/>
-  <YRangeConfig minMM="-10" maxMM="10" threshold="2" invert="0" pid="1" pidKickout="1" moveByThresholduM="0"/>
-  <ZRangeConfig minMM="-3" maxMM="3" threshold="1" invert="0" pid="1" pidKickout="1" moveByThresholduM="0"/>
-  <RRangeConfig min="-10" max="10" threshold="2" invert="0" pid="1" pidKickout="1" moveByThresholduM="0"/>
+	<SlotLayout slot1="" slot2="" slot3="" slot4="" slot5="" slot6="" slot7=""/>
+	<XRangeConfig minMM="-10" maxMM="10" threshold="2" invert="0" moveByThresholduM="-1"/>
+	<YRangeConfig minMM="-10" maxMM="10" threshold="2" invert="0" moveByThresholduM="-1"/>
+	<ZRangeConfig minMM="-3" maxMM="3" threshold="1" invert="0" moveByThresholduM="-1"/>
+	<RRangeConfig min="-10" max="10" threshold="2" invert="0" moveByThresholduM="-1"/>
+	<CondenserRangeConfig minMM="-3" maxMM="3" threshold="1" invert="0" moveByThresholduM="-1"/>
 </MCM6000Settings>

@@ -14,6 +14,7 @@
     <Grid>
         <lc:LampControlUC 
 					   LampMaxPosition="{Binding Path=LampMaxPosition, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       LampON="{Binding Path=LampON, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 					   LampPosition="{Binding Path=LampPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 					   LampMinPosition="{Binding Path=LampMinPosition, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                        TempLampPosition="{Binding Path=TempLampPosition, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"

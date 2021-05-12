@@ -19,7 +19,7 @@ public:
 
 public:
 	AcquireFactory();
-	IAcquire *getAcquireInstance(AcquireType id,IAutoFocus *pAF,Observer *pOb,IExperiment *pExp,wstring path);
+	IAcquire *getAcquireInstance(AcquireType id,Observer *pOb,IExperiment *pExp,wstring path);
 
 	static const char* const bufferChannelName[];
 

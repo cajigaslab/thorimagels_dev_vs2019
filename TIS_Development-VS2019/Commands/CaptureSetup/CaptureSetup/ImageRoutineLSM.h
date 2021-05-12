@@ -23,6 +23,7 @@ public:
 	long CopyAcquisition(long isFullFrame);
 	long GetImageDimensions(long &width, long &height);
 	long CaptureSingleImageWithAverage(char *buffer, double exposureTime, long binningX, long binningY , long avgFrames, long snapshotFlag);
+	long StartAutoFocus(double magnification, long autoFocusType, BOOL& afFound);
 
 	static BOOL _enableCopy;
 
@@ -33,3 +34,6 @@ private:
 
 UINT ZStackCaptureThreadProcLSM( LPVOID pParam );
 UINT SnapshotThreadProcLSM(LPVOID pParam);
+
+UINT AutoFocusCaptureThreadProcLSM(LPVOID pParam);
+UINT AutoFocusStatusThreadProcLSM();

@@ -246,8 +246,8 @@
                         new bool[14] { true, true, true, true, true, true, true, true, true, true, true, true, true, true };
 
                     OverlayManagerClass.Instance.InitSelectROI(ref _overlayCanvas);
-                    OverlayManagerClass.Instance.DisplayModeROI(ref _overlayCanvas, _configMicroScanArea ? ThorSharedTypes.Mode.STATSONLY : ThorSharedTypes.Mode.MICRO_SCANAREA, false);
-                    OverlayManagerClass.Instance.DisplayModeROI(ref _overlayCanvas, _configMicroScanArea ? ThorSharedTypes.Mode.MICRO_SCANAREA : ThorSharedTypes.Mode.STATSONLY, true);
+                    OverlayManagerClass.Instance.DisplayModeROI(ref _overlayCanvas, _configMicroScanArea ? new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.STATSONLY } : new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.MICRO_SCANAREA }, false);
+                    OverlayManagerClass.Instance.DisplayModeROI(ref _overlayCanvas, _configMicroScanArea ? new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.MICRO_SCANAREA } : new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.STATSONLY }, true);
                     OverlayManagerClass.Instance.CurrentMode = _configMicroScanArea ? ThorSharedTypes.Mode.MICRO_SCANAREA : ThorSharedTypes.Mode.STATSONLY;
 
                     if (_configMicroScanArea)
@@ -690,7 +690,7 @@
 
                 this.EnableResolutionPresets = !TimeBasedLineScan;
 
-                //Recaluclate time based line scan parameters
+                //Recalculate time based line scan parameters
                 if (TimeBasedLineScan)
                 {
                     TimeBasedLSTimeMS = TimeBasedLSTimeMS;

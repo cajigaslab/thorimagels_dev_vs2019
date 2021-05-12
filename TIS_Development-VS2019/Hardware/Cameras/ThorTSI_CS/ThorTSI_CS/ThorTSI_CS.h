@@ -54,8 +54,10 @@ extern "C"
 		int bitPerPixel;
 		int hotPixelThreshold;
 		int hotPixelEnabled;
+		int frameRateControlEnabled;
 		double pixelSizeXUM;
 		double pixelSizeYUM;
+		double frameRateControlValue;
 
 	}ImgPty, *pImgPty;
 
@@ -148,6 +150,7 @@ extern "C"
 		const int DEFAULT_CHANNEL;
 		const int MAX_BITS_PERPIXEL;
 		const int MIN_BITS_PERPIXEL;
+		double _frameRateControlValueRange[2];
 
 		//callback functions:
 		static void CameraConnectedCallback(char* cameraSerialNumber, enum TL_CAMERA_USB_PORT_TYPE usb_bus_speed, void* context);

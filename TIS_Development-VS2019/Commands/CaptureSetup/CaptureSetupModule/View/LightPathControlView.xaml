@@ -19,8 +19,9 @@
         <StackPanel>
             <StackPanel Orientation="Horizontal"
                         VerticalAlignment="Center"
-                        HorizontalAlignment="Left">
+                        HorizontalAlignment="Center">
                 <StackPanel VerticalAlignment="Center"
+                            HorizontalAlignment="Left"
                             Visibility="{Binding GGLightPathVisibility}">
                     <Label Content="{Binding LightPathLabel_1}"
                            FontSize="14"
@@ -57,7 +58,7 @@
                         <Button Name="Btn_GGInverted"
                                 Width="50"
                                 Height="40"
-                                Margin="45,0,45,10"
+                                Margin="{Binding Path=MarginLeftInvertedButton}"
                                 VerticalAlignment="Center"
                                 Visibility="{Binding Path=IsInvertedScope}"
                                 ToolTip="Select left side mirror"
@@ -69,6 +70,7 @@
                     </StackPanel>
                 </StackPanel>
                 <StackPanel VerticalAlignment="Center"
+                            HorizontalAlignment="Center"
                             Visibility="{Binding GRLightPathVisibility}">
                     <Label Content="{Binding LightPathLabel_2}"
                            FontSize="14"
@@ -105,7 +107,7 @@
                         <Button Name="Btn_GRInverted"
                                 Width="50"
                                 Height="40"
-                                Margin="45,0,45,10"
+                                Margin="{Binding Path=MarginCenterInvertedButton}"
                                 Visibility="{Binding Path=IsInvertedScope}"
                                 ToolTip="Select center mirror"
                                 Command="{Binding Path=LightPathSwitch}"
@@ -115,7 +117,8 @@
                         </Button>
                     </StackPanel>
                 </StackPanel>
-                <StackPanel Visibility="{Binding CameraLightPathVisibility}">
+                <StackPanel Visibility="{Binding CameraLightPathVisibility}"
+                            HorizontalAlignment="Right">
                     <Label Content="{Binding LightPathLabel_3}"
                            FontSize="14"
                            Foreground="White"
@@ -152,13 +155,48 @@
                                 Width="50"
                                 Height="40"
                                 VerticalAlignment="Center"
-                                Margin="45,0,45,10"
+                                Margin="{Binding Path=MarginRightInvertedButton}"
                                 Visibility="{Binding Path=IsInvertedScope}"
                                 ToolTip="Select right side mirror"
                                 Command="{Binding Path=LightPathSwitch}"
                                 CommandParameter="Right">
                             <Image Name="ToggleCamInverted"
                                    Source="{Binding Path=InvertedLpRightDisplay, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel HorizontalAlignment="Center"
+                        Visibility="{Binding Path=IsNDDAvailable, ConverterParameter=False, Converter={StaticResource VisibilityOfBool}}">
+                    <Label Content="{Binding Path=LabelNDD, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       HorizontalAlignment="Center"
+                       FontSize="14"
+                       Foreground="White"
+                       HorizontalContentAlignment="Center"
+                       VerticalAlignment="Center"
+                       Height="31.28"/>
+                    <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Center">
+                        <Button Name="Btn_NDDon"
+                             Width="50"
+                             Height="40"
+                             Margin="20,0,0,10"
+                             VerticalAlignment="Center"
+                             ToolTip="Move NDD in"
+                             Command="{Binding Path=LightPathSwitch}"
+                             CommandParameter="NDD_IN">
+                            <Image Name="ToggleNDDon"
+                               Source="{Binding Path=DisplayOnNDD}" />
+                        </Button>
+                        <Button Name="Btn_NDDoff"
+                            Width="50"
+                            Height="40"
+                            Margin="0,0,20,10"
+                            VerticalAlignment="Center"
+                            ToolTip="Move NDD out"
+                            Command="{Binding Path=LightPathSwitch}"
+                            CommandParameter="NDD_OUT">
+                            <Image Name="ToggleNDDoff"
+                               Source="{Binding Path=DisplayOffNDD}" />
                         </Button>
                     </StackPanel>
                 </StackPanel>

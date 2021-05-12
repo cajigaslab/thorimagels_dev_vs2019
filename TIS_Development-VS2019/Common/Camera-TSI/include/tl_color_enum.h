@@ -47,10 +47,10 @@ For full license details, see the accompanying LICENSE file.
 */
 enum TL_COLOR_FILTER_ARRAY_PHASE
 {
-   BAYER_RED /*!< A red pixel. */
- , BAYER_BLUE /*!< A blue pixel. */ 
- , BAYER_GREEN_LEFT_OF_RED /*!< A green pixel next to a red pixel. */
- , BAYER_GREEN_LEFT_OF_BLUE /*!< A green pixel next to a blue pixel. */
+   TL_COLOR_FILTER_ARRAY_PHASE_BAYER_RED /*!< A red pixel. */
+ , TL_COLOR_FILTER_ARRAY_PHASE_BAYER_BLUE /*!< A blue pixel. */
+ , TL_COLOR_FILTER_ARRAY_PHASE_BAYER_GREEN_LEFT_OF_RED /*!< A green pixel next to a red pixel. */
+ , TL_COLOR_FILTER_ARRAY_PHASE_BAYER_GREEN_LEFT_OF_BLUE /*!< A green pixel next to a blue pixel. */
  , TL_COLOR_FILTER_ARRAY_PHASE_MAX /*!< A sentinel value (DO NOT USE). */
 };
 
@@ -66,9 +66,9 @@ enum TL_COLOR_FILTER_ARRAY_PHASE
 */
 enum TL_COLOR_FORMAT
 {
-   BGR_PLANAR /*!< The color pixels blue, green, and red are grouped in separate planes in the buffer: BBBBBBBB..., GGGGGGGG..., RRRRRRRR.... */
- , BGR_PIXEL /*!< The color pixels blue, green, and red are clustered and stored consecutively in the following pattern: BGRBGRBGR... */
- , RGB_PIXEL /*!< The color pixels blue, green, and red are clustered and stored consecutively in the following pattern: RGBRGBRGB... */
+   TL_COLOR_FORMAT_BGR_PLANAR /*!< The color pixels blue, green, and red are grouped in separate planes in the buffer: BBBBBBBB..., GGGGGGGG..., RRRRRRRR.... */
+ , TL_COLOR_FORMAT_BGR_PIXEL /*!< The color pixels blue, green, and red are clustered and stored consecutively in the following pattern: BGRBGRBGR... */
+ , TL_COLOR_FORMAT_RGB_PIXEL /*!< The color pixels blue, green, and red are clustered and stored consecutively in the following pattern: RGBRGBRGB... */
  , TL_COLOR_FORMAT_MAX /*!< A sentinel value (DO NOT USE). */
 };
 
@@ -79,6 +79,6 @@ enum TL_COLOR_FORMAT
 */
 enum TL_COLOR_FILTER_TYPE
 {
-   BAYER /*!< A Bayer pattern color sensor. */
+   TL_COLOR_FILTER_TYPE_BAYER /*!< A Bayer pattern color sensor. */
  , TL_COLOR_FILTER_TYPE_MAX /*!< A sentinel value (DO NOT USE). */
 };

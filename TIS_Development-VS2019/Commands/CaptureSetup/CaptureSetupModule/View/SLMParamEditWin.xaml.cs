@@ -186,7 +186,7 @@
         };
 
         const double MIN_PATTERN_MS = 8.0; //[msec], minimum time for SLM runtime calculation
-        const int SLM_CALIB_PTS = 9;
+        const int SLM_CALIB_PTS = 9; //exclude center [subID == 0]
 
         private BackgroundWorker slmBuilder;
         private BackgroundWorker slmCalibrator;
@@ -912,6 +912,8 @@
                 _vm.StopBleach();
                 System.Threading.Thread.Sleep(50);
             }
+            //not leaving calibration pattern on:
+            _vm.SLMSetBlank();
         }
 
         private void CancelSLMBackgroundWorker(BackgroundWorker worker, bool updateFile)
@@ -1374,7 +1376,7 @@
                             bmpPathLamda[i] = _vm.SLMWaveformFolder[0] + "\\" + _vm.SLMWaveBaseName[1] + i + ".bmp";
                             _vm.SLMSelectWavelengthProp = (1 == i);
                             bmp = ProcessBitmap.CreateBinaryBitmap(new int[2] { _vm.ImageWidth, _vm.ImageHeight }, OverlayManagerClass.Instance.GetModeROIs(Mode.PATTERN_WIDEFIELD, OverlayManagerClass.Instance.PatternID, _vm.SLMWavelengthNM));
-                            float dpi = (float)((double)Constants.UM_PER_INCH / (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0]);
+                            float dpi = (float)((double)Constants.UM_PER_INCH / (double)MVMManager.Instance["ObjectiveControlViewModel", "TurretMagnification", (object)1.0] / (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0]);
                             bmp.SetResolution(dpi, dpi);    //dots per inch
                             bmp.Save(bmpPathLamda[i], System.Drawing.Imaging.ImageFormat.Bmp);
                             _vm.SaveSLMPatternName(bmpPathLamda[i]);     //save phase masks with calibration
@@ -1475,7 +1477,7 @@
                     WaveformBuilder.ClkRate = _vm.IsStimulator ? _vm.BleachInternalClockRate : (int)(_vm.BleachLSMPixelXY[0] * WaveformBuilder.MS_TO_S / minPixelSpacing);   //[Hz]
                     SLMParamsCurrent = new SLMParams(_vm.SLMBleachWaveParams[i]);
                     int stepCount = GetDwellCount(WaveformBuilder.ClkRate);
-                    _vm.SLMBleachWaveParams[i].BleachWaveParams.DwellTime = _vm.SLMBleachWaveParams[i].Duration * (_vm.IsStimulator ? 1 : WaveformBuilder.MS_TO_S / stepCount);  //Duration [ms], DwellTime [us]
+                    _vm.SLMBleachWaveParams[i].BleachWaveParams.DwellTime = _vm.SLMBleachWaveParams[i].Duration * WaveformBuilder.MS_TO_S / (_vm.IsStimulator ? 1 : stepCount);  //Duration [ms], DwellTime [us]
                     _vm.SLMBleachWaveParams[i].BleachWaveParams.ClockRate = WaveformBuilder.ClkRate;
                     _vm.SLMBleachWaveParams[i].BleachWaveParams.DeltaX_Px = WaveformBuilder.DeltaX_Px;
 
@@ -1764,18 +1766,25 @@
                 }
             });
 
-            float[] ptsTo = PointsToFloatVec(calPointsTo);
-            float[] ptsFrom = (0 == calPointsFrom.Count) ? ptsTo : PointsToFloatVec(calPointsFrom);
+            //expect above are in Sub Pattern ID order,
+            //keep the first as image center for later transform in SLM
+            List<Point> calPointsToMap = new List<Point>();
+            calPointsToMap = calPointsTo;
+            calPointsTo.Insert(0, new Point(_vm.ImageWidth / 2, _vm.ImageHeight / 2));
+            calPointsFrom.Insert(0, new Point(_vm.ImageWidth / 2, _vm.ImageHeight / 2));
 
-            //check if both are valid counts:
-            if (((SLM_CALIB_PTS * 2) != ptsTo.Length) || ((SLM_CALIB_PTS * 2) != ptsFrom.Length))
+            float[] ptsTo = PointsToFloatVec(calPointsTo);
+            float[] ptsFrom = (1 >= calPointsFrom.Count) ? ptsTo : PointsToFloatVec(calPointsFrom);
+
+            //check if both are valid counts, one more for image center:
+            if (((SLM_CALIB_PTS + 1) * 2) != ptsTo.Length || ((SLM_CALIB_PTS + 1) * 2) != ptsFrom.Length)
             {
                 e.Result = "Invalid count of points.\n";
                 return;
             }
 
             //create mask for later used slm:
-            System.Drawing.Bitmap bmp = ProcessBitmap.CreateBinaryBitmap(_vm.ImageWidth, _vm.ImageHeight, calPointsTo);
+            System.Drawing.Bitmap bmp = ProcessBitmap.CreateBinaryBitmap(_vm.ImageWidth, _vm.ImageHeight, calPointsToMap);
             string bmpPath = _vm.BleachROIPath + "SLMCalibROIs.bmp";
             bmp.Save(bmpPath, System.Drawing.Imaging.ImageFormat.Bmp);
 
@@ -1786,7 +1795,7 @@
             if (0 == e.Result.ToString().CompareTo("0"))
             {
                 SLMPatternStatus = String.Format("Loading SLM Calibration Waveform, \nplease wait until done ... \n");
-                e.Result = (_vm.SLMCalibration(bmpPath, ptsFrom, ptsTo, ptsTo.Length, _vm.ImageWidth, _vm.ImageHeight, _vm.SLMCalibZPos)) ? "0" : "Calibration Failed\n";
+                e.Result = (_vm.SLMCalibration(bmpPath, ptsFrom, ptsTo, ptsTo.Length)) ? "0" : "Calibration Failed\n";
             }
         }
 
@@ -2417,7 +2426,7 @@
 
                 //calculate power area density
                 double areaUM2 = 1;
-                if (_vm.IsStimulator)
+                if (_vm.IsStimulator && null != activeROI)
                 {
                     this.Dispatcher.Invoke((SLMSavePattern)delegate
                     {
@@ -2522,7 +2531,7 @@
                 return false;
             }
             //Verify duration:
-            SLMParamsCurrent.BleachWaveParams.DwellTime = SLMParamsCurrent.Duration * WaveformBuilder.MS_TO_S / stepCount;  //Duration [ms], DwellTime [us]
+            SLMParamsCurrent.BleachWaveParams.DwellTime = SLMParamsCurrent.Duration * WaveformBuilder.MS_TO_S / (_vm.IsStimulator ? 1 : stepCount);  //Duration [ms], DwellTime [us]
             if (WaveformBuilder.MinDwellTime > SLMParamsCurrent.BleachWaveParams.DwellTime)
             {
                 SLMPatternStatus = String.Format("Minimum duration is {0} ms,\nwhile pixel spacing = {1}, width = {2} um, height = {3} um.\n",

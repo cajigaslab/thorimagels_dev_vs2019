@@ -30,6 +30,7 @@
 //#include <string.h>
 #include <algorithm>
 #include <iomanip>
+#include <atomic>
 using namespace std;
 
 #ifndef TIXML_USE_TICPP
@@ -60,6 +61,8 @@ using namespace sigslot;
 #include "..\..\..\..\Commands\General\SelectHardware\SelectHardware\SelectHardware.h"
 #include "..\..\..\..\Common\ThorDiskIO\ThorDiskIO.h"
 #include "..\..\..\..\Common\HardwareXML\HardwareSetupXML.h"
+#include "..\..\..\..\Common\AutoFocusModule\AutoFocus\AutoFocusClass.h"
+#include "..\..\..\..\Common\AutoFocusModule\AutoFocus\AutoFocus.h"
 
 #include "..\..\..\..\Commands\ImageAnalysis\PincushionCorrection\PincushionCorrection\PincushionCorrection.h"
 #include "..\..\..\..\Commands\ImageAnalysis\FlatField\FlatField\FlatField.h"

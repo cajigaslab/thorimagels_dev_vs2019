@@ -16,9 +16,8 @@ long SaveJPEG(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long h
 void GetColorInfo(HardwareSetupXML *pHardware,string wavelengthName, long &red, long &green, long &blue,long &bp, long &wp);
 void GetLookUpTables(unsigned short * rlut, unsigned short * glut, unsigned short *blut,long red, long green, long blue, long bp, long wp, long bitdepth);
 long SetupDimensions(ICamera *pCamera,IExperiment *pExperiment,double fieldSizeCalibration, double magnification, Dimensions &d, long &avgFrames, long &bufferChannels, long &avgMode, double &umPerPixe, long &numOfPlanes);
-AcquireMultiWavelength::AcquireMultiWavelength(IAutoFocus * pAutoFocus, IExperiment *pExperiment, wstring path)
+AcquireMultiWavelength::AcquireMultiWavelength(IExperiment *pExperiment, wstring path)
 {
-	_pAutoFocus = pAutoFocus;
 	_pExp = pExperiment;
 	_zFrame = 1;
 	_tFrame = 1;
@@ -121,26 +120,6 @@ UINT StatusShutterThreadProc( LPVOID pParam )
 	return 0;
 }
 
-
-UINT StatusAutoFocusThreadProc( LPVOID pParam )
-{
-	long status = IDevice::STATUS_BUSY;
-
-	IDevice * pDevice = (IDevice*)pParam;
-
-	while(status == IDevice::STATUS_BUSY)
-	{
-		if(FALSE == pDevice->StatusPosition(status))
-		{
-			break;
-		}
-	}
-
-	SetEvent( AcquireMultiWavelength::hEventAutoFocus);
-
-	return 0;
-}
-
 UINT StatusZThreadProc( LPVOID pParam )
 {
 	long status = IDevice::STATUS_BUSY;
@@ -163,7 +142,6 @@ UINT StatusZThreadProc( LPVOID pParam )
 HANDLE AcquireMultiWavelength::hEvent = NULL;
 HANDLE AcquireMultiWavelength::hEventFilter[] = {NULL, NULL, NULL};
 HANDLE AcquireMultiWavelength::hEventShutter = NULL;
-HANDLE AcquireMultiWavelength::hEventAutoFocus = NULL;
 HANDLE AcquireMultiWavelength::hEventZ = NULL;
 BOOL AcquireMultiWavelength::_evenOdd = FALSE;
 double AcquireMultiWavelength::_lastGoodFocusPosition = 0.0;
@@ -326,8 +304,9 @@ long AcquireMultiWavelength::Execute(long index, long subWell)
 	long turretPosition=0;
 	long zAxisToEscape=0;
 	double zAxisEscapeDistance=0;
+	double fineAutoFocusPercentage = 0.15;
 
-	pHardware->GetMagInfoFromName(objName,magnification,position,numAperture,afStartPos,afFocusOffset,afAdaptiveOffset,beamExpPos,beamExpWavelength,beamExpPos2,beamExpWavelength2,turretPosition,zAxisToEscape,zAxisEscapeDistance);
+	pHardware->GetMagInfoFromName(objName,magnification,position,numAperture,afStartPos,afFocusOffset,afAdaptiveOffset,beamExpPos,beamExpWavelength,beamExpPos2,beamExpWavelength2,turretPosition,zAxisToEscape,zAxisEscapeDistance,fineAutoFocusPercentage);
 
 	_adaptiveOffset = afAdaptiveOffset;
 
@@ -335,7 +314,6 @@ long AcquireMultiWavelength::Execute(long index, long subWell)
 	double expTimeMS,stepSizeUM,startPosMM,stopPosMM;
 
 	_pExp->GetAutoFocus(aftype,repeat,expTimeMS,stepSizeUM,startPosMM,stopPosMM);
-
 
 	//Determine if we are capturing the first image for the experiment. If so make sure an autofocus is executed if enabled.
 	//After the first iteration the Z position will overlap with the XY motion
@@ -350,19 +328,12 @@ long AcquireMultiWavelength::Execute(long index, long subWell)
 		}
 	}
 
-	IDevice * pAutoFocusDevice = NULL;
-
-	pAutoFocusDevice = GetDevice(SelectedHardware::SELECTED_AUTOFOCUS);
-
-	if(NULL == pAutoFocusDevice)
-	{	
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create autofocus device");
+	BOOL afFound=FALSE;
+	if (FALSE == RunAutofocus(index, aftype, afFound))
+	{
+		logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample RunAutoFocus failed");
 		return FALSE;
 	}
-
-	BOOL afFound=FALSE;
-
-	_pAutoFocus->Execute(index,pAutoFocusDevice,afFound);	
 
 	//get the camera
 	ICamera *pCamera = NULL;
@@ -665,7 +636,7 @@ long AcquireMultiWavelength::Execute(long index, long subWell)
 		_evenOdd = FALSE;
 	}
 
-	if(TRUE ==	_pAutoFocus->WillAFExecuteNextIteration())
+	if(TRUE == AutofocusExecuteNextIteration(aftype))
 	{
 		//move to an offset of of the start location	
 		if(FALSE == SetAutoFocusStartZPosition(afStartPos,FALSE,afFound))
@@ -868,80 +839,4 @@ void AcquireMultiWavelength::OpenShutter(IDevice *pShutter)
 void AcquireMultiWavelength::CloseShutter(IDevice *pShutter)
 {
 	//pShutter->PostflightPosition();
-}
-
-
-long AcquireMultiWavelength::SetAutoFocusStartZPosition(double afStartPos,BOOL bWait,BOOL afFound)
-{
-	IDevice * pZStage = NULL;
-
-	pZStage = GetDevice(SelectedHardware::SELECTED_ZSTAGE);
-
-	if(NULL == pZStage)
-	{	
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AcquireMultiWavelength Execute could not create z stage");
-		return FALSE;
-	}
-
-	//if found use a relative offset from the current position
-	if(afFound)
-	{
-		double pos;
-		pZStage->GetParam(IDevice::PARAM_Z_POS_CURRENT,pos);
-
-		_lastGoodFocusPosition = pos;
-
-		pos -= _adaptiveOffset;
-
-		pZStage->SetParam(IDevice::PARAM_Z_POS, pos);
-
-
-		StringCbPrintfW(message,MSG_LENGTH,L"ThorImager SetAutoFocusStartZPosition new af start position %d.%d",(int)pos,(int)((pos - static_cast<long>(pos))*1000));
-	}
-	else
-	{
-		double pos = _lastGoodFocusPosition;
-
-		//modify the last good focus position each pass to ensure its unique
-		_lastGoodFocusPosition = _lastGoodFocusPosition - .001;
-
-		pos -= _adaptiveOffset;
-
-		pZStage->SetParam(IDevice::PARAM_Z_POS, pos);
-
-		StringCbPrintfW(message,MSG_LENGTH,L"ThorImager SetAutoFocusStartZPosition new af start position %d.%d",(int)pos,(int)((pos - static_cast<long>(pos))*1000));
-	}
-
-	pZStage->PreflightPosition();
-
-	pZStage->SetupPosition ();
-
-	pZStage->StartPosition();
-
-	if(TRUE == bWait)
-	{
-		//don't wait for the z to finish its motion will overlap with the next XY movement
-		hEventZ = CreateEvent(0, FALSE, FALSE, 0);
-
-		DWORD dwThread;
-
-		HANDLE hThread = ::CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE) StatusZThreadProc, pZStage, 0, &dwThread );
-
-		const long MAX_Z_WAIT_TIME = 5000;
-
-		DWORD dwWait = WaitForSingleObject( hEventZ, MAX_Z_WAIT_TIME);
-
-		if(dwWait != WAIT_OBJECT_0)
-		{
-			logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AcquireMultiWavelength Execute Z failed");
-			//return FALSE;
-		}		
-
-		CloseHandle(hThread);
-		CloseHandle(hEventZ);
-	}
-
-	pZStage->PostflightPosition();	
-
-	return TRUE;
 }

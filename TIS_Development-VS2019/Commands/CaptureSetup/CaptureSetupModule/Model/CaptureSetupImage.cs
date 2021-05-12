@@ -152,6 +152,18 @@
             }
         }
 
+        public static bool PixelDataReady
+        {
+            get
+            {
+                return _pixelDataReady;
+            }
+            set
+            {
+                _pixelDataReady = value;
+            }
+        }
+
         public int AutoROIDisplayChannel
         {
             get

@@ -23,7 +23,7 @@
             typeof(Boolean),
             typeof(LEDSlider),
             new FrameworkPropertyMetadata(true,
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsArrange |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure));
@@ -44,7 +44,7 @@
             typeof(Boolean),
             typeof(LEDSlider),
             new FrameworkPropertyMetadata(true,
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsArrange |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure));
@@ -57,7 +57,7 @@
             typeof(Boolean),
             typeof(LEDSlider),
             new FrameworkPropertyMetadata(false,
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure |
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
@@ -70,7 +70,7 @@
             typeof(Boolean),
             typeof(LEDSlider),
             new FrameworkPropertyMetadata(true,
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsArrange |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure));
@@ -83,7 +83,7 @@
             typeof(SolidColorBrush),
             typeof(LEDSlider),
             new FrameworkPropertyMetadata(Brushes.DarkGray,
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure));
 
@@ -95,7 +95,7 @@
             typeof(ObservableCollection<String>),
             typeof(LEDSlider),
             new FrameworkPropertyMetadata(new ObservableCollection<String>() { "**EMPTY**" },
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure |
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
@@ -116,11 +116,20 @@
             typeof(Double),
             typeof(LEDSlider),
             new FrameworkPropertyMetadata(0.0,
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure |
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
                 new PropertyChangedCallback(OnValueChanged)));
+        public static readonly DependencyProperty PeakWavelengthToolTipProperty = DependencyProperty.RegisterAttached(
+           "PeakWavelengthToolTip",
+           typeof(String),
+           typeof(LEDSlider),
+           new FrameworkPropertyMetadata(string.Empty,
+            //FrameworkPropertyMetadataOptions.Inherits |
+               FrameworkPropertyMetadataOptions.AffectsRender |
+               FrameworkPropertyMetadataOptions.AffectsMeasure |
+               FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
 
         /// <summary>
         /// Selected Linear-Mode Settings-Name Property
@@ -130,7 +139,7 @@
             typeof(String),
             typeof(LEDSlider),
             new FrameworkPropertyMetadata("Slot I",
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure |
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
@@ -143,7 +152,7 @@
             typeof(Int32),
             typeof(LEDSlider),
             new FrameworkPropertyMetadata(0,
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure |
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
@@ -156,7 +165,7 @@
             typeof(Boolean),
             typeof(LEDSlider),
             new FrameworkPropertyMetadata(true,
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsArrange |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure));
@@ -169,7 +178,7 @@
             typeof(Double),
             typeof(LEDSlider),
             new FrameworkPropertyMetadata(1.0,
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure));
         public static readonly DependencyProperty TemperatureUnitProperty = DependencyProperty.RegisterAttached(
@@ -177,7 +186,7 @@
            typeof(String),
            typeof(LEDSlider),
            new FrameworkPropertyMetadata("ºC",
-               //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                FrameworkPropertyMetadataOptions.AffectsRender |
                FrameworkPropertyMetadataOptions.AffectsMeasure));
 
@@ -188,7 +197,7 @@
             typeof(String),
             typeof(LEDSlider),
             new FrameworkPropertyMetadata("LEDSlider",
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure |
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
@@ -201,7 +210,7 @@
             typeof(Double),
             typeof(LEDSlider),
             new FrameworkPropertyMetadata(0.0,
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure |
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
@@ -215,7 +224,7 @@
             typeof(Boolean),
             typeof(LEDSlider),
             new FrameworkPropertyMetadata(false,
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsArrange |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure));
@@ -446,6 +455,22 @@
                 {
                     this.SetValue(MasterValueProperty, value);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Gets string to be used as Tooltip to display the peak wavelength
+        /// </summary>
+        public String PeakWavelengthToolTip
+        {
+            get
+            {
+                return (String)this.GetValue(PeakWavelengthToolTipProperty);
+            }
+
+            set
+            {
+                this.SetValue(PeakWavelengthToolTipProperty, value);
             }
         }
 

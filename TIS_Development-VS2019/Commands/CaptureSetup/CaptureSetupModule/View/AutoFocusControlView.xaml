@@ -1,0 +1,31 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.AutoFocusControlView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:autofocus="clr-namespace:AutoFocusControl;assembly=AutofocusControl"
+             Height="Auto"
+             Width="385">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <autofocus:AutoFocusControlUC 
+            AbsoluteStartPosition="{Binding Path=AbsoluteStartPosition, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+            AbsoluteStopPosition="{Binding Path=AbsoluteStopPosition, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+            AutoFocusButtonEnabled="{Binding Path=AutoFocusButtonEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            AutoFocusType="{Binding Path=AutoFocusType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            CurrentZPosition="{Binding Path=CurrentZPosition, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+            InvertZ="{Binding Path=InvertZ, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+            Repeats="{Binding Path=Repeats, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            RunAutoFocusCommand="{Binding Path=RunAutoFocusCommand}"
+            StartPosition="{Binding Path=StartPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            StepSizeUM="{Binding Path=StepSizeUM, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            StopPosition="{Binding Path=StopPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            ZMin="{Binding Path=ZMin, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+            ZMax="{Binding Path=ZMax, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" >
+        </autofocus:AutoFocusControlUC>
+    </Grid>
+</UserControl>

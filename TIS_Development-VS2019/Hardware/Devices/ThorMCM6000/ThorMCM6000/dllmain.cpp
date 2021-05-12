@@ -20,7 +20,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	return TRUE;
 }
 
-DllExport FindDevices(long &deviceCount)
+DllExport FindDevices(long& deviceCount)
 {
 	return MCM6000Stage::getInstance()->FindDevices(deviceCount);
 }
@@ -34,7 +34,7 @@ DllExport long TeardownDevice()
 	return MCM6000Stage::getInstance()->TeardownDevice();
 }
 
-DllExport long GetParamInfo(const long paramID, long &paramType, long &paramAvailable, long &paramReadOnly, double &paramMin, double &paramMax, double &paramDefault)
+DllExport long GetParamInfo(const long paramID, long& paramType, long& paramAvailable, long& paramReadOnly, double& paramMin, double& paramMax, double& paramDefault)
 {
 	return MCM6000Stage::getInstance()->GetParamInfo(paramID, paramType, paramAvailable, paramReadOnly, paramMin, paramMax, paramDefault);
 }
@@ -44,7 +44,7 @@ DllExport long SetParam(const long paramID, const double param)
 	return MCM6000Stage::getInstance()->SetParam(paramID, param);
 }
 
-DllExport long GetParam(const long paramID, double &param)
+DllExport long GetParam(const long paramID, double& param)
 {
 	return MCM6000Stage::getInstance()->GetParam(paramID, param);
 }
@@ -64,12 +64,12 @@ DllExport long StartPosition()
 	return MCM6000Stage::getInstance()->StartPosition();
 }
 
-DllExport long StatusPosition(long &status)
+DllExport long StatusPosition(long& status)
 {
 	return MCM6000Stage::getInstance()->StatusPosition(status);
 }
 
-DllExport long ReadPosition(IDevice::DeviceType deviceType, double &pos)
+DllExport long ReadPosition(IDevice::DeviceType deviceType, double& pos)
 {
 	return MCM6000Stage::getInstance()->ReadPosition(deviceType, pos);
 }
@@ -79,22 +79,22 @@ DllExport long PostflightPosition()
 	return MCM6000Stage::getInstance()->PostflightPosition();
 }
 
-DllExport SetParamString(long paramID, wchar_t * str)
+DllExport SetParamString(long paramID, wchar_t* str)
 {
 	return MCM6000Stage::getInstance()->SetParamString(paramID, str);
 }
 
-DllExport GetParamString(const long paramID, wchar_t *str, long size)
+DllExport GetParamString(const long paramID, wchar_t* str, long size)
 {
 	return MCM6000Stage::getInstance()->GetParamString(paramID, str, size);
 }
 
-DllExport SetParamBuffer(const long paramID, char * buffer, long size)
+DllExport SetParamBuffer(const long paramID, char* buffer, long size)
 {
 	return MCM6000Stage::getInstance()->SetParamBuffer(paramID, buffer, size);
 }
 
-DllExport GetParamBuffer(const long paramID, char * buffer, long size)
+DllExport GetParamBuffer(const long paramID, char* buffer, long size)
 {
 	return MCM6000Stage::getInstance()->GetParamBuffer(paramID, buffer, size);
 }

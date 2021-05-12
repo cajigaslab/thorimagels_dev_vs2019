@@ -26,10 +26,10 @@
 
         private bool _getFirstLampPos = true;
         private bool _isExternalTrigger;
-        private double _lampPosition;
-        private long _lampTerminal;
         private bool _isLamp1Enable;
         private bool _isLamp2Enable;
+        private double _lampPosition;
+        private long _lampTerminal;
 
         #endregion Fields
 
@@ -62,6 +62,56 @@
                     _isExternalTrigger = value;
                     ResourceManagerCS.SetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP_MODE, _isExternalTrigger ? 7 : 2, (int)IDevice.DeviceSetParamType.EXECUTION_NO_WAIT);
                 }
+            }
+        }
+
+        public bool Lamp1Enable
+        {
+            get
+            {
+                int _terminal = 0;
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP1_CONNECTION, ref _terminal);
+
+                _isLamp1Enable = (_terminal>0)?true:false;
+
+                return _isLamp1Enable;
+            }
+            set
+            {
+                _isLamp1Enable = value;
+
+            }
+        }
+
+        public bool Lamp2Enable
+        {
+            get
+            {
+                int _terminal = 0;
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP2_CONNECTION, ref _terminal);
+                _isLamp2Enable = (_terminal > 0) ? true : false;
+
+                return _isLamp2Enable;
+            }
+            set
+            {
+                _isLamp2Enable = value;
+
+            }
+        }
+
+        public bool LampON
+        {
+            get
+            {
+                int state = 0;
+                int retCode = ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LEDS_ENABLE_DISABLE, ref state);
+                return state > 0;
+            }
+            set
+            {
+                int state = (Boolean)value ? 1 : 0;
+                int retCode = ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LEDS_ENABLE_DISABLE, state, (int)IDevice.DeviceSetParamType.EXECUTION_WAIT);
             }
         }
 
@@ -99,44 +149,6 @@
                 ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP_TERMINAL, (int)_lampTerminal, (int)IDevice.DeviceSetParamType.EXECUTION_NO_WAIT);
             }
         }
-
-        public bool Lamp1Enable
-        {
-            get
-            {
-                int _terminal = 0;
-                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP1_CONNECTION, ref _terminal);
-
-                
-                
-                _isLamp1Enable = (_terminal>0)?true:false;
-
-                return _isLamp1Enable;
-            }
-            set
-            {
-                _isLamp1Enable = value;
-                
-            }
-        }
-
-        public bool Lamp2Enable
-        {
-            get
-            {
-                int _terminal = 0;
-                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP2_CONNECTION, ref _terminal);
-                _isLamp2Enable = (_terminal > 0) ? true : false;
-
-                return _isLamp2Enable;
-            }
-            set
-            {
-                _isLamp2Enable = value;
-                
-            }
-        }
-
 
         #endregion Properties
     }

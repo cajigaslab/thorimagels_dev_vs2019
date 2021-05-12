@@ -14,6 +14,10 @@
     {
         #region Fields
 
+        public static readonly DependencyProperty LED1PeakToolTipProperty = 
+            DependencyProperty.Register("LED1PeakToolTip",
+            typeof(String),
+            typeof(LightEngineControlUC));
         public static readonly DependencyProperty LED1PowerMinusCommandProperty = 
             DependencyProperty.Register(
             "LED1PowerMinusCommand",
@@ -23,6 +27,10 @@
             DependencyProperty.Register(
             "LED1PowerPlusCommand",
             typeof(ICommand),
+            typeof(LightEngineControlUC));
+        public static readonly DependencyProperty LED2PeakToolTipProperty = 
+            DependencyProperty.Register("LED2PeakToolTip",
+            typeof(String),
             typeof(LightEngineControlUC));
         public static readonly DependencyProperty LED2PowerMinusCommandProperty = 
            DependencyProperty.Register(
@@ -34,6 +42,10 @@
             "LED2PowerPlusCommand",
             typeof(ICommand),
             typeof(LightEngineControlUC));
+        public static readonly DependencyProperty LED3PeakToolTipProperty = 
+            DependencyProperty.Register("LED3PeakToolTip",
+            typeof(String),
+            typeof(LightEngineControlUC));
         public static readonly DependencyProperty LED3PowerMinusCommandProperty = 
            DependencyProperty.Register(
            "LED3PowerMinusCommand",
@@ -43,6 +55,10 @@
             DependencyProperty.Register(
             "LED3PowerPlusCommand",
             typeof(ICommand),
+            typeof(LightEngineControlUC));
+        public static readonly DependencyProperty LED4PeakToolTipProperty = 
+            DependencyProperty.Register("LED4PeakToolTip",
+            typeof(String),
             typeof(LightEngineControlUC));
         public static readonly DependencyProperty LED4PowerMinusCommandProperty = 
            DependencyProperty.Register(
@@ -54,6 +70,10 @@
             "LED4PowerPlusCommand",
             typeof(ICommand),
             typeof(LightEngineControlUC));
+        public static readonly DependencyProperty LED5PeakToolTipProperty = 
+            DependencyProperty.Register("LED5PeakToolTip",
+            typeof(String),
+            typeof(LightEngineControlUC));
         public static readonly DependencyProperty LED5PowerMinusCommandProperty = 
            DependencyProperty.Register(
            "LED5PowerMinusCommand",
@@ -63,6 +83,10 @@
             DependencyProperty.Register(
             "LED5PowerPlusCommand",
             typeof(ICommand),
+            typeof(LightEngineControlUC));
+        public static readonly DependencyProperty LED6PeakToolTipProperty = 
+            DependencyProperty.Register("LED6PeakToolTip",
+            typeof(String),
             typeof(LightEngineControlUC));
         public static readonly DependencyProperty LED6PowerMinusCommandProperty = 
            DependencyProperty.Register(
@@ -94,7 +118,7 @@
            typeof(String),
            typeof(LightEngineControlUC),
            new FrameworkPropertyMetadata("ºC",
-               //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                FrameworkPropertyMetadataOptions.AffectsRender |
                FrameworkPropertyMetadataOptions.AffectsMeasure));
 
@@ -113,7 +137,7 @@
             typeof(String),
             typeof(LightEngineControlUC),
             new FrameworkPropertyMetadata("LED 1",
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsArrange |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure |
@@ -124,7 +148,7 @@
             typeof(SolidColorBrush),
             typeof(LightEngineControlUC),
             new FrameworkPropertyMetadata(new SolidColorBrush(Colors.Red),
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure,
                 new PropertyChangedCallback(onLED1LightColorChanged)));
@@ -133,7 +157,7 @@
             typeof(Double),
             typeof(LightEngineControlUC),
             new FrameworkPropertyMetadata(10.0,
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure |
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
@@ -143,7 +167,7 @@
             typeof(Boolean),
             typeof(LightEngineControlUC),
             new FrameworkPropertyMetadata(false,
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure |
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
@@ -159,7 +183,7 @@
             typeof(Double),
             typeof(LightEngineControlUC),
             new FrameworkPropertyMetadata(21.0,
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure,
                 new PropertyChangedCallback(onLED1TemperatureChanged)));
@@ -318,7 +342,7 @@
             typeof(Int32),
             typeof(LightEngineControlUC),
             new FrameworkPropertyMetadata(0,
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure |
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
@@ -328,7 +352,7 @@
             typeof(ObservableCollection<String>),
             typeof(LightEngineControlUC),
             new FrameworkPropertyMetadata(new ObservableCollection<String>() { "Slot I", "Slot II", "Slot III" },
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsArrange |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure |
@@ -339,7 +363,7 @@
             typeof(Double),
             typeof(LightEngineControlUC),
             new FrameworkPropertyMetadata(100.0,
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure |
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
@@ -349,7 +373,7 @@
             typeof(Boolean),
             typeof(LightEngineControlUC),
             new FrameworkPropertyMetadata(true,
-                //FrameworkPropertyMetadataOptions.Inherits |
+            //FrameworkPropertyMetadataOptions.Inherits |
                 FrameworkPropertyMetadataOptions.AffectsArrange |
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure,
@@ -411,6 +435,21 @@
                 if (!this.GetValue(LED1LightColorProperty).Equals(value))
                 {
                     this.SetValue(LED1LightColorProperty, value);
+                }
+            }
+        }
+
+        public String LED1PeakToolTip
+        {
+            get
+            {
+                return this.GetValue(LED1PeakToolTipProperty) as String;
+            }
+            set
+            {
+                if (!this.GetValue(LED1PeakToolTipProperty).Equals(value))
+                {
+                    this.SetValue(LED1PeakToolTipProperty, value);
                 }
             }
         }
@@ -517,6 +556,21 @@
             }
         }
 
+        public String LED2PeakToolTip
+        {
+            get
+            {
+                return this.GetValue(LED2PeakToolTipProperty) as String;
+            }
+            set
+            {
+                if (!this.GetValue(LED2PeakToolTipProperty).Equals(value))
+                {
+                    this.SetValue(LED2PeakToolTipProperty, value);
+                }
+            }
+        }
+
         public Double LED2Power
         {
             get
@@ -615,6 +669,21 @@
                 if (!this.GetValue(LED3LightColorProperty).Equals(value))
                 {
                     this.SetValue(LED3LightColorProperty, value);
+                }
+            }
+        }
+
+        public String LED3PeakToolTip
+        {
+            get
+            {
+                return this.GetValue(LED3PeakToolTipProperty) as String;
+            }
+            set
+            {
+                if (!this.GetValue(LED3PeakToolTipProperty).Equals(value))
+                {
+                    this.SetValue(LED3PeakToolTipProperty, value);
                 }
             }
         }
@@ -721,6 +790,21 @@
             }
         }
 
+        public String LED4PeakToolTip
+        {
+            get
+            {
+                return this.GetValue(LED4PeakToolTipProperty) as String;
+            }
+            set
+            {
+                if (!this.GetValue(LED4PeakToolTipProperty).Equals(value))
+                {
+                    this.SetValue(LED4PeakToolTipProperty, value);
+                }
+            }
+        }
+
         public Double LED4Power
         {
             get
@@ -823,6 +907,21 @@
             }
         }
 
+        public String LED5PeakToolTip
+        {
+            get
+            {
+                return this.GetValue(LED5PeakToolTipProperty) as String;
+            }
+            set
+            {
+                if (!this.GetValue(LED5PeakToolTipProperty).Equals(value))
+                {
+                    this.SetValue(LED5PeakToolTipProperty, value);
+                }
+            }
+        }
+
         public Double LED5Power
         {
             get
@@ -921,6 +1020,21 @@
                 if (!this.GetValue(LED6LightColorProperty).Equals(value))
                 {
                     this.SetValue(LED6LightColorProperty, value);
+                }
+            }
+        }
+
+        public String LED6PeakToolTip
+        {
+            get
+            {
+                return this.GetValue(LED6PeakToolTipProperty) as String;
+            }
+            set
+            {
+                if (!this.GetValue(LED6PeakToolTipProperty).Equals(value))
+                {
+                    this.SetValue(LED6PeakToolTipProperty, value);
                 }
             }
         }

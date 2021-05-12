@@ -612,10 +612,13 @@ namespace GeometryUtilities
             System.Drawing.Imaging.BitmapData bmpData = bmp8bit.LockBits(new System.Drawing.Rectangle(0, 0, bmp8bit.Width, bmp8bit.Height), System.Drawing.Imaging.ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format8bppIndexed);
             byte[] bytes = new byte[bmpData.Height * bmpData.Stride];
             System.Runtime.InteropServices.Marshal.Copy(bmpData.Scan0, bytes, 0, bytes.Length);
-            for (int i = 0; i < ptGroups.Count; i++)
+            if (null != ptGroups)
             {
-                //opposite coordinates of our image:
-                bytes[(int)ptGroups[i].Y * bmpData.Stride + (int)ptGroups[i].X] = (null == ptValues) ? (byte)255 : (byte)(ptValues[i]);
+                for (int i = 0; i < ptGroups.Count; i++)
+                {
+                    //opposite coordinates of our image:
+                    bytes[(int)ptGroups[i].Y * bmpData.Stride + (int)ptGroups[i].X] = (null == ptValues) ? (byte)255 : (byte)(ptValues[i]);
+                }
             }
             System.Runtime.InteropServices.Marshal.Copy(bytes, 0, bmpData.Scan0, bytes.Length);
             bmp8bit.UnlockBits(bmpData);

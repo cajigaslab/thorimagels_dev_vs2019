@@ -212,8 +212,8 @@ long HardwareSetupXML::GetCurrentPath()
 
 const char * const HardwareSetupXML::OBJECTIVES = "Objectives";
 const char * const HardwareSetupXML::OBJECTIVE = "Objective";
-const char * const HardwareSetupXML::OBJECTIVE_ATTR[NUM_OBJECTIVE_ATTRIBUTES] = {"name","mag","na","afScanStartMM","afFocusOffsetMM","afAdaptiveOffsetMM","beamExp","beamWavelength","beamExp2","beamWavelength2","turretPosition","zAxisToEscape","zAxisEscapeDistance"};
-long HardwareSetupXML::GetMagInfoFromMagVal(double mag, string &name, long &position, double &numAper, double &afScanStart,double &afFocusOffset, double &afAdaptiveOffset,long &beamExpPos,long &beamExpWavelength,long &beamExpPos2, long &beamExpWavelength2,long &turretPosition,long &zAxisToEscape, double &zAxisEscapeDistance)
+const char * const HardwareSetupXML::OBJECTIVE_ATTR[NUM_OBJECTIVE_ATTRIBUTES] = {"name","mag","na","afScanStartMM","afFocusOffsetMM","afAdaptiveOffsetMM","beamExp","beamWavelength","beamExp2","beamWavelength2","turretPosition","zAxisToEscape","zAxisEscapeDistance","fineAfPercentDecrease"};
+long HardwareSetupXML::GetMagInfoFromMagVal(double mag, string &name, long &position, double &numAper, double &afScanStart,double &afFocusOffset, double &afAdaptiveOffset,long &beamExpPos,long &beamExpWavelength,long &beamExpPos2, long &beamExpWavelength2,long &turretPosition,long &zAxisToEscape, double &zAxisEscapeDistance, double &finePercentage)
 {	
 	if(FALSE == GetCurrentPath())
 	{
@@ -293,6 +293,9 @@ long HardwareSetupXML::GetMagInfoFromMagVal(double mag, string &name, long &posi
 					case 12:
 						sss>>zAxisEscapeDistance;
 						break;
+					case 13:
+						sss >> finePercentage;
+						break;
 					}
 				}
 				catch(...)
@@ -314,7 +317,7 @@ long HardwareSetupXML::GetMagInfoFromMagVal(double mag, string &name, long &posi
 }
 
 
-long HardwareSetupXML::GetMagInfoFromPosition(long position,  string &name, double &mag, double &numAper, double &afScanStart,double &afFocusOffset, double &afAdaptiveOffset,long &beamExpPos,long &beamExpWavelength,long &beamExpPos2, long &beamExpWavelength2,long &turretPosition,long &zAxisToEscape, double &zAxisEscapeDistance)
+long HardwareSetupXML::GetMagInfoFromPosition(long position,  string &name, double &mag, double &numAper, double &afScanStart,double &afFocusOffset, double &afAdaptiveOffset,long &beamExpPos,long &beamExpWavelength,long &beamExpPos2, long &beamExpWavelength2,long &turretPosition,long &zAxisToEscape, double &zAxisEscapeDistance, double &finePercentage)
 {	
 	if(FALSE == GetCurrentPath())
 	{
@@ -395,6 +398,9 @@ long HardwareSetupXML::GetMagInfoFromPosition(long position,  string &name, doub
 						case 12:
 							sss>>zAxisEscapeDistance;
 							break;
+						case 13:
+							sss >> finePercentage;
+							break;
 						}
 					}
 					catch(...)
@@ -409,7 +415,7 @@ long HardwareSetupXML::GetMagInfoFromPosition(long position,  string &name, doub
 	return FALSE;
 }
 
-long HardwareSetupXML::GetMagInfoFromName(string name,double &mag, long &position, double &numAper, double &afScanStart,double &afFocusOffset, double &afAdaptiveOffset,long &beamExpPos,long &beamExpWavelength,long &beamExpPos2, long &beamExpWavelength2,long &turretPosition,long &zAxisToEscape, double &zAxisEscapeDistance)
+long HardwareSetupXML::GetMagInfoFromName(string name,double &mag, long &position, double &numAper, double &afScanStart,double &afFocusOffset, double &afAdaptiveOffset,long &beamExpPos,long &beamExpWavelength,long &beamExpPos2, long &beamExpWavelength2,long &turretPosition,long &zAxisToEscape, double &zAxisEscapeDistance, double &finePercentage)
 {	
 	if(FALSE == GetCurrentPath())
 	{
@@ -487,6 +493,9 @@ long HardwareSetupXML::GetMagInfoFromName(string name,double &mag, long &positio
 						break;
 					case 12:
 						sss>>zAxisEscapeDistance;
+						break;
+					case 13:
+						sss >> finePercentage;
 						break;
 					}
 				}
@@ -1232,4 +1241,52 @@ long HardwareSetupXML::SetFastLoad(long val)
 	_fastLoad = val;
 
 	return TRUE;
+}
+
+const char* const HardwareSetupXML::INVERTED = "Inverted";
+const char* const HardwareSetupXML::INVERTED_ATTR[NUM_INVERTED_ATTRIBUTES] = { "SafetyInterlockCheck" };
+long HardwareSetupXML::GetInvertedSettings(long& safetyInterlockCheckEnabled)
+{
+	if (FALSE == GetCurrentPath())
+	{
+		logDll->TLTraceEvent(ERROR_EVENT, 1, L"HardwareSetupXML GetInvertedSettings -> Failed to open HardwareSetttings.xml file");
+		return FALSE;
+	}
+
+	OpenConfigFile(WStringToString(_currentPathAndFile));
+
+	// make sure the top level root element exist
+	ticpp::Element* configObj = _xmlObj->FirstChildElement(false);
+
+	if (configObj == NULL)
+	{
+		logDll->TLTraceEvent(ERROR_EVENT, 1, L"HardwareSetupXML GetInvertedSettings -> configObj == NULL, top level root element of HardwareSettings.xml doesn't exist.");
+		return FALSE;
+	}
+	else
+	{
+		ticpp::Element* child = configObj->FirstChildElement(INVERTED, false);
+		if (NULL == child)
+		{
+			logDll->TLTraceEvent(ERROR_EVENT, 1, L"HardwareSetupXML GetInvertedSettings -> child == NULL, Inverted tag doesn't exist in HardwareSettings.xml.");
+			return FALSE;
+		}
+
+		string str;
+		wstring str2;
+		for (long attCount = 0; attCount < NUM_INVERTED_ATTRIBUTES; attCount++)
+		{
+			str.clear();
+			GetAttribute(child, INVERTED, INVERTED_ATTR[attCount], str);
+			stringstream ss(str);
+			switch (attCount)
+			{
+			case 0:
+				ss >> safetyInterlockCheckEnabled;
+				break;
+			}
+		}
+		return TRUE;
+	}
+	return FALSE;
 }

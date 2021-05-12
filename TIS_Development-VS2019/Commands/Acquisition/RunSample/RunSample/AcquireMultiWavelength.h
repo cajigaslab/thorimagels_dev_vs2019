@@ -1,13 +1,12 @@
 #pragma once
 
 #include "..\..\..\..\Common\Sample\Sample\Acquire.h"
-#include "AutoFocus.h"
 #include "AcquireSingle.h"
 
 class AcquireMultiWavelength : public IAcquire
 {
 public:
-	AcquireMultiWavelength(IAutoFocus *,IExperiment *pExperiment,wstring path);
+	AcquireMultiWavelength(IExperiment *pExperiment,wstring path);
 
 	virtual long Execute(long index, long subWell);//Synchrnous acquisition of data
 	virtual	long Execute(long index, long subWell, long zFrame, long tFrame);
@@ -28,7 +27,6 @@ public:
 	static HANDLE hEvent;
 	static HANDLE hEventFilter[3];
 	static HANDLE hEventShutter;
-	static HANDLE hEventAutoFocus;
 	static HANDLE hEventZ;
 
 
@@ -38,9 +36,7 @@ private:
 	void PositionFilters(IDevice *pExcitation, double ex, IDevice *pEmission, double em, IDevice *pDichroic, double dic);
 	void OpenShutter(IDevice *pShutter);
 	void CloseShutter(IDevice *pShutter);
-	long SetAutoFocusStartZPosition(double afStartPos,BOOL bWait,BOOL afFound);
 
-	IAutoFocus * _pAutoFocus;
 	IExperiment * _pExp;
 
 	static double _lastGoodFocusPosition;

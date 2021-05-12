@@ -65,7 +65,7 @@
                                   Interval="100" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" 
-                            Visibility="{Binding Path=IsGainBLVisible, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
+                            Visibility="{Binding Path=IsGainVisible, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
                     <Label VerticalAlignment="Center"
                            Content="Gain"
                            Margin="4,0,0,0"
@@ -92,31 +92,34 @@
                             </Style>
                         </Button.Style>
                     </Button>
-                    <Label Margin="4,0,0,0"
+                    <StackPanel Orientation="Horizontal"
+                                Visibility="{Binding Path=IsBlackLevelVisible, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
+                        <Label Margin="4,0,0,0"
                        VerticalAlignment="Center"
                        Content="Black LVL" />
-                    <TextBox Name="txtBlackLevel"
+                        <TextBox Name="txtBlackLevel"
                          Height="25"
                          MinWidth="40"
                          Text="{Binding Path=CamBlackLevel}" />
-                    <Button Width="25"
+                        <Button Width="25"
                         Height="25"
                         Content="✓">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Visibility"
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility"
                                     Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Path=IsFocused,
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=IsFocused,
                                                                ElementName=txtBlackLevel}"
                                              Value="True">
-                                        <Setter Property="Visibility"
+                                            <Setter Property="Visibility"
                                             Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
                 </StackPanel>
             </StackPanel>
             <Border Margin="3">
@@ -471,7 +474,70 @@
                           VerticalAlignment="Center"
                           Content="Tap Balance"
                           IsChecked="{Binding Path=CamTapBalance}" />
-
+            </StackPanel>
+            <StackPanel MinHeight="20"
+                        Visibility="{Binding Path=FrameRateControlVisibility, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
+                <CheckBox Name="framRateCtrlEnabledChkbox" 
+                          Margin="13,5,0,0"
+                          VerticalAlignment="Center"
+                          Content="Frame Rate Control (FPS)"
+                          IsChecked="{Binding Path=FrameRateControlEnabled}" />
+                <StackPanel Orientation="Horizontal"
+                            Margin="1"
+                            ToolTip="Frame Rate Control Settings"
+                            IsEnabled="{Binding IsChecked,ElementName=framRateCtrlEnabledChkbox}">
+                    <Slider x:Name="frameRateCtrlSlider"
+                            Width="250"
+                            Margin="10,0"
+                            Value="{Binding Path=FrameRateControlValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            VerticalAlignment="Center"
+                            Minimum="{Binding Path=FrameRateControlMin, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                            Maximum="{Binding Path=FrameRateControlMax, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                            MouseWheel="FormattedSlider_MouseWheel"
+                            Thumb.DragCompleted="FormattedSlider_DragCompleted"
+                            Thumb.DragStarted="FormattedSlider_DragStarted"/>
+                    <TextBox Name="tbFrameRateCtrl"
+                             Width="50"
+                             Height="25"
+                             Text="{Binding Path=FrameRateControlValue, Mode=TwoWay, StringFormat={}{0:0.00}}" 
+                             Valid:Validation.ValidationType="{x:Type System:Double}"
+                             Valid:Validation.NoEmptyValue="True"
+                             Valid:Validation.MinValue="0.00"
+                             Valid:Validation.MaxValue="100.00" />
+                    <Button Width="30"
+                            Height="25"
+                            Content="✓">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbFrameRateCtrl}"
+                                                Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <StackPanel>
+                        <RepeatButton Content="+"
+                                      Width="30"
+                                      Height="20"
+                                      Command="{Binding Path=FrameRateControlPlusCommand}"
+                                      CommandParameter="3"
+                                      Delay="500"
+                                      Interval="100" />
+                        <RepeatButton Content="-"
+                                      Width="30"
+                                      Height="20"
+                                      Command="{Binding Path=FrameRateControlMinusCommand}"
+                                      CommandParameter="3"
+                                      Delay="500"
+                                      Interval="100" />
+                    </StackPanel>
+                </StackPanel>
             </StackPanel>
             <StackPanel Margin="1"
                         Orientation="Horizontal"

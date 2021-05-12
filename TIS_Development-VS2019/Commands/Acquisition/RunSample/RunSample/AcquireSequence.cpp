@@ -5,9 +5,8 @@
 
 extern auto_ptr<CommandDll> shwDll;
 
-AcquireSequence::AcquireSequence(IAutoFocus * pAF,IExperiment *pExperiment, wstring path)
+AcquireSequence::AcquireSequence(IExperiment *pExperiment, wstring path)
 {
-	_pAF = pAF;
 	_pExp = pExperiment;
 	_counter = 0;
 	_zFrame = 1;
@@ -144,7 +143,7 @@ long AcquireSequence::Execute(long index, long subWell)
 			_pExp->SetMCLS(channelOrder[i].MCLSEnable1,channelOrder[i].MCLSPower1,channelOrder[i].MCLSEnable2,channelOrder[i].MCLSPower2,channelOrder[i].MCLSEnable3,channelOrder[i].MCLSPower3,channelOrder[i].MCLSEnable4,channelOrder[i].MCLSPower4);
 			_pExp->SetMultiPhotonLaser(multiphotonEnable,channelOrder[i].MultiphotonPos,multiphotonSeqEnable,multiphotonSeqPos1,multiphotonSeqPos2);
 			_pExp->SetPinholeWheel(channelOrder[i].PinholePos);
-			_pExp->SetLightPath(channelOrder[i].LightPathGGEnable, channelOrder[i].LightPathGREnable, channelOrder[i].LightPathCamEnable, channelOrder[i].InvertedLightPathPosition);
+			_pExp->SetLightPath(channelOrder[i].LightPathGGEnable, channelOrder[i].LightPathGREnable, channelOrder[i].LightPathCamEnable, channelOrder[i].InvertedLightPathPosition, channelOrder[i].LightPathNDDPosition);
 
 			//continue in software mode after trigger first:
 			if((1 == triggerModeTimelapse) && (0 < i))
@@ -215,17 +214,17 @@ void AcquireSequence::SetAcquire(long captureMode, size_t timePoints, long zStre
 	{
 	case IExperiment::STREAMING:
 		{
-			acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_T_STREAM,_pAF,NULL,_pExp,_path));
+			acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_T_STREAM,NULL,_pExp,_path));
 		}
 		break;
 	case IExperiment::BLEACHING:
 		{	
-			acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_BLEACHING,_pAF,NULL,_pExp,_path));
+			acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_BLEACHING,NULL,_pExp,_path));
 		}
 		break;
 	case IExperiment::HYPERSPECTRAL:
 		{
-			acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_HYPERSPECTRAL,_pAF,NULL,_pExp,_path));
+			acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_HYPERSPECTRAL,NULL,_pExp,_path));
 		}
 		break;
 	case IExperiment::Z_AND_T:
@@ -235,26 +234,26 @@ void AcquireSequence::SetAcquire(long captureMode, size_t timePoints, long zStre
 		//AcquireZStack is not used at all.
 			if((timePoints >= 1)||(1 == zStreamMode))
 			{
-				acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_T_SERIES,_pAF,NULL,_pExp,_path));
+				acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_T_SERIES,NULL,_pExp,_path));
 			}
 			else if(zStageSteps > 1)
 			{
-				acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_Z_STACK,_pAF,NULL,_pExp,_path));
+				acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_Z_STACK,NULL,_pExp,_path));
 			}
 			else if(nWavelengths > 1)
 			{
 				if(ICamera::CCD == activeCamera)
 				{
-					acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_MULTI_WAVELENGTH,_pAF,NULL,_pExp,_path));
+					acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_MULTI_WAVELENGTH,NULL,_pExp,_path));
 				}
 				else
 				{
-					acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_T_SERIES,_pAF,NULL,_pExp,_path));
+					acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_T_SERIES,NULL,_pExp,_path));
 				}
 			}
 			else
 			{		
-				acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_T_SERIES,_pAF,NULL,_pExp,_path));
+				acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_T_SERIES,NULL,_pExp,_path));
 			}
 		}
 		break;

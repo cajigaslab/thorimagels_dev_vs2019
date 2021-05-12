@@ -58,6 +58,15 @@
 
         #region Properties
 
+        //Used to call ApplyOrRevertFastFocusParams from other MVMs
+        public bool ApplyOrRevertFastFocusParamsMVMCall
+        {
+            set
+            {
+                ApplyOrRevertFastFocusParams(value);
+            }
+        }
+
         public string CameraSaveIcon
         {
             get
@@ -480,22 +489,18 @@
         /// <summary>
         /// Auto focus
         /// </summary>
-        public bool AutoFocus()
-        {
-            if (ExperimentDoc == null)
-            {
-                return false;
-            }
-
-            bool ret = this._captureSetup.AutoFocus(Convert.ToDouble(ExperimentDoc.DocumentElement["Magnification"].GetAttribute("mag"), CultureInfo.InvariantCulture));
-
-            //retrieve the z position after an autofocus
-            OnPropertyChanged("ZPosition");
-            OnPropertyChanged("ZPosOutOfBounds");
-
-            return ret;
-        }
-
+        //public bool AutoFocus()
+        //{
+        //    if (ExperimentDoc == null)
+        //    {
+        //        return false;
+        //    }
+        //    bool ret = this._captureSetup.AutoFocus(Convert.ToDouble(ExperimentDoc.DocumentElement["Magnification"].GetAttribute("mag"), CultureInfo.InvariantCulture));
+        //    //retrieve the z position after an autofocus
+        //    OnPropertyChanged("ZPosition");
+        //    OnPropertyChanged("ZPosOutOfBounds");
+        //    return ret;
+        //}
         public void LiveCapture(bool input)
         {
             if (true == input)

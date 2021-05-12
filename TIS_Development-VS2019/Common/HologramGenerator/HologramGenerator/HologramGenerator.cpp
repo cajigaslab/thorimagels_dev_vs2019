@@ -118,7 +118,9 @@ long HologramGen::CombineHologramFiles(const wchar_t * pathAndFilename1, const w
 	unsigned char* imgRead[2] = {NULL};
 	for (int i = 0; i < 2; i++)
 	{
-		imgRead[i] = LoadBMP(&imgWidth[i], &imgHeight[i], &size, &bmi.bmiHeader, fname[i].c_str());
+		imgRead[i] = LoadBMP(&bmi.bmiHeader, fname[i].c_str());
+		imgWidth[i] = bmi.bmiHeader.biWidth;
+		imgHeight[i] = bmi.bmiHeader.biHeight;
 	}
 	if (NULL == imgRead[0] || NULL == imgRead[1] || imgWidth[0] != imgWidth[1] || imgHeight[0] != imgHeight[1])
 	{
@@ -294,9 +296,9 @@ long HologramGen::RotateForAngle(float* pImgDst, double angle)
 
 	float* pSrc = pImgDst;
 	float* pDst = pBuf;
-	for (int i = 0; i < _mtrxWidth; i++)
+	for (int j = 0; j < _mtrxHeight; j++)
 	{
-		for (int j = 0; j < _mtrxHeight; j++)
+		for (int i = 0; i < _mtrxWidth; i++)
 		{
 			if(0 < *pSrc)
 			{
@@ -304,7 +306,7 @@ long HologramGen::RotateForAngle(float* pImgDst, double angle)
 				long y = j - yCenter;
 				long xDst =  max(0, min(_mtrxWidth, static_cast<long>(floor((x*cos(angleRad)) + (y*sin(angleRad)) + xCenter + 0.5))));
 				long yDst =  max(0, min(_mtrxHeight, static_cast<long>(floor((y*cos(angleRad)) - (x*sin(angleRad)) + yCenter + 0.5))));
-				*(pDst + xDst*_mtrxWidth + yDst) = *pSrc;
+				*(pDst + yDst*_mtrxWidth + xDst) = *pSrc;
 			}
 			pSrc++;
 		}
@@ -349,9 +351,9 @@ long HologramGen::ScaleByFactor(float* pImgDst, double scaleX, double scaleY)
 
 	float* pSrc = pImgDst;
 	float* pDst = pBuf;
-	for (int i = 0; i < _mtrxWidth; i++)
+	for (int j = 0; j < _mtrxHeight; j++)
 	{
-		for (int j = 0; j < _mtrxHeight; j++)
+		for (int i = 0; i < _mtrxWidth; i++)
 		{
 			if(0 < *pSrc)
 			{
@@ -359,7 +361,7 @@ long HologramGen::ScaleByFactor(float* pImgDst, double scaleX, double scaleY)
 				long y = j - yCenter;
 				long xDst = max(0, min(_mtrxWidth, static_cast<long>(floor((x*scaleX) + xCenter + 0.5))));
 				long yDst = max(0, min(_mtrxHeight, static_cast<long>(floor((y*scaleY) + yCenter + 0.5))));
-				*(pDst + xDst*_mtrxWidth + yDst) = *pSrc;
+				*(pDst + yDst*_mtrxWidth + xDst) = *pSrc;
 			}
 			pSrc++;
 		}
@@ -378,17 +380,17 @@ long HologramGen::OffsetByPixels(float* pImgDst, long offsetX, long offsetY)
 
 	float* pSrc = pImgDst;
 	float* pDst = pBuf;
-	for (int i = 0; i < _mtrxWidth; i++)
+	for (int j = 0; j < _mtrxHeight; j++)
 	{
-		for (int j = 0; j < _mtrxHeight; j++)
+		for (int i = 0; i < _mtrxWidth; i++)
 		{
 			if(0 < *pSrc)
 			{
-				long x = i - offsetY;
-				long y = j + offsetX;
+				long x = i + offsetX;
+				long y = j - offsetY;
 				long xDst = max(0, min(_mtrxWidth, static_cast<long>(x)));
 				long yDst = max(0, min(_mtrxHeight, static_cast<long>(y)));
-				*(pDst + xDst*_mtrxWidth + yDst) = *pSrc;
+				*(pDst + yDst*_mtrxWidth + xDst) = *pSrc;
 			}
 			pSrc++;
 		}
@@ -961,9 +963,9 @@ long HologramGen::PhaseGenBy3DGS(float* pImg, float* pPolPhase, int iterateCount
 			complex<double> complexnumber(a, b);
 
 
-			totalPhase[(v)*_slmXsize + u] = static_cast<Ipp32f>(arg(complexnumber) + PI);
+			totalPhase[(v )*_slmXsize + u] = arg(complexnumber) +PI;
 			complex<double> tempComplex(0,pPolPhase[(v )*_slmXsize + u]+totalPhase[(v )*_slmXsize + u]);
-			pPolPhase[(v )*_slmXsize + u]= static_cast<float>(arg(exp(tempComplex)));
+			pPolPhase[(v )*_slmXsize + u]=arg(exp(tempComplex));	
 
 
 

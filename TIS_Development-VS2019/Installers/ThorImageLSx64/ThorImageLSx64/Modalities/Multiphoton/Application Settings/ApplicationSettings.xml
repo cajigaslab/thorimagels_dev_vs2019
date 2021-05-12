@@ -73,7 +73,7 @@
       <BeamExp2View Visibility="Collapsed" />
       <StatsTableSaveButtonView Visibility="Collapsed"/>
       <LightPathView Visibility="Visible" location="4" GGLightPathVisibility="Visible"    GRLightPathVisibility="Visible"  CameraLightPathVisibility="Visible" />
-	  <InvertedLightPathView LeftNameChange="Left" CenterNameChange="Center" RightNameChange="Right"/>
+	  <InvertedLightPathView LeftNameChange="Left" CenterNameChange="Center" RightNameChange="Right" NddNameChange="NDD"/>
       <BleachView Visibility="Collapsed" location="5" SLMPatternUnshifted="0">
         <OTMView Visibility="Collapsed" Exclusive="1"/>
         <BleachCalibrationTool Visibility="Collapsed" />

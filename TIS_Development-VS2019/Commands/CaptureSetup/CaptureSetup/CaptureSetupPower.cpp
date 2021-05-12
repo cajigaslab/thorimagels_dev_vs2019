@@ -145,8 +145,62 @@ DllExportLiveImage IsShutterAvailable()
 	return TRUE;
 }
 
+UINT SafetyInterlockStatusCheck()
+{
+	long safetyInterLockState = -1;
+	while (TRUE == _shutterOpened)
+	{
+		if (TRUE == GetDeviceParamLong(SelectedHardware::SELECTED_LIGHTPATH, IDevice::Params::PARAM_SHUTTER_SAFETY_INTERLOCK_STATE, safetyInterLockState))
+		{
+			if (FALSE == safetyInterLockState)
+			{
+				wstring messageWstring = L"Safety Interlock is engaged or not installed. Please check if the trinoc is in eyepiece mode. \nIf error persists please contact techsupport@thorlabs.com.";
+				MessageBox(NULL, messageWstring.c_str(), L"ThorMCM6000 Error: Primary path shutter closed.", MB_OK);
+				return FALSE;
+			}
+		}
+		else
+		{
+			StringCbPrintfW(message, MSG_SIZE, L"CaptureSetup SafetyInterlockStatusCheck: unable get param PARAM_SHUTTER_SAFETY_INTERLOCK_STATE");
+			logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+			return FALSE;
+		}
+		Sleep(1000);
+	}
+	return TRUE;
+}
+
+void InitiateSafetyInterlockStatusCheck(long pos)
+{
+	long scopeType = ScopeType::UPRIGHT;
+	long safetyInterlockCheckEnabled = FALSE;
+	long shutterAvailable = FALSE;
+	long ret = FALSE;
+
+	auto_ptr<HardwareSetupXML> pHardware(new HardwareSetupXML);
+	ret = pHardware->GetInvertedSettings(safetyInterlockCheckEnabled);
+
+	if ((TRUE == GetDeviceParamLong(SelectedHardware::SELECTED_LIGHTPATH, IDevice::Params::PARAM_SCOPE_TYPE, scopeType) && ScopeType::INVERTED == scopeType) &&
+		(TRUE == ret && TRUE == safetyInterlockCheckEnabled) &&
+		(TRUE == GetDeviceParamLong(SelectedHardware::SELECTED_LIGHTPATH, IDevice::Params::PARAM_SHUTTER_AVAILABLE, shutterAvailable) && TRUE == shutterAvailable))
+	{
+		if (SHUTTER_OPEN == pos)
+		{
+			_shutterOpened = TRUE;
+			SAFE_DELETE_HANDLE(_hSafetyInterLockCheckThread);
+			_hSafetyInterLockCheckThread = ::CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SafetyInterlockStatusCheck, NULL, 0, &_dwSafetyInterLockCheckThreadId);
+			SetThreadPriority(_hSafetyInterLockCheckThread, THREAD_PRIORITY_LOWEST);
+		}
+		else
+		{
+			_shutterOpened = FALSE;
+		}
+	}
+}
+
 DllExportLiveImage SetShutterPosition(long pos)
 {
+	InitiateSafetyInterlockStatusCheck(pos);
 	return SetDeviceParamDouble(SelectedHardware::SELECTED_SHUTTER1,IDevice::PARAM_SHUTTER_POS,pos,FALSE);
 }
 

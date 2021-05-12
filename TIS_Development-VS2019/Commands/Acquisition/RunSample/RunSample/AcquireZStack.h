@@ -1,12 +1,11 @@
 #pragma once
 
 #include "..\..\..\..\Common\Sample\Sample\Acquire.h"
-#include "AutoFocus.h"
 
 class AcquireZStack : public IAcquire
 {
 public:
-	AcquireZStack(IAutoFocus *,IExperiment *,wstring path);
+	AcquireZStack(IExperiment *,wstring path);
 
 	virtual long Execute(long index, long subWell);//Synchrnous acquisition of data
 	virtual long Execute(long index, long subWell, long zFrame, long tFrame);//
@@ -24,22 +23,18 @@ public:
 	virtual long CallStartProgressBar(long index, long resetTotalCount = 0);
 
 	static HANDLE hEvent;
-	static HANDLE hEventAutoFocus;
 	static HANDLE hEventZ;
 	static long _stopZCapture; //indicates if stop requested by user since start of experiment
 
 
 private:
 
-	long SetAutoFocusStartZPosition(double afStartPos,BOOL bWait,BOOL afFound);
-	long AutoFocusAndRetry(long index, IDevice *pAutoFocusDevice, BOOL &afFound);
 	long SetZPosition(double pos,BOOL bWait);
 	long StopZ();
 	long SetPMT();
 	long ScannerEnable(long enable);
 	long CaptureZStack(long index, long subWell, auto_ptr<IAcquire> &acqZFrame);
 
-	IAutoFocus * _pAutoFocus;
 	IExperiment * _pExp;
 	IDevice * _pPower;
 	ICamera * _pCamera;

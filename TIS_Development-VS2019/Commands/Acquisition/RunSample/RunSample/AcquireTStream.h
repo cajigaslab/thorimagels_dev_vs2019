@@ -1,7 +1,6 @@
 #pragma once
 
 #include "..\..\..\..\Common\Sample\Sample\Acquire.h"
-#include "AutoFocus.h"
 #include "AcquireSaveInfo.h"
 #include "..\..\..\Common\ThorSharedTypesCPP.h"
 #include "..\..\..\Common\BinaryImageDataUtilities\RawFile.h"
@@ -46,7 +45,7 @@ struct ZRangeInfo
 class AcquireTStream : public IAcquire
 {
 public:
-	AcquireTStream(IAutoFocus *,IExperiment *,wstring path);
+	AcquireTStream(IExperiment *,wstring path);
 
 	virtual long Execute(long index, long subWell);//Synchrnous acquisition of data
 	virtual long Execute(long index, long subWell, long zFrame, long tFrame);//
@@ -65,7 +64,6 @@ public:
 
 
 	static HANDLE hEvent;
-	static HANDLE hEventAutoFocus;
 	static HANDLE hEventZ;
 	static HANDLE hEventAbort;
 	static HANDLE hEventSave;
@@ -234,8 +232,6 @@ private:
 	long CreateSaveThread(SaveParams& sp, char* pMem);
 	void ResumeSaveThread(int threadPriority);
 
-	long SetAutoFocusStartZPosition(double afStartPos,BOOL bWait,BOOL afFound);
-	long AutoFocusAndRetry(long index, IDevice *pAutoFocusDevice, BOOL &afFound);
 	long SetPMT();	
 	void SaveData(SaveParams *sp, long imageMode, bool stopCheckAllowed, bool rawContainsDisabledChannels, long subwells);
 	long ScannerEnable(long enable);	
@@ -267,7 +263,6 @@ private:
 	static 	vector<long> savedFrameNumVec;
 	const static int MAX_CHANNELS = 4;
 
-	IAutoFocus * _pAutoFocus;
 	IExperiment * _pExp;
 	double _adaptiveOffset;
 	long _repeat;
