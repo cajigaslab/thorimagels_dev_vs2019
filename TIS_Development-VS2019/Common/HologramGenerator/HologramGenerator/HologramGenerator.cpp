@@ -108,7 +108,7 @@ long HologramGen::SetAlgorithm(int algorithmID)
 }
 
 // combine two holograms to first, from center parts of each: [1 | 2], left from 1 and right from 2
-long HologramGen::CombineHologramFiles(const wchar_t * pathAndFilename1, const wchar_t * pathAndFilename2)
+long HologramGen::CombineHologramFiles(const wchar_t * pathAndFilename1, const wchar_t * pathAndFilename2, long shiftPx)
 {
 	std::wstring fname[2] = {std::wstring(pathAndFilename1), std::wstring(pathAndFilename2)};
 
@@ -139,14 +139,18 @@ long HologramGen::CombineHologramFiles(const wchar_t * pathAndFilename1, const w
 		imgRGB[i] = ConvertBGRToRGBBuffer(imgRead[i], bmi.bmiHeader, &newSize);
 	}
 
+	//crop center part of each, then combined as [0 | 1],
+	//also make center offset in pixel number configurable to have larger/smaller left/right
 	int channelCnt = static_cast<int>(bmi.bmiHeader.biBitCount/CHAR_BIT);
 	BYTE* pSrc = imgRGB[1];
 	BYTE* pDst = imgRGB[0];
-	size_t dLength = channelCnt*bmi.bmiHeader.biWidth * sizeof(BYTE);
+	long long dLength = channelCnt * bmi.bmiHeader.biWidth * sizeof(BYTE);
+	long long sLength = channelCnt * shiftPx * sizeof(BYTE);
+	sLength = max(min(sLength, dLength/2), -dLength/2);
 	for (int j = 0; j < bmi.bmiHeader.biHeight; j++)
 	{
-		memcpy_s(pDst, static_cast<int>(dLength/2), (pDst+static_cast<int>(dLength/4)), static_cast<int>(dLength/2));
-		memcpy_s((pDst+dLength/2), static_cast<int>(dLength/2), (pSrc+static_cast<int>(dLength/4)), static_cast<int>(dLength/2));
+		SAFE_MEMCPY(pDst, static_cast<int>(dLength/2)+sLength, (pDst+static_cast<int>(dLength/4)-static_cast<int>(sLength/2)));
+		SAFE_MEMCPY(pDst+static_cast<int>(dLength/2)+sLength, static_cast<int>(dLength/2)-sLength, (pSrc+static_cast<int>(dLength/4)+static_cast<int>(sLength/2)));
 		pDst += dLength/sizeof(BYTE);
 		pSrc += dLength/sizeof(BYTE);
 	}
@@ -251,7 +255,7 @@ long HologramGen::SetCoeffs(long algorithm, double* affCoeffs)
 }
 
 //generate hologram with weight by distance from center, affine Transformaton
-long HologramGen::GenerateHologram(float* pImgDst, int iteCount, float z)
+long HologramGen::GenerateHologram(float* pImgDst, int iteCount, int weightRadiusPx, double minPercent, double maxPercent, float z)
 {
 	long ret = TRUE;
 
@@ -259,7 +263,7 @@ long HologramGen::GenerateHologram(float* pImgDst, int iteCount, float z)
 	ippsDll->ippsZero_32f(pPhase,_mtrxLength);
 
 	//linear weight by distance from center:
-	WeightByDistance(pImgDst);
+	WeightByDistance(pImgDst, weightRadiusPx, minPercent, maxPercent);
 
 	//generate phase:
 	switch (_holoGenMethod)
@@ -1000,20 +1004,14 @@ long HologramGen::PhaseGenBy3DGS(float* pImg, float* pPolPhase, int iterateCount
 
 
 
-long HologramGen::WeightByDistance(float* pImgDst)
+long HologramGen::WeightByDistance(float* pImgDst, int weightRadiusPx, double minPercent, double maxPercent)
 {
 	if((NULL == pImgDst) || (0 == _mtrxWidth) || (0 == _mtrxHeight))
 		return FALSE;
 
 	//y = mx+b, linear mapping
-	const int FIRST_ORDER_RADIUS = 183;
-	const int DEFAULT_RADIUS = 256;
-	const int MAX_PERCENT = 75;
-	const int MIN_PERCENT = 25;
-	const int HUNDRED_PERCENT = 100;
-	double circleBound = (floor(_mtrxWidth/2))*FIRST_ORDER_RADIUS/DEFAULT_RADIUS;
-	double m = MAX_PERCENT/circleBound;
-	double b = MIN_PERCENT;
+	double m = maxPercent/weightRadiusPx;
+	double b = minPercent;
 	int centerX = static_cast<int>(floor(_mtrxWidth/2));
 	int centerY = static_cast<int>(floor(_mtrxHeight/2));
 
@@ -1026,8 +1024,8 @@ long HologramGen::WeightByDistance(float* pImgDst)
 			if(0 < (*pSrc))
 			{
 				double disFromCenter = sqrt(pow((i-centerX),2)+pow((j-centerY),2));
-				float weightValue = static_cast<float>((m*disFromCenter+b)/HUNDRED_PERCENT*MAX_PIXEL_VALUE);
-				if(circleBound > disFromCenter)
+				float weightValue = static_cast<float>((m*disFromCenter+b)/Constants::HUNDRED_PERCENT*MAX_PIXEL_VALUE);
+				if(weightRadiusPx > disFromCenter)
 				{
 					*pSrc = weightValue;
 				}
@@ -1035,7 +1033,6 @@ long HologramGen::WeightByDistance(float* pImgDst)
 			pSrc++;
 		}
 	}
-
 	return TRUE;
 }
 

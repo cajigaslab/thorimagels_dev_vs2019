@@ -703,6 +703,8 @@
                                               SelectedIndex="{Binding Path=PMTPolarity[0].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                                         <ComboBoxItem Content="Neg" />
                                         <ComboBoxItem Content="Pos" />
+                                        <ComboBoxItem Content="Bi" 
+                                                      Visibility="{Binding Path=BipolarityVisibility, UpdateSourceTrigger=PropertyChanged}" />
                                     </ComboBox>
                                 </StackPanel>
                                 <StackPanel Margin="10,1,1,1"
@@ -850,6 +852,8 @@
                                               SelectedIndex="{Binding Path=PMTPolarity[1].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                                         <ComboBoxItem Content="Neg" />
                                         <ComboBoxItem Content="Pos" />
+                                        <ComboBoxItem Content="Bi" 
+                                                      Visibility="{Binding Path=BipolarityVisibility, UpdateSourceTrigger=PropertyChanged}" />
                                     </ComboBox>
                                 </StackPanel>
                                 <StackPanel Margin="10,1,1,1"
@@ -997,6 +1001,8 @@
                                               SelectedIndex="{Binding Path=PMTPolarity[2].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                                         <ComboBoxItem Content="Neg" />
                                         <ComboBoxItem Content="Pos" />
+                                        <ComboBoxItem Content="Bi" 
+                                                      Visibility="{Binding Path=BipolarityVisibility, UpdateSourceTrigger=PropertyChanged}" />
                                     </ComboBox>
                                 </StackPanel>
                                 <StackPanel Margin="10,1,1,1"
@@ -1144,6 +1150,8 @@
                                               SelectedIndex="{Binding Path=PMTPolarity[3].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                                         <ComboBoxItem Content="Neg" />
                                         <ComboBoxItem Content="Pos" />
+                                        <ComboBoxItem Content="Bi"
+                                                      Visibility="{Binding Path=BipolarityVisibility, UpdateSourceTrigger=PropertyChanged}" />
                                     </ComboBox>
                                 </StackPanel>
                                 <StackPanel Margin="10,1,1,1"
@@ -1357,6 +1365,20 @@
                                 </Button>
                                 <Label Content="[us]"
                                        VerticalAlignment="Center" />
+                            </StackPanel>
+                            <StackPanel HorizontalAlignment="Left"
+                                        Orientation="Horizontal"
+                                        Margin="0,1"
+                                        ToolTip="Pixel processing mode"
+                                        Visibility="{Binding Path=LSMPixelProcessVisibility}">
+                                <Label Content="Pixel Processing Mode"
+                                       VerticalAlignment="Center" />
+                                <ComboBox MinWidth="80"
+                                          Height="25"
+                                          SelectedIndex="{Binding Path=LSMPixelProcess, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                    <ComboBoxItem Content="Sum" />
+                                    <ComboBoxItem Content="Average" />
+                                </ComboBox>
                             </StackPanel>
                         </StackPanel>
                     </Expander>

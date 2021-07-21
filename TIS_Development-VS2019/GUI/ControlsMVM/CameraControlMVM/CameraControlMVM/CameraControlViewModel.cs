@@ -96,6 +96,7 @@
                 OnPropertyChanged("BinIndex");
                 OnPropertyChanged("CamImageWidth");
                 OnPropertyChanged("CamImageHeight");
+                OnPropertyChanged("PixelSizeUM");
             }
         }
 
@@ -135,6 +136,7 @@
                 OnPropertyChanged("BinX");
                 OnPropertyChanged("CamImageWidth");
                 OnPropertyChanged("CamImageHeight"); // We need both in case the Image Angle is 90 or 270
+                OnPropertyChanged("PixelSizeUM");
             }
         }
 
@@ -173,6 +175,7 @@
                 OnPropertyChanged("BinY");
                 OnPropertyChanged("CamImageHeight");
                 OnPropertyChanged("CamImageWidth"); // We need both in case the Image Angle is 90 or 270
+                OnPropertyChanged("PixelSizeUM");
             }
         }
 
@@ -1005,6 +1008,21 @@
             get
             {
                 return _cameraControlModel.LightModeMin;
+            }
+        }
+
+        public string PixelSizeUM
+        {
+            get
+            {
+                if (1 < BinX || 1 < BinY)
+                {
+                    return "[" + (CamPixelSizeUM * Math.Max(BinY, BinX)).ToString() + "]";
+                }
+                else
+                {
+                    return CamPixelSizeUM.ToString();
+                }
             }
         }
 

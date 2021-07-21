@@ -46,9 +46,11 @@ extern "C"
 		double* _fitCoeff[2]; ///<fitting coefficients for two wavelengths in order of [0][0],[0][1],[0][2],[1][0],[1][1],[1][2],[2[0],[2][1]
 		long _deviceCount; ///<how many SLM being detected
 		bool _deviceDetected;
-		long* _pixelRange; ///<pixel range of Xmin, Xmax, Ymin, Ymax
+		long _pixelSize[2]; ///<pixel size of X, Y
 		long _overDrive; ///<overdrive mode for meadowlark slm
 		unsigned int _transientFrames; ///<transient frame counts in overdrive mode for meadowlark slm
+		double _flatDiagRatio; ///<flatness correction range, compared with image's diagnal length
+		double _flatPowerRange[2]; ///<power range for flatness correction, [min, max]
 		std::string _lutFile; ///<look up table file for phase correction
 		std::string _overDrivelutFile; ///<look up table file for overdrive SLM
 		std::string _wavefrontFile; ///<wavefront file for wavefront correction
@@ -74,7 +76,8 @@ extern "C"
 		//Get,Set:
 		double _calibZ;
 		double _na;
-		double _wavelength[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT]; ///<incident light wavelengths, could be two for left-right halves
+		double _wavelength[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT]; ///<incident wavelengths, could be two for left-right halves
+		long   _phaseMax[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT]; ///<maximum phase value for incident wavelengths
 		long _selectWavelength; ///<active wavelength selection, either 0[first] or 1[second]
 		long _slm3D; ///<hologram generation in 3D (true) or 2D (false)
 		long _loadPhaseDirectly; ///<load or save phase mask directly (TRUE) or default load-then-convert (FALSE)

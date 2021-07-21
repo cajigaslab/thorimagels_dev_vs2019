@@ -226,6 +226,30 @@
             }
         }
 
+        public int LSMPixelProcess
+        {
+            get
+            {
+                int val = 0;
+                int lsmType = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_TYPE, ref lsmType);
+                if (lsmType == (int)ICamera.LSMType.GALVO_GALVO && ResourceManagerCS.Instance.GetActiveLSMName().Equals("GalvoGalvo"))
+                {
+                    GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_PIXEL_PROCESS, ref val);
+                }
+                return val;
+            }
+            set
+            {
+                int lsmType = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_TYPE, ref lsmType);
+                if (lsmType == (int)ICamera.LSMType.GALVO_GALVO && ResourceManagerCS.Instance.GetActiveLSMName().Equals("GalvoGalvo"))
+                {
+                    SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_PIXEL_PROCESS, value);
+                }
+            }
+        }
+
         public int LSMPulseMultiplexing
         {
             get

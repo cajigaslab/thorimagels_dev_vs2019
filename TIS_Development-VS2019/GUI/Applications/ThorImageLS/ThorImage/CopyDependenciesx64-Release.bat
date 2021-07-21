@@ -188,7 +188,6 @@ echo F | xcopy /F ..\..\..\..\Documents\HelpLS\ThorImageLS.chm .\bin\Release
 
 echo F | xcopy /F ..\..\..\..\Commands\General\SelectHardware\x64\Release\SelectHardware.dll .\bin\Release\Modules_Native
 echo F | xcopy /F ..\..\..\..\Common\GeometryUtilities\x64\Release\GeometryUtilitiesCPP.dll .\bin\Release\Modules_Native
-REM echo F | xcopy /F ..\..\..\..\Commands\Acquisition\LiveImageData\x64\Release\LiveImageData.dll .\bin\Release\Modules_Native
 
 REM Uncomment later
 echo F | xcopy /F ..\..\..\..\Commands\CaptureSetup\CaptureSetupModule\bin\Release\CaptureSetupModule.dll .\bin\Release\Modules
@@ -211,7 +210,7 @@ echo F | xcopy /F ..\..\..\..\GUI\Controls\XMLViewer\XMLViewer\bin\Release\en-US
 echo F | xcopy /F ..\..\..\..\GUI\Controls\SettingsEditor\SettingsEditor\bin\Release\SettingsEditor.dll .\bin\Release\Modules
 echo F | xcopy /F ..\..\..\..\GUI\Controls\SettingsEditor\SettingsEditor\bin\Release\en-US\SettingsEditor.resources.dll .\bin\Release\en-US\SettingsEditor.resources.dll
 
-REM echo F | xcopy /F ..\..\..\..\GUI\Controls\HardwareSetupUserControl\HardwareSetupUserControl\bin\Release\HardwareSetupUserControl.dll .\bin\Release\Modules
+echo F | xcopy /F ..\..\..\..\GUI\Controls\HardwareSetupUserControl\HardwareSetupUserControl\bin\Release\HardwareSetupUserControl.dll .\bin\Release\Modules
 REM echo F | xcopy /F ..\..\..\..\GUI\Controls\HardwareSetupUserControl\HardwareSetupUserControl\bin\Release\en-US\HardwareSetupUserControl.resources.dll .\bin\Release\en-US\HardwareSetupUserControl.resources.dll
 
 echo F | xcopy /F ..\..\..\..\GUI\Controls\SampleRegionSelection\SampleRegionSelection\bin\Release\SampleRegionSelection.dll .\bin\Release\Modules
@@ -231,13 +230,12 @@ echo F | xcopy /F ..\..\..\..\GUI\Controls\ImageTilerControl\ImageTilerControl\b
 
 echo F | xcopy /F ..\..\..\..\GUI\Controls\TilesDisplay\TilesDisplay\bin\Release\TilesDisplay.dll .\bin\Release\Modules
 echo F | xcopy /F ..\..\..\..\GUI\Controls\XYTileControl\XYTileControl\bin\Release\XYTileControl.dll .\bin\Release\Modules
-echo F | xcopy /F ..\..\..\..\GUI\Controls\VtkVolumeControl\VtkVolumeControl64\bin\Release\VtkVolumeControl.dll .\bin\Release\Modules
+echo F | xcopy /F ..\..\..\..\GUI\Controls\VtkVolumeControl\VtkVolumeControl64\bin\Release\VtkVolumeControl64.dll .\bin\Release\Modules\VtkVolumeControl.dll
 echo F | xcopy /F ..\..\..\..\GUI\Controls\VolumeControlInterface\VolumeControlInterface\bin\Release\VolumeControlInterface.dll .\bin\Release\Modules
 echo F | xcopy /F ..\..\..\..\GUI\Controls\SpinnerProgress\SpinnerProgress\bin\Release\SpinnerProgress.dll .\bin\Release\Modules
 echo F | xcopy /F ..\..\..\..\GUI\Controls\DigitalOutputSwitches\DigitalOutputSwitches\bin\Release\DigitalOutputSwitches.dll .\bin\Release\Modules
 
 echo F | xcopy /F ..\..\..\..\GUI\Controls\JPEGer_Process\JPEGer_Process\\bin\Release\JPEGer_Process.exe .\bin\Release\
-echo F | xcopy /F ..\..\..\..\GUI\Controls\TileBuilder\x64\Release\TileBuilder.dll .\bin\Release
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorDetectorSwitch\MCLWrapper\MCLWrapper\bin\Release\mcl_RF_Switch_Controller64.dll .\bin\Release
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorDetectorSwitch\MCLWrapper\MCLWrapper\bin\Release\MCLWrapper.dll .\bin\Release
 
@@ -278,7 +276,6 @@ echo F | xcopy /F ..\..\..\..\Common\AutoFocusModule\x64\Release\AutoFocus.dll .
 
 echo F | xcopy /F ..\..\..\..\Commands\ImageAnalysis\PincushionCorrection\x64\Release\PincushionCorrection.dll .\bin\Release
 echo F | xcopy /F ..\..\..\..\Commands\ImageAnalysis\FlatField\x64\Release\FlatField.dll .\bin\Release
-echo F | xcopy /F ..\..\..\..\Commands\ImageAnalysis\ImageStats\x64\Release\ImageStats.dll .\bin\Release
 echo F | xcopy /F ..\..\..\..\Commands\ImageAnalysis\LineProfile\x64\Release\LineProfile.dll .\bin\Release
 echo F | xcopy /F ..\..\..\..\Commands\ImageAnalysis\ThorImageProcess\x64\Release\ThorImageProcess.dll .\bin\Release
 
@@ -323,7 +320,6 @@ REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorTSI\x64\Release\ThorTSI.d
 REM echo F | xcopy /F ..\..\..\..\Common\Camera-TSI\dlls\Native_64_lib\bin_CCD_mono\*.dll .\bin\Release\Lib
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorTSI_CS\x64\Release\ThorTSI_CS.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Common\Camera-TSI\dlls\Native_64_lib\bin_CMOS_mono\*.dll .\bin\Release\Lib
-REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\Common\iDAQ\x64\Release\iDAQ.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\DCxCamera\x64\Release\DCxCamera.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ORCA\x64\Release\ORCA.dll .\bin\Release\Modules_Native
 
@@ -425,8 +421,9 @@ echo F | xcopy /F ..\..\..\..\Hardware\Devices\OTMLaser\OTMLaserSettings.xml .\b
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorLSKGR\ThorLSKGRSettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM6000\ThorMCM6000Settings.xml .\bin\Release
 
-REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\thordaq\Dll\ThorDAQResonantGalvo\ThorDAQResonantGalvoSettings.xml .\bin\Release
-REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\thordaq\Dll\ThorDAQGalvoGalvo\ThorDAQGalvoGalvoSettings.xml .\bin\Release
+echo F | xcopy /F ..\..\..\..\Hardware\Cameras\thordaq\Dll\ThorDAQResonantGalvo\ThorDAQResonantGalvoSettings.xml .\bin\Release
+echo F | xcopy /F ..\..\..\..\Hardware\Cameras\thordaq\Dll\ThorDAQGalvoGalvo\ThorDAQGalvoGalvoSettings.xml .\bin\Release
+echo F | xcopy /F ..\..\..\..\Hardware\Cameras\thordaq\Dll\ThorDAQIOSettings.xml .\bin\Release
 
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThordaqDFLIM\Dll\ThorDFLIMGalvoGalvo\ThorDFLIMGalvoGalvoSettings.xml .\bin\Release
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThordaqDFLIM\Dll\ThorDAQGGDFLIMSim\fullFrameSim.bin .\bin\Release

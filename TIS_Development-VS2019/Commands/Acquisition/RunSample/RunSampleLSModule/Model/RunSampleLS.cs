@@ -76,6 +76,7 @@
         private static byte[][] _rawImg = new byte[MAX_CHANNELS + 1][];
         private static Report _reportCallBack;
         private static ReportIndex _reportCallBackImage;
+        private static ReportInformMessage _reportInformMessage;
         private static ReportPreCapture _reportPreCaptureCallBack;
         private static ReportSequenceStepCurrentIndex _reportSequenceStepCurrentIndexCallBack;
         private static ReportSubRowEndIndex _reportSubRowEndCallBack;
@@ -187,7 +188,6 @@
         private bool _runComplete;
         private int _runCompleteCount;
         System.Timers.Timer _runPlateTimer;
-        private RunSampleLSDll.View.RunSampleLSView _RunSampleLSView;
         private string _sampleConfig;
         StringBuilder _sbNewDir;
         private int _scanMode;
@@ -218,7 +218,6 @@
         private int _streamVolumes;
         private bool _tbZSEnable;
         private Brush _tbZSEnableFGColor;
-        private string _templatesFolder;
         private bool _tEnable;
         private int _tFrames;
         private bool _tiffCompressionEnabled;
@@ -235,6 +234,8 @@
         private double _volumeTimeAdjustMS = 0;
         private ArrayList _wavelengthList;
         private double[] _whitePoint;
+        private bool _z2StageLock;
+        private bool _z2StageMirror;
         private int _zEnable;
         private bool _zFastEnable = false;
         private int _zFileEnable;
@@ -318,7 +319,7 @@
             _multiROIStatsCallBack = new ReportMultiROIStats(MultiROIStatsUpdate);
             _reportPreCaptureCallBack = new ReportPreCapture(RunSampleLSUpdatePreCapture);
             _reportSequenceStepCurrentIndexCallBack = new ReportSequenceStepCurrentIndex(RunsampleLSUpdateSequenceStepCurrentIndx);
-            _RunSampleLSView = new RunSampleLSDll.View.RunSampleLSView();
+            _reportInformMessage = new ReportInformMessage(RunsampleLSUpdateMessage);
 
             try
             {
@@ -335,7 +336,6 @@
             }
 
             _experimentXMLPath = ActiveExperimentPath = ResourceManagerCS.GetCaptureTemplatePathString() + "Active.xml";
-            _templatesFolder = ResourceManagerCS.GetCaptureTemplatePathString();
             IsDisplayImageReady = false;
             _zFilePosList = new List<double>();
             _zFilePosRead = 0;
@@ -382,6 +382,9 @@
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void ReportIndex(ref int index);
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode)]
+        private delegate void ReportInformMessage(string index);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode)]
         private delegate void ReportLineProfile(IntPtr lineProfile, int length, int channelEnable, int numChannel);
@@ -1527,7 +1530,7 @@
 
         public int NumberOfPlanes
         {
-            get;set;
+            get; set;
         }
 
         public string OutputPath
@@ -2132,7 +2135,7 @@
 
         public string[] SLMWaveformFolder
         {
-            get { return new string[2] { TemplatesFolder + "SLMWaveforms", TemplatesFolder + "SLMWaveforms\\SLMSequences" }; }
+            get { return new string[2] { ResourceManagerCS.GetCaptureTemplatePathString() + "SLMWaveforms", ResourceManagerCS.GetCaptureTemplatePathString() + "SLMWaveforms\\SLMSequences" }; }
         }
 
         public string[] SLMWaveformPath
@@ -2416,14 +2419,6 @@
             set { _tbZSEnableFGColor = value; }
         }
 
-        public string TemplatesFolder
-        {
-            get
-            {
-                return _templatesFolder;
-            }
-        }
-
         public bool TEnable
         {
             get { return _tEnable; }
@@ -2438,7 +2433,7 @@
 
         public bool ThreePhotonEnable
         {
-            get;set;
+            get; set;
         }
 
         public int TileHeight
@@ -2737,6 +2732,18 @@
 
                 return Math.Round(val, 3);
             }
+        }
+
+        public bool Z2StageLock
+        {
+            get { return _z2StageLock; }
+            set { _z2StageLock = value; }
+        }
+
+        public bool Z2StageMirror
+        {
+            get { return _z2StageMirror; }
+            set { _z2StageMirror = value; }
         }
 
         public int ZEnable
@@ -3154,7 +3161,8 @@
                 _reportZCallBack,
                 _reportTCallBack,
                 _reportPreCaptureCallBack,
-                _reportSequenceStepCurrentIndexCallBack
+                _reportSequenceStepCurrentIndexCallBack,
+                _reportInformMessage
                 );
 
             InitCallBackROIDataStore(_multiROIStatsCallBack);
@@ -3740,7 +3748,7 @@
                 if (IsRunning())
                     return false;
 
-                ActiveExperimentPath = TemplatesFolder + "Active.xml";
+                ActiveExperimentPath = ResourceManagerCS.GetCaptureTemplatePathString() + "Active.xml";
                 if (true == _runComplete)
                 {
 
@@ -3861,15 +3869,15 @@
 
                     try
                     {
-                        MVMManager.Instance.ReloadSettings(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS, true);
-                        XmlDocument pDocA = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS];
-                        XmlNodeList nlA = pDocA.SelectNodes("/ThorImageExperiment/Name");
+                        XmlNodeList nlA = expDoc.SelectNodes("/ThorImageExperiment/Name");
                         if (0 < nlA.Count)
                         {
-                            XmlManager.SetAttribute(nlA[0], pDocA, "name", _experimentName.FullName);
-                            XmlManager.SetAttribute(nlA[0], pDocA, "path", _sbNewDir.ToString());
+                            XmlManager.SetAttribute(nlA[0], expDoc, "name", _experimentName.FullName);
+                            XmlManager.SetAttribute(nlA[0], expDoc, "path", _sbNewDir.ToString());
                         }
-                        MVMManager.Instance.SaveSettings(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS, true);
+                        ResourceManagerCS.BorrowDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
+                        expDoc.Save(ActiveExperimentPath);
+                        ResourceManagerCS.ReturnDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
                     }
                     catch (Exception ex)
                     {
@@ -4177,7 +4185,7 @@
         private static extern int GetZStage(StringBuilder name, int length, ref int zstageSteps, ref double zstageStepSize, ref double zStartPos);
 
         [DllImport(".\\Modules_Native\\RunSample.dll", EntryPoint = "InitCallBack")]
-        private static extern void InitCallBack(Report report, ReportIndex reportIndex, ReportSubRowStartIndex reportSubRowStartIndex, ReportSubRowEndIndex reportSubRowEndIndex, ReportZIndex reportZIndex, ReportTIndex reportTIndex, ReportPreCapture reportPreCapture, ReportSequenceStepCurrentIndex reporSequenceStepCurrentIndx);
+        private static extern void InitCallBack(Report report, ReportIndex reportIndex, ReportSubRowStartIndex reportSubRowStartIndex, ReportSubRowEndIndex reportSubRowEndIndex, ReportZIndex reportZIndex, ReportTIndex reportTIndex, ReportPreCapture reportPreCapture, ReportSequenceStepCurrentIndex reporSequenceStepCurrentIndx, ReportInformMessage reportInformMessage);
 
         [DllImport(".\\StatsManager.dll", EntryPoint = "InitCallBackLineProfilePush")]
         private static extern void InitCallBackLineProfilePush(ReportLineProfile reportLineProfile);
@@ -4970,8 +4978,8 @@
         private bool PreBleachCheck()
         {
             bool ret = true;
-            string bROISource = TemplatesFolder + "BleachROIs.xaml";
-            string bWaveformSource = TemplatesFolder + "BleachWaveform.raw";
+            string bROISource = ResourceManagerCS.GetCaptureTemplatePathString() + "BleachROIs.xaml";
+            string bWaveformSource = ResourceManagerCS.GetCaptureTemplatePathString() + "BleachWaveform.raw";
             string bROIPath = _experimentFolderPath + "BleachROIs.xaml";
             string bWaveformPath = _experimentFolderPath + "BleachWaveform.raw";
 
@@ -5464,6 +5472,11 @@
 
         private void RunSampleLSUpdateCaptureComplete(ref int index)
         {
+        }
+
+        private void RunsampleLSUpdateMessage(string message)
+        {
+            StatusMessage = message;
         }
 
         //to update the completed working Sub WELL status
@@ -6166,6 +6179,8 @@
                 XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "zStreamFrames", _zStreamFrames.ToString());
                 XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "zFileEnable", _zFileEnable.ToString());
                 XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "zFilePosScale", _zFilePosScale.ToString());
+                XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "z2StageLock", _z2StageLock == true ? "1" : "0");
+                XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "z2StageMirror", _z2StageMirror == true ? "1" : "0");
             }
 
             nodeList = ExperimentDoc.SelectNodes("/ThorImageExperiment/Timelapse");

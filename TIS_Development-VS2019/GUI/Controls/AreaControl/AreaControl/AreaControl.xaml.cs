@@ -431,6 +431,11 @@
         typeof(int),
         typeof(AreaControlUC),
         new FrameworkPropertyMetadata(new PropertyChangedCallback(onLSMPixelYMinChanged)));
+        public static DependencyProperty LSMPixelYMultipleProperty = 
+        DependencyProperty.RegisterAttached("LSMPixelYMultiple",
+        typeof(int),
+        typeof(AreaControlUC),
+        new FrameworkPropertyMetadata(new PropertyChangedCallback(onLSMPixelYMultiplehanged)));
         public static DependencyProperty LSMPixelYProperty = 
         DependencyProperty.RegisterAttached("LSMPixelY",
         typeof(int),
@@ -973,6 +978,12 @@
             set { SetValue(LSMPixelYMinProperty, value); }
         }
 
+        public int LSMPixelYMultiple
+        {
+            get { return (int)GetValue(LSMPixelYMultipleProperty); }
+            set { SetValue(LSMPixelYMultipleProperty, value); }
+        }
+
         public ICommand LSMSaveCalibrationCommand
         {
             get { return (ICommand)GetValue(LSMSaveCalibrationCommandProperty); }
@@ -1397,6 +1408,10 @@
         {
         }
 
+        public static void onLSMPixelYMultiplehanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+        }
+
         public static void onLSMScaleYScanChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
         }
@@ -1553,11 +1568,11 @@
         {
             if (sliderPixelY.Value > LSMPixelY)
             {
-                LSMPixelY += 32;
+                LSMPixelY += LSMPixelYMultiple;
             }
             else if (sliderPixelY.Value < LSMPixelY)
             {
-                LSMPixelY -= 32;
+                LSMPixelY -= LSMPixelYMultiple;
             }
         }
 

@@ -310,22 +310,20 @@
         {
             get
             {
-                if (1 <= _measurePower.Length)
-                    return _measurePower[0];
-                else
-                    return 0.0;
+                return (1 <= _measurePower.Length) ? _measurePower[0] : 0.0;
             }
             set
             {
                 if (0 >= _measurePower.Length)
                 {
                     _measurePower = new double[1] { value };
+                    OnPropertyChanged("MeasurePower");
                 }
-                else
+                else if (value != _measurePower[0])
                 {
                     _measurePower[0] = value;
+                    OnPropertyChanged("MeasurePower");
                 }
-                OnPropertyChanged("MeasurePower");
             }
         }
 
@@ -334,10 +332,7 @@
         {
             get
             {
-                if (2 <= _measurePower.Length)
-                    return _measurePower[1];
-                else
-                    return 0.0;
+                return (2 <= _measurePower.Length) ? _measurePower[1] : 0.0;
             }
             set
             {
@@ -345,12 +340,13 @@
                 {
                     double tmp = _measurePower[0];
                     _measurePower = new double[2] { tmp, value };
+                    OnPropertyChanged("MeasurePower1");
                 }
-                else
+                else if (value != _measurePower[1])
                 {
                     _measurePower[1] = value;
+                    OnPropertyChanged("MeasurePower1");
                 }
-                OnPropertyChanged("MeasurePower1");
             }
         }
 
@@ -415,22 +411,20 @@
         {
             get
             {
-                if (1 <= _power.Length)
-                    return _power[0];
-                else
-                    return 0.0;
+                return (1 <= _power.Length) ? _power[0] : 0.0;
             }
             set
             {
                 if (0 >= _power.Length)
                 {
                     _power = new double[1] { value };
+                    OnPropertyChanged("Power");
                 }
-                else
+                else if (value != _power[0])
                 {
                     _power[0] = value;
+                    OnPropertyChanged("Power");
                 }
-                OnPropertyChanged("Power");
             }
         }
 
@@ -439,10 +433,7 @@
         {
             get
             {
-                if (2 <= _power.Length)
-                    return _power[1];
-                else
-                    return 0.0;
+                return (2 <= _power.Length) ? _power[1] : 0.0;
             }
             set
             {
@@ -450,12 +441,13 @@
                 {
                     double tmp = _power[0];
                     _power = new double[2] { tmp, value };
+                    OnPropertyChanged("Power1");
                 }
-                else
+                else if (value != _power[1])
                 {
                     _power[1] = value;
+                    OnPropertyChanged("Power1");
                 }
-                OnPropertyChanged("Power1");
             }
         }
 
@@ -789,6 +781,8 @@
                 return false;
             if (this.Power != bParamsIn.Power)
                 return false;
+            if (1 < this._power.Length && this.Power1 != bParamsIn.Power1)
+                return false;
             if (this.PrePatIdleTime != bParamsIn.PrePatIdleTime)
                 return false;
             if (this.PostPatIdleTime != bParamsIn.PostPatIdleTime)
@@ -891,6 +885,8 @@
             outParams.PreEpochIdleMS = this.PreEpochIdleMS;
             outParams.PostEpochIdleMS = this.PostEpochIdleMS;
             outParams.Power = this.Power;
+            if (1 < this._power.Length)
+                outParams.Power1 = this.Power1;
             outParams.PreIdleTime = this.PreIdleTime;
             outParams.PrePatIdleTime = this.PrePatIdleTime;
             outParams.ROIBottom = this.ROIBottom;

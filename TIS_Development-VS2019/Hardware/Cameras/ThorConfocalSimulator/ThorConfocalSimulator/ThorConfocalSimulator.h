@@ -270,6 +270,7 @@ extern "C"
 		long _rotationAngle;
 		UINT64 _lastImageUpdateTime;
 		long _imageUpdateIntervalMS;
+		long _channelPolarity[4];///<store the polarity to use for each channel 
 	public:
 		static ThorLSMCam* getInstance();
 

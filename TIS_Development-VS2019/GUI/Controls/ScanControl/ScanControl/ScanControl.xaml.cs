@@ -387,6 +387,10 @@
         typeof(ICommand),
         typeof(ScanControlUC));
 
+        public static DependencyProperty BipolarityVisibilityProperty = 
+        DependencyProperty.Register("BipolarityVisibility",
+        typeof(Visibility),
+        typeof(ScanControlUC));
         public static DependencyProperty ChanDigOffsetProperty = 
         DependencyProperty.Register("ChanDigOffset",
         typeof(CustomCollection<HwVal<int>>),
@@ -490,6 +494,14 @@
         public static DependencyProperty LSMPixelDwellTimeProperty = 
         DependencyProperty.Register("LSMPixelDwellTime",
         typeof(double),
+        typeof(ScanControlUC));
+        public static DependencyProperty LSMPixelProcessProperty = 
+        DependencyProperty.Register("LSMPixelProcess",
+        typeof(int),
+        typeof(ScanControlUC));
+        public static DependencyProperty LSMPixelProcessVisibilityProperty = 
+        DependencyProperty.Register("LSMPixelProcessVisibility",
+        typeof(Visibility),
         typeof(ScanControlUC));
         public static DependencyProperty LSMPulseMultiplexingPhaseProperty = 
         DependencyProperty.Register("LSMPulseMultiplexingPhase",
@@ -632,6 +644,12 @@
         {
             get { return (ICommand)GetValue(AverageFramesPlusCommandProperty); }
             set { SetValue(AverageFramesPlusCommandProperty, value); }
+        }
+
+        public Visibility BipolarityVisibility
+        {
+            get { return (Visibility)GetValue(BipolarityVisibilityProperty); }
+            set { SetValue(BipolarityVisibilityProperty, value); }
         }
 
         public CustomCollection<HwVal<int>> ChanDigOffset
@@ -848,6 +866,18 @@
         {
             get { return (int)GetValue(LSMPixelDwellTimeMinIndexProperty); }
             set { SetValue(LSMPixelDwellTimeMinIndexProperty, value); }
+        }
+
+        public int LSMPixelProcess
+        {
+            get { return (int)GetValue(LSMPixelProcessProperty); }
+            set { SetValue(LSMPixelProcessProperty, value); }
+        }
+
+        public Visibility LSMPixelProcessVisibility
+        {
+            get { return (Visibility)GetValue(LSMPixelProcessVisibilityProperty); }
+            set { SetValue(LSMPixelProcessVisibilityProperty, value); }
         }
 
         public int LSMPulseMultiplexing

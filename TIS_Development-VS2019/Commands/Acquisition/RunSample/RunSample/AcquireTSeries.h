@@ -26,6 +26,7 @@ public:
 	virtual long CallSaveTImage(long index);
 	virtual long CallSequenceStepCurrent(long index);
 	virtual long CallStartProgressBar(long index, long resetTotalCount = 0);
+	virtual long CallInformMessage(wchar_t* message);
 
 	static HANDLE hEvent;
 	static HANDLE hEventZ;
@@ -55,6 +56,7 @@ private:
 	};
 
 	long SetZPosition(double pos,BOOL bWait, BOOL bPostflight);
+	long SetZPositionLocked(double pos1, double pos2, BOOL bWait, BOOL bPostflight);
 	long StopZ();
 	long CaptureTSeries(long index, long subWell, auto_ptr<IAcquire> &acqZFrame, ICamera *pCamera);
 	string uUIDSetup(auto_ptr<HardwareSetupXML> &pHardware, long timePoints, long zstageSteps, long zStreamFrames, long index, long subWell);

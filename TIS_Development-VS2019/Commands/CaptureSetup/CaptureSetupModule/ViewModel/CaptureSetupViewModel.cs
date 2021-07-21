@@ -2576,7 +2576,7 @@
 
             _spinnerWindow.Owner = Application.Current.MainWindow;
             _spinnerWindow.Left = _spinnerWindow.Owner.Left + _spinnerWindow.Width;
-            _spinnerWindow.Top = _spinnerWindow.Owner.Top + ((System.Windows.Controls.Panel)_spinnerWindow.Owner.Content).ActualHeight / 2;
+            _spinnerWindow.Top = _spinnerWindow.Owner.Top + ((System.Windows.Controls.Panel)_spinnerWindow.Owner.Content).ActualHeight / 4;
             _spinnerWindow.Closed += new EventHandler(_spinnerWindow_Closed);
             IsProgressWindowOff = false;
             _spinnerWindow.Show();
@@ -2688,6 +2688,7 @@
             PersistROIStatsChartWindowSettings();
             PersistMultiStatsWindowSettings();
             PersistLineProfileWindowSettings();
+            ClearZ2StageLockedSettings();
         }
 
         private void DisplayROIStatsOptions()
@@ -2911,6 +2912,11 @@
             _multiROIStats = null;
         }
 
+        private void ClearZ2StageLockedSettings()
+        {
+            MVMManager.Instance["ZControlViewModel", "Z2StageLock", (object)0.0] = false;
+        }
+
         private string ReadLast3dOutputPath()
         {
             if (Application.Current == null)
@@ -3019,8 +3025,8 @@
 
                     if (ts.TotalSeconds > .2)
                     {
-                        tmpPos = (double)MVMManager.Instance["PowerControlViewModel", "PowerPositionCurrent", (object)0];
-                        tmpPos = (double)MVMManager.Instance["PowerControlViewModel", "PowerPosition2Current", (object)0];
+                        tmpPos = (double)MVMManager.Instance["PowerControlViewModel", "PowerPositionCurrent", (object)0.0];
+                        tmpPos = (double)MVMManager.Instance["PowerControlViewModel", "PowerPosition2Current", (object)0.0];
 
                         lastP = DateTime.Now;
                     }

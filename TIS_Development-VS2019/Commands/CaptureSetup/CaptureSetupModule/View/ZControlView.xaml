@@ -54,6 +54,9 @@
                        ZStage2LocationSaveCommand="{Binding Path=ZStage2LocationSaveCommand}"
                        ZStage2Name="{Binding Path=ZStage2Name, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                        ZStepSize="{Binding Path=ZStepSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       Z2StageLock="{Binding Path=Z2StageLock, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       Z2StageLockVisibility="{Binding Path=Z2StageLockVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                       Z2StageMirror="{Binding Path=Z2StageMirror, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     />
     </Grid>
 </UserControl>

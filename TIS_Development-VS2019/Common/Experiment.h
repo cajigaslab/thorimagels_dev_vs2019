@@ -261,6 +261,7 @@ public:
 
 	virtual long GetZPosList(vector<double>& vec) = 0;
 	virtual long GetZFileInfo(int& enable, double& scale) = 0;
+	virtual long GetZ2LockInfo(int& lockEnable, int& mirrorEnable) = 0;
 
 	virtual void Update()=0;
 };

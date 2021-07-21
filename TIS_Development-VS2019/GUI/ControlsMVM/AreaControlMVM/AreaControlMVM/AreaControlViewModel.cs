@@ -1535,15 +1535,28 @@
                 {
                     return;
                 }
-                if (2 < value && 0 != value % 32 && (int)ICamera.LSMType.RESONANCE_GALVO_GALVO != ResourceManagerCS.GetLSMType())
+                int multiple = LSMPixelYMultiple;
+                if (2 < value && 0 != value % multiple && (int)ICamera.LSMType.RESONANCE_GALVO_GALVO != ResourceManagerCS.GetLSMType())
                 {
-                    if (16 > Math.Abs(value - currentPixelY))
+                    if (multiple == 32)
                     {
-                        return;
+                        if (16 > Math.Abs(value - currentPixelY))
+                        {
+                            return;
+                        }
                     }
 
-                    value = value >> 5; // divide by 32
-                    value = value << 5; // multiply by 32
+                    if (value > _areaControlModel.LSMPixelY)
+                    {
+                        value /= multiple; // divide by 32
+                        value *= multiple; // multiply by 32
+                        value += multiple;
+                    }
+                    else
+                    {
+                        value /= multiple; // divide by 32
+                        value *= multiple; // multiply by 32
+                    }
 
                     if (2 == value && 1 == currentPixelY)
                     {
@@ -1620,9 +1633,9 @@
                 }
                 else if (ICamera.LSMAreaMode.RECTANGLE == (ICamera.LSMAreaMode)LSMAreaMode)
                 {
-                    if (value < LSMPixelXMin)
+                    if (value < LSMPixelYMin)
                     {
-                        value = LSMPixelXMin;
+                        value = LSMPixelYMin;
                     }
                 }
                 this._areaControlModel.LSMPixelY = Math.Min(value, this._areaControlModel.LSMPixelYMax);
@@ -1669,6 +1682,14 @@
             get
             {
                 return this._areaControlModel.LSMPixelYMin;
+            }
+        }
+
+        public int LSMPixelYMultiple
+        {
+            get
+            {
+                return _areaControlModel.LSMPixelYMultiple;
             }
         }
 

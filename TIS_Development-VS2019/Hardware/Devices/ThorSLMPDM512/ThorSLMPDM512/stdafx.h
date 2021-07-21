@@ -18,7 +18,7 @@
 #include <map>
 #include <mutex>
 #include "Blink_SDK.h"
-#include <string>
+
 using namespace std;
 
 // TODO: reference additional headers your program requires here
@@ -34,7 +34,7 @@ using namespace std;
 #define TIXML_USE_TICPP
 #endif
 
-#define MSG_SIZE 256
+#define MSG_SIZE		256
 
 #define XY_COORD		2
 #define RGB_CNT			3

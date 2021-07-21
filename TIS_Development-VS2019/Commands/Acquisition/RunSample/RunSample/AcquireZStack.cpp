@@ -113,6 +113,12 @@ long AcquireZStack::CallStartProgressBar(long index, long resetTotalCount)
 	return TRUE;
 }
 
+long AcquireZStack::CallInformMessage(wchar_t* message)
+{
+	InformMessage(message);
+	return TRUE;
+}
+
 long AcquireZStack::Execute(long index, long subWell, long zFrame, long tFrame)
 {
 	_tFrame = tFrame;

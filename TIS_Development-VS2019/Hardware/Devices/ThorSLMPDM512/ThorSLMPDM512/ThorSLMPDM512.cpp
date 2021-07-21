@@ -45,7 +45,7 @@ ThorSLM::ThorSLM() :
 	_deviceCount = 0;
 	_deviceDetected = FALSE;
 	_fileSettingsLoaded = FALSE;
-	_pixelRange = new long[4];	//minX, maxX, minY, maxY
+	_pixelSize[0] = _pixelSize[1] = 512;	//X, Y
 	_fpPointsXYSize = new long[MAX_ARRAY_CNT];
 	_tableLUT = new unsigned short[65536];
 	_imgWavefront = NULL;
@@ -57,6 +57,10 @@ ThorSLM::ThorSLM() :
 	_dmdMode = _loadPhaseDirectly = _slm3D = FALSE;
 	_doHologram = false;
 	_wavelength[0] = _wavelength[1] = 0;
+	_flatDiagRatio = 1;
+	_flatPowerRange[0] = 25;
+	_flatPowerRange[1] = 75;
+	_phaseMax[0] = 	_phaseMax[1] = 255;
 	_selectWavelength = 0;
 	_power2Px =0;
 }
@@ -87,11 +91,6 @@ ThorSLM::~ThorSLM()
 			_fitCoeff[i] = NULL;
 		}
 	}
-	if(NULL != _pixelRange)
-	{
-		delete[] _pixelRange;
-		_pixelRange = NULL;
-	}
 
 	ReleaseMem();
 	if(NULL != _fpPointsXYSize)
@@ -110,7 +109,7 @@ long ThorSLM::FindDevices(long &deviceCount)
 	_deviceDetected = TRUE;
 	try
 	{
-		if(FALSE == pSetup->GetSpec(_pSlmName,_dmdMode,_overDrive,_transientFrames,_pixelRange[0],_pixelRange[1],_pixelRange[2],_pixelRange[3], _lutFile, _overDrivelutFile, _wavefrontFile))
+		if(FALSE == pSetup->GetSpec(_pSlmName,_dmdMode,_overDrive,_transientFrames,_flatDiagRatio,_flatPowerRange[0],_flatPowerRange[1],_pixelSize[0],_pixelSize[1],_lutFile,_overDrivelutFile,_wavefrontFile))
 		{
 			StringCbPrintfW(_errMsg,MSG_SIZE,L"GetSpec from ThorSLMPDM512Settings failed.");
 			LogMessage(_errMsg,ERROR_EVENT);
@@ -199,18 +198,19 @@ long ThorSLM::SelectDevice(const long device)
 			_wavelength[0] = _wavelength[1] = 0;
 			for (int i = 0; i < Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT; i++)
 			{
-				if(FALSE == pSetup->GetCalibration(i+1,_wavelength[i],_fitCoeff[i][0],_fitCoeff[i][1],_fitCoeff[i][2],_fitCoeff[i][3],_fitCoeff[i][4],_fitCoeff[i][5],_fitCoeff[i][6],_fitCoeff[i][7]))
+				if(FALSE == pSetup->GetCalibration(i+1,_wavelength[i],_phaseMax[i],_fitCoeff[i][0],_fitCoeff[i][1],_fitCoeff[i][2],_fitCoeff[i][3],_fitCoeff[i][4],_fitCoeff[i][5],_fitCoeff[i][6],_fitCoeff[i][7]))
 				{
 					StringCbPrintfW(_errMsg,MSG_SIZE,L"GetCalibration from ThorSLMPDM512Settings failed.");
 					LogMessage(_errMsg,ERROR_EVENT);
 				}
+				_phaseMax[i] = max(0, min(255, _phaseMax[i]));
 				if(FALSE == pSetup->GetPostTransform(i+1,_verticalFlip[i], _rotateAngle[i], _scaleFactor[i][0], _scaleFactor[i][1], _offsetPixels[i][0], _offsetPixels[i][1]))
 				{
 					StringCbPrintfW(_errMsg,MSG_SIZE,L"GetPostTransform from ThorSLMPDM512Settings failed.");
 					LogMessage(_errMsg,ERROR_EVENT);
 				}
 			}
-			if(FALSE == pSetup->GetSpec(_pSlmName,_dmdMode,_overDrive,_transientFrames,_pixelRange[0],_pixelRange[1],_pixelRange[2],_pixelRange[3], _lutFile, _overDrivelutFile, _wavefrontFile))
+			if(FALSE == pSetup->GetSpec(_pSlmName,_dmdMode,_overDrive,_transientFrames,_flatDiagRatio,_flatPowerRange[0],_flatPowerRange[1],_pixelSize[0],_pixelSize[1],_lutFile,_overDrivelutFile,_wavefrontFile))
 			{
 				StringCbPrintfW(_errMsg,MSG_SIZE,L"GetSpec from ThorSLMPDM512Settings failed.");
 				LogMessage(_errMsg,ERROR_EVENT);
@@ -335,8 +335,8 @@ long ThorSLM::GetParamInfo(const long paramID, long &paramType, long &paramAvail
 		{
 			paramType = IDevice::TYPE_LONG;
 			paramAvailable = TRUE;
-			paramMin = _pixelRange[0];
-			paramMax = _pixelRange[1];
+			paramMin = 1;
+			paramMax = _pixelSize[0];
 			paramDefault = DEFAULT_PIXEL_X;
 			paramReadOnly = TRUE;
 		}
@@ -345,8 +345,8 @@ long ThorSLM::GetParamInfo(const long paramID, long &paramType, long &paramAvail
 		{
 			paramType = IDevice::TYPE_LONG;
 			paramAvailable = TRUE;
-			paramMin = _pixelRange[2];
-			paramMax = _pixelRange[3];
+			paramMin = 1;
+			paramMax = _pixelSize[1];
 			paramDefault = DEFAULT_PIXEL_Y;
 			paramReadOnly = TRUE;
 		}
@@ -501,13 +501,13 @@ long ThorSLM::SetParam(const long paramID, const double param)
 		}
 		break;
 	case IDevice::PARAM_SLM_PIXEL_X:
-		if ((param >= _pixelRange[0]) && (param <= _pixelRange[1]))
+		if ((param >= 1) && (param <= _pixelSize[0]))
 		{
 			_pixelX = static_cast<long> (param);
 		}
 		break;
 	case IDevice::PARAM_SLM_PIXEL_Y:
-		if ((param >= _pixelRange[2]) && (param <= _pixelRange[3]))
+		if ((param >= 1) && (param <= _pixelSize[2]))
 		{
 			_pixelY = static_cast<long> (param);
 		}
@@ -564,7 +564,7 @@ long ThorSLM::SetParam(const long paramID, const double param)
 			if(static_cast<long> (param))
 			{
 				//set blank image:
-				size_t imgSize = _pixelRange[1] * _pixelRange[3] * RGB_CNT* sizeof(unsigned char);
+				size_t imgSize = _pixelSize[0] * _pixelSize[1] * RGB_CNT* sizeof(unsigned char);
 				unsigned char* pImg = (unsigned char*)malloc(imgSize);
 				memset(pImg, 0, imgSize);
 
@@ -576,8 +576,8 @@ long ThorSLM::SetParam(const long paramID, const double param)
 				{
 					BITMAPINFO bmi;
 					bmi.bmiHeader.biSize = 40;
-					bmi.bmiHeader.biWidth = _pixelRange[1];
-					bmi.bmiHeader.biHeight = _pixelRange[3];
+					bmi.bmiHeader.biWidth = _pixelSize[0];
+					bmi.bmiHeader.biHeight = _pixelSize[1];
 					bmi.bmiHeader.biPlanes = 1;
 					bmi.bmiHeader.biBitCount = CHAR_BIT * RGB_CNT;
 					bmi.bmiHeader.biSizeImage = (DWORD)imgSize;
@@ -587,7 +587,7 @@ long ThorSLM::SetParam(const long paramID, const double param)
 					bmi.bmiHeader.biClrUsed = 256;
 					bmi.bmiHeader.biClrImportant = 256;
 					winDVI->EditBMP(0, pImg, bmi);
-					winDVI->CreateDVIWindow(_pixelRange[1], _pixelRange[3]);
+					winDVI->CreateDVIWindow(_pixelSize[0], _pixelSize[1]);
 					winDVI->DisplayBMP(0);
 				}
 
@@ -623,7 +623,7 @@ long ThorSLM::SetParamBuffer(const long paramID, char * pBuffer, long size)
 	{
 	case IDevice::PARAM_SLM_POINTS_ARRAY:
 		//image center at the first [x, y]
-		_power2Px = static_cast<long>(max(max(pow(2, ceil(log2(_pixelRange[1]))), pow(2, ceil(log2(_pixelRange[3])))),
+		_power2Px = static_cast<long>(max(max(pow(2, ceil(log2(_pixelSize[0]))), pow(2, ceil(log2(_pixelSize[1])))),
 			max(pow(2, ceil(log2(*pSrc*2))), pow(2, ceil(log2(*(pSrc+1)*2))))));
 
 		for (int i = 0; i < XY_COORD; i++)
@@ -1467,7 +1467,7 @@ unsigned char* ThorSLM::MapImageHologram(const wchar_t* pathAndFilename, PBITMAP
 
 	//map to power of 2 square image, then crop later
 	//consider case with image size larger than SLM
-	_power2Px = static_cast<long>(max(max(pow(2, ceil(log2(_pixelRange[1]))), pow(2, ceil(log2(_pixelRange[3])))),
+	_power2Px = static_cast<long>(max(max(pow(2, ceil(log2(_pixelSize[0]))), pow(2, ceil(log2(_pixelSize[1])))),
 		max(pow(2, ceil(log2(pbmi->bmiHeader.biWidth))), pow(2, ceil(log2(pbmi->bmiHeader.biHeight))))));
 
 	//return if the same size
@@ -1556,8 +1556,9 @@ unsigned char* ThorSLM::MapImageHologram(const wchar_t* pathAndFilename, PBITMAP
 	//set pixel size to be SLM dimension and bmi header to hologram power of 2,		//
 	//we will crop from hologram power of 2 to SLM dimension at ReadAndScaleBitmap	//
 	//******************************************************************************//
-	_pixelX = _pixelRange[1];
-	_pixelY = _pixelRange[3];
+	//keep image size for later use for holoGen
+	_pixelX = pbmi->bmiHeader.biWidth;
+	_pixelY = pbmi->bmiHeader.biHeight;
 	pbmi->bmiHeader.biWidth = pbmi->bmiHeader.biHeight = _power2Px;
 	pbmi->bmiHeader.biSizeImage = static_cast<int>(pow(_power2Px, 2)) * channelCnt + 2;
 	pbmi->bmiHeader.biXPelsPerMeter = static_cast<LONG>((double)Constants::M_TO_UM/pixelUM);
@@ -1625,14 +1626,15 @@ unsigned char* ThorSLM::GetAndProcessBMP(BITMAPINFO& bmi)
 		ret = holoGen->RotateForAngle(fImg, _rotateAngle[_selectWavelength]);
 	}
 	ret = holoGen->FittingTransform(fImg);
-	ret = holoGen->GenerateHologram(fImg, ITERATIONS_2D, 0);
+	ret = holoGen->GenerateHologram(fImg, ITERATIONS_2D, static_cast<int>(ceil(max(sqrt(pow(_pixelX,2)+pow(_pixelY,2))/2 * max(0.0,min(1.0,_flatDiagRatio)), 0))), _flatPowerRange[0], _flatPowerRange[1], 0);	//183 for default 512x512, image dimension (_pixelX,_pixelY)
 
-	//copy back from buffer, scale if necessary:
+	//copy back from buffer,
+	//consider phase scaling per wavelength and scale for LUT if necessary:
 	pSrc = imgRead;
 	pDst = fImg;
 	for (int i = 0; i < bmi.bmiHeader.biWidth*bmi.bmiHeader.biHeight; i++)
 	{
-		*pSrc = ((MAX_ARRAY_CNT-1) < (*pDst)) ? static_cast<unsigned char>((*pDst)*(MAX_ARRAY_CNT-1)/(LUT_SIZE-1)) : static_cast<unsigned char>((*pDst));
+		*pSrc = static_cast<unsigned char>(((MAX_ARRAY_CNT-1) < (*pDst) ? (*pDst)*(MAX_ARRAY_CNT-1)/(LUT_SIZE-1) : *pDst) * _phaseMax[_selectWavelength]/UCHAR_MAX);
 		pSrc++;
 		pDst++;
 	}
@@ -1651,6 +1653,9 @@ unsigned char* ThorSLM::GetAndProcessBMP(BITMAPINFO& bmi)
 	// |                         | //
 	// |                         | //
 	// |_________________________| //
+	// set to SLM dimension (_pixelX x _pixelY)
+	_pixelX = _pixelSize[0];
+	_pixelY = _pixelSize[1];
 	if (_pixelX == bmi.bmiHeader.biWidth && _pixelY == bmi.bmiHeader.biHeight)
 	{
 		return imgRead;
@@ -1787,7 +1792,7 @@ unsigned char* ThorSLM::GetAndProcessText(BITMAPINFO& bmi)	//for 3D pattern, we 
 			}
 			ret = holoGen->FittingTransform(fImg);
 			//ret = holoGen->GenerateHologram(fImg, ITERATIONS,-z*1000/2.1);	//hardcoding for Nick Robinson
-			ret = holoGen->GenerateHologram(fImg, ITERATIONS_3D,z*Constants::UM_TO_MM);
+			ret = holoGen->GenerateHologram(fImg, ITERATIONS_3D,static_cast<int>(ceil(max(sqrt(pow(_pixelX,2)+pow(_pixelY,2))/2 * max(0.0,min(1.0,_flatDiagRatio)), 0))),_flatPowerRange[0],_flatPowerRange[1],z*Constants::UM_TO_MM);
 			for (int q=0;q<bmi.bmiHeader.biWidth*bmi.bmiHeader.biHeight;q++)
 			{
 				mImg[q]=mImg[q]+fImg[q];
@@ -1805,6 +1810,9 @@ unsigned char* ThorSLM::GetAndProcessText(BITMAPINFO& bmi)	//for 3D pattern, we 
 	}
 	myReadFile.close();
 	//free(fullFileName);
+
+
+
 
 	unsigned char* pSrc = txtRead;
 	float* pDst = mImg;

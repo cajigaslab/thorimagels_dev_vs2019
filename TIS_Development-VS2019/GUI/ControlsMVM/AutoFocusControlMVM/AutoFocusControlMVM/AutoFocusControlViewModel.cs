@@ -434,6 +434,8 @@
                         FineAutoFocusPercentageDecrease = Convert.ToDouble(objList[turretPosition].Attributes["fineAfPercentDecrease"].Value.ToString(CultureInfo.InvariantCulture), CultureInfo.InvariantCulture);
                     }
                 }
+                OnPropertyChanged("ZMax");
+                OnPropertyChanged("ZMin");
             }
         }
 

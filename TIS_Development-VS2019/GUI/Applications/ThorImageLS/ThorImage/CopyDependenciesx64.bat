@@ -189,7 +189,6 @@ echo F | xcopy /F ..\..\..\..\Documents\HelpLS\ThorImageLS.chm .\bin\Debug
 
 echo F | xcopy /F ..\..\..\..\Commands\General\SelectHardware\x64\Debug\SelectHardware.dll .\bin\Debug\Modules_Native
 echo F | xcopy /F ..\..\..\..\Common\GeometryUtilities\x64\Debug\GeometryUtilitiesCPP.dll .\bin\Debug\Modules_Native
-REM echo F | xcopy /F ..\..\..\..\Commands\Acquisition\LiveImageData\x64\Debug\LiveImageData.dll .\bin\Debug\Modules_Native
 
 REM Uncomment later
 echo F | xcopy /F ..\..\..\..\Commands\CaptureSetup\CaptureSetupModule\bin\Debug\CaptureSetupModule.dll .\bin\Debug\Modules
@@ -238,7 +237,6 @@ echo F | xcopy /F ..\..\..\..\GUI\Controls\SpinnerProgress\SpinnerProgress\bin\D
 echo F | xcopy /F ..\..\..\..\GUI\Controls\DigitalOutputSwitches\DigitalOutputSwitches\bin\Debug\DigitalOutputSwitches.dll .\bin\Debug\Modules
 
 echo F | xcopy /F ..\..\..\..\GUI\Controls\JPEGer_Process\JPEGer_Process\\bin\Debug\JPEGer_Process.exe .\bin\Debug\
-echo F | xcopy /F ..\..\..\..\GUI\Controls\TileBuilder\x64\Debug\TileBuilder.dll .\bin\Debug
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorDetectorSwitch\MCLWrapper\MCLWrapper\bin\Debug\mcl_RF_Switch_Controller64.dll .\bin\Debug
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorDetectorSwitch\MCLWrapper\MCLWrapper\bin\Debug\MCLWrapper.dll .\bin\Debug
 
@@ -279,7 +277,6 @@ echo F | xcopy /F ..\..\..\..\Common\AutoFocusModule\x64\Debug\AutoFocus.dll .\b
 
 echo F | xcopy /F ..\..\..\..\Commands\ImageAnalysis\PincushionCorrection\x64\Debug\PincushionCorrection.dll .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Commands\ImageAnalysis\FlatField\x64\Debug\FlatField.dll .\bin\Debug
-echo F | xcopy /F ..\..\..\..\Commands\ImageAnalysis\ImageStats\x64\Debug\ImageStats.dll .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Commands\ImageAnalysis\LineProfile\x64\Debug\LineProfile.dll .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Commands\ImageAnalysis\ThorImageProcess\x64\Debug\ThorImageProcess.dll .\bin\Debug
 
@@ -324,7 +321,6 @@ REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorTSI\x64\Debug\ThorTSI.dll
 REM echo F | xcopy /F ..\..\..\..\Common\Camera-TSI\dlls\Native_64_lib\bin_CCD_mono\*.dll .\bin\Debug\Lib
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorTSI_CS\x64\Debug\ThorTSI_CS.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Common\Camera-TSI\dlls\Native_64_lib\bin_CMOS_mono\*.dll .\bin\Debug\Lib
-REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\Common\iDAQ\x64\Debug\iDAQ.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\DCxCamera\x64\Debug\DCxCamera.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ORCA\x64\Debug\ORCA.dll .\bin\Debug\Modules_Native
 
@@ -427,6 +423,7 @@ echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM6000\ThorMCM6000Settings.x
 
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\thordaq\Dll\ThorDAQResonantGalvo\ThorDAQResonantGalvoSettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\thordaq\Dll\ThorDAQGalvoGalvo\ThorDAQGalvoGalvoSettings.xml .\bin\Debug
+echo F | xcopy /F ..\..\..\..\Hardware\Cameras\thordaq\Dll\ThorDAQIOSettings.xml .\bin\Debug
 
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThordaqDFLIM\Dll\ThorDFLIMGalvoGalvo\ThorDFLIMGalvoGalvoSettings.xml .\bin\Debug
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThordaqDFLIM\Dll\ThorDAQGGDFLIMSim\fullFrameSim.bin .\bin\debug

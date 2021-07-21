@@ -295,7 +295,7 @@ if $(ConfigurationName) == Debug (
 CopyDependenciesx64.bat
 )
 if $(ConfigurationName) == Release (
-rem CopyDependenciesx64-Release.bat
+CopyDependenciesx64-Release.bat
 )
 )</PreBuildEvent>
   </PropertyGroup>

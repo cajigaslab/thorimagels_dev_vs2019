@@ -209,17 +209,24 @@
 
         #region Methods
 
-        public bool CombineHolograms(string bmpPhaseName1, string bmpPhaseName2)
+        public bool CombineHolograms(string bmpPhaseName1, string bmpPhaseName2, int shiftPx)
         {
-            return ((1 == CombineHologramFiles(bmpPhaseName1, bmpPhaseName2)) ? true : false);
+            return ((1 == CombineHologramFiles(bmpPhaseName1, bmpPhaseName2, shiftPx)) ? true : false);
         }
 
         public void InitializeWaveformBuilder(int clockRateHz)
         {
             WaveformBuilder.ClkRate = clockRateHz;
             WaveformBuilder.Field2Volts = (double)MVMManager.Instance["AreaControlViewModel", "LSMField2Theta", (object)1.0];
-            WaveformBuilder.InitializeParams(BleachCalibrateFieldSize, BleachCalibrateFineScaleXY, BleachCalibratePixelXY, BleachCalibrateOffsetXY, BleachCalibrateFineOffsetXY, BleachCalibrateScaleYScan,
-                BleachCalibrateFlipHV[1], BleachCalibrateFlipHV[0], BleachCalibratePockelsVoltageMin0, WaveformDriverType);
+            int calibrateFieldSize = (0 == BleachCalibrateFieldSize) ? 1 : BleachCalibrateFieldSize;
+            double[] calibrateFineScaleXY = (null == BleachCalibrateFineScaleXY) ? new double[2] { 1.0, 1.0 } : BleachCalibrateFineScaleXY;
+            int[] calibratePixelXY = (null == BleachCalibratePixelXY) ? new int[2] { 1, 1 } : BleachCalibratePixelXY;
+            int[] calibrateOffsetXY = (null == BleachCalibrateOffsetXY) ? new int[2] { 1, 1 } : BleachCalibrateOffsetXY;
+            double[] calibrateFineOffsetXY = (null == BleachCalibrateFineOffsetXY) ? new double[2] { 0.0, 0.0 } : BleachCalibrateFineOffsetXY;
+            int[] calibrateFlipHV = (null == BleachCalibrateFlipHV) ? new int[2] { 0, 0 } : BleachCalibrateFlipHV;
+
+            WaveformBuilder.InitializeParams(calibrateFieldSize, calibrateFineScaleXY, calibratePixelXY, calibrateOffsetXY, calibrateFineOffsetXY, BleachCalibrateScaleYScan,
+                calibrateFlipHV[1], calibrateFlipHV[0], BleachCalibratePockelsVoltageMin0, WaveformDriverType);
         }
 
         public bool LoadSLMPatternName(int runtimeCal, int id, string bmpPatternName, bool start, bool phaseDirect = false, int timeoutVal = 0)
@@ -293,7 +300,7 @@
         private static extern int CalibrateSLM(string bmpPatternName, IntPtr xyPointFrom, IntPtr xyPointTo, int size);
 
         [DllImport(".\\Modules_Native\\HologramGenerator.dll", EntryPoint = "CombineHologramFiles", CharSet = CharSet.Unicode)]
-        private static extern int CombineHologramFiles(string bmpPhaseName1, string bmpPhaseName2);
+        private static extern int CombineHologramFiles(string bmpPhaseName1, string bmpPhaseName2, int shiftPx);
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "InitCallBackBleachSLM")]
         private static extern void InitCallBackBleachSLM(ReportBleachSLMNowFinished reportBleachSLMNowFinished, PreBleachSLMCallback preBleachSLMCallback);

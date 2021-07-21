@@ -26,7 +26,7 @@
                         <OuterGlowBitmapEffect GlowSize="5" GlowColor="Black" />
                     </Image.BitmapEffect>
                 </Image>
-                <Label HorizontalAlignment="Left" Margin="5" Background="{x:Null}" Content="Thorlabs Inc - 2020" HorizontalContentAlignment="Center" Foreground="#FFFFFFFF" FontSize="12" FontFamily="Cambria" />
+                <Label HorizontalAlignment="Left" Margin="5" Background="{x:Null}" Content="Thorlabs Inc - 2021" HorizontalContentAlignment="Center" Foreground="#FFFFFFFF" FontSize="12" FontFamily="Cambria" />
             </StackPanel>
         </StackPanel>
     </Grid>

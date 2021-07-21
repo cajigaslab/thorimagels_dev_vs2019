@@ -125,6 +125,11 @@ ThorLSMCam::ThorLSMCam():
 
 	_rotationAngle = ICamera::LSMGRRotationAngle::DEG_0;
 
+	_channelPolarity[0] = ICamera::Polarity::POL_NEG;
+	_channelPolarity[1] = ICamera::Polarity::POL_NEG;
+	_channelPolarity[2] = ICamera::Polarity::POL_NEG;
+	_channelPolarity[3] = ICamera::Polarity::POL_NEG;
+
 	/*   galvo_waveform = NULL;
 	frameTrigger = NULL;
 	hThread = NULL;*/
@@ -1321,6 +1326,46 @@ long ThorLSMCam::GetParamInfo(const long paramID, long &paramType, long &paramAv
 			paramReadOnly = FALSE;
 		}
 		break;
+	case ICamera::PARAM_LSM_CHANNEL_POLARITY_1:
+	{
+		paramType = ICamera::TYPE_LONG;
+		paramAvailable = TRUE;
+		paramMin = ICamera::Polarity::POL_NEG;
+		paramMax = ICamera::Polarity::POL_BI;
+		paramDefault = ICamera::Polarity::POL_NEG;
+		paramReadOnly = FALSE;
+	}
+	break;
+	case ICamera::PARAM_LSM_CHANNEL_POLARITY_2:
+	{
+		paramType = ICamera::TYPE_LONG;
+		paramAvailable = TRUE;
+		paramMin = ICamera::Polarity::POL_NEG;
+		paramMax = ICamera::Polarity::POL_BI;
+		paramDefault = ICamera::Polarity::POL_NEG;
+		paramReadOnly = FALSE;
+	}
+	break;
+	case ICamera::PARAM_LSM_CHANNEL_POLARITY_3:
+	{
+		paramType = ICamera::TYPE_LONG;
+		paramAvailable = TRUE;
+		paramMin = ICamera::Polarity::POL_NEG;
+		paramMax = ICamera::Polarity::POL_BI;
+		paramDefault = ICamera::Polarity::POL_NEG;
+		paramReadOnly = FALSE;
+	}
+	break;
+	case ICamera::PARAM_LSM_CHANNEL_POLARITY_4:
+	{
+		paramType = ICamera::TYPE_LONG;
+		paramAvailable = TRUE;
+		paramMin = ICamera::Polarity::POL_NEG;
+		paramMax = ICamera::Polarity::POL_BI;
+		paramDefault = ICamera::Polarity::POL_NEG;
+		paramReadOnly = FALSE;
+	}
+	break;
 	default:
 		{
 			ret = TRUE;
@@ -2230,6 +2275,42 @@ long ThorLSMCam::SetParam(const long paramID, const double param)
 			}
 		}
 		break;
+	case ICamera::PARAM_LSM_CHANNEL_POLARITY_1:
+	{
+		if ((param >= ICamera::Polarity::POL_NEG) && (param <= ICamera::Polarity::POL_BI))
+		{
+			_channelPolarity[0] = static_cast<long>(param);
+			ret = TRUE;
+		}
+	}
+	break;
+	case ICamera::PARAM_LSM_CHANNEL_POLARITY_2:
+	{
+		if ((param >= ICamera::Polarity::POL_NEG) && (param <= ICamera::Polarity::POL_BI))
+		{
+			_channelPolarity[1] = static_cast<long>(param);
+			ret = TRUE;
+		}
+	}
+	break;
+	case ICamera::PARAM_LSM_CHANNEL_POLARITY_3:
+	{
+		if ((param >= ICamera::Polarity::POL_NEG) && (param <= ICamera::Polarity::POL_BI))
+		{
+			_channelPolarity[2] = static_cast<long>(param);
+			ret = TRUE;
+		}
+	}
+	break;
+	case ICamera::PARAM_LSM_CHANNEL_POLARITY_4:
+	{
+		if ((param >= ICamera::Polarity::POL_NEG) && (param <= ICamera::Polarity::POL_BI))
+		{
+			_channelPolarity[3] = static_cast<long>(param);
+			ret = TRUE;
+		}
+	}
+	break;
 	}	
 	return ret;
 }
@@ -3046,6 +3127,26 @@ long ThorLSMCam::GetParam(const long paramID, double &param)
 			param = 1.0;
 		}
 		break;
+	case ICamera::PARAM_LSM_CHANNEL_POLARITY_1:
+	{
+		param = _channelPolarity[0];
+	}
+	break;
+	case ICamera::PARAM_LSM_CHANNEL_POLARITY_2:
+	{
+		param = _channelPolarity[1];
+	}
+	break;
+	case ICamera::PARAM_LSM_CHANNEL_POLARITY_3:
+	{
+		param = _channelPolarity[2];
+	}
+	break;
+	case ICamera::PARAM_LSM_CHANNEL_POLARITY_4:
+	{
+		param = _channelPolarity[3];
+	}
+	break;
 	default:
 		{
 			ret = FALSE;

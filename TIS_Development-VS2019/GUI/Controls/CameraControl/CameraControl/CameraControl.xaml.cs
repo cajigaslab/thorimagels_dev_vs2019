@@ -94,11 +94,13 @@
         public static readonly DependencyProperty HotPixelVisProperty = DependencyProperty.Register("HotPixelVis", typeof(bool), typeof(CameraControlUC));
         public static readonly DependencyProperty ImageStartStatusCameraProperty = DependencyProperty.Register("ImageStartStatusCamera", typeof(bool), typeof(CameraControlUC));
         public static readonly DependencyProperty IsBlackLevelVisibleProperty = DependencyProperty.Register("IsBlackLevelVisible", typeof(bool), typeof(CameraControlUC));
-        public static readonly DependencyProperty IsGainVisibleProperty = DependencyProperty.Register("IsGainVisible", typeof(bool), typeof(CameraControlUC)); public static readonly DependencyProperty IsReadoutVisibleProperty = DependencyProperty.Register("IsReadoutVisible", typeof(bool), typeof(CameraControlUC));
+        public static readonly DependencyProperty IsGainVisibleProperty = DependencyProperty.Register("IsGainVisible", typeof(bool), typeof(CameraControlUC));
+        public static readonly DependencyProperty IsReadoutVisibleProperty = DependencyProperty.Register("IsReadoutVisible", typeof(bool), typeof(CameraControlUC));
         public static readonly DependencyProperty IsTapsVisibleProperty = DependencyProperty.Register("IsTapsVisible", typeof(bool), typeof(CameraControlUC));
         public static readonly DependencyProperty LeftMaxProperty = DependencyProperty.Register("LeftMax", typeof(int), typeof(CameraControlUC));
         public static readonly DependencyProperty LeftMinProperty = DependencyProperty.Register("LeftMin", typeof(int), typeof(CameraControlUC));
         public static readonly DependencyProperty LeftProperty = DependencyProperty.Register("Left", typeof(int), typeof(CameraControlUC));
+        public static readonly DependencyProperty PixelSizeUMProperty = DependencyProperty.Register("PixelSizeUM", typeof(string), typeof(CameraControlUC));
         public static readonly DependencyProperty RightMaxProperty = DependencyProperty.Register("RightMax", typeof(int), typeof(CameraControlUC));
         public static readonly DependencyProperty RightMinProperty = DependencyProperty.Register("RightMin", typeof(int), typeof(CameraControlUC));
         public static readonly DependencyProperty RightProperty = DependencyProperty.Register("Right", typeof(int), typeof(CameraControlUC));
@@ -544,6 +546,12 @@
         {
             get { return (int)GetValue(LeftMinProperty); }
             set { SetValue(LeftMinProperty, value); }
+        }
+
+        public string PixelSizeUM
+        {
+            get { return (string)GetValue(PixelSizeUMProperty); }
+            set { SetValue(PixelSizeUMProperty, value); }
         }
 
         public int Right

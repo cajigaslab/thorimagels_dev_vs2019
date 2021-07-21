@@ -220,6 +220,12 @@ long AcquireBleaching::CallStartProgressBar(long index, long resetTotalCount)
 	return TRUE;
 }
 
+long AcquireBleaching::CallInformMessage(wchar_t* message)
+{
+	InformMessage(message);
+	return TRUE;
+}
+
 long AcquireBleaching::Execute(long index, long subWell, long zFrame, long tFrame)
 {
 	AcquireBleaching::_lastImageUpdateTime = 0;
@@ -1790,6 +1796,9 @@ long AcquireBleaching::Execute(long index, long subWell)
 	ScannerEnable(0,FALSE);
 	ScannerEnable(1,FALSE);
 
+	//notice user of converting (or combining) files
+	StringCbPrintfW(message, MSG_LENGTH, L"Preparing output files, please wait ...");
+	CallInformMessage(message);
 	_pExp->GetPhotoBleachingAttr("rawOption", val);
 	if((long)val == 0)
 	{

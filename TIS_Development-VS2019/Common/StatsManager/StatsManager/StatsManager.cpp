@@ -1609,6 +1609,11 @@ long StatsManager::CopyStatsImageDataToLineImageData()
 		{
 			const long bufferSize = _imgWidth*_imgHeight;
 
+			if (_imgBufferLength != bufferSize)
+			{
+				return FALSE;
+			}
+
 			if (NULL == _pDataForLine)//allocate memory for the incoming buffer if needed
 			{
 				_pDataForLine = new unsigned short[bufferSize];
@@ -1626,6 +1631,11 @@ long StatsManager::CopyStatsImageDataToLineImageData()
 		else
 		{
 			const long bufferSize = _imgWidth*_imgHeight*MAX_CHANNEL_COUNT;
+
+			if (_imgBufferLength != bufferSize)
+			{
+				return FALSE;
+			}
 
 			if (NULL == _pDataForLine)//allocate memory for the incoming buffer if needed
 			{

@@ -60,21 +60,18 @@ long ThorStim::MovePockelsToPowerLevel(long index)
 		TerminateTask(_taskHandleAOPockels);
 		float64 mArray[1] = {_pockelsMinVoltage[index] + (_pockelsMaxVoltage[index] - _pockelsMinVoltage[index])*_pockelsPowerLevel[index]};
 		ret = SetVoltageToAnalogLine (_taskHandleAOPockels, _pockelsLine[index], mArray);
+		//control pockels digital line accordingly
+		BLEACHSCAN_DIGITAL_LINENAME eEnum = BLEACHSCAN_DIGITAL_LINENAME::DIGITAL_LINENAME_LAST;
+		string eStr = "POCKEL_DIG";
+		eStr = (0 == index) ? eStr : eStr + "_" + std::to_string(index);
+		if (EnumString<BLEACHSCAN_DIGITAL_LINENAME>::To(eEnum, eStr))
+			TogglePulseToDigitalLine(_taskHandleDO, _digiLines[eEnum-1], 1, (_pockelsMinVoltage[index] < mArray[0]) ? TogglePulseMode::ToggleHigh : TogglePulseMode::ToggleLow);
 	}
 	return ret;
 }
 
 long ThorStim::SetupProtocol()
 {
-	//determine digital line, set bitwise line selections
-	//skip the first dummy line trigger for GalvoGalvo
-	_digiLineSelect = 0x0;
-	for (int i = BLEACHSCAN_DIGITAL_LINENAME::POCKEL_DIG; i < BLEACHSCAN_DIGITAL_LINENAME::DIGITAL_LINENAME_LAST; i++)
-	{
-		if (0 < _digiLines[i-1].length())
-			_digiLineSelect |= (0x1 << i);
-	}
-
 	switch ((WaveformDriverType)_driverType)
 	{
 	case WaveformDriverType::WaveformDriver_NI:
@@ -149,7 +146,7 @@ long ThorStim::TryBuildTaskMaster(void)
 
 	//returned total count should be the maximum available, 
 	//assuming GalvoXY was not saved
-	uint64_t totalDataCount = ImageWaveformBuilder->RebuildWaveformFromFile(_waveformPathName.c_str(), NULL, _digiLineSelect, _dLengthPerAOCallback);
+	uint64_t totalDataCount = ImageWaveformBuilder->RebuildWaveformFromFile(_waveformPathName.c_str(), NULL, _digiBleachSelect, _dLengthPerAOCallback);
 	if(0 == totalDataCount)
 	{
 		StringCbPrintfW(message,_MAX_PATH,L"ImageWaveformBuilder unable to build waveform.");

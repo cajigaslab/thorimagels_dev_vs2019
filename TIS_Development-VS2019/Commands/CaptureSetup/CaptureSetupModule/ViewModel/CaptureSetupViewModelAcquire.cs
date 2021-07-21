@@ -284,7 +284,8 @@
 
                             if (null != ZStackCaptureFinished)
                             {
-                                if (!IsOrthogonalViewChecked)
+                                bool continuousZStackPreview = (bool)MVMManager.Instance["ZControlViewModel", "EnableContinuousZStackPreview", (object)false];
+                                if (!IsOrthogonalViewChecked && !continuousZStackPreview)
                                 {
                                     ZStackCaptureFinished(!(bool)MVMManager.Instance["ZControlViewModel", "IsZStackCapturing", (object)false]);
                                 }

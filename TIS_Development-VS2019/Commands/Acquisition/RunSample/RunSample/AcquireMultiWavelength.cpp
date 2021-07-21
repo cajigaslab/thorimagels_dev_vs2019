@@ -211,6 +211,12 @@ long AcquireMultiWavelength::CallStartProgressBar(long index, long resetTotalCou
 	return TRUE;
 }
 
+long AcquireMultiWavelength::CallInformMessage(wchar_t* message)
+{
+	InformMessage(message);
+	return TRUE;
+}
+
 long AcquireMultiWavelength::Execute(long index, long subWell, long zFrame, long tFrame)
 {
 	_zFrame = zFrame;

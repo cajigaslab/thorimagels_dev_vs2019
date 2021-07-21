@@ -477,7 +477,7 @@
         {
             get
             {
-                int temp = 0;
+                int temp = (int)WaveformDriverType.WaveformDriver_NI;
 
                 ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_WAVEFORM_DRIVER_TYPE, ref temp);
 

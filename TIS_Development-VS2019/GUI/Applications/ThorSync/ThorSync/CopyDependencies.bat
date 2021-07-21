@@ -15,7 +15,7 @@ echo F | xcopy /F/Y "..\..\..\..\Tools\Intel IPP\intel64\dll\ippsy8-7.0.dll" %1
 @echo copying Modules_Native:
 echo F | xcopy /F/Y ..\..\..\..\Tools\HDF5IO\x64\%2\HDF5IO.dll %1\Modules_Native
 echo F | xcopy /F/Y ..\..\..\..\Hardware\Devices\ThorRealTimeData\x64\%2\ThorRealTimeData.dll %1\Modules_Native
-echo F | xcopy /F/Y ..\..\..\..\Common\ThorLogging\x64\%2\ThorLoggingUnmanagedDisabled.dll %1\Modules_Native\ThorLoggingUnmanaged.dll
+echo F | xcopy /F/Y ..\..\..\..\Common\ThorLogging\x64\%2\ThorLoggingUnmanaged.dll %1\Modules_Native\ThorLoggingUnmanaged.dll
 
 echo F | xcopy /F/Y ..\..\..\..\GUI\Controls\ThemeControl\ThemeControl\bin\Debug\ThemeControl.dll %1
 

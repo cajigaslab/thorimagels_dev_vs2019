@@ -181,47 +181,52 @@
             }
         }
 
+
+
+
         public int ThreePhotonEnable
         {
             get
             {
-                return this._threePhotonControlModel.ThreePhotonEnable;
+                return _threePhotonControlModel.ThreePhotonEnable;
             }
             set
             {
-                if (value != this._threePhotonControlModel.ThreePhotonEnable)
+                if (value != _threePhotonControlModel.ThreePhotonEnable)
                 {
-                    this._threePhotonControlModel.ThreePhotonEnable = value;
+                    _threePhotonControlModel.ThreePhotonEnable = value;
                     OnPropertyChanged("ThreePhotonEnable");
-                    ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("LSMExtClockRate");
-                    // update the frequency, disable dwell time slider
-                    if (1 == value && ResourceManagerCS.Instance.IsThorDAQBoard)
-                    {
-                        //MVMManager.Instance["ScanControlViewModel", "LSMClockSource"] = value;
-
-                        //not a pretty way to get and set the freq but this process takes a long time
-                        //this way we only do it once, and when the getter for ThreePhotonFreq is called
-                        //the frequency will already be determined
-                        ThreePhotonFreq = this._threePhotonControlModel.ThreePhotonFreq;
-
-                        UpdateDwellTimeForThreePhoton();
-                    }
-                    else
-                    {
-                        MVMManager.Instance["ScanControlViewModel", "LSMPixelDwellTime"] = 0.4 + (0.2 * Math.Round(((double)MVMManager.Instance["ScanControlViewModel", "LSMPixelDwellTime"] - 0.4) / 0.2));
-                    }
-                    //else
-                    //{
-                    //    MVMManager.Instance["ScanControlViewModel", "LSMClockSource"] = value;
-                    //}
-                    //MVMManager.Instance["ScanControlViewModel", "DwellTimeSliderEnabled"] = (0 == value) ? true : false;
-                    LSMNumberOfPlanes = LSMNumberOfPlanes;
-                    ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("LSMClockSource");
-                    ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("InputRange");
-                    MVMManager.Instance["ScanControlViewModel", "UpdateDwellTime"] = true;
-                    ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("LSMPixelDwellTimeMaxIndex");
-                    ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("PulsesPerPixelVisibility");
                 }
+
+                ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("LSMExtClockRate");
+                // update the frequency, disable dwell time slider
+                if (1 == value && ResourceManagerCS.Instance.IsThorDAQBoard)
+                {
+                    //MVMManager.Instance["ScanControlViewModel", "LSMClockSource"] = value;
+
+                    //not a pretty way to get and set the freq but this process takes a long time
+                    //this way we only do it once, and when the getter for ThreePhotonFreq is called
+                    //the frequency will already be determined
+                    ThreePhotonFreq = _threePhotonControlModel.ThreePhotonFreq;
+
+                    UpdateDwellTimeForThreePhoton();
+                }
+                else
+                {
+                    MVMManager.Instance["ScanControlViewModel", "LSMPixelDwellTime"] = 0.4 + (0.2 * Math.Round(((double)MVMManager.Instance["ScanControlViewModel", "LSMPixelDwellTime"] - 0.4) / 0.2));
+                }
+                //else
+                //{
+                //    MVMManager.Instance["ScanControlViewModel", "LSMClockSource"] = value;
+                //}
+                //MVMManager.Instance["ScanControlViewModel", "DwellTimeSliderEnabled"] = (0 == value) ? true : false;
+                LSMNumberOfPlanes = LSMNumberOfPlanes;
+                ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("LSMClockSource");
+                ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("InputRange");
+                MVMManager.Instance["ScanControlViewModel", "UpdateDwellTime"] = true;
+                ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("LSMPixelDwellTimeMaxIndex");
+                ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("PulsesPerPixelVisibility");
+
             }
         }
 

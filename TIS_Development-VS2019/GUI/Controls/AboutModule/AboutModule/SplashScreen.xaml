@@ -60,7 +60,7 @@
                     <Label
                        Margin="5"
                        Background="{x:Null}"
-                       Content="Thorlabs Inc - 2020"
+                       Content="Thorlabs Inc - 2021"
                        HorizontalContentAlignment="Left"
                        Foreground="#FFFFFFFF"
                        FontSize="12"

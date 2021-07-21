@@ -160,8 +160,8 @@
     </PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent>rem cd ..\..\
-rem CopyDependencies.bat $(OutDir) $(Configuration)</PreBuildEvent>
+    <PreBuildEvent>cd ..\..\
+CopyDependencies.bat $(OutDir) $(Configuration)</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

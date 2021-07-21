@@ -350,6 +350,12 @@ long AutoFocusHWandImage::Execute(long index, IDevice * pAutoFocus, BOOL &afFoun
 			while (TRUE == _imageReady && TRUE == _enableGUIUpdate)
 			{
 				Sleep(1);
+				if (TRUE == _stopFlag)
+				{
+					_autoFocusStatus = AutoFocusStatusTypes::STOPPED;
+					logDll->TLTraceEvent(VERBOSE_EVENT, 1, L"AutoFocusImage AutoFocusImageBased Stopped");
+					return TRUE;
+				}
 			}
 		}
 	}
@@ -394,6 +400,12 @@ long AutoFocusHWandImage::Execute(long index, IDevice * pAutoFocus, BOOL &afFoun
 			while (TRUE == _imageReady && TRUE == _enableGUIUpdate)
 			{
 				Sleep(1);
+				if (TRUE == _stopFlag)
+				{
+					_autoFocusStatus = AutoFocusStatusTypes::STOPPED;
+					logDll->TLTraceEvent(VERBOSE_EVENT, 1, L"AutoFocusImage AutoFocusImageBased Stopped");
+					return TRUE;
+				}
 			}
 		}		
 	}
@@ -425,6 +437,12 @@ long AutoFocusHWandImage::Execute(long index, IDevice * pAutoFocus, BOOL &afFoun
 		while (TRUE == _imageReady)
 		{
 			Sleep(1);
+			if (TRUE == _stopFlag)
+			{
+				_autoFocusStatus = AutoFocusStatusTypes::STOPPED;
+				logDll->TLTraceEvent(VERBOSE_EVENT, 1, L"AutoFocusImage AutoFocusImageBased Stopped");
+				return TRUE;
+			}
 		}
 	}
 

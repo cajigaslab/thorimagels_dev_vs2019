@@ -19,6 +19,7 @@ public:
 	virtual long CallSaveTImage(long index);
 	virtual long CallSequenceStepCurrent(long index);
 	virtual long CallStartProgressBar(long index, long resetTotalCount = 0);
+	virtual long CallInformMessage(wchar_t* message);
 
 	static HANDLE hEvent;
 	static HANDLE hEventZ;

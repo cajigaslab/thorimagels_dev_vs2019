@@ -185,13 +185,15 @@
         {"SLM_CONFIG_SEQUENCE",SLMPatternType.ConfigSequence}
         };
 
-        const double MIN_PATTERN_MS = 8.0; //[msec], minimum time for SLM runtime calculation
         const int SLM_CALIB_PTS = 9; //exclude center [subID == 0]
 
+        private BackgroundWorker slmBuildAllWorker;
         private BackgroundWorker slmBuilder;
         private BackgroundWorker slmCalibrator;
+        private BackgroundWorker slmPreviewWorker;
         private BackgroundWorker slmWorker;
         private SLMPanelMode _panelMode = SLMPanelMode.ParamEdit;
+        private bool _slmCalibIsReset = false;
         private SLMParams _slmParamsCurrent;
         private List<Point> _slmPatternPoints = new List<Point>();
         private List<double> _slmPatternZPos = new List<double>();
@@ -274,6 +276,9 @@
                         stpRGB.Visibility = System.Windows.Visibility.Visible;
                         stpSLMStatus.Visibility = System.Windows.Visibility.Visible;
                         stpSLMLabel.Visibility = System.Windows.Visibility.Visible;
+                        stpPreview.Visibility = (_vm.IsStimulator) ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+                        SLMPreviewPanel slmPreview = new SLMPreviewPanel("PREVIEW", "CANCEL");
+                        stpPreview.DataContext = slmPreview;
                         stpSLMButton.Visibility = System.Windows.Visibility.Visible;
                         stpSLMSpin.Visibility = System.Windows.Visibility.Visible;
                         stpCalib.Visibility = System.Windows.Visibility.Collapsed;
@@ -341,6 +346,35 @@
             }
         }
 
+        public double PatternMinMS
+        {
+            get
+            {
+                string strTmp = string.Empty;
+                const double DEFAULT_PATTERN_MS = 8.0;  //[msec], default minimum time for SLM runtime calculation
+                double dVal = DEFAULT_PATTERN_MS;
+                try
+                {
+                    XmlDocument appSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+                    XmlNodeList ndList = appSettings.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView");
+                    if (null != ndList)
+                    {
+                        if (!(XmlManager.GetAttribute(ndList[0], appSettings, "PatternMinMS", ref strTmp) && Double.TryParse(strTmp, out dVal)))
+                        {
+                            dVal = DEFAULT_PATTERN_MS;
+                            XmlManager.SetAttribute(ndList[0], appSettings, "PatternMinMS", dVal.ToString());
+                            MVMManager.Instance.SaveSettings(SettingsFileType.APPLICATION_SETTINGS);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ThorLogging.ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Verbose, 1, "Fail to get PatternMinMS: " + ex.Message);
+                }
+                return dVal;
+            }
+        }
+
         public List<SLMEpochSequence> SLMEpochSequences
         {
             get;
@@ -391,9 +425,11 @@
                 if (null != _slmParamsCurrent)
                 {
                     _slmParamsCurrent.BleachParamsChangedEvent -= SLMParamsCurrent_BleachParamsChangedEvent;
+                    _slmParamsCurrent.PowerParamsChangedEvent -= SLMParamsCurrent_PowerParamsChangedEvent;
                 }
                 _slmParamsCurrent = value;
                 _slmParamsCurrent.BleachParamsChangedEvent += SLMParamsCurrent_BleachParamsChangedEvent;
+                _slmParamsCurrent.PowerParamsChangedEvent += SLMParamsCurrent_PowerParamsChangedEvent;
             }
         }
 
@@ -437,6 +473,7 @@
                     stpImportBrowse.IsEnabled = btnImport.IsEnabled = (!value);
                     stpCalibBtns.IsEnabled = (!value);
                     stpSLMSequence.IsEnabled = (!value);
+                    stpSLMLabel.IsEnabled = (!value);
                 });
             }
         }
@@ -468,21 +505,24 @@
 
             if (!slmBuilder.IsBusy)
             {
-                //check calibration has been done or valid:
-                if (null == _vm.BleachCalibrateFineScaleXY)
+                if (!_vm.IsStimulator)
                 {
-                    SLMPatternStatus = String.Format("Galvo calibration has not been done.\n");
-                    SLMGenResult = false;
-                    return false;
+                    //check calibration has been done or valid:
+                    if (null == _vm.BleachCalibrateFineScaleXY)
+                    {
+                        SLMPatternStatus = String.Format("Galvo calibration has not been done.\n");
+                        SLMGenResult = false;
+                        return false;
+                    }
+                    else if ((0 == _vm.BleachCalibrateFineScaleXY[0]) || (0 == _vm.BleachCalibrateFineScaleXY[1]) ||
+                        (0 == _vm.BleachCalibrateFieldSize) || (null == _vm.BleachCalibratePixelXY))
+                    {
+                        SLMPatternStatus = String.Format("Galvo calibration is not valid.\n");
+                        SLMGenResult = false;
+                        return false;
+                    }
                 }
-                else if ((0 == _vm.BleachCalibrateFineScaleXY[0]) || (0 == _vm.BleachCalibrateFineScaleXY[1]) ||
-                    (0 == _vm.BleachCalibrateFieldSize) || (null == _vm.BleachCalibratePixelXY))
-                {
-                    SLMPatternStatus = String.Format("Galvo calibration is not valid.\n");
-                    SLMGenResult = false;
-                    return false;
-                }
-                else if (_vm.SLMSequenceOn && 0 == SLMEpochSequences.Count)
+                if (_vm.SLMSequenceOn && 0 == SLMEpochSequences.Count)
                 {
                     //user cleared epoch sequences, update view model copy
                     _vm.EpochSequence = new List<SLMEpochSequence>();
@@ -523,6 +563,68 @@
                 outArray[2 * i + 1] = (float)pts[i].Y;
             }
             return outArray;
+        }
+
+        /// <summary>
+        /// rebuild all slm patterns and then waveform(s)
+        /// </summary>
+        public void ReBuildAll()
+        {
+            if (null == slmBuildAllWorker)
+                return;
+
+            if (slmBuildAllWorker.IsBusy)
+            {
+                CancelSLMBackgroundWorker(slmBuildAllWorker);
+            }
+            else
+            {
+                SLMSpinProgressVisible = true;
+                SLMPatternStatus = String.Format("Start building all existing patterns ... \n");
+
+                slmBuildAllWorker.DoWork += new DoWorkEventHandler(slmBuildAllWorker_DoWork);
+                slmBuildAllWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(slmBuildAllWorker_RunWorkerCompleted);
+                slmBuildAllWorker.RunWorkerAsync();
+            }
+        }
+
+        public void UpdateSLMParamEdit()
+        {
+            if (null != _slmParamsCurrent)
+            {
+                if (_vm.IsStimulator)
+                {
+                    //alert user to manually update (measured) power
+                    _slmParamsCurrent.SLMPowerAlert = true;
+                }
+                else
+                {
+                    //calculate area through image
+                    CalculateSLMPowerDensity((0 == _slmParamsCurrent.BleachWaveParams.ROIWidth && 0 == _slmParamsCurrent.BleachWaveParams.ROIHeight) ?
+                        (Math.Pow((_slmParamsCurrent.BleachWaveParams.UMPerPixel / _slmParamsCurrent.BleachWaveParams.UMPerPixelRatio), 2)) :
+                        Math.PI * Math.Max(1, _slmParamsCurrent.BleachWaveParams.ROIWidth) * Math.Max(1, _slmParamsCurrent.BleachWaveParams.ROIHeight) / 4 * Math.Pow((_slmParamsCurrent.BleachWaveParams.UMPerPixel / _slmParamsCurrent.BleachWaveParams.UMPerPixelRatio), 2));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Calculate SLM power based on patterns' area power density
+        /// </summary>
+        public void UpdateSLMParamPower()
+        {
+            List<Shape> rois = new List<Shape>();
+            this.Dispatcher.Invoke((SLMSavePattern)delegate
+            { rois = OverlayManagerClass.Instance.GetModeROIs(Mode.PATTERN_WIDEFIELD, OverlayManagerClass.Instance.PatternID, _vm.SLMWavelengthNM); });
+            if (0 < rois.Count)
+            {
+                System.Drawing.Bitmap bmp = ProcessBitmap.CreateBinaryBitmap(new int[2] { _vm.ImageWidth, _vm.ImageHeight }, rois);
+                CalculateSLMPowerDensity(ProcessBitmap.BinaryBitmapNonZeroCount(bmp) * Math.Pow((double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0], 2));
+            }
+            else if (!_slmParamsCurrent.PowerEntryPreferred)
+                CalculateSLMPowerDensity(0.0);
+
+            if (null != _slmParamsCurrent)
+                _slmParamsCurrent.SLMPowerAlert = false;
         }
 
         /// <summary>Determines if the path contains invalid characters.</summary>
@@ -627,77 +729,7 @@
 
         private void btnCalibration_Click(object sender, RoutedEventArgs e)
         {
-            string note = (null != (sender as FrameworkElement)) ? (sender as FrameworkElement).Tag as string : (string)(sender);
-            SLMCalibPanel slmCalib;
-            string roiPathAndName = _vm.BleachROIPath + _vm.SLMCalibFile;
-            string strBody;
-
-            switch (note)
-            {
-                case "BURN":
-                    //limit only one task is running:
-                    if (slmCalibrator.IsBusy)
-                    { return; }
-
-                    OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, true);
-                    slmCalibrator.DoWork += new DoWorkEventHandler(SLMCalibrator_DoWork);
-                    slmCalibrator.RunWorkerCompleted += new RunWorkerCompletedEventHandler(SLMCalibrator_RunWorkerCompleted);
-                    slmCalibrator.RunWorkerAsync(roiPathAndName);
-                    break;
-                case "REDO":
-                    //reset affine values if not matched:
-                    _vm.ResetSLMCalibration();
-                    OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, true);
-
-                    slmCalib = new SLMCalibPanel("BURN", "SELECT", "New Calibration", "Move to another clear area on the\ncalibration slide then Press Yes to\ncreate calibration spots on the slide,\nPress No to continue.");
-                    this.DataContext = slmCalib;
-                    this.Show();
-                    break;
-                case "SELECT":
-                    OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID);
-                    OverlayManagerClass.Instance.ClearNonSaveROIs(ref CaptureSetupViewModel.OverlayCanvas);
-                    OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, false);
-
-                    strBody = "Using Cross Hair ROI tool, mark the \ncenter points of the burned calibration \nspots on the image. Press YES when\ncomplete, and press No to break.\n\n\n\tx4\tx5\tx6\n\n\tx3\n\t\t\t\tx7\n\n\tx2\n\t\t     x8\n\n\n\tx1\t\t\tx9\n ";
-                    slmCalib = new SLMCalibPanel("FINISH_SELECT", "DONE", "New Calibration", strBody);
-                    this.DataContext = slmCalib;
-                    this.Show();
-                    break;
-                case "FINISH_SELECT":
-                    //retrieve user selected points (without offset):
-                    string roiType = string.Empty;
-                    Point offCenter = new Point(-1, -1);
-                    List<Point> pts = OverlayManagerClass.Instance.GetPatternROICenters(OverlayManagerClass.Instance.PatternID, ref roiType, ref offCenter);
-                    if (SLM_CALIB_PTS != pts.Count)
-                    {
-                        OverlayManagerClass.Instance.ClearNonSaveROIs(ref CaptureSetupViewModel.OverlayCanvas);
-                        OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, false);
-                        strBody = "Error: Number of your selections is invalid.\n\nUsing Cross Hair ROI tool, mark the \ncenter points of the burned calibration \nspots on the image. Press YES when\ncomplete, and press No to break.\n\n\n\tx4\tx5\tx6\n\n\tx3\n\t\t\t\tx7\n\n\tx2\n\t\t     x8\n\n\n\tx1\t\t\tx9\n ";
-                        slmCalib = new SLMCalibPanel("FINISH_SELECT", "DONE", "New Calibration", strBody);
-                        this.DataContext = slmCalib;
-                        this.Show();
-                    }
-                    else
-                    {
-                        OverlayManagerClass.Instance.SetPatternToSaveROI(OverlayManagerClass.Instance.PatternID);
-                        OverlayManagerClass.Instance.SaveROIs(roiPathAndName);
-
-                        //valid count, send for calibration,
-                        if (slmCalibrator.IsBusy)
-                        { return; }
-
-                        slmCalibrator.DoWork += new DoWorkEventHandler(SLMCalibrator_DoWork);
-                        slmCalibrator.RunWorkerCompleted += new RunWorkerCompletedEventHandler(SLMCalibrator_RunWorkerCompleted);
-                        slmCalibrator.RunWorkerAsync(roiPathAndName);
-                    }
-                    break;
-                case "DONE":
-                    CancelCalibrator();
-                    this.Close();
-                    break;
-                default:
-                    break;
-            }
+            CalibrationProc((null != (sender as FrameworkElement)) ? (sender as FrameworkElement).Tag as string : (string)(sender));
         }
 
         private void btnCancel_Click(object sender, RoutedEventArgs e)
@@ -787,6 +819,40 @@
                 case "CANCEL":
                     this.Close();
                     break;
+            }
+        }
+
+        private void btnSLMPreview_Click(object sender, RoutedEventArgs e)
+        {
+            string note = (null != (sender as FrameworkElement)) ? (sender as FrameworkElement).Tag as string : (string)(sender);
+            switch (note)
+            {
+                case "PREVIEW":
+                    switch ((SLMPanelMode)this.PanelMode)
+                    {
+                        case SLMPanelMode.ParamEdit:
+                            if (slmPreviewWorker.IsBusy)
+                            {
+                                CancelSLMBackgroundWorker(slmPreviewWorker);
+                            }
+                            else
+                            {
+                                SLMSpinProgressVisible = true;
+                                slmPreviewWorker.DoWork += new DoWorkEventHandler(PreviewWorker_DoWork);
+                                slmPreviewWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(PreviewWorker_RunWorkerCompleted);
+                                slmPreviewWorker.RunWorkerAsync();
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case "CANCEL":
+                    _vm.IdleSLM();
+                    break;
+                default:
+                    break;
+
             }
         }
 
@@ -902,6 +968,131 @@
             return "0";
         }
 
+        private void CalculateSLMPowerDensity(double areaUM2)
+        {
+            if (null != _slmParamsCurrent)
+            {
+                // PowerDensity[mW/mm^2] = MeasuredPower[mW] * Power[%] / 100 * [um-to-mm]^2 / Area[um^2]
+                if (_slmParamsCurrent.PowerEntryPreferred)
+                {
+                    //calculate power density based on power entry
+                    double powerMW = (double)_slmParamsCurrent.BleachWaveParams.GetType().GetProperty(_vm.SLMSelectWavelengthProp ? "MeasurePower" + 1 : "MeasurePower").GetValue(_slmParamsCurrent.BleachWaveParams) *
+                        (double)_slmParamsCurrent.BleachWaveParams.GetType().GetProperty(_vm.SLMSelectWavelengthProp ? "Power" + 1 : "Power").GetValue(_slmParamsCurrent.BleachWaveParams) / (double)Constants.HUNDRED_PERCENT;
+
+                    _slmParamsCurrent.GetType().GetProperty(_vm.SLMSelectWavelengthProp ? "SLMMeasurePowerArea" + 1 : "SLMMeasurePowerArea").SetValue(_slmParamsCurrent,
+                        (0 >= areaUM2) ? 0.0 : Math.Round(powerMW * Math.Pow((double)Constants.UM_TO_MM, 2) / areaUM2, 6)); // [mW/mm^2]
+                }
+                else
+                {
+                    //calculate power based on power density entry
+                    double measuredPower = (double)_slmParamsCurrent.BleachWaveParams.GetType().GetProperty(_vm.SLMSelectWavelengthProp ? "MeasurePower" + 1 : "MeasurePower").GetValue(_slmParamsCurrent.BleachWaveParams);
+
+                    double powerPercentValue = (0 >= measuredPower) ? 0.0 :
+                        Math.Round(areaUM2 * (double)_slmParamsCurrent.GetType().GetProperty(_vm.SLMSelectWavelengthProp ? "SLMMeasurePowerArea" + 1 : "SLMMeasurePowerArea").GetValue(_slmParamsCurrent) * (double)Constants.HUNDRED_PERCENT / measuredPower / Math.Pow((double)Constants.UM_TO_MM, 2), 3); // [%]
+                    if ((double)Constants.HUNDRED_PERCENT < powerPercentValue)
+                    {
+                        powerPercentValue = (double)Constants.HUNDRED_PERCENT;
+                        _slmParamsCurrent.GetType().GetProperty(_vm.SLMSelectWavelengthProp ? "SLMMeasurePowerArea" + 1 : "SLMMeasurePowerArea").SetValue(_slmParamsCurrent,
+                            (0 >= areaUM2) ? 0.0 :
+                            Math.Round(measuredPower * powerPercentValue * Math.Pow((double)Constants.UM_TO_MM, 2) / areaUM2 / (double)Constants.HUNDRED_PERCENT, 6)); // [mW/mm^2]
+                    }
+
+                    _slmParamsCurrent.BleachWaveParams.GetType().GetProperty(_vm.SLMSelectWavelengthProp ? "Power" + 1 : "Power").SetValue(_slmParamsCurrent.BleachWaveParams, powerPercentValue); // [%]
+                }
+            }
+        }
+
+        private void CalibrationProc(string note)
+        {
+            SLMCalibPanel slmCalib;
+            string roiPathAndName = _vm.BleachROIPath + _vm.SLMCalibFile;
+            string strBody;
+            switch (note)
+            {
+                case "BURN":
+                    //limit only one task is running:
+                    if (slmCalibrator.IsBusy)
+                    { return; }
+
+                    OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, true);
+                    slmCalibrator.DoWork += new DoWorkEventHandler(SLMCalibrator_DoWork);
+                    slmCalibrator.RunWorkerCompleted += new RunWorkerCompletedEventHandler(SLMCalibrator_RunWorkerCompleted);
+                    slmCalibrator.RunWorkerAsync(roiPathAndName);
+                    break;
+                case "REDO":
+                    //reset affine values if not matched:
+                    _slmCalibIsReset = _vm.ResetSLMCalibration();
+                    OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, true);
+
+                    slmCalib = new SLMCalibPanel("BURN", "SELECT", "New Calibration", "Move to another clear area on the\ncalibration slide then Press Yes to\ncreate calibration spots on the slide,\nPress No to continue.");
+                    this.DataContext = slmCalib;
+                    this.Show();
+                    break;
+                case "SELECT":
+                    OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID);
+                    OverlayManagerClass.Instance.ClearNonSaveROIs(ref CaptureSetupViewModel.OverlayCanvas);
+                    OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, false);
+
+                    strBody = "Using Cross Hair ROI tool, mark the \ncenter points of the burned calibration \nspots on the image. Press YES when\ncomplete, and press No to break.\n\n\n\tx4\tx5\tx6\n\n\tx3\n\t\t\t\tx7\n\n\tx2\n\t\t     x8\n\n\n\tx1\t\t\tx9\n ";
+                    slmCalib = new SLMCalibPanel("FINISH_SELECT", "DONE", "New Calibration", strBody);
+                    this.DataContext = slmCalib;
+                    this.Show();
+                    break;
+                case "FINISH_SELECT":
+                    //retrieve user selected points (without offset):
+                    string roiType = string.Empty;
+                    Point offCenter = new Point(-1, -1);
+                    List<Point> pts = OverlayManagerClass.Instance.GetPatternROICenters(OverlayManagerClass.Instance.PatternID, ref roiType, ref offCenter);
+                    if (SLM_CALIB_PTS != pts.Count)
+                    {
+                        OverlayManagerClass.Instance.ClearNonSaveROIs(ref CaptureSetupViewModel.OverlayCanvas);
+                        OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, false);
+                        strBody = "Error: Number of your selections is invalid.\n\nUsing Cross Hair ROI tool, mark the \ncenter points of the burned calibration \nspots on the image. Press YES when\ncomplete, and press No to break.\n\n\n\tx4\tx5\tx6\n\n\tx3\n\t\t\t\tx7\n\n\tx2\n\t\t     x8\n\n\n\tx1\t\t\tx9\n ";
+                        slmCalib = new SLMCalibPanel("FINISH_SELECT", "DONE", "New Calibration", strBody);
+                        this.DataContext = slmCalib;
+                        this.Show();
+                    }
+                    else
+                    {
+                        OverlayManagerClass.Instance.SetPatternToSaveROI(OverlayManagerClass.Instance.PatternID);
+                        OverlayManagerClass.Instance.SaveROIs(roiPathAndName);
+
+                        //valid count, send for calibration,
+                        if (slmCalibrator.IsBusy)
+                        { return; }
+
+                        slmCalibrator.DoWork += new DoWorkEventHandler(SLMCalibrator_DoWork);
+                        slmCalibrator.RunWorkerCompleted += new RunWorkerCompletedEventHandler(SLMCalibrator_RunWorkerCompleted);
+                        slmCalibrator.RunWorkerAsync(roiPathAndName);
+                    }
+                    break;
+                case "REBUILD":
+                    ReBuildAll();
+                    break;
+                case "CHECK":
+                    if (_slmCalibIsReset && _vm.SLMPhaseDirect && 0 < _vm.SLMBleachWaveParams.Count)
+                    {
+                        OverlayManagerClass.Instance.RevokeROIs(ref CaptureSetupViewModel.OverlayCanvas);
+                        _vm.DisplayROI();
+                        OverlayManagerClass.Instance.CurrentMode = _vm.IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS;
+                        slmCalib = new SLMCalibPanel("REBUILD", "DONE", "After Calibration", "The calibration may be altered.\nPress Yes if you want the patterns to be rebuilt.");
+                        this.DataContext = slmCalib;
+                        this.Show();
+                    }
+                    else
+                    {
+                        CalibrationProc("DONE");
+                    }
+                    break;
+                case "DONE":
+                    CancelCalibrator();
+                    this.Close();
+                    break;
+                default:
+                    break;
+            }
+        }
+
         private void CancelCalibrator()
         {
             SLMWorkerStateChecker stillWorking = () => { return slmCalibrator.IsBusy; };
@@ -912,11 +1103,9 @@
                 _vm.StopBleach();
                 System.Threading.Thread.Sleep(50);
             }
-            //not leaving calibration pattern on:
-            _vm.SLMSetBlank();
         }
 
-        private void CancelSLMBackgroundWorker(BackgroundWorker worker, bool updateFile)
+        private void CancelSLMBackgroundWorker(BackgroundWorker worker, bool updateFile = false)
         {
             SLMWorkerStateChecker stillWorking = () => { return worker.IsBusy; };
             worker.CancelAsync();
@@ -1011,15 +1200,17 @@
 
         private int GetDwellCount(int clockRateHz)
         {
-            //check calibration has been done or valid:
-            if (null == _vm.BleachCalibrateFineScaleXY)
-            { return 0; }
-            else if ((0 == _vm.BleachCalibrateFineScaleXY[0]) || (0 == _vm.BleachCalibrateFineScaleXY[1]))
-            { return 0; }
+            if (!_vm.IsStimulator)
+            {
+                //check calibration has been done or valid:
+                if (null == _vm.BleachCalibrateFineScaleXY)
+                { return 0; }
+                else if ((0 == _vm.BleachCalibrateFineScaleXY[0]) || (0 == _vm.BleachCalibrateFineScaleXY[1]))
+                { return 0; }
 
-            if ((0 == _vm.BleachCalibrateFieldSize) || (null == _vm.BleachCalibratePixelXY))
-            { return 0; }
-
+                if ((0 == _vm.BleachCalibrateFieldSize) || (null == _vm.BleachCalibratePixelXY))
+                { return 0; }
+            }
             double[] powerVal = new double[1] { WaveformBuilder.GetPockelsPowerValue(SLMParamsCurrent.BleachWaveParams.Power, _vm.BleachCalibratePockelsVoltageMin0[0], _vm.BleachCalibratePockelsVoltageMax0[0], (PockelsResponseType)MVMManager.Instance["PowerControlViewModel", "BleacherPowerResponse0", (object)0]) };
 
             _vm.InitializeWaveformBuilder(clockRateHz);
@@ -1058,6 +1249,33 @@
         {
             if (true == obj)
                 UpdateSLMParamEdit();
+        }
+
+        private void PreviewWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker worker = sender as BackgroundWorker;
+            if (worker.CancellationPending != true)
+            {
+                //try save pattern bmp
+                if (SaveSLMPatternImage(_vm.SLMPreviewFileName))
+                {
+                    //push pattern to SLM device
+                    _vm.LoadSLMPatternName(0, 0, _vm.SLMPreviewFileName, true, _vm.IsStimulator);
+
+                    //update power at bleach scanner
+                    UpdateSLMParamPower();
+                    MVMManager.Instance["PowerControlViewModel", "BleacherPower0"] = Math.Max(0.0, SLMParamsCurrent.BleachWaveParams.Power);
+                    MVMManager.Instance["PowerControlViewModel", "BleacherPower1"] = Math.Max(0.0, SLMParamsCurrent.BleachWaveParams.Power1);
+                }
+            }
+        }
+
+        private void PreviewWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            _vm.DeleteFile(_vm.SLMPreviewFileName);
+            SLMSpinProgressVisible = false;
+            slmPreviewWorker.DoWork -= new DoWorkEventHandler(PreviewWorker_DoWork);
+            slmPreviewWorker.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(PreviewWorker_RunWorkerCompleted);
         }
 
         private void RebuildSLMWaveform(bool skipCompare = false)
@@ -1357,86 +1575,104 @@
                 return false;
             }
 
-            System.Drawing.Bitmap bmp;
-            string bmpPath = (null == WaveFileNameAndPathCurrent[2]) ? WaveFileNameAndPathCurrent[3] : _vm.SLMWaveformFolder[0] + "\\" + WaveFileNameAndPathCurrent[2] + ".bmp";
-            string txtPath = (null == WaveFileNameAndPathCurrent[2]) ? WaveFileNameAndPathCurrent[3] : _vm.SLMWaveformFolder[0] + "\\" + WaveFileNameAndPathCurrent[2] + ".txt";
+            return SaveSLMPatternImage((null == WaveFileNameAndPathCurrent[2]) ? WaveFileNameAndPathCurrent[3] : _vm.SLMWaveformFolder[0] + "\\" + WaveFileNameAndPathCurrent[2] + ".bmp");
+        }
+
+        /// <summary>
+        /// either save phase masks as an image or combined two wavelengths as one (left-right)
+        /// </summary>
+        private bool SaveSLMPatternImage(string bmpPath)
+        {
             try
             {
-                this.Dispatcher.Invoke((SLMSavePattern)delegate
+                System.Drawing.Bitmap bmp;
+                if (_vm.IsStimulator)
                 {
-                    if (_vm.IsStimulator)
+                    //save phase masks to expedite loading time, expecially combining two sets (of light source) as one,
+                    //fetch wavelength by altering selected wavelength (give back user selection afterward),
+                    //expected to be regenerated if new calibration.
+                    bool backupWavelength = _vm.SLMSelectWavelengthProp;
+                    string[] bmpPathLamda = new string[_vm.SLMWavelengthCount];
+                    List<Shape>[] rois = new List<Shape>[_vm.SLMWavelengthCount];
+                    this.Dispatcher.Invoke((SLMSavePattern)delegate
                     {
-                        //save phase masks to expedite loading time, expecially combining two sets (of light source) as one,
-                        //fetch wavelength by altering selected wavelength (give back user selection afterward),
-                        //expected to be regenerated if new calibration.
-                        bool backupWavelength = _vm.SLMSelectWavelengthProp;
-                        string[] bmpPathLamda = new string[_vm.SLMWavelengthCount];
                         for (int i = 0; i < _vm.SLMWavelengthCount; i++)
                         {
                             bmpPathLamda[i] = _vm.SLMWaveformFolder[0] + "\\" + _vm.SLMWaveBaseName[1] + i + ".bmp";
-                            _vm.SLMSelectWavelengthProp = (1 == i);
-                            bmp = ProcessBitmap.CreateBinaryBitmap(new int[2] { _vm.ImageWidth, _vm.ImageHeight }, OverlayManagerClass.Instance.GetModeROIs(Mode.PATTERN_WIDEFIELD, OverlayManagerClass.Instance.PatternID, _vm.SLMWavelengthNM));
-                            float dpi = (float)((double)Constants.UM_PER_INCH / (double)MVMManager.Instance["ObjectiveControlViewModel", "TurretMagnification", (object)1.0] / (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0]);
-                            bmp.SetResolution(dpi, dpi);    //dots per inch
-                            bmp.Save(bmpPathLamda[i], System.Drawing.Imaging.ImageFormat.Bmp);
-                            _vm.SaveSLMPatternName(bmpPathLamda[i]);     //save phase masks with calibration
+                            _vm.SLMSelectWavelengthProp = (1 == i);     //to retrieve rois of selected wavelength
+                            rois[i] = OverlayManagerClass.Instance.GetModeROIs(Mode.PATTERN_WIDEFIELD, OverlayManagerClass.Instance.PatternID, _vm.SLMWavelengthNM);
                         }
-                        //combine phase masks and rename afterward
-                        if (1 < _vm.SLMWavelengthCount)
-                        {
-                            _vm.CombineHolograms(bmpPathLamda[0], bmpPathLamda[1]);
-                            _vm.DeleteFile(bmpPathLamda[1]);
-                        }
-                        if (File.Exists(bmpPathLamda[0]))
-                        {
-                            _vm.DeleteFile(bmpPath);
-                            File.Move(bmpPathLamda[0], bmpPath);
-                        }
-                        _vm.SLMSelectWavelengthProp = backupWavelength;
-                    }
-                    else
+                    });
+                    //separate create bmp to allow spinner wheel
+                    for (int i = 0; i < _vm.SLMWavelengthCount; i++)
                     {
-                        //save bitmap of pattern centers:
-                        string strTmp = string.Empty;
-                        int intTmp = 0;
-                        Point offCenter = new Point(-1, -1);
-                        List<Point> pts = OverlayManagerClass.Instance.GetPatternROICenters(OverlayManagerClass.Instance.PatternID, ref strTmp, ref offCenter); //before offset
-                        bmp = ProcessBitmap.CreateBinaryBitmap(_vm.BleachLSMPixelXY[0], _vm.BleachLSMPixelXY[1], _slmPatternPoints);                            //after offset
+                        _vm.SLMSelectWavelengthProp = (1 == i);         //to apply coefficients of selected wavelength
+                        bmp = ProcessBitmap.CreateBinaryBitmap(new int[2] { _vm.ImageWidth, _vm.ImageHeight }, rois[i]);
+                        float dpi = (float)((double)Constants.UM_PER_INCH / (double)MVMManager.Instance["ObjectiveControlViewModel", "TurretMagnification", (object)1.0] / (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0]);
+                        bmp.SetResolution(dpi, dpi);                    //dots per inch
+                        bmp.Save(bmpPathLamda[i], System.Drawing.Imaging.ImageFormat.Bmp);
+                        _vm.SaveSLMPatternName(bmpPathLamda[i]);        //save phase masks with calibration
+                    }
+                    //combine phase masks and rename afterward
+                    if (1 < _vm.SLMWavelengthCount)
+                    {
+                        _vm.CombineHolograms(bmpPathLamda[0], bmpPathLamda[1]);
+                        _vm.DeleteFile(bmpPathLamda[1]);
+                    }
+                    if (File.Exists(bmpPathLamda[0]))
+                    {
+                        _vm.DeleteFile(bmpPath);
+                        File.Move(bmpPathLamda[0], bmpPath);
+                    }
+                    _vm.SLMSelectWavelengthProp = backupWavelength;
+                }
+                else
+                {
+                    //save bitmap of pattern centers:
+                    string strTmp = string.Empty;
+                    int intTmp = 0;
+                    Point offCenter = new Point(-1, -1);
+                    List<Point> pts = new List<Point>();
+                    this.Dispatcher.Invoke((SLMSavePattern)delegate
+                    {
+                        pts = OverlayManagerClass.Instance.GetPatternROICenters(OverlayManagerClass.Instance.PatternID, ref strTmp, ref offCenter); //before offset
+                    });
+                    bmp = ProcessBitmap.CreateBinaryBitmap(_vm.BleachLSMPixelXY[0], _vm.BleachLSMPixelXY[1], _slmPatternPoints);                    //after offset
 
-                        //We save selected point image instead of phase mask,
-                        //so that user can run history experiments with new calibrations:
-                        bmp.Save(bmpPath, System.Drawing.Imaging.ImageFormat.Bmp);
-                        _vm.SaveSLMPatternName(bmpPath);
+                    //We save selected point image instead of phase mask,
+                    //so that user can run history experiments with new calibrations:
+                    bmp.Save(bmpPath, System.Drawing.Imaging.ImageFormat.Bmp);
+                    _vm.SaveSLMPatternName(bmpPath);
 
-                        //here we save non-offset patterns in a sub-folder if enabled in settings,
-                        //for user to do roi analysis:
-                        XmlDocument appSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
-                        XmlNodeList ndList = appSettings.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView");
-                        if (XmlManager.GetAttribute(ndList[0], appSettings, "SLMPatternUnshifted", ref strTmp) && Int32.TryParse(strTmp, out intTmp))
+                    //here we save non-offset patterns in a sub-folder if enabled in settings,
+                    //for user to do roi analysis:
+                    XmlDocument appSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+                    XmlNodeList ndList = appSettings.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView");
+                    if (XmlManager.GetAttribute(ndList[0], appSettings, "SLMPatternUnshifted", ref strTmp) && Int32.TryParse(strTmp, out intTmp))
+                    {
+                        if (1 == intTmp)
                         {
-                            if (1 == intTmp)
-                            {
-                                bmp = ProcessBitmap.CreateBinaryBitmap(_vm.BleachLSMPixelXY[0], _vm.BleachLSMPixelXY[1], pts);                                  //before offset
+                            bmp = ProcessBitmap.CreateBinaryBitmap(_vm.BleachLSMPixelXY[0], _vm.BleachLSMPixelXY[1], pts);                          //before offset
 
-                                if (!Directory.Exists(bmpPath.Substring(0, bmpPath.LastIndexOf("\\")) + _vm.SLMbmpSubFolders[1]))
-                                {
-                                    Directory.CreateDirectory(bmpPath.Substring(0, bmpPath.LastIndexOf("\\")) + _vm.SLMbmpSubFolders[1]);
-                                }
-
-                                bmp.Save(bmpPath.Substring(0, bmpPath.LastIndexOf("\\")) + _vm.SLMbmpSubFolders[1] + bmpPath.Substring(bmpPath.LastIndexOf("\\")), System.Drawing.Imaging.ImageFormat.Bmp);
-                            }
-                            else if (Directory.Exists(bmpPath.Substring(0, bmpPath.LastIndexOf("\\")) + _vm.SLMbmpSubFolders[1]))
+                            if (!Directory.Exists(bmpPath.Substring(0, bmpPath.LastIndexOf("\\")) + _vm.SLMbmpSubFolders[1]))
                             {
-                                Directory.Delete(bmpPath.Substring(0, bmpPath.LastIndexOf("\\")) + _vm.SLMbmpSubFolders[1], true);
-                                Directory.Delete(txtPath.Substring(0, txtPath.LastIndexOf("\\")) + _vm.SLMbmpSubFolders[1], true);
+                                Directory.CreateDirectory(bmpPath.Substring(0, bmpPath.LastIndexOf("\\")) + _vm.SLMbmpSubFolders[1]);
                             }
+
+                            bmp.Save(bmpPath.Substring(0, bmpPath.LastIndexOf("\\")) + _vm.SLMbmpSubFolders[1] + bmpPath.Substring(bmpPath.LastIndexOf("\\")), System.Drawing.Imaging.ImageFormat.Bmp);
+                        }
+                        else if (Directory.Exists(bmpPath.Substring(0, bmpPath.LastIndexOf("\\")) + _vm.SLMbmpSubFolders[1]))
+                        {
+                            Directory.Delete(bmpPath.Substring(0, bmpPath.LastIndexOf("\\")) + _vm.SLMbmpSubFolders[1], true);
+                            string txtPath = System.IO.Path.ChangeExtension(bmpPath, ".txt");
+                            Directory.Delete(txtPath.Substring(0, txtPath.LastIndexOf("\\")) + _vm.SLMbmpSubFolders[1], true);
                         }
                     }
-                });
+                }
             }
             catch (Exception ex)
             {
-                ThorLogging.ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "SaveSLMPattern: " + ex.Message);
+                ThorLogging.ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "SaveSLMPatternImage: " + ex.Message);
                 return false;
             }
             return true;
@@ -1450,6 +1686,53 @@
                 {
                     linePanel.Children.Add(AddEpochLineGUI(SLMEpochSequences.ElementAt(i), i + 1));
                 }
+            }
+        }
+
+        private void slmBuildAllWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker worker = sender as BackgroundWorker;
+            if (worker.CancellationPending != true)
+            {
+                for (SLMParamID = 0; SLMParamID < _vm.SLMBleachWaveParams.Count; SLMParamID++)              //index in waveform param list [0-based]
+                {
+                    SLMParamsCurrent = new SLMParams(_vm.SLMBleachWaveParams[SLMParamID]);
+                    OverlayManagerClass.Instance.PatternID = (int)SLMParamsCurrent.BleachWaveParams.ID;     //pattern ID: 1 based
+                    SaveSLMFiles();
+                    SLMGenResult = ValidateWaveformBeforeBuild();
+                    SLMPatternStatus = SLMGenResult ? String.Format("Saving SLM Pattern: " + SLMParamsCurrent.Name) : String.Format("Unable to save SLM Pattern: " + SLMParamsCurrent.Name);
+                    if (!SLMGenResult)
+                        break;
+                    SLMFileSaved = true;
+                    _waveParamsUpdated = false;
+                    UpdateWaveParamsAndFile();
+                }
+            }
+        }
+
+        private void slmBuildAllWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            SLMSpinProgressVisible = false;
+            if (e.Error != null)
+            {
+                ThorLogging.ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, "SLMBuildAll: " + e.Error.Message);
+            }
+            else if (e.Cancelled == true)
+            {
+                SLMPatternStatus = String.Format("Cancelled SLM build all.\n ");
+                UpdateWaveParamsAndFile();
+                SLMGenResult = false;
+            }
+
+            slmBuildAllWorker.DoWork -= new DoWorkEventHandler(slmBuildAllWorker_DoWork);
+            slmBuildAllWorker.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(slmBuildAllWorker_RunWorkerCompleted);
+
+            if (SLMGenResult)
+            {
+                if (_vm.SLMSequenceOn)
+                    BuildSequences();
+                else
+                    RebuildSLMWaveform();
             }
         }
 
@@ -1545,9 +1828,9 @@
                         for (int i = 0; i < patternIDs.Length; i++)
                         {
                             //verify pattern time to be long enough for SLM runtime calculation
-                            if (MIN_PATTERN_MS > _vm.SLMBleachWaveParams[patternIDs[i] - 1].BleachWaveParams.EstDuration * _vm.SLMBleachWaveParams[patternIDs[i] - 1].BleachWaveParams.Iterations)
+                            if (PatternMinMS > _vm.SLMBleachWaveParams[patternIDs[i] - 1].BleachWaveParams.EstDuration * _vm.SLMBleachWaveParams[patternIDs[i] - 1].BleachWaveParams.Iterations)
                             {
-                                SLMPatternStatus = String.Format("SLM sequence #" + (seq + 1).ToString() + " pattern time of ID #" + patternIDs[i].ToString() + " should be > " + MIN_PATTERN_MS.ToString() + " msec.\n");
+                                SLMPatternStatus = String.Format("SLM sequence #" + (seq + 1).ToString() + " pattern time of ID #" + patternIDs[i].ToString() + " should be > " + PatternMinMS.ToString() + " msec.\n");
                                 seqTextFile.Close();
                                 seqTextFile.Dispose();
                                 return;
@@ -1819,7 +2102,7 @@
                 try
                 {
                     slmCalib = (0 == ((string)e.Result).CompareTo("0")) ?
-                        new SLMCalibPanel("DONE", "REDO", "Verify Calibration", "Do the calibration spots align with the overlaid \ncalibration pattern?\n\n[NOTE: Click 'NO' will reset calibrations.]\n") :
+                        new SLMCalibPanel("CHECK", "REDO", "Verify Calibration", "Do the calibration spots align with the overlaid \ncalibration pattern?\n\n[NOTE: Click 'NO' will reset calibrations.]\n") :
                         new SLMCalibPanel("REDO", "DONE", "Verify Calibration", "Error: " + e.Result + "Click No to exit or \nYes to try again?");
                     this.DataContext = slmCalib;
                     this.Show();
@@ -1850,9 +2133,13 @@
         {
             try
             {
-                CancelSLMBackgroundWorker(slmBuilder, false);
+                CancelSLMBackgroundWorker(slmBuilder);
                 CancelSLMBackgroundWorker(slmWorker, true);
+                CancelSLMBackgroundWorker(slmPreviewWorker);
+                CancelSLMBackgroundWorker(slmBuildAllWorker);
                 CancelCalibrator();
+
+                _vm.IdleSLM();
 
                 _vm.ROIToolVisible = new bool[14] { true, true, true, true, true, true, true, true, true, true, true, true, true, true };
                 _vm.SLMPanelAvailable = true;
@@ -1897,6 +2184,14 @@
             slmBuilder.WorkerReportsProgress = false;
             slmBuilder.WorkerSupportsCancellation = true;
 
+            slmPreviewWorker = new BackgroundWorker();
+            slmPreviewWorker.WorkerReportsProgress = false;
+            slmPreviewWorker.WorkerSupportsCancellation = true;
+
+            slmBuildAllWorker = new BackgroundWorker();
+            slmBuildAllWorker.WorkerReportsProgress = false;
+            slmBuildAllWorker.WorkerSupportsCancellation = true;
+
             OverlayManagerClass.Instance.ObjectSizeChangedEvent += OverlayManager_ObjectSizeChangedEvent;
             OverlayManagerClass.Instance.UpdatingObjectEvent += OverlayManager_UpdatingObjectEvent;
             OverlayManagerClass.Instance.ClearedObjectEvent += OverlayManager_ClearedObjectEvent;
@@ -1917,12 +2212,21 @@
             UpdateSLMParamEdit();
         }
 
+        /// <summary>
+        /// event to handle SLM bleach (measured) power update
+        /// </summary>
+        void SLMParamsCurrent_PowerParamsChangedEvent()
+        {
+            UpdateSLMParamPower();
+        }
+
         private void SLMWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             BackgroundWorker worker = sender as BackgroundWorker;
             if (worker.CancellationPending != true)
             {
                 SaveSLMFiles();
+                UpdateSLMParamPower();
                 SLMGenResult = ValidateWaveformBeforeBuild();
                 if (SLMGenResult)
                 {
@@ -2404,64 +2708,19 @@
             return true;
         }
 
-        void UpdateSLMParamEdit()
+        private void UpdatePropProc(string note)
         {
-            Shape activeROI = OverlayManagerClass.Instance.GetCurrentROI();
-            if (null != _slmParamsCurrent)
+            switch (note.ToUpper(new CultureInfo("en-US", false)))
             {
-                //skip in drawing shapes
-                if (null != activeROI)
-                {
-                    switch (activeROI.GetType().ToString())
-                    {
-                        case "OverlayManager.ROIEllipse":
-                        case "OverlayManager.ROIRect":
-                            if (System.Windows.Input.Mouse.LeftButton == MouseButtonState.Pressed)
-                                return;
-                            break;
-                        default:
-                            break;
-                    }
-                }
-
-                //calculate power area density
-                double areaUM2 = 1;
-                if (_vm.IsStimulator && null != activeROI)
-                {
-                    this.Dispatcher.Invoke((SLMSavePattern)delegate
-                    {
-                        System.Drawing.Bitmap bmp = ProcessBitmap.CreateBinaryBitmap(new int[2] { _vm.ImageWidth, _vm.ImageHeight }, OverlayManagerClass.Instance.GetModeROIs(Mode.PATTERN_WIDEFIELD, OverlayManagerClass.Instance.PatternID, _vm.SLMWavelengthNM));
-                        areaUM2 = ProcessBitmap.BinaryBitmapNonZeroCount(bmp) * Math.Pow((double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0], 2);
-                    });
-                }
-                else
-                {
-                    areaUM2 = (0 == _slmParamsCurrent.BleachWaveParams.ROIWidth && 0 == _slmParamsCurrent.BleachWaveParams.ROIHeight) ?
-                        (Math.Pow((_slmParamsCurrent.BleachWaveParams.UMPerPixel / _slmParamsCurrent.BleachWaveParams.UMPerPixelRatio), 2)) :
-                        Math.PI * Math.Max(1, _slmParamsCurrent.BleachWaveParams.ROIWidth) * Math.Max(1, _slmParamsCurrent.BleachWaveParams.ROIHeight) / 4 * Math.Pow((_slmParamsCurrent.BleachWaveParams.UMPerPixel / _slmParamsCurrent.BleachWaveParams.UMPerPixelRatio), 2);
-                }
-                if (_slmParamsCurrent.PowerEntryPreferred)
-                {
-                    //calculate power density based on power entry
-                    for (int i = 0; i < _vm.BleachCalibratePockelsVoltageMin0.Length; i++)
-                    {
-                        _slmParamsCurrent.GetType().GetProperty(0 < i ? "SLMMeasurePowerArea" + i : "SLMMeasurePowerArea").SetValue(_slmParamsCurrent,
-                            (0 >= areaUM2 || 0 >= OverlayManagerClass.Instance.GetPatternROICount()) ? 0.0 :
-                            Math.Round((double)_slmParamsCurrent.BleachWaveParams.GetType().GetProperty(0 < i ? "MeasurePower" + i : "MeasurePower").GetValue(_slmParamsCurrent.BleachWaveParams) / OverlayManagerClass.Instance.GetPatternROICount() * Math.Pow((double)Constants.UM_TO_MM, 2) / areaUM2, 6)); // [mW/mm^2]
-                    }
-                }
-                else
-                {
-                    //calculate power based on power density entry
-                    for (int i = 0; i < _vm.BleachCalibratePockelsVoltageMin0.Length; i++)
-                    {
-                        double measuredPower = (double)_slmParamsCurrent.BleachWaveParams.GetType().GetProperty(0 < i ? "MeasurePower" + i : "MeasurePower").GetValue(_slmParamsCurrent.BleachWaveParams);
-                        _slmParamsCurrent.BleachWaveParams.GetType().GetProperty((0 < i) ? "Power" + i : "Power").SetValue(_slmParamsCurrent.BleachWaveParams,
-                            0 >= measuredPower ? 0.0 :
-                            Math.Round(areaUM2 * (double)_slmParamsCurrent.GetType().GetProperty(0 < i ? "SLMMeasurePowerArea" + i : "SLMMeasurePowerArea").GetValue(_slmParamsCurrent) / measuredPower / Math.Pow((double)Constants.UM_TO_MM, 2), 3)); // [%]
-                    }
-                }
+                case "POWER":
+                    UpdateSLMParamPower();
+                    break;
             }
+        }
+
+        private void UpdateProp_Click(object sender, RoutedEventArgs e)
+        {
+            UpdatePropProc((null != (sender as FrameworkElement)) ? (sender as FrameworkElement).Tag as string : (string)(sender));
         }
 
         private void UpdateWaveParamsAndFile()
@@ -2541,6 +2800,12 @@
                 SLMPatternStatus += String.Format("SLM Generation: FAILED due to invalid dwell time.\n");
                 ret = false;
             }
+            else if (PatternMinMS > SLMParamsCurrent.Duration * SLMParamsCurrent.BleachWaveParams.Iterations)
+            {
+                SLMPatternStatus = String.Format("Minimum total duration is {0} ms,\nwhile duration per iteration = {1}, multiply by {2} of iterations.\n",
+                   PatternMinMS, SLMParamsCurrent.Duration, SLMParamsCurrent.BleachWaveParams.Iterations);
+                ret = false;
+            }
             else if (WaveformBuilder.GetWaveform().Count > Int32.MaxValue)
             {
                 SLMPatternStatus = String.Format("SLM Generation: FAILED due to limited memory space.\n");
@@ -2567,5 +2832,33 @@
         }
 
         #endregion Methods
+    }
+
+    public class SLMPreviewPanel
+    {
+        #region Constructors
+
+        public SLMPreviewPanel(string preview, string cancel)
+        {
+            Preview = preview; Cancel = cancel;
+        }
+
+        #endregion Constructors
+
+        #region Properties
+
+        public string Cancel
+        {
+            get;
+            set;
+        }
+
+        public string Preview
+        {
+            get;
+            set;
+        }
+
+        #endregion Properties
     }
 }

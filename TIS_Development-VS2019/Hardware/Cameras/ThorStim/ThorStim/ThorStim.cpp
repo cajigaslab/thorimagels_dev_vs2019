@@ -47,7 +47,7 @@ std::string ThorStim::_digiLineStr;
 std::string ThorStim::_counter;
 std::string ThorStim::_triggerIn;
 std::unique_ptr<ImageWaveformBuilderDLL> ImageWaveformBuilder(new ImageWaveformBuilderDLL(L".\\Modules_Native\\GeometryUtilitiesCPP.dll"));
-int ThorStim::_digiLineSelect = 0x0;
+int ThorStim::_digiBleachSelect = 0x0;
 int ThorStim::_numPockelsLines = 0x0;
 long ThorStim::_activeLoadMS = 1;
 long ThorStim::_sampleRateHz = 250000;
@@ -319,15 +319,17 @@ long ThorStim::CheckConfigNI()
 		}
 	}
 
-	//get digital lines
-	_numDigiLines = 0;
-	_digiLineStr = "";
+	//get digital lines, set bitwise line selections
+	//keep the first dummy line trigger for future application
 	if(FALSE == settings->GetWaveform(&_digiLines))
 	{
 		StringCbPrintfW(message,_MAX_PATH,L"GetWaveform from Thor%sSettings failed", ThorStimXML::_libName);
 		LogMessage(message,ERROR_EVENT);
 		return FALSE;
 	}
+	_numDigiLines = 1;	//include dummy line for future application
+	_digiBleachSelect = 0x1;
+	_digiLineStr = "";
 	//verify pockels digital lines count compatible with pockels lines count
 	for (int i = 0; i < MAX_GG_POCKELS_CELL_COUNT; i++)
 	{
@@ -349,8 +351,10 @@ long ThorStim::CheckConfigNI()
 				LogMessage(message,ERROR_EVENT);
 				return FALSE;
 			}
-			if (0 < j) _digiLineStr += ",";
+			if (0 == j)	_digiLineStr = GetDevIDName(_digiLines[i]) + "/port0/line6";
+			_digiLineStr += ",";
 			_digiLineStr += _digiLines[i].c_str();
+			_digiBleachSelect |= (0x1 << (i+1));
 			rtsiAvailable[1 == bInfo->rtsiConfigure]++;
 			_numDigiLines++;
 			j++;

@@ -276,6 +276,27 @@
             }
         }
 
+        public int SLMDualPatternShift
+        {
+            get
+            {
+                string strTmp = string.Empty;
+                int intTmp = 0;
+                ApplicationDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+                XmlNodeList ndList = ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView");
+                if (null != ndList)
+                {
+                    if (!(XmlManager.GetAttribute(ndList[0], ApplicationDoc, "DualPatternShiftPx", ref strTmp) && Int32.TryParse(strTmp, out intTmp)))
+                    {
+                        intTmp = 0;
+                        XmlManager.SetAttribute(ndList[0], ApplicationDoc, "DualPatternShiftPx", intTmp.ToString());
+                        MVMManager.Instance.SaveSettings(SettingsFileType.APPLICATION_SETTINGS);
+                    }
+                }
+                return intTmp;
+            }
+        }
+
         public string SLMImportFilePathName
         {
             get
@@ -369,6 +390,11 @@
             set { this._captureSetup.SLMPhaseDirect = value; }
         }
 
+        public string SLMPreviewFileName
+        {
+            get { return SLMWaveformFolder[0] + "\\SLMPreview.bmp"; }
+        }
+
         public bool SLMSelectWavelength
         {
             get { return SLMSelectWavelengthProp; }
@@ -380,6 +406,9 @@
                     //update for wavelength selection
                     OverlayManagerClass.Instance.WavelengthNM = SLMWavelengthNM;
                     OverlayManagerClass.Instance.DimWavelengthROI(ref CaptureSetupViewModel.OverlayCanvas);
+                    //update power settings
+                    if (null != _slmParamEditWin)
+                        _slmParamEditWin.UpdateSLMParamPower();
                 }
             }
         }
@@ -531,7 +560,7 @@
 
         public bool CombineHolograms(string bmpPhaseName1, string bmpPhaseName2)
         {
-            return _captureSetup.CombineHolograms(bmpPhaseName1, bmpPhaseName2);
+            return _captureSetup.CombineHolograms(bmpPhaseName1, bmpPhaseName2, SLMDualPatternShift);
         }
 
         /// <summary>
@@ -692,11 +721,11 @@
                 {
                     int newID = currentID - 1;
 
-                    if (File.Exists(slmPatternsInFolder[i]))
+                    if (i < slmPatternsInFolder.Count && File.Exists(slmPatternsInFolder[i]))
                     {
                         File.Move(slmPatternsInFolder[i], SLMWaveformFolder[0] + "\\" + SLMWaveBaseName[1] + "_" + newID.ToString(numDigits) + ".bmp");
                     }
-                    if (File.Exists(slmTextInFolder[i]))
+                    if (i < slmTextInFolder.Count && File.Exists(slmTextInFolder[i]))
                     {
                         File.Move(slmTextInFolder[i], SLMWaveformFolder[0] + "\\" + SLMWaveBaseName[1] + "_" + newID.ToString(numDigits) + ".txt");
                     }
@@ -773,9 +802,23 @@
             return roiOffset;
         }
 
+        public void IdleSLM()
+        {
+            //set bleach scanner power to zero
+            MVMManager.Instance["PowerControlViewModel", "BleacherPower0"] = MVMManager.Instance["PowerControlViewModel", "BleacherPower1"] = 0.0;
+
+            //not leaving pattern on
+            SLMSetBlank();
+        }
+
         public void InitializeWaveformBuilder(int clockRateHz)
         {
             _captureSetup.InitializeWaveformBuilder(clockRateHz);
+        }
+
+        public bool LoadSLMPatternName(int runtimeCal, int id, string bmpPatternName, bool start, bool phaseDirect = false, int timeoutVal = 0)
+        {
+            return _captureSetup.LoadSLMPatternName(runtimeCal, id, bmpPatternName, start, phaseDirect, timeoutVal);
         }
 
         public bool ResetSLMCalibration()
@@ -821,7 +864,9 @@
                 MVMManager.Instance["ScanControlViewModel", "LastLSMScanMode"] = (int)MVMManager.Instance["ScanControlViewModel", "LSMScanMode", (object)0];
 
             string str = (string)type;
+            double dTmp = 0.0;
             System.Collections.Specialized.BitVector32 bitVec32;
+            XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/SLM");
             switch (SLMParamEditWin.SLMPatternTypeDictionary[str])
             {
                 case SLMParamEditWin.SLMPatternType.Add:
@@ -848,14 +893,15 @@
                             _slmParamEditWin.SLMParamsCurrent.Duration = 100;
                             _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.Power = 0.0;
                             _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.Power1 = (1 < BleachCalibratePockelsVoltageMin0.Length) ? 0.0 : -1.0;
-                            _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.MeasurePower = 0.0;
+                            _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.MeasurePower = (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "measurePowerMW", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp)) ? dTmp : 0.0;
                             if (1 < BleachCalibratePockelsVoltageMin0.Length)
-                                _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.MeasurePower1 = 0.0;
+                                _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.MeasurePower1 = (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "measurePower1MW", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp)) ? dTmp : 0.0;
                         }
                         _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.UMPerPixel = (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0];
                         _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.UMPerPixelRatio = this.BleachPixelSizeUMRatio;
                         _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.ROIWidthUM = 0;
                         _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.ROIHeight = 0;
+                        _slmParamEditWin.UpdateSLMParamPower();
                         _slmParamEditWin.Title = "Add SLM Pattern";
                         _slmParamEditWin.SLMParamID = -1;
 

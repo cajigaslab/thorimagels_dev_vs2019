@@ -78,7 +78,7 @@
         <OTMView Visibility="Collapsed" Exclusive="1"/>
         <BleachCalibrationTool Visibility="Collapsed" />
       </BleachView>
-      <ZView Visibility="Visible" Invert="0" Invert2="0" location="2" zZeroVisibility="Visible" z2ZeroVisibility="Visible" InvertVisibility="Visible" InvertLimitsZ1="0" InvertLimitsZ2="0" Z1InvertPlusMinusButton="0" Z2InvertPlusMinusButton="0"/>
+      <ZView Visibility="Visible" Invert="0" Invert2="0" location="2" zZeroVisibility="Visible" z2ZeroVisibility="Visible" InvertVisibility="Visible" InvertLimitsZ1="0" InvertLimitsZ2="0" Z1InvertPlusMinusButton="0" Z2InvertPlusMinusButton="0" />
       <PowerView Visibility="Collapsed" location="3"/>
       <MCLSView Visibility="Visible" location="6" />
       <PinholeView Visibility="Visible" SwitchSizeWithADU="0" location="8"/>

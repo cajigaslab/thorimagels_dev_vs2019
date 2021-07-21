@@ -275,6 +275,8 @@
                     {
                         vm.ZFilePosScale = 1.0;
                     };
+                    vm.Z2StageLock = (Convert.ToInt32(nodeList[0].Attributes["z2StageLock"].Value) == 0) ? false : true;
+                    vm.Z2StageMirror = (Convert.ToInt32(nodeList[0].Attributes["z2StageMirror"].Value) == 0) ? false : true;
                 }
 
                 nodeList = expDoc.SelectNodes("/ThorImageExperiment/Magnification");

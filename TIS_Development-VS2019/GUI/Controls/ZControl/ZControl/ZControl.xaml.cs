@@ -240,6 +240,22 @@
             "Z2PosOutOfBounds",
             typeof(bool),
             typeof(ZControlUC));
+        public static readonly DependencyProperty Z2StageLockProperty = 
+            DependencyProperty.Register(
+            "Z2StageLock",
+            typeof(bool),
+            typeof(ZControlUC));
+        public static readonly DependencyProperty Z2StageLockVisibilityProperty = 
+            DependencyProperty.RegisterAttached(
+            "Z2StageLockVisibility",
+            typeof(Visibility),
+            typeof(ZControlUC),
+            new FrameworkPropertyMetadata(new PropertyChangedCallback(onZ2StageLockVisibilityChanged)));
+        public static readonly DependencyProperty Z2StageMirrorProperty = 
+            DependencyProperty.Register(
+            "Z2StageMirror",
+            typeof(bool),
+            typeof(ZControlUC));
         public static readonly DependencyProperty Z2StageVisibilityProperty = 
             DependencyProperty.RegisterAttached(
             "Z2StageVisibility",
@@ -267,6 +283,11 @@
             "ZCommand",
             typeof(ICommand),
             typeof(ZControlUC));
+        public static readonly DependencyProperty ZEnableContinuousZStackPreviewProperty = 
+           DependencyProperty.Register(
+           "EnableContinuousZStackPreview",
+           typeof(bool),
+           typeof(ZControlUC));
         public static readonly DependencyProperty ZGotoValueProperty = 
             DependencyProperty.Register(
             "ZGotoValue",
@@ -358,11 +379,6 @@
             "ZScanStopNotValid",
             typeof(bool),
             typeof(ZControlUC));
-        public static readonly DependencyProperty ZEnableContinuousZStackPreviewProperty =
-           DependencyProperty.Register(
-           "EnableContinuousZStackPreview",
-           typeof(bool),
-           typeof(ZControlUC));
         public static readonly DependencyProperty ZScanStopProperty = 
             DependencyProperty.Register(
             "ZScanStop",
@@ -423,16 +439,16 @@
 
         #region Properties
 
-        public bool PreviewButtonEnabled
-        {
-            get { return (bool)GetValue(PreviewButtonEnabledProperty); }
-            set { SetValue(PreviewButtonEnabledProperty, value); }
-        }
-
         public bool EnableContinuousZStackPreview
         {
             get { return (bool)GetValue(ZEnableContinuousZStackPreviewProperty); }
             set { SetValue(ZEnableContinuousZStackPreviewProperty, value); }
+        }
+
+        public bool PreviewButtonEnabled
+        {
+            get { return (bool)GetValue(PreviewButtonEnabledProperty); }
+            set { SetValue(PreviewButtonEnabledProperty, value); }
         }
 
         public ICommand PreviewZStackCommand
@@ -493,6 +509,24 @@
         {
             get { return (bool)GetValue(Z2PosOutOfBoundsProperty); }
             set { SetValue(Z2PosOutOfBoundsProperty, value); }
+        }
+
+        public bool Z2StageLock
+        {
+            get { return (bool)GetValue(Z2StageLockProperty); }
+            set { SetValue(Z2StageLockProperty, value); }
+        }
+
+        public Visibility Z2StageLockVisibility
+        {
+            get { return (Visibility)GetValue(Z2StageLockVisibilityProperty); }
+            set { SetValue(Z2StageLockVisibilityProperty, value); }
+        }
+
+        public bool Z2StageMirror
+        {
+            get { return (bool)GetValue(Z2StageMirrorProperty); }
+            set { SetValue(Z2StageMirrorProperty, value); }
         }
 
         public Visibility Z2StageVisibility
@@ -686,6 +720,10 @@
         #region Methods
 
         public static void onRStageVisibilityChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+        }
+
+        public static void onZ2StageLockVisibilityChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
         }
 

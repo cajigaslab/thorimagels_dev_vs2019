@@ -303,6 +303,12 @@ long AutoFocusImage::Execute(long index, IDevice* pAutoFocus, BOOL& afFound)
 			while (TRUE == _imageReady && TRUE == _enableGUIUpdate)
 			{
 				Sleep(1);
+				if (TRUE == _stopFlag)
+				{
+					_autoFocusStatus = AutoFocusStatusTypes::STOPPED;
+					logDll->TLTraceEvent(VERBOSE_EVENT, 1, L"AutoFocusImage AutoFocusImageBased Stopped");
+					return TRUE;
+				}
 			}
 		}
 	}
@@ -347,6 +353,12 @@ long AutoFocusImage::Execute(long index, IDevice* pAutoFocus, BOOL& afFound)
 			while (TRUE == _imageReady && TRUE == _enableGUIUpdate)
 			{
 				Sleep(1);
+				if (TRUE == _stopFlag)
+				{
+					_autoFocusStatus = AutoFocusStatusTypes::STOPPED;
+					logDll->TLTraceEvent(VERBOSE_EVENT, 1, L"AutoFocusImage AutoFocusImageBased Stopped");
+					return TRUE;
+				}
 			}
 		}		
 	}
@@ -402,6 +414,12 @@ long AutoFocusImage::Execute(long index, IDevice* pAutoFocus, BOOL& afFound)
 			while (TRUE == _imageReady && TRUE == _enableGUIUpdate)
 			{
 				Sleep(1);
+				if (TRUE == _stopFlag)
+				{
+					_autoFocusStatus = AutoFocusStatusTypes::STOPPED;
+					logDll->TLTraceEvent(VERBOSE_EVENT, 1, L"AutoFocusImage AutoFocusImageBased Stopped");
+					return TRUE;
+				}
 			}
 		}
 	}
@@ -446,6 +464,12 @@ long AutoFocusImage::Execute(long index, IDevice* pAutoFocus, BOOL& afFound)
 			while (TRUE == _imageReady && TRUE == _enableGUIUpdate)
 			{
 				Sleep(1);
+				if (TRUE == _stopFlag)
+				{
+					_autoFocusStatus = AutoFocusStatusTypes::STOPPED;
+					logDll->TLTraceEvent(VERBOSE_EVENT, 1, L"AutoFocusImage AutoFocusImageBased Stopped");
+					return TRUE;
+				}
 			}
 		}		
 	}
@@ -478,6 +502,12 @@ long AutoFocusImage::Execute(long index, IDevice* pAutoFocus, BOOL& afFound)
 		while (TRUE == _imageReady)
 		{
 			Sleep(1);
+			if (TRUE == _stopFlag)
+			{
+				_autoFocusStatus = AutoFocusStatusTypes::STOPPED;
+				logDll->TLTraceEvent(VERBOSE_EVENT, 1, L"AutoFocusImage AutoFocusImageBased Stopped");
+				return TRUE;
+			}
 		}
 		//Give enough time to Capture Setup's bitmap to update the final image
 		Sleep(200);

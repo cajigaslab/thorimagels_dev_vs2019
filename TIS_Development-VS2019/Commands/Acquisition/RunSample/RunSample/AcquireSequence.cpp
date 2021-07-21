@@ -79,6 +79,13 @@ long AcquireSequence::CallStartProgressBar(long index, long resetTotalCount)
 	return TRUE;
 }
 
+long AcquireSequence::CallInformMessage(wchar_t* message)
+{
+	InformMessage(message);
+	return TRUE;
+}
+
+
 long AcquireSequence::Execute(long index, long subWell, long zFrame, long tFrame)
 {
 	_tFrame = tFrame;

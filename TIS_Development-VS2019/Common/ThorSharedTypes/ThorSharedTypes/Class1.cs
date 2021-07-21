@@ -148,6 +148,19 @@
         public int PreCapStatus;
     }
 
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    public struct ScanRegionStruct
+    {
+        public byte ScanID;
+        public UInt16 RegionID;
+        public UInt32 SizeX;
+        public UInt32 SizeY;
+        public UInt32 SizeZ;
+        public UInt32 SizeT;
+        public UInt32 SizeS;
+        public UInt64 BufferSize;
+    }
+
     /// <summary>
     /// Identical data structure defined in ThorSharedTypesCPP.h.
     /// clockRate, analog galvo XY interleaved, analog pockels of unit length,  
@@ -175,19 +188,6 @@
         public IntPtr bufferHandle;
         public int lastLoaded;
         public int PreCapStatus;
-    }
-
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    public struct ScanRegionStruct
-    {
-        public byte ScanID;
-        public UInt16 RegionID;
-        public UInt32 SizeX;
-        public UInt32 SizeY;
-        public UInt32 SizeZ;
-        public UInt32 SizeT;
-        public UInt32 SizeS;
-        public UInt64 BufferSize;
     }
 
     public class DoublePC : INotifyPropertyChanged
@@ -279,8 +279,8 @@
             FIRST_AREA_MODE = 0,
             SQUARE = 0,
             RECTANGLE = 1,
-            LINE_TIMELAPSE = 2,
-            LINE = 3,
+            LINE = 2,
+            LINE_TIMELAPSE = 3,
             POLYLINE = 4,
             LAST_AREA_MODE
         }
@@ -989,6 +989,8 @@
             PARAM_LSM_POWER_RAMP_NUM_FLYBACK_FRAMES,
             PARAM_LSM_POWER_RAMP_MODE,
             PARAM_LSM_POWER_RAMP_PERCENTAGE_BUFFER,
+            PARAM_LSM_PIXEL_Y_MULTIPLE,
+            PARAM_LSM_PIXEL_PROCESS,
 
             PARAM_FIRST_CCD_PARAM = 1000,
             PARAM_BINNING_X = 1000,///<Binning X
@@ -1280,34 +1282,6 @@
     public static class IDevice
     {
         #region Enumerations
-        public enum ThorDAQ_DBB1_DIO_SLAVE_PORTS
-        {
-            Resonant_scanner_line_trigger_input = 0x00,
-            Extern_line_trigger_input = 0x01,
-            Extern_pixel_clock_input = 0x02,
-            Scan_direction_output = 0x03,
-            Horizontal_line_pulse_output = 0x04,
-            Pixel_integration_output = 0x05,
-            Start_of_frame_output = 0x06,
-            Hardware_trigger_input = 0x07,
-            External_SOF_input = 0x08,
-            Pixel_clock_pulse_output = 0x09,
-            Digital_Output_0 = 0x0A,
-            Digital_Output_1 = 0x0B,
-            Digital_Output_2 = 0x0C,
-            Digital_Output_3 = 0x0D,
-            Digital_Output_4 = 0x0E,
-            Digital_Output_5 = 0x0F,
-            Digital_Output_6 = 0x10,
-            Digital_Output_7 = 0x11,
-            Capture_Active = 0x12,
-            Aux_GPIO_0 = 0x13,
-            Aux_GPIO_1 = 0x14,
-            Aux_GPIO_2 = 0x15,
-            Aux_GPIO_3 = 0x16,
-            Aux_GPIO_4 = 0x17
-        };
-
 
         public enum ConnectionStatusType
         {
@@ -2570,6 +2544,34 @@
             PHASE_CALIBRATION,
             SAVE_PHASE,
             LAST_FUNCTION
+        }
+
+        public enum ThorDAQ_DBB1_DIO_SLAVE_PORTS
+        {
+            Resonant_scanner_line_trigger_input = 0x00,
+            Extern_line_trigger_input = 0x01,
+            Extern_pixel_clock_input = 0x02,
+            Scan_direction_output = 0x03,
+            Horizontal_line_pulse_output = 0x04,
+            Pixel_integration_output = 0x05,
+            Start_of_frame_output = 0x06,
+            Hardware_trigger_input = 0x07,
+            External_SOF_input = 0x08,
+            Pixel_clock_pulse_output = 0x09,
+            Digital_Output_0 = 0x0A,
+            Digital_Output_1 = 0x0B,
+            Digital_Output_2 = 0x0C,
+            Digital_Output_3 = 0x0D,
+            Digital_Output_4 = 0x0E,
+            Digital_Output_5 = 0x0F,
+            Digital_Output_6 = 0x10,
+            Digital_Output_7 = 0x11,
+            Capture_Active = 0x12,
+            Aux_GPIO_0 = 0x13,
+            Aux_GPIO_1 = 0x14,
+            Aux_GPIO_2 = 0x15,
+            Aux_GPIO_3 = 0x16,
+            Aux_GPIO_4 = 0x17
         }
 
         #endregion Enumerations

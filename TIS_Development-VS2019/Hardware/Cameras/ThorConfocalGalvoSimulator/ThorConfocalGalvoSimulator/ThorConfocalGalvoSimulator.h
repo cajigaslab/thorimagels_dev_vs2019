@@ -272,6 +272,7 @@ extern "C"
 		long _tileRow;
 		long _tileCol;
 		long _zSteps;
+		long _channelPolarity[4];///<store the polarity to use for each channel 
 
 		void PrintMessage(GenericImage<unsigned short>& image, double printTime);
 

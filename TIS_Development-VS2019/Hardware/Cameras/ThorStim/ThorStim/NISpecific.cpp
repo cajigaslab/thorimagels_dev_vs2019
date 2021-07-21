@@ -54,8 +54,8 @@ int32 CVICALLBACK ThorStim::CycleDoneCallback(TaskHandle taskHandle, int32 signa
 	{
 		_precaptureStatus = PreCaptureStatus::PRECAPTURE_WAVEFORM_LAST_CYCLE;
 		//update when active or complete line is configured:
-		if((0 < (_digiLineSelect & (0x1 << BLEACHSCAN_DIGITAL_LINENAME::CYCLE_COMPLETE)))
-			|| (0 < (_digiLineSelect & (0x1 << BLEACHSCAN_DIGITAL_LINENAME::ACTIVE_ENVELOPE))))
+		if((0 < (_digiBleachSelect & (0x1 << BLEACHSCAN_DIGITAL_LINENAME::CYCLE_COMPLETE)))
+			|| (0 < (_digiBleachSelect & (0x1 << BLEACHSCAN_DIGITAL_LINENAME::ACTIVE_ENVELOPE))))
 			updateCase = (1 != updateCase) ? 2 : 1;
 	}
 
@@ -230,7 +230,7 @@ long ThorStim::SetupTaskMasterDigital(void)
 
 	TerminateTask(_taskHandleDO);
 
-	if(_digiLineSelect)
+	if(1 < _digiBleachSelect)
 	{
 		try
 		{

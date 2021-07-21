@@ -23,8 +23,10 @@
         <FieldSizePanel Visibility="Collapsed" />
         <DigitalOffset Visibility="Collapsed" />
         <PulseMultiplexing Visibility="Collapsed" />
-        <TurnAroundAlteration Visibility="Collapsed" />
 		<PixelDwellTime Visibility="Visible" />
+        <TurnAroundAlteration Visibility="Collapsed" />
+        <LSMPixelProcess Visibility="Collapsed" />
+        <Bipolarity Visibility="Collapsed" />
       </ScannerView>
       <AreaView Visibility="Visible" location="1">
         <ResolutionPresets>
@@ -78,7 +80,7 @@
         <OTMView Visibility="Collapsed" Exclusive="1"/>
         <BleachCalibrationTool Visibility="Collapsed" />
       </BleachView>
-      <ZView Visibility="Visible" Invert="0" Invert2="0" location="2" zZeroVisibility="Visible" z2ZeroVisibility="Visible" InvertVisibility="Visible" InvertLimitsZ1="0" InvertLimitsZ2="0" Z1InvertPlusMinusButton="0" Z2InvertPlusMinusButton="0"/>
+      <ZView Visibility="Visible" Invert="0" Invert2="0" location="2" zZeroVisibility="Visible" z2ZeroVisibility="Visible" InvertVisibility="Visible" InvertLimitsZ1="0" InvertLimitsZ2="0" Z1InvertPlusMinusButton="0" Z2InvertPlusMinusButton="0" Z2StageLockVisibility="Collapsed"/>
       <PowerView Visibility="Visible" location="3"/>
       <MCLSView Visibility="Visible" location="6" />
       <PinholeView Visibility="Visible" SwitchSizeWithADU="0" location="8"/>

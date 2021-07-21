@@ -649,26 +649,37 @@ namespace GeometryUtilities
                     {
                         using (System.Drawing.Graphics gr = System.Drawing.Graphics.FromImage(bitmap))
                         {
-                            if (typeof(ROIEllipse) == shape.GetType())
+                            shape.Dispatcher.Invoke(new Action(() =>
                             {
-                                gr.FillEllipse(new System.Drawing.SolidBrush(System.Drawing.Color.White),
-                                    new System.Drawing.RectangleF((float)((ROIEllipse)shape).StartPoint.X, (float)((ROIEllipse)shape).StartPoint.Y, (float)((ROIEllipse)shape).ROIWidth, (float)((ROIEllipse)shape).ROIHeight));
-                            }
-                            else if (typeof(ROIRect) == shape.GetType())
-                            {
-                                gr.FillRectangle(new System.Drawing.SolidBrush(System.Drawing.Color.White),
-                                    new System.Drawing.RectangleF((float)((ROIRect)shape).StartPoint.X, (float)((ROIRect)shape).StartPoint.Y, (float)((ROIRect)shape).ROIWidth, (float)((ROIRect)shape).ROIHeight));
-                            }
-                            else if (typeof(ROIPoly) == shape.GetType())
-                            {
-                                gr.FillPolygon(new System.Drawing.SolidBrush(System.Drawing.Color.White),
-                                    ((ROIPoly)shape).Points.Select(elm => new System.Drawing.Point((int)elm.X, (int)elm.Y)).ToArray());
-                            }
-                            else if (typeof(Line) == shape.GetType())
-                            {
-                                gr.DrawLine(new System.Drawing.Pen(new System.Drawing.SolidBrush(System.Drawing.Color.White), 1),
-                                    new System.Drawing.Point((int)((Line)shape).X1, (int)((Line)shape).Y1), new System.Drawing.Point((int)((Line)shape).X2, (int)((Line)shape).Y2));
-                            }
+                                if (typeof(ROIEllipse) == shape.GetType())
+                                {
+                                    gr.FillEllipse(new System.Drawing.SolidBrush(System.Drawing.Color.White),
+                                        new System.Drawing.RectangleF((float)((ROIEllipse)shape).StartPoint.X, (float)((ROIEllipse)shape).StartPoint.Y, (float)((ROIEllipse)shape).ROIWidth, (float)((ROIEllipse)shape).ROIHeight));
+                                }
+                                else if (typeof(ROIRect) == shape.GetType())
+                                {
+                                    gr.FillRectangle(new System.Drawing.SolidBrush(System.Drawing.Color.White),
+                                        new System.Drawing.RectangleF((float)((ROIRect)shape).StartPoint.X, (float)((ROIRect)shape).StartPoint.Y, (float)((ROIRect)shape).ROIWidth, (float)((ROIRect)shape).ROIHeight));
+                                }
+                                else if (typeof(ROIPoly) == shape.GetType())
+                                {
+                                    gr.FillPolygon(new System.Drawing.SolidBrush(System.Drawing.Color.White),
+                                        ((ROIPoly)shape).Points.Select(elm => new System.Drawing.Point((int)elm.X, (int)elm.Y)).ToArray());
+                                }
+                                else if (typeof(Line) == shape.GetType())
+                                {
+                                    gr.DrawLine(new System.Drawing.Pen(new System.Drawing.SolidBrush(System.Drawing.Color.White), 1),
+                                        new System.Drawing.Point((int)((Line)shape).X1, (int)((Line)shape).Y1), new System.Drawing.Point((int)((Line)shape).X2, (int)((Line)shape).Y2));
+                                }
+                                else if (typeof(Polyline) == shape.GetType())
+                                {
+                                    System.Drawing.Point[] dpts = new System.Drawing.Point[((Polyline)shape).Points.Count];
+                                    for (int i = 0; i < ((Polyline)shape).Points.Count; i++)
+                                        dpts[i] = new System.Drawing.Point(Convert.ToInt32(((Polyline)shape).Points[i].X), Convert.ToInt32(((Polyline)shape).Points[i].Y));
+
+                                    gr.DrawLines(new System.Drawing.Pen(new System.Drawing.SolidBrush(System.Drawing.Color.White), 1), dpts);
+                                }
+                            }));
                         }
                     }
                 }

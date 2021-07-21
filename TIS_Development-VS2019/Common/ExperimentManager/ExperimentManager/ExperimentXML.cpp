@@ -1392,6 +1392,27 @@ long ExperimentXML::GetZFileInfo(int& enable, double& scale)
 	return TRUE;
 }
 
+long ExperimentXML::GetZ2LockInfo(int& lockEnable, int& mirrorEnable)
+{
+	string str;
+
+	if (!GetAttribute(ZSTAGE, "z2StageLock", str))
+	{
+		logDll->TLTraceEvent(VERBOSE_EVENT, 1, L"ExperimentManger  Could not find z2StageLock attribute");
+		return FALSE;
+	}
+	lockEnable = stoi(str);
+
+	if (!GetAttribute(ZSTAGE, "z2StageMirror", str))
+	{
+		logDll->TLTraceEvent(VERBOSE_EVENT, 1, L"ExperimentManger  Could not find z2StageMirror attribute");
+		return FALSE;
+	}
+	mirrorEnable = stoi(str);
+
+	return TRUE;
+}
+
 const char * const ExperimentXML::TIMELAPSE = "Timelapse";
 
 const char * const ExperimentXML::TIMELAPSE_ATTR[NUM_TIMELAPSE_ATTRIBUTES] = {"timepoints", "intervalSec", "triggerMode"};

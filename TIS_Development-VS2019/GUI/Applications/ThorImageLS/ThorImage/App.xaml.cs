@@ -86,7 +86,7 @@ namespace ThorImage
 
                     if (false == p.Id.Equals(myprocess.Id))
                     {
-                        if (MessageBoxResult.Yes == MessageBox.Show("An existing version of ThorImageLS is running and must be shutdown. Do you want to close the existing ThorImageLS.exe?", "Close exsiting application", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.Yes))
+                        if (MessageBoxResult.Yes == MessageBox.Show("An existing version of ThorImageLS is running and must be shutdown. Do you want to close the existing ThorImageLS.exe?", "Close existing application", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.Yes))
                         {
                             ProcessUtility.KillTree(p.Id);
                             ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Killing process");

@@ -37,9 +37,9 @@ DllExportHoloGen SetAlgorithm(int algorithmID)
 	return HologramGen::getInstance()->SetAlgorithm(algorithmID);
 }
 
-DllExportHoloGen CombineHologramFiles(const wchar_t * pathAndFilename1, const wchar_t * pathAndFilename2)
+DllExportHoloGen CombineHologramFiles(const wchar_t * pathAndFilename1, const wchar_t * pathAndFilename2, long shiftPx)
 {
-	return HologramGen::getInstance()->CombineHologramFiles(pathAndFilename1, pathAndFilename2);
+	return HologramGen::getInstance()->CombineHologramFiles(pathAndFilename1, pathAndFilename2, shiftPx);
 }
 
 DllExportHoloGen SetCoeffs(long fittingAlgorithm, double* affCoeffs)
@@ -57,9 +57,9 @@ DllExportHoloGen CalculateCoeffs(const float* pSrcPoints, const float* pTgtPoint
 	return HologramGen::getInstance()->CalculateCoeffs(pSrcPoints, pTgtPoints, size, fittingAlg, affCoeffs);
 }
 
-DllExportHoloGen GenerateHologram(float* pImgDst, int iteCount, float z)
+DllExportHoloGen GenerateHologram(float* pImgDst, int iteCount, int weightRadiusPx, double minPercent, double maxPercent, float z)
 {
-	return HologramGen::getInstance()->GenerateHologram(pImgDst, iteCount, z);
+	return HologramGen::getInstance()->GenerateHologram(pImgDst, iteCount, weightRadiusPx, minPercent, maxPercent, z);
 }
 
 DllExportHoloGen VerticalFlip(float* pImgDst)

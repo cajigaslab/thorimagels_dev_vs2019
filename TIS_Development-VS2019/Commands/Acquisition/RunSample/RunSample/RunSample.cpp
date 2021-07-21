@@ -47,6 +47,10 @@ typedef void (_cdecl *myPrototypeSequenceStepCurrentIndex)(long* index);
 //funtion pointer for getting back the index of completed channel Step
 void (*myFunctionPointerSequenceStepCurrent)(long* index) = NULL;
 
+typedef void(_cdecl* myPrototypeInformMessage)(wchar_t* message);
+//funtion pointer for sending message to notice user
+void (*myFunctionPointerInformMessage)(wchar_t* message) = NULL;
+
 long SetDeviceParameterValue(IDevice *pDevice,long paramID, double val,long bWait,HANDLE hEvent,long waitTime);
 
 DWORD dwRunSampleThreadId = NULL;
@@ -68,7 +72,7 @@ DWORD _dwSafetyInterLockCheckThreadId = NULL;
 HANDLE _hSafetyInterLockCheckThread = NULL;
 atomic<BOOL> _shutterOpened = FALSE;
 
-DllExport_RunSample InitCallBack(myPrototype dm, myPrototypeBeginImage di, myPrototypeBeginSubImage bsi, myPrototypeEndSubImage esi,myPrototypeSaveZImage szi,myPrototypeSaveTImage sti, myPrototypePreCapture pc, myPrototypeSequenceStepCurrentIndex cs) //myPrototypeCaptureComplete cc,
+DllExport_RunSample InitCallBack(myPrototype dm, myPrototypeBeginImage di, myPrototypeBeginSubImage bsi, myPrototypeEndSubImage esi, myPrototypeSaveZImage szi, myPrototypeSaveTImage sti, myPrototypePreCapture pc, myPrototypeSequenceStepCurrentIndex cs, myPrototypeInformMessage sm) //myPrototypeCaptureComplete cc,
 {
 	myFunctionPointer = dm;
 
@@ -87,6 +91,8 @@ DllExport_RunSample InitCallBack(myPrototype dm, myPrototypeBeginImage di, myPro
 	myFunctionPointerPreCapture = pc;
 
 	myFunctionPointerSequenceStepCurrent = cs;
+
+	myFunctionPointerInformMessage = sm;
 
 	if(myFunctionPointer != NULL)
 	{
@@ -126,6 +132,20 @@ DllExport_RunSample GetZRange(double &zMin, double &zMax, double &zDefault)
 	}
 
 	return GetDeviceParameterValueRangeDouble(pZStage,IDevice::PARAM_Z_POS,zMin,zMax,zDefault);
+}
+
+DllExport_RunSample GetZ2Range(double& zMin, double& zMax, double& zDefault)
+{
+	IDevice* pZStage = NULL;
+
+	pZStage = GetDevice(SelectedHardware::SELECTED_ZSTAGE2);
+
+	if (NULL == pZStage)
+	{
+		return FALSE;
+	}
+
+	return GetDeviceParameterValueRangeDouble(pZStage, IDevice::PARAM_Z_POS, zMin, zMax, zDefault);
 }
 
 DllExport_RunSample GetXPosition(double &xPosition)

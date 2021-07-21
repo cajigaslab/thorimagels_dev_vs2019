@@ -30,7 +30,7 @@
 #include "..\..\..\..\Common\ThreadSafeQueue.h"
 #include "..\..\..\..\Tools\Intel IPP\intel64\include\IPPlib.h"
 
-//#define LOGGING_ENABLED
+#define LOGGING_ENABLED
 
 #ifdef LOGGING_ENABLED
 #include "..\..\..\..\Common\Log.h"

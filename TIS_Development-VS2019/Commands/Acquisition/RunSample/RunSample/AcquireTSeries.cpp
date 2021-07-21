@@ -10,6 +10,7 @@
 extern auto_ptr<CommandDll> shwDll;
 extern auto_ptr<TiffLibDll> tiffDll;
 extern "C" long __declspec(dllimport) GetZRange(double& zMin, double& zMax, double& zDefault);
+extern "C" long __declspec(dllimport) GetZ2Range(double& zMin, double& zMax, double& zDefault);
 
 
 int Call_TiffVSetField(TIFF* out, uint32 ttag_t, ...);
@@ -180,6 +181,12 @@ long AcquireTSeries::StopCaptureEventCheck(long &status)
 long AcquireTSeries::CallStartProgressBar(long index, long resetTotalCount)
 {
 	StartProgressBar(index, resetTotalCount);
+	return TRUE;
+}
+
+long AcquireTSeries::CallInformMessage(wchar_t* message)
+{
+	InformMessage(message);
 	return TRUE;
 }
 
@@ -458,6 +465,8 @@ long AcquireTSeries::CaptureTSeries(long index, long subWell, auto_ptr<IAcquire>
 
 	double zStartPos, zStopPos, zTiltPos, zStepSizeMM;
 	double zMin, zMax, zDefault;
+	double z2Min, z2Max, z2Default;
+	double z2ScaleFactor = 0.0;
 	long zstageSteps, zStreamFrames, zStreamMode;
 	GetZPositions(_pExp, NULL, zStartPos, zStopPos, zTiltPos, zStepSizeMM, zstageSteps, zStreamFrames, zStreamMode);
 
@@ -508,6 +517,40 @@ long AcquireTSeries::CaptureTSeries(long index, long subWell, auto_ptr<IAcquire>
 			{
 				logDll->TLTraceEvent(WARNING_EVENT, 1, L"AcquireZStack Requested position outside allowed z-range");
 				MessageBox(NULL, L"At least one of the positions is out of range.", L"", MB_OK);
+				return FALSE;
+			}
+		}
+	}
+
+	// check if the secondary stage is supposed to be locked
+	int z2StageLock = FALSE;
+	int z2StageMirror = FALSE;
+	_pExp->GetZ2LockInfo(z2StageLock, z2StageMirror);
+	// if locking is enabled, make sure the secondary stage positions are also within range
+	if (z2StageLock == TRUE) 
+	{
+		GetZ2Range(z2Min, z2Max, z2Default);
+		z2ScaleFactor = (z2StageMirror == 1) ? -1.0 : 1.0;
+		if (zFileEnable == TRUE) // positions read from file
+		{ 
+			for (long z = 0; z < zstageSteps; z++)
+			{
+				if (z2ScaleFactor * posList[z] < z2Min || z2ScaleFactor * posList[z] > z2Max)
+				{
+					logDll->TLTraceEvent(WARNING_EVENT, 1, L"AcquireZStack Requested position outside allowed z-range for secondary stage");
+					MessageBox(NULL, L"At least one of the positions is out of range for the secondary stage.", L"", MB_OK);
+					return FALSE;
+				}
+			}
+		}
+		else // positions equally spaced
+		{
+			if (z2ScaleFactor * zStartPos < z2Min || z2ScaleFactor * zStartPos > z2Max ||
+				z2ScaleFactor * (zStartPos + (zstageSteps - 1) * zStepSizeMM) < z2Min ||
+				z2ScaleFactor * (zStartPos + (zstageSteps - 1) * zStepSizeMM) > z2Max)
+			{
+				logDll->TLTraceEvent(WARNING_EVENT, 1, L"AcquireZStack Requested position outside allowed z-range for secondary stage");
+				MessageBox(NULL, L"At least one of the positions is out of range for the secondary stage.", L"", MB_OK);
 				return FALSE;
 			}
 		}
@@ -599,10 +642,21 @@ long AcquireTSeries::CaptureTSeries(long index, long subWell, auto_ptr<IAcquire>
 					pos = posList[(long long)z - 1];
 				}
 
-				if(FALSE == SetZPosition(pos,TRUE,FALSE))
-				{
-					logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AcquireTSeries Execute SetZPosition failed ");
-					break;
+				if (z2StageLock == FALSE) // normal Z motion
+				{ 
+					if (FALSE == SetZPosition(pos, TRUE, FALSE))
+					{
+						logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"AcquireTSeries Execute SetZPosition failed ");
+						break;
+					}
+				}
+				else // locked Z motion
+				{ 
+					if (FALSE == SetZPositionLocked(pos, z2ScaleFactor * pos, TRUE, FALSE))
+					{
+						logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"AcquireTSeries Execute SetZPositionLocked failed ");
+						break;
+					}
 				}
 
 				SetPower(_pExp, pCamera, pos, power0, power1, power2, power3, power4, power5);
@@ -682,9 +736,21 @@ long AcquireTSeries::CaptureTSeries(long index, long subWell, auto_ptr<IAcquire>
 			//immediately return to the start position between time points if not already stopped by user
 			if(FALSE == _stopTCapture)
 			{
-				if(FALSE == SetZPosition(zStartPos,TRUE,TRUE))
+				if (z2StageLock == FALSE) // normal Z motion
+				{ 
+					if (FALSE == SetZPosition(zStartPos, TRUE, TRUE))
+					{
+						logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"AcquireTSeries SetZPosition failed ");
+						break;
+					}
+				}
+				else  // locked Z motion
 				{
-					logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AcquireTSeries Execute SetZPosition failed ");
+					if (FALSE == SetZPositionLocked(zStartPos, z2ScaleFactor * zStartPos, TRUE, TRUE))
+					{
+						logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"AcquireTSeries SetZPositionLocked failed ");
+						break;
+					}
 				}
 			}
 		}
@@ -784,9 +850,19 @@ long AcquireTSeries::CaptureTSeries(long index, long subWell, auto_ptr<IAcquire>
 	{
 		if(FALSE == _stopTCapture)
 		{
-			if(FALSE == SetZPosition(zStartPos,TRUE,TRUE))
-			{
-				logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AcquireTSeries Execute SetZPosition failed ");
+			if (z2StageLock == FALSE) // normal Z motion
+			{ 
+				if (FALSE == SetZPosition(zStartPos, TRUE, TRUE))
+				{
+					logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"AcquireTSeries SetZPosition failed ");
+				}
+			}
+			else // locked Z motion
+			{ 
+				if (FALSE == SetZPositionLocked(zStartPos, z2ScaleFactor * zStartPos, TRUE, TRUE))
+				{
+					logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"AcquireTSeries SetZPositionLocked failed ");
+				}
 			}
 		}
 		else
@@ -813,22 +889,33 @@ long AcquireTSeries::StopZ()
 	long ret = TRUE;
 	IDevice * pZStage = NULL;
 
+	// primary Z stage
 	pZStage = GetDevice(SelectedHardware::SELECTED_ZSTAGE);
-
 	if(NULL == pZStage)
 	{	
 		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AcquireMultiWavelength Execute could not create z stage");
 		return FALSE;
 	}
-
 	pZStage->SetParam(IDevice::PARAM_Z_STOP, NULL);
-
 	pZStage->PreflightPosition();
-
 	pZStage->SetupPosition ();
-
 	pZStage->StartPosition();
 	pZStage->PostflightPosition();	
+
+
+	// secondary Z stage
+	pZStage = GetDevice(SelectedHardware::SELECTED_ZSTAGE2);
+	if (NULL == pZStage)
+	{
+		logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"AcquireMultiWavelength Execute could not create z stage");
+		return FALSE;
+	}
+	pZStage->SetParam(IDevice::PARAM_Z_STOP, NULL);
+	pZStage->PreflightPosition();
+	pZStage->SetupPosition();
+	pZStage->StartPosition();
+	pZStage->PostflightPosition();
+
 	return ret;
 }
 
@@ -901,6 +988,121 @@ long AcquireTSeries::SetZPosition(double pos,BOOL bWait, BOOL bPostflight)
 	if (TRUE == bPostflight)
 	{
 		pZStage->PostflightPosition();	
+	}
+
+	return TRUE;
+}
+
+long AcquireTSeries::SetZPositionLocked(double pos1, double pos2, BOOL bWait, BOOL bPostflight)
+{
+	long ret = TRUE;
+	IDevice* pZStage1 = NULL;
+	IDevice* pZStage2 = NULL;
+	long status;
+
+	DWORD dwThread;
+	HANDLE hThread;
+	const long MAX_Z_WAIT_TIME = 80000;
+	DWORD startTime;
+	DWORD dwWait = WAIT_TIMEOUT;
+
+	pZStage1 = GetDevice(SelectedHardware::SELECTED_ZSTAGE);
+	pZStage2 = GetDevice(SelectedHardware::SELECTED_ZSTAGE2);
+
+	if (NULL == pZStage1)
+	{
+		logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"SetZPositionLocked could not create z stage");
+		return FALSE;
+	}
+	if (NULL == pZStage2)
+	{
+		logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"SetZPositionLocked could not create locked z stage");
+		return FALSE;
+	}
+
+	pZStage1->SetParam(IDevice::PARAM_Z_POS, pos1);
+	StringCbPrintfW(message, MSG_LENGTH, L"ThorImager SetZPositionLocked new position stage1 %d.%d", (int)pos1, (int)((pos1 - static_cast<long>(pos1)) * 1000));
+	pZStage2->SetParam(IDevice::PARAM_Z_POS, pos2);
+	StringCbPrintfW(message, MSG_LENGTH, L"ThorImager SetZPositionLocked new position stage2 %d.%d", (int)pos2, (int)((pos2 - static_cast<long>(pos2)) * 1000));
+
+	pZStage1->PreflightPosition();
+	pZStage2->PreflightPosition();
+
+	pZStage1->SetupPosition();
+	pZStage2->SetupPosition();
+
+	pZStage1->StartPosition();
+	pZStage2->StartPosition();
+
+	// wait for the stages to finish
+	if (TRUE == bWait)
+	{
+		// wait for first stage
+		hEventZ = CreateEvent(0, FALSE, FALSE, 0);
+		hThread = ::CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)StatusZThreadProc4, pZStage1, 0, &dwThread);
+		startTime = GetTickCount();
+		dwWait = WAIT_TIMEOUT;
+
+		while ((WAIT_OBJECT_0 != dwWait) && ((GetTickCount() - startTime) < MAX_Z_WAIT_TIME))
+		{
+			dwWait = WaitForSingleObject(hEventZ, 10);
+
+			StopCapture(status);
+			_stopTCapture = status;
+			if (1 == status) break;
+		}
+
+		if (dwWait != WAIT_OBJECT_0)
+		{
+			logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"SetZPositionLocked wait for stage1 motion complete failed");
+
+			//stop the z stepper if stop requested by user
+			pZStage1->SetParam(IDevice::PARAM_Z_STOP, 1);
+			pZStage1->PreflightPosition();
+			pZStage1->SetupPosition();
+			pZStage1->StartPosition();
+			ret = FALSE;
+		}
+
+		CloseHandle(hThread);
+		CloseHandle(hEventZ);
+
+		// wait for second stage
+		hEventZ = CreateEvent(0, FALSE, FALSE, 0);
+		hThread = ::CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)StatusZThreadProc4, pZStage2, 0, &dwThread);
+		startTime = GetTickCount();
+		dwWait = WAIT_TIMEOUT;
+
+		while ((WAIT_OBJECT_0 != dwWait) && ((GetTickCount() - startTime) < MAX_Z_WAIT_TIME))
+		{
+			dwWait = WaitForSingleObject(hEventZ, 10);
+
+			StopCapture(status);
+			_stopTCapture = status;
+			if (1 == status) break;
+		}
+
+		if (dwWait != WAIT_OBJECT_0)
+		{
+			logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"SetZPositionLocked wait for stage2 motion complete failed");
+
+			//stop the z stepper if stop requested by user
+			pZStage2->SetParam(IDevice::PARAM_Z_STOP, 1);
+			pZStage2->PreflightPosition();
+			pZStage2->SetupPosition();
+			pZStage2->StartPosition();
+			ret = FALSE;
+		}
+
+		CloseHandle(hThread);
+		CloseHandle(hEventZ);
+
+	}
+
+	if (TRUE == bPostflight)
+	{
+		pZStage1->PostflightPosition();
+		pZStage2->PostflightPosition();
 	}
 
 	return TRUE;

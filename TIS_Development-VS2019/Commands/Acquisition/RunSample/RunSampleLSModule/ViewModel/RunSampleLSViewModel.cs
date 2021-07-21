@@ -821,7 +821,7 @@
                 bool isCCDCamera = IsCamera();
                 int chan = 0;
                 int rawChan = 0;
-                string expPath = _RunSampleLS.TemplatesFolder + "\\Active.xml";
+                string expPath = ResourceManagerCS.GetCaptureTemplatePathString() + "\\Active.xml";
                 XmlDocument expDoc = new XmlDocument();
                 expDoc.Load(expPath);
 
@@ -3879,6 +3879,18 @@
             }
         }
 
+        public bool Z2StageLock
+        {
+            get { return _RunSampleLS.Z2StageLock; }
+            set { _RunSampleLS.Z2StageLock = value; }
+        }
+
+        public bool Z2StageMirror
+        {
+            get { return _RunSampleLS.Z2StageMirror; }
+            set { _RunSampleLS.Z2StageMirror = value; }
+        }
+
         public int ZEnable
         {
             get
@@ -4176,6 +4188,8 @@
         {
             // make sure z file read button is off
             ZFileEnable = 0;
+            // clear Z2Stage lock for safety reasons
+            Z2StageLock = false;
         }
 
         /// <summary>
@@ -4383,6 +4397,7 @@
 
         public void UpdateExperimentFile()
         {
+            string str = string.Empty;
             this._RunSampleLS.UpdateExperimentFile();
 
             this._RunSampleLS.ExperimentDoc.Save(ResourceManagerCS.GetCaptureTemplatePathString() + "\\Active.xml");
@@ -4398,16 +4413,16 @@
 
                 if (nodeList.Count > 0)
                 {
-                    string str = string.Empty;
-
-                    XmlManager.GetAttribute(nodeList[0], this._RunSampleLS.ExperimentDoc, "name", ref str);
-                    try
+                    if (XmlManager.GetAttribute(nodeList[0], this._RunSampleLS.ExperimentDoc, "name", ref str))
                     {
-                        File.Copy(ResourceManagerCS.GetCaptureTemplatePathString() + "\\Active.xml", ResourceManagerCS.GetMyDocumentsThorImageFolderString() + "\\Modalities\\" + str + "\\Active.xml", true);
-                    }
-                    catch (Exception ex)
-                    {
-                        string strErr = ex.Message;
+                        try
+                        {
+                            File.Copy(ResourceManagerCS.GetCaptureTemplatePathString() + "\\Active.xml", ResourceManagerCS.GetMyDocumentsThorImageFolderString() + "\\Modalities\\" + str + "\\Active.xml", true);
+                        }
+                        catch (Exception ex)
+                        {
+                            ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, ex.Message);
+                        }
                     }
                 }
             }
@@ -4736,7 +4751,7 @@
 
         private bool PreBleachParamsSetup()
         {
-            string bROISource = _RunSampleLS.TemplatesFolder + "BleachROIs.xaml";
+            string bROISource = ResourceManagerCS.GetCaptureTemplatePathString() + "BleachROIs.xaml";
             List<string> fileList;
             switch (CurrentBleachMode)
             {
@@ -4926,6 +4941,7 @@
                 }
             }
 
+            //[Note] Active.xml is copied to experiment after _RunSampleLS.Start
             if (!_RunSampleLS.Start())
             {
                 RunSampleLS_UpdateScript("Error");

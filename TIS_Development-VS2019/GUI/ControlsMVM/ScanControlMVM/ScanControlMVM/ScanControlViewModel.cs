@@ -38,6 +38,7 @@
         private string _activeLSMName = string.Empty;
         ICommand _AverageFramesMinusCommand;
         ICommand _AverageFramesPlusCommand;
+        private Visibility _bipolarityVisibility = Visibility.Collapsed;
         ICommand _ChanDigOffsetMinusCommand;
         ICommand _ChanDigOffsetPlusCommand;
         private Visibility _coarsePanelVisibility;
@@ -51,6 +52,7 @@
         ICommand _LSMAlignmentPlusCommand;
         ICommand _LSMDwellTimeMinusCommand;
         ICommand _LSMDwellTimePlusCommand;
+        private Visibility _LSMPixelProcessVisibility;
         private Visibility _lsmPulseMultiplexingVisibility;
         double[][] _minDwellTimeTable;
         private Visibility _pmtBandwidthLabelVisibility;
@@ -113,6 +115,19 @@
             get
             {
                 if (this._AverageFramesPlusCommand == null) this._AverageFramesPlusCommand = new RelayCommand(() => LSMSignalAverageFrames++); return this._AverageFramesPlusCommand;
+            }
+        }
+
+        public Visibility BipolarityVisibility
+        {
+            get
+            {
+                return _bipolarityVisibility;
+            }
+            set
+            {
+                _bipolarityVisibility = value;
+                OnPropertyChanged("BipolarityVisibility");
             }
         }
 
@@ -655,6 +670,36 @@
                     OnPropertyChanged("LSMFlybackTime");
                     OnPropertyChanged("LSMPixelDwellTimeMaxIndex");
                 }
+            }
+        }
+
+        public int LSMPixelProcess
+        {
+            get
+            {
+                return _scanControlModel.LSMPixelProcess;
+            }
+            set
+            {
+                _scanControlModel.LSMPixelProcess = value;
+                OnPropertyChanged("LSMPixelProcess");
+            }
+        }
+
+        public Visibility LSMPixelProcessVisibility
+        {
+            get
+            {
+                return _LSMPixelProcessVisibility;
+            }
+            set
+            {
+                //only set to visible if the image detector is GalvoGalvo.
+                _LSMPixelProcessVisibility = (
+                        ((int)ThorSharedTypes.ICamera.CameraType.LSM == ResourceManagerCS.GetCameraType())
+                        && ResourceManagerCS.Instance.GetActiveLSMName().Equals("GalvoGalvo")
+                     ) ? value : Visibility.Collapsed;
+                OnPropertyChanged("LSMPixelProcessVisibility");
             }
         }
 
@@ -1382,32 +1427,33 @@
 
                 LoadPixelCountXY(ndList);
 
-                //:TODO: This is a temporary fix, for the problem of 3P not imaging when starting ThorImage in 3P mode
-                // 3P needs to be enabled at least once for it to work. This needs to be before the dwell time and input ranges are loaded, otherwise it will change them
-                MVMManager.Instance["ThreePhotonControlViewModel", "ThreePhotonEnable"] = 1;
-                MVMManager.Instance["ThreePhotonControlViewModel", "ThreePhotonEnable"] = 0;
-
                 // LSMClockSource and ThreePhotonEnable need to be loaded first before the input ranges, this is because in Thordaq when one of those is checked,
                 // it will default to 1.5V internally. If they were loaded after the input ranges, the input range would always be switched to 1.5V when Capture Setup is loaded
-                if (XmlManager.GetAttribute(ndList[0], doc, "clockSource", ref str))
-                {
-                    int tmp = 0;
-                    if (Int32.TryParse(str, out tmp))
-                    {
-                        LSMClockSource = tmp - 1;
-                    }
-                }
+
                 //If 3P is enabled don't read the status of the extClockRate
-                int itmp = 0;
-                if (XmlManager.GetAttribute(ndList[0], doc, "ThreePhotonEnable", ref str) && (Int32.TryParse(str, out itmp)))
+                int threePhotonEnable = 0;
+                if (XmlManager.GetAttribute(ndList[0], doc, "ThreePhotonEnable", ref str) && (Int32.TryParse(str, out threePhotonEnable)))
                 {
-                    MVMManager.Instance["ThreePhotonControlViewModel", "ThreePhotonEnable"] = itmp;
-                    if (XmlManager.GetAttribute(ndList[0], doc, "extClockRate", ref str) && 1 != itmp)
+                    MVMManager.Instance["ThreePhotonControlViewModel", "ThreePhotonEnable"] = threePhotonEnable;
+                    if (XmlManager.GetAttribute(ndList[0], doc, "extClockRate", ref str) && 1 != threePhotonEnable)
                     {
                         int tmp = 0;
                         if (Int32.TryParse(str, out tmp))
                         {
                             LSMExtClockRate = (double)tmp / (double)Constants.US_TO_SEC;
+                        }
+                    }
+                }
+
+                //only need to set clock source if 3P not enabled
+                if (0 == threePhotonEnable)
+            {
+                    if (XmlManager.GetAttribute(ndList[0], doc, "clockSource", ref str))
+                    {
+                        int tmp = 0;
+                        if (Int32.TryParse(str, out tmp))
+                        {
+                            LSMClockSource = tmp - 1;
                         }
                     }
                 }
@@ -1575,6 +1621,15 @@
                     if (Double.TryParse(str, out tmp))
                     {
                         LSMPulseMultiplexingPhase = tmp;
+                    }
+                }
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "LSMPixelProcess", ref str))
+                {
+                    int tmp = 0;
+                    if (Int32.TryParse(str, out tmp))
+                    {
+                        LSMPixelProcess = tmp;
                     }
                 }
             }
@@ -1747,6 +1802,32 @@
                 TurnAroundOptionVisibility = Visibility.Collapsed;
             }
 
+            ndList = appDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/ScannerView/LSMPixelProcess");
+            if (ndList.Count > 0)
+            {
+                string str = string.Empty;
+                XmlManager.GetAttribute(ndList[0], appDoc, "Visibility", ref str);
+
+                LSMPixelProcessVisibility = str.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
+            }
+            else
+            {
+                LSMPixelProcessVisibility = Visibility.Collapsed;
+            }
+
+            ndList = appDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/ScannerView/Bipolarity");
+            if (ndList.Count > 0)
+            {
+                string str = string.Empty;
+                XmlManager.GetAttribute(ndList[0], appDoc, "Visibility", ref str);
+
+                BipolarityVisibility = str.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
+            }
+            else
+            {
+                BipolarityVisibility = Visibility.Collapsed;
+            }
+
             OnPropertyChange("");
         }
 
@@ -1822,6 +1903,12 @@
 
                         XmlManager.SetAttribute(ndList[0], experimentFile, "pulseMultiplexing", this.LSMPulseMultiplexing.ToString());
                         XmlManager.SetAttribute(ndList[0], experimentFile, "pulseMultiplexingPhase", this.LSMPulseMultiplexingPhase.ToString());
+
+                        if (ResourceManagerCS.Instance.GetActiveLSMName().Equals("GalvoGalvo"))
+                        {
+                            // Only need to save PixelProcess to active.xml if the image detector is GalvoGalvo.
+                            XmlManager.SetAttribute(ndList[0], experimentFile, "LSMPixelProcess", this.LSMPixelProcess.ToString());
+                        }
                     }
                 }
 

@@ -191,7 +191,8 @@
                     if (!File.Exists(xmlFiles[fid]))
                         continue;
 
-                    XmlNodeList ndList;
+                    XmlNodeList ndList, ndListP;
+                    double dTmp = 0.0;
                     XmlDocument experimentFile = new XmlDocument();
 
                     //persist current active and give back afterward in case of missing properties:
@@ -282,9 +283,9 @@
                                 if (null == this.SLMBleachWaveParams[i])
                                     continue;
 
-                                ndList = experimentFile.SelectNodes("/ThorImageExperiment/SLM");
+                                ndListP = experimentFile.SelectNodes("/ThorImageExperiment/SLM");
                                 XmlNode node = experimentFile.CreateNode(XmlNodeType.Element, "Pattern", null);
-                                ndList[0].AppendChild(node);
+                                ndListP[0].AppendChild(node);
                                 ndList = experimentFile.SelectNodes("/ThorImageExperiment/SLM/Pattern");
                                 XmlManager.SetAttribute(ndList[i], experimentFile, "name", this.SLMBleachWaveParams[i].Name.ToString());
                                 XmlManager.SetAttribute(ndList[i], experimentFile, "pixelSizeUM", this.SLMBleachWaveParams[i].BleachWaveParams.UMPerPixel.ToString());
@@ -306,8 +307,12 @@
                                     {
                                         XmlManager.SetAttribute(ndList[i], experimentFile, (0 < j) ? "power" + j : "power",
                                            this.SLMBleachWaveParams[i].BleachWaveParams.GetType().GetProperty((0 < j) ? "Power" + j : "Power").GetValue(this.SLMBleachWaveParams[i].BleachWaveParams).ToString());
-                                        XmlManager.SetAttribute(ndList[i], experimentFile, (0 < j) ? "measurePower" + j + "MW" : "measurePowerMW",
-                                            this.SLMBleachWaveParams[i].BleachWaveParams.GetType().GetProperty((0 < j) ? "MeasurePower" + j : "MeasurePower").GetValue(this.SLMBleachWaveParams[i].BleachWaveParams).ToString());
+
+                                        Double.TryParse(this.SLMBleachWaveParams[i].BleachWaveParams.GetType().GetProperty((0 < j) ? "MeasurePower" + j : "MeasurePower").GetValue(this.SLMBleachWaveParams[i].BleachWaveParams).ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp);
+                                        XmlManager.SetAttribute(ndList[i], experimentFile, (0 < j) ? "measurePower" + j + "MW" : "measurePowerMW", dTmp.ToString());
+                                        //keep measurePower at root for later retrieval after patterns cleared
+                                        if (0 < dTmp) XmlManager.SetAttribute(ndListP[0], experimentFile, (0 < j) ? "measurePower" + j + "MW" : "measurePowerMW", dTmp.ToString());
+
                                         XmlManager.SetAttribute(ndList[i], experimentFile, (0 < j) ? "measurePower" + j + "MWPerUM2" : "measurePowerMWPerUM2",
                                             this.SLMBleachWaveParams[i].GetType().GetProperty((0 < j) ? "SLMMeasurePowerArea" + j : "SLMMeasurePowerArea").GetValue(this.SLMBleachWaveParams[i]).ToString());
                                     }
@@ -442,6 +447,8 @@
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "stepSizeUM", stepSize.ToString());
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "setupPositionMM", ((double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0.0]).ToString());
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "startPos", ((double)MVMManager.Instance["ZControlViewModel", "ZScanStart", (object)0.0]).ToString());
+                    XmlManager.SetAttribute(ndList[0], xmlDoc, "z2StageLock", ((bool)MVMManager.Instance["ZControlViewModel", "Z2StageLock", (object)0.0]) == true ? "1" : "0");
+                    XmlManager.SetAttribute(ndList[0], xmlDoc, "z2StageMirror", ((bool)MVMManager.Instance["ZControlViewModel", "Z2StageMirror", (object)0.0]) == true ? "1" : "0");
                 }
 
                 ndListHW = HardwareDoc.SelectNodes("/HardwareSettings/Devices/ZStage");

@@ -10,6 +10,7 @@ extern void (*myFunctionPointerSaveTImage)(long * index);
 extern void (*myFunctionPointer)(long * index,long * completed,long * total, long * timeElapsed, long * timeRemaining, long * captureComplete);
 extern void (*myFunctionPointerPreCapture)(long * status);
 extern void (*myFunctionPointerSequenceStepCurrent)(long* index);
+extern void (*myFunctionPointerInformMessage)(wchar_t* message);
 
 Observer::Observer()
 {
@@ -196,6 +197,11 @@ void Observer::OnProgressBarStart(long index, long resetTotalCount)
 	{
 		_totalImageCount = resetTotalCount;
 	}
+}
+
+void Observer::OnInformMessage(wchar_t* message)
+{
+	myFunctionPointerInformMessage(message);
 }
 
 void Observer::SetTotalImagecount(long count, long channelCount)

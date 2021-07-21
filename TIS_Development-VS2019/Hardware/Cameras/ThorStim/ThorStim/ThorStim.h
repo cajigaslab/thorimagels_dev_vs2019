@@ -19,7 +19,7 @@ extern "C"
 	{
 		double pockelsMaxVoltage[MAX_GG_POCKELS_CELL_COUNT];
 		double pockelsMinVoltage[MAX_GG_POCKELS_CELL_COUNT];
-	}ParamsPty, * pParamsPty;
+	}ParamsPty, *pParamsPty;
 
 	class ThorStim : ICamera
 	{
@@ -32,24 +32,24 @@ extern "C"
 		~ThorStim();
 
 		///<function implementation
-		long FindCameras(long& cameraCount); ///<Search system to find daq board
+		long FindCameras(long &cameraCount); ///<Search system to find daq board
 		long SelectCamera(const long camera);
 		long TeardownCamera(); ///<close handles for daq board
-		long GetParamInfo(const long paramID, long& paramType, long& paramAvailable, long& paramReadOnly, double& paramMin, double& paramMax, double& paramDefault); ///<get the information for each parameter
+		long GetParamInfo(const long paramID, long &paramType, long &paramAvailable, long &paramReadOnly, double &paramMin, double &paramMax, double &paramDefault); ///<get the information for each parameter
 		long SetParam(const long paramID, const double param);///<set parameter value
-		long GetParam(const long paramID, double& param);///<get the parameter value
-		long PreflightAcquisition(char* pDataBuffer);///<Setup for , should be called before each experiment, or whenever trigger mode has been changed
-		long SetupAcquisition(char* pDataBuffer);
-		long StartAcquisition(char* pDataBuffer);///<Start an experiment
-		long StatusAcquisition(long& status);///<Status of a stimulation 
-		long StatusAcquisitionEx(long& status, long& indexOfLastCompletedFrame);
-		long CopyAcquisition(char* pDataBuffer, void* frameInfo);
-		long PostflightAcquisition(char* pDataBuffer);
-		long GetLastErrorMsg(wchar_t* msg, long size);
-		long SetParamString(const long paramID, wchar_t* str);
-		long GetParamString(const long paramID, wchar_t* str, long size);
-		long GetParamBuffer(const long paramID, char* pBuffer, long size);
-		long SetParamBuffer(const long paramID, char* pBuffer, long size);
+		long GetParam(const long paramID, double &param);///<get the parameter value
+		long PreflightAcquisition(char * pDataBuffer);///<Setup for , should be called before each experiment, or whenever trigger mode has been changed
+		long SetupAcquisition(char * pDataBuffer);
+		long StartAcquisition(char * pDataBuffer);///<Start an experiment
+		long StatusAcquisition(long &status);///<Status of a stimulation 
+		long StatusAcquisitionEx(long &status,long &indexOfLastCompletedFrame);
+		long CopyAcquisition(char * pDataBuffer, void* frameInfo);
+		long PostflightAcquisition(char * pDataBuffer);
+		long GetLastErrorMsg(wchar_t * msg, long size);
+		long SetParamString(const long paramID, wchar_t * str);
+		long GetParamString(const long paramID, wchar_t * str, long size);
+		long GetParamBuffer(const long paramID, char * pBuffer, long size);
+		long SetParamBuffer(const long paramID, char * pBuffer, long size);
 
 	private:
 		const static long RATE6321 = 250000;
@@ -75,10 +75,10 @@ extern "C"
 		static long SetupTaskMasterPockel(void);
 		static long SetupTaskMasterDigital(void);
 		static long SetupFrameTriggerInput(void);
-		static int32 CVICALLBACK HWTriggerCallback(TaskHandle taskHandle, int32 signalID, void* callbackData);
-		static int32 CVICALLBACK CycleDoneCallback(TaskHandle taskHandle, int32 status, void* callbackData);
-		static int32 CVICALLBACK EveryNDigitalOutCallback(TaskHandle taskHandle, int32 everyNsamplesEventType, uInt32 nSamples, void* callbackData);
-		static int32 CVICALLBACK EveryNPockelOutCallback(TaskHandle taskHandle, int32 everyNsamplesEventType, uInt32 nSamples, void* callbackData);
+		static int32 CVICALLBACK HWTriggerCallback(TaskHandle taskHandle, int32 signalID, void *callbackData);
+		static int32 CVICALLBACK CycleDoneCallback(TaskHandle taskHandle, int32 status, void *callbackData);
+		static int32 CVICALLBACK EveryNDigitalOutCallback(TaskHandle taskHandle, int32 everyNsamplesEventType, uInt32 nSamples, void *callbackData);
+		static int32 CVICALLBACK EveryNPockelOutCallback(TaskHandle taskHandle, int32 everyNsamplesEventType, uInt32 nSamples, void *callbackData);
 
 		///<NI actions
 		long MovePockelsToPowerLevel(long index);
@@ -130,7 +130,7 @@ extern "C"
 		double _pockelsPowerLevel[MAX_GG_POCKELS_CELL_COUNT];
 		long _pockelsResponseType[MAX_GG_POCKELS_CELL_COUNT]; ///<power fit method:[0]sinusoidal [1]linear
 
-		static int _digiLineSelect;///<active digital lines bitwise selection [N,...,0]
+		static int _digiBleachSelect;///<active digital lines bitwise selection [N,...,0]: [1]dummy,[2]pockelsDig,[4]complete,[8]cycle,[16]iteration,[32]pattern,[64]patternComplete...
 		static int _numPockelsLines;///<user selected pockels line counts
 		static std::string _pockelsLineStr;///<complete string for active pockels lines
 		static std::string _digiLineStr;///<complete string for active digital lines

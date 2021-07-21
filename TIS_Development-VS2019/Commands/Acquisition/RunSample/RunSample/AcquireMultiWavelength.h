@@ -19,6 +19,7 @@ public:
 	virtual long PreCaptureEventCheck(long &status);
 	virtual long StopCaptureEventCheck(long &status);
 	virtual long CallStartProgressBar(long index, long resetTotalCount = 0);
+	virtual long CallInformMessage(wchar_t* message);
 
 	virtual long CallSaveZImage(long index, double power0, double power1, double power2, double power3, double power4, double power5);
 	virtual long CallSaveTImage(long index);

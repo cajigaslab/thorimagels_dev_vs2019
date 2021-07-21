@@ -362,7 +362,7 @@
                                 </StackPanel>
                             </StackPanel>
                             <StackPanel Margin="5,0,0,0">
-                            <Button Name="btnZStackPreview"
+                                <Button Name="btnZStackPreview"
                                 Width="55"
                                 Height="50"
                                 Background="LimeGreen"
@@ -948,7 +948,21 @@
                                     </StackPanel>
                                 </StackPanel>
                                 <StackPanel Margin="10,10,10,0"
-                                        VerticalAlignment="Center">
+                                            VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left"
+                                                Visibility="{Binding Path=Z2StageLockVisibility}">
+                                        <CheckBox Name="cbZ2StageLock"
+                                                  Content="Lock to Primary Z"
+                                                  Margin="3"
+                                                  MinWidth="130"
+                                                  ToolTip="Move the secondary Z-Stage in lockstep with the primary stage"
+                                                  IsChecked="{Binding Path=Z2StageLock, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                        <CheckBox Name="cbZ2StageMirror"
+                                                  Content="Mirror movement"
+                                                  Margin="3"
+                                                  ToolTip="Mirror the axis direction"
+                                                  IsChecked="{Binding Path=Z2StageMirror, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
                                             Visibility="{Binding Path=RStageVisibility}">
                                         <Label Content="R : "

@@ -17,6 +17,7 @@ public:
 	void OnSaveTImage(long val);
 	void OnSequenceStepCurrent(long val);
 	void OnProgressBarStart(long val, long resetTotalCount = 0);
+	void OnInformMessage(wchar_t* message);
 	void SetStopCapture(long status);
 	void SetTotalImagecount(long count, long channelCount);		///< count: total frame #, channelCount: total channel steps for CaptureSequence mode
 

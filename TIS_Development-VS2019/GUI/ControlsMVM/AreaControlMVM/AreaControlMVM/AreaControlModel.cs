@@ -636,6 +636,22 @@
             }
         }
 
+        public int LSMPixelYMultiple
+        {
+            get
+            {
+                int val = 1;
+                if (1 == GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_PIXEL_Y_MULTIPLE, ref val))
+                {
+                    return val;
+                }
+                else
+                {
+                    return 32;
+                }
+            }
+        }
+
         public double LSMScaleYScan
         {
             get

@@ -155,9 +155,9 @@ long ThorSLMPDM512XML::SetPostTransform(int id, long verticalFlip, double rotate
 const char * const ThorSLMPDM512XML::CALIBRATION = "Calibration";
 const char * const ThorSLMPDM512XML::CALIBRATION2 = "Calibration2";
 
-const char * const ThorSLMPDM512XML::CALIBRATION_ATTR[NUM_CALIBRATION_ATTRIBUTES] = {"wavelengthNM","coeff1","coeff2","coeff3","coeff4","coeff5","coeff6", "coeff7", "coeff8"};
+const char * const ThorSLMPDM512XML::CALIBRATION_ATTR[NUM_CALIBRATION_ATTRIBUTES] = {"wavelengthNM","phaseMax","coeff1","coeff2","coeff3","coeff4","coeff5","coeff6", "coeff7", "coeff8"};
 
-long ThorSLMPDM512XML::GetCalibration(int id, double& wavelengthNM, double &coeff1, double &coeff2, double &coeff3, double &coeff4, double &coeff5, double &coeff6, double &coeff7, double &coeff8)
+long ThorSLMPDM512XML::GetCalibration(int id, double& wavelengthNM, long &phaseMax, double &coeff1, double &coeff2, double &coeff3, double &coeff4, double &coeff5, double &coeff6, double &coeff7, double &coeff8)
 {	
 	StringCbPrintfW(_currentPathAndFile,MAX_PATH,L"ThorSLMPDM512Settings.xml");		
 
@@ -195,40 +195,45 @@ long ThorSLMPDM512XML::GetCalibration(int id, double& wavelengthNM, double &coef
 						break;
 					case 1:
 						{
-							ss>>coeff1;
+							ss>>phaseMax;
 						}
 						break;
 					case 2:
 						{
-							ss>>coeff2;
+							ss>>coeff1;
 						}
 						break;
 					case 3:
 						{
-							ss>>coeff3;
+							ss>>coeff2;
 						}
 						break;
 					case 4:
 						{
-							ss>>coeff4;
+							ss>>coeff3;
 						}
 						break;
 					case 5:
 						{
-							ss>>coeff5;
+							ss>>coeff4;
 						}
 						break;
 					case 6:
 						{
-							ss>>coeff6;
+							ss>>coeff5;
 						}
 						break;
 					case 7:
 						{
-							ss>>coeff7;
+							ss>>coeff6;
 						}
 						break;
 					case 8:
+						{
+							ss>>coeff7;
+						}
+						break;
+					case 9:
 						{
 							ss>>coeff8;
 						}
@@ -293,7 +298,7 @@ long ThorSLMPDM512XML::SetCalibration(int id, double coeff1, double coeff2, doub
 
 		long index;
 
-		for(index=1; index<NUM_CALIBRATION_ATTRIBUTES; index++)
+		for(index=2; index<NUM_CALIBRATION_ATTRIBUTES; index++)
 		{
 			getline(ss,str);
 
@@ -309,9 +314,9 @@ long ThorSLMPDM512XML::SetCalibration(int id, double coeff1, double coeff2, doub
 
 const char * const ThorSLMPDM512XML::SPEC = "Spec";
 
-const char * const ThorSLMPDM512XML::SPEC_ATTR[NUM_SPEC_ATTRIBUTES] = {"Name","dmdMode","overDrive","transientFrames","pixelXmin","pixelXmax","pixelYmin","pixelYmax","LUT","overDriveLUT","waveFront"};
+const char * const ThorSLMPDM512XML::SPEC_ATTR[NUM_SPEC_ATTRIBUTES] = {"Name","dmdMode","overDrive","transientFrames","flatDiagRatio","flatPowerMinPercent","flatPowerMaxPercent","pixelX","pixelY","LUT","overDriveLUT","waveFront"};
 
-long ThorSLMPDM512XML::GetSpec(string &name, long &dmdMode, long &overDrive, unsigned int &transientFrames, long &pixelXmin, long &pixelXmax, long &pixelYmin, long &pixelYmax, string &lut, string &odLUT, string &wavefront)
+long ThorSLMPDM512XML::GetSpec(string &name, long &dmdMode, long &overDrive, unsigned int &transientFrames, double &flatDiagRatio, double&flatPowerMinPercent, double&flatPowerMaxPercent, long &pixelX, long &pixelY, string &lut, string &odLUT, string &wavefront)
 {
 	StringCbPrintfW(_currentPathAndFile,MAX_PATH,L"ThorSLMPDM512Settings.xml");		
 
@@ -364,35 +369,40 @@ long ThorSLMPDM512XML::GetSpec(string &name, long &dmdMode, long &overDrive, uns
 						break;
 					case 4:
 						{
-							ss>>pixelXmin;
+							ss>>flatDiagRatio;
 						}
 						break;
 					case 5:
 						{
-							ss>>pixelXmax;
+							ss>>flatPowerMinPercent;
 						}
 						break;
 					case 6:
 						{
-							ss>>pixelYmin;
+							ss>>flatPowerMaxPercent;
 						}
 						break;
 					case 7:
 						{
-							ss>>pixelYmax;
+							ss>>pixelX;
 						}
 						break;
 					case 8:
 						{
-							lut = str;
+							ss>>pixelY;
 						}
 						break;
 					case 9:
 						{
-							odLUT = str;
+							lut = str;
 						}
 						break;
 					case 10:
+						{
+							odLUT = str;
+						}
+						break;
+					case 11:
 						{
 							wavefront = str;
 						}

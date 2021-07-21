@@ -201,6 +201,12 @@ long AcquireTStream::CallStartProgressBar(long index, long resetTotalCount)
 	return TRUE;
 }
 
+long AcquireTStream::CallInformMessage(wchar_t* message)
+{
+	InformMessage(message);
+	return TRUE;
+}
+
 /// <return> return next created image ID, -1 if failed. </return>
 long AcquireTStream::CreateSaveThread(SaveParams& sp, char* pMem)
 {

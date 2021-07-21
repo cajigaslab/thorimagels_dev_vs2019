@@ -26,6 +26,7 @@
 
         private int _pixelSpacing = 1;
         private double[] _slmMeasurePowerArea = { 0.0 };
+        private bool _slmPowerAlert = false;
 
         #endregion Fields
 
@@ -42,6 +43,8 @@
             this.Name = slmParams.Name;
             this.Duration = slmParams.Duration;
             this.SLMMeasurePowerArea = slmParams.SLMMeasurePowerArea;
+            if (1 < slmParams._slmMeasurePowerArea.Length)
+                this.SLMMeasurePowerArea1 = slmParams.SLMMeasurePowerArea1;
             this.PixelSpacing = slmParams.PixelSpacing;
             this.Red = slmParams.Red;
             this.Green = slmParams.Green;
@@ -55,6 +58,8 @@
         #region Events
 
         public event Action BleachParamsChangedEvent;
+
+        public event Action PowerParamsChangedEvent;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -136,10 +141,7 @@
         {
             get
             {
-                if (1 <= _slmMeasurePowerArea.Length)
-                    return _slmMeasurePowerArea[0];
-                else
-                    return 0.0;
+                return (1 <= _slmMeasurePowerArea.Length) ? _slmMeasurePowerArea[0] : 0.0;
             }
             set
             {
@@ -148,7 +150,7 @@
                     _slmMeasurePowerArea = new double[1] { value };
                     OnPropertyChanged("SLMMeasurePowerArea");
                 }
-                else if (_slmMeasurePowerArea[0] != value)
+                else if (value != _slmMeasurePowerArea[0])
                 {
                     _slmMeasurePowerArea[0] = value;
                     OnPropertyChanged("SLMMeasurePowerArea");
@@ -160,10 +162,7 @@
         {
             get
             {
-                if (2 <= _slmMeasurePowerArea.Length)
-                    return _slmMeasurePowerArea[1];
-                else
-                    return 0.0;
+                return (2 <= _slmMeasurePowerArea.Length) ? _slmMeasurePowerArea[1] : 0.0;
             }
             set
             {
@@ -173,11 +172,24 @@
                     _slmMeasurePowerArea = new double[2] { tmp, value };
                     OnPropertyChanged("SLMMeasurePowerArea1");
                 }
-                else if (_slmMeasurePowerArea[1] != value)
+                else if (value != _slmMeasurePowerArea[1])
                 {
                     _slmMeasurePowerArea[1] = value;
                     OnPropertyChanged("SLMMeasurePowerArea1");
                 }
+            }
+        }
+
+        public bool SLMPowerAlert
+        {
+            get
+            {
+                return _slmPowerAlert;
+            }
+            set
+            {
+                _slmPowerAlert = value;
+                OnPropertyChanged("SLMPowerAlert");
             }
         }
 
@@ -201,19 +213,24 @@
             if (handler != null)
             {
                 handler(this, new PropertyChangedEventArgs(propertyName));
-                if (null != BleachParamsChangedEvent &&
+                if (null != PowerParamsChangedEvent &&
                     (0 == propertyName.CompareTo("SLMMeasurePowerArea") || 0 == propertyName.CompareTo("SLMMeasurePowerArea1")))
-                    BleachParamsChangedEvent();
+                    PowerParamsChangedEvent();
             }
         }
 
         void BleachWaveParams_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if ((null != BleachParamsChangedEvent) &&
-                ((0 == e.PropertyName.CompareTo("ROIWidthUM")) || (0 == e.PropertyName.CompareTo("ROIHeightUM")) ||
-                (0 == e.PropertyName.CompareTo("MeasurePower")) || (0 == e.PropertyName.CompareTo("MeasurePower1"))))
+                ((0 == e.PropertyName.CompareTo("ROIWidthUM")) || (0 == e.PropertyName.CompareTo("ROIHeightUM"))))
             {
                 BleachParamsChangedEvent();
+            }
+            if ((null != PowerParamsChangedEvent) &&
+                (0 == e.PropertyName.CompareTo("Power") || 0 == e.PropertyName.CompareTo("Power1") ||
+                 0 == e.PropertyName.CompareTo("MeasurePower") || 0 == e.PropertyName.CompareTo("MeasurePower1")))
+            {
+                PowerParamsChangedEvent();
             }
         }
 

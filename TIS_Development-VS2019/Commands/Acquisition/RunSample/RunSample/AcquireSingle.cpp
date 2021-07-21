@@ -135,6 +135,12 @@ long AcquireSingle::CallStartProgressBar(long index, long resetTotalCount)
 	return TRUE;
 }
 
+long AcquireSingle::CallInformMessage(wchar_t* message)
+{
+	InformMessage(message);
+	return TRUE;
+}
+
 int Call_TiffVSetField(TIFF* out, uint32 ttag_t, ...)
 {
 	int retv;

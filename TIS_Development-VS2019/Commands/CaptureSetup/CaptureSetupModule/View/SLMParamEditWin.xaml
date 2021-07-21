@@ -11,8 +11,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         d:DesignWidth="500"
-        d:DesignHeight="780"
-        MaxHeight="780"
+        d:DesignHeight="880"
+        MaxHeight="880"
         MaxWidth="500"
         WindowStyle="ThreeDBorderWindow"
         SizeToContent="WidthAndHeight"
@@ -415,12 +415,12 @@
                             <Style TargetType="TextBox"
                                    BasedOn="{StaticResource {x:Type TextBox}}">
                                 <Setter Property="Visibility"
-                                        Value="Visible" />
+                                        Value="Collapsed" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding ElementName=btnLamda, Path=IsChecked}"
-                                                 Value="false">
+                                                 Value="true">
                                         <Setter Property="Visibility"
-                                                Value="Collapsed" />
+                                                Value="Visible" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -459,7 +459,6 @@
                            VerticalAlignment="Center" />
                     <TextBlock Text="{Binding Path=.BleachWaveParams.Power, StringFormat=N3, Converter={StaticResource doubleCulture}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                Foreground="White"
-                               Background="#FF595959"
                                Width="60"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"
@@ -467,13 +466,37 @@
                         <TextBlock.Style>
                             <Style TargetType="TextBlock"
                                    BasedOn="{StaticResource {x:Type TextBlock}}">
+                                <Style.Resources>
+                                    <Storyboard x:Key="flashingAnimation">
+                                        <DoubleAnimation AutoReverse="True"
+                                                         Duration="0:0:0.5"
+                                                         From="1"
+                                                         RepeatBehavior="Forever"
+                                                         Storyboard.TargetProperty="(Background).(Opacity)"
+                                                         To="0.5" />
+                                    </Storyboard>
+                                </Style.Resources>
                                 <Setter Property="Visibility"
                                         Value="Visible" />
+                                <Setter Property="Background"
+                                        Value="#FF595959" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding ElementName=btnLamda, Path=IsChecked}"
                                                  Value="true">
                                         <Setter Property="Visibility"
                                                 Value="Collapsed" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Path=.SLMPowerAlert, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Value="True">
+                                        <Setter Property="Background"
+                                                Value="Red" />
+                                        <DataTrigger.EnterActions>
+                                            <BeginStoryboard Name="flashing"
+                                                             Storyboard="{StaticResource flashingAnimation}" />
+                                        </DataTrigger.EnterActions>
+                                        <DataTrigger.ExitActions>
+                                            <StopStoryboard BeginStoryboardName="flashing" />
+                                        </DataTrigger.ExitActions>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -481,7 +504,6 @@
                     </TextBlock>
                     <TextBlock Text="{Binding Path=.BleachWaveParams.Power1, StringFormat=N3, Converter={StaticResource doubleCulture}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                Foreground="White"
-                               Background="#FF595959"
                                Width="60"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"
@@ -489,18 +511,62 @@
                         <TextBlock.Style>
                             <Style TargetType="TextBlock"
                                    BasedOn="{StaticResource {x:Type TextBlock}}">
+                                <Style.Resources>
+                                    <Storyboard x:Key="flashingAnimation">
+                                        <DoubleAnimation AutoReverse="True"
+                                                         Duration="0:0:0.5"
+                                                         From="1"
+                                                         RepeatBehavior="Forever"
+                                                         Storyboard.TargetProperty="(Background).(Opacity)"
+                                                         To="0.5" />
+                                    </Storyboard>
+                                </Style.Resources>
                                 <Setter Property="Visibility"
-                                        Value="Visible" />
+                                        Value="Collapsed" />
+                                <Setter Property="Background"
+                                        Value="#FF595959" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding ElementName=btnLamda, Path=IsChecked}"
-                                                 Value="false">
+                                                 Value="true">
                                         <Setter Property="Visibility"
-                                                Value="Collapsed" />
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Path=.SLMPowerAlert, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Value="True">
+                                        <Setter Property="Background"
+                                                Value="Red" />
+                                        <DataTrigger.EnterActions>
+                                            <BeginStoryboard Name="flashing"
+                                                             Storyboard="{StaticResource flashingAnimation}" />
+                                        </DataTrigger.EnterActions>
+                                        <DataTrigger.ExitActions>
+                                            <StopStoryboard BeginStoryboardName="flashing" />
+                                        </DataTrigger.ExitActions>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
+                    <Button Width="25"
+                            Height="25"
+                            Click="UpdateProp_Click"
+                            Tag="Power"
+                            ToolTip="Calculate power"
+                            Content="✓">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=SLMPowerAlert,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                     <Label Content="[%]"
                            Width="50"
                            Height="30"
@@ -627,7 +693,6 @@
                            VerticalAlignment="Center" />
                     <TextBlock Text="{Binding Path=.SLMMeasurePowerArea, StringFormat=N3, Converter={StaticResource doubleCulture}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                Foreground="White"
-                               Background="#FF595959"
                                Width="55"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"
@@ -635,13 +700,37 @@
                         <TextBlock.Style>
                             <Style TargetType="TextBlock"
                                    BasedOn="{StaticResource {x:Type TextBlock}}">
+                                <Style.Resources>
+                                    <Storyboard x:Key="flashingAnimation">
+                                        <DoubleAnimation AutoReverse="True"
+                                                         Duration="0:0:0.5"
+                                                         From="1"
+                                                         RepeatBehavior="Forever"
+                                                         Storyboard.TargetProperty="(Background).(Opacity)"
+                                                         To="0.5" />
+                                    </Storyboard>
+                                </Style.Resources>
                                 <Setter Property="Visibility"
                                         Value="Visible" />
+                                <Setter Property="Background"
+                                        Value="#FF595959" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding ElementName=btnLamda, Path=IsChecked}"
                                                  Value="true">
                                         <Setter Property="Visibility"
                                                 Value="Collapsed" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Path=.SLMPowerAlert, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Value="True">
+                                        <Setter Property="Background"
+                                                Value="Red" />
+                                        <DataTrigger.EnterActions>
+                                            <BeginStoryboard Name="flashing"
+                                                             Storyboard="{StaticResource flashingAnimation}" />
+                                        </DataTrigger.EnterActions>
+                                        <DataTrigger.ExitActions>
+                                            <StopStoryboard BeginStoryboardName="flashing" />
+                                        </DataTrigger.ExitActions>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -649,7 +738,6 @@
                     </TextBlock>
                     <TextBlock Text="{Binding Path=.SLMMeasurePowerArea1, StringFormat=N3, Converter={StaticResource doubleCulture}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                Foreground="White"
-                               Background="#FF595959"
                                Width="55"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"
@@ -657,18 +745,62 @@
                         <TextBlock.Style>
                             <Style TargetType="TextBlock"
                                    BasedOn="{StaticResource {x:Type TextBlock}}">
+                                <Style.Resources>
+                                    <Storyboard x:Key="flashingAnimation">
+                                        <DoubleAnimation AutoReverse="True"
+                                                         Duration="0:0:0.5"
+                                                         From="1"
+                                                         RepeatBehavior="Forever"
+                                                         Storyboard.TargetProperty="(Background).(Opacity)"
+                                                         To="0.5" />
+                                    </Storyboard>
+                                </Style.Resources>
                                 <Setter Property="Visibility"
                                         Value="Visible" />
+                                <Setter Property="Background"
+                                        Value="#FF595959" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding ElementName=btnLamda, Path=IsChecked}"
                                                  Value="false">
                                         <Setter Property="Visibility"
                                                 Value="Collapsed" />
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding Path=.SLMPowerAlert, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Value="True">
+                                        <Setter Property="Background"
+                                                Value="Red" />
+                                        <DataTrigger.EnterActions>
+                                            <BeginStoryboard Name="flashing"
+                                                             Storyboard="{StaticResource flashingAnimation}" />
+                                        </DataTrigger.EnterActions>
+                                        <DataTrigger.ExitActions>
+                                            <StopStoryboard BeginStoryboardName="flashing" />
+                                        </DataTrigger.ExitActions>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
+                    <Button Width="25"
+                            Height="25"
+                            Click="UpdateProp_Click"
+                            Tag="Power"
+                            ToolTip="Calculate power density"
+                            Content="✓">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=SLMPowerAlert,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                     <Label Content="[mW/mm^2]"
                            Width="80"
                            Height="30"
@@ -1185,6 +1317,35 @@
                        TextWrapping="Wrap"
                        FontSize="16"
                        FontStyle="Italic" />
+            <StackPanel Name="stpPreview"
+                        Grid.Column="0"
+                        Grid.Row="7"
+                        MaxHeight="140"
+                        HorizontalAlignment="Right"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center"
+                        ToolTip="preview current pattern with specified power value">
+                <Button HorizontalAlignment="Center"
+                        HorizontalContentAlignment="Center"
+                        VerticalAlignment="Center"
+                        Height="30"
+                        Width="80"
+                        Margin="3"
+                        Click="btnSLMPreview_Click"
+                        Tag="{Binding Path=.Preview}">
+                    <TextBlock Text="Preview" />
+                </Button>
+                <Button HorizontalAlignment="Center"
+                        HorizontalContentAlignment="Center"
+                        VerticalAlignment="Center"
+                        Height="30"
+                        Width="80"
+                        Margin="3"
+                        Click="btnSLMPreview_Click"
+                        Tag="{Binding Path=.Cancel}">
+                    <TextBlock Text="Cancel" />
+                </Button>
+            </StackPanel>
         </StackPanel>
         <StackPanel Name="stpSLMButton"
                     Grid.Column="1"

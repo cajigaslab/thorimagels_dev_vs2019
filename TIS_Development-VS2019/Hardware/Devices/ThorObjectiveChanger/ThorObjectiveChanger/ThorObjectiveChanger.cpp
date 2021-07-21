@@ -107,7 +107,7 @@ ThorObjectiveChanger::ThorObjectiveChanger() :
 	_currentPos1 = 0;
 	_currentPos2 = 0;
 	_errMsg[0] = NULL;
-	_insertSequence[0] = NULL;
+	_insertSequence = nullptr;
 	_moverLoc = MOVER_LOCATION::DISCONNECTED;
 	_moverLoc_B = FALSE;
 	_moverPos = (long)MOVER_LOCATION::DISCONNECTED;

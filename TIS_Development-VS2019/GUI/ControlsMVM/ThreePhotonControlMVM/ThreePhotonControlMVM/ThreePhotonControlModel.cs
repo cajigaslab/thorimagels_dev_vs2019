@@ -35,6 +35,20 @@
 
         #region Properties
 
+        public int FIR1ManualControlEnable
+        {
+            get
+            {
+                int temp = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_MANUAL_FIR1_CONTROL_ENABLE, ref temp);
+                return temp;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_MANUAL_FIR1_CONTROL_ENABLE, value);
+            }
+        }
+
         public int LSMFIRFilterIndex
         {
             get
@@ -101,19 +115,6 @@
             }
         }
 
-        public int FIR1ManualControlEnable
-        {
-            get
-            {
-                int temp = 0;
-                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_MANUAL_FIR1_CONTROL_ENABLE, ref temp);
-                return temp;
-            }
-            set
-            {
-                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_MANUAL_FIR1_CONTROL_ENABLE, value);
-            }
-        }
         public int ThreePhotonEnable
         {
             get

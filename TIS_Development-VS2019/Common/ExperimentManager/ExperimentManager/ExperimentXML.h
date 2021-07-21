@@ -304,6 +304,7 @@ public:
 
 	long GetZPosList(vector<double>& vec);
 	long GetZFileInfo(int& enable, double& scale);
+	long GetZ2LockInfo(int& lockEnable, int& mirrorEnable);
 
 	void Update();
 

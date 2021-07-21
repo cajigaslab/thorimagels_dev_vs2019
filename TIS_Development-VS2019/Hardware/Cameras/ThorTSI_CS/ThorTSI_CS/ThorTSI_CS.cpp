@@ -255,21 +255,13 @@ void ThorCam::InitialParamInfo(void)
 	ThorTSIErrChk(L"tl_camera_get_hot_pixel_correction_threshold_range", tl_camera_get_hot_pixel_correction_threshold_range(_camera[_camID], &_hotPixelRange[0], &_hotPixelRange[1]), 1);
 	ThorTSIErrChk(L"tl_camera_get_hot_pixel_correction_threshold", tl_camera_get_hot_pixel_correction_threshold(_camera[_camID], &_ImgPty_SetSettings.hotPixelThreshold), 1);
 	ThorTSIErrChk(L"tl_camera_get_is_hot_pixel_correction_enabled", tl_camera_get_is_hot_pixel_correction_enabled(_camera[_camID], &_ImgPty_SetSettings.hotPixelEnabled), 1);
-	ThorTSIErrChk(L"tl_camera_get_frame_rate_control_value_range", tl_camera_get_frame_rate_control_value_range(_camera[_camID], &_frameRateControlValueRange[0], &_frameRateControlValueRange[1]), 1);
-	ThorTSIErrChk(L"tl_camera_get_is_frame_rate_control_enabled", tl_camera_get_is_frame_rate_control_enabled(_camera[_camID], &_ImgPty_SetSettings.frameRateControlEnabled), 1);
-	ThorTSIErrChk(L"tl_camera_get_frame_rate_control_value", tl_camera_get_frame_rate_control_value(_camera[_camID], &_ImgPty_SetSettings.frameRateControlValue), 1);
-
-	if(0 != _camName[_camID].compare(0, 6, "CS2100"))
-	{
-		//CS135 doesn't have a black level parameter
-		if (0 != _camName[_camID].compare(0, 5, "CS135"))
-		{
-			ThorTSIErrChk(L"tl_camera_get_black_level_range", tl_camera_get_black_level_range(_camera[_camID], &_blackLevelRange[0], &_blackLevelRange[1]), 1);
-			ThorTSIErrChk(L"tl_camera_get_black_level", tl_camera_get_black_level(_camera[_camID], &_ImgPty_SetSettings.blackLevel), 1);
-		}
-		ThorTSIErrChk(L"tl_camera_get_gain_range", tl_camera_get_gain_range(_camera[_camID],&_gainRange[0], &_gainRange[1]), 1);
-		ThorTSIErrChk(L"tl_camera_get_gain", tl_camera_get_gain(_camera[_camID], &_ImgPty_SetSettings.gain), 1);
-	}
+	ThorTSIErrChk(L"tl_camera_get_gain_range", tl_camera_get_gain_range(_camera[_camID], &_gainRange[0], &_gainRange[1]), FALSE);
+	ThorTSIErrChk(L"tl_camera_get_gain", tl_camera_get_gain(_camera[_camID], &_ImgPty_SetSettings.gain), FALSE);
+	ThorTSIErrChk(L"tl_camera_get_black_level_range", tl_camera_get_black_level_range(_camera[_camID], &_blackLevelRange[0], &_blackLevelRange[1]), FALSE);
+	ThorTSIErrChk(L"tl_camera_get_black_level", tl_camera_get_black_level(_camera[_camID], &_ImgPty_SetSettings.blackLevel), FALSE);
+	ThorTSIErrChk(L"tl_camera_get_frame_rate_control_value_range", tl_camera_get_frame_rate_control_value_range(_camera[_camID], &_frameRateControlValueRange[0], &_frameRateControlValueRange[1]), FALSE);
+	ThorTSIErrChk(L"tl_camera_get_is_frame_rate_control_enabled", tl_camera_get_is_frame_rate_control_enabled(_camera[_camID], &_ImgPty_SetSettings.frameRateControlEnabled), FALSE);
+	ThorTSIErrChk(L"tl_camera_get_frame_rate_control_value", tl_camera_get_frame_rate_control_value(_camera[_camID], &_ImgPty_SetSettings.frameRateControlValue), FALSE);
 }
 
 bool ThorCam::IsOpen(const long cameraIndex)
@@ -413,21 +405,17 @@ long ThorCam::SetBdDMA(ImgPty *pImgPty)
 
 		ThorTSIErrChk(L"tl_camera_set_biny", tl_camera_set_biny(_camera[_camID], _imgPtyDll.roiBinY), 1);
 
-		ThorTSIErrChk(L"tl_camera_set_roi", tl_camera_set_roi(_camera[_camID], _imgPtyDll.roiLeft, _imgPtyDll.roiTop, _imgPtyDll.roiRight, _imgPtyDll.roiBottom), 1); 
+		ThorTSIErrChk(L"tl_camera_set_roi", tl_camera_set_roi(_camera[_camID], _imgPtyDll.roiLeft, _imgPtyDll.roiTop, _imgPtyDll.roiRight, _imgPtyDll.roiBottom), 1);
 
-		//Only the CS2100 type of cameras have multiple readoutspeeds and don't have gain and black level
-		if(0 == _camName[_camID].compare(0, 6, "CS2100"))
-		{
-			ThorTSIErrChk(L"tl_camera_set_data_rate", tl_camera_set_data_rate(_camera[_camID], (TL_CAMERA_DATA_RATE)_imgPtyDll.readOutSpeedIndex), 1);
-		}
-		else
-		{
-			if (0 != _camName[_camID].compare(0, 5, "CS135"))
-			{
-				ThorTSIErrChk(L"tl_camera_set_black_level", tl_camera_set_black_level(_camera[_camID], (TL_CAMERA_DATA_RATE)_imgPtyDll.blackLevel), 1);
-			}
-			ThorTSIErrChk(L"tl_camera_set_gain", tl_camera_set_gain(_camera[_camID], (TL_CAMERA_DATA_RATE)_imgPtyDll.gain), 1);
-		}
+		ThorTSIErrChk(L"tl_camera_set_data_rate", tl_camera_set_data_rate(_camera[_camID], (TL_CAMERA_DATA_RATE)_imgPtyDll.readOutSpeedIndex), FALSE);
+
+		ThorTSIErrChk(L"tl_camera_set_gain", tl_camera_set_gain(_camera[_camID], (TL_CAMERA_DATA_RATE)_imgPtyDll.gain), FALSE);
+
+		ThorTSIErrChk(L"tl_camera_set_black_level", tl_camera_set_black_level(_camera[_camID], (TL_CAMERA_DATA_RATE)_imgPtyDll.blackLevel), FALSE);
+
+		ThorTSIErrChk(L"tl_camera_set_is_frame_rate_control_enabled", tl_camera_set_is_frame_rate_control_enabled(_camera[_camID], _imgPtyDll.frameRateControlEnabled), FALSE);
+
+		ThorTSIErrChk(L"tl_camera_set_frame_rate_control_value", tl_camera_set_frame_rate_control_value(_camera[_camID], _imgPtyDll.frameRateControlValue), FALSE);
 
 		//update width and height after setting roi
 		ThorTSIErrChk(L"tl_camera_get_sensor_width", tl_camera_get_sensor_width(_camera[_camID], &_ImgPty_SetSettings.widthPx), 1);
@@ -435,10 +423,6 @@ long ThorCam::SetBdDMA(ImgPty *pImgPty)
 
 		ThorTSIErrChk(L"tl_camera_get_sensor_height", tl_camera_get_sensor_height(_camera[_camID], &_ImgPty_SetSettings.heightPx), 1);
 		_imgPtyDll.heightPx = _ImgPty.heightPx = _ImgPty_SetSettings.heightPx;
-
-		ThorTSIErrChk(L"tl_camera_set_is_frame_rate_control_enabled", tl_camera_set_is_frame_rate_control_enabled(_camera[_camID], _imgPtyDll.frameRateControlEnabled), 1);
-
-		ThorTSIErrChk(L"tl_camera_set_frame_rate_control_value", tl_camera_set_frame_rate_control_value(_camera[_camID], _imgPtyDll.frameRateControlValue), 1);
 
 		//////****End Set/Get Camera Parameters****//////
 

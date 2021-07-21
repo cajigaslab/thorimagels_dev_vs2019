@@ -14,7 +14,7 @@
 #define DEFAULT_AVGNUM			1
 #define MAX_FRAMENUM			4096			// Maximum limit of frame count
 
-#define ThorTSIErrChk(fnName,fnCall,fnThrow) if (0 != fnCall) { StringCbPrintfW(_errMsg,MSG_SIZE,L"%s TSI_CS failed ,(%d). ",fnName,__LINE__); ThorCam::getInstance()->LogMessage(_errMsg,ERROR_EVENT); GetLastError(); if(fnThrow){ throw "fnCall"; }}
+#define ThorTSIErrChk(fnName,fnCall,fnThrow) if (0 != fnCall) { StringCbPrintfW(_errMsg,MSG_SIZE,L"%s TSI_CS failed ,(%d). ",fnName,__LINE__); if(fnThrow){ ThorCam::getInstance()->LogMessage(_errMsg,ERROR_EVENT); GetLastError(); throw "fnCall"; } else { ThorCam::getInstance()->LogMessage(_errMsg,INFORMATION_EVENT); }}
 
 #ifdef __cplusplus
 

@@ -448,7 +448,7 @@
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             Margin="8,0,0,0">
-                    <Label Content="{Binding Path=CamPixelSizeUM, UpdateSourceTrigger=PropertyChanged}"
+                    <Label Content="{Binding Path=PixelSizeUM, UpdateSourceTrigger=PropertyChanged}"
                                MinWidth="35"
                                VerticalAlignment="Center"/>
                     <Label Content="[um/pixel]"

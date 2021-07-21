@@ -38,13 +38,13 @@ public:
 	long Set3DParam(double na, double wavelength);
 	long SetSize(int width, int height, double pixelUM);
 	long SetAlgorithm(int algorithmID);
-	long CombineHologramFiles(const wchar_t * pathAndFilename1, const wchar_t * pathAndFilename2);
+	long CombineHologramFiles(const wchar_t * pathAndFilename1, const wchar_t * pathAndFilename2, long shiftPx);
 	long SetCoeffs(long algorithm, double* affCoeffs);
 	long VerticalFlip(float* pImgDst);
 	long RotateForAngle(float* pImgDst, double angle);
 	long ScaleByFactor(float* pImgDst, double scaleX, double scaleY);
 	long OffsetByPixels(float* pImgDst, long offsetX, long offsetY);
-	long GenerateHologram(float* pImg, int iteCount, float z);
+	long GenerateHologram(float* pImg, int iteCount, int weightRadiusPx, double minPercent, double maxPercent, float z);
 
 private:
 	HologramGen();
@@ -61,7 +61,7 @@ private:
 	void LogMessage(long eventLevel);
 	long PhaseGenByGS(float* pImgIn,float* pPhaseDst,int iterateCount);
 	long PhaseGenBy3DGS(float* pImg, float* pPolPhase, int iterateCount, double z);
-	long WeightByDistance(float* pImgDst);
+	long WeightByDistance(float* pImgDst, int weightRadiusPx, double minPercent = 25, double maxPercent = 75);
 	long SinglePassFilter(float* pImgDst);
 
 };

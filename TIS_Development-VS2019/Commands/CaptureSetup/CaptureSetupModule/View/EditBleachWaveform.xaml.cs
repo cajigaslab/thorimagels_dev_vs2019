@@ -263,13 +263,15 @@
         {
             bool ret = true;
 
-            //check calibration has been done:
-            if (null == vm.BleachCalibrateFineScaleXY)
-            { return false; }
+            if (!vm.IsStimulator)
+            {
+                //check calibration has been done:
+                if (null == vm.BleachCalibrateFineScaleXY)
+                { return false; }
 
-            if ((0 == vm.BleachCalibrateFieldSize) || (null == vm.BleachCalibratePixelXY))
-            { return false; }
-
+                if ((0 == vm.BleachCalibrateFieldSize) || (null == vm.BleachCalibratePixelXY))
+                { return false; }
+            }
             //***   Cycle Start    ***//
             vm.InitializeWaveformBuilder(clkRate);
             WaveformBuilder.ResetWaveform();

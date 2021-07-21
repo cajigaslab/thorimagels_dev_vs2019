@@ -811,6 +811,8 @@ public:
 		PARAM_LSM_POWER_RAMP_NUM_FLYBACK_FRAMES,
 		PARAM_LSM_POWER_RAMP_MODE,
 		PARAM_LSM_POWER_RAMP_PERCENTAGE_BUFFER,
+		PARAM_LSM_PIXEL_Y_MULTIPLE,
+		PARAM_LSM_PIXEL_PROCESS,
 
 		PARAM_FIRST_CCD_PARAM = 1000,
 		PARAM_BINNING_X = 1000,///<Binning X
@@ -1070,6 +1072,13 @@ public:
 		STATUS_READY = 1,
 		STATUS_ERROR = 2,
 		STATUS_PARTIAL = 3
+	};
+
+	enum Polarity
+	{
+		POL_NEG = 0,
+		POL_POS = 1,
+		POL_BI = 2
 	};
 
 	virtual long FindCameras(long &cameraCount) = 0;///<returns the number of cameras

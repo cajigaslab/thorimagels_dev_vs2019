@@ -89,6 +89,8 @@ IAcquire * AcquireFactory::getAcquireInstance(AcquireType type, Observer *pOb, I
 		pAcquire->PreCapture.connect(pOb,&Observer::OnPreCapture);
 		pAcquire->SequenceStepCurrent.connect(pOb,&Observer::OnSequenceStepCurrent);
 		pAcquire->StartProgressBar.connect(pOb,&Observer::OnProgressBarStart);
+		pAcquire->InformMessage.connect(pOb, &Observer::OnInformMessage);
+
 	}
 
 	return pAcquire;

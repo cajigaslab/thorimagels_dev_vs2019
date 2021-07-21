@@ -82,6 +82,8 @@
         private string _z2PosMinusModifier;
         private string _z2PosPlusKey;
         private string _z2PosPlusModifier;
+        private bool _z2StageLock = false;
+        private bool _z2StageMirror = false;
         private double _z2StepSize = .0100;
         private string _z2StopKey;
         private string _z2StopModifier;
@@ -427,6 +429,75 @@
             }
         }
 
+        public bool Z2StageLock
+        {
+            get
+            {
+                return _z2StageLock;
+            }
+            set
+            {
+                // for safety, only lock the stages if they are both close to zero position
+                // Note that Z(2)Position are in mm
+                if (_z2StageLock == false && value == true)
+                {
+                    if (Math.Abs(ZPosition) > 0.005 || Math.Abs(Z2Position) > 0.005)
+                    {
+                        string message = "Locking the Z stages is only allowed when both are at their zero position.";
+                        string caption = "Stage error";
+                        MessageBox.Show(message, caption);
+                        return;
+                    }
+
+                }
+
+                _z2StageLock = value;
+                OnPropertyChanged("Z2StageLock");
+            }
+        }
+
+        /// <summary>
+        /// Gets the Lock ZStages visibility.
+        /// </summary>
+        /// <value>The lock ZStages visibility.</value>
+        public Visibility Z2StageLockVisibility
+        {
+            get
+            {
+                XmlDocument appSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+
+                XmlNodeList ndList = appSettings.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/ZView");
+                if (ndList.Count > 0)
+                {
+                    string tmp = string.Empty;
+
+                    if (XmlManager.GetAttribute(ndList[0], appSettings, "Z2StageLockVisibility", ref tmp))
+                    {
+                        return tmp.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
+                    }
+                    else
+                    {
+                        return Visibility.Collapsed;
+                    }
+                }
+
+                return Visibility.Collapsed;
+            }
+        }
+
+        public bool Z2StageMirror
+        {
+            get
+            {
+                return _z2StageMirror;
+            }
+            set
+            {
+                _z2StageMirror = value;
+                OnPropertyChanged("Z2StageMirror");
+            }
+        }
+
         public Visibility Z2StageVisibility
         {
             get
@@ -685,6 +756,12 @@
                     OnPropertyChanged("ZPositionBar");
                     MVMManager.Instance["PowerControlViewModel", "RedrawPowerPlot"] = true;
                     OnPropertyChanged("ZPosOutOfBounds");
+
+                    if (Z2StageLock == true)
+                    {
+                        Z2Position = (Z2StageMirror == true) ? -value : value;
+                    }
+
                     _lastZSetTime[0] = DateTime.Now;
                 }
             }
@@ -1293,6 +1370,23 @@
                 //display step as an unsigned value
                 ZScanStep = Math.Abs(scanStep);
                 ZScanStop = ZScanStart + (numSteps - 1) * scanStep / (double)Constants.UM_TO_MM;
+
+                if (XmlManager.GetAttribute(ndList[0], experimentDoc, "z2StageLock", ref str))
+                {
+                    Z2StageLock = ("1" == str || Boolean.TrueString == str) ? true : false;
+                }
+                else
+                {
+                    Z2StageLock = false;
+                }
+                if (XmlManager.GetAttribute(ndList[0], experimentDoc, "z2StageMirror", ref str))
+                {
+                    Z2StageMirror = ("1" == str || Boolean.TrueString == str) ? true : false;
+                }
+                else
+                {
+                    Z2StageMirror = false;
+                }
             }
 
             // Set an OnPropertyChanged event for all properties
@@ -1389,6 +1483,8 @@
         /// </summary>
         private void GoZ2()
         {
+            if (Z2StageLock == true) return; // ignore command if stage is locked to primary
+
             Z2Position = ZGotoValue[1] / (double)Constants.UM_TO_MM;
             OnPropertyChanged("Z2Position");
             OnPropertyChanged("Z2PosOutOfBounds");
@@ -1546,11 +1642,15 @@
 
         private void z2PosMinus()
         {
+            if (Z2StageLock == true) return; // ignore command if stage is locked to primary
+
             Z2Position -= Z2StepSize;
         }
 
         private void z2PosPlus()
         {
+            if (Z2StageLock == true) return; // ignore command if stage is locked to primary
+
             Z2Position += Z2StepSize;
         }
 
@@ -1662,6 +1762,8 @@
 
         private void ZStage2GoToLocation(object index)
         {
+            if (Z2StageLock == true) return; // ignore command if stage is locked to primary
+
             try
             {
                 XmlDocument hardwareDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS];

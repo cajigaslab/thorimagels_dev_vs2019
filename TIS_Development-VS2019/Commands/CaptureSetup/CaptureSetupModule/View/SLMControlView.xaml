@@ -114,13 +114,13 @@
                                         DisplayMemberBinding="{Binding Path=BleachWaveParams.PostIdleTime}" />
                         <GridViewColumn Header="Power&#x0a;   (%)"
                                         Width="Auto"
-                                        DisplayMemberBinding="{Binding Path=BleachWaveParams.Power[0]}" />
+                                        DisplayMemberBinding="{Binding Path=BleachWaveParams.Power}" />
                         <GridViewColumn Header="Mea.Power&#x0a;    (mW)"
                                         Width="Auto"
-                                        DisplayMemberBinding="{Binding Path=BleachWaveParams.MeasurePower[0]}" />
+                                        DisplayMemberBinding="{Binding Path=BleachWaveParams.MeasurePower}" />
                         <GridViewColumn Header="Mea.Power D&#x0a;    (mW/um^2)"
                                         Width="Auto"
-                                        DisplayMemberBinding="{Binding Path=SLMMeasurePowerArea[0]}" />
+                                        DisplayMemberBinding="{Binding Path=SLMMeasurePowerArea}" />
                     </GridView>
                 </ListView.View>
             </ListView>
@@ -637,7 +637,9 @@
                                        Foreground="White" />
                             </StackPanel>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal"
+                        <StackPanel Name="stpCalibration"
+                                    Orientation="Horizontal"
+                                    IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
                                     VerticalAlignment="Center">
                             <Label Content="Wavelength"
                                    Height="30"
@@ -671,8 +673,7 @@
                                     Width="Auto"
                                     Margin="3"
                                     Command="{Binding Path=EditSLMParamRelayCommand}"
-                                    CommandParameter="SLM_CALIBRATION"
-                                    IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
+                                    CommandParameter="SLM_CALIBRATION">
                                 <TextBlock ToolTip="Calibrate SLM">Check Calibration</TextBlock>
                             </Button>
                         </StackPanel>

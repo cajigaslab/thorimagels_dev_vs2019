@@ -79,6 +79,7 @@
                           LSMPixelYMax="{Binding Path=LSMPixelYMax, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
                           LSMPixelYMin="{Binding Path=LSMPixelYMin, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
                           LSMPixelY="{Binding Path=LSMPixelY, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                          LSMPixelYMultiple="{Binding Path=LSMPixelYMultiple, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                           LSMScaleYScan="{Binding Path=LSMScaleYScan, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                           LSMScanAreaAngle="{Binding Path=LSMScanAreaAngle, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                           LSMUMPerPixel="{Binding Path=LSMUMPerPixel, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
