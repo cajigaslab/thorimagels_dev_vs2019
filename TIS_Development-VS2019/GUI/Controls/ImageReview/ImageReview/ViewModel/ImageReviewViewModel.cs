@@ -40,7 +40,7 @@
     using Microsoft.Practices.Composite.Regions;
     using Microsoft.Practices.Composite.Wpf.Events;
     using Microsoft.Practices.Unity;
-
+    using Microsoft.Win32;
     using MultiROIStats;
 
     using OverlayManager;
@@ -414,6 +414,7 @@
         private bool _updateVirtualStack = true;
         private ICommand _viewMatlabCOmmand;
         private ICommand _viewOMEXMLCommand;
+        private ICommand _viewThorAnalysisCommand;
 
         // 0: 2D viewer
         // 1: 3D viewer
@@ -2601,6 +2602,17 @@
             }
         }
 
+        public ICommand ViewThorAnalysis
+        {
+            get
+            {
+                if (this._viewThorAnalysisCommand == null)
+                    this._viewThorAnalysisCommand = new RelayCommand(() => LaunchThorAnalysis());
+
+                return this._viewThorAnalysisCommand;
+            }
+        }
+
         public int ViewType
         {
             get
@@ -3678,6 +3690,57 @@
             });
             PanelsEnable = true;
             SetMenuBarEnable(true);
+        }
+
+        public long LaunchThorAnalysis()
+        {
+            long ret = 0;
+
+            // Judge whether ThorAnalysis has been installed
+            var isThorAnalysisInstalled = false;
+            string exePath = "";
+            var regKey = Registry.LocalMachine;
+            var regSubKey = regKey.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\", false);
+            foreach (var keyName in regSubKey.GetSubKeyNames())
+            {
+                if (keyName.Contains("ThorAnalysis"))
+                {
+                    isThorAnalysisInstalled = true;
+
+                    var subKey = regSubKey.OpenSubKey(keyName);
+                    exePath = subKey.GetValue("")?.ToString();
+                    break;
+                }
+            }
+
+            if (!isThorAnalysisInstalled || string.IsNullOrEmpty(exePath))
+            {
+                MessageBox.Show("Failed to launch ThorAnalysis, please install or contact Thorlabs Support");
+            }
+            else
+            {
+                //Load active.xml to find experiment folder
+                var experimentDoc = new XmlDocument();
+                experimentDoc.Load(_imageReview.ExperimentXMLPath);
+                XmlNodeList nodeList = experimentDoc.SelectNodes("/ThorImageExperiment/Name");
+                if (nodeList.Count > 0)
+                {
+                    string str = string.Empty;
+                    if (XmlManager.GetAttribute(nodeList[0], experimentDoc, "path", ref str))
+                    {
+                        var imgFile = str + "\\Image.tif";
+                        if (File.Exists(imgFile))
+                        {
+                            Process.Start(exePath, imgFile);
+                            ret = 1;
+                        }
+                        else
+                            MessageBox.Show("The image data needs to be in OME-TIFF format.");
+                    }
+                }
+            }
+
+            return ret;
         }
 
         public long LaunchFijiOMEXML()

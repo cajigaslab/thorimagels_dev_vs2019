@@ -46,8 +46,8 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="mcl_RF_Switch_ControllerNET45">
-      <HintPath>..\..\..\Tools\Mini-Circuits\RF switch controller\mcl_RF_Switch_ControllerNET45.dll</HintPath>
+    <Reference Include="mcl_RF_Switch_Controller_NET45">
+      <HintPath>..\..\..\Tools\Mini-Circuits\RF switch controller\mcl_RF_Switch_Controller_NET45.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Practices.Composite">
       <HintPath>..\..\..\GUI\Composite Application\Source\CAL\Composite.UnityExtensions\bin\Debug\Microsoft.Practices.Composite.dll</HintPath>

@@ -96,7 +96,7 @@
   <body>
     <div>
       <div class="fileinformation">
-		<div>v19.12.5887</div>
+		<div>v21.6.6291</div>
 	</div>
     </div>
     <div><a class="go-top" href="#Chapter_appendix_detail"></a></div>
@@ -232,6 +232,12 @@
                             <div><b>補正データの取得と保存</b><br>カメラに補正データを生成させ、メモリ内に保存します。この機能は一部のカメラのみ対応しています。<br></div>
                           </td>
                         </tr>
+                        <tr>
+                          <td width="25%"><a class="go-top" href="cpp/devicebuffermode">devicebuffermode</a></td>
+                          <td width="75%">
+                            <div><b>デバイスバッファモードに関連するパラメータの設定と画像アクセス</b><br>デバイスバッファモードに関連するパラメータの設定、取得をし、すべての画像に最短でアクセスします。この機能は一部のカメラのみ対応しています。<br></div>
+                          </td>
+                        </tr>
                       </table>
                     </div>
                   </div>
@@ -301,10 +307,49 @@
                   <div>
                     <p></p>
                   </div>
+				<div class="title">Python</div>
+                  <div></div>
+                  <div>
+                    <div class="samplelist">
+                      <table width="100%" border="1" rules="all">
+                        <tr>
+                          <th bgcolor="#BBBBBB" width="25%" align="left">Sample</th>
+                          <th bgcolor="#BBBBBB" width="75%" align="left">Explanation</th>
+                        </tr>
+                        <tr>
+                          <td width="25%"><a class="go-top" href="python">Source Folder</a></td>
+                          <td width="75%">
+                            <div>リンクされたディレクトリに次のソースが含まれています。<br></div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td width="25%">dcam_show_device_list.py</td>
+                          <td width="75%">
+                            <div>認識されたデバイスのリストを表示します。<br></div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td width="25%">dcam_show_properties.py</td>
+                          <td width="75%">
+                            <div>オープンされたデバイスがサポートしているプロパティのリストを表示します。<br></div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td width="25%">dcam_show_single_captured_image.py</td>
+                          <td width="75%">
+                            <div>画像を1フレーム取得し、OpenCVで表示します。<br></div>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+                  </div>
+                  <div>
+                    <p></p>
+                  </div>
 				<div class="title">CUDA</div>
                   <div>
                     <div>
-						<div>CUDAを使用したサンプルとなります。CUDA Toolkit 7.0で作成しています。</div>
+						<div>CUDAを使用したサンプルとなります。CUDA Toolkit 10.2、Visual Studio 2019で作成しています。</div>
 					</div>
                   </div>
                   <div>

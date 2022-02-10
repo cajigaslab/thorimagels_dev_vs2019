@@ -317,7 +317,7 @@ long ImageWaveformBuilder::GetGGalvoWaveformParams(SignalType sType, void* param
 		if(WAIT_OBJECT_0 != WaitForSingleObject(_gParams[_scanAreaId].bufferHandle, 3*EVENT_WAIT_TIME))					//timeout: 15 seconds
 			return FALSE;
 	}
-	long unitSize[SignalType::SIGNALTYPE_LAST] = { _countPerCallback[sType], _countPerCallback[sType], _countPerCallback[sType], 0 };
+	long unitSize[SignalType::SIGNALTYPE_LAST] = { (long)_countPerCallback[sType], (long)_countPerCallback[sType], (long)_countPerCallback[sType], 0 };
 	if(FALSE == ResetGGalvoWaveformParam(&_gParams[_scanAreaId], unitSize, _gWaveXY[_scanAreaId].pockelsCount, _gWaveXY[_scanAreaId].digitalLineCnt))	//count to be copied before return is _countPerCallback
 	{
 		ReleaseMutex(_gParams[_scanAreaId].bufferHandle);

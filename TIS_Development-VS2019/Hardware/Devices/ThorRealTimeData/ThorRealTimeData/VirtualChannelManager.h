@@ -37,7 +37,7 @@ public:
 	~VirtualChannelProcessor();
 
 	//execute math expression on time domain channels, including both analog and digital
-	long ExecuteTimeDomain(double* pAIn, unsigned long* pDIn, size_t length, long lineID, double* pOut);
+	long ExecuteTimeDomain(double* pAIn, unsigned char* pDIn, size_t length, long lineID, double* pOut);
 
 	//execute math expression on freq domain channels
 	long ExecuteFreqDomain(double* pSInRe, double* pSInIm, size_t length, long lineID, double* pOut);

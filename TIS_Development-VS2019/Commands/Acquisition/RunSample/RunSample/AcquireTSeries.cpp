@@ -190,6 +190,12 @@ long AcquireTSeries::CallInformMessage(wchar_t* message)
 	return TRUE;
 }
 
+long AcquireTSeries::CallNotifySavedFileIPC(wchar_t* message)
+{
+	NotifySavedFileIPC(message);
+	return TRUE;
+}
+
 long AcquireTSeries::Execute(long index, long subWell, long zFrame, long tFrame)
 {
 	_tFrame = tFrame;

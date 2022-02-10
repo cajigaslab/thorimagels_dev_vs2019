@@ -238,7 +238,7 @@
                 experimentPath = experimentsSavePath + "\\" + expName.FullName;
 
                 //Create the new experiment directory(s)
-                Directory.CreateDirectory(experimentPath);
+                ResourceManagerCS.SafeCreateDirectory(experimentPath);
 
                 //assign the experiment xml path
                 string experimentXMLPath = experimentPath + "\\Experiment.xml";
@@ -361,10 +361,7 @@
 
             snapshotFilename = SnapshotSavingPath + "\\" + expName.FullName;
 
-            if (false == Directory.Exists(SnapshotSavingPath))
-            {
-                Directory.CreateDirectory(SnapshotSavingPath);
-            }
+            ResourceManagerCS.SafeCreateDirectory(SnapshotSavingPath);
 
             return snapshotFilename;
         }

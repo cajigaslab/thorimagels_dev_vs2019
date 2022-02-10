@@ -101,9 +101,6 @@ private:
 	wstring FindCOMPort(string VID, string PID, string serialNum);
 	list<string> SerialNumbers(string VID, string PID);
 
-	char * _setSequence;
-	char * _insertSequence;
-
 	vector<SERIAL_PORT_STATUS> _devices;
 	int  _selectedDevIndex;
 	ULONG _currentPos1, _currentPos2;

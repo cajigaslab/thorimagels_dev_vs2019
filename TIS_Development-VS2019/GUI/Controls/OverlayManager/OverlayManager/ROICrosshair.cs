@@ -18,7 +18,6 @@
         private GeometryGroup _crossHairGroup;
         private double _size = 7;
         private double _wavelength = 0;
-        private double _zValue = 0;
 
         #endregion Fields
 
@@ -57,12 +56,6 @@
         {
             get { return _wavelength; }
             set { _wavelength = value; }
-        }
-
-        public double ZValue
-        {
-            get { return _zValue; }
-            set { _zValue = value; }
         }
 
         protected override Geometry DefiningGeometry

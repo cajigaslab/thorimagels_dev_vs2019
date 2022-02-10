@@ -311,6 +311,11 @@
         "AverageFramesPlusCommand",
         typeof(ICommand),
         typeof(ScanControlUC));
+        public static readonly DependencyProperty BandwidthListProperty = 
+        DependencyProperty.Register(
+        "BandwidthList",
+        typeof(ObservableCollection<ObservableCollection<string>>),
+        typeof(ScanControlUC));
         public static readonly DependencyProperty ChanDigOffsetMinusCommandProperty = 
         DependencyProperty.Register(
         "ChanDigOffsetMinusCommand",
@@ -419,6 +424,10 @@
         DependencyProperty.Register("DwellTimeSliderEnabled",
         typeof(bool),
         typeof(ScanControlUC));
+        public static DependencyProperty FastOneWayImagingModeEnableVisibilityProperty = 
+        DependencyProperty.Register("FastOneWayImagingModeEnableVisibility",
+        typeof(Visibility),
+        typeof(ScanControlUC));
         public static DependencyProperty FramesPerSecondAverageProperty = 
         DependencyProperty.Register("FramesPerSecondAverage",
         typeof(string),
@@ -463,6 +472,14 @@
         DependencyProperty.Register("LSMExtClockRate",
         typeof(double),
         typeof(ScanControlUC));
+        public static DependencyProperty LSMExternalClockPhaseOffsetProperty = 
+        DependencyProperty.Register("LSMExternalClockPhaseOffset",
+        typeof(double),
+        typeof(ScanControlUC));
+        public static DependencyProperty LSMFastOneWayImagingModeEnableProperty = 
+        DependencyProperty.Register("LSMFastOneWayImagingModeEnable",
+        typeof(bool),
+        typeof(ScanControlUC));
         public static DependencyProperty LSMFlybackCyclesProperty = 
         DependencyProperty.Register("LSMFlybackCycles",
         typeof(int),
@@ -503,10 +520,6 @@
         DependencyProperty.Register("LSMPixelProcessVisibility",
         typeof(Visibility),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMPulseMultiplexingPhaseProperty = 
-        DependencyProperty.Register("LSMPulseMultiplexingPhase",
-        typeof(double),
-        typeof(ScanControlUC));
         public static DependencyProperty LSMPulseMultiplexingProperty = 
         DependencyProperty.Register("LSMPulseMultiplexing",
         typeof(int),
@@ -543,9 +556,21 @@
         DependencyProperty.Register("NumberOfPulsesPerPixel",
         typeof(int),
         typeof(ScanControlUC));
-        public static DependencyProperty PmtBandwidthIndexProperty = 
-        DependencyProperty.Register("PmtBandwidthIndex",
-        typeof(List<int>),
+        public static DependencyProperty Pmt1BandwidthSelectedProperty = 
+        DependencyProperty.Register("Pmt1BandwidthSelected",
+        typeof(string),
+        typeof(ScanControlUC));
+        public static DependencyProperty Pmt2BandwidthSelectedProperty = 
+        DependencyProperty.Register("Pmt2BandwidthSelected",
+        typeof(string),
+        typeof(ScanControlUC));
+        public static DependencyProperty Pmt3BandwidthSelectedProperty = 
+        DependencyProperty.Register("Pmt3BandwidthSelected",
+        typeof(string),
+        typeof(ScanControlUC));
+        public static DependencyProperty Pmt4BandwidthSelectedProperty = 
+        DependencyProperty.Register("Pmt4BandwidthSelected",
+        typeof(string),
         typeof(ScanControlUC));
         public static DependencyProperty PMTBandwidthLabelVisibilityProperty = 
         DependencyProperty.Register("PMTBandwidthLabelVisibility",
@@ -646,6 +671,12 @@
             set { SetValue(AverageFramesPlusCommandProperty, value); }
         }
 
+        public ObservableCollection<ObservableCollection<string>> BandwidthList
+        {
+            get { return (ObservableCollection<ObservableCollection<string>>)GetValue(BandwidthListProperty); }
+            set { SetValue(BandwidthListProperty, value); }
+        }
+
         public Visibility BipolarityVisibility
         {
             get { return (Visibility)GetValue(BipolarityVisibilityProperty); }
@@ -704,6 +735,12 @@
         {
             get { return (bool)GetValue(DwellTimeSliderEnabledProperty); }
             set { SetValue(DwellTimeSliderEnabledProperty, value); }
+        }
+
+        public Visibility FastOneWayImagingModeEnableVisibility
+        {
+            get { return (Visibility)GetValue(FastOneWayImagingModeEnableVisibilityProperty); }
+            set { SetValue(FastOneWayImagingModeEnableVisibilityProperty, value); }
         }
 
         public ICommand FlybackCyclesMinusCommand
@@ -820,6 +857,18 @@
             set { SetValue(LSMExtClockRateProperty, value); }
         }
 
+        public double LSMExternalClockPhaseOffset
+        {
+            get { return (double)GetValue(LSMExternalClockPhaseOffsetProperty); }
+            set { SetValue(LSMExternalClockPhaseOffsetProperty, value); }
+        }
+
+        public bool LSMFastOneWayImagingModeEnable
+        {
+            get { return (bool)GetValue(LSMFastOneWayImagingModeEnableProperty); }
+            set { SetValue(LSMFastOneWayImagingModeEnableProperty, value); }
+        }
+
         public int LSMFlybackCycles
         {
             get { return (int)GetValue(LSMFlybackCyclesProperty); }
@@ -886,12 +935,6 @@
             set { SetValue(LSMPulseMultiplexingProperty, value); }
         }
 
-        public double LSMPulseMultiplexingPhase
-        {
-            get { return (double)GetValue(LSMPulseMultiplexingPhaseProperty); }
-            set { SetValue(LSMPulseMultiplexingPhaseProperty, value); }
-        }
-
         public Visibility LSMPulseMultiplexingVisibility
         {
             get { return (Visibility)GetValue(LSMPulseMultiplexingVisibilityProperty); }
@@ -940,10 +983,28 @@
             set { SetValue(NumberOfPulsesPerPixelProperty, value); }
         }
 
-        public List<int> PmtBandwidthIndex
+        public string Pmt1BandwidthSelected
         {
-            get { return (List<int>)GetValue(PmtBandwidthIndexProperty); }
-            set { SetValue(PmtBandwidthIndexProperty, value); }
+            get { return (string)GetValue(Pmt1BandwidthSelectedProperty); }
+            set { SetValue(Pmt1BandwidthSelectedProperty, value); }
+        }
+
+        public string Pmt2BandwidthSelected
+        {
+            get { return (string)GetValue(Pmt2BandwidthSelectedProperty); }
+            set { SetValue(Pmt2BandwidthSelectedProperty, value); }
+        }
+
+        public string Pmt3BandwidthSelected
+        {
+            get { return (string)GetValue(Pmt3BandwidthSelectedProperty); }
+            set { SetValue(Pmt3BandwidthSelectedProperty, value); }
+        }
+
+        public string Pmt4BandwidthSelected
+        {
+            get { return (string)GetValue(Pmt4BandwidthSelectedProperty); }
+            set { SetValue(Pmt4BandwidthSelectedProperty, value); }
         }
 
         public Visibility PMTBandwidthLabelVisibility

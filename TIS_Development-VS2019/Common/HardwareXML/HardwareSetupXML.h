@@ -67,7 +67,8 @@ public:
 	 static const char * const PMT_SWITCH_TAG;
 	 static const char * const BEAM_STABILIZER_TAG;
 	 static const char * const LAMP_TAG;
-	 static const char* const INVERTED;
+	 static const char * const INVERTED;
+	 static const char * const SHUTTER;
 	 enum {NUM_WAVELENGTH_ATTRIBUTES = 9};
 	 enum {NUM_OBJECTIVE_ATTRIBUTES = 14};
 	 enum {NUM_COLORCHANNEL_ATTRIBUTES = 1};
@@ -76,6 +77,7 @@ public:
 	 enum {NUM_HARDWARE_ATTRIBUTES = 6};
 	 enum { NUM_INVERTED_ATTRIBUTES = 1 };
 	 enum {NUM_DEVICE_ATTRIBUTES = 3};
+	 enum { NUM_SHUTTER_ATTRIBUTES = 1 };
 	 enum 
 	 {
 		 DLLNAME_ATTR = 0, 
@@ -91,7 +93,8 @@ public:
 	 static const char * const STREAMING_ATTR[NUM_STREAMING_ATTRIBUTES];
 	 static const char * const LSM_ATTR[NUM_LSM_ATTRIBUTES];
 	 static const char * const HARDWARE_ATTR[NUM_HARDWARE_ATTRIBUTES];
-	 static const char* const INVERTED_ATTR[NUM_INVERTED_ATTRIBUTES];
+	 static const char * const INVERTED_ATTR[NUM_INVERTED_ATTRIBUTES];
+	 static const char * const SHUTTER_ATTR[NUM_SHUTTER_ATTRIBUTES];
 
 	HardwareSetupXML();
 	~HardwareSetupXML();
@@ -120,4 +123,5 @@ public:
 	long GetActivationCameraID(long &id);
 	long SetFastLoad(long val);///<if fast load is enabled the OpenConfigFile function will be bypassed if the file was previously loaded
 	long GetInvertedSettings(long& safetyInterlockCheckEnabled);
+	long GetShutterOptions(long& openShutterInSimulusMode);
 };

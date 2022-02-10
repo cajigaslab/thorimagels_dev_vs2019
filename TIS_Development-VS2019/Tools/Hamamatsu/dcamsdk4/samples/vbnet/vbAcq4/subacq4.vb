@@ -85,7 +85,7 @@ Namespace Hamamatsu
                     Dim offset As Integer
 
                     offset = srcrowbytes * y
-                    CopyMemory_UShortarrayFromIntPtr(s, src.ToInt64() + offset, width)
+                    CopyMemory_UShortarrayFromIntPtr(s, src.ToInt64() + offset, srcrowbytes)
 
                     copydibline_rgb32_from_mono16(d, s, width, gain, inBase)
 

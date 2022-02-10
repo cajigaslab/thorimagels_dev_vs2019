@@ -243,7 +243,7 @@ public:
 			long numBlockToExtend = 0;
 			if (_blockSize < (_unitIdx + numUnits))
 			{
-				numBlockToExtend = (0 == ((_unitIdx + numUnits) % _blockSize)) ? ((_unitIdx + numUnits) / _blockSize) + 1 : ((_unitIdx + numUnits) / _blockSize);
+				numBlockToExtend = (0 != ((_unitIdx + numUnits) % _blockSize) && 1 < ((double)(_unitIdx + numUnits) / (double)_blockSize)) ? ((_unitIdx + numUnits) / _blockSize) + 1 : ((_unitIdx + numUnits) / _blockSize);
 			}
 
 			//return if over the block count limit

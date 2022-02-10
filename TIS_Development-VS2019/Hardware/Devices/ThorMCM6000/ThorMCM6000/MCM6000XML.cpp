@@ -837,7 +837,8 @@ long MCM6000XML::SaveSlotNameToSettingsFile(Mcm6kParams* mcm6kParams, long& sett
 
 						if (slotName.compare("Light Path") == 0)
 						{
-							if (CardTypes::ST_Invert_Stepper_BISS_type == mcm6kParams->cardType[i] || CardTypes::ST_Invert_Stepper_SSI_type == mcm6kParams->cardType[i])
+							if (CardTypes::ST_Invert_Stepper_BISS_type == mcm6kParams->cardType[i] || CardTypes::ST_Invert_Stepper_SSI_type == mcm6kParams->cardType[i] ||
+								CardTypes::MCM_Stepper_Internal_BISS_L6470 == mcm6kParams->cardType[i] || CardTypes::MCM_Stepper_Internal_SSI_L6470 == mcm6kParams->cardType[i])
 							{
 								CHK_HR(VariantFromString(L"InvertedLP", varStage));
 							}
@@ -862,7 +863,7 @@ long MCM6000XML::SaveSlotNameToSettingsFile(Mcm6kParams* mcm6kParams, long& sett
 						settingsFileChanged = TRUE;
 					}
 					//For Shutter, the slot name comes back as empty, instead we need check the card type and write it on the settings file
-					else if (wstring(val.bstrVal).compare(L"") == 0 && (CardTypes::Shutter_type == mcm6kParams->cardType[i] || CardTypes::Shutter_4_type == mcm6kParams->cardType[i]))
+					else if (wstring(val.bstrVal).compare(L"") == 0 && (CardTypes::Shutter_type == mcm6kParams->cardType[i] || CardTypes::Shutter_4_type == mcm6kParams->cardType[i] || CardTypes::Shutter_4_type_REV6 == mcm6kParams->cardType[i]))
 					{
 						CHK_HR(VariantFromString(L"Shutter", varStage));
 						pNode->put_nodeValue(varStage);
@@ -1003,7 +1004,7 @@ long MCM6000XML::VerifySlotCards(Mcm6kParams* mcm6kParams, ScopeType& scopeType)
 			ret = FALSE;
 		}
 
-		if (i + CARD_ID_START_ADDRESS == mcm6kParams->shutter_slot_id && (CardTypes::Shutter_type != mcm6kParams->cardType[i] && CardTypes::Shutter_4_type != mcm6kParams->cardType[i]))
+		if (i + CARD_ID_START_ADDRESS == mcm6kParams->shutter_slot_id && (CardTypes::Shutter_type != mcm6kParams->cardType[i] && CardTypes::Shutter_4_type != mcm6kParams->cardType[i] && CardTypes::Shutter_4_type_REV6 != mcm6kParams->cardType[i]))
 		{
 			mcm6kParams->shutter_slot_id = 0;
 			mcm6kParams->shutterConfigured = FALSE;

@@ -271,6 +271,7 @@
                             XmlManager.SetAttribute(ndList[0], experimentFile, "epochCount", this.EpochCount.ToString());
                             XmlManager.SetAttribute(ndList[0], experimentFile, "advanceMode", this.SLMSequenceOn ? "1" : "0");
                             XmlManager.SetAttribute(ndList[0], experimentFile, "holoGen3D", this.SLM3D ? "1" : "0");
+                            XmlManager.SetAttribute(ndList[0], experimentFile, "refractiveIndex", this.RefractiveIndex.ToString());
 
                             ndList = experimentFile.SelectNodes("/ThorImageExperiment/SLM/Pattern");
                             for (int id = 0; id < ndList.Count; id++)
@@ -342,6 +343,15 @@
                             break;
                         case GlobalExpAttribute.OTM:
                             MVMManager.Instance["OTMControlViewModel", "PersistGlobalOTMCalibration"] = experimentFile;
+                            break;
+                        case GlobalExpAttribute.SLM_ZREF:
+                            ndList = experimentFile.SelectNodes("/ThorImageExperiment/SLM");
+                            if (ndList.Count <= 0)
+                            {
+                                CreateXmlNode(experimentFile, "SLM");
+                                ndList = experimentFile.SelectNodes("/ThorImageExperiment/SLM");
+                            }
+                            XmlManager.SetAttribute(ndList[0], experimentFile, "zRefMM", (((double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0.0])).ToString());
                             break;
                         default:
                             break;
@@ -447,8 +457,6 @@
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "stepSizeUM", stepSize.ToString());
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "setupPositionMM", ((double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0.0]).ToString());
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "startPos", ((double)MVMManager.Instance["ZControlViewModel", "ZScanStart", (object)0.0]).ToString());
-                    XmlManager.SetAttribute(ndList[0], xmlDoc, "z2StageLock", ((bool)MVMManager.Instance["ZControlViewModel", "Z2StageLock", (object)0.0]) == true ? "1" : "0");
-                    XmlManager.SetAttribute(ndList[0], xmlDoc, "z2StageMirror", ((bool)MVMManager.Instance["ZControlViewModel", "Z2StageMirror", (object)0.0]) == true ? "1" : "0");
                 }
 
                 ndListHW = HardwareDoc.SelectNodes("/HardwareSettings/Devices/ZStage");
@@ -562,6 +570,7 @@
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "cycleDelay", this.SLMBleachDelay.ToString());
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "advanceMode", this.SLMSequenceOn ? "1" : "0");
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "holoGen3D", this.SLM3D ? "1" : "0");
+                    XmlManager.SetAttribute(ndList[0], xmlDoc, "refractiveIndex", this.RefractiveIndex.ToString());
                 }
                 ////End (SLM) Bleach non-waveform criticals
 
@@ -610,10 +619,7 @@
                 XmlDocument lightPathListDoc = new XmlDocument();
                 string lightPathListFolder = Application.Current.Resources["LightPathListFolder"].ToString();
                 //if the directory doesn't existe, create it.
-                if (false == Directory.Exists(lightPathListFolder))
-                {
-                    Directory.CreateDirectory(lightPathListFolder);
-                }
+                ResourceManagerCS.SafeCreateDirectory(lightPathListFolder);
 
                 string lightPathListFile = lightPathListFolder + "\\LightPathList.xml";
 

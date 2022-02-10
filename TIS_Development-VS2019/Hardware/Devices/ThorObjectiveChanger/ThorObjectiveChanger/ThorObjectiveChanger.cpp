@@ -107,7 +107,6 @@ ThorObjectiveChanger::ThorObjectiveChanger() :
 	_currentPos1 = 0;
 	_currentPos2 = 0;
 	_errMsg[0] = NULL;
-	_insertSequence = nullptr;
 	_moverLoc = MOVER_LOCATION::DISCONNECTED;
 	_moverLoc_B = FALSE;
 	_moverPos = (long)MOVER_LOCATION::DISCONNECTED;
@@ -117,7 +116,6 @@ ThorObjectiveChanger::ThorObjectiveChanger() :
 	_rawDriverCount = 0;
 	_rawEncoderCount = 0;
 	_selectedDevIndex = 0;
-	_setSequence[0] = NULL;
 	_umDriverCount = 0;
 	_umEncoderCount = 0;
 }

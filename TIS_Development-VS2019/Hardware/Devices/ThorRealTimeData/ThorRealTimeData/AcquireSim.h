@@ -30,7 +30,7 @@ typedef struct SimData
 	int nVI;
 	unsigned long * gCtr;
 	double * aiData;
-	unsigned long * diData;
+	unsigned char* diData;
 	double *aiSpectrum;
 	unsigned long * diSpectrum;
 	unsigned long * ciData;

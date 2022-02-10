@@ -103,7 +103,7 @@ BOOL CExCapApp::InitInstance()
 	// in your application.
 	InitCtrls.dwICC = ICC_WIN95_CLASSES;
 	InitCommonControlsEx(&InitCtrls);
-
+		
 	CWinApp::InitInstance();
 
 

@@ -90,7 +90,7 @@ IAcquire * AcquireFactory::getAcquireInstance(AcquireType type, Observer *pOb, I
 		pAcquire->SequenceStepCurrent.connect(pOb,&Observer::OnSequenceStepCurrent);
 		pAcquire->StartProgressBar.connect(pOb,&Observer::OnProgressBarStart);
 		pAcquire->InformMessage.connect(pOb, &Observer::OnInformMessage);
-
+		pAcquire->NotifySavedFileIPC.connect(pOb, &Observer::OnNotifySavedFileIPC);
 	}
 
 	return pAcquire;

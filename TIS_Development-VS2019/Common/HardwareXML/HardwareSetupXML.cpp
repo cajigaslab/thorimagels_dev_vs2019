@@ -1290,3 +1290,51 @@ long HardwareSetupXML::GetInvertedSettings(long& safetyInterlockCheckEnabled)
 	}
 	return FALSE;
 }
+
+const char* const HardwareSetupXML::SHUTTER = "Shutter";
+const char* const HardwareSetupXML::SHUTTER_ATTR[NUM_SHUTTER_ATTRIBUTES] = { "OpenShutterInSimulusMode" };
+long HardwareSetupXML::GetShutterOptions(long& openShutterInSimulusMode)
+{
+	if (FALSE == GetCurrentPath())
+	{
+		logDll->TLTraceEvent(ERROR_EVENT, 1, L"HardwareSetupXML GetShutterOptions -> Failed to open HardwareSetttings.xml file");
+		return FALSE;
+	}
+
+	OpenConfigFile(WStringToString(_currentPathAndFile));
+
+	// make sure the top level root element exist
+	ticpp::Element* configObj = _xmlObj->FirstChildElement(false);
+
+	if (configObj == NULL)
+	{
+		logDll->TLTraceEvent(ERROR_EVENT, 1, L"HardwareSetupXML GetShutterOptions -> configObj == NULL, top level root element of HardwareSettings.xml doesn't exist.");
+		return FALSE;
+	}
+	else
+	{
+		ticpp::Element* child = configObj->FirstChildElement(SHUTTER, false);
+		if (NULL == child)
+		{
+			logDll->TLTraceEvent(ERROR_EVENT, 1, L"HardwareSetupXML GetShutterOptions -> child == NULL, Shutter tag doesn't exist in HardwareSettings.xml.");
+			return FALSE;
+		}
+
+		string str;
+		wstring str2;
+		for (long attCount = 0; attCount < NUM_SHUTTER_ATTRIBUTES; attCount++)
+		{
+			str.clear();
+			GetAttribute(child, SHUTTER, SHUTTER_ATTR[attCount], str);
+			stringstream ss(str);
+			switch (attCount)
+			{
+			case 0:
+				ss >> openShutterInSimulusMode;
+				break;
+			}
+		}
+		return TRUE;
+	}
+	return FALSE;
+}

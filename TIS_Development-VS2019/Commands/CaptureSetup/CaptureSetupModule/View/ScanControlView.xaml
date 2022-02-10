@@ -17,6 +17,7 @@
     <Grid>
         <sc:ScanControlUC AverageFramesMinusCommand="{Binding Path=AverageFramesMinusCommand}"
                           AverageFramesPlusCommand="{Binding Path=AverageFramesPlusCommand}"
+                          BandwidthList="{Binding Path=BandwidthList}"
                           ChanDigOffset="{Binding Path=ChanDigOffset,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                           ChanDigOffsetMinusCommand="{Binding Path=ChanDigOffsetMinusCommand}"
                           ChanDigOffsetPlusCommand="{Binding Path=ChanDigOffsetPlusCommand}"
@@ -53,7 +54,7 @@
                           LSMPixelDwellTimeMaxIndex="{Binding Path=LSMPixelDwellTimeMaxIndex,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
                           LSMPixelDwellTimeMinIndex="{Binding Path=LSMPixelDwellTimeMinIndex,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
                           LSMPulseMultiplexing="{Binding Path=LSMPulseMultiplexing,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
-                          LSMPulseMultiplexingPhase="{Binding Path=LSMPulseMultiplexingPhase,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                          LSMExternalClockPhaseOffset="{Binding Path=LSMExternalClockPhaseOffset,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                           LSMPulseMultiplexingVisibility="{Binding Path=LSMPulseMultiplexingVisibility,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
                           LSMPhaseAdjusmentVisibility="{Binding Path=LSMPhaseAdjusmentVisibility,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
                           LSMRealtimeAveraging="{Binding Path=LSMRealtimeAveraging,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
@@ -62,7 +63,10 @@
                           LSMSignalAverageFrames="{Binding Path=LSMSignalAverageFrames,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                           LSMTwoWayAlignment="{Binding Path=LSMTwoWayAlignment,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                           LSMTwoWayAlignmentCoarse="{Binding Path=LSMTwoWayAlignmentCoarse,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
-                          PmtBandwidthIndex="{Binding Path=PmtBandwidthIndex,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                          Pmt1BandwidthSelected="{Binding Path=Pmt1BandwidthSelected,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                          Pmt2BandwidthSelected="{Binding Path=Pmt2BandwidthSelected,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                          Pmt3BandwidthSelected="{Binding Path=Pmt3BandwidthSelected,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                          Pmt4BandwidthSelected="{Binding Path=Pmt4BandwidthSelected,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                           PMTBandwidthLabelVisibility="{Binding Path=PMTBandwidthLabelVisibility,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                           PmtBandwidthVisibility="{Binding Path=PmtBandwidthVisibility,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                           PMTGain="{Binding Path=PMTGain,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
@@ -83,6 +87,8 @@
                           TwoWayVisibility="{Binding Path=TwoWayVisibility,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
                           UpdateDwellTime="{Binding Path=UpdateDwellTime,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                           UseFastestSettingForFlybackCycles="{Binding Path=UseFastestSettingForFlybackCycles,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                          LSMFastOneWayImagingModeEnable="{Binding Path=LSMFastOneWayImagingModeEnable,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                          FastOneWayImagingModeEnableVisibility="{Binding Path=FastOneWayImagingModeEnableVisibility,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                           Margin="0,0,0.2,0.4">
         </sc:ScanControlUC>
     </Grid>

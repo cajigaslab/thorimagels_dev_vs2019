@@ -21,48 +21,66 @@
     </UserControl.Resources>
     <Grid>
         <StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        ToolTip="Set the max allowed frame rate in frames per second"
+                        Visibility="{Binding Path=IsFrameRateVisible, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
+                <CheckBox Margin="4,0"
+                          IsChecked="{Binding Path=OrcaFrameRateEnabled}"
+                          Content="Master Pulse"
+                          VerticalAlignment="Center"/>
+            </StackPanel>
             <StackPanel Margin="1"
                         Orientation="Horizontal"
                         MinHeight="40">
-                <Label VerticalAlignment="Center"
+                <StackPanel Orientation="Horizontal">
+                    <Label VerticalAlignment="Center"
                        Content="Exposure [ms]"
                        MinWidth="85" />
-                <TextBox Name="txtExposureTime"
+                    <TextBox Name="txtExposureTime"
                          Height="25"
                          MinWidth="40"
                          VerticalAlignment="Center"
-                         Text="{Binding Path=ExposureTimeCam}" />
-                <Button Width="25"
+                         Text="{Binding Path=ExposureTimeCam}"
+                         Visibility="{Binding Path=OrcaFrameRateEnabled, ConverterParameter=true, Converter={StaticResource VisibilityOfBool}}"/>
+                    <Button Width="25"
                         Height="25"
                         Content="✓">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Visibility"
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
                                     Value="Collapsed" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Path=IsFocused,
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused,
                                                                ElementName=txtExposureTime}"
                                              Value="True">
-                                    <Setter Property="Visibility"
+                                        <Setter Property="Visibility"
                                             Value="Visible" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
-                <StackPanel VerticalAlignment="Center">
-                    <RepeatButton Width="25"
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <StackPanel VerticalAlignment="Center"
+                                Visibility="{Binding Path=OrcaFrameRateEnabled, ConverterParameter=true, Converter={StaticResource VisibilityOfBool}}">
+                        <RepeatButton Width="25"
                                   Height="20"
                                   Command="{Binding Path=CamExposureTimePlusCommand}"
                                   Content="+"
                                   Delay="500"
                                   Interval="100" />
-                    <RepeatButton Width="25"
+                        <RepeatButton Width="25"
                                   Height="20"
                                   Command="{Binding Path=CamExposureTimeMinusCommand}"
                                   Content="-"
                                   Delay="500"
                                   Interval="100" />
+                    </StackPanel>
+                    <Label Name="lblExposureTime"
+                         Height="25"
+                         MinWidth="40"
+                         VerticalAlignment="Center"
+                         Content="{Binding Path=ExposureTimeCam}" 
+                         Visibility="{Binding Path=OrcaFrameRateEnabled, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" 
                             Visibility="{Binding Path=IsGainVisible, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
@@ -120,6 +138,33 @@
                             </Button.Style>
                         </Button>
                     </StackPanel>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal"
+                            Margin="4,0"
+                            Visibility="{Binding Path=OrcaFrameRateEnabled, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
+                    <Label VerticalAlignment="Center"
+                           Content="Set Frame Rate [fps]"/>
+                    <TextBox Name="txtFrameRate"
+                             Height="25"
+                             MinWidth="40"
+                             Text="{Binding Path=CamOrcaFrameRate}"/>
+                    <Button Width="25"
+                            Height="25"
+                            Content="✓">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txtFrameRate}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                 </StackPanel>
             </StackPanel>
             <Border Margin="3">
@@ -692,6 +737,19 @@
                           SelectedIndex="{Binding Path=HotPixelLevelIndex}"
                           Height="25"
                           MinWidth="125" >
+                </ComboBox>
+            </StackPanel>
+            <StackPanel Margin="1"
+                        Orientation="Horizontal"
+                        MinHeight="40"
+                        Visibility="{Binding Path=CoolingVisibility}">
+                <Label Content="Cooling Mode"
+                       VerticalAlignment="Center"
+                       MinWidth="95" />
+                <ComboBox ItemsSource="{Binding Path=CoolingModeList}"
+                          SelectedIndex="{Binding Path=CoolingModeIndex}"
+                          Height="25"
+                          MinWidth="80" >
                 </ComboBox>
             </StackPanel>
             <StackPanel Margin="1"

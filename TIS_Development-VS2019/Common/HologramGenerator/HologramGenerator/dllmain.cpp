@@ -4,10 +4,10 @@
 
 #define DllExportHoloGen extern "C" long __declspec(dllexport)
 
-BOOL APIENTRY DllMain( HMODULE hModule,
-					  DWORD  ul_reason_for_call,
-					  LPVOID lpReserved
-					  )
+BOOL APIENTRY DllMain(HMODULE hModule,
+	DWORD  ul_reason_for_call,
+	LPVOID lpReserved
+)
 {
 	switch (ul_reason_for_call)
 	{
@@ -20,12 +20,15 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	return TRUE;
 }
 
-DllExportHoloGen Set3DParam(double na,double wavelength)
+DllExportHoloGen SetDefocus(double n, double NAeff, long Np)
 {
-	return HologramGen::getInstance()->Set3DParam(na,wavelength);
+	return HologramGen::getInstance()->SetDefocus(n, NAeff, Np);
 }
 
-
+DllExportHoloGen Set3DParam(double na, double wavelength)
+{
+	return HologramGen::getInstance()->Set3DParam(na, wavelength);
+}
 
 DllExportHoloGen SetSize(int width, int height, double pixelUM)
 {
@@ -37,7 +40,7 @@ DllExportHoloGen SetAlgorithm(int algorithmID)
 	return HologramGen::getInstance()->SetAlgorithm(algorithmID);
 }
 
-DllExportHoloGen CombineHologramFiles(const wchar_t * pathAndFilename1, const wchar_t * pathAndFilename2, long shiftPx)
+DllExportHoloGen CombineHologramFiles(const wchar_t* pathAndFilename1, const wchar_t* pathAndFilename2, long shiftPx)
 {
 	return HologramGen::getInstance()->CombineHologramFiles(pathAndFilename1, pathAndFilename2, shiftPx);
 }
@@ -60,6 +63,16 @@ DllExportHoloGen CalculateCoeffs(const float* pSrcPoints, const float* pTgtPoint
 DllExportHoloGen GenerateHologram(float* pImgDst, int iteCount, int weightRadiusPx, double minPercent, double maxPercent, float z)
 {
 	return HologramGen::getInstance()->GenerateHologram(pImgDst, iteCount, weightRadiusPx, minPercent, maxPercent, z);
+}
+
+DllExportHoloGen Generate3DHologram(void* pMemStruct, int zCount)
+{
+	return HologramGen::getInstance()->Generate3DHologram(pMemStruct, zCount);
+}
+
+DllExportHoloGen DefocusHologram(float* pImgDst, double kz)
+{
+	return HologramGen::getInstance()->DefocusHologram(pImgDst, kz);
 }
 
 DllExportHoloGen VerticalFlip(float* pImgDst)

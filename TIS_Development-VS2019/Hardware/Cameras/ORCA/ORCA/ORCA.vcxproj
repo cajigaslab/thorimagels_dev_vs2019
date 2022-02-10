@@ -199,10 +199,10 @@ REM echo F | xcopy /F /Y $(TargetDir)$(TargetName).pdb \\tsifs01\Engineering\Gre
       <AdditionalLibraryDirectories>..\..\..\..\Tools\Hamamatsu\dcamsdk4\lib\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Message>Copy executable to network</Message>
-      <Command>REM  echo F | xcopy /F /Y $(TargetDir)$(TargetName).dll \\tsifs01\Engineering\Greg\TIS
-REM echo F | xcopy /F /Y $(TargetDir)$(TargetName).pdb \\tsifs01\Engineering\Greg\TIS
-</Command>
+      <Message>
+      </Message>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

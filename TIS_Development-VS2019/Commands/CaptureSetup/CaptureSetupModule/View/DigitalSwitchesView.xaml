@@ -43,7 +43,7 @@
                                              SwitchName5="{Binding Path=SwitchName[5].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                              SwitchName6="{Binding Path=SwitchName[6].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                              SwitchName7="{Binding Path=SwitchName[7].Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
-                                             SwitchEnable="{Binding Path=SwitchEnable,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" 
+                                             SwitchEnable="{Binding Path=SwitchEnable,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                              TriggerEnableCommand="{Binding Path=TriggerEnableCommand}"
                                              TriggerImagePath="{Binding Path=TriggerImagePath,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
                                              TriggerModeItems="{Binding Path=TriggerModeItems,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
@@ -51,6 +51,9 @@
                                              TriggerIsVisible="{Binding Path=TriggerIsVisible,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
                                              SwitchesIsVisible="{Binding Path=SwitchesIsVisible,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
                                              ExperimentMode="{Binding Path=ExperimentMode,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                             TriggerTypeItems="{Binding Path=TriggerTypeItems,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                             TriggerType="{Binding Path=TriggerType,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             PowerPercentString="{Binding Path=PowerPercentString,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                              TriggerEnable="{Binding Path=TriggerEnable,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                              TriggerMode="{Binding Path=TriggerMode,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                              TriggerStartEdge="{Binding Path=TriggerStartEdge,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
@@ -61,8 +64,7 @@
                                              TriggerIdleMS="{Binding Path=TriggerIdleMS,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                              TriggerIterations="{Binding Path=TriggerIterations,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                              TriggerError="{Binding Path=TriggerError,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
-                                             TriggerErrorColor="{Binding Path=TriggerErrorColor,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
-                                             />
+                                             TriggerErrorColor="{Binding Path=TriggerErrorColor,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" />
         </StackPanel>
     </Grid>
 </UserControl>

@@ -32,10 +32,10 @@
 
         private static double _field2Volts = 0.0901639344; // == FIELD2THETA
         static GGalvoWaveformParams _gWaveParams = new GGalvoWaveformParams() { GalvoWaveformXY = IntPtr.Zero, GalvoWaveformPockel = IntPtr.Zero, DigBufWaveform = IntPtr.Zero };
-        static ThorDAQGGWaveformParams _thorDAQGGWaveformParams = new ThorDAQGGWaveformParams() { GalvoWaveformX = IntPtr.Zero, GalvoWaveformY = IntPtr.Zero, GalvoWaveformPockel = IntPtr.Zero, DigBufWaveform = IntPtr.Zero };
         private static bool _inSaving;
         static PixelArray _pixelArray = new PixelArray();
         private static bool _saveSuccessed;
+        static ThorDAQGGWaveformParams _thorDAQGGWaveformParams = new ThorDAQGGWaveformParams() { GalvoWaveformX = IntPtr.Zero, GalvoWaveformY = IntPtr.Zero, GalvoWaveformPockel = IntPtr.Zero, DigBufWaveform = IntPtr.Zero };
         static BleachWaveform _waveform = null;
         static BackgroundWorker _waveformSaver;
 
@@ -697,7 +697,6 @@
                 Marshal.FreeHGlobal(_thorDAQGGWaveformParams.DigBufWaveform);
                 _thorDAQGGWaveformParams.DigBufWaveform = IntPtr.Zero;
             }
-
         }
 
         public static PixelArray GetPixelArray()
@@ -873,7 +872,6 @@
                     rec.ROILeft = ((OverlayManager.ROICrosshair)(roiCapsule.ROIs[idx])).CenterPoint.X * binX;
                     rec.ROIBottom = rec.ROITop;
                     rec.ROIRight = rec.ROILeft;
-                    rec.ZValue = ((OverlayManager.ROICrosshair)(roiCapsule.ROIs[idx])).ZValue;
                 }
                 else if (roiCapsule.ROIs[idx].GetType() == typeof(Line))
                 {
@@ -918,7 +916,6 @@
                     rec.ROILeft = Math.Round((rec.Center.X * binX - ((OverlayManager.ROIEllipse)(roiCapsule.ROIs[idx])).ROIWidth / 2), 2);
                     rec.ROIBottom = Math.Round((rec.Center.Y * binY + ((OverlayManager.ROIEllipse)(roiCapsule.ROIs[idx])).ROIHeight / 2), 2);
                     rec.ROIRight = Math.Round((rec.Center.X * binX + ((OverlayManager.ROIEllipse)(roiCapsule.ROIs[idx])).ROIWidth / 2), 2);
-                    rec.ZValue = ((OverlayManager.ROIEllipse)(roiCapsule.ROIs[idx])).ZValue; ;
                 }
                 rec.ID = (uint)(((int[])roiCapsule.ROIs[idx].Tag)[(int)Tag.SUB_PATTERN_ID]);
                 bParamList.Add(rec);
@@ -1404,7 +1401,7 @@
                         }
                         //copy the digital lines into a single IntPtr buffer _gWaveParams.DigBufWaveform
                         //offset the IntPtr using the IntPtr.Add() function
-                        if (IntPtr.Zero != _gWaveParams.DigBufWaveform)
+                        if (IntPtr.Zero != _gWaveParams.DigBufWaveform && _waveform.Count > 0 && _waveform.PockelDig.Count > 0)
                         {
                             Marshal.Copy(_waveform.PockelDig[0].ToArray(), 0, _gWaveParams.DigBufWaveform, _waveform.Count);
                             Marshal.Copy(_waveform.ActiveEnvelope.ToArray(), 0, IntPtr.Add(_gWaveParams.DigBufWaveform, 1 * _waveform.Count), _waveform.Count);
@@ -1453,7 +1450,7 @@
                         }
                     }
                     break;
-            }           
+            }
         }
 
         [DllImport("kernel32.dll", EntryPoint = "RtlMoveMemory", SetLastError = false)]
@@ -1573,6 +1570,9 @@
 
         [DllImport(".\\Modules_Native\\GeometryUtilitiesCPP.dll", EntryPoint = "SaveThorDAQWaveformDataStruct", CharSet = CharSet.Unicode)]
         private static extern int SaveThorDAQWaveformDataStruct(string waveformPathName, GGalvoWaveformParams waveformParams);
+
+        [DllImport(".\\Modules_Native\\GeometryUtilitiesCPP.dll", EntryPoint = "SaveThorDAQWaveformDataStruct", CharSet = CharSet.Unicode)]
+        private static extern int SaveThorDAQWaveformDataStruct(string waveformPathName, ThorDAQGGWaveformParams waveformParams);
 
         private static void SaveToH5()
         {
@@ -1887,9 +1887,6 @@
             return true;
         }
 
-        [DllImport(".\\Modules_Native\\GeometryUtilitiesCPP.dll", EntryPoint = "SaveThorDAQWaveformDataStruct", CharSet = CharSet.Unicode)]
-        private static extern int SaveThorDAQWaveformDataStruct(string waveformPathName, ThorDAQGGWaveformParams waveformParams);
-
         [DllImport(".\\Modules_Native\\GeometryUtilitiesCPP.dll", EntryPoint = "SaveWaveformDataStruct", CharSet = CharSet.Unicode)]
         private static extern int SaveWaveformDataStruct(string waveformPathName, GGalvoWaveformParams waveformParams);
 
@@ -1912,7 +1909,7 @@
 
                         //Alloc the unmanaged memory in the corresponding size depending on the waveform driver Type
                         _gWaveParams.GalvoWaveformXY = SaveType[(int)SignalType.ANALOG_XY] ? Marshal.AllocHGlobal((int)_gWaveParams.analogXYSize * sizeof(double)) : IntPtr.Zero;
-                        _gWaveParams.GalvoWaveformPockel = SaveType[(int)SignalType.ANALOG_POCKEL] ? Marshal.AllocHGlobal((int)_gWaveParams.analogPockelSize *  sizeof(double)) : IntPtr.Zero;
+                        _gWaveParams.GalvoWaveformPockel = SaveType[(int)SignalType.ANALOG_POCKEL] ? Marshal.AllocHGlobal((int)_gWaveParams.analogPockelSize * sizeof(double)) : IntPtr.Zero;
                         _gWaveParams.DigBufWaveform = SaveType[(int)SignalType.DIGITAL_LINES] ? Marshal.AllocHGlobal((int)_gWaveParams.digitalSize * sizeof(byte)) : IntPtr.Zero;
                         _gWaveParams.PiezoWaveformZ = IntPtr.Zero;
                     }
@@ -1938,7 +1935,7 @@
             }
         }
 
-            private static void waveformSaver_DoWork(object sender, DoWorkEventArgs e)
+        private static void waveformSaver_DoWork(object sender, DoWorkEventArgs e)
         {
             switch (FileType)
             {

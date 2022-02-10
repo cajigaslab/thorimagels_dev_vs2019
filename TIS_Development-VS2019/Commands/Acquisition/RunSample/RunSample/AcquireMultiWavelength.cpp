@@ -217,6 +217,12 @@ long AcquireMultiWavelength::CallInformMessage(wchar_t* message)
 	return TRUE;
 }
 
+long AcquireMultiWavelength::CallNotifySavedFileIPC(wchar_t* message)
+{
+	NotifySavedFileIPC(message);
+	return TRUE;
+}
+
 long AcquireMultiWavelength::Execute(long index, long subWell, long zFrame, long tFrame)
 {
 	_zFrame = zFrame;

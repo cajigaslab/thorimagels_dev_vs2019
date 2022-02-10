@@ -223,7 +223,7 @@ long ChannelCenter::LoadEpisode()
 	}
 
 	//check size, will load percent by percent
-	if(FALSE == h5Loader->OpenFileIO(_episodefile,H5FileType::READWRITE))
+	if(FALSE == h5Loader->OpenFileIO(_episodefile,H5FileType::READONLY))
 	{
 		_isLoading = FALSE;
 		return FALSE;
@@ -249,7 +249,7 @@ long ChannelCenter::LoadEpisode()
 		{
 			goto DONE_LOAD;
 		}
-		if(TRUE == h5Loader->OpenFileIO(_episodefile,H5FileType::READWRITE))
+		if(TRUE == h5Loader->OpenFileIO(_episodefile,H5FileType::READONLY))
 		{
 			for (int j = 0; j < HUNDRED_PERCENT; j++)
 			{
@@ -319,8 +319,11 @@ long ChannelCenter::LoadEpisodeDataOnly(void* file, CompoundData* cData, unsigne
 			counter[SignalType::ANALOG_IN]++;
 			break;
 		case SignalType::DIGITAL_IN:
-			ret = h5File->ReadData(channels[i].type.c_str(), ("/" + channels[i].alias).c_str(), cData->GetStrucData()->diDataPtr + (counter[SignalType::DIGITAL_IN] * dLength) + dOffset, H5DataTypeEnum::DATA_UINT32, start, length);
+		{
+			size_t offset = (counter[SignalType::DIGITAL_IN] * dLength) + dOffset;
+			ret = h5File->ReadData(channels[i].type.c_str(), ("/" + channels[i].alias).c_str(), cData->GetStrucData()->diDataPtr + offset, H5DataTypeEnum::DATA_UCHAR, start, length);
 			counter[SignalType::DIGITAL_IN]++;
+		}
 			break;
 		case SignalType::COUNTER_IN:
 			ret = h5File->ReadData(channels[i].type.c_str(), ("/" + channels[i].alias).c_str(), cData->GetStrucData()->ciDataPtr + (counter[SignalType::COUNTER_IN] * dLength) + dOffset, H5DataTypeEnum::DATA_UINT32, start, length);
@@ -543,7 +546,7 @@ long ChannelCenter::SetupFileH5(unsigned long long length)
 			if(didataset.size()>0)
 			{
 				const char ** didatachar = ConvertStrVec(didataset);
-				ret = h5Loader->CreateGroupDatasets(digroup.c_str(),didatachar,static_cast<long>(didataset.size()),H5DataType::DATA_UINT32);
+				ret = h5Loader->CreateGroupDatasets(digroup.c_str(),didatachar,static_cast<long>(didataset.size()),H5DataType::DATA_UCHAR);
 				FreeCharVec(didatachar,didataset.size());
 				if(FALSE == ret)
 					goto __FILE_ERROR;

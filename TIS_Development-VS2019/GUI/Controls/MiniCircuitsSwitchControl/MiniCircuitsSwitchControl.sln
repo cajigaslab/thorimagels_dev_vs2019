@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31424.327
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniCircuitsSwitchControl", "MiniCircuitsSwitchControl\MiniCircuitsSwitchControl.csproj", "{329DC93B-AB43-425D-80DE-AD813088FC91}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniCircuitsSwitchControlTestApp", "MiniCircuitsSwitchControlTestApp\MiniCircuitsSwitchControlTestApp.csproj", "{44401265-DD87-4A56-B196-144D70BCDDF1}"
+	ProjectSection(ProjectDependencies) = postProject
+		{329DC93B-AB43-425D-80DE-AD813088FC91} = {329DC93B-AB43-425D-80DE-AD813088FC91}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{329DC93B-AB43-425D-80DE-AD813088FC91}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{329DC93B-AB43-425D-80DE-AD813088FC91}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{329DC93B-AB43-425D-80DE-AD813088FC91}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{329DC93B-AB43-425D-80DE-AD813088FC91}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44401265-DD87-4A56-B196-144D70BCDDF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44401265-DD87-4A56-B196-144D70BCDDF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44401265-DD87-4A56-B196-144D70BCDDF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44401265-DD87-4A56-B196-144D70BCDDF1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BBFDD53A-7AD9-4F29-90CF-CBC5FE45987A}
+	EndGlobalSection
+EndGlobal

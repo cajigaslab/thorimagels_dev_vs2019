@@ -100,10 +100,39 @@
         SUB_PATTERN_ID,
         RGB,
         WAVELENGTH_NM,
+        Z_UM_INT,
+        Z_UM_DEC,
         LAST_TAG
     }
 
     #endregion Enumerations
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    public struct EPhysTriggerStruct
+    {
+        public Int32 configured;
+        public Int32 enable;
+        public Int32 mode;
+        public double startIdleMS;
+        public double durationMS;
+        public double idleMS;
+        public double minIdleMS;
+        public Int32 iterations;
+        public Int32 startEdge;
+        public Int32 repeats;
+        public Int32 framePerZSlice;
+        public Int32 clockRateHz;
+        public Int32 outputType;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)Constants.EPHYS_ARRAY_SIZE)]
+        public string triggerLine;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)Constants.EPHYS_ARRAY_SIZE)]
+        public Int32[] stepEdge;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
+        public double[] voltageRange;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)Constants.EPHYS_ARRAY_SIZE)]
+        public double[] powerPercent;
+        public Int32 responseType;
+    }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     public struct FrameInfoStruct
@@ -699,7 +728,15 @@
             PARAM_LSM_POCKELS_RESPONSE_TYPE_3,
 
             PARAM_LSM_PULSE_MULTIPLEXING_ENABLE,
-            PARAM_LSM_PULSE_MULTIPLEXING_PHASE,
+            PARAM_LSM_EXTERNAL_CLOCK_PHASE_OFFSET, 
+            PARAM_LSM_GG_ACQUIRE_DURING_TURAROUND,
+
+            PARAM_LSM_DAQ_NAME,
+            PARAM_LSM_DAQ_PART_NUMBER,
+            PARAM_LSM_DAQ_FW_VER,
+            PARAM_LSM_DAQ_DRIVER_VER,
+            PARAM_LSM_LOW_FREQ_TRIG_BOARD_FW_VER,
+            PARAM_LSM_LOW_FREQ_TRIG_BOARD_CPLD_VER,
 
             PARAM_LSM_TWO_WAY_ZONE_FINE_1 = 700,
             PARAM_LSM_TWO_WAY_ZONE_FINE_2,
@@ -991,6 +1028,8 @@
             PARAM_LSM_POWER_RAMP_PERCENTAGE_BUFFER,
             PARAM_LSM_PIXEL_Y_MULTIPLE,
             PARAM_LSM_PIXEL_PROCESS,
+            PARAM_LSM_FAST_ONEWAY_MODE_ENABLE,
+            PARAM_LSM_POCKELS_BLANKING_PHASESHIFT_PERCENT,
 
             PARAM_FIRST_CCD_PARAM = 1000,
             PARAM_BINNING_X = 1000,///<Binning X
@@ -1046,6 +1085,10 @@
             PARAM_DMA_BUFFER_AVAILABLE_FRAMES,
             PARAM_CAMERA_FRAME_RATE_CONTROL_ENABLED,
             PARAM_CAMERA_FRAME_RATE_CONTROL_VALUE,
+            PARAM_CAMERA_STATIC_FPS_ENABLE,
+            PARAM_CAMERA_STATIC_FPS,
+            PARAM_CAMERA_COOLING_AVAILABLE,
+            PARAM_CAMERA_COOLING_MODE,
 
             PARAM_MESO_PLATE_INFO = 1500,
             PARAM_MESO_SCAN_INFO,
@@ -1567,6 +1610,9 @@
             PARAM_PMT4_TYPE,
             PARAM_PMT5_TYPE,
             PARAM_PMT6_TYPE,
+            PARAM_PMT1_FIRMWAREVERSION,
+            PARAM_PMT2_FIRMWAREVERSION,
+            PARAM_PMT_CLEAR_TRIP = 797,
 
             PARAM_EXP_RATIO = 800,
             PARAM_MOT0_POS,
@@ -1604,6 +1650,19 @@
             PARAM_LASER1_SHUTTER2_POS,
             PARAM_LASER1_SHUTTER2_POS_CURRENT,
             PARAM_LASER1_SEQ,
+            PARAM_LASER1_FOCUS_POS,
+            PARAM_LASER1_EMISSION,
+            PARAM_LASER2_EMISSION,
+            PARAM_LASER3_EMISSION,
+            PARAM_LASER4_EMISSION,
+            PARAM_LASER1_WAVELENGTH,
+            PARAM_LASER2_WAVELENGTH,
+            PARAM_LASER3_WAVELENGTH,
+            PARAM_LASER4_WAVELENGTH,
+            PARAM_LASER_ALL_ENABLE,
+            PARAM_LASER_ALL_EMISSION,
+            PARAM_LASER_ALL_TTL_MODE,
+            PARAM_LASER_ALL_ANALOG_MODE,
 
             PARAM_PINHOLE_POS = 900,
             PARAM_PINHOLE_POS_CURRENT,
@@ -1625,6 +1684,13 @@
             PARAM_PMT4_SATURATIONS,
             PARAM_PMT5_SATURATIONS,
             PARAM_PMT6_SATURATIONS,
+            PARAM_PMT1_DETECTOR_TYPE,
+            PARAM_PMT2_DETECTOR_TYPE,
+            PARAM_PMT3_DETECTOR_TYPE,
+            PARAM_PMT4_DETECTOR_TYPE,
+            PARAM_PMT5_DETECTOR_TYPE,
+            PARAM_PMT6_DETECTOR_TYPE,
+            PARAM_PMT_OFFSET_STEP_SIZE,
 
             PARAM_STOP = 1000,
 
@@ -1652,11 +1718,14 @@
             PARAM_SLM_RUNTIME_CALC,
             PARAM_SLM_SEQ_FILENAME,
             PARAM_SLM_CALIB_Z,
-            PARAM_SLM_NA,
             PARAM_SLM_WAVELENGTH,
             PARAM_SLM_WAVELENGTH_SELECT,
             PARAM_SLM_3D,
             PARAM_SLM_PHASE_DIRECT,
+            PARAM_SLM_DEFOCUS,
+            PARAM_SLM_SAVE_DEFOCUS,
+            PARAM_SLM_BLANK_ZONE1,
+            PARAM_SLM_BLANK_ZONE2,
 
             PARAM_R_POS = 1200,
             PARAM_R_HOME = 1201,
@@ -2544,34 +2613,6 @@
             PHASE_CALIBRATION,
             SAVE_PHASE,
             LAST_FUNCTION
-        }
-
-        public enum ThorDAQ_DBB1_DIO_SLAVE_PORTS
-        {
-            Resonant_scanner_line_trigger_input = 0x00,
-            Extern_line_trigger_input = 0x01,
-            Extern_pixel_clock_input = 0x02,
-            Scan_direction_output = 0x03,
-            Horizontal_line_pulse_output = 0x04,
-            Pixel_integration_output = 0x05,
-            Start_of_frame_output = 0x06,
-            Hardware_trigger_input = 0x07,
-            External_SOF_input = 0x08,
-            Pixel_clock_pulse_output = 0x09,
-            Digital_Output_0 = 0x0A,
-            Digital_Output_1 = 0x0B,
-            Digital_Output_2 = 0x0C,
-            Digital_Output_3 = 0x0D,
-            Digital_Output_4 = 0x0E,
-            Digital_Output_5 = 0x0F,
-            Digital_Output_6 = 0x10,
-            Digital_Output_7 = 0x11,
-            Capture_Active = 0x12,
-            Aux_GPIO_0 = 0x13,
-            Aux_GPIO_1 = 0x14,
-            Aux_GPIO_2 = 0x15,
-            Aux_GPIO_3 = 0x16,
-            Aux_GPIO_4 = 0x17
         }
 
         #endregion Enumerations

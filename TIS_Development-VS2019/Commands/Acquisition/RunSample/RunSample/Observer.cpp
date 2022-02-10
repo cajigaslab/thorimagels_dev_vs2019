@@ -11,6 +11,7 @@ extern void (*myFunctionPointer)(long * index,long * completed,long * total, lon
 extern void (*myFunctionPointerPreCapture)(long * status);
 extern void (*myFunctionPointerSequenceStepCurrent)(long* index);
 extern void (*myFunctionPointerInformMessage)(wchar_t* message);
+extern void (*myFunctionPointerFileSavedNameAndPathForIPC)(wchar_t* message);
 
 Observer::Observer()
 {
@@ -202,6 +203,11 @@ void Observer::OnProgressBarStart(long index, long resetTotalCount)
 void Observer::OnInformMessage(wchar_t* message)
 {
 	myFunctionPointerInformMessage(message);
+}
+
+void Observer::OnNotifySavedFileIPC(wchar_t* message)
+{
+	myFunctionPointerFileSavedNameAndPathForIPC(message);
 }
 
 void Observer::SetTotalImagecount(long count, long channelCount)

@@ -166,13 +166,13 @@
             this.scrollView.Height = Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_SCROLL;
             this.ImageView.Height = Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_SCROLL;
             RunSampleLSViewModel viewModel = (RunSampleLSViewModel)this.RunSampleLSView.DataContext;
-            viewModel.MVMNames = new string[] { "DigitalOutputSwitchesViewModel", "LampControlViewModel", "ObjectiveControlViewModel", "DFLIMControlCaptureViewModel" };
+            viewModel.MVMNames = new string[] { "DigitalOutputSwitchesViewModel", "LampControlViewModel", "ObjectiveControlViewModel", "DFLIMControlCaptureViewModel", "MiniCircuitsSwitchControlViewModel" };
             viewModel.UnloadWhole = false;
 
             viewModel.IVHeight = this.ImageView.Height;
 
             //populate data contents from specified MVMs
-            viewModel.MVMNames = new string[] { "DigitalOutputSwitchesViewModel", "LampControlViewModel", "ObjectiveControlViewModel" };
+            viewModel.MVMNames = new string[] { "DigitalOutputSwitchesViewModel", "LampControlViewModel", "ObjectiveControlViewModel", "MiniCircuitsSwitchControlViewModel" };
             this.RunSampleLSView.digOutputSwitchView.DataContext = MVMManager.Instance["DigitalOutputSwitchesViewModel", viewModel];
         }
 

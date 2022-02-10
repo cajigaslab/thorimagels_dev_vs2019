@@ -691,9 +691,9 @@
                 string pathActiveBleachingROIsXAML = tempFolder + "BleachROIs.xaml";
                 string pathActiveBleachingWaveFormH5 = tempFolder + "BleachWaveform.raw";
 
-                DeleteFile(pathActiveBleachingROIsXAML);
+                ResourceManagerCS.DeleteFile(pathActiveBleachingROIsXAML);
 
-                DeleteFile(pathActiveBleachingWaveFormH5);
+                ResourceManagerCS.DeleteFile(pathActiveBleachingWaveFormH5);
             }
             catch (Exception e)
             {

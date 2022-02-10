@@ -35,6 +35,20 @@
 
         #region Properties
 
+        public int AcquireDuringTurnAround
+        {
+            get
+            {
+                int temp = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_GG_ACQUIRE_DURING_TURAROUND, ref temp);
+                return temp;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_GG_ACQUIRE_DURING_TURAROUND, value);
+            }
+        }
+
         public int FIR1ManualControlEnable
         {
             get
@@ -46,6 +60,20 @@
             set
             {
                 ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_MANUAL_FIR1_CONTROL_ENABLE, value);
+            }
+        }
+
+        public int LUTOffset3P
+        {
+            get
+            {
+                int temp = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_RESEARCH_CAMERA_100, ref temp);
+                return temp;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_RESEARCH_CAMERA_100, value);
             }
         }
 

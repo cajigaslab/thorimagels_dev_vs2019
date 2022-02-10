@@ -5,6 +5,28 @@
 #define MAX_DIG_PORT_OUTPUT		8
 #define DEFAULT_DO_SAMPLE_RATE	20000	//[Hz]
 
+enum EPhysTriggerLines
+{
+	FIRST_TRIGGER_CONFIG	= 0,
+	DIGITAL_COUNTER			= 0,
+	DIGITAL_OUTPUT			= 1,
+	ANALOG_COUNTER			= 2,
+	ANALOG_OUTPUT			= 3,
+	EDGE_OUTPUT				= 4,
+	BUFFER_OUTPUT			= 5,
+	CUSTOM_INPUT			= 6,
+	LAST_TRIGGER_CONFIG
+};
+
+enum EPhysModeConfig
+{
+	NONE_TRIG		= 0,
+	MANUAL_TRIG		= 1,
+	EDGE_MONITOR	= 2,
+	CUSTOM_CONFIG	= 3,
+	LAST_MODE_CONFIG
+};
+
 class ThorElectroPhys : IDevice
 {
 private:
@@ -36,12 +58,17 @@ private:
 
 	int CloseNITasks();
 	void ResetParams();
-	long SetTriggerTask();
+	std::string GetTriggerInputLine();
+	long SetDigitalTriggerTask();
+	long SetAnalogTriggerTask();
+	long SetEdgeMonitorTask();
+	long SetTriggerTasks();
+	long StartTriggerTasks();
 	static void CloseMeasureTasks();
-	static void CloseTriggerTasks();
-	static long FillupAvailableBuffer();
+	static void CloseTriggerTasks(long bringDownLines=TRUE);
+	static long FillupAvailableBuffer(int id); ///<[0:AO,1:DO] element N callback
 	static int32 CVICALLBACK TriggerCOCallback (TaskHandle taskHandle, int32 signalID, void *callbackData);
-	static int32 CVICALLBACK EveryNTriggerDOCallback(TaskHandle taskHandle, int32 everyNsamplesEventType, uInt32 nSamples, void *callbackData);
+	static int32 CVICALLBACK EveryNTriggerCallback(TaskHandle taskHandle, int32 everyNsamplesEventType, uInt32 nSamples, void *callbackData);
 	static UINT ThorElectroPhys::FreqMeasureAsync(void);
 private:
 
@@ -54,8 +81,8 @@ private:
 
 	TaskHandle _taskHandleDI0;	
 	TaskHandle _taskHandleDO[MAX_DIG_PORT_OUTPUT];
-	static TaskHandle _taskTriggerDO;
-	static TaskHandle _taskTriggerCO;
+	static TaskHandle _taskTriggerHandle[2]; ///<[0:DO, 1:AO], both do active loading
+	static TaskHandle _taskTriggerCO[2]; ///<[0:DO, 1:AO]
 
 	//*********************************************************//
 	//***	frequency probe to measure signal frequency		***//
@@ -78,14 +105,17 @@ private:
 
 	BOOL _deviceDetected;
 	long _numDevices;
-	long _ringBufferSize;
-	unsigned long long _targetCount; //total output count of finite counter output task
+	long _ringBufferSize; ///<# of blocks in ring buffer, coming from "activeLoadCount" settings
+	long _ringBufferUnit; ///<# of units in one block of ring buffer, converted from "activeUnitMS" settings
+	long _parkAnalogLineAtLastVoltage; ///<Flag to decide wheather to leave the analog output low or high after cyles are done
+	bool _analogTriggerSet; ///<Flag to know wheather the analog triggers have been set since the last time they were closed
+	std::string _analogCounterInternalOutput; ///<clock source for analog output task, "InternalOutput" of AnalogCounter
+	unsigned long long _targetCount; //total trigger counts of finite counter output task, used to determine when to stop edge monitor mode
 
 	static bool _instanceFlag;
 	static std::auto_ptr<ThorElectroPhys> _single;
-	static std::unique_ptr<BlockRingBuffer> _bRingBuf;
+	static std::unique_ptr<BlockRingBuffer> _bRingBuf[2];
 	static uInt8* _localBuffer;
-	static long _localBufferSize;
-	static unsigned long long _outputCount; //output index of finite counter output task
-	static char* _pTemp;
+	static long _localBufferSizeInBytes;
+	static unsigned long long _outputCount; //output index of finite counter output task, index of triggering edges
 };

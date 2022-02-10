@@ -539,10 +539,10 @@
         private static extern int InitImageProcessCallBack(ReportImageProcessData reportImageProcessData);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadImage")]
-        private static extern bool ReadImage([MarshalAs(UnmanagedType.LPWStr)]string path, ref IntPtr outputBuffer);
+        private static extern bool ReadImage([MarshalAs(UnmanagedType.LPWStr)] string path, ref IntPtr outputBuffer);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadImageInfo")]
-        private static extern bool ReadImageInfo([MarshalAs(UnmanagedType.LPWStr)]string selectedFileName, ref long width, ref long height, ref long colorChannels);
+        private static extern bool ReadImageInfo([MarshalAs(UnmanagedType.LPWStr)] string selectedFileName, ref long width, ref long height, ref long colorChannels);
 
         [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "SetCameraParamDouble")]
         private static extern int SetCameraParamDouble(int cameraSelection, int param, double value);

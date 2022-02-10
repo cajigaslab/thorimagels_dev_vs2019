@@ -4,10 +4,10 @@
 
 #define WINDVI_DLLEXPORT extern "C" long __declspec( dllexport )
 
-BOOL APIENTRY DllMain( HMODULE hModule,
-                       DWORD  ul_reason_for_call,
-                       LPVOID lpReserved
-					 )
+BOOL APIENTRY DllMain(HMODULE hModule,
+	DWORD  ul_reason_for_call,
+	LPVOID lpReserved
+)
 {
 	switch (ul_reason_for_call)
 	{
@@ -18,6 +18,11 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		break;
 	}
 	return TRUE;
+}
+
+WINDVI_DLLEXPORT ChooseDVI(const wchar_t* monitorId)
+{
+	return CWinDVI::getInstance()->ChooseDVI(monitorId);
 }
 
 WINDVI_DLLEXPORT EditBMP(int id, unsigned char* bmpBuf, BITMAPINFO bmpInfo)
@@ -47,12 +52,12 @@ WINDVI_DLLEXPORT DisplayBMP(int id)
 	return CWinDVI::getInstance()->DisplayBMP(id);
 }
 
-WINDVI_DLLEXPORT GetLastErrorMsg(wchar_t * msg, long size)
+WINDVI_DLLEXPORT GetLastErrorMsg(wchar_t* msg, long size)
 {
 	return CWinDVI::getInstance()->GetLastErrorMsg(msg, size);
 }
 
-WINDVI_DLLEXPORT GetStatus(long &status)
+WINDVI_DLLEXPORT GetStatus(long& status)
 {
 	return CWinDVI::getInstance()->GetStatus(status);
 }

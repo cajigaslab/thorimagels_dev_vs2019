@@ -9,7 +9,10 @@
     using System.Threading.Tasks;
     using System.Windows;
 
-    using Abt.Controls.SciChart.ChartModifiers;
+    using SciChart.Charting;
+    using SciChart.Charting.ChartModifiers;
+    using SciChart.Charting.Visuals.Axes.LabelProviders;
+    using SciChart.Core.Utility.Mouse;
 
     public class RightDoubleClickZoomExtentsModifier : ZoomExtentsModifier
     {

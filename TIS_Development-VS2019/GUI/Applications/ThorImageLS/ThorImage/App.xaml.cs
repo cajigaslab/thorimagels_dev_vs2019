@@ -23,8 +23,11 @@ namespace ThorImage
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
+    using System.Net;
+    using System.Reflection;
     using System.Runtime.InteropServices;
     using System.Text;
+    using System.Threading;
     using System.Windows;
     using System.Xml;
 
@@ -235,8 +238,49 @@ namespace ThorImage
             else
             {
                 AboutDll.SplashScreen splash = new AboutDll.SplashScreen(String.Format("v{0}.{1}.{2}.{3}", version.Major, version.Minor, version.Build, version.Revision));
-
                 splash.Hides = true;
+
+                //load the ResourceManager xml for the lastCheckDate and stopUpdateCheck values
+                XmlDocument doc = new XmlDocument();
+                doc.Load(".//ResourceManager.xml");
+                XmlNode node = doc.SelectSingleNode("/ResourceManager/ThorImageVersionCheck");
+                string str = string.Empty;
+                string str2 = string.Empty;
+                DateTime thisDay = DateTime.Today;
+                string newDay = thisDay.ToString("d");
+                int xmlUpdateCheck = 0;
+                if (XmlManager.GetAttribute(node, doc, "lastCheckDate", ref str))
+                {
+                    //If the last update date is blank (default), fill it in with today's date
+                    if (String.IsNullOrEmpty(str))
+                    {
+                        node.Attributes[0].Value = newDay;
+                        doc.Save("ResourceManager.xml");
+                    }
+
+                    if (XmlManager.GetAttribute(node, doc, "stopUpdateCheck", ref str2))
+                    {
+                        xmlUpdateCheck = int.Parse(str2);
+                        //If the Checkbox is checked, run CheckForUpdates, reset the stopUpdateCheck value to 0, and update the lastCheckDate to today- only if 90 days have passed
+                        if (xmlUpdateCheck == 1)
+                        {
+                            if (CompareDates(newDay, str) == 1)
+                            {
+                                node.Attributes[1].Value = "0";
+                                node.Attributes[0].Value = newDay;
+                                doc.Save("ResourceManager.xml");
+                                CheckForUpdates();
+                            }
+                        }
+                        else
+                        {
+                            //If the Checkbox is not checked, run CheckForUpdates and update the lastCheckDate to today
+                            node.Attributes[0].Value = newDay;
+                            doc.Save("ResourceManager.xml");
+                            CheckForUpdates();
+                        }
+                    }
+                }
 
                 try
                 {
@@ -275,6 +319,124 @@ namespace ThorImage
                 }
 
                 splash.Close();
+
+            }
+
+            //Function that downloads the ThorImageLS.xml to compare current version to newest version release
+            void CheckForUpdates()
+            {
+                ServicePointManager.Expect100Continue = true;
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+                using (WebClient client = new WebClient())
+                {
+                    client.DownloadDataAsync(new Uri("https://www.thorlabs.com/Software/ThorImageLS%20Reference/ThorImageLS.xml"), ResourceManagerCS.GetMyDocumentsThorImageFolderString());
+                    client.DownloadDataCompleted += client_DownloadDataCompleted;
+                }
+            }
+
+            //Function that compares current version to newest release version and opens a messagebox informing the user of an available update
+            void client_DownloadDataCompleted(object sender, DownloadDataCompletedEventArgs e)
+            {
+                if (e.Error != null)
+                {
+                    MessageBox.Show("Unable to check for updates. Please check your network connection.");
+                    return;
+                }
+
+                byte[] raw = e.Result;
+                string result = System.Text.Encoding.UTF8.GetString(raw);
+
+                XmlDocument doc = new XmlDocument();
+                XmlDocument doc2 = new XmlDocument();
+
+                doc.LoadXml(result);
+                doc2.Load(".//ResourceManager.xml");
+
+                XmlNodeList ndList = doc.SelectNodes("/Software/Version");
+                XmlNode node = doc2.SelectSingleNode("/ResourceManager/ThorImageVersionCheck");
+
+                string str = string.Empty;
+                string str2 = string.Empty;
+
+                XmlManager.GetAttribute(node, doc2, "stopUpdateCheck", ref str2);
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "value", ref str))
+                {
+                    Version v = Assembly.GetExecutingAssembly().GetName().Version;
+                    Version v_p = new Version(str);
+
+                    string strMessage = string.Format("");
+
+                    //Only displays the message box if a new version is available
+                    if (v_p.CompareTo(v) > 0)
+                    {
+                        strMessage = string.Format("New Version Available!\rThorImageLS version available {0}\rCurrent ThorImageLS version {1}.{2}.{3}.{4}\rContact ImagingTechSupport@thorlabs.com today to schedule your free software upgrade", str, v.Major, v.Minor, v.Build, v.Revision);
+
+                        Dispatcher.Invoke(() =>
+                        {
+                            CustomMessageBox messageBox = new CustomMessageBox(strMessage, "Check For Updates", "Stop displaying this message", "Ok");
+                            //Displays Check For Updates message box and changes the stopUpdateCheck to 1 if the checkbox was pressed upon closing the window
+                            if (messageBox.ShowDialog().GetValueOrDefault(true))
+                            {
+                                if (messageBox.CheckBoxChecked)
+                                {
+                                    node.Attributes[1].Value = "1";
+                                    doc2.Save("ResourceManager.xml");
+                                }
+                            }
+                        }, System.Windows.Threading.DispatcherPriority.Normal);
+                    }
+                }
+            }
+
+            //Function that takes the date since the checkbox was checked and returns true if 90 days have passed since then
+            int CompareDates(string newDate, string oldDate)
+            {
+            //splits the dates from string "month/day/year" into three separate int values
+            string[] splitNew = newDate.Split('/');
+            string[] splitOld = oldDate.Split('/');
+            int[] newDateInt = new int[3];
+            int[] oldDateInt = new int[3];
+            for (int i = 0; i < 3; i++)
+            {
+                newDateInt[i] = int.Parse(splitNew[i]);
+                oldDateInt[i] = int.Parse(splitOld[i]);
+            }
+
+            //Assigning each date indice to a more recognizable name
+            int newDateYear = newDateInt[2];
+            int newDateMonth = newDateInt[0];
+            int newDateDay = newDateInt[1];
+            int oldDateYear = oldDateInt[2];
+            int oldDateMonth = oldDateInt[0];
+            int oldDateDay = oldDateInt[1];
+
+            //number of days in each month (no leap year)
+            int[] dayNumber = new int[] { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+            //Get the total number of days that have passed for the new and old dates since BC (assuming 365 days in a year)
+            int newDaysInMonths = 0;
+            for (int i = 0; i < (newDateMonth - 1); i++)
+            {
+                newDaysInMonths += dayNumber[i];
+            }
+            int numberNewDays = (newDateYear * 365) + newDaysInMonths + newDateDay;
+
+            int oldDaysInMonths = 0;
+            for (int i = 0; i < (oldDateMonth - 1); i++)
+            {
+                oldDaysInMonths += dayNumber[i];
+            }
+            int numberOldDays = (oldDateYear * 365) + oldDaysInMonths + oldDateDay;
+
+            //If the number of days since the last update exceeds the cutoff, return TRUE
+            int cutoffDays = 90;
+            if ((numberNewDays - numberOldDays) >= cutoffDays)
+            {
+                return 1;
+            }
+            return 0;
             }
 
             //Deregister from Exit event to allow all other modules to be registed first.

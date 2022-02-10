@@ -45,7 +45,7 @@
     {
         #region Fields
 
-        const int DISPLAY_PANELS = 21;
+        const int DISPLAY_PANELS = 23;
         const int NUM_CHANNELS = 4;
 
         private bool zExpander_MouseGotFocus = false;
@@ -74,7 +74,9 @@
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/DFLIMView","DFLIMViewControl","DFLIMControlBorder"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/LightEngineView","LightEngineControlView","LightEngineControlBorder"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/EpiturretControlView","EpiturretControlView","EpiturretControlBorder"},
-                {"/ApplicationSettings/DisplayOptions/CaptureSetup/AutoFocusControlView","AutoFocusControlView","AutoFocusControlBorder"}
+                {"/ApplicationSettings/DisplayOptions/CaptureSetup/AutoFocusControlView","AutoFocusControlView","AutoFocusControlBorder"},
+                {"/ApplicationSettings/DisplayOptions/CaptureSetup/MiniCircuitsSwitchControlView","MiniCircuitsSwitchControlView","MiniCircuitsSwitchControlBorder"},
+                {"/ApplicationSettings/DisplayOptions/CaptureSetup/MultiLaserControlView","MultiLaserControlView","MultiLaserControlBorder"}
             };
         Dictionary<int, string> _powerTabVisibility = new Dictionary<int, string>
          {
@@ -392,10 +394,7 @@
                     }
                 }
 
-                if (!Directory.Exists(_liveVM.SettingsTemplatesPath))
-                {
-                    Directory.CreateDirectory(_liveVM.SettingsTemplatesPath);
-                }
+                ResourceManagerCS.SafeCreateDirectory(_liveVM.SettingsTemplatesPath);
 
                 //There is the possibility that a setting was changed and the camera did not verify the
                 //setting via a capture. In this case use preflight/postflight to push down the gui values
@@ -513,13 +512,13 @@
                 }
             }
 
-            if (sender != mclsExpander)
-            {
-                if (mclsExpander != null)
-                {
-                    mclsExpander.IsExpanded = false;
-                }
-            }
+            //if (sender != mclsExpander)
+            //{
+            //    if (mclsExpander != null)
+            //    {
+            //        mclsExpander.IsExpanded = false;
+            //    }
+            //}
 
             if (sender != multiphotonExpander)
             {
@@ -630,6 +629,14 @@
                 if (EpiturretControlExpander != null)
                 {
                     EpiturretControlExpander.IsExpanded = false;
+                }
+            }
+
+            if (sender != multiLaserExpander)
+            {
+                if (multiLaserExpander != null)
+                {
+                    multiLaserExpander.IsExpanded = false;
                 }
             }
         }
@@ -1177,7 +1184,7 @@
                 _liveVM.SLMPanelInUse = false;
                 for (int i = 0; i < ndList.Count; i++)
                 {
-                    if ((XmlManager.GetAttribute(ndList[i], _liveVM.HardwareDoc, "dllName", ref slmStr)) && (0 == slmStr.CompareTo("ThorSLMPDM512")))
+                    if ((XmlManager.GetAttribute(ndList[i], _liveVM.HardwareDoc, "dllName", ref slmStr)) && (slmStr.Contains("ThorSLM")))
                     {
                         _liveVM.SLMPanelInUse = (XmlManager.GetAttribute(ndList[i], _liveVM.HardwareDoc, "active", ref slmStr)) && (0 == slmStr.CompareTo("1"));
                     }
@@ -1267,11 +1274,11 @@
                     powBorder.Visibility = ndList[0].Attributes["Visibility"].Value.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
                 }
 
-                ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/MCLSView");
-                if (ndList.Count > 0)
-                {
-                    mclsBorder.Visibility = ndList[0].Attributes["Visibility"].Value.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
-                }
+                //ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/MCLSView");
+                //if (ndList.Count > 0)
+                //{
+                //    mclsBorder.Visibility = ndList[0].Attributes["Visibility"].Value.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
+                //}
 
                 ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/MultiphotonView");
                 if (ndList.Count > 0)
@@ -1585,6 +1592,16 @@
                 if (ndList.Count > 0)
                 {
                     AutoFocusControlBorder.Visibility = ndList[0].Attributes["Visibility"].Value.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
+                }
+                ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/MiniCircuitsSwitchControlView");
+                if (ndList.Count > 0)
+                {
+                    MiniCircuitsSwitchControlBorder.Visibility = ndList[0].Attributes["Visibility"].Value.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
+                }
+                ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/MultiLaserControlView");
+                if (ndList.Count > 0)
+                {
+                    MultiLaserControlBorder.Visibility = ndList[0].Attributes["Visibility"].Value.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
                 }
 
                 ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/TwoColumnDisplay");

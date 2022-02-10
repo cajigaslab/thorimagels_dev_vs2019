@@ -78,6 +78,7 @@
         private static ReportIndex _reportCallBackImage;
         private static ReportInformMessage _reportInformMessage;
         private static ReportPreCapture _reportPreCaptureCallBack;
+        private static ReportSavedFileIPC _reportSavedFileIPC;
         private static ReportSequenceStepCurrentIndex _reportSequenceStepCurrentIndexCallBack;
         private static ReportSubRowEndIndex _reportSubRowEndCallBack;
         private static ReportSubRowStartIndex _reportSubRowStartCallBack;
@@ -320,6 +321,7 @@
             _reportPreCaptureCallBack = new ReportPreCapture(RunSampleLSUpdatePreCapture);
             _reportSequenceStepCurrentIndexCallBack = new ReportSequenceStepCurrentIndex(RunsampleLSUpdateSequenceStepCurrentIndx);
             _reportInformMessage = new ReportInformMessage(RunsampleLSUpdateMessage);
+            _reportSavedFileIPC = new ReportSavedFileIPC(RunsampleLSNotifySavedFileToIPC);
 
             try
             {
@@ -346,21 +348,6 @@
         #endregion Constructors
 
         #region Enumerations
-
-        public enum BleachMode
-        {
-            BLEACH = 0,
-            SLM = 1
-        }
-
-        public enum CaptureModes
-        {
-            T_AND_Z = 0,
-            STREAMING = 1,
-            TDI,
-            BLEACHING,
-            HYPERSPECTRAL
-        }
 
         public enum ColorAssignments
         {
@@ -394,6 +381,9 @@
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void ReportPreCapture(ref int status);
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode)]
+        private delegate void ReportSavedFileIPC(string index);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void ReportSequenceStepCurrentIndex(ref int index);
@@ -750,25 +740,12 @@
             get { return _completedImageCount; }
         }
 
-        public RunSampleLS.BleachMode CurrentBleachMode
+        public BleachMode CurrentBleachMode
         {
             get
             {
-                RunSampleLS.BleachMode bMode = RunSampleLS.BleachMode.BLEACH;
-                XmlDocument hwSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS];
-                XmlNodeList ndListHW = hwSettings.SelectNodes("/HardwareSettings/Devices/SLM");
-                for (int i = 0; i < ndListHW.Count; i++)
-                {
-                    string str = string.Empty;
-
-                    if (XmlManager.GetAttribute(ndListHW[i], hwSettings, "dllName", ref str) && (0 == str.CompareTo("ThorSLMPDM512")))
-                    {
-                        bMode = (XmlManager.GetAttribute(ndListHW[i], hwSettings, "active", ref str) && (0 == str.CompareTo("1"))) ?
-                            RunSampleLS.BleachMode.SLM : RunSampleLS.BleachMode.BLEACH;
-                    }
-                }
-                BleachScanMode = bMode;
-                return bMode;
+                BleachScanMode = ResourceManagerCS.Instance.GetBleachMode;
+                return BleachScanMode;
             }
         }
 
@@ -2848,7 +2825,6 @@
                             Math.Max(1, (int)Math.Round(Math.Abs(Math.Round((_zStopPosition - _zStartPosition), 5) / (_zStepSize / (double)Constants.UM_TO_MM)))) :
                             Math.Max(1, (int)Math.Round(Math.Abs(Math.Round((_zStopPosition - _zStartPosition), 5) / (_zStepSize / (double)Constants.UM_TO_MM)) + 1));
                         break;
-                    case CaptureModes.TDI:
                     case CaptureModes.BLEACHING:
                     case CaptureModes.HYPERSPECTRAL:
                     default:
@@ -3162,7 +3138,8 @@
                 _reportTCallBack,
                 _reportPreCaptureCallBack,
                 _reportSequenceStepCurrentIndexCallBack,
-                _reportInformMessage
+                _reportInformMessage,
+                _reportSavedFileIPC
                 );
 
             InitCallBackROIDataStore(_multiROIStatsCallBack);
@@ -4185,7 +4162,7 @@
         private static extern int GetZStage(StringBuilder name, int length, ref int zstageSteps, ref double zstageStepSize, ref double zStartPos);
 
         [DllImport(".\\Modules_Native\\RunSample.dll", EntryPoint = "InitCallBack")]
-        private static extern void InitCallBack(Report report, ReportIndex reportIndex, ReportSubRowStartIndex reportSubRowStartIndex, ReportSubRowEndIndex reportSubRowEndIndex, ReportZIndex reportZIndex, ReportTIndex reportTIndex, ReportPreCapture reportPreCapture, ReportSequenceStepCurrentIndex reporSequenceStepCurrentIndx, ReportInformMessage reportInformMessage);
+        private static extern void InitCallBack(Report report, ReportIndex reportIndex, ReportSubRowStartIndex reportSubRowStartIndex, ReportSubRowEndIndex reportSubRowEndIndex, ReportZIndex reportZIndex, ReportTIndex reportTIndex, ReportPreCapture reportPreCapture, ReportSequenceStepCurrentIndex reporSequenceStepCurrentIndx, ReportInformMessage reportInformMessage, ReportSavedFileIPC reportSavedFileIPC);
 
         [DllImport(".\\StatsManager.dll", EntryPoint = "InitCallBackLineProfilePush")]
         private static extern void InitCallBackLineProfilePush(ReportLineProfile reportLineProfile);
@@ -5042,7 +5019,7 @@
             _loadedSLMFiles.Clear();
             _loadedSLMSequences.Clear();
 
-            if (RunSampleLS.BleachMode.SLM == _bleachScanMode)
+            if (BleachMode.SLM == _bleachScanMode)
             {
                 //preload all available SLM patterns:
                 PreLoadAllSLMPattern();
@@ -5278,6 +5255,11 @@
                 _bleachPixelArrayList.Add(pxArray);
             }
             return true;
+        }
+
+        private void RunsampleLSNotifySavedFileToIPC(string message)
+        {
+            SendToIPCController(ThorPipeCommand.NotifySavedFile, message);
         }
 
         //to update the completed working WELL status and progress feedback
@@ -5978,10 +5960,10 @@
             {
                 _streamEnable = 1;
             }
-            else if ((int)CaptureModes.TDI == CaptureMode)
-            {
-                _streamEnable = 2;
-            }
+            //else if ((int)CaptureModes.TDI == CaptureMode)
+            //{
+            //    _streamEnable = 2;
+            //}
             else
             {
                 _streamEnable = 0;

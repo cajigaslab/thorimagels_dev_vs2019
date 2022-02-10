@@ -3,9 +3,22 @@
     using System;
     using System.Windows.Media;
 
-    using Abt.Controls.SciChart;
-    using Abt.Controls.SciChart.Model.DataSeries;
-    using Abt.Controls.SciChart.Visuals;
+    using SciChart;
+    using SciChart.Charting;
+    using SciChart.Charting.ChartModifiers;
+    using SciChart.Charting.Common.Extensions;
+    using SciChart.Charting.Model.DataSeries;
+    using SciChart.Charting.Themes;
+    using SciChart.Charting.Utility;
+    using SciChart.Charting.Visuals;
+    using SciChart.Charting.Visuals.Annotations;
+    using SciChart.Charting.Visuals.Axes;
+    using SciChart.Charting.Visuals.Axes.LabelProviders;
+    using SciChart.Charting.Visuals.Events;
+    using SciChart.Core;
+    using SciChart.Data.Model;
+    using SciChart.Drawing.HighSpeedRasterizer;
+    using SciChart.Drawing.Utility;
 
     public interface IChannelViewModel
     {
@@ -22,7 +35,7 @@
             get;
         }
 
-        IXyDataSeries<double, double> ChannelSeries
+        IDataSeries ChannelSeries
         {
             get;
             set;
@@ -87,7 +100,7 @@
     {
         #region Fields
 
-        private IXyDataSeries<double, double> _channelSeries = null;
+        private IDataSeries _channelSeries = null;
         private Color _color;
         private int _height = 150;
         private bool _isRollOverEnabled = false;
@@ -158,7 +171,7 @@
             }
         }
 
-        public IXyDataSeries<double, double> ChannelSeries
+        public IDataSeries ChannelSeries
         {
             get { return _channelSeries; }
             set
@@ -237,7 +250,7 @@
             }
         }
 
-        public Abt.Controls.SciChart.ScientificNotation ThresholdValue
+        public ScientificNotation ThresholdValue
         {
             get
             {
@@ -345,8 +358,8 @@
     {
         #region Fields
 
-        private IXyDataSeries<double, double> _channelSeries = null;
-        private IXyDataSeries<double, double> _channelSeries2 = null;
+        private IDataSeries _channelSeries = null;
+        private IDataSeries _channelSeries2 = null;
         private Color[] _color = new Color[2];
         private int _height = 250;
         private bool _isRollOverEnabled = false;
@@ -388,7 +401,7 @@
             }
         }
 
-        public IXyDataSeries<double, double> ChannelSeries
+        public IDataSeries ChannelSeries
         {
             get { return _channelSeries; }
             set
@@ -398,7 +411,7 @@
             }
         }
 
-        public IXyDataSeries<double, double> ChannelSeries2
+        public IDataSeries ChannelSeries2
         {
             get { return _channelSeries2; }
             set

@@ -11,6 +11,7 @@
         #region Fields
 
         private const string OPS = "-+/*^";
+
         private static Dictionary<string, char> _associativity = new Dictionary<string, char>()
             {
                 {"^", 'R'},

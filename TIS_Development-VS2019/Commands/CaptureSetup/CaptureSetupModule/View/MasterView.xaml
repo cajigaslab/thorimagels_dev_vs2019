@@ -580,82 +580,6 @@
                                                Visibility="{Binding ElementName=zExpander, Path=IsExpanded, ConverterParameter=False, Converter={StaticResource VisibilityOfBool}}"/>
                         </StackPanel>
                     </Border>
-                    <Border Name="mclsBorder"
-                  Width="{Binding Path=PanelBorderWidth}">
-                        <Expander Name="mclsExpander"
-                      Foreground="#FFFFFFFF"
-                      IsExpanded="True"
-                      Margin="1"
-                      Expanded="Expander_Expanded">
-                            <Expander.Header>
-                                <Grid Width="350">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="200" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Orientation="Horizontal"
-                              VerticalAlignment="Center"
-                              HorizontalAlignment="Left"
-                              Grid.Column="0">
-                                        <Label Content="MCLS Power Control"
-                           Foreground="White" />
-
-                                    </StackPanel>
-                                    <WrapPanel Orientation="Horizontal"
-                             VerticalAlignment="Center"
-                             MaxWidth="200"
-                             HorizontalAlignment="Right"
-                             Margin="10,0,0,0"
-                             Grid.Column="0"
-                             Grid.ColumnSpan="2"
-                             Visibility="{Binding ElementName=mclsExpander, Path=IsExpanded, ConverterParameter=True, Converter={StaticResource VisibilityOfBool}}">
-                                        <StackPanel Orientation="Horizontal"
-                                                    HorizontalAlignment="Right"
-                                                    Visibility="{Binding Path=CollapsedLaser1Enable}">
-                                            <Label Content="{Binding Path=CollapsedCbLaser1Content}"
-                                                   ContentStringFormat="{}{0}:"
-                                                   Foreground="White"
-                                                   Margin="10,0,0,0" />
-                                            <Label Content="{Binding Path=CollapsedLaser1Power, Converter={StaticResource MCLSPercentConverter}, ConverterParameter=1}"
-                                                   Foreground="White" />
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal"
-                                                    HorizontalAlignment="Right"
-                                                    Visibility="{Binding Path=CollapsedLaser2Enable}">
-                                            <Label Content="{Binding Path=CollapsedCbLaser2Content}"
-                                                   ContentStringFormat="{}{0}:"
-                                                   Foreground="White"
-                                                   Margin="10,0,0,0" />
-                                            <Label Content="{Binding Path=CollapsedLaser2Power, Converter={StaticResource MCLSPercentConverter}, ConverterParameter=2}"
-                                                   Foreground="White" />
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal"
-                                                    HorizontalAlignment="Right"
-                                                    Visibility="{Binding Path=CollapsedLaser3Enable}">
-                                            <Label Content="{Binding Path=CollapsedCbLaser3Content}"
-                                                   ContentStringFormat="{}{0}:"
-                                                   Foreground="White"
-                                                   Margin="10,0,0,0" />
-                                            <Label Content="{Binding Path=CollapsedLaser3Power, Converter={StaticResource MCLSPercentConverter}, ConverterParameter=3}"
-                                                   Foreground="White" />
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal"
-                                                    HorizontalAlignment="Right"
-                                                    Visibility="{Binding Path=CollapsedLaser4Enable}">
-                                            <Label Content="{Binding Path=CollapsedCbLaser4Content}"
-                                                   ContentStringFormat="{}{0}:"
-                                                   Foreground="White"
-                                                   Margin="10,0,0,0" />
-                                            <Label Content="{Binding Path=CollapsedLaser4Power, Converter={StaticResource MCLSPercentConverter}, ConverterParameter=4}"
-                                                   Foreground="White" />
-                                        </StackPanel>
-                                    </WrapPanel>
-                                </Grid>
-                            </Expander.Header>
-                            <View:LaserControlView x:Name="LaserControlView"
-                                    HorizontalAlignment="Center" />
-                        </Expander>
-                    </Border>
                     <Border Name="multiphotonBorder"
                   Width="{Binding Path=PanelBorderWidth}">
                         <Expander Name="multiphotonExpander"
@@ -1152,6 +1076,132 @@
                             <StackPanel Name="AutoFocusControlPanel">
                                 <View:AutoFocusControlView x:Name="AutoFocusControlView"/>
                             </StackPanel>
+                        </Expander>
+                    </Border>
+                    <Border Name="MiniCircuitsSwitchControlBorder"
+                            Width="{Binding Path=PanelBorderWidth}"
+                            Visibility="Visible">
+                        <Expander Name="MiniCircuitsSwitchControlExpander"
+                                  Foreground="#FFFFFFFF"
+                                  IsExpanded="True"
+                                  Margin="1"
+                                  Header="MiniCircuits Switch Control"
+                                  Expanded="Expander_Expanded">
+                            <StackPanel Name="MiniCircuitsSwitchControlPanel">
+                                <View:MiniCircuitsSwitchControlView x:Name="MiniCircuitsSwitchControlView"/>
+                            </StackPanel>
+                        </Expander>
+                    </Border>
+                    <Border Name="MultiLaserControlBorder"
+                  Width="{Binding Path=PanelBorderWidth}">
+                        <Expander Name="multiLaserExpander"
+                      Foreground="#FFFFFFFF"
+                      IsExpanded="True"
+                      Margin="1"
+                      Expanded="Expander_Expanded">
+                            <Expander.Header>
+                                <Grid Width="350">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="200" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Orientation="Horizontal"
+                              VerticalAlignment="Center"
+                              HorizontalAlignment="Left"
+                              Grid.Column="0">
+                                        <Label Content="Laser Power Control"
+                           Foreground="White" />
+
+                                    </StackPanel>
+                                    <WrapPanel Orientation="Horizontal"
+                             VerticalAlignment="Center"
+                             MaxWidth="200"
+                             HorizontalAlignment="Right"
+                             Margin="10,0,0,0"
+                             Grid.Column="0"
+                             Grid.ColumnSpan="2"
+                             Visibility="{Binding ElementName=multiLaserExpander, Path=IsExpanded, ConverterParameter=True, Converter={StaticResource VisibilityOfBool}}">
+                                        <StackPanel Orientation="Horizontal"
+                                                    HorizontalAlignment="Right"
+                                                    Visibility="{Binding Path=CollapsedLaser1Enable}">
+                                            <Label Content="{Binding Path=CollapsedEnableLaser1Content}"
+                                                   ContentStringFormat="{}{0}:"
+                                                   Foreground="White"
+                                                   Margin="10,0,0,0" 
+                                                   Visibility="{Binding Path=CollapsedOriginalLaserVisibility}"/>
+                                            <Label Content="{Binding Path=CollapsedLaser1Wavelength}"
+                                                   Foreground="White"
+                                                   Margin="6,0,0,0"
+                                                   Visibility="{Binding Path=CollapsedTopticaVisibility}"/>
+                                            <Label Content="{Binding Path=CollapsedLaser1Power}"
+                                                   Visibility="{Binding Path=CollapsedTopticaVisibility}"
+                                                   Foreground="White" />
+                                            <Label Content="{Binding Path=CollapsedLaser1Power, Converter={StaticResource MCLSPercentConverter}, ConverterParameter=1}"
+                                                   Visibility="{Binding Path=CollapsedOriginalLaserVisibility}"
+                                                   Foreground="White" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal"
+                                                    HorizontalAlignment="Right"
+                                                    Visibility="{Binding Path=CollapsedLaser2Enable}">
+                                            <Label Content="{Binding Path=CollapsedEnableLaser2Content}"
+                                                   ContentStringFormat="{}{0}:"
+                                                   Foreground="White"
+                                                   Margin="10,0,0,0" 
+                                                   Visibility="{Binding Path=CollapsedOriginalLaserVisibility}"/>
+                                            <Label Content="{Binding Path=CollapsedLaser2Wavelength}"
+                                                   Foreground="White"
+                                                   Margin="6,0,0,0"
+                                                   Visibility="{Binding Path=CollapsedTopticaVisibility}"/>
+                                            <Label Content="{Binding Path=CollapsedLaser2Power}"
+                                                   Visibility="{Binding Path=CollapsedTopticaVisibility}"
+                                                   Foreground="White" />
+                                            <Label Content="{Binding Path=CollapsedLaser2Power, Converter={StaticResource MCLSPercentConverter}, ConverterParameter=2}"
+                                                   Visibility="{Binding Path=CollapsedOriginalLaserVisibility}"
+                                                   Foreground="White" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal"
+                                                    HorizontalAlignment="Right"
+                                                    Visibility="{Binding Path=CollapsedLaser3Enable}">
+                                            <Label Content="{Binding Path=CollapsedEnableLaser3Content}"
+                                                   ContentStringFormat="{}{0}:"
+                                                   Foreground="White"
+                                                   Margin="10,0,0,0" 
+                                                   Visibility="{Binding Path=CollapsedOriginalLaserVisibility}"/>
+                                            <Label Content="{Binding Path=CollapsedLaser3Wavelength}"
+                                                   Foreground="White"
+                                                   Margin="6,0,0,0"
+                                                   Visibility="{Binding Path=CollapsedTopticaVisibility}"/>
+                                            <Label Content="{Binding Path=CollapsedLaser3Power}"
+                                                   Visibility="{Binding Path=CollapsedTopticaVisibility}"
+                                                   Foreground="White" />
+                                            <Label Content="{Binding Path=CollapsedLaser3Power, Converter={StaticResource MCLSPercentConverter}, ConverterParameter=3}"
+                                                   Visibility="{Binding Path=CollapsedOriginalLaserVisibility}"
+                                                   Foreground="White" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal"
+                                                    HorizontalAlignment="Right"
+                                                    Visibility="{Binding Path=CollapsedLaser4Enable}">
+                                            <Label Content="{Binding Path=CollapsedEnableLaser4Content}"
+                                                   ContentStringFormat="{}{0}:"
+                                                   Foreground="White"
+                                                   Margin="10,0,0,0" 
+                                                   Visibility="{Binding Path=CollapsedOriginalLaserVisibility}"/>
+                                            <Label Content="{Binding Path=CollapsedLaser4Wavelength}"
+                                                   Foreground="White"
+                                                   Margin="6,0,0,0"
+                                                   Visibility="{Binding Path=CollapsedTopticaVisibility}"/>
+                                            <Label Content="{Binding Path=CollapsedLaser4Power}"
+                                                   Visibility="{Binding Path=CollapsedTopticaVisibility}"
+                                                   Foreground="White" />
+                                            <Label Content="{Binding Path=CollapsedLaser4Power, Converter={StaticResource MCLSPercentConverter}, ConverterParameter=4}"
+                                                   Visibility="{Binding Path=CollapsedOriginalLaserVisibility}"
+                                                   Foreground="White" />
+                                        </StackPanel>
+                                    </WrapPanel>
+                                </Grid>
+                            </Expander.Header>
+                            <View:MultiLaserControlView x:Name="MultiLaserControlView"
+                                    HorizontalAlignment="Center" />
                         </Expander>
                     </Border>
                 </StackPanel>

@@ -224,7 +224,7 @@ BOOL console_prompt(const char* prompt, char* buf, int32 bufsize )
 //---
 void output_data(const char* filename, char* buf, int32 bufsize )
 {
-#if	defined( _WIN32 )
+#if	defined( WIN32 )
 	HANDLE hFile = CreateFileA( filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL );
 	if( hFile != INVALID_HANDLE_VALUE )
 	{

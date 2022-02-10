@@ -21,7 +21,7 @@ extern "C" _declspec(dllexport) typedef struct CompoundDataStruct
 	size_t				ciLength;
 	size_t				viLength;
 	double*				aiDataPtr;
-	unsigned long*		diDataPtr;
+	unsigned char*		diDataPtr;
 	unsigned long*		ciDataPtr;
 	double*				viDataPtr;
 	unsigned __int64*	gCtr64Ptr;

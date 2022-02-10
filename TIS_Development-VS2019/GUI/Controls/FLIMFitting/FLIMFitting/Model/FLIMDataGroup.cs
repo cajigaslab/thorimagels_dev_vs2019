@@ -10,12 +10,26 @@
     using System.Windows.Data;
     using System.Windows.Media;
 
-    using Abt.Controls.SciChart;
-    using Abt.Controls.SciChart.Model.DataSeries;
-    using Abt.Controls.SciChart.Visuals.PointMarkers;
-    using Abt.Controls.SciChart.Visuals.RenderableSeries;
-
     using FLIMFitting.Utils;
+
+    using SciChart;
+    using SciChart.Charting;
+    using SciChart.Charting.ChartModifiers;
+    using SciChart.Charting.Common.Extensions;
+    using SciChart.Charting.Model.DataSeries;
+    using SciChart.Charting.Themes;
+    using SciChart.Charting.Visuals;
+    using SciChart.Charting.Visuals.Annotations;
+    using SciChart.Charting.Visuals.Axes;
+    using SciChart.Charting.Visuals.Axes.LabelProviders;
+    using SciChart.Charting.Visuals.Events;
+    using SciChart.Charting.Visuals.PointMarkers;
+    using SciChart.Charting.Visuals.RenderableSeries;
+    using SciChart.Core;
+    using SciChart.Data.Model;
+    using SciChart.Drawing.HighSpeedRasterizer;
+    using SciChart.Drawing.Utility;
+    using SciChart.Drawing.VisualXcceleratorRasterizer;
 
     public class FLIMDataGroup : BindableBase
     {
@@ -260,7 +274,7 @@
                 var fs = new FastLineRenderableSeries
                 {
                     DataSeries = residualsSerie,
-                    SeriesColor = flimData.RenderColor,
+                    Stroke = flimData.RenderColor,
                     StrokeThickness = 2
                 };
                 BindingOperations.SetBinding(fs, FastLineRenderableSeries.IsVisibleProperty, binding);
@@ -275,6 +289,12 @@
                 return false;
             }
             HasPreFit = false;
+
+            Dictionary<string, bool> isVisibleDictionary = new Dictionary<string, bool>();
+            for (int i = 0; i < BinSeries?.Count; ++i)
+            {
+                isVisibleDictionary.Add(BinSeries[i].DataSeries.SeriesName, BinSeries[i].IsVisible);
+            }
 
             foreach (var b in _binHistogramSeries)
             {
@@ -315,6 +335,7 @@
             IsMultiData = _flimDataList.Count > 1;
             double maxPhoton = 0.0;
             double minPhoton = int.MaxValue;
+
             for (int i = 0; i < _flimDataList.Count; i++)
             {
                 var serie = new XyDataSeries<double, double>() { SeriesName = string.Format("Bin {0}", i + 1) };
@@ -362,12 +383,29 @@
                 }
             }
 
+            foreach (var isVisible in isVisibleDictionary)
+            {
+                for (int i = 0; i < BinSeries?.Count; ++i)
+                {
+                    if (isVisible.Key == BinSeries[i].DataSeries.SeriesName)
+                    {
+                        BinSeries[i].IsVisible = isVisible.Value;
+                    }
+                }
+            }
+
             PhotonRange = new DoubleRange(minPhoton - minPhoton * 1.1, maxPhoton * 1.1);
             return true;
         }
 
         private void UpdateResult()
         {
+            Dictionary<string, bool> isVisibleDictionary = new Dictionary<string, bool>();
+            for (int i = 0; i < ResidualsSeries?.Count; ++i)
+            {
+                isVisibleDictionary.Add(ResidualsSeries[i].DataSeries.SeriesName, ResidualsSeries[i].IsVisible);
+            }
+
             ResidualsSeries.Clear();
             foreach (var r in _resultLineSeries)
             {
@@ -389,7 +427,7 @@
                 }
                 var renderableSeries = new FastLineRenderableSeries
                 {
-                    SeriesColor = flimData.RenderColor,
+                    Stroke = flimData.RenderColor,
                     DataSeries = serie,
                     StrokeThickness = 2
                 };
@@ -406,7 +444,7 @@
                 var fs = new FastLineRenderableSeries
                 {
                     DataSeries = residualsSerie,
-                    SeriesColor = flimData.RenderColor,
+                    Stroke = flimData.RenderColor,
                     StrokeThickness = 2
                 };
                 BindingOperations.SetBinding(fs, FastLineRenderableSeries.IsVisibleProperty, binding);
@@ -422,6 +460,18 @@
                     minResidual = (double)residualsSerie.YMin;
                 }
             }
+
+            foreach (var isVisible in isVisibleDictionary)
+            {
+                for (int i = 0; i < ResidualsSeries?.Count; ++i)
+                {
+                    if (isVisible.Key == ResidualsSeries[i].DataSeries.SeriesName)
+                    {
+                        ResidualsSeries[i].IsVisible = isVisible.Value;
+                    }
+                }
+            }
+
             ResidualsRange = new DoubleRange(Math.Floor(minResidual), Math.Ceiling(maxResidual));
         }
 

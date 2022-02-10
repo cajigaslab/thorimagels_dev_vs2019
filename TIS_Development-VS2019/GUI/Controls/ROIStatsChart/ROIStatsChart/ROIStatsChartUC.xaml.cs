@@ -19,14 +19,26 @@
     using System.Windows.Navigation;
     using System.Windows.Shapes;
 
-    using Abt.Controls.SciChart;
-    using Abt.Controls.SciChart.Model.DataSeries;
-    using Abt.Controls.SciChart.Visuals;
-    using Abt.Controls.SciChart.Visuals.RenderableSeries;
-
     using Microsoft.Win32;
 
     using ROIStatsChart.ViewModel;
+
+    using SciChart;
+    using SciChart.Charting;
+    using SciChart.Charting.ChartModifiers;
+    using SciChart.Charting.Common.Extensions;
+    using SciChart.Charting.Model.DataSeries;
+    using SciChart.Charting.Themes;
+    using SciChart.Charting.Visuals;
+    using SciChart.Charting.Visuals.Annotations;
+    using SciChart.Charting.Visuals.Axes;
+    using SciChart.Charting.Visuals.Axes.LabelProviders;
+    using SciChart.Charting.Visuals.Events;
+    using SciChart.Core;
+    using SciChart.Data.Model;
+    using SciChart.Drawing.HighSpeedRasterizer;
+    using SciChart.Drawing.Utility;
+    using SciChart.Drawing.VisualXcceleratorRasterizer;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -153,7 +165,7 @@
             Nullable<bool> result = svFlDlg.ShowDialog();
             if (result == true && svFlDlg.FileName != "")
             {
-                _vm.SciChartSurface.ExportToFile(svFlDlg.FileName, (ExportType)(svFlDlg.FilterIndex - 1));
+                _vm.SciChartSurface.ExportToFile(svFlDlg.FileName, (ExportType)(svFlDlg.FilterIndex - 1), true);
             }
         }
 

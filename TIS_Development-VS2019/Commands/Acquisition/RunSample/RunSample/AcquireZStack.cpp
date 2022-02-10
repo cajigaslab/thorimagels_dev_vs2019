@@ -119,6 +119,12 @@ long AcquireZStack::CallInformMessage(wchar_t* message)
 	return TRUE;
 }
 
+long AcquireZStack::CallNotifySavedFileIPC(wchar_t* message)
+{
+	NotifySavedFileIPC(message);
+	return TRUE;
+}
+
 long AcquireZStack::Execute(long index, long subWell, long zFrame, long tFrame)
 {
 	_tFrame = tFrame;

@@ -512,6 +512,13 @@ long ThorPMT2100::GetParam(const long paramID, double &param)
 				param = (_deviceDetected[DEVICE_NUM]) ? CONNECTION_READY : CONNECTION_UNAVAILABLE;
 				return TRUE;
 			}
+			case PARAM_PMT_OFFSET_STEP_SIZE:
+			{
+				//Note: Step size was changed back to 0.002 because we were seeing problems with 0.001 at 0.411 and 0.311
+				// The plus/minus buttons would get stucked
+				param = 0.002;
+				return TRUE;
+			}
 			default:
 				param = _tableParams[paramID]->GetParamVal();
 				return TRUE;
@@ -2329,6 +2336,21 @@ long ThorPMT2100::CreateParamTable()
 		L"",						//Command
 		-1);						//Device Index
 	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_CONNECTION_STATUS, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT_OFFSET_STEP_SIZE,
+		FALSE,
+		FALSE,
+		FALSE,
+		TYPE_DOUBLE,
+		TRUE,
+		TRUE,
+		0,
+		100,
+		0,
+		L"",
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT_OFFSET_STEP_SIZE, tempParamInfo));
 
 	return TRUE;
 }

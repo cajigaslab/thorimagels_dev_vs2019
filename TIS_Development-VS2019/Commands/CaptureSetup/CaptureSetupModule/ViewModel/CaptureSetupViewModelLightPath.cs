@@ -329,7 +329,8 @@
         {
             get
             {
-                return _captureSetup.IsNDDAvailable;
+                Visibility NDDVisibility = GetVisibility("/ApplicationSettings/DisplayOptions/CaptureSetup/LightPathView", "NDDLightPathVisibility");
+                return (Visibility.Visible == NDDVisibility) ? _captureSetup.IsNDDAvailable : false;
             }
         }
 
@@ -917,31 +918,36 @@
             }
 
             //add all the attributes for MCLS for the current Capture Sequence Step
-            decimal power1percent = Power2PercentConvertion((double)MVMManager.Instance["LaserControlViewModel", "Laser1Power"],
-                                                            (double)MVMManager.Instance["LaserControlViewModel", "Laser1Max"],
-                                                            (double)MVMManager.Instance["LaserControlViewModel", "Laser1Min"]);
-            decimal power2percent = Power2PercentConvertion((double)MVMManager.Instance["LaserControlViewModel", "Laser2Power"],
-                                                            (double)MVMManager.Instance["LaserControlViewModel", "Laser2Max"],
-                                                            (double)MVMManager.Instance["LaserControlViewModel", "Laser2Min"]);
-            decimal power3percent = Power2PercentConvertion((double)MVMManager.Instance["LaserControlViewModel", "Laser3Power"],
-                                                            (double)MVMManager.Instance["LaserControlViewModel", "Laser3Max"],
-                                                            (double)MVMManager.Instance["LaserControlViewModel", "Laser3Min"]);
-            decimal power4percent = Power2PercentConvertion((double)MVMManager.Instance["LaserControlViewModel", "Laser4Power"],
-                                                            (double)MVMManager.Instance["LaserControlViewModel", "Laser4Max"],
-                                                            (double)MVMManager.Instance["LaserControlViewModel", "Laser4Min"]);
+            decimal power1percent = Power2PercentConvertion((double)MVMManager.Instance["MultiLaserControlViewModel", "Laser1Power"],
+                                                            (double)MVMManager.Instance["MultiLaserControlViewModel", "Laser1Max"],
+                                                            (double)MVMManager.Instance["MultiLaserControlViewModel", "Laser1Min"]);
+            decimal power2percent = Power2PercentConvertion((double)MVMManager.Instance["MultiLaserControlViewModel", "Laser2Power"],
+                                                            (double)MVMManager.Instance["MultiLaserControlViewModel", "Laser2Max"],
+                                                            (double)MVMManager.Instance["MultiLaserControlViewModel", "Laser2Min"]);
+            decimal power3percent = Power2PercentConvertion((double)MVMManager.Instance["MultiLaserControlViewModel", "Laser3Power"],
+                                                            (double)MVMManager.Instance["MultiLaserControlViewModel", "Laser3Max"],
+                                                            (double)MVMManager.Instance["MultiLaserControlViewModel", "Laser3Min"]);
+            decimal power4percent = Power2PercentConvertion((double)MVMManager.Instance["MultiLaserControlViewModel", "Laser4Power"],
+                                                            (double)MVMManager.Instance["MultiLaserControlViewModel", "Laser4Max"],
+                                                            (double)MVMManager.Instance["MultiLaserControlViewModel", "Laser4Min"]);
             // SetAttribute(innderNdList[0], lightPathListDoc, "MainLaserSelection", this.MainLaserIndex.ToString());
-            SetAttribute(innderNdList[0], lightPathListDoc, "enable1", MVMManager.Instance["LaserControlViewModel", "Laser1Enable"].ToString());
-            SetAttribute(innderNdList[0], lightPathListDoc, "power1", MVMManager.Instance["LaserControlViewModel", "Laser1Power"].ToString());
-            SetAttribute(innderNdList[0], lightPathListDoc, "enable2", MVMManager.Instance["LaserControlViewModel", "Laser2Enable"].ToString());
-            SetAttribute(innderNdList[0], lightPathListDoc, "power2", MVMManager.Instance["LaserControlViewModel", "Laser2Power"].ToString());
-            SetAttribute(innderNdList[0], lightPathListDoc, "enable3", MVMManager.Instance["LaserControlViewModel", "Laser3Enable"].ToString());
-            SetAttribute(innderNdList[0], lightPathListDoc, "power3", MVMManager.Instance["LaserControlViewModel", "Laser3Power"].ToString());
-            SetAttribute(innderNdList[0], lightPathListDoc, "enable4", MVMManager.Instance["LaserControlViewModel", "Laser4Enable"].ToString());
-            SetAttribute(innderNdList[0], lightPathListDoc, "power4", MVMManager.Instance["LaserControlViewModel", "Laser4Power"].ToString());
+            SetAttribute(innderNdList[0], lightPathListDoc, "enable1", MVMManager.Instance["MultiLaserControlViewModel", "Laser1Enable"].ToString());
+            SetAttribute(innderNdList[0], lightPathListDoc, "power1", MVMManager.Instance["MultiLaserControlViewModel", "Laser1Power"].ToString());
+            SetAttribute(innderNdList[0], lightPathListDoc, "enable2", MVMManager.Instance["MultiLaserControlViewModel", "Laser2Enable"].ToString());
+            SetAttribute(innderNdList[0], lightPathListDoc, "power2", MVMManager.Instance["MultiLaserControlViewModel", "Laser2Power"].ToString());
+            SetAttribute(innderNdList[0], lightPathListDoc, "enable3", MVMManager.Instance["MultiLaserControlViewModel", "Laser3Enable"].ToString());
+            SetAttribute(innderNdList[0], lightPathListDoc, "power3", MVMManager.Instance["MultiLaserControlViewModel", "Laser3Power"].ToString());
+            SetAttribute(innderNdList[0], lightPathListDoc, "enable4", MVMManager.Instance["MultiLaserControlViewModel", "Laser4Enable"].ToString());
+            SetAttribute(innderNdList[0], lightPathListDoc, "power4", MVMManager.Instance["MultiLaserControlViewModel", "Laser4Power"].ToString());
             SetAttribute(innderNdList[0], lightPathListDoc, "power1percent", power1percent.ToString());
             SetAttribute(innderNdList[0], lightPathListDoc, "power2percent", power2percent.ToString());
             SetAttribute(innderNdList[0], lightPathListDoc, "power3percent", power3percent.ToString());
             SetAttribute(innderNdList[0], lightPathListDoc, "power4percent", power4percent.ToString());
+            //Set these to set visibility of wavelength value when hovering over sequential capture Light Path
+            SetAttribute(innderNdList[0], lightPathListDoc, "wavelength1", MVMManager.Instance["MultiLaserControlViewModel", "Laser1Wavelength"].ToString());
+            SetAttribute(innderNdList[0], lightPathListDoc, "wavelength2", MVMManager.Instance["MultiLaserControlViewModel", "Laser2Wavelength"].ToString());
+            SetAttribute(innderNdList[0], lightPathListDoc, "wavelength3", MVMManager.Instance["MultiLaserControlViewModel", "Laser3Wavelength"].ToString());
+            SetAttribute(innderNdList[0], lightPathListDoc, "wavelength4", MVMManager.Instance["MultiLaserControlViewModel", "Laser4Wavelength"].ToString());
 
             //set the node to MultiPhotonLaser, create it if it doesn't exist
             innderNdList = stepRootNode.SelectNodes("MultiPhotonLaser");
@@ -1152,17 +1158,19 @@
             double laser2Power = 0.0, laser2Percent = 0.0;
             double laser3Power = 0.0, laser3Percent = 0.0;
             double laser4Power = 0.0, laser4Percent = 0.0;
+            int laser1Wavelength = 0, laser2Wavelength = 0, laser3Wavelength = 0, laser4Wavelength = 0;
             lightPathSequenceStep.GetLightPathSequenceStepMCLS(ref mainLaserSelection, ref laser1Enable, ref laser1Power, ref laser1Percent, ref laser2Enable, ref laser2Power, ref laser2Percent,
-                ref laser3Enable, ref laser3Power, ref laser3Percent, ref laser4Enable, ref laser4Power, ref laser4Percent);
-            MVMManager.Instance["LaserControlViewModel", "MainLaserIndex"] = mainLaserSelection;
-            MVMManager.Instance["LaserControlViewModel", "Laser1Enable"] = laser1Enable;
-            MVMManager.Instance["LaserControlViewModel", "Laser1Power"] = laser1Power;
-            MVMManager.Instance["LaserControlViewModel", "Laser2Enable"] = laser2Enable;
-            MVMManager.Instance["LaserControlViewModel", "Laser2Power"] = laser2Power;
-            MVMManager.Instance["LaserControlViewModel", "Laser3Enable"] = laser3Enable;
-            MVMManager.Instance["LaserControlViewModel", "Laser3Power"] = laser3Power;
-            MVMManager.Instance["LaserControlViewModel", "Laser4Enable"] = laser4Enable;
-            MVMManager.Instance["LaserControlViewModel", "Laser4Power"] = laser4Power;
+                ref laser3Enable, ref laser3Power, ref laser3Percent, ref laser4Enable, ref laser4Power, ref laser4Percent, ref laser1Wavelength, ref laser2Wavelength, ref laser3Wavelength,
+                ref laser4Wavelength);
+            MVMManager.Instance["MultiLaserControlViewModel", "MainLaserIndex"] = mainLaserSelection;
+            MVMManager.Instance["MultiLaserControlViewModel", "Laser1Enable"] = laser1Enable;
+            MVMManager.Instance["MultiLaserControlViewModel", "Laser1Power"] = laser1Power;
+            MVMManager.Instance["MultiLaserControlViewModel", "Laser2Enable"] = laser2Enable;
+            MVMManager.Instance["MultiLaserControlViewModel", "Laser2Power"] = laser2Power;
+            MVMManager.Instance["MultiLaserControlViewModel", "Laser3Enable"] = laser3Enable;
+            MVMManager.Instance["MultiLaserControlViewModel", "Laser3Power"] = laser3Power;
+            MVMManager.Instance["MultiLaserControlViewModel", "Laser4Enable"] = laser4Enable;
+            MVMManager.Instance["MultiLaserControlViewModel", "Laser4Power"] = laser4Power;
 
             //Load and set Multiphoton Laser Settings
             int laserPosition = 0;

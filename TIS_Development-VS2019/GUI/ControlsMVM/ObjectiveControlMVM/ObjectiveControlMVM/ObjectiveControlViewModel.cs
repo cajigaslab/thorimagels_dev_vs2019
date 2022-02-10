@@ -34,10 +34,9 @@
 
         private readonly ObjectiveControlModel _ObjectiveControlModel;
 
-        private Dictionary<string, PropertyInfo> _properties = new Dictionary<string, PropertyInfo>();
-
+        private double[] _focalLengths = { 200.0, 100.0, 50.0, 200.0 }; //f1, f2, f3, f4
         private double _NA;
-
+        private Dictionary<string, PropertyInfo> _properties = new Dictionary<string, PropertyInfo>();
 
         #endregion Fields
 
@@ -128,6 +127,11 @@
             set;
         }
 
+        public double[] FocalLengths
+        {
+            get { return _focalLengths; }
+        }
+
         public string FramesPerSecondText
         {
             get
@@ -183,8 +187,6 @@
                 OnPropertyChanged("NA");
             }
         }
-
-
 
         public int ObjectiveChangerStatus
         {
@@ -525,6 +527,36 @@
             OnPropertyChanged("EpiTurretVis");
         }
 
+        public void LoadHardwareSettings()
+        {
+            string str = string.Empty;
+            double dVal;
+            XmlDocument hwSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS];
+            XmlNodeList ndObj = hwSettings.SelectNodes("/HardwareSettings/Objectives");
+            if (0 < ndObj.Count)
+            {
+                if (!XmlManager.GetAttribute(ndObj[0], hwSettings, "f1MM", ref str))
+                {
+                    //create default if not already exist
+                    MVMManager.Instance.ReloadSettings(SettingsFileType.HARDWARE_SETTINGS);
+                    hwSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS];
+                    ndObj = hwSettings.SelectNodes("/HardwareSettings/Objectives");
+                    for (int i = 0; i < _focalLengths.Length; i++)
+                    {
+                        XmlManager.SetAttribute(ndObj[0], hwSettings, "f" + (i + 1).ToString() + "MM", _focalLengths[i].ToString());
+                    }
+                    MVMManager.Instance.SaveSettings(SettingsFileType.HARDWARE_SETTINGS);
+                }
+                else
+                {
+                    for (int i = 0; i < _focalLengths.Length; i++)
+                    {
+                        _focalLengths[i] = (XmlManager.GetAttribute(ndObj[0], hwSettings, "f" + (i + 1).ToString() + "MM", ref str) && Double.TryParse(str, out dVal)) ? dVal : _focalLengths[i];
+                    }
+                }
+            }
+        }
+
         public void LoadLastSavedMag()
         {
             XmlDocument hardwareSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS];
@@ -533,8 +565,6 @@
             string na = string.Empty;
             if (ndList.Count > 0)
             {
-
-
                 if (XmlManager.GetAttribute(ndList[0], hardwareSettings, "lastSavedMagnification", ref magName))
                 {
                     if (ObjectiveNames.Contains(magName))
@@ -566,7 +596,10 @@
         public void LoadXMLSettings()
         {
             LoadApplicationSettings();
-            //load hardware settings before load exp
+
+            LoadHardwareSettings();
+
+            //load hardware settings before load exp for mutural items
             XmlNodeList ndListObj = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS].DocumentElement["Objectives"].GetElementsByTagName("Objective");
 
             bool isDifferent = false;

@@ -55,6 +55,10 @@ echo F | xcopy /F "..\..\..\..\Tools\AviFile\bin\Debug\AviFile.dll" .\bin\Debug
 echo F | xcopy /F "..\..\..\..\Tools\LibTiff.Net40\Debug\BitMiracle.LibTiff.NET40.dll" .\bin\Debug
 echo F | xcopy /F "..\..\..\..\Tools\LibTiff.Net40\Debug\BitMiracle.LibTiff.NET40.xml" .\bin\Debug
 
+@echo Copying Library Microsoft.Xaml.Behaviors
+echo F | xcopy /F "..\..\..\..\Tools\Microsoft.Xaml.Behaviors\Microsoft.Xaml.Behaviors.dll" .\bin\Debug
+echo F | xcopy /F "..\..\..\..\Tools\Microsoft.Xaml.Behaviors\Microsoft.Xaml.Behaviors.xml" .\bin\Debug
+
 REM @echo Copying Library uart for Kurios
 REM echo F | xcopy /F "..\..\..\..\Tools\uartlibrary\x64\uart_library_ftdi64.dll" .\bin\Debug
 
@@ -65,12 +69,21 @@ echo F | xcopy /F "..\..\..\..\Tools\Gong\gong-wpf-dragdrop-master\GongSolutions
 echo F | xcopy /F "..\..\..\..\Tools\MahApps.Metro\MahApps.Metro.1.5.0\lib\net45\MahApps.Metro.dll" .\bin\Debug
 
 @echo Copying Library Mini Circuits - Switch box library built in .NET 4.5
-echo F | xcopy /F "..\..\..\..\Tools\Mini-Circuits\RF switch controller\mcl_RF_Switch_ControllerNET45.dll" .\bin\Debug
+echo F | xcopy /F "..\..\..\..\Tools\Mini-Circuits\RF switch controller\mcl_RF_Switch_Controller_NET45.dll" .\bin\Debug
 
 @echo Copying Library Infragistics
 echo F | xcopy /F "..\..\..\..\Tools\Infragistics\Infragistics.WPF.16.2.20162.2141\lib\InfragisticsWPF.dll" .\bin\Debug
 echo F | xcopy /F "..\..\..\..\Tools\Infragistics\Infragistics.WPF.Controls.Editors.XamMaskedInput.16.2.20162.2141\lib\InfragisticsWPF.Controls.Editors.XamMaskedInput.dll" .\bin\Debug
 echo F | xcopy /F "..\..\..\..\Tools\Infragistics\Infragistics.WPF.Controls.Editors.XamSlider.16.2.20162.2141\lib\InfragisticsWPF.Controls.Editors.XamSlider.dll" .\bin\Debug
+
+@echo Copying Library Scichart
+echo F | xcopy /F "..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting.dll" .\bin\Debug
+echo F | xcopy /F "..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting.DrawingTools.dll" .\bin\Debug
+echo F | xcopy /F "..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting3D.dll" .\bin\Debug
+echo F | xcopy /F "..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Core.dll" .\bin\Debug
+echo F | xcopy /F "..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Data.dll" .\bin\Debug
+echo F | xcopy /F "..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Drawing.dll" .\bin\Debug
+echo F | xcopy /F "..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Drawing.DirectX.dll" .\bin\Debug
 
 @echo Copying FLIM fitting library
 echo F | xcopy /F ..\..\..\..\Tools\FLIMFit\x64\Release\FLIMFitLibrary.dll .\bin\Debug\Lib
@@ -128,6 +141,8 @@ echo F | xcopy /F ..\..\..\..\GUI\Controls\DFLIMControl\DFLIMControl\bin\Debug\D
 echo F | xcopy /F ..\..\..\..\GUI\Controls\DFLIMSetupAssistant\DFLIMSetupAssistant\bin\Debug\DFLIMSetupAssistant.dll .\bin\Debug\Modules
 echo F | xcopy /F ..\..\..\..\GUI\Controls\FLIMFitting\FLIMFitting\bin\Debug\FLIMFitting.dll .\bin\Debug\Modules
 echo F | xcopy /F ..\..\..\..\GUI\Controls\AutoFocusControl\AutoFocusControl\bin\Debug\AutoFocusControl.dll .\bin\Debug\Modules
+echo F | xcopy /F ..\..\..\..\GUI\Controls\MiniCircuitsSwitchControl\MiniCircuitsSwitchControl\bin\Debug\MiniCircuitsSwitchControl.dll .\bin\Debug\Modules
+echo F | xcopy /F ..\..\..\..\GUI\Controls\MultiLaserControl\MultiLaserControl\bin\Debug\MultiLaserControl.dll .\bin\Debug\Modules
 
 @echo Copying Library MVM
 echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\PowerControlMVM\PowerControlMVM\bin\Debug\PowerControlMVM.dll .\bin\Debug\Modules\MVM
@@ -153,6 +168,8 @@ echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\DFLIMControlMVM\DFLIMControlMVM\bi
 echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\EpiTurretControlMVM\EpiTurretControlMVM\bin\Debug\EpiTurretControlMVM.dll .\bin\Debug\Modules\MVM
 REM echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\MesoScanMVM\MesoScanMVM\bin\Debug\MesoScanMVM.dll .\bin\Debug\Modules\MVM
 echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\AutoFocusControlMVM\AutoFocusControlMVM\bin\Debug\AutoFocusControlMVM.dll .\bin\Debug\Modules\MVM
+echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\MiniCircuitsSwitchControlMVM\MiniCircuitsSwitchControlMVM\bin\Debug\MiniCircuitsSwitchControlMVM.dll .\bin\Debug\Modules\MVM
+echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\MultiLaserControlMVM\MultiLaserControlMVM\bin\Debug\MultiLaserControlMVM.dll .\bin\Debug\Modules\MVM
 
 echo F | xcopy /F ..\..\..\..\Common\Database\DatabaseInterface\bin\Debug\DatabaseInterface.dll .\bin\Debug\Modules
 echo F | xcopy /F ..\..\..\..\Common\Database\DatabaseInterface\bin\Debug\System.Data.SQLite.dll .\bin\Debug\Modules
@@ -250,11 +267,6 @@ move .\bin\Debug\Lib\Kitware.VTK.dll .\bin\Debug
 move .\bin\Debug\Lib\Kitware.VTK.vtkFiltering.Unmanaged.dll .\bin\Debug
 
 echo F | xcopy /F ..\..\..\..\GUI\Controls\ROIStatsChart\ROIStatsChart\bin\Debug\ROIStatsChart.dll .\bin\Debug\Modules
-echo F | xcopy /F ..\..\..\..\GUI\Controls\ROIStatsChart\ROIStatsChart\bin\Debug\Abt.Controls.SciChart.Wpf.2.3.dll .\bin\Debug\
-echo F | xcopy /F ..\..\..\..\GUI\Controls\ROIStatsChart\ROIStatsChart\bin\Debug\Abt.Controls.SciChart.Wpf.2.3.xml .\bin\Debug\
-
-echo F | xcopy /F ..\..\..\..\GUI\Controls\XYTileControl\XYTileControl\bin\Debug\Abt.Controls.SciChart.Wpf.dll .\bin\Debug\
-echo F | xcopy /F ..\..\..\..\GUI\Controls\XYTileControl\XYTileControl\bin\Debug\Abt.Controls.SciChart.Wpf.xml .\bin\Debug\
 
 echo F | xcopy /F ..\..\..\..\GUI\Controls\KuriosControl\KuriosControl\bin\Debug\KuriosControl.dll .\bin\Debug\Modules
 
@@ -364,6 +376,7 @@ REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorTDC\x64\Debug\ThorTDC.dll
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorVBE\x64\Debug\ThorVBE.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorZPiezo\x64\Debug\ThorZPiezo.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorZStepper\x64\Debug\ThorZStepper.dll .\bin\Debug\Modules_Native
+REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorSLM\x64\Debug\ThorSLM.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorSLMPDM512\x64\Debug\ThorSLMPDM512.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorSLMPDM512\ThorSLMPDM512\DLL\*.* .\bin\Debug\Lib
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorTiberius\x64\Debug\ThorTiberius.dll .\bin\Debug\Modules_Native
@@ -371,6 +384,8 @@ REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\PIPiezoXYZ\x64\Debug\PIPiezo.
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\OTMLaser\x64\Debug\OTMLaser.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorChrolis\x64\Debug\ThorChrolis.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorLSKGR\x64\Debug\ThorLSKGR.dll .\bin\Debug\Modules_Native
+REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorDetector\x64\Debug\ThorDetector.dll .\bin\Debug\Modules_Native
+REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\TopticaiChrome\x64\Debug\TopticaiChrome.dll .\bin\Debug\Modules_Native
 
 :: Settings Files :::::::::::::::::::::
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\CoherentChameleon\CoherentChameleonSettings.xml .\bin\Debug
@@ -384,6 +399,7 @@ echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocal\ThorConfocalSettings
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocalGalvo\ThorConfocalGalvoSettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocalGalvoSimulator\ThorConfocalGalvoSimulatorSettings.xml .\bin\Debug 
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocalSimulator\ThorConfocalSimulatorSettings.xml .\bin\Debug
+echo F | xcopy /F ..\..\..\..\Installers\ThorImageLSx64\ThorImageLSx64\ThorDetectorSwitchSettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorGGNI\ThorGGNISettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorMesoScan\ThorMesoScanSettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorStim\ThorStimSettings.xml .\bin\Debug
@@ -414,16 +430,19 @@ echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorBCMPA\ThorBCMPASettings.xml .
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorDDR05\ThorDDR05Settings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorPLSZ\ThorPLSZSettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMTS25\ThorMTS25Settings.xml .\bin\Debug
-echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorSLMPDM512\ThorSLMPDM512Settings.xml .\bin\Debug
+echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorSLM\ThorSLMSettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorTiberius\ThorTiberiusSettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\PIPiezoXYZ\PIPiezoSettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\OTMLaser\OTMLaserSettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorLSKGR\ThorLSKGRSettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM6000\ThorMCM6000Settings.xml .\bin\Debug
+echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorDetector\ThorDetectorSettings.xml .\bin\Debug
+echo F | xcopy /F ..\..\..\..\Hardware\Devices\TopticaiChrome\TopticaiChromeSettings.xml .\bin\Debug
 
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\thordaq\Dll\ThorDAQResonantGalvo\ThorDAQResonantGalvoSettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\thordaq\Dll\ThorDAQGalvoGalvo\ThorDAQGalvoGalvoSettings.xml .\bin\Debug
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\thordaq\Dll\ThorDAQIOSettings.xml .\bin\Debug
+echo F | xcopy /F ..\..\..\..\Hardware\Cameras\thordaq\lib\thordaq\ThorDAQSettings.xml .\bin\Debug
 
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThordaqDFLIM\Dll\ThorDFLIMGalvoGalvo\ThorDFLIMGalvoGalvoSettings.xml .\bin\Debug
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThordaqDFLIM\Dll\ThorDAQGGDFLIMSim\fullFrameSim.bin .\bin\debug

@@ -48,6 +48,9 @@
     <ClInclude Include="WaveformSaver.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
+    <ClInclude Include="EPhysAOWaveformBuilder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -75,6 +78,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="WaveformSaver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EPhysAOWaveformBuilder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

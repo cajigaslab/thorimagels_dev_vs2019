@@ -20,10 +20,6 @@
     using System.Windows.Navigation;
     using System.Windows.Shapes;
 
-    using Abt.Controls.SciChart.Utility;
-    using Abt.Controls.SciChart.Visuals;
-    using Abt.Controls.SciChart.Visuals.Annotations;
-
     using RealTimeLineChart.ViewModel;
 
     /// <summary>

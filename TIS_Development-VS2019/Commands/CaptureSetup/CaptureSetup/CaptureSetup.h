@@ -213,6 +213,15 @@ DllExportLiveImage GetTurretPosition(long &pos);
 DllExportLiveImage GetFieldSize(long &fieldSize);
 DllExportLiveImage SetZPosition(double pos);
 DllExportLiveImage SetBFLampPosition(long pos);
+DllExportLiveImage SetLaser1Emission(long pos);
+DllExportLiveImage SetLaser2Emission(long pos);
+DllExportLiveImage SetLaser3Emission(long pos);
+DllExportLiveImage SetLaser4Emission(long pos);
+DllExportLiveImage GetLaserAnalog(long &pos);
+DllExportLiveImage GetLaser1Enable(long &pos);
+DllExportLiveImage GetLaser2Enable(long &pos);
+DllExportLiveImage GetLaser3Enable(long &pos);
+DllExportLiveImage GetLaser4Enable(long &pos);
 
 #define CHECK_PACTIVEIMAGEROUTINE(x) 	if(NULL != CaptureSetup::getInstance()->_pActiveImageRoutine)\
 {\
@@ -271,3 +280,7 @@ const long SHUTTER_CLOSE = 1;
 
 const long DISABLE_LEDS = 0;
 const long ENABLE_LEDS = 1;
+
+const long DISABLE_EMISSION = 0;
+const long ENABLE_EMISSION = 1;
+

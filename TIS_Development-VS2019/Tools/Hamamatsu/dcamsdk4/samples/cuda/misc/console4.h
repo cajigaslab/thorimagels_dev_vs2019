@@ -53,7 +53,7 @@
 
 #if defined( _WIN64 )
 #pragma comment(lib,"../../../lib/win64/dcamapi.lib")
-#elif defined( _WIN32 )
+#elif defined(_WIN32)
 #pragma comment(lib,"../../../lib/win32/dcamapi.lib")
 #endif
 
@@ -88,7 +88,7 @@
 
 // absorb Visual Studio 2005 and later
 
-#if defined( WIN32 ) && _MSC_VER >= 1400
+#if defined(_WIN32) && _MSC_VER >= 1400
 
 #define	_secure_buf(buf)		buf,sizeof( buf )
 #define	_secure_ptr(ptr,size)	ptr,size

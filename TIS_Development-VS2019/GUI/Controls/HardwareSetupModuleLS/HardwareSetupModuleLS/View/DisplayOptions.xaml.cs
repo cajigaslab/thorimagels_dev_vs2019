@@ -31,7 +31,7 @@
     {
         #region Fields
 
-        const int DISPLAY_PANELS = 21;
+        const int DISPLAY_PANELS = 22;
         private const int WINDOW_HEIGHT = 400;
         private const int WINDOW_LEFT = 0;
         private const int WINDOW_TOP = 0;
@@ -46,7 +46,7 @@
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView","Stimulation Control"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/ZView","Z Control"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/PowerView","Power Control"},
-                {"/ApplicationSettings/DisplayOptions/CaptureSetup/MCLSView","MCLS Control"},
+                {"/ApplicationSettings/DisplayOptions/CaptureSetup/MultiLaserControlView", "Multi Laser Power Control"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/MultiphotonView", "Multiphoton Control"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/PinholeView","Pinhole Wheel Control"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/XYView","Tiles Control"},
@@ -60,7 +60,8 @@
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/LightEngineView","LightEngine Control"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/DFLIMView","Digital FLIM Control"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/EpiturretControlView","Epiturret Control"},
-                {"/ApplicationSettings/DisplayOptions/CaptureSetup/AutoFocusControlView","AutoFocus Control"}
+                {"/ApplicationSettings/DisplayOptions/CaptureSetup/AutoFocusControlView","AutoFocus Control"},
+                {"/ApplicationSettings/DisplayOptions/CaptureSetup/MiniCircuitsSwitchControlView","MiniCircuits Switch Control"},
             };
 
         #endregion Fields

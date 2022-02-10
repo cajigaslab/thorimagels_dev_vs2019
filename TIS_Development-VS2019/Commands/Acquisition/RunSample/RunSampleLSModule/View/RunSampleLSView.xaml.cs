@@ -275,8 +275,14 @@
                     {
                         vm.ZFilePosScale = 1.0;
                     };
-                    vm.Z2StageLock = (Convert.ToInt32(nodeList[0].Attributes["z2StageLock"].Value) == 0) ? false : true;
-                    vm.Z2StageMirror = (Convert.ToInt32(nodeList[0].Attributes["z2StageMirror"].Value) == 0) ? false : true;
+                    if (XmlManager.GetAttribute(nodeList[0], expDoc, "z2StageLock", ref str))
+                    {
+                        vm.Z2StageLock = (Convert.ToInt32(nodeList[0].Attributes["z2StageLock"].Value) == 0) ? false : true;
+                    }
+                    if (XmlManager.GetAttribute(nodeList[0], expDoc, "z2StageMirror", ref str))
+                    {
+                        vm.Z2StageMirror = (Convert.ToInt32(nodeList[0].Attributes["z2StageMirror"].Value) == 0) ? false : true;
+                    }
                 }
 
                 nodeList = expDoc.SelectNodes("/ThorImageExperiment/Magnification");

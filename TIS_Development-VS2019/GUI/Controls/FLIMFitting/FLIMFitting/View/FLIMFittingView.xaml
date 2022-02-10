@@ -33,7 +33,10 @@
                                   x:Name="sciChartSurface"
                                   Margin="2"
                                   RenderableSeries="{Binding SelectedGroup.BinSeries}"
-                                  AutoRangeOnStartup="False">
+                                  sciChart:VisualXcceleratorEngine.IsEnabled="True"
+                                  sciChart:VisualXcceleratorEngine.FallbackType="{x:Type sciChart:HighSpeedRenderSurface}"
+                                  sciChart:VisualXcceleratorEngine.DowngradeWithoutException="False"
+                                  sciChart:VisualXcceleratorEngine.EnableImpossibleMode="True">
             <sciChart:SciChartSurface.XAxis>
                 <sciChart:NumericAxis AxisTitle="Lifetime[ns]"
                                       Visibility="Collapsed" />
@@ -59,8 +62,7 @@
         <sciChart:SciChartSurface Grid.Row="2"
                                   Padding="30,15,10,15"
                                   Margin="2"
-                                  RenderableSeries="{Binding SelectedGroup.ResidualsSeries}"
-                                  AutoRangeOnStartup="False">
+                                  RenderableSeries="{Binding SelectedGroup.ResidualsSeries}">
             <sciChart:SciChartSurface.XAxis>
                 <sciChart:NumericAxis AxisTitle="Lifetime[ns]" />
             </sciChart:SciChartSurface.XAxis>

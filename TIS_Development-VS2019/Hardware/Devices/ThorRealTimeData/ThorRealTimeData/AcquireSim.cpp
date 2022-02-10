@@ -126,7 +126,7 @@ UINT SimSaveFileThreadProc(LPVOID pParam)
 				{			
 					if(cdDataForSave->GetdiLengthValue() > 0)
 					{
-						if(FALSE == simH5io->ExtendData(ChannelCenter::getInstance()->_dataChannel.at(i).type.c_str(),("/" + ChannelCenter::getInstance()->_dataChannel.at(i).alias).c_str(),cdDataForSave->GetStrucData()->diDataPtr+idx_di*cdDataForSave->GetgcLengthComValue(),H5DataType::DATA_UINT32,simExtendBuf,static_cast<unsigned long>(cdDataForSave->GetgcLengthComValue())))
+						if(FALSE == simH5io->ExtendData(ChannelCenter::getInstance()->_dataChannel.at(i).type.c_str(),("/" + ChannelCenter::getInstance()->_dataChannel.at(i).alias).c_str(),cdDataForSave->GetStrucData()->diDataPtr+idx_di*cdDataForSave->GetgcLengthComValue(),H5DataType::DATA_UCHAR,simExtendBuf,static_cast<unsigned long>(cdDataForSave->GetgcLengthComValue())))
 						{
 							StringCbPrintfW(message,MSG_LENGTH,L"Error writing HDF5 file digital channel at thread (%d)",AcquireSim::_saveThreadCnt);
 							LogMessage(message,ERROR_EVENT);
@@ -293,7 +293,7 @@ void CALLBACK AcquireSim::TimerCallback(HWND hwnd, UINT uMsg, UINT timerId, DWOR
 			{
 				for(int j=0;j<_simData->nDI;j++)
 				{
-					_simData->diData[i+j*_samplesPerCallback] = ((AcquireSim::_saveThreadCnt % (j+2)) == 0) ? static_cast<unsigned long>(1) : 0;
+					_simData->diData[i+j*_samplesPerCallback] = ((AcquireSim::_saveThreadCnt % (j+2)) == 0) ? static_cast<unsigned char>(1) : 0;
 				}
 			}
 			//ciData: counting threadCnt
@@ -309,7 +309,7 @@ void CALLBACK AcquireSim::TimerCallback(HWND hwnd, UINT uMsg, UINT timerId, DWOR
 		//copy data:
 		memcpy(_callbackCompData->GetgCtr(),_simData->gCtr,sizeof(unsigned long)*_samplesPerCallback);
 		if(_simData->nAI>0) {memcpy(_callbackCompData->GetStrucData()->aiDataPtr,_simData->aiData,sizeof(double)*_simData->nAI*_samplesPerCallback);}
-		if(_simData->nDI>0) {memcpy(_callbackCompData->GetStrucData()->diDataPtr,_simData->diData,sizeof(unsigned long)*_simData->nDI*_samplesPerCallback);}
+		if(_simData->nDI>0) {memcpy(_callbackCompData->GetStrucData()->diDataPtr,_simData->diData,sizeof(unsigned char)*_simData->nDI*_samplesPerCallback);}
 		if(_simData->nCI>0) {memcpy(_callbackCompData->GetStrucData()->ciDataPtr,_simData->ciData,sizeof(unsigned long)*_simData->nCI*_samplesPerCallback);}
 	}
 
@@ -562,7 +562,7 @@ long AcquireSim::SetupChannels()
 	_simData->nAI=nAI;
 	_simData->aiData = (_simData->nAI > 0) ? (new double[_simData->nAI*_samplesPerCallback]) : NULL;
 	_simData->nDI=nDI;
-	_simData->diData = (_simData->nDI > 0) ? (new unsigned long[_simData->nDI*_samplesPerCallback]) : NULL;
+	_simData->diData = (_simData->nDI > 0) ? (new unsigned char[_simData->nDI*_samplesPerCallback]) : NULL;
 	_simData->nCI=nCI;
 	_simData->ciData = (_simData->nCI > 0) ? (new unsigned long[_simData->nCI*_samplesPerCallback]) : NULL;
 	_simData->nVI=nVI;

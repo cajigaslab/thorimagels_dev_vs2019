@@ -53,6 +53,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <StackPanel>
             <Button x:Name="btnShowMostRecent"
@@ -94,6 +95,16 @@
               Command="{Binding ViewOMEXML}"
               Content="Open with FIJI"
               ToolTip="View OME-XML of images" />
+            <Button x:Name="btLoadThorAnalysis"
+              Grid.Row="0"
+              Grid.Column="0"
+              Width="150"
+              Height="40"
+              Margin="1"
+              VerticalAlignment="Top"
+              Command="{Binding ViewThorAnalysis}"
+              Content="Open with ThorAnalysis"
+              ToolTip="Process images with ThorAnalysis" />
             <Button x:Name="btLoadMatlab"
               Grid.Row="0"
               Grid.Column="0"

@@ -14,6 +14,9 @@
 #define DEFAULT_AVGNUM			1
 #define MAX_FRAMENUM			4096			// Maximum limit of frame count
 
+#define ORCA_FUSION_CLOCK_US	4.867647 
+#define ORCA_FUSION_CONSTANT_US	3.029411
+
 #define OrcaErrChk(fnName,fnCall) if (failed(err=(fnCall))) { StringCbPrintfW(_errMsg,MSG_SIZE,L"%s ORCA failed ,(%d). ",fnName,__LINE__); ORCA::getInstance()->LogMessage(_errMsg,ERROR_EVENT);}
 
 #ifdef __cplusplus
@@ -24,7 +27,7 @@ extern "C"
 
 	typedef struct _ImgPty
 	{
-		int exposureTime_us;		
+		long long exposureTime_us;		
 		int roiBinX;		
 		int roiBinY;	
 		int roiLeft;		
@@ -56,6 +59,8 @@ extern "C"
 		int hotPixelLevelIndex;
 		double pixelSizeXUM;
 		double pixelSizeYUM;
+		long masterPulseEnabled;
+		double staticFrameRateVal;
 
 	}ImgPty, *pImgPty;
 

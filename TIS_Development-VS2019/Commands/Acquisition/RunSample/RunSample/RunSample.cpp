@@ -51,6 +51,10 @@ typedef void(_cdecl* myPrototypeInformMessage)(wchar_t* message);
 //funtion pointer for sending message to notice user
 void (*myFunctionPointerInformMessage)(wchar_t* message) = NULL;
 
+typedef void(_cdecl* myPrototypeFileSavedNameAndPathForIPC)(wchar_t* message);
+//funtion pointer for sending an IPC command out with the name and path when a file has been saved. 
+void (*myFunctionPointerFileSavedNameAndPathForIPC)(wchar_t* message) = NULL;
+
 long SetDeviceParameterValue(IDevice *pDevice,long paramID, double val,long bWait,HANDLE hEvent,long waitTime);
 
 DWORD dwRunSampleThreadId = NULL;
@@ -72,7 +76,7 @@ DWORD _dwSafetyInterLockCheckThreadId = NULL;
 HANDLE _hSafetyInterLockCheckThread = NULL;
 atomic<BOOL> _shutterOpened = FALSE;
 
-DllExport_RunSample InitCallBack(myPrototype dm, myPrototypeBeginImage di, myPrototypeBeginSubImage bsi, myPrototypeEndSubImage esi, myPrototypeSaveZImage szi, myPrototypeSaveTImage sti, myPrototypePreCapture pc, myPrototypeSequenceStepCurrentIndex cs, myPrototypeInformMessage sm) //myPrototypeCaptureComplete cc,
+DllExport_RunSample InitCallBack(myPrototype dm, myPrototypeBeginImage di, myPrototypeBeginSubImage bsi, myPrototypeEndSubImage esi, myPrototypeSaveZImage szi, myPrototypeSaveTImage sti, myPrototypePreCapture pc, myPrototypeSequenceStepCurrentIndex cs, myPrototypeInformMessage sm, myPrototypeFileSavedNameAndPathForIPC savedFileIPC) //myPrototypeCaptureComplete cc,
 {
 	myFunctionPointer = dm;
 
@@ -93,6 +97,8 @@ DllExport_RunSample InitCallBack(myPrototype dm, myPrototypeBeginImage di, myPro
 	myFunctionPointerSequenceStepCurrent = cs;
 
 	myFunctionPointerInformMessage = sm;
+
+	myFunctionPointerFileSavedNameAndPathForIPC = savedFileIPC;
 
 	if(myFunctionPointer != NULL)
 	{
@@ -706,9 +712,11 @@ void PreCaptureProtocol(IExperiment* exp)
 	long enable4; 
 	double power4;
 
+	long captureSequenceEnable = FALSE;
+	exp->GetCaptureSequence(captureSequenceEnable);
 	exp->GetMCLS(enable1, power1,enable2, power2,enable3, power3,enable4, power4);
-
-	RunSample::getInstance()->SetLaser(enable1, power1,enable2, power2,enable3, power3,enable4, power4);
+	//Pass whether sequential is enabled when applying the laser settings
+	RunSample::getInstance()->SetLaser(enable1, power1,enable2, power2,enable3, power3,enable4, power4, captureSequenceEnable);
 
 	//Multiphoton Laser Parameters
 	long multiphotonEnable,multiphotonPos,multiphotonSeqEnable,multiphotonSeqPos1,multiphotonSeqPos2;
@@ -947,105 +955,109 @@ void PreCaptureProtocol(IExperiment* exp)
 
 	//Set the pinhole position
 	long pinholePosition, pinholeConnected;
-	long captureSequenceEnable = FALSE;
-	exp->GetCaptureSequence(captureSequenceEnable);
 	exp->GetPinholeWheel(pinholePosition);
-	SetDeviceParamLong(SelectedHardware::SELECTED_PINHOLEWHEEL, IDevice::PARAM_PINHOLE_POS, pinholePosition, TRUE);
-	// Get the position of the pinhole to check if it is connected. If not connected, and the capture mode is 
-	// sequential then pause for 50 miliseconds in order to display the captured image for every sequence.
-	if(!(GetDeviceParamLong(SelectedHardware::SELECTED_PINHOLEWHEEL, IDevice::PARAM_PINHOLE_POS, pinholeConnected)) && captureSequenceEnable)
-	{
-		Sleep(50); //This number has been measured to be the minimum working number
-	}
+SetDeviceParamLong(SelectedHardware::SELECTED_PINHOLEWHEEL, IDevice::PARAM_PINHOLE_POS, pinholePosition, TRUE);
+// Get the position of the pinhole to check if it is connected. If not connected, and the capture mode is 
+// sequential then pause for 50 miliseconds in order to display the captured image for every sequence.
+if (!(GetDeviceParamLong(SelectedHardware::SELECTED_PINHOLEWHEEL, IDevice::PARAM_PINHOLE_POS, pinholeConnected)) && captureSequenceEnable)
+{
+	Sleep(50); //This number has been measured to be the minimum working number
+}
 }
 
-void RunSample::PostCaptureProtocol(IExperiment *exp)
+void RunSample::PostCaptureProtocol(IExperiment* exp)
 {
 	//Stop the scanner if its connected
 
-	IDevice *pControlUnit = NULL;
+	IDevice* pControlUnit = NULL;
 
 	pControlUnit = GetDevice(SelectedHardware::SELECTED_CONTROLUNIT);
 
-	if(NULL != pControlUnit)
-	{	
+	if (NULL != pControlUnit)
+	{
 		pControlUnit->SetParam(IDevice::PARAM_SCANNER_ENABLE, FALSE);
 		pControlUnit->PreflightPosition();
-		pControlUnit->SetupPosition ();
+		pControlUnit->SetupPosition();
 		pControlUnit->StartPosition();
 		pControlUnit->PostflightPosition();
 	}
 
-	IDevice *pPMT = NULL;
+	IDevice* pPMT = NULL;
 
 	pPMT = GetDevice(SelectedHardware::SELECTED_PMT1);
 
-	if(NULL != pPMT)
-	{	
+	if (NULL != pPMT)
+	{
 		pPMT->SetParam(IDevice::PARAM_SCANNER_ENABLE, FALSE);
 		pPMT->SetParam(IDevice::PARAM_PMT1_ENABLE, FALSE);
 		pPMT->PreflightPosition();
-		pPMT->SetupPosition ();
+		pPMT->SetupPosition();
 		pPMT->StartPosition();
 		pPMT->PostflightPosition();
 	}
 
 	pPMT = GetDevice(SelectedHardware::SELECTED_PMT2);
 
-	if(NULL != pPMT)
+	if (NULL != pPMT)
 	{
 
 		pPMT->SetParam(IDevice::PARAM_PMT2_ENABLE, FALSE);
 		pPMT->PreflightPosition();
-		pPMT->SetupPosition ();
+		pPMT->SetupPosition();
 		pPMT->StartPosition();
 		pPMT->PostflightPosition();
 	}
 
 	pPMT = GetDevice(SelectedHardware::SELECTED_PMT3);
 
-	if(NULL != pPMT)
+	if (NULL != pPMT)
 	{
 
 		pPMT->SetParam(IDevice::PARAM_PMT3_ENABLE, FALSE);
 		pPMT->PreflightPosition();
-		pPMT->SetupPosition ();
+		pPMT->SetupPosition();
 		pPMT->StartPosition();
 		pPMT->PostflightPosition();
 	}
 
 	pPMT = GetDevice(SelectedHardware::SELECTED_PMT4);
 
-	if(NULL != pPMT)
+	if (NULL != pPMT)
 	{
 
 		pPMT->SetParam(IDevice::PARAM_PMT4_ENABLE, FALSE);
 		pPMT->PreflightPosition();
-		pPMT->SetupPosition ();
+		pPMT->SetupPosition();
 		pPMT->StartPosition();
 		pPMT->PostflightPosition();
 	}
 
-	long photoBleachingEnable,laserPositiion,durationMS, bleachTrigger, preBleachingFrames, bleachWidth, bleachHeight,bleachOffsetX,bleachOffsetY, bleachingFrames, bleachFieldSize, postBleachingFrames1, postBleachingFrames2,preBleachingStream,postBleachingStream1,postBleachingStream2,powerEnable,laserEnable,bleachQuery,bleachPostTrigger,enableSimultaneousBleachingAndImaging,pmtEnableDuringBleach[4];
-	double powerPosition,preBleachingInterval,postBleachingInterval1,postBleachingInterval2;
+	long photoBleachingEnable, laserPositiion, durationMS, bleachTrigger, preBleachingFrames, bleachWidth, bleachHeight, bleachOffsetX, bleachOffsetY, bleachingFrames, bleachFieldSize, postBleachingFrames1, postBleachingFrames2, preBleachingStream, postBleachingStream1, postBleachingStream2, powerEnable, laserEnable, bleachQuery, bleachPostTrigger, enableSimultaneousBleachingAndImaging, pmtEnableDuringBleach[4];
+	double powerPosition, preBleachingInterval, postBleachingInterval1, postBleachingInterval2;
 
-	exp->GetPhotobleaching(photoBleachingEnable, laserPositiion, durationMS, powerPosition, bleachWidth,bleachHeight,bleachOffsetX,bleachOffsetY, bleachingFrames, bleachFieldSize, bleachTrigger,preBleachingFrames, preBleachingInterval,preBleachingStream, postBleachingFrames1, postBleachingInterval1,postBleachingStream1, postBleachingFrames2, postBleachingInterval2,postBleachingStream2,powerEnable,laserEnable,bleachQuery,bleachPostTrigger,enableSimultaneousBleachingAndImaging,pmtEnableDuringBleach[0],pmtEnableDuringBleach[1],pmtEnableDuringBleach[2],pmtEnableDuringBleach[3]);
+	exp->GetPhotobleaching(photoBleachingEnable, laserPositiion, durationMS, powerPosition, bleachWidth, bleachHeight, bleachOffsetX, bleachOffsetY, bleachingFrames, bleachFieldSize, bleachTrigger, preBleachingFrames, preBleachingInterval, preBleachingStream, postBleachingFrames1, postBleachingInterval1, postBleachingStream1, postBleachingFrames2, postBleachingInterval2, postBleachingStream2, powerEnable, laserEnable, bleachQuery, bleachPostTrigger, enableSimultaneousBleachingAndImaging, pmtEnableDuringBleach[0], pmtEnableDuringBleach[1], pmtEnableDuringBleach[2], pmtEnableDuringBleach[3]);
 
-	long multiphotonEnable,multiphotonPos,multiphotonSeqEnable,multiphotonSeqPos1,multiphotonSeqPos2;
+	long multiphotonEnable, multiphotonPos, multiphotonSeqEnable, multiphotonSeqPos1, multiphotonSeqPos2;
 
-	exp->GetMultiPhotonLaser(multiphotonEnable,multiphotonPos,multiphotonSeqEnable,multiphotonSeqPos1,multiphotonSeqPos2);
+	exp->GetMultiPhotonLaser(multiphotonEnable, multiphotonPos, multiphotonSeqEnable, multiphotonSeqPos1, multiphotonSeqPos2);
 
 	//disable the sequence mode at the end of the capture
-	if(multiphotonSeqEnable)
+	if (multiphotonSeqEnable)
 	{
 		char seqBuf[4];
-		seqBuf[0]=seqBuf[1]=seqBuf[2]=seqBuf[3]=0;
+		seqBuf[0] = seqBuf[1] = seqBuf[2] = seqBuf[3] = 0;
 
-		SetDeviceParamBuffer(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_SEQ,seqBuf,sizeof(seqBuf),TRUE);
+		SetDeviceParamBuffer(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_SEQ, seqBuf, sizeof(seqBuf), TRUE);
 	}
 
 	//Turn OFF all LEDs once acquisition is finished 
 	SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP, IDevice::PARAM_LEDS_ENABLE_DISABLE, FALSE, TRUE);
+
+	//Disable Laser Emission once aquisition is finished
+	SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_EMISSION, DISABLE_EMISSION, FALSE);
+	SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_EMISSION, DISABLE_EMISSION, FALSE);
+	SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_EMISSION, DISABLE_EMISSION, FALSE);
+	SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_EMISSION, DISABLE_EMISSION, FALSE);
 }
 
 UINT RunSampleThreadProc( LPVOID pParam )
@@ -1297,51 +1309,193 @@ void RunSample::SetMagnification(double mag,string objName)
 HANDLE RunSample::_hEventLaser = NULL;
 HANDLE RunSample::_hEventPowerReg = NULL;
 
-void RunSample::SetLaser(long enable1, double power1,long enable2, double power2,long enable3, double power3,long enable4, double power4)
+void RunSample::SetLaser(long enable1, double power1,long enable2, double power2,long enable3, double power3,long enable4, double power4, long sequential)
 {
 	//Get filter parameters from hardware setup.xml
 	auto_ptr<HardwareSetupXML> pHardware(new HardwareSetupXML());
 
 	IDevice *pLaser = NULL;	
-
 	for(long i=0; i<4; i++)
 	{
+		long laserAnalog = 0;
+		long laserWavelength1 = 0;
+		long laserWavelength2 = 0;
+		long laserWavelength3 = 0;
+		long laserWavelength4 = 0;
+		GetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER_ALL_ANALOG_MODE, laserAnalog);
+		GetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_WAVELENGTH, laserWavelength1);
+		GetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_WAVELENGTH, laserWavelength2);
+		GetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_WAVELENGTH, laserWavelength3);
+		GetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_WAVELENGTH, laserWavelength4);
+
 		switch(i)
 		{
 		case 0:			
 			pLaser = GetDevice(SelectedHardware::SELECTED_LASER1);
 			if(pLaser != NULL)
 			{
-				pLaser->SetParam(IDevice::PARAM_LASER1_ENABLE, enable1 );
-				pLaser->SetParam(IDevice::PARAM_LASER1_POWER, power1 );
-				RunLaser(pLaser); 
+				if (sequential == 1)
+				{
+					//If sequential scanning is enabled, laser 1 is enabled, and laser wavelengths are within bounds, 
+					//disable all other lasers, set the power for laser 1, and enable emission for laser 1 (newer laser logic needed for sequential)
+					if (enable1 == true && (405 <= laserWavelength1) && (laserWavelength1 <= 785))
+					{
+						SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_ENABLE, FALSE, FALSE);
+						SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_ENABLE, FALSE, FALSE);
+						SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_ENABLE, FALSE, FALSE);
+						SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_POWER, power1, FALSE);
+						SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_ENABLE, enable1, FALSE);
+						//Only set emission if analog mode is off
+						if (laserAnalog == false) 
+						{
+							SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_EMISSION, ENABLE_EMISSION, FALSE);
+						}
+					}
+					//If sequential is enabled, enable laser 1 and set its power (old MCLS logic)
+					pLaser->SetParam(IDevice::PARAM_LASER1_ENABLE, enable1);
+					pLaser->SetParam(IDevice::PARAM_LASER1_POWER, power1);
+					RunLaser(pLaser);
+				}
+				else 
+				{
+					//If sequential is not enabled, set the power, enable state, and emission states for laser 1
+					SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_POWER, power1, FALSE);
+					SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_ENABLE, enable1, FALSE);
+					//Only set emission if analog mode is off
+					if (laserAnalog == false)
+					{
+						SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_EMISSION, ENABLE_EMISSION, FALSE);
+					}
+					pLaser->SetParam(IDevice::PARAM_LASER1_ENABLE, enable1);
+					pLaser->SetParam(IDevice::PARAM_LASER1_POWER, power1);
+					RunLaser(pLaser);
+				}
 			}
 			break;
 		case 1:
 			pLaser = GetDevice(SelectedHardware::SELECTED_LASER2);
 			if(pLaser != NULL)
 			{
-				pLaser->SetParam(IDevice::PARAM_LASER2_ENABLE, enable2 );
-				pLaser->SetParam(IDevice::PARAM_LASER2_POWER, power2 ); 
-				RunLaser(pLaser); 
+				if (sequential == 1)
+				{
+					//If sequential scanning is enabled, laser 2 is enabled, and laser wavelengths are within bounds, 
+					//disable all other lasers, set the power for laser 2, and enable emission for laser 2 (newer laser logic needed for sequential)
+					if (enable2 == true && (405 <= laserWavelength2) && (laserWavelength2 <= 785))
+					{
+						SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_ENABLE, FALSE, FALSE);
+						SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_ENABLE, FALSE, FALSE);
+						SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_ENABLE, FALSE, FALSE);
+						SetDeviceParamDouble(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_POWER, power2, FALSE);
+						SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_ENABLE, enable2, FALSE);
+						//Only set emission if analog mode is off
+						if (laserAnalog == false) 
+						{
+							SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_EMISSION, ENABLE_EMISSION, FALSE);
+						}
+					}
+					//If sequential is enabled, enable laser 2 and set its power (old MCLS logic)
+					pLaser->SetParam(IDevice::PARAM_LASER2_ENABLE, enable2);
+					pLaser->SetParam(IDevice::PARAM_LASER2_POWER, power2);
+					RunLaser(pLaser);
+				}
+				else 
+				{
+					//If sequential is not enabled, set the power, enable state, and emission states for laser 2
+					SetDeviceParamDouble(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_POWER, power2, FALSE);
+					SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_ENABLE, enable2, FALSE);
+					//Only set emission if analog mode is off
+					if (laserAnalog == false) 
+					{
+						SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_EMISSION, ENABLE_EMISSION, FALSE);
+					}
+					pLaser->SetParam(IDevice::PARAM_LASER2_ENABLE, enable2);
+					pLaser->SetParam(IDevice::PARAM_LASER2_POWER, power2);
+					RunLaser(pLaser);
+				}
 			}
 			break;
 		case 2:
 			pLaser = GetDevice(SelectedHardware::SELECTED_LASER3);
 			if(pLaser != NULL)
 			{
-				pLaser->SetParam(IDevice::PARAM_LASER3_ENABLE, enable3 );
-				pLaser->SetParam(IDevice::PARAM_LASER3_POWER, power3 ); 
-				RunLaser(pLaser); 
+				if (sequential == 1)
+				{
+					//If sequential scanning is enabled, laser 3 is enabled, and laser wavelengths are within bounds, 
+					//disable all other lasers, set the power for laser 3, and enable emission for laser 3 (newer laser logic needed for sequential)
+					if (enable3 == true && (405 <= laserWavelength3) && (laserWavelength3 <= 785))
+					{
+						SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_ENABLE, FALSE, FALSE);
+						SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_ENABLE, FALSE, FALSE);
+						SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_ENABLE, FALSE, FALSE);
+						SetDeviceParamDouble(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_POWER, power3, FALSE);
+						SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_ENABLE, enable3, FALSE);
+						//Only set emission if analog mode is off 
+						if (laserAnalog == false)
+						{
+							SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_EMISSION, ENABLE_EMISSION, FALSE);
+						}
+					}
+					//If sequential is enabled, enable laser 3 and set its power (old MCLS logic)
+					pLaser->SetParam(IDevice::PARAM_LASER3_ENABLE, enable3);
+					pLaser->SetParam(IDevice::PARAM_LASER3_POWER, power3);
+					RunLaser(pLaser);
+				}
+				else
+				{
+					//If sequential is not enabled, set the power, enable state, and emission states for laser 3
+					SetDeviceParamDouble(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_POWER, power3, FALSE);
+					SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_ENABLE, enable3, FALSE);
+					//Only set emission if analog mode is off
+					if (laserAnalog == false) 
+					{
+						SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_EMISSION, ENABLE_EMISSION, FALSE);
+					}
+					pLaser->SetParam(IDevice::PARAM_LASER3_ENABLE, enable3);
+					pLaser->SetParam(IDevice::PARAM_LASER3_POWER, power3);
+					RunLaser(pLaser);
+				}
 			}
 			break;
 		case 3:
 			pLaser = GetDevice(SelectedHardware::SELECTED_LASER4);
-			if(pLaser != NULL)
+			if (pLaser != NULL)
 			{
-				pLaser->SetParam(IDevice::PARAM_LASER4_ENABLE, enable4 );
-				pLaser->SetParam(IDevice::PARAM_LASER4_POWER, power4 );
-				RunLaser(pLaser); 
+				if (sequential == 1)
+				{
+					//If sequential scanning is enabled, laser 4 is enabled, and laser wavelengths are within bounds, 
+					//disable all other lasers, set the power for laser 4, and enable emission for laser 4 (newer laser logic needed for sequential)
+					if (enable4 == true && (405 <= laserWavelength4) && (laserWavelength4 <= 785))
+					{
+						SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_ENABLE, FALSE, FALSE);
+						SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_ENABLE, FALSE, FALSE);
+						SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_ENABLE, FALSE, FALSE);
+						SetDeviceParamDouble(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_POWER, power4, FALSE);
+						SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_ENABLE, enable4, FALSE);
+						//Only set emission if analog mode is off
+						if (laserAnalog == false)
+						{
+							SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_EMISSION, ENABLE_EMISSION, FALSE);
+						}
+					}
+					//If sequential is enabled, enable laser 4 and set its power (old MCLS logic)
+					pLaser->SetParam(IDevice::PARAM_LASER4_ENABLE, enable4);
+					pLaser->SetParam(IDevice::PARAM_LASER4_POWER, power4);
+					RunLaser(pLaser);
+				}
+				else 
+				{
+					//If sequential is not enabled, set the power, enable state, and emission states for laser 4
+					SetDeviceParamDouble(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_POWER, power4, FALSE);
+					SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_ENABLE, enable4, FALSE);
+					//Only set emission if analog mode is off
+					if (laserAnalog == false)
+					{
+						SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_EMISSION, ENABLE_EMISSION, FALSE);
+					}
+					pLaser->SetParam(IDevice::PARAM_LASER4_ENABLE, enable4);
+					pLaser->SetParam(IDevice::PARAM_LASER4_POWER, power4);
+					RunLaser(pLaser);
+				}
 			}
 			break;
 		}	

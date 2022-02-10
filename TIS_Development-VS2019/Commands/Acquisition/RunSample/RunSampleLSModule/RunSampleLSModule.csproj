@@ -49,10 +49,6 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Abt.Controls.SciChart.Wpf, Version=3.60.0.7618, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart.3.6\lib\net45\Abt.Controls.SciChart.Wpf.dll</HintPath>
-    </Reference>
     <Reference Include="DatabaseInterface">
       <HintPath>..\..\..\..\Common\Database\DatabaseInterface\bin\Debug\DatabaseInterface.dll</HintPath>
     </Reference>
@@ -112,6 +108,34 @@
     <Reference Include="SampleRegionSelection, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\GUI\Controls\SampleRegionSelection\SampleRegionSelection\bin\Debug\SampleRegionSelection.dll</HintPath>
+    </Reference>
+    <Reference Include="SciChart.Charting, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting.dll</HintPath>
+    </Reference>
+    <Reference Include="SciChart.Charting.DrawingTools, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting.DrawingTools.dll</HintPath>
+    </Reference>
+    <Reference Include="SciChart.Charting3D, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting3D.dll</HintPath>
+    </Reference>
+    <Reference Include="SciChart.Core, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="SciChart.Data, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="SciChart.Drawing, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Drawing.dll</HintPath>
+    </Reference>
+    <Reference Include="SciChart.Drawing.DirectX, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Drawing.DirectX.dll</HintPath>
     </Reference>
     <Reference Include="SpinnerProgress">
       <HintPath>..\..\..\..\GUI\Controls\SpinnerProgress\SpinnerProgress\bin\Debug\SpinnerProgress.dll</HintPath>

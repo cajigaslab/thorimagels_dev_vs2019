@@ -90,6 +90,12 @@ long AcquireHyperspectral::CallInformMessage(wchar_t* message)
 	return TRUE;
 }
 
+long AcquireHyperspectral::CallNotifySavedFileIPC(wchar_t* message)
+{
+	NotifySavedFileIPC(message);
+	return TRUE;
+}
+
 long AcquireHyperspectral::Execute(long index, long subWell, long zFrame, long tFrame)
 {
 	_tFrame = tFrame;

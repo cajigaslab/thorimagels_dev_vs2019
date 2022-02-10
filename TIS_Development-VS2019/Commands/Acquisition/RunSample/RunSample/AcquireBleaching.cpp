@@ -27,6 +27,7 @@ AcquireBleaching::AcquireBleaching(IExperiment *exp,wstring path)
 	_zstageStepSize = 0;
 	_capturedImageID = 0;
 	_pTemp = NULL;
+	_digiShutterEnabled = FALSE;
 }
 
 UINT BleachThreadProc( LPVOID pParam )
@@ -223,6 +224,12 @@ long AcquireBleaching::CallStartProgressBar(long index, long resetTotalCount)
 long AcquireBleaching::CallInformMessage(wchar_t* message)
 {
 	InformMessage(message);
+	return TRUE;
+}
+
+long AcquireBleaching::CallNotifySavedFileIPC(wchar_t* message)
+{
+	NotifySavedFileIPC(message);
 	return TRUE;
 }
 
@@ -742,38 +749,55 @@ long AcquireBleaching::PreCaptureAutoFocus(long index, long subWell)
 	return TRUE;
 }
 
-long AcquireBleaching::CaptureStream(ICamera *pCamera, char * pMemoryBuffer, long currentT, long numFrames, long avgFrames, SaveParams *sp)
+long AcquireBleaching::CaptureStream(ICamera* pCamera, char* pMemoryBuffer, long currentT, long numFrames, long avgFrames, SaveParams* sp)
 {
 	long ret = TRUE, stopStatus = FALSE;
 	long t = currentT;
 	long lastFrame = currentT + (numFrames - 1);
-	FrameInfo frameInfo = {0, 0, 0, 0};
+	FrameInfo frameInfo = { 0, 0, 0, 0 };
 
 	//Force the averaging mode to be NONE for all bleaching captures
 	avgFrames = 1;
 
 	pCamera->SetupAcquisition(pMemoryBuffer);
-	if(NULL != AcquireBleaching::hEventPostBleachSetupComplete)
+	if (NULL != AcquireBleaching::hEventPostBleachSetupComplete)
 	{
 		SetEvent(hEventPostBleachSetupComplete);
 	}
 	//HW timed out or failed to start:
-	if(FALSE == pCamera->StartAcquisition(pMemoryBuffer))
+	if (FALSE == pCamera->StartAcquisition(pMemoryBuffer))
 	{
-		StringCbPrintfW(message,MSG_LENGTH,L"AcquireBleaching StartAcquisition Failed.");
-		logDll->TLTraceEvent(ERROR_EVENT,1,message);
+		StringCbPrintfW(message, MSG_LENGTH, L"AcquireBleaching StartAcquisition Failed.");
+		logDll->TLTraceEvent(ERROR_EVENT, 1, message);
 		return FALSE;
 	}
 
 	long imageIndex = 1;
+	//this is the dropped frame count:
+	double droppedFrameCnt = 0;
+	//this is the number of frames available to be copied in the lower level DMA circular buffer:
+	double dmaBufferAvailableFrames = 0;
+	//This is the type of CCD camera that is currently selected
+	double ccdType = ICamera::CMOS;
 
-	for(;t<=lastFrame; t++,imageIndex++)
+	//Read the size of the dma buffer from the lower level and use that if it is larger
+	double dmaFrm = 0;
+	pCamera->GetParam(ICamera::PARAM_CAMERA_DMA_BUFFER_COUNT, dmaFrm);
+	long dmaFrames = max(static_cast<long>(dmaFrm), dmaFrames);
+
+	//No preview if occupied buffer is over the limit
+	double dmaInUseLimit = (20 <= dmaFrames) ? 0.90 : 0.60;
+	//Change the limit if it is an ORCA to throttle the preview image rate sooner if the dma buffer is filling up quickly
+	pCamera->GetParam(ICamera::PARAM_CCD_TYPE, ccdType);
+	dmaInUseLimit = (ICamera::ORCA == ccdType) ? 0.3 : dmaInUseLimit;
+
+	for (; t <= lastFrame; t++, imageIndex++)
 	{
-		for(long i = 0; i < avgFrames; i++)
+		for (long i = 0; i < avgFrames; i++)
 		{
-			if( i == 0)
+			if (i == 0)
 			{
-				if((sp->subWell == 1) && (t == 1))
+				if ((sp->subWell == 1) && (t == 1))
 				{
 					_acquireSaveInfo->getInstance()->SetExperimentStartCount();	//set current timer count as start of the experiment
 				}
@@ -795,57 +819,78 @@ long AcquireBleaching::CaptureStream(ICamera *pCamera, char * pMemoryBuffer, lon
 
 			DWORD frameStartTime = GetTickCount();
 
-			while((ICamera::STATUS_BUSY == status) || (ICamera::STATUS_PARTIAL == status))
+			while ((ICamera::STATUS_BUSY == status) || (ICamera::STATUS_PARTIAL == status))
 			{
-				if(FALSE == pCamera->StatusAcquisition(status))
+				if (FALSE == pCamera->StatusAcquisition(status) || (0 < static_cast<long>(droppedFrameCnt)))
 				{
+					StringCbPrintfW(message, MSG_LENGTH, L"AcquireBleaching status acquisition returned false or number of dropped frames is bigger than 1");
+					logDll->TLTraceEvent(ERROR_EVENT, 1, message);
 					break;
 				}
 
 				//LSM will wait for triggers at StartAcquisition, break when timed out.
 				//camera will wait for triggers here instead.
-				DWORD currentTime = GetTickCount();				
-				if((ICamera::LSM == (ICamera::CameraType)static_cast<long>(cameraType)) 
-					&& (currentTime - frameStartTime)>FRAME_WAIT_TIMEOUT)
+				DWORD currentTime = GetTickCount();
+				if ((ICamera::LSM == (ICamera::CameraType)static_cast<long>(cameraType))
+					&& (currentTime - frameStartTime) > FRAME_WAIT_TIMEOUT)
 				{
 					break;
 				}
 
 				//check if user has asked to stop the capture
-				if(NULL != hStopCapture)
+				if (NULL != hStopCapture)
 				{
-					if(WAIT_OBJECT_0 == WaitForSingleObject(hStopCapture, 0))
+					if (WAIT_OBJECT_0 == WaitForSingleObject(hStopCapture, 0))
 						return FALSE;
 				}
 				else
 				{
 					StopCaptureEventCheck(stopStatus);
-					if(1 == stopStatus)
+					if (1 == stopStatus)
 						return FALSE;
 				}
 			}
 
-			pMemoryBuffer = ImageManager::getInstance()->GetImagePtr(sp->imageID, 0, 0, 0, totalFrame); //**Update to actual frame number*//
-			if(pMemoryBuffer == NULL)
+			if (ICamera::STATUS_ERROR == status)
 			{
-				StringCbPrintfW(message,MSG_LENGTH,L"AcquireBleaching invalid memory buffer");
-				logDll->TLTraceEvent(INFORMATION_EVENT,1,message);
+				StringCbPrintfW(message, MSG_LENGTH, L"AcquireBleaching status returned ERROR, stopping acquisition");
+				logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+				SetEvent(hStopCapture);
+				SetEvent(hStopBleach);
+				break;
+			}
+
+			pMemoryBuffer = ImageManager::getInstance()->GetImagePtr(sp->imageID, 0, 0, 0, totalFrame); //**Update to actual frame number*//
+			if (pMemoryBuffer == NULL)
+			{
+				StringCbPrintfW(message, MSG_LENGTH, L"AcquireBleaching invalid memory buffer");
+				logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
 			}
 
 			pCamera->CopyAcquisition(pMemoryBuffer, &frameInfo);
 
-			if((GetTickCount() - _lastImageUpdateTime) > 1000*(1/sp->previewRate))
-			{
-				if(sp->displayImage)
-				{
-					SavePreviewImage(sp,t,pMemoryBuffer);
-				}
+			pCamera->GetParam(ICamera::PARAM_DROPPED_FRAMES, droppedFrameCnt);
 
-				_lastImageUpdateTime = GetTickCount();
+			if (ICamera::ORCA == ccdType)
+			{
+				pCamera->GetParam(ICamera::PARAM_DMA_BUFFER_AVAILABLE_FRAMES, dmaBufferAvailableFrames);
+			}
+
+			if ((GetTickCount() - _lastImageUpdateTime) > 1000 * (1 / sp->previewRate))
+			{
+				if ((dmaInUseLimit > static_cast<double>(droppedFrameCnt / dmaFrames)) && (dmaInUseLimit > static_cast<double>(dmaBufferAvailableFrames / dmaFrames)))	//no preview if camera is close to overflow limit
+				{
+					if (sp->displayImage)
+					{
+						SavePreviewImage(sp, t, pMemoryBuffer);
+					}
+
+					_lastImageUpdateTime = GetTickCount();
+				}
 			}
 
 			//synchrnously start the unlock process for the frame
-			ImageManager::getInstance()->UnlockImagePtr(sp->imageID,0,0,0,totalFrame);
+			ImageManager::getInstance()->UnlockImagePtr(sp->imageID, 0, 0, 0, totalFrame);
 
 		}
 
@@ -854,15 +899,15 @@ long AcquireBleaching::CaptureStream(ICamera *pCamera, char * pMemoryBuffer, lon
 		_capturedImageID++;
 
 		//check if user has asked to stop the capture
-		if(NULL != hStopCapture)
+		if (NULL != hStopCapture)
 		{
-			if(WAIT_OBJECT_0 == WaitForSingleObject(hStopCapture, 0))
+			if (WAIT_OBJECT_0 == WaitForSingleObject(hStopCapture, 0))
 				return FALSE;
 		}
 		else
 		{
 			StopCaptureEventCheck(stopStatus);
-			if(1 == stopStatus)
+			if (1 == stopStatus)
 				return FALSE;
 		}
 	}
@@ -1436,6 +1481,7 @@ long AcquireBleaching::Execute(long index, long subWell)
 	_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,channel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes);
 	pCamera->SetParam(ICamera::PARAM_LSM_VERTICAL_SCAN_DIRECTION, verticalFlip);
 	pCamera->SetParam(ICamera::PARAM_LSM_HORIZONTAL_FLIP, horizontalFlip);
+	pHardware->GetShutterOptions(_digiShutterEnabled);
 	//convert bleach trigger mode into a bleach scanner trigger mode
 	long trigMode;
 	switch(bleachTrigger)
@@ -1484,6 +1530,12 @@ long AcquireBleaching::Execute(long index, long subWell)
 	//initialize the progress indicator
 	CallSaveImage(0, FALSE);
 
+	//open the shutter before the first stream
+	if (TRUE == _digiShutterEnabled)
+	{
+		OpenShutter();
+	}
+
 	//master time index
 	long currentT = 1;
 
@@ -1499,6 +1551,11 @@ long AcquireBleaching::Execute(long index, long subWell)
 		if((ICamera::GALVO_GALVO == (ICamera::LSMType)static_cast<long> (bleachVal)) && ((ICamera::GALVO_GALVO == (ICamera::LSMType)static_cast<long> (camVal))))
 		{
 			MessageBox(NULL,L"Bleach Scanner and Image Detector cannot both be GalvoGalvo when using Hardware Trigger or Simultaneous mode during bleaching acquisition.",L"HW Trigger Error", MB_OK | MB_DEFAULT_DESKTOP_ONLY | MB_ICONWARNING);
+			//Close the shutter before returning
+			if (TRUE == _digiShutterEnabled)
+			{
+				CloseShutter();
+			}
 			return FALSE;
 		}
 
@@ -1520,6 +1577,11 @@ long AcquireBleaching::Execute(long index, long subWell)
 			if(pockelsLineBleachScannerWS[i].find(L"Dev1") != wstring::npos)
 			{
 				MessageBox(NULL,L"A pockels for the Bleach Scanner cannot use the same card as the Image Detector.",L"HW Trigger Error", MB_OK | MB_DEFAULT_DESKTOP_ONLY | MB_ICONWARNING);
+				//Close the shutter before returning
+				if (TRUE == _digiShutterEnabled)
+				{
+					CloseShutter();
+				}
 				return FALSE;
 			}
 		}
@@ -1532,6 +1594,11 @@ long AcquireBleaching::Execute(long index, long subWell)
 	PostCaptureProtocol(preBleachingStream, currentT, preBleachingFrames, &sp);
 	if(FALSE == AcquireBleaching::captureStatus)
 	{
+		//Close the shutter before returning
+		if (TRUE == _digiShutterEnabled)
+		{
+			CloseShutter();
+		}
 		return FALSE;
 	}
 	currentT += preBleachingFrames;
@@ -1601,6 +1668,11 @@ long AcquireBleaching::Execute(long index, long subWell)
 	{
 		StringCbPrintfW(message, MSG_LENGTH, L"RunSample Bleach scanner is not Galvo-Galvo or Stimulator.");
 		logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+		//Close the shutter before returning
+		if (TRUE == _digiShutterEnabled)
+		{
+			CloseShutter();
+		}
 		return FALSE;
 	}
 
@@ -1621,6 +1693,11 @@ long AcquireBleaching::Execute(long index, long subWell)
 		if(1 == _stopStatus)
 		{	
 			PostflightSLMBleachScanner(pBleachScanner);
+			//Close the shutter before returning
+			if (TRUE == _digiShutterEnabled)
+			{
+				CloseShutter();
+			}
 			return FALSE;
 		}
 		if(PreCaptureStatus::PRECAPTURE_DONE == preCapStatus)
@@ -1653,6 +1730,11 @@ long AcquireBleaching::Execute(long index, long subWell)
 		if(FALSE == pBleachScanner->SetupAcquisition(NULL))
 		{
 			PostflightSLMBleachScanner(pBleachScanner);
+			//Close the shutter before returning
+			if (TRUE == _digiShutterEnabled)
+			{
+				CloseShutter();
+			}
 			return FALSE;
 		}
 
@@ -1740,6 +1822,11 @@ long AcquireBleaching::Execute(long index, long subWell)
 			{
 				SetEvent(hStopCapture);
 			}
+			//Close the shutter before returning
+			if (TRUE == _digiShutterEnabled)
+			{
+				CloseShutter();
+			}
 			//let it return outside the while loop:
 			preCapStatus = PreCaptureStatus::PRECAPTURE_DONE;
 		}
@@ -1790,6 +1877,12 @@ long AcquireBleaching::Execute(long index, long subWell)
 		PreCaptureProtocol(pCamera, index, subWell, postBleachingStream2, postBleachingFrames2, FALSE, channel, &d, &sp);
 		AcquireBleaching::captureStatus = Capture(pCamera,currentT,postBleachingStream2,postBleachingFrames2,postBleachingInterval2,d,&sp,FALSE);
 		PostCaptureProtocol(postBleachingStream2, currentT, postBleachingFrames2, &sp);
+	}
+
+	//Close the shutter before returning
+	if (TRUE == _digiShutterEnabled)
+	{
+		CloseShutter();
 	}
 
 	//stop the scanner before processing the images
@@ -2064,8 +2157,8 @@ long AcquireBleaching::CatRawFiles(SaveParams *sp, long preBleachingFrames, long
 			if_2.close();
 			_wremove(name);
 		}
-		of.close();
-	}
+		of.close(); 
+	} 
 
 	wchar_t drive[_MAX_DRIVE];
 	wchar_t dir[_MAX_DIR];

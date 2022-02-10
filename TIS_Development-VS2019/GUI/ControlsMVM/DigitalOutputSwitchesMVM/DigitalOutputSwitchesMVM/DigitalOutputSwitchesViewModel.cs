@@ -31,8 +31,6 @@
     {
         #region Fields
 
-        public const int ARRAY_SIZE = 260;
-
         private readonly DigitalOutputSwitchesModel _DigitalOutputSwitchesModel;
 
         ICommand _digitalSwitchCommand;
@@ -66,9 +64,14 @@
             }
             _triggerStruct = new EPhysTriggerStruct();
             _triggerStruct.triggerLine = string.Empty;
-            _triggerStruct.stepEdge = Enumerable.Repeat(-1, ARRAY_SIZE).ToArray();
+            _triggerStruct.stepEdge = Enumerable.Repeat(-1, (int)Constants.EPHYS_ARRAY_SIZE).ToArray();
 
             //populate combobox selections and label
+            TriggerTypeItems = new ObservableCollection<StringPC>();
+            for (int i = (int)EPhysOutputType.DIGITAL_ONLY; i < (int)EPhysOutputType.EPHYS_LAST_OUTPUT_TYPE; i++)
+            {
+                TriggerTypeItems.Add(new StringPC(new String(Enum.GetName(typeof(EPhysOutputType), i).Select((ch, id) => (0 == id) ? ch : ('_' == ch ? ' ' : Char.ToLower(ch))).ToArray())));
+            }
             TriggerModeItems = new ObservableCollection<StringPC>();
             for (int i = (int)EPhysTriggerMode.NONE; i < (int)EPhysTriggerMode.EPHYS_LAST_TRIGGER_MODE; i++)
             {
@@ -115,6 +118,40 @@
             {
                 _experimentMode = value;
                 OnPropertyChanged("ExperimentMode");
+            }
+        }
+
+        public string PowerPercentString
+        {
+            get
+            {
+                return (null != _triggerStruct.powerPercent && 0 < _triggerStruct.powerPercent.Where(x => 0 < x).Count()) ?
+                    string.Join(":", Array.ConvertAll(_triggerStruct.powerPercent.Where(x => 0 <= x).ToArray(), y => y.ToString())) :
+                    "0";
+            }
+            set
+            {
+                string[] list = Regex.Split(value, ":");
+                TriggerError = string.Empty;
+                double dVal = 0.0;
+                if ((int)Constants.EPHYS_ARRAY_SIZE < list.Length)
+                {
+                    TriggerError = "Error: too many entries for Powers.";
+                }
+                else
+                {
+                    _triggerStruct.powerPercent = Enumerable.Repeat(-1.0, (int)Constants.EPHYS_ARRAY_SIZE).ToArray();
+                    for (int i = 0; i < list.Length; i++)
+                    {
+                        if (Double.TryParse(list[i], out dVal))
+                            _triggerStruct.powerPercent[i] = dVal;
+                    }
+                }
+                if ((0 == _triggerError.Length) || (TriggerErrorColor.Contains("Yellow")))
+                {
+                    SetTriggerStruct();
+                    OnPropertyChanged("PowerPercentString");
+                }
             }
         }
 
@@ -224,13 +261,13 @@
                 string[] list = Regex.Split(value, ":");
                 TriggerError = string.Empty;
                 int iVal = 0;
-                if (ARRAY_SIZE < list.Length)
+                if ((int)Constants.EPHYS_ARRAY_SIZE < list.Length)
                 {
                     TriggerError = "Error: too many entries for Gaps.";
                 }
                 else
                 {
-                    _triggerStruct.stepEdge = Enumerable.Repeat(-1, ARRAY_SIZE).ToArray();
+                    _triggerStruct.stepEdge = Enumerable.Repeat(-1, (int)Constants.EPHYS_ARRAY_SIZE).ToArray();
                     for (int i = 0; i < list.Length; i++)
                     {
                         if ((!Int32.TryParse(list[i], out iVal)) || ((1 < list.Length) && (0 == iVal)))
@@ -481,6 +518,26 @@
             }
         }
 
+        public int TriggerType
+        {
+            get
+            {
+                return _triggerStruct.outputType;
+            }
+            set
+            {
+                _triggerStruct.outputType = value;
+                SetTriggerStruct();
+                OnPropertyChanged("TriggerType");
+            }
+        }
+
+        public ObservableCollection<StringPC> TriggerTypeItems
+        {
+            get;
+            set;
+        }
+
         #endregion Properties
 
         #region Indexers
@@ -683,6 +740,7 @@
                 }
 
                 //for triggers
+                TriggerType = ((XmlManager.GetAttribute(ndList[0], doc, "trigType", ref str)) && Int32.TryParse(str, out iVal)) ? iVal : 0;
                 TriggerMode = ((XmlManager.GetAttribute(ndList[0], doc, "trigMode", ref str)) && Int32.TryParse(str, out iVal)) ? iVal : 0;
                 TriggerStartEdge = ((XmlManager.GetAttribute(ndList[0], doc, "trigStartEdge", ref str)) && Int32.TryParse(str, out iVal)) ? iVal : 0;
                 TriggerEdgeString = XmlManager.GetAttribute(ndList[0], doc, "trigSteps", ref str) ? str : "0";
@@ -691,6 +749,7 @@
                 TriggerDurationMS = ((XmlManager.GetAttribute(ndList[0], doc, "trigDurationMS", ref str)) && Double.TryParse(str, out dVal)) ? dVal : 0;
                 TriggerIdleMS = ((XmlManager.GetAttribute(ndList[0], doc, "trigIdleMS", ref str)) && Double.TryParse(str, out dVal)) ? dVal : 0;
                 TriggerIterations = ((XmlManager.GetAttribute(ndList[0], doc, "trigIterations", ref str)) && Int32.TryParse(str, out iVal)) ? iVal : 0;
+                PowerPercentString = XmlManager.GetAttribute(ndList[0], doc, "powerPercents", ref str) ? str : "0";
             }
         }
 
@@ -723,6 +782,7 @@
                     XmlManager.SetAttribute(ndList[0], experimentFile, string.Format("digOut{0}", i + 1), SwitchState[i].Value.ToString());
                 }
 
+                XmlManager.SetAttribute(ndList[0], experimentFile, "trigType", TriggerType.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "trigMode", TriggerMode.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "trigStartEdge", TriggerStartEdge.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "trigSteps", TriggerEdgeString);
@@ -731,7 +791,7 @@
                 XmlManager.SetAttribute(ndList[0], experimentFile, "trigDurationMS", TriggerDurationMS.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "trigIdleMS", TriggerIdleMS.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "trigIterations", TriggerIterations.ToString());
-
+                XmlManager.SetAttribute(ndList[0], experimentFile, "powerPercents", PowerPercentString);
             }
         }
 
@@ -837,29 +897,5 @@
         }
 
         #endregion Methods
-
-        #region Nested Types
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        public struct EPhysTriggerStruct
-        {
-            public Int32 configured;
-            public Int32 enable;
-            public Int32 mode;
-            public double startIdleMS;
-            public double durationMS;
-            public double idleMS;
-            public double minIdleMS;
-            public Int32 iterations;
-            public Int32 startEdge;
-            public Int32 repeats;
-            public Int32 framePerZSlice;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = ARRAY_SIZE)]
-            public string triggerLine;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = ARRAY_SIZE)]
-            public Int32[] stepEdge;
-        }
-
-        #endregion Nested Types
     }
 }

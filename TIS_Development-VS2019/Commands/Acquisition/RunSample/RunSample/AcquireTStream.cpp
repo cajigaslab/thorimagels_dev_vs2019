@@ -207,6 +207,12 @@ long AcquireTStream::CallInformMessage(wchar_t* message)
 	return TRUE;
 }
 
+long AcquireTStream::CallNotifySavedFileIPC(wchar_t* message)
+{
+	NotifySavedFileIPC(message);
+	return TRUE;
+}
+
 /// <return> return next created image ID, -1 if failed. </return>
 long AcquireTStream::CreateSaveThread(SaveParams& sp, char* pMem)
 {
@@ -3823,6 +3829,7 @@ void AcquireTStream::SavePreviewImage(SaveParams *sp, long tFrameOneBased, char 
 		ofstream my_file1(filePathAndName, ios_base::binary | ios::out);
 		my_file1.write(buffer,dflimPreviewSize);
 		my_file1.close();	
+		CallNotifySavedFileIPC(filePathAndName);
 
 	}
 	else

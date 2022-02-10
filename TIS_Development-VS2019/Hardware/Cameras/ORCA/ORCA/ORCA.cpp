@@ -59,6 +59,8 @@ ORCA::ORCA() :
 	_ImgPty_SetSettings.blackLevel = 0;
 	_ImgPty_SetSettings.binIndex = 0;
 	_ImgPty_SetSettings.hotPixelLevelIndex = 0;
+	_ImgPty_SetSettings.masterPulseEnabled = FALSE;
+	_ImgPty_SetSettings.staticFrameRateVal = 30;
 
 	_pDetectorName = NULL;
 	_pSerialNumber = NULL;
@@ -222,7 +224,7 @@ inline const int ORCA::get_dcamdev_string(DCAMERR& err, HDCAM hdcam, int32 idStr
 	param.iString = idStr;
 
 	OrcaErrChk(L"dcamdev_getstring", err = dcamdev_getstring(hdcam, &param));
-	return !failed(err);
+	return (FALSE == failed(err));
 }
 
 /*
@@ -336,6 +338,8 @@ void ORCA::FindAllCameras()
 
 			apiinit.guid = &guid;
 #endif
+			//This is the minimum best time that works in Yoav's system
+			Sleep(350);
 
 			OrcaErrChk(L"dcamapi_init", err = dcamapi_init(&apiinit));
 
@@ -372,7 +376,7 @@ void ORCA::FindAllCameras()
 			}
 		}
 	}
-	catch (...)
+	catch (exception e)
 	{
 		StringCbPrintfW(_errMsg, MSG_SIZE, L"ORCA: FindAllCameras failed");
 		LogMessage(_errMsg, ERROR_EVENT);
@@ -405,7 +409,7 @@ long ORCA::GetAttributeFromCamera(HDCAM hdcam, long requestedProperty, DCAMPROP_
 void ORCA::InitialParamInfo(void)
 {
 	DCAMPROP_ATTR widthAttr, heightAttr, binningInfo, binningInfoHorz, binningInfoVert, exposureAttr, speedAttr;
-	double pixelType = 0, rowBytes, width = 0, height = 0, exposure = 0, binning;
+	double pixelType = 0, rowBytes, width = 0, height = 0, exposure = 0, binning = 1;
 	DCAMERR err;
 	_paramHotPixelAvailable = TRUE;
 
@@ -466,8 +470,8 @@ void ORCA::InitialParamInfo(void)
 	//Get Exposure range
 	if (TRUE == GetAttributeFromCamera(_hdcam[_camID], DCAM_IDPROP_EXPOSURETIME, exposureAttr))
 	{
-		_expUSRange[0] = static_cast<int>(ceil(exposureAttr.valuemin * US_TO_SEC));
-		_expUSRange[1] = static_cast<int>(floor(exposureAttr.valuemax * US_TO_SEC));
+		_expUSRange[0] = static_cast<long long>(ceil(exposureAttr.valuemin * US_TO_SEC));
+		_expUSRange[1] = static_cast<long long>(floor(exposureAttr.valuemax * US_TO_SEC));
 	}
 
 	OrcaErrChk(L"dcamprop_getvalue", dcamprop_getvalue(_hdcam[_camID], DCAM_IDPROP_IMAGE_WIDTH, &width));
@@ -600,6 +604,9 @@ long ORCA::SetBdDMA(ImgPty* pImgPty)
 		//Set new Cam parameters
 		_imgPtyDll = *pImgPty;
 
+		//Need to set the speed to default first
+		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_READOUTSPEED, 0));
+
 		//Need to set the binning to 1 before setting the image area size. Because the camera max area size changes internally with the binning
 		OrcaErrChk(L"dcamprop_getvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_BINNING, DCAMPROP_BINNING__1));
 
@@ -634,28 +641,32 @@ long ORCA::SetBdDMA(ImgPty* pImgPty)
 			{
 			case 0:
 			{
-				OrcaErrChk(L"dcamprop_getvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_BINNING, DCAMPROP_BINNING__1));
+				OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_BINNING, DCAMPROP_BINNING__1));
 			}
 			break;
 			case 1:
 			{
-				OrcaErrChk(L"dcamprop_getvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_BINNING, DCAMPROP_BINNING__2));
+				OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_BINNING, DCAMPROP_BINNING__2));
 			}
 			break;
 			case 2:
 			{
-				OrcaErrChk(L"dcamprop_getvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_BINNING, DCAMPROP_BINNING__4));
+				OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_BINNING, DCAMPROP_BINNING__4));
 			}
 			break;
 			default:
 			{
-				OrcaErrChk(L"dcamprop_getvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_BINNING, DCAMPROP_BINNING__1));
+				OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_BINNING, DCAMPROP_BINNING__1));
 			}
 			}
 		}
 
 		double frameRate = 0;
 		OrcaErrChk(L"dcamprop_getvalue", dcamprop_getvalue(_hdcam[_camID], DCAM_IDPROP_INTERNALFRAMERATE, &frameRate));
+		if (_imgPtyDll.masterPulseEnabled)
+		{
+			frameRate = _imgPtyDll.staticFrameRateVal;
+		}
 
 		//////****End Set/Get Camera Parameters****//////
 
@@ -669,6 +680,13 @@ long ORCA::SetBdDMA(ImgPty* pImgPty)
 		case SW_SINGLE_FRAME:
 		{
 			OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__INTERNAL));
+			OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_TRIGGERACTIVE, DCAMPROP_TRIGGERACTIVE__EDGE));
+			if (_imgPtyDll.masterPulseEnabled)
+			{
+				OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__MASTERPULSE));
+				OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_MASTERPULSE_TRIGGERSOURCE, DCAMPROP_MASTERPULSE_TRIGGERSOURCE__SOFTWARE));
+			}
+
 			_imgPtyDll.numFrame = avgNum;
 			_imgPtyDll.numImagesToBuffer = MIN_IMAGE_BUFFERS;
 			_imgPtyDll.dmaBufferCount = avgNum;
@@ -677,6 +695,13 @@ long ORCA::SetBdDMA(ImgPty* pImgPty)
 		case SW_MULTI_FRAME:
 		{
 			OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__INTERNAL));
+			OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_TRIGGERACTIVE, DCAMPROP_TRIGGERACTIVE__EDGE));
+			if (_imgPtyDll.masterPulseEnabled)
+			{
+				OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__MASTERPULSE));
+				OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_MASTERPULSE_TRIGGERSOURCE, DCAMPROP_MASTERPULSE_TRIGGERSOURCE__SOFTWARE));
+			}
+
 			_imgPtyDll.numFrame = _imgPtyDll.numFrame * avgNum;
 			_imgPtyDll.numImagesToBuffer = DEFAULT_IMAGE_BUFFERS;
 			_imgPtyDll.dmaBufferCount = min(4096, static_cast<int>(frameRate * 10)); //Make the DMA buffer 10 times the size of the frame rate without exceeding 4096
@@ -685,6 +710,13 @@ long ORCA::SetBdDMA(ImgPty* pImgPty)
 		case SW_FREE_RUN_MODE:
 		{
 			OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__INTERNAL));
+			OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_TRIGGERACTIVE, DCAMPROP_TRIGGERACTIVE__EDGE));
+			if (_imgPtyDll.masterPulseEnabled)
+			{
+				OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__MASTERPULSE));
+				OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_MASTERPULSE_TRIGGERSOURCE, DCAMPROP_MASTERPULSE_TRIGGERSOURCE__SOFTWARE));
+			}
+
 			_imgPtyDll.numFrame = 0;
 			_imgPtyDll.numImagesToBuffer = MIN_IMAGE_BUFFERS;
 			_imgPtyDll.dmaBufferCount = avgNum;
@@ -693,6 +725,13 @@ long ORCA::SetBdDMA(ImgPty* pImgPty)
 		case HW_SINGLE_FRAME:
 		{
 			OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__INTERNAL));
+			OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_TRIGGERACTIVE, DCAMPROP_TRIGGERACTIVE__EDGE));
+			if (_imgPtyDll.masterPulseEnabled)
+			{
+				OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__MASTERPULSE));
+				OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_MASTERPULSE_TRIGGERSOURCE, DCAMPROP_MASTERPULSE_TRIGGERSOURCE__SOFTWARE));
+			}
+
 			_imgPtyDll.numFrame = avgNum;
 			_imgPtyDll.numImagesToBuffer = MIN_IMAGE_BUFFERS;
 			_imgPtyDll.dmaBufferCount = avgNum;
@@ -701,31 +740,57 @@ long ORCA::SetBdDMA(ImgPty* pImgPty)
 		case HW_MULTI_FRAME_TRIGGER_FIRST:
 		case HW_MULTI_FRAME_TRIGGER_EACH:
 		{
-			OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__EXTERNAL));
+			if (_imgPtyDll.masterPulseEnabled)
+			{
+				OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__MASTERPULSE));
+				OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_MASTERPULSE_TRIGGERSOURCE, DCAMPROP_MASTERPULSE_TRIGGERSOURCE__EXTERNAL));
+				OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_MASTERPULSE_MODE, DCAMPROP_MASTERPULSE_MODE__START));
+			}
+			else
+			{
+				OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__EXTERNAL));
+				OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_TRIGGERACTIVE, DCAMPROP_TRIGGERACTIVE__EDGE));
+			}
 			_imgPtyDll.numFrame = _imgPtyDll.numFrame * avgNum;
 			_imgPtyDll.numImagesToBuffer = DEFAULT_IMAGE_BUFFERS;
-			_imgPtyDll.dmaBufferCount = min(4096, static_cast<int>(frameRate * 10));  //Make the DMA buffer 10 times the size of the frame rate without exceeding 4096
+			_imgPtyDll.dmaBufferCount = min(4096, static_cast<int>(frameRate * 10)); //Make the DMA buffer 10 times the size of the frame rate without exceeding 4096
 		}
 		break;
 		case HW_MULTI_FRAME_TRIGGER_EACH_BULB:
 		{
-			//current_mode = TL_CAMERA_OPERATION_MODE::TL_CAMERA_OPERATION_MODE_BULB;
+			OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__EXTERNAL));
+			OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_TRIGGERACTIVE, DCAMPROP_TRIGGERACTIVE__LEVEL));
 			_imgPtyDll.numFrame = _imgPtyDll.numFrame * avgNum;
 			_imgPtyDll.numImagesToBuffer = DEFAULT_IMAGE_BUFFERS;
-			_imgPtyDll.dmaBufferCount = min(4096, static_cast<int>(frameRate * 10));  //Make the DMA buffer 10 times the size of the frame rate without exceeding 4096
+			_imgPtyDll.dmaBufferCount = min(4096, static_cast<int>(frameRate * 10)); //Make the DMA buffer 10 times the size of the frame rate without exceeding 4096
 		}
 		break;
 		}
 
+		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_POLARITY, DCAMPROP_OUTPUTTRIGGER_POLARITY__POSITIVE));
+		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_KIND, DCAMPROP_OUTPUTTRIGGER_KIND__EXPOSURE));
+		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_SOURCE, DCAMPROP_OUTPUTTRIGGER_SOURCE__EXPOSURE));
+
 		//We need to program frame trigger out because the camera doesn't have a default digital line like that
 		//To program the output frame trigger, set the kind to programable, and the source to readout end
-		//To set the leght of each pulse use the framerate to calculate the time of each frame in seconds, then use 90% of that time as the length
-		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_KIND, DCAMPROP_OUTPUTTRIGGER_KIND__PROGRAMABLE));
-		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_PROGRAMABLESTART, DCAMPROP_OUTPUTTRIGGER_PROGRAMABLESTART__FIRSTREADOUT));
-		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_SOURCE, DCAMPROP_OUTPUTTRIGGER_SOURCE__READOUTEND));
-		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_PERIOD, (1.0 / frameRate) * 0.9));
-		//We can also use the exposure as the lenght, but we decided to use the frame rate instead, we can change it at any time
-		//OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_PERIOD, (double)_ImgPty_SetSettings.exposureTime_us / (double)US_TO_SEC));
+		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_POLARITY + DCAM_IDPROP__OUTPUTTRIGGER, DCAMPROP_OUTPUTTRIGGER_POLARITY__POSITIVE));
+		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_KIND + DCAM_IDPROP__OUTPUTTRIGGER, DCAMPROP_OUTPUTTRIGGER_KIND__PROGRAMABLE));
+		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + DCAM_IDPROP__OUTPUTTRIGGER, DCAMPROP_OUTPUTTRIGGER_SOURCE__EXPOSURE));
+		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_PROGRAMABLESTART + DCAM_IDPROP__OUTPUTTRIGGER, DCAMPROP_OUTPUTTRIGGER_PROGRAMABLESTART__FIRSTREADOUT));
+		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + DCAM_IDPROP__OUTPUTTRIGGER, ((double)_ImgPty_SetSettings.exposureTime_us / (double)US_TO_SEC)));
+
+		//Set up the masterpulse
+		if (_imgPtyDll.masterPulseEnabled && 0 != _imgPtyDll.staticFrameRateVal)
+		{
+			double internalLineInterval, masterPulseInterval, frameInterval;
+			OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_MASTERPULSE_INTERVAL, (1.0 / _imgPtyDll.staticFrameRateVal)));
+			OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_TRIGGERACTIVE, DCAMPROP_TRIGGERACTIVE__SYNCREADOUT));
+			OrcaErrChk(L"dcamprop_getvalue", dcamprop_getvalue(_hdcam[_camID], DCAM_IDPROP_INTERNAL_LINEINTERVAL, &internalLineInterval));
+			OrcaErrChk(L"dcamprop_getvalue", dcamprop_getvalue(_hdcam[_camID], DCAM_IDPROP_INTERNAL_FRAMEINTERVAL, &frameInterval));
+			OrcaErrChk(L"dcamprop_getvalue", dcamprop_getvalue(_hdcam[_camID], DCAM_IDPROP_MASTERPULSE_INTERVAL, &masterPulseInterval));
+			StringCbPrintfW(_errMsg, MSG_SIZE, L"ORCA lineInterval: %f frameInterval: %f pixelY: %d masterPulseInterval: %f", internalLineInterval, frameInterval, _imgPtyDll.roiBottom - _imgPtyDll.roiTop, masterPulseInterval);
+			LogMessage(_errMsg, INFORMATION_EVENT);
+		}
 
 		///------------------------------------------------------------------------------------///
 		// The comments that have step numbers are all required steps in DCAM for image acquisition. 
@@ -941,6 +1006,8 @@ long ORCA::PreflightAcquisition(char* pData)
 	_ImgPty.heightPx = _ImgPty_SetSettings.heightPx;
 	_ImgPty.binIndex = _ImgPty_SetSettings.binIndex;
 	_ImgPty.hotPixelLevelIndex = _ImgPty_SetSettings.hotPixelLevelIndex;
+	_ImgPty.masterPulseEnabled = _ImgPty_SetSettings.masterPulseEnabled;
+	_ImgPty.staticFrameRateVal = _ImgPty_SetSettings.staticFrameRateVal;
 
 	//set the the camera settings and allocate the DMA buffer
 	if (TRUE == SetBdDMA(&_ImgPty))
@@ -977,6 +1044,8 @@ long ORCA::PreflightAcquisition(char* pData)
 		_ImgPty_Pre.blackLevel = _ImgPty.blackLevel;
 		_ImgPty_Pre.binIndex = _ImgPty.binIndex;
 		_ImgPty_Pre.hotPixelLevelIndex = _ImgPty.hotPixelLevelIndex;
+		_ImgPty_Pre.masterPulseEnabled = _ImgPty.masterPulseEnabled;
+		_ImgPty_Pre.staticFrameRateVal = _ImgPty.staticFrameRateVal;
 	}
 	else
 	{
@@ -1023,6 +1092,8 @@ long ORCA::SetupAcquisition(char* pData)
 		(_ImgPty_Pre.blackLevel != _ImgPty_SetSettings.blackLevel) ||
 		(_ImgPty_Pre.binIndex != _ImgPty_SetSettings.binIndex) ||
 		(_ImgPty_Pre.hotPixelLevelIndex != _ImgPty_SetSettings.hotPixelLevelIndex) ||
+		(_ImgPty_Pre.masterPulseEnabled != _ImgPty_SetSettings.masterPulseEnabled) ||
+		(_ImgPty_Pre.staticFrameRateVal != _ImgPty_SetSettings.staticFrameRateVal) ||
 		(TRUE == _forceSettingsUpdate)
 		)
 	{
@@ -1057,6 +1128,8 @@ long ORCA::SetupAcquisition(char* pData)
 		_ImgPty.blackLevel = _ImgPty_SetSettings.blackLevel;
 		_ImgPty.binIndex = _ImgPty_SetSettings.binIndex;
 		_ImgPty.hotPixelLevelIndex = _ImgPty_SetSettings.hotPixelLevelIndex;
+		_ImgPty.masterPulseEnabled = _ImgPty_SetSettings.masterPulseEnabled;
+		_ImgPty.staticFrameRateVal = _ImgPty_SetSettings.staticFrameRateVal;
 
 		//set the the camera settings and allocate the DMA buffer
 		if (TRUE == SetBdDMA(&_ImgPty))
@@ -1092,6 +1165,8 @@ long ORCA::SetupAcquisition(char* pData)
 			_ImgPty_Pre.blackLevel = _ImgPty.blackLevel;
 			_ImgPty_Pre.binIndex = _ImgPty.binIndex;
 			_ImgPty_Pre.hotPixelLevelIndex = _ImgPty.hotPixelLevelIndex;
+			_ImgPty_Pre.masterPulseEnabled = _ImgPty.masterPulseEnabled;
+			_ImgPty_Pre.staticFrameRateVal = _ImgPty.staticFrameRateVal;
 		}
 		else
 		{

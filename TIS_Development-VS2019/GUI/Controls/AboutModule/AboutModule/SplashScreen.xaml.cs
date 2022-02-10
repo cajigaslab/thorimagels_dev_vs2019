@@ -15,6 +15,8 @@
     using System.Windows.Media.Imaging;
     using System.Windows.Shapes;
 
+    using ThorSharedTypes;
+
     /// <summary>
     /// Interaction logic for SplashScreen.xaml
     /// </summary>
@@ -37,6 +39,7 @@
             this.Closing += new CancelEventHandler(SplashScreen_Closing);
             this.Deactivated += new EventHandler(SplashScreen_Deactivated);
             this.ShowInTaskbar = false;
+            LoadDAQInfo();
         }
 
         #endregion Constructors
@@ -52,6 +55,27 @@
         #endregion Properties
 
         #region Methods
+
+        void LoadDAQInfo()
+        {
+            bool daqAvailable = 1 == ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_DAQ_NAME);
+            daqPanel.Visibility = daqAvailable ? Visibility.Visible : Visibility.Collapsed;
+
+            if (daqAvailable)
+            {
+                daqName.Text = ResourceManagerCS.GetCameraParamString((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_DAQ_NAME);
+                DAQFirmwareVer.Text = ResourceManagerCS.GetCameraParamString((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_DAQ_FW_VER);
+                DAQDriverVer.Text = ResourceManagerCS.GetCameraParamString((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_DAQ_DRIVER_VER);
+            }
+            bool lftAvailable = 1 == ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_LOW_FREQ_TRIG_BOARD_FW_VER);
+            lftPanel.Visibility = lftAvailable ? Visibility.Visible : Visibility.Collapsed;
+
+            if (lftAvailable)
+            {
+                lftFWVer.Text = ResourceManagerCS.GetCameraParamString((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_LOW_FREQ_TRIG_BOARD_CPLD_VER);
+                lftCPLDVer.Text = ResourceManagerCS.GetCameraParamString((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_LOW_FREQ_TRIG_BOARD_FW_VER);
+            }
+        }
 
         void SplashScreen_Closing(object sender, CancelEventArgs e)
         {

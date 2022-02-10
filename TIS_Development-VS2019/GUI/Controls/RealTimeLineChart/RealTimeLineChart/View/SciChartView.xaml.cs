@@ -17,16 +17,24 @@
     using System.Windows.Navigation;
     using System.Windows.Shapes;
 
-    using Abt.Controls.SciChart;
-    using Abt.Controls.SciChart.ChartModifiers;
-    using Abt.Controls.SciChart.Rendering.HighSpeedRasterizer;
-    using Abt.Controls.SciChart.Themes;
-    using Abt.Controls.SciChart.Visuals;
-    using Abt.Controls.SciChart.Visuals.Annotations;
-
     using Microsoft.Win32;
 
     using RealTimeLineChart.ViewModel;
+
+    using SciChart;
+    using SciChart.Charting;
+    using SciChart.Charting.ChartModifiers;
+    using SciChart.Charting.Common.Extensions;
+    using SciChart.Charting.Model.DataSeries;
+    using SciChart.Charting.Themes;
+    using SciChart.Charting.Visuals;
+    using SciChart.Charting.Visuals.Annotations;
+    using SciChart.Charting.Visuals.Axes;
+    using SciChart.Charting.Visuals.Axes.LabelProviders;
+    using SciChart.Charting.Visuals.Events;
+    using SciChart.Core;
+    using SciChart.Drawing.HighSpeedRasterizer;
+    using SciChart.Drawing.VisualXcceleratorRasterizer;
 
     /// <summary>
     /// Interaction logic for SciChartView.xaml
@@ -115,7 +123,7 @@
             {
                 var exportType = (ExportType)saveFileDialog.FilterIndex - 1;
                 // Saving chart to file with specified file format
-                this.sciChartSurface.ExportToFile(saveFileDialog.FileName, exportType);
+                this.sciChartSurface.ExportToFile(saveFileDialog.FileName, exportType, true);
             }
         }
 
@@ -146,6 +154,7 @@
             yAxis.VisibleRangeChanged += yAxis_VisibleRangeChanged;
             vm._visibleYAxisMin = (double)this.sciChartSurface.YAxis.VisibleRange.Min;
             vm._visibleYAxisMax = (double)this.sciChartSurface.YAxis.VisibleRange.Max;
+            vm.UpdateRenderPriority += Vm_UpdateRenderPriority;
             var mode = AxisDragModes.Scale;
             yAxisRightDragmodifier.DragMode = mode;
             xAxisDragModifier.DragMode = mode;
@@ -271,7 +280,10 @@
         /// <param name="maxY">The maximum y.</param>
         void vm_EventChartYAxisChanged(double minY, double maxY)
         {
-            this.sciChartSurface.YAxis.VisibleRange.SetMinMax(minY, maxY);
+            Dispatcher.Invoke(new Action(() =>
+            {
+                this.sciChartSurface.YAxis.VisibleRange.SetMinMax(minY, maxY);
+            }));
         }
 
         /// <summary>
@@ -300,183 +312,50 @@
             }
         }
 
+        private void Vm_UpdateRenderPriority(RenderPriority renderPriority)
+        {
+            sciChartSurface.RenderPriority = renderPriority;
+        }
+
         /// <summary>
         /// VM_s the vertical market event.
         /// </summary>
         /// <param name="markerType">Type of the marker.</param>
         void vm_VerticalMarkerEvent(int markerType, double typeValue)
         {
-            RealTimeLineChartViewModel vm = (RealTimeLineChartViewModel)this.DataContext;
-            if (vm == null)
+            Dispatcher.Invoke(new Action(() =>
             {
-                return;
-            }
-            RealTimeLineChartViewModel.MarkerType type = (RealTimeLineChartViewModel.MarkerType)markerType;
-            switch (type)
-            {
-                case RealTimeLineChartViewModel.MarkerType.Add:
-                    {
-                        if (typeValue > 0 && this.sciChartSurface.XAxis.VisibleRange.IsValueWithinRange(typeValue) == false)
-                        {
-                            MessageBoxResult messageBoxResult = MessageBoxResult.None;
-                            MessageBox.Show("Position is Out of Visible Range, Would you want to continue?", "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning, messageBoxResult);
-                            if (messageBoxResult == MessageBoxResult.No)
-                            {
-                                return;
-                            }
-                        }
-                        var slice = new VerticalLineAnnotation()
-                        {
-                            X1 = (typeValue < 0) ? this.sciChartSurface.XAxis.GetDataValue(this.sciChartSurface.ActualWidth / 2) : typeValue,
-                            ShowLabel = true,
-                            Stroke = new BrushConverter().ConvertFromString("#427EF6") as SolidColorBrush,
-                            StrokeThickness = 2,
-                            IsEditable = true,
-                            LabelPlacement = LabelPlacement.Axis
-                        };
-                        this.sliceModifier.VerticalLines.Add(slice);
-                        vm.CreateVerticalMarker(_index, Math.Round((double)slice.X1, 6));
-                        slice.MouseDoubleClick += slice_MouseDoubleClick;
-                        if (0 < slice.AnnotationLabels.Count)
-                        {
-                            slice.AnnotationLabels[0].MouseMove += new MouseEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
-                            slice.AnnotationLabels[0].MouseUp += new MouseButtonEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
-                            slice.AnnotationLabels[0].MouseDown += new MouseButtonEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
-                        }
-                        _index++;
-                    }
-                    break;
-                case RealTimeLineChartViewModel.MarkerType.Delete:
-                    {
-                        var selectedSlices = sliceModifier.VerticalLines.Where(annotation => annotation.IsSelected).ToList();
+                RealTimeLineChartViewModel vm = (RealTimeLineChartViewModel)this.DataContext;
+                if (vm == null)
+                {
+                    return;
+                }
 
-                        foreach (var slice in selectedSlices)
+                RealTimeLineChartViewModel.MarkerType type = (RealTimeLineChartViewModel.MarkerType)markerType;
+                switch (type)
+                {
+                    case RealTimeLineChartViewModel.MarkerType.Add:
                         {
-                            int deleteIndex = sliceModifier.VerticalLines.IndexOf(slice);
-                            this.sciChartSurface.Annotations.Remove(slice);
-                            slice.MouseDoubleClick -= slice_MouseDoubleClick;
-                            if (0 < slice.AnnotationLabels.Count)
+                            if (typeValue > 0 && this.sciChartSurface.XAxis.VisibleRange.IsValueWithinRange(typeValue) == false)
                             {
-                                slice.AnnotationLabels[0].MouseMove -= new MouseEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
-                                slice.AnnotationLabels[0].MouseUp -= new MouseButtonEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
-                                slice.AnnotationLabels[0].MouseDown -= new MouseButtonEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
+                                MessageBoxResult messageBoxResult = MessageBoxResult.None;
+                                MessageBox.Show("Position is Out of Visible Range, Would you want to continue?", "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning, messageBoxResult);
+                                if (messageBoxResult == MessageBoxResult.No)
+                                {
+                                    return;
+                                }
                             }
-                            vm.DeleteVerticalMarker(deleteIndex);
-                        }
-                    }
-                    break;
-                case RealTimeLineChartViewModel.MarkerType.DeleteAll:
-                    {
-                        var selectedSlices = sliceModifier.VerticalLines.ToList();
-
-                        foreach (var slice in selectedSlices)
-                        {
-                            this.sciChartSurface.Annotations.Remove(slice);
-                            slice.MouseDoubleClick -= slice_MouseDoubleClick;
-                            if (0 < slice.AnnotationLabels.Count)
-                            {
-                                slice.AnnotationLabels[0].MouseMove -= new MouseEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
-                                slice.AnnotationLabels[0].MouseUp -= new MouseButtonEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
-                                slice.AnnotationLabels[0].MouseDown -= new MouseButtonEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
-                            }
-                        }
-                        vm._verticalmarker.Clear();
-                        _index = 0;
-                    }
-                    break;
-                case RealTimeLineChartViewModel.MarkerType.HideAll:
-                    {
-                        var selectedSlices = sliceModifier.VerticalLines.ToList();
-
-                        foreach (var slice in selectedSlices)
-                        {
-                            slice.IsHidden = true;
-                            slice.ShowLabel = false;
-                        }
-                    }
-                    break;
-                case RealTimeLineChartViewModel.MarkerType.DisplayAll:
-                    {
-                        var selectedSlices = sliceModifier.VerticalLines.ToList();
-
-                        foreach (var slice in selectedSlices)
-                        {
-                            slice.IsHidden = false;
-                            slice.ShowLabel = true;
-                        }
-                    }
-                    break;
-                case RealTimeLineChartViewModel.MarkerType.Save:
-                    {
-                        if (vm._coordinationVerticalMarkers != null)
-                        {
-                            vm._coordinationVerticalMarkers.Clear();
-                            vm._tooltipVerticalMarkers.Clear();
-                        }
-                        else
-                        {
-                            vm._coordinationVerticalMarkers = new List<double> { };
-                            vm._tooltipVerticalMarkers = new List<string> { };
-                        }
-                        string fileName = vm.SavePath + "\\" + vm.SaveName;
-                        var selectedSlices = sliceModifier.VerticalLines.ToList();
-                        for (int i = 0; i < selectedSlices.Count; i++)
-                        {
-                            vm._coordinationVerticalMarkers.Add(Math.Round((double)selectedSlices[i].X1, 6));
-                            if (selectedSlices[i].ToolTip != null)
-                            {
-                                vm._tooltipVerticalMarkers.Add(selectedSlices[i].ToolTip.ToString());
-                            }
-                            else
-                            {
-                                vm._tooltipVerticalMarkers.Add(string.Empty);
-                            }
-                        }
-                        if ((selectedSlices.Count > 0) || (0 == typeValue)) //typeValue [0]: create file anyway, otherwise: check counts.
-                        {
-                            vm.CreateXMLVerticalMarkers(fileName, vm._coordinationVerticalMarkers, vm._tooltipVerticalMarkers);
-                        }
-                    }
-                    break;
-                case RealTimeLineChartViewModel.MarkerType.Load:
-                    {
-                        string fileName = vm.SavePath + "\\" + vm.SaveName + "\\VerticalMarkers.xml";
-                        if (vm._coordinationVerticalMarkers != null)
-                        {
-                            vm._coordinationVerticalMarkers.Clear();
-                            vm._tooltipVerticalMarkers.Clear();
-                        }
-                        else
-                        {
-                            vm._coordinationVerticalMarkers = new List<double> { };
-                            vm._tooltipVerticalMarkers = new List<string> { };
-                        }
-                        vm.LoadXMLVerticalMarkers(fileName, vm._coordinationVerticalMarkers, vm._tooltipVerticalMarkers);
-                        _index = 0;
-                        for (int i = 0; i < vm._coordinationVerticalMarkers.Count; i++)
-                        {
                             var slice = new VerticalLineAnnotation()
                             {
-                                X1 = vm._coordinationVerticalMarkers[i],
+                                X1 = (typeValue < 0) ? this.sciChartSurface.XAxis.GetDataValue(this.sciChartSurface.ActualWidth / 2) : typeValue,
                                 ShowLabel = true,
                                 Stroke = new BrushConverter().ConvertFromString("#427EF6") as SolidColorBrush,
                                 StrokeThickness = 2,
                                 IsEditable = true,
                                 LabelPlacement = LabelPlacement.Axis
                             };
-                            if (vm._tooltipVerticalMarkers.Count != 0)
-                            {
-                                if (vm._tooltipVerticalMarkers[i] != string.Empty)
-                                {
-                                    slice.ToolTip = vm._tooltipVerticalMarkers[i];
-                                }
-                                vm.CreateVerticalMarker(_index, (double)slice.X1, vm._tooltipVerticalMarkers[i]);
-                            }
-                            else
-                            {
-                                vm.CreateVerticalMarker(_index, (double)slice.X1);
-                            }
                             this.sliceModifier.VerticalLines.Add(slice);
+                            vm.CreateVerticalMarker(_index, Math.Round((double)slice.X1, 6));
                             slice.MouseDoubleClick += slice_MouseDoubleClick;
                             if (0 < slice.AnnotationLabels.Count)
                             {
@@ -486,11 +365,153 @@
                             }
                             _index++;
                         }
-                    }
-                    break;
-                default:
-                    break;
-            }
+                        break;
+                    case RealTimeLineChartViewModel.MarkerType.Delete:
+                        {
+                            var selectedSlices = sliceModifier.VerticalLines.Where(annotation => annotation.IsSelected).ToList();
+
+                            foreach (var slice in selectedSlices)
+                            {
+                                int deleteIndex = sliceModifier.VerticalLines.IndexOf(slice);
+                                this.sciChartSurface.Annotations.Remove(slice);
+                                slice.MouseDoubleClick -= slice_MouseDoubleClick;
+                                if (0 < slice.AnnotationLabels.Count)
+                                {
+                                    slice.AnnotationLabels[0].MouseMove -= new MouseEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
+                                    slice.AnnotationLabels[0].MouseUp -= new MouseButtonEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
+                                    slice.AnnotationLabels[0].MouseDown -= new MouseButtonEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
+                                }
+                                vm.DeleteVerticalMarker(deleteIndex);
+                            }
+                        }
+                        break;
+                    case RealTimeLineChartViewModel.MarkerType.DeleteAll:
+                        {
+                            var selectedSlices = sliceModifier.VerticalLines.ToList();
+
+                            foreach (var slice in selectedSlices)
+                            {
+                                this.sciChartSurface.Annotations.Remove(slice);
+                                slice.MouseDoubleClick -= slice_MouseDoubleClick;
+                                if (0 < slice.AnnotationLabels.Count)
+                                {
+                                    slice.AnnotationLabels[0].MouseMove -= new MouseEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
+                                    slice.AnnotationLabels[0].MouseUp -= new MouseButtonEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
+                                    slice.AnnotationLabels[0].MouseDown -= new MouseButtonEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
+                                }
+                            }
+                            vm._verticalmarker.Clear();
+                            _index = 0;
+                        }
+                        break;
+                    case RealTimeLineChartViewModel.MarkerType.HideAll:
+                        {
+                            var selectedSlices = sliceModifier.VerticalLines.ToList();
+
+                            foreach (var slice in selectedSlices)
+                            {
+                                slice.IsHidden = true;
+                                slice.ShowLabel = false;
+                            }
+                        }
+                        break;
+                    case RealTimeLineChartViewModel.MarkerType.DisplayAll:
+                        {
+                            var selectedSlices = sliceModifier.VerticalLines.ToList();
+
+                            foreach (var slice in selectedSlices)
+                            {
+                                slice.IsHidden = false;
+                                slice.ShowLabel = true;
+                            }
+                        }
+                        break;
+                    case RealTimeLineChartViewModel.MarkerType.Save:
+                        {
+                            if (vm._coordinationVerticalMarkers != null)
+                            {
+                                vm._coordinationVerticalMarkers.Clear();
+                                vm._tooltipVerticalMarkers.Clear();
+                            }
+                            else
+                            {
+                                vm._coordinationVerticalMarkers = new List<double> { };
+                                vm._tooltipVerticalMarkers = new List<string> { };
+                            }
+                            string fileName = vm.SavePath + "\\" + vm.SaveName;
+                            var selectedSlices = sliceModifier.VerticalLines.ToList();
+                            for (int i = 0; i < selectedSlices.Count; i++)
+                            {
+                                vm._coordinationVerticalMarkers.Add(Math.Round((double)selectedSlices[i].X1, 6));
+                                if (selectedSlices[i].ToolTip != null)
+                                {
+                                    vm._tooltipVerticalMarkers.Add(selectedSlices[i].ToolTip.ToString());
+                                }
+                                else
+                                {
+                                    vm._tooltipVerticalMarkers.Add(string.Empty);
+                                }
+                            }
+                            if ((selectedSlices.Count > 0) || (0 == typeValue)) //typeValue [0]: create file anyway, otherwise: check counts.
+                            {
+                                vm.CreateXMLVerticalMarkers(fileName, vm._coordinationVerticalMarkers, vm._tooltipVerticalMarkers);
+                            }
+                        }
+                        break;
+                    case RealTimeLineChartViewModel.MarkerType.Load:
+                        {
+                            string fileName = vm.SavePath + "\\" + vm.SaveName + "\\VerticalMarkers.xml";
+                            if (vm._coordinationVerticalMarkers != null)
+                            {
+                                vm._coordinationVerticalMarkers.Clear();
+                                vm._tooltipVerticalMarkers.Clear();
+                            }
+                            else
+                            {
+                                vm._coordinationVerticalMarkers = new List<double> { };
+                                vm._tooltipVerticalMarkers = new List<string> { };
+                            }
+                            vm.LoadXMLVerticalMarkers(fileName, vm._coordinationVerticalMarkers, vm._tooltipVerticalMarkers);
+                            _index = 0;
+                            for (int i = 0; i < vm._coordinationVerticalMarkers.Count; i++)
+                            {
+                                var slice = new VerticalLineAnnotation()
+                                {
+                                    X1 = vm._coordinationVerticalMarkers[i],
+                                    ShowLabel = true,
+                                    Stroke = new BrushConverter().ConvertFromString("#427EF6") as SolidColorBrush,
+                                    StrokeThickness = 2,
+                                    IsEditable = true,
+                                    LabelPlacement = LabelPlacement.Axis
+                                };
+                                if (vm._tooltipVerticalMarkers.Count != 0)
+                                {
+                                    if (vm._tooltipVerticalMarkers[i] != string.Empty)
+                                    {
+                                        slice.ToolTip = vm._tooltipVerticalMarkers[i];
+                                    }
+                                    vm.CreateVerticalMarker(_index, (double)slice.X1, vm._tooltipVerticalMarkers[i]);
+                                }
+                                else
+                                {
+                                    vm.CreateVerticalMarker(_index, (double)slice.X1);
+                                }
+                                this.sliceModifier.VerticalLines.Add(slice);
+                                slice.MouseDoubleClick += slice_MouseDoubleClick;
+                                if (0 < slice.AnnotationLabels.Count)
+                                {
+                                    slice.AnnotationLabels[0].MouseMove += new MouseEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
+                                    slice.AnnotationLabels[0].MouseUp += new MouseButtonEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
+                                    slice.AnnotationLabels[0].MouseDown += new MouseButtonEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
+                                }
+                                _index++;
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }));
         }
 
         /// <summary>

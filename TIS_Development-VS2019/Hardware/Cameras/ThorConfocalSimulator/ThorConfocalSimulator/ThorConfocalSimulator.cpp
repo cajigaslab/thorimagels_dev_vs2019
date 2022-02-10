@@ -1316,7 +1316,7 @@ long ThorLSMCam::GetParamInfo(const long paramID, long &paramType, long &paramAv
 			paramReadOnly = FALSE;
 		}
 		break;
-	case ICamera::PARAM_LSM_PULSE_MULTIPLEXING_PHASE:
+	case ICamera::PARAM_LSM_EXTERNAL_CLOCK_PHASE_OFFSET:
 		{
 			paramType = ICamera::TYPE_DOUBLE;
 			paramAvailable = TRUE;
@@ -1634,7 +1634,7 @@ long ThorLSMCam::SetParam(const long paramID, const double param)
 			}
 		}
 		break;
-	case ICamera::PARAM_LSM_PULSE_MULTIPLEXING_PHASE:
+	case ICamera::PARAM_LSM_EXTERNAL_CLOCK_PHASE_OFFSET:
 		{
 			if((param >= 0) && (param <=100))
 			{
@@ -2433,7 +2433,7 @@ long ThorLSMCam::GetParam(const long paramID, double &param)
 			param = _pulseMultiplexingEnable;
 		}
 		break;
-	case ICamera::PARAM_LSM_PULSE_MULTIPLEXING_PHASE:
+	case ICamera::PARAM_LSM_EXTERNAL_CLOCK_PHASE_OFFSET:
 		{
 			param = _pulseMultiplexingPhase;
 		}

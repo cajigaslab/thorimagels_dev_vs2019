@@ -420,43 +420,43 @@
             }
         }
 
-        public string CollapsedCbLaser1Content
-        {
-            get
-            {
-                return (string)MVMManager.Instance["LaserControlViewModel", "CbLaser1Content", (object)string.Empty];
-            }
-        }
-
-        public string CollapsedCbLaser2Content
-        {
-            get
-            {
-                return (string)MVMManager.Instance["LaserControlViewModel", "CbLaser2Content", (object)string.Empty];
-            }
-        }
-
-        public string CollapsedCbLaser3Content
-        {
-            get
-            {
-                return (string)MVMManager.Instance["LaserControlViewModel", "CbLaser3Content", (object)string.Empty];
-            }
-        }
-
-        public string CollapsedCbLaser4Content
-        {
-            get
-            {
-                return (string)MVMManager.Instance["LaserControlViewModel", "CbLaser4Content", (object)string.Empty];
-            }
-        }
-
         public double CollapsedConverRatio
         {
             get
             {
                 return (double)MVMManager.Instance["XYTileControlViewModel", "ConvertRatio", (object)0.0];
+            }
+        }
+
+        public string CollapsedEnableLaser1Content
+        {
+            get
+            {
+                return (string)MVMManager.Instance["MultiLaserControlViewModel", "EnableLaser1Content", (object)string.Empty];
+            }
+        }
+
+        public string CollapsedEnableLaser2Content
+        {
+            get
+            {
+                return (string)MVMManager.Instance["MultiLaserControlViewModel", "EnableLaser2Content", (object)string.Empty];
+            }
+        }
+
+        public string CollapsedEnableLaser3Content
+        {
+            get
+            {
+                return (string)MVMManager.Instance["MultiLaserControlViewModel", "EnableLaser3Content", (object)string.Empty];
+            }
+        }
+
+        public string CollapsedEnableLaser4Content
+        {
+            get
+            {
+                return (string)MVMManager.Instance["MultiLaserControlViewModel", "EnableLaser4Content", (object)string.Empty];
             }
         }
 
@@ -472,7 +472,8 @@
         {
             get
             {
-                return (1 == (int)MVMManager.Instance["LaserControlViewModel", "Laser1Enable", (object)0]) ? Visibility.Visible : Visibility.Collapsed;
+                int _laser1enable = (int)MVMManager.Instance["MultiLaserControlViewModel", "CollapsedLaser1Enable", (object)0];
+                return (1 == _laser1enable) ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
@@ -488,7 +489,17 @@
         {
             get
             {
-                return (double)MVMManager.Instance["LaserControlViewModel", "Laser1Power", (object)0.0];
+                return (double)MVMManager.Instance["MultiLaserControlViewModel", "Laser1Power", (object)0.0];
+            }
+        }
+
+        //Gets the Wavelengths for lasers 1-4 to use as Label within collapsed control panel
+        public string CollapsedLaser1Wavelength
+        {
+            get
+            {
+                int wavelength1 = (int)MVMManager.Instance["MultiLaserControlViewModel", "CollapsedLaser1Wavelength", (object)0];
+                return wavelength1.ToString() + " nm Laser: ";
             }
         }
 
@@ -496,7 +507,8 @@
         {
             get
             {
-                return (1 == (int)MVMManager.Instance["LaserControlViewModel", "Laser2Enable", (object)0]) ? Visibility.Visible : Visibility.Collapsed;
+                int _laser2enable = (int)MVMManager.Instance["MultiLaserControlViewModel", "CollapsedLaser2Enable", (object)0];
+                return (1 == _laser2enable) ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
@@ -504,7 +516,16 @@
         {
             get
             {
-                return (double)MVMManager.Instance["LaserControlViewModel", "Laser2Power", (object)0.0];
+                return (double)MVMManager.Instance["MultiLaserControlViewModel", "Laser2Power", (object)0.0];
+            }
+        }
+
+        public string CollapsedLaser2Wavelength
+        {
+            get
+            {
+                int wavelength2 = (int)MVMManager.Instance["MultiLaserControlViewModel", "CollapsedLaser2Wavelength", (object)0];
+                return wavelength2.ToString() + " nm Laser: ";
             }
         }
 
@@ -512,7 +533,8 @@
         {
             get
             {
-                return (1 == (int)MVMManager.Instance["LaserControlViewModel", "Laser3Enable", (object)0]) ? Visibility.Visible : Visibility.Collapsed;
+                int _laser3enable = (int)MVMManager.Instance["MultiLaserControlViewModel", "CollapsedLaser3Enable", (object)0];
+                return (1 == _laser3enable) ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
@@ -520,7 +542,16 @@
         {
             get
             {
-                return (double)MVMManager.Instance["LaserControlViewModel", "Laser3Power", (object)0.0];
+                return (double)MVMManager.Instance["MultiLaserControlViewModel", "Laser3Power", (object)0.0];
+            }
+        }
+
+        public string CollapsedLaser3Wavelength
+        {
+            get
+            {
+                int wavelength3 = (int)MVMManager.Instance["MultiLaserControlViewModel", "CollapsedLaser3Wavelength", (object)0];
+                return wavelength3.ToString() + " nm Laser: ";
             }
         }
 
@@ -528,7 +559,8 @@
         {
             get
             {
-                return (1 == (int)MVMManager.Instance["LaserControlViewModel", "Laser4Enable", (object)0]) ? Visibility.Visible : Visibility.Collapsed;
+                int _laser4enable = (int)MVMManager.Instance["MultiLaserControlViewModel", "CollapsedLaser4Enable", (object)0];
+                return (1 == _laser4enable) ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
@@ -536,7 +568,16 @@
         {
             get
             {
-                return (double)MVMManager.Instance["LaserControlViewModel", "Laser4Power", (object)0.0];
+                return (double)MVMManager.Instance["MultiLaserControlViewModel", "Laser4Power", (object)0.0];
+            }
+        }
+
+        public string CollapsedLaser4Wavelength
+        {
+            get
+            {
+                int wavelength4 = (int)MVMManager.Instance["MultiLaserControlViewModel", "CollapsedLaser4Wavelength", (object)0];
+                return wavelength4.ToString() + " nm Laser: ";
             }
         }
 
@@ -571,6 +612,14 @@
             get
             {
                 return (string)MVMManager.Instance["AreaControlViewModel", "LSMZoom", (object)string.Empty];
+            }
+        }
+
+        public Visibility CollapsedOriginalLaserVisibility
+        {
+            get
+            {
+                return (Visibility)MVMManager.Instance["MultiLaserControlViewModel", "OriginalLaserVisibility", (object)Visibility.Collapsed];
             }
         }
 
@@ -734,6 +783,14 @@
             }
         }
 
+        public Visibility CollapsedTopticaVisibility
+        {
+            get
+            {
+                return (Visibility)MVMManager.Instance["MultiLaserControlViewModel", "TopticaVisibility", (object)Visibility.Collapsed];
+            }
+        }
+
         public double CollapsedXPosition
         {
             get
@@ -839,6 +896,7 @@
                 _enableDeviceQuery = value;
             }
         }
+
         public XmlDocument ExperimentDoc
         {
             get
@@ -1583,7 +1641,7 @@
                 string pathTemplateBleachingWaveFormH5 = expTemplatesFldr + "\\" + templateName + "\\BleachWaveform.raw";
                 string pathTemplateSLMWaveFormFolder = expTemplatesFldr + "\\" + templateName + "\\SLMWaveforms";
 
-                Directory.CreateDirectory(expTemplatesFldr + "\\" + templateName);
+                ResourceManagerCS.SafeCreateDirectory(expTemplatesFldr + "\\" + templateName);
 
                 OverlayManagerClass.Instance.SaveROIs(pathTemplateROIsXAML);
 
@@ -1598,10 +1656,10 @@
                 //copy SLM:
                 if (Directory.Exists(SLMWaveformFolder[0]))
                 {
-                    Directory.CreateDirectory(pathTemplateSLMWaveFormFolder);
+                    ResourceManagerCS.SafeCreateDirectory(pathTemplateSLMWaveFormFolder);
                     //create directories:
                     foreach (string dirPath in Directory.GetDirectories(SLMWaveformFolder[0], "*", SearchOption.AllDirectories))
-                        Directory.CreateDirectory(dirPath.Replace(SLMWaveformFolder[0], pathTemplateSLMWaveFormFolder));
+                        ResourceManagerCS.SafeCreateDirectory(dirPath.Replace(SLMWaveformFolder[0], pathTemplateSLMWaveFormFolder));
 
                     //copy all the files & replaces any files with the same name
                     foreach (string newPath in Directory.GetFiles(SLMWaveformFolder[0], "*.*", SearchOption.AllDirectories))
@@ -1613,21 +1671,6 @@
             {
                 MessageBox.Show("Save template failed.\n\n" + ex.Message);
                 return false;
-            }
-        }
-
-        public void DeleteFile(string target_file)
-        {
-            try
-            {
-                if (File.Exists(target_file))
-                {
-                    File.Delete(target_file);
-                }
-            }
-            catch (Exception ex)
-            {
-                ThorLogging.ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, "DeleteFile '" + target_file + "': " + ex.Message);
             }
         }
 
@@ -1961,13 +2004,6 @@
                     {
                         sparam.BleachWaveParams.ID = uiTmp;
                     }
-                    if (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "zValue", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
-                    {
-
-                        sparam.BleachWaveParams.ZValue = dTmp;
-
-                    }
-
                     str = (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "shape", ref str)) ? str : string.Empty;
                     sparam.BleachWaveParams.shapeType = String.IsNullOrWhiteSpace(str) ? ((0 < sparam.BleachWaveParams.ROIWidthUM) ? "Ellipse" : "Crosshair") : str;
                     SLMBleachWaveParams.Add(sparam);
@@ -2034,6 +2070,14 @@
                 {
                     SLM3D = (1 == iTmp);
                 }
+                if (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "refractiveIndex", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
+                {
+                    RefractiveIndex = dTmp;
+                }
+                double[] focalLengths = (double[])MVMManager.Instance["ObjectiveControlViewModel", "FocalLengths", (object)new double[4] { 100.0, 100.0, 50.0, 200.0 }];
+                EffectiveFocalMM = focalLengths[0] * focalLengths[2] * (double)Constants.TURRET_FOCALLENGTH_MAGNIFICATION_RATIO / (focalLengths[1] * focalLengths[3] * (double)MVMManager.Instance["ObjectiveControlViewModel", "TurretMagnification", (object)20.0]);
+                DefocusUM = DefocusSavedUM;
+
                 //keep epochCount last to update
                 if (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "epochCount", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iTmp))
                 {
@@ -2257,7 +2301,7 @@
                 }
                 else
                 {
-                    DeleteFile(pathActiveBleachingROIsXAML);
+                    ResourceManagerCS.DeleteFile(pathActiveBleachingROIsXAML);
                 }
                 if (File.Exists(expBleachingWaveFormFile))
                 {
@@ -2266,7 +2310,7 @@
                 }
                 else
                 {
-                    DeleteFile(pathActiveBleachingWaveformFile);
+                    ResourceManagerCS.DeleteFile(pathActiveBleachingWaveformFile);
                     BleachNowEnable = false;
                 }
                 //SLM files:
@@ -2274,10 +2318,10 @@
                 ClearSLMFiles(SLMWaveformFolder[0], "bmp");
                 if (Directory.Exists(expSLMBleachFolder))
                 {
-                    Directory.CreateDirectory(SLMWaveformFolder[0]);
+                    ResourceManagerCS.SafeCreateDirectory(SLMWaveformFolder[0]);
                     //create directories:
                     foreach (string dirPath in Directory.GetDirectories(expSLMBleachFolder, "*", SearchOption.AllDirectories))
-                        Directory.CreateDirectory(dirPath.Replace(expSLMBleachFolder, SLMWaveformFolder[0]));
+                        ResourceManagerCS.SafeCreateDirectory(dirPath.Replace(expSLMBleachFolder, SLMWaveformFolder[0]));
 
                     //copy all the files & replaces any files with the same name
                     foreach (string newPath in Directory.GetFiles(expSLMBleachFolder, "*.*", SearchOption.AllDirectories))
@@ -2445,6 +2489,11 @@
             else
             {
             }
+        }
+
+        private void ClearZ2StageLockedSettings()
+        {
+            MVMManager.Instance["ZControlViewModel", "Z2StageLock", (object)0.0] = false;
         }
 
         private int ConvertBoolAry2Int(bool[] boolArray, int nDigit)
@@ -2912,11 +2961,6 @@
             _multiROIStats = null;
         }
 
-        private void ClearZ2StageLockedSettings()
-        {
-            MVMManager.Instance["ZControlViewModel", "Z2StageLock", (object)0.0] = false;
-        }
-
         private string ReadLast3dOutputPath()
         {
             if (Application.Current == null)
@@ -3273,7 +3317,6 @@
                             }
                         }
                     }));
-            
         }
 
         void _lineProfile_Closed(object sender, EventArgs e)

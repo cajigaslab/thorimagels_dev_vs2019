@@ -22,6 +22,7 @@
 #include "Strsafe.h"
 #include <queue>
 #include <map>
+#include <atomic>
 
 
 #include "..\..\..\..\Common\Camera.h"

@@ -375,6 +375,12 @@ namespace GeometryUtilities
             EdgeDetection
         }
 
+        public enum SaveShapeType
+        {
+            Fill,
+            Center_Only
+        }
+
         #endregion Enumerations
 
         #region Methods
@@ -631,7 +637,7 @@ namespace GeometryUtilities
         /// <param name="imgSize"></param>
         /// <param name="shapeGroups"></param>
         /// <returns></returns>
-        public static System.Drawing.Bitmap CreateBinaryBitmap(int[] imgSize, List<Shape> shapeGroups)
+        public static System.Drawing.Bitmap CreateBinaryBitmap(int[] imgSize, List<Shape> shapeGroups, SaveShapeType saveType = SaveShapeType.Fill, Point? offsetToCenterVec = null)
         {
             System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(imgSize[0], imgSize[1]);
             if (null == shapeGroups)
@@ -647,39 +653,88 @@ namespace GeometryUtilities
                     }
                     else
                     {
+                        double left = double.MaxValue, right = 0, top = double.MaxValue, bottom = 0;
                         using (System.Drawing.Graphics gr = System.Drawing.Graphics.FromImage(bitmap))
                         {
-                            shape.Dispatcher.Invoke(new Action(() =>
+                            switch (saveType)
                             {
-                                if (typeof(ROIEllipse) == shape.GetType())
-                                {
-                                    gr.FillEllipse(new System.Drawing.SolidBrush(System.Drawing.Color.White),
-                                        new System.Drawing.RectangleF((float)((ROIEllipse)shape).StartPoint.X, (float)((ROIEllipse)shape).StartPoint.Y, (float)((ROIEllipse)shape).ROIWidth, (float)((ROIEllipse)shape).ROIHeight));
-                                }
-                                else if (typeof(ROIRect) == shape.GetType())
-                                {
-                                    gr.FillRectangle(new System.Drawing.SolidBrush(System.Drawing.Color.White),
-                                        new System.Drawing.RectangleF((float)((ROIRect)shape).StartPoint.X, (float)((ROIRect)shape).StartPoint.Y, (float)((ROIRect)shape).ROIWidth, (float)((ROIRect)shape).ROIHeight));
-                                }
-                                else if (typeof(ROIPoly) == shape.GetType())
-                                {
-                                    gr.FillPolygon(new System.Drawing.SolidBrush(System.Drawing.Color.White),
-                                        ((ROIPoly)shape).Points.Select(elm => new System.Drawing.Point((int)elm.X, (int)elm.Y)).ToArray());
-                                }
-                                else if (typeof(Line) == shape.GetType())
-                                {
-                                    gr.DrawLine(new System.Drawing.Pen(new System.Drawing.SolidBrush(System.Drawing.Color.White), 1),
-                                        new System.Drawing.Point((int)((Line)shape).X1, (int)((Line)shape).Y1), new System.Drawing.Point((int)((Line)shape).X2, (int)((Line)shape).Y2));
-                                }
-                                else if (typeof(Polyline) == shape.GetType())
-                                {
-                                    System.Drawing.Point[] dpts = new System.Drawing.Point[((Polyline)shape).Points.Count];
-                                    for (int i = 0; i < ((Polyline)shape).Points.Count; i++)
-                                        dpts[i] = new System.Drawing.Point(Convert.ToInt32(((Polyline)shape).Points[i].X), Convert.ToInt32(((Polyline)shape).Points[i].Y));
+                                case SaveShapeType.Fill:
+                                    shape.Dispatcher.Invoke(new Action(() =>
+                                     {
+                                         if (typeof(ROIEllipse) == shape.GetType())
+                                         {
+                                             gr.FillEllipse(new System.Drawing.SolidBrush(System.Drawing.Color.White),
+                                                 new System.Drawing.RectangleF((float)((ROIEllipse)shape).TopLeft.X, (float)((ROIEllipse)shape).TopLeft.Y, (float)((ROIEllipse)shape).ROIWidth, (float)((ROIEllipse)shape).ROIHeight));
+                                         }
+                                         else if (typeof(ROIRect) == shape.GetType())
+                                         {
+                                             gr.FillRectangle(new System.Drawing.SolidBrush(System.Drawing.Color.White),
+                                                 new System.Drawing.RectangleF((float)((ROIRect)shape).TopLeft.X, (float)((ROIRect)shape).TopLeft.Y, (float)((ROIRect)shape).ROIWidth, (float)((ROIRect)shape).ROIHeight));
+                                         }
+                                         else if (typeof(ROIPoly) == shape.GetType())
+                                         {
+                                             gr.FillPolygon(new System.Drawing.SolidBrush(System.Drawing.Color.White),
+                                                 ((ROIPoly)shape).Points.Select(elm => new System.Drawing.Point((int)elm.X, (int)elm.Y)).ToArray());
+                                         }
+                                         else if (typeof(Line) == shape.GetType())
+                                         {
+                                             gr.DrawLine(new System.Drawing.Pen(new System.Drawing.SolidBrush(System.Drawing.Color.White), 1),
+                                                 new System.Drawing.Point((int)((Line)shape).X1, (int)((Line)shape).Y1), new System.Drawing.Point((int)((Line)shape).X2, (int)((Line)shape).Y2));
+                                         }
+                                         else if (typeof(Polyline) == shape.GetType())
+                                         {
+                                             System.Drawing.Point[] dpts = new System.Drawing.Point[((Polyline)shape).Points.Count];
+                                             for (int i = 0; i < ((Polyline)shape).Points.Count; i++)
+                                                 dpts[i] = new System.Drawing.Point(Convert.ToInt32(((Polyline)shape).Points[i].X), Convert.ToInt32(((Polyline)shape).Points[i].Y));
 
-                                    gr.DrawLines(new System.Drawing.Pen(new System.Drawing.SolidBrush(System.Drawing.Color.White), 1), dpts);
-                                }
-                            }));
+                                             gr.DrawLines(new System.Drawing.Pen(new System.Drawing.SolidBrush(System.Drawing.Color.White), 1), dpts);
+                                         }
+                                     }));
+                                    break;
+                                case SaveShapeType.Center_Only:
+                                    shape.Dispatcher.Invoke(new Action(() =>
+                                    {
+                                        if (typeof(ROIEllipse) == shape.GetType())
+                                        {
+                                            bitmap.SetPixel((int)(((ROIEllipse)shape).Center.X + ((null != offsetToCenterVec) ? ((Point)offsetToCenterVec).X : 0.0)), (int)(((ROIEllipse)shape).Center.Y + ((null != offsetToCenterVec) ? ((Point)offsetToCenterVec).Y : 0.0)), System.Drawing.Color.White);
+                                        }
+                                        else if (typeof(ROIRect) == shape.GetType())
+                                        {
+                                            bitmap.SetPixel((int)(((((ROIRect)shape).TopLeft.X + ((ROIRect)shape).BottomRight.X) / 2) + ((null != offsetToCenterVec) ? ((Point)offsetToCenterVec).X : 0.0)), (int)(((((ROIRect)shape).TopLeft.Y + ((ROIRect)shape).BottomRight.Y) / 2) + ((null != offsetToCenterVec) ? ((Point)offsetToCenterVec).Y : 0.0)), System.Drawing.Color.White);
+                                        }
+                                        else if (typeof(ROIPoly) == shape.GetType())
+                                        {
+                                            //[TODO] need a better method to get a polygon center.
+                                            for (int i = 0; i < ((ROIPoly)shape).Points.Count; i++)
+                                            {
+                                                left = Math.Min(left, ((ROIPoly)shape).Points[i].X);
+                                                right = Math.Max(right, ((ROIPoly)shape).Points[i].X);
+                                                top = Math.Min(top, ((ROIPoly)shape).Points[i].Y);
+                                                bottom = Math.Min(bottom, ((ROIPoly)shape).Points[i].Y);
+                                            }
+                                            bitmap.SetPixel((int)(((bottom + right) / 2) + ((null != offsetToCenterVec) ? ((Point)offsetToCenterVec).X : 0.0)), (int)(((top + bottom) / 2) + ((null != offsetToCenterVec) ? ((Point)offsetToCenterVec).Y : 0.0)), System.Drawing.Color.White);
+                                        }
+                                        else if (typeof(Line) == shape.GetType())
+                                        {
+                                            bitmap.SetPixel((int)(((((Line)shape).X1 + ((Line)shape).X2) / 2) + ((null != offsetToCenterVec) ? ((Point)offsetToCenterVec).X : 0.0)), (int)(((((Line)shape).Y1 + ((Line)shape).Y2) / 2) + ((null != offsetToCenterVec) ? ((Point)offsetToCenterVec).Y : 0.0)), System.Drawing.Color.White);
+                                        }
+                                        else if (typeof(Polyline) == shape.GetType())
+                                        {
+                                            //[TODO] need a better method to get a polyline center.
+                                            for (int i = 0; i < ((Polyline)shape).Points.Count; i++)
+                                            {
+                                                left = Math.Min(left, ((Polyline)shape).Points[i].X);
+                                                right = Math.Max(right, ((Polyline)shape).Points[i].X);
+                                                top = Math.Min(top, ((Polyline)shape).Points[i].Y);
+                                                bottom = Math.Min(bottom, ((Polyline)shape).Points[i].Y);
+                                            }
+                                            bitmap.SetPixel((int)(((bottom + right) / 2) + ((null != offsetToCenterVec) ? ((Point)offsetToCenterVec).X : 0.0)), (int)(((top + bottom) / 2) + ((null != offsetToCenterVec) ? ((Point)offsetToCenterVec).Y : 0.0)), System.Drawing.Color.White);
+                                        }
+                                    }));
+                                    break;
+                                default:
+                                    break;
+                            }
                         }
                     }
                 }

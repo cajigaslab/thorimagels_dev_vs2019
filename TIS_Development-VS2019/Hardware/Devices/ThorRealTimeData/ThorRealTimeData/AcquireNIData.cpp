@@ -196,7 +196,7 @@ UINT SaveFileThreadProc(LPVOID pParam)
 				{			
 					if(cdDataForSave->GetdiLengthValue() > 0)
 					{
-						if(FALSE == h5io->ExtendData(niChannel.at(i).type.c_str(),("/" + niChannel.at(i).alias).c_str(),cdDataForSave->GetStrucData()->diDataPtr+idx_di*cdDataForSave->GetgcLengthComValue(),H5DataType::DATA_UINT32,extendBuf,static_cast<unsigned long>(cdDataForSave->GetgcLengthComValue())))
+						if(FALSE == h5io->ExtendData(niChannel.at(i).type.c_str(),("/" + niChannel.at(i).alias).c_str(),cdDataForSave->GetStrucData()->diDataPtr+idx_di*cdDataForSave->GetgcLengthComValue(),H5DataType::DATA_UCHAR,extendBuf,static_cast<unsigned long>(cdDataForSave->GetgcLengthComValue())))
 						{
 							StringCbPrintfW(message,MSG_LENGTH,L"Error writing HDF5 file digital channel at thread (%d)",AcquireNIData::_saveThreadCnt);
 							LogMessage(message,ERROR_EVENT);
@@ -481,7 +481,16 @@ int32 CVICALLBACK AcquireNIData::EveryNCallback(TaskHandle taskHandle, int32 eve
 		//read digital channels:
 		if(AcquireNIData::DItaskHandle)
 		{
-			DAQmxErrChk (L"DAQmxReadDigitalU32",err = DAQmxReadDigitalU32(AcquireNIData::DItaskHandle,static_cast<int32>(localCtrPerCallback),MAX_TASK_WAIT_TIME,DAQmx_Val_GroupByChannel,callbackCompData->GetStrucData()->diDataPtr,static_cast<uInt32>(localCtrPerCallback*niboard->totalDI),&readCount[2],NULL));
+			//TODO: this should happen only once per acquisition
+			int32* numBytesPerSamp = new int32[niboard->totalDI];
+
+			for (int i = 0; i < niboard->totalDI; ++i)
+			{
+				numBytesPerSamp[i] = 1;
+			}
+			DAQmxErrChk(L"DAQmxReadDigitalLines", err = DAQmxReadDigitalLines(AcquireNIData::DItaskHandle, static_cast<int32>(localCtrPerCallback), MAX_TASK_WAIT_TIME, DAQmx_Val_GroupByChannel, callbackCompData->GetStrucData()->diDataPtr, static_cast<uInt32>(localCtrPerCallback * niboard->totalDI), &readCount[2], numBytesPerSamp, NULL));
+
+			delete[] numBytesPerSamp;
 		}
 
 		//read CI counter:

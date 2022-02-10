@@ -157,6 +157,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\ImageWaveformBuilderDll.h" />
+    <ClInclude Include="EPhysAOWaveformBuilder.h" />
     <ClInclude Include="EPhysWaveformBuilder.h" />
     <ClInclude Include="GeometryUtilitiesCpp.h" />
     <ClInclude Include="ImageWaveformBuilder.h" />
@@ -182,6 +183,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="EPhysAOWaveformBuilder.cpp" />
     <ClCompile Include="EPhysWaveformBuilder.cpp" />
     <ClCompile Include="GeometryUtilitiesCpp.cpp" />
     <ClCompile Include="ImageWaveformBuilder.cpp" />

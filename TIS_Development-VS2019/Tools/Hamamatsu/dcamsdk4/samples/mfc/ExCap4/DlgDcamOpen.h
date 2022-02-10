@@ -50,7 +50,6 @@ protected:
 public:
 	static	UINT dcam_init_and_open( HDCAM& hdcam, long* option = NULL );
 	UINT	init_and_open( HDCAM& hdcam, long* option = NULL );
-
 // Generated message map functions
 protected:
 	//{{AFX_MSG(CDlgDcamOpen)

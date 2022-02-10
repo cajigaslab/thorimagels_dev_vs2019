@@ -1,4 +1,4 @@
-' dcamapi4.vb: Aug 30, 2018
+' dcamapi4.vb: Jun 18, 2021
 
 Imports System.Runtime.InteropServices
 Imports System.Text
@@ -31,11 +31,12 @@ Namespace Hamamatsu
             NOGRABBER                           = &H80000207    ' no grabber
             NOCOMBINATION                       = &H80000208    ' no combination on registry
             FAILOPEN                            = &H80001001    ' DEPRECATED
+            FRAMEGRABBER_NEEDS_FIRMWAREUPDATE   = &H80001002    ' need to update frame grabber firmware to use the camera
             INVALIDMODULE                       = &H80000211    ' dcam_init() found invalid module
             INVALIDCOMMPORT                     = &H80000212    ' invalid serial port
             FAILOPENBUS                         = &H81001001    ' the bus or driver are not available
             FAILOPENCAMERA                      = &H82001001    ' camera report error during opening
-            FRAMEGRABBER_NEEDS_FIRMWAREUPDATE   = &H80001002    ' need to update frame grabber firmware to use the camera
+            DEVICEPROBLEM                       = &H82001002    ' initialization failed(for maico)
             INVALIDCAMERA                       = &H80000806    ' invalid camera
             INVALIDHANDLE                       = &H80000807    ' invalid camera handle
             INVALIDPARAM                        = &H80000808    ' invalid parameter
@@ -60,7 +61,8 @@ Namespace Hamamatsu
             NOCORRECTIONDATA                    = &H80000838    ' not take the dark and shading correction data yet.
             CHANNELDEPENDENTVALUE               = &H80000839    ' each channel has own property value so can't return overall property value.
             VIEWDEPENDENTVALUE                  = &H8000083a    ' each view has own property value so can't return overall property value.
-            INVALIDCALIBSETTING                 = &H8000083e    ' the setting of properties are invalid on sampling calibration data. some camera has the limitation to make calibration data. e.g. the trigger source is INTERNAL only and read out direction isn't trigger.
+            NODEVICEBUFFER                      = &H8000083b    ' the frame count is larger than device momory size on using device memory.
+            REQUIREDSNAP                        = &H8000083c    ' the capture mode is sequence on using device memory.
             LESSSYSTEMMEMORY                    = &H8000083f    ' the sysmte memory size is too small. PC doesn't have enough memory or is limited memory by 32bit OS.
             NOTSUPPORT                          = &H80000f03    ' camera does not support the function or property with current settings
             FAILREADCAMERA                      = &H83001002    ' failed to read data from camera
@@ -82,7 +84,6 @@ Namespace Hamamatsu
             WRITEFULL                           = &H84001006    ' DCAMREC writes full frame of the session
             ALREADYOCCUPIED                     = &H84001007    ' DCAMREC handle is already occupied by other HDCAM
             TOOLARGEUSERDATASIZE                = &H84001008    ' DCAMREC is set the large value to user data size
-            NOIMAGE                             = &H84001804    ' not stored image in buffer on bufrecord
             INVALIDWAITHANDLE                   = &H84002001    ' DCAMWAIT is invalid handle
             NEWRUNTIMEREQUIRED                  = &H84002002    ' DCAM Module Version is older than the version that the camera requests
             VERSIONMISMATCH                     = &H84002003    ' Camre returns the error on setting parameter to limit version
@@ -103,10 +104,13 @@ Namespace Hamamatsu
             THRUADAPTER                         = &H80000f05    
             NOCONNECTION                        = &H80000f07    ' HDCAM lost connection to camera
             NOTIMPLEMENT                        = &H80000f02    ' not yet implementation
+            DELAYEDFRAME                        = &H80000f09    ' the frame waiting re-load from hardware buffer with SNAPSHOT of DEVICEBUFFER MODE
+            DEVICEINITIALIZING                  = &Hb0000001    
             APIINIT_INITOPTIONBYTES             = &Ha4010003    ' DCAMAPI_INIT::initoptionbytes is invalid
             APIINIT_INITOPTION                  = &Ha4010004    ' DCAMAPI_INIT::initoption is invalid
             INITOPTION_COLLISION_BASE           = &Ha401C000    
             INITOPTION_COLLISION_MAX            = &Ha401FFFF    
+            MISSPROP_TRIGGERSOURCE              = &HE0100110    ' the trigger mode is internal or syncreadout on using device memory.
 
         End Enum
 
@@ -119,6 +123,10 @@ Namespace Hamamatsu
             DRIVERVERSION       = &H04000106    
             MODULEVERSION       = &H04000107    
             DCAMAPIVERSION      = &H04000108    
+            SUBUNIT_INFO1       = &H04000110    
+            SUBUNIT_INFO2       = &H04000111    
+            SUBUNIT_INFO3       = &H04000112    
+            SUBUNIT_INFO4       = &H04000113    
             CAMERA_SERIESNAME   = &H0400012c    
 
         End Enum
@@ -161,7 +169,6 @@ Namespace Hamamatsu
             TRIGGERENABLE_POLARITY              = &H00100420    
             TRIGGERNUMBER_FORFIRSTIMAGE         = &H00100810    ' R/O, long,    "TRIGGER NUMBER FOR FIRST IMAGE"
             TRIGGERNUMBER_FORNEXTIMAGE          = &H00100820    ' R/O, long,    "TRIGGER NUMBER FOR NEXT IMAGE"
-            BUS_SPEED                           = &H00180110    ' R/W, long,    "BUS SPEED"
             NUMBEROF_OUTPUTTRIGGERCONNECTOR     = &H001C0010    
             OUTPUTTRIGGER_CHANNELSYNC           = &H001C0030    ' R/W, mode,    "OUTPUT TRIGGER CHANNEL SYNC"
             OUTPUTTRIGGER_PROGRAMABLESTART      = &H001C0050    ' R/W, mode,    "OUTPUT TRIGGER PROGRAMABLE START"
@@ -179,7 +186,6 @@ Namespace Hamamatsu
             MASTERPULSE_INTERVAL                = &H001E0040    ' R/W, sec, "MASTER PULSE INTERVAL"
             MASTERPULSE_BURSTTIMES              = &H001E0050    ' R/W, long,    "MASTER PULSE BURST TIMES"
             EXPOSURETIME                        = &H001F0110    ' R/W, sec, "EXPOSURE TIME"
-            SYNC_MULTIVIEWEXPOSURE              = &H001F0120    ' R/W, mode,    "SYNCHRONOUS MULTI VIEW EXPOSURE"
             EXPOSURETIME_CONTROL                = &H001F0130    ' R/W, mode,    "EXPOSURE TIME CONTROL"
             TRIGGER_FIRSTEXPOSURE               = &H001F0200    ' R/W, mode,    "TRIGGER FIRST EXPOSURE"
             TRIGGER_GLOBALEXPOSURE              = &H001F0300    ' R/W, mode,    "TRIGGER GLOBAL EXPOSURE"
@@ -189,7 +195,6 @@ Namespace Hamamatsu
             LIGHTMODE                           = &H00200110    ' R/W, mode,    "LIGHT MODE"
             SENSITIVITYMODE                     = &H00200210    ' R/W, mode,    "SENSITIVITY MODE"
             SENSITIVITY                         = &H00200220    ' R/W, long,    "SENSITIVITY"
-            SENSITIVITY2                        = &H00200240    ' R/W, long,    "SENSITIVITY2"
             DIRECTEMGAIN_MODE                   = &H00200250    ' R/W, mode,    "DIRECT EM GAIN MODE"
             EMGAINWARNING_STATUS                = &H00200260    
             EMGAINWARNING_LEVEL                 = &H00200270    ' R/W, long,    "EM GAIN WARNING LEVEL"
@@ -309,6 +314,8 @@ Namespace Hamamatsu
             INTERNAL_LINEINTERVAL               = &H00403850    ' R/W, sec, "INTERNAL LINE INTERVAL"
             TIMESTAMP_PRODUCER                  = &H00410A10    ' R/O, mode,    "TIME STAMP PRODUCER"
             FRAMESTAMP_PRODUCER                 = &H00410A20    ' R/O, mode,    "FRAME STAMP PRODUCER"
+            TRANSFERINFO_FRAMECOUNT             = &H00410B10    ' R/O, long,    "TRANSFER INFO FRAME COUNT"
+            TRANSFERINFO_LOSTCOUNT              = &H00410B11    ' R/O, long,    "TRANSFER INFO LOST COUNT"
             COLORTYPE                           = &H00420120    ' R/W, mode,    "COLORTYPE"
             BITSPERCHANNEL                      = &H00420130    ' R/W, long,    "BIT PER CHANNEL"
             NUMBEROF_CHANNEL                    = &H00420180    ' R/O, long,    "NUMBER OF CHANNEL"
@@ -319,12 +326,9 @@ Namespace Hamamatsu
             IMAGE_HEIGHT                        = &H00420220    ' R/O, long,    "IMAGE HEIGHT"
             IMAGE_ROWBYTES                      = &H00420230    ' R/O, long,    "IMAGE ROWBYTES"
             IMAGE_FRAMEBYTES                    = &H00420240    ' R/O, long,    "IMAGE FRAMEBYTES"
+            IMAGE_TOPOFFSETBYTES                = &H00420250    
             IMAGE_PIXELTYPE                     = &H00420270    ' R/W, DCAM_PIXELTYPE,  "IMAGE PIXEL TYPE"
             IMAGE_CAMERASTAMP                   = &H00420300    ' R/W, long,    "IMAGE CAMERA STAMP"
-            BUFFER_ROWBYTES                     = &H00420330    ' R/O, long,    "BUFFER ROWBYTES"
-            BUFFER_FRAMEBYTES                   = &H00420340    ' R/O, long,    "BUFFER FRAME BYTES"
-            BUFFER_TOPOFFSETBYTES               = &H00420350    ' R/O, long,    "BUFFER TOP OFFSET BYTES"
-            BUFFER_PIXELTYPE                    = &H00420360    ' R/O, DCAM_PIXELTYPE,  "BUFFER PIXEL TYPE"
             RECORDFIXEDBYTES_PERFILE            = &H00420410    ' R/O,  long    "RECORD FIXED BYTES PER FILE"
             RECORDFIXEDBYTES_PERSESSION         = &H00420420    
             RECORDFIXEDBYTES_PERFRAME           = &H00420430    ' R/O,  long    "RECORD FIXED BYTES PER FRAME"
@@ -348,6 +352,8 @@ Namespace Hamamatsu
             DEFECTCORRECT_HPOS                  = &H00471000    ' R/W, long,    "DEFECT CORRECT HPOS"
             DEFECTCORRECT_METHOD                = &H00473000    ' R/W, mode,    "DEFECT CORRECT METHOD"
             _DEFECTCORRECT                      = &H00000010    ' the offset of ID for Nth DEFECT
+            DEVICEBUFFER_MODE                   = &H00490000    ' R/W, mode,    "DEVICE BUFFER MODE"
+            DEVICEBUFFER_FRAMECOUNTMAX          = &H00490020    ' R/O, long,    "DEVICE BUFFER FRAME COUNT MAX"
             CALIBREGION_MODE                    = &H00402410    ' R/W, mode,    "CALIBRATE REGION MODE"
             NUMBEROF_CALIBREGION                = &H00402420    
             CALIBREGION_HPOS                    = &H004B0000    ' R/W, long,    "CALIBRATE REGION HPOS"
@@ -365,6 +371,18 @@ Namespace Hamamatsu
             BACKFOCUSPOS_CURRENT                = &H00804020    ' R/O, micro-meter,"BACK FOCUS POSITION CURRENT"
             BACKFOCUSPOS_LOADFROMMEMORY         = &H00804050    
             BACKFOCUSPOS_STORETOMEMORY          = &H00804060    ' W/O, long, "BACK FOCUS POSITION STORE TO MEMORY"
+            CONFOCAL_SCANMODE                   = &H00910010    ' R/W, mode,    "CONFOCAL SCAN MODE"
+            CONFOCAL_SCANLINES                  = &H00910020    ' R/W, long,    "CONFOCAL SCANLINES"
+            CONFOCAL_ZOOM                       = &H00910030    ' R/W, long,    "CONFOCAL ZOOM"
+            SUBUNIT_IMAGEWIDTH                  = &H009100e0    ' R/O, long,    "SUBUNIT IMAGE WIDTH
+            NUMBEROF_SUBUNIT                    = &H009100f0    ' R/O, long,    "NUMBER OF SUBUNIT"
+            SUBUNIT_CONTROL                     = &H00910100    ' R/W, mode,    "SUBUNIT CONTROL"
+            SUBUNIT_LASERPOWER                  = &H00910200    ' R/W, long,    "SUBUNIT LASERPOWER"
+            SUBUNIT_PMTGAIN                     = &H00910300    ' R/W, real,    "SUBUNIT PMTGAIN"
+            SUBUNIT_PINHOLESIZE                 = &H00910400    ' R/O, long,    "SUBUNIT PINHOLE SIZE"
+            SUBUNIT_WAVELENGTH                  = &H00910500    ' R/O, long,    "SUBUNIT WAVELENGTH"
+            SUBUNIT_TOPOFFSETBYTES              = &H00910600    ' R/O, long,    "SUBUNIT TOP OFFSET BYTES"
+            _SUBUNIT                            = &H00000010    ' the offset of ID for Nth Subunit parameter
             SYSTEM_ALIVE                        = &H00FF0010    ' R/O, mode,    "SYSTEM ALIVE"
             CONVERSIONFACTOR_COEFF              = &H00FFE010    ' R/O, double,  "CONVERSION FACTOR COEFF"
             CONVERSIONFACTOR_OFFSET             = &H00FFE020    ' R/O, double,  "CONVERSION FACTOR OFFSET"
@@ -378,6 +396,7 @@ Namespace Hamamatsu
             SENSORMODE__PROGRESSIVE                         = 12            ' "PROGRESSIVE"
             SENSORMODE__SPLITVIEW                           = 14            ' "SPLIT VIEW"
             SENSORMODE__DUALLIGHTSHEET                      = 16            ' "DUAL LIGHTSHEET"
+            SENSORMODE__PHOTONNUMBERRESOLVING               = 18            ' "PHOTON NUMBER RESOLVING"
             SHUTTER_MODE__GLOBAL                            = 1             ' "GLOBAL"
             SHUTTER_MODE__ROLLING                           = 2             ' "ROLLING"
             READOUTSPEED__SLOWEST                           = 1             ' no text
@@ -461,10 +480,11 @@ Namespace Hamamatsu
             OUTPUTTRIGGER_ACTIVE__EDGE                      = 1             ' "EDGE"
             OUTPUTTRIGGER_ACTIVE__LEVEL                     = 2             ' "LEVEL"
             OUTPUTTRIGGER_KIND__LOW                         = 1             ' "LOW"
-            OUTPUTTRIGGER_KIND__EXPOSURE                    = 2             ' "EXPOSURE"
+            OUTPUTTRIGGER_KIND__GLOBALEXPOSURE              = 2             ' "EXPOSURE"
             OUTPUTTRIGGER_KIND__PROGRAMABLE                 = 3             ' "PROGRAMABLE"
             OUTPUTTRIGGER_KIND__TRIGGERREADY                = 4             ' "TRIGGER READY"
             OUTPUTTRIGGER_KIND__HIGH                        = 5             ' "HIGH"
+            OUTPUTTRIGGER_KIND__ANYROWEXPOSURE              = 6             ' "ANYROW EXPOSURE"
             OUTPUTTRIGGER_BASESENSOR__VIEW1                 = 1             ' "VIEW 1"
             OUTPUTTRIGGER_BASESENSOR__VIEW2                 = 2             ' "VIEW 2"
             OUTPUTTRIGGER_BASESENSOR__ANYVIEW               = 15            ' "ANY VIEW"
@@ -559,6 +579,8 @@ Namespace Hamamatsu
             BINNING__4                                      = 4             ' "4X4"
             BINNING__8                                      = 8             ' "8X8"
             BINNING__16                                     = 16            ' "16X16"
+            BINNING__1_2                                    = 102           ' "1X2"
+            BINNING__2_4                                    = 204           ' "2X4"
             COLORTYPE__BW                                   = &H00000001    ' "BW"
             COLORTYPE__RGB                                  = &H00000002    ' "RGB"
             COLORTYPE__BGR                                  = &H00000003    ' "BGR"
@@ -574,8 +596,11 @@ Namespace Hamamatsu
             HOTPIXELCORRECT_LEVEL__STANDARD                 = 1             ' "STANDARD"
             HOTPIXELCORRECT_LEVEL__MINIMUM                  = 2             ' "MINIMUM"
             HOTPIXELCORRECT_LEVEL__AGGRESSIVE               = 3             ' "AGGRESSIVE"
+            DEVICEBUFFER_MODE__THRU                         = 1             ' "THRU"
+            DEVICEBUFFER_MODE__SNAPSHOT                     = 2             ' "SNAPSHOT"
             SYSTEM_ALIVE__OFFLINE                           = 1             ' "OFFLINE"
             SYSTEM_ALIVE__ONLINE                            = 2             ' "ONLINE"
+            SYSTEM_ALIVE__ERROR                             = 3             ' "ERROR"
             TIMESTAMP_MODE__NONE                            = 1             ' "NONE"
             TIMESTAMP_MODE__LINEBEFORELEFT                  = 2             ' "LINE BEFORE LEFT"
             TIMESTAMP_MODE__LINEOVERWRITELEFT               = 3             ' "LINE OVERWRITE LEFT"
@@ -615,8 +640,15 @@ Namespace Hamamatsu
             CAMERASTATUS_CALIBRATION__TOODARK               = 7             ' "TOO DARK"
             CAMERASTATUS_CALIBRATION__TOOBRIGHT             = 8             ' "TOO BRIGHT"
             CAMERASTATUS_CALIBRATION__NOTDETECTOBJECT       = 9             ' "NOT DETECT OBJECT"
-            MODE__OFF                                       = 1             ' "OFF"
-            MODE__ON                                        = 2             ' "ON"
+            CONFOCAL_SCANMODE__SIMULTANEOUS                 = 1             ' "SIMULTANEOUS"
+            CONFOCAL_SCANMODE__SEQUENTIAL                   = 2             ' "SEQUENTIAL"
+            SUBUNIT_CONTROL__NOTINSTALLED                   = 0             ' "NOT INSTALLED"
+            SUBUNIT_CONTROL__OFF                            = 1             ' "OFF"
+            SUBUNIT_CONTROL__ON                             = 2             ' "ON"
+            SUBUNIT_PINHOLESIZE__ERROR                      = 1             ' "ERROR"
+            SUBUNIT_PINHOLESIZE__SMALL                      = 2             ' "SMALL"
+            SUBUNIT_PINHOLESIZE__MEDIUM                     = 3             ' "MEDIUM"
+            SUBUNIT_PINHOLESIZE__LARGE                      = 4             ' "LARGE"
 
         End Enum
         Public Enum DCAMPROP_UNIT
@@ -657,6 +689,7 @@ Namespace Hamamatsu
             HASVIEW                 = &H00008000    ' value can set the value for each views
             ACCESSREADY             = &H00002000    ' This value can get or set at READY status
             ACCESSBUSY              = &H00001000    ' This value can get or set at BUSY status
+            EFFECTIVE               = &H00000200    ' value is effective
 
 
             ' property value type
@@ -670,10 +703,11 @@ Namespace Hamamatsu
             ' application has to use double-float type variable even the property is not REAL.
         End Enum
         Public Enum DCAMPROPATTRIBUTE2 As Integer
-            ARRAYBASE   = &H08000000    
-            ARRAYELEMENT= &H04000000    
-            REAL32      = &H02000000    
-            _FUTUREUSE  = &H0007FFFC    
+            ARRAYBASE           = &H08000000    
+            ARRAYELEMENT        = &H04000000    
+            REAL32              = &H02000000    
+            INITIALIZEIMPROPER  = &H00000001    
+            CHANNELSEPARATEDDATA= &H00040000    ' Channel 0 value is total of each channels.
 
         End Enum
 
@@ -692,6 +726,7 @@ Namespace Hamamatsu
             CAPEVENT_CYCLEEND   = &H0004    ' all modules support
             CAPEVENT_EXPOSUREEND= &H0008    
             CAPEVENT_STOPPED    = &H0010    
+            CAPEVENT_RELOADFRAME= &H0020    
             RECEVENT_STOPPED    = &H0100    
             RECEVENT_WARNING    = &H0200    
             RECEVENT_MISSED     = &H0400    

@@ -322,6 +322,30 @@
             }
         }
 
+        public double PockelsBlankingPhaseShiftPercent
+        {
+            get
+            {
+                double pos = 0;
+
+                ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_BLANKING_PHASESHIFT_PERCENT, ref pos);
+
+                return pos;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_BLANKING_PHASESHIFT_PERCENT, value);
+            }
+        }
+
+        public bool PockelsBlankingPhaseShiftPercentAvailable
+        {
+            get
+            {
+                return 1 == ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_BLANKING_PHASESHIFT_PERCENT);
+            }
+        }
+
         public int PockelsBlankPercentage0
         {
             get

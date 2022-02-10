@@ -9,6 +9,7 @@
     using System.IO;
     using System.Linq;
     using System.Runtime.InteropServices;
+    using System.Threading;
     using System.Timers;
     using System.Windows;
     using System.Windows.Data;
@@ -35,12 +36,14 @@
         private int _currentSLMCycleID = 0;
         private int _currentSLMSequenceID = 0;
         private int _currentSLMWaveID = 0;
+        private double[] _defocusParams = { 0.0, 1.33, 6.25, 0.0 }; //[0]:  defocus z in [um], [1]: refractive index, [2]:effective focal length in [mm], [3]: saved defocus z in [um]
         private int _epochCount;
         private bool _lastInSLMCycle = false;
         private List<string> _loadedSLMFiles = new List<string>();
         private List<string> _loadedSLMPatterns = new List<string>();
         private int _loadedSLMPatternsCnt = 0;
         private List<string> _loadedSLMSequences = new List<string>();
+        private Mutex _mDefocus = new Mutex();
         private double _slmBleachDelay = 0;
         private ObservableCollection<SLMParams> _slmBleachWaveParams = new ObservableCollection<GeometryUtilities.SLMParams>();
         private List<string> _slmFilesInFolder;
@@ -61,6 +64,45 @@
 
         #region Properties
 
+        public double DefocusSavedUM
+        {
+            get
+            {
+                ResourceManagerCS.GetDeviceParamBuffer((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_DEFOCUS, _defocusParams, _defocusParams.Length);
+                return _defocusParams[3];
+            }
+            set
+            {
+                ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_SAVE_DEFOCUS, (int)1, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
+            }
+        }
+
+        public double DefocusUM
+        {
+            get
+            {
+                ResourceManagerCS.GetDeviceParamBuffer((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_DEFOCUS, _defocusParams, _defocusParams.Length);
+                return _defocusParams[0];
+            }
+            set
+            {
+                _defocusParams[0] = value;
+                SetDefocusParam();
+            }
+        }
+
+        public double EffectiveFocalMM
+        {
+            get
+            {
+                return _defocusParams[2];
+            }
+            set
+            {
+                _defocusParams[2] = value;
+            }
+        }
+
         public int EpochCount
         {
             get
@@ -76,6 +118,19 @@
         public bool IsStimulator
         {
             get { return ((int)ICamera.LSMType.STIMULATE_MODULATOR == ResourceManagerCS.GetBleacherType()); }
+        }
+
+        public double RefractiveIndex
+        {
+            get
+            {
+                return _defocusParams[1];
+            }
+            set
+            {
+                _defocusParams[1] = value;
+                SetDefocusParam();
+            }
         }
 
         public bool SLM3D
@@ -599,6 +654,13 @@
                 }
             }
             return (string.Empty == LoadedSequenceName) ? false : true;
+        }
+
+        private void SetDefocusParam()
+        {
+            _mDefocus.WaitOne();
+            ResourceManagerCS.SetDeviceParamBuffer((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_DEFOCUS, _defocusParams, _defocusParams.Length, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
+            _mDefocus.ReleaseMutex();
         }
 
         #endregion Methods

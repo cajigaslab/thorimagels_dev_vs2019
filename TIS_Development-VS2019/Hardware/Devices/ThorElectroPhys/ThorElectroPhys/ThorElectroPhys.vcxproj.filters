@@ -24,21 +24,6 @@
     <ClCompile Include="ThorElectroPhys.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\Tools\ticpp\ticpp.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\Tools\ticpp\tinystr.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\Tools\ticpp\tinyxml.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\Tools\ticpp\tinyxmlerror.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\Tools\ticpp\tinyxmlparser.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ElectroPhysSetupXML.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -59,18 +44,6 @@
     <ClInclude Include="ThorElectroPhys.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\Tools\ticpp\ticpp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\Tools\ticpp\ticpprc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\Tools\ticpp\tinystr.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\Tools\ticpp\tinyxml.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ElectroPhysSetupXML.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -88,5 +61,8 @@
     <ResourceCompile Include="ThorElectroPhys.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\ThorElectroPhysSettings.xml" />
   </ItemGroup>
 </Project>

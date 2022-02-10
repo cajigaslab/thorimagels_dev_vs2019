@@ -546,14 +546,14 @@ long ThorCam::GetParam(const long paramID, double &param)
 		case ICamera::PARAM_HOT_PIXEL_THRESHOLD_VALUE:
 			{
 				int hotPixelThresholdVal = 0;
-				ThorTSIErrChk(L"tl_camera_get_hot_pixel_correction_threshold", tl_camera_get_hot_pixel_correction_threshold(_camera[_camID], &hotPixelThresholdVal), 1);
+				ThorTSIErrChk(L"tl_camera_get_hot_pixel_correction_threshold", tl_camera_get_hot_pixel_correction_threshold(_camera[_camID], &hotPixelThresholdVal), FALSE);
 				param = hotPixelThresholdVal;
 			}
 			break;
 		case ICamera::PARAM_HOT_PIXEL_ENABLED:
 			{
 				int hotPixelEnabled = 0;
-				ThorTSIErrChk(L"tl_camera_get_is_hot_pixel_correction_enabled", tl_camera_get_is_hot_pixel_correction_enabled(_camera[_camID], &hotPixelEnabled), 1);
+				ThorTSIErrChk(L"tl_camera_get_is_hot_pixel_correction_enabled", tl_camera_get_is_hot_pixel_correction_enabled(_camera[_camID], &hotPixelEnabled), FALSE);
 				param = hotPixelEnabled;
 			}
 			break;

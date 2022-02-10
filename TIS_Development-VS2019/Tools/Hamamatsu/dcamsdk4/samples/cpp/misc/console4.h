@@ -2,13 +2,13 @@
 
 // ----------------------------------------------------------------
 
-#ifdef _WIN32
+#ifdef WIN32
 
 // Windows
 
 #include	<windows.h>
 
-#else // ! _WIN32
+#else // ! WIN32
 
 #include    <stdlib.h>
 #include    <string.h>
@@ -29,7 +29,7 @@
 #include    <unistd.h>
 
 #endif
-#endif // _WIN32
+#endif // WIN32
 
 // common headers
 
@@ -55,9 +55,9 @@
 #include			"../../../inc/dcamprop.h"
 #endif
 
-#if defined( _WIN64 )
+#if defined(_WIN64)
 #pragma comment(lib,"../../../lib/win64/dcamapi.lib")
-#elif defined( _WIN32 )
+#elif defined(WIN32)
 #pragma comment(lib,"../../../lib/win32/dcamapi.lib")
 #endif
 
@@ -73,7 +73,7 @@
 
 // absorb different function
 
-#ifdef _WIN32
+#ifdef WIN32
 
 #if defined(UNICODE) || defined(_UNICODE)
 #define	_T(str)	L##str
@@ -89,7 +89,7 @@
 
 // absorb Visual Studio 2005 and later
 
-#if ! defined( WIN32 ) || _MSC_VER < 1400
+#if ! defined(WIN32) || _MSC_VER < 1400
 
 #define	_stricmp(str1, str2)				strncasecmp( str1, str2, strlen(str2) )
 #define	sprintf_s							snprintf

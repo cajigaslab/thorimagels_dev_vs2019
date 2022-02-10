@@ -174,6 +174,10 @@ mkdir "..\..\Hardware\Cameras\DCxCamera\x64\Release"
 copy .\x64\Release\DCxCamera.dll ..\..\Hardware\Cameras\DCxCamera\x64\Release
 copy .\x64\Release\DCxCamera.lib ..\..\Hardware\Cameras\DCxCamera\x64\Release
 copy .\x64\Release\DCxCamera.pdb ..\..\Hardware\Cameras\DCxCamera\x64\Release
+mkdir "..\..\Hardware\Devices\ThorDetector\x64\Release"
+copy .\x64\Release\ThorDetector.dll ..\..\Hardware\Devices\ThorDetector\x64\Release
+copy .\x64\Release\ThorDetector.lib ..\..\Hardware\Devices\ThorDetector\x64\Release
+copy .\x64\Release\ThorDetector.pdb ..\..\Hardware\Devices\ThorDetector\x64\Release
 mkdir "..\..\Common\ThorDiskIO\x64\Release"
 copy .\x64\Release\ThorDiskIO.dll ..\..\Common\ThorDiskIO\x64\Release
 copy .\x64\Release\ThorDiskIO.lib ..\..\Common\ThorDiskIO\x64\Release
@@ -305,10 +309,13 @@ mkdir "..\..\Hardware\Devices\ThorShutterDigital6\x64\Release"
 copy .\x64\Release\ThorShutterDig6.dll ..\..\Hardware\Devices\ThorShutterDigital6\x64\Release
 copy .\x64\Release\ThorShutterDig6.lib ..\..\Hardware\Devices\ThorShutterDigital6\x64\Release
 copy .\x64\Release\ThorShutterDig6.pdb ..\..\Hardware\Devices\ThorShutterDigital6\x64\Release
-mkdir "..\..\Hardware\Devices\ThorSLMPDM512\x64\Release"
-copy .\x64\Release\ThorSLMPDM512.dll ..\..\Hardware\Devices\ThorSLMPDM512\x64\Release
-copy .\x64\Release\ThorSLMPDM512.lib ..\..\Hardware\Devices\ThorSLMPDM512\x64\Release
-copy .\x64\Release\ThorSLMPDM512.pdb ..\..\Hardware\Devices\ThorSLMPDM512\x64\Release
+mkdir "..\..\Hardware\Devices\ThorSLM\x64\Release"
+copy .\x64\Release\ThorSLMPDM512.dll ..\..\Hardware\Devices\ThorSLM\x64\Release
+copy .\x64\Release\ThorSLMPDM512.lib ..\..\Hardware\Devices\ThorSLM\x64\Release
+copy .\x64\Release\ThorSLMPDM512.pdb ..\..\Hardware\Devices\ThorSLM\x64\Release
+copy .\x64\Release\ThorSLM.dll ..\..\Hardware\Devices\ThorSLM\x64\Release
+copy .\x64\Release\ThorSLM.lib ..\..\Hardware\Devices\ThorSLM\x64\Release
+copy .\x64\Release\ThorSLM.pdb ..\..\Hardware\Devices\ThorSLM\x64\Release
 mkdir "..\..\Hardware\Devices\ThorVBE\x64\Release"
 copy .\x64\Release\ThorVBE.dll ..\..\Hardware\Devices\ThorVBE\x64\Release
 copy .\x64\Release\ThorVBE.lib ..\..\Hardware\Devices\ThorVBE\x64\Release
@@ -381,3 +388,7 @@ mkdir "..\..\Hardware\Devices\ThorLSKGR\x64\Release"
 copy .\x64\Release\ThorLSKGR.dll ..\..\Hardware\Devices\ThorLSKGR\x64\Release
 copy .\x64\Release\ThorLSKGR.lib ..\..\Hardware\Devices\ThorLSKGR\x64\Release
 copy .\x64\Release\ThorLSKGR.pdb ..\..\Hardware\Devices\ThorLSKGR\x64\Release
+mkdir "..\..\Hardware\Devices\TopticaiChrome\x64\Release"
+copy .\x64\Release\TopticaiChrome.dll ..\..\Hardware\Devices\TopticaiChrome\x64\Release
+copy .\x64\Release\TopticaiChrome.lib ..\..\Hardware\Devices\TopticaiChrome\x64\Release
+copy .\x64\Release\TopticaiChrome.pdb ..\..\Hardware\Devices\TopticaiChrome\x64\Release

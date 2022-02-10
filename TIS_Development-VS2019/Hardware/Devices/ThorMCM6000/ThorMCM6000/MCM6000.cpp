@@ -181,7 +181,9 @@ void MCM6000::GetStatusAllBoards(LPVOID instance)
 			if (CardTypes::High_Current_Stepper_Card == _mcm6kParams->cardType[slotNumber - CARD_ID_START_ADDRESS] ||
 				CardTypes::High_Current_Stepper_Card_HD == _mcm6kParams->cardType[slotNumber - CARD_ID_START_ADDRESS] ||
 				CardTypes::ST_Invert_Stepper_BISS_type == _mcm6kParams->cardType[slotNumber - CARD_ID_START_ADDRESS] ||
-				CardTypes::ST_Invert_Stepper_SSI_type == _mcm6kParams->cardType[slotNumber - CARD_ID_START_ADDRESS])
+				CardTypes::ST_Invert_Stepper_SSI_type == _mcm6kParams->cardType[slotNumber - CARD_ID_START_ADDRESS] ||
+				CardTypes::MCM_Stepper_Internal_BISS_L6470 == _mcm6kParams->cardType[slotNumber - CARD_ID_START_ADDRESS] ||
+				CardTypes::MCM_Stepper_Internal_SSI_L6470 == _mcm6kParams->cardType[slotNumber - CARD_ID_START_ADDRESS])
 			{
 				char bytesToSend[6] = { (UCHAR)(MGMSG_MCM_REQ_STATUSUPDATE & 0xFF), (UCHAR)((MGMSG_MCM_REQ_STATUSUPDATE & 0xFF00) >> 8), 0x00, 0x00, static_cast<char>(slotNumber), HOST_ID };
 				result = fnUART_LIBRARY_write(_threadDeviceHandler, bytesToSend, 6);
@@ -277,7 +279,7 @@ void MCM6000::GetStatusAllBoards(LPVOID instance)
 					errorCounter++;
 				}
 			}
-			else if (CardTypes::Shutter_4_type == _mcm6kParams->cardType[slotNumber - CARD_ID_START_ADDRESS])
+			else if (CardTypes::Shutter_4_type == _mcm6kParams->cardType[slotNumber - CARD_ID_START_ADDRESS] || CardTypes::Shutter_4_type_REV6 == _mcm6kParams->cardType[slotNumber - CARD_ID_START_ADDRESS])
 			{
 				//Check for the state of the safety interlock
 				char bytesToSend[6] = { (UCHAR)(MGMSG_MCM_REQ_INTERLOCK_STATE & 0xFF), (UCHAR)((MGMSG_MCM_REQ_INTERLOCK_STATE & 0xFF00) >> 8), 0x00, 0x00, static_cast<char>(slotNumber), HOST_ID };
@@ -506,7 +508,9 @@ long MCM6000::InitializeParams()
 			MessageBox(NULL, messageWstring.c_str(), L"ThorMCM6000 Error: Card Type Mismatch", MB_OK);
 		}
 		else if ((CardTypes::ST_Invert_Stepper_BISS_type == _mcm6kParams->cardType[i] ||
-			CardTypes::ST_Invert_Stepper_SSI_type == _mcm6kParams->cardType[i]) &&
+			CardTypes::ST_Invert_Stepper_SSI_type == _mcm6kParams->cardType[i] || 
+			CardTypes::MCM_Stepper_Internal_BISS_L6470 == _mcm6kParams->cardType[i] ||
+			CardTypes::MCM_Stepper_Internal_SSI_L6470 == _mcm6kParams->cardType[i]) &&
 			(_mcm6kParams->et_slot_id != i + CARD_ID_START_ADDRESS &&
 				_mcm6kParams->inverted_lp_slot_id != i + CARD_ID_START_ADDRESS &&
 				_mcm6kParams->z_slot_id != i + CARD_ID_START_ADDRESS &&
@@ -524,7 +528,8 @@ long MCM6000::InitializeParams()
 			MessageBox(NULL, messageWstring.c_str(), L"ThorMCM6000 Error: Card Type Mismatch", MB_OK);
 		}
 		if ((CardTypes::Shutter_type == _mcm6kParams->cardType[i] ||
-			CardTypes::Shutter_4_type == _mcm6kParams->cardType[i]) &&
+			CardTypes::Shutter_4_type == _mcm6kParams->cardType[i] ||
+			CardTypes::Shutter_4_type_REV6 == _mcm6kParams->cardType[i]) &&
 			(_mcm6kParams->shutter_slot_id != i + CARD_ID_START_ADDRESS))
 		{
 			wstring messageWstring = L"Card type Shutter mismatch. There is a card of type Shutter that is not accounted for. Please check ThorMCM6000Settings.xml Make sure SlotLayout is configured correctly with the right matching cards. \n\nIf error persists please contact Thorlabs customer support.\nPossible stage types for this type of card: Shutter";
@@ -537,7 +542,7 @@ long MCM6000::InitializeParams()
 	{
 		long piezoMode = -1;
 		PiezoSetMode(Piezo_modes::PZ_ANALOG_INPUT_MODE);
-
+		Sleep(RESPONSE_WAIT_TIME);
 		PiezoRequestMode(piezoMode);
 		//Check if the piezo was correctly set, if it wasn't try it again with a delay in between
 		if (Piezo_modes::PZ_ANALOG_INPUT_MODE != piezoMode)
@@ -546,6 +551,7 @@ long MCM6000::InitializeParams()
 			PiezoSetMode(Piezo_modes::PZ_ANALOG_INPUT_MODE);
 			Sleep(RESPONSE_WAIT_TIME);
 			PiezoRequestMode(piezoMode);
+			Sleep(RESPONSE_WAIT_TIME);
 			if (Piezo_modes::PZ_ANALOG_INPUT_MODE != _mcm6kParams->piezoMode)
 			{
 				wchar_t errMsg[MSG_SIZE];
@@ -1540,7 +1546,7 @@ long MCM6000::Close()
 	{
 		long piezoMode = -1;
 		PiezoSetMode(Piezo_modes::PZ_STOP_MODE);
-
+		Sleep(RESPONSE_WAIT_TIME);
 		PiezoRequestMode(piezoMode);
 		//Check if the piezo was correctly set, if it wasn't try it again with a delay in between
 		if (Piezo_modes::PZ_STOP_MODE != piezoMode)
@@ -1549,6 +1555,8 @@ long MCM6000::Close()
 			PiezoSetMode(Piezo_modes::PZ_STOP_MODE);
 			Sleep(RESPONSE_WAIT_TIME);
 			PiezoRequestMode(piezoMode);
+			Sleep(RESPONSE_WAIT_TIME);
+
 			if (Piezo_modes::PZ_STOP_MODE != _mcm6kParams->piezoMode)
 			{
 				wchar_t errMsg[MSG_SIZE];

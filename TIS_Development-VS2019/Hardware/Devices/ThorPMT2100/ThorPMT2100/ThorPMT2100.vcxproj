@@ -159,6 +159,9 @@
       <TargetMachine>MachineX64</TargetMachine>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
     </Link>
+    <PostBuildEvent>
+      <Command>if $(Configuration) == Debug  copy "$(SolutionDir)$(Platform)\$(Configuration)\ThorPMT2100.dll" "$(ProjectDir)..\..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\Debug\Modules_Native</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Midl>

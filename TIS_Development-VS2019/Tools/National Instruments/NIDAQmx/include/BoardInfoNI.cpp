@@ -4,6 +4,10 @@
 #include "BoardInfoNI.h"
 #include "..\..\..\..\Common\ThorSharedTypesCPP.h"
 
+#define DEFAULT_AO_CLKRATE	 250000
+#define NI6321_AO_CLKRATE	 800000
+#define NI6363_AO_CLKRATE	1000000
+
 ///Initialize static members
 bool BoardInfoNI::_instanceFlag = false;
 std::unique_ptr<BoardInfoNI> BoardInfoNI::_single(new BoardInfoNI());
@@ -42,10 +46,15 @@ void BoardInfoNI::GetAllBoardsInfo()
 		bInfo.devName = pickDevicename;
 		bInfo.devType = GetNIDeviceAttribute(bInfo.devName, DAQmx_Dev_ProductType);
 		bInfo.boardStyle = (std::string::npos != bInfo.devType.find("USB")) ? BoardStyle::USB : BoardStyle::PCI;
+		bInfo.aoClockRateHz = DEFAULT_AO_CLKRATE;
+		if (std::string::npos != bInfo.devType.find("PCIe-6363") || std::string::npos != bInfo.devType.find("USB-6363 (BNC)"))
+			bInfo.aoClockRateHz = NI6363_AO_CLKRATE;
+		else if (std::string::npos != bInfo.devType.find("PCIe-6321"))
+			bInfo.aoClockRateHz = NI6321_AO_CLKRATE;
 
 		std::string compStr1 = GetNIDeviceAttribute(bInfo.devName,DAQmx_Dev_Terminals);
 		bInfo.rtsiConfigure = ((0 < compStr1.size()) && (std::string::npos != compStr1.find("RTSI"))) ? 1 : 0;
-		
+
 		compStr1 = GetNIDeviceCIPhysicalChans(bInfo.devName);
 		std::string toSearch = "ctr";
 		std::size_t pos = compStr1.find("ctr");

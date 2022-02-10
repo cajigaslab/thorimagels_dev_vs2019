@@ -1,48 +1,48 @@
 /**
-@file	access_image.cpp
-@brief	sample code to access image.
-@details	This program accesses the captured image. The function used to access image is changed by the directive "USE_COPYFRAME".
-@details	This program outputs raw data if the directive "OUTPUT_IMAGE" is enable.
-@remarks	dcambuf_lockframe
-@remarks	dcambuf_copyframe
-*/
+  @file	access_image.cpp
+  @brief	sample code to access image.
+  @details	This program accesses the captured image. The function used to access image is changed by the directive "USE_COPYFRAME".
+  @details	This program outputs raw data if the directive "OUTPUT_IMAGE" is enable.
+  @remarks	dcambuf_lockframe
+  @remarks	dcambuf_copyframe
+ */
 
 
 #include "../misc/console4.h"
 #include "../misc/common.h"
 
 /**
-@def	USE_COPYFRAME
-*
-*0:	dcambuf_lockframe is used to access image.\n
-*		This function gets the pointer of image, so it is necessary to copy the target ROI from this pointer.
-*
-*1:	dcambuf_copyframe is used to access image.\n
-*		This function sets the pointer of buffer to get image. DCAM copies the target ROI to this buffer 
-*/
-#define USE_COPYFRAME	1	// 0: call dcambuf_lockframe to access image, 1: call dcambuf_copyframe to access image
+ @def	USE_COPYFRAME
+ *
+ *0:	dcambuf_lockframe is used to access image.\n
+ *		This function gets the pointer of image, so it is necessary to copy the target ROI from this pointer.
+ *
+ *1:	dcambuf_copyframe is used to access image.\n
+ *		This function sets the pointer of buffer to get image. DCAM copies the target ROI to this buffer 
+ */
+#define USE_COPYFRAME	0	// 0: call dcambuf_lockframe to access image, 1: call dcambuf_copyframe to access image
 
 /**
-@def	OUTPUT_IMAGE
-*
-*0:	not output image\n
-*
-*1:	output the accessed image with sequential name.\n
-*/
-#define OUTPUT_IMAGE	1	// 0: not output, 1: output the accessed image by raw data
+ @def	OUTPUT_IMAGE
+ *
+ *0:	not output image\n
+ *
+ *1:	output the accessed image with sequential name.\n
+ */
+#define OUTPUT_IMAGE	0	// 0: not output, 1: output the accessed image by raw data
 
 /**
-@brief	copy image to the specified buffer by the specified area.
-@param	hdcam		DCAM handle
-@param iFrame		frame index
-@param buf		    buffer to copy image
-@param rowbytes	rowbytes of buf
-@param ox			horizontal offset
-@param oy			vertical offset
-@param cx			horizontal size
-@param cy			vertical size
-@return	result of copy image
-*/
+ @brief	copy image to the specified buffer by the specified area.
+ @param	hdcam		DCAM handle
+ @param iFrame		frame index
+ @param buf		    buffer to copy image
+ @param rowbytes	rowbytes of buf
+ @param ox			horizontal offset
+ @param oy			vertical offset
+ @param cx			horizontal size
+ @param cy			vertical size
+ @return	result of copy image
+ */
 BOOL copy_targetarea( HDCAM hdcam, int32 iFrame, void* buf, int32 rowbytes, int32 ox, int32 oy, int32 cx, int32 cy )
 {
 	DCAMERR err;
@@ -61,7 +61,7 @@ BOOL copy_targetarea( HDCAM hdcam, int32 iFrame, void* buf, int32 rowbytes, int3
 	bufframe.top		= oy;
 	bufframe.width		= cx;
 	bufframe.height		= cy;
-
+	
 	// access image
 	err = dcambuf_copyframe( hdcam, &bufframe );
 	if( failed(err) )
@@ -103,13 +103,13 @@ BOOL copy_targetarea( HDCAM hdcam, int32 iFrame, void* buf, int32 rowbytes, int3
 }
 
 /**
-@brief	get image information from properties.
-@param	hdcam		DCAM handle
-@param pixeltype	DCAM_PIXELTYPE value
-@param width		image width
-@param rowbytes	image rowbytes
-@param height		image height
-*/
+ @brief	get image information from properties.
+ @param	hdcam		DCAM handle
+ @param pixeltype	DCAM_PIXELTYPE value
+ @param width		image width
+ @param rowbytes	image rowbytes
+ @param height		image height
+ */
 void get_image_information( HDCAM hdcam, int32& pixeltype, int32& width, int32& rowbytes, int32& height )
 {
 	DCAMERR err;
@@ -155,16 +155,14 @@ void get_image_information( HDCAM hdcam, int32& pixeltype, int32& width, int32& 
 	}
 	else
 		height = (int32)v;
-
-	err = dcamprop_getvalue( hdcam, DCAM_IDPROP_EXPOSURETIME, &v );
 }
 
 /**
-@brief	sample used to process image after capturing.
-@details	This function copies the target area that is 10% of full area on the center.
-@param	hdcam		DCAM handle
-@sa	get_image_information, copy_targetarea
-*/
+ @brief	sample used to process image after capturing.
+ @details	This function copies the target area that is 10% of full area on the center.
+ @param	hdcam		DCAM handle
+ @sa	get_image_information, copy_targetarea
+ */
 void sample_access_image( HDCAM hdcam )
 {
 	DCAMERR err;
@@ -198,15 +196,11 @@ void sample_access_image( HDCAM hdcam )
 		return;
 	}
 
-#if 20180821
-	int32   cx = width;
-	int32   cy = height;
-#else
 	int32 cx = width / 10;
 	int32 cy = height / 10;
 	if( cx < 10 )	cx = 10;
 	if( cy < 10 )	cy = 10;
-#endif
+	
 	if( cx > width || cy > height )
 	{
 		printf( "frame is too small\n" );
@@ -280,25 +274,6 @@ int main( int argc, char* const argv[] )
 			}
 			else
 			{
-				double v =0;
-				//err = dcamprop_getvalue( hdcam, DCAM_IDPROP_BINNING , &v );
-				//dcamprop_setvalue( hdcam, DCAM_IDPROP_BINNING , 2 );
-				//err = dcamprop_getvalue( hdcam, DCAM_IDPROP_BINNING , &v );
-
-				err = dcamprop_getvalue( hdcam, DCAM_IDPROP_EXPOSURETIME, &v );
-				dcamprop_setvalue( hdcam, DCAM_IDPROP_EXPOSURETIME, 0.0001 );
-
-				err = dcamprop_getvalue( hdcam, DCAM_IDPROP_EXPOSURETIME, &v );
-
-				err = dcamprop_getvalue( hdcam, DCAM_IDPROP_CONTRASTGAIN, &v );
-				//err = dcamprop_getvalue( hdcam, DCAM_IDPROP_SYNC_MULTIVIEWEXPOSURE, &v );
-				//err = dcamprop_getvalue( hdcam, DCAM_IDPROP_EXPOSURETIME_CONTROL, &v );
-				//err = dcamprop_getvalue( hdcam, DCAM_IDPROP_TRIGGER_FIRSTEXPOSURE, &v );
-				err = dcamprop_getvalue( hdcam, DCAM_IDPROP_TRIGGER_GLOBALEXPOSURE, &v );
-				dcamprop_setvalue( hdcam, DCAM_IDPROP_TRIGGER_GLOBALEXPOSURE, 1 );
-				err = dcamprop_getvalue( hdcam, DCAM_IDPROP_TRIGGER_GLOBALEXPOSURE, &v );
-				//err = dcamprop_getvalue( hdcam, DCAM_IDPROP_FIRSTTRIGGER_BEHAVIOR, &v );
-				//err = dcamprop_getvalue( hdcam, DCAM_IDPROP_MULTIFRAME_EXPOSURE, &v );
 				// start capture
 				err = dcamcap_start( hdcam, DCAMCAP_START_SEQUENCE );
 				if( failed(err) )

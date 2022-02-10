@@ -38,6 +38,33 @@ long copybits_bw8( BYTE* dsttopleft, long dstrowbytes
 	return lines;
 }
 
+long copybits_bw8( BYTE* dsttopleft, long dstrowbytes, const BYTE* lut
+				  , const BYTE* srctopleft, long srcrowbytes
+				  , long srcox, long srcoy, long srcwidth, long srcheight )
+{
+	long	lines = 0;
+	const BYTE*	src = srctopleft + srcrowbytes * srcoy + srcox;
+	BYTE* dst = dsttopleft;
+
+	int	x, y;
+	for (y = srcheight; y-- > 0; )
+	{
+		const BYTE*	s = src;
+		BYTE*	d = dst;
+
+		for (x = srcwidth; x-- > 0; )
+		{
+			*d++ = lut[*s++];
+		}
+
+		src += srcrowbytes;
+		dst += dstrowbytes;
+		lines++;
+	}
+
+	return lines;
+}
+
 long copybits_bw16( BYTE* dsttopleft, long dstrowbytes, long nShift
 				  , const WORD* srctopleft, long srcrowbytes
 				  , long srcox, long srcoy, long srcwidth, long srcheight )

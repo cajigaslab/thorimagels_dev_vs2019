@@ -684,14 +684,19 @@
                 {
                     return null;
                 }
+                else if (null != xdp.Document)
+                {
+                    doc.LoadXml(xdp.Document.InnerXml.ToString());
+                }
                 else if (null == xdp.Document && null != xdp.Source)
                 {
                     doc.Load(Uri.UnescapeDataString(xdp.Source.AbsolutePath));
                 }
                 else
                 {
-                    doc.LoadXml(xdp.Document.InnerXml.ToString());
+                    return null;
                 }
+                
                 XmlNodeList nodes = doc.SelectNodes("/HardwareSettings/Objectives/Objective");
 
                 foreach (XmlNode node in nodes)

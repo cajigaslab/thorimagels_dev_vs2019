@@ -5,6 +5,7 @@
     using System.Collections.Specialized;
     using System.ComponentModel;
     using System.Diagnostics;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Runtime.InteropServices;
@@ -17,7 +18,6 @@
     using System.Windows.Input;
     using System.Windows.Markup;
     using System.Windows.Media;
-    using System.Windows.Media.Imaging;
     using System.Windows.Shapes;
     using System.Windows.Threading;
     using System.Xml;
@@ -77,7 +77,7 @@
         private double _umPerPixel;
         private bool _visible = true;
         private int _wavelengthNM = 0;
-        private double _zValue = 0;
+        private double _zRefMM = 0;
 
         #endregion Fields
 
@@ -231,6 +231,18 @@
             }
         }
 
+        public int ROICount
+        {
+            get
+            {
+                if (_roiList == null)
+                {
+                    return 0;
+                }
+                return _roiList.Count;
+            }
+        }
+
         public bool Save
         {
             get { return _save; }
@@ -263,10 +275,10 @@
             set { _wavelengthNM = value; }
         }
 
-        public double ZValue
+        public double ZRefMM
         {
-            get { return _zValue; }
-            set { _zValue = value; }
+            get { return _zRefMM; }
+            set { _zRefMM = value; }
         }
 
         #endregion Properties
@@ -312,6 +324,63 @@
                 ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, "LoadXamlROIs exception " + ex.Message);
                 return null;
             }
+        }
+
+        /// <summary>
+        ///  Append the Mode ROIs
+        /// </summary>
+        /// <param name="canvas"></param>
+        /// <param name="mode"></param>
+        /// <param name="patternID"></param>
+        /// <param name="rois"></param>
+        /// <param name="waveLength"></param>
+        public void AppendModeROIs(ref Canvas canvas, Mode mode, int patternID, List<Shape> rois, int waveLength)
+        {
+            List<Shape> roiList = new List<Shape>();
+
+            for (int i = 0; i < _roiList.Count; i++)
+            {
+                if (mode == (Mode)(GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR)) &&
+                    (0 < patternID && patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID]))
+                {
+                    roiList.Add(_roiList[i]);
+                }
+            }
+
+            //find the last sub pattern id for the current patternID
+            int lspid = 0;
+            for (int i = 0; i < roiList.Count; ++i)
+            {
+                if (lspid < ((int[])roiList[i].Tag)[(int)Tag.SUB_PATTERN_ID])
+                {
+                    lspid = ((int[])roiList[i].Tag)[(int)Tag.SUB_PATTERN_ID];
+                }
+            }
+
+            //append the rois to the passed wavelenth
+            for (int i = 0; i < rois.Count; ++i)
+            {
+                var newRoi = CloneUIElementByXamlWriter(rois[i]);
+                int[] originalTag = (int[])rois[i].Tag;
+                int[] newTag = DefaultTags(_roiCount);//newRoi.Tag as int[];
+                ++lspid;
+                newTag[(int)Tag.SUB_PATTERN_ID] = lspid;
+                newTag[(int)Tag.PATTERN_ID] = patternID;
+                newTag[(int)Tag.ROI_ID] = _roiCount;
+                newTag[(int)Tag.MODE] = originalTag[(int)Tag.MODE];
+                newTag[(int)Tag.RGB] = originalTag[(int)Tag.RGB];
+                newTag[(int)Tag.FLAGS] = originalTag[(int)Tag.FLAGS];
+                newTag[(int)Tag.WAVELENGTH_NM] = waveLength;
+                ++_roiCount;
+                newRoi.Tag = newTag;
+                newRoi.ToolTip = "ROI #" + newTag[(int)Tag.SUB_PATTERN_ID];
+                newRoi.MouseLeftButtonDown += ROI_MouseDown;
+                _roiList.Add(newRoi);
+                canvas.Children.Add(_roiList[_roiList.Count - 1]);
+                AddIndexToROI(_roiList[_roiList.Count - 1]);
+            }
+
+            ValidateROIs(ref canvas);
         }
 
         /// <summary>
@@ -407,9 +476,6 @@
                     roiCrosshair.StrokeThickness = ((ROICrosshair)_roiList[i]).StrokeThickness;
                     roiCrosshair.MouseLeftButtonDown += ROI_MouseDown;
                     roiCrosshair.Tag = tag.Clone();
-
-                    roiCrosshair.ZValue = ((ROICrosshair)_roiList[i]).ZValue;
-
                     _roiListBackup.Add(roiCrosshair);
                 }
                 else if (typeof(Polyline) == _roiList[i].GetType())
@@ -432,9 +498,6 @@
                     roiEllipse.StrokeThickness = ((ROIEllipse)_roiList[i]).StrokeThickness;
                     roiEllipse.MouseLeftButtonDown += ROI_MouseDown;
                     roiEllipse.Tag = tag.Clone();
-
-                    roiEllipse.ZValue = ((ROIEllipse)_roiList[i]).ZValue;
-
                     _roiListBackup.Add(roiEllipse);
                 }
             }
@@ -725,7 +788,6 @@
                     Fill = Brushes.Transparent
                 };
                 crosshair.CenterPoint = pt;
-                crosshair.ZValue = (Mode.PATTERN_NOSTATS == _currentMode) ? (double)MVMManager.Instance["ZControlViewModel", "ZPosition"] : 0;
                 crosshair.MouseLeftButtonDown += ROI_MouseDown;
                 _roiList.Add(crosshair);
             }
@@ -739,7 +801,6 @@
                     StrokeThickness = 1,
                     Fill = Brushes.Transparent
                 };
-                ellipse.ZValue = (Mode.PATTERN_NOSTATS == _currentMode) ? (double)MVMManager.Instance["ZControlViewModel", "ZPosition"] : 0;
                 ellipse.MouseLeftButtonDown += ROI_MouseDown;
                 _roiList.Add(ellipse);
             }
@@ -917,6 +978,37 @@
             UpdateVisibleROIs(ref canvas);
         }
 
+        public void DisplayOnlyPatternROIs(ref Canvas canvas, Mode[] mode, int patternID, int[] wavelengthsNM)
+        {
+            if (mode == null || wavelengthsNM == null) return;
+
+            for (int i = 0; i < _roiList.Count; i++)
+            {
+                bool displaying = false;
+                var roiMode = (Mode)(GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR));
+                var roiWavelength = ((int[])_roiList[i].Tag)[(int)Tag.WAVELENGTH_NM];
+                var roiPatternID = ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID];
+                for (int j = 0; j < mode.Length; j++)
+                {
+                    for (int k = 0; k < wavelengthsNM.Length; k++)
+                    {
+                        if (mode[j] == roiMode && roiPatternID == patternID && (wavelengthsNM[k] == roiWavelength || wavelengthsNM[k] < 0))
+                        {
+                            SetTagBit(_roiList[i].Tag, Tag.FLAGS, Flag.DISPLAY, true);
+                            displaying = true;
+                        }
+                    }
+                }
+
+                if (!displaying)
+                {
+                    SetTagBit(_roiList[i].Tag, Tag.FLAGS, Flag.DISPLAY, false);
+                }
+            }
+
+            UpdateVisibleROIs(ref canvas);
+        }
+
         public void DisplayPatternROI(ref Canvas canvas, int patternID, bool setVisible)
         {
             for (int i = 0; i < _roiList.Count; i++)
@@ -928,6 +1020,56 @@
             }
 
             UpdateVisibleROIs(ref canvas);
+        }
+
+        public void DuplicatePatternROIs(ref Canvas canvas, int patternID, Mode patternMode = Mode.PATTERN_NOSTATS)
+        {
+            //keep other patterns and stats:
+            List<Shape> listToDuplicate = new List<Shape>();
+            int maxPatternID = 0;
+            for (int i = 0; i < _roiList.Count; i++)
+            {
+                Mode roiMode = (Mode)GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR);
+
+                if ((patternMode == roiMode) && 0 < patternID && (patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID]))
+                {
+                    listToDuplicate.Add(_roiList[i]);
+                }
+                //reassign later pattern IDs forward
+                if ((patternMode == roiMode) && (maxPatternID < ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID]))
+                {
+                    int[] tag = (int[])_roiList[i].Tag;
+                    maxPatternID = tag[(int)Tag.PATTERN_ID];
+                }
+            }
+
+            int newPatternID = maxPatternID + 1;
+            List<Shape> roiList = new List<Shape>();
+
+            //append the rois to the passed wavelenth
+            for (int i = 0; i < listToDuplicate.Count; ++i)
+            {
+                var newRoi = CloneUIElementByXamlWriter(listToDuplicate[i]);
+
+                int[] newTag = DefaultTags(_roiCount);//newRoi.Tag as int[];
+                int[] originalTag = (int[])listToDuplicate[i].Tag;
+                newTag[(int)Tag.PATTERN_ID] = newPatternID;
+                newTag[(int)Tag.SUB_PATTERN_ID] = originalTag[(int)Tag.SUB_PATTERN_ID];
+                newTag[(int)Tag.ROI_ID] = _roiCount;
+                newTag[(int)Tag.WAVELENGTH_NM] = originalTag[(int)Tag.WAVELENGTH_NM];
+                newTag[(int)Tag.MODE] = originalTag[(int)Tag.MODE];
+                newTag[(int)Tag.RGB] = originalTag[(int)Tag.RGB];
+                newTag[(int)Tag.FLAGS] = originalTag[(int)Tag.FLAGS];
+                ++_roiCount;
+                newRoi.Tag = newTag;
+                newRoi.ToolTip = "ROI #" + newTag[(int)Tag.SUB_PATTERN_ID];
+                newRoi.MouseLeftButtonDown += ROI_MouseDown;
+                _roiList.Add(newRoi);
+                canvas.Children.Add(_roiList[_roiList.Count - 1]);
+                AddIndexToROI(_roiList[_roiList.Count - 1]);
+            }
+
+            ValidateROIs(ref canvas);
         }
 
         /// <summary>
@@ -980,38 +1122,67 @@
         public List<Point> GetPatternROICenters(int patternID, ref string roiType, ref Point centerPoint)
         {
             List<Point> centers = new List<Point>();
+            Point? pt = null;
+            roiType = string.Empty;
+            double left = double.MaxValue, right = 0, top = double.MaxValue, bottom = 0;
             for (int i = 0; i < _roiList.Count; i++)
             {
-                if (patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID])
+                //avoid patternID == 0 for Mode.STATSONLY
+                if (0 < patternID && patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID])
                 {
                     switch (_roiList[i].GetType().ToString())
                     {
                         case "OverlayManager.ROIEllipse":
-                            if (0 == ((int[])_roiList[i].Tag)[(int)Tag.SUB_PATTERN_ID])
-                            {
-                                centerPoint.X = (_roiList[i] as ROIEllipse).Center.X;
-                                centerPoint.Y = (_roiList[i] as ROIEllipse).Center.Y;
-                            }
-                            else
-                            {
-                                centers.Add((_roiList[i] as ROIEllipse).Center);
-                            }
-                            roiType = "Ellipse";
+                            pt = (_roiList[i] as ROIEllipse).Center;
+                            roiType = (string.IsNullOrEmpty(roiType) || 0 == roiType.CompareTo("Ellipse")) ? "Ellipse" : "mixed";
                             break;
                         case "OverlayManager.ROICrosshair":
-                            if (0 == ((int[])_roiList[i].Tag)[(int)Tag.SUB_PATTERN_ID])
+                            pt = (_roiList[i] as ROICrosshair).CenterPoint;
+                            roiType = (string.IsNullOrEmpty(roiType) || 0 == roiType.CompareTo("Crosshair")) ? "Crosshair" : "mixed";
+                            break;
+                        case "OverlayManager.ROIRect":
+                            pt = new Point((((OverlayManager.ROIRect)_roiList[i]).TopLeft.X + ((OverlayManager.ROIRect)_roiList[i]).BottomRight.X) / 2, (((OverlayManager.ROIRect)_roiList[i]).TopLeft.Y + ((OverlayManager.ROIRect)_roiList[i]).BottomRight.Y) / 2);
+                            roiType = (string.IsNullOrEmpty(roiType) || 0 == roiType.CompareTo("Rectangle")) ? "Rectangle" : "mixed";
+                            break;
+                        case "OverlayManager.ROIPoly":
+                            for (int j = 0; j < ((ROIPoly)_roiList[i]).Points.Count; j++)
                             {
-                                centerPoint.X = (_roiList[i] as ROICrosshair).CenterPoint.X;
-                                centerPoint.Y = (_roiList[i] as ROICrosshair).CenterPoint.Y;
+                                left = Math.Min(left, ((ROIPoly)_roiList[i]).Points[j].X);
+                                right = Math.Max(right, ((ROIPoly)_roiList[i]).Points[j].X);
+                                top = Math.Min(top, ((ROIPoly)_roiList[i]).Points[j].Y);
+                                bottom = Math.Min(bottom, ((ROIPoly)_roiList[i]).Points[j].Y);
                             }
-                            else
+                            pt = new Point((left + right) / 2, (top + bottom) / 2);
+                            roiType = (string.IsNullOrEmpty(roiType) || 0 == roiType.CompareTo("Polygon")) ? "Polygon" : "mixed";
+                            break;
+                        case "Line":
+                            pt = new Point((((Line)_roiList[i]).X1 + ((Line)_roiList[i]).X2) / 2, (((Line)_roiList[i]).Y1 + ((Line)_roiList[i]).Y2) / 2);
+                            roiType = (string.IsNullOrEmpty(roiType) || 0 == roiType.CompareTo("Line")) ? "Line" : "mixed";
+                            break;
+                        case "Polyline":
+                            for (int j = 0; j < ((Polyline)_roiList[i]).Points.Count; j++)
                             {
-                                centers.Add((_roiList[i] as ROICrosshair).CenterPoint);
+                                left = Math.Min(left, ((Polyline)_roiList[i]).Points[j].X);
+                                right = Math.Max(right, ((Polyline)_roiList[i]).Points[j].X);
+                                top = Math.Min(top, ((Polyline)_roiList[i]).Points[j].Y);
+                                bottom = Math.Min(bottom, ((Polyline)_roiList[i]).Points[j].Y);
                             }
-                            roiType = "Crosshair";
+                            pt = new Point((left + right) / 2, (top + bottom) / 2);
+                            roiType = (string.IsNullOrEmpty(roiType) || 0 == roiType.CompareTo("Polyline")) ? "Polyline" : "mixed";
                             break;
                         default:
                             break;
+                    }
+                    if (null != pt)
+                    {
+                        if (0 == ((int[])_roiList[i].Tag)[(int)Tag.SUB_PATTERN_ID])
+                        {
+                            centerPoint = (Point)pt;
+                        }
+                        else
+                        {
+                            centers.Add((Point)pt);
+                        }
                     }
                 }
             }
@@ -1033,30 +1204,28 @@
             return count;
         }
 
-        public List<double> GetPatternROIZPos(int patternID, ref string roiType)
+        public Dictionary<double, List<Shape>> GetPatternZROIs(int patternID)
         {
-            List<double> zpos = new List<double>();
+            Dictionary<double, List<Shape>> zShapes = new Dictionary<double, List<Shape>>();
+            double zUM;
             for (int i = 0; i < _roiList.Count; i++)
             {
-                if (patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID])
+                //avoid patternID == 0 for Mode.STATSONLY and SUB_PATTERN_ID == 0 for pattern center
+                if (0 < patternID && patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID] &&
+                    0 != ((int[])_roiList[i].Tag)[(int)Tag.SUB_PATTERN_ID])
                 {
-                    switch (_roiList[i].GetType().ToString())
+                    if (Double.TryParse(((int[])_roiList[i].Tag)[(int)Tag.Z_UM_INT].ToString() + "." + ((int[])_roiList[i].Tag)[(int)Tag.Z_UM_DEC].ToString(), out zUM))
                     {
-                        case "OverlayManager.ROIEllipse":
-                            zpos.Add((_roiList[i] as ROIEllipse).ZValue);
-                            roiType = "Ellipse";
-                            break;
-                        case "OverlayManager.ROICrosshair":
-                            zpos.Add((_roiList[i] as ROICrosshair).ZValue);
-                            roiType = "Crosshair";
-                            break;
-                        default:
-                            break;
+                        if (!zShapes.ContainsKey(zUM))
+                        {
+                            List<Shape> shapeList = new List<Shape>();
+                            zShapes.Add(zUM, shapeList);
+                        }
+                        zShapes[zUM].Add(_roiList[i]);
                     }
                 }
             }
-
-            return zpos;
+            return zShapes;
         }
 
         public void InitOverlayManagerClass(int pixelX, int pixelY, double umPerPixel, bool saveMaskEverytime)
@@ -1469,14 +1638,11 @@
                                 }
 
                                 //Add properties to the last added item
-                                string tipInit = ((Mode.PATTERN_NOSTATS == (Mode)(GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR))) && (0 == tag[(int)Tag.SUB_PATTERN_ID])) ? "Center" : "ROI #" + tag[(int)Tag.SUB_PATTERN_ID];
-                                if (_roiList[i].GetType() == typeof(ROICrosshair))
+                                double zUM = 0.0;
+                                Double.TryParse(tag[(int)Tag.Z_UM_INT].ToString() + "." + tag[(int)Tag.Z_UM_DEC].ToString(), out zUM);
+                                if (Mode.PATTERN_NOSTATS == (Mode)(GetTagByteSection(tag, Tag.MODE, SecR)) || Mode.PATTERN_WIDEFIELD == (Mode)(GetTagByteSection(tag, Tag.MODE, SecR)))
                                 {
-                                    _roiList[i].ToolTip = tipInit + ((Mode.PATTERN_NOSTATS == (Mode)(GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR))) ? "\nz=" + ((ROICrosshair)_roiList[i]).ZValue : "");
-                                }
-                                else if (_roiList[i].GetType() == typeof(ROIEllipse))
-                                {
-                                    _roiList[i].ToolTip = tipInit + ((Mode.PATTERN_NOSTATS == (Mode)(GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR))) ? "\nz=" + ((ROIEllipse)_roiList[i]).ZValue : "");
+                                    _roiList[i].ToolTip = ((0 == tag[(int)Tag.SUB_PATTERN_ID]) ? "Center" : "ROI #" + tag[(int)Tag.SUB_PATTERN_ID]) + "\nz=" + zUM + "um";
                                 }
                                 else
                                 {
@@ -1923,7 +2089,6 @@
                     roiReplace.Fill = ((ROIEllipse)_roiList[i]).Fill;
                     roiReplace.Stroke = ((ROIEllipse)_roiList[i]).Stroke;
                     roiReplace.StrokeThickness = ((ROIEllipse)_roiList[i]).StrokeThickness;
-                    roiReplace.ZValue = ((ROIEllipse)_roiList[i]).ZValue;
                     roiReplace.MouseLeftButtonDown += ROI_MouseDown;
                     roiReplace.Tag = SetTagRGB(_roiList[i]);
                     roiList.Add(roiReplace);
@@ -2596,8 +2761,6 @@
                 Fill = Brushes.Transparent
             };
             crosshair.CenterPoint = pt;
-            crosshair.ZValue = (Mode.PATTERN_NOSTATS == _currentMode) ? (double)MVMManager.Instance["ZControlViewModel", "ZPosition"] : 0;
-
             crosshair.MouseLeftButtonDown += ROI_MouseDown;
             _roiList.Add(crosshair);
             _roiCount++;
@@ -2645,7 +2808,6 @@
             {
                 ellipse.StartPoint = pt;
             }
-            ellipse.ZValue = (Mode.PATTERN_NOSTATS == _currentMode) ? (double)MVMManager.Instance["ZControlViewModel", "ZPosition"] : 0;
 
             ellipse.Fill = new SolidColorBrush(Colors.Transparent);
             _bitVec32 = new BitVector32(tag[(int)Tag.RGB]);
@@ -2903,16 +3065,21 @@
             int[] newTag;
             Version ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
             int versionInt = ver.Major * 10 + ver.Minor;
+            string[] zUM = (((double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0.0] - ZRefMM) * (double)Constants.UM_TO_MM).ToString("F3", CultureInfo.InvariantCulture).Split('.');
 
             if (null != refTag)
             {
                 if (4 < ((int[])refTag).Length)
                 {
-                    newTag = new int[((int[])refTag).Length];
+                    newTag = new int[(int)Tag.LAST_TAG];
 
                     for (int i = 0; i < ((int[])refTag).Length; i++)
                     {
                         newTag[i] = (1 == i) ? index : ((int[])refTag)[i];
+                    }
+                    for (int i = ((int[])refTag).Length; i < (int)Tag.LAST_TAG; i++)
+                    {
+                        newTag[i] = 0;
                     }
                     return newTag;
                 }
@@ -2950,6 +3117,8 @@
                     _bitVec32[SecB] = cBrush.Color.B;
                     newTag[(int)Tag.RGB] = _bitVec32.Data;                                              // RGB for brush color, R starts from lower bits.
                     newTag[(int)Tag.WAVELENGTH_NM] = 0;                                                 // Wavelength of light in [nm]
+                    newTag[(int)Tag.Z_UM_INT] = 0;                                                      // z integer value in [um]
+                    newTag[(int)Tag.Z_UM_DEC] = 0;                                                      // z decimal value in [um]
                     return newTag;
                 }
             }
@@ -2972,6 +3141,8 @@
             newTag[(int)Tag.SUB_PATTERN_ID] = 0;                                                        // Sub-Pattern ROI Index, 1-based if used, 0: center
             newTag[(int)Tag.RGB] = _colorRGB;                                                           // RGB for brush color, R starts from lower bits.
             newTag[(int)Tag.WAVELENGTH_NM] = _wavelengthNM;                                             // Wavelength of light in [nm]
+            newTag[(int)Tag.Z_UM_INT] = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ? int.Parse(zUM[0]) : 0;    // z integer value in [um]
+            newTag[(int)Tag.Z_UM_DEC] = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ? int.Parse(zUM[1]) : 0;    // z decimal value in [um]
             return newTag;
         }
 

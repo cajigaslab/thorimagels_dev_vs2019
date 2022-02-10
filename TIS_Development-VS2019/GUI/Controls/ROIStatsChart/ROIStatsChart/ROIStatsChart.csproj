@@ -45,9 +45,33 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Abt.Controls.SciChart.Wpf, Version=3.60.0.7618, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+    <Reference Include="SciChart.Charting, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart.3.6\lib\net45\Abt.Controls.SciChart.Wpf.dll</HintPath>
+      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting.dll</HintPath>
+    </Reference>
+    <Reference Include="SciChart.Charting.DrawingTools, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting.DrawingTools.dll</HintPath>
+    </Reference>
+    <Reference Include="SciChart.Charting3D, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting3D.dll</HintPath>
+    </Reference>
+    <Reference Include="SciChart.Core, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="SciChart.Data, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="SciChart.Drawing, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Drawing.dll</HintPath>
+    </Reference>
+    <Reference Include="SciChart.Drawing.DirectX, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Drawing.DirectX.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -153,9 +177,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="SciChartLicense.xml" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="..\..\..\Styles\Arithmetics.png">

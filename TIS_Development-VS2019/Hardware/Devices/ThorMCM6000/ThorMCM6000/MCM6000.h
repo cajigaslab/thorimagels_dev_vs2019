@@ -36,19 +36,23 @@ enum CardTypes
 {
 	NO_CARD_IN_SLOT = 0,
 	CARD_IN_SLOT_NOT_PROGRAMMED = 1,
-	ST_Stepper_type,
-	High_Current_Stepper_Card,
-	Servo_type,
-	Shutter_type,
-	OTM_Dac_type,
-	OTM_RS232_type,
-	High_Current_Stepper_Card_HD,
-	Slider_IO_type,
-	Shutter_4_type,
-	Piezo_Elliptec_type,
-	ST_Invert_Stepper_BISS_type,
-	ST_Invert_Stepper_SSI_type,
-	Piezo_Type,
+	ST_Stepper_type,                // 2 
+	High_Current_Stepper_Card,      // 3 42-0093 MCM6000 HC Stepper Module
+	Servo_type,                     // 4 42-0098 MCM Servo Module
+	Shutter_type,                   // 5 42-0098 MCM Servo Module
+	OTM_Dac_type,                   // 6
+	OTM_RS232_type,                 // 7
+	High_Current_Stepper_Card_HD,   // 8 42-0107 MCM6000 HC Stepper Module Micro DB15
+	Slider_IO_type,                 // 9
+	Shutter_4_type,                 // 10 42-0108 MCM6000 4 Shutter Card PCB
+	Piezo_Elliptec_type,            // 11
+	ST_Invert_Stepper_BISS_type,    // 12 42-0113 MCM Stepper ABS BISS encoder Module
+	ST_Invert_Stepper_SSI_type,     // 13 42-0113 MCM Stepper ABS BISS encoder Module
+	Piezo_Type,                     // 14 42-0123 Piezo Slot Card PCB
+	MCM_Stepper_Internal_BISS_L6470,// 15 41-0128 MCM Stepper Internal Slot Card
+	MCM_Stepper_Internal_SSI_L6470, // 16 41-0128 MCM Stepper Internal Slot Card
+	MCM_Stepper_L6470_MicroDB15,    // 17 41-0129 MCM Stepper LC Micro DB15
+	Shutter_4_type_REV6,     	    // 18 42-0108 MCM6000 4 Shutter Card PCB REV 6
 	MAX_CARD_TYPE,
 	END_CARD_TYPES = 0xffff    // make this enum 16bit
 };

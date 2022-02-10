@@ -82,6 +82,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\Common\ThorLogging\ThorLogging\bin\Debug\ThorLogging.dll</HintPath>
     </Reference>
+    <Reference Include="ThorSharedTypes">
+      <HintPath>..\..\..\..\Common\ThorSharedTypes\ThorSharedTypes\bin\Debug\ThorSharedTypes.dll</HintPath>
+    </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />

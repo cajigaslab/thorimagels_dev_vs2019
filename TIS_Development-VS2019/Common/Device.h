@@ -23,13 +23,13 @@ public:
 		PARAM_DEVICE_FIRMWAREVERSION = 106,
 		PARAM_DEVICE_STATUS_MESSAGE = 107,
 
-		PARAM_X_POS = 200,	
+		PARAM_X_POS = 200,
 		PARAM_X_HOME = 201,
 		PARAM_X_ZERO = 202,
 		PARAM_X_VELOCITY = 203,
 		PARAM_X_STEPS_PER_MM = 204,
 		PARAM_X_ACCEL = 205,
-		PARAM_X_DECEL = 206,		
+		PARAM_X_DECEL = 206,
 		PARAM_X_POS_CURRENT = 207,
 		PARAM_X_JOYSTICK_VELOCITY = 208,
 		PARAM_X_STOP = 209,
@@ -50,7 +50,7 @@ public:
 		PARAM_X_JOG = 224,
 		PARAM_X_POS_MOVE_BY = 225,
 
-		PARAM_Y_POS = 300,	
+		PARAM_Y_POS = 300,
 		PARAM_Y_HOME = 301,
 		PARAM_Y_ZERO = 302,
 		PARAM_Y_VELOCITY = 303,
@@ -59,7 +59,7 @@ public:
 		PARAM_Y_DECEL = 306,
 		PARAM_Y_POS_CURRENT = 307,
 		PARAM_Y_JOYSTICK_VELOCITY = 308,
-		PARAM_Y_STOP = 309,		
+		PARAM_Y_STOP = 309,
 		PARAM_Y_VELOCITY_CURRENT = 310,
 		PARAM_Y_WAIT_UNTIL_SETTLED = 311,
 		PARAM_Y_POSITIVE = 312,
@@ -77,7 +77,7 @@ public:
 		PARAM_Y_JOG = 324,
 		PARAM_Y_POS_MOVE_BY = 325,
 
-		PARAM_Z_POS = 400,	
+		PARAM_Z_POS = 400,
 		PARAM_Z_HOME = 401,
 		PARAM_Z_ZERO = 402,
 		PARAM_Z_VELOCITY = 403,
@@ -86,7 +86,7 @@ public:
 		PARAM_Z_DECEL = 406,
 		PARAM_Z_POS_CURRENT = 407,
 		PARAM_Z_JOYSTICK_VELOCITY = 408,
-		PARAM_Z_STOP = 409,	
+		PARAM_Z_STOP = 409,
 		PARAM_Z_VELOCITY_CURRENT = 410,
 		PARAM_Z_ANALOG_MODE = 411,///<Enables piezo to run in single point, waveform, staircase mode etc...
 		PARAM_Z_FAST_START_POS = 412,///<Start location for volume scan
@@ -109,7 +109,7 @@ public:
 		PARAM_Z_POCKELS_MIN = 429,///Min Voltage from pockels calibration
 		PARAM_Z_JOG = 430,
 		PARAM_Z_STATUS = 431,
-		PARAM_Z_POS_MOVE_BY = 432, 
+		PARAM_Z_POS_MOVE_BY = 432,
 		PARAM_Z_ELEVATOR_POS_CURRENT = 433,
 
 		PARAM_Z_ENABLE_HOLDING_VOLTAGE = 499,
@@ -117,7 +117,7 @@ public:
 		PARAM_LOAD_AND_EJECT = 501,
 		PARAM_TURRET_POS = 502,
 		PARAM_AUTOFOCUS_OFFSET = 503,
-		PARAM_AUTOFOCUS_FOUND= 504,
+		PARAM_AUTOFOCUS_FOUND = 504,
 		PARAM_TURRET_SERIALNUMBER = 505,
 		PARAM_TURRET_FIRMWAREUPDATE = 506,
 		PARAM_TURRET_FIRMWAREVERSION = 507,
@@ -213,7 +213,7 @@ public:
 		PARAM_PMT6_BANDWIDTH_POS,
 		PARAM_PMT6_SAFETY,
 		PARAM_PMT6_GAIN_POS_CURRENT_VOLTS,
-		PARAM_PMT6_OUTPUT_OFFSET,		
+		PARAM_PMT6_OUTPUT_OFFSET,
 		PARAM_PMT6_OUTPUT_OFFSET_CURRENT,
 		PARAM_PMT6_SERIALNUMBER,
 		PARAM_CONNECTED_PMTS,
@@ -231,6 +231,7 @@ public:
 		PARAM_PMT6_TYPE,
 		PARAM_PMT1_FIRMWAREVERSION,
 		PARAM_PMT2_FIRMWAREVERSION,
+		PARAM_PMT_CLEAR_TRIP = 797,
 
 		PARAM_EXP_RATIO = 800,
 		PARAM_MOT0_POS,
@@ -246,7 +247,7 @@ public:
 		PARAM_FOCUS_CCW = 822,
 		PARAM_FOCUS_JOGSTEP = 823,
 		PARAM_LASER_POWER = 824,
-		PARAM_LASER1_ENABLE=825,
+		PARAM_LASER1_ENABLE = 825,
 		PARAM_LASER1_POS,
 		PARAM_LASER2_ENABLE,
 		PARAM_LASER2_POS,
@@ -272,6 +273,18 @@ public:
 		PARAM_LASER1_SHUTTER2_POS_CURRENT,
 		PARAM_LASER1_SEQ,
 		PARAM_LASER1_FOCUS_POS,
+		PARAM_LASER1_EMISSION,
+		PARAM_LASER2_EMISSION,
+		PARAM_LASER3_EMISSION,
+		PARAM_LASER4_EMISSION,
+		PARAM_LASER1_WAVELENGTH,
+		PARAM_LASER2_WAVELENGTH,
+		PARAM_LASER3_WAVELENGTH,
+		PARAM_LASER4_WAVELENGTH,
+		PARAM_LASER_ALL_ENABLE,
+		PARAM_LASER_ALL_EMISSION,
+		PARAM_LASER_ALL_TTL_MODE,
+		PARAM_LASER_ALL_ANALOG_MODE,
 
 		PARAM_PINHOLE_POS = 900,
 		PARAM_PINHOLE_POS_CURRENT,
@@ -281,7 +294,7 @@ public:
 		PARAM_PINHOLE_SEPARATION,
 		PARAM_PINHOLE_NON_PINHOLE_FREQUENCY,
 
-		PARAM_PMT1_BANDWIDTH_POS_CURRENT=920,
+		PARAM_PMT1_BANDWIDTH_POS_CURRENT = 920,
 		PARAM_PMT2_BANDWIDTH_POS_CURRENT,
 		PARAM_PMT3_BANDWIDTH_POS_CURRENT,
 		PARAM_PMT4_BANDWIDTH_POS_CURRENT,
@@ -293,8 +306,15 @@ public:
 		PARAM_PMT4_SATURATIONS,
 		PARAM_PMT5_SATURATIONS,
 		PARAM_PMT6_SATURATIONS,
+		PARAM_PMT1_DETECTOR_TYPE,
+		PARAM_PMT2_DETECTOR_TYPE,
+		PARAM_PMT3_DETECTOR_TYPE,
+		PARAM_PMT4_DETECTOR_TYPE,
+		PARAM_PMT5_DETECTOR_TYPE,
+		PARAM_PMT6_DETECTOR_TYPE,
+		PARAM_PMT_OFFSET_STEP_SIZE,
 
-		PARAM_STOP=1000,
+		PARAM_STOP = 1000,
 
 		PARAM_DECODER_INCREMENT = 1100,
 		PARAM_DECODER_BLANKING_PERIOD,
@@ -320,19 +340,22 @@ public:
 		PARAM_SLM_RUNTIME_CALC,
 		PARAM_SLM_SEQ_FILENAME,
 		PARAM_SLM_CALIB_Z,
-		PARAM_SLM_NA,
 		PARAM_SLM_WAVELENGTH,
 		PARAM_SLM_WAVELENGTH_SELECT,
 		PARAM_SLM_3D,
 		PARAM_SLM_PHASE_DIRECT,
+		PARAM_SLM_DEFOCUS,
+		PARAM_SLM_SAVE_DEFOCUS,
+		PARAM_SLM_BLANK_ZONE1,
+		PARAM_SLM_BLANK_ZONE2,
 
-		PARAM_R_POS = 1200,	
+		PARAM_R_POS = 1200,
 		PARAM_R_HOME = 1201,
 		PARAM_R_ZERO = 1202,
 		PARAM_R_VELOCITY = 1203,
 		PARAM_R_STEPS_PER_MM = 1204,
 		PARAM_R_ACCEL = 1205,
-		PARAM_R_DECEL = 1206,		
+		PARAM_R_DECEL = 1206,
 		PARAM_R_POS_CURRENT = 1207,
 		PARAM_R_JOYSTICK_VELOCITY = 1208,
 		PARAM_R_STOP = 1209,
@@ -874,7 +897,7 @@ public:
 		PARAM_LAMP_INTENSITY = 1830,
 		PARAM_LAMP_SHUTTERSTATE,
 		PARAM_LAMP_CONTROLMODE,
-		PARAM_LAMP_MODE,		
+		PARAM_LAMP_MODE,
 		PARAM_LAMP_LAMPTEMPERATURE,
 		PARAM_LAMP_LLGTEMPERATURE,
 		PARAM_LAMP_LIFETIME,
@@ -896,7 +919,7 @@ public:
 		PARAM_LIGHTPATH_NDD,
 		PARAM_LIGHTPATH_NDD_AVAILABLE,
 
-		PARAM_KURIOS_WAVELENGTH=1860,
+		PARAM_KURIOS_WAVELENGTH = 1860,
 		PARAM_KURIOS_BANDWIDTHMODE,
 		PARAM_KURIOS_TEMPERATURE,
 		PARAM_KURIOS_TEMPERATURESTATUS,
@@ -1275,39 +1298,39 @@ public:
 
 	enum DeviceType
 	{
-		DEVICE_TYPE_FIRST	= 0,
-		SHUTTER				= 0x00000001,
-		BEAM_STABILIZER		= 0x00000002,
-		STAGE_X				= 0x00000004,
-		STAGE_Y				= 0x00000008,
-		STAGE_Z				= 0x00000010,
-		AUTOFOCUS			= 0x00000020,
-		LAMP				= 0x00000040,
-		FILTER_WHEEL_EM		= 0x00000080,
-		FILTER_WHEEL_DIC	= 0x00000100,
-		TURRET				= 0x00000200,
-		PMT1				= 0x00000400,
-		PMT2				= 0x00000800,
-		POWER_REG			= 0x00001000,
-		BEAM_EXPANDER		= 0x00002000,
-		LASER1				= 0x00004000,
-		LASER2				= 0x00008000,
-		LASER3				= 0x00010000,
-		LASER4				= 0x00020000,
-		PINHOLE_WHEEL		= 0x00040000,
-		PMT3				= 0x00080000,
-		PMT4				= 0x00100000,
-		SLM				    = 0x00200000,
-		STAGE_R				= 0X00400000,
-		PMT_SWITCH			= 0x00800000,
-		EPHYS				= 0x01000000,
-		LIGHT_PATH			= 0X02000000,
-		PMT5				= 0x04000000,
-		PMT6				= 0x08000000,
-		STAGE_Z2			= 0x10000000,
-		CONTROL_UNIT		= 0x20000000,
-		SPECTRUM_FILTER		= 0x40000000,
-		POWER_REG2			= 0x80000000,
+		DEVICE_TYPE_FIRST = 0,
+		SHUTTER = 0x00000001,
+		BEAM_STABILIZER = 0x00000002,
+		STAGE_X = 0x00000004,
+		STAGE_Y = 0x00000008,
+		STAGE_Z = 0x00000010,
+		AUTOFOCUS = 0x00000020,
+		LAMP = 0x00000040,
+		FILTER_WHEEL_EM = 0x00000080,
+		FILTER_WHEEL_DIC = 0x00000100,
+		TURRET = 0x00000200,
+		PMT1 = 0x00000400,
+		PMT2 = 0x00000800,
+		POWER_REG = 0x00001000,
+		BEAM_EXPANDER = 0x00002000,
+		LASER1 = 0x00004000,
+		LASER2 = 0x00008000,
+		LASER3 = 0x00010000,
+		LASER4 = 0x00020000,
+		PINHOLE_WHEEL = 0x00040000,
+		PMT3 = 0x00080000,
+		PMT4 = 0x00100000,
+		SLM = 0x00200000,
+		STAGE_R = 0X00400000,
+		PMT_SWITCH = 0x00800000,
+		EPHYS = 0x01000000,
+		LIGHT_PATH = 0X02000000,
+		PMT5 = 0x04000000,
+		PMT6 = 0x08000000,
+		STAGE_Z2 = 0x10000000,
+		CONTROL_UNIT = 0x20000000,
+		SPECTRUM_FILTER = 0x40000000,
+		POWER_REG2 = 0x80000000,
 		DEVICE_TYPE_LAST
 	};
 
@@ -1315,8 +1338,8 @@ public:
 	enum StatusType
 	{
 		STATUS_BUSY = 0,
-		STATUS_READY,   
-		STATUS_ERROR,   
+		STATUS_READY,
+		STATUS_ERROR,
 		STATUS_PARTIAL
 	};
 
@@ -1328,23 +1351,23 @@ public:
 		CONNECTION_ERROR_STATE
 	};
 
-	virtual long FindDevices(long &DeviceCount) = 0;///<returns the number of Devices
+	virtual long FindDevices(long& DeviceCount) = 0;///<returns the number of Devices
 	virtual long SelectDevice(const long Device) = 0;///<index of the Device to attach driver to
 	virtual long TeardownDevice() = 0;///<release Device and its resources
-	virtual long GetParamInfo(const long paramID, long &paramType, long &paramAvailable, long &paramReadOnly, double &paramMin, double &paramMax, double &paramDefault) = 0;
+	virtual long GetParamInfo(const long paramID, long& paramType, long& paramAvailable, long& paramReadOnly, double& paramMin, double& paramMax, double& paramDefault) = 0;
 	virtual long SetParam(const long paramID, const double param) = 0;
-	virtual long GetParam(const long paramID, double &param) = 0;	
+	virtual long GetParam(const long paramID, double& param) = 0;
 	virtual long PreflightPosition() = 0;///<This submits the current parameters to the Device. There may be some first time latencey in settings parameters so its best to call this outside of the shutter control for image capture
 	virtual long SetupPosition() = 0;///<This submits the parameters that can chage while the Device is active. 
 	virtual long StartPosition() = 0;///<Begin the capture.
-	virtual long StatusPosition(long &status) = 0;///<returns the status of the capture
-	virtual long ReadPosition(DeviceType deviceType, double &pos) = 0;///<If the Device uses its on captures buffer copy that data to the input databuffer
+	virtual long StatusPosition(long& status) = 0;///<returns the status of the capture
+	virtual long ReadPosition(DeviceType deviceType, double& pos) = 0;///<If the Device uses its on captures buffer copy that data to the input databuffer
 	virtual long PostflightPosition() = 0;///<clean up if necessary
 	virtual long GetLastErrorMsg(wchar_t* msg, long size) = 0;///<Retrieve the description for the last error
-	virtual long SetParamString(const long paramID, wchar_t * str) = 0;
-	virtual long GetParamString(const long paramID, wchar_t * str, long size) = 0;
-	virtual	long SetParamBuffer(const long paramID, char * buffer, long size) = 0;
-	virtual	long GetParamBuffer(const long paramID, char * buffer, long size) = 0;
+	virtual long SetParamString(const long paramID, wchar_t* str) = 0;
+	virtual long GetParamString(const long paramID, wchar_t* str, long size) = 0;
+	virtual	long SetParamBuffer(const long paramID, char* buffer, long size) = 0;
+	virtual	long GetParamBuffer(const long paramID, char* buffer, long size) = 0;
 };
 
 class DeviceDll : public PDLL, public IDevice
@@ -1359,18 +1382,18 @@ class DeviceDll : public PDLL, public IDevice
 	DECLARE_FUNCTION1(long, FindDevices, long&)
 	DECLARE_FUNCTION1(long, SelectDevice, const long)
 	DECLARE_FUNCTION0(long, TeardownDevice)
-	DECLARE_FUNCTION7(long, GetParamInfo,const long, long&, long&, long&, double&, double&, double&)
-	DECLARE_FUNCTION2(long, SetParam,const long, const double)
-	DECLARE_FUNCTION2(long, GetParam,const long, double &)	
+	DECLARE_FUNCTION7(long, GetParamInfo, const long, long&, long&, long&, double&, double&, double&)
+	DECLARE_FUNCTION2(long, SetParam, const long, const double)
+	DECLARE_FUNCTION2(long, GetParam, const long, double&)
 	DECLARE_FUNCTION0(long, PreflightPosition)
 	DECLARE_FUNCTION0(long, SetupPosition)
 	DECLARE_FUNCTION0(long, StartPosition)
-	DECLARE_FUNCTION1(long, StatusPosition,long &)
-	DECLARE_FUNCTION2(long, ReadPosition, DeviceType, double &)
+	DECLARE_FUNCTION1(long, StatusPosition, long&)
+	DECLARE_FUNCTION2(long, ReadPosition, DeviceType, double&)
 	DECLARE_FUNCTION0(long, PostflightPosition)
 	DECLARE_FUNCTION2(long, GetLastErrorMsg, wchar_t*, long)
-	DECLARE_FUNCTION2(long, SetParamString, const long, wchar_t *)
-	DECLARE_FUNCTION3(long, GetParamString, const long, wchar_t *, long)
+	DECLARE_FUNCTION2(long, SetParamString, const long, wchar_t*)
+	DECLARE_FUNCTION3(long, GetParamString, const long, wchar_t*, long)
 	DECLARE_FUNCTION3(long, SetParamBuffer, const long, char*, long)
-	DECLARE_FUNCTION3(long, GetParamBuffer, const long, char *, long)
+	DECLARE_FUNCTION3(long, GetParamBuffer, const long, char*, long)
 };

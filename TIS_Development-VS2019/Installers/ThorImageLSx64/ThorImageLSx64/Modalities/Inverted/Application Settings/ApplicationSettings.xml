@@ -25,6 +25,7 @@
         <PulseMultiplexing Visibility="Collapsed" />
         <PixelDwellTime Visibility="Visible" />
         <TurnAroundAlteration Visibility="Collapsed" />
+		<FastOneWayImaging Visibility="Collapsed" />	
       </ScannerView>
       <AreaView Visibility="Visible" location="1">
         <ResolutionPresets>
@@ -72,20 +73,20 @@
       <BeamExpView Visibility="Collapsed" />
       <BeamExp2View Visibility="Collapsed" />
       <StatsTableSaveButtonView Visibility="Collapsed"/>
-      <LightPathView Visibility="Visible" location="4" GGLightPathVisibility="Visible"    GRLightPathVisibility="Visible"  CameraLightPathVisibility="Visible"  />
+      <LightPathView Visibility="Visible" location="4" GGLightPathVisibility="Visible" GRLightPathVisibility="Visible" CameraLightPathVisibility="Visible" NDDLightPathVisibility="Visible" />
 	  <InvertedLightPathView LeftNameChange="Left" CenterNameChange="Center" RightNameChange="Right" NddNameChange="NDD"/>
-      <BleachView Visibility="Collapsed" location="5" SLMPatternUnshifted="0">
+      <BleachView Visibility="Collapsed" location="5" SLMPatternUnshifted="0" PowerEntryPreferred="1" AllowSavePattern="0" PatternMinMS="8">
         <OTMView Visibility="Collapsed" Exclusive="1"/>
         <BleachCalibrationTool Visibility="Collapsed" />
       </BleachView>
-      <ZView Visibility="Visible" Invert="0" Invert2="0" location="2" zZeroVisibility="Visible" z2ZeroVisibility="Visible" InvertVisibility="Visible" InvertLimitsZ1="0" InvertLimitsZ2="0" Z1InvertPlusMinusButton="0" Z2InvertPlusMinusButton="0" />
+	  <MultiLaserControlView Visibility="Collapsed" location="6" />
+      <ZView Visibility="Visible" Invert="0" Invert2="0" location="2" zZeroVisibility="Visible" z2ZeroVisibility="Visible" InvertVisibility="Visible" InvertLimitsZ1="0" InvertLimitsZ2="0" Z1InvertPlusMinusButton="0" Z2InvertPlusMinusButton="0" enableContinuousZStackPreview="0" />
       <PowerView Visibility="Collapsed" location="3"/>
-      <MCLSView Visibility="Visible" location="6" />
       <PinholeView Visibility="Visible" SwitchSizeWithADU="0" location="8"/>
       <XYView Visibility="Hidden" SubColumnsMax="55" SubRowsMax="55" location="9" xZeroVisibility="Collapsed" yZeroVisibility="Collapsed" showInUM="1" showTileGrid="1" />
       <CaptureOptionsView Visibility="Visible" location="10" />
       <ROIStatsWindow left="0" top="0" width="480" height="120" reset="0" display="0" />
-      <LineProfileWindow left="100" top="100" width="300" height="300" reset="0" display="0" lineWidth="1" />
+      <LineProfileWindow left="100" top="100" width="300" height="300" reset="0" display="0" lineWidth="1" Autoscale="True" ConversionToUm="False" YMin="0" YMax="17000"/>
       <ROIChartWindow left="0" top="0" width="400" height="300" legendF="1" legendC="15" fifo="300" cursorStatsEnable="True" reset="0" display="0" />
       <EditBleachWindow left="0" top="0" width="400" height="300" reset="0" />
       <PowerRampWindow left="300" top="300" reset="0" />
@@ -138,12 +139,14 @@
       <DigitalSwitchesView Visibility="Visible" location="13" switchName1="1" switchName2="2" switchName3="3" switchName4="4" switchName5="5" switchName6="6" switchName7="7" switchName8="8" SwitchView="Visible" TriggerView="Collapsed" />
       <QuickTemplate Visibility="Collapsed" location="14"/>
       <LampView Visibility="Collapsed" location="15" />
-      <ThreePhotonView Visibility="Collapsed" location="16" PhaseCoarseVisibility="Collapsed" FIRSettingsVisibility="Collapsed" MultiplaneVisibility="Collapsed"/>
+      <ThreePhotonView Visibility="Collapsed" location="16" PhaseCoarseVisibility="Collapsed" FIRSettingsVisibility="Collapsed" MultiplaneVisibility="Collapsed" AcquireDuringGalvoTurnAroundVisibility="Collapsed"/>
       <EpiTurretView Visibility="Visible" EpiTurretPosName1="1" EpiTurretPosName2="2" EpiTurretPosName3="3" EpiTurretPosName4="4" EpiTurretPosName5="5" EpiTurretPosName6="6" />
       <LightEngineView Visibility="Collapsed" location="17" MainControlVisibility="Collapsed" />
 	    <DFLIMView Visibility="Collapsed" location="18" />
       <EpiturretControlView Visibility="Collapsed" location="19" />
-    </CaptureSetup>
+      <AutoFocusControlView Visibility="Collapsed" location="20" />
+      <MiniCircuitsSwitchControlView Visibility="Collapsed" location="21" A1LeftName="PMT GR" A1RightName="PMT GG" B1LeftName="PMT GR" B1RightName="PMT GG" C1LeftName="PMT GR" C1RightName="PMT GG" D1LeftName="PMT GR" D1RightName="PMT GG" A2LeftName="" A2RightName="" B2LeftName="" B2RightName="" C2LeftName="" C2RightName="" D2LeftName="" D2RightName="" />
+	</CaptureSetup>
     <RunSample>
       <BleachingView Visibility="Collapsed"/>
       <XYView Visibility="Hidden"/>

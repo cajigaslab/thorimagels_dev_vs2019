@@ -19,15 +19,28 @@
     using System.Windows.Threading;
     using System.Xml;
 
-    using Abt.Controls.SciChart;
-    using Abt.Controls.SciChart.Model.DataSeries;
-    using Abt.Controls.SciChart.Visuals;
-    using Abt.Controls.SciChart.Visuals.RenderableSeries;
-
     using HDF5CS;
 
     using ROIStatsChart.Model;
     using ROIStatsChart.View;
+
+    using SciChart;
+    using SciChart.Charting;
+    using SciChart.Charting.ChartModifiers;
+    using SciChart.Charting.Common.Extensions;
+    using SciChart.Charting.Model.DataSeries;
+    using SciChart.Charting.Themes;
+    using SciChart.Charting.Visuals;
+    using SciChart.Charting.Visuals.Annotations;
+    using SciChart.Charting.Visuals.Axes;
+    using SciChart.Charting.Visuals.Axes.LabelProviders;
+    using SciChart.Charting.Visuals.Events;
+    using SciChart.Charting.Visuals.RenderableSeries;
+    using SciChart.Core;
+    using SciChart.Data.Model;
+    using SciChart.Drawing.HighSpeedRasterizer;
+    using SciChart.Drawing.Utility;
+    using SciChart.Drawing.VisualXcceleratorRasterizer;
 
     using ThorSharedTypes;
 
@@ -174,15 +187,9 @@
                 }
                 lock (_chartSeries)
                 {
-
-                    if (true == _skipGeometricInfo)
-                    {
-                        _chartSeries.Add(new ChartSeriesViewModel(ds0, new FastLineRenderableSeries() { Tag = arithmetic, StrokeDashArray = strokeDashArray, StrokeThickness = 2, IsVisible = true, SeriesColor = (Color)ChartLineProperty.GetLineColor(name, typeof(Color)) }));
-                    }
-                    else
-                    {
-                        _chartSeries.Add(new ChartSeriesViewModel(ds0, new FastLineRenderableSeries() { Tag = arithmetic, StrokeDashArray = strokeDashArray, StrokeThickness = 2, IsVisible = true, SeriesColor = (Color)ChartLineProperty.GetLineColor(name, typeof(Color)) }));
-                    }
+                    bool isVisible = _skipGeometricInfo ? true : _seriesVisibles[i];
+                    var l = new FastLineRenderableSeries() { DataSeries = ds0, Tag = arithmetic, StrokeDashArray = strokeDashArray, StrokeThickness = 2, IsVisible = true, Stroke = (Color)ChartLineProperty.GetLineColor(name, typeof(Color)) };
+                    _chartSeries.Add(l);
                 }
                 if (false == _arithmeticDataChartIndex.ContainsKey(name))
                 {

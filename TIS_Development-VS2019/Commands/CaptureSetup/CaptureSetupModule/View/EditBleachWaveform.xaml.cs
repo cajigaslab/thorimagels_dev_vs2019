@@ -248,7 +248,7 @@
             //delete file if terminated:
             if ((false == Result) || (vm.PixelUnitMode))
             {
-                vm.DeleteFile(ROIPath + "BleachWaveform.raw");
+                ResourceManagerCS.DeleteFile(ROIPath + "BleachWaveform.raw");
             }
             vm.EditBleachResult = Result;
             this.Close();
@@ -403,7 +403,7 @@
                 //false if it requires more than memory:
                 if ((ret == false) || (WaveformBuilder.GetWaveform().Count > Int32.MaxValue))   //|| (((double)RequiredSize / KILOBYTES_TO_GIGABYTES) > ((double)MemorySize))
                 {
-                    vm.DeleteFile(ROIPath + "BleachWaveform.raw");
+                    ResourceManagerCS.DeleteFile(ROIPath + "BleachWaveform.raw");
                     return false;
                 }
             }

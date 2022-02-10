@@ -86,6 +86,20 @@
             }
         }
 
+
+        public int LUTOffset3P
+        {
+            get
+            {
+                return _threePhotonControlModel.LUTOffset3P;
+            }
+            set
+            {
+                _threePhotonControlModel.LUTOffset3P = value;
+                OnPropertyChanged("LUTOffset3P");
+            }
+        }
+
         public Visibility FIRSettingsVisibility
         {
             get
@@ -126,6 +140,17 @@
                 this._threePhotonControlModel.LSMFIRFilterTapIndex = value;
                 OnPropertyChanged("LSMFIRFilterTapIndex");
                 OnPropertyChanged("LSMFIRFilterTapValue");
+            }
+        }
+
+        Visibility _acquireDuringTurnAroundVisibility = Visibility.Collapsed;
+        public Visibility AcquireDuringTurnAroundVisibility
+        {
+            get => _acquireDuringTurnAroundVisibility;
+            set
+            {
+                _acquireDuringTurnAroundVisibility = value;
+                OnPropertyChanged("AcquireDuringTurnAroundVisibility");
             }
         }
 
@@ -503,6 +528,26 @@
                 {
                     MultiplaneVisibility = str.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
                 }
+                if (XmlManager.GetAttribute(ndList[0], appDoc, "AcquireDuringGalvoTurnAroundVisibility", ref str))
+                {
+                    AcquireDuringTurnAroundVisibility = str.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
+                }
+
+                 if(AcquireDuringTurnAroundVisibility != Visibility.Visible)
+                {
+                    AcquireDuringTurnAround = 0;
+                }
+            }
+        }
+
+
+        public int AcquireDuringTurnAround
+        {
+            get => _threePhotonControlModel.AcquireDuringTurnAround;
+            set
+            {
+                _threePhotonControlModel.AcquireDuringTurnAround = value;
+                OnPropertyChanged("AcquireDuringTurnAround");
             }
         }
 
@@ -513,6 +558,8 @@
                 OnPropertyChanged(propertyName);
             }
         }
+
+
 
         public void UpdateExpXMLSettings(ref XmlDocument experimentFile)
         {

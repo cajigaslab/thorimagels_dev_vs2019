@@ -25,7 +25,6 @@
         private Point _startPoint;
         private Point _topLeft;
         private Point _topRight;
-        private double _zValue = 0;
 
         #endregion Fields
 
@@ -162,15 +161,6 @@
         public Point TopRight
         {
             get { return _topRight; }
-        }
-
-        public double ZValue
-        {
-            get { return _zValue; }
-            set
-            {
-                _zValue = value;
-            }
         }
 
         protected override Geometry DefiningGeometry

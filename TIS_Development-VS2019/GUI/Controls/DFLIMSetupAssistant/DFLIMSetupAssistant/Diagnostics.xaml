@@ -14,7 +14,11 @@
             <sci:SciChartSurface Name="sciChartSurface"
                                  HorizontalAlignment="Stretch"
                                  Margin="0"
-                                 Padding="4,0,0,0">
+                                 Padding="4,0,0,0"
+                                 sci:VisualXcceleratorEngine.IsEnabled="True"
+                                 sci:VisualXcceleratorEngine.FallbackType="{x:Type sci:HighSpeedRenderSurface}"
+                                 sci:VisualXcceleratorEngine.DowngradeWithoutException="False"
+                                 sci:VisualXcceleratorEngine.EnableImpossibleMode="True">
                 <sci:SciChartSurface.XAxis>
                     <sci:NumericAxis Name="XAxis"
                                      AxisTitle="Sample" />
@@ -43,7 +47,7 @@
                                              ExecuteOn="MouseLeftButton"
                                              XyDirection="XYDirection"
                                              ClipModeX="ClipAtExtents" />
-                        <sci:LegendModifier Name="legendModifier" />
+                        <!--<sci:LegendModifier Name="legendModifier" />-->
                         <!--<customModifiers:MouseWheelZoomCustomModifier />
                     <customModifiers:ChartRolloverModifier />-->
                         <!--<sci:RolloverModifier x:Name="rolloverModifier"

@@ -85,6 +85,7 @@ struct BoardInfo
 	BoardStyle	boardStyle;
 	long		rtsiConfigure;
 	long		counterCount;
+	long		aoClockRateHz;
 };
 
 static std::string GetDevIDName(std::string input)
@@ -206,6 +207,44 @@ static long SetVoltageToAnalogLine(TaskHandle handle, std::string lineName, doub
 	}
 	return (DAQmxSuccess == retVal) ? TRUE : FALSE;
 }
+
+/// <summary> send a pulse or toggle designated digital line </summary>
+static long SetAnalogVoltage(TaskHandle handle, std::string lineName, long lineCount, double* voltVal, long idleMS = 5)
+{
+	int32 retVal = DAQmxSuccess, error = 0, written = 0;
+	const double CLK_RATE = 1000;
+	const int32 AO_CLOCK_LENGTH = 1000;
+	try
+	{
+		if(0 >= lineName.size() && 0 >= lineCount)
+			return FALSE;
+
+		TerminateTask(handle);
+		DAQmxErrChk(L"DAQmxCreateTask",retVal = DAQmxCreateTask("", &handle));
+		DAQmxErrChk(L"DAQmxCreateAOVoltageChan",retVal = DAQmxCreateAOVoltageChan(handle,lineName.c_str(), "", MIN_AO_VOLTAGE, MAX_AO_VOLTAGE, DAQmx_Val_Volts, NULL));
+		DAQmxErrChk(L"DAQmxCfgSampClkTiming",retVal = DAQmxCfgSampClkTiming(handle, "", 1000.0, DAQmx_Val_Rising, DAQmx_Val_FiniteSamps, 1000));
+		//DAQmxErrChk(L"DAQmxWriteAnalogScalarF64",retVal = DAQmxWriteAnalogScalarF64(handle, true, 10.0, *voltVal, NULL));
+		DAQmxErrChk(L"DAQmxWriteAnalogF64",retVal = DAQmxWriteAnalogF64(handle, 1, true, 10.0, DAQmx_Val_GroupByScanNumber, voltVal, &written, NULL));
+		//error [-200802] if not auto start with (near)empty buffer, use idleMS to delay termination
+		//DAQmxErrChk(L"DAQmxStartTask",retVal = DAQmxStartTask(handle));
+		//DAQmxErrChk(L"DAQmxWaitUntilTaskDone",retVal = DAQmxWaitUntilTaskDone(handle, MAX_TASK_WAIT_TIME));
+
+		//idle time
+		if(0 < idleMS)
+			std::this_thread::sleep_for (std::chrono::milliseconds(idleMS)); 
+	}
+	catch(...)
+	{
+		DAQmxFailed(error);
+		StringCbPrintfW(message,_MAX_PATH,L"%hs failed: (%d)",__FUNCTION__, error);
+		LogMessage(message,ERROR_EVENT);
+	}
+
+	//force tasks to be recreated:
+	TerminateTask(handle);
+	return (DAQmxSuccess == retVal) ? TRUE : FALSE;
+}
+
 
 /// <summary> send a pulse or toggle designated digital line </summary>
 static long TogglePulseToDigitalLine(TaskHandle handle, std::string lineName, long lineCount, TogglePulseMode tpMode, long idleMS = 0)

@@ -6,7 +6,24 @@
     using System.Text;
     using System.Threading.Tasks;
 
-    using Abt.Controls.SciChart.Visuals.Axes;
+    using SciChart;
+    using SciChart.Charting;
+    using SciChart.Charting.ChartModifiers;
+    using SciChart.Charting.Common.Extensions;
+    using SciChart.Charting.Model.DataSeries;
+    using SciChart.Charting.Numerics.TickProviders;
+    using SciChart.Charting.Themes;
+    using SciChart.Charting.Visuals;
+    using SciChart.Charting.Visuals.Annotations;
+    using SciChart.Charting.Visuals.Axes;
+    using SciChart.Charting.Visuals.Axes.LabelProviders;
+    using SciChart.Charting.Visuals.Events;
+    using SciChart.Charting.Visuals.RenderableSeries;
+    using SciChart.Core;
+    using SciChart.Data.Model;
+    using SciChart.Drawing.HighSpeedRasterizer;
+    using SciChart.Drawing.Utility;
+    using SciChart.Drawing.VisualXcceleratorRasterizer;
 
     public class AxisTickProvider : NumericTickProvider
     {
@@ -113,7 +130,7 @@
             }
         }
 
-        public override double[] GetMajorTicks(IAxisParams axis)
+        public override IList<double> GetMajorTicks(IAxisParams axis)
         {
             var max = axis.VisibleRange.AsDoubleRange().Max;
             var min = axis.VisibleRange.AsDoubleRange().Min;
@@ -164,7 +181,7 @@
             return rett;
         }
 
-        public override double[] GetMinorTicks(IAxisParams axis)
+        public override IList<double> GetMinorTicks(IAxisParams axis)
         {
             var ret = new List<double>();
             var max = axis.VisibleRange.AsDoubleRange().Max;

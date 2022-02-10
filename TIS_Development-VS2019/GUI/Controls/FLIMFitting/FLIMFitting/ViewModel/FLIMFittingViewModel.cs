@@ -13,11 +13,6 @@
     using System.Windows.Input;
     using System.Windows.Media;
 
-    using Abt.Controls.SciChart;
-    using Abt.Controls.SciChart.Model.DataSeries;
-    using Abt.Controls.SciChart.Visuals.PointMarkers;
-    using Abt.Controls.SciChart.Visuals.RenderableSeries;
-
     using FLIMFitting;
     using FLIMFitting.Model;
 
@@ -250,7 +245,7 @@
                                     {
                                         PrefitAllCommandExecute();
 
-                                        //Turn off the updateTZero when autofit once is set to true for now                                        
+                                        //Turn off the updateTZero when autofit once is set to true for now
                                         //if (AutoFitOnce)
                                         //{
                                         //    UpdateTZeroCommandExecute();

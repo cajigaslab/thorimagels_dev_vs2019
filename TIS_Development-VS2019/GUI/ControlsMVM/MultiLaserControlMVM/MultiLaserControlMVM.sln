@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31409.214
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiLaserControlMVM", "MultiLaserControlMVM\MultiLaserControlMVM.csproj", "{3DA41E7F-0673-414F-930C-27D5C2C35FAF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3DA41E7F-0673-414F-930C-27D5C2C35FAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3DA41E7F-0673-414F-930C-27D5C2C35FAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3DA41E7F-0673-414F-930C-27D5C2C35FAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3DA41E7F-0673-414F-930C-27D5C2C35FAF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F075977F-A894-48A8-83D4-2FB666E94DBB}
+	EndGlobalSection
+EndGlobal

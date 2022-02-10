@@ -351,15 +351,22 @@
 
         public void UpdateExpXMLSettings(ref XmlDocument experimentFile)
         {
-            XmlNodeList ndList = experimentFile.SelectNodes("/ThorImageExperiment/EPITurret");
-
-            if (ndList.Count <= 0)
+            try
             {
-                ThorSharedTypes.XmlManager.CreateXmlNode(experimentFile, "EPITurret");
-                ndList = experimentFile.SelectNodes("/ThorImageExperiment/EPITurret");
+                XmlNodeList ndList = experimentFile.SelectNodes("/ThorImageExperiment/EPITurret");
+
+                if (ndList.Count <= 0)
+                {
+                    ThorSharedTypes.XmlManager.CreateXmlNode(experimentFile, "EPITurret");
+                    ndList = experimentFile.SelectNodes("/ThorImageExperiment/EPITurret");
+                }
+                XmlManager.SetAttribute(ndList[0], experimentFile, "pos", this.EpiTurretPos.ToString());
+                XmlManager.SetAttribute(ndList[0], experimentFile, "name", EpiTurretPosName);
             }
-            XmlManager.SetAttribute(ndList[0], experimentFile, "pos", this.EpiTurretPos.ToString());
-            XmlManager.SetAttribute(ndList[0], experimentFile, "name", EpiTurretPosName);
+            catch(Exception e)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 0, "Exception thrown at UpdateExpXMLSettings.\nError message: " + e.ToString());
+            }
         }
 
         private void EpiPositionNameChange(object index)
@@ -424,8 +431,7 @@
             }
             catch (Exception e)
             {
-                e.ToString();
-                //:TODO: Log issues
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 0, "Exception thrown at EpiPositionNameChange.\nError message: " + e.ToString());
             }
         }
 

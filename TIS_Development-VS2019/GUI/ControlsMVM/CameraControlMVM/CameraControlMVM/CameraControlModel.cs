@@ -27,6 +27,7 @@
         private string _activeCameraName = string.Empty;
         private int _binIndex;
         private bool _cameraCSType = false;
+        private int _coolingModeIndex;
         private double _exposureTimeMax;
         private double _exposureTimeMin;
         private int _hotPixelLevelIndex;
@@ -52,6 +53,7 @@
             _readoutSpeedIndex = -1;
             _binIndex = -1;
             _hotPixelLevelIndex = -1;
+            _coolingModeIndex = -1;
         }
 
         #endregion Constructors
@@ -328,6 +330,21 @@
             }
         }
 
+        public double CamOrcaFrameRate
+        {
+            get
+            {
+                double val = 0;
+
+                ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_STATIC_FPS, ref val);
+                return val;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_STATIC_FPS, value);
+            }
+        }
+
         public int CamReadoutSpeedIndex
         {
             get
@@ -429,6 +446,36 @@
             set
             {
                 ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_IMAGE_VERTICAL_FLIP, value);
+            }
+        }
+
+        public bool CoolingModeAvailable
+        {
+            get
+            {
+                int val = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_COOLING_AVAILABLE, ref val);
+                return 1 == val;
+            }
+        }
+
+        public int CoolingModeIndex
+        {
+            get
+            {
+                if (-1 != _coolingModeIndex)
+                {
+                    ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_COOLING_MODE, ref _coolingModeIndex);
+                }
+                return _coolingModeIndex;
+            }
+            set
+            {
+                if (-1 != value)
+                {
+                    ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_COOLING_MODE, value);
+                }
+                _coolingModeIndex = value;
             }
         }
 
@@ -808,6 +855,21 @@
             }
             set
             {
+            }
+        }
+
+        public bool OrcaFrameRateEnabled
+        {
+            get
+            {
+                int val = 0;
+
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_STATIC_FPS_ENABLE, ref val);
+                return 1 == val;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_STATIC_FPS_ENABLE, value ? 1 : 0);
             }
         }
 

@@ -4,7 +4,7 @@
   <Wavelength name="ChanB" wavelength="589" ex="2" em="2" dic="2" fluor="1" color="#FFFF0000" bp="0" wp="255" AutoSta="0" LogSta="0" />
   <Wavelength name="ChanC" wavelength="480" ex="1" em="1" dic="1" fluor="1" color="#FF0000FF" bp="0" wp="255" AutoSta="0" LogSta="0" />
   <Wavelength name="ChanD" wavelength="480" ex="1" em="1" dic="1" fluor="1" color="#FFFFFFFF" bp="0" wp="255" AutoSta="0" LogSta="0" />
-  <Objectives beamExpType="2" lastSavedMagnification="4X">
+  <Objectives beamExpType="2" lastSavedMagnification="4X" f1MM="200" f2MM="100" f3MM="50" f4MM="200">
     <Objective name="4X" mag="4" na=".1" afScanStartMM="-6.0" afFocusOffsetMM=".1650" afAdaptiveOffsetMM=".3" beamExp="100" beamWavelength="0" beamExp2="100" beamWavelength2="0" turretPosition="1" zAxisToEscape="2" zAxisEscapeDistance="0" fineAfPercentDecrease=".15" />
     <Objective name="10X" mag="10" na=".25" afScanStartMM="-6.0" afFocusOffsetMM=".1650" afAdaptiveOffsetMM=".3" beamExp="100" beamWavelength="0" beamExp2="100" beamWavelength2="0" turretPosition="1" zAxisToEscape="2" zAxisEscapeDistance="0" fineAfPercentDecrease=".15" />
     <Objective name="16X" mag="16" na=".80" afScanStartMM="-6.0" afFocusOffsetMM=".1650" afAdaptiveOffsetMM=".3" beamExp="100" beamWavelength="0" beamExp2="100" beamWavelength2="0" turretPosition="1" zAxisToEscape="2" zAxisEscapeDistance="0" fineAfPercentDecrease=".15" />
@@ -48,6 +48,7 @@
   <ZStage2 locationName1="" location1="0" locationName2="" location2="0" locationName3="" location3="0" locationName4="" location4="0" locationName5="" location5="0" locationName6="" location6="0" />
   <DigitalIO FrameGR="/Dev3/PFI3" FrameGG="/Dev4/PFI3" LineGR="/Dev3/PFI4" LineGG="/Dev4/PFI4" CaptureGR="/Dev3/PFI8" CaptureGG="/Dev3/PFI9" Stimulation="/Dev4/PFI5" />
   <Inverted SafetyInterlockCheck="1" />
+  <Shutter OpenShutterInSimulusMode="0" />
   <ImageDetectors>
   </ImageDetectors>
   <Devices>

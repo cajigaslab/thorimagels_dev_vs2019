@@ -19,11 +19,15 @@
     /// </summary>
     public partial class SplashProgress : Window
     {
-        private bool _displayProgress = true;
+        #region Fields
+
         private bool _displayCancel = true;
+        private bool _displayProgress = true;
         private string _displayText;
         private string _progressText;
         private int _progressVal;
+
+        #endregion Fields
 
         #region Events
 
@@ -31,18 +35,16 @@
 
         #endregion Events
 
-        #region Properties
+        #region Constructors
 
-        public bool DisplayProgress
+        public SplashProgress()
         {
-            get {return _displayProgress;}
-            set
-            {
-                _displayProgress = value;
-                this.lblProgress.Visibility = (_displayProgress) ? Visibility.Visible : Visibility.Collapsed;
-                this.pbProgress.Visibility = (_displayProgress) ? Visibility.Visible : Visibility.Collapsed;
-            }
+            InitializeComponent();
         }
+
+        #endregion Constructors
+
+        #region Properties
 
         public bool DisplayCancel
         {
@@ -51,6 +53,20 @@
             {
                 _displayCancel = value;
                 this.btnCancel.Visibility = (_displayCancel) ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        public bool DisplayProgress
+        {
+            get
+            {
+                return _displayProgress;
+            }
+            set
+            {
+                _displayProgress = value;
+                this.lblProgress.Visibility = (_displayProgress) ? Visibility.Visible : Visibility.Collapsed;
+                this.pbProgress.Visibility = (_displayProgress) ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
@@ -73,7 +89,7 @@
             set
             {
                 _progressText = value;
-                this.lblProgress.Content= value;
+                this.lblProgress.Content = value;
             }
         }
 
@@ -91,15 +107,6 @@
         }
 
         #endregion Properties
-
-        #region Constructors
-
-        public SplashProgress()
-        {
-            InitializeComponent();
-        }
-
-        #endregion Constructors
 
         #region Methods
 

@@ -869,6 +869,7 @@ void CDlgDcamProperty::update_controls()
 		addstring( m_lbAttr, m_editprop.attribute & DCAMPROP_ATTR_WRITABLE,		_T( "WRITABLE" ) );
 		addstring( m_lbAttr, m_editprop.attribute & DCAMPROP_ATTR_READABLE,		_T( "READABLE" ) );
 		addstring( m_lbAttr, m_editprop.attribute & DCAMPROP_ATTR_EFFECTIVE,	_T( "EFFECTIVE" ) );
+		addstring(m_lbAttr, m_editprop.attribute & DCAMPROP_ATTR_STEPPING_INCONSISTENT, _T("STEPPING_INCONSISTENT"));
 		addstring( m_lbAttr, m_editprop.attribute & DCAMPROP_ATTR_DATASTREAM,	_T( "DATASTREAM" ) );
 		addstring( m_lbAttr, m_editprop.attribute & DCAMPROP_ATTR_ACCESSREADY,	_T( "ACCESSREADY" ) );
 		addstring( m_lbAttr, m_editprop.attribute & DCAMPROP_ATTR_ACCESSBUSY,	_T( "ACCESSBUSY" ) );
@@ -1196,6 +1197,7 @@ void CDlgDcamProperty::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar
 			else
 			{
 				err = dcamprop_queryvalue( m_hdcam, m_editprop.idprop, &newValue );
+
 				if( !failed(err) )
 				{
 					bValid = TRUE;
@@ -1530,7 +1532,13 @@ void CDlgDcamProperty::OnDeltaposDlgdcampropertySpin(NMHDR* pNMHDR, LRESULT* pRe
 		}
 		else
 		{
-			err = dcamprop_queryvalue( m_hdcam, m_editprop.idprop, &newValue );
+			if ((m_editprop.attribute & DCAMPROP_ATTR_STEPPING_INCONSISTENT) && (oldValue > newValue))
+			{
+				newValue = oldValue;
+				err = dcamprop_queryvalue(m_hdcam, m_editprop.idprop, &newValue, DCAMPROP_OPTION_PRIOR);
+			}
+			else
+				err = dcamprop_queryvalue( m_hdcam, m_editprop.idprop, &newValue );
 			if( !failed(err) )
 			{
 				bValid = TRUE;
@@ -1543,9 +1551,8 @@ void CDlgDcamProperty::OnDeltaposDlgdcampropertySpin(NMHDR* pNMHDR, LRESULT* pRe
 					if( !failed(err) )
 						bValid = TRUE;
 				}
-				else
+				else if (newValue < oldValue)
 				{
-					ASSERT( newValue < oldValue );
 					err = dcamprop_queryvalue( m_hdcam, m_editprop.idprop, &newValue, DCAMPROP_OPTION_PRIOR );
 					if( !failed(err) )
 						bValid = TRUE;

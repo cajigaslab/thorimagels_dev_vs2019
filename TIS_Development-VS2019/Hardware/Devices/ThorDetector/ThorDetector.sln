@@ -1,0 +1,44 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31702.278
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{08EC888E-F6A8-40F4-B2B6-F3FE9DD67EE9}"
+	ProjectSection(SolutionItems) = preProject
+		ThorDetectorSettings.xml = ThorDetectorSettings.xml
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorDetector", "ThorDetector\ThorDetector.vcxproj", "{7BA927E1-12BA-4C6B-9DF0-3A232270D743}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		debug2|x64 = debug2|x64
+		debug2|x86 = debug2|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7BA927E1-12BA-4C6B-9DF0-3A232270D743}.Debug|x64.ActiveCfg = Debug|x64
+		{7BA927E1-12BA-4C6B-9DF0-3A232270D743}.Debug|x64.Build.0 = Debug|x64
+		{7BA927E1-12BA-4C6B-9DF0-3A232270D743}.Debug|x86.ActiveCfg = Debug|Win32
+		{7BA927E1-12BA-4C6B-9DF0-3A232270D743}.Debug|x86.Build.0 = Debug|Win32
+		{7BA927E1-12BA-4C6B-9DF0-3A232270D743}.debug2|x64.ActiveCfg = debug2|x64
+		{7BA927E1-12BA-4C6B-9DF0-3A232270D743}.debug2|x64.Build.0 = debug2|x64
+		{7BA927E1-12BA-4C6B-9DF0-3A232270D743}.debug2|x86.ActiveCfg = debug2|Win32
+		{7BA927E1-12BA-4C6B-9DF0-3A232270D743}.debug2|x86.Build.0 = debug2|Win32
+		{7BA927E1-12BA-4C6B-9DF0-3A232270D743}.Release|x64.ActiveCfg = Release|x64
+		{7BA927E1-12BA-4C6B-9DF0-3A232270D743}.Release|x64.Build.0 = Release|x64
+		{7BA927E1-12BA-4C6B-9DF0-3A232270D743}.Release|x86.ActiveCfg = Release|Win32
+		{7BA927E1-12BA-4C6B-9DF0-3A232270D743}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7BA927E1-12BA-4C6B-9DF0-3A232270D743} = {08EC888E-F6A8-40F4-B2B6-F3FE9DD67EE9}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {230F0AE0-0BB1-4502-BDAA-4F782C5FD271}
+	EndGlobalSection
+EndGlobal

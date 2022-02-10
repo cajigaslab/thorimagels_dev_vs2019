@@ -209,6 +209,51 @@ DllExportLiveImage SetBFLampPosition(long pos)
 	return SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP,IDevice::PARAM_LEDS_ENABLE_DISABLE,pos,FALSE);
 }
 
+DllExportLiveImage SetLaser1Emission(long pos) 
+{
+	return SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_EMISSION, pos, FALSE);
+}
+
+DllExportLiveImage SetLaser2Emission(long pos)
+{
+	return SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_EMISSION, pos, FALSE);
+}
+
+DllExportLiveImage SetLaser3Emission(long pos)
+{
+	return SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_EMISSION, pos, FALSE);
+}
+
+DllExportLiveImage SetLaser4Emission(long pos)
+{
+	return SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_EMISSION, pos, FALSE);
+}
+
+DllExportLiveImage GetLaserAnalog(long &pos) 
+{
+	return GetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER_ALL_ANALOG_MODE, pos);
+}
+
+DllExportLiveImage GetLaser1Enable(long& pos) 
+{
+	return GetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_ENABLE, pos);
+}
+
+DllExportLiveImage GetLaser2Enable(long& pos)
+{
+	return GetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_ENABLE, pos);
+}
+
+DllExportLiveImage GetLaser3Enable(long& pos)
+{
+	return GetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_ENABLE, pos);
+}
+
+DllExportLiveImage GetLaser4Enable(long& pos)
+{
+	return GetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_ENABLE, pos);
+}
+
 DllExportLiveImage PowerCalibrateZero()
 {		
 	long ret = FALSE;

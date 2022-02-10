@@ -16,11 +16,6 @@ static char THIS_FILE[] = __FILE__;
 
 void double2text( double v, CString& str )
 {
-	if( v <= -10000 || 10000 <= v )
-	{
-		str.Format( _T( "%f" ), v );
-	}
-	else
 	if( v <= -1000 || 1000 <= v )
 	{
 		str.Format( _T( "%.1f" ), v );

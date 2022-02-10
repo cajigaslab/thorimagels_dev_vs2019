@@ -6,7 +6,7 @@
     using System.Text;
 
     //using System.Threading;
-    using mcl_RF_Switch_ControllerNET45;
+    using mcl_RF_Switch_Controller_NET45;
 
     class PMTSwitch
     {
@@ -14,19 +14,30 @@
 
         public USB_RF_SwitchBox _sb = new USB_RF_SwitchBox();
 
+        private string _serialNumber = string.Empty;
+
         #endregion Fields
 
         #region Methods
+
+        public bool CheckSwitchBoxConnection()
+        {
+            return (1 == _sb.Check_Connection());
+        }
 
         public bool Connect(string SerialNumber)
         {
             //Only connect if it is not currently connected to a switch box
             if (0 == _sb.Check_Connection())
             {
-                //Thread.Sleep(10);
                 _sb.Connect(ref SerialNumber);
+                if (1 == _sb.Check_Connection())
+                {
+                    _serialNumber = SerialNumber;
+                    return true;
+                }
             }
-            return (1 == _sb.Check_Connection());
+            return false;
         }
 
         public void Disconnect()
@@ -35,34 +46,47 @@
             if (1 == _sb.Check_Connection())
             {
                 _sb.Disconnect();
+                _serialNumber = string.Empty;
+                System.Threading.Thread.Sleep(10);
             }
         }
 
-        public void GetSwitchesStatus(int statusRet)
+        public string[] GetSerialNumbers()
         {
+            string serialNums = string.Empty;
+            _sb.Get_Available_SN_List(ref serialNums);
+            return serialNums.Split(' ');
+        }
+
+        public int GetSwitchesStatus()
+        {
+            int statusRet = 0;
             //Only send the command if it is connected to a switch box
             if (1 == _sb.Check_Connection())
             {
                 _sb.GetSwitchesStatus(ref statusRet);
             }
+            return statusRet;
         }
 
-        public void Set_Switch(string SwitchName, int Val)
+        public bool Set_Switch(string SwitchName, int Val)
         {
             //Only send the command if it is connected to a switch box
             if (1 == _sb.Check_Connection())
             {
-                _sb.Set_Switch(ref SwitchName, ref Val);
+                return (1 == _sb.Set_Switch(ref SwitchName, ref Val));
             }
+            return false;
         }
 
-        public void Set_SwitchesPort(byte binVal)
+        public bool Set_SwitchesPort(byte binVal)
         {
             //Only send the command if it is connected to a switch box
             if (1 == _sb.Check_Connection())
             {
-                _sb.Set_SwitchesPort(ref binVal);
+                return (1 == _sb.Set_SwitchesPort(ref binVal));
             }
+            return false;
         }
 
         #endregion Methods

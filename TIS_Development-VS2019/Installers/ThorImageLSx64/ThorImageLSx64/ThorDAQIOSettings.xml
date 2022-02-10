@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<ThorDAQIOSettings>
+	<DIOSettings captureActiveInvert="0" />
+	<DIOLinesConfig
+		DI_HardwareTrigger="6" DI_ResonantScannerLineClock="5"
+		DO_GRFrameTrigger="4" DO_GRPockelsDigitalLine="2" DO_GGFrameTrigger="4" DO_GGLineTrigger="8"  DO_GGPockelsDigitalLine="2" DO_CaptureActive="1" DO_BufferReady="3" 
+		DO_StimPockelsDigitalLine="2" DO_StimActiveEnvelope="" DO_StimComplete="7" DO_StimCycleEnvelope=""
+		DO_StimIterationEnvelope="" DO_StimEpochEnvelope="" DO_StimPatternComplete="" DO_StimPatternEnvelope=""
+		DO_InternalLinetrigger="" DO_InternalFrameTrigger="" DO_InternalPixelClock="" DO_InternalLineClock=""/>
+
+	<!--Defaults for DIOLinesConfig Leave empty if unused. Only 8 Digital IO channels available. Channels are numbered 1-8 matching the DBB1 silk screen, DIO1-DIO8. DO_GRFrameTrigger and DO_GGFrameTrigger Can be set to the same line. DO_GRPockelsDigitalLine, DO_StimPockelsDigitalLine can be set to the same line. 
+		For all others if two or more lines are set to the same DIO channel number, only the first one will be respected, and the other will be turned off
+		For Simultaneous GR-Imaging and GG-Stimulation the pockels digital line cannot be shared-->
+	<!--<DIOLinesConfig  
+		DI_HarwareTrigger="6" DI_ResonantScannerLineClock="5"
+		DO_GRFrameTrigger="4" DO_GRPockelsDigitalLine="2" DO_GGFrameTrigger="4" DO_GGLineTrigger="8"  DO_GGPockelsDigitalLine="2" DO_CaptureActive="1" DO_BufferReady="3" 
+		DO_StimPockelsDigitalLine="2" DO_StimActiveEnvelope="" DO_StimComplete="7" DO_StimCycleEnvelope=""
+		DO_StimIterationEnvelope="" DO_StimEpochEnvelope="" DO_StimPatternComplete="" DO_StimPatternEnvelope=""
+		DO_InternalLinetrigger="" DO_InternalFrameTrigger="" DO_InternalPixelClock="" DO_InternalLineClock=""/>-->
+</ThorDAQIOSettings>

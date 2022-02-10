@@ -9,7 +9,7 @@
         AllowsTransparency="True"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        Height="488"
+        Height="500"
         Width="400"
         MouseDown="SplashScreen_MouseDown">
     <Window.Resources>
@@ -17,54 +17,137 @@
         </ResourceDictionary>
     </Window.Resources>
     <Grid>
-        <StackPanel>
+        <StackPanel HorizontalAlignment="Stretch">
             <Border CornerRadius="5"
                     BorderBrush="LightBlue"
                     BorderThickness="1"
                     Background="#FF333333">
-            <StackPanel                     
-                        >
-                <StackPanel.BitmapEffect>
-                    <OuterGlowBitmapEffect GlowSize="10"
-                                           GlowColor="Black" />
-                </StackPanel.BitmapEffect>
-                <StackPanel Orientation="Horizontal"
-                            HorizontalAlignment="Center">
-                    <TextBlock  Text="ThorImageLS"
-                                Background="{x:Null}"
-                                Foreground="White"
-                                FontSize="36"
-                                TextAlignment="Left"
-                                FontFamily="Cambria"
-                                Margin="5,5,40,5" />
-                    <TextBlock Name="txtTitle"
-                               Background="{x:Null}"
-                               VerticalAlignment="Center"
-                               HorizontalAlignment="Center"
-                               Foreground="White"
-                               FontSize="16"
-                               TextAlignment="Left"
-                               FontFamily="Cambria" />
+                <StackPanel>
+                    <StackPanel.BitmapEffect>
+                        <OuterGlowBitmapEffect GlowSize="10"
+                                               GlowColor="Black" />
+                    </StackPanel.BitmapEffect>
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center">
+                        <TextBlock  Text="ThorImageLS"
+                                    Background="{x:Null}"
+                                    Foreground="White"
+                                    FontSize="36"
+                                    TextAlignment="Center"
+                                    FontFamily="Cambria"
+                                    Margin="5,5,40,5" />
+                        <TextBlock Name="txtTitle"
+                                   Background="{x:Null}"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"
+                                   Foreground="White"
+                                   FontSize="16"
+                                   TextAlignment="Left"
+                                   FontFamily="Cambria" />
                     </StackPanel>
-                <Image Source=".\splash.png"
+
+                    <Image Source=".\splash.png"
                            Width="300"
                            HorizontalAlignment="Center"
-                       VerticalAlignment="Center"
-                       >
+                           VerticalAlignment="Center">
                         <Image.BitmapEffect>
                             <OuterGlowBitmapEffect GlowSize="5"
                                                    GlowColor="Black" />
                         </Image.BitmapEffect>
                     </Image>
-
-                    <Label
-                       Margin="5"
-                       Background="{x:Null}"
-                       Content="Thorlabs Inc - 2021"
-                       HorizontalContentAlignment="Left"
-                       Foreground="#FFFFFFFF"
-                       FontSize="12"
-                       FontFamily="Cambria" />
+                    <StackPanel Orientation="Horizontal"
+                                Margin="10,10,2,0"
+                                Name="daqPanel"
+                                HorizontalAlignment="Left">
+                        <TextBlock Background="{x:Null}"
+                                   Name="daqName"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="right"
+                                   Foreground="White"
+                                   FontSize="12"
+                                   TextAlignment="Left"
+                                   FontFamily="Cambria" />
+                        <TextBlock Text=" FW:"
+                                   Background="{x:Null}"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="right"
+                                   Foreground="White"
+                                   FontSize="12"
+                                   TextAlignment="Left"
+                                   FontFamily="Cambria" />
+                        <TextBlock x:Name="DAQFirmwareVer"
+                                   Background="{x:Null}"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="right"
+                                   Foreground="White"
+                                   FontSize="12"
+                                   TextAlignment="Left"
+                                   FontFamily="Cambria" />
+                        <TextBlock Text="Driver:"
+                                   Margin="5,0,0,0"
+                                   Background="{x:Null}"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="right"
+                                   Foreground="White"
+                                   FontSize="12"
+                                   TextAlignment="Left"
+                                   FontFamily="Cambria" />
+                        <TextBlock x:Name="DAQDriverVer"
+                                   Background="{x:Null}"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="right"
+                                   Foreground="White"
+                                   FontSize="12"
+                                   TextAlignment="Left"
+                                   FontFamily="Cambria" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal"
+                                Margin="10,1,2,0"
+                                Name="lftPanel"
+                                HorizontalAlignment="Left">
+                        <TextBlock Background="{x:Null}"
+                                   Text="Low Freq. Trig. FW:"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="right"
+                                   Foreground="White"
+                                   FontSize="12"
+                                   TextAlignment="Left"
+                                   FontFamily="Cambria" />
+                        <TextBlock Name="lftFWVer"
+                                   Background="{x:Null}"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="right"
+                                   Foreground="White"
+                                   FontSize="12"
+                                   TextAlignment="Left"
+                                   FontFamily="Cambria" />
+                        <TextBlock Text="CPLD:"
+                                   Margin="5,0,0,0"
+                                   Background="{x:Null}"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="right"
+                                   Foreground="White"
+                                   FontSize="12"
+                                   TextAlignment="Left"
+                                   FontFamily="Cambria" />
+                        <TextBlock x:Name="lftCPLDVer"
+                                   Background="{x:Null}"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="right"
+                                   Foreground="White"
+                                   FontSize="12"
+                                   TextAlignment="Left"
+                                   FontFamily="Cambria" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Margin="5"
+                               Background="{x:Null}"
+                               Content="Thorlabs Inc - 2022"
+                               HorizontalContentAlignment="Left"
+                               Foreground="#FFFFFFFF"
+                               FontSize="12"
+                               FontFamily="Cambria" />
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </StackPanel>

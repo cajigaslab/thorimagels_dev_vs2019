@@ -51,7 +51,7 @@ public:
 	void SetMagnification(double mag, string name);
 	void SetPinholeWheel(long pinholePosition);
 	void SetPockelsMask(ICamera * pCamera, IExperiment* exp, string maskPath);
-	void SetLaser(long enable1, double power1,long enable2, double power2,long enable3, double power3,long enable4, double power4);
+	void SetLaser(long enable1, double power1,long enable2, double power2,long enable3, double power3,long enable4, double power4, long sequential);
 	void RunLaser(IDevice*);
 	void SetupZStage(long enableHoldingVoltage);
 	void PostCaptureProtocol(IExperiment *exp);
@@ -71,6 +71,8 @@ public:
 
 	static bool _isActive;	
 	static bool _isSaving;
+	const long ENABLE_EMISSION = 1;
+	const long DISABLE_EMISSION = 0;
 
 	~RunSample();
 };

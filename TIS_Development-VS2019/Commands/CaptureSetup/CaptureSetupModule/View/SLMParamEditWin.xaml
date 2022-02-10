@@ -329,6 +329,11 @@
                 <StackPanel Name="stpWavelength"
                             Orientation="Horizontal"
                             HorizontalAlignment="Right">
+                    <Button x:Name="CopyWaveLengthBtn"
+                            Content="Copy"
+                            ToolTip="Copy ROIs from the current wavelength into the other wavelenth"
+                            Width="50"
+                            Click="CopyWaveLengthBtn_Click" />
                     <Label Content="Wavelength"
                            Height="30"
                            HorizontalAlignment="Center"
@@ -1325,6 +1330,18 @@
                         Orientation="Horizontal"
                         VerticalAlignment="Center"
                         ToolTip="preview current pattern with specified power value">
+                <Button Name="btnSavePattern" 
+                        HorizontalAlignment="Center"
+                        HorizontalContentAlignment="Center"
+                        VerticalAlignment="Center"
+                        Height="30"
+                        Width="80"
+                        Margin="3"
+                        Visibility="{Binding Path=.AllowSavePattern, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVisConverter}, ConverterParameter=Normal}"
+                        Click="btnSLMPreview_Click"
+                        Tag="{Binding Path=.SavePattern}">
+                    <TextBlock Text="SavePattern"/>
+                </Button>
                 <Button HorizontalAlignment="Center"
                         HorizontalContentAlignment="Center"
                         VerticalAlignment="Center"

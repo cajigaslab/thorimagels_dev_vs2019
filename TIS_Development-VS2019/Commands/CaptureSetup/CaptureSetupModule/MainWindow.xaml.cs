@@ -78,7 +78,7 @@
 
             this.MasterView.ScanControlView.DataContext = MVMManager.Instance["ScanControlViewModel", captureSetupViewModel];
 
-            this.MasterView.LaserControlView.DataContext = MVMManager.Instance["LaserControlViewModel", captureSetupViewModel];
+            //this.MasterView.LaserControlView.DataContext = MVMManager.Instance["LaserControlViewModel", captureSetupViewModel];
 
             this.MasterView.MultiphotonControlView.DataContext = MVMManager.Instance["MultiphotonControlViewModel", captureSetupViewModel];
 
@@ -111,6 +111,10 @@
             this.MasterView.DFLIMControlView.DataContext = MVMManager.Instance["DFLIMControlViewModel", captureSetupViewModel];
 
             this.MasterView.AutoFocusControlView.DataContext = MVMManager.Instance["AutoFocusControlViewModel", captureSetupViewModel];
+
+            this.MasterView.MiniCircuitsSwitchControlView.DataContext = MVMManager.Instance["MiniCircuitsSwitchControlViewModel", captureSetupViewModel];
+
+            this.MasterView.MultiLaserControlView.DataContext = MVMManager.Instance["MultiLaserControlViewModel", captureSetupViewModel];
 
             this.volumeView.DataContext = captureSetupViewModel;
 
@@ -228,7 +232,7 @@
             {
                 this.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal,
                     new Action(
-                        delegate()
+                        delegate ()
                         {
                             ((CaptureSetupViewModel)this.DataContext).ViewType = Convert.ToInt32(ViewTypes.ViewType2D);
                         }
@@ -243,7 +247,7 @@
             {
                 this.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal,
                     new Action(
-                        delegate()
+                        delegate ()
                         {
 
                             ((CaptureSetupViewModel)this.DataContext).ViewType = Convert.ToInt32(ViewTypes.ViewType3D);
@@ -261,7 +265,7 @@
             {
                 this.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal,
                     new Action(
-                        delegate()
+                        delegate ()
                         {
 
                             ((CaptureSetupViewModel)this.DataContext).ViewType = Convert.ToInt32(ViewTypes.ViewTypeTiles);

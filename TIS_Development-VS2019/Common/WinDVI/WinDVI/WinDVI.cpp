@@ -17,7 +17,7 @@ std::auto_ptr<LogDll> logDll(new LogDll(L".\\ThorLoggingUnmanaged.dll"));
 bool CWinDVI::_instanceFlag = false;
 std::auto_ptr<CWinDVI> CWinDVI::_single(new CWinDVI());
 wchar_t CWinDVI::_errMsg[MSG_SIZE];
-BYTE* CWinDVI::_bmpBuffers[MAX_BUFFER_CNT] = {NULL};
+BYTE* CWinDVI::_bmpBuffers[MAX_BUFFER_CNT] = { NULL };
 long CWinDVI::_bmpBufID = -1;
 int CWinDVI::winWidth = DEFAULT_SIZE;
 int CWinDVI::winHeight = DEFAULT_SIZE;
@@ -34,33 +34,34 @@ CRITICAL_SECTION	mCriticalSection;									//for _bmpBuffers
 long				winDVIStatus = IDevice::STATUS_BUSY;
 
 // Thread to create a window
-UINT WindowCreateProc( LPVOID pParam )
+UINT WindowCreateProc(LPVOID pParam)
 {
 	long ret = TRUE;
 	MSG	messages;
 
-	hwnd = CreateWindow(szWindowClass, 0, WS_POPUP,	CWinDVI::cMInfo.rcMonitor.left, CWinDVI::cMInfo.rcMonitor.top, CWinDVI::winWidth, CWinDVI::winHeight, NULL, NULL, hInst, NULL);
+	hwnd = CreateWindow(szWindowClass, 0, WS_POPUP, CWinDVI::cMInfo.rcMonitor.left, CWinDVI::cMInfo.rcMonitor.top, CWinDVI::winWidth, CWinDVI::winHeight, NULL, NULL, hInst, NULL);
 	SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_TOOLWINDOW);
-    SetMenu(hwnd, NULL);
-	::SetWindowPos(hwnd,		// handle to window
-                HWND_TOPMOST,	// placement-order handle
-                0,				// horizontal position
-                0,				// vertical position
-                0,				// width
-                0,				// height
-                SWP_NOMOVE|SWP_NOSIZE); // window-positioning options
+	SetMenu(hwnd, NULL);
+	::SetWindowPos(
+		hwnd,		    // handle to window
+		HWND_TOPMOST,	// placement-order handle
+		0,				// horizontal position
+		0,				// vertical position
+		0,				// width
+		0,				// height
+		SWP_NOMOVE | SWP_NOSIZE); // window-positioning options
 
 	if (!hwnd)
-    {
+	{
 		CWinDVI::winWidth = CWinDVI::winHeight = DEFAULT_SIZE;
 		return FALSE;
-    }
+	}
 
 	ret = ShowWindow(hwnd, SW_SHOWDEFAULT);
 	ret = EnableWindow(hwnd, FALSE);
 
 	/* Run the message loop in the same thread of window. It will run until GetMessage() returns 0 */
-	while (0 < GetMessage (&messages, hwnd, 0, WM_USER))
+	while (0 < GetMessage(&messages, hwnd, 0, WM_USER))
 	{
 		/* Translate virtual-key messages into character messages */
 		TranslateMessage(&messages);
@@ -73,14 +74,6 @@ UINT WindowCreateProc( LPVOID pParam )
 CWinDVI::CWinDVI()
 {
 	_cDisplay.Update();
-	int count = _cDisplay.Count();	
-	if(count <= 1)
-	{
-		StringCbPrintfW(_errMsg,MSG_SIZE,L"CWinDVI: No second monitor is available");
-		LogMessage(_errMsg,VERBOSE_EVENT);
-	}
-	// assume using last monitor:
-	cMInfo = (0 < count) ? _cDisplay.Get(count-1) : _cDisplay.Get(0); 
 
 	hWinThread = NULL;
 
@@ -92,8 +85,8 @@ CWinDVI::~CWinDVI()
 	_instanceFlag = false;
 	ClearBMPs();
 	DestroyDVIWindow();
-	
-	if(hWinThread)
+
+	if (hWinThread)
 	{
 		CloseHandle(hWinThread);
 		hWinThread = NULL;
@@ -122,10 +115,10 @@ LRESULT CALLBACK CWinDVI::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 {
 	PAINTSTRUCT		ps;
 	HDC				hdc;
-	char*			ppvBits;
-    BITMAP          bitmap;
-    HDC             hdcMem;
-    HGDIOBJ         oldBitmap;
+	char* ppvBits;
+	BITMAP          bitmap;
+	HDC             hdcMem;
+	HGDIOBJ         oldBitmap;
 
 	switch (message)
 	{
@@ -133,13 +126,13 @@ LRESULT CALLBACK CWinDVI::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 		//paint bmp based on ID:
 		EnterCriticalSection(&mCriticalSection);
 
-		if(NULL !=  _bmpBuffers[_bmpBufID])
+		if (NULL != _bmpBuffers[_bmpBufID])
 		{
 			hdc = BeginPaint(hWnd, &ps);
 
-			hBitmap = CreateDIBSection(hdc,&bmi, DIB_RGB_COLORS, (void**)&ppvBits, NULL, 0);
+			hBitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, (void**)&ppvBits, NULL, 0);
 			SetDIBits(NULL, hBitmap, 0, bmi.bmiHeader.biHeight, _bmpBuffers[_bmpBufID], &bmi, DIB_RGB_COLORS);
-		
+
 			hdcMem = CreateCompatibleDC(hdc);
 			oldBitmap = SelectObject(hdcMem, hBitmap);
 
@@ -172,23 +165,70 @@ LRESULT CALLBACK CWinDVI::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 // Registers the window class
 ATOM CWinDVI::MyRegisterClass(HINSTANCE hInstance)
 {
-	WNDCLASSEX wcex = {0}; // make sure all the members are zero-ed out to start
+	WNDCLASSEX wcex = { 0 }; // make sure all the members are zero-ed out to start
 
 	wcex.cbSize = sizeof(wcex);
 
-	wcex.style			= CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc	= CWinDVI::WndProc;
-	wcex.cbClsExtra		= 0;
-	wcex.cbWndExtra		= 0;
-	wcex.hInstance		= hInstance;
-	wcex.hIcon			= NULL;
-	wcex.hCursor		= LoadCursor(hInstance, IDC_ARROW);
-	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
-	wcex.lpszMenuName	= NULL;
-	wcex.lpszClassName	= szWindowClass;
-	wcex.hIconSm		= NULL;
+	wcex.style = CS_HREDRAW | CS_VREDRAW;
+	wcex.lpfnWndProc = CWinDVI::WndProc;
+	wcex.cbClsExtra = 0;
+	wcex.cbWndExtra = 0;
+	wcex.hInstance = hInstance;
+	wcex.hIcon = NULL;
+	wcex.hCursor = LoadCursor(hInstance, IDC_ARROW);
+	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+	wcex.lpszMenuName = NULL;
+	wcex.lpszClassName = szWindowClass;
+	wcex.hIconSm = NULL;
 
 	return RegisterClassEx(&wcex);
+}
+
+// Method to choose dvi monitor by id, last if nothing valid
+long CWinDVI::ChooseDVI(const wchar_t* id)
+{
+	if (1 == _cDisplay.Count())
+	{
+		StringCbPrintfW(_errMsg, MSG_SIZE, L"CWinDVI: No second monitor is available");
+		LogMessage(_errMsg, VERBOSE_EVENT);
+	}
+	else if (_cDisplay.Count() < 1)
+	{
+		//try update display callback
+		_cDisplay.Update();
+		StringCbPrintfW(_errMsg, MSG_SIZE, L"CWinDVI: No monitor is available");
+		LogMessage(_errMsg, ERROR_EVENT);
+		return FALSE;
+	}
+
+	//collect monitor names
+	std::map<std::wstring, int> displayNames;
+	for (int i = 0; i < _cDisplay.Count(); i++)
+		displayNames.insert(std::pair<std::wstring, int>(_cDisplay.Get(i).DeviceName(), i));
+
+	//collect monitor IDs
+	std::map<std::wstring, std::wstring> monitorMap;
+	DISPLAY_DEVICE display[2];
+	display[0].cb = sizeof(display[0]);
+	display[1].cb = sizeof(display[1]);
+	int deviceIndex = 0;
+	while (EnumDisplayDevices(0, deviceIndex, &display[0], 0))
+	{
+		int monitorIndex = 0;
+		while (EnumDisplayDevices(display[0].DeviceName, monitorIndex, &display[1], 0))
+		{
+			monitorMap.insert(std::pair<std::wstring, std::wstring>(std::wstring(display[1].DeviceID).substr(0, std::wstring(display[1].DeviceID).find(L"\\{")), std::wstring(display[0].DeviceName)));
+			++monitorIndex;
+		}
+		++deviceIndex;
+	}
+
+	// Note: 0-based index in WinDVI, select last if not specified or invalid
+	cMInfo = (monitorMap.end() != monitorMap.find(id)) ?
+		(displayNames.end() != displayNames.find(monitorMap.find(id)->second)) ?
+		_cDisplay.Get(displayNames.find(monitorMap.find(id)->second)->second) : _cDisplay.Get(_cDisplay.Count() - 1) :
+		_cDisplay.Get(_cDisplay.Count() - 1);
+	return TRUE;
 }
 
 // Method to create thread for a new window if not exist
@@ -201,7 +241,7 @@ long CWinDVI::CreateDVIWindow(int w, int h)
 		return TRUE;
 
 	//re-create when different size:
-	if((hwnd) && ((winWidth != w) || (winHeight != h)))
+	if ((hwnd) && ((winWidth != w) || (winHeight != h)))
 	{
 		DestroyDVIWindow();
 	}
@@ -211,37 +251,37 @@ long CWinDVI::CreateDVIWindow(int w, int h)
 
 	winWidth = (cMInfo.Width() > w) ? w : cMInfo.Width();
 	winHeight = (cMInfo.Height() > h) ? h : cMInfo.Height();
-		
-	if(hWinThread)
+
+	if (hWinThread)
 	{
 		CloseHandle(hWinThread);
 		hWinThread = NULL;
 	}
 	DWORD dwThread;
-	hWinThread = ::CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE) WindowCreateProc, NULL, 0, &dwThread );
-    return ret;
+	hWinThread = ::CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)WindowCreateProc, NULL, 0, &dwThread);
+	return ret;
 }
 
 void CWinDVI::DestroyDVIWindow()
 {
-	if(hwnd)
+	if (hwnd)
 	{
 		//set flag and event before callback:
 		winDVIStatus = IDevice::STATUS_BUSY;
 		ResetEvent(hStatusWinDVI);
-		
+
 		//send request to close window:
 		SendMessage(hwnd, WM_CLOSE, 0, 0);
 
-		if(WAIT_OBJECT_0 != WaitForSingleObject(hStatusWinDVI, THREAD_CHECKTIME))
+		if (WAIT_OBJECT_0 != WaitForSingleObject(hStatusWinDVI, THREAD_CHECKTIME))
 		{
-			logDll->TLTraceEvent(ERROR_EVENT,1,L"WinDVI DestroyDVIWindow WaitForSingleObject hStatusWinDVI failed.\n");
+			logDll->TLTraceEvent(ERROR_EVENT, 1, L"WinDVI DestroyDVIWindow WaitForSingleObject hStatusWinDVI failed.\n");
 			LogMessage(_errMsg, ERROR_EVENT);
 		}
 
 		//done:
 		winDVIStatus = IDevice::STATUS_READY;
-		hwnd = NULL;		
+		hwnd = NULL;
 		hInst = NULL;
 	}
 }
@@ -250,15 +290,15 @@ void CWinDVI::DestroyDVIWindow()
 long CWinDVI::EditBMP(int id, unsigned char* bmpBuf, BITMAPINFO bmpInfo)
 {
 	long ret = TRUE;
-	if((NULL == bmpBuf) || (0 > id) || (MAX_BUFFER_CNT <= id))
+	if ((NULL == bmpBuf) || (0 > id) || (MAX_BUFFER_CNT <= id))
 		return FALSE;
 
 	EnterCriticalSection(&mCriticalSection);
 
-	_bmpBuffers[id] = (BYTE*) realloc((void*)_bmpBuffers[id], bmpInfo.bmiHeader.biSizeImage);
-	if(NULL == _bmpBuffers[id])
+	_bmpBuffers[id] = (BYTE*)realloc((void*)_bmpBuffers[id], bmpInfo.bmiHeader.biSizeImage);
+	if (NULL == _bmpBuffers[id])
 		return FALSE;
-	if(0 == memcpy_s(_bmpBuffers[id],bmpInfo.bmiHeader.biSizeImage,bmpBuf,bmpInfo.bmiHeader.biSizeImage))
+	if (0 == memcpy_s(_bmpBuffers[id], bmpInfo.bmiHeader.biSizeImage, bmpBuf, bmpInfo.bmiHeader.biSizeImage))
 	{
 		_bmpBufID = id;
 		bmi = bmpInfo;
@@ -272,7 +312,7 @@ void CWinDVI::ClearBMPs()
 {
 	for (int i = 0; i < MAX_BUFFER_CNT; i++)
 	{
-		if(NULL != _bmpBuffers[i])
+		if (NULL != _bmpBuffers[i])
 		{
 			free(_bmpBuffers[i]);
 			_bmpBuffers[i] = NULL;
@@ -284,8 +324,8 @@ void CWinDVI::ClearBMPs()
 //Display bitmap with defined index on the window
 long CWinDVI::DisplayBMP(int id)
 {
-	if((hwnd) && (NULL != _bmpBuffers[id]))
-	{		
+	if ((hwnd) && (NULL != _bmpBuffers[id]))
+	{
 		_bmpBufID = id;
 
 		::SetActiveWindow(hwnd);
@@ -297,20 +337,20 @@ long CWinDVI::DisplayBMP(int id)
 		winDVIStatus = IDevice::STATUS_BUSY;
 		ResetEvent(hStatusWinDVI);
 
-		if(0 != UpdateWindow(hwnd))		//callback for WM_PAINT
+		if (0 != UpdateWindow(hwnd))		//callback for WM_PAINT
 		{
-			if(WAIT_OBJECT_0 != WaitForSingleObject(hStatusWinDVI, THREAD_CHECKTIME))
+			if (WAIT_OBJECT_0 != WaitForSingleObject(hStatusWinDVI, THREAD_CHECKTIME))
 			{
-				logDll->TLTraceEvent(ERROR_EVENT,1,L"WinDVI DisplayBMP WaitForSingleObject hStatusWinDVI failed.\n");
+				logDll->TLTraceEvent(ERROR_EVENT, 1, L"WinDVI DisplayBMP WaitForSingleObject hStatusWinDVI failed.\n");
 				LogMessage(_errMsg, ERROR_EVENT);
 			}
 		}
 		else
 		{
-			logDll->TLTraceEvent(ERROR_EVENT,1,L"WinDVI UpdateWindow failed.\n");
+			logDll->TLTraceEvent(ERROR_EVENT, 1, L"WinDVI UpdateWindow failed.\n");
 			LogMessage(_errMsg, ERROR_EVENT);
 		}
-		
+
 		//set flag with done:
 		winDVIStatus = IDevice::STATUS_READY;
 		return TRUE;
@@ -322,22 +362,22 @@ long CWinDVI::DisplayBMP(int id)
 	return FALSE;
 }
 
-long CWinDVI::GetStatus(long &status)
+long CWinDVI::GetStatus(long& status)
 {
 	status = winDVIStatus;
 	return TRUE;
 }
 
-long CWinDVI::GetLastErrorMsg(wchar_t * msg, long size)
+long CWinDVI::GetLastErrorMsg(wchar_t* msg, long size)
 {
-	wcsncpy_s(msg,size,_errMsg,MSG_SIZE);
+	wcsncpy_s(msg, size, _errMsg, MSG_SIZE);
 
 	//reset the error message
 	_errMsg[0] = 0;
 	return TRUE;
 }
 
-void CWinDVI::LogMessage(wchar_t *logMsg,long eventLevel)
+void CWinDVI::LogMessage(wchar_t* logMsg, long eventLevel)
 {
 #ifdef LOGGING_ENABLED
 	logDll->TLTraceEvent(eventLevel, 1, logMsg);

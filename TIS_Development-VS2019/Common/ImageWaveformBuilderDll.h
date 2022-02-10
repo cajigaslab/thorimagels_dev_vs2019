@@ -10,7 +10,8 @@ enum BuilderType
 {
 	ALAZAR,
 	GR,
-	EPHYS_DO
+	EPHYS_DO,
+	EPHYS_AO
 };
 
 static int UnitSizeInBytes(SignalType input)

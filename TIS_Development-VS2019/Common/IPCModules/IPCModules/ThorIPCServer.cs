@@ -8,6 +8,7 @@
     using System.Threading.Tasks;
 
     using ThorLogging;
+
     using ThorSharedTypes;
 
     /// <summary>
@@ -163,6 +164,11 @@
                     SetClientServerNames();
 
                     RestartNamePipeClient();
+                    break;
+                case ThorPipeCommand.NotifySavedFile:
+                    {
+                        SendIPCCommand(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.NotifySavedFile), data);
+                    }
                     break;
                 default:
                     break;

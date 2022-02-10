@@ -14,6 +14,8 @@
 #include "Strsafe.h"
 #include "math.h"
 #include <algorithm>
+#include <complex>
+#include <thread>
 
 #define HOLOGEN_EXPORTS
 
@@ -26,6 +28,7 @@ using namespace std;
 #include "..\..\ThorSharedTypesCPP.h"
 #include "..\..\bmpCpp.h"
 #include "..\..\WinDVI\WinDVI\WinDVIlib.h"
+#include "..\..\SLM.h"
 
 //#define LOGGING_ENABLED
 #define MSG_LENGTH		256

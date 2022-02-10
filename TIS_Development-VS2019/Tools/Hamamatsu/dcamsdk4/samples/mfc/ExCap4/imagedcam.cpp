@@ -332,9 +332,18 @@ long imagedcam::_copybits( BYTE* dsttopleft, long dstrowbytes, const void* srcto
 
 		if( bitperchannel == 8 )
 		{
-			return copybits_bw8( dsttopleft, dstrowbytes
+			if (lut != NULL)
+			{
+				return copybits_bw8(dsttopleft, dstrowbytes, lut
 					, (const BYTE*)srctopleft, srcrowbytes
 					, srcox, srcoy, srcwidth, srcheight );
+			}
+
+			{
+				return copybits_bw8(dsttopleft, dstrowbytes
+					, (const BYTE*)srctopleft, srcrowbytes
+					, srcox, srcoy, srcwidth, srcheight);
+			}
 		}
 
 		if( pixeltype == DCAM_PIXELTYPE_MONO12 )

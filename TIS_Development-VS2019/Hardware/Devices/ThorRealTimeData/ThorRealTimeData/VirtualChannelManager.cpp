@@ -14,7 +14,7 @@ VirtualChannelProcessor::~VirtualChannelProcessor()
 {
 }
 
-long VirtualChannelProcessor::ExecuteTimeDomain(double* pAIn, unsigned long* pDIn, size_t length, long lineID, double* pOut)
+long VirtualChannelProcessor::ExecuteTimeDomain(double* pAIn, unsigned char* pDIn, size_t length, long lineID, double* pOut)
 {
 	double* pDInValue = new double[_variable.size()];
 	unsigned long tmpDVal = 0;

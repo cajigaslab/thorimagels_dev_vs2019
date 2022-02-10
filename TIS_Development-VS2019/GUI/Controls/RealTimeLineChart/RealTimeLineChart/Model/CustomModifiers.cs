@@ -15,16 +15,24 @@
     using System.Windows.Media;
     using System.Windows.Shapes;
 
-    using Abt.Controls.SciChart;
-    using Abt.Controls.SciChart.ChartModifiers;
-    using Abt.Controls.SciChart.Rendering.HighSpeedRasterizer;
-    using Abt.Controls.SciChart.Themes;
-    using Abt.Controls.SciChart.Utility;
-    using Abt.Controls.SciChart.Visuals;
-    using Abt.Controls.SciChart.Visuals.Annotations;
-    using Abt.Controls.SciChart.Visuals.RenderableSeries;
-
     using RealTimeLineChart.ViewModel;
+
+    using SciChart;
+    using SciChart.Charting;
+    using SciChart.Charting.ChartModifiers;
+    using SciChart.Charting.Common.Extensions;
+    using SciChart.Charting.Model.DataSeries;
+    using SciChart.Charting.Themes;
+    using SciChart.Charting.Utility;
+    using SciChart.Charting.Visuals;
+    using SciChart.Charting.Visuals.Annotations;
+    using SciChart.Charting.Visuals.Axes;
+    using SciChart.Charting.Visuals.Axes.LabelProviders;
+    using SciChart.Charting.Visuals.Events;
+    using SciChart.Core;
+    using SciChart.Core.Utility.Mouse;
+    using SciChart.Drawing.HighSpeedRasterizer;
+    using SciChart.Drawing.Utility;
 
     /// <summary>
     /// Implementation of RolloverModifier 
@@ -384,7 +392,7 @@
                     this.ModifierSurface.Children.Add(_line);
 
                     // Add the rollover points to the surface
-                    var hitTestResults = allSeries.Where(x => x.IsVisible == true).Select(x => x.HitTest(pt, false)).ToArray();
+                    var hitTestResults = allSeries.Where(x => x.IsVisible == true).Select(x => x.HitTestProvider.HitTest(pt, false)).ToArray();
                     foreach (var hitTestResult in hitTestResults)
                     {
                         const int markerSize = 10;
@@ -1007,13 +1015,13 @@
             switch (e.Modifier)
             {
                 case MouseModifier.Ctrl:
-                    this.XyDirection = Abt.Controls.SciChart.XyDirection.YDirection;
-                    this.ActionType = Abt.Controls.SciChart.ActionType.Pan;
+                    this.XyDirection = XyDirection.YDirection;
+                    this.ActionType = ActionType.Pan;
                     base.OnModifierMouseWheel(e);
                     break;
                 case MouseModifier.Shift:
-                    this.XyDirection = Abt.Controls.SciChart.XyDirection.XDirection;
-                    this.ActionType = Abt.Controls.SciChart.ActionType.Pan;
+                    this.XyDirection = XyDirection.XDirection;
+                    this.ActionType = ActionType.Pan;
                     base.OnModifierMouseWheel(e);
                     break;
                 case MouseModifier.Alt:
@@ -1030,8 +1038,8 @@
                     e.Handled = true;
                     break;
                 default:
-                    this.XyDirection = (IsXOnly) ? Abt.Controls.SciChart.XyDirection.XDirection : Abt.Controls.SciChart.XyDirection.XYDirection;
-                    this.ActionType = Abt.Controls.SciChart.ActionType.Zoom;
+                    this.XyDirection = (IsXOnly) ? XyDirection.XDirection : XyDirection.XYDirection;
+                    this.ActionType = ActionType.Zoom;
                     base.OnModifierMouseWheel(e);
                     break;
             }

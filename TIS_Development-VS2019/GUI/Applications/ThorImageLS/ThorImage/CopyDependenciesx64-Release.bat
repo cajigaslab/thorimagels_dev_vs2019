@@ -64,12 +64,21 @@ echo F | xcopy /F "..\..\..\..\Tools\Gong\gong-wpf-dragdrop-master\GongSolutions
 echo F | xcopy /F "..\..\..\..\Tools\MahApps.Metro\MahApps.Metro.1.5.0\lib\net45\MahApps.Metro.dll" .\bin\Release
 
 @echo Copying Library Mini Circuits - Switch box library built in .NET 4.5
-echo F | xcopy /F "..\..\..\..\Tools\Mini-Circuits\RF switch controller\mcl_RF_Switch_ControllerNET45.dll" .\bin\Release
+echo F | xcopy /F "..\..\..\..\Tools\Mini-Circuits\RF switch controller\mcl_RF_Switch_Controller_NET45.dll" .\bin\Release
 
 @echo Copying Library Infragistics
 echo F | xcopy /F "..\..\..\..\Tools\Infragistics\Infragistics.WPF.16.2.20162.2141\lib\InfragisticsWPF.dll" .\bin\Release
 echo F | xcopy /F "..\..\..\..\Tools\Infragistics\Infragistics.WPF.Controls.Editors.XamMaskedInput.16.2.20162.2141\lib\InfragisticsWPF.Controls.Editors.XamMaskedInput.dll" .\bin\Release
 echo F | xcopy /F "..\..\..\..\Tools\Infragistics\Infragistics.WPF.Controls.Editors.XamSlider.16.2.20162.2141\lib\InfragisticsWPF.Controls.Editors.XamSlider.dll" .\bin\Release
+
+@echo Copying Library Scichart
+echo F | xcopy /F "..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting.dll" .\bin\Release
+echo F | xcopy /F "..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting.DrawingTools.dll" .\bin\Release
+echo F | xcopy /F "..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting3D.dll" .\bin\Release
+echo F | xcopy /F "..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Core.dll" .\bin\Release
+echo F | xcopy /F "..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Data.dll" .\bin\Release
+echo F | xcopy /F "..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Drawing.dll" .\bin\Release
+echo F | xcopy /F "..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Drawing.DirectX.dll" .\bin\Release
 
 @echo Copying FLIM fitting library
 echo F | xcopy /F ..\..\..\..\Tools\FLIMFit\x64\Release\FLIMFitLibrary.dll .\bin\Release\Lib
@@ -127,6 +136,8 @@ echo F | xcopy /F ..\..\..\..\GUI\Controls\DFLIMControl\DFLIMControl\bin\Release
 echo F | xcopy /F ..\..\..\..\GUI\Controls\DFLIMSetupAssistant\DFLIMSetupAssistant\bin\Release\DFLIMSetupAssistant.dll .\bin\Release\Modules
 echo F | xcopy /F ..\..\..\..\GUI\Controls\FLIMFitting\FLIMFitting\bin\Release\FLIMFitting.dll .\bin\Release\Modules
 echo F | xcopy /F ..\..\..\..\GUI\Controls\AutoFocusControl\AutoFocusControl\bin\Release\AutoFocusControl.dll .\bin\Release\Modules
+echo F | xcopy /F ..\..\..\..\GUI\Controls\MiniCircuitsSwitchControl\MiniCircuitsSwitchControl\bin\Release\MiniCircuitsSwitchControl.dll .\bin\Release\Modules
+echo F | xcopy /F ..\..\..\..\GUI\Controls\MultiLaserControl\MultiLaserControl\bin\Release\MultiLaserControl.dll .\bin\Release\Modules
 
 @echo Copying Library MVM
 echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\PowerControlMVM\PowerControlMVM\bin\Release\PowerControlMVM.dll .\bin\Release\Modules\MVM
@@ -152,6 +163,8 @@ echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\DFLIMControlMVM\DFLIMControlMVM\bi
 echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\EpiTurretControlMVM\EpiTurretControlMVM\bin\Release\EpiTurretControlMVM.dll .\bin\Release\Modules\MVM
 REM echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\MesoScanMVM\MesoScanMVM\bin\Release\MesoScanMVM.dll .\bin\Release\Modules\MVM
 echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\AutoFocusControlMVM\AutoFocusControlMVM\bin\Release\AutoFocusControlMVM.dll .\bin\Release\Modules\MVM
+echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\MiniCircuitsSwitchControlMVM\MiniCircuitsSwitchControlMVM\bin\Release\MiniCircuitsSwitchControlMVM.dll .\bin\Release\Modules\MVM
+echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\MultiLaserControlMVM\MultiLaserControlMVM\bin\Release\MultiLaserControlMVM.dll .\bin\Release\Modules\MVM
 
 echo F | xcopy /F ..\..\..\..\Common\Database\DatabaseInterface\bin\Release\DatabaseInterface.dll .\bin\Release\Modules
 echo F | xcopy /F ..\..\..\..\Common\Database\DatabaseInterface\bin\Release\System.Data.SQLite.dll .\bin\Release\Modules
@@ -249,11 +262,6 @@ move .\bin\Release\Lib\Kitware.VTK.dll .\bin\Release
 move .\bin\Release\Lib\Kitware.VTK.vtkFiltering.Unmanaged.dll .\bin\Release
 
 echo F | xcopy /F ..\..\..\..\GUI\Controls\ROIStatsChart\ROIStatsChart\bin\Release\ROIStatsChart.dll .\bin\Release\Modules
-echo F | xcopy /F ..\..\..\..\GUI\Controls\ROIStatsChart\ROIStatsChart\bin\Release\Abt.Controls.SciChart.Wpf.2.3.dll .\bin\Release\
-echo F | xcopy /F ..\..\..\..\GUI\Controls\ROIStatsChart\ROIStatsChart\bin\Release\Abt.Controls.SciChart.Wpf.2.3.xml .\bin\Release\
-
-echo F | xcopy /F ..\..\..\..\GUI\Controls\XYTileControl\XYTileControl\bin\Release\Abt.Controls.SciChart.Wpf.dll .\bin\Release\
-echo F | xcopy /F ..\..\..\..\GUI\Controls\XYTileControl\XYTileControl\bin\Release\Abt.Controls.SciChart.Wpf.xml .\bin\Release\
 
 echo F | xcopy /F ..\..\..\..\GUI\Controls\KuriosControl\KuriosControl\bin\Release\KuriosControl.dll .\bin\Release\Modules
 
@@ -364,6 +372,7 @@ REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorTDC\x64\Release\ThorTDC.d
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorVBE\x64\Release\ThorVBE.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorZPiezo\x64\Release\ThorZPiezo.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorZStepper\x64\Release\ThorZStepper.dll .\bin\Release\Modules_Native
+REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorSLM\x64\Release\ThorSLM.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorSLMPDM512\x64\Release\ThorSLMPDM512.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorSLMPDM512\ThorSLMPDM512\DLL\*.* .\bin\Release\Lib
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorTiberius\x64\Release\ThorTiberius.dll .\bin\Release\Modules_Native
@@ -371,6 +380,7 @@ REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\PIPiezoXYZ\x64\Release\PIPiez
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\OTMLaser\x64\Release\OTMLaser.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorChrolis\x64\Release\ThorChrolis.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorLSKGR\x64\Release\ThorLSKGR.dll .\bin\Release\Modules_Native
+REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorDetector\x64\Release\ThorDetector.dll .\bin\Release\Modules_Native
 
 :: Settings Files :::::::::::::::::::::
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\CoherentChameleon\CoherentChameleonSettings.xml .\bin\Release
@@ -384,6 +394,7 @@ echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocal\ThorConfocalSettings
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocalGalvo\ThorConfocalGalvoSettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocalGalvoSimulator\ThorConfocalGalvoSimulatorSettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorConfocalSimulator\ThorConfocalSimulatorSettings.xml .\bin\Release
+echo F | xcopy /F ..\..\..\..\Installers\ThorImageLSx64\ThorImageLSx64\ThorDetectorSwitchSettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorGGNI\ThorGGNISettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorMesoScan\ThorMesoScanSettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorStim\ThorStimSettings.xml .\bin\Release
@@ -413,13 +424,14 @@ echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorVBE\ThorVBESettings.xml .\bin
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorElectroPhys\ThorElectroPhysSettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorBCMPA\ThorBCMPASettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorDDR05\ThorDDR05Settings.xml .\bin\Release
-echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorSLMPDM512\ThorSLMPDM512Settings.xml .\bin\Release
+echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorSLM\ThorSLMSettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorPLSZ\ThorPLSZSettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorTiberius\ThorTiberiusSettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\PIPiezoXYZ\PIPiezoSettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\OTMLaser\OTMLaserSettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorLSKGR\ThorLSKGRSettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM6000\ThorMCM6000Settings.xml .\bin\Release
+echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorDetector\ThorDetectorSettings.xml .\bin\Release
 
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\thordaq\Dll\ThorDAQResonantGalvo\ThorDAQResonantGalvoSettings.xml .\bin\Release
 echo F | xcopy /F ..\..\..\..\Hardware\Cameras\thordaq\Dll\ThorDAQGalvoGalvo\ThorDAQGalvoGalvoSettings.xml .\bin\Release

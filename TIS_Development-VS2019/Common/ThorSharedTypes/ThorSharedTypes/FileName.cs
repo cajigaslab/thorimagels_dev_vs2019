@@ -242,6 +242,9 @@
                     NumDigits = Math.Max(Math.Min(imgIndxDigiCnts, (int)Constants.MAX_FILE_FORMAT_DIGITS), 1);
                 }
             }
+            catch (DllNotFoundException)
+            {
+            }
             catch (Exception ex)
             {
                 ResourceManagerCS.ReturnDocMutexCS(SettingsFileType.APPLICATION_SETTINGS);

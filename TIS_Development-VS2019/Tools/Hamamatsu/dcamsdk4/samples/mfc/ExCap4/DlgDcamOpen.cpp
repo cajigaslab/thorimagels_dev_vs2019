@@ -22,7 +22,6 @@ UINT CDlgDcamOpen::dcam_init_and_open( HDCAM& hdcam, long* option )
 {
 	return aDlgDcamOpen.init_and_open( hdcam, option );
 }
-
 // ----------------------------------------------------------------
 // CDlgDcamOpen dialog
 

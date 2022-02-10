@@ -141,6 +141,12 @@ long AcquireSingle::CallInformMessage(wchar_t* message)
 	return TRUE;
 }
 
+long AcquireSingle::CallNotifySavedFileIPC(wchar_t* message)
+{
+	NotifySavedFileIPC(message);
+	return TRUE;
+}
+
 int Call_TiffVSetField(TIFF* out, uint32 ttag_t, ...)
 {
 	int retv;
@@ -2203,6 +2209,7 @@ long AcquireSingle::Execute(long index, long subWell)
 		dflimFile.write(dflimBuffer, dflimImageSize);
 		dflimFile.close();
 		delete[] dflimBuffer;
+		CallNotifySavedFileIPC(filePathAndName);
 
 		long maxPhotonListSizePerFrame = dPhotonList.c * dPhotonList.x * dPhotonList.y;
 		ofstream photonsFile(filePathAndNamePhotons, ios_base::binary);
@@ -2215,6 +2222,7 @@ long AcquireSingle::Execute(long index, long subWell)
 				photonsBuffer = ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_PHOTONS], 0, 0, 0, i, i * maxPhotonListSizePerFrame);
 				photonsFile.write((char*)photonsBuffer, maxPhotonListSizePerFrame);
 				ImageManager::getInstance()->UnlockImagePtr(avgImageIDs[BufferType::DFLIM_PHOTONS], 0, 0, 0, i);
+				CallNotifySavedFileIPC(filePathAndNamePhotons);
 			}
 
 			int rem = dflimPhotonListOffset % maxPhotonListSizePerFrame;
@@ -2223,6 +2231,7 @@ long AcquireSingle::Execute(long index, long subWell)
 				photonsBuffer = ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_PHOTONS], 0, 0, 0, n, n * maxPhotonListSizePerFrame);
 				photonsFile.write((char*)photonsBuffer, rem);
 				ImageManager::getInstance()->UnlockImagePtr(avgImageIDs[BufferType::DFLIM_PHOTONS], 0, 0, 0, n);
+				CallNotifySavedFileIPC(filePathAndNamePhotons);
 			}
 		}
 		else
@@ -2230,6 +2239,7 @@ long AcquireSingle::Execute(long index, long subWell)
 			char* photonsBuffer = ImageManager::getInstance()->GetImagePtr(avgImageIDs[BufferType::DFLIM_PHOTONS], 0, 0, 0, 0);
 			photonsFile.write((char*)photonsBuffer, dflimPhotonListOffset);
 			ImageManager::getInstance()->UnlockImagePtr(avgImageIDs[BufferType::DFLIM_PHOTONS], 0, 0, 0, 0);
+			CallNotifySavedFileIPC(filePathAndNamePhotons);
 		}
 		photonsFile.close();
 
@@ -2292,6 +2302,7 @@ long AcquireSingle::Execute(long index, long subWell)
 			}
 
 			rawFile.write(pMemoryBuffer + ((size_t)bufferOffsetIndex * d.x * d.y * sizeof(unsigned short)), rawFrameSize);
+			CallNotifySavedFileIPC(filePathAndName);
 		}
 	}
 	
@@ -2339,6 +2350,7 @@ long AcquireSingle::Execute(long index, long subWell)
 			{
 				SaveTIFFWithoutOME(filePathAndName, pMemoryBuffer + (bufferOffsetIndex * d.x * d.y * 2), d.x, d.y, rlut, glut, blut, umPerPixel, _pExp->GetNumberOfWavelengths(), timePoints, zstageSteps, intervalSec, i, _tFrame - 1, _zFrame - 1, &acquiredDate, deltaT, _sp.doCompression);
 			}
+			CallNotifySavedFileIPC(filePathAndName);
 
 			if (_sp.doJPEG)
 			{
@@ -2349,6 +2361,7 @@ long AcquireSingle::Execute(long index, long subWell)
 				StringCbPrintfW(filePathAndName, _MAX_PATH, jpgNameFormat.str().c_str(), drive, dir, wavelengthName.c_str(), index, subWell, _zFrame, _tFrame);
 
 				SaveJPEG(filePathAndName, pMemoryBuffer + (bufferOffsetIndex * d.x * d.y * 2), d.x, d.y, rlut, glut, blut, bitDepth);
+				CallNotifySavedFileIPC(filePathAndName);
 			}
 		}
 	}

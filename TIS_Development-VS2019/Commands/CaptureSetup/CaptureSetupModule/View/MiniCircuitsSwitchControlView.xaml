@@ -1,0 +1,67 @@
+﻿<UserControl x:Class="CaptureSetupDll.View.MiniCircuitsSwitchControlView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:View="clr-namespace:CaptureSetupDll.View"
+             xmlns:validator="clr-namespace:Validations;assembly=Validations"
+             xmlns:tc="clr-namespace:ThemeControl;assembly=ThemeControl"
+             xmlns:mcl="clr-namespace:MiniCircuitsSwitchControl;assembly=MiniCircuitsSwitchControl"
+             Height="Auto"
+             Width="400">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <Style TargetType="{x:Type ListBox}">
+                <Setter Property="ListBox.ItemTemplate">
+                    <Setter.Value>
+                        <DataTemplate>
+                            <ToggleButton Content="{Binding}"
+                                          IsChecked="{Binding IsSelected, Mode=TwoWay, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}" />
+                        </DataTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <mcl:MiniCircuitsSwitchControlUC 
+            ManualSwitchEnable="{Binding ManualSwitchEnable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+            A1SwitchPosition="{Binding Path=A1SwitchPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            A1SwitchColor="{Binding Path=A1SwitchColor, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+            A1SwitchLeftName="{Binding Path=A1SwitchLeftName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            A1SwitchRightName="{Binding Path=A1SwitchRightName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            B1SwitchPosition="{Binding Path=B1SwitchPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            B1SwitchColor="{Binding Path=B1SwitchColor, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+            B1SwitchLeftName="{Binding Path=B1SwitchLeftName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            B1SwitchRightName="{Binding Path=B1SwitchRightName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            C1SwitchPosition="{Binding Path=C1SwitchPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            C1SwitchColor="{Binding Path=C1SwitchColor, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+            C1SwitchLeftName="{Binding Path=C1SwitchLeftName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            C1SwitchRightName="{Binding Path=C1SwitchRightName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            D1SwitchPosition="{Binding Path=D1SwitchPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            D1SwitchColor="{Binding Path=D1SwitchColor, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+            D1SwitchLeftName="{Binding Path=D1SwitchLeftName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            D1SwitchRightName="{Binding Path=D1SwitchRightName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            SecondSwitchBoxAvailable="{Binding Path=SecondSwitchBoxAvailable, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+            A2SwitchPosition="{Binding Path=A2SwitchPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            A2SwitchColor="{Binding Path=A2SwitchColor, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+            A2SwitchLeftName="{Binding Path=A2SwitchLeftName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            A2SwitchRightName="{Binding Path=A2SwitchRightName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            B2SwitchPosition="{Binding Path=B2SwitchPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            B2SwitchColor="{Binding Path=B2SwitchColor, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+            B2SwitchLeftName="{Binding Path=B2SwitchLeftName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            B2SwitchRightName="{Binding Path=B2SwitchRightName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            C2SwitchPosition="{Binding Path=C2SwitchPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            C2SwitchColor="{Binding Path=C2SwitchColor, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+            C2SwitchLeftName="{Binding Path=C2SwitchLeftName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            C2SwitchRightName="{Binding Path=C2SwitchRightName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            D2SwitchPosition="{Binding Path=D2SwitchPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            D2SwitchColor="{Binding Path=D2SwitchColor, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+            D2SwitchLeftName="{Binding Path=D2SwitchLeftName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            D2SwitchRightName="{Binding Path=D2SwitchRightName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            SwitchPositionNameChangeCommand="{Binding Path=SwitchPositionNameChangeCommand}"
+            >
+        </mcl:MiniCircuitsSwitchControlUC>
+    </Grid>
+</UserControl>

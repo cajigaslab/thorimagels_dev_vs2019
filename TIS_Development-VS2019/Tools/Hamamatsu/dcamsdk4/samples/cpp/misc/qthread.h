@@ -18,7 +18,7 @@ protected:
 	void*	m_thread;
 	int32	m_exitcode;
 
-#if defined( WIN32 )
+#if defined(WIN32)
 
 	static	DWORD WINAPI threadentry( LPVOID pparam );
 

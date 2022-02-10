@@ -260,6 +260,28 @@
                         Orientation="Horizontal"
                         Margin="0,5"
                         IsEnabled="{Binding Path=IsChecked, ElementName=CbThreePhotonModeEnable}"
+                        Visibility="{Binding Path=AcquireDuringTurnAroundVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <CheckBox Content="Acquire During Galvo Turn-Around"
+                          VerticalContentAlignment="Center"
+                          IsChecked="{Binding AcquireDuringTurnAround}"
+                          Margin="3"
+                          VerticalAlignment="Bottom" />
+            </StackPanel>
+            <StackPanel HorizontalAlignment="Stretch"
+                        Orientation="Horizontal"
+                        Margin="0,5"
+                        IsEnabled="{Binding Path=IsChecked, ElementName=CbThreePhotonModeEnable}"
+                        Visibility="{Binding Path=AcquireDuringTurnAroundVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <Label Content="One-way LUT offset"
+                       VerticalAlignment="Center"/>
+                <TextBox Text="{Binding LUTOffset3P, Mode=TwoWay}"
+                         Width="60"
+                         VerticalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel HorizontalAlignment="Stretch"
+                        Orientation="Horizontal"
+                        Margin="0,5"
+                        IsEnabled="{Binding Path=IsChecked, ElementName=CbThreePhotonModeEnable}"
                         Visibility="{Binding Path=MultiplaneVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
                 <Label Content="Number of planes"
                        VerticalAlignment="Center" />

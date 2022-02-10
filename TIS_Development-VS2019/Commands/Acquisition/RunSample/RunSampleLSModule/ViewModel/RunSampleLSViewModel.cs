@@ -93,6 +93,7 @@
         private bool _largeHistogram2 = false;
         private bool _largeHistogram3 = false;
         private bool _largeHistogram4 = false;
+        private DateTime _lastUpdate = DateTime.Now;
         private bool _logScaleEnabled0 = false;
         private bool _logScaleEnabled1 = false;
         private bool _logScaleEnabled2 = false;
@@ -634,7 +635,7 @@
             }
         }
 
-        public RunSampleLS.BleachMode CurrentBleachMode
+        public BleachMode CurrentBleachMode
         {
             get
             {
@@ -861,7 +862,7 @@
                 const double BYTES_TO_MEGABYTES = 1048576.0;
                 const int ACCUMULATIVE = 1;
 
-                if ((int)RunSampleLS.CaptureModes.T_AND_Z == this.CaptureMode)
+                if ((int)CaptureModes.T_AND_Z == this.CaptureMode)
                 {
                     int nz = 1;
                     int nt = 1;
@@ -888,7 +889,7 @@
                     double val = width * height * chan * nzs * nz * nt * nsub * BYTES_PER_PIXEL / BYTES_TO_MEGABYTES;
                     reqSize = (long)(0.5 + val);
                 }
-                else if ((int)RunSampleLS.CaptureModes.STREAMING == this.CaptureMode)
+                else if ((int)CaptureModes.STREAMING == this.CaptureMode)
                 {
                     if (this.StreamStorageMode == 0)
                     {
@@ -918,7 +919,7 @@
                         }
                     }
                 }
-                else if ((int)RunSampleLS.CaptureModes.BLEACHING == this.CaptureMode)
+                else if ((int)CaptureModes.BLEACHING == this.CaptureMode)
                 {
                     long preBleachSize;
                     long postBleachSize1;
@@ -939,7 +940,7 @@
 
                     reqSize = preBleachSize + postBleachSize1 + postBleachSize2;
                 }
-                else if ((int)RunSampleLS.CaptureModes.HYPERSPECTRAL == this.CaptureMode)
+                else if ((int)CaptureModes.HYPERSPECTRAL == this.CaptureMode)
                 {
                     int depth = 1;
                     int frames = SFSteps;
@@ -4470,8 +4471,8 @@
                 return;
             }
 
-                        _bitmap = this._RunSampleLS.CreateBitmap();
-                        _paletteChanged = false;
+            _bitmap = this._RunSampleLS.CreateBitmap();
+            _paletteChanged = false;
 
             this._RunSampleLS.IsDisplayImageReady = false;
 
@@ -4755,10 +4756,10 @@
             List<string> fileList;
             switch (CurrentBleachMode)
             {
-                case RunSampleLS.BleachMode.BLEACH:
+                case BleachMode.BLEACH:
                     if (File.Exists(bROISource))
                     {
-                        _RunSampleLS.BleachScanMode = RunSampleLS.BleachMode.BLEACH;
+                        _RunSampleLS.BleachScanMode = BleachMode.BLEACH;
                         _RunSampleLS.BleachLongIdle = 0;
 
                         string str = string.Empty;
@@ -4804,7 +4805,7 @@
                         }
                     }
                     break;
-                case RunSampleLS.BleachMode.SLM:
+                case BleachMode.SLM:
                     if (!Directory.Exists(_RunSampleLS.SLMWaveformFolder[0]))
                     {
                         MessageBox.Show("Unable to locate SLMWaveforms folder.");
@@ -4839,7 +4840,7 @@
                         else
                         {
                             _RunSampleLS.BleachLongIdle = 0;
-                            _RunSampleLS.BleachScanMode = RunSampleLS.BleachMode.SLM;
+                            _RunSampleLS.BleachScanMode = BleachMode.SLM;
                         }
                     }
                     break;
@@ -4932,7 +4933,7 @@
             CurrentSubImageCol = 1;
 
             //Pre-bleach check:
-            if ((int)RunSampleLS.CaptureModes.BLEACHING == CaptureMode)
+            if ((int)CaptureModes.BLEACHING == CaptureMode)
             {
                 if (!PreBleachParamsSetup())
                 {
@@ -4971,6 +4972,21 @@
 
         void RunSampleLS_Update(string statusMessage)
         {
+            //We need to throttle the GUI image count update for fast frame rates (more than 200fps).
+            //The throttle needs to stop before the end of acquisition (one frame before) otherwise the GUI might miss the final frame and won't know it finished
+            if (CompletedImageCount < (TotalImageCount - 1) && 200 < _RunSampleLS.FrameRate)
+            {
+                TimeSpan ts = DateTime.Now - _lastUpdate;
+                if (0.5 < ts.TotalSeconds)
+                {
+                    _lastUpdate = DateTime.Now;
+                }
+                else
+                {
+                    return;
+                }
+            }
+
             OnPropertyChanged("TotalImageCount");
             OnPropertyChanged("CurrentImageCount");
             OnPropertyChanged("CompletedImageCount");

@@ -88,6 +88,7 @@
         private int _selectedPowerTab = 0;
         private ICommand _selectPockelsMaskCommand;
         private ICommand _setBleacherPowerCommand;
+        private ICommand _setBleacherPowerToZeroCommand;
         private ICommand _setPowerCommand;
         private ICommand _stepCoarseCommand;
         private ICommand _stepFineCommand;
@@ -317,6 +318,31 @@
                     case 3: val = this.PockelsVoltageMin3; break;
                 }
                 return val;
+            }
+        }
+
+        public double PockelsBlankingPhaseShiftPercent
+        {
+            get
+            {
+                return _powerControlModel.PockelsBlankingPhaseShiftPercent;
+            }
+            set
+            {
+                _powerControlModel.PockelsBlankingPhaseShiftPercent = value;
+                OnPropertyChanged("PockelsBlankingPhaseShiftPercent");
+            }
+        }
+
+        public Visibility PockelsBlankingPhaseShiftPercentVisibility
+        {
+            get
+            {
+                return _powerControlModel.PockelsBlankingPhaseShiftPercentAvailable ? Visibility.Visible : Visibility.Collapsed;
+            }
+            set
+            {
+
             }
         }
 
@@ -1750,6 +1776,17 @@
             }
         }
 
+        public ICommand SetBleacherPowerToZeroCommand
+        {
+            get
+            {
+                if (this._setBleacherPowerToZeroCommand == null)
+                    this._setBleacherPowerToZeroCommand = new RelayCommand(() => SetBleacherPowerToZero());
+
+                return this._setBleacherPowerToZeroCommand;
+            }
+        }
+
         public ICommand SetPowerCommand
         {
             get
@@ -3076,6 +3113,20 @@
                     case 2: this._powerControlModel.BleacherPower1 = BleacherPowerGo; break;
                     case 3: this._powerControlModel.BleacherPower2 = BleacherPowerGo; break;
                     case 4: this._powerControlModel.BleacherPower3 = BleacherPowerGo; break;
+                }
+            }
+        }
+
+        private void SetBleacherPowerToZero()
+        {
+            if ((0 < BleacherPockelsList.Count) && (0 <= BleacherPowerID))
+            {
+                switch (BleacherPockelsList[BleacherPowerID])
+                {
+                    case 1: this._powerControlModel.BleacherPower0 = 0; break;
+                    case 2: this._powerControlModel.BleacherPower1 = 0; break;
+                    case 3: this._powerControlModel.BleacherPower2 = 0; break;
+                    case 4: this._powerControlModel.BleacherPower3 = 0; break;
                 }
             }
         }

@@ -1188,6 +1188,12 @@
                     ShowTemperatures = (str == "1" || str == Boolean.TrueString);
                 }
             }
+            OnPropertyChanged("LED1ControlName");
+            OnPropertyChanged("LED2ControlName");
+            OnPropertyChanged("LED3ControlName");
+            OnPropertyChanged("LED4ControlName");
+            OnPropertyChanged("LED5ControlName");
+            OnPropertyChanged("LED6ControlName");
         }
 
         /// <summary>

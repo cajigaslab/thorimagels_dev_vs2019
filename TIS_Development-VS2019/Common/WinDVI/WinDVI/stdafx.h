@@ -14,6 +14,7 @@
 // C RunTime Header Files
 #include <string>
 #include <memory>
+#include <map>
 
 #ifdef WINDVI_EXPORTS
 #define WINDVI_API __declspec( dllexport )

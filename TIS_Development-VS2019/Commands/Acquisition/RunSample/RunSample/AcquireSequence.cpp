@@ -85,6 +85,11 @@ long AcquireSequence::CallInformMessage(wchar_t* message)
 	return TRUE;
 }
 
+long AcquireSequence::CallNotifySavedFileIPC(wchar_t* message)
+{
+	NotifySavedFileIPC(message);
+	return TRUE;
+}
 
 long AcquireSequence::Execute(long index, long subWell, long zFrame, long tFrame)
 {

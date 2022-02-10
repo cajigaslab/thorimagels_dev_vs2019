@@ -62,6 +62,7 @@
         public static readonly DependencyProperty CamImageWidthProperty = DependencyProperty.Register("CamImageWidth", typeof(int), typeof(CameraControlUC));
         public static readonly DependencyProperty CamLedAvailableProperty = DependencyProperty.Register("CamLedAvailable", typeof(bool), typeof(CameraControlUC));
         public static readonly DependencyProperty CamLedEnableProperty = DependencyProperty.Register("CamLedEnable", typeof(int), typeof(CameraControlUC));
+        public static readonly DependencyProperty CamOrcaFrameRateProperty = DependencyProperty.Register("CamOrcaFrameRate", typeof(double), typeof(CameraControlUC));
         public static readonly DependencyProperty CamPixelSizeUMProperty = DependencyProperty.Register("CamPixelSizeUM", typeof(double), typeof(CameraControlUC));
         public static readonly DependencyProperty CamReadoutSpeedIndexProperty = DependencyProperty.Register("CamReadoutSpeedIndex", typeof(int), typeof(CameraControlUC));
         public static readonly DependencyProperty CamReadoutSpeedListProperty = DependencyProperty.Register("CamReadoutSpeedList", typeof(ObservableCollection<string>), typeof(CameraControlUC));
@@ -73,6 +74,9 @@
         public static readonly DependencyProperty CamTapindexMinProperty = DependencyProperty.Register("CamTapindexMin", typeof(int), typeof(CameraControlUC));
         public static readonly DependencyProperty CamTapIndexProperty = DependencyProperty.Register("CamTapIndex", typeof(int), typeof(CameraControlUC));
         public static readonly DependencyProperty CamVerticalFlipProperty = DependencyProperty.Register("CamVerticalFlip", typeof(int), typeof(CameraControlUC));
+        public static readonly DependencyProperty CoolingModeIndexProperty = DependencyProperty.Register("CoolingModeIndex", typeof(int), typeof(CameraControlUC));
+        public static readonly DependencyProperty CoolingModeListProperty = DependencyProperty.Register("CoolingModeList", typeof(ObservableCollection<string>), typeof(CameraControlUC));
+        public static readonly DependencyProperty CoolingVisibilityProperty = DependencyProperty.Register("CoolingVisibility", typeof(Visibility), typeof(CameraControlUC));
         public static readonly DependencyProperty ExposureTimeCamProperty = DependencyProperty.Register("ExposureTimeCam", typeof(double), typeof(CameraControlUC));
         public static readonly DependencyProperty ExposureTimeMaxProperty = DependencyProperty.Register("ExposureTimeMax", typeof(double), typeof(CameraControlUC));
         public static readonly DependencyProperty ExposureTimeMinProperty = DependencyProperty.Register("ExposureTimeMin", typeof(double), typeof(CameraControlUC));
@@ -94,12 +98,14 @@
         public static readonly DependencyProperty HotPixelVisProperty = DependencyProperty.Register("HotPixelVis", typeof(bool), typeof(CameraControlUC));
         public static readonly DependencyProperty ImageStartStatusCameraProperty = DependencyProperty.Register("ImageStartStatusCamera", typeof(bool), typeof(CameraControlUC));
         public static readonly DependencyProperty IsBlackLevelVisibleProperty = DependencyProperty.Register("IsBlackLevelVisible", typeof(bool), typeof(CameraControlUC));
+        public static readonly DependencyProperty IsFrameRateVisibleProperty = DependencyProperty.Register("IsFrameRateVisible", typeof(bool), typeof(CameraControlUC));
         public static readonly DependencyProperty IsGainVisibleProperty = DependencyProperty.Register("IsGainVisible", typeof(bool), typeof(CameraControlUC));
         public static readonly DependencyProperty IsReadoutVisibleProperty = DependencyProperty.Register("IsReadoutVisible", typeof(bool), typeof(CameraControlUC));
         public static readonly DependencyProperty IsTapsVisibleProperty = DependencyProperty.Register("IsTapsVisible", typeof(bool), typeof(CameraControlUC));
         public static readonly DependencyProperty LeftMaxProperty = DependencyProperty.Register("LeftMax", typeof(int), typeof(CameraControlUC));
         public static readonly DependencyProperty LeftMinProperty = DependencyProperty.Register("LeftMin", typeof(int), typeof(CameraControlUC));
         public static readonly DependencyProperty LeftProperty = DependencyProperty.Register("Left", typeof(int), typeof(CameraControlUC));
+        public static readonly DependencyProperty OrcaFrameRateEnabledProperty = DependencyProperty.Register("OrcaFrameRateEnabled", typeof(bool), typeof(CameraControlUC));
         public static readonly DependencyProperty PixelSizeUMProperty = DependencyProperty.Register("PixelSizeUM", typeof(string), typeof(CameraControlUC));
         public static readonly DependencyProperty RightMaxProperty = DependencyProperty.Register("RightMax", typeof(int), typeof(CameraControlUC));
         public static readonly DependencyProperty RightMinProperty = DependencyProperty.Register("RightMin", typeof(int), typeof(CameraControlUC));
@@ -320,6 +326,12 @@
             set { SetValue(CamLedEnableProperty, value); }
         }
 
+        public double CamOrcaFrameRate
+        {
+            get { return (double)GetValue(CamOrcaFrameRateProperty); }
+            set { SetValue(CamOrcaFrameRateProperty, value); }
+        }
+
         public double CamPixelSizeUM
         {
             get { return (double)GetValue(CamPixelSizeUMProperty); }
@@ -384,6 +396,24 @@
         {
             get { return (int)GetValue(CamVerticalFlipProperty); }
             set { SetValue(CamVerticalFlipProperty, value); }
+        }
+
+        public int CoolingModeIndex
+        {
+            get { return (int)GetValue(CoolingModeIndexProperty); }
+            set { SetValue(CoolingModeIndexProperty, value); }
+        }
+
+        public ObservableCollection<string> CoolingModeList
+        {
+            get { return (ObservableCollection<string>)GetValue(CoolingModeListProperty); }
+            set { SetValue(CoolingModeListProperty, value); }
+        }
+
+        public Visibility CoolingVisibility
+        {
+            get { return (Visibility)GetValue(CoolingVisibilityProperty); }
+            set { SetValue(CoolingVisibilityProperty, value); }
         }
 
         public double ExposureTimeCam
@@ -512,6 +542,12 @@
             set { SetValue(IsBlackLevelVisibleProperty, value); }
         }
 
+        public bool IsFrameRateVisible
+        {
+            get { return (bool)GetValue(IsFrameRateVisibleProperty); }
+            set { SetValue(IsFrameRateVisibleProperty, value); }
+        }
+
         public bool IsGainVisible
         {
             get { return (bool)GetValue(IsGainVisibleProperty); }
@@ -546,6 +582,12 @@
         {
             get { return (int)GetValue(LeftMinProperty); }
             set { SetValue(LeftMinProperty, value); }
+        }
+
+        public bool OrcaFrameRateEnabled
+        {
+            get { return (bool)GetValue(OrcaFrameRateEnabledProperty); }
+            set { SetValue(OrcaFrameRateEnabledProperty, value); }
         }
 
         public string PixelSizeUM

@@ -647,12 +647,8 @@
                                           VerticalAlignment="Center"
                                           Visibility="{Binding Path=PmtBandwidthVisibility[0]}"
                                           MinWidth="70"
-                                          SelectedIndex="{Binding Path=PmtBandwidthIndex[0], Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                                    <ComboBoxItem Content="80 Mhz" />
-                                    <ComboBoxItem Content="2.5 Mhz"
-                                                  HorizontalAlignment="Left"
-                                                  Width="78" />
-                                    <ComboBoxItem Content="250 kHz" />
+                                          SelectedItem="{Binding Path=Pmt1BandwidthSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          ItemsSource="{Binding Path=BandwidthList[0]}">
                                 </ComboBox>
                                 <StackPanel Margin="3,1,1,1"
                                             Orientation="Horizontal"
@@ -798,10 +794,8 @@
                                           VerticalAlignment="Center"
                                           Visibility="{Binding Path=PmtBandwidthVisibility[1]}"
                                           MinWidth="70"
-                                          SelectedIndex="{Binding Path=PmtBandwidthIndex[1], Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                                    <ComboBoxItem Content="80 Mhz" />
-                                    <ComboBoxItem Content="2.5 Mhz" />
-                                    <ComboBoxItem Content="250 kHz" />
+                                          SelectedItem="{Binding Path=Pmt2BandwidthSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          ItemsSource="{Binding Path=BandwidthList[1]}">
                                 </ComboBox>
                                 <StackPanel Margin="3,1,1,1"
                                             Orientation="Horizontal"
@@ -947,10 +941,8 @@
                                           VerticalAlignment="Center"
                                           Visibility="{Binding Path=PmtBandwidthVisibility[2]}"
                                           MinWidth="70"
-                                          SelectedIndex="{Binding Path=PmtBandwidthIndex[2], Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                                    <ComboBoxItem Content="80 Mhz" />
-                                    <ComboBoxItem Content="2.5 Mhz" />
-                                    <ComboBoxItem Content="250 kHz" />
+                                          SelectedItem="{Binding Path=Pmt3BandwidthSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          ItemsSource="{Binding Path=BandwidthList[2]}">
                                 </ComboBox>
                                 <StackPanel Margin="3,1,1,1"
                                             Orientation="Horizontal"
@@ -1096,10 +1088,8 @@
                                           VerticalAlignment="Center"
                                           Visibility="{Binding Path=PmtBandwidthVisibility[3]}"
                                           MinWidth="70"
-                                          SelectedIndex="{Binding Path=PmtBandwidthIndex[3], Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                                    <ComboBoxItem Content="80 Mhz" />
-                                    <ComboBoxItem Content="2.5 Mhz" />
-                                    <ComboBoxItem Content="250 kHz" />
+                                          SelectedItem="{Binding Path=Pmt4BandwidthSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          ItemsSource="{Binding Path=BandwidthList[3]}">
                                 </ComboBox>
                                 <StackPanel Margin="3,1,1,1"
                                             Orientation="Horizontal"
@@ -1261,7 +1251,7 @@
                                 <TextBox Name="tbExternalPulsePhase"
                                          Width="50"
                                          Height="25"
-                                         Text="{Binding Path=LSMPulseMultiplexingPhase, Mode=TwoWay, Converter={StaticResource doubleCulture}}"
+                                         Text="{Binding Path=LSMExternalClockPhaseOffset, Mode=TwoWay, Converter={StaticResource doubleCulture}}"
                                          ToolTip="Phase as a percentage of repetition rate"
                                          VerticalAlignment="Center"
                                          IsEnabled="{Binding Path=LSMClockSource, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
@@ -1272,7 +1262,7 @@
                                             <Setter Property="Visibility"
                                                     Value="Collapsed" />
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbPulseMultiplexingPhase}"
+                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbExternalPulsePhase}"
                                                              Value="True">
                                                     <Setter Property="Visibility"
                                                             Value="Visible" />
@@ -1333,8 +1323,7 @@
                                           IsChecked="{Binding UseFastestSettingForFlybackCycles, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                                           IsEnabled="{Binding Path=UseFastestFlybackEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
                             </DockPanel>
-                            <StackPanel  Orientation="Horizontal"
-                                         Width="180"
+                            <StackPanel  Orientation="Horizontal"                                     
                                          Margin="0,1"
                                          HorizontalAlignment="Left"
                                          Visibility="{Binding Path=TurnAroundOptionVisibility}"
@@ -1365,6 +1354,14 @@
                                 </Button>
                                 <Label Content="[us]"
                                        VerticalAlignment="Center" />
+                            </StackPanel>
+                            <StackPanel HorizontalAlignment="Left"
+                                        Orientation="Horizontal"
+                                        Margin="0,1"
+                                        ToolTip="Pixel processing mode"
+                                        Visibility="{Binding Path=FastOneWayImagingModeEnableVisibility}">
+                                <CheckBox Content="Fast One-Way Imaging" 
+                                          IsChecked="{Binding LSMFastOneWayImagingModeEnable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </StackPanel>
                             <StackPanel HorizontalAlignment="Left"
                                         Orientation="Horizontal"

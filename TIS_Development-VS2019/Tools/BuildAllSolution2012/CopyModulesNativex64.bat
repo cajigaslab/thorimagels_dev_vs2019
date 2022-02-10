@@ -174,6 +174,10 @@ mkdir "..\..\Hardware\Cameras\ORCA\x64\Debug"
 copy .\x64\Debug\ORCA.dll ..\..\Hardware\Cameras\ORCA\x64\Debug
 copy .\x64\Debug\ORCA.lib ..\..\Hardware\Cameras\ORCA\x64\Debug
 copy .\x64\Debug\ORCA.pdb ..\..\Hardware\Cameras\ORCA\x64\Debug
+mkdir "..\..\Hardware\Devices\ThorDetector\x64\Debug"
+copy .\x64\Debug\ThorDetector.dll ..\..\Hardware\Devices\ThorDetector\x64\Debug
+copy .\x64\Debug\ThorDetector.lib ..\..\Hardware\Devices\ThorDetector\x64\Debug
+copy .\x64\Debug\ThorDetector.pdb ..\..\Hardware\Devices\ThorDetector\x64\Debug
 mkdir "..\..\Common\ThorDiskIO\x64\Debug"
 copy .\x64\Debug\ThorDiskIO.dll ..\..\Common\ThorDiskIO\x64\Debug
 copy .\x64\Debug\ThorDiskIO.lib ..\..\Common\ThorDiskIO\x64\Debug
@@ -305,10 +309,13 @@ mkdir "..\..\Hardware\Devices\ThorShutterDigital6\x64\Debug"
 copy .\x64\Debug\ThorShutterDig6.dll ..\..\Hardware\Devices\ThorShutterDigital6\x64\Debug
 copy .\x64\Debug\ThorShutterDig6.lib ..\..\Hardware\Devices\ThorShutterDigital6\x64\Debug
 copy .\x64\Debug\ThorShutterDig6.pdb ..\..\Hardware\Devices\ThorShutterDigital6\x64\Debug
-mkdir "..\..\Hardware\Devices\ThorSLMPDM512\x64\Debug"
-copy .\x64\Debug\ThorSLMPDM512.dll ..\..\Hardware\Devices\ThorSLMPDM512\x64\Debug
-copy .\x64\Debug\ThorSLMPDM512.lib ..\..\Hardware\Devices\ThorSLMPDM512\x64\Debug
-copy .\x64\Debug\ThorSLMPDM512.pdb ..\..\Hardware\Devices\ThorSLMPDM512\x64\Debug
+mkdir "..\..\Hardware\Devices\ThorSLM\x64\Debug"
+copy .\x64\Debug\ThorSLMPDM512.dll ..\..\Hardware\Devices\ThorSLM\x64\Debug
+copy .\x64\Debug\ThorSLMPDM512.lib ..\..\Hardware\Devices\ThorSLM\x64\Debug
+copy .\x64\Debug\ThorSLMPDM512.pdb ..\..\Hardware\Devices\ThorSLM\x64\Debug
+copy .\x64\Debug\ThorSLM.dll ..\..\Hardware\Devices\ThorSLM\x64\Debug
+copy .\x64\Debug\ThorSLM.lib ..\..\Hardware\Devices\ThorSLM\x64\Debug
+copy .\x64\Debug\ThorSLM.pdb ..\..\Hardware\Devices\ThorSLM\x64\Debug
 mkdir "..\..\Hardware\Devices\ThorVBE\x64\Debug"
 copy .\x64\Debug\ThorVBE.dll ..\..\Hardware\Devices\ThorVBE\x64\Debug
 copy .\x64\Debug\ThorVBE.lib ..\..\Hardware\Devices\ThorVBE\x64\Debug
@@ -381,3 +388,7 @@ mkdir "..\..\Hardware\Devices\ThorLSKGR\x64\Debug"
 copy .\x64\Debug\ThorLSKGR.dll ..\..\Hardware\Devices\ThorLSKGR\x64\Debug
 copy .\x64\Debug\ThorLSKGR.lib ..\..\Hardware\Devices\ThorLSKGR\x64\Debug
 copy .\x64\Debug\ThorLSKGR.pdb ..\..\Hardware\Devices\ThorLSKGR\x64\Debug
+mkdir "..\..\Hardware\Devices\TopticaiChrome\x64\Debug"
+copy .\x64\Debug\TopticaiChrome.dll ..\..\Hardware\Devices\TopticaiChrome\x64\Debug
+copy .\x64\Debug\TopticaiChrome.lib ..\..\Hardware\Devices\TopticaiChrome\x64\Debug
+copy .\x64\Debug\TopticaiChrome.pdb ..\..\Hardware\Devices\TopticaiChrome\x64\Debug

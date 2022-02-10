@@ -15,6 +15,7 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <sharedTypes:InverseBooleanConverter x:Key="InvertBool" />
+            <sharedTypes:BooleanToVisibilityConverter x:Key="boolToVisConverter" />
             <DataTemplate DataType="{x:Type ViewModel:CaptureSetupViewModel}" />
             <XmlDataProvider x:Key="expData" />
             <ViewModel:DoubleCultureConverter x:Key="doubleCulture" />
@@ -134,7 +135,7 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Height="20"
-                    Width="65"
+                    Width="50"
                     Margin="1"
                     Command="{Binding Path=EditSLMParamRelayCommand}"
                     CommandParameter="SLM_PATTERN_ADD"
@@ -145,7 +146,7 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Height="20"
-                    Width="65"
+                    Width="50"
                     Margin="1"
                     Command="{Binding Path=EditSLMParamRelayCommand}"
                     CommandParameter="SLM_PATTERN_EDIT"
@@ -170,12 +171,23 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Height="20"
-                    Width="65"
+                    Width="55"
                     Margin="1"
                     Command="{Binding Path=EditSLMParamRelayCommand}"
                     CommandParameter="SLM_PATTERN_DELETE"
                     IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
                 <TextBlock ToolTip="Delete settings and waveform">Delete</TextBlock>
+            </Button>
+            <Button ToolTip="Command to add one SLM pattern"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Height="20"
+                    Width="60"
+                    Margin="1"
+                    Command="{Binding Path=EditSLMParamRelayCommand}"
+                    CommandParameter="SLM_PATTERN_DUMPLICATE"
+                    IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
+                <TextBlock ToolTip="Extract SLM ROI data, update settings for SLM waveform">Duplicate</TextBlock>
             </Button>
             <Button ToolTip="Command to show or hide all ROIs"
                     HorizontalAlignment="Center"
@@ -191,7 +203,7 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Height="20"
-                    Width="65"
+                    Width="55"
                     Margin="1"
                     Command="{Binding Path=EditSLMParamRelayCommand}"
                     CommandParameter="SLM_IMPORT"
@@ -250,7 +262,31 @@
                         </Style>
                     </ToggleButton.Style>
                 </ToggleButton>
-                <Label Width="100" />
+                <StackPanel Width="100"  ToolTip="Set reference Z position for 3D SLM pattern" Orientation="Horizontal">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel" BasedOn="{StaticResource {x:Type StackPanel}}">
+                            <Setter Property="Visibility"
+                                    Value="Hidden" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ElementName=tbtnSLM3D, Path=IsChecked}"
+                                             Value="True">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <Button HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Height="25"
+                            Width="100"
+                            Margin="0"
+                            Command="{Binding Path=EditSLMParamRelayCommand}"
+                            CommandParameter="SLM_Z_REF"
+                            IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
+                        <TextBlock Text="{Binding Path=SLMZRefText, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"></TextBlock>
+                    </Button>
+                </StackPanel>
                 <StackPanel Orientation="Horizontal">
                     <StackPanel.Style>
                         <Style TargetType="StackPanel"
@@ -559,6 +595,95 @@
                     <StackPanel Orientation="Vertical"
                                 HorizontalAlignment="Stretch">
                         <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Left"
+                                    ToolTip="Apply axial chromatic shift (Z offset) by SLM with refractive index of the environment.">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel" BasedOn="{StaticResource {x:Type StackPanel}}">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ElementName=tbtnSLM3D, Path=IsChecked}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <Label Content="Refractive Index"
+                                   HorizontalAlignment="Center"
+                                   Foreground="White" />
+                            <TextBox Text="{Binding Path=RefractiveIndex, Mode=TwoWay}"
+                                     validator:Validation.ValidationType="{x:Type system:Double}"
+                                     validator:Validation.MinValue="0.0"
+                                     validator:Validation.NoEmptyValue="True"
+                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                     Width="40"
+                                     HorizontalAlignment="Center"
+                                     VerticalAlignment="Center"
+                                     Margin="1">
+                                <TextBox.Style>
+                                    <Style TargetType="{x:Type TextBox}"
+                                               BasedOn="{StaticResource {x:Type TextBox}}">
+                                        <Style.Triggers>
+                                            <Trigger Property="Validation.HasError"
+                                                     Value="True">
+                                                <Setter Property="ToolTip"
+                                                        Value="{Binding RelativeSource={x:Static RelativeSource.Self}, Path=(Validation.Errors).CurrentItem.ErrorContent}" />
+                                            </Trigger>
+                                            <Trigger Property="Validation.HasError"
+                                                     Value="False">
+                                                <Setter Property="ToolTip"
+                                                        Value="Refractive index of immersive environment" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                            <Label Content="Z offset"
+                                   HorizontalAlignment="Center"
+                                   Foreground="White" />
+                            <TextBox Text="{Binding Path=DefocusUM, Mode=TwoWay}"
+                                     validator:Validation.ValidationType="{x:Type system:Double}"
+                                     validator:Validation.MinValue="-5000.0"
+                                     validator:Validation.MaxValue="5000.0"
+                                     validator:Validation.NoEmptyValue="True"
+                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                     Width="40"
+                                     HorizontalAlignment="Center"
+                                     VerticalAlignment="Center"
+                                     Margin="1">
+                                <TextBox.Style>
+                                    <Style TargetType="{x:Type TextBox}"
+                                               BasedOn="{StaticResource {x:Type TextBox}}">
+                                        <Style.Triggers>
+                                            <Trigger Property="Validation.HasError"
+                                                     Value="True">
+                                                <Setter Property="ToolTip"
+                                                        Value="{Binding RelativeSource={x:Static RelativeSource.Self}, Path=(Validation.Errors).CurrentItem.ErrorContent}" />
+                                            </Trigger>
+                                            <Trigger Property="Validation.HasError"
+                                                     Value="False">
+                                                <Setter Property="ToolTip"
+                                                        Value="Apply z offset in um on current modality" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                            <Label Content="[um]"
+                                   HorizontalAlignment="Center"
+                                   Foreground="White" />
+                            <Label Width="20"
+                                   HorizontalAlignment="Center"
+                                   Foreground="White" />
+                            <Button ToolTip="Command to save axial chromatic shift calibration"
+                                    Width="50"
+                                    Margin="1"
+                                    Visibility="{Binding Path=IsDefocusUMDifferent, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVisConverter}, ConverterParameter=Normal}"
+                                    Command="{Binding Path=EditSLMParamRelayCommand}"
+                                    CommandParameter="SLM_SAVEZOFFSET">
+                                <TextBlock ToolTip="Save Z Offset">Save</TextBlock>
+                            </Button>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
                                     HorizontalAlignment="Center">
                             <StackPanel Orientation="Horizontal"
                                         VerticalAlignment="Center">
@@ -741,10 +866,6 @@
                                           ItemsSource="{Binding BleacherPockelsList, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                           SelectedIndex="{Binding Path=BleacherPowerID, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                                 </ComboBox>
-                                <Label Content=":"
-                                       HorizontalAlignment="Center"
-                                       Foreground="White"
-                                       VerticalAlignment="Center" />
                                 <TextBox Name="tbSLMBleachPower"
                                          Text="{Binding Path=BleacherPowerGo, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}"
                                          ToolTip="Enter the power value of bleach scanner to go to"
@@ -777,7 +898,18 @@
                                         VerticalAlignment="Center"
                                         Command="{Binding Path=SetBleacherPowerCommand}"
                                         MinWidth="25"
-                                        Margin="3">
+                                        Margin="1">
+                                </Button>
+                                <Button Name="btnSetPockelsZero"
+                                        ToolTip="Command to set SLM blank"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Width="40"
+                                        Height="40"
+                                        Margin="1"
+                                        Command="{Binding Path=SetBleacherPowerToZeroCommand}">
+                                    <TextBlock Text="  Set&#x0a;Zero%"
+                                               ToolTip="Set selected pockels to zero % power" />
                                 </Button>
                             </StackPanel>
                         </StackPanel>

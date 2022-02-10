@@ -148,14 +148,16 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>NIDAQmx.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\..\Tools\National Instruments\NIDAQmx\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>tinyxml2d.lib;NIDAQmx.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\..\Tools\National Instruments\NIDAQmx\lib\x64;$(ProjectDir)..\..\..\..\Tools\tinyxml2\lib\x64-Debug-Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>if $(Configuration) == Debug  copy $(TargetPath) $(ProjectDir)..\..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\Debug\Modules_Native</Command>
+      <Command>if $(Configuration) == Debug  copy "$(SolutionDir)$(Platform)\$(Configuration)\ThorElectroPhys.dll" $(ProjectDir)..\..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\$(Configuration)\Modules_Native
+if $(Configuration) == Debug  copy "$(SolutionDir)ThorElectroPhysSettings.xml" $(ProjectDir)..\..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\$(Configuration)\
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -174,8 +176,8 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>NIDAQmx.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\..\Tools\National Instruments\NIDAQmx\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>tinyxml2.lib;NIDAQmx.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\..\Tools\National Instruments\NIDAQmx\lib\x64;$(ProjectDir)..\..\..\..\Tools\tinyxml2\lib\x64-Release-Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -209,11 +211,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="ThorElectroPhys.cpp" />
-    <ClCompile Include="..\..\..\..\Tools\ticpp\ticpp.cpp" />
-    <ClCompile Include="..\..\..\..\Tools\ticpp\tinystr.cpp" />
-    <ClCompile Include="..\..\..\..\Tools\ticpp\tinyxml.cpp" />
-    <ClCompile Include="..\..\..\..\Tools\ticpp\tinyxmlerror.cpp" />
-    <ClCompile Include="..\..\..\..\Tools\ticpp\tinyxmlparser.cpp" />
     <ClCompile Include="ElectroPhysSetupXML.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -223,10 +220,6 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ThorElectroPhys.h" />
-    <ClInclude Include="..\..\..\..\Tools\ticpp\ticpp.h" />
-    <ClInclude Include="..\..\..\..\Tools\ticpp\ticpprc.h" />
-    <ClInclude Include="..\..\..\..\Tools\ticpp\tinystr.h" />
-    <ClInclude Include="..\..\..\..\Tools\ticpp\tinyxml.h" />
     <ClInclude Include="ElectroPhysSetupXML.h" />
   </ItemGroup>
   <ItemGroup>
@@ -234,6 +227,9 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ThorElectroPhys.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\ThorElectroPhysSettings.xml" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

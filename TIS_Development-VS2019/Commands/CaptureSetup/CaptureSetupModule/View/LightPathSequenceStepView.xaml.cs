@@ -89,7 +89,7 @@
             string xPath = "/ApplicationSettings/DisplayOptions/CaptureSetup/ScannerView";
             gbPMTSettings.Visibility = GetVisibility(appDoc, xPath, "Visibility");
 
-            xPath = "/ApplicationSettings/DisplayOptions/CaptureSetup/MCLSView";
+            xPath = "/ApplicationSettings/DisplayOptions/CaptureSetup/MultiLaserControlView";
             gbMCLSSettings.Visibility = GetVisibility(appDoc, xPath, "Visibility");
 
             xPath = "/ApplicationSettings/DisplayOptions/CaptureSetup/MultiphotonView";
@@ -169,18 +169,72 @@
             double laser2Power = 0.0, laser2Percent = 0.0;
             double laser3Power = 0.0, laser3Percent = 0.0;
             double laser4Power = 0.0, laser4Percent = 0.0;
+            int laser1Wavelength = 0, laser2Wavelength = 0, laser3Wavelength = 0, laser4Wavelength = 0;
             _lightPathSequenceStep.GetLightPathSequenceStepMCLS(ref mainLaserSelection, ref laser1Enable, ref laser1Power, ref laser1Percent, ref laser2Enable, ref laser2Power, ref laser2Percent,
-                ref laser3Enable, ref laser3Power, ref laser3Percent, ref laser4Enable, ref laser4Power, ref laser4Percent);
+                ref laser3Enable, ref laser3Power, ref laser3Percent, ref laser4Enable, ref laser4Power, ref laser4Percent, ref laser1Wavelength, ref laser2Wavelength, ref laser3Wavelength,
+                ref laser4Wavelength);
+
+            //Check if wavelength has been populated or not
+            int wavelengthVisibility = 0;
+            if (laser1Wavelength == 0 || laser2Wavelength == 0 || laser3Wavelength == 0 || laser4Wavelength == 0)
+            {
+                wavelengthVisibility = 0;
+            }
+            else
+            {
+                wavelengthVisibility = 1;
+            }
+
+            //If wavelength has been populated display the wavelength as the label
             cbLaser1Enable.IsChecked = (1 == laser1Enable) ? true : false;
+            if (wavelengthVisibility == 0)
+            {
+                cbLaser1Enable.Content = "Laser1 Enable";
+            }
+            else
+            {
+                cbLaser1Enable.Content = laser1Wavelength.ToString() + " nm";
+            }
+
             tbLaserPowerPercent1.Text = laser1Percent.ToString();
             tbLaserPowerPercent1.IsEnabled = (1 == laser1Enable) ? true : false;
+
+            //If wavelength has been populated display the wavelength as the label
             cbLaser2Enable.IsChecked = (1 == laser2Enable) ? true : false;
+            if (wavelengthVisibility == 0)
+            {
+                cbLaser2Enable.Content = "Laser2 Enable";
+            }
+            else
+            {
+                cbLaser2Enable.Content = laser2Wavelength.ToString() + " nm";
+            }
             tbLaserPowerPercent2.Text = laser2Percent.ToString();
             tbLaserPowerPercent2.IsEnabled = (1 == laser2Enable) ? true : false;
+
+            //If wavelength has been populated display the wavelength as the label
             cbLaser3Enable.IsChecked = (1 == laser3Enable) ? true : false;
+            if (wavelengthVisibility == 0)
+            {
+                cbLaser3Enable.Content = "Laser3 Enable";
+            }
+            else
+            {
+                cbLaser3Enable.Content = laser3Wavelength.ToString() + " nm";
+            }
             tbLaserPowerPercent3.Text = laser3Percent.ToString();
             tbLaserPowerPercent3.IsEnabled = (1 == laser3Enable) ? true : false;
+
+            //If wavelength has been populated display the wavelength as the label
             cbLaser4Enable.IsChecked = (1 == laser4Enable) ? true : false;
+            if (wavelengthVisibility == 0)
+            {
+                cbLaser4Enable.Content = "Laser4 Enable";
+            }
+            else
+            {
+                cbLaser4Enable.Content = laser4Wavelength.ToString() + " nm";
+            }
             tbLaserPowerPercent4.Text = laser4Percent.ToString();
             tbLaserPowerPercent4.IsEnabled = (1 == laser4Enable) ? true : false;
 

@@ -109,8 +109,8 @@
                                           DataSeries="{Binding ChannelSeries, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                           ResamplingMode="None"
                                           StrokeThickness="2"
-                                          StrokeDashArray=""
-                                          SeriesColor="{Binding Stroke, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                          StrokeDashArray=""                                                    
+                                          Stroke="{Binding Stroke, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
                             <sci:FastLineRenderableSeries.RolloverMarkerTemplate>
                                 <ControlTemplate>
                                     <Ellipse Width="7"
@@ -363,7 +363,7 @@
                                           DataSeries="{Binding ChannelSeries, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                           ResamplingMode="None"
                                           StrokeThickness="1"
-                                          SeriesColor="{Binding Stroke[0], Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                          Stroke="{Binding Stroke[0], Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
                             <sci:FastLineRenderableSeries.RolloverMarkerTemplate>
                                 <ControlTemplate>
                                     <Ellipse Width="7"
@@ -378,7 +378,7 @@
                                            DataSeries="{Binding ChannelSeries2, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                            ResamplingMode="None"
                                            StrokeThickness="5"
-                                           SeriesColor="{Binding Stroke[1], Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                           Stroke="{Binding Stroke[1], Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
                             <sci:XyScatterRenderableSeries.PointMarker>
                                 <sci:EllipsePointMarker Stroke="{Binding Path=SeriesColor}"
                                         StrokeThickness="5"

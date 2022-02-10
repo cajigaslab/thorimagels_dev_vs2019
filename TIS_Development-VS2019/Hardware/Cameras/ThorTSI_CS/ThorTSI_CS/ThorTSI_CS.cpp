@@ -252,9 +252,12 @@ void ThorCam::InitialParamInfo(void)
 	ThorTSIErrChk(L"tl_camera_get_sensor_height", tl_camera_get_sensor_height(_camera[_camID], &_ImgPty_SetSettings.heightPx), 1);
 	ThorTSIErrChk(L"tl_camera_get_sensor_pixel_width", tl_camera_get_sensor_pixel_width(_camera[_camID], &_ImgPty_SetSettings.pixelSizeXUM), 1);
 	ThorTSIErrChk(L"tl_camera_get_sensor_pixel_height", tl_camera_get_sensor_pixel_height(_camera[_camID], &_ImgPty_SetSettings.pixelSizeYUM), 1);
-	ThorTSIErrChk(L"tl_camera_get_hot_pixel_correction_threshold_range", tl_camera_get_hot_pixel_correction_threshold_range(_camera[_camID], &_hotPixelRange[0], &_hotPixelRange[1]), 1);
-	ThorTSIErrChk(L"tl_camera_get_hot_pixel_correction_threshold", tl_camera_get_hot_pixel_correction_threshold(_camera[_camID], &_ImgPty_SetSettings.hotPixelThreshold), 1);
-	ThorTSIErrChk(L"tl_camera_get_is_hot_pixel_correction_enabled", tl_camera_get_is_hot_pixel_correction_enabled(_camera[_camID], &_ImgPty_SetSettings.hotPixelEnabled), 1);
+	ThorTSIErrChk(L"tl_camera_get_hot_pixel_correction_threshold_range", tl_camera_get_hot_pixel_correction_threshold_range(_camera[_camID], &_hotPixelRange[0], &_hotPixelRange[1]), FALSE);
+	if (0 != _hotPixelRange[1])
+	{
+		ThorTSIErrChk(L"tl_camera_get_hot_pixel_correction_threshold", tl_camera_get_hot_pixel_correction_threshold(_camera[_camID], &_ImgPty_SetSettings.hotPixelThreshold), FALSE);
+	}
+	ThorTSIErrChk(L"tl_camera_get_is_hot_pixel_correction_enabled", tl_camera_get_is_hot_pixel_correction_enabled(_camera[_camID], &_ImgPty_SetSettings.hotPixelEnabled), FALSE);
 	ThorTSIErrChk(L"tl_camera_get_gain_range", tl_camera_get_gain_range(_camera[_camID], &_gainRange[0], &_gainRange[1]), FALSE);
 	ThorTSIErrChk(L"tl_camera_get_gain", tl_camera_get_gain(_camera[_camID], &_ImgPty_SetSettings.gain), FALSE);
 	ThorTSIErrChk(L"tl_camera_get_black_level_range", tl_camera_get_black_level_range(_camera[_camID], &_blackLevelRange[0], &_blackLevelRange[1]), FALSE);

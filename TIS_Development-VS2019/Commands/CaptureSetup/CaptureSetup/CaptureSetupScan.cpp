@@ -109,12 +109,53 @@ DllExportLiveImage CenterLSMScanners(long selectedCamera)
 			SetShutterPosition(SHUTTER_OPEN);
 			//enable LEDs
 			SetBFLampPosition(ENABLE_LEDS);
+
+			//Enable laser emission if analog mode is off
+			long laserAnalog = 0;
+			GetLaserAnalog(laserAnalog);
+			long laser1Enable = 0;
+			GetLaser1Enable(laser1Enable);
+			long laser2Enable = 0;
+			GetLaser2Enable(laser2Enable);
+			long laser3Enable = 0;
+			GetLaser3Enable(laser3Enable);
+			long laser4Enable = 0;
+			GetLaser4Enable(laser4Enable);
+			if (laserAnalog == false)
+			{
+				SetLaser1Emission(ENABLE_EMISSION);
+			}
+
+			if (laserAnalog == false)
+			{
+				SetLaser2Emission(ENABLE_EMISSION);
+			}
+
+			if (laserAnalog == false)
+			{
+				SetLaser3Emission(ENABLE_EMISSION);
+			}
+
+			if (laserAnalog == false)
+			{
+				SetLaser4Emission(ENABLE_EMISSION);
+			}
 		}
 		break;
 	default:
 		return FALSE;
 	}
 
+	return TRUE;
+}
+
+DllExportLiveImage TurnOffLaser() 
+{
+	//disable Laser Emission
+	SetLaser1Emission(DISABLE_EMISSION);
+	SetLaser2Emission(DISABLE_EMISSION);
+	SetLaser3Emission(DISABLE_EMISSION);
+	SetLaser4Emission(DISABLE_EMISSION);
 	return TRUE;
 }
 
@@ -460,7 +501,7 @@ DllExportLiveImage GetPMTSafetyStatus()
 		if(FALSE == static_cast<long>(val))
 		{
 			StringCbPrintfW(message,MSG_SIZE,L"CaptureSetup GetPMTSafetyStatus PMT1 has tripped");
-			logDll->TLTraceEvent(VERBOSE_EVENT,1,message);
+			logDll->TLTraceEvent(ERROR_EVENT,1,message);
 
 			return FALSE;
 		}
@@ -472,7 +513,7 @@ DllExportLiveImage GetPMTSafetyStatus()
 		if(FALSE == static_cast<long>(val))
 		{
 			StringCbPrintfW(message,MSG_SIZE,L"CaptureSetup GetPMTSafetyStatus PMT2 has tripped");
-			logDll->TLTraceEvent(VERBOSE_EVENT,1,message);
+			logDll->TLTraceEvent(ERROR_EVENT,1,message);
 			return FALSE;
 		}
 	}
@@ -483,7 +524,7 @@ DllExportLiveImage GetPMTSafetyStatus()
 		if(FALSE == static_cast<long>(val))
 		{
 			StringCbPrintfW(message,MSG_SIZE,L"CaptureSetup GetPMTSafetyStatus PMT3 has tripped");
-			logDll->TLTraceEvent(VERBOSE_EVENT,1,message);
+			logDll->TLTraceEvent(ERROR_EVENT,1,message);
 			return FALSE;
 		}
 	}
@@ -494,7 +535,7 @@ DllExportLiveImage GetPMTSafetyStatus()
 		if(FALSE == static_cast<long>(val))
 		{
 			StringCbPrintfW(message,MSG_SIZE,L"CaptureSetup GetPMTSafetyStatus PMT4 has tripped");
-			logDll->TLTraceEvent(VERBOSE_EVENT,1,message);
+			logDll->TLTraceEvent(ERROR_EVENT,1,message);
 			return FALSE;
 		}
 	}

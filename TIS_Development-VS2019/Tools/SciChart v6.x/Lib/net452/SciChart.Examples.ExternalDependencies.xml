@@ -1,0 +1,417 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SciChart.Examples.ExternalDependencies</name>
+    </assembly>
+    <members>
+        <member name="T:SciChart.Examples.ExternalDependencies.Behaviors.EventToCommandBehavior">
+            <summary>
+            Behavior that will connect an UI event to a viewmodel Command,
+            allowing the event arguments to be passed as the CommandParameter.
+            </summary>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Behaviors.EventToCommandBehavior.AttachHandler(System.String)">
+            <summary>
+            Attaches the handler to the event
+            </summary>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Behaviors.EventToCommandBehavior.ExecuteCommand(System.Object,System.EventArgs)">
+            <summary>
+            Executes the Command
+            </summary>
+        </member>
+        <member name="T:SciChart.Examples.ExternalDependencies.Common.BoolToValueConverter">
+            <summary>
+            A ValueConverter which can convert Boolean to any value, e.g. Boolean to Visibility, Boolean to Margin
+            </summary>
+        </member>
+        <member name="P:SciChart.Examples.ExternalDependencies.Common.BoolToValueConverter.TrueValue">
+            <summary>
+            The value to convert to if the input boolean is true
+            </summary>
+        </member>
+        <member name="P:SciChart.Examples.ExternalDependencies.Common.BoolToValueConverter.FalseValue">
+            <summary>
+            The value to convert to if the input boolean is false
+            </summary>
+        </member>
+        <member name="P:SciChart.Examples.ExternalDependencies.Common.BoolToValueConverter.TrueSLValue">
+            <summary>
+            The value to convert to if the input boolean is true and in Silverlight
+            </summary>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Common.BoolToValueConverter.Convert(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <summary>
+            Modifies the source data before passing it to the target for display in the UI.
+            </summary>
+            <param name="value">The source data being passed to the target.</param>
+            <param name="targetType">The <see cref="T:System.Type" /> of data expected by the target dependency property.</param>
+            <param name="parameter">An optional parameter to be used in the converter logic.</param>
+            <param name="culture">The culture of the conversion.</param>
+            <returns>
+            The value to be passed to the target dependency property.
+            </returns>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Common.BoolToValueConverter.ConvertBack(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <summary>
+            Modifies the target data before passing it to the source object.  This method is called only in <see cref="F:System.Windows.Data.BindingMode.TwoWay" /> bindings.
+            </summary>
+            <param name="value">The target data being passed to the source.</param>
+            <param name="targetType">The <see cref="T:System.Type" /> of data expected by the source object.</param>
+            <param name="parameter">An optional parameter to be used in the converter logic.</param>
+            <param name="culture">The culture of the conversion.</param>
+            <returns>
+            The value to be passed to the source object.
+            </returns>
+            <exception cref="T:System.NotImplementedException"></exception>
+        </member>
+        <member name="T:SciChart.Examples.ExternalDependencies.Common.GridSplitterCollapseMode">
+            <summary>
+            Specifies different collapse modes of a ExtendedGridSplitter.
+            </summary>
+        </member>
+        <member name="F:SciChart.Examples.ExternalDependencies.Common.GridSplitterCollapseMode.None">
+            <summary>
+            The ExtendedGridSplitter cannot be collapsed or expanded.
+            </summary>
+        </member>
+        <member name="F:SciChart.Examples.ExternalDependencies.Common.GridSplitterCollapseMode.Next">
+            <summary>
+            The column (or row) to the right (or below) the
+            splitter's column, will be collapsed.
+            </summary>
+        </member>
+        <member name="F:SciChart.Examples.ExternalDependencies.Common.GridSplitterCollapseMode.Previous">
+            <summary>
+            The column (or row) to the left (or above) the
+            splitter's column, will be collapsed.
+            </summary>
+        </member>
+        <member name="T:SciChart.Examples.ExternalDependencies.Common.CollapsableGridSplitter">
+            <summary>
+            An updated version of the standard ExtendedGridSplitter control that includes a centered handle
+            which allows complete collapsing and expanding of the appropriate grid column or row.
+            </summary>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Common.CollapsableGridSplitter.OnIsCollapsedChanged(System.Boolean)">
+            <summary>
+            Handles the property change event of the IsCollapsed property.
+            </summary>
+            <param name="isCollapsed">The new value for the IsCollapsed property.</param>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Common.CollapsableGridSplitter.OnCollapseModeChanged(SciChart.Examples.ExternalDependencies.Common.GridSplitterCollapseMode)">
+            <summary>
+            Handles the property change event of the CollapseMode property.
+            </summary>
+            <param name="collapseMode">The new value for the CollapseMode property.</param>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Common.CollapsableGridSplitter.Collapse">
+            <summary>
+            Collapses the target ColumnDefinition or RowDefinition.
+            </summary>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Common.CollapsableGridSplitter.Expand">
+            <summary>
+            Expands the target ColumnDefinition or RowDefinition.
+            </summary>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Common.CollapsableGridSplitter.GetCollapseDirection">
+            <summary>
+            Determine the collapse direction based on the horizontal and vertical alignments
+            </summary>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Common.CollapsableGridSplitter.OnCollapsed(System.EventArgs)">
+            <summary>
+            Raises the Collapsed event.
+            </summary>
+            <param name="e">Contains event arguments.</param>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Common.CollapsableGridSplitter.OnExpanded(System.EventArgs)">
+            <summary>
+            Raises the Expanded event.
+            </summary>
+            <param name="e">Contains event arguments.</param>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Common.CollapsableGridSplitter.GridSplitterButton_Checked(System.Object,System.Windows.RoutedEventArgs)">
+            <summary>
+            Handles the Checked event of either the Vertical or Horizontal
+            GridSplitterHandle ToggleButton.
+            </summary>
+            <param name="sender">An instance of the ToggleButton that fired the event.</param>
+            <param name="e">Contains event arguments for the routed event that fired.</param>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Common.CollapsableGridSplitter.GridSplitterButton_Unchecked(System.Object,System.Windows.RoutedEventArgs)">
+            <summary>
+            Handles the Unchecked event of either the Vertical or Horizontal
+            GridSplitterHandle ToggleButton.
+            </summary>
+            <param name="sender">An instance of the ToggleButton that fired the event.</param>
+            <param name="e">Contains event arguments for the routed event that fired.</param>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Common.CollapsableGridSplitter.AnimateCollapse(System.Object)">
+            <summary>
+            Uses DoubleAnimation and a StoryBoard to animated the collapsing
+            of the specificed ColumnDefinition or RowDefinition.
+            </summary>
+            <param name="definition">The RowDefinition or ColumnDefintition that will be collapsed.</param>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Common.CollapsableGridSplitter.AnimateExpand(System.Object)">
+            <summary>
+            Uses DoubleAnimation and a StoryBoard to animate the expansion
+            of the specificed ColumnDefinition or RowDefinition.
+            </summary>
+            <param name="definition">The RowDefinition or ColumnDefintition that will be expanded.</param>
+        </member>
+        <member name="T:SciChart.Examples.ExternalDependencies.Common.CollapsableGridSplitter.GridCollapseDirection">
+            <summary>
+            An enumeration that specifies the direction the ExtendedGridSplitter will
+            be collapased (Rows or Columns).
+            </summary>
+        </member>
+        <member name="T:SciChart.Examples.ExternalDependencies.Common.ExampleHelpers">
+            <summary>
+            A helper class which is used to invoke commands on the Loaded and Unloaded events of a FrameworkElement
+            </summary>
+        </member>
+        <member name="T:SciChart.Examples.ExternalDependencies.Common.FrameworkVisibilityManager">
+            <summary>
+            Used to show or hide UIElements based on framework (WPF, Silverlight)
+            </summary>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Common.IPowerManager.GetPlans">
+            <returns>
+            All supported power plans.
+            </returns>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Common.IPowerManager.OpenControlPanel">
+            <summary>
+            Opens Power Options section of the Control Panel.
+            </summary>
+        </member>
+        <member name="T:SciChart.Examples.ExternalDependencies.Common.IsSameObjectsMultiConverter">
+            <summary>
+            Converts an array of 2 elements to a boolean value which indicates whether they are equal.
+            </summary>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Common.IsSameObjectsMultiConverter.Convert(System.Object[],System.Type,System.Object,System.Globalization.CultureInfo)">
+            <summary>
+            Modifies the source data before passing it to the target for display in the UI.
+            </summary>
+            <param name="values">The source data array being passed to the target.</param>
+            <param name="targetType">The <see cref="T:System.Type" /> of data expected by the target dependency property.</param>
+            <param name="parameter">An optional parameter to be used in the converter logic.</param>
+            <param name="culture">The culture of the conversion.</param>
+            <returns>
+            The value to be passed to the target dependency property.
+            </returns>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Common.IsSameObjectsMultiConverter.ConvertBack(System.Object,System.Type[],System.Object,System.Globalization.CultureInfo)">
+            <summary>
+            Modifies the target data before passing it to the source object.
+            </summary>
+            <param name="value">The target data being passed to the source.</param>
+            <param name="targetTypes">The <see cref="T:System.Type" /> array of data expected by the source object.</param>
+            <param name="parameter">An optional parameter to be used in the converter logic.</param>
+            <param name="culture">The culture of the conversion.</param>
+            <returns>
+            The value to be passed to the source object.
+            </returns>
+        </member>
+        <member name="F:SciChart.Examples.ExternalDependencies.Common.PowerManager.MaximumPerformance">
+            <summary>
+            Indicates that almost no power savings measures will be used.
+            </summary>
+        </member>
+        <member name="F:SciChart.Examples.ExternalDependencies.Common.PowerManager.Balanced">
+            <summary>
+            Indicates that fairly aggressive power savings measures will be used.
+            </summary>
+        </member>
+        <member name="F:SciChart.Examples.ExternalDependencies.Common.PowerManager.PowerSourceOptimized">
+            <summary>
+            Indicates that very aggressive power savings measures will be used to help
+            stretch battery life.                                                     
+            </summary>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Common.PowerManager.GetPlans">
+            <returns>
+            All supported power plans.
+            </returns>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Common.PowerManager.OpenControlPanel">
+            <summary>
+            Opens Power Options section of the Control Panel.
+            </summary>
+        </member>
+        <member name="T:SciChart.Examples.ExternalDependencies.Common.SciChartPolarInteractionToolbar">
+            <summary>
+            A toolbar used in examples to simplify zoom, oom extents, rollover, cursor etc... for the polar charts. This also helps us with testing ;)
+            </summary>
+        </member>
+        <member name="T:SciChart.Examples.ExternalDependencies.Controls.CoverFlow.PlaneProjector">
+            <summary>
+            PlaneProjector - dead simple interactive 3D in WPF.  Read more at 
+            http://blogs.msdn.com/greg_schechter/archive/2007/10/26/enter-the-planerator-dead-simple-3d-in-wpf-with-a-stupid-name.aspx
+            
+            Greg Schechter - Fall 2007
+            </summary>
+        </member>
+        <member name="T:SciChart.Examples.ExternalDependencies.Controls.CoverFlow.PlaneProjector.LayoutInvalidationCatcher">
+            <summary>
+            Wrap this around a class that we want to catch the measure and arrange 
+            processes occuring on, and propagate to the parent PlaneProjector, if any.
+            Do this because layout invalidations don't flow up out of a 
+            Viewport2DVisual3D object.
+            </summary>
+        </member>
+        <member name="T:SciChart.Examples.ExternalDependencies.Controls.ExceptionView.ExceptionView">
+            <summary>
+            Interaction logic for ExceptionView.xaml
+            </summary>
+            <summary>
+            ExceptionView
+            </summary>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Controls.ExceptionView.ExceptionView.InitializeComponent">
+            <summary>
+            InitializeComponent
+            </summary>
+        </member>
+        <member name="F:SciChart.Examples.ExternalDependencies.Controls.Toolbar2D.InvokeSnapToSeriesCommandAction.SnapToSelectedSeriesCommandProperty">
+            <summary>
+            Defines the SnapToSelectedSeriesCommand property
+            </summary>
+        </member>
+        <member name="T:SciChart.Examples.ExternalDependencies.Controls.Toolbar2D.MyCustomAnnotation">
+            <summary>
+            MyCustomAnnotation
+            </summary>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Controls.Toolbar2D.MyCustomAnnotation.InitializeComponent">
+            <summary>
+            InitializeComponent
+            </summary>
+        </member>
+        <member name="T:SciChart.Examples.ExternalDependencies.Controls.Toolbar2D.SciChartInteractionToolbar">
+            <summary>
+            A toolbar used in examples to simplify zoom, pan, zoom extents, rollover, cursor etc... This also helps us with
+            testing ;-)
+            </summary>
+        </member>
+        <member name="T:SciChart.Examples.ExternalDependencies.Data.DoubleSeries">
+            <summary>
+            A data-structure to contain a list of X,Y double-precision points
+            </summary>
+        </member>
+        <member name="T:SciChart.Examples.ExternalDependencies.Data.FFT2">
+             Performs an in-place complex FFT.
+            
+             Released under the MIT License
+            
+             Copyright (c) 2010 Gerald T. Beauregard
+            
+             Permission is hereby granted, free of charge, to any person obtaining a copy
+             of this software and associated documentation files (the "Software"), to
+             deal in the Software without restriction, including without limitation the
+             rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+             sell copies of the Software, and to permit persons to whom the Software is
+             furnished to do so, subject to the following conditions:
+            
+             The above copyright notice and this permission notice shall be included in
+             all copies or substantial portions of the Software.
+            
+             THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+             IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+             FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+             AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+             LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+             FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+             IN THE SOFTWARE.
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Data.FFT2.#ctor"></member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Data.FFT2.init(System.UInt32)">
+             Initialize class to perform FFT of specified size.
+            
+             @param	logN	Log2 of FFT length. e.g. for 512 pt FFT, logN = 9.
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Data.FFT2.run(System.Double[],System.Double[],System.Boolean)">
+             Performs in-place complex FFT.
+            
+             @param	xRe		Real part of input/output
+             @param	xIm		Imaginary part of input/output
+             @param	inverse	If true, do an inverse FFT
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Data.FFT2.BitReverse(System.UInt32,System.UInt32)">
+             Do bit reversal of specified number of places of an int
+             For example, 1101 bit-reversed is 1011
+            
+             @param	x		Number to be bit-reverse.
+             @param	numBits	Number of bits in the number.
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Data.MovingAverageExtensions.MovingAverage``1(System.Collections.Generic.IEnumerable{``0},System.Func{``0,System.Double},System.Int32)">
+            <summary>
+            Fast MovingAverage LINQ Extension method provided for example purposes on an AS IS BASIS ONLY. ACCURACY OF CALCULATION NOT GAURANTEED
+            </summary>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Data.MovingAverageExtensions.MovingAverage(System.Collections.Generic.IEnumerable{System.Double},System.Int32)">
+            <summary>
+            Fast MovingAverage LINQ Extension method provided for example purposes on an AS IS BASIS ONLY. ACCURACY OF CALCULATION NOT GAURANTEED
+            </summary>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Data.MovingAverageExtensions.Macd(System.Collections.Generic.IEnumerable{System.Double},System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Fast Macd LINQ Extension method provided for example purposes on an AS IS BASIS ONLY. ACCURACY OF CALCULATION NOT GAURANTEED
+            </summary>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Data.MovingAverageExtensions.Rsi(System.Collections.Generic.IEnumerable{SciChart.Examples.ExternalDependencies.Data.PriceBar},System.Int32)">
+            <summary>
+            Fast Rsi LINQ Extension method provided for example purposes on an AS IS BASIS ONLY. ACCURACY OF CALCULATION NOT GAURANTEED
+            </summary>
+        </member>
+        <member name="T:SciChart.Examples.ExternalDependencies.Data.MovingAverage">
+            <summary>
+            Fast Moving Average class provided for example purposes on an AS IS BASIS ONLY. ACCURACY OF CALCULATION NOT GAURANTEED
+            </summary>
+        </member>
+        <member name="P:SciChart.Examples.ExternalDependencies.Data.PriceSeries.TimeData">
+            <summary>
+            Extracts the DateTime column of the PriceSeries as an array
+            </summary>
+        </member>
+        <member name="P:SciChart.Examples.ExternalDependencies.Data.PriceSeries.OpenData">
+            <summary>
+            Extracts the Open column of the PriceSeries as an array
+            </summary>
+        </member>
+        <member name="P:SciChart.Examples.ExternalDependencies.Data.PriceSeries.HighData">
+            <summary>
+            Extracts the High column of the PriceSeries as an array
+            </summary>
+        </member>
+        <member name="P:SciChart.Examples.ExternalDependencies.Data.PriceSeries.LowData">
+            <summary>
+            Extracts the Low column of the PriceSeries as an array
+            </summary>
+        </member>
+        <member name="P:SciChart.Examples.ExternalDependencies.Data.PriceSeries.CloseData">
+            <summary>
+            Extracts the Close column of the PriceSeries as an array
+            </summary>
+        </member>
+        <member name="P:SciChart.Examples.ExternalDependencies.Data.PriceSeries.VolumeData">
+            <summary>
+            Extracts the Volume column of the PriceSeries as an array
+            </summary>
+        </member>
+        <member name="T:SciChart.Examples.ExternalDependencies.Resources.Styles.AnnotationStylesResourceDictionary">
+            <summary>
+            AnnotationStylesResourceDictionary
+            </summary>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Resources.Styles.AnnotationStylesResourceDictionary.InitializeComponent">
+            <summary>
+            InitializeComponent
+            </summary>
+        </member>
+    </members>
+</doc>

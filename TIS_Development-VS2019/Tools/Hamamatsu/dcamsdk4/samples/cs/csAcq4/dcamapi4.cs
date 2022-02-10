@@ -1,4 +1,4 @@
-// dcamapi4.cs: Aug 30, 2018
+// dcamapi4.cs: Jun 18, 2021
 
 using System;
 using System.Collections.Generic;
@@ -36,11 +36,12 @@ namespace Hamamatsu.DCAM4
             NOGRABBER                           = 0x80000207,   // no grabber
             NOCOMBINATION                       = 0x80000208,   // no combination on registry
             FAILOPEN                            = 0x80001001,   // DEPRECATED
+            FRAMEGRABBER_NEEDS_FIRMWAREUPDATE   = 0x80001002,   // need to update frame grabber firmware to use the camera
             INVALIDMODULE                       = 0x80000211,   // dcam_init() found invalid module
             INVALIDCOMMPORT                     = 0x80000212,   // invalid serial port
             FAILOPENBUS                         = 0x81001001,   // the bus or driver are not available
             FAILOPENCAMERA                      = 0x82001001,   // camera report error during opening
-            FRAMEGRABBER_NEEDS_FIRMWAREUPDATE   = 0x80001002,   // need to update frame grabber firmware to use the camera
+            DEVICEPROBLEM                       = 0x82001002,   // initialization failed(for maico)
             INVALIDCAMERA                       = 0x80000806,   // invalid camera
             INVALIDHANDLE                       = 0x80000807,   // invalid camera handle
             INVALIDPARAM                        = 0x80000808,   // invalid parameter
@@ -65,7 +66,8 @@ namespace Hamamatsu.DCAM4
             NOCORRECTIONDATA                    = 0x80000838,   // not take the dark and shading correction data yet.
             CHANNELDEPENDENTVALUE               = 0x80000839,   // each channel has own property value so can't return overall property value.
             VIEWDEPENDENTVALUE                  = 0x8000083a,   // each view has own property value so can't return overall property value.
-            INVALIDCALIBSETTING                 = 0x8000083e,   // the setting of properties are invalid on sampling calibration data. some camera has the limitation to make calibration data. e.g. the trigger source is INTERNAL only and read out direction isn't trigger.
+            NODEVICEBUFFER                      = 0x8000083b,   // the frame count is larger than device momory size on using device memory.
+            REQUIREDSNAP                        = 0x8000083c,   // the capture mode is sequence on using device memory.
             LESSSYSTEMMEMORY                    = 0x8000083f,   // the sysmte memory size is too small. PC doesn't have enough memory or is limited memory by 32bit OS.
             NOTSUPPORT                          = 0x80000f03,   // camera does not support the function or property with current settings
             FAILREADCAMERA                      = 0x83001002,   // failed to read data from camera
@@ -87,7 +89,6 @@ namespace Hamamatsu.DCAM4
             WRITEFULL                           = 0x84001006,   // DCAMREC writes full frame of the session
             ALREADYOCCUPIED                     = 0x84001007,   // DCAMREC handle is already occupied by other HDCAM
             TOOLARGEUSERDATASIZE                = 0x84001008,   // DCAMREC is set the large value to user data size
-            NOIMAGE                             = 0x84001804,   // not stored image in buffer on bufrecord
             INVALIDWAITHANDLE                   = 0x84002001,   // DCAMWAIT is invalid handle
             NEWRUNTIMEREQUIRED                  = 0x84002002,   // DCAM Module Version is older than the version that the camera requests
             VERSIONMISMATCH                     = 0x84002003,   // Camre returns the error on setting parameter to limit version
@@ -109,10 +110,13 @@ namespace Hamamatsu.DCAM4
             THRUADAPTER                         = 0x80000f05,   
             NOCONNECTION                        = 0x80000f07,   // HDCAM lost connection to camera
             NOTIMPLEMENT                        = 0x80000f02,   // not yet implementation
+            DELAYEDFRAME                        = 0x80000f09,   // the frame waiting re-load from hardware buffer with SNAPSHOT of DEVICEBUFFER MODE
+            DEVICEINITIALIZING                  = 0xb0000001,   
             APIINIT_INITOPTIONBYTES             = 0xa4010003,   // DCAMAPI_INIT::initoptionbytes is invalid
             APIINIT_INITOPTION                  = 0xa4010004,   // DCAMAPI_INIT::initoption is invalid
             INITOPTION_COLLISION_BASE           = 0xa401C000,   
             INITOPTION_COLLISION_MAX            = 0xa401FFFF,   
+            MISSPROP_TRIGGERSOURCE              = 0xE0100110,   // the trigger mode is internal or syncreadout on using device memory.
             SUCCESS                             = 1,            // no error, general success code, app should check the value is positive
 
         }
@@ -142,11 +146,12 @@ namespace Hamamatsu.DCAM4
         public static readonly DCAMERR NOGRABBER                        = new DCAMERR(ERR.NOGRABBER);
         public static readonly DCAMERR NOCOMBINATION                    = new DCAMERR(ERR.NOCOMBINATION);
         public static readonly DCAMERR FAILOPEN                         = new DCAMERR(ERR.FAILOPEN);
+        public static readonly DCAMERR FRAMEGRABBER_NEEDS_FIRMWAREUPDATE= new DCAMERR(ERR.FRAMEGRABBER_NEEDS_FIRMWAREUPDATE);
         public static readonly DCAMERR INVALIDMODULE                    = new DCAMERR(ERR.INVALIDMODULE);
         public static readonly DCAMERR INVALIDCOMMPORT                  = new DCAMERR(ERR.INVALIDCOMMPORT);
         public static readonly DCAMERR FAILOPENBUS                      = new DCAMERR(ERR.FAILOPENBUS);
         public static readonly DCAMERR FAILOPENCAMERA                   = new DCAMERR(ERR.FAILOPENCAMERA);
-        public static readonly DCAMERR FRAMEGRABBER_NEEDS_FIRMWAREUPDATE= new DCAMERR(ERR.FRAMEGRABBER_NEEDS_FIRMWAREUPDATE);
+        public static readonly DCAMERR DEVICEPROBLEM                    = new DCAMERR(ERR.DEVICEPROBLEM);
         public static readonly DCAMERR INVALIDCAMERA                    = new DCAMERR(ERR.INVALIDCAMERA);
         public static readonly DCAMERR INVALIDHANDLE                    = new DCAMERR(ERR.INVALIDHANDLE);
         public static readonly DCAMERR INVALIDPARAM                     = new DCAMERR(ERR.INVALIDPARAM);
@@ -171,7 +176,8 @@ namespace Hamamatsu.DCAM4
         public static readonly DCAMERR NOCORRECTIONDATA                 = new DCAMERR(ERR.NOCORRECTIONDATA);
         public static readonly DCAMERR CHANNELDEPENDENTVALUE            = new DCAMERR(ERR.CHANNELDEPENDENTVALUE);
         public static readonly DCAMERR VIEWDEPENDENTVALUE               = new DCAMERR(ERR.VIEWDEPENDENTVALUE);
-        public static readonly DCAMERR INVALIDCALIBSETTING              = new DCAMERR(ERR.INVALIDCALIBSETTING);
+        public static readonly DCAMERR NODEVICEBUFFER                   = new DCAMERR(ERR.NODEVICEBUFFER);
+        public static readonly DCAMERR REQUIREDSNAP                     = new DCAMERR(ERR.REQUIREDSNAP);
         public static readonly DCAMERR LESSSYSTEMMEMORY                 = new DCAMERR(ERR.LESSSYSTEMMEMORY);
         public static readonly DCAMERR NOTSUPPORT                       = new DCAMERR(ERR.NOTSUPPORT);
         public static readonly DCAMERR FAILREADCAMERA                   = new DCAMERR(ERR.FAILREADCAMERA);
@@ -193,7 +199,6 @@ namespace Hamamatsu.DCAM4
         public static readonly DCAMERR WRITEFULL                        = new DCAMERR(ERR.WRITEFULL);
         public static readonly DCAMERR ALREADYOCCUPIED                  = new DCAMERR(ERR.ALREADYOCCUPIED);
         public static readonly DCAMERR TOOLARGEUSERDATASIZE             = new DCAMERR(ERR.TOOLARGEUSERDATASIZE);
-        public static readonly DCAMERR NOIMAGE                          = new DCAMERR(ERR.NOIMAGE);
         public static readonly DCAMERR INVALIDWAITHANDLE                = new DCAMERR(ERR.INVALIDWAITHANDLE);
         public static readonly DCAMERR NEWRUNTIMEREQUIRED               = new DCAMERR(ERR.NEWRUNTIMEREQUIRED);
         public static readonly DCAMERR VERSIONMISMATCH                  = new DCAMERR(ERR.VERSIONMISMATCH);
@@ -215,10 +220,13 @@ namespace Hamamatsu.DCAM4
         public static readonly DCAMERR THRUADAPTER                      = new DCAMERR(ERR.THRUADAPTER);
         public static readonly DCAMERR NOCONNECTION                     = new DCAMERR(ERR.NOCONNECTION);
         public static readonly DCAMERR NOTIMPLEMENT                     = new DCAMERR(ERR.NOTIMPLEMENT);
+        public static readonly DCAMERR DELAYEDFRAME                     = new DCAMERR(ERR.DELAYEDFRAME);
+        public static readonly DCAMERR DEVICEINITIALIZING               = new DCAMERR(ERR.DEVICEINITIALIZING);
         public static readonly DCAMERR APIINIT_INITOPTIONBYTES          = new DCAMERR(ERR.APIINIT_INITOPTIONBYTES);
         public static readonly DCAMERR APIINIT_INITOPTION               = new DCAMERR(ERR.APIINIT_INITOPTION);
         public static readonly DCAMERR INITOPTION_COLLISION_BASE        = new DCAMERR(ERR.INITOPTION_COLLISION_BASE);
         public static readonly DCAMERR INITOPTION_COLLISION_MAX         = new DCAMERR(ERR.INITOPTION_COLLISION_MAX);
+        public static readonly DCAMERR MISSPROP_TRIGGERSOURCE           = new DCAMERR(ERR.MISSPROP_TRIGGERSOURCE);
         public static readonly DCAMERR SUCCESS                          = new DCAMERR(ERR.SUCCESS);
 
         private DCAMERR(ERR argv)
@@ -253,11 +261,12 @@ namespace Hamamatsu.DCAM4
             case ERR.NOGRABBER:                         return "NOGRABBER";
             case ERR.NOCOMBINATION:                     return "NOCOMBINATION";
             case ERR.FAILOPEN:                          return "FAILOPEN";
+            case ERR.FRAMEGRABBER_NEEDS_FIRMWAREUPDATE: return "FRAMEGRABBER_NEEDS_FIRMWAREUPDATE";
             case ERR.INVALIDMODULE:                     return "INVALIDMODULE";
             case ERR.INVALIDCOMMPORT:                   return "INVALIDCOMMPORT";
             case ERR.FAILOPENBUS:                       return "FAILOPENBUS";
             case ERR.FAILOPENCAMERA:                    return "FAILOPENCAMERA";
-            case ERR.FRAMEGRABBER_NEEDS_FIRMWAREUPDATE: return "FRAMEGRABBER_NEEDS_FIRMWAREUPDATE";
+            case ERR.DEVICEPROBLEM:                     return "DEVICEPROBLEM";
             case ERR.INVALIDCAMERA:                     return "INVALIDCAMERA";
             case ERR.INVALIDHANDLE:                     return "INVALIDHANDLE";
             case ERR.INVALIDPARAM:                      return "INVALIDPARAM";
@@ -282,7 +291,8 @@ namespace Hamamatsu.DCAM4
             case ERR.NOCORRECTIONDATA:                  return "NOCORRECTIONDATA";
             case ERR.CHANNELDEPENDENTVALUE:             return "CHANNELDEPENDENTVALUE";
             case ERR.VIEWDEPENDENTVALUE:                return "VIEWDEPENDENTVALUE";
-            case ERR.INVALIDCALIBSETTING:               return "INVALIDCALIBSETTING";
+            case ERR.NODEVICEBUFFER:                    return "NODEVICEBUFFER";
+            case ERR.REQUIREDSNAP:                      return "REQUIREDSNAP";
             case ERR.LESSSYSTEMMEMORY:                  return "LESSSYSTEMMEMORY";
             case ERR.NOTSUPPORT:                        return "NOTSUPPORT";
             case ERR.FAILREADCAMERA:                    return "FAILREADCAMERA";
@@ -304,7 +314,6 @@ namespace Hamamatsu.DCAM4
             case ERR.WRITEFULL:                         return "WRITEFULL";
             case ERR.ALREADYOCCUPIED:                   return "ALREADYOCCUPIED";
             case ERR.TOOLARGEUSERDATASIZE:              return "TOOLARGEUSERDATASIZE";
-            case ERR.NOIMAGE:                           return "NOIMAGE";
             case ERR.INVALIDWAITHANDLE:                 return "INVALIDWAITHANDLE";
             case ERR.NEWRUNTIMEREQUIRED:                return "NEWRUNTIMEREQUIRED";
             case ERR.VERSIONMISMATCH:                   return "VERSIONMISMATCH";
@@ -326,10 +335,13 @@ namespace Hamamatsu.DCAM4
             case ERR.THRUADAPTER:                       return "THRUADAPTER";
             case ERR.NOCONNECTION:                      return "NOCONNECTION";
             case ERR.NOTIMPLEMENT:                      return "NOTIMPLEMENT";
+            case ERR.DELAYEDFRAME:                      return "DELAYEDFRAME";
+            case ERR.DEVICEINITIALIZING:                return "DEVICEINITIALIZING";
             case ERR.APIINIT_INITOPTIONBYTES:           return "APIINIT_INITOPTIONBYTES";
             case ERR.APIINIT_INITOPTION:                return "APIINIT_INITOPTION";
             case ERR.INITOPTION_COLLISION_BASE:         return "INITOPTION_COLLISION_BASE";
             case ERR.INITOPTION_COLLISION_MAX:          return "INITOPTION_COLLISION_MAX";
+            case ERR.MISSPROP_TRIGGERSOURCE:            return "MISSPROP_TRIGGERSOURCE";
             case ERR.SUCCESS:                           return "SUCCESS";
 
             }
@@ -387,6 +399,10 @@ namespace Hamamatsu.DCAM4
         public static readonly DCAMIDSTR DRIVERVERSION      = new DCAMIDSTR(0x04000106);
         public static readonly DCAMIDSTR MODULEVERSION      = new DCAMIDSTR(0x04000107);
         public static readonly DCAMIDSTR DCAMAPIVERSION     = new DCAMIDSTR(0x04000108);
+        public static readonly DCAMIDSTR SUBUNIT_INFO1      = new DCAMIDSTR(0x04000110);
+        public static readonly DCAMIDSTR SUBUNIT_INFO2      = new DCAMIDSTR(0x04000111);
+        public static readonly DCAMIDSTR SUBUNIT_INFO3      = new DCAMIDSTR(0x04000112);
+        public static readonly DCAMIDSTR SUBUNIT_INFO4      = new DCAMIDSTR(0x04000113);
         public static readonly DCAMIDSTR CAMERA_SERIESNAME  = new DCAMIDSTR(0x0400012c);
 
 
@@ -489,7 +505,6 @@ namespace Hamamatsu.DCAM4
         public static readonly DCAMIDPROP TRIGGERENABLE_POLARITY            = new DCAMIDPROP(0x00100420);
         public static readonly DCAMIDPROP TRIGGERNUMBER_FORFIRSTIMAGE       = new DCAMIDPROP(0x00100810);
         public static readonly DCAMIDPROP TRIGGERNUMBER_FORNEXTIMAGE        = new DCAMIDPROP(0x00100820);
-        public static readonly DCAMIDPROP BUS_SPEED                         = new DCAMIDPROP(0x00180110);
         public static readonly DCAMIDPROP NUMBEROF_OUTPUTTRIGGERCONNECTOR   = new DCAMIDPROP(0x001C0010);
         public static readonly DCAMIDPROP OUTPUTTRIGGER_CHANNELSYNC         = new DCAMIDPROP(0x001C0030);
         public static readonly DCAMIDPROP OUTPUTTRIGGER_PROGRAMABLESTART    = new DCAMIDPROP(0x001C0050);
@@ -507,7 +522,6 @@ namespace Hamamatsu.DCAM4
         public static readonly DCAMIDPROP MASTERPULSE_INTERVAL              = new DCAMIDPROP(0x001E0040);
         public static readonly DCAMIDPROP MASTERPULSE_BURSTTIMES            = new DCAMIDPROP(0x001E0050);
         public static readonly DCAMIDPROP EXPOSURETIME                      = new DCAMIDPROP(0x001F0110);
-        public static readonly DCAMIDPROP SYNC_MULTIVIEWEXPOSURE            = new DCAMIDPROP(0x001F0120);
         public static readonly DCAMIDPROP EXPOSURETIME_CONTROL              = new DCAMIDPROP(0x001F0130);
         public static readonly DCAMIDPROP TRIGGER_FIRSTEXPOSURE             = new DCAMIDPROP(0x001F0200);
         public static readonly DCAMIDPROP TRIGGER_GLOBALEXPOSURE            = new DCAMIDPROP(0x001F0300);
@@ -517,7 +531,6 @@ namespace Hamamatsu.DCAM4
         public static readonly DCAMIDPROP LIGHTMODE                         = new DCAMIDPROP(0x00200110);
         public static readonly DCAMIDPROP SENSITIVITYMODE                   = new DCAMIDPROP(0x00200210);
         public static readonly DCAMIDPROP SENSITIVITY                       = new DCAMIDPROP(0x00200220);
-        public static readonly DCAMIDPROP SENSITIVITY2                      = new DCAMIDPROP(0x00200240);
         public static readonly DCAMIDPROP DIRECTEMGAIN_MODE                 = new DCAMIDPROP(0x00200250);
         public static readonly DCAMIDPROP EMGAINWARNING_STATUS              = new DCAMIDPROP(0x00200260);
         public static readonly DCAMIDPROP EMGAINWARNING_LEVEL               = new DCAMIDPROP(0x00200270);
@@ -637,6 +650,8 @@ namespace Hamamatsu.DCAM4
         public static readonly DCAMIDPROP INTERNAL_LINEINTERVAL             = new DCAMIDPROP(0x00403850);
         public static readonly DCAMIDPROP TIMESTAMP_PRODUCER                = new DCAMIDPROP(0x00410A10);
         public static readonly DCAMIDPROP FRAMESTAMP_PRODUCER               = new DCAMIDPROP(0x00410A20);
+        public static readonly DCAMIDPROP TRANSFERINFO_FRAMECOUNT           = new DCAMIDPROP(0x00410B10);
+        public static readonly DCAMIDPROP TRANSFERINFO_LOSTCOUNT            = new DCAMIDPROP(0x00410B11);
         public static readonly DCAMIDPROP COLORTYPE                         = new DCAMIDPROP(0x00420120);
         public static readonly DCAMIDPROP BITSPERCHANNEL                    = new DCAMIDPROP(0x00420130);
         public static readonly DCAMIDPROP NUMBEROF_CHANNEL                  = new DCAMIDPROP(0x00420180);
@@ -647,12 +662,9 @@ namespace Hamamatsu.DCAM4
         public static readonly DCAMIDPROP IMAGE_HEIGHT                      = new DCAMIDPROP(0x00420220);
         public static readonly DCAMIDPROP IMAGE_ROWBYTES                    = new DCAMIDPROP(0x00420230);
         public static readonly DCAMIDPROP IMAGE_FRAMEBYTES                  = new DCAMIDPROP(0x00420240);
+        public static readonly DCAMIDPROP IMAGE_TOPOFFSETBYTES              = new DCAMIDPROP(0x00420250);
         public static readonly DCAMIDPROP IMAGE_PIXELTYPE                   = new DCAMIDPROP(0x00420270);
         public static readonly DCAMIDPROP IMAGE_CAMERASTAMP                 = new DCAMIDPROP(0x00420300);
-        public static readonly DCAMIDPROP BUFFER_ROWBYTES                   = new DCAMIDPROP(0x00420330);
-        public static readonly DCAMIDPROP BUFFER_FRAMEBYTES                 = new DCAMIDPROP(0x00420340);
-        public static readonly DCAMIDPROP BUFFER_TOPOFFSETBYTES             = new DCAMIDPROP(0x00420350);
-        public static readonly DCAMIDPROP BUFFER_PIXELTYPE                  = new DCAMIDPROP(0x00420360);
         public static readonly DCAMIDPROP RECORDFIXEDBYTES_PERFILE          = new DCAMIDPROP(0x00420410);
         public static readonly DCAMIDPROP RECORDFIXEDBYTES_PERSESSION       = new DCAMIDPROP(0x00420420);
         public static readonly DCAMIDPROP RECORDFIXEDBYTES_PERFRAME         = new DCAMIDPROP(0x00420430);
@@ -676,6 +688,8 @@ namespace Hamamatsu.DCAM4
         public static readonly DCAMIDPROP DEFECTCORRECT_HPOS                = new DCAMIDPROP(0x00471000);
         public static readonly DCAMIDPROP DEFECTCORRECT_METHOD              = new DCAMIDPROP(0x00473000);
         public static readonly DCAMIDPROP _DEFECTCORRECT                    = new DCAMIDPROP(0x00000010);
+        public static readonly DCAMIDPROP DEVICEBUFFER_MODE                 = new DCAMIDPROP(0x00490000);
+        public static readonly DCAMIDPROP DEVICEBUFFER_FRAMECOUNTMAX        = new DCAMIDPROP(0x00490020);
         public static readonly DCAMIDPROP CALIBREGION_MODE                  = new DCAMIDPROP(0x00402410);
         public static readonly DCAMIDPROP NUMBEROF_CALIBREGION              = new DCAMIDPROP(0x00402420);
         public static readonly DCAMIDPROP CALIBREGION_HPOS                  = new DCAMIDPROP(0x004B0000);
@@ -693,10 +707,25 @@ namespace Hamamatsu.DCAM4
         public static readonly DCAMIDPROP BACKFOCUSPOS_CURRENT              = new DCAMIDPROP(0x00804020);
         public static readonly DCAMIDPROP BACKFOCUSPOS_LOADFROMMEMORY       = new DCAMIDPROP(0x00804050);
         public static readonly DCAMIDPROP BACKFOCUSPOS_STORETOMEMORY        = new DCAMIDPROP(0x00804060);
+        public static readonly DCAMIDPROP CONFOCAL_SCANMODE                 = new DCAMIDPROP(0x00910010);
+        public static readonly DCAMIDPROP CONFOCAL_SCANLINES                = new DCAMIDPROP(0x00910020);
+        public static readonly DCAMIDPROP CONFOCAL_ZOOM                     = new DCAMIDPROP(0x00910030);
+        public static readonly DCAMIDPROP SUBUNIT_IMAGEWIDTH                = new DCAMIDPROP(0x009100e0);
+        public static readonly DCAMIDPROP NUMBEROF_SUBUNIT                  = new DCAMIDPROP(0x009100f0);
+        public static readonly DCAMIDPROP SUBUNIT_CONTROL                   = new DCAMIDPROP(0x00910100);
+        public static readonly DCAMIDPROP SUBUNIT_LASERPOWER                = new DCAMIDPROP(0x00910200);
+        public static readonly DCAMIDPROP SUBUNIT_PMTGAIN                   = new DCAMIDPROP(0x00910300);
+        public static readonly DCAMIDPROP SUBUNIT_PINHOLESIZE               = new DCAMIDPROP(0x00910400);
+        public static readonly DCAMIDPROP SUBUNIT_WAVELENGTH                = new DCAMIDPROP(0x00910500);
+        public static readonly DCAMIDPROP SUBUNIT_TOPOFFSETBYTES            = new DCAMIDPROP(0x00910600);
+        public static readonly DCAMIDPROP _SUBUNIT                          = new DCAMIDPROP(0x00000010);
         public static readonly DCAMIDPROP SYSTEM_ALIVE                      = new DCAMIDPROP(0x00FF0010);
         public static readonly DCAMIDPROP CONVERSIONFACTOR_COEFF            = new DCAMIDPROP(0x00FFE010);
         public static readonly DCAMIDPROP CONVERSIONFACTOR_OFFSET           = new DCAMIDPROP(0x00FFE020);
 
+
+        public static readonly DCAMIDPROP _CHANNEL                          = new DCAMIDPROP(0x00000001);
+        public static readonly DCAMIDPROP _VIEW                             = new DCAMIDPROP(0x01000000);
 
         public static readonly DCAMIDPROP ZERO = new DCAMIDPROP(0);
 
@@ -757,6 +786,7 @@ namespace Hamamatsu.DCAM4
             public static readonly DCAMPROP PROGRESSIVE             = new DCAMPROP(12);         // "PROGRESSIVE"
             public static readonly DCAMPROP SPLITVIEW               = new DCAMPROP(14);         // "SPLIT VIEW"
             public static readonly DCAMPROP DUALLIGHTSHEET          = new DCAMPROP(16);         // "DUAL LIGHTSHEET"
+            public static readonly DCAMPROP PHOTONNUMBERRESOLVING   = new DCAMPROP(18);         // "PHOTON NUMBER RESOLVING"
         };
         public struct SHUTTER_MODE      {
             public static readonly DCAMPROP GLOBAL                  = new DCAMPROP(1);          // "GLOBAL"
@@ -866,6 +896,11 @@ namespace Hamamatsu.DCAM4
             public static readonly DCAMPROP POSITIVE                = new DCAMPROP(2);          // "POSITIVE"
             public static readonly DCAMPROP INTERLOCK               = new DCAMPROP(3);          // "INTERLOCK"
         };
+        public struct OUTPUTTRIGGER_CHANNELSYNC     {
+            public static readonly DCAMPROP _1CHANNEL               = new DCAMPROP(1);          // "1 Channel"
+            public static readonly DCAMPROP _2CHANNELS              = new DCAMPROP(2);          // "2 Channels"
+            public static readonly DCAMPROP _3CHANNELS              = new DCAMPROP(3);          // "3 Channels"
+        };
         public struct OUTPUTTRIGGER_PROGRAMABLESTART        {
             public static readonly DCAMPROP FIRSTEXPOSURE           = new DCAMPROP(1);          // "FIRST EXPOSURE"
             public static readonly DCAMPROP FIRSTREADOUT            = new DCAMPROP(2);          // "FIRST READOUT"
@@ -887,10 +922,11 @@ namespace Hamamatsu.DCAM4
         };
         public struct OUTPUTTRIGGER_KIND        {
             public static readonly DCAMPROP LOW                     = new DCAMPROP(1);          // "LOW"
-            public static readonly DCAMPROP EXPOSURE                = new DCAMPROP(2);          // "EXPOSURE"
+            public static readonly DCAMPROP GLOBALEXPOSURE          = new DCAMPROP(2);          // "EXPOSURE"
             public static readonly DCAMPROP PROGRAMABLE             = new DCAMPROP(3);          // "PROGRAMABLE"
             public static readonly DCAMPROP TRIGGERREADY            = new DCAMPROP(4);          // "TRIGGER READY"
             public static readonly DCAMPROP HIGH                    = new DCAMPROP(5);          // "HIGH"
+            public static readonly DCAMPROP ANYROWEXPOSURE          = new DCAMPROP(6);          // "ANYROW EXPOSURE"
         };
         public struct OUTPUTTRIGGER_BASESENSOR      {
             public static readonly DCAMPROP VIEW1                   = new DCAMPROP(1);          // "VIEW 1"
@@ -945,6 +981,12 @@ namespace Hamamatsu.DCAM4
             public static readonly DCAMPROP WARNING                 = new DCAMPROP(2);          // "WARNING"
             public static readonly DCAMPROP PROTECTED               = new DCAMPROP(3);          // "PROTECTED"
         };
+        public struct PHOTONIMAGINGMODE     {
+            public static readonly DCAMPROP _0                      = new DCAMPROP(0);          // "0"
+            public static readonly DCAMPROP _1                      = new DCAMPROP(1);          // "1"
+            public static readonly DCAMPROP _2                      = new DCAMPROP(2);          // "2"
+            public static readonly DCAMPROP _3                      = new DCAMPROP(3);          // "2"
+        };
         public struct SENSORCOOLER      {
             public static readonly DCAMPROP OFF                     = new DCAMPROP(1);          // "OFF"
             public static readonly DCAMPROP ON                      = new DCAMPROP(2);          // "ON"
@@ -966,6 +1008,13 @@ namespace Hamamatsu.DCAM4
             public static readonly DCAMPROP BUSY                    = new DCAMPROP(3);          // "BUSY"
             public static readonly DCAMPROP ALWAYS                  = new DCAMPROP(4);          // "ALWAYS"
             public static readonly DCAMPROP WARNING                 = new DCAMPROP(5);          // "WARNING"
+        };
+        public struct REALTIMEGAINCORRECT_LEVEL     {
+            public static readonly DCAMPROP _1                      = new DCAMPROP(1);          // "1"
+            public static readonly DCAMPROP _2                      = new DCAMPROP(2);          // "2"
+            public static readonly DCAMPROP _3                      = new DCAMPROP(3);          // "3"
+            public static readonly DCAMPROP _4                      = new DCAMPROP(4);          // "4"
+            public static readonly DCAMPROP _5                      = new DCAMPROP(5);          // "5"
         };
         public struct WHITEBALANCEMODE      {
             public static readonly DCAMPROP FLAT                    = new DCAMPROP(1);          // "FLAT"
@@ -1005,15 +1054,39 @@ namespace Hamamatsu.DCAM4
             public static readonly DCAMPROP MAX                     = new DCAMPROP(2);          // "MAXIMUM"
             public static readonly DCAMPROP MIN                     = new DCAMPROP(3);          // "MINIMUM"
         };
+        public struct RECURSIVEFILTERFRAMES     {
+            public static readonly DCAMPROP _2                      = new DCAMPROP(2);          // "2 FRAMES"
+            public static readonly DCAMPROP _4                      = new DCAMPROP(4);          // "4 FRAMES"
+            public static readonly DCAMPROP _8                      = new DCAMPROP(8);          // "8 FRAMES"
+            public static readonly DCAMPROP _16                     = new DCAMPROP(16);         // "16 FRAMES"
+            public static readonly DCAMPROP _32                     = new DCAMPROP(32);         // "32 FRAMES"
+            public static readonly DCAMPROP _64                     = new DCAMPROP(64);         // "64 FRAMES"
+        };
         public struct INTENSITYLUT_MODE     {
             public static readonly DCAMPROP THROUGH                 = new DCAMPROP(1);          // "THROUGH"
             public static readonly DCAMPROP PAGE                    = new DCAMPROP(2);          // "PAGE"
             public static readonly DCAMPROP CLIP                    = new DCAMPROP(3);          // "CLIP"
         };
+        public struct BINNING       {
+            public static readonly DCAMPROP _1                      = new DCAMPROP(1);          // "1X1"
+            public static readonly DCAMPROP _2                      = new DCAMPROP(2);          // "2X2"
+            public static readonly DCAMPROP _4                      = new DCAMPROP(4);          // "4X4"
+            public static readonly DCAMPROP _8                      = new DCAMPROP(8);          // "8X8"
+            public static readonly DCAMPROP _16                     = new DCAMPROP(16);         // "16X16"
+            public static readonly DCAMPROP _1_2                    = new DCAMPROP(102);        // "1X2"
+            public static readonly DCAMPROP _2_4                    = new DCAMPROP(204);        // "2X4"
+        };
         public struct COLORTYPE     {
             public static readonly DCAMPROP BW                      = new DCAMPROP(0x00000001); // "BW"
             public static readonly DCAMPROP RGB                     = new DCAMPROP(0x00000002); // "RGB"
             public static readonly DCAMPROP BGR                     = new DCAMPROP(0x00000003); // "BGR"
+        };
+        public struct BITSPERCHANNEL        {
+            public static readonly DCAMPROP _8                      = new DCAMPROP(8);          // "8BIT"
+            public static readonly DCAMPROP _10                     = new DCAMPROP(10);         // "10BIT"
+            public static readonly DCAMPROP _12                     = new DCAMPROP(12);         // "12BIT"
+            public static readonly DCAMPROP _14                     = new DCAMPROP(14);         // "14BIT"
+            public static readonly DCAMPROP _16                     = new DCAMPROP(16);         // "16BIT"
         };
         public struct DEFECTCORRECT_MODE        {
             public static readonly DCAMPROP OFF                     = new DCAMPROP(1);          // "OFF"
@@ -1028,9 +1101,14 @@ namespace Hamamatsu.DCAM4
             public static readonly DCAMPROP MINIMUM                 = new DCAMPROP(2);          // "MINIMUM"
             public static readonly DCAMPROP AGGRESSIVE              = new DCAMPROP(3);          // "AGGRESSIVE"
         };
+        public struct DEVICEBUFFER_MODE     {
+            public static readonly DCAMPROP THRU                    = new DCAMPROP(1);          // "THRU"
+            public static readonly DCAMPROP SNAPSHOT                = new DCAMPROP(2);          // "SNAPSHOT"
+        };
         public struct SYSTEM_ALIVE      {
             public static readonly DCAMPROP OFFLINE                 = new DCAMPROP(1);          // "OFFLINE"
             public static readonly DCAMPROP ONLINE                  = new DCAMPROP(2);          // "ONLINE"
+            public static readonly DCAMPROP ERROR                   = new DCAMPROP(3);          // "ERROR"
         };
         public struct TIMESTAMP_MODE        {
             public static readonly DCAMPROP NONE                    = new DCAMPROP(1);          // "NONE"
@@ -1084,8 +1162,21 @@ namespace Hamamatsu.DCAM4
             public static readonly DCAMPROP TOODARK                 = new DCAMPROP(7);          // "TOO DARK"
             public static readonly DCAMPROP TOOBRIGHT               = new DCAMPROP(8);          // "TOO BRIGHT"
             public static readonly DCAMPROP NOTDETECTOBJECT         = new DCAMPROP(9);          // "NOT DETECT OBJECT"
+        };
+        public struct CONFOCAL_SCANMODE     {
+            public static readonly DCAMPROP SIMULTANEOUS            = new DCAMPROP(1);          // "SIMULTANEOUS"
+            public static readonly DCAMPROP SEQUENTIAL              = new DCAMPROP(2);          // "SEQUENTIAL"
+        };
+        public struct SUBUNIT_CONTROL       {
+            public static readonly DCAMPROP NOTINSTALLED            = new DCAMPROP(0);          // "NOT INSTALLED"
             public static readonly DCAMPROP OFF                     = new DCAMPROP(1);          // "OFF"
             public static readonly DCAMPROP ON                      = new DCAMPROP(2);          // "ON"
+        };
+        public struct SUBUNIT_PINHOLESIZE       {
+            public static readonly DCAMPROP ERROR                   = new DCAMPROP(1);          // "ERROR"
+            public static readonly DCAMPROP SMALL                   = new DCAMPROP(2);          // "SMALL"
+            public static readonly DCAMPROP MEDIUM                  = new DCAMPROP(3);          // "MEDIUM"
+            public static readonly DCAMPROP LARGE                   = new DCAMPROP(4);          // "LARGE"
         };
 
         public struct MODE
@@ -1230,6 +1321,7 @@ namespace Hamamatsu.DCAM4
         public static readonly DCAMPROPATTRIBUTE HASVIEW                = new DCAMPROPATTRIBUTE(0x00008000);// value can set the value for each views
         public static readonly DCAMPROPATTRIBUTE ACCESSREADY            = new DCAMPROPATTRIBUTE(0x00002000);// This value can get or set at READY status
         public static readonly DCAMPROPATTRIBUTE ACCESSBUSY             = new DCAMPROPATTRIBUTE(0x00001000);// This value can get or set at BUSY status
+        public static readonly DCAMPROPATTRIBUTE EFFECTIVE              = new DCAMPROPATTRIBUTE(0x00000200);// value is effective
 
 
             // property value type
@@ -1306,10 +1398,11 @@ namespace Hamamatsu.DCAM4
     {
         private uint attribute;
 
-        public static readonly DCAMPROPATTRIBUTE2 ARRAYBASE     = new DCAMPROPATTRIBUTE2(0x08000000);   
-        public static readonly DCAMPROPATTRIBUTE2 ARRAYELEMENT  = new DCAMPROPATTRIBUTE2(0x04000000);   
-        public static readonly DCAMPROPATTRIBUTE2 REAL32        = new DCAMPROPATTRIBUTE2(0x02000000);   
-        public static readonly DCAMPROPATTRIBUTE2 _FUTUREUSE    = new DCAMPROPATTRIBUTE2(0x0007FFFC);   
+        public static readonly DCAMPROPATTRIBUTE2 ARRAYBASE             = new DCAMPROPATTRIBUTE2(0x08000000);   
+        public static readonly DCAMPROPATTRIBUTE2 ARRAYELEMENT          = new DCAMPROPATTRIBUTE2(0x04000000);   
+        public static readonly DCAMPROPATTRIBUTE2 REAL32                = new DCAMPROPATTRIBUTE2(0x02000000);   
+        public static readonly DCAMPROPATTRIBUTE2 INITIALIZEIMPROPER    = new DCAMPROPATTRIBUTE2(0x00000001);   
+        public static readonly DCAMPROPATTRIBUTE2 CHANNELSEPARATEDDATA  = new DCAMPROPATTRIBUTE2(0x00040000);   // Channel 0 value is total of each channels.
 
 
         public DCAMPROPATTRIBUTE2(uint v)
@@ -1423,6 +1516,7 @@ namespace Hamamatsu.DCAM4
             public static readonly DCAMWAIT CYCLEEND    = new DCAMWAIT(0x0004);
             public static readonly DCAMWAIT EXPOSUREEND = new DCAMWAIT(0x0008);
             public static readonly DCAMWAIT STOPPED     = new DCAMWAIT(0x0010);
+            public static readonly DCAMWAIT RELOADFRAME = new DCAMWAIT(0x0020);
 
         };
 
@@ -1526,6 +1620,47 @@ namespace Hamamatsu.DCAM4
         }
     }
 
+    public struct DCAMBUF_METADATAKIND : IEquatable<DCAMBUF_METADATAKIND>
+    {
+        private uint metadatakind;
+
+        public static readonly DCAMBUF_METADATAKIND TIMESTAMPS  = new DCAMBUF_METADATAKIND(0x00010000);
+        public static readonly DCAMBUF_METADATAKIND FRAMESTAMPS = new DCAMBUF_METADATAKIND(0x00020000);
+
+
+        public DCAMBUF_METADATAKIND(uint v)
+        {
+            metadatakind = v;
+        }
+
+        public override int GetHashCode()
+        {
+            return metadatakind.GetHashCode();
+        }
+
+        public bool Equals(DCAMBUF_METADATAKIND a)
+        {
+            return metadatakind == a.metadatakind;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is DCAMBUF_METADATAKIND))
+                return false;
+
+            return Equals((DCAMBUF_METADATAKIND)obj);
+        }
+
+        public static implicit operator uint(DCAMBUF_METADATAKIND self)
+        {
+            return (uint)self.metadatakind;
+        }
+        public static implicit operator int(DCAMBUF_METADATAKIND self)
+        {
+            return (int)self.metadatakind;
+        }
+    }
+
 
     // ================================ structures ================================
 
@@ -1572,6 +1707,63 @@ namespace Hamamatsu.DCAM4
             iFrame = 0;
             in_count = 0;
             outcount = 0;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack =8)]
+    public struct DCAM_TIMESTAMPBLOCK
+    {
+        public DCAM_METADATABLOCKHDR hdr;   // [in] size member should be size of this structure
+                                            // [in] iKind should be DCAMBUF_METADATAKIND_TIMESTAMPS.
+                                            // [in] option should be one of DCAMBUF_METADATAOPTION or DCAMREC_METADATAOPTION
+
+        public IntPtr timestamp;            // [in] pointer for TIMESTAMP block. DCAM_TIMESTAMP[]
+
+        public Int32 timestampsize;             // [in] sizeof(DCAM_TIMESTRAMP)
+        public Int32 timestampvaildsize;        // [o] return the written data size of DCAM_TIMESTRAMP.
+        public Int32 timestampkind;             // [o] return timestamp kind(Hardware, Driver, DCAM etc..)
+        public Int32 reserved;
+
+        public DCAM_TIMESTAMPBLOCK(int option)
+        {
+            hdr.size = Marshal.SizeOf(typeof(DCAM_TIMESTAMPBLOCK));
+            hdr.iKind = DCAMBUF_METADATAKIND.TIMESTAMPS;
+            hdr.option = option;
+            hdr.iFrame = 0;
+            hdr.in_count = 0;
+            hdr.outcount = 0;
+
+            timestamp = IntPtr.Zero;
+
+            timestampsize = 0;
+            timestampvaildsize = 0;
+            timestampkind = 0;
+            reserved = 0;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct DCAM_FRAMESTAMPBLOCK
+    {
+        public DCAM_METADATABLOCKHDR hdr;   // [in] size member should be size of this structure
+                                            // [in] iKind should be DCAMBUF_METADATAKIND_FRAMESTAMPS.
+                                            // [in] option should be one of DCAMBUF_METADATAOPTION or DCAMREC_METADATAOPTION
+
+        public IntPtr framestamps;            // [in] pointer for framestamp block. Int32[]
+
+        public Int32 reserved;
+
+        public DCAM_FRAMESTAMPBLOCK(int option)
+        {
+            hdr.size = Marshal.SizeOf(typeof(DCAM_FRAMESTAMPBLOCK));
+            hdr.iKind = DCAMBUF_METADATAKIND.FRAMESTAMPS;
+            hdr.option = option;
+            hdr.iFrame = 0;
+            hdr.in_count = 0;
+            hdr.outcount = 0;
+
+            framestamps = IntPtr.Zero;
+            reserved = 0;
         }
     }
 
@@ -1939,6 +2131,12 @@ namespace Hamamatsu.DCAM4
         [DllImport("dcamapi")]
         public static extern DCAMERR dcambuf_copymetadata(IntPtr h, ref  DCAM_METADATAHDR hdr);
 
+        [DllImport("dcamapi", EntryPoint = "dcambuf_copymetadata")]
+        public static extern DCAMERR dcambuf_copymetadata_timestampblock(IntPtr h, ref DCAM_TIMESTAMPBLOCK tsb);
+
+        [DllImport("dcamapi", EntryPoint = "dcambuf_copymetadata")]
+        public static extern DCAMERR dcambuf_copymetadata_framestampblock(IntPtr h, ref DCAM_FRAMESTAMPBLOCK tsb);
+
         // Capturing
         [DllImport("dcamapi")]
         public static extern DCAMERR dcamcap_start(IntPtr h, Int32 mode);
@@ -2129,9 +2327,13 @@ namespace Hamamatsu.DCAM4
         {
             return dcamapidll.dcambuf_copyframe(hdcam, ref aFrame);
         }
-        public static DCAMERR copymetadata(IntPtr hdcam, ref DCAM_METADATAHDR hdr)
+        public static DCAMERR copymetadata_timestampblock(IntPtr hdcam, ref DCAM_TIMESTAMPBLOCK tsb)
         {
-            return dcamapidll.dcambuf_copymetadata(hdcam, ref hdr);
+            return dcamapidll.dcambuf_copymetadata_timestampblock(hdcam, ref tsb);
+        }
+        public static DCAMERR copymetadata_framestampblock(IntPtr hdcam, ref DCAM_FRAMESTAMPBLOCK fsb)
+        {
+            return dcamapidll.dcambuf_copymetadata_framestampblock(hdcam, ref fsb);
         }
     }
 

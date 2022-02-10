@@ -17,6 +17,7 @@
     using System.Windows.Media;
 
     using ThorLogging;
+
     using ThorSharedTypes;
 
     /// <summary>
@@ -291,10 +292,52 @@
                         ret = true;
                     }
                     break;
+                case ThorPipeCommand.LoadExperimentFile:
+                    if (_modeThorImage == "Run Sample LS")
+                    {
+                        sendData(_eventAggregator, "IPC_CONTROLLER", "RUN_SAMPLE", "LoadExperimentFile", msg[3]);
+                        ret = true;
+                    }
+                    break;
+                case ThorPipeCommand.MoveX:
+                    if (_modeThorImage == "Run Sample LS")
+                    {
+                        sendData(_eventAggregator, "IPC_CONTROLLER", "RUN_SAMPLE", "MoveX", msg[3]);
+                        ret = true;
+                    }
+                    break;
+                case ThorPipeCommand.MoveY:
+                    if (_modeThorImage == "Run Sample LS")
+                    {
+                        sendData(_eventAggregator, "IPC_CONTROLLER", "RUN_SAMPLE", "MoveY", msg[3]);
+                        ret = true;
+                    }
+                    break;
+                case ThorPipeCommand.MoveZ:
+                    if (_modeThorImage == "Run Sample LS")
+                    {
+                        sendData(_eventAggregator, "IPC_CONTROLLER", "RUN_SAMPLE", "MoveZ", msg[3]);
+                        ret = true;
+                    }
+                    break;
+                case ThorPipeCommand.MoveSecondaryZ:
+                    if (_modeThorImage == "Run Sample LS")
+                    {
+                        sendData(_eventAggregator, "IPC_CONTROLLER", "RUN_SAMPLE", "MoveSecondaryZ", msg[3]);
+                        ret = true;
+                    }
+                    break;
                 case ThorPipeCommand.AcquireInformation:
                     {
                         ret = true;
                     };
+                    break;
+                case ThorPipeCommand.NotifySavedFile:
+                    if (_modeThorImage == "Run Sample LS")
+                    {
+                        sendData(_eventAggregator, "IPC_CONTROLLER", "RUN_SAMPLE", "NotifySavedFile", msg[3]);
+                        ret = true;
+                    }
                     break;
                 default:
                     break;

@@ -1,0 +1,274 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SciChart.Drawing.DirectX</name>
+    </assembly>
+    <members>
+        <member name="T:SciChart.Drawing.DirectX.Common.Disposer">
+            <summary>
+            Disposes a class if not disposed
+            </summary>
+        </member>
+        <member name="M:SciChart.Drawing.DirectX.Common.Disposer.RemoveAndDispose``1(``0)">
+            <summary>
+            Dispose an object instance and set the reference to null
+            </summary>
+            <typeparam name="T">The type of object to dispose</typeparam>
+            <param name="disposer">A reference to the instance for disposal</param>
+            <remarks>This method hides any thrown exceptions that might occur during disposal of the object (by design)</remarks>
+        </member>
+        <member name="T:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11CompatibilityHelper">
+            <summary>
+            A helper class which can be used to detect if the Direct3D10 enhancements to SciChart can run on the current hardware &amp; operating system
+            </summary>
+        </member>
+        <member name="P:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11CompatibilityHelper.IsSupportedOperatingSystem">
+            <summary>
+            Supported operating systems include Windows Vista, Windows 7, Windows 8, 8.1 and up. Windows XP, 2000, 2003 are not supported. 
+            </summary>
+        </member>
+        <member name="P:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11CompatibilityHelper.HasDirectX10CapableGpu">
+            <summary>
+            Determines if the current GPU supports DirectX10 or later
+            </summary>
+        </member>
+        <member name="P:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11CompatibilityHelper.SupportsDirectX10">
+            <summary>
+            Determines if the current hardware &amp; software configuration fully supports DirectX10 or later
+            </summary>
+        </member>
+        <member name="T:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11ObsoleteWarning">
+            <summary>
+            Displays an obsolete warning in all Direct3D11RenderSurface types 
+            </summary>
+        </member>
+        <member name="T:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface">
+            <summary>
+            Provides a <see cref="T:SciChart.Drawing.Common.RenderSurfaceBase" /> implementation that uses a DirectX 10 High Quality and High Speed raster, capable of rendering with sub-pixel accuracy. 
+            This requires DirectX10 hardware or later to run. Newer GPUs will have superior performance. If performance issues occur, please use the <see cref="T:SciChart.Drawing.HighSpeedRasterizer.HighSpeedRenderSurface" /></summary>
+            <seealso cref="T:SciChart.Drawing.HighSpeedRasterizer.HighSpeedRenderSurface" />
+            <seealso cref="T:SciChart.Drawing.Common.RenderSurfaceBase" />
+            <seealso cref="T:SciChart.Drawing.Common.IRenderContext2D" />
+        </member>
+        <member name="E:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface.InitializationFailed">
+            <summary>
+            This event handler will fire if the direct x initialization fails.
+            </summary>
+        </member>
+        <member name="E:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface.RenderingFailed">
+            <summary>
+            Event handler to be used when rendering fails.
+            </summary>
+        </member>
+        <member name="M:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface" /> class.
+            </summary>
+        </member>
+        <member name="P:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface.UseAlternativeFillSource">
+            <summary>
+            When false (default), uses <see cref="T:System.Windows.Interop.D3DImage" /> for hardware accelerated texture sharing. 
+            When true, uses software method to FillSource (avoiding use of D3DImage). This can help compatibility on certain systems
+            </summary>
+            <example>
+            To enable compatibility mode for SciChart3DSurface, set this property once, statically, in your application
+            <code>        
+            void Foo()
+            {
+               Direct3D11RenderSurface.UseAlternativeFillSource = true;
+            }
+            </code></example>
+        </member>
+        <member name="P:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface.GraphicsAdapterIndex">
+            <summary>
+            Sets the Graphics Adapter Index to use for the <see cref="T:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface" />. Defaults to 0. Use values other than 0 only in multi GPU computers
+            </summary>
+        </member>
+        <member name="P:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface.EnableForceWaitForGPU">
+            <summary>
+            When false (default), no waiting for gpu
+            when true , we force wait for the gpu to finish rendering before invalidating the final image or copying it 
+            </summary>
+            <example>
+            To enable compatibility mode for SciChart3DSurface, set this property once, statically, in your application
+            <code>        
+            void Foo()
+            {
+               Direct3D11RenderSurface.EnableForceWaitForGPU = true;
+            }
+            </code></example>
+        </member>
+        <member name="P:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface.SupportsDirectX10">
+            <summary>
+            Gets a value indicating whether your current hardware supports DirectX10. THIS CALL IS DEFERRED TO Direct3D10CompatibilityHelper.SupportsDirectX10. Please check the property values and Intellisense documentation for Direct3D10CompatibilityHelper to see the reason why this failed
+            </summary>
+        </member>
+        <member name="M:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface.SciChart#Drawing#DirectX#Rendering#IDirectXRenderSurface#GetRenderContext">
+            <summary>
+            Creates an <see cref="T:SciChart.Drawing.Common.IRenderContext2D" /> instance to perform drawing operations. Note this is only valid for the current render pass
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface.GetRenderContext">
+            <summary>
+            When overridden in a derived class, returns a RenderContext valid for the current render pass
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface.SciChart#Drawing#DirectX#Rendering#IDirectXRenderSurface#ResetD3D11With(System.Boolean)">
+            <summary>
+            Resets the D3D Engine with the flag which determines whether we use the alternative software path for mixing DirectX content with WPF.
+            This flag (when true) improves compatibility on some older graphics hardware, at the expense of performance.
+            </summary>
+            <param name="useAlternativeFillSource">This flag (when true) improves compatibility on some older graphics hardware, at the expense of performance</param>
+        </member>
+        <member name="M:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface.InitEngineAsync">
+            <summary>
+            Initializes the Direct3D11RenderSurface D3D Engine Asynchronously. The task returns True when the operation has completed, or faulted if an exception occurs
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface.RecreateSurface">
+            <summary>
+            this is called when window is created or resized
+            </summary>
+        </member>
+        <member name="M:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface.AssertSupportsDirectX">
+            <summary>
+            Asserts the current hardware/software configuration supports DirectX. 
+            
+            Will throw a PlatformNotSupportedException if InitializationFailed is not handled, otherwise, raises the InitializationFailed event 
+            </summary>
+            <exception cref="T:System.PlatformNotSupportedException"></exception>
+        </member>
+        <member name="M:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface.OnRenderSurfaceBaseLoaded(System.Object,System.Windows.RoutedEventArgs)">
+            <summary>
+            Called when the <see cref="T:SciChart.Drawing.Common.RenderSurfaceBase" /> is loaded into the visual tree
+            </summary>
+            <param name="sender">The sender.</param>
+            <param name="e">The <see cref="T:System.Windows.RoutedEventArgs" /> instance containing the event data.</param>
+        </member>
+        <member name="M:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface.DisposeUnmanagedResources">
+            <summary>
+            Derived classes may override this method to be notified when to dispose of unmanaged resources. Called when the
+            <see cref="T:SciChart.Drawing.Common.RenderSurfaceBase" /> is disposed
+            </summary>
+        </member>
+        <member name="T:SciChart.Drawing.DirectX.Context.D3D11.DirectXHelper">
+            <summary>
+                <para>A helper class to enable the Direct3D11RenderSurface </para>
+                <para>Usage: &gt;SciChartSurface DirectXHelper.TryApplyDirectXRenderer="True"/&lt;</para>
+            </summary>
+        </member>
+        <member name="F:SciChart.Drawing.DirectX.Context.D3D11.DirectXHelper.TryApplyDirectXRendererProperty">
+            <summary>Defines the TryApplyDirectXRenderer attached property</summary>
+        </member>
+        <member name="M:SciChart.Drawing.DirectX.Context.D3D11.DirectXHelper.SetTryApplyDirectXRenderer(SciChart.Charting.Visuals.SciChartSurface,System.Boolean)">
+            <summary>
+            Sets the TryApplyDirectXRenderer attached property. When true, tries to apply DirectX rendering to the <see cref="T:SciChart.Charting.Visuals.SciChartSurface" /></summary>
+            <param name="element">The element.</param>
+            <param name="value">if set to <c>true</c> tries to apply DirectX rendering to the <see cref="T:SciChart.Charting.Visuals.SciChartSurface" />.</param>
+        </member>
+        <member name="M:SciChart.Drawing.DirectX.Context.D3D11.DirectXHelper.GetTryApplyDirectXRenderer(SciChart.Charting.Visuals.SciChartSurface)">
+            <summary>
+            Sets the TryApplyDirectXRenderer attached property value
+            </summary>
+        </member>
+        <member name="F:SciChart.Drawing.DirectX.Context.D3D11.DirectXHelper.FallbackTypeProperty">
+            <summary>Defines the FallbackType attached property</summary>
+        </member>
+        <member name="M:SciChart.Drawing.DirectX.Context.D3D11.DirectXHelper.SetFallbackType(System.Windows.DependencyObject,System.Type)">
+            <summary>
+            Sets the FallbackType attached property. This is the type of <see cref="T:SciChart.Drawing.Common.RenderSurfaceBase" /> which is created if DirectX is not available
+            </summary>
+            <param name="element">The element.</param>
+            <param name="value">if set to <c>true</c> tries to apply DirectX rendering to the <see cref="T:SciChart.Charting.Visuals.SciChartSurface" />.</param>
+        </member>
+        <member name="M:SciChart.Drawing.DirectX.Context.D3D11.DirectXHelper.GetFallbackType(System.Windows.DependencyObject)">
+            <summary>
+            Sets the FallbackType attached property value
+            </summary>
+        </member>
+        <member name="T:SciChart.Drawing.DirectX.Context.D3D11.DXErrorEventArgs">
+            <summary>
+            Event args used by the <see cref="T:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface" /></summary>
+        </member>
+        <member name="P:SciChart.Drawing.DirectX.Context.D3D11.DXErrorEventArgs.Exception">
+            <summary>
+            Gets or sets the exception.
+            </summary>
+        </member>
+        <member name="T:SciChart.Drawing.DirectX.Context.D3D11.IDirectXRenderContext">
+            <summary>
+            Defines the interface to a 3D RenderContext
+            </summary>
+        </member>
+        <member name="M:SciChart.Drawing.DirectX.Context.D3D11.IDirectXRenderContext.BeginScene">
+            <summary>
+            BeginScene, must be called at the start of every frame
+            </summary>
+        </member>
+        <member name="M:SciChart.Drawing.DirectX.Context.D3D11.IDirectXRenderContext.EndScene">
+            <summary>
+            EndScene, called at the end of every frame
+            </summary>
+        </member>
+        <member name="M:SciChart.Drawing.DirectX.Context.D3D11.IDirectXRenderContext.RenderColorTriangles(System.Collections.Generic.List{System.Windows.Point},System.Collections.Generic.List{System.Double},System.Collections.Generic.List{System.UInt32})">
+            <summary>
+            Render a series of triangles that enclose points by heights sent, and filled with the colors sent 
+            </summary>
+            <param name="points"></param> base 2 points fron eight heights will be extended
+            <param name="heights"></param> height used to extente length perpendicular on the point, creating quads ( 2 trangles for each 2 points )
+            <param name="colors"></param> color used to fill the quads
+        </member>
+        <member name="M:SciChart.Drawing.DirectX.Context.D3D11.IDirectXRenderContext.RenderGammaSeriesFilledTriangles(System.Collections.Generic.List{System.Windows.Point},System.Collections.Generic.List{System.Windows.Point},System.Collections.Generic.List{System.UInt32})">
+            <summary>
+            Render gamma series, with calculated point on the other side of the gamma curve
+            </summary>
+            <param name="points"></param>
+            <param name="gammaPoints"></param>
+            <param name="colors"></param>
+        </member>
+        <member name="T:SciChart.Drawing.DirectX.Context.D3D11.RdpDetectionTimer">
+            <summary>
+            Provides a helper class that can be used to detect if Remote Desktop sessions is in use on the current PC
+            </summary>
+        </member>
+        <member name="P:SciChart.Drawing.DirectX.Context.D3D11.RdpDetectionTimer.IsRemoteDesktop">
+            <summary>
+            Determines if the code is being run under Remote Desktop
+            </summary>
+        </member>
+        <member name="T:SciChart.Drawing.DirectX.Engine2D.Effects.ShaderManager">
+            <summary>
+            compiles Direct3D shaders from FX files in assembly resources
+            </summary>
+        </member>
+        <member name="T:SciChart.Drawing.DirectX.Properties.Resources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="T:SciChart.Drawing.DirectX.Rendering.IDirectXRenderSurface">
+            <summary>
+            Defines the interface to a <see cref="T:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface" />: a DirectX10/11 implementation of <see cref="T:SciChart.Drawing.Common.RenderSurfaceBase" /> that uses high-quality, sub-pixel, hardware accelerated drawing algorithms.
+            </summary>
+            <seealso cref="T:SciChart.Drawing.DirectX.Context.D3D11.Direct3D11RenderSurface" />
+            <seealso cref="T:SciChart.Drawing.HighQualityRasterizer.HighQualityRenderSurface" />
+            <seealso cref="T:SciChart.Drawing.HighSpeedRasterizer.HighSpeedRenderSurface" />
+            <seealso cref="T:SciChart.Drawing.Common.RenderSurfaceBase" />
+            <seealso cref="T:SciChart.Drawing.Common.IRenderContext2D" />
+        </member>
+        <member name="M:SciChart.Drawing.DirectX.Rendering.IDirectXRenderSurface.GetRenderContext">
+            <summary>
+            Creates an <see cref="T:SciChart.Drawing.DirectX.Context.D3D11.IDirectXRenderContext" /> instance to perform drawing operations. Note this is only valid for the current render pass
+            </summary>
+        </member>
+        <member name="M:SciChart.Drawing.DirectX.Rendering.IDirectXRenderSurface.ResetD3D11With(System.Boolean)">
+            <summary>
+            Resets the D3D Engine with the flag <param name="useAlternativeFillSource"> which determines whether we use the alternative software path for mixing DirectX content with WPF. 
+            This flag (when true) improves compatibility on some older graphics hardware, at the expense of performance</param></summary>
+            <param name="useAlternativeFillSource">This flag (when true) improves compatibility on some older graphics hardware, at the expense of performance</param>
+        </member>
+    </members>
+</doc>

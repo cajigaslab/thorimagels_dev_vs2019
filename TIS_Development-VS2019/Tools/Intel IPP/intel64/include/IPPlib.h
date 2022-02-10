@@ -684,6 +684,9 @@ class IPPSDll : public PDLL, IPPSlib
 	//call the macro and pass your functions
 	DECLARE_FUNCTION1(Ipp32f*, ippsMalloc_32f, int);
 	DECLARE_FUNCTION1(void, ippsFree, void*);
+	DECLARE_FUNCTION4(IppStatus, ippsAdd_32fc, const Ipp32fc*, const Ipp32fc*, Ipp32fc*, int);
+	DECLARE_FUNCTION3(IppStatus, ippsAdd_32fc_I, const Ipp32fc*, Ipp32fc*, int);
+	DECLARE_FUNCTION3(IppStatus, ippsDivC_32fc_I, Ipp32fc, Ipp32fc*, int);
 	DECLARE_FUNCTION3(IppStatus, ippsSet_32f, Ipp32f, Ipp32f*, int);
 	DECLARE_FUNCTION3(IppStatus, ippsSet_64f, Ipp64f, Ipp64f*, int);
 	DECLARE_FUNCTION2(IppStatus, ippsZero_32f, Ipp32f*, int);

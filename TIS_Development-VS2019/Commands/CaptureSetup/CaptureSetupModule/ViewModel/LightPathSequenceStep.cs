@@ -207,7 +207,8 @@
         public void GetLightPathSequenceStepMCLS(ref int mainLaserSel, ref int laser1Enable, ref double laser1Power, ref double laser1PowerPercent,
             ref int laser2Enable, ref double laser2Power, ref double laser2PowerPercent,
             ref int laser3Enable, ref double laser3Power, ref double laser3PowerPercent,
-            ref int laser4Enable, ref double laser4Power, ref double laser4PowerPercent)
+            ref int laser4Enable, ref double laser4Power, ref double laser4PowerPercent,
+            ref int laser1Wavelength, ref int laser2Wavelength, ref int laser3Wavelength, ref int laser4Wavelength)
         {
             if (null != _lightPathSequenceStepNode)
             {
@@ -282,6 +283,24 @@
                     if (GetAttribute(mclsNdList[0], "power4percent", ref str))
                     {
                         Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out laser4PowerPercent);
+                    }
+
+                    //Used to determine whether wavelength should be displayed when hovering over sequential capture Light Path
+                    if (GetAttribute(mclsNdList[0], "wavelength1", ref str))
+                    {
+                        Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out laser1Wavelength);
+                    }
+                    if (GetAttribute(mclsNdList[0], "wavelength2", ref str))
+                    {
+                        Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out laser2Wavelength);
+                    }
+                    if (GetAttribute(mclsNdList[0], "wavelength3", ref str))
+                    {
+                        Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out laser3Wavelength);
+                    }
+                    if (GetAttribute(mclsNdList[0], "wavelength4", ref str))
+                    {
+                        Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out laser4Wavelength);
                     }
                 }
             }

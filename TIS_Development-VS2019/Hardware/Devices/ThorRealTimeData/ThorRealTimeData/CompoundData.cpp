@@ -37,7 +37,7 @@ CompoundData::CompoundData(CompoundData* cd,int interleave)
 
 	gCtr = ((_localGCtrSize = newGCtrSize) > 0) ? new unsigned long[_localGCtrSize] : NULL;
 	strucData->aiDataPtr = ((strucData->aiLength = newGCtrSize * nAI) > 0) ? new double[strucData->aiLength] : NULL;
-	strucData->diDataPtr = ((strucData->diLength = newGCtrSize * nDI) > 0) ? new unsigned long[strucData->diLength] : NULL;
+	strucData->diDataPtr = ((strucData->diLength = newGCtrSize * nDI) > 0) ? new unsigned char[strucData->diLength] : NULL;
 	strucData->ciDataPtr = ((strucData->ciLength = newGCtrSize * nCI) > 0) ? new unsigned long[strucData->ciLength] : NULL;
 	strucData->viDataPtr = ((strucData->viLength = newGCtrSize * nVI) > 0) ? new double[strucData->viLength] : NULL;
 	strucData->gCtr64Ptr = ((strucData->gcLength = newGCtrSize * nGC) > 0) ? new unsigned __int64[strucData->gcLength] : NULL;
@@ -100,7 +100,7 @@ CompoundData::CompoundData(CompoundData* cd,int interleave)
 		{
 			for(j=0;j<nDI;j++)
 			{
-				memcpy(strucData->diDataPtr+j*_localGCtrSize,cd->strucData->diDataPtr+j*(cd->strucData->diLength/nDI),_localGCtrSize*sizeof(unsigned long));
+				memcpy(strucData->diDataPtr+j*_localGCtrSize,cd->strucData->diDataPtr+j*(cd->strucData->diLength/nDI),_localGCtrSize*sizeof(unsigned char));
 			}
 		}
 		if(strucData->ciLength > 0)
@@ -156,7 +156,7 @@ CompoundData::CompoundData(CompoundData* cd,StimulusSaveStruct* ssaveMode)
 			strucData->ciDataPtr = ((strucData->ciLength = newGCtrSize * nCI) > 0) ? new unsigned long[strucData->ciLength] : NULL;
 			strucData->gCtr64Ptr = ((strucData->gcLength = newGCtrSize * nGC) > 0) ? new unsigned __int64[strucData->gcLength] : NULL;
 			strucData->aiDataPtr = ((strucData->aiLength = newGCtrSize * nAI) > 0) ? new double[strucData->aiLength] : NULL;
-			strucData->diDataPtr = ((strucData->diLength = newGCtrSize * nDI) > 0) ? new unsigned long[strucData->diLength] : NULL;
+			strucData->diDataPtr = ((strucData->diLength = newGCtrSize * nDI) > 0) ? new unsigned char[strucData->diLength] : NULL;
 			strucData->viDataPtr = ((strucData->viLength = newGCtrSize * nVI) > 0) ? new double[strucData->viLength] : NULL;
 
 			//copy based on the stimulus channel:
@@ -210,7 +210,7 @@ CompoundData::CompoundData(CompoundData* cd,StimulusSaveStruct* ssaveMode)
 			gCtr = ((_localGCtrSize = newGCtrSize) > 0) ? new unsigned long[_localGCtrSize] : NULL;
 			strucData->ciDataPtr = ((strucData->ciLength = newGCtrSize * nCI) > 0) ? new unsigned long[strucData->ciLength] : NULL;
 			strucData->gCtr64Ptr = ((strucData->gcLength = newGCtrSize * nGC) > 0) ? new unsigned __int64[strucData->gcLength] : NULL;
-			strucData->diDataPtr = ((strucData->diLength = newGCtrSize * nDI) > 0) ? new unsigned long[strucData->diLength] : NULL;
+			strucData->diDataPtr = ((strucData->diLength = newGCtrSize * nDI) > 0) ? new unsigned char[strucData->diLength] : NULL;
 			strucData->aiDataPtr = ((strucData->aiLength = newGCtrSize * nAI) > 0) ? new double[strucData->aiLength] : NULL;
 			strucData->viDataPtr = ((strucData->viLength = newGCtrSize * nVI) > 0) ? new double[strucData->viLength] : NULL;
 
@@ -261,7 +261,7 @@ CompoundData::CompoundData(CompoundData* cd,StimulusSaveStruct* ssaveMode)
 		//GCtrSize should be primary length:
 		gCtr = ((_localGCtrSize = cd->_localGCtrSize) > 0) ?  new unsigned long[_localGCtrSize] : NULL;
 		strucData->aiDataPtr = ((strucData->aiLength = _localGCtrSize * nAI) > 0) ? new double[strucData->aiLength] : NULL;
-		strucData->diDataPtr = ((strucData->diLength = _localGCtrSize * nDI) > 0) ? new unsigned long[strucData->diLength] : NULL;
+		strucData->diDataPtr = ((strucData->diLength = _localGCtrSize * nDI) > 0) ? new unsigned char[strucData->diLength] : NULL;
 		strucData->ciDataPtr = ((strucData->ciLength = _localGCtrSize * nCI) > 0) ? new unsigned long[strucData->ciLength] : NULL;
 		strucData->viDataPtr = ((strucData->viLength = _localGCtrSize * nVI) > 0) ? new double[strucData->viLength] : NULL;
 		strucData->gCtr64Ptr = ((strucData->gcLength = cd->strucData->gcLength) > 0) ? new unsigned __int64[strucData->gcLength] : NULL;
@@ -281,7 +281,7 @@ CompoundData::CompoundData(CompoundData* cd,StimulusSaveStruct* ssaveMode)
 		{
 			for(j=0;j<nDI;j++)
 			{
-				memcpy(strucData->diDataPtr+j*_localGCtrSize,cd->strucData->diDataPtr+j*(cd->strucData->diLength/nDI),_localGCtrSize*sizeof(unsigned long));
+				memcpy(strucData->diDataPtr+j*_localGCtrSize,cd->strucData->diDataPtr+j*(cd->strucData->diLength/nDI),_localGCtrSize*sizeof(unsigned char));
 			}
 		}
 		if(strucData->ciLength > 0)
@@ -316,7 +316,7 @@ long CompoundData::allocBufferMem()
 {
 	gCtr = (_localGCtrSize > 0) ? new unsigned long[_localGCtrSize] : NULL;
 	strucData->aiDataPtr =(strucData->aiLength > 0) ? new double[strucData->aiLength] : NULL;
-	strucData->diDataPtr = (strucData->diLength > 0) ? new unsigned long[strucData->diLength] : NULL;
+	strucData->diDataPtr = (strucData->diLength > 0) ? new unsigned char[strucData->diLength] : NULL;
 	strucData->ciDataPtr = (strucData->ciLength > 0) ? new unsigned long[strucData->ciLength] : NULL;
 	strucData->viDataPtr =(strucData->viLength > 0) ? new double[strucData->viLength] : NULL;
 	strucData->gCtr64Ptr = (strucData->gcLength > 0) ? new unsigned __int64[strucData->gcLength] : NULL; 
@@ -334,7 +334,7 @@ long CompoundData::CopyCompoundData(CompoundData* cd)
 	if((strucData->aiLength == cd->strucData->aiLength) && (strucData->diLength == cd->strucData->diLength) && (strucData->ciLength == cd->strucData->ciLength) && (strucData->viLength == cd->strucData->viLength))
 	{
 		memcpy(strucData->aiDataPtr,cd->strucData->aiDataPtr,cd->strucData->aiLength*sizeof(double));
-		memcpy(strucData->diDataPtr,cd->strucData->diDataPtr,cd->strucData->diLength*sizeof(unsigned long));	
+		memcpy(strucData->diDataPtr,cd->strucData->diDataPtr,cd->strucData->diLength*sizeof(unsigned char));	
 		memcpy(strucData->ciDataPtr,cd->strucData->ciDataPtr,cd->strucData->ciLength*sizeof(unsigned long));
 		memcpy(strucData->viDataPtr,cd->strucData->viDataPtr,cd->strucData->viLength*sizeof(double));
 	}

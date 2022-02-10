@@ -602,6 +602,7 @@
                 LiveImageCapturing(!CaptureStatus);
                 ((IMVM)MVMManager.Instance["ObjectiveControlViewModel", this]).OnPropertyChange("FramesPerSecondText");
                 ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("FramesPerSecondAverage");
+                ((ThorSharedTypes.IMVM)MVMManager.Instance["CameraControlViewModel", this]).OnPropertyChange("ExposureTimeCam");
                 CloseProgressWindow();
             };
 
@@ -734,6 +735,7 @@
                 _bw.CancelAsync();
                 ((IMVM)MVMManager.Instance["ObjectiveControlViewModel", this]).OnPropertyChange("FramesPerSecondText");
                 ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("FramesPerSecondAverage");
+                ((ThorSharedTypes.IMVM)MVMManager.Instance["CameraControlViewModel", this]).OnPropertyChange("ExposureTimeCam");
             }
 
             _isLive = !_isLive;
@@ -770,6 +772,7 @@
 
                 ((IMVM)MVMManager.Instance["ObjectiveControlViewModel", this]).OnPropertyChange("FramesPerSecondText");
                 ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("FramesPerSecondAverage");
+                ((ThorSharedTypes.IMVM)MVMManager.Instance["CameraControlViewModel", this]).OnPropertyChange("ExposureTimeCam");
                 OnPropertyChanged("ImagePathPlay");
                 OnPropertyChanged("IsLive");
                 OnPropertyChanged("ImagePathFastFocus");

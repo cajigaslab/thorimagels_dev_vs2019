@@ -18,12 +18,26 @@
     using System.Windows.Navigation;
     using System.Windows.Shapes;
 
-    using Abt.Controls.SciChart;
-    using Abt.Controls.SciChart.Model.DataSeries;
-    using Abt.Controls.SciChart.Visuals;
-    using Abt.Controls.SciChart.Visuals.RenderableSeries;
-
     using ROIStatsChart.Model;
+
+    using SciChart;
+    using SciChart.Charting;
+    using SciChart.Charting.ChartModifiers;
+    using SciChart.Charting.Common.Extensions;
+    using SciChart.Charting.Model.DataSeries;
+    using SciChart.Charting.Themes;
+    using SciChart.Charting.Visuals;
+    using SciChart.Charting.Visuals.Annotations;
+    using SciChart.Charting.Visuals.Axes;
+    using SciChart.Charting.Visuals.Axes.LabelProviders;
+    using SciChart.Charting.Visuals.Events;
+    using SciChart.Charting.Visuals.PointMarkers;
+    using SciChart.Charting.Visuals.RenderableSeries;
+    using SciChart.Core;
+    using SciChart.Data.Model;
+    using SciChart.Drawing.HighSpeedRasterizer;
+    using SciChart.Drawing.Utility;
+    using SciChart.Drawing.VisualXcceleratorRasterizer;
 
     using ThorSharedTypes;
 
@@ -45,12 +59,14 @@
 
         public void Clear()
         {
+            SciChartSurface.SetRuntimeLicenseKey("TCqHmTkInF/fDQuv2IRL2jISc44wjQP46+iIvQjEtY21jW+X66HmcupG3FzPOD39A8zSj8i8vKIUgW2r9wgDzzuy3RK/gQsogW5d2SN0QVo0tnTzAd/uEWHLFeS2W17/2hf//FVKxwU4704JENFsCxYbOoPZHbpNwbTJovnl1QjEabIjy1KzBkA2fJMJbWF8wPRTD0ruKUEnrHpXOuvpTOQlr7a6XSmUlJ5o/Vsx7oJRcIYm70L7shDDXu1hHEqICpBtcCb91kpgNMaAZoWJwhYiBmowdHbgszC9lm3o6hlLi35y88379sblqhR1b7rIh80hoc3XwfQUmPydvU6RAwLUyIYT/z28JOl3kx0pReVdlLQd5bfdldNeNrI6J3ajng427j2udkQpNqQxNUEbLH9D/qqr5xeez+F/O4FWIYiYJvs9pgMamA6GYfGnV1sQ2spekHboGxh5PWfNgAWTuqFU/arLx5W1LYhT75WcXUe8pSXX1JD6qGD7/G4l9KpN+CYuZrXh1Zl9ND5KLicMDvfX65W+B8ka0TZbLIFExmsWSwNt+n6osLwE48Q8JsPb1+WCzy+1oCaFnyGXcpK5LlVB0Dcg9VdcDnwmrEQ=");
+
             sciChartSurface.RenderableSeries.Clear();
         }
 
         public void Plot(KeyValuePair<int, SolidColorBrush> channel, uint[] data)
         {
-            ObservableCollection<IChartSeriesViewModel> chartSeries = new ObservableCollection<IChartSeriesViewModel>();
+            ObservableCollection<IRenderableSeries> chartSeries = new ObservableCollection<IRenderableSeries>();
 
             IXyDataSeries<double, double> ds0;
 
@@ -71,14 +87,10 @@
 
             ds0.Append(x, y);
             var color = channel.Value.Color;
-            var vm = new ChartSeriesViewModel(ds0, new XyScatterRenderableSeries() { Tag = channel.Key.ToString(), StrokeThickness = 1, IsVisible = true, SeriesColor = color, PointMarker = new Abt.Controls.SciChart.Visuals.PointMarkers.CrossPointMarker() { Width = 1.5, Height = 1.5, StrokeThickness = 2 } });
 
-            vm.RenderSeries.IsVisible = true;
-
-            chartSeries.Add(vm);
-
-            sciChartSurface.SeriesSource = chartSeries;
-
+            var l = new XyScatterRenderableSeries() { DataSeries = ds0, Tag = channel.Key.ToString(), StrokeThickness = 1, IsVisible = true, Stroke = color, PointMarker = new CrossPointMarker() { Width = 1.5, Height = 1.5, StrokeThickness = 2 } };
+            chartSeries.Add(l);
+            sciChartSurface.RenderableSeries = chartSeries;
             sciChartSurface.ZoomExtents();
         }
 

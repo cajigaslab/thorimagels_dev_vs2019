@@ -96,7 +96,7 @@
   <body>
     <div>
       <div class="fileinformation">
-		<div>v19.12.5887</div>
+		<div>v21.6.6291</div>
 	</div>
     </div>
     <div><a class="go-top" href="#Chapter_appendix_detail"></a></div>
@@ -232,6 +232,12 @@
                             <div><b>get and store calibration data</b><br>Control camera to make calibration data and store in memory. Not supported by all cameras.<br></div>
                           </td>
                         </tr>
+                        <tr>
+                          <td width="25%"><a class="go-top" href="cpp/devicebuffermode">devicebuffermode</a></td>
+                          <td width="75%">
+                            <div><b>set parameter related device buffer mode and access image</b><br>Set and get parameters related device buffer mode and access all images in the shortest time. Not supported by all cameras.<br></div>
+                          </td>
+                        </tr>
                       </table>
                     </div>
                   </div>
@@ -301,10 +307,49 @@
                   <div>
                     <p></p>
                   </div>
+				<div class="title">Python</div>
+                  <div></div>
+                  <div>
+                    <div class="samplelist">
+                      <table width="100%" border="1" rules="all">
+                        <tr>
+                          <th bgcolor="#BBBBBB" width="25%" align="left">Sample</th>
+                          <th bgcolor="#BBBBBB" width="75%" align="left">Explanation</th>
+                        </tr>
+                        <tr>
+                          <td width="25%"><a class="go-top" href="python">Source Folder</a></td>
+                          <td width="75%">
+                            <div>The linked directory contains the following sources.<br></div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td width="25%">dcam_show_device_list.py</td>
+                          <td width="75%">
+                            <div>show the list of detected device<br></div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td width="25%">dcam_show_properties.py</td>
+                          <td width="75%">
+                            <div>show the property list that the opened device supports.<br></div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td width="25%">dcam_show_single_captured_image.py</td>
+                          <td width="75%">
+                            <div>capture a single frame and show the image by OpenCV.<br></div>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+                  </div>
+                  <div>
+                    <p></p>
+                  </div>
 				<div class="title">CUDA</div>
                   <div>
                     <div>
-						<div>Sample code using CUDA. We made with CUDA Toolkit 7.0.</div>
+						<div>Sample code using CUDA. We made with CUDA Toolkit 10.2 and Visual Studio 2019.</div>
 					</div>
                   </div>
                   <div>

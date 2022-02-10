@@ -26,6 +26,7 @@
         static ObservableCollection<string> _modalities = new ObservableCollection<string>();
 
         private PMTSwitch _pmtSwitchController = new PMTSwitch();
+        private PMTSwitch _pmtSwitchController2 = new PMTSwitch();
         private bool _tabletMode = false;
 
         #endregion Fields
@@ -95,10 +96,28 @@
 
                     //Because the HWSettings file has changed, the data structures in SelectHW must be updated
                     UpdateAndPersistCurrentDevices();
-
-                    //The active camera might've changed with the modality, set the PMT switch box to the right position
-                    UpdatePMTSwitchBox();
                 }
+            }
+        }
+
+        public BleachMode GetBleachMode
+        {
+            get
+            {
+                BleachMode bMode = BleachMode.BLEACH;
+                XmlDocument hwSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS];
+                XmlNodeList ndListHW = hwSettings.SelectNodes("/HardwareSettings/Devices/SLM");
+                for (int i = 0; i < ndListHW.Count; i++)
+                {
+                    string str = string.Empty;
+
+                    if (XmlManager.GetAttribute(ndListHW[i], hwSettings, "dllName", ref str) && (0 == str.CompareTo("ThorSLMPDM512")))
+                    {
+                        bMode = (XmlManager.GetAttribute(ndListHW[i], hwSettings, "active", ref str) && (0 == str.CompareTo("1"))) ?
+                            BleachMode.SLM : BleachMode.BLEACH;
+                    }
+                }
+                return bMode;
             }
         }
 
@@ -141,41 +160,41 @@
 
         public static void DeleteDirectory(string target_dir)
         {
-            DirectoryInfo dirInfo = new DirectoryInfo(target_dir);
-            foreach (FileInfo file in dirInfo.GetFiles())
+            if (Directory.Exists(target_dir))
+                return;
+            try
             {
-                file.Delete();
+                DirectoryInfo dirInfo = new DirectoryInfo(target_dir);
+                foreach (FileInfo file in dirInfo.GetFiles())
+                {
+                    file.Delete();
+                }
+                foreach (DirectoryInfo dir in dirInfo.GetDirectories())
+                {
+                    dir.Delete(true);
+                }
+
+                Directory.Delete(target_dir, false);
             }
-            foreach (DirectoryInfo dir in dirInfo.GetDirectories())
+            catch (System.IO.IOException ex)
             {
-                dir.Delete(true);
+                ThorLogging.ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Verbose, 1, "DeleteDirectory error: " + ex.Message);
             }
+        }
 
-            //string[] files = Directory.GetFiles(target_dir);
-            //string[] dirs = Directory.GetDirectories(target_dir);
-
-            //foreach (string file in files)
-            //{
-            //    File.SetAttributes(file, FileAttributes.Normal);
-            //    File.Delete(file);
-            //}
-
-            //foreach (string dir in dirs)
-            //{
-            //    DeleteDirectory(dir);
-            //}
-
-            //try
-            //{
-            //    Directory.Delete(target_dir, false);
-            //}
-            //catch (System.IO.IOException)
-            //{
-            //    //This gives a locking application (Ex. Windows Explorer) an
-            //    //opportunity to release the directory handle
-            //    System.Threading.Thread.Sleep(1000);
-            //    Directory.Delete(target_dir, false);
-            //}
+        public static void DeleteFile(string target_file)
+        {
+            try
+            {
+                if (File.Exists(target_file))
+                {
+                    File.Delete(target_file);
+                }
+            }
+            catch (Exception ex)
+            {
+                ThorLogging.ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, "DeleteFile '" + target_file + "': " + ex.Message);
+            }
         }
 
         [DllImport(".\\Modules_Native\\SelectHardware.dll", EntryPoint = "DeslectCameras")]
@@ -406,6 +425,12 @@
             return ReturnDocMutex(sfType);
         }
 
+        public static void SafeCreateDirectory(string target_dir)
+        {
+            if (!Directory.Exists(target_dir))
+                Directory.CreateDirectory(target_dir);
+        }
+
         [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "SetCameraParamDouble")]
         public static extern int SetCameraParamDouble(int cameraSelection, int param, double value);
 
@@ -417,8 +442,28 @@
             return SetCameraParamString(cameraSelection, param, new StringBuilder(value));
         }
 
+        public static int SetDeviceParamBuffer<T>(int deviceSelection, int paramId, T[] buf, long len, int exeOrWait)
+        {
+            int ret = 0;
+            var gch = default(GCHandle);
+            try
+            {
+                gch = GCHandle.Alloc(buf, GCHandleType.Pinned);
+                ret = SetDeviceParamBuffer(deviceSelection, paramId, gch.AddrOfPinnedObject(), len, exeOrWait);
+            }
+            finally
+            {
+                if (gch.IsAllocated)
+                    gch.Free();
+            }
+            return ret;
+        }
+
         [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "SetDeviceParamBuffer")]
         public static extern int SetDeviceParamBuffer(int deviceSelection, int paramId, byte[] buf, long len, int exeOrWait);
+
+        [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "SetDeviceParamBuffer")]
+        public static extern int SetDeviceParamBuffer(int deviceSelection, int paramId, IntPtr buf, long len, int exeOrWait);
 
         [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "SetDeviceParamDouble")]
         public static extern int SetDeviceParamDouble(int deviceSelection, int paramId, double param, int exeOrWait);
@@ -542,7 +587,7 @@
                     string mod = GetMyDocumentsThorImageFolderString() + "Modalities\\" + _lastSavedModality;
                     FileCopyWithExistCheck(GetActiveSettingsFileString(), mod + "\\Active.xml", true);
 
-                    if (!Directory.Exists(mod + "\\AlignData")) Directory.CreateDirectory(mod + "\\AlignData");
+                    ResourceManagerCS.SafeCreateDirectory(mod + "\\AlignData");
 
                     foreach (string f in Directory.GetFiles(Directory.GetCurrentDirectory(), "AlignData*.txt"))
                     {
@@ -644,19 +689,59 @@
         {
             int ret = 0;
             string str = string.Empty;
+            string sn2 = string.Empty;
+            string[] serialNums;
+            DisconnectSwitchBoxes();
 
-            if (File.Exists("ThorDetectorSwitchSettings.xml"))
+            serialNums = _pmtSwitchController.GetSerialNumbers();
+            try
             {
-                XmlDocument detetorSwitchSettings = new XmlDocument();
-                detetorSwitchSettings.Load("ThorDetectorSwitchSettings.xml");
-                XmlNodeList ndList = (null != detetorSwitchSettings) ? detetorSwitchSettings.SelectNodes("/DetectorSwitchSettings/SerialNumber") : null;
-                if (null != ndList)
+                if (File.Exists("ThorDetectorSwitchSettings.xml"))
                 {
-                    XmlManager.GetAttribute(ndList[0], detetorSwitchSettings, "sn", ref str);
+                    XmlDocument detetorSwitchSettings = new XmlDocument();
+                    detetorSwitchSettings.Load("ThorDetectorSwitchSettings.xml");
+                    XmlNodeList ndList = (null != detetorSwitchSettings) ? detetorSwitchSettings.SelectNodes("/DetectorSwitchSettings/SerialNumber") : null;
+                    if (null != ndList)
+                    {
+                        XmlManager.GetAttribute(ndList[0], detetorSwitchSettings, "sn", ref str);
+                    }
+                    if (string.Empty == str)
+                    {
+                        XmlManager.SetAttribute(ndList[0], detetorSwitchSettings, "sn", str = serialNums[0]);
+                    }
+                    ret = _pmtSwitchController.Connect(str) ? 1 : 0;
+                    if (1 < serialNums.Length)
+                    {
+                        ndList = (null != detetorSwitchSettings) ? detetorSwitchSettings.SelectNodes("/DetectorSwitchSettings/SecondSerialNumber") : null;
+                        if (null != ndList)
+                        {
+                            XmlManager.GetAttribute(ndList[0], detetorSwitchSettings, "sn", ref sn2);
+                        }
+                        if (string.Empty == sn2)
+                        {
+                            sn2 = (str == serialNums[0]) ? serialNums[1] : serialNums[0];
+                            XmlManager.SetAttribute(ndList[0], detetorSwitchSettings, "sn", sn2);
+                        }
+                        _pmtSwitchController2.Connect(sn2);
+                    }
+                    detetorSwitchSettings.Save("ThorDetectorSwitchSettings.xml");
+                }
+                else
+                {
+                    ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "Error ThorDetectorSwitchSettings.xml not found");
                 }
             }
-            ret = _pmtSwitchController.Connect(str) ? 1 : 0;
+            catch (Exception e)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "Error reading ThorDetectorSwitchSettings.xml in ResourceManager -> ConnectToPMTSwitchBox. Exception: " + e.ToString());
+            }
             return ret;
+        }
+
+        public void DisconnectSwitchBoxes()
+        {
+            _pmtSwitchController.Disconnect();
+            _pmtSwitchController2.Disconnect();
         }
 
         public string GetActiveLSMName()
@@ -681,6 +766,151 @@
             return string.Empty;
         }
 
+        public bool IsSwitchBoxConnected(int selectedDetectorSwitch)
+        {
+            if (2 == selectedDetectorSwitch)
+            {
+                return _pmtSwitchController2.CheckSwitchBoxConnection();
+            }
+            return _pmtSwitchController.CheckSwitchBoxConnection();
+        }
+
+        public int ReadSwitchBoxPositions(int selectedDetectorSwitch)
+        {
+            if (2 == selectedDetectorSwitch)
+            {
+                return _pmtSwitchController2.GetSwitchesStatus();
+            }
+            return _pmtSwitchController.GetSwitchesStatus();
+        }
+
+        public void ReplaceActiveXML(string experimentPath)
+        {
+            string expTemplatesFldr = Path.GetDirectoryName(experimentPath);
+            string templateName = Path.GetFileNameWithoutExtension(experimentPath);
+            string expRoisXAML = expTemplatesFldr + "\\" + templateName + "\\ROIs.xaml";
+            string expRoisMask = expTemplatesFldr + "\\" + templateName + "\\ROIMask.raw";
+            string expBleachingROIsXAML = expTemplatesFldr + "\\" + templateName + "\\BleachROIs.xaml";
+            string expBleachingWaveFormH5 = expTemplatesFldr + "\\" + templateName + "\\BleachWaveform.raw";
+            string expSLMWaveforms = expTemplatesFldr + "\\" + templateName + "\\SLMWaveforms";
+
+            string tempFolder = Application.Current.Resources["TemplatesFolder"].ToString();
+            string pathActiveXML = tempFolder + "\\Active.xml";
+            string pathActiveROIsXAML = tempFolder + "\\ActiveROIs.xaml";
+            string pathActiveROIMask = tempFolder + "\\ActiveMask.xaml";
+            string pathActiveBleachingROIsXAML = tempFolder + "\\BleachROIs.xaml";
+            string pathActiveBleachingWaveformH5 = tempFolder + "\\BleachWaveform.raw";
+            string pathActiveSLMWaveforms = tempFolder + "\\SLMWaveforms";
+
+            if (File.Exists(experimentPath))
+            {
+                XmlDocument doc = new XmlDocument();
+                string str = string.Empty;
+                doc.Load(experimentPath);
+                const string MODALITY = "ThorImageExperiment/Modality";
+
+                XmlNode node = doc.SelectSingleNode(MODALITY);
+                if (null != node)
+                {
+                    if (XmlManager.GetAttribute(node, doc, "name", ref str) && (!str.Equals(ResourceManagerCS.Instance.ActiveModality)))
+                    {
+                        //if the modality differs from the modality in the script,
+                        //attempt to set the modality without persistance
+                        ResourceManagerCS.SetActiveModality = str;
+                    }
+                }
+                File.Copy(experimentPath, pathActiveXML, true);
+            }
+            else
+            {
+                MessageBox.Show("Capture: Could not find file " + experimentPath);
+                return;
+            }
+            if (File.Exists(expRoisXAML))
+            {
+                File.Copy(expRoisXAML, pathActiveROIsXAML, true);
+            }
+            if (File.Exists(expRoisMask))
+            {
+                File.Copy(expRoisMask, pathActiveROIMask, true);
+            }
+            switch (GetBleachMode)
+            {
+                case BleachMode.BLEACH:
+                    if (File.Exists(expBleachingROIsXAML))
+                    {
+                        File.Copy(expBleachingROIsXAML, pathActiveBleachingROIsXAML, true);
+                    }
+                    else
+                    {
+                        if (File.Exists(pathActiveBleachingROIsXAML))
+                        {
+                            File.Delete(pathActiveBleachingROIsXAML);
+                        }
+                    }
+                    if (File.Exists(expBleachingWaveFormH5))
+                    {
+                        File.Copy(expBleachingWaveFormH5, pathActiveBleachingWaveformH5, true);
+                    }
+                    else
+                    {
+                        if (File.Exists(pathActiveBleachingWaveformH5))
+                        {
+                            File.Delete(pathActiveBleachingWaveformH5);
+                        }
+                    }
+                    break;
+                case BleachMode.SLM:
+                    if (Directory.Exists(expSLMWaveforms))
+                    {
+                        if (Directory.Exists(pathActiveSLMWaveforms))
+                        {
+                            System.IO.DirectoryInfo dInfo = new DirectoryInfo(pathActiveSLMWaveforms);
+
+                            foreach (FileInfo file in dInfo.GetFiles())
+                            {
+                                file.Delete();
+                            }
+                            foreach (DirectoryInfo folder in dInfo.GetDirectories())
+                            {
+                                folder.Delete(true);
+                            }
+                        }
+                        //recreate all directories:
+                        foreach (string dirPath in Directory.GetDirectories(expSLMWaveforms, "*", SearchOption.AllDirectories))
+                        {
+                            ResourceManagerCS.SafeCreateDirectory(dirPath.Replace(expSLMWaveforms, pathActiveSLMWaveforms));
+                        }
+                        //copy all files:
+                        foreach (string newPath in Directory.GetFiles(expSLMWaveforms, "*.*", SearchOption.AllDirectories))
+                        {
+                            File.Copy(newPath, newPath.Replace(expSLMWaveforms, pathActiveSLMWaveforms), true);
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        public bool ToggleSwitch(int selectedDetectorSwitch, string switchName, int value)
+        {
+            if (2 == selectedDetectorSwitch)
+            {
+                return _pmtSwitchController2.Set_Switch(switchName, value);
+            }
+            return _pmtSwitchController.Set_Switch(switchName, value);
+        }
+
+        public bool ToggleSwitchBox(int selectedDetectorSwitch, byte toggle)
+        {
+            if (2 == selectedDetectorSwitch)
+            {
+                return _pmtSwitchController2.Set_SwitchesPort(toggle);
+            }
+            return _pmtSwitchController.Set_SwitchesPort(toggle);
+        }
+
         public void UpdatePMTSwitchBox()
         {
             byte toggle = 0; //Toggle all off by default 0000
@@ -694,15 +924,44 @@
                 switch ((ICamera.LSMType)lsmType)
                 {
                     case ICamera.LSMType.GALVO_RESONANCE:
-                        _pmtSwitchController.Set_SwitchesPort(toggle);
-
+                        if (null == MVMManager.Instance.MVMCollection || false == (bool)MVMManager.Instance["MiniCircuitsSwitchControlViewModel", "ManualSwitchEnable", (object)false])
+                        {
+                            if (IsSwitchBoxConnected(1) && toggle != ReadSwitchBoxPositions(1))
+                            {
+                                if (false == ToggleSwitchBox(1, toggle))
+                                {
+                                    ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "Mini Circuits Switch: Error could not toggle Switch to configuration " + toggle.ToString());
+                                }
+                            }
+                            if (IsSwitchBoxConnected(2) && toggle != ReadSwitchBoxPositions(2))
+                            {
+                                if (false == ToggleSwitchBox(2, toggle))
+                                {
+                                    ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "Mini Circuits Second Switch box: Error could not toggle Switch to configuration " + toggle.ToString());
+                                }
+                            }
+                        }
                         SetDeviceParamInt((int)SelectedHardware.SELECTED_PMTSWITCH, (int)IDevice.Params.PARAM_PMT_SWITCH_POS, 0, (int)IDevice.DeviceSetParamType.EXECUTION_NO_WAIT);
-
                         break;
                     case ICamera.LSMType.GALVO_GALVO:
-                        toggle = 15; //Toggle all on 1111
-                        _pmtSwitchController.Set_SwitchesPort(toggle);
-
+                        if (null == MVMManager.Instance.MVMCollection || false == (bool)MVMManager.Instance["MiniCircuitsSwitchControlViewModel", "ManualSwitchEnable", (object)false])
+                        {
+                            toggle = 15; //Toggle all on 1111
+                            if (IsSwitchBoxConnected(1) && toggle != ReadSwitchBoxPositions(1))
+                            {
+                                if (false == ToggleSwitchBox(1, toggle))
+                                {
+                                    ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "Mini Circuits Switch: Error could not toggle Switch to configuration " + toggle.ToString());
+                                }
+                            }
+                            if (IsSwitchBoxConnected(2) && toggle != ReadSwitchBoxPositions(2))
+                            {
+                                if (false == ToggleSwitchBox(2, toggle))
+                                {
+                                    ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "Mini Circuits Second Switch box: Error could not toggle Switch to configuration " + toggle.ToString());
+                                }
+                            }
+                        }
                         SetDeviceParamInt((int)SelectedHardware.SELECTED_PMTSWITCH, (int)IDevice.Params.PARAM_PMT_SWITCH_POS, 0, (int)IDevice.DeviceSetParamType.EXECUTION_NO_WAIT);
                         break;
                 }

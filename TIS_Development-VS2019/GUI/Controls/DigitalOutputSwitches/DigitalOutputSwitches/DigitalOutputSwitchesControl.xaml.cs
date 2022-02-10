@@ -26,223 +26,238 @@
     {
         #region Fields
 
-        public static readonly DependencyProperty EnableCommandProperty = 
+        public static readonly DependencyProperty EnableCommandProperty =
             DependencyProperty.Register(
             "EnableCommand",
             typeof(ICommand),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty ExperimentModeProperty = 
+        public static readonly DependencyProperty ExperimentModeProperty =
             DependencyProperty.Register(
             "ExperimentMode",
             typeof(int),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty Switch0CommandProperty = 
+        public static readonly DependencyProperty PowerPercentStringProperty =
+            DependencyProperty.Register(
+            "PowerPercentString",
+            typeof(string),
+            typeof(DigitalOutputSwitchesControl));
+        public static readonly DependencyProperty Switch0CommandProperty =
             DependencyProperty.Register(
             "Switch0Command",
             typeof(ICommand),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty Switch1CommandProperty = 
+        public static readonly DependencyProperty Switch1CommandProperty =
             DependencyProperty.Register(
             "Switch1Command",
             typeof(ICommand),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty Switch2CommandProperty = 
+        public static readonly DependencyProperty Switch2CommandProperty =
             DependencyProperty.Register(
             "Switch2Command",
             typeof(ICommand),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty Switch3CommandProperty = 
+        public static readonly DependencyProperty Switch3CommandProperty =
             DependencyProperty.Register(
             "Switch3Command",
             typeof(ICommand),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty Switch4CommandProperty = 
+        public static readonly DependencyProperty Switch4CommandProperty =
             DependencyProperty.Register(
             "Switch4Command",
             typeof(ICommand),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty Switch5CommandProperty = 
+        public static readonly DependencyProperty Switch5CommandProperty =
             DependencyProperty.Register(
             "Switch5Command",
             typeof(ICommand),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty Switch6CommandProperty = 
+        public static readonly DependencyProperty Switch6CommandProperty =
             DependencyProperty.Register(
             "Switch6Command",
             typeof(ICommand),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty Switch7CommandProperty = 
+        public static readonly DependencyProperty Switch7CommandProperty =
             DependencyProperty.Register(
             "Switch7Command",
             typeof(ICommand),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty SwitchesIsVisibleProperty = 
+        public static readonly DependencyProperty SwitchesIsVisibleProperty =
             DependencyProperty.Register(
             "SwitchesIsVisible",
             typeof(bool),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty TriggerDurationMSProperty = 
+        public static readonly DependencyProperty TriggerDurationMSProperty =
             DependencyProperty.Register(
             "TriggerDurationMS",
             typeof(double),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty TriggerEdgeStringProperty = 
+        public static readonly DependencyProperty TriggerEdgeStringProperty =
             DependencyProperty.Register(
             "TriggerEdgeString",
             typeof(string),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty TriggerEnableCommandProperty = 
+        public static readonly DependencyProperty TriggerEnableCommandProperty =
             DependencyProperty.Register(
             "TriggerEnableCommand",
             typeof(ICommand),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty TriggerEnableProperty = 
+        public static readonly DependencyProperty TriggerEnableProperty =
             DependencyProperty.Register(
             "TriggerEnable",
             typeof(int),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty TriggerErrorColorProperty = 
+        public static readonly DependencyProperty TriggerErrorColorProperty =
             DependencyProperty.Register(
             "TriggerErrorColor",
             typeof(string),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty TriggerErrorProperty = 
+        public static readonly DependencyProperty TriggerErrorProperty =
             DependencyProperty.Register(
             "TriggerError",
             typeof(string),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty TriggerIdleMSProperty = 
+        public static readonly DependencyProperty TriggerIdleMSProperty =
             DependencyProperty.Register(
             "TriggerIdleMS",
             typeof(double),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty TriggerImagePathProperty = 
+        public static readonly DependencyProperty TriggerImagePathProperty =
             DependencyProperty.Register(
             "TriggerImagePath",
             typeof(string),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty TriggerIsVisibleProperty = 
+        public static readonly DependencyProperty TriggerIsVisibleProperty =
             DependencyProperty.Register(
             "TriggerIsVisible",
             typeof(bool),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty TriggerIterationsProperty = 
+        public static readonly DependencyProperty TriggerIterationsProperty =
             DependencyProperty.Register(
             "TriggerIterations",
             typeof(int),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty TriggerLabelProperty = 
+        public static readonly DependencyProperty TriggerLabelProperty =
             DependencyProperty.Register(
             "TriggerLabel",
             typeof(string),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty TriggerModeItemsProperty = 
+        public static readonly DependencyProperty TriggerModeItemsProperty =
             DependencyProperty.Register(
             "TriggerModeItems",
             typeof(ObservableCollection<StringPC>),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty TriggerModeProperty = 
+        public static readonly DependencyProperty TriggerModeProperty =
             DependencyProperty.Register(
             "TriggerMode",
             typeof(int),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty TriggerRepeatProperty = 
+        public static readonly DependencyProperty TriggerRepeatProperty =
             DependencyProperty.Register(
             "TriggerRepeat",
             typeof(int),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty TriggerStartEdgeProperty = 
+        public static readonly DependencyProperty TriggerStartEdgeProperty =
             DependencyProperty.Register(
             "TriggerStartEdge",
             typeof(int),
             typeof(DigitalOutputSwitchesControl));
-        public static readonly DependencyProperty TriggerStartIdleMSProperty = 
+        public static readonly DependencyProperty TriggerStartIdleMSProperty =
             DependencyProperty.Register(
             "TriggerStartIdleMS",
             typeof(double),
             typeof(DigitalOutputSwitchesControl));
+        public static readonly DependencyProperty TriggerTypeItemsProperty =
+            DependencyProperty.Register(
+            "TriggerTypeItems",
+            typeof(ObservableCollection<StringPC>),
+            typeof(DigitalOutputSwitchesControl));
+        public static readonly DependencyProperty TriggerTypeProperty =
+           DependencyProperty.Register(
+           "TriggerType",
+           typeof(int),
+           typeof(DigitalOutputSwitchesControl));
 
-        public static DependencyProperty SwitchEnableProperty = 
+        public static DependencyProperty SwitchEnableProperty =
            DependencyProperty.RegisterAttached("SwitchEnable",
            typeof(int),
            typeof(DigitalOutputSwitchesControl),
            new FrameworkPropertyMetadata(new PropertyChangedCallback(onSwitchEnableChanged)));
-        public static DependencyProperty SwitchName0Property = 
+        public static DependencyProperty SwitchName0Property =
            DependencyProperty.RegisterAttached("SwitchName0",
            typeof(string),
            typeof(DigitalOutputSwitchesControl),
            new FrameworkPropertyMetadata(new PropertyChangedCallback(onSwitchNameChanged0)));
-        public static DependencyProperty SwitchName1Property = 
+        public static DependencyProperty SwitchName1Property =
            DependencyProperty.RegisterAttached("SwitchName1",
            typeof(string),
            typeof(DigitalOutputSwitchesControl),
            new FrameworkPropertyMetadata(new PropertyChangedCallback(onSwitchNameChanged1)));
-        public static DependencyProperty SwitchName2Property = 
+        public static DependencyProperty SwitchName2Property =
            DependencyProperty.RegisterAttached("SwitchName2",
            typeof(string),
            typeof(DigitalOutputSwitchesControl),
            new FrameworkPropertyMetadata(new PropertyChangedCallback(onSwitchNameChanged2)));
-        public static DependencyProperty SwitchName3Property = 
+        public static DependencyProperty SwitchName3Property =
            DependencyProperty.RegisterAttached("SwitchName3",
            typeof(string),
            typeof(DigitalOutputSwitchesControl),
            new FrameworkPropertyMetadata(new PropertyChangedCallback(onSwitchNameChanged3)));
-        public static DependencyProperty SwitchName4Property = 
+        public static DependencyProperty SwitchName4Property =
            DependencyProperty.RegisterAttached("SwitchName4",
            typeof(string),
            typeof(DigitalOutputSwitchesControl),
            new FrameworkPropertyMetadata(new PropertyChangedCallback(onSwitchNameChanged4)));
-        public static DependencyProperty SwitchName5Property = 
+        public static DependencyProperty SwitchName5Property =
            DependencyProperty.RegisterAttached("SwitchName5",
            typeof(string),
            typeof(DigitalOutputSwitchesControl),
            new FrameworkPropertyMetadata(new PropertyChangedCallback(onSwitchNameChanged5)));
-        public static DependencyProperty SwitchName6Property = 
+        public static DependencyProperty SwitchName6Property =
            DependencyProperty.RegisterAttached("SwitchName6",
            typeof(string),
            typeof(DigitalOutputSwitchesControl),
            new FrameworkPropertyMetadata(new PropertyChangedCallback(onSwitchNameChanged6)));
-        public static DependencyProperty SwitchName7Property = 
+        public static DependencyProperty SwitchName7Property =
            DependencyProperty.RegisterAttached("SwitchName7",
            typeof(string),
            typeof(DigitalOutputSwitchesControl),
            new FrameworkPropertyMetadata(new PropertyChangedCallback(onSwitchNameChanged7)));
-        public static DependencyProperty SwitchState0Property = 
+        public static DependencyProperty SwitchState0Property =
            DependencyProperty.RegisterAttached("SwitchState0",
            typeof(int),
            typeof(DigitalOutputSwitchesControl),
            new FrameworkPropertyMetadata(new PropertyChangedCallback(onSwitchStateChanged0)));
-        public static DependencyProperty SwitchState1Property = 
+        public static DependencyProperty SwitchState1Property =
            DependencyProperty.RegisterAttached("SwitchState1",
            typeof(int),
            typeof(DigitalOutputSwitchesControl),
            new FrameworkPropertyMetadata(new PropertyChangedCallback(onSwitchStateChanged1)));
-        public static DependencyProperty SwitchState2Property = 
+        public static DependencyProperty SwitchState2Property =
            DependencyProperty.RegisterAttached("SwitchState2",
            typeof(int),
            typeof(DigitalOutputSwitchesControl),
            new FrameworkPropertyMetadata(new PropertyChangedCallback(onSwitchStateChanged2)));
-        public static DependencyProperty SwitchState3Property = 
+        public static DependencyProperty SwitchState3Property =
            DependencyProperty.RegisterAttached("SwitchState3",
            typeof(int),
            typeof(DigitalOutputSwitchesControl),
            new FrameworkPropertyMetadata(new PropertyChangedCallback(onSwitchStateChanged3)));
-        public static DependencyProperty SwitchState4Property = 
+        public static DependencyProperty SwitchState4Property =
            DependencyProperty.RegisterAttached("SwitchState4",
            typeof(int),
            typeof(DigitalOutputSwitchesControl),
            new FrameworkPropertyMetadata(new PropertyChangedCallback(onSwitchStateChanged4)));
-        public static DependencyProperty SwitchState5Property = 
+        public static DependencyProperty SwitchState5Property =
            DependencyProperty.RegisterAttached("SwitchState5",
            typeof(int),
            typeof(DigitalOutputSwitchesControl),
            new FrameworkPropertyMetadata(new PropertyChangedCallback(onSwitchStateChanged5)));
-        public static DependencyProperty SwitchState6Property = 
+        public static DependencyProperty SwitchState6Property =
            DependencyProperty.RegisterAttached("SwitchState6",
            typeof(int),
            typeof(DigitalOutputSwitchesControl),
            new FrameworkPropertyMetadata(new PropertyChangedCallback(onSwitchStateChanged6)));
-        public static DependencyProperty SwitchState7Property = 
+        public static DependencyProperty SwitchState7Property =
            DependencyProperty.RegisterAttached("SwitchState7",
            typeof(int),
            typeof(DigitalOutputSwitchesControl),
@@ -274,6 +289,12 @@
         {
             get { return (int)GetValue(ExperimentModeProperty); }
             set { SetValue(ExperimentModeProperty, value); }
+        }
+
+        public string PowerPercentString
+        {
+            get { return (string)GetValue(PowerPercentStringProperty); }
+            set { SetValue(PowerPercentStringProperty, value); }
         }
 
         //This Property is only used in the Script panel. Not in Capture Setup
@@ -598,6 +619,18 @@
         {
             get { return (double)GetValue(TriggerStartIdleMSProperty); }
             set { SetValue(TriggerStartIdleMSProperty, value); }
+        }
+
+        public int TriggerType
+        {
+            get { return (int)GetValue(TriggerTypeProperty); }
+            set { SetValue(TriggerTypeProperty, value); }
+        }
+
+        public ObservableCollection<StringPC> TriggerTypeItems
+        {
+            get { return (ObservableCollection<StringPC>)GetValue(TriggerTypeItemsProperty); }
+            set { SetValue(TriggerTypeItemsProperty, value); }
         }
 
         #endregion Properties

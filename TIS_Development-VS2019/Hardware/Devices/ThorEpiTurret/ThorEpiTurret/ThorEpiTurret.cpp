@@ -41,6 +41,7 @@ ThorEpiTurret::ThorEpiTurret() :
 		_settingsSerialNumber[i] = "NA";
 	}
 	_timeOutTime = 10000;
+	_setToBootloaderMode = FALSE;
 
 
 
@@ -443,6 +444,11 @@ long ThorEpiTurret::SetParam(const long paramID, const double param)
 				{
 					_tableParams[paramID]->UpdateParam(param);
 
+					if (PARAM_FW_DIC_FIRMWAREUPDATE == paramID && TRUE == param)
+					{
+						_setToBootloaderMode = param;
+					}
+
 					return TRUE;
 				}
 			}
@@ -603,12 +609,13 @@ long ThorEpiTurret::StartPosition()
 {
 	// The only thing that gets set is the bootloader mode
 	double param = 0;
-	if (NULL != _tableParams[PARAM_FW_DIC_FIRMWAREUPDATE])
+	if (NULL != _tableParams[PARAM_FW_DIC_FIRMWAREUPDATE] && TRUE == _setToBootloaderMode)
 	{
 		if (_tableParams[PARAM_FW_DIC_FIRMWAREUPDATE]->GetParamAvailable())
 		{
 			std::vector<unsigned char> cmd = _tableParams[PARAM_FW_DIC_FIRMWAREUPDATE]->GetCmdBytes();
 			ExecuteCmd(PARAM_FW_DIC_FIRMWAREUPDATE, cmd, param);
+			_setToBootloaderMode = FALSE;
 		}
 	}
 	return TRUE;

@@ -843,6 +843,7 @@
         public void CloseShutter()
         {
             MVMManager.Instance["PowerControlViewModel", "ShutterPosition"] = 1;
+            TurnOffLaser();
         }
 
         /// <summary>
@@ -1193,6 +1194,9 @@
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "SetRSInitMode")]
         private static extern bool SetRSInitMode(int mode);
+
+        [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "TurnOffLaser")]
+        private static extern bool TurnOffLaser();
 
         [DllImport(".\\Modules_Native\\GeometryUtilitiesCPP.dll", EntryPoint = "VerifyPolyLine")]
         private static extern int VerifyPolyLine(int[] PointX, int[] PointY, int count, int fieldSize, double field2Volts, double fieldScaleFineX, double fieldScaleFineY, int PixelY, ref int PixelX);

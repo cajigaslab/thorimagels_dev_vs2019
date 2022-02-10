@@ -71,7 +71,13 @@
             Receive,
             Error,
             ChangeRemotePC,
-            ChangeRemoteApp
+            ChangeRemoteApp,
+            LoadExperimentFile,
+            MoveX,
+            MoveY,
+            MoveZ,
+            MoveSecondaryZ,
+            NotifySavedFile
         }
 
         public enum ThorPipeDst
@@ -423,7 +429,7 @@
                     }
                     if (XmlManager.GetAttribute(node, doc, "remoteAppName", ref strTemp))
                     {
-                        _remoteAppName = strTemp;
+                        RemoteAppName = strTemp;
                         OnPropertyChanged("RemoteAppName");
                     }
                 }
@@ -447,6 +453,7 @@
         public void ReceiveFromIPCController(string command, string data)
         {
             ThorPipeCommand cmd = (ThorPipeCommand)(Enum.Parse(typeof(ThorPipeCommand), command));
+            double val = 0;
             IPCDownlinkFlag = true;
             switch (cmd)
             {
@@ -505,6 +512,108 @@
                 case ThorPipeCommand.Receive:
                     break;
                 case ThorPipeCommand.Error:
+                    break;
+                case ThorPipeCommand.LoadExperimentFile:
+                    if (File.Exists(data))
+                    {
+                        XmlDocument doc = new XmlDocument();
+
+                        //Replace all the active files with the ones from the template.
+                        ResourceManagerCS.Instance.ReplaceActiveXML(data);
+
+                        if (File.Exists(data))
+                        {
+                            doc.Load(data);
+                        }
+                        const string MODALITY = "ThorImageExperiment/Modality";
+
+                        XmlNode node = doc.SelectSingleNode(MODALITY);
+
+                        string str = string.Empty;
+
+                        const int NAME_LENGTH = 256;
+                        StringBuilder startModality = new StringBuilder(NAME_LENGTH);
+
+                        if (null != node)
+                        {
+                            if (ThorSharedTypes.XmlManager.GetAttribute(node, doc, "name", ref str))
+                            {
+                                //Get the current modality and store it to
+                                //startModality
+                                //GetModality(startModality, NAME_LENGTH);
+
+                                if (str.Equals(startModality.ToString()))
+                                {
+                                }
+                                else
+                                {
+                                    //if the modality differs fromt the modality
+                                    //in the script attempt to set the modality
+                                    StringBuilder sb = new StringBuilder(NAME_LENGTH);
+                                    sb.Append(str);
+                                    //SetModality(sb);
+
+                                    //ensure the HW matches the available HW
+
+                                    RunSampleLS.UpdateAndPersistCurrentDevices();
+
+                                    //Update the PMT Switch box (for LSM only) to GG or GR depending on current camera
+                                    RunSampleLS.UpdatePMTSwitchBox();
+                                }
+                            }
+                        }
+
+                        int captureModeIndex = 0;
+                        node = doc.SelectSingleNode("/ThorImageExperiment/CaptureMode");
+
+                        if (null != node)
+                        {
+                            if (ThorSharedTypes.XmlManager.GetAttribute(node, doc, "mode", ref str))
+                            {
+                                captureModeIndex = Int32.Parse(str);
+                            }
+                        }
+
+                        CaptureMode = captureModeIndex;
+                        //OnPropertyChanged("CaptureMode");
+
+                        Command commandIPC = new Command();
+                        commandIPC.Message = "Run Sample LS";
+                        commandIPC.CommandGUID = new Guid("30db4357-7508-46c9-84eb-3ca0900aa4c5");
+
+                        _eventAggregator.GetEvent<CommandShowDialogEvent>().Publish(commandIPC);
+
+                    }
+                    break;
+                case ThorPipeCommand.MoveX:
+                    val = Convert.ToDouble(data);
+                    if (1 == ResourceManagerCS.SetDeviceParamDouble((int)SelectedHardware.SELECTED_XYSTAGE, (int)IDevice.Params.PARAM_X_POS, val, (int)IDevice.DeviceSetParamType.EXECUTION_NO_WAIT))
+                    {
+
+                    }
+                    break;
+                case ThorPipeCommand.MoveY:
+                    val = Convert.ToDouble(data);
+                    if (1 == ResourceManagerCS.SetDeviceParamDouble((int)SelectedHardware.SELECTED_XYSTAGE, (int)IDevice.Params.PARAM_Y_POS, val, (int)IDevice.DeviceSetParamType.EXECUTION_NO_WAIT))
+                    {
+
+                    }
+                    break;
+                case ThorPipeCommand.MoveZ:
+                    val = Convert.ToDouble(data);
+                    if (1 == ResourceManagerCS.SetDeviceParamDouble((int)SelectedHardware.SELECTED_ZSTAGE, (int)IDevice.Params.PARAM_Z_POS, val, (int)IDevice.DeviceSetParamType.EXECUTION_NO_WAIT))
+                    {
+
+                    }
+                    break;
+                case ThorPipeCommand.MoveSecondaryZ:
+                    val = Convert.ToDouble(data);
+                    if (1 == ResourceManagerCS.SetDeviceParamDouble((int)SelectedHardware.SELECTED_ZSTAGE2, (int)IDevice.Params.PARAM_Z_POS, val, (int)IDevice.DeviceSetParamType.EXECUTION_NO_WAIT))
+                    {
+
+                    }
+                    break;
+                case ThorPipeCommand.NotifySavedFile:
                     break;
                 default:
                     break;
@@ -602,6 +711,19 @@
                 case ThorPipeCommand.Receive:
                     break;
                 case ThorPipeCommand.Error:
+                    break;
+                case ThorPipeCommand.LoadExperimentFile:
+                    break;
+                case ThorPipeCommand.MoveX:
+                    break;
+                case ThorPipeCommand.MoveY:
+                    break;
+                case ThorPipeCommand.MoveZ:
+                    break;
+                case ThorPipeCommand.MoveSecondaryZ:
+                    break;
+                case ThorPipeCommand.NotifySavedFile:
+                    sendData("RUN_SAMPLE", "IPC_CONTROLLER", Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.NotifySavedFile), data);
                     break;
                 default:
                     break;

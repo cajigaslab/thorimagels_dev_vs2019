@@ -190,7 +190,7 @@ long ORCA::SetParam(const long paramID, const double param)
 		case ICamera::PARAM_EXPOSURE_TIME_MS:
 		{
 			DCAMERR err;
-			int valUS = static_cast<int>(param * MS_TO_SEC); //Convert from miliseconds from GUI to microseconds
+			long long valUS = static_cast<int>(param * MS_TO_SEC); //Convert from miliseconds from GUI to microseconds
 			if (valUS < _expUSRange[0])
 			{
 				valUS = _expUSRange[0];
@@ -399,6 +399,31 @@ long ORCA::SetParam(const long paramID, const double param)
 			}
 		}
 		break;
+		case ICamera::PARAM_CAMERA_STATIC_FPS_ENABLE:
+		{
+			_ImgPty_SetSettings.masterPulseEnabled = static_cast<long>(param);
+		}
+		break;
+		case ICamera::PARAM_CAMERA_STATIC_FPS:
+		{
+			if (1 < param && 5000 > param)
+			{
+				_ImgPty_SetSettings.staticFrameRateVal = param;
+			}
+		}
+		break;
+		case ICamera::PARAM_CAMERA_COOLING_MODE:
+		{
+			double coolingMode = (param == 2) ? DCAMPROP_SENSORCOOLER__MAX : param + 1;
+			OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_SENSORCOOLER, coolingMode));
+			if (failed(err))
+			{
+				StringCbPrintfW(_errMsg, MSG_SIZE, L"SetParam Parameter (%d) PARAM_CAMERA_COOLING_MODE failed", paramID);
+				LogMessage(_errMsg, ERROR_EVENT);
+				ret = FALSE;
+			}
+		}
+		break;
 		default:
 		{
 			ret = FALSE;
@@ -442,6 +467,30 @@ long ORCA::GetParam(const long paramID, double& param)
 			OrcaErrChk(L"dcamprop_getvalue", dcamprop_getvalue(_hdcam[_camID], DCAM_IDPROP_EXPOSURETIME, &exposure));
 			_ImgPty_SetSettings.exposureTime_us = static_cast<int>(exposure * US_TO_SEC);
 			param = (double)_ImgPty_SetSettings.exposureTime_us / Constants::MS_TO_SEC;
+
+			if (_ImgPty_SetSettings.masterPulseEnabled)
+			{
+				/*double readOutTime = (_ImgPty_SetSettings.roiBottom - _ImgPty_SetSettings.roiTop + 1 + 1) * (ORCA_FUSION_CLOCK_US / US_TO_SEC);
+				double threshold = (_ImgPty_SetSettings.roiBottom - _ImgPty_SetSettings.roiTop + 1 + 5) * (ORCA_FUSION_CLOCK_US / US_TO_SEC);
+				param = (1.0/_ImgPty_SetSettings.staticFrameRateVal - readOutTime) * Constants::MS_TO_SEC ;
+				if(1.0/_ImgPty_SetSettings.staticFrameRateVal < threshold)
+				{
+					param = ((ceil(threshold / (1.0 / _ImgPty_SetSettings.staticFrameRateVal)) * (1.0 / _ImgPty_SetSettings.staticFrameRateVal)) - readOutTime) * Constants::MS_TO_SEC;
+				}*/
+
+				// Hamamtsu provided this formula to calculate the actual exposure in trigger internal mode
+				double internalLineInterval = 0;
+				OrcaErrChk(L"dcamprop_getvalue", dcamprop_getvalue(_hdcam[_camID], DCAM_IDPROP_INTERNAL_LINEINTERVAL, &internalLineInterval));
+				double exp1 = 1.0 / _ImgPty_SetSettings.staticFrameRateVal;
+				double exp2 = ceil((exp1 - (ORCA_FUSION_CONSTANT_US / US_TO_SEC)) / internalLineInterval);
+				double actualExposure = exp2 * internalLineInterval + (ORCA_FUSION_CONSTANT_US / US_TO_SEC);
+				param = actualExposure * MS_TO_SEC;
+				double threshold = (_ImgPty_SetSettings.roiBottom - _ImgPty_SetSettings.roiTop + 1 + 5) * internalLineInterval;
+				if (1.0 / _ImgPty_SetSettings.staticFrameRateVal < threshold)
+				{
+					param = ceil(threshold / (1.0 / _ImgPty_SetSettings.staticFrameRateVal)) * actualExposure * Constants::MS_TO_SEC;
+				}
+			}
 		}
 		break;
 		// ROI and Binning are special cases 
@@ -569,7 +618,7 @@ long ORCA::GetParam(const long paramID, double& param)
 		break;
 		case ICamera::PARAM_PIXEL_SIZE:
 		{
-			param = _ImgPty_SetSettings.pixelSizeXUM;		//could be different in X | Y in future
+			param = _ImgPty_SetSettings.pixelSizeXUM * _ImgPty_SetSettings.roiBinX;		//could be different in X | Y in future
 		}
 		break;
 		case ICamera::PARAM_READOUT_SPEED_INDEX:
@@ -582,6 +631,19 @@ long ORCA::GetParam(const long paramID, double& param)
 			double frameRate = 0;
 			DCAMERR err;
 			OrcaErrChk(L"dcamprop_getvalue", dcamprop_getvalue(_hdcam[_camID], DCAM_IDPROP_INTERNALFRAMERATE, &frameRate));
+			if (_ImgPty_SetSettings.masterPulseEnabled)
+			{
+				double internalLineInterval = 0;
+				OrcaErrChk(L"dcamprop_getvalue", dcamprop_getvalue(_hdcam[_camID], DCAM_IDPROP_INTERNAL_LINEINTERVAL, &internalLineInterval));
+				if (1.0 / _ImgPty_SetSettings.staticFrameRateVal < (_ImgPty_SetSettings.roiBottom - _ImgPty_SetSettings.roiTop + 1 + 5) * internalLineInterval)
+				{
+					frameRate = _ImgPty_SetSettings.staticFrameRateVal / ceil(((_ImgPty_SetSettings.roiBottom - _ImgPty_SetSettings.roiTop + 1 + 5) * internalLineInterval) / (1.0 / _ImgPty_SetSettings.staticFrameRateVal));
+				}
+				else
+				{
+					frameRate = _ImgPty_SetSettings.staticFrameRateVal;
+				}
+			}
 			param = frameRate;
 		}
 		break;
@@ -668,6 +730,40 @@ long ORCA::GetParam(const long paramID, double& param)
 				}
 				_ImgPty_SetSettings.hotPixelLevelIndex = static_cast<int>(hotPixelCorrection - 1);
 				param = _ImgPty_SetSettings.hotPixelLevelIndex;
+			}
+		}
+		break;
+		case ICamera::PARAM_CAMERA_STATIC_FPS_ENABLE:
+		{
+			param = _ImgPty_SetSettings.masterPulseEnabled;
+		}
+		break;
+		case ICamera::PARAM_CAMERA_STATIC_FPS:
+		{
+			param = _ImgPty_SetSettings.staticFrameRateVal;
+		}
+		break;
+		case ICamera::PARAM_CAMERA_COOLING_MODE:
+		{
+			double coolingMode = DCAMPROP_SENSORCOOLER__OFF;
+			OrcaErrChk(L"dcamprop_getvalue", dcamprop_getvalue(_hdcam[_camID], DCAM_IDPROP_SENSORCOOLER, &coolingMode));
+			if (failed(err))
+			{
+				StringCbPrintfW(_errMsg, MSG_SIZE, L"GetParam Parameter (%d) PARAM_CAMERA_COOLING_MODE failed", paramID);
+				LogMessage(_errMsg, ERROR_EVENT);
+				ret = FALSE;
+			}
+			param = (coolingMode == DCAMPROP_SENSORCOOLER__MAX) ? coolingMode - 2 : coolingMode - 1;
+		}
+		break;
+		case ICamera::PARAM_CAMERA_COOLING_AVAILABLE:
+		{
+			double coolingMode = 0;
+			param = TRUE;
+			OrcaErrChk(L"dcamprop_getvalue", dcamprop_getvalue(_hdcam[_camID], DCAM_IDPROP_SENSORCOOLER, &coolingMode));
+			if (failed(err))
+			{
+				param = FALSE;
 			}
 		}
 		break;
@@ -1001,6 +1097,38 @@ long ORCA::GetParamInfo(const long paramID, long& paramType, long& paramAvailabl
 			paramMax = 2;
 			paramDefault = 0;
 			paramReadOnly = FALSE;
+			break;
+		case ICamera::PARAM_CAMERA_STATIC_FPS_ENABLE:
+			paramType = ICamera::TYPE_LONG;
+			paramAvailable = TRUE;
+			paramMin = FALSE;
+			paramMax = TRUE;
+			paramDefault = FALSE;
+			paramReadOnly = FALSE;
+			break;
+		case ICamera::PARAM_CAMERA_STATIC_FPS:
+			paramType = ICamera::TYPE_DOUBLE;
+			paramAvailable = TRUE;
+			paramMin = 0;
+			paramMax = MAXULONG32;
+			paramDefault = 30;
+			paramReadOnly = FALSE;
+			break;
+		case ICamera::PARAM_CAMERA_COOLING_MODE:
+			paramType = ICamera::TYPE_LONG;
+			paramAvailable = TRUE;
+			paramMin = (double)DCAMPROP_SENSORCOOLER__OFF - 1;
+			paramMax = DCAMPROP_SENSORCOOLER__MAX;
+			paramDefault = (double)DCAMPROP_SENSORCOOLER__OFF - 1;
+			paramReadOnly = FALSE;
+			break;
+		case ICamera::PARAM_CAMERA_COOLING_AVAILABLE:
+			paramType = ICamera::TYPE_LONG;
+			paramAvailable = TRUE;
+			paramMin = FALSE;
+			paramMax = TRUE;
+			paramDefault = FALSE;
+			paramReadOnly = TRUE;
 			break;
 		default:
 			ret = FALSE;

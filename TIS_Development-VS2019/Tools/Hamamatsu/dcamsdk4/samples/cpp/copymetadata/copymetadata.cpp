@@ -12,7 +12,7 @@ BOOL copy_metadata_timestamps( HDCAM hdcam, int32 iStartFrame, DCAM_TIMESTAMP* p
 	DCAM_TIMESTAMPBLOCK	tsb;
 	memset( &tsb, 0, sizeof(tsb) );
 	tsb.hdr.size	= sizeof(tsb);
-	tsb.hdr.iKind	= DCAMREC_METADATAKIND_TIMESTAMPS;
+	tsb.hdr.iKind	= DCAMBUF_METADATAKIND_TIMESTAMPS;
 	tsb.hdr.in_count= nStampCount;
 	tsb.hdr.iFrame	= iStartFrame;
 		
@@ -40,7 +40,7 @@ BOOL copy_metadata_framestamps( HDCAM hdcam, int32 iStartFrame, int32* pStamp, i
 	DCAM_FRAMESTAMPBLOCK fsb;
 	memset( &fsb, 0, sizeof(fsb) );
 	fsb.hdr.size	= sizeof(fsb);
-	fsb.hdr.iKind	= DCAMREC_METADATAKIND_FRAMESTAMPS;
+	fsb.hdr.iKind	= DCAMBUF_METADATAKIND_FRAMESTAMPS;
 	fsb.hdr.in_count= nStampCount;
 	fsb.hdr.iFrame	= iStartFrame;
 

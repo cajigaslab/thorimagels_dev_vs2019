@@ -8,16 +8,33 @@
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
+    using System.Windows;
     using System.Windows.Data;
     using System.Windows.Input;
+    using System.Windows.Media;
     using System.Xml;
     using System.Xml.Linq;
 
-    using Abt.Controls.SciChart;
-    using Abt.Controls.SciChart.Model.DataSeries;
-    using Abt.Controls.SciChart.Visuals;
-
     using global::RealTimeLineChart.Model;
+
+    using SciChart;
+    using SciChart.Charting;
+    using SciChart.Charting.ChartModifiers;
+    using SciChart.Charting.Common.Extensions;
+    using SciChart.Charting.Model.ChartSeries;
+    using SciChart.Charting.Model.DataSeries;
+    using SciChart.Charting.Themes;
+    using SciChart.Charting.Utility;
+    using SciChart.Charting.Visuals;
+    using SciChart.Charting.Visuals.Annotations;
+    using SciChart.Charting.Visuals.Axes;
+    using SciChart.Charting.Visuals.Axes.LabelProviders;
+    using SciChart.Charting.Visuals.Events;
+    using SciChart.Charting.Visuals.RenderableSeries;
+    using SciChart.Core.Framework;
+    using SciChart.Data.Model;
+    using SciChart.Drawing.HighSpeedRasterizer;
+    using SciChart.Drawing.Utility;
 
     using ThorLogging;
 
@@ -527,6 +544,28 @@
                         IsMeasureCursorVisible = true;
                     }
                 }
+
+                if (_chartMode == ChartModes.REVIEW && _bwLoadDone)
+                {
+                    for (int j = 0; j < _chartSeriesMetadata?.Count; j++)
+                    {
+                        if (!IsStackedDisplay)
+                        {
+                            Application.Current.Dispatcher.Invoke(new Action(() =>
+                            {
+                                ChartSeries[j].DataSeries = _channelViewModels[j].ChannelSeries;
+                            }));
+                        }
+                        else
+                        {
+                            Application.Current.Dispatcher.Invoke(new Action(() =>
+                            {
+                                _channelViewModels[j].ChannelSeries = (IXyDataSeries<double, double>)ChartSeries[j].DataSeries;
+                            }));
+                        }
+                    }
+                    ZoomExtendChartSeries();
+                }
             }
         }
 
@@ -783,10 +822,8 @@
                     //clear fitting lines:
                     for (int j = 0; j < _specChViewModels.Count; j++)
                     {
-                        using (_specChViewModels[j].ChannelSeries2.SuspendUpdates())
-                        {
-                            _specChViewModels[j].ChannelSeries2.Clear();
-                        }
+
+                        _specChViewModels[j].ChannelSeries2.Clear();
                         _specChViewModels[j].Update();
                     }
                 }
@@ -906,11 +943,7 @@
         {
             for (int i = 0; i < _specChViewModels.Count; i++)
             {
-                using (_specChViewModels[i].ChannelSeries.SuspendUpdates())
-                {
-                    _specChViewModels[i].XVisibleRange.SetMinMax(_freqMin, _freqMax);
-                }
-
+                _specChViewModels[i].XVisibleRange.SetMinMax(_freqMin, _freqMax);
             }
         }
 

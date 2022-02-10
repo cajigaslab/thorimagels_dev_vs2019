@@ -22,8 +22,6 @@
     using System.Windows.Navigation;
     using System.Windows.Shapes;
 
-    using Abt.Controls.SciChart.Model.DataSeries;
-
     /// <summary>
     /// A data-structure to contain a list of X,Y double-precision points
     /// </summary>

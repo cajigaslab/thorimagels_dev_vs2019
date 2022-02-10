@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Runtime.InteropServices;
 using Hamamatsu.DCAM4;
 
 namespace csAcq4
@@ -135,6 +136,86 @@ namespace csAcq4
 
             return ! m_lasterr.failed();
         }
+        public bool buf_copyframe(ref DCAMBUF_FRAME aFrame)
+        {
+            if (m_hdcam == IntPtr.Zero)
+            {
+                m_lasterr = DCAMERR.INVALIDHANDLE;
+            }
+            else
+            {
+                m_lasterr = dcambuf.copyframe(m_hdcam, ref aFrame);
+            }
+
+            return !m_lasterr.failed();
+        }
+
+        public bool buf_copymetadata_timestampblock(DCAM_TIMESTAMP[] ats, int iFrame, ref int outcount)
+        {
+            if (m_hdcam == IntPtr.Zero)
+            {
+                m_lasterr = DCAMERR.INVALIDHANDLE;
+            }
+            else
+            {
+                DCAM_TIMESTAMPBLOCK tsb = new DCAM_TIMESTAMPBLOCK(0);
+
+                int unitsize = Marshal.SizeOf(typeof(DCAM_TIMESTAMP));
+                IntPtr ptr = Marshal.AllocHGlobal(unitsize * ats.Length);
+
+                tsb.timestamp = ptr;
+                tsb.timestampsize = Marshal.SizeOf(typeof(DCAM_TIMESTAMP));
+                tsb.hdr.iFrame = iFrame;
+                tsb.hdr.in_count = ats.Length; 
+
+                m_lasterr = dcambuf.copymetadata_timestampblock(m_hdcam, ref tsb);
+                if (!m_lasterr.failed())
+                {
+                    outcount = tsb.hdr.outcount;
+
+                    for(int i=0; i<outcount; i++)
+                    {
+                        IntPtr p = (IntPtr)(ptr.ToInt64() + unitsize * i);
+                        ats[i] = (DCAM_TIMESTAMP)Marshal.PtrToStructure(p, typeof(DCAM_TIMESTAMP));
+                    }
+                }
+
+                Marshal.FreeHGlobal(ptr);
+            }
+
+            return ! m_lasterr.failed();
+        }
+
+        public bool buf_copymetadata_framestampblock(Int32[] afs, int iFrame, ref int outcount)
+        {
+            if (m_hdcam == IntPtr.Zero)
+            {
+                m_lasterr = DCAMERR.INVALIDHANDLE;
+            }
+            else
+            {
+                DCAM_FRAMESTAMPBLOCK fsb = new DCAM_FRAMESTAMPBLOCK(0);
+
+                int unitsize = Marshal.SizeOf(typeof(Int32));
+                IntPtr ptr = Marshal.AllocHGlobal(unitsize * afs.Length);
+
+                fsb.framestamps = ptr;
+                fsb.hdr.iFrame = iFrame;
+                fsb.hdr.in_count = afs.Length;
+
+                m_lasterr = dcambuf.copymetadata_framestampblock(m_hdcam, ref fsb);
+                if (!m_lasterr.failed())
+                {
+                    outcount = fsb.hdr.outcount;
+
+                    Marshal.Copy(ptr, afs, 0, outcount);
+                }
+
+                Marshal.FreeHGlobal(ptr);
+            }
+
+            return !m_lasterr.failed();
+        }
 
         // dcambuf_copyframe(ByVal hdcam As IntPtr, ByRef pFrame As DCAMBUF_FRAME) As Integer
         // dcambuf_copymetadata(ByVal hdcam As IntPtr, ByRef hdr As DCAM_METADATAHDR) As Integer
@@ -219,6 +300,13 @@ namespace csAcq4
             return ! m_lasterr.failed();
         }
         // dcamcap_record(ByVal hdcam As IntPtr, ByVal hrec As IntPtr) As Integer
+
+        // function to get property value without MyDcamProp
+        public bool prop_getvalue(DCAMIDPROP idprop, ref double value)
+        {
+            m_lasterr = dcamprop.getvalue(m_hdcam, idprop, ref value);
+            return !m_lasterr.failed();
+        }
     }
 
     // ================================ MyDcamWait ================================

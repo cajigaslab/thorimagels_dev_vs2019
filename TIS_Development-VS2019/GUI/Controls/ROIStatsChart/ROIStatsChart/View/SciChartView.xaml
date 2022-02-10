@@ -25,8 +25,14 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <sci:SciChartSurface Name="sciChartSurface"
-                             SeriesSource="{Binding ChartSeries}"
-                             Grid.Row="1">
+                             RenderableSeries="{Binding ChartSeries}"
+                             Grid.Row="1"
+                             RenderPriority="Normal"
+                             MaxFrameRate="33"
+                             sci:VisualXcceleratorEngine.IsEnabled="True"
+                             sci:VisualXcceleratorEngine.FallbackType="{x:Type sci:HighSpeedRenderSurface}"
+                             sci:VisualXcceleratorEngine.DowngradeWithoutException="False"
+                             sci:VisualXcceleratorEngine.EnableImpossibleMode="True">
             <sci:SciChartSurface.Annotations>
                 <sci:VerticalLineAnnotation Name="CurrentFrameLineAnnotation"
                                             VerticalAlignment="Stretch"
@@ -74,7 +80,7 @@
                                          ExecuteOn="MouseLeftButton"
                                          XyDirection="XYDirection"
                                          ClipModeX="ClipAtExtents" />
-                    <sci:LegendModifier Name="legendModifier" />
+                    <!--<sci:LegendModifier Name="legendModifier" />-->
                     <customModifiers:MouseWheelZoomCustomModifier />
                     <customModifiers:ChartRolloverModifier />
                     <!--<sci:RolloverModifier x:Name="rolloverModifier"

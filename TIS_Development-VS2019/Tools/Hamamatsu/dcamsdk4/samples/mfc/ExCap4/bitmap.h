@@ -24,6 +24,10 @@ long copybits_bw8( BYTE* dsttopleft, long dstrowbytes
 				  , const BYTE* srctopleft, long srcrowbytes
 				  , long srcox, long srcoy, long srcwidth, long srcheight );
 
+long copybits_bw8( BYTE* dsttopleft, long dstrowbytes, const BYTE* lut
+				  , const BYTE* srctopleft, long srcrowbytes
+				  , long srcox, long srcoy, long srcwidth, long srcheight );
+
 long copybits_bw16( BYTE* dsttopleft, long dstrowbytes, long nShift
 				  , const WORD* srctopleft, long srcrowbytes
 				  , long srcox, long srcoy, long srcwidth, long srcheight );

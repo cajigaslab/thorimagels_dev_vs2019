@@ -1,16 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Threading;
-using System.IO.Pipes;
-using System.IO;
-using System.Security.Principal;
-using System.Runtime.InteropServices;
-
-namespace ConsoleTest
+﻿namespace ConsoleTest
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.IO.Pipes;
+    using System.Linq;
+    using System.Runtime.InteropServices;
+    using System.Security.Principal;
+    using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
+
+    #region Enumerations
+
     public enum ThorPipeCommand
     {
         Establish,
@@ -26,6 +28,12 @@ namespace ConsoleTest
         Error,
         ChangeRemotePC,
         ChangeRemoteApp,
+        LoadExperimentFile,
+        MoveX,
+        MoveY,
+        MoveZ,
+        MoveSecondaryZ,
+        NotifySavedFile
     }
 
     public enum ThorPipeDst
@@ -51,6 +59,8 @@ namespace ConsoleTest
         ThorpipeIOError = 20,
         ThorPipeError = 99,
     }
+
+    #endregion Enumerations
 
     /// <summary>
     ///  Defines the data protocol for reading and writing strings on our stream
@@ -121,18 +131,133 @@ namespace ConsoleTest
 
     class IpcConnection
     {
-        bool _threadCompleted = true;
-        Thread _serverThread = null;
-        Thread _pipeClient = null;
-        string[] _sendBuffer = null;
-        bool _thorImageLSConnectionStats = false;
-        NamedPipeServerStream _pipeServer;
-        public string _connectionServerID;
-        public string _connectionClientID;
+        #region Fields
+
         public readonly int DataLength = 4;
-        public string RemotePCHostName;
+
         public string FullSaveName;
+        public string RemotePCHostName;
+        public string _connectionClientID;
+        public string _connectionServerID;
+
+        Thread _pipeClient = null;
+        NamedPipeServerStream _pipeServer;
         bool _receiveIPCCommandActive = false;
+        string[] _sendBuffer = null;
+        Thread _serverThread = null;
+        bool _thorImageLSConnectionStats = false;
+        bool _threadCompleted = true;
+
+        #endregion Fields
+
+        #region Methods
+
+        public static bool NamedPipeDoesNotExist(string pipeName)
+        {
+            try
+            {
+                int timeout = 0;
+                string normalizedPath = System.IO.Path.GetFullPath(
+                 string.Format(@"\\.\pipe\{0}", pipeName));
+                bool exists = WaitNamedPipe(normalizedPath, timeout);
+                if (!exists)
+                {
+                    int error = Marshal.GetLastWin32Error();
+                    if (error == 0) // pipe does not exist
+                        return true;
+                    else if (error == 2) // win32 error code for file not found
+                        return true;
+                    // all other errors indicate other issues
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                return true; // assume it exists
+            }
+        }
+
+        /// <summary>
+        /// Excutes the namedpipe data.
+        /// </summary>
+        /// <param name="msg">The MSG.</param>
+        /// <param name="ss">The ss.</param>
+        /// <returns></returns>
+        public bool ExcuteNamedPipeData(String[] msg, StreamString ss, bool isAcknowledgment)
+        {
+            _receiveIPCCommandActive = true;
+            if (msg.Length == 4)
+            {
+                switch ((ThorPipeCommand)(Enum.Parse(typeof(ThorPipeCommand), msg[2])))
+                {
+                    case ThorPipeCommand.Establish:
+                        {
+
+                        };
+                        break;
+                    case ThorPipeCommand.TearDown:
+                        {
+
+                        };
+                        break;
+                    case ThorPipeCommand.StartAcquiring:
+                        {
+
+                        };
+                        break;
+                    case ThorPipeCommand.StopAcquiring:
+                        {
+
+                        };
+                        break;
+                    case ThorPipeCommand.AcquireInformation:
+                        {
+
+                        };
+                        break;
+                    case ThorPipeCommand.LoadExperimentFile:
+                        {
+
+                        };
+                        break;
+                    case ThorPipeCommand.MoveX:
+                        {
+
+                        };
+                        break;
+                    case ThorPipeCommand.MoveY:
+                        {
+
+                        };
+                        break;
+                    case ThorPipeCommand.MoveZ:
+                        {
+
+                        };
+                        break;
+                    case ThorPipeCommand.MoveSecondaryZ:
+                        {
+
+                        };
+                        break;
+                    case ThorPipeCommand.NotifySavedFile:
+                        {
+                            Console.WriteLine(msg[3]);
+                        };
+                        break;
+                    default:
+                        _receiveIPCCommandActive = false;
+                        return false;
+                }
+                _receiveIPCCommandActive = false;
+                return true;
+            }
+            else
+            {
+                _receiveIPCCommandActive = false;
+                return false;
+            }
+        }
 
         /// <summary>
         /// Gets the name of the host.
@@ -141,6 +266,88 @@ namespace ConsoleTest
         public string GetHostName()
         {
             return (System.Environment.MachineName);
+        }
+
+        /// <summary>
+        /// Receives the ipc command.
+        /// </summary>
+        /// <param name="thorImagePipeRecv">The thor image pipe recv.</param>
+        /// <param name="ss">The ss.</param>
+        public void ReceiveIPCCommand(String thorImagePipeRecv, StreamString ss)
+        {
+            if (thorImagePipeRecv.Contains("~"))
+            {
+                String[] msgRecv = thorImagePipeRecv.Split('~');
+                if (VerifyNamedPipeRouting(msgRecv))
+                {
+                    if (ExcuteNamedPipeData(msgRecv, ss, true))
+                    {
+                        ss.WriteString(String.Join("~", new String[]{Enum.GetName(typeof(ThorPipeSrc), ThorPipeSrc.Remote), Enum.GetName(typeof(ThorPipeDst), ThorPipeDst.Local),
+                                           msgRecv[2], "1"}));
+                    }
+                    else
+                    {
+                        ss.WriteString(String.Join("~", new String[]{Enum.GetName(typeof(ThorPipeSrc), ThorPipeSrc.Remote), Enum.GetName(typeof(ThorPipeDst), ThorPipeDst.Local),
+                                   Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.Error), "2"}));
+                    }
+                }
+                else
+                {
+                    ss.WriteString(String.Join("~", new String[]{Enum.GetName(typeof(ThorPipeSrc), ThorPipeSrc.Remote), Enum.GetName(typeof(ThorPipeDst), ThorPipeDst.Local),
+                                       Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.Error), "11"}));
+                }
+            }
+            else
+            {
+                ss.WriteString(String.Join("~", new String[]{Enum.GetName(typeof(ThorPipeSrc), ThorPipeSrc.Remote), Enum.GetName(typeof(ThorPipeDst), ThorPipeDst.Local),
+                                   Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.Error), "3"}));
+            }
+        }
+
+        /// <summary>
+        /// Receives the ipc ack message.
+        /// </summary>
+        /// <param name="msg">The MSG.</param>
+        public void ReceiveIPCMessageACK(string msg)
+        {
+            if (msg.Contains("~"))
+            {
+                String[] msgRecv = msg.Split('~');
+                if (msgRecv.Length == 4)
+                {
+                    if (VerifyNamedPipeRouting(msgRecv))
+                    {
+                        if (msgRecv[2] == _sendBuffer[2] && msgRecv[3] == "1")
+                        {
+
+                        }
+                        else
+                        {
+                            switch ((ThorPipeStatus)(Convert.ToInt32(msgRecv[3])))
+                            {
+                                case ThorPipeStatus.ThorPipeStsNoError:
+                                    break;
+                                case ThorPipeStatus.ThorPipeStsBusy:
+                                    break;
+                                case ThorPipeStatus.ThorPipeStsBlankCommandError:
+                                    break;
+                                case ThorPipeStatus.ThorPipeStreamNotSupportedError:
+                                    break;
+                                case ThorPipeStatus.ThorPipeFormatError:
+                                    break;
+                                case ThorPipeStatus.ThorPipeFormatRoutingError:
+                                    break;
+                                case ThorPipeStatus.ThorpipeIOError:
+                                    break;
+                                case ThorPipeStatus.ThorPipeError:
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -164,38 +371,27 @@ namespace ConsoleTest
         }
 
         /// <summary>
-        /// Servers the thread.
+        /// Starts the namedpipe client.
         /// </summary>
-        private void ServerThread()
+        public void StartNamedPipeClient()
         {
-            _threadCompleted = false;
-            StreamOutNamedPipe();
-            if (_thorImageLSConnectionStats == true)
+            if (_pipeClient == null)
             {
-                switch ((ThorPipeCommand)(Enum.Parse(typeof(ThorPipeCommand), _sendBuffer[2])))
-                {
-                    case ThorPipeCommand.Establish:
-                        {
-                            _thorImageLSConnectionStats = true;
-
-                            Thread.Sleep(50);
-                            String[] configurarionInformation = { "true", "0" };
-                            _sendBuffer = new string[] { Enum.GetName(typeof(ThorPipeSrc),ThorPipeSrc.Remote),  Enum.GetName(typeof(ThorPipeDst),ThorPipeDst.Local),
-                                        Enum.GetName(typeof(ThorPipeCommand),ThorPipeCommand.UpdataInformation), string.Join("/",configurarionInformation) };
-                            StreamOutNamedPipe();
-                        }
-                        break;
-                    case ThorPipeCommand.TearDown:
-                        {
-                            _thorImageLSConnectionStats = false;
-
-                        }
-                        break;
-                    default:
-                        break;
-                }
+                _pipeClient = new Thread(ClientThread);
             }
-            _threadCompleted = true;
+            _pipeClient.Start();
+        }
+
+        /// <summary>
+        /// Stops the namedpipe client.
+        /// </summary>
+        public void StopNamedPipeClient()
+        {
+            if (_pipeClient != null)
+            {
+                _pipeClient.Abort();
+                _pipeClient = null;
+            }
         }
 
         /// <summary>
@@ -249,52 +445,6 @@ namespace ConsoleTest
         }
 
         /// <summary>
-        /// Receives the ipc ack message.
-        /// </summary>
-        /// <param name="msg">The MSG.</param>
-        public void ReceiveIPCMessageACK(string msg)
-        {
-            if (msg.Contains("~"))
-            {
-                String[] msgRecv = msg.Split('~');
-                if (msgRecv.Length == 4)
-                {
-                    if (VerifyNamedPipeRouting(msgRecv))
-                    {
-                        if (msgRecv[2] == _sendBuffer[2] && msgRecv[3] == "1")
-                        {
-
-                        }
-                        else
-                        {
-                            switch ((ThorPipeStatus)(Convert.ToInt32(msgRecv[3])))
-                            {
-                                case ThorPipeStatus.ThorPipeStsNoError:
-                                    break;
-                                case ThorPipeStatus.ThorPipeStsBusy:
-                                    break;
-                                case ThorPipeStatus.ThorPipeStsBlankCommandError:
-                                    break;
-                                case ThorPipeStatus.ThorPipeStreamNotSupportedError:
-                                    break;
-                                case ThorPipeStatus.ThorPipeFormatError:
-                                    break;
-                                case ThorPipeStatus.ThorPipeFormatRoutingError:
-                                    break;
-                                case ThorPipeStatus.ThorpipeIOError:
-                                    break;
-                                case ThorPipeStatus.ThorPipeError:
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        /// <summary>
         /// Verifies the named pipe routing.
         /// </summary>
         /// <param name="msg">The MSG.</param>
@@ -309,29 +459,9 @@ namespace ConsoleTest
             return false;
         }
 
-        /// <summary>
-        /// Starts the namedpipe client.
-        /// </summary>
-        public void StartNamedPipeClient()
-        {
-            if (_pipeClient == null)
-            {
-                _pipeClient = new Thread(ClientThread);
-            }
-            _pipeClient.Start();
-        }
-
-        /// <summary>
-        /// Stops the namedpipe client.
-        /// </summary>
-        public void StopNamedPipeClient()
-        {
-            if (_pipeClient != null)
-            {
-                _pipeClient.Abort();
-                _pipeClient = null;
-            }
-        }
+        [return: MarshalAs(UnmanagedType.Bool)]
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern bool WaitNamedPipe(string name, int timeout);
 
         /// <summary>
         /// Clients the thread.
@@ -389,129 +519,53 @@ namespace ConsoleTest
             }
         }
 
-        public static bool NamedPipeDoesNotExist(string pipeName)
-        {
-            try
-            {
-                int timeout = 0;
-                string normalizedPath = System.IO.Path.GetFullPath(
-                 string.Format(@"\\.\pipe\{0}", pipeName));
-                bool exists = WaitNamedPipe(normalizedPath, timeout);
-                if (!exists)
-                {
-                    int error = Marshal.GetLastWin32Error();
-                    if (error == 0) // pipe does not exist
-                        return true;
-                    else if (error == 2) // win32 error code for file not found
-                        return true;
-                    // all other errors indicate other issues
-                }
-                return false;
-            }
-            catch (Exception ex)
-            {
-                return true; // assume it exists
-            }
-        }
-
-        [return: MarshalAs(UnmanagedType.Bool)]
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern bool WaitNamedPipe(string name, int timeout);
-
         /// <summary>
-        /// Receives the ipc command.
+        /// Servers the thread.
         /// </summary>
-        /// <param name="thorImagePipeRecv">The thor image pipe recv.</param>
-        /// <param name="ss">The ss.</param>
-        public void ReceiveIPCCommand(String thorImagePipeRecv, StreamString ss)
+        private void ServerThread()
         {
-            if (thorImagePipeRecv.Contains("~"))
+            _threadCompleted = false;
+            StreamOutNamedPipe();
+            if (_thorImageLSConnectionStats == true)
             {
-                String[] msgRecv = thorImagePipeRecv.Split('~');
-                if (VerifyNamedPipeRouting(msgRecv))
-                {
-                    if (ExcuteNamedPipeData(msgRecv, ss, true))
-                    {
-                        ss.WriteString(String.Join("~", new String[]{Enum.GetName(typeof(ThorPipeSrc), ThorPipeSrc.Remote), Enum.GetName(typeof(ThorPipeDst), ThorPipeDst.Local),
-                                           msgRecv[2], "1"}));
-                    }
-                    else
-                    {
-                        ss.WriteString(String.Join("~", new String[]{Enum.GetName(typeof(ThorPipeSrc), ThorPipeSrc.Remote), Enum.GetName(typeof(ThorPipeDst), ThorPipeDst.Local),
-                                   Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.Error), "2"}));
-                    }
-                }
-                else
-                {
-                    ss.WriteString(String.Join("~", new String[]{Enum.GetName(typeof(ThorPipeSrc), ThorPipeSrc.Remote), Enum.GetName(typeof(ThorPipeDst), ThorPipeDst.Local),
-                                       Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.Error), "11"}));
-                }
-            }
-            else
-            {
-                ss.WriteString(String.Join("~", new String[]{Enum.GetName(typeof(ThorPipeSrc), ThorPipeSrc.Remote), Enum.GetName(typeof(ThorPipeDst), ThorPipeDst.Local),
-                                   Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.Error), "3"}));
-            }
-        }
-
-        /// <summary>
-        /// Excutes the namedpipe data.
-        /// </summary>
-        /// <param name="msg">The MSG.</param>
-        /// <param name="ss">The ss.</param>
-        /// <returns></returns>
-        public bool ExcuteNamedPipeData(String[] msg, StreamString ss, bool isAcknowledgment)
-        {
-            _receiveIPCCommandActive = true;
-            if (msg.Length == 4)
-            {
-                switch ((ThorPipeCommand)(Enum.Parse(typeof(ThorPipeCommand), msg[2])))
+                switch ((ThorPipeCommand)(Enum.Parse(typeof(ThorPipeCommand), _sendBuffer[2])))
                 {
                     case ThorPipeCommand.Establish:
                         {
+                            _thorImageLSConnectionStats = true;
 
-                        };
+                            Thread.Sleep(50);
+                            String[] configurarionInformation = { "true", "0" };
+                            _sendBuffer = new string[] { Enum.GetName(typeof(ThorPipeSrc),ThorPipeSrc.Remote),  Enum.GetName(typeof(ThorPipeDst),ThorPipeDst.Local),
+                                        Enum.GetName(typeof(ThorPipeCommand),ThorPipeCommand.UpdataInformation), string.Join("/",configurarionInformation) };
+                            StreamOutNamedPipe();
+                        }
                         break;
                     case ThorPipeCommand.TearDown:
                         {
+                            _thorImageLSConnectionStats = false;
 
-                        };
-                        break;
-                    case ThorPipeCommand.StartAcquiring:
-                        {
-
-                        };
-                        break;
-                    case ThorPipeCommand.StopAcquiring:
-                        {
-
-                        };
-                        break;
-                    case ThorPipeCommand.AcquireInformation:
-                        {
-
-                        };
+                        }
                         break;
                     default:
-                        _receiveIPCCommandActive = false;
-                        return false;
+                        break;
                 }
-                _receiveIPCCommandActive = false;
-                return true;
             }
-            else
-            {
-                _receiveIPCCommandActive = false;
-                return false;
-            }
+            _threadCompleted = true;
         }
+
+        #endregion Methods
     }
 
     class Program
     {
+        #region Methods
+
         static void Main(string[] args)
-        {             
+        {
             var conn = new IpcConnection();
+            string path = string.Empty;
+
             if (args.Length == 3)
             {
                 conn.RemotePCHostName = args[1];
@@ -521,48 +575,104 @@ namespace ConsoleTest
             else if (args.Length == 2)
             {
                 conn.RemotePCHostName = args[1]; // remote host name should be fed in command line.
-                Console.WriteLine("Default save name is used: C:\\temp\\exp01");
+                Console.WriteLine("Default save name used: C:\\temp\\exp01");
                 conn.FullSaveName = "C:\\temp\\exp01";
             }
             else
             {
-                Console.WriteLine("Default remote host name is used: '.' ");                
+                Console.WriteLine("Default remote host name used: '.' ");
                 conn.RemotePCHostName = ".";
-                Console.WriteLine("Default save name is used: C:\\temp\\exp01");
-                conn.FullSaveName = "C:\\temp\\exp01";
+                Console.WriteLine("Default save name used: C:\\temp\\exp01\\");
+                conn.FullSaveName = "C:\\temp\\exp01\\";
             }
-            conn._connectionServerID = "ConsoleTestThorImagePipe";
-            conn._connectionClientID = "ThorImageConsoleTestPipe";
+            //This is the name of the application you have to write in the remote setup, in ThorImage/Capture
+            string applicationName = "ConsoleTest";
+            conn._connectionServerID = applicationName + "ThorImagePipe";
+            conn._connectionClientID = "ThorImage" + applicationName + "Pipe";
             conn.StartNamedPipeClient();
             conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.Establish), conn.GetHostName());
 
             Console.WriteLine("s - start acquisition.");
+            Console.WriteLine("l - load Experiment File.");
+            Console.WriteLine("c - change experiment path.");
             Console.WriteLine("x - stop acquisition.");
+            Console.WriteLine("m - move stage.");
             Console.WriteLine("Esc - end application.");
 
             do
             {
                 if (Console.ReadKey(true).Key == ConsoleKey.S)
                 {
-
                     conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.StartAcquiring), conn.FullSaveName);
+                    Console.WriteLine("Starting Experiment");
+                }
+                else if (Console.ReadKey(true).Key == ConsoleKey.L)
+                {
+                    Console.WriteLine("Enter the new experiment path:");
+                    path = Console.ReadLine();
+                    conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.LoadExperimentFile), path);
+                    Console.WriteLine("Experiment Path was successfully loaded from " + path);
+                }
+                else if (Console.ReadKey(true).Key == ConsoleKey.C)
+                {
+                    Console.WriteLine("Enter the new experiment path:");
+                    conn.FullSaveName = Console.ReadLine();
+                    Console.WriteLine("Experiment Path was successfully changed to " + conn.FullSaveName);
+                }
+                else if (Console.ReadKey(true).Key == ConsoleKey.H)
+                {
+                    Console.WriteLine("Enter the new Local Computer Name:");
+                    conn.RemotePCHostName = Console.ReadLine();
+                    Console.WriteLine("PC Host Name was successfully changed to " + conn.RemotePCHostName);
                 }
                 else if (Console.ReadKey(true).Key == ConsoleKey.X)
                 {
-
                     conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.StopAcquiring));
+                    Console.WriteLine("Experiment Stopped");
                 }
-
+                else if (Console.ReadKey(true).Key == ConsoleKey.M)
+                {
+                    Console.WriteLine("Select the stage you want to move \n Options are: X, Y, Z, Secondary Z");
+                    string optionSelected = Console.ReadLine();
+                    if ("X" != optionSelected && "Y" != optionSelected && "Z" != optionSelected && "Secondary Z" != optionSelected)
+                    {
+                        Console.WriteLine("That stage doesn't exist");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Set the distance you want to move by in micrometers: ");
+                        string distanceUM = Console.ReadLine();
+                        switch (optionSelected)
+                        {
+                            case ("X"):
+                                conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.MoveX), distanceUM);
+                                Console.WriteLine("Stage X was successfully moved by " + distanceUM);
+                                break;
+                            case ("Y"):
+                                conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.MoveY), distanceUM);
+                                Console.WriteLine("Stage Y was successfully moved by " + distanceUM);
+                                break;
+                            case ("Z"):
+                                conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.MoveZ), distanceUM);
+                                Console.WriteLine("Stage Z was successfully moved by " + distanceUM);
+                                break;
+                            case ("Secondary Z"):
+                                conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.MoveSecondaryZ), distanceUM);
+                                Console.WriteLine("Stage Secondary Z was successfully moved by " + distanceUM);
+                                break;
+                        }
+                    }
+                }
             } while (Console.ReadKey(true).Key != ConsoleKey.Escape);
 
-            
             conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.TearDown));
 
             Console.WriteLine("Bye, see you next time.");
             System.Threading.Thread.Sleep(5000);
             Environment.Exit(0);
             return;
-
         }
+
+        #endregion Methods
     }
 }

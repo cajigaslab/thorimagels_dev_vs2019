@@ -5,7 +5,7 @@
     using System.Windows.Controls;
 
     using MenuLSDll.ViewModel;
-
+    
     using Microsoft.Practices.Composite.Events;
     using Microsoft.Practices.Composite.Modularity;
     using Microsoft.Practices.Composite.Regions;
@@ -37,7 +37,7 @@
             InitializeComponent();
         }
 
-        public MainWindow(MenuLSViewModel MenuLSViewModel, IEventAggregator eventAggregator)
+public MainWindow(MenuLSViewModel MenuLSViewModel, IEventAggregator eventAggregator)
             : this()
         {
             if (System.ComponentModel.DesignerProperties.GetIsInDesignMode(this) == true)

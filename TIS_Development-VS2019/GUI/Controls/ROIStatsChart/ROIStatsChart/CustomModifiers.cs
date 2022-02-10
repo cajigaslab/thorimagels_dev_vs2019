@@ -8,10 +8,12 @@
     using System.Windows.Media;
     using System.Windows.Shapes;
 
-    using Abt.Controls.SciChart.ChartModifiers;
-    using Abt.Controls.SciChart.Visuals.Axes;
-
     using ROIStatsChart.Model;
+
+    using SciChart.Charting;
+    using SciChart.Charting.ChartModifiers;
+    using SciChart.Charting.Visuals.Axes.LabelProviders;
+    using SciChart.Core.Utility.Mouse;
 
     /// <summary>
     /// Implementation of RolloverModifier 
@@ -73,7 +75,7 @@
             var pt = GetPointRelativeTo(e.MousePoint, this.ModifierSurface);
 
             // Add the rollover points to the surface
-            var hitTestResults = allSeries.Where(x => x.IsVisible == true).Select(x => x.HitTest(pt, false)).ToArray();
+            var hitTestResults = allSeries.Where(x => x.IsVisible == true).Select(x => x.HitTestProvider.HitTest(pt, false)).ToArray();
 
             if (0 < hitTestResults.Count())
             {
@@ -204,13 +206,13 @@
             switch (e.Modifier)
             {
                 case MouseModifier.Ctrl:
-                    this.XyDirection = Abt.Controls.SciChart.XyDirection.YDirection;
-                    this.ActionType = Abt.Controls.SciChart.ActionType.Pan;
+                    this.XyDirection = XyDirection.YDirection;
+                    this.ActionType = ActionType.Pan;
                     base.OnModifierMouseWheel(e);
                     break;
                 case MouseModifier.Shift:
-                    this.XyDirection = Abt.Controls.SciChart.XyDirection.XDirection;
-                    this.ActionType = Abt.Controls.SciChart.ActionType.Pan;
+                    this.XyDirection = XyDirection.XDirection;
+                    this.ActionType = ActionType.Pan;
                     base.OnModifierMouseWheel(e);
                     break;
                 case MouseModifier.Alt:
@@ -227,8 +229,8 @@
                     e.Handled = true;
                     break;
                 default:
-                    this.XyDirection = Abt.Controls.SciChart.XyDirection.XYDirection;
-                    this.ActionType = Abt.Controls.SciChart.ActionType.Zoom;
+                    this.XyDirection = XyDirection.XYDirection;
+                    this.ActionType = ActionType.Zoom;
                     base.OnModifierMouseWheel(e);
                     break;
             }

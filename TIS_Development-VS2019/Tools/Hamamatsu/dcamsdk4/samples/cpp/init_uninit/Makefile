@@ -1,4 +1,4 @@
-CC=gcc
+CC=g++
 CFLAGS = -g -Wall -DLINUX -I../../../inc/
 LDFLAGS = -ldcamapi
 EXECUTABLE = init_uninit

@@ -19,11 +19,11 @@
     </UserControl.Resources>
     <Grid x:Name="LayoutRoot">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <!-- Digital Switches -->
-        <StackPanel Grid.Row="0" 
+        <StackPanel Grid.Row="0"
                     Orientation="Horizontal"
                     HorizontalAlignment="Left"
                     Margin="3"
@@ -31,8 +31,8 @@
             <CheckBox Content="Enable"
                       VerticalAlignment="Center"
                       Margin="1"
-                      IsChecked="{Binding SwitchEnable}" 
-                      Command="{Binding Path=EnableCommand}"/>
+                      IsChecked="{Binding SwitchEnable}"
+                      Command="{Binding Path=EnableCommand}" />
             <StackPanel Margin="1">
                 <Label Content="{Binding Path=SwitchName0}" />
                 <ToggleButton Width="25"
@@ -115,7 +115,7 @@
             </StackPanel>
         </StackPanel>
         <!-- Digital Triggers -->
-        <GroupBox Header="Signal Generator" 
+        <GroupBox Header="Signal Generator"
                   Grid.Row="1"
                   Margin="1"
                   HorizontalAlignment="Left"
@@ -123,13 +123,18 @@
             <StackPanel Orientation="Vertical">
                 <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="3" ToolTip="select mode and execute signal generation">
-                        <Label Content="Mode" Width="50"/>
+                    <StackPanel Grid.Row="0"
+                                Orientation="Horizontal"
+                                Margin="1"
+                                ToolTip="select mode and execute signal generation">
+                        <Label Content="Mode"
+                               Width="50" />
                         <ComboBox Name="cbDigTrigMode"
                                   Margin="1"
                                   Width="160"
@@ -141,9 +146,11 @@
                         <Button Width="65"
                                 Margin="1"
                                 Command="{Binding Path=TriggerEnableCommand}">
-                            <Image Source="{Binding TriggerImagePath, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Width="20" />
+                            <Image Source="{Binding TriggerImagePath, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                   Width="20" />
                             <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                <Style TargetType="Button"
+                                       BasedOn="{StaticResource {x:Type Button}}">
                                     <Setter Property="Visibility"
                                             Value="{Binding Path=ExperimentMode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=true, Converter={StaticResource _boolToVis}}" />
                                     <Style.Triggers>
@@ -157,7 +164,61 @@
                             </Button.Style>
                         </Button>
                     </StackPanel>
-                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="1">
+                    <StackPanel Grid.Row="1"
+                                Orientation="Horizontal"
+                                Margin="1">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=SelectedIndex,ElementName=cbDigTrigMode}"
+                                                 Value="0">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <Label Content="Type"
+                               Width="50" />
+                        <ComboBox x:Name="cbTrigType"
+                                  Margin="1"
+                                  HorizontalContentAlignment="Right"
+                                  ItemsSource="{Binding TriggerTypeItems, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                  SelectedIndex="{Binding TriggerType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  DisplayMemberPath="Value" />
+                        <StackPanel Orientation="Horizontal"
+                                    ToolTip="Power settings for individual iteration if many, eg.> 10:20:50.">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=SelectedIndex,ElementName=cbTrigType}"
+                                                     Value="0">
+                                            <Setter Property="Visibility"
+                                                    Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <TextBox Width="80"
+                                     HorizontalAlignment="Left"
+                                     HorizontalContentAlignment="Right"
+                                     Text="{Binding Path=PowerPercentString,Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                     validator:Validation.ValidationType="{x:Type system:Double}"
+                                     validator:Validation.Separator=":"
+                                     validator:Validation.MinValue="0.0"
+                                     validator:Validation.NoEmptyValue="True"
+                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
+                            <Label Content="[%]"
+                                   Width="30" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Grid.Row="2"
+                                Orientation="Horizontal"
+                                Margin="1">
                         <StackPanel.Style>
                             <Style TargetType="StackPanel">
                                 <Setter Property="Visibility"
@@ -169,19 +230,26 @@
                                                 Value="Collapsed" />
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding Path=SelectedIndex,ElementName=cbDigTrigMode}"
-                                                 Value="6">
+                                                 Value="1">
                                         <Setter Property="Visibility"
                                                 Value="Collapsed" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </StackPanel.Style>
-                        <StackPanel Orientation="Vertical" VerticalAlignment="Bottom" Margin="1">
-                            <Label Content="{Binding Path=TriggerLabel, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Width="80" HorizontalContentAlignment="Left"/>
+                        <StackPanel Orientation="Vertical"
+                                    VerticalAlignment="Bottom"
+                                    Margin="1">
+                            <Label Content="{Binding Path=TriggerLabel, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                   Width="80"
+                                   HorizontalContentAlignment="Left" />
                         </StackPanel>
-                        <StackPanel Orientation="Vertical" Margin="1"
+                        <StackPanel Orientation="Vertical"
+                                    Margin="1"
                                     ToolTip="start edge number">
-                            <Label Content="Start" Width="50" HorizontalContentAlignment="Center"/>
+                            <Label Content="Start"
+                                   Width="50"
+                                   HorizontalContentAlignment="Center" />
                             <TextBox Width="50"
                                      HorizontalAlignment="Left"
                                      HorizontalContentAlignment="Right"
@@ -189,13 +257,15 @@
                                      validator:Validation.ValidationType="{x:Type system:Int32}"
                                      validator:Validation.MinValue="1"
                                      validator:Validation.NoEmptyValue="True"
-                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"/>
+                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
                         </StackPanel>
-                        <StackPanel Orientation="Vertical" Margin="1"
+                        <StackPanel Orientation="Vertical"
+                                    Margin="1"
                                     ToolTip="steps format: eg> 1:2">
-                            <Label Content="Gaps" Width="40" HorizontalContentAlignment="Center"/>
-                            <TextBox Name="tbTriggerEdges"
-                                     Width="95"
+                            <Label Content="Gaps"
+                                   Width="40"
+                                   HorizontalContentAlignment="Center" />
+                            <TextBox Width="95"
                                      HorizontalAlignment="Left"
                                      HorizontalContentAlignment="Right"
                                      Text="{Binding Path=TriggerEdgeString, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnExceptions=True, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
@@ -203,11 +273,14 @@
                                      validator:Validation.Separator=":"
                                      validator:Validation.MinValue="0"
                                      validator:Validation.NoEmptyValue="True"
-                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"/>
+                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
                         </StackPanel>
-                        <StackPanel Orientation="Vertical" Margin="1"
+                        <StackPanel Orientation="Vertical"
+                                    Margin="1"
                                     ToolTip="repeat number, 0: infinite">
-                            <Label Content="Repeat" Width="50" HorizontalContentAlignment="Center"/>
+                            <Label Content="Repeat"
+                                   Width="50"
+                                   HorizontalContentAlignment="Center" />
                             <TextBox Width="50"
                                      HorizontalAlignment="Left"
                                      HorizontalContentAlignment="Right"
@@ -215,10 +288,12 @@
                                      validator:Validation.ValidationType="{x:Type system:Int32}"
                                      validator:Validation.MinValue="0"
                                      validator:Validation.NoEmptyValue="True"
-                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"/>
+                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
                         </StackPanel>
                     </StackPanel>
-                    <StackPanel Grid.Row="2" Orientation="Horizontal">
+                    <StackPanel Grid.Row="3"
+                                Orientation="Horizontal"
+                                Margin="1">
                         <StackPanel.Style>
                             <Style TargetType="StackPanel">
                                 <Setter Property="Visibility"
@@ -234,7 +309,8 @@
                         </StackPanel.Style>
                         <StackPanel Orientation="Vertical"
                                     ToolTip="initial idle time in milliseconds">
-                            <Label Content="ini. idle[ms]" HorizontalContentAlignment="Center"/>
+                            <Label Content="ini. idle[ms]"
+                                   HorizontalContentAlignment="Center" />
                             <TextBox Text="{Binding Path=TriggerStartIdleMS, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
                                      validator:Validation.ValidationType="{x:Type system:Double}"
                                      validator:Validation.MinValue="0.0"
@@ -243,11 +319,12 @@
                                      Width="70"
                                      Margin="1"
                                      HorizontalContentAlignment="Right"
-                                     HorizontalAlignment="Center"/>
+                                     HorizontalAlignment="Center" />
                         </StackPanel>
-                        <StackPanel Orientation="Vertical" 
+                        <StackPanel Orientation="Vertical"
                                     ToolTip="idle time per iteration in milliseconds">
-                            <Label Content="idle[ms]" HorizontalContentAlignment="Center"/>
+                            <Label Content="idle[ms]"
+                                   HorizontalContentAlignment="Center" />
                             <TextBox Text="{Binding Path=TriggerIdleMS, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
                                      validator:Validation.MinValue="0.0"
                                      validator:Validation.ValidationType="{x:Type system:Double}"
@@ -256,11 +333,12 @@
                                      Width="70"
                                      Margin="1"
                                      HorizontalContentAlignment="Right"
-                                     HorizontalAlignment="Center"/>
+                                     HorizontalAlignment="Center" />
                         </StackPanel>
                         <StackPanel Orientation="Vertical"
                                     ToolTip="duration time per iteration in milliseconds">
-                            <Label Content="duration[ms]" HorizontalContentAlignment="Center"/>
+                            <Label Content="duration[ms]"
+                                   HorizontalContentAlignment="Center" />
                             <TextBox Text="{Binding Path=TriggerDurationMS, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
                                      validator:Validation.MinValue="0.001"
                                      validator:Validation.MaxValue="42949672"
@@ -270,11 +348,12 @@
                                      Width="75"
                                      Margin="1"
                                      HorizontalContentAlignment="Right"
-                                     HorizontalAlignment="Center"/>
+                                     HorizontalAlignment="Center" />
                         </StackPanel>
-                        <StackPanel Orientation="Vertical" 
+                        <StackPanel Orientation="Vertical"
                                     ToolTip="iteration counts, 0: infinite">
-                            <Label Content="iterations " HorizontalContentAlignment="Center"/>
+                            <Label Content="iterations "
+                                   HorizontalContentAlignment="Center" />
                             <TextBox Text="{Binding Path=TriggerIterations, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
                                      validator:Validation.MinValue="0"
                                      validator:Validation.ValidationType="{x:Type system:Int32}"
@@ -283,14 +362,17 @@
                                      Width="60"
                                      Margin="1"
                                      HorizontalContentAlignment="Right"
-                                     HorizontalAlignment="Center"/>
+                                     HorizontalAlignment="Center" />
                         </StackPanel>
                     </StackPanel>
-                    <TextBlock Grid.Row="3" 
-                               Text="{Binding Path=TriggerError, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
-                               Visibility="{Binding Path=TriggerError, Converter={StaticResource _stringToVis}}"
-                               Foreground="{Binding Path=TriggerErrorColor, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
-                    </TextBlock>
+                    <StackPanel Grid.Row="4"
+                                Orientation="Horizontal"
+                                Margin="1">
+                        <TextBlock Text="{Binding Path=TriggerError, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                   Visibility="{Binding Path=TriggerError, Converter={StaticResource _stringToVis}}"
+                                   Foreground="{Binding Path=TriggerErrorColor, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                        </TextBlock>
+                    </StackPanel>
                 </Grid>
             </StackPanel>
         </GroupBox>

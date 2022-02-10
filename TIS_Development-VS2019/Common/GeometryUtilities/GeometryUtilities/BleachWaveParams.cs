@@ -61,7 +61,6 @@
         private double _umPerPixel = 1.0;
         private double _umPerPixelRatio = 1.0;
         List<Point> _vertices = new List<Point>();
-        private double _zValue = 0;
 
         #endregion Fields
 
@@ -744,16 +743,6 @@
             set
             {
                 _vertices = value;
-            }
-        }
-
-        public double ZValue
-        {
-            get { return _zValue; }
-            set
-            {
-                _zValue = value;
-                OnPropertyChanged("ZValue");
             }
         }
 

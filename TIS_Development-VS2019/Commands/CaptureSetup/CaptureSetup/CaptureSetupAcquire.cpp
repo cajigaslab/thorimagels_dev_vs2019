@@ -257,6 +257,38 @@ UINT LiveThreadProc( LPVOID pParam )
 	//enable LEDs
 	SetBFLampPosition(ENABLE_LEDS);
 
+
+	//Enable laser emission if analog mode is off
+	long laserAnalog = 0;
+	GetLaserAnalog(laserAnalog);
+	long laser1Enable = 0;
+	GetLaser1Enable(laser1Enable);
+	long laser2Enable = 0;
+	GetLaser2Enable(laser2Enable);
+	long laser3Enable = 0;
+	GetLaser3Enable(laser3Enable);
+	long laser4Enable = 0;
+	GetLaser4Enable(laser4Enable);
+	if (laserAnalog == false)
+	{
+		SetLaser1Emission(ENABLE_EMISSION);
+	}
+
+	if (laserAnalog == false)
+	{
+		SetLaser2Emission(ENABLE_EMISSION);
+	}
+
+	if (laserAnalog == false)
+	{
+		SetLaser3Emission(ENABLE_EMISSION);
+	}
+
+	if (laserAnalog == false)
+	{
+		SetLaser4Emission(ENABLE_EMISSION);
+	}
+
 	LARGE_INTEGER freqInt;
 	QueryPerformanceFrequency(&freqInt);
 	double dfrq=(double) freqInt.QuadPart;
@@ -371,6 +403,12 @@ RETURN:
 
 	//disable LEDs
 	SetBFLampPosition(DISABLE_LEDS);
+
+	//disable Laser Emission
+	SetLaser1Emission(DISABLE_EMISSION);
+	SetLaser2Emission(DISABLE_EMISSION);
+	SetLaser3Emission(DISABLE_EMISSION);
+	SetLaser4Emission(DISABLE_EMISSION);
 
 	CHECK_INLINE_PACTIVEIMAGEROUTINE(SetCaptureActive(FALSE));
 

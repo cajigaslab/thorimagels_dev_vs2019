@@ -49,9 +49,14 @@
         <sci:SciChartSurface Name="sciChartSurface"
                              Visibility="{Binding IsStackedDisplay, ConverterParameter=Inverted,Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                              IsVisibleChanged="SciChartSurface_IsVisibleChanged"
-                             SeriesSource="{Binding ChartSeries}"
+                             MaxFrameRate="33"
+                             RenderableSeries="{Binding ChartSeries}"
                              Grid.Row="0"
-                             RenderPriority="Low">
+                             RenderPriority="Normal"
+                             sci:VisualXcceleratorEngine.IsEnabled="True"
+                             sci:VisualXcceleratorEngine.FallbackType="{x:Type sci:HighSpeedRenderSurface}"
+                             sci:VisualXcceleratorEngine.DowngradeWithoutException="False"
+                             sci:VisualXcceleratorEngine.EnableImpossibleMode="True">
             <sci:SciChartSurface.XAxis>
                 <sci:NumericAxis AxisTitle="Time"
                                  AutoRange="{Binding AutoRangeX}"
@@ -97,8 +102,9 @@
                                            IsEnabled="{Binding IsDragToScaleEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
                     <customModifiers:MouseWheelZoomCustomModifier x:Name="mouseWheelZoomModifier"
                                                                   IsEnabled="{Binding Path=ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <sci:LegendModifier Name="legendModifier"
-                                        ReceiveHandledEvents="True" />
+                    <sci:LegendModifier Name="legendModifier" 
+                                        ReceiveHandledEvents="False" ShowLegend="True" Margin="10"
+                           LegendPlacement="Inside"  GetLegendDataFor="AllSeries"/>
                     <customModifiers:ChartCanvasModifier x:Name="ChartCanvasModifier"
                                                          CursorTop="{Binding CursorTop, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                          CursorBottom="{Binding CursorBottom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -128,17 +134,13 @@
                     Margin="0,0,0,0">
             <StackPanel Orientation="Horizontal"
                         Visibility="{Binding IsCounting, ConverterParameter=Normal,Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                        Margin="0,-5,0,-1"
+                        Margin="0,-5,0,0"
                         Background="Transparent">
                 <Label Content="Counter:"
                        Background="Transparent" />
                 <Label Content="{Binding Path=ImageCounterNumber}"
                        Background="Transparent" />
             </StackPanel>
-            <sci:SciChartLegend Name="legendControl"
-                                MaxWidth="300"
-                                ShowVisibilityCheckboxes="True"
-                                LegendData="{Binding LegendData, ElementName=legendModifier, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
         </StackPanel>
         <!--  Define the listbox which will host the N channels of the Time Domain  -->
         <ScrollViewer Name="scvDataStack"
@@ -194,7 +196,7 @@
                         <ListBox.ItemContainerStyle>
                             <Style TargetType="{x:Type ListBoxItem}">
                                 <Setter Property="IsSelected"
-                                        Value="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                        Value="{Binding IsVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </Style>
                         </ListBox.ItemContainerStyle>
                         <ListBox.ItemsPanel>
@@ -206,15 +208,16 @@
                 </Expander>
                 <ListBox Name="lbDataStack"
                          Grid.Row="1"
+                         Grid.RowSpan="5"
                          Grid.Column="1"
-                         Height="Auto"
-                         VerticalAlignment="Top"
+                         VerticalAlignment="Center"
                          BorderThickness="0"
                          ItemContainerStyle="{StaticResource TimeChannelItemStyle}"
                          ItemTemplate="{StaticResource DataChannelTemplate}"
                          ItemsSource="{Binding Path=ChannelViewModels, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                          Grid.IsSharedSizeScope="True"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Grid}}}"
                          PreviewMouseWheel="Stack_PreviewMouseWheel" />
             </Grid>
         </ScrollViewer>
@@ -269,7 +272,7 @@
                         <ListBox.ItemContainerStyle>
                             <Style TargetType="{x:Type ListBoxItem}">
                                 <Setter Property="IsSelected"
-                                        Value="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                        Value="{Binding IsVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </Style>
                         </ListBox.ItemContainerStyle>
                         <ListBox.ItemsPanel>

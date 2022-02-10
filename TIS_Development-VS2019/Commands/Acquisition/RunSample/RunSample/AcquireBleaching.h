@@ -72,6 +72,7 @@ public:
 	virtual long CallSequenceStepCurrent(long index);
 	virtual long CallStartProgressBar(long index, long resetTotalCount = 0);
 	virtual long CallInformMessage(wchar_t* message);
+	virtual long CallNotifySavedFileIPC(wchar_t* message);
 
 	//wrappers:
 	static long CaptureWrap(void* pObj, ICamera * pCamera, long currentT, long streaming, long numFrames, double timeInterval, Dimensions d, SaveParams *sp, long simultaneous)
@@ -144,4 +145,5 @@ private:
 	AcquireSaveInfo* _acquireSaveInfo;
 	long _capturedImageID;
 	static char* _pTemp;
+	long _digiShutterEnabled;
 };

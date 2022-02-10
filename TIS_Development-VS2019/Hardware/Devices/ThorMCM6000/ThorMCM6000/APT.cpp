@@ -97,7 +97,7 @@ void APT::ParseApt(char* buf, int len, Mcm6kParams* params)
 		break;
 
 	case MGMSG_MCM_GET_SHUTTERPARAMS:
-		if (params->cardType[extData[0]] == (USHORT)Shutter_4_type)
+		if (params->cardType[extData[0]] == (USHORT)Shutter_4_type || params->cardType[extData[0]] == (USHORT)Shutter_4_type_REV6)
 			shutter_4_get_params(extData, extDataSize, params);
 		else
 			shutter_get_params(extData, extDataSize, params);
@@ -708,7 +708,7 @@ void APT::shutter_get_state(char* data, int size, Mcm6kParams* params)
 {
 	//Save the shutter position to the first one if the type is Shutter_type
 	int channel = 0;
-	if (params->cardType[data[5] - CARD_ID_START_ADDRESS] == (USHORT)Shutter_4_type)
+	if (params->cardType[data[5] - CARD_ID_START_ADDRESS] == (USHORT)Shutter_4_type || params->cardType[data[5] - CARD_ID_START_ADDRESS] == (USHORT)Shutter_4_type_REV6)
 	{
 		byte slot = (byte)(data[5] - CARD_ID_START_ADDRESS);
 		byte chan_id = (byte)(data[2] + 1);

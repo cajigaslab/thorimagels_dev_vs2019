@@ -9,7 +9,7 @@
              xmlns:system="clr-namespace:System;assembly=mscorlib"
              xmlns:validator="clr-namespace:Validations;assembly=Validations"
              xmlns:theme="clr-namespace:ThemeControl;assembly=ThemeControl"
-             xmlns:ThorSharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"             
+             xmlns:ThorSharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
              x:Name="Control"
              Width="390"
              Height="Auto"
@@ -17,7 +17,8 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ThorSharedTypes:DoubleScaledMultiConverter x:Key="doubleScaledMultiConverter" />
-            <x:StaticExtension Member="ThorSharedTypes:ResourceManagerCS.Instance" x:Key="ResourceManagerCS"/>
+            <x:StaticExtension Member="ThorSharedTypes:ResourceManagerCS.Instance"
+                               x:Key="ResourceManagerCS" />
             <LinearGradientBrush x:Key="DarkBrush"
                                  StartPoint="0,0"
                                  EndPoint="0,1">
@@ -173,7 +174,7 @@
         <StackPanel>
             <StackPanel.LayoutTransform>
                 <ScaleTransform ScaleX="{Binding Path=XYPanelScale}"
-                                ScaleY="{Binding Path=XYPanelScale}"/>
+                                ScaleY="{Binding Path=XYPanelScale}" />
             </StackPanel.LayoutTransform>
             <StackPanel Name="ControlPanel"
                         Orientation="Horizontal"
@@ -183,7 +184,7 @@
                                              UpdateSourceTrigger=PropertyChanged}">
                 <StackPanel.LayoutTransform>
                     <ScaleTransform ScaleX="{Binding Path=XYControlPanelScale}"
-                                    ScaleY="{Binding Path=XYControlPanelScale}"/>
+                                    ScaleY="{Binding Path=XYControlPanelScale}" />
                 </StackPanel.LayoutTransform>
                 <Button Name="Overview"
                         Width="86"
@@ -235,7 +236,12 @@
                                    Width="350"
                                    Height="350"
                                    Padding="5,5,5,0"
-                                   RenderPriority="Low">
+                                   MaxFrameRate="33"
+                                   RenderPriority="Normal"
+                                   s:VisualXcceleratorEngine.IsEnabled="True"
+                                   s:VisualXcceleratorEngine.FallbackType="{x:Type s:HighSpeedRenderSurface}"
+                                   s:VisualXcceleratorEngine.DowngradeWithoutException="False"
+                                   s:VisualXcceleratorEngine.EnableImpossibleMode="True">
                     <s:SciChartSurface.Style>
                         <Style TargetType="s:SciChartSurface">
                             <Style.Triggers>
@@ -271,10 +277,10 @@
                     </s:SciChartSurface.YAxis>
                     <s:SciChartSurface.RenderableSeries>
                         <s:FastLineRenderableSeries IsDigitalLine="True"
-                                                    SeriesColor="Transparent"
+                                                    Stroke="Transparent"
                                                     StrokeThickness="1" />
                         <s:FastLineRenderableSeries IsDigitalLine="True"
-                                                    SeriesColor="Transparent"
+                                                    Stroke="Transparent"
                                                     StrokeThickness="1" />
                     </s:SciChartSurface.RenderableSeries>
                     <s:SciChartSurface.RenderSurface>
@@ -295,11 +301,10 @@
                             <s:CursorModifier IsEnabled="True"
                                               ReceiveHandledEvents="True" />
                             <s:MouseWheelZoomModifier x:Name="MouseWheelZoomModifier" />
-                            <s:PinchZoomModifier x:Name="PinchZoomModifier" 
+                            <s:PinchZoomModifier x:Name="PinchZoomModifier"
                                                  XyDirection="XYDirection"
-                                                 IsUniform="True"
                                                  GrowFactor="0.018"
-                                                 ReceiveHandledEvents="True"/>
+                                                 ReceiveHandledEvents="True" />
                             <s:ZoomPanModifier x:Name="ZoomPanModifier"
                                                ExecuteOn="MouseLeftButton"
                                                ReceiveHandledEvents="True" />
@@ -368,17 +373,21 @@
                                                        VerticalAlignment="Center">
                                                 <TextBlock.Text>
                                                     <MultiBinding Converter="{StaticResource doubleScaledMultiConverter}">
-                                                        <Binding ElementName="Control" Path="ScanAreaXPosition" StringFormat="N4" Mode="TwoWay"/>
-                                                        <Binding Path="ConvertRatio" Mode="OneWay"/>
+                                                        <Binding ElementName="Control"
+                                                                 Path="ScanAreaXPosition"
+                                                                 StringFormat="N4"
+                                                                 Mode="TwoWay" />
+                                                        <Binding Path="ConvertRatio"
+                                                                 Mode="OneWay" />
                                                     </MultiBinding>
                                                 </TextBlock.Text>
                                             </TextBlock>
                                         </Border>
-                                        <Label Content="{Binding LabelUnit}"/>
+                                        <Label Content="{Binding LabelUnit}" />
                                         <TextBlock Width="20"
                                                    VerticalAlignment="Center"
-                                                   Text="Y:" 
-                                                   Margin="10,0,0,0"/>
+                                                   Text="Y:"
+                                                   Margin="10,0,0,0" />
                                         <Border Width="55">
                                             <Border.Style>
                                                 <Style TargetType="{x:Type Border}">
@@ -411,8 +420,12 @@
                                                        VerticalAlignment="Center">
                                                 <TextBlock.Text>
                                                     <MultiBinding Converter="{StaticResource doubleScaledMultiConverter}">
-                                                        <Binding ElementName="Control" Path="ScanAreaYPosition" StringFormat="N4" Mode="TwoWay"/>
-                                                        <Binding Path="ConvertRatio" Mode="OneWay"/>
+                                                        <Binding ElementName="Control"
+                                                                 Path="ScanAreaYPosition"
+                                                                 StringFormat="N4"
+                                                                 Mode="TwoWay" />
+                                                        <Binding Path="ConvertRatio"
+                                                                 Mode="OneWay" />
                                                     </MultiBinding>
                                                 </TextBlock.Text>
                                             </TextBlock>
@@ -438,8 +451,12 @@
                                                      Foreground="White">
                                                 <TextBox.Text>
                                                     <MultiBinding Converter="{StaticResource doubleScaledMultiConverter}">
-                                                        <Binding ElementName="Control" Path="ScanAreaXPosition" StringFormat="N5" Mode="TwoWay"/>
-                                                        <Binding Path="ConvertRatio" Mode="OneWay"/>
+                                                        <Binding ElementName="Control"
+                                                                 Path="ScanAreaXPosition"
+                                                                 StringFormat="N5"
+                                                                 Mode="TwoWay" />
+                                                        <Binding Path="ConvertRatio"
+                                                                 Mode="OneWay" />
                                                     </MultiBinding>
                                                 </TextBox.Text>
                                                 <TextBox.Style>
@@ -526,8 +543,11 @@
                                                  VerticalAlignment="Center">
                                             <TextBox.Text>
                                                 <MultiBinding Converter="{StaticResource doubleScaledMultiConverter}">
-                                                    <Binding ElementName="Control" Path="StepSizeX" Mode="TwoWay"/>
-                                                    <Binding Path="ConvertRatio" Mode="OneWay"/>
+                                                    <Binding ElementName="Control"
+                                                             Path="StepSizeX"
+                                                             Mode="TwoWay" />
+                                                    <Binding Path="ConvertRatio"
+                                                             Mode="OneWay" />
                                                 </MultiBinding>
                                             </TextBox.Text>
                                         </TextBox>
@@ -582,8 +602,12 @@
                                                      Foreground="White">
                                                 <TextBox.Text>
                                                     <MultiBinding Converter="{StaticResource doubleScaledMultiConverter}">
-                                                        <Binding ElementName="Control" Path="ScanAreaYPosition" StringFormat="N5" Mode="TwoWay"/>
-                                                        <Binding Path="ConvertRatio" Mode="OneWay"/>
+                                                        <Binding ElementName="Control"
+                                                                 Path="ScanAreaYPosition"
+                                                                 StringFormat="N5"
+                                                                 Mode="TwoWay" />
+                                                        <Binding Path="ConvertRatio"
+                                                                 Mode="OneWay" />
                                                     </MultiBinding>
                                                 </TextBox.Text>
                                                 <TextBox.Style>
@@ -670,8 +694,11 @@
                                                  VerticalAlignment="Center">
                                             <TextBox.Text>
                                                 <MultiBinding Converter="{StaticResource doubleScaledMultiConverter}">
-                                                    <Binding ElementName="Control" Path="StepSizeY" Mode="TwoWay"/>
-                                                    <Binding Path="ConvertRatio" Mode="OneWay"/>
+                                                    <Binding ElementName="Control"
+                                                             Path="StepSizeY"
+                                                             Mode="TwoWay" />
+                                                    <Binding Path="ConvertRatio"
+                                                             Mode="OneWay" />
                                                 </MultiBinding>
                                             </TextBox.Text>
                                         </TextBox>
@@ -811,8 +838,11 @@
                                              Margin="0,2,0,0">
                                         <TextBox.Text>
                                             <MultiBinding Converter="{StaticResource doubleScaledMultiConverter}">
-                                                <Binding ElementName="Control" Path="HomePosX" Mode="TwoWay"/>
-                                                <Binding Path="ConvertRatio" Mode="OneWay"/>
+                                                <Binding ElementName="Control"
+                                                         Path="HomePosX"
+                                                         Mode="TwoWay" />
+                                                <Binding Path="ConvertRatio"
+                                                         Mode="OneWay" />
                                             </MultiBinding>
                                         </TextBox.Text>
                                     </TextBox>
@@ -843,8 +873,11 @@
                                              Margin="0,2,0,0">
                                         <TextBox.Text>
                                             <MultiBinding Converter="{StaticResource doubleScaledMultiConverter}">
-                                                <Binding ElementName="Control" Path="HomePosY" Mode="TwoWay"/>
-                                                <Binding Path="ConvertRatio" Mode="OneWay"/>
+                                                <Binding ElementName="Control"
+                                                         Path="HomePosY"
+                                                         Mode="TwoWay" />
+                                                <Binding Path="ConvertRatio"
+                                                         Mode="OneWay" />
                                             </MultiBinding>
                                         </TextBox.Text>
                                     </TextBox>
@@ -1071,7 +1104,7 @@
                                               VerticalAlignment="Center"
                                               Click="SinglePosition_Click"
                                               Content="Single Position"
-                                              Visibility="{Binding Source={StaticResource ResourceManagerCS}, Path=TabletModeEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVis}, ConverterParameter=true}"/>
+                                              Visibility="{Binding Source={StaticResource ResourceManagerCS}, Path=TabletModeEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVis}, ConverterParameter=true}" />
                                 </StackPanel>
                                 <DataGrid Name="XYtable"
                                           Height="140"
@@ -1089,7 +1122,8 @@
                                     <DataGrid.Resources>
                                         <Style TargetType="DataGridRow">
                                             <Style.Resources>
-                                                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="DarkGray"/>
+                                                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
+                                                                 Color="DarkGray" />
                                             </Style.Resources>
                                             <EventSetter Event="MouseLeftButtonUp"
                                                          Handler="XYTable_MouseLeftButtonUp" />

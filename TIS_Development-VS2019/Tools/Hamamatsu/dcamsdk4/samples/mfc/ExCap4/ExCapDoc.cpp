@@ -69,7 +69,7 @@ CExCapDoc::CExCapDoc()
 	m_nFramecountDcimg  = 100;
 
 	TCHAR temp[2048];
-	if (SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_MYDOCUMENTS, NULL, 0, temp)))
+	if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, 0, temp)))
 		m_strFolderDcimg = temp;
 
 	if (m_strFolderDcimg.Right(1) != "\\")

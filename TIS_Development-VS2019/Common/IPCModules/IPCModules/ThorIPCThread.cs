@@ -124,7 +124,13 @@
             Receive,
             Error,
             ChangeRemotePC,
-            ChangeRemoteApp
+            ChangeRemoteApp,
+            LoadExperimentFile,
+            MoveX,
+            MoveY,
+            MoveZ,
+            MoveSecondaryZ,
+            NotifySavedFile
         }
 
         /// <summary>

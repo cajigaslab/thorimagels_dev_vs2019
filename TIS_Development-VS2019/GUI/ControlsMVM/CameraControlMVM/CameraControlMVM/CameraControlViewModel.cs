@@ -46,6 +46,7 @@
         ICommand _camFullFrameCommand;
         ObservableCollection<string> _camReadoutSpeedList;
         ICommand _camRegionFromROICommand;
+        ObservableCollection<string> _coolingModeList;
         ICommand _frameRateControlMinusCommand;
         ICommand _frameRateControlPlusCommand;
         ObservableCollection<string> _hotPixelLevelList;
@@ -66,6 +67,7 @@
             _camReadoutSpeedList = new ObservableCollection<string>();
             _binList = new ObservableCollection<string>();
             _hotPixelLevelList = new ObservableCollection<string>();
+            _coolingModeList = new ObservableCollection<string>();
         }
 
         #endregion Constructors
@@ -94,9 +96,12 @@
             {
                 _cameraControlModel.BinIndex = value;
                 OnPropertyChanged("BinIndex");
+                OnPropertyChanged("CamPixelSizeUM");
                 OnPropertyChanged("CamImageWidth");
                 OnPropertyChanged("CamImageHeight");
-                OnPropertyChanged("PixelSizeUM");
+                OnPropertyChanged("CameraRegionWidthUM");
+                OnPropertyChanged("CameraRegionHeightUM");
+                OnPropertyChanged("ExposureTimeCam");
             }
         }
 
@@ -227,6 +232,7 @@
                 }
                 ((IMVM)MVMManager.Instance["XYTileControlViewModel", this]).OnPropertyChange("ScanAreaWidth");
                 ((IMVM)MVMManager.Instance["XYTileControlViewModel", this]).OnPropertyChange("ScanAreaHeight");
+                OnPropertyChanged("ExposureTimeCam");
             }
         }
 
@@ -342,6 +348,7 @@
                 OnPropertyChanged("IsBlackLevelVisible");
                 OnPropertyChanged("IsReadoutVisible");
                 OnPropertyChanged("IsTapsVisible");
+                OnPropertyChanged("ExposureTimeCam");
             }
         }
 
@@ -388,8 +395,8 @@
         {
             get
             {
-                Decimal decY = new Decimal((Bottom - Top) * CamPixelSizeUM);
-                Decimal decX = new Decimal((Right - Left) * CamPixelSizeUM);
+                Decimal decY = new Decimal((CamImageHeight) * CamPixelSizeUM);
+                Decimal decX = new Decimal((CamImageWidth) * CamPixelSizeUM);
                 if (0 != CameraImageAngle && 180 != CameraImageAngle)
                 {
                     return Convert.ToDouble(Decimal.Round(decX, 2).ToString());
@@ -402,8 +409,8 @@
         {
             get
             {
-                Decimal decY = new Decimal((Bottom - Top) * CamPixelSizeUM);
-                Decimal decX = new Decimal((Right - Left) * CamPixelSizeUM);
+                Decimal decY = new Decimal((CamImageHeight) * CamPixelSizeUM);
+                Decimal decX = new Decimal((CamImageWidth) * CamPixelSizeUM);
                 if (0 != CameraImageAngle && 180 != CameraImageAngle)
                 {
                     return Convert.ToDouble(Decimal.Round(decY, 2).ToString());
@@ -492,6 +499,20 @@
             {
                 _cameraControlModel.CamLedEnable = value;
                 OnPropertyChanged("CamLedEnable");
+            }
+        }
+
+        public double CamOrcaFrameRate
+        {
+            get
+            {
+                return _cameraControlModel.CamOrcaFrameRate;
+            }
+            set
+            {
+                _cameraControlModel.CamOrcaFrameRate = value;
+                OnPropertyChanged("CamOrcaFrameRate");
+                OnPropertyChanged("ExposureTimeCam");
             }
         }
 
@@ -623,6 +644,42 @@
             {
                 _cameraControlModel.CamVerticalFlip = value;
                 OnPropertyChanged("CamVerticalFlip");
+            }
+        }
+
+        public int CoolingModeIndex
+        {
+            get
+            {
+                return _cameraControlModel.CoolingModeIndex;
+            }
+            set
+            {
+                _cameraControlModel.CoolingModeIndex = value;
+                OnPropertyChanged("CoolingModeIndex");
+            }
+        }
+
+        public ObservableCollection<string> CoolingModeList
+        {
+            get
+            {
+                _hotPixelLevelList.Clear();
+                if ((int)ICamera.CCDType.ORCA == ResourceManagerCS.GetCCDType())
+                {
+                    _hotPixelLevelList.Add("OFF");
+                    _hotPixelLevelList.Add("ON");
+                    _hotPixelLevelList.Add("MAX");
+                }
+                return _hotPixelLevelList;
+            }
+        }
+
+        public Visibility CoolingVisibility
+        {
+            get
+            {
+                return ((int)ICamera.CCDType.ORCA == ResourceManagerCS.GetCCDType() && _cameraControlModel.CoolingModeAvailable) ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
@@ -912,6 +969,14 @@
             }
         }
 
+        public bool IsFrameRateVisible
+        {
+            get
+            {
+                return ((int)ICamera.CCDType.ORCA == ResourceManagerCS.GetCCDType());
+            }
+        }
+
         public bool IsGainVisible
         {
             get
@@ -963,6 +1028,7 @@
                 }
                 ((IMVM)MVMManager.Instance["XYTileControlViewModel", this]).OnPropertyChange("ScanAreaWidth");
                 ((IMVM)MVMManager.Instance["XYTileControlViewModel", this]).OnPropertyChange("ScanAreaHeight");
+                OnPropertyChanged("ExposureTimeCam");
             }
         }
 
@@ -1008,6 +1074,20 @@
             get
             {
                 return _cameraControlModel.LightModeMin;
+            }
+        }
+
+        public bool OrcaFrameRateEnabled
+        {
+            get
+            {
+                return _cameraControlModel.OrcaFrameRateEnabled;
+            }
+            set
+            {
+                _cameraControlModel.OrcaFrameRateEnabled = value;
+                OnPropertyChanged("OrcaFrameRateEnabled");
+                OnPropertyChanged("ExposureTimeCam");
             }
         }
 
@@ -1063,6 +1143,7 @@
                 }
                 ((IMVM)MVMManager.Instance["XYTileControlViewModel", this]).OnPropertyChange("ScanAreaWidth");
                 ((IMVM)MVMManager.Instance["XYTileControlViewModel", this]).OnPropertyChange("ScanAreaHeight");
+                OnPropertyChanged("ExposureTimeCam");
             }
         }
 
@@ -1108,6 +1189,7 @@
                 }
                 ((IMVM)MVMManager.Instance["XYTileControlViewModel", this]).OnPropertyChange("ScanAreaWidth");
                 ((IMVM)MVMManager.Instance["XYTileControlViewModel", this]).OnPropertyChange("ScanAreaHeight");
+                OnPropertyChanged("ExposureTimeCam");
             }
         }
 
@@ -1238,6 +1320,7 @@
             //When loading the panel reset the index of the camera. The correct index will be loaded from active.xml later.
             CamReadoutSpeedIndex = -1;
             HotPixelLevelIndex = -1;
+            CoolingModeIndex = -1;
             BinIndex = -1;
 
             ActiveCameraName = GetCameraName();
@@ -1255,6 +1338,9 @@
             OnPropertyChanged("FrameRateControlVisibility");
             OnPropertyChanged("HotPixelEnabled");
             OnPropertyChanged("HotPixelVal");
+            OnPropertyChanged("IsFrameRateVisible");
+            OnPropertyChanged("CoolingVisibility");
+            OnPropertyChanged("CoolingModeList");
 
             if (ndList.Count > 0)
             {
@@ -1467,6 +1553,37 @@
                         FrameRateControlValue = tmp;
                     }
                 }
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "OrcaFrameRateEnabled", ref str))
+                {
+                    int tmp = 0;
+                    if (Int32.TryParse(str, out tmp))
+                    {
+                        OrcaFrameRateEnabled = Convert.ToBoolean(tmp);
+                    }
+                }
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "OrcaFrameRateValue", ref str))
+                {
+                    double tmp = 0;
+                    if (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out tmp))
+                    {
+                        CamOrcaFrameRate = tmp;
+                    }
+                }
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "CoolingModeIndex", ref str))
+                {
+                    int tmp = 0;
+                    if (Int32.TryParse(str, out tmp))
+                    {
+                        CoolingModeIndex = tmp;
+                    }
+                }
+                else
+                {
+                    CoolingModeIndex = 0;
+                }
             }
         }
 
@@ -1528,6 +1645,9 @@
                     XmlManager.SetAttribute(ndList[0], experimentFile, "hotPixelLevelIndex", this.HotPixelLevelIndex.ToString());
                     XmlManager.SetAttribute(ndList[0], experimentFile, "frameRateControlEnabled", this.FrameRateControlEnabled.ToString());
                     XmlManager.SetAttribute(ndList[0], experimentFile, "frameRateControlValue", this.FrameRateControlValue.ToString());
+                    XmlManager.SetAttribute(ndList[0], experimentFile, "OrcaFrameRateEnabled", Convert.ToInt32(this.OrcaFrameRateEnabled).ToString());
+                    XmlManager.SetAttribute(ndList[0], experimentFile, "OrcaFrameRateValue", this.CamOrcaFrameRate.ToString());
+                    XmlManager.SetAttribute(ndList[0], experimentFile, "CoolingModeIndex", this.CoolingModeIndex.ToString());
 
                     Decimal decX = new Decimal((this.Right - this.Left) * this.CamPixelSizeUM);
                     Decimal decY = new Decimal((this.Bottom - this.Top) * this.CamPixelSizeUM);

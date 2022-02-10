@@ -74,4 +74,5 @@ private:
 	long ClearSerialBuffer(CSerial & serialPort);
 	std::wstring _firmwareVersion;
 	std::wstring _serialNumber;
+	long _setToBootloaderMode;
 };

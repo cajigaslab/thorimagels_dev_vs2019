@@ -417,14 +417,13 @@ namespace AreaControl
                 const double SCANLENSFOCALLENGTH = 70;
                 const double PINHOLECOLLECTORLENSFOCALLENGTH = 75;
 
-                double pinholeProjMag = PINHOLECOLLECTORLENSFOCALLENGTH / SCANLENSFOCALLENGTH;
+                double pinholeProjMag = SCANLENSFOCALLENGTH / PINHOLECOLLECTORLENSFOCALLENGTH;
 
-                double au = ((2 * 0.61 * EmissionWavelength / 1000.0 * pinholeProjMag * Magnification) / NumericalAperture);
-
-                double ps = _pinholeSizeUM / au;
+                //PH variable in Confocal NyquistZ formula
+                double pinholeVar = _pinholeSizeUM * pinholeProjMag / Magnification;
 
                 double termA = ((0.88 * EmissionWavelength / 1000.0) / (IndexOfRefraction - Math.Sqrt(IndexOfRefraction * IndexOfRefraction - NumericalAperture * NumericalAperture)));
-                double termB = (Math.Sqrt(2) * IndexOfRefraction * ps) / NumericalAperture;
+                double termB = (Math.Sqrt(2) * IndexOfRefraction * pinholeVar) / NumericalAperture;
                 return Math.Round(Math.Sqrt(termA * termA + termB * termB) / 2.0, 3);
             }
         }

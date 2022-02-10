@@ -162,7 +162,7 @@
                     return;
                 }
                 OverlayManagerClass.Instance.DeleteSelectedROIs(ref overlayCanvas);
-                if (0 == overlayCanvas.Children.Count)
+                if (0 == OverlayManagerClass.Instance.ROICount)
                 {
                     //Force reset ROI count
                     OverlayManagerClass.Instance.ClearAllObjects(ref overlayCanvas);

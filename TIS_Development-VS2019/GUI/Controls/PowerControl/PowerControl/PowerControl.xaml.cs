@@ -126,6 +126,16 @@
         typeof(int),
         typeof(PowerControlUC),
         new FrameworkPropertyMetadata(new PropertyChangedCallback(onPCTabIndexChanged)));
+        public static DependencyProperty PockelsBlankingPhaseShiftPercentProperty = 
+        DependencyProperty.RegisterAttached("PockelsBlankingPhaseShiftPercent",
+        typeof(double),
+        typeof(PowerControlUC),
+        new FrameworkPropertyMetadata(new PropertyChangedCallback(onPockelsBlankingPhaseShiftPercentChanged)));
+        public static DependencyProperty PockelsBlankingPhaseShiftPercentVisibilityProperty = 
+           DependencyProperty.RegisterAttached("PockelsBlankingPhaseShiftPercentVisibility",
+           typeof(Visibility),
+           typeof(PowerControlUC),
+           new FrameworkPropertyMetadata(new PropertyChangedCallback(onPockelsBlankingPhaseShiftPercentVisibilityChanged)));
         public static DependencyProperty PockelsBlankPercentageProperty = 
         DependencyProperty.RegisterAttached("PockelsBlankPercentage",
         typeof(int),
@@ -295,6 +305,18 @@
         {
             get { return (int)GetValue(PCTabIndexProperty); }
             set { SetValue(PCTabIndexProperty, value); }
+        }
+
+        public double PockelsBlankingPhaseShiftPercent
+        {
+            get { return (double)GetValue(PockelsBlankingPhaseShiftPercentProperty); }
+            set { SetValue(PockelsBlankingPhaseShiftPercentProperty, value); }
+        }
+
+        public Visibility PockelsBlankingPhaseShiftPercentVisibility
+        {
+            get { return (Visibility)GetValue(PockelsBlankingPhaseShiftPercentVisibilityProperty); }
+            set { SetValue(PockelsBlankingPhaseShiftPercentVisibilityProperty, value); }
         }
 
         public double PockelsBlankPercentage
@@ -554,6 +576,14 @@
         }
 
         public static void onPCTabIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+        }
+
+        public static void onPockelsBlankingPhaseShiftPercentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+        }
+
+        public static void onPockelsBlankingPhaseShiftPercentVisibilityChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
         }
 
