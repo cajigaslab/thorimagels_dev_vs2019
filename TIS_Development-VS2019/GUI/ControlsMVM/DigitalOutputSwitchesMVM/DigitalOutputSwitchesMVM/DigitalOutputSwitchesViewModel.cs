@@ -35,6 +35,8 @@
 
         ICommand _digitalSwitchCommand;
         private int _experimentMode = 0;
+        ICommand _gotoCommand;
+        private double[] _gotoValue;
         private Dictionary<string, PropertyInfo> _properties = new Dictionary<string, PropertyInfo>();
         private DispatcherTimer _statusTimer;
         private int _switchEnable;
@@ -91,6 +93,8 @@
             _statusTimer = new DispatcherTimer();
             _statusTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
             _statusTimer.Tick += new EventHandler(_statusTimer_Tick);
+
+            _gotoValue = new double[2] { 0.0, 0.0 };
         }
 
         #endregion Constructors
@@ -118,6 +122,37 @@
             {
                 _experimentMode = value;
                 OnPropertyChanged("ExperimentMode");
+            }
+        }
+
+        public double GotoAnalog
+        {
+            get { return _gotoValue[1]; }
+            set
+            {
+                _gotoValue[1] = value;
+                OnPropertyChanged("GotoAnalog");
+            }
+        }
+
+        public ICommand GotoCommand
+        {
+            get
+            {
+                if (this._gotoCommand == null)
+                    this._gotoCommand = new RelayCommand(() => Goto());
+
+                return this._gotoCommand;
+            }
+        }
+
+        public int GotoDigital
+        {
+            get { return (int)_gotoValue[0]; }
+            set
+            {
+                _gotoValue[0] = value;
+                OnPropertyChanged("GotoDigital");
             }
         }
 
@@ -805,6 +840,11 @@
             byte[] tByteArray = ResourceManagerCS.StructToByteArray(_triggerStruct);
             ResourceManagerCS.GetDeviceParamBuffer((int)SelectedHardware.SELECTED_EPHYS, (int)IDevice.Params.PARAM_EPHYS_TRIG_BUFFER, tByteArray, tByteArray.Length);
             _triggerStruct = ResourceManagerCS.StructFromByteArray<EPhysTriggerStruct>(tByteArray);
+        }
+
+        private void Goto()
+        {
+            ResourceManagerCS.SetDeviceParamBuffer<double>((int)SelectedHardware.SELECTED_EPHYS, (int)IDevice.Params.PARAM_EPHYS_GOTO_BUFFER, _gotoValue, _gotoValue.Length, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
         }
 
         /// <summary>

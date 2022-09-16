@@ -11,6 +11,7 @@
     using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading;
+    using System.Threading.Tasks;
     using System.Windows;
     using System.Windows.Controls;
     using System.Windows.Data;
@@ -22,7 +23,7 @@
     using ExperimentSettingsBrowser;
 
     using FolderDialogControl;
-
+    using ImageReviewDll.OME;
     using ImageReviewDll.View;
     using ImageReviewDll.ViewModel;
 
@@ -150,6 +151,50 @@
             catch (Exception ex)
             {
                 ex.ToString();
+            }
+        }
+        public void OnConvertRawToTIFF(object sender, RoutedEventArgs e)
+        {
+            if (_imageReviewVM == null)
+            {
+                return;
+            }
+            string tiffExperimentFilePth = "";
+
+            //Get experiment folder and type
+            var experimentDoc = new XmlDocument();
+            experimentDoc.Load(_imageReviewVM.ImageReviewObject.ExperimentXMLPath);
+            var pathXmlNode = experimentDoc.SelectSingleNode("/ThorImageExperiment/Name");
+            if (pathXmlNode != null)
+            {
+                string pathString = string.Empty;
+                if (XmlManager.GetAttribute(pathXmlNode, experimentDoc, "path", ref pathString))
+                {
+                    // Start converting
+                    Task task = Task.Run(() =>
+                    {
+                        // Convert experiment from RAW to TIFF
+                        ClassicTiffConverter tiffConverter = new ClassicTiffConverter(pathString);
+                        long result = tiffConverter.DoConvertRawToTiff(ref tiffExperimentFilePth);
+                    });
+                    task.ContinueWith(x =>
+                    {
+                        Application.Current.Dispatcher.BeginInvoke((Action)delegate ()
+                        {
+                            _imageReviewVM.CloseProgressWindow();
+
+                        // Show message to load new converted tiff experiment
+                        if (MessageBox.Show("Would you like to open the converted experiment?", "", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                            LoadExperiment(tiffExperimentFilePth); // open new .tif experiment
+                        });
+                    });
+
+                    // Show progress window
+                    Application.Current.Dispatcher.BeginInvoke((Action)delegate ()
+                    {
+                        _imageReviewVM.CreateProgressWindow();
+                    });
+                }
             }
         }
 
@@ -691,6 +736,9 @@
 
             UpdateUserControls();
 
+            // Show/hide ConvertToTIFF button
+            _imageReviewVM.IsRawExperiment = _imageReviewVM.ImageInfo.imageType == CaptureFile.FILE_RAW;
+
             return true;
         }
 
@@ -727,6 +775,18 @@
             this.tileControl.TilesIndexChangedEvent += tileControl_TilesIndexChangedEvent;
             this.tileControl.Loaded += tileControl_Loaded;
             _imageReviewVM.EnableHandlers();
+
+            // Show/hide "Open In ThorAnalysis" button
+            string str = string.Empty;
+            var node = _imageReviewVM.ApplicationDoc.SelectSingleNode("/ApplicationSettings/DisplayOptions/Review/OpenInThorAnalysisButton");
+            if (XmlManager.GetAttribute(node, _imageReviewVM.ApplicationDoc, "Visibility", ref str) && (str.EndsWith("Visible")))
+            {
+                btLoadThorAnalysis.Visibility = Visibility.Visible;                
+            }
+            else
+            {
+                btLoadThorAnalysis.Visibility = Visibility.Collapsed;
+            }
         }
 
         void MasterView_Unloaded(object sender, RoutedEventArgs e)

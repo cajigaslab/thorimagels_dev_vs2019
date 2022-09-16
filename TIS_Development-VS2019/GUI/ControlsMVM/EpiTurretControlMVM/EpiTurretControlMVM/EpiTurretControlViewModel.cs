@@ -163,7 +163,7 @@
                 //Check if the current position is within a valid position
                 if (_epiTurretControlModel.EpiTurretPos > 0 && _epiTurretControlModel.EpiTurretPos < 7)
                 {
-                    return EpiTurretPosNames[_epiTurretControlModel.EpiTurretPos - 1].Value;
+                    return EpiTurretPosNames?[_epiTurretControlModel.EpiTurretPos - 1].Value;
                 }
                 return _epiTurretControlModel.EpiTurretPos.ToString();
             }
@@ -273,6 +273,7 @@
             try
             {
                 XmlDocument applicationDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+                EpiTurretPosNames = new ObservableCollection<StringPC>();
 
                 if (null != applicationDoc)
                 {
@@ -285,6 +286,7 @@
                         for (int i = 1; i <= MAX_TURRET_POS; i++)
                         {
                             ThorSharedTypes.XmlManager.GetAttribute(ndList[0], applicationDoc, string.Format("EpiTurretPosName{0}", i), ref str);
+                            EpiTurretPosNames.Add(new StringPC(str));
                             switch (i)
                             {
                                 case 1:

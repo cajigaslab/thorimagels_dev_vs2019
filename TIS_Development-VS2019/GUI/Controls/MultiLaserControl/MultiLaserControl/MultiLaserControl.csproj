@@ -63,14 +63,16 @@
     </Reference>
     <Reference Include="WindowsBase" />
   </ItemGroup>
-    <ItemGroup>
+  <ItemGroup>
     <Page Include="MultiLaserControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="SliderDragEndBehavior.cs" />
+    <Compile Include="..\..\..\..\Common\SliderDragEndBehavior.cs">
+      <Link>SliderDragEndBehavior.cs</Link>
+    </Compile>
     <Compile Include="Converters.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="MultiLaserControl.xaml.cs">

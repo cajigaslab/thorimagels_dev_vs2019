@@ -25,21 +25,25 @@
         #region Fields
 
         bool _closing = false;
+        bool _hardwareConnectionsOpened = false;
         bool _hides;
 
         #endregion Fields
 
         #region Constructors
 
-        public SplashScreen(string title)
+        public SplashScreen(string title, bool hardwareconnectionsopened)
         {
             InitializeComponent();
-            txtTitle.Text = title;
+            bool isBeta = false;
+            txtTitle.Text = isBeta ? title + "-Beta" : title;
+            txtTILS.Margin = isBeta ? new Thickness(5, 5, 30, 5) : txtTILS.Margin;
             _hides = false;
+            _hardwareConnectionsOpened = hardwareconnectionsopened;
             this.Closing += new CancelEventHandler(SplashScreen_Closing);
             this.Deactivated += new EventHandler(SplashScreen_Deactivated);
+            this.Loaded += SplashScreen_Loaded;
             this.ShowInTaskbar = false;
-            LoadDAQInfo();
         }
 
         #endregion Constructors
@@ -58,22 +62,28 @@
 
         void LoadDAQInfo()
         {
-            bool daqAvailable = 1 == ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_DAQ_NAME);
-            daqPanel.Visibility = daqAvailable ? Visibility.Visible : Visibility.Collapsed;
-
-            if (daqAvailable)
+            if (_hardwareConnectionsOpened)
             {
-                daqName.Text = ResourceManagerCS.GetCameraParamString((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_DAQ_NAME);
-                DAQFirmwareVer.Text = ResourceManagerCS.GetCameraParamString((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_DAQ_FW_VER);
-                DAQDriverVer.Text = ResourceManagerCS.GetCameraParamString((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_DAQ_DRIVER_VER);
+                bool daqAvailable = 1 == ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_DAQ_NAME);
+                daqPanel.Visibility = daqAvailable ? Visibility.Visible : Visibility.Collapsed;
+                if (daqAvailable)
+                {
+                    daqName.Text = ResourceManagerCS.GetCameraParamString((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_DAQ_NAME);
+                    DAQFirmwareVer.Text = ResourceManagerCS.GetCameraParamString((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_DAQ_FW_VER);
+                    DAQDriverVer.Text = ResourceManagerCS.GetCameraParamString((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_DAQ_DRIVER_VER);
+                }
+                bool lftAvailable = 1 == ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_LOW_FREQ_TRIG_BOARD_FW_VER);
+                lftPanel.Visibility = lftAvailable ? Visibility.Visible : Visibility.Collapsed;
+                if (lftAvailable)
+                {
+                    lftFWVer.Text = ResourceManagerCS.GetCameraParamString((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_LOW_FREQ_TRIG_BOARD_FW_VER);
+                    lftCPLDVer.Text = ResourceManagerCS.GetCameraParamString((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_LOW_FREQ_TRIG_BOARD_CPLD_VER);
+                }
             }
-            bool lftAvailable = 1 == ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_LOW_FREQ_TRIG_BOARD_FW_VER);
-            lftPanel.Visibility = lftAvailable ? Visibility.Visible : Visibility.Collapsed;
-
-            if (lftAvailable)
+            else
             {
-                lftFWVer.Text = ResourceManagerCS.GetCameraParamString((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_LOW_FREQ_TRIG_BOARD_CPLD_VER);
-                lftCPLDVer.Text = ResourceManagerCS.GetCameraParamString((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_LOW_FREQ_TRIG_BOARD_FW_VER);
+                daqPanel.Visibility = Visibility.Collapsed;
+                lftPanel.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -96,6 +106,11 @@
             {
                 ex.ToString();
             }
+        }
+
+        private void SplashScreen_Loaded(object sender, RoutedEventArgs e)
+        {
+            LoadDAQInfo();
         }
 
         private void SplashScreen_MouseDown(object sender, MouseButtonEventArgs e)

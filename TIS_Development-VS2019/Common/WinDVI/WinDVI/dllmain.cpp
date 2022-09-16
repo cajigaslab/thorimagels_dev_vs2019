@@ -30,6 +30,11 @@ WINDVI_DLLEXPORT EditBMP(int id, unsigned char* bmpBuf, BITMAPINFO bmpInfo)
 	return CWinDVI::getInstance()->EditBMP(id, bmpBuf, bmpInfo);
 }
 
+WINDVI_DLLEXPORT GetBMP(int id, unsigned char* bmpBuf, BITMAPINFO& bmpInfo)
+{
+	return CWinDVI::getInstance()->GetBMP(id, bmpBuf, bmpInfo);
+}
+
 WINDVI_DLLEXPORT ClearBMPs()
 {
 	CWinDVI::getInstance()->ClearBMPs();

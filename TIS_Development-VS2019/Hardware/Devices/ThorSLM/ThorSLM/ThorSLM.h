@@ -14,7 +14,9 @@ extern "C"
 		static unique_ptr<ThorSLM> _single;
 
 		static float* _fpPointsXY[MAX_ARRAY_CNT]; ///<interleaved x,y coordinate of slm points for frame per set
+		static float* _fpPointsXYZ[MAX_ARRAY_CNT]; ///<interleaved x,y,z coordinate of slm calibration points
 		long* _fpPointsXYSize; ///<total length of slm points per set, include both x and y
+		long* _fpPointsXYZSize; ///<total length of slm points per set, include x, y and z
 
 		const long DEFAULT_PIXEL_X;
 		const long DEFAULT_PIXEL_Y;
@@ -33,6 +35,7 @@ extern "C"
 		long _fileSettingsLoaded; ///<Flag set when the settings from the settings file have been read
 		static std::string _pSlmName;///<slm device name
 		double* _fitCoeff[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT]; ///<fitting coefficients for two wavelengths in order of [0][0],[0][1],[0][2],[1][0],[1][1],[1][2],[2[0],[2][1]
+		double* _fitCoeff3D[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT]; ///<3D fitting coefficients for two wavelengths in order of [0][0],[0][1],[0][2],[0][3],[1][0],[1][1],[1][2],[1][3],[2[0],[2][1],[2][2],[2][3],[3][0],[3][1],[3][2]
 		long _deviceCount; ///<how many SLM being detected
 		bool _deviceDetected;
 		long _pixelSize[2]; ///<pixel size of X, Y
@@ -47,7 +50,7 @@ extern "C"
 		unsigned short* _tableLUT; ///<look-up table from phase mask to bitmap
 		unsigned char* _imgWavefront; ///<wavefront calibration for meadowlark phase mask correction
 		MemoryStruct<float> _lastHoloBuf[2]; ///<buffers for the last generated SLM hologram, used for fast calculating defocus, [1]:focus,[0]:defocus
-		LoadedBMPWinDVIStruct _winDVILoadedBMPs[MAX_ARRAY_CNT]; ///<array to keep track of loaded
+		MemoryStruct<unsigned char> _lastBmpBuf; ///<buffers for the last pushed SLM hologram, used for blanking
 
 		//params in struct:		
 		long _pixelX; ///<pixel X, limited by device spec
@@ -65,7 +68,6 @@ extern "C"
 		static long _slmRuntimeCalculate; ///<runtime calculation of transient frames
 
 		//Get,Set:
-		double _calibZ;
 		double _wavelength[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT]; ///<incident wavelengths [nm], could be two for left-right halves
 		long   _phaseMax[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT]; ///<maximum phase value for incident wavelengths
 		long _selectWavelength; ///<active wavelength selection, either 0[first] or 1[second]
@@ -74,6 +76,7 @@ extern "C"
 		long _dmdMode; ///<use SLM in DMD mode if TRUE
 		bool _doHologram; ///<phase image applied by hologram & transform if TRUE
 		double _defocusParam[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT][4]; ///<defocus applied on all holograms, [0]:z defocus in [um], [1]:refractive index, [2]:effective focal length in [mm], [3]: saved defocus value [um]
+		long _skipFitting; ///<skip fitting when loading of SLM mask
 
 		//NI:
 		static TaskHandle _taskHandleCI; ///<trigger input
@@ -83,8 +86,8 @@ extern "C"
 		//winDVI:
 		std::wstring _monitorID; ///<monitor id to be used for mask display
 
-		long _persistHologramZone1;
-		long _persistHologramZone2;
+		long _dualPatternShiftPx; ///<SLM pattern center offset for dual wavelengths in [Pixel]
+		long _persistHologramZone[2]; ///<[0] zone1 left, [1] zone2 right
 
 	public:
 		static ThorSLM* getInstance();
@@ -115,6 +118,7 @@ extern "C"
 		ThorSLM();
 		static int32 CVICALLBACK ThorSLM::HWTriggerCallback(TaskHandle taskHandle, int32 signalID, void* callbackData);
 		static BOOL IsOverdrive();
+		void BlankSLM(ISLM::SLMBlank bmode);
 		void CloseNITasks();
 		long CoordinatesRotate(float* ptArrays, long size, double angle);
 		long CoordinatesVerticalFlip(float* ptArrays, long size);
@@ -138,7 +142,6 @@ extern "C"
 		unsigned char* MapCalibrateHologram(const wchar_t* pathAndFilename, MemoryStruct<float>* pbuf);
 		unsigned char* CropHologramBMP(unsigned char* pImg, float* pS, BITMAPINFO& bmi);
 		unsigned char* GetAndProcessBMP(BITMAPINFO& bmi);
-		unsigned char* GetAndProcessText(BITMAPINFO& bmi);
 
 	};
 

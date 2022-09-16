@@ -111,7 +111,7 @@
                 {
                     string str = string.Empty;
 
-                    if (XmlManager.GetAttribute(ndListHW[i], hwSettings, "dllName", ref str) && (0 == str.CompareTo("ThorSLMPDM512")))
+                    if (XmlManager.GetAttribute(ndListHW[i], hwSettings, "dllName", ref str) && (str.Contains("ThorSLM")))
                     {
                         bMode = (XmlManager.GetAttribute(ndListHW[i], hwSettings, "active", ref str) && (0 == str.CompareTo("1"))) ?
                             BleachMode.SLM : BleachMode.BLEACH;
@@ -557,6 +557,10 @@
         /// <param name="modality"></param>
         public static void SetModalityPersistLast(string modality)
         {
+            if ((int) MVMManager.Instance["CaptureSetupViewModel", "CaptureSetupModalitySwap"] == 1)
+            {
+                MVMManager.Instance["CaptureSetupViewModel", "ModalitySpinnerWindowShowing"] = true;
+            }
             string str = string.Empty;
             string strActiveExp = GetCaptureTemplatePathString() + "Active.xml";
             XmlDocument activeDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS];
@@ -580,6 +584,20 @@
                 //update modality name
                 XmlManager.SetAttribute(ndList[0], activeDoc, "name", _lastSavedModality);
                 MVMManager.Instance.SaveSettings(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
+
+                //Disable lasers when swapping modalities in case TTL mode is enabled and the laser source is disconnected
+                //Special case for when modality is swapped from Capture Setup. Swapping modalities from Hardware Connetions handled in MenuModuleLS
+                if ((int)MVMManager.Instance["MultiLaserControlViewModel", "LaserAllTTL"] == 1 && (int)MVMManager.Instance["MultiLaserControlViewModel", "CaptureSetupModalitySwap"] == 1)
+                {
+                    MVMManager.Instance["MultiLaserControlViewModel", "TTLModeSaveSettings"] = 0;
+                    MVMManager.Instance["MultiLaserControlViewModel", "Laser1Enable"] = 0;
+                    MVMManager.Instance["MultiLaserControlViewModel", "Laser2Enable"] = 0;
+                    MVMManager.Instance["MultiLaserControlViewModel", "Laser3Enable"] = 0;
+                    MVMManager.Instance["MultiLaserControlViewModel", "Laser4Enable"] = 0;
+                }
+
+                //Prevents laser power levels from being set to 0 when changing from modality with Analog mode enabled to one without it
+                MVMManager.Instance["MultiLaserControlViewModel", "LaserAnalogModalitySwap"] = 1;
 
                 //back up exp settings to the modality folder:
                 if (Directory.Exists(GetMyDocumentsThorImageFolderString() + "Modalities\\" + _lastSavedModality))

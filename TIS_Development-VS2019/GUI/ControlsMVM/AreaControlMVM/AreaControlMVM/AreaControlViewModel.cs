@@ -2394,7 +2394,8 @@
         {
             get
             {
-                if (_timedBasedVisibility && ((int)ICamera.LSMAreaMode.LINE == LSMAreaMode || (int)ICamera.LSMAreaMode.POLYLINE == LSMAreaMode))
+                if (_timedBasedVisibility && !ResourceManagerCS.Instance.IsThorDAQBoard && ((int)ICamera.LSMType.GALVO_GALVO == ResourceManagerCS.GetLSMType()) && 
+                    ((int)ICamera.LSMAreaMode.LINE == LSMAreaMode || (int)ICamera.LSMAreaMode.POLYLINE == LSMAreaMode || (int)ICamera.LSMAreaMode.LINE_TIMELAPSE == LSMAreaMode))
                 {
                     return Visibility.Visible;
                 }
@@ -2740,6 +2741,9 @@
             { _statusTimer.Start(); }
             else
             { _statusTimer.Stop(); }
+
+            //After the modality is changed we need to rebuild the zoom table. Set _zoomTable[0] = 0 to rebuild it.
+            _zoomTable[0] = 0;
         }
 
         public void OnPropertyChange(string propertyName)

@@ -939,6 +939,8 @@ long AcquireTSeries::SetZPosition(double pos,BOOL bWait, BOOL bPostflight)
 		return FALSE;
 	}
 
+	//Need to round pos to 0.1um. Otherwise Z&T won't reach the max Z position if we are going the full range e.g. Piezo 0-450um
+	pos = (ceil(pos * 10000 - 0.5f)) / 10000;
 	pZStage->SetParam(IDevice::PARAM_Z_POS, pos);
 
 	pZStage->PreflightPosition();

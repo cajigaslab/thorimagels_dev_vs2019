@@ -34,7 +34,10 @@
 #define BW_30MHz					30000000
 #define BW_15MHz					15000000
 #define BW_2_5MHz					2500000
+#define BW_1MHz						1000000
 #define BW_250kHz					250000
+
+#define MILIVOLTS_TO_VOLTS			1000.0
 
 const string THORLABS_VID = "1313";
 const string THORLABS_PMT1000_PID = "2E01";
@@ -151,8 +154,8 @@ private:
 	long _atenuationMax[DEVICE_NUM];
 	long _gainSliderMin[DEVICE_NUM];
 	long _gainSliderMax[DEVICE_NUM];
-	long _offsetSliderMin[DEVICE_NUM];
-	long _offsetSliderMax[DEVICE_NUM];
+	double _offsetMinVolts[DEVICE_NUM];
+	double _offsetMaxVolts[DEVICE_NUM];
 
 	std::map<long, ParamInfo *> _tableParams;
 

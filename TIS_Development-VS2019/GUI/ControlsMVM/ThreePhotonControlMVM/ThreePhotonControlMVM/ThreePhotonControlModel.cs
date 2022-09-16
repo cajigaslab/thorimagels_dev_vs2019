@@ -49,6 +49,86 @@
             }
         }
 
+        public double DDSAmplitude0
+        {
+            get
+            {
+                double temp = 0;
+
+                ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_3P_REVERB_DDS0_AMPLITUDE, ref temp);
+
+                return temp;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_3P_REVERB_DDS0_AMPLITUDE, value);
+            }
+        }
+
+        public double DDSAmplitude1
+        {
+            get
+            {
+                double temp = 0;
+
+                ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_3P_REVERB_DDS1_AMPLITUDE, ref temp);
+
+                return temp;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_3P_REVERB_DDS1_AMPLITUDE, value);
+            }
+        }
+
+        public int DDSEnable
+        {
+            get
+            {
+                int temp = 0;
+
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_3P_REVERB_DDS_ENABLE, ref temp);
+
+                return temp;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_3P_REVERB_DDS_ENABLE, value);
+            }
+        }
+
+        public double DDSPhase0
+        {
+            get
+            {
+                double temp = 0;
+
+                ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_3P_REVERB_DDS0_PHASE, ref temp);
+
+                return temp;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_3P_REVERB_DDS0_PHASE, value);
+            }
+        }
+
+        public double DDSPhase1
+        {
+            get
+            {
+                double temp = 0;
+
+                ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_3P_REVERB_DDS1_PHASE, ref temp);
+
+                return temp;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_3P_REVERB_DDS1_PHASE, value);
+            }
+        }
+
         public int FIR1ManualControlEnable
         {
             get
@@ -60,20 +140,6 @@
             set
             {
                 ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_MANUAL_FIR1_CONTROL_ENABLE, value);
-            }
-        }
-
-        public int LUTOffset3P
-        {
-            get
-            {
-                int temp = 0;
-                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_RESEARCH_CAMERA_100, ref temp);
-                return temp;
-            }
-            set
-            {
-                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_RESEARCH_CAMERA_100, value);
             }
         }
 
@@ -140,6 +206,20 @@
             set
             {
                 ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_NUMBER_OF_PLANES, value);
+            }
+        }
+
+        public int LUTOffset3P
+        {
+            get
+            {
+                int temp = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_3P_LUT_OFFSET, ref temp);
+                return temp;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_3P_LUT_OFFSET, value);
             }
         }
 

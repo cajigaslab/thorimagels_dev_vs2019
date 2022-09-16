@@ -1581,6 +1581,7 @@ long AcquireTStream::Execute(long index, long subWell)
 	long zAxisToEscape=0;
 	double zAxisEscapeDistance=0;
 	double fineAutoFocusPercentage = 0.15;
+	long currentTCount = 0;
 
 	pHardware->GetMagInfoFromName(objName,magnification,position,numAperture,afStartPos,afFocusOffset,afAdaptiveOffset,beamExpPos,beamExpWavelength,beamExpPos2,beamExpWavelength2,turretPosition,zAxisToEscape,zAxisEscapeDistance,fineAutoFocusPercentage);
 
@@ -2513,6 +2514,9 @@ long AcquireTStream::Execute(long index, long subWell)
 					long tVolume = static_cast<long>(floor(t / (double)(imageIt->second.SizeZ + sp.fastFlybackFrames))) + (TRUE == zFastEnableGUI);	//1-based
 					long zIndex = (FALSE == zFastEnableGUI) ? 1 : tFastZStimulus;																//1-based
 
+					//save current t count for later use to update ome tiff xml
+					currentTCount = tVolume;
+					
 					//Call Save
 					if (useVirtualMemory)
 						bufferAtPos = pVirtualMemory + imageIt->second.SizeX * imageIt->second.SizeY * sp.bufferChannels[imageIt->first] * (t - 1) * 2;
@@ -2969,6 +2973,12 @@ long AcquireTStream::Execute(long index, long subWell)
 	SAFE_DELETE_ARRAY (pSumBufferDFLIMArrivalTimeSum);
 
 	SAFE_DELETE_ARRAY (pSumBufferDFLIMSinglePhoton);
+
+	// Adjust T if OME-Tiff and stopped manually
+	if (IDYES == _messageID && STORAGE_FINITE == storageMode)
+	{
+		bigTiff->AdjustScanTCount((int)currentTCount);
+	}
 
 	bigTiff->ClearImageStore();
 

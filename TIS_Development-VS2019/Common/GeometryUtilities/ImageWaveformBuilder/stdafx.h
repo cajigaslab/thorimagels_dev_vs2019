@@ -67,3 +67,28 @@ enum EventType
 // TODO: reference additional headers your program requires here
 #include "..\..\ImageWaveformBuilderDll.h"
 #include "GeometryUtilitiesCpp.h"
+
+#ifdef LOGGING_ENABLED
+extern std::auto_ptr<LogDll> logDll;
+#endif
+
+extern wchar_t message[_MAX_PATH];
+extern DWORD startTime;
+
+static void LogMessage(wchar_t *logMsg,long eventLevel)
+{
+#ifdef LOGGING_ENABLED
+	logDll->TLTraceEvent(eventLevel, 1, logMsg);
+#endif
+}
+
+static void LogPerformance(const wchar_t* wstr)
+{
+#ifdef LOGGING_ENABLED
+	long elapsedTime = static_cast<long>((GetTickCount() - startTime));
+	std::wstring strLog = std::wstring(wstr) + L" %d";
+	StringCbPrintfW(message,_MAX_PATH, strLog.c_str(), static_cast<long>(elapsedTime));
+	LogMessage(message,VERBOSE_EVENT);								
+	startTime = GetTickCount();
+#endif
+}

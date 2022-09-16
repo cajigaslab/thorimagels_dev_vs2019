@@ -1185,6 +1185,7 @@
             if (0 < node.Count)
             {
                 vm.TileDisplay = XmlManager.GetAttribute(node[0], vm.ApplicationDoc, "TilingEnableOption", ref str) && (str == "1" || str == Boolean.TrueString);
+                vm.VerticalTileDisplay = XmlManager.GetAttribute(node[0], vm.ApplicationDoc, "VerticalTiling", ref str) && (str == "1" || str == Boolean.TrueString);
             }
 
             node = vm.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/General/HistogramSettings");
@@ -1452,7 +1453,7 @@
                             UpdateOrthogonalView(vm.BitmapPoint);
                         }
                     }
-                    else   if (colorIndex != _orthogonalLineColorType || lineTypeIndex != _orthogonalLineType)
+                    else if (colorIndex != _orthogonalLineColorType || lineTypeIndex != _orthogonalLineType)
                     {
                         _orthogonalLineColorType = colorIndex;
                         _orthogonalLineType = lineTypeIndex;
@@ -2137,7 +2138,7 @@
                         break;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 ex.ToString();
             }
@@ -2198,12 +2199,12 @@
 
             _bleachROIChecker.RunWorkerAsync();
 
-            _bleachROIChecker.DoWork += delegate(object sender, DoWorkEventArgs e)
+            _bleachROIChecker.DoWork += delegate (object sender, DoWorkEventArgs e)
             {
                 result = OverlayManagerClass.Instance.BleachCompareROIs(vm.BleachROIPath);
             };
 
-            _bleachROIChecker.RunWorkerCompleted += delegate(object sender, RunWorkerCompletedEventArgs e)
+            _bleachROIChecker.RunWorkerCompleted += delegate (object sender, RunWorkerCompletedEventArgs e)
             {
                 vm.IsROIExtracted = result;
             };

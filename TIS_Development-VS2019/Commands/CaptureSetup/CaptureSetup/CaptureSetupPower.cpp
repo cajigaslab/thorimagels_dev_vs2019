@@ -229,9 +229,19 @@ DllExportLiveImage SetLaser4Emission(long pos)
 	return SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_EMISSION, pos, FALSE);
 }
 
+DllExportLiveImage SetLaserAllEmission(long pos)
+{
+	return SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER_ALL_EMISSION, pos, FALSE);
+}
+
 DllExportLiveImage GetLaserAnalog(long &pos) 
 {
 	return GetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER_ALL_ANALOG_MODE, pos);
+}
+
+DllExportLiveImage GetLaserTTL(long& pos)
+{
+	return GetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER_ALL_TTL_MODE, pos);
 }
 
 DllExportLiveImage GetLaser1Enable(long& pos) 

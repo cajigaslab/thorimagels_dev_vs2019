@@ -679,6 +679,14 @@
             <param name="e">The <see cref="T:SciChart.Core.Utility.Mouse.ModifierMouseArgs" /> containing mouse event data.</param>
             <returns>True if the point is within bounds</returns>
         </member>
+        <member name="M:SciChart.Charting.ChartModifiers.ChartModifierBase.GetRelativePosition(System.Windows.Point,SciChart.Core.Framework.IHitTestable)">
+            <summary>
+            OBSOLETE
+            </summary>
+            <param name="point"></param>
+            <param name="relativeTo"></param>
+            <returns></returns>
+        </member>
         <member name="M:SciChart.Charting.ChartModifiers.ChartModifierBase.OnXAxesCollectionChanged(System.Object,System.Collections.Specialized.NotifyCollectionChangedEventArgs)">
             <summary>
             Called with the <see cref="P:SciChart.Charting.Visuals.SciChartSurface.XAxes" /><see cref="T:SciChart.Charting.Model.AxisCollection" /> changes. Overridden in derived classes.
@@ -1248,19 +1256,14 @@
             Initializes a new instance of the <see cref="T:SciChart.Charting.ChartModifiers.DataPointSelectionModifier" /> class.
             </summary>
         </member>
-        <member name="P:SciChart.Charting.ChartModifiers.DataPointSelectionModifier.TouchHitTestRadius">
-            <summary>
-            Gets or sets the radius in pixels to determine whether a touch-point is over a data-point.
-            </summary>
-        </member>
         <member name="M:SciChart.Charting.ChartModifiers.DataPointSelectionModifier.SetIncludeSeries(System.Windows.DependencyObject,System.Boolean)">
             <summary>
-            Sets the <see cref="F:SciChart.Charting.ChartModifiers.DataPointSelectionModifier.IncludeSeriesProperty" /> attached property value, used to define if this series is included in DataPointSelectionModifier operations or not
+            Gets the <see cref="F:SciChart.Charting.ChartModifiers.DataPointSelectionModifier.IncludeSeriesProperty" /> attached property value, used to define if this series is included in DataPointSelectionModifier operations or not
             </summary>
         </member>
         <member name="M:SciChart.Charting.ChartModifiers.DataPointSelectionModifier.GetIncludeSeries(System.Windows.DependencyObject)">
             <summary>
-            Gets the <see cref="F:SciChart.Charting.ChartModifiers.DataPointSelectionModifier.IncludeSeriesProperty" /> attached property value, used to define if this series is included in DataPointSelectionModifier operations or not
+            Sets the <see cref="F:SciChart.Charting.ChartModifiers.DataPointSelectionModifier.IncludeSeriesProperty" /> attached property value, used to define if this series is included in DataPointSelectionModifier operations or not
             </summary>
         </member>
         <member name="P:SciChart.Charting.ChartModifiers.DataPointSelectionModifier.XAxisId">
@@ -1298,37 +1301,22 @@
             Called immediately before the element is detached from the Chart Surface.
             </summary>
         </member>
-        <member name="M:SciChart.Charting.ChartModifiers.DataPointSelectionModifier.OnModifierTouchDown(SciChart.Charting.ChartModifiers.ModifierTouchArgs)">
-            <summary>
-            Called when a Multi-Touch Down interaction occurs on the parent <see cref="T:SciChart.Charting.Visuals.SciChartSurface" /></summary>
-            <param name="e">Arguments detailing the manipulation operation</param>
-        </member>
         <member name="M:SciChart.Charting.ChartModifiers.DataPointSelectionModifier.OnModifierMouseDown(SciChart.Core.Utility.Mouse.ModifierMouseArgs)">
             <summary>
             Called when a Mouse Button is pressed on the parent <see cref="T:SciChart.Charting.Visuals.SciChartSurface" /></summary>
             <param name="e">Arguments detailing the mouse button operation</param>
             <remarks></remarks>
         </member>
-        <member name="M:SciChart.Charting.ChartModifiers.DataPointSelectionModifier.OnModifierTouchUp(SciChart.Charting.ChartModifiers.ModifierTouchArgs)">
+        <member name="M:SciChart.Charting.ChartModifiers.DataPointSelectionModifier.OnModifierMouseMove(SciChart.Core.Utility.Mouse.ModifierMouseArgs)">
             <summary>
-            Called when a Multi-Touch Up interaction occurs on the parent <see cref="T:SciChart.Charting.Visuals.SciChartSurface" /></summary>
-            <param name="e">Arguments detailing the manipulation operation</param>
+            Called when the Mouse is moved on the parent <see cref="T:SciChart.Charting.Visuals.SciChartSurface" /></summary>
+            <param name="e">Arguments detailing the mouse move operation</param>
+            <remarks></remarks>
         </member>
         <member name="M:SciChart.Charting.ChartModifiers.DataPointSelectionModifier.OnModifierMouseUp(SciChart.Core.Utility.Mouse.ModifierMouseArgs)">
             <summary>
             Called when a Mouse Button is released on the parent <see cref="T:SciChart.Charting.Visuals.SciChartSurface" /></summary>
             <param name="e">Arguments detailing the mouse button operation</param>
-            <remarks></remarks>
-        </member>
-        <member name="M:SciChart.Charting.ChartModifiers.DataPointSelectionModifier.OnModifierTouchMove(SciChart.Charting.ChartModifiers.ModifierTouchArgs)">
-            <summary>
-            Called when a Multi-Touch Move interaction occurs on the parent <see cref="T:SciChart.Charting.Visuals.SciChartSurface" /></summary>
-            <param name="e">Arguments detailing the manipulation operation</param>
-        </member>
-        <member name="M:SciChart.Charting.ChartModifiers.DataPointSelectionModifier.OnModifierMouseMove(SciChart.Core.Utility.Mouse.ModifierMouseArgs)">
-            <summary>
-            Called when the Mouse is moved on the parent <see cref="T:SciChart.Charting.Visuals.SciChartSurface" /></summary>
-            <param name="e">Arguments detailing the mouse move operation</param>
             <remarks></remarks>
         </member>
         <member name="M:SciChart.Charting.ChartModifiers.DataPointSelectionModifier.GetSelectionMode(SciChart.Core.Utility.Mouse.MouseModifier,System.Boolean)">
@@ -3701,6 +3689,14 @@
             </summary>
             <param name="e">The <see cref="T:SciChart.Core.Utility.Mouse.ModifierMouseArgs" /> containing mouse event data.</param>
             <returns>True if the point is within bounds</returns>
+        </member>
+        <member name="M:SciChart.Charting.ChartModifiers.TernaryChartModifierBase.GetRelativePosition(System.Windows.Point,SciChart.Core.Framework.IHitTestable)">
+            <summary>
+            OBSOLETE
+            </summary>
+            <param name="point"></param>
+            <param name="relativeTo"></param>
+            <returns></returns>
         </member>
         <member name="M:SciChart.Charting.ChartModifiers.TernaryChartModifierBase.OnAnnotationCollectionChanged(System.Object,System.Collections.Specialized.NotifyCollectionChangedEventArgs)">
             <summary>
@@ -7096,11 +7092,6 @@
             <param name="ranges">Ranges to union</param>
             <returns></returns>
         </member>
-        <member name="T:SciChart.Charting.Common.Extensions.RenderSurfaceExtensions">
-            <summary>
-            Provides helper extension methods for setting renderers.
-            </summary>
-        </member>
         <member name="F:SciChart.Charting.Common.Extensions.RenderSurfaceExtensions.RenderSurfaceTypeProperty">
             <summary>
             Defines the RenderSurfaceType attached property
@@ -7562,6 +7553,11 @@
         <member name="T:SciChart.Charting.Common.MarkupExtensions.EffectManager">
             <summary>
             Provides an application wide way to enable or disable Drop Shadows application-wide
+            </summary>
+        </member>
+        <member name="P:SciChart.Charting.Common.MarkupExtensions.EffectManager.Instance">
+            <summary>
+            Gets the instance of the EffectManager
             </summary>
         </member>
         <member name="P:SciChart.Charting.Common.MarkupExtensions.EffectManager.EnableDropShadows">
@@ -13397,6 +13393,11 @@
             Gets or sets a value indicating how this renderable series will treat double.NaN. See <see cref="T:SciChart.Charting.Visuals.RenderableSeries.LineDrawMode" /> for available options
             </summary>
         </member>
+        <member name="P:SciChart.Charting.Model.ChartSeries.BaseRenderableSeriesViewModel.RenderSeriesType">
+            <summary>
+            RenderSeriesType has been made obsolete, please use ViewType instead
+            </summary>
+        </member>
         <member name="M:SciChart.Charting.Model.ChartSeries.BaseRenderableSeriesViewModel.#cctor">
             <summary>
             Initializes the <see cref="T:SciChart.Charting.Model.ChartSeries.BaseRenderableSeriesViewModel" /> class
@@ -13901,6 +13902,11 @@
             <summary>
             Gets or Sets an optional <see cref="T:SciChart.Charting.Visuals.PaletteProviders.IPaletteProvider" /> instance, which may be used to override specific data-point colors during rendering.
             For more details, see the <see cref="T:SciChart.Charting.Visuals.PaletteProviders.IPaletteProvider" /> documentation
+            </summary>
+        </member>
+        <member name="P:SciChart.Charting.Model.ChartSeries.IRenderableSeriesViewModel.RenderSeriesType">
+            <summary>
+            Gets the RenderableSeries Type to which this ViewModel will be associated
             </summary>
         </member>
         <member name="P:SciChart.Charting.Model.ChartSeries.ISciChartElementViewModel.StyleKey">
@@ -15906,12 +15912,6 @@
             Called when [property changed].
             </summary>
             <param name="propertyName">Name of the property.</param>
-        </member>
-        <member name="M:SciChart.Charting.Licensing.SciChartSurfaceValidator.Validate(System.Object,System.Int32,Abt.Licensing.New.LicenseType,Abt.Licensing.New.LicenseType,Abt.Licensing.New.LicenseType,System.Boolean)">
-            <summary>
-            Validates the component
-            </summary>
-            <param name="parameter">The component to validate</param>
         </member>
         <member name="T:SciChart.Charting.Numerics.Calendars.DefaultDiscontinuousDateTimeCalendar">
             <summary>
@@ -18948,6 +18948,11 @@
             <param name="sender">The sender.</param>
             <param name="renderContext">The render context.</param>
         </member>
+        <member name="P:SciChart.Charting.Utility.SciChartRenderedMessage.BitmapContext">
+            <summary>
+            OBSOLETE
+            </summary>
+        </member>
         <member name="P:SciChart.Charting.Utility.SciChartRenderedMessage.RenderContext">
             <summary>
             Gets the RenderContext
@@ -20306,6 +20311,9 @@
         <member name="F:SciChart.Charting.Visuals.Annotations.AnnotationLabel.CanEditTextProperty">
             <summary>Defines the CanEditText DependnecyProperty</summary>
         </member>
+        <member name="F:SciChart.Charting.Visuals.Annotations.AnnotationLabel.TextFormattingProperty">
+            <summary>Defines the TextFormatting DependnecyProperty</summary>
+        </member>
         <member name="M:SciChart.Charting.Visuals.Annotations.AnnotationLabel.#ctor">
             <summary>
             Initializes a new instance of the <see cref="T:SciChart.Charting.Visuals.Annotations.AnnotationLabel" /> class.
@@ -20339,6 +20347,12 @@
         <member name="P:SciChart.Charting.Visuals.Annotations.AnnotationLabel.LabelPlacement">
             <summary>
             Gets or sets the <see cref="P:SciChart.Charting.Visuals.Annotations.AnnotationLabel.LabelPlacement" /></summary>
+        </member>
+        <member name="P:SciChart.Charting.Visuals.Annotations.AnnotationLabel.TextFormatting">
+            <summary>
+            Gets or sets the TextFormatting to use on the label, when the Text property is bound to a Data-Value. 
+            This works in a similar way to the <see cref="T:SciChart.Charting.Visuals.Axes.AxisBase" /> TextFormatting property
+            </summary>
         </member>
         <member name="P:SciChart.Charting.Visuals.Annotations.AnnotationLabel.LabelStyle">
             <summary>
@@ -22623,6 +22637,14 @@
             <param name="dataValue">The data value.</param>
             <returns>The <see cref="T:SciChart.Charting.Visuals.RenderableSeries.AxisInfo" /> result</returns>
         </member>
+        <member name="M:SciChart.Charting.Visuals.Axes.AxisBase.FormatText(System.IComparable,System.String)">
+            <summary>
+            String formats the text, using the <see cref="P:SciChart.Charting.Visuals.Axes.AxisCore.TextFormatting" /> property as a formatting string
+            </summary>
+            <param name="value">The data value to format</param>
+            <param name="format">A composite format string</param>
+            <returns>The string formatted data value</returns>
+        </member>
         <member name="M:SciChart.Charting.Visuals.Axes.AxisBase.FormatText(System.IComparable)">
             <summary>
             String formats the text, using the <see cref="P:SciChart.Charting.Visuals.Axes.AxisCore.TextFormatting" /> property as a formatting string
@@ -22682,11 +22704,7 @@
             </summary>
             <remarks></remarks>
         </member>
-        <member name="M:SciChart.Charting.Visuals.Axes.AxisBase.OnTickOrGridLineStyleChanged">
-            <summary>
-            Called when a dependency property or Major/Minor Tick or Grid Line Style changes, or Axis Bands brush changes, requiring recreation of brushes &amp; pens for gridlines
-            </summary>
-        </member>
+        <!-- Badly formed XML comment ignored for member "M:SciChart.Charting.Visuals.Axes.AxisBase.OnTickOrGridLineStyleChanged" -->
         <member name="M:SciChart.Charting.Visuals.Axes.AxisBase.DrawGridLines(SciChart.Drawing.Common.IRenderContext2D,SciChart.Drawing.Common.IPen2D,SciChart.Charting.XyDirection,System.Single)">
             <summary>
             Draws a single grid line on the <see cref="P:SciChart.Charting.Visuals.Axes.AxisBase.RenderSurface" />, using the specified Style (TargetType <see cref="T:System.Windows.Shapes.Line" />), <see cref="T:SciChart.Charting.XyDirection" /> and integer coordinate.
@@ -23356,11 +23374,7 @@
             Called when a dependency property changes that requires the parent surface redraws
             </summary>
         </member>
-        <member name="M:SciChart.Charting.Visuals.Axes.AxisCore.OnTickOrGridLineStyleChanged">
-            <summary>
-            Called when a dependency property or Major/Minor Tick or Grid Line Style changes, or Axis Bands brush changes, requiring recreation of brushes &amp; pens for gridlines
-            </summary>
-        </member>
+        <!-- Badly formed XML comment ignored for member "M:SciChart.Charting.Visuals.Axes.AxisCore.OnTickOrGridLineStyleChanged" -->
         <member name="M:SciChart.Charting.Visuals.Axes.AxisCore.OnIdChanged(System.Windows.DependencyPropertyChangedEventArgs)">
             <summary>
             Called when a dependency property changes that requires the parent surface redraws
@@ -24790,6 +24804,12 @@
             </summary>
             <param name="dataType"></param>
         </member>
+        <member name="M:SciChart.Charting.Visuals.Axes.IAxis.FormatText(System.IComparable,System.String)">
+            <summary>
+            String formats the text, using the <see cref="P:SciChart.Charting.Visuals.Axes.AxisCore.TextFormatting" /> property as a formatting string
+            </summary>
+            <param name="value">The data value to format</param>
+            /// <param name="format">A composite format string</param><returns>The string formatted data value</returns></member>
         <member name="M:SciChart.Charting.Visuals.Axes.IAxis.FormatText(System.IComparable)">
             <summary>
             String formats the text, using the <see cref="P:SciChart.Charting.Visuals.Axes.AxisCore.TextFormatting" /> property as a formatting string
@@ -25136,6 +25156,15 @@
             </summary>
             <param name="rangeToScroll">The start range</param>
             <param name="pixels">Scroll N pixels from the start visible range</param>
+        </member>
+        <member name="M:SciChart.Charting.Visuals.Axes.IAxisInteractivityHelper.ScrollBy(SciChart.Data.Model.IRange,System.Int32)">
+            <summary>
+            Translates the passed range by the specified number of datapoints
+            </summary>
+            <param name="rangeToScroll">The start range</param>
+            <param name="pointAmount">Amount of points that the start visible range is scrolled by</param>
+            <remarks>For XAxis only,  is suitable for <see cref="T:SciChart.Charting.Visuals.Axes.CategoryDateTimeAxis" />, <see cref="T:SciChart.Charting.Visuals.Axes.DateTimeAxis" /> and <see cref="T:SciChart.Charting.Visuals.Axes.NumericAxis" />
+            where data is regularly spaced</remarks>
         </member>
         <member name="M:SciChart.Charting.Visuals.Axes.IAxisInteractivityHelper.ClipRange(SciChart.Data.Model.IRange,SciChart.Data.Model.IRange,SciChart.Charting.ClipMode)">
             <summary>
@@ -27530,6 +27559,39 @@
             Preparations for a render pass, called internally, returns the viewport size
             </summary>
         </member>
+        <member name="M:SciChart.Charting.Visuals.ISciChartSurface.IsPointWithinBounds(System.Windows.Point)">
+            <summary>
+            Returns true if the Point is within the bounds of the current HitTestable element
+            </summary>
+            <param name="point">The point to test</param>
+            <returns>true if the Point is within the bounds</returns>
+            <remarks></remarks>
+        </member>
+        <member name="M:SciChart.Charting.Visuals.ISciChartSurface.GetBoundsRelativeTo(SciChart.Core.Framework.IHitTestable)">
+            <summary>
+            Gets the bounds of the current HitTestable element relative to another HitTestable element
+            </summary>
+            <param name="relativeTo">The relative to.</param>
+            <returns></returns>
+            <remarks></remarks>
+        </member>
+        <member name="M:SciChart.Charting.Visuals.ISciChartSurface.TranslatePoint(System.Windows.Point,SciChart.Core.Framework.IHitTestable)">
+            <summary>
+            Translates the point relative to the other hittestable element
+            </summary>
+            <param name="point">The point.</param>
+            <param name="relativeTo">The relative to.</param>
+            <returns></returns>
+            <remarks></remarks>
+        </member>
+        <member name="M:SciChart.Charting.Visuals.ISciChartSurface.GetWindowedYRange(SciChart.Charting.Visuals.Axes.IAxis,SciChart.Data.Model.IRange)">
+            <summary>
+            Equivalent of calling YAxis.GetMaximumRange() however returns the max range only for that axis (by the data-series on it)
+            </summary>
+            <param name="yAxis"></param>
+            <param name="xRange"></param>
+            <returns></returns>
+        </member>
         <member name="M:SciChart.Charting.Visuals.ISciChartSurface.OnAxisAlignmentChanged(SciChart.Charting.Visuals.Axes.IAxis,SciChart.Charting.Visuals.Axes.AxisAlignment)">
             <summary>
             Called internally by SciChart when <see cref="P:SciChart.Charting.Visuals.Axes.IAxis.AxisAlignment" /> changes. Allows the <see cref="T:SciChart.Charting.Visuals.SciChartSurface" /> to reposition the axis, e.g. at the top, left, bottom, right
@@ -29403,6 +29465,13 @@
             <remarks>
             Note that increasing stroke thickness from 1 will have a detrimental effect on performance
             </remarks>
+        </member>
+        <member name="P:SciChart.Charting.Visuals.RenderableSeries.BaseRenderableSeries.ResamplingResolution">
+            <summary>
+            Gets or sets the resampling resolution. The default is 2, which results in Nyquist resampling. Lower values are not permitted. Higher values result in potentially more visually accurate rendering, but at the expense of performance
+            </summary>
+            <value>The resampling resolution.</value>
+            <remarks></remarks>
         </member>
         <member name="P:SciChart.Charting.Visuals.RenderableSeries.BaseRenderableSeries.PaletteProvider">
             <summary>
@@ -35127,6 +35196,11 @@
             <remarks>
                 <see cref="T:SciChart.Charting.Visuals.RenderableSeries.XyScatterRenderableSeries" /> does not support resampling and so ignores the <see cref="P:SciChart.Charting.Visuals.RenderableSeries.BaseRenderableSeries.ResamplingMode" /> property</remarks>
         </member>
+        <member name="P:SciChart.Charting.Visuals.RenderableSeries.XyScatterRenderableSeries.DoClusterResampling">
+            <summary>
+            Gets or sets a value indicating whether this <see cref="T:SciChart.Charting.Visuals.RenderableSeries.XyScatterRenderableSeries" /> should use Cluster Resampling
+            </summary>
+        </member>
         <member name="M:SciChart.Charting.Visuals.RenderableSeries.XyScatterRenderableSeries.#ctor">
             <summary>
             Initializes a new instance of the <see cref="T:SciChart.Charting.Visuals.RenderableSeries.XyScatterRenderableSeries" /> class.
@@ -36917,6 +36991,31 @@
             The inner drawing loop. Called once per frame.
             </summary>
         </member>
+        <member name="M:SciChart.Charting.Visuals.SciChartSurface.TranslatePoint(System.Windows.Point,SciChart.Core.Framework.IHitTestable)">
+            <summary>
+            Translates the point relative to the other hit-testable element
+            </summary>
+            <param name="point">The point.</param>
+            <param name="relativeTo">The relative to.</param>
+            <returns></returns>
+            <remarks></remarks>
+        </member>
+        <member name="M:SciChart.Charting.Visuals.SciChartSurface.IsPointWithinBounds(System.Windows.Point)">
+            <summary>
+            Returns true if the Point is within the bounds of the current HitTestable element
+            </summary>
+            <param name="point">The point to test</param>
+            <returns>true if the Point is within the bounds</returns>
+            <remarks></remarks>
+        </member>
+        <member name="M:SciChart.Charting.Visuals.SciChartSurface.GetBoundsRelativeTo(SciChart.Core.Framework.IHitTestable)">
+            <summary>
+            Gets the bounds of the current HitTestable element relative to another HitTestable element
+            </summary>
+            <param name="relativeTo">The relative to.</param>
+            <returns></returns>
+            <remarks></remarks>
+        </member>
         <member name="M:SciChart.Charting.Visuals.SciChartSurface.AttachDataSeries(SciChart.Charting.Model.DataSeries.IDataSeries)">
             <summary>
             Attaches listeners for DataSeries.DataSeriesChanged
@@ -36944,6 +37043,16 @@
             Preparations for a render pass, called internally, returns the viewport size
             </summary>
             <returns>The required Viewport Size</returns>
+        </member>
+        <member name="M:SciChart.Charting.Visuals.SciChartSurface.GetWindowedYRange(SciChart.Charting.Visuals.Axes.IAxis,SciChart.Data.Model.IRange)">
+            <summary>
+            Equivalent of calling YAxis.GetMaximumRange() however returns the max range only for that axis (by the data-series on it)
+            "windowed" = "displayed in current viewport"
+            uses GrowBy()
+            </summary>
+            <param name="yAxis"></param>
+            <param name="xRange"></param>
+            <returns></returns>
         </member>
         <member name="M:SciChart.Charting.Visuals.SciChartSurface.OnIsCenterAxisChanged(SciChart.Charting.Visuals.Axes.IAxis)">
             <summary>
@@ -38301,41 +38410,12 @@
         </member>
         <member name="T:SciChart.Charting.VisualXcceleratorEngine">
             <summary>
-            Helper class that allows configuring the VisualXccelerator Engine
+            Defines properties to enable and configure The Visual Xccelerator Engine
             </summary>
-        </member>
-        <member name="P:SciChart.Charting.VisualXcceleratorEngine.UseAlternativeFillSource">
-            <summary>
-            When True (default), uses software method to FillSource (avoiding use of D3DImage). This can help compatibility on certain systems
-            When False, uses D3DImage for hardware accelerated texture sharing.
-            and prevent flicker which is due to D3DImage itself.
-            </summary>
-            <example>
-            To enable compatibility mode for VisualXcceleratorEngine, set this property once, statically, in your application
-            <code>        
-            void Foo()
-            {
-               VisualXcceleratorConfig.UseAlternativeFillSource = true;
-            }
-            </code></example>
-        </member>
-        <member name="P:SciChart.Charting.VisualXcceleratorEngine.EnableForceWaitForGPU">
-            <summary>
-            When false (default), no waiting for GPU
-            When true, we force wait for the GPU to finish rendering before invalidating the final image or copying it 
-            </summary>
-            <example>
-            To enable compatibility mode for VisualXcceleratorEngine, set this property once, statically, in your application
-            <code>        
-            void Foo()
-            {
-               VisualXcceleratorConfig.EnableForceWaitForGPU = true;
-            }
-            </code></example>
         </member>
         <member name="F:SciChart.Charting.VisualXcceleratorEngine.IsEnabledProperty">
             <summary>
-            Defines the IsEnabled attached property
+            Defines the TryApplyDirectXRenderer attached property
             </summary>
         </member>
         <member name="M:SciChart.Charting.VisualXcceleratorEngine.SetIsEnabled(SciChart.Charting.Visuals.SciChartSurface,System.Boolean)">
@@ -38387,6 +38467,23 @@
             Sets the FallbackType attached property value
             </summary>
         </member>
+        <member name="F:SciChart.Charting.VisualXcceleratorEngine.EnableImpossibleModeProperty">
+            <summary>
+            Defines the EnableImpossibleMode attached property
+            </summary>
+        </member>
+        <member name="M:SciChart.Charting.VisualXcceleratorEngine.SetEnableImpossibleMode(SciChart.Charting.Visuals.ISciChartSurface,System.Boolean)">
+            <summary>
+            Sets the EnableImpossibleMode attached property value on the current SciChartSurface. When true, we enable a ridiculous performance improvement for real-time and big-data charts. Warning, this mode is experimental!
+            </summary>
+            <param name="element"></param>
+            <param name="value"></param>
+        </member>
+        <member name="M:SciChart.Charting.VisualXcceleratorEngine.GetEnableImpossibleMode(SciChart.Charting.Visuals.ISciChartSurface)">
+            <summary>
+            Gets the EnableImpossibleMode attached property value from the current series
+            </summary>
+        </member>
         <member name="F:SciChart.Charting.VisualXcceleratorEngine.AvoidBlacklistedGpuProperty">
             <summary>
             Defines the AvoidBlacklistedGpu attached property
@@ -38408,22 +38505,14 @@
             Gets the AvoidBlacklistedGpu attached property value from the current series
             </summary>
         </member>
-        <member name="F:SciChart.Charting.VisualXcceleratorEngine.EnableImpossibleModeProperty">
+        <member name="P:SciChart.Charting.VisualXcceleratorEngine.SupportsHardwareAcceleration">
             <summary>
-            Defines the EnableImpossibleMode attached property
+            Returns <value>True</value> if GPU supports hardware acceleration (DirectX).
             </summary>
         </member>
-        <member name="M:SciChart.Charting.VisualXcceleratorEngine.SetEnableImpossibleMode(SciChart.Charting.Visuals.ISciChartSurface,System.Boolean)">
+        <member name="P:SciChart.Charting.VisualXcceleratorEngine.HasDirectX10OrBetterCapableGpu">
             <summary>
-            Sets the EnableImpossibleMode attached property value on the current SciChartSurface.
-            When true, we enable a ridiculous performance improvement for real-time and big-data charts. Warning, this mode is experimental!
-            </summary>
-            <param name="element"></param>
-            <param name="value"></param>
-        </member>
-        <member name="M:SciChart.Charting.VisualXcceleratorEngine.GetEnableImpossibleMode(SciChart.Charting.Visuals.ISciChartSurface)">
-            <summary>
-            Gets the EnableImpossibleMode attached property value from the current series
+            Returns <value>True</value> if GPU supports DirectX 10 or higher.
             </summary>
         </member>
         <member name="P:SciChart.Charting.VisualXcceleratorEngine.IsGpuBlacklisted">
@@ -38435,15 +38524,34 @@
             resulting in crashing the application.
             </summary>
         </member>
-        <member name="P:SciChart.Charting.VisualXcceleratorEngine.SupportsHardwareAcceleration">
+        <member name="P:SciChart.Charting.VisualXcceleratorEngine.UseAlternativeFillSource">
             <summary>
-            Returns <value>True</value> if GPU supports hardware acceleration (DirectX).
+            When True (default), uses software method to FillSource (avoiding use of D3DImage). This can help compatibility on certain systems
+            When False, uses <see cref="T:System.Windows.Interop.D3DImage" /> for hardware accelerated texture sharing.
+            and prevent flicker which is due to D3DImage itself.
             </summary>
+            <example>
+            To enable compatibility mode for VisualXcceleratorEngine, set this property once, statically, in your application
+            <code>        
+            void Foo()
+            {
+               VisualXcceleratorEngine.UseAlternativeFillSource = true;
+            }
+            </code></example>
         </member>
-        <member name="P:SciChart.Charting.VisualXcceleratorEngine.HasDirectX10OrBetterCapableGpu">
+        <member name="P:SciChart.Charting.VisualXcceleratorEngine.EnableForceWaitForGPU">
             <summary>
-            Returns <value>True</value> if GPU supports DirectX 10 or higher.
+            When false (default), no waiting for gpu
+            when true , we force wait for the gpu to finish rendering before invalidating the final image or copying it 
             </summary>
+            <example>
+            To enable compatibility mode for VisualXcceleratorEngine, set this property once, statically, in your application
+            <code>        
+            void Foo()
+            {
+               VisualXcceleratorEngine.EnableForceWaitForGPU = true;
+            }
+            </code></example>
         </member>
         <member name="M:SciChart.Charting.VisualXcceleratorEngine.AssertSupportsDirectX">
             <summary>

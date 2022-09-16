@@ -85,6 +85,12 @@ long fnAISS_remove_scan(int handle, uint32_t scan_id)
 	return	vecTiffData[handle - 1]->RemoveScan(scan_id);
 }
 
+long fnAISS_adjust_scan_tcount(int handle, uint32_t t_count)
+{
+	if (handle <= 0 || handle > (int)vecTiffData.size()) return HANDLE_IS_NOT_EXIST;
+	return	vecTiffData[handle - 1]->AdjustScanT(t_count);
+}
+
 long fnAISS_save_tile_data(int handle, void* image_data, uint32_t stride, frame_info frame, uint32_t tile_row, uint32_t tile_column)
 {
 	if (image_data == NULL) return INPUT_PTR_IS_NULL;

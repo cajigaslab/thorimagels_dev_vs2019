@@ -196,8 +196,10 @@
                 <ComboBox Name="cbModality"
                           ItemsSource="{Binding Source={StaticResource ResourceManagerCS}, Path=Modalities, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                           SelectedItem="{Binding Source={StaticResource ResourceManagerCS}, Path=ActiveModality, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          PreviewMouseUp="cbModality_PreviewMouseUp"
                           IsSynchronizedWithCurrentItem="True"
                           SelectionChanged="cbModality_SelectionChanged"
+                          LostFocus="cbModality_LostFocus"
                           IsEnabled="{Binding Path=ModalityComboBoxStatus, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
                     <ComboBox.Style>
                         <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">

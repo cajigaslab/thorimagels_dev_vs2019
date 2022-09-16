@@ -5,16 +5,21 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:sci="http://schemas.abtsoftware.co.uk/scichart"
              xmlns:vm="clr-namespace:RealTimeLineChart.ViewModel"
+             xmlns:b="http: //schemas.microsoft.com/xaml/behaviors"
              xmlns:validator="clr-namespace:RealTimeLineChart.InputValidation"
              xmlns:system="clr-namespace:System;assembly=mscorlib"
              xmlns:customModifiers="clr-namespace:RealTimeLineChart.CustomModifiers"
+             xmlns:View="clr-namespace:RealTimeLineChart.View"
              xmlns:s3D="http://schemas.abtsoftware.co.uk/scichart3D"
              xmlns:ikriv="clr-namespace:IKriv.Wpf"
              mc:Ignorable="d"
              IsEnabled="{Binding Path=IsPanelsEnable, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
     <UserControl.Resources>
         <ResourceDictionary>
+            <View:BindingProxy x:Key="proxy"
+                               Data="{Binding}" />
             <sci:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <validator:InvertableVisibilityGateConverter x:Key="_gateVisConverter" />
             <validator:DoubleCultureConverter x:Key="doubleCultureConverter" />
             <validator:InvertableBooleanToVisibilityConverter x:Key="_Converter" />
             <validator:InverseBooleanConverter x:Key="_IntToBoolConverter" />
@@ -33,8 +38,12 @@
                 </ResourceDictionary.MergedDictionaries>
             </ResourceDictionary>
         </Grid.Resources>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="*" />
             <RowDefinition Height="7" />
             <RowDefinition Height="{Binding Path=SpecPanelHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                 <RowDefinition.MaxHeight>
@@ -46,87 +55,143 @@
                 </RowDefinition.MaxHeight>
             </RowDefinition>
         </Grid.RowDefinitions>
-        <sci:SciChartSurface Name="sciChartSurface"
-                             Visibility="{Binding IsStackedDisplay, ConverterParameter=Inverted,Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                             IsVisibleChanged="SciChartSurface_IsVisibleChanged"
-                             MaxFrameRate="33"
-                             RenderableSeries="{Binding ChartSeries}"
-                             Grid.Row="0"
-                             RenderPriority="Normal"
-                             sci:VisualXcceleratorEngine.IsEnabled="True"
-                             sci:VisualXcceleratorEngine.FallbackType="{x:Type sci:HighSpeedRenderSurface}"
-                             sci:VisualXcceleratorEngine.DowngradeWithoutException="False"
-                             sci:VisualXcceleratorEngine.EnableImpossibleMode="True">
-            <sci:SciChartSurface.XAxis>
-                <sci:NumericAxis AxisTitle="Time"
-                                 AutoRange="{Binding AutoRangeX}"
-                                 VisibleRange="{Binding XVisibleRangeChart, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                 DrawMinorTicks="False"
-                                 DrawMinorGridLines="False"
-                                 x:Name="xAxis">
-                </sci:NumericAxis>
-            </sci:SciChartSurface.XAxis>
-            <sci:SciChartSurface.YAxis>
-                <sci:NumericAxis AxisTitle="Value"
-                                 TextFormatting="#.000"
-                                 AutoRange="{Binding AutoRangeY}"
-                                 DrawMinorTicks="False"
-                                 DrawMinorGridLines="False"
-                                 x:Name="yAxis">
-                    <sci:NumericAxis.GrowBy>
-                        <sci:DoubleRange Max="0.1"
-                                         Min="0.20" />
-                    </sci:NumericAxis.GrowBy>
-                </sci:NumericAxis>
-            </sci:SciChartSurface.YAxis>
-            <sci:SciChartSurface.ChartModifier>
-                <sci:ModifierGroup>
-                    <customModifiers:RubberBandXyZoomModifierEx ExecuteOn="MouseRightButton"
-                                                                FreqSampleSecMin="{Binding FreqSampleSecMin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                                FreqSampleSecMax="{Binding FreqSampleSecMax, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                                SelectionPolygonStyle="{StaticResource SelectionStyle}"
-                                                                IsEnabled="{Binding Path=ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <sci:ZoomExtentsModifier ExecuteOn="MouseDoubleClick"
-                                             XyDirection="XYDirection" />
-                    <customModifiers:RightDoubleClickZoomExtentsModifier ExecuteOn="MouseDoubleClick"
-                                                                         XyDirection="YDirection" />
-                    <sci:ZoomPanModifier x:Name="zoomPanModifier"
-                                         ExecuteOn="MouseLeftButton"
-                                         XyDirection="XYDirection"
-                                         ClipModeX="ClipAtExtents"
-                                         IsEnabled="{Binding Path=ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <sci:XAxisDragModifier x:Name="xAxisDragModifier"
-                                           IsEnabled="{Binding IsDragToScaleEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                                           ClipModeX="None" />
-                    <sci:YAxisDragModifier x:Name="yAxisRightDragmodifier"
-                                           IsEnabled="{Binding IsDragToScaleEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <customModifiers:MouseWheelZoomCustomModifier x:Name="mouseWheelZoomModifier"
-                                                                  IsEnabled="{Binding Path=ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <sci:LegendModifier Name="legendModifier" 
-                                        ReceiveHandledEvents="False" ShowLegend="True" Margin="10"
-                           LegendPlacement="Inside"  GetLegendDataFor="AllSeries"/>
-                    <customModifiers:ChartCanvasModifier x:Name="ChartCanvasModifier"
-                                                         CursorTop="{Binding CursorTop, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                         CursorBottom="{Binding CursorBottom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                         CursorLeft="{Binding CursorLeft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                         CursorRight="{Binding CursorRight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                         CursorSelectedIndex="{Binding CursorSelectedIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                         ExecuteOn="MouseLeftButton"
-                                                         MeasureCursor="MEASURECURSOR_ALL"
-                                                         MeasureBorderVisible="True"
-                                                         MeasureCursorVisible="{Binding IsMeasureCursorVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                                                         IsDragToScale="{Binding IsDragToScaleEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                         IsRollOver="{Binding IsRollOverEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <sci:VerticalSliceModifier Name="sliceModifier"
-                                               ReceiveHandledEvents="True" />
-                </sci:ModifierGroup>
-            </sci:SciChartSurface.ChartModifier>
-            <sci:SciChartSurface.RenderSurface>
-                <sci:HighSpeedRenderSurface />
-            </sci:SciChartSurface.RenderSurface>
-        </sci:SciChartSurface>
+        <Grid  Grid.Column="0"
+               Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <sci:SciChartSurface Name="sciChartSurface"
+                                 Visibility="{Binding IsStackedDisplay, ConverterParameter=Inverted,Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                 IsVisibleChanged="SciChartSurface_IsVisibleChanged"
+                                 RenderableSeries="{Binding ChartSeries}"
+                                 Grid.Row="0"
+                                 Grid.Column="0"
+                                 MouseDoubleClick="sciChartSurface_MouseDoubleClick"
+                                 sci:VisualXcceleratorEngine.IsEnabled="True"
+                                 sci:VisualXcceleratorEngine.FallbackType="{x:Type sci:HighSpeedRenderSurface}"
+                                 sci:VisualXcceleratorEngine.DowngradeWithoutException="False"
+                                 sci:VisualXcceleratorEngine.EnableImpossibleMode="True">
+                <sci:SciChartSurface.XAxis>
+                    <sci:NumericAxis AxisTitle="Time"
+                                     AutoRange="{Binding AutoRangeX}"
+                                     VisibleRange="{Binding XVisibleRangeChart, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     DrawMinorTicks="False"
+                                     DrawMinorGridLines="False"
+                                     x:Name="xAxis">
+                    </sci:NumericAxis>
+                </sci:SciChartSurface.XAxis>
+                <sci:SciChartSurface.YAxis>
+                    <sci:NumericAxis AxisTitle="Value"
+                                     TextFormatting="#.000"
+                                     AutoRange="{Binding AutoRangeY}"
+                                     VisibleRange="{Binding YVisibleRangeChart, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     DrawMinorTicks="False"
+                                     DrawMinorGridLines="False"
+                                     x:Name="yAxis">
+                        <sci:NumericAxis.GrowBy>
+                            <sci:DoubleRange Max="0.1"
+                                             Min="0.20" />
+                        </sci:NumericAxis.GrowBy>
+                    </sci:NumericAxis>
+                </sci:SciChartSurface.YAxis>
+                <sci:SciChartSurface.ChartModifier>
+                    <sci:ModifierGroup>
+                        <customModifiers:RubberBandXyZoomModifierEx ExecuteOn="MouseRightButton"
+                                                                    IsAnimated="False"
+                                                                    FreqSampleSecMin="{Binding FreqSampleSecMin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                    FreqSampleSecMax="{Binding FreqSampleSecMax, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                    IsEnabled="{Binding Path=ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <customModifiers:RightDoubleClickZoomExtentsModifier ExecuteOn="MouseDoubleClick"
+                                                                             XyDirection="YDirection" />
+                        <sci:ZoomPanModifier x:Name="zoomPanModifier"
+                                             ExecuteOn="MouseLeftButton"
+                                             XyDirection="XYDirection"
+                                             ClipModeX="ClipAtExtents"
+                                             IsEnabled="{Binding Path=ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <sci:XAxisDragModifier x:Name="xAxisDragModifier"
+                                               IsEnabled="{Binding IsDragToScaleEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                               ClipModeX="None" />
+                        <sci:YAxisDragModifier x:Name="yAxisRightDragmodifier"
+                                               IsEnabled="{Binding IsDragToScaleEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <customModifiers:MouseWheelZoomCustomModifier x:Name="mouseWheelZoomModifier"
+                                                                      IsEnabled="{Binding Path=ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <sci:LegendModifier Name="legendModifier"
+                                            ReceiveHandledEvents="False"
+                                            ShowLegend="True"
+                                            Margin="10"
+                                            LegendPlacement="Inside"
+                                            GetLegendDataFor="AllSeries" />
+                        <customModifiers:ChartCanvasModifier x:Name="ChartCanvasModifier"
+                                                             CursorTop="{Binding CursorTop, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                             CursorBottom="{Binding CursorBottom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                             CursorLeft="{Binding CursorLeft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                             CursorRight="{Binding CursorRight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                             CursorSelectedIndex="{Binding CursorSelectedIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                             ExecuteOn="MouseLeftButton"
+                                                             MeasureCursor="MEASURECURSOR_ALL"
+                                                             MeasureBorderVisible="True"
+                                                             MeasureCursorVisible="{Binding IsMeasureCursorVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                             IsDragToScale="{Binding IsDragToScaleEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                             IsRollOver="{Binding IsRollOverEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <sci:VerticalSliceModifier Name="sliceModifier"
+                                                   ReceiveHandledEvents="True" />
+                    </sci:ModifierGroup>
+                </sci:SciChartSurface.ChartModifier>
+            </sci:SciChartSurface>
+            <sci:SciChartSurface x:Name="dummySurface"
+                                 Height="0"
+                                 Width="0"
+                                 RenderableSeries="{Binding ChartSeriesForScrollBar}"
+                                 Grid.Column="0"
+                                 Grid.Row="0"
+                                 MaxFrameRate="10"
+                                 RenderPriority="Low"
+                                 sci:VisualXcceleratorEngine.IsEnabled="True"
+                                 sci:VisualXcceleratorEngine.FallbackType="{x:Type sci:HighSpeedRenderSurface}"
+                                 sci:VisualXcceleratorEngine.DowngradeWithoutException="False"
+                                 sci:VisualXcceleratorEngine.EnableImpossibleMode="True">
+                <sci:SciChartSurface.XAxis>
+                    <sci:NumericAxis DrawMajorGridLines="False"
+                                     x:Name="xAxisDummy"
+                                     DrawMinorGridLines="False"
+                                     AutoRange="Never"
+                                     VisibleRange="{Binding XVisibleRangeChart, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Visibility="Collapsed" />
+                </sci:SciChartSurface.XAxis>
+                <sci:SciChartSurface.YAxis>
+                    <sci:NumericAxis DrawMajorGridLines="False"
+                                     DrawMinorGridLines="False"
+                                     x:Name="yAxisDummy"
+                                     AutoRange="Never"
+                                     VisibleRange="{Binding YVisibleRangeChart, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Visibility="Collapsed" />
+                </sci:SciChartSurface.YAxis>
+            </sci:SciChartSurface>
+            <sci:SciChartScrollbar Grid.Row="1"
+                                   Grid.Column="0"
+                                   Margin="3,0"
+                                   x:Name="scichartMainXScrollbar"
+                                   Height="20"
+                                   Axis="{Binding ElementName=xAxisDummy}"
+                                   SelectedRange="{Binding XVisibleRangeChart, Mode=TwoWay}" />
+            <sci:SciChartScrollbar Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0,3"
+                                   Orientation="Vertical"
+                                   x:Name="scichartMainYScrollbar"
+                                   Axis="{Binding ElementName=yAxisDummy}"
+                                   SelectedRange="{Binding YVisibleRangeChart, Mode=TwoWay}"
+                                   Width="20" />
+        </Grid>
         <StackPanel Name="Legend"
                     Grid.Row="0"
+                    Grid.Column="0"
                     Panel.ZIndex="1"
                     HorizontalAlignment="Left"
                     Visibility="{Binding IsStackedDisplay, ConverterParameter=Inverted,Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
@@ -143,85 +208,310 @@
             </StackPanel>
         </StackPanel>
         <!--  Define the listbox which will host the N channels of the Time Domain  -->
-        <ScrollViewer Name="scvDataStack"
+
+        <Grid Grid.Row="0"
+              Grid.Column="0"
+              Visibility="{Binding IsStackedDisplay, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal"
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        Visibility="{Binding IsCounting, ConverterParameter=Normal,Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <Label Content="Counter:"
+                       Background="Transparent" />
+                <Label Content="{Binding Path=ImageCounterNumber}"
+                       Background="Transparent" />
+            </StackPanel>
+            <Expander ExpandDirection="Right"
+                      Width="Auto"
+                      HorizontalAlignment="Left"
+                      IsExpanded="True"
                       Grid.Row="0"
-                      VerticalScrollBarVisibility="Auto"
-                      Visibility="{Binding IsStackedDisplay, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
+                      Grid.Column="0"
+                      Grid.RowSpan="2">
+                <Expander.Header>
+                    <TextBlock Text="Legend"
+                               Foreground="White"
+                               RenderTransformOrigin="0.5,0.5">
+                        <TextBlock.LayoutTransform>
+                            <RotateTransform Angle="-90" />
+                        </TextBlock.LayoutTransform>
+                    </TextBlock>
+                </Expander.Header>
+                <ItemsControl x:Name="chartItemsControls"
+                              HorizontalAlignment="Left"
+                              Height="Auto"
+                              VerticalAlignment="Top"
+                              ItemsSource="{Binding ChannelViewModels}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox IsChecked="{Binding Path=IsVisible, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                      Content="{Binding Path=ChannelName}"
+                                      Foreground="{Binding Path=StrokeBrush}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+
+                </ItemsControl>
+            </Expander>
+            <ScrollViewer Name="scvDataStack"
+                          Grid.Row="1"
+                          Padding="0"
+                          Margin="0"
+                          Grid.Column="1"
+                          VerticalScrollBarVisibility="Auto">
+                <ItemsControl x:Name="chartItemsControl"
+                              ItemsSource="{Binding ChannelViewModels}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Background="#2D2C32"
+                                  Margin="0"
+                                  Focusable="False"
+                                  UseLayoutRounding="False">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="50"
+                                                      SharedSizeGroup="ChannelNames" />
+                                    <ColumnDefinition Width="*"
+                                                      SharedSizeGroup="chart" />
+                                </Grid.ColumnDefinitions>
+                                <Border BorderThickness="0,0,0,1"
+                                        Grid.Column="0"
+                                        BorderBrush="#1C1C1E">
+                                    <DockPanel>
+                                        <CheckBox x:Name="chbLockYTime"
+                                                  DockPanel.Dock="Top"
+                                                  Foreground="White"
+                                                  ToolTip="Lock Y Range"
+                                                  Width="Auto"
+                                                  VerticalAlignment="Top"
+                                                  HorizontalAlignment="Left"
+                                                  FlowDirection="RightToLeft"
+                                                  IsChecked="{Binding YVisibleLock}"
+                                                  Margin="0,0,0,0">
+                                            <CheckBox.Visibility>
+                                                <MultiBinding Converter="{StaticResource _gateVisConverter}"
+                                                              ConverterParameter="Inverted">
+                                                    <Binding Path="IsVisible"
+                                                             Mode="OneWay"
+                                                             UpdateSourceTrigger="PropertyChanged" />
+                                                    <Binding Path="Data.ChartMode"
+                                                             Source="{StaticResource proxy}" />
+                                                </MultiBinding>
+                                            </CheckBox.Visibility>
+                                            <TextBlock FlowDirection="LeftToRight"
+                                                       Foreground="White"
+                                                       Text="YLock" />
+                                        </CheckBox>
+                                        <TextBlock Name="tbCh"
+                                                   DockPanel.Dock="Left"
+                                                   Margin="10,5"
+                                                   Foreground="White"
+                                                   Text="{Binding Path=ChannelName, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                   Visibility="{Binding Path=IsVisible, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                                   TextAlignment="Center">
+                                            <TextBlock.LayoutTransform>
+                                                <RotateTransform Angle="-90" />
+                                            </TextBlock.LayoutTransform>
+                                        </TextBlock>
+                                        <Label Name="tbYLabel"
+                                               DockPanel.Dock="Left"
+                                               Margin="2"
+                                               Foreground="White"
+                                               Content="{Binding Path=YLabel, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                               Visibility="{Binding Path=IsVisible, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                               HorizontalContentAlignment="Center">
+                                            <Label.LayoutTransform>
+                                                <RotateTransform Angle="-90" />
+                                            </Label.LayoutTransform>
+                                        </Label>
+                                    </DockPanel>
+
+                                </Border>
+                                <sci:SciChartSurface x:Name="channelSurface"
+                                                     SizeChanged="channelSurface_SizeChanged"
+                                                     sci:VisualXcceleratorEngine.IsEnabled="True"
+                                                     sci:VisualXcceleratorEngine.FallbackType="{x:Type sci:HighSpeedRenderSurface}"
+                                                     sci:VisualXcceleratorEngine.DowngradeWithoutException="False"
+                                                     sci:VisualXcceleratorEngine.EnableImpossibleMode="True"
+                                                     Height="{Binding Path=Height, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     Visibility="{Binding Path=IsVisible, ConverterParameter=Normal, Converter={StaticResource _Converter}, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                                     HorizontalAlignment="Stretch"
+                                                     Padding="0"
+                                                     Grid.Column="1">
+                                    <sci:SciChartSurface.RenderableSeries>
+                                        <sci:FastLineRenderableSeries AntiAliasing="False"
+                                                                      ResamplingPrecision="0"
+                                                                      DataSeries="{Binding ChannelSeries, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                      ResamplingMode="Auto"
+                                                                      IsDigitalLine="{Binding IsDigitalLine}"
+                                                                      StrokeThickness="2"
+                                                                      IsVisible="{Binding Path=IsVisible, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                                                      Stroke="{Binding Stroke, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                            <sci:FastLineRenderableSeries.RolloverMarkerTemplate>
+                                                <ControlTemplate>
+                                                    <Ellipse Width="7"
+                                                             Height="7"
+                                                             Fill="SlateGray"
+                                                             Stroke="SlateGray"
+                                                             StrokeThickness="1" />
+                                                </ControlTemplate>
+                                            </sci:FastLineRenderableSeries.RolloverMarkerTemplate>
+                                        </sci:FastLineRenderableSeries>
+                                    </sci:SciChartSurface.RenderableSeries>
+                                    <sci:SciChartSurface.XAxis>
+                                        <sci:NumericAxis AutoRange="{Binding Path=AutoRangeX, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         x:Name="stackX"
+                                                         DataRangeChanged="stackX_DataRangeChanged"
+                                                         VisibleRangeLimitMode="Min"
+                                                         DrawMajorGridLines="False"
+                                                         DrawMinorGridLines="False"
+                                                         VisibleRangeLimit="0,0"
+                                                         DrawMajorBands="False"
+                                                         VisibleRangeChanged="NumericAxis_VisibleRangeChanged"
+                                                         DrawLabels="False"
+                                                         VisibleRange="{Binding Path=XVisibleRange, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                        </sci:NumericAxis>
+                                    </sci:SciChartSurface.XAxis>
+                                    <sci:SciChartSurface.YAxis>
+                                        <sci:NumericAxis AutoRange="{Binding Path=AutoRangeY,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                                         VisibleRange="{Binding Path=YVisibleRange, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         DrawMajorGridLines="False"
+                                                         DrawMinorGridLines="False"
+                                                         DrawMajorBands="False"
+                                                         ScientificNotation="{Binding Path=ThresholdValue, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         TextFormatting="{Binding Path= TextForScientificNotation, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         Visibility="Visible">
+                                            <sci:NumericAxis.GrowBy>
+                                                <sci:DoubleRange Min="0.1"
+                                                                 Max="0.1" />
+                                            </sci:NumericAxis.GrowBy>
+                                        </sci:NumericAxis>
+                                    </sci:SciChartSurface.YAxis>
+                                    <sci:SciChartSurface.Annotations>
+                                        <sci:BoxAnnotation X1="5.0"
+                                                           Y1="5" />
+                                    </sci:SciChartSurface.Annotations>
+                                    <sci:SciChartSurface.ChartModifier>
+                                        <sci:ModifierGroup>
+                                            <customModifiers:RubberBandXyZoomModifierEx ExecuteOn="MouseRightButton"
+                                                                                        IsXAxisOnly="True"
+                                                                                        IsAnimated="False"
+                                                                                        ReceiveHandledEvents="True"
+                                                                                        FreqSampleSecMin="{Binding Path=Data.FreqSampleSecMin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Source={StaticResource proxy}}"
+                                                                                        FreqSampleSecMax="{Binding Path=Data.FreqSampleSecMax, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Source={StaticResource proxy}}"
+                                                                                        IsEnabled="{Binding Path=Data.ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Source={StaticResource proxy}}" />
+                                            <sci:ZoomPanModifier ZoomExtentsY="False"
+                                                                 ExecuteOn="MouseLeftButton"
+                                                                 XyDirection="XDirection"
+                                                                 ClipModeX="ClipAtExtents"
+                                                                 IsEnabled="{Binding Path=Data.ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Source={StaticResource proxy}}" />
+                                            <sci:ZoomExtentsModifier XyDirection="XDirection"
+                                                                     IsAnimated="False"
+                                                                     IsEnabled="{Binding Path=Data.ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Source={StaticResource proxy}}" />
+                                            <customModifiers:RightDoubleClickZoomExtentsModifier ExecuteOn="MouseDoubleClick"
+                                                                                                 XyDirection="YDirection"
+                                                                                                 IsEnabled="{Binding Path=Data.ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Source={StaticResource proxy}}" />
+                                            <customModifiers:MouseWheelZoomCustomModifier x:Name="mouseWheelZoomModifier"
+                                                                                          IsXOnly="true"
+                                                                                          IsEnabled="{Binding Path=Data.ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Source={StaticResource proxy}}" />
+                                            <customModifiers:ChartCanvasModifier x:Name="ChartCanvasModifier"
+                                                                                 CursorTop="{Binding Path=Data.CursorTop, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Source={StaticResource proxy}}"
+                                                                                 CursorBottom="{Binding Path=Data.CursorBottom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Source={StaticResource proxy}}"
+                                                                                 CursorLeft="{Binding Path=Data.CursorLeft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Source={StaticResource proxy}}"
+                                                                                 CursorRight="{Binding Path=Data.CursorRight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Source={StaticResource proxy}}"
+                                                                                 CursorSelectedIndex="{Binding Path=Data.CursorSelectedIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Source={StaticResource proxy}}"
+                                                                                 ExecuteOn="MouseLeftButton"
+                                                                                 MeasureCursor="MEASURECURSOR_X_ONLY"
+                                                                                 MeasureBorderVisible="{Binding Path=IsVisible, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                                                                 MeasureCursorVisible="{Binding Path=Data.IsMeasureCursorVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Source={StaticResource proxy}}"
+                                                                                 IsDragToScale="{Binding Path=Data.IsDragToScaleEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Source={StaticResource proxy}}"
+                                                                                 IsRollOver="{Binding Path=IsRollOverEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                                        </sci:ModifierGroup>
+                                    </sci:SciChartSurface.ChartModifier>
+                                </sci:SciChartSurface>
+                                <Border Grid.Column="1"
+                                        BorderThickness="0,0,0,1"
+                                        BorderBrush="#2D2C32"
+                                        VerticalAlignment="Bottom" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+            <!-- BottomAxis -->
+            <Grid Grid.Row="2"
+                  Margin="0"
+                  Grid.Column="1">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="50" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <StackPanel Orientation="Horizontal"
-                            Grid.Row="0"
-                            Grid.Column="1"
-                            Visibility="{Binding IsCounting, ConverterParameter=Normal,Converter={StaticResource _Converter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
-                    <Label Content="Counter:"
-                           Background="Transparent" />
-                    <Label Content="{Binding Path=ImageCounterNumber}"
-                           Background="Transparent" />
-                </StackPanel>
-                <Expander ExpandDirection="Right"
-                          Width="Auto"
-                          HorizontalAlignment="Left"
-                          IsExpanded="True"
-                          Grid.Row="0"
-                          Grid.Column="0"
-                          Grid.RowSpan="2">
-                    <Expander.Header>
-                        <TextBlock Text="Legend"
-                                   Foreground="White"
-                                   RenderTransformOrigin="0.5,0.5">
-                            <TextBlock.LayoutTransform>
-                                <RotateTransform Angle="-90" />
-                            </TextBlock.LayoutTransform>
-                        </TextBlock>
-                    </Expander.Header>
-                    <ListBox HorizontalAlignment="Left"
-                             SelectionMode="Extended"
-                             Height="Auto"
-                             VerticalAlignment="Top"
-                             ItemsSource="{Binding Path=ChannelViewModels, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <CheckBox IsChecked="{Binding Path=IsVisible, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
-                                          Content="{Binding Path=ChannelName}"
-                                          Foreground="{Binding Path=StrokeBrush}" />
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                        <ListBox.ItemContainerStyle>
-                            <Style TargetType="{x:Type ListBoxItem}">
-                                <Setter Property="IsSelected"
-                                        Value="{Binding IsVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                            </Style>
-                        </ListBox.ItemContainerStyle>
-                        <ListBox.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel Orientation="Vertical" />
-                            </ItemsPanelTemplate>
-                        </ListBox.ItemsPanel>
-                    </ListBox>
-                </Expander>
-                <ListBox Name="lbDataStack"
-                         Grid.Row="1"
-                         Grid.RowSpan="5"
-                         Grid.Column="1"
-                         VerticalAlignment="Center"
-                         BorderThickness="0"
-                         ItemContainerStyle="{StaticResource TimeChannelItemStyle}"
-                         ItemTemplate="{StaticResource DataChannelTemplate}"
-                         ItemsSource="{Binding Path=ChannelViewModels, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                         Grid.IsSharedSizeScope="True"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Grid}}}"
-                         PreviewMouseWheel="Stack_PreviewMouseWheel" />
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="32" />
+                </Grid.RowDefinitions>
+                <Border Grid.Column="0"
+                        Grid.Row="0"
+                        Margin="0"
+                        BorderThickness="0"
+                        BorderBrush="Transparent"
+                        Padding="0"
+                        Background="Transparent" />
+                <sci:SciChartSurface Grid.Column="1"
+                                     Grid.Row="0"
+                                     sci:VisualXcceleratorEngine.IsEnabled="True"
+                                     sci:VisualXcceleratorEngine.FallbackType="{x:Type sci:HighSpeedRenderSurface}"
+                                     sci:VisualXcceleratorEngine.DowngradeWithoutException="False"
+                                     sci:VisualXcceleratorEngine.EnableImpossibleMode="True"
+                                     x:Name="stackTimeAxisSurface"
+                                     HorizontalAlignment="Stretch"
+                                     Padding="0"
+                                     Width="300">
+                    <sci:SciChartSurface.XAxis>
+                        <sci:NumericAxis Height="30"
+                                         AxisAlignment="Bottom"
+                                         VisibleRange="{Binding XVisibleRangeStack, Mode=TwoWay}"
+                                         AxisTitle="Time"
+                                         VisibleRangeLimitMode="Min"
+                                         DrawMajorGridLines="False"
+                                         DrawMinorGridLines="False"
+                                         VisibleRangeLimit="0,0"
+                                         DrawMajorBands="False"
+                                         DrawLabels="True">
+                        </sci:NumericAxis>
+                    </sci:SciChartSurface.XAxis>
+                    <sci:SciChartSurface.YAxis>
+                        <sci:NumericAxis DrawMajorGridLines="False"
+                                         DrawMinorGridLines="False"
+                                         DrawMajorBands="False"
+                                         Width="30"
+                                         Visibility="Hidden">
+                            <sci:NumericAxis.GrowBy>
+                                <sci:DoubleRange Min="0.1"
+                                                 Max="0.1" />
+                            </sci:NumericAxis.GrowBy>
+                        </sci:NumericAxis>
+                    </sci:SciChartSurface.YAxis>
+                </sci:SciChartSurface>
+                <!-- Declare a scrollbar and bind to XAxis by ElementName binding -->
+                <sci:SciChartScrollbar Grid.Row="1"
+                                       Height="20"
+                                       x:Name="stackedViewXScrollbar"
+                                       SelectedRange="{Binding XVisibleRangeStack, Mode=TwoWay}"
+                                       Visibility="{Binding StackHorizontalDataScrollerVisibility}"
+                                       Grid.Column="1" />
             </Grid>
-        </ScrollViewer>
+        </Grid>
         <GridSplitter Grid.Row="1"
+                      Grid.Column="0"
+                      Grid.ColumnSpan="2"
                       Height="6"
                       ShowsPreview="True"
                       ResizeBehavior="PreviousAndNext"
@@ -235,6 +525,7 @@
         <!--  Define the listbox which will host the N channels of the Frequency Domain  -->
         <ScrollViewer Name="scvFreqStack"
                       Grid.Row="2"
+                      Grid.Column="0"
                       VerticalScrollBarVisibility="Auto"
                       Visibility="{Binding Path=SpecChViewModels.Count, ConverterParameter=Normal, Converter={StaticResource _IntVisConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
             <Grid>

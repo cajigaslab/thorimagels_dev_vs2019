@@ -14,7 +14,7 @@
     <General>
       <CenterScannersButton Visibility="Visible" />
       <GrayscaleForSingleChannel value="1" />
-      <ChannelTileViewSettings TilingEnableOption="False" />
+      <ChannelTileViewSettings TilingEnableOption="False"  VerticalTiling="1"/>
       <HistogramSettings ReducedBinValue="255" saturationCountVisibility="Collapsed"/>   
     </General>
     <CaptureSetup saveSnapshots="0" snapshotExperimentName="Snapshot" snapshotBaseName="Snapshot" saveExperimentInfo="0" savePath="">
@@ -79,9 +79,9 @@
         <OTMView Visibility="Collapsed" Exclusive="1"/>
         <BleachCalibrationTool Visibility="Collapsed" />
       </BleachView>
-	  <MultiLaserControlView Visibility="Collapsed" location="6" />
       <ZView Visibility="Visible" Invert="0" Invert2="0" location="2" zZeroVisibility="Visible" z2ZeroVisibility="Visible" InvertVisibility="Visible" InvertLimitsZ1="0" InvertLimitsZ2="0" Z1InvertPlusMinusButton="0" Z2InvertPlusMinusButton="0" enableContinuousZStackPreview="0" />
       <PowerView Visibility="Collapsed" location="3"/>
+	  <MultiLaserControlView Visibility="Collapsed" location="6" />
       <PinholeView Visibility="Collapsed" SwitchSizeWithADU="0" location="8"/>
       <XYView Visibility="Visible" SubColumnsMax="55" SubRowsMax="55" location="9" xZeroVisibility="Collapsed" yZeroVisibility="Collapsed" showInUM="1" showTileGrid="1" />
       <CaptureOptionsView Visibility="Collapsed" location="10" />
@@ -156,6 +156,7 @@
     </RunSample>
     <Review>
       <DeepZoomView Visibility="Collapsed"/>
+      <OpenInThorAnalysisButton Visibility="Collapsed"/>
     </Review>
     <OverlayManager showLineLength="0" showPolylineLength="0" />
     <HardwareSetup ImageDetector="Collapsed" BleachingScanner="Collapsed" ControlUnit="Collapsed" PMT1="Collapsed" PMT2="Collapsed" PMT3="Collapsed" PMT4="Collapsed" Shutter="Collapsed" ZStage="Collapsed" SecondaryZStage="Visible" PowerRegulator="Collapsed" BeamExpander="Collapsed" LaserSource="Collapsed" PinholeWheel="Collapsed" LightPath="Collapsed" XYStage="Visible" SpectrumFilter="Collapsed" ObjectiveTurret="Collapsed" BleachingSLM="Collapsed" BeamStabilizer="Collapsed" PowerRegulator2="Collapsed" EpiTurret="Collapsed" LAMP="Collapsed"/>

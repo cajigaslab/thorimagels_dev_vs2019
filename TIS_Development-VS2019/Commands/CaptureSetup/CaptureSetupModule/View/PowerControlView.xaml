@@ -63,7 +63,9 @@
                                        VoltageMax="{Binding Path=PockelsVoltageMax0,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                        PockelsBlankPercentage="{Binding Path=PockelsBlankPercentage0, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                        PockelsBlankingPhaseShiftPercent="{Binding Path=PockelsBlankingPhaseShiftPercent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                       PockelsBlankingPhaseShiftPercentVisibility="{Binding Path=PockelsBlankingPhaseShiftPercentVisibility, UpdateSourceTrigger=PropertyChanged}">
+                                       PockelsBlankingPhaseShiftPercentVisibility="{Binding Path=PockelsBlankingPhaseShiftPercentVisibility, UpdateSourceTrigger=PropertyChanged}"
+                                       PockelsDelayUS="{Binding Path=PockelsDelayUS0, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                       PockelsDelayVisibility="{Binding Path=PockelsDelayVisibility0, UpdateSourceTrigger=PropertyChanged}">
                     </pc:PowerControlUC>
                 </Grid>
             </TabItem>
@@ -105,7 +107,9 @@
                                        VoltageMax="{Binding Path=PockelsVoltageMax1,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                        PockelsBlankPercentage="{Binding Path=PockelsBlankPercentage1, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                        PockelsBlankingPhaseShiftPercent="{Binding Path=PockelsBlankingPhaseShiftPercent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                       PockelsBlankingPhaseShiftPercentVisibility="{Binding Path=PockelsBlankingPhaseShiftPercentVisibility, UpdateSourceTrigger=PropertyChanged}">
+                                       PockelsBlankingPhaseShiftPercentVisibility="{Binding Path=PockelsBlankingPhaseShiftPercentVisibility, UpdateSourceTrigger=PropertyChanged}"
+                                       PockelsDelayUS="{Binding Path=PockelsDelayUS1, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                       PockelsDelayVisibility="{Binding Path=PockelsDelayVisibility1, UpdateSourceTrigger=PropertyChanged}">
                     </pc:PowerControlUC>
                 </Grid>
             </TabItem>
@@ -147,7 +151,9 @@
                                        VoltageMax="{Binding Path=PockelsVoltageMax2,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                        PockelsBlankPercentage="{Binding Path=PockelsBlankPercentage2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                        PockelsBlankingPhaseShiftPercent="{Binding Path=PockelsBlankingPhaseShiftPercent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                       PockelsBlankingPhaseShiftPercentVisibility="{Binding Path=PockelsBlankingPhaseShiftPercentVisibility, UpdateSourceTrigger=PropertyChanged}">
+                                       PockelsBlankingPhaseShiftPercentVisibility="{Binding Path=PockelsBlankingPhaseShiftPercentVisibility, UpdateSourceTrigger=PropertyChanged}"
+                                       PockelsDelayUS="{Binding Path=PockelsDelayUS2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                       PockelsDelayVisibility="{Binding Path=PockelsDelayVisibility2, UpdateSourceTrigger=PropertyChanged}">
                     </pc:PowerControlUC>
                 </Grid>
             </TabItem>
@@ -189,7 +195,9 @@
                                        VoltageMax="{Binding Path=PockelsVoltageMax3,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                        PockelsBlankPercentage="{Binding Path=PockelsBlankPercentage3, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                        PockelsBlankingPhaseShiftPercent="{Binding Path=PockelsBlankingPhaseShiftPercent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                       PockelsBlankingPhaseShiftPercentVisibility="{Binding Path=PockelsBlankingPhaseShiftPercentVisibility, UpdateSourceTrigger=PropertyChanged}">
+                                       PockelsBlankingPhaseShiftPercentVisibility="{Binding Path=PockelsBlankingPhaseShiftPercentVisibility, UpdateSourceTrigger=PropertyChanged}"
+                                       PockelsDelayUS="{Binding Path=PockelsDelayUS3, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                       PockelsDelayVisibility="{Binding Path=PockelsDelayVisibility3, UpdateSourceTrigger=PropertyChanged}">
                     </pc:PowerControlUC>
                 </Grid>
             </TabItem>

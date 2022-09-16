@@ -316,6 +316,18 @@
             Extracts the Volume column of the PriceSeries as an array
             </summary>
         </member>
+        <member name="T:SciChart.Examples.ExternalDependencies.Helpers.VisualXcceleratorEngineHelper">
+            <summary>
+            Helper class that is used to force usage of VisualXcceleratorEngine for rendering.
+            </summary>
+        </member>
+        <member name="M:SciChart.Examples.ExternalDependencies.Helpers.VisualXcceleratorEngineHelper.ForceEnable(SciChart.Charting.Visuals.SciChartSurface)">
+            <summary>
+            Creates <see cref="T:SciChart.Drawing.VisualXcceleratorRasterizer.VisualXcceleratorRenderSurface" /> and assigns it to <see cref="P:SciChart.Charting.Visuals.SciChartSurfaceBase.RenderSurface" />.
+            If hardware acceleration is not supported assigns an instance of <see cref="T:SciChart.Drawing.HighSpeedRasterizer.HighSpeedRenderSurface" /> instead.
+            </summary>
+            <param name="scs"></param>
+        </member>
         <member name="T:SciChart.Examples.ExternalDependencies.Resources.Styles.AnnotationStylesResourceDictionary">
             <summary>
             AnnotationStylesResourceDictionary

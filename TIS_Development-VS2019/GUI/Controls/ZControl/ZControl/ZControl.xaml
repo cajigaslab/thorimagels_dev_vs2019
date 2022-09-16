@@ -1126,11 +1126,10 @@
                                                 ToolTip="Preset Z locations">
                                             <StackPanel Orientation="Horizontal">
                                                 <Button MinWidth="40"
-                                                    Margin="1"
-                                                    Command="{Binding Path=ZStage2GoToLocationCommand}"
-                                                    CommandParameter="0"
-                                                    Content="{Binding Path=ZStage2LocationNames[0],
-                                                                  UpdateSourceTrigger=PropertyChanged}">
+                                                        MaxWidth="50"
+                                                        Margin="1"
+                                                        Command="{Binding Path=ZStage2GoToLocationCommand}"
+                                                        CommandParameter="0">
                                                     <Button.ContextMenu>
                                                         <ContextMenu>
                                                             <MenuItem Name="btnPRCalSave0"
@@ -1139,13 +1138,15 @@
                                                                   Header="Save" />
                                                         </ContextMenu>
                                                     </Button.ContextMenu>
+                                                    <TextBlock Text="{Binding Path=ZStage2LocationNames[0], UpdateSourceTrigger=PropertyChanged}" 
+                                                               TextWrapping="Wrap" 
+                                                               TextAlignment="Center"/>
                                                 </Button>
                                                 <Button MinWidth="40"
-                                                    Margin="1"
-                                                    Command="{Binding Path=ZStage2GoToLocationCommand}"
-                                                    CommandParameter="1"
-                                                    Content="{Binding Path=ZStage2LocationNames[1],
-                                                                  UpdateSourceTrigger=PropertyChanged}">
+                                                        MaxWidth="50"
+                                                        Margin="1"
+                                                        Command="{Binding Path=ZStage2GoToLocationCommand}"
+                                                        CommandParameter="1">
                                                     <Button.ContextMenu>
                                                         <ContextMenu>
                                                             <MenuItem Name="btnPRCalSave1"
@@ -1154,13 +1155,15 @@
                                                                   Header="Save" />
                                                         </ContextMenu>
                                                     </Button.ContextMenu>
+                                                    <TextBlock Text="{Binding Path=ZStage2LocationNames[1], UpdateSourceTrigger=PropertyChanged}" 
+                                                               TextWrapping="Wrap" 
+                                                               TextAlignment="Center"/>
                                                 </Button>
                                                 <Button MinWidth="40"
-                                                    Margin="1"
-                                                    Command="{Binding Path=ZStage2GoToLocationCommand}"
-                                                    CommandParameter="2"
-                                                    Content="{Binding Path=ZStage2LocationNames[2],
-                                                                  UpdateSourceTrigger=PropertyChanged}">
+                                                        MaxWidth="50"
+                                                        Margin="1"
+                                                        Command="{Binding Path=ZStage2GoToLocationCommand}"
+                                                        CommandParameter="2" >
                                                     <Button.ContextMenu>
                                                         <ContextMenu>
                                                             <MenuItem Name="btnPRCalSave2"
@@ -1169,13 +1172,15 @@
                                                                   Header="Save" />
                                                         </ContextMenu>
                                                     </Button.ContextMenu>
+                                                    <TextBlock Text="{Binding Path=ZStage2LocationNames[2], UpdateSourceTrigger=PropertyChanged}" 
+                                                               TextWrapping="Wrap" 
+                                                               TextAlignment="Center"/>
                                                 </Button>
                                                 <Button MinWidth="40"
-                                                    Margin="1"
-                                                    Command="{Binding Path=ZStage2GoToLocationCommand}"
-                                                    CommandParameter="3"
-                                                    Content="{Binding Path=ZStage2LocationNames[3],
-                                                                  UpdateSourceTrigger=PropertyChanged}">
+                                                        MaxWidth="50"
+                                                        Margin="1"
+                                                        Command="{Binding Path=ZStage2GoToLocationCommand}"
+                                                        CommandParameter="3">
                                                     <Button.ContextMenu>
                                                         <ContextMenu>
                                                             <MenuItem Name="btnPRCalSave3"
@@ -1184,13 +1189,15 @@
                                                                   Header="Save" />
                                                         </ContextMenu>
                                                     </Button.ContextMenu>
+                                                    <TextBlock Text="{Binding Path=ZStage2LocationNames[3], UpdateSourceTrigger=PropertyChanged}" 
+                                                               TextWrapping="Wrap" 
+                                                               TextAlignment="Center"/>
                                                 </Button>
                                                 <Button MinWidth="40"
-                                                    Margin="1"
-                                                    Command="{Binding Path=ZStage2GoToLocationCommand}"
-                                                    CommandParameter="4"
-                                                    Content="{Binding Path=ZStage2LocationNames[4],
-                                                                  UpdateSourceTrigger=PropertyChanged}">
+                                                        MaxWidth="50"
+                                                        Margin="1"
+                                                        Command="{Binding Path=ZStage2GoToLocationCommand}"
+                                                        CommandParameter="4">
                                                     <Button.ContextMenu>
                                                         <ContextMenu>
                                                             <MenuItem Name="btnPRCalSave4"
@@ -1199,13 +1206,15 @@
                                                                   Header="Save" />
                                                         </ContextMenu>
                                                     </Button.ContextMenu>
+                                                    <TextBlock Text="{Binding Path=ZStage2LocationNames[4], UpdateSourceTrigger=PropertyChanged}" 
+                                                               TextWrapping="Wrap" 
+                                                               TextAlignment="Center"/>
                                                 </Button>
                                                 <Button MinWidth="40"
-                                                    Margin="1"
-                                                    Command="{Binding Path=ZStage2GoToLocationCommand}"
-                                                    CommandParameter="5"
-                                                    Content="{Binding Path=ZStage2LocationNames[5],
-                                                                  UpdateSourceTrigger=PropertyChanged}">
+                                                        MaxWidth="50"
+                                                        Margin="1"
+                                                        Command="{Binding Path=ZStage2GoToLocationCommand}"
+                                                        CommandParameter="5">
                                                     <Button.ContextMenu>
                                                         <ContextMenu>
                                                             <MenuItem Name="btnPRCalSave5"
@@ -1214,6 +1223,9 @@
                                                                   Header="Save" />
                                                         </ContextMenu>
                                                     </Button.ContextMenu>
+                                                    <TextBlock Text="{Binding Path=ZStage2LocationNames[5], UpdateSourceTrigger=PropertyChanged}" 
+                                                               TextWrapping="Wrap" 
+                                                               TextAlignment="Center"/>
                                                 </Button>
                                             </StackPanel>
                                         </StackPanel>

@@ -426,6 +426,12 @@ long ThorBCMPA::TeardownDevice()
 	{
 		if(_deviceDetected[i] == TRUE)
 		{
+			//Close the shutter when disconnecting the device
+			SetParam(PARAM_SHUTTER_POS, SHUTTER_CLOSED);
+			PreflightPosition();
+			SetupPosition();
+			StartPosition();
+
 			_serialPort[i].Close();
 			_deviceDetected[i] = FALSE;
 		}
@@ -1174,8 +1180,8 @@ long ThorBCMPA::BuildParamTable()
 	commandBytes.assign(commandBytesBCMPA0Shutter, commandBytesBCMPA0Shutter + sizeof(commandBytesBCMPA0Shutter)/sizeof(commandBytesBCMPA0Shutter[0]));
 	tempParamInfo = new ParamInfo(
 		PARAM_SHUTTER_POS,	//ID
-		1,					//VAL
-		0,					//PARAM C
+		SHUTTER_CLOSED,		//VAL
+		SHUTTER_CLOSED,		//PARAM C
 		TRUE,				//PARAM B
 		TYPE_LONG,			//TYPE
 		TRUE,				//AVAILABLE
@@ -1193,8 +1199,8 @@ long ThorBCMPA::BuildParamTable()
 	commandBytes.assign(commandBytesBCMPA1Shutter, commandBytesBCMPA1Shutter + sizeof(commandBytesBCMPA1Shutter)/sizeof(commandBytesBCMPA1Shutter[0]));
 	tempParamInfo = new ParamInfo(
 		PARAM_SHUTTER2_POS,	//ID
-		1,					//VAL
-		0,					//PARAM C
+		SHUTTER_CLOSED,		//VAL
+		SHUTTER_CLOSED,		//PARAM C
 		TRUE,				//PARAM B
 		TYPE_LONG,			//TYPE
 		TRUE,				//AVAILABLE

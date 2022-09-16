@@ -289,7 +289,6 @@ void CWinDVI::DestroyDVIWindow()
 // populate bitmap buffers up to MAX_BUFFER_CNT count
 long CWinDVI::EditBMP(int id, unsigned char* bmpBuf, BITMAPINFO bmpInfo)
 {
-	long ret = TRUE;
 	if ((NULL == bmpBuf) || (0 > id) || (MAX_BUFFER_CNT <= id))
 		return FALSE;
 
@@ -305,7 +304,30 @@ long CWinDVI::EditBMP(int id, unsigned char* bmpBuf, BITMAPINFO bmpInfo)
 	}
 
 	LeaveCriticalSection(&mCriticalSection);
-	return ret;
+	return TRUE;
+}
+
+// get bitmap buffer at index when available
+long CWinDVI::GetBMP(int id, unsigned char* bmpBuf, BITMAPINFO& bmpInfo)
+{
+	if ((0 > id) || (MAX_BUFFER_CNT <= id) || 0 > _bmpBufID)
+		return FALSE;
+
+	EnterCriticalSection(&mCriticalSection);
+
+	// reset buffer if image size is not as expected
+	if (bmpInfo.bmiHeader.biSizeImage != bmi.bmiHeader.biSizeImage)
+	{
+		bmpBuf = (BYTE*)realloc((void*)bmpBuf, bmi.bmiHeader.biSizeImage);
+		if (NULL == bmpBuf)
+			return FALSE;
+	}
+
+	memcpy_s(bmpBuf, bmi.bmiHeader.biSizeImage, _bmpBuffers[id], bmi.bmiHeader.biSizeImage);
+	bmpInfo = bmi;
+
+	LeaveCriticalSection(&mCriticalSection);
+	return TRUE;
 }
 
 void CWinDVI::ClearBMPs()

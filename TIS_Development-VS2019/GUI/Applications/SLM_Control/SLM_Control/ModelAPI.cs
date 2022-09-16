@@ -24,12 +24,15 @@
         PARAM_SLM_TIMEOUT,
         PARAM_SLM_RUNTIME_CALC,
         PARAM_SLM_SEQ_FILENAME,
-        PARAM_SLM_CALIB_Z,
-        PARAM_SLM_NA,
+        PARAM_SLM_SKIP_FITTING,
         PARAM_SLM_WAVELENGTH,
         PARAM_SLM_WAVELENGTH_SELECT,
         PARAM_SLM_3D,
         PARAM_SLM_PHASE_DIRECT,
+        PARAM_SLM_DEFOCUS,
+        PARAM_SLM_SAVE_DEFOCUS,
+        PARAM_SLM_DUAL_SHIFT_PX,
+
     }
 
     public enum SLMFunctionMode
@@ -46,7 +49,7 @@
     {
         #region Fields
 
-        public const string DLL_NAME = ".\\ThorSLMPDM512.dll";
+        public const string DLL_NAME = ".\\ThorSLM.dll";
 
         #endregion Fields
 

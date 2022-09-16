@@ -23,6 +23,7 @@
     using ThorImageInfastructure;
 
     using ThorLogging;
+
     using ThorSharedTypes;
 
     /// <summary>
@@ -86,7 +87,7 @@
         /// <exception>NONE</exception>
         public void CommandShowDialogHandler(Command command)
         {
-            if (command.Message == "Run Sample LS" || command.Message == "Capture Setup" || command.Message == "ImageReview")
+            if (command.Message == "Run Sample LS" || command.Message == "Capture Setup" || command.Message == "ImageReview" || command.Message == "ScriptManager" || command.Message == "Capture")
             {
                 if (_thorSyncConnection == true && command.Message == "Run Sample LS")
                 {
@@ -96,6 +97,30 @@
                 else if (_thorSyncConnection == false  && command.Message == "Run Sample LS")
                 {
                     sendData(_eventAggregator, "IPC_CONTROLLER", "RUN_SAMPLE", "TearDown"); // disconnect to thorsync when Capture Mode is Active
+                    _uncheckRemoteConnection = false;
+                }
+                //Fix for remote checkbox being checked even when off after running a script and heading back into Capture tab
+                //There is most likely a better fix - better logic as to when pipes should be established or when remote connection booleans are enabled/disabled
+                if (_thorSyncConnection == false && command.Message == "ScriptManager")
+                {
+                    _uncheckRemoteConnection = true;
+                }
+                //Update remote connection to false when switching back to Capture tab from Script tab
+                else if (_uncheckRemoteConnection == true && command.Message == "ScriptManager")
+                {
+                    _uncheckRemoteConnection = false;
+                    _thorSyncConnection = false;
+                }
+                //Set a boolean to know whether the Capture tab has been entered from Scripting while the remote connection was disabled
+                if (command.Message == "Capture" && _uncheckRemoteConnection == true)
+                {
+                    _captureScriptManager = true;
+                }
+                //Update the remote connection to false when it was disabled upon entering the Capture tab within a script
+                if (_captureScriptManager == true && command.Message == "ScriptManager")
+                {
+                    _captureScriptManager = false;
+                    _thorSyncConnection = false;
                 }
                 _modeThorImage = command.Message;
             }

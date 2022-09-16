@@ -123,7 +123,7 @@ static TsiSDK *get_tsi_sdk(char *path)
 TsiSDK        *tsi_sdk        = 0;
 TSI_CREATE_SDK tsi_create_sdk = 0;
 
-   _tsi_dll_handle = LoadLibraryA("tsi_sdk.dll"); 
+   _tsi_dll_handle = LoadLibraryA("thorlabs_ccd_tsi_sdk.dll"); 
    if(_tsi_dll_handle == 0)  return tsi_sdk; 
 
    tsi_create_sdk = (TSI_CREATE_SDK)GetProcAddress(_tsi_dll_handle, "tsi_create_sdk");

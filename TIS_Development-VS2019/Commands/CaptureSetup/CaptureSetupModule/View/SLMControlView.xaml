@@ -208,7 +208,7 @@
                     Command="{Binding Path=EditSLMParamRelayCommand}"
                     CommandParameter="SLM_IMPORT"
                     IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
-                <TextBlock ToolTip="Import custom SLM bleaching patterns.">Import</TextBlock>
+                <TextBlock ToolTip="Import or Export custom SLM bleaching patterns.">Im/Export</TextBlock>
             </Button>
         </StackPanel>
         <StackPanel Grid.Row="3">

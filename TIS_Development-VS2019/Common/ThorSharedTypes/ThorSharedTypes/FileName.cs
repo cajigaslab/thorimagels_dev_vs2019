@@ -43,7 +43,9 @@
             }
             if (null != FileExtension)
             {
-                NameWithoutNumber = name.Substring(0, name.Length - FileExtension.Length);
+                NameWithoutNumber = (name.Contains(INDEX_SEPARATOR) && !string.IsNullOrEmpty(NameNumber)) ?
+                        name.Substring(0, name.Length - FileExtension.Length - NumDigits - INDEX_SEPARATOR.Length) :
+                        name.Substring(0, name.Length - FileExtension.Length);
             }
         }
 
@@ -61,7 +63,8 @@
                 FileExtension = name.Substring(name.LastIndexOf('.'), name.Length - name.LastIndexOf('.'));
                 if (name.LastIndexOf(separator) < name.LastIndexOf('.') - 1)
                 {
-                    NameNumber = name.Substring(name.LastIndexOf(separator) + 1, name.Length - name.LastIndexOf('.'));
+                    NameNumber = (0 < name.LastIndexOf(separator)) ?
+                        name.Substring(name.LastIndexOf(separator) + 1, name.Length - name.LastIndexOf('.')) : "000";
                 }
             }
             else if ((0 < name.LastIndexOf(separator)) && (name.LastIndexOf(separator) < (name.Length - 1)))
@@ -114,7 +117,7 @@
                 if (String.IsNullOrEmpty(value))
                     throw new ArgumentException("Argument Filename Cannot Be Null Or Empty");
 
-                NameWithoutExtension = value;
+                NameWithoutExtension = Path.GetFileNameWithoutExtension(value);
             }
         }
 
@@ -190,6 +193,7 @@
             set
             {
                 NameNumber = GetNumberAtEndAsString(value);
+
                 NameWithoutNumber = value.Substring(0, value.Length - NameNumber.Length - (NameNumber.Length > 0 ? 1 : 0));
             }
         }

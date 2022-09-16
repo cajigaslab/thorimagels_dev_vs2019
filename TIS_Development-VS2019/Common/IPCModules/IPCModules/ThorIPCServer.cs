@@ -280,6 +280,7 @@
                             else
                             {
                                 sendData(_eventAggregator, "IPC_CONTROLLER", "RUN_SAMPLE", "TearDown");
+                                _thorSyncConnection = false;
                             }
                         }
                         break;

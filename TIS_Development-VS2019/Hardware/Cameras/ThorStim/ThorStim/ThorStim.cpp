@@ -330,7 +330,8 @@ long ThorStim::CheckConfigNI()
 	_numDigiLines = 1;	//include dummy line for future application
 	_digiBleachSelect = 0x1;
 	_digiLineStr = "";
-	//verify pockels digital lines count compatible with pockels lines count
+	//verify pockels digital lines count compatible with pockels lines count,
+	//we haven't add dummy line at this point, so count of _digiLines is 1 short.
 	for (int i = 0; i < MAX_GG_POCKELS_CELL_COUNT; i++)
 	{
 		BLEACHSCAN_DIGITAL_LINENAME eEnum = BLEACHSCAN_DIGITAL_LINENAME::DIGITAL_LINENAME_LAST;
@@ -339,6 +340,7 @@ long ThorStim::CheckConfigNI()
 		if (EnumString<BLEACHSCAN_DIGITAL_LINENAME>::To(eEnum, eStr))
 			_digiLines[eEnum-1] = (0 >= _pockelsLine[i].length()) ? "" : _digiLines[eEnum-1];
 	}
+	string dummyLine = GetDevIDName("/Dev2") + "/port0/line6";
 	//verity pockels digital lines
 	for (int i = 0, j = 0; i < ThorStimXML::NUM_WAVEFORM_ATTRIBUTES; i++)
 	{
@@ -351,7 +353,8 @@ long ThorStim::CheckConfigNI()
 				LogMessage(message,ERROR_EVENT);
 				return FALSE;
 			}
-			if (0 == j)	_digiLineStr = GetDevIDName(_digiLines[i]) + "/port0/line6";
+			dummyLine = GetDevIDName(_digiLines[i]) + "/port0/line6";
+			if (0 == j)	_digiLineStr = dummyLine;
 			_digiLineStr += ",";
 			_digiLineStr += _digiLines[i].c_str();
 			_digiBleachSelect |= (0x1 << (i+1));
@@ -369,6 +372,9 @@ long ThorStim::CheckConfigNI()
 			return FALSE;
 		}
 	}
+	//add dummy line so that count of digilines is aligned with enum and _numDigiLines
+	_digiLines.insert(_digiLines.begin(), dummyLine);
+
 	if (1 < devMaps.size() && 1 < rtsiAvailable[0])
 	{
 		StringCbPrintfW(message,_MAX_PATH,L"RTSI is not configured, all must be on the same device.");

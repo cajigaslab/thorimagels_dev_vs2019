@@ -40,6 +40,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.Xaml.Behaviors">
+      <HintPath>..\..\..\..\Tools\Microsoft.Xaml.Behaviors\Microsoft.Xaml.Behaviors.dll</HintPath>
+    </Reference>
     <Reference Include="ROIUserControl">
       <HintPath>..\..\ROIUserControl\bin\Debug\ROIUserControl.dll</HintPath>
     </Reference>
@@ -68,6 +71,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Compile Include="..\..\..\..\Common\SliderDragEndBehavior.cs">
+      <Link>SliderDragEndBehavior.cs</Link>
+    </Compile>
     <Compile Include="ScanControl.xaml.cs">
       <DependentUpon>ScanControl.xaml</DependentUpon>
       <SubType>Code</SubType>

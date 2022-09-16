@@ -207,7 +207,7 @@
         public void GetLightPathSequenceStepMCLS(ref int mainLaserSel, ref int laser1Enable, ref double laser1Power, ref double laser1PowerPercent,
             ref int laser2Enable, ref double laser2Power, ref double laser2PowerPercent,
             ref int laser3Enable, ref double laser3Power, ref double laser3PowerPercent,
-            ref int laser4Enable, ref double laser4Power, ref double laser4PowerPercent,
+            ref int laser4Enable, ref double laser4Power, ref double laser4PowerPercent, ref int laserTTL, ref int laserAnalog,
             ref int laser1Wavelength, ref int laser2Wavelength, ref int laser3Wavelength, ref int laser4Wavelength)
         {
             if (null != _lightPathSequenceStepNode)
@@ -219,6 +219,10 @@
                     if (GetAttribute(mclsNdList[0], "MainLaserSelection", ref str))
                     {
                         Int32.TryParse(str, out mainLaserSel);
+                    }
+                    if (GetAttribute(mclsNdList[0], "allanalog", ref str))
+                    {
+                        Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out laserAnalog);
                     }
                     if (GetAttribute(mclsNdList[0], "enable1", ref str))
                     {
@@ -284,6 +288,10 @@
                     {
                         Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out laser4PowerPercent);
                     }
+                    if (GetAttribute(mclsNdList[0], "allttl", ref str))
+                    {
+                        Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out laserTTL);
+                    }
 
                     //Used to determine whether wavelength should be displayed when hovering over sequential capture Light Path
                     if (GetAttribute(mclsNdList[0], "wavelength1", ref str))
@@ -348,7 +356,7 @@
             }
         }
 
-        public void GetLightPathSequenceStepPMT(ref int pmt1Gain, ref int pmt2Gain, ref int pmt3Gain, ref int pmt4Gain)
+        public void GetLightPathSequenceStepPMT(ref double pmt1Gain, ref double pmt2Gain, ref double pmt3Gain, ref double pmt4Gain)
         {
             if (null != _lightPathSequenceStepNode)
             {
@@ -358,19 +366,19 @@
                     string str = string.Empty;
                     if (GetAttribute(pmtNdList[0], "gainA", ref str))
                     {
-                        Int32.TryParse(str, out pmt1Gain);
+                        Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out pmt1Gain);
                     }
                     if (GetAttribute(pmtNdList[0], "gainB", ref str))
                     {
-                        Int32.TryParse(str, out pmt2Gain);
+                        Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out pmt2Gain);
                     }
                     if (GetAttribute(pmtNdList[0], "gainC", ref str))
                     {
-                        Int32.TryParse(str, out pmt3Gain);
+                        Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out pmt3Gain);
                     }
                     if (GetAttribute(pmtNdList[0], "gainD", ref str))
                     {
-                        Int32.TryParse(str, out pmt4Gain);
+                        Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out pmt4Gain);
                     }
                 }
             }

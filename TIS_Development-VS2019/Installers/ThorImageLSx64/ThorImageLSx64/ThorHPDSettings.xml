@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ThorHPDSettings>
+	<Detector1 portID="55" baudRate="460800" serialNumber="1" type="5" />
+  <Detector2 portID="56" baudRate="460800" serialNumber="2" type="5" />
+  <Detector3 portID="57" baudRate="460800" serialNumber="3" type="5" />
+  <Detector4 portID="58" baudRate="460800" serialNumber="4" type="5" />
+  <Detector5 portID="59" baudRate="460800" serialNumber="5" type="5" />
+  <Detector6 portID="60" baudRate="460800" serialNumber="6" type="5" />
+  
+  <DetectorGain gain1="7000" gain2="7000" gain3="7000" gain4="7000" />
+</ThorHPDSettings>

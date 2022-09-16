@@ -128,8 +128,8 @@
       <AdditionalDependencies>NIDAQmx.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command> if $(Configuration) == Debug  copy $(SolutionDir)$(Platform)\$(Configuration)\$(TargetFileName) $(SolutionDir)..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\$(Configuration)\Modules_Native
- if $(Configuration) == Debug  copy $(SolutionDir)\ThorSLMSettings.xml $(SolutionDir)..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\$(Configuration)</Command>
+      <Command> if $(Configuration) == Debug  copy $(SolutionDir)$(Platform)\$(Configuration)\$(TargetFileName) $(ProjectDir)..\..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\$(Configuration)\Modules_Native
+ if $(Configuration) == Debug  copy $(ProjectDir)..\ThorSLMSettings.xml $(ProjectDir)..\..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\$(Configuration)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

@@ -2,30 +2,7 @@
 #include "Strsafe.h"
 #include "..\..\PDLL\pdll.h"
 
-#ifdef LOGGING_ENABLED
-extern std::auto_ptr<LogDll> logDll;
-#endif
 
-extern wchar_t message[_MAX_PATH];
-extern DWORD startTime;
-
-static void LogMessage(wchar_t *logMsg,long eventLevel)
-{
-#ifdef LOGGING_ENABLED
-	logDll->TLTraceEvent(eventLevel, 1, logMsg);
-#endif
-}
-
-static void LogPerformance(const wchar_t* wstr)
-{
-#ifdef LOGGING_ENABLED
-	long elapsedTime = static_cast<long>((GetTickCount() - startTime));
-	std::wstring strLog = std::wstring(wstr) + L" %d";
-	StringCbPrintfW(message,_MAX_PATH, strLog.c_str(), static_cast<long>(elapsedTime));
-	LogMessage(message,VERBOSE_EVENT);								
-	startTime = GetTickCount();
-#endif
-}
 
 static long GetMutex(HANDLE mutex)
 {
@@ -112,13 +89,52 @@ private:
 	double		_voltPerPixel;
 
 public:
-	LineSegment(Cartesian2D startPoint, Cartesian2D endPoint);
-	void SetVoltPerPixel(double voltPerPixel);
-	double GetLineLength();
-	double GetMaxXYLength();
-	Cartesian2D GetUnitVector(double direction);
-	Cartesian2D GetEndPoint();
-	Cartesian2D GetStartPoint();
+	//LineSegment(Cartesian2D startPoint, Cartesian2D endPoint);
+	//void SetVoltPerPixel(double voltPerPixel);
+	//double GetLineLength();
+	//double GetMaxXYLength();
+	//Cartesian2D GetUnitVector(double direction);
+	//Cartesian2D GetEndPoint();
+	//Cartesian2D GetStartPoint();
+
+///Line Vector: Start->End
+	LineSegment::LineSegment(Cartesian2D start, Cartesian2D end)
+	{
+		_startPoint = start;
+		_endPoint = end;
+		_length = sqrt(pow((_endPoint.First() - _startPoint.First()), 2) + pow(((_endPoint.Second() - _startPoint.Second())), 2));
+		_vector = _endPoint - _startPoint;
+		_unitVector = _vector / _length;
+	}
+
+	double LineSegment::GetLineLength()
+	{
+		return _length;
+	}
+
+	double LineSegment::GetMaxXYLength()
+	{
+		return (_endPoint.First() - _startPoint.First()) > (_endPoint.Second() - _startPoint.Second()) ? (_endPoint.First() - _startPoint.First()) : (_endPoint.Second() - _startPoint.Second());
+	}
+
+	Cartesian2D LineSegment::GetUnitVector(double direction)
+	{
+		return _unitVector * direction;
+	}
+
+	Cartesian2D LineSegment::GetEndPoint()
+	{
+		return _endPoint;
+	}
+
+	Cartesian2D LineSegment::GetStartPoint()
+	{
+		return _startPoint;
+	}
 };
 
-typedef std::vector<LineSegment> LineSegVec;	
+
+typedef std::vector<LineSegment> LineSegVec;
+
+
+

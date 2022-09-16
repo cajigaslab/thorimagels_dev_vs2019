@@ -836,16 +836,6 @@ DllExportLiveImage SaveSLMPattern(const wchar_t* bmpPatternName)
 	return ret;
 }
 
-DllExportLiveImage ResetAffineCalibration()
-{
-	return SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_RESET_AFFINE,TRUE, IDevice::DeviceSetParamType::NO_EXECUTION);
-}
-
-DllExportLiveImage SetSLMBlank()
-{
-	return SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_BLANK,TRUE, IDevice::DeviceSetParamType::NO_EXECUTION);
-}
-
 DllExportLiveImage StopLiveBleach() 
 {
 	stopBleach = TRUE;

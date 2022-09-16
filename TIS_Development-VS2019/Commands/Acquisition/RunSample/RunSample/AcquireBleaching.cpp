@@ -783,7 +783,7 @@ long AcquireBleaching::CaptureStream(ICamera* pCamera, char* pMemoryBuffer, long
 	//Read the size of the dma buffer from the lower level and use that if it is larger
 	double dmaFrm = 0;
 	pCamera->GetParam(ICamera::PARAM_CAMERA_DMA_BUFFER_COUNT, dmaFrm);
-	long dmaFrames = max(static_cast<long>(dmaFrm), dmaFrames);
+	long dmaFrames = max(static_cast<long>(dmaFrm), 4);
 
 	//No preview if occupied buffer is over the limit
 	double dmaInUseLimit = (20 <= dmaFrames) ? 0.90 : 0.60;
@@ -1312,7 +1312,7 @@ long AcquireBleaching::PreCaptureProtocol(ICamera * pCamera, long index, long su
 	return ret;
 }
 
-void  AcquireBleaching::PostCaptureProtocol(long streaming, long currentT, long numFrames, SaveParams *sp)
+void AcquireBleaching::PostCaptureProtocol(long streaming, long currentT, long numFrames, SaveParams *sp)
 {
 	//save timing information to file after capture is done
 	SaveTimingToExperimentFolder();
@@ -1469,6 +1469,23 @@ long AcquireBleaching::Execute(long index, long subWell)
 		return FALSE;
 	}
 
+	//get the resonant scanner as soon as possible
+	double camTypeVal;
+	pCamera->GetParam(ICamera::PARAM_LSM_TYPE, camTypeVal);
+	long camType = static_cast<long>(camTypeVal);
+
+	IDevice* pControlUnit = NULL;
+	pControlUnit = GetDevice(SelectedHardware::SELECTED_CONTROLUNIT);
+	if (NULL != pControlUnit && (ICamera::LSMType::GALVO_RESONANCE == (ICamera::LSMType)camType))
+	{
+		pControlUnit->SetParam(IDevice::PARAM_SCANNER_ENABLE, TRUE);
+		pControlUnit->PreflightPosition();
+		pControlUnit->SetupPosition();
+		pControlUnit->StartPosition();
+		pControlUnit->PostflightPosition();
+	}
+	clock_t start = std::clock();
+
 	long photoBleachingEnable,laserPositiion,durationMS, bleachTrigger, preBleachingFrames, bleachWidth, bleachHeight,bleachOffsetX,bleachOffsetY, bleachingFrames, bleachFieldSize, postBleachingFrames1, postBleachingFrames2,preBleachingStream,postBleachingStream1,postBleachingStream2,powerEnable,laserEnable,bleachQuery,bleachPostTrigger,enableSimultaneousBleachingAndImaging,pmtEnableDuringBleach[4];
 	double powerPosition,preBleachingInterval,postBleachingInterval1,postBleachingInterval2,areaAngle,dwellTime,crsFrequencyHz = 0;
 	long areaMode,scanMode,interleave,pixelX,pixelY,channel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[4];
@@ -1520,12 +1537,7 @@ long AcquireBleaching::Execute(long index, long subWell)
 	SetLEDs(_pExp, pCamera, 0, ledPower1, ledPower2, ledPower3, ledPower4, ledPower5, ledPower6);
 
 	//enable and set the relevent PMTs
-	//also start the resonance scanner
 	SetPMT();
-	//The scanner is turned off and then on. This may
-	//be due to the scanner not accepting the ON
-	ScannerEnable(0,TRUE);
-	ScannerEnable(1,TRUE);
 
 	//initialize the progress indicator
 	CallSaveImage(0, FALSE);
@@ -1541,14 +1553,20 @@ long AcquireBleaching::Execute(long index, long subWell)
 
 	SaveParams sp;
 
+	double lightPathTypeVal;
+	pCamera->GetParam(ICamera::PARAM_LIGHTPATH_TYPE, lightPathTypeVal);
+	long lightPathType = static_cast<long>(lightPathTypeVal);
+
 	//Verify configuration before start:
 	if(ICamera::HW_MULTI_FRAME_TRIGGER_FIRST == postTrigMode || TRUE == enableSimultaneousBleachingAndImaging)
 	{
 		//return if using bleacher(Galvo/Galvo) same as detector:
-		double camVal, bleachVal;
-		pCamera->GetParam(ICamera::PARAM_LSM_TYPE,camVal);
+		double bleachVal;
+
 		pBleachScanner->GetParam(ICamera::PARAM_LSM_TYPE,bleachVal);
-		if((ICamera::GALVO_GALVO == (ICamera::LSMType)static_cast<long> (bleachVal)) && ((ICamera::GALVO_GALVO == (ICamera::LSMType)static_cast<long> (camVal))))
+
+		//TODO: for 5.0 we need to allow having RGG in one path and GG (bleacher) in another path. if that's the case then we can allow simultatinous or triggered, this is not supported in 4.3 however
+		if((ICamera::GALVO_GALVO == (ICamera::LSMType)static_cast<long> (bleachVal)) && ((ICamera::GALVO_GALVO == (ICamera::LSMType)camType)) || ICamera::LightPathType::LIGHTPATHTYPE_RESONANCE_GALVO_GALVO == lightPathType)
 		{
 			MessageBox(NULL,L"Bleach Scanner and Image Detector cannot both be GalvoGalvo when using Hardware Trigger or Simultaneous mode during bleaching acquisition.",L"HW Trigger Error", MB_OK | MB_DEFAULT_DESKTOP_ONLY | MB_ICONWARNING);
 			//Close the shutter before returning
@@ -1590,7 +1608,33 @@ long AcquireBleaching::Execute(long index, long subWell)
 	//prebleach acquisition
 	Dimensions d;
 	PreCaptureProtocol(pCamera, index, subWell, preBleachingStream, preBleachingFrames, FALSE, channel, &d, &sp);
+
+	double duration = (clock() - start) / (double)CLOCKS_PER_SEC * 1000; //ms
+	//wait for the Resonance scanner to stabilize
+	long MIN_DURATION = 200; //ms
+	double durationDiff = MIN_DURATION - duration;
+	if (0 < durationDiff)
+	{
+		Sleep(static_cast<long>(durationDiff));
+	}
+
 	AcquireBleaching::captureStatus = Capture(pCamera,currentT,preBleachingStream,preBleachingFrames,preBleachingInterval,d,&sp,FALSE);
+
+	bool needToStopStartRScanner = (ICamera::LSMType::GALVO_RESONANCE == camType) && (ICamera::LightPathType::LIGHTPATHTYPE_RESONANCE_GALVO_GALVO == lightPathType);
+	//need to stop it if light path is RGG
+	if (NULL != pControlUnit && needToStopStartRScanner)
+	{
+		pControlUnit->SetParam(IDevice::PARAM_SCANNER_ENABLE, FALSE);
+		pControlUnit->PreflightPosition();
+		pControlUnit->SetupPosition();
+		pControlUnit->StartPosition();
+		pControlUnit->PostflightPosition();
+
+		//if the Resonant scanner and GG for stim are in the same light path (RGG scanhead) we need to stop
+		//the resonant scanner before we run the stim and wait a second which experimentally is how long it takes to stop
+		Sleep(1000);
+	}
+
 	PostCaptureProtocol(preBleachingStream, currentT, preBleachingFrames, &sp);
 	if(FALSE == AcquireBleaching::captureStatus)
 	{
@@ -1837,6 +1881,19 @@ long AcquireBleaching::Execute(long index, long subWell)
 
 	PostBleachProtocol(_pExp,pCamera);
 
+	//need to restarted again, usually if light path is RGG. TODO: this may change in 5.0 when support for RGG and GG lightpaths is available in single ThorDAQ
+	if (NULL != pControlUnit && needToStopStartRScanner)
+	{
+		pControlUnit->SetParam(IDevice::PARAM_SCANNER_ENABLE, TRUE);
+		pControlUnit->PreflightPosition();
+		pControlUnit->SetupPosition();
+		pControlUnit->StartPosition();
+		pControlUnit->PostflightPosition();
+
+		start = std::clock();
+	}
+	
+
 	//PMT settings may have changed during bleaching. 
 	//Set the PMTs to the acquisition state after bleaching is done
 	SetPMT();
@@ -1865,6 +1922,17 @@ long AcquireBleaching::Execute(long index, long subWell)
 	{
 		//postbleach acquisition 1
 		PreCaptureProtocol(pCamera, index, subWell, postBleachingStream1, postBleachingFrames1, FALSE, channel, &d, &sp);
+
+		duration = (clock() - start) / (double)CLOCKS_PER_SEC * 1000; //ms
+		//wait for the Resonance scanner to stabilize
+		long MIN_DURATION = 200; //ms
+		double durationDiff = MIN_DURATION - duration;
+		if (0 < durationDiff)
+		{
+			Sleep(static_cast<long>(durationDiff));
+		}
+
+
 		AcquireBleaching::captureStatus = Capture(pCamera,currentT,postBleachingStream1,postBleachingFrames1,postBleachingInterval1,d,&sp,FALSE);
 		PostCaptureProtocol(postBleachingStream1, currentT, postBleachingFrames1, &sp);
 	}
@@ -1887,7 +1955,6 @@ long AcquireBleaching::Execute(long index, long subWell)
 
 	//stop the scanner before processing the images
 	ScannerEnable(0,FALSE);
-	ScannerEnable(1,FALSE);
 
 	//notice user of converting (or combining) files
 	StringCbPrintfW(message, MSG_LENGTH, L"Preparing output files, please wait ...");
@@ -2493,6 +2560,7 @@ void AcquireBleaching::PreBleachProtocol(IExperiment  *exp, ICamera * pBleachSca
 		p5 = start;
 
 		double param = 0;
+		string slmDLLName;
 
 		if(pBleachScanner->GetParam(ICamera::PARAM_LSM_POCKELS_CONNECTED_0,param) && (1 == static_cast<long>(param)))
 		{
@@ -2505,7 +2573,7 @@ void AcquireBleaching::PreBleachProtocol(IExperiment  *exp, ICamera * pBleachSca
 				case 0: param = ICamera::PARAM_LSM_POCKELS_POWER_LEVEL_PERCENTAGE_0; break;
 				case 1: param = ICamera::PARAM_LSM_POCKELS_POWER_LEVEL_PERCENTAGE_1; break;
 				case 2: param = ICamera::PARAM_LSM_POCKELS_POWER_LEVEL_PERCENTAGE_2; break;
-				case 3: param = ICamera::PARAM_LSM_POCKELS_POWER_LEVEL_PERCENTAGE_2; break;
+				case 3: param = ICamera::PARAM_LSM_POCKELS_POWER_LEVEL_PERCENTAGE_3; break;
 				}
 
 				pBleachScanner->SetParam(param, powerPosition);				
@@ -2515,7 +2583,9 @@ void AcquireBleaching::PreBleachProtocol(IExperiment  *exp, ICamera * pBleachSca
 			p2 = powerPosition;
 			p3 = powerPosition;
 		}
-		else if(NULL != pPowerReg)
+		//Power Reg 1 should only be moved if the SLM is disconnected, there are no controls for the stimulation power in the SLM panel. So it shouldn't
+		//change the power if it was enabled in regular stimulation mode.
+		else if(NULL != pPowerReg &&(TRUE == pHardware->GetActiveHardwareDllName("Devices", "SLM", slmDLLName) && 0 == slmDLLName.compare("Disconnected")))
 		{
 			SetDevicePosition(pPowerReg,IDevice::PARAM_POWER_POS,powerPosition,TRUE);
 			p4 = powerPosition;
@@ -2705,7 +2775,7 @@ DllExport_RunSample LoadSLMPattern(long runtimeCal, long id, const wchar_t* blea
 	long ret = TRUE;
 	string slmDLLName;
 	if((TRUE == pHardware->GetActiveHardwareDllName("Devices","SLM", slmDLLName)) && 
-		(0 == slmDLLName.compare("ThorSLMPDM512")))
+		(std::string::npos != slmDLLName.find("ThorSLM")))
 	{
 		SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_RUNTIME_CALC, runtimeCal, IDevice::DeviceSetParamType::NO_EXECUTION);
 		SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_FUNC_MODE,IDevice::SLMFunctionMode::LOAD_PHASE_ONLY, IDevice::DeviceSetParamType::NO_EXECUTION);

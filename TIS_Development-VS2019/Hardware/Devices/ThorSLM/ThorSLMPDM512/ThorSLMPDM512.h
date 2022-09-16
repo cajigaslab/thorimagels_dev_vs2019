@@ -21,7 +21,6 @@ extern "C"
 		static Blink_SDK* _blinkSDK;
 		static unsigned int _slmTimeout; ///<timeout value for overdrive SLM, can be multiple of min value
 		static MemoryStruct<unsigned char> _slmTempBuf; ///<temperary buffer for calculation of transient frames
-		static mutex _callbackMutex; ///<mutex lock to update static params used in callback
 
 		std::string _pSlmName;///<slm device name
 		long _deviceCount; ///<how many SLM being detected
@@ -41,6 +40,7 @@ extern "C"
 		long GetParam(const long paramID, double& param);
 		long SetParam(const long paramID, const double param);
 		long TeardownSLM();
+		long GetParamBuffer(const long paramID, char* pBuffer, long size);
 		long SetParamBuffer(const long paramID, char* pBuffer, long size);
 		long StartSLM();
 		long StopSLM();

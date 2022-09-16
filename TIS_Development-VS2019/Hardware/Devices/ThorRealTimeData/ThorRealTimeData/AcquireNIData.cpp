@@ -1827,6 +1827,13 @@ long AcquireNIData::VerifyNIBoard(BoardInfo* board)
 					searchDev = "PCIe-6321";
 				}				
 			}	
+			else if (0 == strcmp(board->name.c_str(), "NI6323"))
+			{
+				if (std::string::npos == typeStr.find("PCIe-6323"))
+				{
+					searchDev = "PCIe-6323";
+				}
+			}
 			else if(0 == strcmp(board->name.c_str(),"NI6341"))
 			{
 				board->bStyle = BoardStyle::USB;
@@ -1835,6 +1842,13 @@ long AcquireNIData::VerifyNIBoard(BoardInfo* board)
 					searchDev = "USB-6341 (BNC)";
 				}				
 			}	
+			else if (0 == strcmp(board->name.c_str(), "NI6343"))
+			{
+				if (std::string::npos == typeStr.find("PCIe-6343"))
+				{
+					searchDev = "PCIe-6343";
+				}
+			}
 		}		
 
 		//generate device map for later check:

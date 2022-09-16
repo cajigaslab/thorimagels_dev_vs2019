@@ -54,6 +54,11 @@ echo F | xcopy /F "..\..\..\..\Tools\AviFile\bin\Release\AviFile.dll" .\bin\Rele
 @echo Copying Library LibTiff.NET40
 echo F | xcopy /F "..\..\..\..\Tools\LibTiff.Net40\Debug\BitMiracle.LibTiff.NET40.dll" .\bin\Release
 echo F | xcopy /F "..\..\..\..\Tools\LibTiff.Net40\Debug\BitMiracle.LibTiff.NET40.xml" .\bin\Release
+
+@echo Copying Library Microsoft.Xaml.Behaviors
+echo F | xcopy /F "..\..\..\..\Tools\Microsoft.Xaml.Behaviors\Microsoft.Xaml.Behaviors.dll" .\bin\Release
+echo F | xcopy /F "..\..\..\..\Tools\Microsoft.Xaml.Behaviors\Microsoft.Xaml.Behaviors.xml" .\bin\Release
+
 REM @echo Copying Library uart for kurios
 REM echo F | xcopy /F "..\..\..\..\Tools\uartlibrary\x64\uart_library_ftdi64.dll" .\bin\Release
 
@@ -272,6 +277,9 @@ echo F | xcopy /F ..\..\..\..\Common\ExperimentManager\x64\Release\ExperimentMan
 echo F | xcopy /F ..\..\..\..\Common\ImageManager\x64\Release\ImageManager.dll .\bin\Release\
 echo F | xcopy /F ..\..\..\..\Common\ResourceManager\x64\Release\ResourceManager.dll .\bin\Release\
 echo F | xcopy /F ..\..\..\..\Common\RoiDataStore\x64\Release\RoiDataStore.dll .\bin\Release
+echo F | xcopy /F ..\..\..\..\Common\ConvertUtilities\x64\Release\ClassicTiffConverter.dll .\bin\Release\Modules_Native
+echo F | xcopy /F ..\..\..\..\Common\ConvertUtilities\Libs\classic_tiff_library\*.dll .\bin\Release\Modules_Native
+echo F | xcopy /F ..\..\..\..\Common\ConvertUtilities\Libs\ImageStoreLibrary\ome_tiff_library.dll .\bin\Release\Modules_Native
 echo F | xcopy /F ..\..\..\..\Common\ImageStoreLibrary\bin\vs2012\Release\*.dll .\bin\Release\Modules_Native
 echo F | xcopy /F ..\..\..\..\Common\Sample\x64\Release\Sample.dll .\bin\Release\Modules_Native
 echo F | xcopy /F ..\..\..\..\Common\HardwareCom\x64\Release\HardwareCom.dll .\bin\Release\Modules_Native

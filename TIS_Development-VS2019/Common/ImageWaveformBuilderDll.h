@@ -3,7 +3,7 @@
 #include <string>
 #include "./PDLL/pdll.h"
 #include "BlockRingBuffer.h"
-
+#include "GeometryUtilities/ImageWaveformBuilder/GeometryUtilitiesCpp.h"
 #define BUF_REGION_COUNT	3
 
 enum BuilderType
@@ -74,6 +74,7 @@ class ImageWaveformBuilderDLL : public PDLL
 	DECLARE_FUNCTION0(void, ResetThorDAQGGalvoWaveformParams)
 	DECLARE_FUNCTION8(long, VerifyPolyLine, const long*, const long*, long, double, double, double, long , long&)
 	DECLARE_FUNCTION0(long, BuildPolyLine)
+	DECLARE_FUNCTION2(long, GetPolylineSegments, LineSegVec&, double&)
 	DECLARE_FUNCTION1(long, BuildSpiral, long)
 	DECLARE_FUNCTION1(uint64_t, GetCounter, SignalType)
 	DECLARE_FUNCTION0(void, ResetCounter)

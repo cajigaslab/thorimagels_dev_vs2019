@@ -5,6 +5,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:roi="clr-namespace:ROIUserControl;assembly=ROIUserControl"
              xmlns:local="clr-namespace:ScanControl"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"        
+             xmlns:b="clr-namespace:MyBehaviorAssembly"
              xmlns:sharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
              mc:Ignorable="d"
              Height="Auto"
@@ -53,16 +55,24 @@
                            Foreground="White"
                            Width="50"
                            VerticalAlignment="Center" />
-                    <Slider Width="180"
-                            Value="{Binding Path=PMTGain[0].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    <Slider Name="GainSlider1"
+                            Width="180"
+                            Value="{Binding Path=PMTGain[0].Value, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                             Minimum="{Binding Path=PMTGain[0].Min, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                             Maximum="{Binding Path=PMTGain[0].Max, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                             IsEnabled="{Binding ElementName=cbGain1, Path=IsChecked}"
-                            VerticalAlignment="Center" />
+                            VerticalAlignment="Center"
+                            ValueChanged="Slider_ValueChanged">
+                        <!--Slider behaviors requires us to set the value binding of the slider to OneWay mode and the value binding of SliderDragEndValueBehavior to TwoWay mode-->
+                        <i:Interaction.Behaviors>
+                            <b:SliderDragEndValueBehavior
+                                Value="{Binding Path=PMTGain[0].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </i:Interaction.Behaviors>
+                    </Slider>
                     <TextBox Width="50"
                              Height="25"
                              Name="tbPMT1Gain"
-                             Text="{Binding Path=PMTGain[0].Value, Mode=TwoWay}"
+                             Text="{Binding Path=PMTGain[0].Value, Mode=TwoWay, StringFormat='{}{0:0.##}'}"
                              IsEnabled="{Binding ElementName=cbGain1, Path=IsChecked}" />
                     <Button Width="30"
                             Height="25"
@@ -101,7 +111,7 @@
                         <Label Name="VoltagePMT1"
                                Content="{Binding Path=PMTVolt[0].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                Foreground="White"
-                               Width="40"
+                               Width="42"
                                VerticalAlignment="Center" />
                         <Label Content="[V]"
                                Foreground="White"
@@ -122,16 +132,24 @@
                            Foreground="White"
                            Width="50"
                            VerticalAlignment="Center" />
-                    <Slider Width="180"
-                            Value="{Binding Path=PMTGain[1].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    <Slider Name="GainSlider2"
+                            Width="180"
+                            Value="{Binding Path=PMTGain[1].Value, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                             Minimum="{Binding Path=PMTGain[1].Min, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                             Maximum="{Binding Path=PMTGain[1].Max, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                             IsEnabled="{Binding ElementName=cbGain2, Path=IsChecked}"
-                            VerticalAlignment="Center" />
+                            VerticalAlignment="Center"
+                            ValueChanged="Slider_ValueChanged">
+                        <!--Slider behaviors requires us to set the value binding of the slider to OneWay mode and the value binding of SliderDragEndValueBehavior to TwoWay mode-->
+                        <i:Interaction.Behaviors>
+                            <b:SliderDragEndValueBehavior
+                                Value="{Binding Path=PMTGain[1].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </i:Interaction.Behaviors>
+                    </Slider>
                     <TextBox Width="50"
                              Name="tbPMT2Gain"
                              Height="25"
-                             Text="{Binding Path=PMTGain[1].Value, Mode=TwoWay}"
+                             Text="{Binding Path=PMTGain[1].Value, Mode=TwoWay, StringFormat='{}{0:0.##}'}"
                              IsEnabled="{Binding ElementName=cbGain2, Path=IsChecked}" />
                     <Button Width="30"
                             Height="25"
@@ -170,7 +188,7 @@
                         <Label Name="VoltagePMT2"
                                Content="{Binding Path=PMTVolt[1].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                Foreground="White"
-                               Width="40"
+                               Width="42"
                                VerticalAlignment="Center" />
                         <Label Content="[V]"
                                Foreground="White"
@@ -191,16 +209,24 @@
                            Foreground="White"
                            Width="50"
                            VerticalAlignment="Center" />
-                    <Slider Width="180"
-                            Value="{Binding Path=PMTGain[2].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    <Slider Name="GainSlider3"
+                            Width="180"
+                            Value="{Binding Path=PMTGain[2].Value, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                             Minimum="{Binding Path=PMTGain[2].Min, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                             Maximum="{Binding Path=PMTGain[2].Max, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                             IsEnabled="{Binding ElementName=cbGain3, Path=IsChecked}"
-                            VerticalAlignment="Center" />
+                            VerticalAlignment="Center"
+                            ValueChanged="Slider_ValueChanged">
+                        <!--Slider behaviors requires us to set the value binding of the slider to OneWay mode and the value binding of SliderDragEndValueBehavior to TwoWay mode-->
+                        <i:Interaction.Behaviors>
+                            <b:SliderDragEndValueBehavior
+                                Value="{Binding Path=PMTGain[2].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </i:Interaction.Behaviors>
+                    </Slider>
                     <TextBox Width="50"
                              Name="tbPMT3Gain"
                              Height="25"
-                             Text="{Binding Path=PMTGain[2].Value, Mode=TwoWay}"
+                             Text="{Binding Path=PMTGain[2].Value, Mode=TwoWay, StringFormat='{}{0:0.##}'}"
                              IsEnabled="{Binding ElementName=cbGain3, Path=IsChecked}" />
                     <Button Width="30"
                             Height="25"
@@ -239,7 +265,7 @@
                         <Label Name="VoltagePMT3"
                                Content="{Binding Path=PMTVolt[2].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                Foreground="White"
-                               Width="40"
+                               Width="42"
                                VerticalAlignment="Center" />
                         <Label Content="[V]"
                                Foreground="White"
@@ -260,16 +286,24 @@
                            Foreground="White"
                            Width="50"
                            VerticalAlignment="Center" />
-                    <Slider Width="180"
-                            Value="{Binding Path=PMTGain[3].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    <Slider Name="GainSlider4"
+                            Width="180"
+                            Value="{Binding Path=PMTGain[3].Value, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                             Minimum="{Binding Path=PMTGain[3].Min, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                             Maximum="{Binding Path=PMTGain[3].Max, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                             IsEnabled="{Binding ElementName=cbGain4, Path=IsChecked}"
-                            VerticalAlignment="Center" />
+                            VerticalAlignment="Center"
+                            ValueChanged="Slider_ValueChanged">
+                        <!--Slider behaviors requires us to set the value binding of the slider to OneWay mode and the value binding of SliderDragEndValueBehavior to TwoWay mode-->
+                        <i:Interaction.Behaviors>
+                            <b:SliderDragEndValueBehavior
+                                Value="{Binding Path=PMTGain[3].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </i:Interaction.Behaviors>
+                    </Slider>
                     <TextBox Width="50"
                              Name="tbPMT4Gain"
                              Height="25"
-                             Text="{Binding Path=PMTGain[3].Value, Mode=TwoWay}"
+                             Text="{Binding Path=PMTGain[3].Value, Mode=TwoWay, StringFormat='{}{0:0.##}'}"
                              IsEnabled="{Binding ElementName=cbGain4, Path=IsChecked}" />
                     <Button Width="30"
                             Height="25"
@@ -308,7 +342,7 @@
                         <Label Name="VoltagePMT4"
                                Content="{Binding Path=PMTVolt[3].Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                Foreground="White"
-                               Width="40"
+                               Width="42"
                                VerticalAlignment="Center" />
                         <Label Content="[V]"
                                Foreground="White"
@@ -401,8 +435,7 @@
                                 <TextBox x:Name="txtTwoWayCoarse"
                                          Width="50"
                                          Height="25"
-                                         Text="{Binding LSMTwoWayAlignmentCoarse, Mode=TwoWay}"
-                                         TextChanged="txtTwoWayCoarse_TextChanged" />
+                                         Text="{Binding LSMTwoWayAlignmentCoarse, Mode=TwoWay}" />
                                 <Button Width="30"
                                         Height="25"
                                         Content="✓">
@@ -501,7 +534,6 @@
                                 Minimum="{Binding Path=LSMPixelDwellTimeMinIndex, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                 Maximum="{Binding Path=LSMPixelDwellTimeMaxIndex, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                 Value="{Binding Path=LSMPixelDwellTimeIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                ValueChanged="slDwellTime_ValueChanged"
                                 PreviewMouseUp="slDwellTime_PreviewMouseUp"
                                 GotMouseCapture="slDwellTime_GotMouseCapture"
                                 IsEnabled="{Binding Path=DwellTimeSliderEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />

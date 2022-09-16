@@ -1205,6 +1205,22 @@
             Gets the RenderableSeries3D Type to which this ViewModel will be associated
             </summary>
         </member>
+        <member name="T:SciChart.Charting3D.Model.ChartSeries.MountainRenderableSeries3DViewModel">
+            <summary></summary>
+        </member>
+        <member name="P:SciChart.Charting3D.Model.ChartSeries.MountainRenderableSeries3DViewModel.StrokeThickness">
+            <summary>
+            Gets or sets the StrokeThickness of the lines. 
+            </summary>
+        </member>
+        <member name="P:SciChart.Charting3D.Model.ChartSeries.MountainRenderableSeries3DViewModel.Fill">
+            <summary></summary>
+        </member>
+        <member name="P:SciChart.Charting3D.Model.ChartSeries.MountainRenderableSeries3DViewModel.ViewType">
+            <summary>
+            Gets the RenderableSeries3D Type to which this ViewModel will be associated
+            </summary>
+        </member>
         <member name="T:SciChart.Charting3D.Model.ChartSeries.PointLineRenderableSeries3DViewModel">
             <summary></summary>
         </member>
@@ -3807,6 +3823,17 @@
             Initializes a new instance of the <seealso cref="T:SciChart.Charting3D.Visuals.RenderableSeries.ImpulseRenderableSeries3DForMvvm" /> class.
             </summary>
         </member>
+        <member name="T:SciChart.Charting3D.Visuals.RenderableSeries.MountainRenderableSeries3DForMvvm">
+            <summary>
+            Defines a class which extends the original <see cref="T:SciChart.Charting3D.RenderableSeries.MountainRenderableSeries3D" /> and is created internally
+            per every <see cref="T:SciChart.Charting3D.Visuals.RenderableSeries.IRenderableSeries3DViewModel" /> of appropriate type in MVVM scenarios
+            </summary>
+        </member>
+        <member name="M:SciChart.Charting3D.Visuals.RenderableSeries.MountainRenderableSeries3DForMvvm.#ctor">
+            <summary>
+            Initializes a new instance of the <seealso cref="T:SciChart.Charting3D.Visuals.RenderableSeries.MountainRenderableSeries3DForMvvm" /> class.
+            </summary>
+        </member>
         <member name="T:SciChart.Charting3D.Visuals.RenderableSeries.PointLineRenderableSeries3DForMvvm">
             <summary>
             Defines a class which extends the original <see cref="T:SciChart.Charting3D.RenderableSeries.PointLineRenderableSeries3D" /> and is created internally
@@ -3875,6 +3902,11 @@
             </summary>
             <param name="sender">The sender.</param>
             <param name="e">The <see cref="T:System.EventArgs" /> instance containing the event data.</param>
+        </member>
+        <member name="M:SciChart.Charting3D.Visuals.RenderableSeries.Waterfall.MountainSceneEntity.Dispose(System.Boolean)">
+            <summary>
+            Releases unmanaged and - optionally - managed resources.
+            </summary>
         </member>
         <member name="T:SciChart.Charting3D.Visuals.RenderableSeries.Waterfall.WaterfallSceneEntity">
             <summary>
@@ -4294,11 +4326,6 @@
         <member name="F:SciChart.Charting3D.Visuals.Object.ObjSceneEntity._zCalc">
             <summary>
             The ZAxis <see cref="T:SciChart.Charting.Numerics.CoordinateCalculators.ICoordinateCalculator`1" />, which converts pixel to world coordinates. 
-            </summary>
-        </member>
-        <member name="M:SciChart.Charting3D.Visuals.Object.ObjSceneEntity.OnEngineRestart">
-            <summary>
-            Called when the D3DEngine Restarts. Meshes and DirectX related objects should be recreated
             </summary>
         </member>
         <member name="T:SciChart.Charting3D.Visuals.Primitives.Font3DStyle">
@@ -12215,6 +12242,16 @@
             <summary>
             Transforms data from an IPointSeries3D into series specific type,
             that holds all the necessary data to create mesh.
+            </summary>
+        </member>
+        <member name="F:SciChart.Charting3D.RenderableSeries.MountainRenderableSeries3D.StrokeThicknessProperty">
+            <summary>
+            Defines the StrokeThickness DependencyProperty.
+            </summary>
+        </member>
+        <member name="F:SciChart.Charting3D.RenderableSeries.MountainRenderableSeries3D.FillProperty">
+            <summary>
+            Defines the Fill DependencyProperty.
             </summary>
         </member>
         <member name="T:SciChart.Charting3D.RenderableSeries.ClipMode">

@@ -35,8 +35,8 @@ ThorDetector::ThorDetector()
 		_atenuationMax[i] = 0;
 		_gainSliderMin[i] = 0;
 		_gainSliderMax[i] = 100;
-		_offsetSliderMin[i] = 0;
-		_offsetSliderMax[i] = 100;
+		_offsetMinVolts[i] = 0;
+		_offsetMaxVolts[i] = 100;
 	}
 	_connectedPMTs = 0;
 	_deviceDetected[DEVICE_NUM] = FALSE;
@@ -149,6 +149,7 @@ long ThorDetector::FindDevices(long& deviceCount)
 				{
 					StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorDetector: Find device found more than 6 PMTs connected");
 					logDll->TLTraceEvent(ERROR_EVENT, 1, _errMsg);
+					ret = FALSE;
 				}
 			}
 		}
@@ -157,6 +158,7 @@ long ThorDetector::FindDevices(long& deviceCount)
 			wstring message = L"ThorDetector: Unable to find any serial device connected in the registry associated with this PID and VID " + _listOfTypes[i];
 			StringCbPrintfW(_errMsg, MSG_SIZE, message.c_str());
 			logDll->TLTraceEvent(INFORMATION_EVENT, 1, _errMsg);
+			ret = FALSE;
 		}
 	}
 
@@ -296,6 +298,7 @@ long ThorDetector::SelectDevice(const long device)
 								type = ConvertWStringToString(_listOfTypes[_detectorType[i]]);
 								pSetup->SetDetectorType(_deviceSignature[i], type);
 								ret = TRUE;
+								i++;
 							}
 						}
 					}
@@ -314,7 +317,6 @@ long ThorDetector::ConnectToComPort(wstring portName, long pmtIndex)
 	long portID = 0;
 	long ret = FALSE;
 	long count = 0;
-	long numberOfRetries = 5;
 	try
 	{
 		if (!portName.empty())
@@ -336,12 +338,7 @@ long ThorDetector::ConnectToComPort(wstring portName, long pmtIndex)
 				StringCbPrintfW(message, 512, L"ThorDetector: WARNING One of the detectors COM port is unavailable. Port: COM%d. Please change the COM port number of this detector to one that is not between 17 and 56 to avoid any conflicts in ThorImageLS. \nRecommended ports COM56 - COM62.", portID);
 				MessageBox(NULL, message, L"ThorDetector COM port warning", MB_OK | MB_DEFAULT_DESKTOP_ONLY | MB_ICONWARNING);
 			}
-			while (FALSE == _serialPort[pmtIndex].Open(portID, _baudRate) || numberOfRetries <= count)
-			{
-				count++;
-				Sleep(18);
-			}
-			if (numberOfRetries <= count)
+			if (FALSE == _serialPort[pmtIndex].Open(portID, _baudRate))
 			{
 				StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorDetector SelectDevice could not open serial port: %d", portID);
 				LogMessage(_errMsg, ERROR_EVENT);
@@ -527,15 +524,27 @@ long ThorDetector::GetParam(const long paramID, double& param)
 		case PARAM_PMT6_GAIN_POS_CURRENT_VOLTS:
 		{
 			double value = 0;
-			ExecuteCmd(_tableParams[paramID]->GetCmdBytes(), _tableParams[paramID]->GetDeviceIndex(), value, FALSE, returnedCommand);
-			if (MGMSG_GET_PMT_ATTENUATION == returnedCommand)
+			int pmtIndex = _tableParams[paramID]->GetDeviceIndex();
+			ExecuteCmd(_tableParams[paramID]->GetCmdBytes(), pmtIndex, value, FALSE, returnedCommand);
+			if (MGMSG_GET_PMT_GAIN == returnedCommand)
 			{
-				param = value;
+				// The Gain will only return > 0 from the device when the PMT is enabled, we need to be able to see the current Gain V even
+				//if the PMT is not enabled. Then in that case the value that was Set last will be used.
+				if (0 == value)
+				{
+					long paramVal = static_cast<long>(Round((_tableParams[_tableParams[paramID]->GetRelatedID()]->GetParamVal() / _gainSliderMax[pmtIndex] * ((double)_gainMax[pmtIndex] - _gainMin[pmtIndex])) + _gainMin[pmtIndex], 0));
+					param = _tableParams[_tableParams[paramID]->GetRelatedID()]->GetParamVal() == 0 ? value : paramVal;
+				}
+				else
+				{
+					param = value;
+				}
+				param = (DetectorTypes::HPD1000 == _detectorType[pmtIndex]) ? Round(-8000 * param / 4096, 0) : Round(5 * param / 4096, 3);
 				return TRUE;
 			}
 			else
 			{
-				StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorDetector: GetParam PARAM_PMT_GAIN_POS_CURRENT_VOLTS, incorrect header. Expected MGMSG_GET_PMT_ATTENUATION %d returned %d.", MGMSG_GET_PMT_ATTENUATION, returnedCommand);
+				StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorDetector: GetParam PARAM_PMT_GAIN_POS_CURRENT_VOLTS, incorrect header. Expected MGMSG_GET_PMT_GAIN %d returned %d.", MGMSG_GET_PMT_GAIN, returnedCommand);
 				LogMessage(_errMsg, ERROR_EVENT);
 			}
 			return FALSE;
@@ -552,7 +561,8 @@ long ThorDetector::GetParam(const long paramID, double& param)
 			ExecuteCmd(_tableParams[paramID]->GetCmdBytes(), _tableParams[paramID]->GetDeviceIndex(), value, FALSE, returnedCommand);
 			if (MGMSG_GET_PMT_OFFSET == returnedCommand)
 			{
-				param = Round((value - _offsetMin[pmtIndex]) * _offsetSliderMax[pmtIndex] / ((double)_offsetMax[pmtIndex] - _offsetMin[pmtIndex]), 3);
+				//param = Round((value - _offsetMin[pmtIndex]) * _offsetSliderMax[pmtIndex] / ((double)_offsetMax[pmtIndex] - _offsetMin[pmtIndex]), 3);
+				param = (600.0 * value / 4096.0 - 300.0) / MILIVOLTS_TO_VOLTS;
 				return TRUE;
 			}
 			else
@@ -619,9 +629,25 @@ long ThorDetector::GetParam(const long paramID, double& param)
 			param = (_deviceDetected[DEVICE_NUM]) ? (double)ConnectionStatusType::CONNECTION_READY : (double)ConnectionStatusType::CONNECTION_UNAVAILABLE;
 			return TRUE;
 		}
-		case PARAM_PMT_OFFSET_STEP_SIZE:
+		case PARAM_PMT1_OFFSET_STEP_SIZE:
+		case PARAM_PMT2_OFFSET_STEP_SIZE:
+		case PARAM_PMT3_OFFSET_STEP_SIZE:
+		case PARAM_PMT4_OFFSET_STEP_SIZE:
+		case PARAM_PMT5_OFFSET_STEP_SIZE:
+		case PARAM_PMT6_OFFSET_STEP_SIZE:
 		{
-			param = 2.0 * (static_cast<double>(_offsetSliderMax[_tableParams[paramID]->GetDeviceIndex()]) - static_cast<double>(_offsetSliderMin[_tableParams[paramID]->GetDeviceIndex()])) / (static_cast<double>(_offsetMax[_tableParams[paramID]->GetDeviceIndex()]) - static_cast<double>(_offsetMin[_tableParams[paramID]->GetDeviceIndex()]));
+			param = 2.0 * (static_cast<double>(_offsetMaxVolts[_tableParams[paramID]->GetDeviceIndex()]) - static_cast<double>(_offsetMinVolts[_tableParams[paramID]->GetDeviceIndex()])) / (static_cast<double>(_offsetMax[_tableParams[paramID]->GetDeviceIndex()]) - static_cast<double>(_offsetMin[_tableParams[paramID]->GetDeviceIndex()]));
+			param = (param < 0.001) ? 0.001 : param;
+			return TRUE;
+		}
+		case PARAM_PMT1_GAIN_STEP_SIZE:
+		case PARAM_PMT2_GAIN_STEP_SIZE:
+		case PARAM_PMT3_GAIN_STEP_SIZE:
+		case PARAM_PMT4_GAIN_STEP_SIZE:
+		case PARAM_PMT5_GAIN_STEP_SIZE:
+		case PARAM_PMT6_GAIN_STEP_SIZE:
+		{
+			param = (static_cast<double>(_gainSliderMax[_tableParams[paramID]->GetDeviceIndex()]) - static_cast<double>(_gainSliderMin[_tableParams[paramID]->GetDeviceIndex()])) / (static_cast<double>(_gainMax[_tableParams[paramID]->GetDeviceIndex()]) - static_cast<double>(_gainMin[_tableParams[paramID]->GetDeviceIndex()]));
 			return TRUE;
 		}
 		default:
@@ -926,7 +952,8 @@ long ThorDetector::ExecuteCmdParam(ParamInfo* pParamInfo)
 	case PARAM_PMT6_OUTPUT_OFFSET:
 	{
 		long pmtIndex = pParamInfo->GetDeviceIndex();
-		long paramVal = static_cast<long>(Round((pParamInfo->GetParamVal() / _offsetSliderMax[pmtIndex] * ((double)_offsetMax[pmtIndex] - _offsetMin[pmtIndex])) + _offsetMin[pmtIndex], 0));
+		//long paramVal = static_cast<long>(Round((pParamInfo->GetParamVal() / _offsetSliderMax[pmtIndex] * ((double)_offsetMax[pmtIndex] - _offsetMin[pmtIndex])) + _offsetMin[pmtIndex], 0));
+		long paramVal = static_cast<long>(Round(((pParamInfo->GetParamVal() * MILIVOLTS_TO_VOLTS) + 300.0) * 4096.0 / 600.0, 0));
 
 		std::vector<unsigned char> paramValBytes = GetBytes(paramVal);
 		cmd[6] = paramValBytes[0];
@@ -953,6 +980,19 @@ long ThorDetector::ExecuteCmdParam(ParamInfo* pParamInfo)
 		cmd[7] = paramValBytes[1];
 		cmd[8] = paramValBytes[2];
 		cmd[9] = paramValBytes[3];
+		double readBackVal = -1;
+		long index = pParamInfo->GetDeviceIndex();
+		ExecuteCmd(cmd, index, readBackVal, FALSE, returnedCommand);
+		break;
+	}
+	break;
+	case PARAM_PMT1_FIRMWAREUPDATE:
+	case PARAM_PMT2_FIRMWAREUPDATE:
+	case PARAM_PMT3_FIRMWAREUPDATE:
+	case PARAM_PMT4_FIRMWAREUPDATE:
+	case PARAM_PMT5_FIRMWAREUPDATE:
+	case PARAM_PMT6_FIRMWAREUPDATE:
+	{
 		double readBackVal = -1;
 		long index = pParamInfo->GetDeviceIndex();
 		ExecuteCmd(cmd, index, readBackVal, FALSE, returnedCommand);
@@ -1129,6 +1169,48 @@ long ThorDetector::RetrieveDevicesInfo()
 				}
 
 				_firmwareVersion[i] = to_string((unsigned char)buf[47]) + '.' + to_string((unsigned char)buf[46]) + '.' + to_string((unsigned char)buf[45]);
+				if (DetectorTypes::PMT3100 == _detectorType[i])
+				{
+					if ((int)buf[47] < 5)
+					{
+						if (_deviceDetected[i] == TRUE)
+						{
+							_serialPort[i].Close();
+							_deviceDetected[i] = FALSE;
+						}
+						wchar_t message[512];
+						StringCbPrintfW(message, 512, L"ThorDetector: ERROR Detector #%d has an older firmware. Please update the firmware of this detector to 5.1.6 or higher. Current firmware is: %d.%d.%d", i + 1, (int)buf[47], (int)buf[46], (int)buf[45]);
+						MessageBox(NULL, message, L"ThorDetector incorrect firmware", MB_OK | MB_DEFAULT_DESKTOP_ONLY | MB_ICONWARNING);
+					}
+					else if ((int)buf[47] == 5)
+					{
+						if ((int)buf[46] < 1)
+						{
+							if (_deviceDetected[i] == TRUE)
+							{
+								_serialPort[i].Close();
+								_deviceDetected[i] = FALSE;
+							}
+							wchar_t message[512];
+							StringCbPrintfW(message, 512, L"ThorDetector: ERROR Detector #%d has an older firmware. Please update the firmware of this detector to 5.1.6 or higher. Current firmware is: %d.%d.%d", i + 1, (int)buf[47], (int)buf[46], (int)buf[45]);
+							MessageBox(NULL, message, L"ThorDetector incorrect firmware", MB_OK | MB_DEFAULT_DESKTOP_ONLY | MB_ICONWARNING);
+						}
+						else if ((int)buf[46] == 1)
+						{
+							if ((int)buf[45] < 6)
+							{
+								if (_deviceDetected[i] == TRUE)
+								{
+									_serialPort[i].Close();
+									_deviceDetected[i] = FALSE;
+								}
+								wchar_t message[512];
+								StringCbPrintfW(message, 512, L"ThorDetector: ERROR Detector #%d has an older firmware. Please update the firmware of this detector to 5.1.6 or higher. Current firmware is: %d.%d.%d", i + 1, (int)buf[47], (int)buf[46], (int)buf[45]);
+								MessageBox(NULL, message, L"ThorDetector incorrect firmware", MB_OK | MB_DEFAULT_DESKTOP_ONLY | MB_ICONWARNING);
+							}
+						}
+					}
+				}
 			}
 			else
 			{
@@ -1191,6 +1273,8 @@ long ThorDetector::RetrieveDevicesInfo()
 				_gainMax[i] = ((unsigned char)buf[10] | (unsigned char)buf[11] << 8 | (unsigned char)buf[12] << 16 | (unsigned char)buf[13] << 24);
 				_offsetMin[i] = ((unsigned char)buf[14] | (unsigned char)buf[15] << 8 | (unsigned char)buf[16] << 16 | (unsigned char)buf[17] << 24);
 				_offsetMax[i] = ((unsigned char)buf[18] | (unsigned char)buf[19] << 8 | (unsigned char)buf[20] << 16 | (unsigned char)buf[21] << 24);
+				_offsetMinVolts[i] = (600.0 * _offsetMin[i] / 4096.0 - 300.0) / MILIVOLTS_TO_VOLTS;
+				_offsetMaxVolts[i] = (600.0 * _offsetMax[i] / 4096.0 - 300.0) / MILIVOLTS_TO_VOLTS;
 				//Check if the detector type matches what is read from the device
 				if (_detectorType[i] != buf[22])
 				{
@@ -1444,7 +1528,7 @@ long ThorDetector::BuildParamTable()
 		_defaultGain[0],
 		_defaultGain[0],
 		FALSE,
-		TYPE_LONG,
+		TYPE_DOUBLE,
 		TRUE,
 		FALSE,
 		_gainSliderMin[0],
@@ -1462,7 +1546,7 @@ long ThorDetector::BuildParamTable()
 		_defaultGain[1],
 		_defaultGain[1],
 		FALSE,
-		TYPE_LONG,
+		TYPE_DOUBLE,
 		TRUE,
 		FALSE,
 		_gainSliderMin[1],
@@ -1480,7 +1564,7 @@ long ThorDetector::BuildParamTable()
 		_defaultGain[2],
 		_defaultGain[2],
 		FALSE,
-		TYPE_LONG,
+		TYPE_DOUBLE,
 		TRUE,
 		FALSE,
 		_gainSliderMin[2],
@@ -1516,7 +1600,7 @@ long ThorDetector::BuildParamTable()
 		_defaultGain[4],
 		_defaultGain[4],
 		FALSE,
-		TYPE_LONG,
+		TYPE_DOUBLE,
 		TRUE,
 		FALSE,
 		_gainSliderMin[4],
@@ -1534,7 +1618,7 @@ long ThorDetector::BuildParamTable()
 		_defaultGain[5],
 		_defaultGain[5],
 		FALSE,
-		TYPE_LONG,
+		TYPE_DOUBLE,
 		TRUE,
 		FALSE,
 		_gainSliderMin[5],
@@ -1546,7 +1630,7 @@ long ThorDetector::BuildParamTable()
 	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT6_GAIN_POS, tempParamInfo));
 
 	//build table entry To request current PMT atenuation
-	unsigned char commandBytesReqPMTAtenuation[] = { 0x1B, 0x45, 0x00, 0x00, 0x21, 0x01 };
+	unsigned char commandBytesReqPMTAtenuation[] = { 0x11, 0x45, 0x00, 0x00, 0x21, 0x01 };
 	commandBytes.assign(commandBytesReqPMTAtenuation, commandBytesReqPMTAtenuation + sizeof(commandBytesReqPMTAtenuation) / sizeof(commandBytesReqPMTAtenuation[0]));
 	tempParamInfo = new ParamInfo(
 		PARAM_PMT1_GAIN_POS_CURRENT_VOLTS,
@@ -1562,7 +1646,7 @@ long ThorDetector::BuildParamTable()
 		_atenuationMin[0],
 		commandBytes,
 		0,
-		-1);
+		PARAM_PMT1_GAIN_POS);
 	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT1_GAIN_POS_CURRENT_VOLTS, tempParamInfo));
 
 	//build table entry To request current PMT atenuation
@@ -1580,7 +1664,7 @@ long ThorDetector::BuildParamTable()
 		_atenuationMin[1],
 		commandBytes,
 		1,
-		-1);
+		PARAM_PMT2_GAIN_POS);
 	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT2_GAIN_POS_CURRENT_VOLTS, tempParamInfo));
 
 	//build table entry To request current PMT atenuation
@@ -1598,7 +1682,7 @@ long ThorDetector::BuildParamTable()
 		_atenuationMin[2],
 		commandBytes,
 		2,
-		-1);
+		PARAM_PMT3_GAIN_POS);
 	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT3_GAIN_POS_CURRENT_VOLTS, tempParamInfo));
 
 	//build table entry To request current PMT atenuation
@@ -1616,7 +1700,7 @@ long ThorDetector::BuildParamTable()
 		_atenuationMin[3],
 		commandBytes,
 		3,
-		-1);
+		PARAM_PMT4_GAIN_POS);
 	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT4_GAIN_POS_CURRENT_VOLTS, tempParamInfo));
 
 	//build table entry To request current PMT atenuation
@@ -1634,7 +1718,7 @@ long ThorDetector::BuildParamTable()
 		_atenuationMin[4],
 		commandBytes,
 		4,
-		-1);
+		PARAM_PMT5_GAIN_POS);
 	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT5_GAIN_POS_CURRENT_VOLTS, tempParamInfo));
 
 	//build table entry To request current PMT atenuation
@@ -1652,7 +1736,7 @@ long ThorDetector::BuildParamTable()
 		_atenuationMin[5],
 		commandBytes,
 		5,
-		-1);
+		PARAM_PMT6_GAIN_POS);
 	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT6_GAIN_POS_CURRENT_VOLTS, tempParamInfo));
 
 	//build table entry for the device connection status
@@ -1797,9 +1881,9 @@ long ThorDetector::BuildParamTable()
 		TYPE_DOUBLE,
 		TRUE,
 		FALSE,
-		_offsetSliderMin[0],
-		_offsetSliderMax[0],
-		_offsetSliderMin[0],
+		_offsetMinVolts[0],
+		_offsetMaxVolts[0],
+		_offsetMinVolts[0],
 		commandBytes,
 		0,
 		-1);
@@ -1815,9 +1899,9 @@ long ThorDetector::BuildParamTable()
 		TYPE_DOUBLE,
 		TRUE,
 		FALSE,
-		_offsetSliderMin[1],
-		_offsetSliderMax[1],
-		_offsetSliderMin[1],
+		_offsetMinVolts[1],
+		_offsetMaxVolts[1],
+		_offsetMinVolts[1],
 		commandBytes,
 		1,
 		-1);
@@ -1833,9 +1917,9 @@ long ThorDetector::BuildParamTable()
 		TYPE_DOUBLE,
 		TRUE,
 		FALSE,
-		_offsetSliderMin[2],
-		_offsetSliderMax[2],
-		_offsetSliderMin[2],
+		_offsetMinVolts[2],
+		_offsetMaxVolts[2],
+		_offsetMinVolts[2],
 		commandBytes,
 		2,
 		-1);
@@ -1851,9 +1935,9 @@ long ThorDetector::BuildParamTable()
 		TYPE_DOUBLE,
 		TRUE,
 		FALSE,
-		_offsetSliderMin[3],
-		_offsetSliderMax[3],
-		_offsetSliderMin[3],
+		_offsetMinVolts[3],
+		_offsetMaxVolts[3],
+		_offsetMinVolts[3],
 		commandBytes,
 		3,
 		-1);
@@ -1869,9 +1953,9 @@ long ThorDetector::BuildParamTable()
 		TYPE_DOUBLE,
 		TRUE,
 		FALSE,
-		_offsetSliderMin[4],
-		_offsetSliderMax[4],
-		_offsetSliderMin[4],
+		_offsetMinVolts[4],
+		_offsetMaxVolts[4],
+		_offsetMinVolts[4],
 		commandBytes,
 		4,
 		-1);
@@ -1887,9 +1971,9 @@ long ThorDetector::BuildParamTable()
 		TYPE_DOUBLE,
 		TRUE,
 		FALSE,
-		_offsetSliderMin[5],
-		_offsetSliderMax[5],
-		_offsetSliderMin[5],
+		_offsetMinVolts[5],
+		_offsetMaxVolts[5],
+		_offsetMinVolts[5],
 		commandBytes,
 		5,
 		-1);
@@ -1907,9 +1991,9 @@ long ThorDetector::BuildParamTable()
 		TYPE_DOUBLE,
 		TRUE,
 		TRUE,
-		_offsetSliderMin[0],
-		_offsetSliderMax[0],
-		_offsetSliderMin[0],
+		_offsetMinVolts[0],
+		_offsetMaxVolts[0],
+		_offsetMinVolts[0],
 		commandBytes,
 		0,
 		-1);
@@ -1925,9 +2009,9 @@ long ThorDetector::BuildParamTable()
 		TYPE_DOUBLE,
 		TRUE,
 		TRUE,
-		_offsetSliderMin[1],
-		_offsetSliderMax[1],
-		_offsetSliderMin[1],
+		_offsetMinVolts[1],
+		_offsetMaxVolts[1],
+		_offsetMinVolts[1],
 		commandBytes,
 		1,
 		-1);
@@ -1943,9 +2027,9 @@ long ThorDetector::BuildParamTable()
 		TYPE_DOUBLE,
 		TRUE,
 		TRUE,
-		_offsetSliderMin[2],
-		_offsetSliderMax[2],
-		_offsetSliderMin[2],
+		_offsetMinVolts[2],
+		_offsetMaxVolts[2],
+		_offsetMinVolts[2],
 		commandBytes,
 		2,
 		-1);
@@ -1961,9 +2045,9 @@ long ThorDetector::BuildParamTable()
 		TYPE_DOUBLE,
 		TRUE,
 		TRUE,
-		_offsetSliderMin[3],
-		_offsetSliderMax[3],
-		_offsetSliderMin[3],
+		_offsetMinVolts[3],
+		_offsetMaxVolts[3],
+		_offsetMinVolts[3],
 		commandBytes,
 		3,
 		-1);
@@ -1979,9 +2063,9 @@ long ThorDetector::BuildParamTable()
 		TYPE_DOUBLE,
 		TRUE,
 		TRUE,
-		_offsetSliderMin[4],
-		_offsetSliderMax[4],
-		_offsetSliderMin[4],
+		_offsetMinVolts[4],
+		_offsetMaxVolts[4],
+		_offsetMinVolts[4],
 		commandBytes,
 		4,
 		-1);
@@ -1997,9 +2081,9 @@ long ThorDetector::BuildParamTable()
 		TYPE_DOUBLE,
 		TRUE,
 		TRUE,
-		_offsetSliderMin[5],
-		_offsetSliderMax[5],
-		_offsetSliderMin[5],
+		_offsetMinVolts[5],
+		_offsetMaxVolts[5],
+		_offsetMinVolts[5],
 		commandBytes,
 		5,
 		-1);
@@ -2129,8 +2213,8 @@ long ThorDetector::BuildParamTable()
 		TRUE,
 		TRUE,
 		BW_2_5MHz,
+		BW_300MHz,
 		BW_80MHz,
-		BW_2_5MHz,
 		commandBytes,
 		0,
 		-1);
@@ -2147,8 +2231,8 @@ long ThorDetector::BuildParamTable()
 		TRUE,
 		TRUE,
 		BW_2_5MHz,
+		BW_300MHz,
 		BW_80MHz,
-		BW_2_5MHz,
 		commandBytes,
 		1,
 		-1);
@@ -2165,8 +2249,8 @@ long ThorDetector::BuildParamTable()
 		TRUE,
 		TRUE,
 		BW_2_5MHz,
+		BW_300MHz,
 		BW_80MHz,
-		BW_2_5MHz,
 		commandBytes,
 		2,
 		-1);
@@ -2183,8 +2267,8 @@ long ThorDetector::BuildParamTable()
 		TRUE,
 		TRUE,
 		BW_2_5MHz,
+		BW_300MHz,
 		BW_80MHz,
-		BW_2_5MHz,
 		commandBytes,
 		3,
 		-1);
@@ -2201,8 +2285,8 @@ long ThorDetector::BuildParamTable()
 		TRUE,
 		TRUE,
 		BW_2_5MHz,
+		BW_300MHz,
 		BW_80MHz,
-		BW_2_5MHz,
 		commandBytes,
 		4,
 		-1);
@@ -2219,8 +2303,8 @@ long ThorDetector::BuildParamTable()
 		TRUE,
 		TRUE,
 		BW_2_5MHz,
+		BW_300MHz,
 		BW_80MHz,
-		BW_2_5MHz,
 		commandBytes,
 		5,
 		-1);
@@ -2672,8 +2756,8 @@ long ThorDetector::BuildParamTable()
 	//***end Update Firmware Commands***//
 
 	tempParamInfo = new ParamInfo(
-		PARAM_PMT_OFFSET_STEP_SIZE,
-		L"PARAM_PMT_OFFSET_STEP_SIZE",
+		PARAM_PMT1_OFFSET_STEP_SIZE,
+		L"PARAM_PMT1_OFFSET_STEP_SIZE",
 		FALSE,
 		FALSE,
 		FALSE,
@@ -2686,7 +2770,194 @@ long ThorDetector::BuildParamTable()
 		tmpCommandBytes,
 		0,
 		-1);
-	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT_OFFSET_STEP_SIZE, tempParamInfo));
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT1_OFFSET_STEP_SIZE, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT2_OFFSET_STEP_SIZE,
+		L"PARAM_PMT2_OFFSET_STEP_SIZE",
+		FALSE,
+		FALSE,
+		FALSE,
+		TYPE_DOUBLE,
+		TRUE,
+		TRUE,
+		0,
+		100,
+		0,
+		tmpCommandBytes,
+		1,
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT2_OFFSET_STEP_SIZE, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT3_OFFSET_STEP_SIZE,
+		L"PARAM_PMT3_OFFSET_STEP_SIZE",
+		FALSE,
+		FALSE,
+		FALSE,
+		TYPE_DOUBLE,
+		TRUE,
+		TRUE,
+		0,
+		100,
+		0,
+		tmpCommandBytes,
+		2,
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT3_OFFSET_STEP_SIZE, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT4_OFFSET_STEP_SIZE,
+		L"PARAM_PMT4_OFFSET_STEP_SIZE",
+		FALSE,
+		FALSE,
+		FALSE,
+		TYPE_DOUBLE,
+		TRUE,
+		TRUE,
+		0,
+		100,
+		0,
+		tmpCommandBytes,
+		3,
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT4_OFFSET_STEP_SIZE, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT5_OFFSET_STEP_SIZE,
+		L"PARAM_PMT5_OFFSET_STEP_SIZE",
+		FALSE,
+		FALSE,
+		FALSE,
+		TYPE_DOUBLE,
+		TRUE,
+		TRUE,
+		0,
+		100,
+		0,
+		tmpCommandBytes,
+		4,
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT5_OFFSET_STEP_SIZE, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT6_OFFSET_STEP_SIZE,
+		L"PARAM_PMT6_OFFSET_STEP_SIZE",
+		FALSE,
+		FALSE,
+		FALSE,
+		TYPE_DOUBLE,
+		TRUE,
+		TRUE,
+		0,
+		100,
+		0,
+		tmpCommandBytes,
+		5,
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT6_OFFSET_STEP_SIZE, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT1_GAIN_STEP_SIZE,
+		L"PARAM_PMT1_GAIN_STEP_SIZE",
+		FALSE,
+		FALSE,
+		FALSE,
+		TYPE_DOUBLE,
+		TRUE,
+		TRUE,
+		0,
+		100,
+		0,
+		tmpCommandBytes,
+		0,
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT1_GAIN_STEP_SIZE, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT2_GAIN_STEP_SIZE,
+		L"PARAM_PMT2_GAIN_STEP_SIZE",
+		FALSE,
+		FALSE,
+		FALSE,
+		TYPE_DOUBLE,
+		TRUE,
+		TRUE,
+		0,
+		100,
+		0,
+		tmpCommandBytes,
+		1,
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT2_GAIN_STEP_SIZE, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT3_GAIN_STEP_SIZE,
+		L"PARAM_PMT3_GAIN_STEP_SIZE",
+		FALSE,
+		FALSE,
+		FALSE,
+		TYPE_DOUBLE,
+		TRUE,
+		TRUE,
+		0,
+		100,
+		0,
+		tmpCommandBytes,
+		2,
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT3_GAIN_STEP_SIZE, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT4_GAIN_STEP_SIZE,
+		L"PARAM_PMT4_GAIN_STEP_SIZE",
+		FALSE,
+		FALSE,
+		FALSE,
+		TYPE_DOUBLE,
+		TRUE,
+		TRUE,
+		0,
+		100,
+		0,
+		tmpCommandBytes,
+		3,
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT4_GAIN_STEP_SIZE, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT5_GAIN_STEP_SIZE,
+		L"PARAM_PMT5_GAIN_STEP_SIZE",
+		FALSE,
+		FALSE,
+		FALSE,
+		TYPE_DOUBLE,
+		TRUE,
+		TRUE,
+		0,
+		100,
+		0,
+		tmpCommandBytes,
+		4,
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT5_GAIN_STEP_SIZE, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT6_GAIN_STEP_SIZE,
+		L"PARAM_PMT6_GAIN_STEP_SIZE",
+		FALSE,
+		FALSE,
+		FALSE,
+		TYPE_DOUBLE,
+		TRUE,
+		TRUE,
+		0,
+		100,
+		0,
+		tmpCommandBytes,
+		5,
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT6_GAIN_STEP_SIZE, tempParamInfo));
 
 	return TRUE;
 }

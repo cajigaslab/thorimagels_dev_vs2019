@@ -38,6 +38,7 @@ using namespace std;
 #define MSG_SIZE		256
 
 #define XY_COORD		2
+#define XYZ_COORD		3
 #define RGB_CNT			3
 #define LUT_SIZE		65536
 #define SLM_TIMEOUT_MIN	20000	//[ms]

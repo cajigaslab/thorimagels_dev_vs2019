@@ -711,12 +711,63 @@ void PreCaptureProtocol(IExperiment* exp)
 	double power3;
 	long enable4; 
 	double power4;
-
+	long allTTL;
+	long allAnalog;
+	long wavelength1;
+	long wavelength2;
+	long wavelength3;
+	long wavelength4;
 	long captureSequenceEnable = FALSE;
 	exp->GetCaptureSequence(captureSequenceEnable);
-	exp->GetMCLS(enable1, power1,enable2, power2,enable3, power3,enable4, power4);
-	//Pass whether sequential is enabled when applying the laser settings
-	RunSample::getInstance()->SetLaser(enable1, power1,enable2, power2,enable3, power3,enable4, power4, captureSequenceEnable);
+	exp->GetMCLS(enable1, power1, enable2, power2, enable3, power3, enable4, power4, allTTL, allAnalog, wavelength1, wavelength2, wavelength3, wavelength4);
+	//only set the power if TTL mode is on and analog mode is off, otherwise set it to 100
+	if (allAnalog == 0)
+	{
+		//Makes sure analog mode is off and laser power is set before imaging
+		SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER_ALL_ANALOG_MODE, FALSE, FALSE);
+		SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_POWER, power1, FALSE);
+		SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER2_POWER, power2, FALSE);
+		SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER3_POWER, power3, FALSE);
+		SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER4_POWER, power4, FALSE);
+	}
+	else
+	{
+		//Makes sure analog mode is on and power is set to 100 for all lasers before imaging
+		SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER_ALL_ANALOG_MODE, TRUE, FALSE);
+		SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_POWER, 100, FALSE);
+		SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER2_POWER, 100, FALSE);
+		SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER3_POWER, 100, FALSE);
+		SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER4_POWER, 100, FALSE);
+	}
+	
+	//only set the emission if TTL mode is off
+	if (allTTL == 0)
+	{
+		//Makes sure TTL mode is off and emission is turned on before imaging
+		SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER_ALL_TTL_MODE, FALSE, FALSE);
+		SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_EMISSION, TRUE, FALSE);
+		SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER2_EMISSION, TRUE, FALSE);
+		SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER3_EMISSION, TRUE, FALSE);
+		SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER4_EMISSION, TRUE, FALSE);
+	}
+	else 
+	{
+		//Makes sure TTL mode is on before imaging and the laser power is set
+		SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER_ALL_TTL_MODE, TRUE, FALSE);
+		SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_POWER, power1, FALSE);
+		SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER2_POWER, power2, FALSE);
+		SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER3_POWER, power3, FALSE);
+		SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER4_POWER, power4, FALSE);
+	}
+	//Make sure TTL and Analog mode are turned off before imaging if neither are enabled
+	if (allAnalog != 1 && allTTL != 1)  
+	{
+		//Makes sure TTL and Analog modes are turned off before imaging via USB
+		SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER_ALL_ANALOG_MODE, FALSE, FALSE);
+		SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER_ALL_TTL_MODE, FALSE, FALSE);
+	}
+	//Pass whether sequential is enabled and other parameters when applying the laser settings
+	RunSample::getInstance()->SetLaser(enable1, power1, enable2, power2, enable3, power3, enable4, power4, captureSequenceEnable, allTTL, allAnalog, wavelength1, wavelength2, wavelength3, wavelength4);
 
 	//Multiphoton Laser Parameters
 	long multiphotonEnable,multiphotonPos,multiphotonSeqEnable,multiphotonSeqPos1,multiphotonSeqPos2;
@@ -1053,11 +1104,15 @@ void RunSample::PostCaptureProtocol(IExperiment* exp)
 	//Turn OFF all LEDs once acquisition is finished 
 	SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP, IDevice::PARAM_LEDS_ENABLE_DISABLE, FALSE, TRUE);
 
-	//Disable Laser Emission once aquisition is finished
+	//Disable Laser Emission and enable state once aquisition is finished
 	SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_EMISSION, DISABLE_EMISSION, FALSE);
 	SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_EMISSION, DISABLE_EMISSION, FALSE);
 	SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_EMISSION, DISABLE_EMISSION, FALSE);
 	SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_EMISSION, DISABLE_EMISSION, FALSE);
+	SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_ENABLE, DISABLE_EMISSION, FALSE);
+	SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_ENABLE, DISABLE_EMISSION, FALSE);
+	SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_ENABLE, DISABLE_EMISSION, FALSE);
+	SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_ENABLE, DISABLE_EMISSION, FALSE);
 }
 
 UINT RunSampleThreadProc( LPVOID pParam )
@@ -1309,7 +1364,7 @@ void RunSample::SetMagnification(double mag,string objName)
 HANDLE RunSample::_hEventLaser = NULL;
 HANDLE RunSample::_hEventPowerReg = NULL;
 
-void RunSample::SetLaser(long enable1, double power1,long enable2, double power2,long enable3, double power3,long enable4, double power4, long sequential)
+void RunSample::SetLaser(long enable1, double power1, long enable2, double power2, long enable3, double power3, long enable4, double power4, long captureSequenceEnable, long allTTL, long allAnalog, long wavelength1, long wavelength2, long wavelength3, long wavelength4)
 {
 	//Get filter parameters from hardware setup.xml
 	auto_ptr<HardwareSetupXML> pHardware(new HardwareSetupXML());
@@ -1317,16 +1372,13 @@ void RunSample::SetLaser(long enable1, double power1,long enable2, double power2
 	IDevice *pLaser = NULL;	
 	for(long i=0; i<4; i++)
 	{
-		long laserAnalog = 0;
-		long laserWavelength1 = 0;
-		long laserWavelength2 = 0;
-		long laserWavelength3 = 0;
-		long laserWavelength4 = 0;
-		GetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER_ALL_ANALOG_MODE, laserAnalog);
-		GetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_WAVELENGTH, laserWavelength1);
-		GetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_WAVELENGTH, laserWavelength2);
-		GetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_WAVELENGTH, laserWavelength3);
-		GetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_WAVELENGTH, laserWavelength4);
+		long laserWavelength1 = wavelength1;
+		long laserWavelength2 = wavelength2;
+		long laserWavelength3 = wavelength3;
+		long laserWavelength4 = wavelength4;
+		long sequential = captureSequenceEnable;
+		long laserAnalog = allAnalog;
+		long laserTTL = allTTL;
 
 		switch(i)
 		{
@@ -1334,41 +1386,41 @@ void RunSample::SetLaser(long enable1, double power1,long enable2, double power2
 			pLaser = GetDevice(SelectedHardware::SELECTED_LASER1);
 			if(pLaser != NULL)
 			{
-				if (sequential == 1)
+				if (sequential == true)
 				{
-					//If sequential scanning is enabled, laser 1 is enabled, and laser wavelengths are within bounds, 
-					//disable all other lasers, set the power for laser 1, and enable emission for laser 1 (newer laser logic needed for sequential)
-					if (enable1 == true && (405 <= laserWavelength1) && (laserWavelength1 <= 785))
+					//Toptica Sequential laser 1 logic (only set power if laser enabled, set emission if TTL Mode is off)
+					if ((405 <= laserWavelength1) && (laserWavelength1 <= 785))
 					{
-						SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_ENABLE, FALSE, FALSE);
-						SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_ENABLE, FALSE, FALSE);
-						SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_ENABLE, FALSE, FALSE);
-						SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_POWER, power1, FALSE);
+						if (enable1 == true) 
+						{
+							SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_POWER, power1, FALSE);
+						}
 						SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_ENABLE, enable1, FALSE);
-						//Only set emission if analog mode is off
-						if (laserAnalog == false) 
+						if (laserTTL == false)
 						{
 							SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_EMISSION, ENABLE_EMISSION, FALSE);
 						}
 					}
 					//If sequential is enabled, enable laser 1 and set its power (old MCLS logic)
-					pLaser->SetParam(IDevice::PARAM_LASER1_ENABLE, enable1);
-					pLaser->SetParam(IDevice::PARAM_LASER1_POWER, power1);
-					RunLaser(pLaser);
+					if (laserAnalog == false && laserTTL == false) 
+					{
+						pLaser->SetParam(IDevice::PARAM_LASER1_ENABLE, enable1);
+						pLaser->SetParam(IDevice::PARAM_LASER1_POWER, power1);
+						RunLaser(pLaser);
+					}
 				}
 				else 
 				{
-					//If sequential is not enabled, set the power, enable state, and emission states for laser 1
-					SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_POWER, power1, FALSE);
-					SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_ENABLE, enable1, FALSE);
-					//Only set emission if analog mode is off
-					if (laserAnalog == false)
+					//If sequential is not enabled, set the power, enable state (and emission state for laser 1 if not in TTL Mode)
+					if (laserTTL == false)
 					{
 						SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_EMISSION, ENABLE_EMISSION, FALSE);
 					}
+					SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_POWER, power1, FALSE);
+					SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_ENABLE, enable1, FALSE);
 					pLaser->SetParam(IDevice::PARAM_LASER1_ENABLE, enable1);
 					pLaser->SetParam(IDevice::PARAM_LASER1_POWER, power1);
-					RunLaser(pLaser);
+					RunLaser(pLaser);	
 				}
 			}
 			break;
@@ -1376,38 +1428,38 @@ void RunSample::SetLaser(long enable1, double power1,long enable2, double power2
 			pLaser = GetDevice(SelectedHardware::SELECTED_LASER2);
 			if(pLaser != NULL)
 			{
-				if (sequential == 1)
+				if (sequential == true)
 				{
-					//If sequential scanning is enabled, laser 2 is enabled, and laser wavelengths are within bounds, 
-					//disable all other lasers, set the power for laser 2, and enable emission for laser 2 (newer laser logic needed for sequential)
-					if (enable2 == true && (405 <= laserWavelength2) && (laserWavelength2 <= 785))
+					//Toptica Sequential laser 2 logic (only set power if laser enabled, set emission if TTL Mode is off)
+					if ((405 <= laserWavelength2) && (laserWavelength2 <= 785))
 					{
-						SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_ENABLE, FALSE, FALSE);
-						SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_ENABLE, FALSE, FALSE);
-						SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_ENABLE, FALSE, FALSE);
-						SetDeviceParamDouble(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_POWER, power2, FALSE);
+						if (enable2 == true) 
+						{
+							SetDeviceParamDouble(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_POWER, power2, FALSE);
+						}
 						SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_ENABLE, enable2, FALSE);
-						//Only set emission if analog mode is off
-						if (laserAnalog == false) 
+						if (laserTTL == false)
 						{
 							SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_EMISSION, ENABLE_EMISSION, FALSE);
 						}
 					}
 					//If sequential is enabled, enable laser 2 and set its power (old MCLS logic)
-					pLaser->SetParam(IDevice::PARAM_LASER2_ENABLE, enable2);
-					pLaser->SetParam(IDevice::PARAM_LASER2_POWER, power2);
-					RunLaser(pLaser);
+					if (laserAnalog == false && laserTTL == false)
+					{
+						pLaser->SetParam(IDevice::PARAM_LASER2_ENABLE, enable2);
+						pLaser->SetParam(IDevice::PARAM_LASER2_POWER, power2);
+						RunLaser(pLaser);
+					}
 				}
-				else 
+				else
 				{
-					//If sequential is not enabled, set the power, enable state, and emission states for laser 2
-					SetDeviceParamDouble(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_POWER, power2, FALSE);
-					SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_ENABLE, enable2, FALSE);
-					//Only set emission if analog mode is off
-					if (laserAnalog == false) 
+					//If sequential is not enabled, set the power, enable state (and emission state for laser 2 if not in TTL Mode)
+					if (laserTTL == false)
 					{
 						SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_EMISSION, ENABLE_EMISSION, FALSE);
 					}
+					SetDeviceParamDouble(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_POWER, power2, FALSE);
+					SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_ENABLE, enable2, FALSE);
 					pLaser->SetParam(IDevice::PARAM_LASER2_ENABLE, enable2);
 					pLaser->SetParam(IDevice::PARAM_LASER2_POWER, power2);
 					RunLaser(pLaser);
@@ -1418,38 +1470,39 @@ void RunSample::SetLaser(long enable1, double power1,long enable2, double power2
 			pLaser = GetDevice(SelectedHardware::SELECTED_LASER3);
 			if(pLaser != NULL)
 			{
-				if (sequential == 1)
+				if (sequential == true)
 				{
-					//If sequential scanning is enabled, laser 3 is enabled, and laser wavelengths are within bounds, 
-					//disable all other lasers, set the power for laser 3, and enable emission for laser 3 (newer laser logic needed for sequential)
-					if (enable3 == true && (405 <= laserWavelength3) && (laserWavelength3 <= 785))
+					//Toptica Sequential laser 3 logic (only set power if laser enabled, set emission if TTL Mode is off)
+
+					if ((405 <= laserWavelength3) && (laserWavelength3 <= 785))
 					{
-						SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_ENABLE, FALSE, FALSE);
-						SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_ENABLE, FALSE, FALSE);
-						SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_ENABLE, FALSE, FALSE);
-						SetDeviceParamDouble(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_POWER, power3, FALSE);
+						if (enable3 == true) 
+						{
+							SetDeviceParamDouble(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_POWER, power3, FALSE);
+						}
 						SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_ENABLE, enable3, FALSE);
-						//Only set emission if analog mode is off 
-						if (laserAnalog == false)
+						if (laserTTL == false)
 						{
 							SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_EMISSION, ENABLE_EMISSION, FALSE);
 						}
 					}
 					//If sequential is enabled, enable laser 3 and set its power (old MCLS logic)
-					pLaser->SetParam(IDevice::PARAM_LASER3_ENABLE, enable3);
-					pLaser->SetParam(IDevice::PARAM_LASER3_POWER, power3);
-					RunLaser(pLaser);
+					if (laserAnalog == false && laserTTL == false)
+					{
+						pLaser->SetParam(IDevice::PARAM_LASER3_ENABLE, enable3);
+						pLaser->SetParam(IDevice::PARAM_LASER3_POWER, power3);
+						RunLaser(pLaser);
+					}
 				}
 				else
 				{
-					//If sequential is not enabled, set the power, enable state, and emission states for laser 3
-					SetDeviceParamDouble(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_POWER, power3, FALSE);
-					SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_ENABLE, enable3, FALSE);
-					//Only set emission if analog mode is off
-					if (laserAnalog == false) 
+					//If sequential is not enabled, set the power, enable state (and emission state for laser 3 if not in TTL Mode)
+					if (laserTTL == false)
 					{
 						SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_EMISSION, ENABLE_EMISSION, FALSE);
 					}
+					SetDeviceParamDouble(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_POWER, power3, FALSE);
+					SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_ENABLE, enable3, FALSE);
 					pLaser->SetParam(IDevice::PARAM_LASER3_ENABLE, enable3);
 					pLaser->SetParam(IDevice::PARAM_LASER3_POWER, power3);
 					RunLaser(pLaser);
@@ -1460,38 +1513,38 @@ void RunSample::SetLaser(long enable1, double power1,long enable2, double power2
 			pLaser = GetDevice(SelectedHardware::SELECTED_LASER4);
 			if (pLaser != NULL)
 			{
-				if (sequential == 1)
+				if (sequential == true)
 				{
-					//If sequential scanning is enabled, laser 4 is enabled, and laser wavelengths are within bounds, 
-					//disable all other lasers, set the power for laser 4, and enable emission for laser 4 (newer laser logic needed for sequential)
-					if (enable4 == true && (405 <= laserWavelength4) && (laserWavelength4 <= 785))
+					//Toptica Sequential laser 3 logic (only set power if laser enabled, set emission if TTL Mode is off)
+					if ((405 <= laserWavelength4) && (laserWavelength4 <= 785))
 					{
-						SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_ENABLE, FALSE, FALSE);
-						SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_ENABLE, FALSE, FALSE);
-						SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_ENABLE, FALSE, FALSE);
-						SetDeviceParamDouble(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_POWER, power4, FALSE);
+						if (enable4 == true) 
+						{
+							SetDeviceParamDouble(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_POWER, power4, FALSE);
+						}
 						SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_ENABLE, enable4, FALSE);
-						//Only set emission if analog mode is off
-						if (laserAnalog == false)
+						if (laserTTL == false) 
 						{
 							SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_EMISSION, ENABLE_EMISSION, FALSE);
 						}
 					}
 					//If sequential is enabled, enable laser 4 and set its power (old MCLS logic)
-					pLaser->SetParam(IDevice::PARAM_LASER4_ENABLE, enable4);
-					pLaser->SetParam(IDevice::PARAM_LASER4_POWER, power4);
-					RunLaser(pLaser);
+					if (laserAnalog == false && laserTTL == false)
+					{
+						pLaser->SetParam(IDevice::PARAM_LASER4_ENABLE, enable4);
+						pLaser->SetParam(IDevice::PARAM_LASER4_POWER, power4);
+						RunLaser(pLaser);
+					}
 				}
 				else 
 				{
-					//If sequential is not enabled, set the power, enable state, and emission states for laser 4
-					SetDeviceParamDouble(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_POWER, power4, FALSE);
-					SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_ENABLE, enable4, FALSE);
-					//Only set emission if analog mode is off
-					if (laserAnalog == false)
+					//If sequential is not enabled, set the power, enable state (and emission state for laser 4 if not in TTL Mode)
+					if (laserTTL == false)
 					{
 						SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_EMISSION, ENABLE_EMISSION, FALSE);
 					}
+					SetDeviceParamDouble(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_POWER, power4, FALSE);
+					SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_ENABLE, enable4, FALSE);
 					pLaser->SetParam(IDevice::PARAM_LASER4_ENABLE, enable4);
 					pLaser->SetParam(IDevice::PARAM_LASER4_POWER, power4);
 					RunLaser(pLaser);
@@ -1785,30 +1838,44 @@ long ScannerEnableProc(long cameraOrBleachScanner, long enable)
 	{
 	case ICamera::LSMType::GALVO_RESONANCE:
 		pControlUnit->SetParam(IDevice::PARAM_SCANNER_ENABLE, enable);
+		pControlUnit->PreflightPosition();
+		pControlUnit->SetupPosition();
+		pControlUnit->StartPosition();
+		pControlUnit->PostflightPosition();
+
+		if (TRUE == enable)
+		{
+			//wait for Resonance scanner to be stable, 
+			//required especially for single channel acquisition:
+			Sleep(300);	//140
+		}
 		break;
 	case ICamera::LSMType::RESONANCE_GALVO_GALVO:
 		pControlUnit->SetParam(IDevice::PARAM_SCANNER_ENABLE_ANALOG, enable);
+		pControlUnit->PreflightPosition();
+		pControlUnit->SetupPosition();
+		pControlUnit->StartPosition();
+		pControlUnit->PostflightPosition();
+
+		if (TRUE == enable)
+		{
+			//wait for Resonance scanner to be stable, 
+			//required especially for single channel acquisition:
+			Sleep(300);	//140
+		}
 		break;
 	default:
 		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample ScannerEnable not a resonance scanner");
 		return FALSE;
 	}
-	pControlUnit->PreflightPosition();
-	pControlUnit->SetupPosition ();
-	pControlUnit->StartPosition();
-	pControlUnit->PostflightPosition();
-
-	//wait for Resonance scanner to be stable, 
-	//required especially for single channel acquisition:
-	Sleep(300);	//140
 
 	return TRUE;
 }
 
 long SetPMTProc(IExperiment* pExp)
 {
-	long enableA,gainA,bandwidthA,enableB,gainB,bandwidthB,enableC,gainC,bandwidthC,enableD,gainD,bandwidthD;
-	double offsetA,offsetB,offsetC,offsetD;
+	long enableA,bandwidthA,enableB,bandwidthB,enableC,bandwidthC,enableD,bandwidthD;
+	double gainA,offsetA,gainB,offsetB,gainC,offsetC,gainD,offsetD;
 	pExp->GetPMT(enableA,gainA,bandwidthA,offsetA,enableB,gainB,bandwidthB,offsetB,enableC,gainC,bandwidthC,offsetC,enableD,gainD,bandwidthD,offsetD);
 
 	IDevice * pPMT = NULL;
@@ -2091,6 +2158,8 @@ void GetZPositions(IExperiment* exp, IDevice* pZStage, double &zStartPos, double
 	}
 	//calculate Z stop position, allow single step
 	zStopPos = (1 < zstageSteps) ? zStartPos + ((zstageSteps-1) * zStepSizeMM) : zStartPos + (zstageSteps * zStepSizeMM);
+	//Need to round zStopPos to 0.1um. Otherwise Z&T won't reach the max Z position if we are going the full range e.g. Piezo 0-450um
+	zStopPos = (ceil(zStopPos * 10000 - 0.5f)) / 10000;
 
 	//validate z stage steps by setting z stop position (PIEZO only):
 	if(NULL != pZStage)

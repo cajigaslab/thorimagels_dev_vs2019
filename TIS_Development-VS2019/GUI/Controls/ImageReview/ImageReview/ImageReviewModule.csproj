@@ -255,7 +255,11 @@
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Model\Common.cs" />
     <Compile Include="Model\ImageReview.cs" />
+    <Compile Include="OME\ClassicTiffConverter.cs" />
+    <Compile Include="OME\ClassicTiffConverterWrapper.cs" />
+    <Compile Include="OME\XMLProcess.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

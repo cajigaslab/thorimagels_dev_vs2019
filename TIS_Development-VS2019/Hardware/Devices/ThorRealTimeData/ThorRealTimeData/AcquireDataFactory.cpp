@@ -13,7 +13,9 @@ AcquireDataFactory::AcquireDataFactory()
 	_allowNIBoardNames.push_back("NI6363-USB");
 	_allowNIBoardNames.push_back("NI6361");
 	_allowNIBoardNames.push_back("NI6321");
+	_allowNIBoardNames.push_back("NI6323");
 	_allowNIBoardNames.push_back("NI6341");
+	_allowNIBoardNames.push_back("NI6343");
 }
 
 AcquireDataFactory::~AcquireDataFactory()

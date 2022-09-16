@@ -122,6 +122,7 @@ void ThorCam::ClearAllCameras()
 	//close sdk
 	if(_sdkIsOpen)
 	{
+		Sleep(10);
 		if (tl_camera_close_sdk())
 		{
 			MessageBox(NULL,L"Failed to close SDK", L"SDK Close error", MB_OK);
@@ -626,6 +627,7 @@ long ThorCam::FindCameras(long &cameraCount)
 
 	if(0 >= cameraCount && _sdkIsOpen)
 	{
+		Sleep(10);
 		if (tl_camera_close_sdk())
 		{
 			MessageBox(NULL,L"Failed to close SDK", L"SDK Close error", MB_OK);

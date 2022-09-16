@@ -11,6 +11,7 @@
     using System.Windows.Automation.Provider;
     using System.Windows.Controls;
     using System.Windows.Data;
+    using System.Windows.Input;
     using System.Windows.Threading;
     using System.Xml;
 
@@ -29,6 +30,7 @@
     {
         #region Fields
 
+        private string _initialModality;
         private DispatcherTimer _memoryReadTimer;
         bool _noLSMImageDetectors;
         bool _viewLoaded;
@@ -213,6 +215,34 @@
                 if (vm != null)
                 {
                     vm.ScriptCommand.Execute(null);
+                }
+            }
+        }
+
+        private void cbModality_LostFocus(object sender, RoutedEventArgs e)
+        {
+            MenuLSViewModel vm = (MenuLSViewModel)this.DataContext;
+
+            if (vm != null)
+            {
+                if (cbModality.IsDropDownOpen == false)
+                {
+                    //Reset the boolean when losing focus from the combobox
+                    vm.ModalitySwap(0);
+                }
+            }
+        }
+
+        private void cbModality_PreviewMouseUp(object sender, MouseButtonEventArgs e)
+        {
+            MenuLSViewModel vm = (MenuLSViewModel)this.DataContext;
+
+            if (vm != null)
+            {
+                if (cbModality.IsDropDownOpen)
+                {
+                    //Allows disabling of the Laser when in TTL mode and changing Modalities (to prevent laser from staying on when switching to a modality with it disconnected
+                    vm.ModalitySwap(1);
                 }
             }
         }

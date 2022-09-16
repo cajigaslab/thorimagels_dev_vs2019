@@ -70,12 +70,13 @@
 
         const double FOCAL_LEN1 = 300000; //[um]
         const int HUNDRED_PERCENT = 100;
-        const int IMAGE_SIZE = 512;
         const int MAX_PERIOD = 256;
         const int MAX_VAL = 255;
         const int NM_TO_UM = 1000;
         const double PUPLE = 15; //[um]
 
+        private double _imageSizeX = 512;  // SLM Pixel X Size
+        private double _imageSizeY = 512;  // SLM Pixel Y Size
         private string _baseFileName = FOLDER_NAME;
         private double _d0 = 850; //[um]
         private double _d1 = 1000; //[um]
@@ -101,8 +102,8 @@
         private bool _periodSweep = false;
         private int _selectedPeriodTab = 0; //[0]D1D2, [1]Period
         private ICommand _setOutputPathCommand;
-        private double _valuePercent = 50; //[%] Black
-        private double _valuePercentW = 50; //[%] White
+        private double _valuePercentB = 0; //[%] Black
+        private double _valuePercentW = 100; //[%] White
 
         #endregion Fields
 
@@ -415,13 +416,13 @@
             }
         }
 
-        public double ValuePercent
+        public double ValuePercentBlack
         {
-            get { return _valuePercent; }
+            get { return _valuePercentB; }
             set
             {
-                _valuePercent = value;
-                OnPropertyChanged("ValuePercent");
+                _valuePercentB = value;
+                OnPropertyChanged("ValuePercentBlack");
             }
         }
         public double ValuePercentWhite
@@ -433,6 +434,25 @@
                 OnPropertyChanged("ValuePercentWhite");
             }
         }
+        public double ValuePixelX
+        {
+            get { return _imageSizeX; }
+            set
+            {
+                _imageSizeX = value;
+                OnPropertyChanged("ValuePixelX");
+            }
+        }
+        public double ValuePixelY
+        {
+            get { return _imageSizeY; }
+            set
+            {
+                _imageSizeY = value;
+                OnPropertyChanged("ValuePixelY");
+            }
+        }
+
 
         #endregion Properties
 
@@ -464,7 +484,7 @@
                                     new XAttribute("D1UM", D1),
                                     new XAttribute("WavelengthNM", Lambda),
                                     new XAttribute("Invert", Invert),
-                                    new XAttribute("ValueMax", ValuePercent),
+                                    new XAttribute("ValueMaxBlack", ValuePercentBlack),
                                     new XAttribute("ValueMaxWhite", ValuePercentWhite)
                                     ),
                                     new XElement("MaskGeneration",
@@ -473,6 +493,10 @@
                                         new XAttribute("PeriodStepPx", PeriodStep),
                                         new XAttribute("PeriodEndPx", PeriodEnd),
                                         new XAttribute("GenerateMode", ((GENERATE_MODE)GenerateModeIndex).ToString())
+                                        ),
+                                    new XElement("ImageSize",
+                                        new XAttribute("PixelX", ValuePixelX),
+                                        new XAttribute("PixelY", ValuePixelY)
                                         ),
                                         new XElement("FilePath",
                                             new XElement("OutputFolder", OutputPath),
@@ -497,7 +521,7 @@
                     D1 = (double?)param.Attribute("D1UM") ?? D1;
                     Lambda = (double?)param.Attribute("WavelengthNM") ?? Lambda;
                     Invert = (bool?)param.Attribute("Invert") ?? Invert;
-                    ValuePercent = (double?)param.Attribute("ValueMax") ?? ValuePercent;
+                    ValuePercentBlack = (double?)param.Attribute("ValueMaxBlack") ?? ValuePercentBlack;
                     ValuePercentWhite = (double?)param.Attribute("ValueMaxWhite") ?? ValuePercentWhite;
 
                     XElement gen = GetOrCreateElement(root, "MaskGeneration");
@@ -506,6 +530,10 @@
                     PeriodStep = (double?)gen.Attribute("PeriodStepPx") ?? PeriodStep;
                     PeriodEnd = (double?)gen.Attribute("PeriodEndPx") ?? PeriodEnd;
                     GenerateModeIndex = (int)Enum.Parse(typeof(GENERATE_MODE), (string)gen.Attribute("GenerateMode") ?? ((GENERATE_MODE)GenerateModeIndex).ToString());
+
+                    XElement img = GetOrCreateElement(root, "ImageSize");
+                    ValuePixelX = (double?)img.Attribute("PixelX") ?? ValuePixelX;
+                    ValuePixelY = (double?)img.Attribute("PixelY") ?? ValuePixelY;
 
                     XElement paths = GetOrCreateElement(root, "FilePath");
                     OutputPath = (0 == ((string)GetOrCreateElement(paths, "OutputFolder").Value).Length) ? OutputPath : GetOrCreateElement(paths, "OutputFolder").Value;
@@ -533,7 +561,7 @@
                     param.SetAttributeValue("D1UM", D1.ToString());
                     param.SetAttributeValue("WavelengthNM", Lambda.ToString());
                     param.SetAttributeValue("Invert", Invert.ToString());
-                    param.SetAttributeValue("ValueMax", ValuePercent.ToString());
+                    param.SetAttributeValue("ValueMaxBlack", ValuePercentBlack.ToString());
                     param.SetAttributeValue("ValueMaxWhite", ValuePercentWhite.ToString());
 
                     XElement gen = root.Element("MaskGeneration");
@@ -542,6 +570,10 @@
                     gen.SetAttributeValue("PeriodStepPx", PeriodStep.ToString());
                     gen.SetAttributeValue("PeriodEndPx", PeriodEnd.ToString());
                     gen.SetAttributeValue("GenerateMode", ((GENERATE_MODE)GenerateModeIndex).ToString());
+
+                    XElement img = root.Element("ImageSize");
+                    img.SetAttributeValue("PixelX", ValuePixelX.ToString());
+                    img.SetAttributeValue("PixelY", ValuePixelY.ToString());
 
                     XElement paths = root.Element("FilePath");
                     paths.SetElementValue("OutputFolder", OutputPath);
@@ -634,13 +666,14 @@
         {
             try
             {
-                int pixelVal = (int)((int?)(MAX_VAL * ValuePercent / HUNDRED_PERCENT) ?? ValuePercent);
+                int pixelValB = (int)((int?)(MAX_VAL * ValuePercentBlack / HUNDRED_PERCENT) ?? ValuePercentBlack);
                 int pixelValW = (int)((int?)(MAX_VAL * ValuePercentWhite / HUNDRED_PERCENT) ?? ValuePercentWhite);
                 double halfPeriod = period / 2;
                 double Ks = Math.PI / period;       //doubled period after absolute value
-                double slope = pixelVal / halfPeriod;   //slope for triangle and blade
-
-                int width = IMAGE_SIZE, height = IMAGE_SIZE;
+                double slope = pixelValB / halfPeriod;   //slope for triangle and blade
+ 
+                int width = (int) _imageSizeX;
+                int height = (int) _imageSizeY;
                 Point center = new Point(width / 2, height / 2);
                 Bitmap bmp24bit = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
                 System.Drawing.Imaging.BitmapData bmpData = bmp24bit.LockBits(new System.Drawing.Rectangle(0, 0, bmp24bit.Width, bmp24bit.Height), System.Drawing.Imaging.ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
@@ -661,11 +694,11 @@
                                 {
                                     if (Invert)
                                     {
-                                        bytes[j * bmpData.Stride + (i * pixelsize) + h] = (0 == (region % 2)) ? (byte)pixelValW : (byte)pixelVal; // added ability to set level for dark ring (Black)
+                                        bytes[j * bmpData.Stride + (i * pixelsize) + h] = (0 == (region % 2)) ? (byte)pixelValW : (byte)pixelValB; // added ability to set level for dark ring (Black)
                                     }
                                     else
                                     {
-                                        bytes[j * bmpData.Stride + (i * pixelsize) + h] = (0 == (region % 2)) ? (byte)pixelVal : (byte)pixelValW;
+                                        bytes[j * bmpData.Stride + (i * pixelsize) + h] = (0 == (region % 2)) ? (byte)pixelValB : (byte)pixelValW;
                                     }
                                 }
                                 break;
@@ -674,11 +707,11 @@
                                 {
                                     if (Invert)
                                     {
-                                        bytes[j * bmpData.Stride + (i * pixelsize) + h] = (byte)(pixelVal * Math.Abs(Math.Sin(Ks * distance)));
+                                        bytes[j * bmpData.Stride + (i * pixelsize) + h] = (byte)(pixelValB * Math.Abs(Math.Sin(Ks * distance)));
                                     }
                                     else
                                     {
-                                        bytes[j * bmpData.Stride + (i * pixelsize) + h] = (byte)(pixelVal * Math.Abs(Math.Sin(Ks * distance + (Math.PI / 2))));
+                                        bytes[j * bmpData.Stride + (i * pixelsize) + h] = (byte)(pixelValB * Math.Abs(Math.Sin(Ks * distance + (Math.PI / 2))));
                                     }
                                 }
                                 break;

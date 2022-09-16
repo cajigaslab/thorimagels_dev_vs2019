@@ -31,6 +31,7 @@ extern "C"
 		long ChooseDVI(const wchar_t* id);
 		long CreateDVIWindow(int w, int h);
 		long EditBMP(int id, unsigned char* bmpBuf, BITMAPINFO bmpInfo);
+		long GetBMP(int id, unsigned char* bmpBuf, BITMAPINFO& bmpInfo);
 		void ClearBMPs();
 		long DisplayBMP(int id);
 		void DestroyDVIWindow();

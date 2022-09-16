@@ -25,6 +25,51 @@
         <Setter Property="StrokeDashArray"
                 Value="2, 2" />
     </Style>
+    <Style x:Key="HiddenAxisStyle"
+           TargetType="sci:AxisBase">
+        <Setter Property="DrawLabels"
+                Value="False" />
+        <Setter Property="DrawMajorBands"
+                Value="False" />
+        <Setter Property="DrawMajorGridLines"
+                Value="False" />
+        <Setter Property="DrawMajorTicks"
+                Value="False" />
+        <Setter Property="DrawMinorGridLines"
+                Value="False" />
+        <Setter Property="DrawMinorTicks"
+                Value="False" />
+        <Setter Property="AutoRange"
+                Value="Never" />
+    </Style>
+
+    <Style x:Key="TimeAxisMajorTickLineStyle"
+           TargetType="Line">
+        <Setter Property="Stroke"
+                Value="DimGray" />
+        <Setter Property="StrokeThickness"
+                Value="1" />
+        <Setter Property="StrokeEndLineCap"
+                Value="Square" />
+        <Setter Property="X2"
+                Value="6" />
+        <Setter Property="Y2"
+                Value="6" />
+    </Style>
+
+    <Style x:Key="TimeAxisMinorTickLineStyle"
+           TargetType="Line">
+        <Setter Property="Stroke"
+                Value="DimGray" />
+        <Setter Property="StrokeThickness"
+                Value="1" />
+        <Setter Property="StrokeEndLineCap"
+                Value="Square" />
+        <Setter Property="X2"
+                Value="3" />
+        <Setter Property="Y2"
+                Value="3" />
+    </Style>
 
     <!-- Define style for the SciChartScrollbar -->
     <Style x:Key="ScrollbarStyle"

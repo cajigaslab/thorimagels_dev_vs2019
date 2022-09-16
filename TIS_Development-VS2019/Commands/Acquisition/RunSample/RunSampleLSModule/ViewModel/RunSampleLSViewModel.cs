@@ -3693,6 +3693,18 @@
             }
         }
 
+        public bool VerticalTileDisplay
+        {
+            get
+            {
+                return _RunSampleLS.VerticalTileDisplay;
+            }
+            set
+            {
+                _RunSampleLS.VerticalTileDisplay = value;
+            }
+        }
+
         public double VolumeTimeAdjustMS
         {
             get
@@ -3917,6 +3929,17 @@
             set
             {
                 this._RunSampleLS.ZFastEnable = value;
+
+                //Do not display the tile view if fastZ is enabled
+                if (_RunSampleLS.ZFastEnable)
+                {
+                    TileDisplay = false;
+                    IsTileButtonEnabled = false;
+                }
+                else
+                {
+                    IsTileButtonEnabled = true;
+                }
 
                 OnPropertyChanged("ZFastEnable");
                 OnPropertyChanged("StreamFrames");

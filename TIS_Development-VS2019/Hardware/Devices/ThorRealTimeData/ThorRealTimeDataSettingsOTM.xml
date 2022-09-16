@@ -3,7 +3,7 @@
   <UserSettings>
     <SciChart useFifo="1" fifoSize="1000" />
     <Database pathAndName="C:\Users\Thorlabs\Documents\ThorImageLS\Application Settings\ThorDatabase.db" />
-    <Save enable="0" forceIPC="1" path="C:\Temp" name="SyncData001"/>
+    <Save enable="0" forceIPC="1" path="C:\Temp" name="SyncData_0000"/>
     <Configuration OTM="0" VisibleChoices="63" />
   </UserSettings>
   <DaqDevices>

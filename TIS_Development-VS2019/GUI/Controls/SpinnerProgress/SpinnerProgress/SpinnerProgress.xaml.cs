@@ -48,6 +48,15 @@
             this.Loaded += new RoutedEventHandler(SpinnerProgressControl_Loaded);
         }
 
+        public SpinnerProgressControl(string content)
+        {
+            InitializeComponent();
+
+            this.Loaded += new RoutedEventHandler(SpinnerProgressControl_Loaded);
+
+            labelText.Content = content;
+        }
+
         #endregion Constructors
 
         #region Events

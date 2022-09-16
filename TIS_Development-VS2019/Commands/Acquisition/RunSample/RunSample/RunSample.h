@@ -51,7 +51,7 @@ public:
 	void SetMagnification(double mag, string name);
 	void SetPinholeWheel(long pinholePosition);
 	void SetPockelsMask(ICamera * pCamera, IExperiment* exp, string maskPath);
-	void SetLaser(long enable1, double power1,long enable2, double power2,long enable3, double power3,long enable4, double power4, long sequential);
+	void SetLaser(long enable1, double power1, long enable2, double power2, long enable3, double power3, long enable4, double power4, long captureSequenceEnable, long allTTL, long allAnalog, long wavelength1, long wavelength2, long wavelength3, long wavelength4);
 	void RunLaser(IDevice*);
 	void SetupZStage(long enableHoldingVoltage);
 	void PostCaptureProtocol(IExperiment *exp);

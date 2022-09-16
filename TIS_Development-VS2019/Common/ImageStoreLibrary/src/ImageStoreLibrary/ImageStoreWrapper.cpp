@@ -155,7 +155,12 @@ long ImageStoreWrapper::AddScan(double zStartPosUM, double zStopPosUM, double zS
 		_exp->GetScanAttribute(viewMode, "TileWidth", tileWidth);
 		_exp->GetScanAttribute(viewMode, "TileHeight", tileHeight);
 
-		scanInfo->PlateID = _plates[1]->PlateID;	//single plate only, plateID: 1-based
+		map<uint16_t, Plate* > ::iterator plate_it;
+		plate_it = _plates.find(1); // find the single plate
+		if (plate_it == _plates.end())
+			return FALSE;
+
+		scanInfo->PlateID = plate_it->second->PlateID;	// plateID: 1-based
 
 		//update well samples, and set scan regions
 		for (const auto& wellit : _plates[1]->Wells)
@@ -674,4 +679,21 @@ long ImageStoreWrapper::SaveData(void* buf, uint16_t channelID, uint16_t z, uint
 		}
 	}
 	return TRUE;
+}
+
+long ImageStoreWrapper::AdjustScanTCount(int count)
+{
+	//update sizeT of scan information
+	for (const auto& scanit : _scans)
+	{
+		for (const auto& regionit : scanit.second->Regions)
+		{
+			regionit.second->SizeT = count;
+		}
+	}
+
+	// change t value and rewrite OME header
+	fnAISS_adjust_scan_tcount(_fileHandle, count);
+
+	return FALSE;
 }

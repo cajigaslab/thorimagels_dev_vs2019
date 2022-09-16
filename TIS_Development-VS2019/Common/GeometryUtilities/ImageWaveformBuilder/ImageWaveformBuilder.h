@@ -106,6 +106,7 @@ public:
 	void ResetThorDAQGGalvoWaveformParams();
 	long VerifyPolyLine(std::vector<long> Ptx, std::vector<long> Pty, long fieldSize, double field2Volts, double fieldScaleFineX, double fieldScaleFineY, long PixelY, long &PixelX);
 	long BuildPolyLine();
+	long GetPolylineSegments(LineSegVec& polylineSegments, double& field2VoltX);
 
 	//[for active load]
 	static void BufferAvailableCallbackFunc(long sType, long bufSpaceNum);

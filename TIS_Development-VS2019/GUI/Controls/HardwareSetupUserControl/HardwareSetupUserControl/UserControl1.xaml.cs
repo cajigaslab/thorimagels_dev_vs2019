@@ -468,7 +468,7 @@
             if (false == _refreshLock)
             {
                 _hwSettingsDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS];
-                XmlNodeList ndList = _hwSettingsDoc.SelectNodes("/HardwareSettings/ImageDetectors/LSM[not(@cameraName='ResonanceGalvo\') and not(@cameraName='ResonanceGalvoGalvo\')]");
+                XmlNodeList ndList = _hwSettingsDoc.SelectNodes("/HardwareSettings/ImageDetectors/LSM[not(@cameraName='ResonanceGalvo\') and not(@cameraName='ResonanceGalvoGalvo\') and not(@cameraName='ThorDAQResonantGalvo\') ]");
                 int index = (sender as ComboBox).SelectedIndex;
 
                 for (int i = 0; i < ndList.Count; i++)
@@ -805,6 +805,8 @@
                 MessageBox.Show("There is a problem loading " + _hardwareSettingsFile);
                 return;
             }
+
+            string s = string.Empty;
             XmlNodeList ndList = _hwSettingsDoc.SelectNodes("/HardwareSettings/ImageDetectors/*");
             int i = 0;
             foreach (XmlNode node in ndList)
@@ -818,7 +820,7 @@
                 }
                 i++;
             }
-            ndList = _hwSettingsDoc.SelectNodes("/HardwareSettings/ImageDetectors/LSM[not(@cameraName='ResonanceGalvo\') and not(@cameraName='ResonanceGalvoGalvo\')]");
+            ndList = _hwSettingsDoc.SelectNodes("/HardwareSettings/ImageDetectors/LSM[not(@cameraName='ResonanceGalvo\') and not(@cameraName='ResonanceGalvoGalvo\')  and not(@cameraName='ThorDAQResonantGalvo\')  ]");
             for (i = 0; i < ndList.Count; i++)
             {
                 string str = string.Empty;
@@ -1090,6 +1092,15 @@
                     break;
                 }
                 i++;
+            }
+            ndList = _hwSettingsDoc.SelectNodes("/HardwareSettings/Objectives/Objective");
+            foreach (XmlNode n in ndList)
+            {
+                if (!XmlManager.GetAttribute(n, _hwSettingsDoc, "fineAfPercentDecrease", ref s))
+                {
+                    XmlManager.SetAttribute(n, _hwSettingsDoc, "fineAfPercentDecrease", ".15");
+                    MVMManager.Instance.SaveSettings(SettingsFileType.HARDWARE_SETTINGS);
+                }
             }
         }
 

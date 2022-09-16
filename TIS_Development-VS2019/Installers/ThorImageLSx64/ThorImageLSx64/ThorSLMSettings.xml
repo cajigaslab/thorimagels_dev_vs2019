@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
 <ThorSLMPDM512Settings>
-  <Calibration wavelengthNM="639" phaseMax="255" coeff1="1" coeff2="0" coeff3="0" coeff4="0" coeff5="1" coeff6="0" coeff7="0" coeff8="0"/>
+  <Calibration wavelengthNM="1040" phaseMax="255" coeff1="1" coeff2="0" coeff3="0" coeff4="0" coeff5="1" coeff6="0" coeff7="0" coeff8="0"/>
 
   <PostCalibration verticalFlip="0" rotateAngle="0" scaleX="1.0" scaleY="1.0" offsetX="0" offsetY="0" />
 

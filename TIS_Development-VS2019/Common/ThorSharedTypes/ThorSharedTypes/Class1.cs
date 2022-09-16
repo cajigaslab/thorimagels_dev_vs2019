@@ -308,8 +308,8 @@
             FIRST_AREA_MODE = 0,
             SQUARE = 0,
             RECTANGLE = 1,
-            LINE = 2,
-            LINE_TIMELAPSE = 3,
+            LINE_TIMELAPSE = 2,
+            LINE = 3,
             POLYLINE = 4,
             LAST_AREA_MODE
         }
@@ -728,7 +728,7 @@
             PARAM_LSM_POCKELS_RESPONSE_TYPE_3,
 
             PARAM_LSM_PULSE_MULTIPLEXING_ENABLE,
-            PARAM_LSM_EXTERNAL_CLOCK_PHASE_OFFSET, 
+            PARAM_LSM_EXTERNAL_CLOCK_PHASE_OFFSET,
             PARAM_LSM_GG_ACQUIRE_DURING_TURAROUND,
 
             PARAM_LSM_DAQ_NAME,
@@ -1030,6 +1030,10 @@
             PARAM_LSM_PIXEL_PROCESS,
             PARAM_LSM_FAST_ONEWAY_MODE_ENABLE,
             PARAM_LSM_POCKELS_BLANKING_PHASESHIFT_PERCENT,
+            PARAM_LSM_POCKELS_LINE_DELAY_US_0,
+            PARAM_LSM_POCKELS_LINE_DELAY_US_1,
+            PARAM_LSM_POCKELS_LINE_DELAY_US_2,
+            PARAM_LSM_POCKELS_LINE_DELAY_US_3,
 
             PARAM_FIRST_CCD_PARAM = 1000,
             PARAM_BINNING_X = 1000,///<Binning X
@@ -1184,6 +1188,23 @@
             PARAM_DFLIM_SAVE_SETTINGS,
             PARAM_DFLIM_SAVE_IMAGES_ON_LIVE_MODE,
             PARAM_DFLIM_FRAME_TYPE,
+            PARAM_3P_LUT_OFFSET,
+            PARAM_3P_REVERB_DDS_ENABLE,
+            PARAM_3P_REVERB_DDS0_PHASE,
+            PARAM_3P_REVERB_DDS1_PHASE,
+            PARAM_3P_REVERB_DDS0_AMPLITUDE,
+            PARAM_3P_REVERB_DDS1_AMPLITUDE,
+            PARAM_LIGHTPATH_TYPE,
+            PARAM_RESEARCH_CAMERA_0,
+            PARAM_RESEARCH_CAMERA_1,
+            PARAM_RESEARCH_CAMERA_2,
+            PARAM_RESEARCH_CAMERA_3,
+            PARAM_RESEARCH_CAMERA_4,
+            PARAM_RESEARCH_CAMERA_5,
+            PARAM_RESEARCH_CAMERA_6,
+            PARAM_RESEARCH_CAMERA_7,
+            PARAM_RESEARCH_CAMERA_8,
+            PARAM_RESEARCH_CAMERA_9,
             PARAM_RESEARCH_CAMERA_10,
             PARAM_RESEARCH_CAMERA_11,
             PARAM_RESEARCH_CAMERA_12,
@@ -1690,7 +1711,18 @@
             PARAM_PMT4_DETECTOR_TYPE,
             PARAM_PMT5_DETECTOR_TYPE,
             PARAM_PMT6_DETECTOR_TYPE,
-            PARAM_PMT_OFFSET_STEP_SIZE,
+            PARAM_PMT1_OFFSET_STEP_SIZE,
+            PARAM_PMT2_OFFSET_STEP_SIZE,
+            PARAM_PMT3_OFFSET_STEP_SIZE,
+            PARAM_PMT4_OFFSET_STEP_SIZE,
+            PARAM_PMT5_OFFSET_STEP_SIZE,
+            PARAM_PMT6_OFFSET_STEP_SIZE,
+            PARAM_PMT1_GAIN_STEP_SIZE,
+            PARAM_PMT2_GAIN_STEP_SIZE,
+            PARAM_PMT3_GAIN_STEP_SIZE,
+            PARAM_PMT4_GAIN_STEP_SIZE,
+            PARAM_PMT5_GAIN_STEP_SIZE,
+            PARAM_PMT6_GAIN_STEP_SIZE,
 
             PARAM_STOP = 1000,
 
@@ -1717,15 +1749,14 @@
             PARAM_SLM_TIMEOUT,
             PARAM_SLM_RUNTIME_CALC,
             PARAM_SLM_SEQ_FILENAME,
-            PARAM_SLM_CALIB_Z,
+            PARAM_SLM_SKIP_FITTING,
             PARAM_SLM_WAVELENGTH,
             PARAM_SLM_WAVELENGTH_SELECT,
             PARAM_SLM_3D,
             PARAM_SLM_PHASE_DIRECT,
             PARAM_SLM_DEFOCUS,
             PARAM_SLM_SAVE_DEFOCUS,
-            PARAM_SLM_BLANK_ZONE1,
-            PARAM_SLM_BLANK_ZONE2,
+            PARAM_SLM_DUAL_SHIFT_PX,
 
             PARAM_R_POS = 1200,
             PARAM_R_HOME = 1201,
@@ -2494,6 +2525,7 @@
             PARAM_TTL_ADD4_CYCLE_COUNT,
 
             PARAM_EPHYS_TRIG_BUFFER,
+            PARAM_EPHYS_GOTO_BUFFER,
             PARAM_WAVEFORM_OUTPATH,
 
             PARAM_HPD1_GAIN_VOLTS = 7000,	///Temporary parameters for research group
@@ -2886,6 +2918,24 @@
             T inValue = default(T);
             ReadAttribute<T>(out inValue, doc, xPathToNode, attribute, valueOnError, index);
             return inValue;
+        }
+
+        /// <summary>
+        /// Remove one xml attribute
+        /// </summary>
+        /// <param name="node">The node.</param>
+        /// <param name="attrName">Name of the attribute.</param>
+        public static void RemoveAttribute(XmlNode node, string attrName)
+        {
+            if (null == node)
+                return;
+
+            XmlNode tempNode = node.Attributes[attrName];
+
+            if (null != tempNode)
+            {
+                node.Attributes.Remove(node.Attributes[attrName]);
+            }
         }
 
         public static void RemoveNodeByName(string xmlFileName, string nodeName)

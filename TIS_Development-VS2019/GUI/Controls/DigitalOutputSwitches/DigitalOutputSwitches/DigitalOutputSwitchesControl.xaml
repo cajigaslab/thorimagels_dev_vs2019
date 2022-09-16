@@ -128,6 +128,7 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <StackPanel Grid.Row="0"
                                 Orientation="Horizontal"
@@ -230,7 +231,7 @@
                                                 Value="Collapsed" />
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding Path=SelectedIndex,ElementName=cbDigTrigMode}"
-                                                 Value="1">
+                                                 Value="6">
                                         <Setter Property="Visibility"
                                                 Value="Collapsed" />
                                     </DataTrigger>
@@ -366,6 +367,100 @@
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Grid.Row="4"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                Margin="1">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=TriggerEnable, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Value="1">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <StackPanel Orientation="Vertical"
+                                    ToolTip="set digital line to defined value, either 0 or 1">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=SelectedIndex,ElementName=cbTrigType}"
+                                                     Value="1">
+                                            <Setter Property="Visibility"
+                                                    Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <Label Content="Digital"
+                                   HorizontalContentAlignment="Center" />
+                            <TextBox Text="{Binding Path=GotoDigital, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                     validator:Validation.ValidationType="{x:Type system:Int32}"
+                                     validator:Validation.MinValue="0"
+                                     validator:Validation.MaxValue="1"
+                                     validator:Validation.NoEmptyValue="False"
+                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                     Width="40"
+                                     Margin="1"
+                                     HorizontalContentAlignment="Right"
+                                     HorizontalAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Orientation="Vertical"
+                                    ToolTip="set analog line to defined value in percentage(%)">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=SelectedIndex,ElementName=cbTrigType}"
+                                                     Value="0">
+                                            <Setter Property="Visibility"
+                                                    Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <Label Content="Analog[%]"
+                                   HorizontalContentAlignment="Center" />
+                            <TextBox Text="{Binding Path=GotoAnalog, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                                     validator:Validation.ValidationType="{x:Type system:Double}"
+                                     validator:Validation.MinValue="0.0"
+                                     validator:Validation.NoEmptyValue="False"
+                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                     Width="50"
+                                     Margin="1"
+                                     HorizontalContentAlignment="Right"
+                                     HorizontalAlignment="Center" />
+                        </StackPanel>
+                        <Button Width="30"
+                                Height="40"
+                                Margin="1"
+                                Content="Go"
+                                ToolTip="Goto defined value(s)"
+                                Command="{Binding Path=GotoCommand}">
+                            <Button.Style>
+                                <Style TargetType="Button"
+                                       BasedOn="{StaticResource {x:Type Button}}">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=TriggerEnable,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+                                                     Value="1">
+                                            <Setter Property="Visibility"
+                                                    Value="Hidden" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                    <StackPanel Grid.Row="5"
                                 Orientation="Horizontal"
                                 Margin="1">
                         <TextBlock Text="{Binding Path=TriggerError, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"

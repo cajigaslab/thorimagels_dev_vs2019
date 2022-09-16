@@ -59,9 +59,6 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeometryUtilitiesCpp.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="WaveformMemory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

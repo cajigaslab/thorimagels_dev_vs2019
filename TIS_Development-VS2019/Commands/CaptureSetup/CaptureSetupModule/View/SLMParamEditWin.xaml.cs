@@ -8,16 +8,11 @@
     using System.Globalization;
     using System.IO;
     using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
     using System.Windows;
     using System.Windows.Controls;
     using System.Windows.Data;
-    using System.Windows.Documents;
     using System.Windows.Input;
     using System.Windows.Media;
-    using System.Windows.Media.Imaging;
-    using System.Windows.Navigation;
     using System.Windows.Shapes;
     using System.Xml;
 
@@ -27,11 +22,7 @@
 
     using OverlayManager;
 
-    using ThorLogging;
-
     using ThorSharedTypes;
-
-    using Validations;
 
     public class CenterBleachParams
     {
@@ -88,9 +79,10 @@
     {
         #region Constructors
 
-        public SLMBrowsePanel(string browse, string ok, string cancel, string path)
+        public SLMBrowsePanel(string browse, string ok, string cancel, string exportChecked, string includeSequences, string path, string exportFilename)
         {
-            Browse = browse; Import = ok; Cancel = cancel; ImportFilePath = path;
+            Browse = browse; Import = ok; Cancel = cancel; ExportChecked = exportChecked; SLMImportSequences = includeSequences;
+            SLMImportPath = path; SLMExportFileName = exportFilename;
         }
 
         #endregion Constructors
@@ -109,13 +101,31 @@
             set;
         }
 
+        public string ExportChecked
+        {
+            get;
+            set;
+        }
+
         public string Import
         {
             get;
             set;
         }
 
-        public string ImportFilePath
+        public string SLMExportFileName
+        {
+            get;
+            set;
+        }
+
+        public string SLMImportPath
+        {
+            get;
+            set;
+        }
+
+        public string SLMImportSequences
         {
             get;
             set;
@@ -188,17 +198,16 @@
         {"SLM_SAVEZOFFSET",SLMPatternType.SaveZOffset}
         };
 
-        const int SLM_CALIB_PTS = 9; //exclude center [subID == 0]
-
         private BackgroundWorker slmBuildAllWorker;
         private BackgroundWorker slmBuilder;
         private BackgroundWorker slmCalibrator;
+        private BackgroundWorker slmImportWorker;
         private BackgroundWorker slmPreviewWorker;
         private BackgroundWorker slmWorker;
+        private int _calibratePointCount = 9; //exclude center [subID == 0]
         private SLMPanelMode _panelMode = SLMPanelMode.ParamEdit;
         private bool _slmCalibIsReset = false;
         private SLMParams _slmParamsCurrent;
-
         private CaptureSetupViewModel _vm;
         private bool _waveParamsUpdated = true; //prevent changes without clicking OK
 
@@ -266,6 +275,12 @@
 
         #region Properties
 
+        public int CalibratePointCount
+        {
+            get { return _calibratePointCount; }
+            set { if (0 < value) _calibratePointCount = value; }
+        }
+
         public SLMPanelMode PanelMode
         {
             get { return _panelMode; }
@@ -282,7 +297,7 @@
                         stpSLMStatus.Visibility = System.Windows.Visibility.Visible;
                         stpSLMLabel.Visibility = System.Windows.Visibility.Visible;
                         stpPreview.Visibility = (_vm.IsStimulator) ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
-                        SLMPreviewPanel slmPreview = new SLMPreviewPanel("SAVEPATTERN", "PREVIEW", "CANCEL");
+                        SLMPreviewPanel slmPreview = new SLMPreviewPanel("PREVIEW", "CANCEL");
                         stpPreview.DataContext = slmPreview;
                         stpSLMButton.Visibility = System.Windows.Visibility.Visible;
                         stpSLMSpin.Visibility = System.Windows.Visibility.Visible;
@@ -305,7 +320,7 @@
                         break;
                     case SLMPanelMode.Browse:
                         _panelMode = value;
-                        this.Title = "SLM Import";
+                        this.Title = "SLM Import or Export";
                         stpParams.Visibility = System.Windows.Visibility.Collapsed;
                         stpRGB.Visibility = System.Windows.Visibility.Collapsed;
                         stpSLMStatus.Visibility = System.Windows.Visibility.Visible;
@@ -384,6 +399,24 @@
         {
             get;
             set;
+        }
+
+        public string SLMExportFileName
+        {
+            get
+            {
+                return (string)this.Dispatcher.Invoke((SLMWorkerGetStatus)delegate
+                {
+                    return tbExportName.Text.ToString();
+                });
+            }
+            set
+            {
+                this.Dispatcher.Invoke((SLMWorkerSetStatus)delegate
+                {
+                    tbExportName.Text = value;
+                });
+            }
         }
 
         public bool SLMFileSaved
@@ -769,57 +802,97 @@
 
         private void btnSLMBrowse_Click(object sender, RoutedEventArgs e)
         {
+            string ext = ".xml";
             string note = (null != (sender as FrameworkElement)) ? (sender as FrameworkElement).Tag as string : (string)(sender);
             switch (note)
             {
                 case "BROWSE":
-                    Microsoft.Win32.OpenFileDialog ofd = new Microsoft.Win32.OpenFileDialog();
-
-                    ofd.FileName = "*.xml";
-                    ofd.InitialDirectory = System.IO.Path.GetDirectoryName(_vm.SLMImportFilePathName);
-                    ofd.DefaultExt = ".xml";
-                    ofd.Filter = "XML Files (*.xml)|*.xml";
-
-                    Nullable<bool> result = ofd.ShowDialog();
-
-                    if (true == result)
+                    if (true == tbtnImExport.IsChecked)  //export: checked
                     {
-                        SLMImportPath = ofd.FileName;
-                        SLMPatternStatus = string.Empty;
+                        System.Windows.Forms.FolderBrowserDialog fbd = new System.Windows.Forms.FolderBrowserDialog();
+                        fbd.SelectedPath = System.IO.Path.GetDirectoryName(_vm.SLMImportFilePathName);
+
+                        if (string.Empty != fbd.ShowDialog().ToString())
+                        {
+                            SLMImportPath = fbd.SelectedPath;
+                            SLMPatternStatus = string.Empty;
+                        }
+                    }
+                    else                                 //import
+                    {
+                        Microsoft.Win32.OpenFileDialog ofd = new Microsoft.Win32.OpenFileDialog();
+
+                        ofd.FileName = "*.xml";
+                        ofd.InitialDirectory = System.IO.Path.GetDirectoryName(_vm.SLMImportFilePathName);
+                        ofd.DefaultExt = ext;
+                        ofd.Filter = "XML Files (*.xml)|*.xml";
+
+                        if (true == ofd.ShowDialog())
+                        {
+                            SLMImportPath = ofd.FileName;
+                            SLMPatternStatus = string.Empty;
+                        }
                     }
                     break;
-                case "IMPORT":
+                case "IMPORT":      //both SLM export or import
                     SLMGenResult = false;
 
-                    if (!File.Exists(SLMImportPath))
+                    if (true == tbtnImExport.IsChecked)     //export: checked
                     {
-                        SLMPatternStatus = String.Format("Selected file does not exist.");
-                        return;
+                        if ((File.GetAttributes(SLMImportPath) & FileAttributes.Directory) == FileAttributes.Directory)
+                        {
+                            if (!Directory.Exists(SLMImportPath))
+                            {
+                                SLMPatternStatus = String.Format("Selected directory does not exist.");
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            if (!Directory.Exists(System.IO.Path.GetDirectoryName(SLMImportPath)))
+                            {
+                                SLMPatternStatus = String.Format("Selected directory does not exist.");
+                                return;
+                            }
+                            SLMImportPath = System.IO.Path.GetDirectoryName(SLMImportPath);
+                        }
                     }
-                    if (".xml" != System.IO.Path.GetExtension(SLMImportPath))
+                    else                                    //import: un-checked
                     {
-                        SLMPatternStatus = String.Format("Invalid file format, please select another xml.");
-                        return;
-                    }
-                    if (null == _vm.BleachLSMFieldScaleXYFine)
-                    {
-                        SLMPatternStatus = String.Format("Calibration must be done before import.\n");
-                        return;
-                    }
-                    _vm.SLMImportFilePathName = SLMImportPath;
-
-                    //load xml
-                    XmlDocument xmlSLMImportDoc = new XmlDocument();
-                    xmlSLMImportDoc.Load(SLMImportPath);
-
-                    //load SLM params and determine the import type
-                    if (!TryImportPatternSequences(xmlSLMImportDoc))
-                    {
-                        if (!TryImportWaveforms(xmlSLMImportDoc))
+                        if (!File.Exists(SLMImportPath))
+                        {
+                            SLMPatternStatus = String.Format("Selected file does not exist.");
                             return;
+                        }
+                        if (".xml" != System.IO.Path.GetExtension(SLMImportPath))
+                        {
+                            SLMPatternStatus = String.Format("Invalid file format, please select another xml.");
+                            return;
+                        }
+
+                        if (!_vm.IsStimulator && null == _vm.BleachLSMFieldScaleXYFine)
+                        {
+                            SLMPatternStatus = String.Format("Calibration must be done before import or export.\n");
+                            return;
+                        }
                     }
-                    this.DataContext = _vm;
-                    RebuildSLMWaveform(true);
+
+                    if (slmImportWorker.IsBusy)
+                    {
+                        CancelSLMBackgroundWorker(slmImportWorker);
+                    }
+                    else
+                    {
+                        SLMSpinProgressVisible = true;
+                        slmImportWorker.DoWork += new DoWorkEventHandler(ImportWorker_DoWork);
+                        slmImportWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(ImportWorker_RunWorkerCompleted);
+
+                        List<object> arguments = new List<object>();
+                        arguments.Add(tbtnImExport.IsChecked);
+                        arguments.Add(chbImportSeq.IsChecked);
+                        arguments.Add((0 < SLMExportFileName.Length ? SLMExportFileName : _vm.SLMExportFileName) + ".xml");
+                        slmImportWorker.RunWorkerAsync(arguments);
+                    }
                     break;
                 case "CANCEL":
                     this.Close();
@@ -832,7 +905,6 @@
             string note = (null != (sender as FrameworkElement)) ? (sender as FrameworkElement).Tag as string : (string)(sender);
             switch (note)
             {
-                case "SAVEPATTERN":
                 case "PREVIEW":
                     switch ((SLMPanelMode)this.PanelMode)
                     {
@@ -1012,7 +1084,9 @@
         {
             SLMCalibPanel slmCalib;
             string roiPathAndName = _vm.BleachROIPath + _vm.SLMCalibFile;
-            string strBody;
+            string strBody = string.Empty, roiType = string.Empty;
+            Point offCenter = new Point(-1, -1);
+            List<Point> pts = new List<Point>();
             switch (note)
             {
                 case "BURN":
@@ -1030,26 +1104,76 @@
                     _slmCalibIsReset = _vm.ResetSLMCalibration();
                     OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, true);
 
-                    slmCalib = new SLMCalibPanel("BURN", "SELECT", "New Calibration", "Move to another clear area on the\ncalibration slide then Press Yes to\ncreate calibration spots on the slide,\nPress No to continue.");
+                    slmCalib = _vm.SLM3D ?
+                        new SLMCalibPanel("SELECT", "DONE", "New Calibration", "Keep Z at reference and use Cross Hair\nROI tool to mark the single imaging bead\nthen Press Yes to continue calibration, \nPress No to cancel.") :
+                        new SLMCalibPanel("BURN", "SELECT", "New Calibration", "Move to another clear area on the\ncalibration slide then Press Yes to\ncreate calibration spots on the slide,\nPress No to continue.");
                     this.DataContext = slmCalib;
                     this.Show();
+                    break;
+                //[For 3D calibration method]
+                case "RESET_CALIBRATION3D":
+                    _vm.ResetSLMCalibration();
+                    //skip affine fittings at loading calibration pattern,
+                    //since 3D fittings will be applied at 3D holo gen.
+                    _vm.SLMSkipFitting = true;
+
+                    slmCalib = new SLMCalibPanel("SPOT_SELECT", "DONE", "New Calibration", "Keep Z at reference and use Cross Hair\nROI tool to mark the single imaging bead\nthen Press Yes to continue calibration,\nPress No to cancel.");
+                    this.DataContext = slmCalib;
+                    this.Show();
+                    break;
+                //[For 3D calibration method]
+                case "SPOT_SELECT":
+                    //expect center spot selected only:
+                    pts = OverlayManagerClass.Instance.GetPatternROICenters(OverlayManagerClass.Instance.PatternID, ref roiType, ref offCenter);
+                    if ((-1 != offCenter.X || -1 != offCenter.Y) && 0 == pts.Count)
+                    {
+                        //create mask:
+                        List<Shape> rois = OverlayManagerClass.Instance.GetModeROIs(Mode.PATTERN_NOSTATS, OverlayManagerClass.Instance.PatternID - 1);
+                        System.Drawing.Bitmap bmp = ProcessBitmap.CreateBinaryBitmap(new int[2] { _vm.ImageWidth, _vm.ImageHeight }, rois);
+                        string bmpPath = _vm.BleachROIPath + "SLMCalibROIs.bmp";
+                        bmp.Save(bmpPath, System.Drawing.Imaging.ImageFormat.Bmp);
+
+                        //have mask loaded with holo gen:
+                        _vm.LoadSLMPatternName(0, 0, bmpPath, true, false);
+
+                        strBody = "Using Cross Hair ROI tool, mark the \ncenter points of the burned calibration \nspots on the image. Move to a differnt\nZ value and repeat. Press YES when\ncomplete, and press No to break.\n\n\n\tx4\tx5\tx6\n\n\tx3\n\t\t\t\tx7\n\n\tx2\n\t\t     x8\n\n\n\tx1\t\t\tx9\n ";
+                        slmCalib = new SLMCalibPanel("TRY_CALIBRATE", "DONE", "New Calibration", strBody);
+                    }
+                    else
+                    {
+                        _vm.SLMSetBlank();
+                        OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID);
+                        OverlayManagerClass.Instance.ClearNonSaveROIs(ref CaptureSetupViewModel.OverlayCanvas);
+                        OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, false);
+                        strBody = "Error: Only one spot should be selected.\n\nKeep Z at reference and use Cross Hair\nROI tool to mark the single imaging bead\nthen Press Yes to continue calibration,\nPress No to cancel.";
+                        slmCalib = new SLMCalibPanel("SPOT_SELECT", "DONE", "New Calibration", strBody);
+                    }
+                    this.DataContext = slmCalib;
+                    this.Show();
+                    break;
+                //[For 3D calibration method]
+                case "TRY_CALIBRATE":
+                    if (slmCalibrator.IsBusy)
+                    { return; }
+
+                    slmCalibrator.DoWork += new DoWorkEventHandler(SLMCalibrator3D_DoWork);
+                    slmCalibrator.RunWorkerCompleted += new RunWorkerCompletedEventHandler(SLMCalibrator3D_RunWorkerCompleted);
+                    slmCalibrator.RunWorkerAsync();
                     break;
                 case "SELECT":
                     OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID);
                     OverlayManagerClass.Instance.ClearNonSaveROIs(ref CaptureSetupViewModel.OverlayCanvas);
                     OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, false);
 
-                    strBody = "Using Cross Hair ROI tool, mark the \ncenter points of the burned calibration \nspots on the image. Press YES when\ncomplete, and press No to break.\n\n\n\tx4\tx5\tx6\n\n\tx3\n\t\t\t\tx7\n\n\tx2\n\t\t     x8\n\n\n\tx1\t\t\tx9\n ";
+                    strBody = "Using Cross Hair ROI tool, mark the \ncenter points of the burned calibration \nspots on the image. Press YES when\ncomplete, and press No to break.\n\n\n\tx4\tx5\tx6\n\n\tx3\n\t\t\t\tx7\n\n\tx2\n\n\t\t\t     x8\n\n\tx1\t\t\tx9\n ";
                     slmCalib = new SLMCalibPanel("FINISH_SELECT", "DONE", "New Calibration", strBody);
                     this.DataContext = slmCalib;
                     this.Show();
                     break;
                 case "FINISH_SELECT":
                     //retrieve user selected points (without offset):
-                    string roiType = string.Empty;
-                    Point offCenter = new Point(-1, -1);
-                    List<Point> pts = OverlayManagerClass.Instance.GetPatternROICenters(OverlayManagerClass.Instance.PatternID, ref roiType, ref offCenter);
-                    if (SLM_CALIB_PTS != pts.Count)
+                    pts = OverlayManagerClass.Instance.GetPatternROICenters(OverlayManagerClass.Instance.PatternID, ref roiType, ref offCenter);
+                    if (CalibratePointCount != pts.Count)
                     {
                         OverlayManagerClass.Instance.ClearNonSaveROIs(ref CaptureSetupViewModel.OverlayCanvas);
                         OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, false);
@@ -1092,6 +1216,13 @@
                     break;
                 case "DONE":
                     CancelCalibrator();
+
+                    //reset sub ID to regular one-based (zero-based for 3D calibration):
+                    OverlayManagerClass.Instance.SkipRedrawCenter = false;
+
+                    //no skip fitting other than 3D calibration:
+                    _vm.SLMSkipFitting = false;
+
                     this.Close();
                     break;
                 default:
@@ -1260,6 +1391,66 @@
             return (WaveformBuilder.GetWaveform().Count / 2);    //half for travel
         }
 
+        private void ImportWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker worker = sender as BackgroundWorker;
+            if (worker.CancellationPending != true)
+            {
+                List<object> arguments = (List<object>)e.Argument;
+                if ((Boolean)arguments[0])      //IsChecked true: Export
+                {
+                    FileName oFile = new FileName((string)arguments[2]);
+                    oFile.MakeUnique(SLMImportPath);
+                    SLMGenResult = TryExportPatternSequences(SLMImportPath + "\\" + oFile.FullName, (Boolean)arguments[1]);
+                }
+                else                            //Import
+                {
+                    //load xml
+                    XmlDocument xmlSLMImportDoc = new XmlDocument();
+                    xmlSLMImportDoc.Load(SLMImportPath);
+
+                    //load SLM params and determine the import type
+                    if (!TryImportPatternSequences(xmlSLMImportDoc, (Boolean)arguments[1]))
+                        SLMGenResult = TryImportWaveforms(xmlSLMImportDoc);
+                    else
+                        SLMGenResult = true;
+                }
+            }
+            //pass export(true) or import(false) to completed event
+            e.Result = (Boolean)((List<object>)e.Argument)[0];
+        }
+
+        private void ImportWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (e.Error != null)
+            {
+                ThorLogging.ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, "SLMImportor: " + e.Error.Message);
+            }
+
+            SLMSpinProgressVisible = false;
+            slmImportWorker.DoWork -= new DoWorkEventHandler(ImportWorker_DoWork);
+            slmImportWorker.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(ImportWorker_RunWorkerCompleted);
+
+            if (SLMGenResult && !e.Cancelled)
+            {
+                //update viewmodel properties
+                _vm.SLMImportFilePathName = SLMImportPath;
+                _vm.SLMExportChecked = (true == tbtnImExport.IsChecked);
+                _vm.SLMImportSequences = (true == chbImportSeq.IsChecked);
+
+                if ((Boolean)e.Result)  //Export
+                {
+                    _vm.SLMExportFileName = SLMExportFileName;
+                    this.Close();
+                }
+                else                    //Import
+                {
+                    this.DataContext = _vm;
+                    RebuildSLMWaveform(true);
+                }
+            }
+        }
+
         void OverlayManager_ClearedObjectEvent()
         {
             UpdateSLMParamEdit();
@@ -1288,9 +1479,6 @@
             {
                 switch ((string)e.Argument)
                 {
-                    case "SAVEPATTERN":
-                        SaveSLMPatternImage(_vm.SLMWaveformFolder[0] + "\\" + SLMParamsCurrent.Name + ".bmp", false);
-                        break;
                     case "PREVIEW":
                     default:
                         //try save pattern bmp
@@ -1375,7 +1563,6 @@
             WaveFileNameAndPathCurrent[1] = _vm.SLMWaveformFolder[0] + "\\" + WaveFileNameToSave[0].FullName;    //waveform path
             WaveFileNameAndPathCurrent[2] = (0 > SLMParamID) ? null : (_vm.SLMWaveBaseName[1] + "_" + SLMParamsCurrent.BleachWaveParams.ID.ToString("D" + FileName.GetDigitCounts().ToString()));    //bmp name, old ID if in edit
             WaveFileNameAndPathCurrent[3] = _vm.SLMWaveformFolder[0] + "\\" + WaveFileNameToSave[1].FullName;    //bmp path
-
         }
 
         private bool SaveSLMPattern()
@@ -1526,6 +1713,9 @@
                 patternPointsUnshifted = patternPoints;
                 SLMParamsCurrent.BleachWaveParams.shapeType = strTmp;
 
+                //clean up not-in-use attributes
+                CaptureSetupViewModel.RemoveApplicationAttribute("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView", "AllowSavePattern");
+
                 //here we save non-offset patterns in a sub-folder if enabled in settings,
                 //for user to do roi analysis:
                 int saveUnshifted = 0;
@@ -1550,10 +1740,6 @@
 
                 if (_vm.IsStimulator)
                 {
-                    //update SLM panel display
-                    SLMParamsCurrent.BleachWaveParams.Center = new Point(0.0, 0.0);
-                    SLMParamsCurrent.BleachWaveParams.ROIWidth = SLMParamsCurrent.BleachWaveParams.ROIHeight = 0.0;
-
                     //save phase masks to expedite loading time, especially combining two sets (of light source) as one,
                     //fetch wavelength by altering selected wavelength (give back user selection afterward),
                     //expected to be regenerated if new calibration.
@@ -1562,6 +1748,10 @@
                     List<Shape>[] rois = new List<Shape>[_vm.SLMWavelengthCount];
                     this.Dispatcher.Invoke((SLMSavePattern)delegate
                     {
+                        //update SLM panel display
+                        SLMParamsCurrent.BleachWaveParams.Center = new Point(0.0, 0.0);
+                        SLMParamsCurrent.BleachWaveParams.ROIWidth = SLMParamsCurrent.BleachWaveParams.ROIHeight = 0.0;
+
                         for (int i = 0; i < _vm.SLMWavelengthCount; i++)
                         {
                             _vm.SLMSelectWavelengthProp = (1 == i);     //to retrieve rois of selected wavelength
@@ -1606,7 +1796,7 @@
                         Dictionary<double, List<Shape>> zShapesNoCenter = new Dictionary<double, List<Shape>>();
                         this.Dispatcher.Invoke((SLMSavePattern)delegate
                         {
-                            zShapesNoCenter = OverlayManagerClass.Instance.GetPatternZROIs(OverlayManagerClass.Instance.PatternID);
+                            zShapesNoCenter = OverlayManagerClass.Instance.GetPatternZROIs(-1, OverlayManagerClass.Instance.PatternID);
                         });
                         foreach (KeyValuePair<double, List<Shape>> entry in zShapesNoCenter)
                         {
@@ -1956,6 +2146,152 @@
             }
         }
 
+        void SLMCalibrator3D_DoWork(object sender, DoWorkEventArgs e)
+        {
+            string roiType = string.Empty;
+            Point offCenter = new Point(-1, -1);
+            List<Point> pts = new List<Point>();
+
+            SLMSpinProgressVisible = true;
+
+            //retrieve user selected points:
+            this.Dispatcher.Invoke((SLMSavePattern)delegate
+             {
+                 pts = OverlayManagerClass.Instance.GetPatternROICenters(OverlayManagerClass.Instance.PatternID, ref roiType, ref offCenter);
+             });
+            //validate count first:
+            if (0 != pts.Count % CalibratePointCount)
+            {
+                e.Result = "Number of your selections(" + pts.Count.ToString() + ") is invalid.\n";
+                return;
+            }
+            else
+            {
+                SLMPatternStatus = String.Format("Doing SLM Calibration,\nplease wait until done ... \n");
+
+                //create mask, PatternID 1 are targets to be burnt,
+                //PatternID 2 are sources for affine calibration:
+                Dictionary<double, List<Shape>> tROIs = new Dictionary<double, List<Shape>>(), zROIs = new Dictionary<double, List<Shape>>();
+                List<float> ptsTo = new List<float>(), ptsFrom = new List<float>(), ptsTmp = new List<float>();
+                float kz = 0;
+
+                _vm.SLMCalibZPos = (double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0];
+                Point center = new Point(_vm.ImageWidth / 2, _vm.ImageHeight / 2);
+
+                this.Dispatcher.Invoke((SLMSavePattern)delegate
+                {
+                    tROIs = OverlayManagerClass.Instance.GetPatternZROIs(-1, OverlayManagerClass.Instance.PatternID - 1);
+                    zROIs = OverlayManagerClass.Instance.GetPatternZROIs(-1, OverlayManagerClass.Instance.PatternID);
+                });
+
+                ptsTo.Add((float)center.X);
+                ptsTo.Add((float)center.Y);
+                ptsTo.Add((float)0.0);
+                foreach (KeyValuePair<double, List<Shape>> entry in tROIs)
+                {
+                    kz = (float)(2 * Math.PI * entry.Key * (float)Constants.UM_TO_MM / _vm.SLMWavelengthNM);
+                    foreach (Shape slist in entry.Value)
+                    {
+                        if (slist.GetType() == typeof(OverlayManager.ROICrosshair))
+                        {
+                            ptsTmp.Add((float)((OverlayManager.ROICrosshair)slist).CenterPoint.X);
+                            ptsTmp.Add((float)((OverlayManager.ROICrosshair)slist).CenterPoint.Y);
+                            ptsTmp.Add(kz);
+                        }
+                        else if (slist.GetType() == typeof(OverlayManager.ROIEllipse))
+                        {
+                            ptsTmp.Add((float)((OverlayManager.ROIEllipse)slist).ROICenter.X);
+                            ptsTmp.Add((float)((OverlayManager.ROIEllipse)slist).ROICenter.Y);
+                            ptsTmp.Add(kz);
+                        }
+                    }
+                }
+
+                bool centerAdded = false;
+                foreach (KeyValuePair<double, List<Shape>> entry in zROIs)
+                {
+                    kz = (float)(2 * Math.PI * entry.Key * (float)Constants.UM_TO_MM / _vm.SLMWavelengthNM);
+                    if (!centerAdded)
+                    {
+                        ptsTo[2] = (float)entry.Key;
+                        ptsFrom.Add((float)offCenter.X);
+                        ptsFrom.Add((float)offCenter.Y);
+                        ptsFrom.Add(kz);
+                        centerAdded = true;
+                    }
+
+                    //update reference pattern with z um value:
+                    for (int i = 2; i < ptsTmp.Count; i += 3)
+                    {
+                        ptsTmp[i] = (float)entry.Key;
+                    }
+                    ptsTo.AddRange(ptsTmp);
+
+                    foreach (Shape slist in entry.Value)
+                    {
+                        if (slist.GetType() == typeof(OverlayManager.ROICrosshair))
+                        {
+                            ptsFrom.Add((float)((OverlayManager.ROICrosshair)slist).CenterPoint.X);
+                            ptsFrom.Add((float)((OverlayManager.ROICrosshair)slist).CenterPoint.Y);
+                            ptsFrom.Add(kz);
+                        }
+                        else if (slist.GetType() == typeof(OverlayManager.ROIEllipse))
+                        {
+                            ptsFrom.Add((float)((OverlayManager.ROIEllipse)slist).ROICenter.X);
+                            ptsFrom.Add((float)((OverlayManager.ROIEllipse)slist).ROICenter.Y);
+                            ptsFrom.Add(kz);
+                        }
+                    }
+                }
+                //execute calibration:
+                e.Result = (_vm.SLMCalibration("", ptsFrom.ToArray(), ptsTo.ToArray(), ptsTo.Count)) ? "0" : String.Format("Calibration Failed\n");
+            }
+        }
+
+        private void SLMCalibrator3D_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            // check error, cancel, then result:
+            if (e.Error != null)
+            {
+                ThorLogging.ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, "SLMCalibrator: " + e.Error.Message);
+            }
+            else if (!e.Cancelled)
+            {
+                try
+                {
+                    if (0 != ((string)e.Result).CompareTo("0"))
+                    {
+                        _vm.SLMSetBlank();
+                        OverlayManagerClass.Instance.ClearNonSaveROIs(ref CaptureSetupViewModel.OverlayCanvas);
+                        OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, false);
+                        string strBody = e.Result + "\n\nKeep Z at reference and use Cross Hair\nROI tool to mark the single imaging bead\nthen Press Yes to continue calibration,\nPress No to cancel.";
+                        SLMCalibPanel slmCalib = new SLMCalibPanel("SPOT_SELECT", "DONE", "New Calibration", strBody);
+                        this.DataContext = slmCalib;
+                        this.Show();
+                    }
+                    else
+                    {
+                        //update calibration datetime:
+                        _vm.SLMLastCalibTimeUnix = ResourceManagerCS.DateTimeToUnixTimestamp(DateTime.Now);
+
+                        //persist slm params in all modalities:
+                        _vm.PersistGlobalExperimentXML(GlobalExpAttribute.SLM_BLEACH);
+                    }
+                    SLMPatternStatus = string.Empty;
+                }
+                catch (Exception ex)
+                {
+                    ThorLogging.ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, "SLMCalibrator: " + ex.Message);
+                }
+            }
+
+            //done:
+            SLMSpinProgressVisible = false;
+            slmCalibrator.DoWork -= new DoWorkEventHandler(SLMCalibrator3D_DoWork);
+            slmCalibrator.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(SLMCalibrator3D_RunWorkerCompleted);
+            if (0 == ((string)e.Result).CompareTo("0")) { CalibrationProc("DONE"); }
+        }
+
         void SLMCalibrator_DoWork(object sender, DoWorkEventArgs e)
         {
             //create mask, PatternID 1 are targets to be burnt,
@@ -2028,7 +2364,7 @@
             float[] ptsFrom = (1 >= calPointsFrom.Count) ? ptsTo : PointsToFloatVec(calPointsFrom);
 
             //check if both are valid counts, one more for image center:
-            if (((SLM_CALIB_PTS + 1) * 2) != ptsTo.Length || ((SLM_CALIB_PTS + 1) * 2) != ptsFrom.Length)
+            if (((CalibratePointCount + 1) * 2) != ptsTo.Length || ((CalibratePointCount + 1) * 2) != ptsFrom.Length)
             {
                 e.Result = "Invalid count of points.\n";
                 return;
@@ -2105,6 +2441,7 @@
                 CancelSLMBackgroundWorker(slmWorker, true);
                 CancelSLMBackgroundWorker(slmPreviewWorker);
                 CancelSLMBackgroundWorker(slmBuildAllWorker);
+                CancelSLMBackgroundWorker(slmImportWorker);
                 CancelCalibrator();
 
                 _vm.IdleSLM();
@@ -2125,7 +2462,8 @@
                 //display ActiveROIs:
                 _vm.DisplayROI();
 
-                Application.Current.MainWindow.Activate();
+                if (Application.Current.MainWindow != null)
+                    Application.Current.MainWindow.Activate();
             }
             catch (Exception ex)
             {
@@ -2155,6 +2493,10 @@
             slmPreviewWorker = new BackgroundWorker();
             slmPreviewWorker.WorkerReportsProgress = false;
             slmPreviewWorker.WorkerSupportsCancellation = true;
+
+            slmImportWorker = new BackgroundWorker();
+            slmImportWorker.WorkerReportsProgress = false;
+            slmImportWorker.WorkerSupportsCancellation = true;
 
             slmBuildAllWorker = new BackgroundWorker();
             slmBuildAllWorker.WorkerReportsProgress = false;
@@ -2224,16 +2566,294 @@
             }
         }
 
-        private bool TryImportPatternSequences(XmlDocument xmlSLMImportDoc)
+        private bool TryExportPatternSequences(string XmlPath, bool includeSequences)
+        {
+            string str = string.Empty;
+            int iVal = 0;
+            double dVal = 0.0;
+            XmlDocument activeXml = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS];
+            XmlNodeList ndActiveParent = activeXml.SelectNodes("/ThorImageExperiment/SLM");
+            XmlNodeList ndActive = activeXml.SelectNodes("/ThorImageExperiment/SLM/Pattern");
+            if (0 >= ndActive.Count)
+            {
+                SLMPatternStatus = String.Format("No SLM patterns to export.");
+                return false;
+            }
+
+            XmlDocument doc = new XmlDocument();
+            doc.AppendChild(doc.CreateProcessingInstruction("xml", "version=\"1.0\""));
+            XmlElement root = doc.CreateElement("ThorImageSLM");
+            doc.AppendChild(root);
+            XmlNodeList ndList = doc.SelectNodes("/ThorImageSLM");
+
+            XmlManager.CreateXmlNodeWithinNode(doc, ndList[0], "SLMPatterns");
+            XmlNodeList ndDoc = doc.SelectNodes("/ThorImageSLM/SLMPatterns");
+            XmlManager.SetAttribute(ndDoc[0], doc, "BleacherType", ((int)ResourceManagerCS.GetBleacherType()).ToString());
+            XmlManager.SetAttribute(ndDoc[0], doc, "holoGen3D", (XmlManager.GetAttribute(ndActiveParent[0], activeXml, "holoGen3D", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal)) ? iVal.ToString() : "0");
+
+            for (int i = 0; i < ndActive.Count; i++)
+                XmlManager.CreateXmlNodeWithinNode(doc, ndDoc[0], "Pattern");
+
+            int idx = 0;
+            int patternID = 1;
+            double pxSizeUM = 1.0, roiWidthPx = 0, roiHeightPx = 0;
+            ndList = doc.SelectNodes("/ThorImageSLM/SLMPatterns/Pattern");
+            for (int p = 0; p < ndList.Count; p++)
+            {
+                XmlManager.SetAttribute(ndList[p], doc, "name",
+                    (XmlManager.GetAttribute(ndActive[p], activeXml, "name", ref str) && !string.IsNullOrEmpty(str) && !ContainsInvalidPathCharacters(str)) ? str : ("Pattern" + string.Format("{0:000}", ++idx))
+                    );
+
+                patternID = (XmlManager.GetAttribute(ndActive[p], activeXml, "fileID", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal)) ? iVal : p + 1;
+                XmlManager.SetAttribute(ndList[p], doc, "patternID", patternID.ToString());
+
+                XmlManager.SetAttribute(ndList[p], doc, "red",
+                    (XmlManager.GetAttribute(ndActive[p], activeXml, "red", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)) ? dVal.ToString() : "255"
+                    );
+
+                XmlManager.SetAttribute(ndList[p], doc, "green",
+                    (XmlManager.GetAttribute(ndActive[p], activeXml, "green", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)) ? dVal.ToString() : "255"
+                    );
+
+                XmlManager.SetAttribute(ndList[p], doc, "blue",
+                    (XmlManager.GetAttribute(ndActive[p], activeXml, "blue", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)) ? dVal.ToString() : "255"
+                    );
+
+                XmlManager.SetAttribute(ndList[p], doc, "pxSpacing",
+                    (XmlManager.GetAttribute(ndActive[p], activeXml, "pxSpacing", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)) ? dVal.ToString() : "1"
+                    );
+
+                XmlManager.SetAttribute(ndList[p], doc, "durationMS",
+                    (XmlManager.GetAttribute(ndActive[p], activeXml, "durationMS", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)) ? dVal.ToString() : "100"
+                    );
+
+                XmlManager.SetAttribute(ndList[p], doc, "iterations",
+                    (XmlManager.GetAttribute(ndActive[p], activeXml, "iterations", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal)) ? iVal.ToString() : "10"
+                    );
+
+                XmlManager.SetAttribute(ndList[p], doc, "power",
+                    (XmlManager.GetAttribute(ndActive[p], activeXml, "power", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)) ? dVal.ToString() : "0"
+                    );
+
+                XmlManager.SetAttribute(ndList[p], doc, "prePatIdleMS",
+                    (XmlManager.GetAttribute(ndActive[p], activeXml, "prePatIdleMS", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)) ? dVal.ToString() : "0"
+                    );
+
+                XmlManager.SetAttribute(ndList[p], doc, "postPatIdleMS",
+                    (XmlManager.GetAttribute(ndActive[p], activeXml, "postPatIdleMS", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)) ? dVal.ToString() : "0"
+                    );
+
+                XmlManager.SetAttribute(ndList[p], doc, "preIteIdleMS",
+                    (XmlManager.GetAttribute(ndActive[p], activeXml, "preIteIdleMS", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)) ? dVal.ToString() : "0"
+                    );
+
+                XmlManager.SetAttribute(ndList[p], doc, "postIteIdleMS",
+                    (XmlManager.GetAttribute(ndActive[p], activeXml, "postIteIdleMS", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)) ? dVal.ToString() : "0"
+                    );
+
+                XmlManager.SetAttribute(ndList[p], doc, "measurePowerMW",
+                    (XmlManager.GetAttribute(ndActive[p], activeXml, "measurePowerMW", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)) ? dVal.ToString() : "0"
+                    );
+
+                XmlManager.SetAttribute(ndList[p], doc, "measurePowerMWPerUM2",
+                    (XmlManager.GetAttribute(ndActive[p], activeXml, "measurePowerMWPerUM2", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)) ? dVal.ToString() : "0"
+                    );
+
+                XmlManager.SetAttribute(ndList[p], doc, "power1",
+                    (XmlManager.GetAttribute(ndActive[p], activeXml, "power1", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)) ? dVal.ToString() : "0"
+                    );
+
+                XmlManager.SetAttribute(ndList[p], doc, "measurePower1MW",
+                    (XmlManager.GetAttribute(ndActive[p], activeXml, "measurePower1MW", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)) ? dVal.ToString() : "0"
+                    );
+
+                XmlManager.SetAttribute(ndList[p], doc, "measurePower1MWPerUM2",
+                    (XmlManager.GetAttribute(ndActive[p], activeXml, "measurePower1MWPerUM2", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)) ? dVal.ToString() : "0"
+                    );
+
+                XmlManager.SetAttribute(ndList[p], doc, "pixelSizeUM",
+                    (XmlManager.GetAttribute(ndActive[p], activeXml, "pixelSizeUM", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out pxSizeUM)) ? pxSizeUM.ToString() : "1"
+                    );
+
+                XmlManager.SetAttribute(ndList[p], doc, "xOffsetUM",
+                    (XmlManager.GetAttribute(ndActive[p], activeXml, "xOffsetUM", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)) ? dVal.ToString() : "0"
+                    );
+
+                XmlManager.SetAttribute(ndList[p], doc, "yOffsetUM",
+                    (XmlManager.GetAttribute(ndActive[p], activeXml, "yOffsetUM", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)) ? dVal.ToString() : "0"
+                    );
+
+                if (XmlManager.GetAttribute(ndActive[p], activeXml, "shape", ref str)) XmlManager.SetAttribute(ndList[p], doc, "shape", str);
+
+                if (XmlManager.GetAttribute(ndActive[p], activeXml, "roiWidthUM", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal))
+                {
+                    roiWidthPx = (dVal / pxSizeUM);
+                    XmlManager.SetAttribute(ndList[p], doc, "roiWidthPx", roiWidthPx.ToString());
+                }
+                if (XmlManager.GetAttribute(ndActive[p], activeXml, "roiHeightUM", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal))
+                {
+                    roiHeightPx = (dVal / pxSizeUM);
+                    XmlManager.SetAttribute(ndList[p], doc, "roiHeightPx", roiHeightPx.ToString());
+                }
+
+                bool backupWavelength = _vm.SLMSelectWavelengthProp;
+                this.Dispatcher.Invoke((SLMSavePattern)delegate
+                {
+                    List<Shape> rois = OverlayManagerClass.Instance.GetModeROIs((_vm.IsStimulator ? Mode.PATTERN_WIDEFIELD : Mode.PATTERN_NOSTATS), patternID);
+                    for (int r = 0; r < rois.Count; r++)
+                        XmlManager.CreateXmlNodeWithinNode(doc, ndList[p], "ROI");
+
+                    for (int i = 0; i < _vm.SLMWavelengthCount; i++)
+                    {
+                        _vm.SLMSelectWavelengthProp = (1 == i);
+
+                        XmlNodeList ndROI = ndList[p].SelectNodes("ROI");
+                        for (int r = 0; r < rois.Count; r++)
+                        {
+                            Dictionary<double, List<Shape>> zSubRoi = OverlayManagerClass.Instance.GetPatternZROIs((int)(_vm.IsStimulator ? Mode.PATTERN_WIDEFIELD : Mode.PATTERN_NOSTATS), patternID, _vm.SLMWavelengthNM, (r + 1).ToString());
+
+                            foreach (KeyValuePair<double, List<Shape>> subRoi in zSubRoi)
+                            {
+                                if (0 < subRoi.Value.Count)   //should be only one per subID
+                                {
+                                    string strVertice = str = string.Empty;
+                                    Point center = new Point();
+                                    double left = double.MaxValue, right = 0, top = double.MaxValue, bottom = 0;
+                                    KeyValuePair<string, Type> shapeType = OverlayManagerClass.ROITypeDictionary.FirstOrDefault(x => x.Value == subRoi.Value[0].GetType());
+                                    XmlManager.SetAttribute(ndROI[r], doc, "subID", (r + 1).ToString());
+                                    if (typeof(ROIPoly) == shapeType.Value)
+                                    {
+                                        foreach (Point pt in ((ROIPoly)rois[r]).Points)
+                                        {
+                                            strVertice += pt.X + "," + pt.Y + " ";
+                                            left = Math.Min(left, pt.X);
+                                            right = Math.Max(right, pt.X);
+                                            top = Math.Min(top, pt.Y);
+                                            bottom = Math.Min(bottom, pt.Y);
+                                        }
+                                        XmlManager.SetAttribute(ndROI[r], doc, "vertices", strVertice);
+                                        center.X = (left + right) / 2;
+                                        center.Y = (top + bottom) / 2;
+                                        roiWidthPx = Math.Max(roiWidthPx, Math.Abs(right - left));
+                                        roiHeightPx = Math.Max(roiHeightPx, Math.Abs(bottom - top));
+                                    }
+                                    else if (typeof(Polyline) == shapeType.Value)
+                                    {
+                                        foreach (Point pt in ((Polyline)rois[r]).Points)
+                                        {
+                                            strVertice += pt.X + "," + pt.Y + " ";
+                                            left = Math.Min(left, pt.X);
+                                            right = Math.Max(right, pt.X);
+                                            top = Math.Min(top, pt.Y);
+                                            bottom = Math.Min(bottom, pt.Y);
+                                        }
+                                        XmlManager.SetAttribute(ndROI[r], doc, "vertices", strVertice);
+                                        center.X = (left + right) / 2;
+                                        center.Y = (top + bottom) / 2;
+                                        roiWidthPx = Math.Max(roiWidthPx, Math.Abs(right - left));
+                                        roiHeightPx = Math.Max(roiHeightPx, Math.Abs(bottom - top));
+                                    }
+                                    else if (typeof(Line) == shapeType.Value)
+                                    {
+                                        strVertice += ((Line)subRoi.Value[0]).X1 + "," + ((Line)subRoi.Value[0]).Y1 + " ";
+                                        strVertice += ((Line)subRoi.Value[0]).X2 + "," + ((Line)subRoi.Value[0]).Y2 + " ";
+                                        XmlManager.SetAttribute(ndROI[r], doc, "vertices", strVertice);
+                                        center.X = (((Line)subRoi.Value[0]).X1 + ((Line)subRoi.Value[0]).X2) / 2;
+                                        center.Y = (((Line)subRoi.Value[0]).Y1 + ((Line)subRoi.Value[0]).Y2) / 2;
+                                        roiWidthPx = Math.Max(roiWidthPx, Math.Abs(((Line)subRoi.Value[0]).X2 - ((Line)subRoi.Value[0]).X1));
+                                        roiHeightPx = Math.Max(roiHeightPx, Math.Abs(((Line)subRoi.Value[0]).Y2 - ((Line)subRoi.Value[0]).Y1));
+                                    }
+                                    else if (typeof(ROIRect) == shapeType.Value)
+                                    {
+                                        center.X = (((ROIRect)subRoi.Value[0]).StartPoint.X + ((ROIRect)subRoi.Value[0]).EndPoint.X) / 2;
+                                        center.Y = (((ROIRect)subRoi.Value[0]).StartPoint.Y + ((ROIRect)subRoi.Value[0]).EndPoint.Y) / 2;
+                                        roiWidthPx = ((ROIRect)subRoi.Value[0]).ROIWidth;
+                                        roiHeightPx = ((ROIRect)subRoi.Value[0]).ROIHeight;
+                                    }
+                                    else if (typeof(ROIEllipse) == shapeType.Value)
+                                    {
+                                        center.X = ((ROIEllipse)subRoi.Value[0]).ROICenter.X;
+                                        center.Y = ((ROIEllipse)subRoi.Value[0]).ROICenter.Y;
+                                        roiWidthPx = ((ROIEllipse)subRoi.Value[0]).ROIWidth;
+                                        roiHeightPx = ((ROIEllipse)subRoi.Value[0]).ROIHeight;
+                                    }
+                                    else if (typeof(ROICrosshair) == shapeType.Value)
+                                    {
+                                        center.X = ((ROICrosshair)subRoi.Value[0]).CenterPoint.X;
+                                        center.Y = ((ROICrosshair)subRoi.Value[0]).CenterPoint.Y;
+                                        roiWidthPx = roiHeightPx = 0;
+                                    }
+                                    XmlManager.SetAttribute(ndROI[r], doc, "ZUM", subRoi.Key.ToString());       //relative Z[um] in overlay manager
+                                    XmlManager.SetAttribute(ndROI[r], doc, "centerX", center.X.ToString());
+                                    XmlManager.SetAttribute(ndROI[r], doc, "centerY", center.Y.ToString());
+                                    XmlManager.SetAttribute(ndROI[r], doc, "shape", shapeType.Key);
+                                    XmlManager.SetAttribute(ndROI[r], doc, "wavelengthNM", _vm.SLMWavelengthNM.ToString());
+                                    XmlManager.SetAttribute(ndROI[r], doc, "roiWidthPx", roiWidthPx.ToString());
+                                    XmlManager.SetAttribute(ndROI[r], doc, "roiHeightPx", roiHeightPx.ToString());
+                                }
+                            } //end of foreach [Z, ROIs] dictionary
+                        } //end of for rois
+                    } //end of for wavelength
+                });
+                _vm.SLMSelectWavelengthProp = backupWavelength;
+            }
+
+            if (includeSequences)
+            {
+                //export SLM sequences
+                ndList = doc.SelectNodes("/ThorImageSLM");
+
+                XmlManager.CreateXmlNodeWithinNode(doc, ndList[0], "SLMSequences");
+                ndDoc = doc.SelectNodes("/ThorImageSLM/SLMSequences");
+
+                for (int i = 0; i < _vm.EpochSequence.Count; i++)
+                    XmlManager.CreateXmlNodeWithinNode(doc, ndDoc[0], "SequenceEpoch");
+
+                ndList = doc.SelectNodes("/ThorImageSLM/SLMSequences/SequenceEpoch");
+
+                for (int i = 0; i < ndList.Count; i++)
+                {
+                    XmlManager.SetAttribute(ndList[i], doc, "sequenceID", i.ToString());
+                    XmlManager.SetAttribute(ndList[i], doc, "sequence", _vm.EpochSequence[i].SequenceStr);
+                    XmlManager.SetAttribute(ndList[i], doc, "sequenceEpochCount", _vm.EpochSequence[i].EpochCount);
+                }
+            }
+
+            doc.Save(XmlPath);
+            return true;
+        }
+
+        /// <summary>
+        /// Import SLM patterns from custom xml
+        /// </summary>
+        /// <param name="xmlSLMImportDoc"></param>
+        /// <returns></returns>
+        private bool TryImportPatternSequences(XmlDocument xmlSLMImportDoc, bool includeSequences)
         {
             string str1 = string.Empty, str2 = string.Empty, str3 = string.Empty;
-            double dVal1 = 0, dVal2 = 0, dVal3 = 0, dVal4 = 0;
+            double dVal1 = 0, dVal2 = 0, dVal3 = 0, dVal4 = 0, zUM = 0;
             int iVal = 0;
             bool workStatus = true;
+            ICamera.LSMType bType = ICamera.LSMType.GALVO_GALVO;
 
-            if (0 >= _vm.BleachLSMUMPerPixel)
+            if (!_vm.IsStimulator && 0 >= _vm.BleachLSMUMPerPixel)
             {
                 SLMPatternStatus = String.Format("Calibration must be done before import.");
+                return false;
+            }
+
+            //load general settings
+            XmlNodeList ndParent = xmlSLMImportDoc.SelectNodes("/ThorImageSLM/SLMPatterns");
+            if (0 >= ndParent.Count)
+            {
+                SLMPatternStatus = String.Format("SLMPatterns node is missing.");
+                return false;
+            }
+            //verify bleacher type
+            bType = (XmlManager.GetAttribute(ndParent[0], xmlSLMImportDoc, "BleacherType", ref str1) && Int32.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal)) ? (ICamera.LSMType)iVal : bType;
+            if (bType != (ICamera.LSMType)ResourceManagerCS.GetBleacherType())
+            {
+                SLMPatternStatus = String.Format("Stimulator must be configured the same as import.");
                 return false;
             }
 
@@ -2246,29 +2866,35 @@
                     MessageBoxResult dresult = MessageBox.Show("Old patterns will be cleared, do you want to continue?", "Import SLM Patterns", MessageBoxButton.YesNo, MessageBoxImage.Question);
                     if (dresult == MessageBoxResult.No)
                     {
-                        SLMPatternStatus = String.Format("Please backup the SLM patterns (as a template) before import or select another xml.");
+                        //SLMPatternStatus = String.Format("Please backup the SLM patterns (as a template) before import or select another xml.");
                         return false;
                     }
-                    else if (dresult == MessageBoxResult.Yes)
-                    {
-                        _vm.SLMBleachWaveParams.Clear();
-                    }
                 }
-                //clear history
-                _vm.SLM3D = _vm.SLMSequenceOn = false;
-                OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas);
-                for (int i = 0; i < _vm.SLMWaveformFolder.Length; i++)
-                    _vm.ClearSLMFiles(_vm.SLMWaveformFolder[i]);
-
                 //backup properties
+                bool backupWavelength = _vm.SLMSelectWavelengthProp;
                 ThorSharedTypes.Mode backupMode = OverlayManagerClass.Instance.CurrentMode;
-                OverlayManagerClass.Instance.CurrentMode = ThorSharedTypes.Mode.PATTERN_NOSTATS;
+                OverlayManagerClass.Instance.CurrentMode = (ICamera.LSMType.STIMULATE_MODULATOR == bType) ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS;
+                OverlayManagerClass.Instance.SimulatorMode = true;   //Make overlay manager not accessing hardware mvms, but properties only
 
-                //start to draw
-                OverlayManagerClass.Instance.InitSelectROI(ref CaptureSetupViewModel.OverlayCanvas);
+                //clear history
+                _vm.SLM3D = (XmlManager.GetAttribute(ndParent[0], xmlSLMImportDoc, "holoGen3D", ref str1) && Int32.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal)) ? (1 == iVal) : false;
+                _vm.SLMSequenceOn = false;
+                this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
+                {
+                    _vm.SLMBleachWaveParams.Clear();
+                    OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, -1, OverlayManagerClass.Instance.CurrentMode);
+                    for (int i = 0; i < _vm.SLMWaveformFolder.Length; i++)
+                        _vm.ClearSLMFiles(_vm.SLMWaveformFolder[i]);
+
+                    //start to draw
+                    OverlayManagerClass.Instance.InitSelectROI(ref CaptureSetupViewModel.OverlayCanvas);
+                });
+
+                //through pattern nodes
                 for (int i = 0; i < ndList.Count; i++)
                 {
                     //locate patternID in order, [1-based]
+                    //Pattern nodes for galvo waveform params, ROI nodes for individual pattern info
                     XmlNode xNode = null;
                     foreach (XmlNode nd in ndList)
                     {
@@ -2289,12 +2915,10 @@
                     SLMParamID = iVal - 1;      //index in waveform param list [0-based]
                     OverlayManagerClass.Instance.PatternID = iVal;
                     sparam.BleachWaveParams.ID = (uint)iVal;
-                    sparam.BleachWaveParams.UMPerPixel = (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0];
-                    sparam.BleachWaveParams.UMPerPixelRatio = (0 < _vm.BleachLSMUMPerPixel) ? sparam.BleachWaveParams.UMPerPixel / _vm.BleachLSMUMPerPixel : 1.0;
 
-                    if ((XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "red", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) &&
-                        (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "green", ref str2) && Double.TryParse(str2, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal2)) &&
-                        (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "blue", ref str3) && Double.TryParse(str3, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal3)))
+                    if (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "red", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1) &&
+                        XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "green", ref str2) && Double.TryParse(str2, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal2) &&
+                        XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "blue", ref str3) && Double.TryParse(str3, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal3))
                     {
                         System.Collections.Specialized.BitVector32 bitVec32 = new System.Collections.Specialized.BitVector32(Convert.ToByte(dVal1));
                         bitVec32[OverlayManager.OverlayManagerClass.SecG] = Convert.ToByte(dVal2);
@@ -2312,89 +2936,74 @@
                         break;
                     }
 
+                    sparam.BleachWaveParams.UMPerPixel = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "pixelSizeUM", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                        dVal1 : (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0];
+
+                    sparam.BleachWaveParams.UMPerPixelRatio = (0 < _vm.BleachLSMUMPerPixel) ? sparam.BleachWaveParams.UMPerPixel / _vm.BleachLSMUMPerPixel : 1.0;
+
+                    //[NOTE]: shape, roiWidthPx, roiHeightPx duplicate in the ROI sub nodes,
+                    //        roiWidthPx & roiHeightPx here used for GG and those in ROI sub nodes for pattern drawing
                     dVal1 = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "roiWidthPx", ref str1) && Double.TryParse(str1, out dVal1)) ? dVal1 : 0;
                     dVal2 = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "roiHeightPx", ref str2) && Double.TryParse(str2, out dVal2)) ? dVal2 : 0;
 
-                    Type stype = ((dVal1 == 0 && dVal2 == 0) ||
+                    Type stype = typeof(ROIEllipse);
+                    if (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "shape", ref str3) && OverlayManagerClass.ROITypeDictionary.ContainsKey(str3.ToUpper()))
+                    {
+                        stype = OverlayManagerClass.ROITypeDictionary[str3.ToUpper()];
+                    }
+                    else
+                    {
+                        stype = ((dVal1 == 0 && dVal2 == 0) ||
                         (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "shape", ref str3) && 0 <= str3.IndexOf("Crosshair", StringComparison.OrdinalIgnoreCase))) ?
                         typeof(ROICrosshair) : typeof(ROIEllipse);
+                    }
 
                     sparam.BleachWaveParams.ROIWidth = (typeof(ROICrosshair) == stype) ? 0 : dVal1;
                     sparam.BleachWaveParams.ROIHeight = (typeof(ROICrosshair) == stype) ? 0 : dVal2;
 
                     sparam.PixelSpacing = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "pxSpacing", ref str1) && Int32.TryParse(str1, out iVal) && (1 <= iVal)) ? iVal : 1;
 
-                    if (!XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "iterations", ref str1) || !Int32.TryParse(str1, out iVal))
-                    {
-                        SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": iterations\n");
-                        workStatus = false;
-                        break;
-                    }
-                    sparam.BleachWaveParams.Iterations = iVal;
+                    sparam.BleachWaveParams.Iterations = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "iterations", ref str1) && Int32.TryParse(str1, out iVal)) ?
+                        Math.Max(1, iVal) : 1;
 
-                    if (!XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "prePatIdleMS", ref str1) || !Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))
-                    {
-                        SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": prePatIdleMS\n");
-                        workStatus = false;
-                        break;
-                    }
-                    sparam.BleachWaveParams.PrePatIdleTime = dVal1;
+                    sparam.BleachWaveParams.PrePatIdleTime = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "prePatIdleMS", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                        Math.Max(0, dVal1) : 0;
 
-                    if (!XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "postPatIdleMS", ref str1) || !Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))
-                    {
-                        SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": postPatIdleMS\n");
-                        workStatus = false;
-                        break;
-                    }
-                    sparam.BleachWaveParams.PostPatIdleTime = dVal1;
+                    sparam.BleachWaveParams.PostPatIdleTime = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "postPatIdleMS", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                        Math.Max(0, dVal1) : 0;
 
-                    if (!XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "preIteIdleMS", ref str1) || !Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))
-                    {
-                        SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": preIteIdleMS\n");
-                        workStatus = false;
-                        break;
-                    }
-                    sparam.BleachWaveParams.PreIdleTime = dVal1;
+                    sparam.BleachWaveParams.PreIdleTime = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "preIteIdleMS", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                        Math.Max(0, dVal1) : 0;
 
-                    if (!XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "postIteIdleMS", ref str1) || !Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))
-                    {
-                        SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": postIteIdleMS\n");
-                        workStatus = false;
-                        break;
-                    }
-                    sparam.BleachWaveParams.PostIdleTime = dVal1;
+                    sparam.BleachWaveParams.PostIdleTime = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "postIteIdleMS", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                        Math.Max(0, dVal1) : 0;
 
-                    if (!XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "power", ref str1) || !Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))
-                    {
-                        SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": power\n");
-                        workStatus = false;
-                        break;
-                    }
-                    sparam.BleachWaveParams.Power = dVal1;
+                    sparam.BleachWaveParams.Power = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "power", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                        dVal1 : 0;
                     sparam.BleachWaveParams.Power1 = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "power1", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal2)) ?
-                                                     dVal2 : -1.0;
+                        dVal2 : -1.0;
 
-                    sparam.BleachWaveParams.MeasurePower = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "measurePowerMW", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ? dVal1 : 0.0;
-                    if (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "measurePower1MW", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal2))
-                        sparam.BleachWaveParams.MeasurePower1 = dVal2;
+                    sparam.BleachWaveParams.MeasurePower = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "measurePowerMW", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                        dVal1 : 0.0;
+                    sparam.BleachWaveParams.MeasurePower1 = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "measurePower1MW", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal2)) ?
+                        dVal2 : -1.0;
 
-                    sparam.SLMMeasurePowerArea = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "measurePowerMWPerUM2", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ? dVal1 : 0.0;
-                    if (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "measurePower1MWPerUM2", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal2))
-                        sparam.SLMMeasurePowerArea1 = dVal2;
+                    sparam.SLMMeasurePowerArea = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "measurePowerMWPerUM2", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                        dVal1 : 0.0;
+                    sparam.SLMMeasurePowerArea1 = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "measurePower1MWPerUM2", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal2)) ?
+                        dVal2 : -1.0;
 
-                    sparam.Red = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "red", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ? dVal1 : 128;
+                    sparam.Red = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "red", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                        dVal1 : 128;
 
-                    sparam.Green = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "green", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ? dVal1 : 128;
+                    sparam.Green = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "green", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                        dVal1 : 128;
 
-                    sparam.Blue = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "blue", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ? dVal1 : 128;
+                    sparam.Blue = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "blue", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                        dVal1 : 128;
 
-                    if (!XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "durationMS", ref str1) || !Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))
-                    {
-                        SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": durationMS\n");
-                        workStatus = false;
-                        break;
-                    }
-                    sparam.Duration = dVal1;
+                    sparam.Duration = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "durationMS", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                        Math.Max(0, dVal1) : 0;
 
                     //draw in order of subID from 1 and draw 0 as the last if exist
                     Dictionary<int, int> subIDdic = new Dictionary<int, int>();
@@ -2409,55 +3018,142 @@
 
                         iLoc++;
                     }
-                    bool firstDraw = true;  //only the first ellipse takes start-end, the rest center only
-                    for (int id = 1; id < subIDdic.Count; id++)
+                    //In Galvo-Galvo, only the first takes start-end, the rest center only
+                    bool firstDraw = true;
+                    for (int id = 1, j = 0; j < subIDdic.Count; j++, id++)  //leave id = 0 for later
                     {
                         if (subIDdic.ContainsKey(id))
                         {
+                            iVal = (XmlManager.GetAttribute(xNode.ChildNodes[subIDdic[id]], xmlSLMImportDoc, "wavelengthNM", ref str1) && Int32.TryParse(str1, out iVal)) ? iVal : _vm.SLMWavelengthNM;
+                            _vm.SLMSelectWavelengthProp = (_vm.SLMWavelengthNM == iVal) ? _vm.SLMSelectWavelengthProp : !_vm.SLMSelectWavelengthProp;
+                            OverlayManagerClass.Instance.WavelengthNM = _vm.SLMWavelengthNM;
+
+                            //update Z[um] before drawing
+                            OverlayManagerClass.Instance.ZUM = ((XmlManager.GetAttribute(xNode.ChildNodes[subIDdic[id]], xmlSLMImportDoc, "ZUM", ref str1) && Double.TryParse(str1, out zUM)) ? zUM : 0.0)
+                                                                + (_vm.SLMZRefMM * (double)Constants.UM_TO_MM);
+
+                            dVal1 = (XmlManager.GetAttribute(xNode.ChildNodes[subIDdic[id]], xmlSLMImportDoc, "roiWidthPx", ref str1) && Double.TryParse(str1, out dVal1)) ? dVal1 : sparam.BleachWaveParams.ROIWidth;
+                            dVal2 = (XmlManager.GetAttribute(xNode.ChildNodes[subIDdic[id]], xmlSLMImportDoc, "roiHeightPx", ref str2) && Double.TryParse(str2, out dVal2)) ? dVal2 : sparam.BleachWaveParams.ROIHeight;
+
+                            stype = (XmlManager.GetAttribute(xNode.ChildNodes[subIDdic[id]], xmlSLMImportDoc, "shape", ref str3) && OverlayManagerClass.ROITypeDictionary.ContainsKey(str3.ToUpper())) ?
+                                OverlayManagerClass.ROITypeDictionary.FirstOrDefault(x => x.Key == str3.ToUpper()).Value : stype;
+
                             if (XmlManager.GetAttribute(xNode.ChildNodes[subIDdic[id]], xmlSLMImportDoc, "centerX", ref str1) && Double.TryParse(str1, out dVal3) &&
                                 XmlManager.GetAttribute(xNode.ChildNodes[subIDdic[id]], xmlSLMImportDoc, "centerY", ref str2) && Double.TryParse(str2, out dVal4))
                             {
-                                OverlayManagerClass.Instance.CreateROIShape(ref CaptureSetupViewModel.OverlayCanvas,
-                                    stype,
-                                    firstDraw ? new Point(dVal3 - sparam.BleachWaveParams.ROIWidth / 2, dVal4 - sparam.BleachWaveParams.ROIHeight / 2) : new Point(dVal3, dVal4),
-                                    new Point(dVal3 + sparam.BleachWaveParams.ROIWidth / 2, dVal4 + sparam.BleachWaveParams.ROIHeight / 2));
-                                OverlayManagerClass.Instance.InitSelectROI(ref CaptureSetupViewModel.OverlayCanvas);
-                                firstDraw = false;
+                                this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
+                                {
+                                    //use vertices to determine shape drawing: polygon, polyline, line
+                                    if (typeof(ROIPoly) == stype || typeof(Polyline) == stype || typeof(Line) == stype)
+                                    {
+                                        if (!firstDraw)
+                                        {
+                                            OverlayManagerClass.Instance.CreateROIShape(ref CaptureSetupViewModel.OverlayCanvas,
+                                                stype,
+                                                new Point(dVal3, dVal4),
+                                                new Point(dVal3 + dVal1 / 2, dVal4 + dVal2 / 2));
+                                        }
+                                        else
+                                        {
+                                            //start draw polys and lines
+                                            if (XmlManager.GetAttribute(xNode.ChildNodes[subIDdic[id]], xmlSLMImportDoc, "vertices", ref str1))
+                                            {
+                                                string[] strVertices = str1.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                                                for (int sV = 0; sV < strVertices.Count(); sV++)
+                                                {
+                                                    string[] vXY = strVertices[sV].Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                                                    if (2 <= vXY.Count())
+                                                    {
+                                                        if (Double.TryParse(vXY[0], out dVal3) && Double.TryParse(vXY[1], out dVal4))
+                                                        {
+                                                            if (0 == sV)
+                                                            {
+                                                                //define range based on start and end point
+                                                                if (typeof(Line) == stype)
+                                                                {
+                                                                    //keep start point at [X1=dVal1, Y1=dVal2]
+                                                                    dVal1 = dVal3; dVal2 = dVal4;
+                                                                    continue;
+                                                                }
+                                                                OverlayManagerClass.Instance.CreateROIShape(ref CaptureSetupViewModel.OverlayCanvas,
+                                                                    stype,
+                                                                    new Point(dVal3, dVal4),
+                                                                    new Point(dVal3 + dVal1 / 2, dVal4 + dVal2 / 2));
+                                                            }
+                                                            else
+                                                            {
+                                                                if (typeof(Line) == stype)
+                                                                {
+                                                                    OverlayManagerClass.Instance.CreateROIShape(ref CaptureSetupViewModel.OverlayCanvas,
+                                                                      stype,
+                                                                      new Point(dVal1, dVal2),
+                                                                      new Point(dVal3, dVal4));
+                                                                }
+                                                                else
+                                                                    OverlayManagerClass.Instance.AddPointToObject(ref CaptureSetupViewModel.OverlayCanvas, new Point(dVal3, dVal4));
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                //add a dummy then close for ROIPoly
+                                                OverlayManagerClass.Instance.AddPointToObject(ref CaptureSetupViewModel.OverlayCanvas, new Point(0, 0));
+                                                OverlayManagerClass.Instance.CloseObject(ref CaptureSetupViewModel.OverlayCanvas, new Point(0, 0));
+                                            }
+                                        }
+                                    }
+                                    else    //use roi size to define shape drawing: rectangle, ellipse
+                                    {
+                                        OverlayManagerClass.Instance.CreateROIShape(ref CaptureSetupViewModel.OverlayCanvas,
+                                            stype,
+                                            firstDraw ? new Point(dVal3 - dVal1 / 2, dVal4 - dVal2 / 2) : new Point(dVal3, dVal4),
+                                            new Point(dVal3 + dVal1 / 2, dVal4 + dVal2 / 2));
+                                    }
+                                    OverlayManagerClass.Instance.InitSelectROI(ref CaptureSetupViewModel.OverlayCanvas);
+                                });
+                                firstDraw = (ICamera.LSMType.GALVO_GALVO == bType) ? false : true;
                             }
                         }
                     }
-                    //set ROI center at the end if provided as subID = 0, fetch otherwise
-                    if (subIDdic.ContainsKey(0))
+                    //set ROI center at the end if provided as subID = 0, fetch otherwise,
+                    //no need if STIMULATE_MODULATOR type
+                    sparam.BleachWaveParams.Center = new Point(0, 0);
+                    if (ICamera.LSMType.GALVO_GALVO == bType)
                     {
-                        if (XmlManager.GetAttribute(xNode.ChildNodes[subIDdic[0]], xmlSLMImportDoc, "centerX", ref str1) && Double.TryParse(str1, out dVal3) &&
-                             XmlManager.GetAttribute(xNode.ChildNodes[subIDdic[0]], xmlSLMImportDoc, "centerY", ref str2) && Double.TryParse(str2, out dVal4))
+                        if (subIDdic.ContainsKey(0))
                         {
-                            OverlayManagerClass.Instance.CreateROIShape(ref CaptureSetupViewModel.OverlayCanvas, typeof(ROICrosshair), new Point(dVal3, dVal4), new Point(dVal3, dVal4));
-                            OverlayManagerClass.Instance.InitSelectROI(ref CaptureSetupViewModel.OverlayCanvas);
-                            sparam.BleachWaveParams.Center = new Point(dVal3, dVal4);
+                            if (XmlManager.GetAttribute(xNode.ChildNodes[subIDdic[0]], xmlSLMImportDoc, "centerX", ref str1) && Double.TryParse(str1, out dVal3) &&
+                                 XmlManager.GetAttribute(xNode.ChildNodes[subIDdic[0]], xmlSLMImportDoc, "centerY", ref str2) && Double.TryParse(str2, out dVal4))
+                            {
+                                this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
+                                {
+                                    OverlayManagerClass.Instance.CreateROIShape(ref CaptureSetupViewModel.OverlayCanvas, typeof(ROICrosshair), new Point(dVal3, dVal4), new Point(dVal3, dVal4));
+                                    OverlayManagerClass.Instance.InitSelectROI(ref CaptureSetupViewModel.OverlayCanvas);
+                                });
+                                sparam.BleachWaveParams.Center = new Point(dVal3, dVal4);
+                            }
                         }
-                    }
-                    else
-                    {
-                        OverlayManagerClass.Instance.CreateROICenter(ref CaptureSetupViewModel.OverlayCanvas);
-                        OverlayManagerClass.Instance.ValidateROIs(ref CaptureSetupViewModel.OverlayCanvas);
-                        Point offCenter = new Point(-1, -1);
-                        OverlayManagerClass.Instance.GetPatternROICenters(OverlayManagerClass.Instance.PatternID, ref str1, ref offCenter);
-                        if ((0 > offCenter.X) || (0 > offCenter.Y))
+                        else
                         {
-                            SLMPatternStatus = String.Format("Unable to calculate ROIs center.");
-                            workStatus = false;
-                            break;
+                            Point offCenter = new Point(-1, -1);
+                            this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
+                            {
+                                OverlayManagerClass.Instance.CreateROICenter(ref CaptureSetupViewModel.OverlayCanvas);
+                                OverlayManagerClass.Instance.ValidateROIs(ref CaptureSetupViewModel.OverlayCanvas);
+                                OverlayManagerClass.Instance.GetPatternROICenters(OverlayManagerClass.Instance.PatternID, ref str1, ref offCenter);
+                            });
+                            if ((0 > offCenter.X) || (0 > offCenter.Y))
+                            {
+                                SLMPatternStatus = String.Format("Unable to calculate ROIs center.");
+                                workStatus = false;
+                                break;
+                            }
+                            sparam.BleachWaveParams.Center = offCenter;
                         }
-                        sparam.BleachWaveParams.Center = offCenter;
                     }
                     sparam.BleachWaveParams.Fill = 1;
 
                     SLMParamsCurrent = new SLMParams(sparam);
-                    this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
-                    {
-                        _vm.SLMBleachWaveParams.Add(SLMParamsCurrent);
-                    });
+                    this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate { _vm.SLMBleachWaveParams.Add(SLMParamsCurrent); });
 
                     SaveSLMFiles();
                     if (!ValidateWaveformBeforeBuild())
@@ -2471,49 +3167,62 @@
                     UpdateWaveParamsAndFile();
                 }
 
-                //end for loop of ndList, give back properties,
-                //and clear-then-return if break due to error
-                OverlayManagerClass.Instance.CurrentMode = backupMode;
-                if (workStatus)
+                //end for loop of ndList,
+                //clear-then-return if break due to error
+                this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
                 {
-                    OverlayManagerClass.Instance.PersistSaveROIs();
-                }
-                else
-                {
-                    this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
+                    if (workStatus)
+                    {
+                        OverlayManagerClass.Instance.PersistSaveROIs();
+                    }
+                    else
                     {
                         _vm.SLMBleachWaveParams.Clear();
-                    });
-                    OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas);
-                    for (int id = 0; id < _vm.SLMWaveformFolder.Length; id++)
-                        _vm.ClearSLMFiles(_vm.SLMWaveformFolder[id]);
+                        OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, -1, OverlayManagerClass.Instance.CurrentMode);
 
-                    return false;
-                }
+                        for (int id = 0; id < _vm.SLMWaveformFolder.Length; id++)
+                            _vm.ClearSLMFiles(_vm.SLMWaveformFolder[id]);
+                    }
+                });
+
+                //give back properties
+                OverlayManagerClass.Instance.CurrentMode = backupMode;
+                _vm.SLMSelectWavelengthProp = backupWavelength;
+                OverlayManagerClass.Instance.SimulatorMode = false;      //give back overlay manager access to hardware mvms
+
+                if (!workStatus) return false;
             }
 
-            //import sequences, clear first since new patterns are loaded,
-            //must accompanied with new sequences
-            _vm.EpochSequence = new List<SLMEpochSequence>();
-            _vm.ClearSLMFiles(_vm.SLMWaveformFolder[1], "txt");
-            _vm.ClearSLMFiles(_vm.SLMWaveformFolder[1], "raw");
-            ndList = xmlSLMImportDoc.SelectNodes("/ThorImageSLM/SLMSequences/SequenceEpoch");
-            if (0 < ndList.Count)
+            if (includeSequences)
             {
-                _vm.SLMSequenceOn = true;
-                for (int i = 0; i < ndList.Count; i++)
+                //import sequences, clear first since new patterns are loaded,
+                //must accompanied with new sequences
+                _vm.EpochSequence = new List<SLMEpochSequence>();
+                _vm.ClearSLMFiles(_vm.SLMWaveformFolder[1], "txt");
+                _vm.ClearSLMFiles(_vm.SLMWaveformFolder[1], "raw");
+                ndList = xmlSLMImportDoc.SelectNodes("/ThorImageSLM/SLMSequences/SequenceEpoch");
+                if (0 < ndList.Count)
                 {
-                    if (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "sequence", ref str1) &&
-                        (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "sequenceEpochCount", ref str2) && Int32.TryParse(str2, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal))
-                        )
+                    _vm.SLMSequenceOn = true;
+                    for (int i = 0; i < ndList.Count; i++)
                     {
-                        _vm.EpochSequence.Add(new SLMEpochSequence(str1, iVal, _vm.SLMBleachWaveParams.Count));
+                        if (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "sequence", ref str1) &&
+                            (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "sequenceEpochCount", ref str2) && Int32.TryParse(str2, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal))
+                            )
+                        {
+                            _vm.EpochSequence.Add(new SLMEpochSequence(str1, iVal, _vm.SLMBleachWaveParams.Count));
+                        }
                     }
                 }
             }
             return true;
         }
 
+        /// <summary>
+        /// Import waveform generation parameters from experiment only
+        /// </summary>
+        /// <param name="xmlSLMImportDoc"></param>
+        /// <returns></returns>
         private bool TryImportWaveforms(XmlDocument xmlSLMImportDoc)
         {
             string str1 = string.Empty, str2 = string.Empty;
@@ -2547,98 +3256,66 @@
                 }
                 sparam.Name = str1;
 
-                if (!XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "pixelSizeUM", ref str1) || !Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))
-                {
-                    SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": pixelSizeUM\n");
-                    return false;
-                }
-                sparam.BleachWaveParams.UMPerPixel = dVal1;
+                sparam.BleachWaveParams.UMPerPixel = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "pixelSizeUM", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                   dVal1 : (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0];
+
                 sparam.BleachWaveParams.UMPerPixelRatio = (0 < _vm.BleachLSMUMPerPixel) ? sparam.BleachWaveParams.UMPerPixel / _vm.BleachLSMUMPerPixel : 1.0;
 
-                if (!XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "xOffsetUM", ref str1) || !XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "yOffsetUM", ref str2))
-                {
-                    SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": xOffsetUM\n");
-                    return false;
-                }
-                if (!Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1) || !Double.TryParse(str2, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal2))
-                {
-                    SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": OffsetUM\n");
-                    return false;
-                }
-                sparam.BleachWaveParams.CenterUM = new Point(dVal1, dVal2);
+                sparam.BleachWaveParams.CenterUM = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "xOffsetUM", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1) &&
+                    XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "yOffsetUM", ref str2) && Double.TryParse(str2, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal2)) ?
+                    new Point(dVal1, dVal2) : new Point(0, 0);
 
-                if (!XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "roiWidthUM", ref str1) || !Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))
+                if (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "roiWidthUM", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))
                 {
-                    SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": roiWidthUM\n");
-                    return false;
+                    sparam.BleachWaveParams.ROIWidthUM = dVal1;
                 }
-                sparam.BleachWaveParams.ROIWidthUM = dVal1;
+                else
+                {
+                    sparam.BleachWaveParams.ROIWidthUM = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "roiWidthPx", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                        dVal1 * sparam.BleachWaveParams.UMPerPixel : 0.0;
+                }
 
-                if (!XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "roiHeightUM", ref str1) || !Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))
+                if (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "roiHeightUM", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))
                 {
-                    SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": roiHeightUM\n");
-                    return false;
+                    sparam.BleachWaveParams.ROIHeightUM = dVal1;
                 }
-                sparam.BleachWaveParams.ROIHeightUM = dVal1;
+                else
+                {
+                    sparam.BleachWaveParams.ROIHeightUM = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "roiHeightPx", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                        dVal1 * sparam.BleachWaveParams.UMPerPixel : 0.0;
+                }
 
-                if (!XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "pxSpacing", ref str1) || !Int32.TryParse(str1, out iVal) || (1 > iVal))
-                {
-                    SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": pxSpacing\n");
-                    return false;
-                }
-                sparam.PixelSpacing = iVal;
+                sparam.PixelSpacing = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "pxSpacing", ref str1) && Int32.TryParse(str1, out iVal)) ?
+                    Math.Max(1, iVal) : 1;
 
-                if (!XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "iterations", ref str1) || !Int32.TryParse(str1, out iVal))
-                {
-                    SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": iterations\n");
-                    return false;
-                }
-                sparam.BleachWaveParams.Iterations = iVal;
+                sparam.BleachWaveParams.Iterations = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "iterations", ref str1) && Int32.TryParse(str1, out iVal)) ?
+                    Math.Max(1, iVal) : 1;
 
-                if (!XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "prePatIdleMS", ref str1) || !Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))
-                {
-                    SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": prePatIdleMS\n");
-                    return false;
-                }
-                sparam.BleachWaveParams.PrePatIdleTime = dVal1;
+                sparam.BleachWaveParams.PrePatIdleTime = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "prePatIdleMS", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                    Math.Max(0, dVal1) : 0.0;
 
-                if (!XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "postPatIdleMS", ref str1) || !Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))
-                {
-                    SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": postPatIdleMS\n");
-                    return false;
-                }
-                sparam.BleachWaveParams.PostPatIdleTime = dVal1;
+                sparam.BleachWaveParams.PostPatIdleTime = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "postPatIdleMS", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                    Math.Max(0, dVal1) : 0.0;
 
-                if (!XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "preIteIdleMS", ref str1) || !Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))
-                {
-                    SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": preIteIdleMS\n");
-                    return false;
-                }
-                sparam.BleachWaveParams.PreIdleTime = dVal1;
+                sparam.BleachWaveParams.PreIdleTime = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "preIteIdleMS", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                    Math.Max(0, dVal1) : 0.0;
 
-                if (!XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "postIteIdleMS", ref str1) || !Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))
-                {
-                    SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": postIteIdleMS\n");
-                    return false;
-                }
-                sparam.BleachWaveParams.PostIdleTime = dVal1;
+                sparam.BleachWaveParams.PostIdleTime = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "postIteIdleMS", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                    Math.Max(0, dVal1) : 0.0;
 
-                if (!XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "power", ref str1) || !Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))
-                {
-                    SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": power\n");
-                    return false;
-                }
-                sparam.BleachWaveParams.Power = dVal1;
+                sparam.BleachWaveParams.Power = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "power", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                    Math.Max(0, dVal1) : 0.0;
                 sparam.BleachWaveParams.Power1 = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "power1", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal2)) ?
-                                                dVal2 : -1.0;
+                    dVal2 : -1.0;
 
-                sparam.BleachWaveParams.MeasurePower = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "measurePowerMW", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ? dVal1 : 0.0;
-                if (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "measurePower1MW", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal2))
-                    sparam.BleachWaveParams.MeasurePower1 = dVal2;
+                sparam.BleachWaveParams.MeasurePower = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "measurePowerMW", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                    Math.Max(0, dVal1) : 0.0;
+                sparam.BleachWaveParams.MeasurePower1 = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "measurePower1MW", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal2)) ?
+                    dVal2 : -1.0;
 
                 sparam.SLMMeasurePowerArea = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "measurePowerMWPerUM2", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ? dVal1 : 0.0;
-                if (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "measurePower1MWPerUM2", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal2))
-                    sparam.SLMMeasurePowerArea1 = dVal2;
+                sparam.SLMMeasurePowerArea1 = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "measurePower1MWPerUM2", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal2)) ?
+                    dVal2 : -1.0;
 
                 sparam.Red = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "red", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ? dVal1 : 128;
 
@@ -2646,13 +3323,12 @@
 
                 sparam.Blue = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "blue", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ? dVal1 : 128;
 
-                if (!XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "durationMS", ref str1) || !Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1))
-                {
-                    SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": durationMS\n");
-                    return false;
-                }
-                sparam.Duration = dVal1;
-                sparam.BleachWaveParams.ID = (uint)(fID + i + 1);
+                sparam.Duration = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "durationMS", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
+                    Math.Max(0, dVal1) : 0.0;
+
+                sparam.BleachWaveParams.ID = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "patternID", ref str1) && Int32.TryParse(str1, out iVal)) ?
+                    (uint)iVal : (uint)(fID + i + 1);
+
                 sparam.BleachWaveParams.Fill = 1;
                 xmlSLMParams.Add(sparam);
             }
@@ -2730,7 +3406,7 @@
 
                     //save ROIs:
                     OverlayManagerClass.Instance.SetPatternToSaveROI(OverlayManagerClass.Instance.PatternID,
-                        (_vm.IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS));
+                (_vm.IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS));
 
                     //backup ROIs for not being revoked:
                     OverlayManagerClass.Instance.BackupROIs();
@@ -2740,8 +3416,11 @@
             }
             else
             {
-                //clear ROIs:
-                OverlayManagerClass.Instance.ClearNonSaveROIs(ref CaptureSetupViewModel.OverlayCanvas);
+                this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
+                {
+                    //clear ROIs:
+                    OverlayManagerClass.Instance.ClearNonSaveROIs(ref CaptureSetupViewModel.OverlayCanvas);
+                });
             }
 
             _waveParamsUpdated = true;
@@ -2806,35 +3485,14 @@
     {
         #region Constructors
 
-        public SLMPreviewPanel(string savePattern, string preview, string cancel)
+        public SLMPreviewPanel(string preview, string cancel)
         {
-            SavePattern = savePattern; Preview = preview; Cancel = cancel;
+            Preview = preview; Cancel = cancel;
         }
 
         #endregion Constructors
 
         #region Properties
-
-        public bool AllowSavePattern
-        {
-            get
-            {
-                string strTmp = string.Empty;
-                int intTmp = 0;
-                XmlDocument ApplicationDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
-                XmlNodeList ndList = ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView");
-                if (null != ndList)
-                {
-                    if (!(XmlManager.GetAttribute(ndList[0], ApplicationDoc, "AllowSavePattern", ref strTmp) && Int32.TryParse(strTmp, out intTmp)))
-                    {
-                        intTmp = 0;
-                        XmlManager.SetAttribute(ndList[0], ApplicationDoc, "AllowSavePattern", intTmp.ToString());
-                        MVMManager.Instance.SaveSettings(SettingsFileType.APPLICATION_SETTINGS);
-                    }
-                }
-                return 1 == intTmp;
-            }
-        }
 
         public string Cancel
         {
@@ -2843,12 +3501,6 @@
         }
 
         public string Preview
-        {
-            get;
-            set;
-        }
-
-        public string SavePattern
         {
             get;
             set;

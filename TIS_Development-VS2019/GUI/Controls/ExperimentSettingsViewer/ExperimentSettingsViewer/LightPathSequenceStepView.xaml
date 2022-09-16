@@ -68,7 +68,7 @@
                     </StackPanel>
                 </GroupBox>
                 <GroupBox Name="gbMCLSSettings"
-                          Header="MCLS">
+                          Header="Laser Control">
                     <StackPanel Name="spMCLS"
                                 HorizontalAlignment="Left"
                                 Orientation="Vertical">
@@ -78,8 +78,7 @@
                                         Orientation="Horizontal">
                                 <CheckBox Name="cbLaser1Enable"
                                           Margin="1"
-                                          VerticalAlignment="Center"
-                                          Content="Laser1 Enable" />
+                                          VerticalAlignment="Center"/>
                                 <TextBox Name="tbLaserPowerPercent1"
                                          Width="47"
                                          Margin="1" />
@@ -87,8 +86,7 @@
                             <StackPanel Orientation="Horizontal">
                                 <CheckBox Name="cbLaser2Enable"
                                           Margin="1"
-                                          VerticalAlignment="Center"
-                                          Content="Laser2 Enable" />
+                                          VerticalAlignment="Center"/>
                                 <TextBox Name="tbLaserPowerPercent2"
                                          Width="47"
                                          Margin="1" />
@@ -100,8 +98,7 @@
                                         Orientation="Horizontal">
                                 <CheckBox Name="cbLaser3Enable"
                                           Margin="1"
-                                          VerticalAlignment="Center"
-                                          Content="Laser3 Enable" />
+                                          VerticalAlignment="Center"/>
                                 <TextBox Name="tbLaserPowerPercent3"
                                          Width="47"
                                          Margin="1" />
@@ -109,12 +106,22 @@
                             <StackPanel Orientation="Horizontal">
                                 <CheckBox Name="cbLaser4Enable"
                                           Margin="1"
-                                          VerticalAlignment="Center"
-                                          Content="Laser4 Enable" />
+                                          VerticalAlignment="Center"/>
                                 <TextBox Name="tbLaserPowerPercent4"
                                          Width="47"
                                          Margin="1" />
                             </StackPanel>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="1">
+                            <CheckBox Name="cbLaserAllAnalog"
+                                      Margin="45, 0"
+                                      VerticalAlignment="Center"
+                                      Content="Analog"/>
+                            <CheckBox Name="cbLaserAllTTL"
+                                      Margin="31, 0"
+                                      VerticalAlignment="Center"
+                                      Content="TTL"/>
                         </StackPanel>
                     </StackPanel>
                 </GroupBox>

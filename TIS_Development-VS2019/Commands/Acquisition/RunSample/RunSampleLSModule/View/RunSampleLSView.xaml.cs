@@ -1307,7 +1307,7 @@
                 }
             }
 
-            nodeList = appDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/MCLSView");
+            nodeList = appDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/MultiLaserControlView");
 
             bool mclsSettingsFound = false;
             if ((nodeList.Count > 0) && XmlManager.GetAttribute(nodeList[0], appDoc, "Visibility", ref str) && (str.Equals("Visible")))

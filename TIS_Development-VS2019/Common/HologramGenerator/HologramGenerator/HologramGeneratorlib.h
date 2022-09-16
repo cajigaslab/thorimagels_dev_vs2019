@@ -2,6 +2,7 @@
 
 #define AFFINE_COEFF_CNT		6
 #define PROJECT_COEFF_CNT		8
+#define HOMOGENEOUS_COEFF_CNT	16
 #define DEFAULT_ITERATIONS		10
 
 
@@ -14,6 +15,7 @@ typedef enum {
 typedef enum {
 	AFFINE = 0,
 	PROJECTIVE = 1,
+	HOMOGENEOUS = 2,
 	LAST_FITTING
 }GeoFittingAlg;
 

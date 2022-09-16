@@ -88,13 +88,13 @@ public:
 
 	struct SequenceStep
 	{
-		long PMT1Gain;
+		double PMT1Gain;
 		long PMT1Enable;
-		long PMT2Gain;
+		double PMT2Gain;
 		long PMT2Enable;
-		long PMT3Gain;
+		double PMT3Gain;
 		long PMT3Enable;
-		long PMT4Gain;
+		double PMT4Gain;
 		long PMT4Enable;
 		long LSMChannel;
 		long MultiphotonPos;
@@ -106,6 +106,12 @@ public:
 		long MCLSEnable3;
 		double MCLSPower4;
 		long MCLSEnable4;
+		long LaserTTL;
+		long LaserAnalog;
+		long Wavelength1;
+		long Wavelength2;
+		long Wavelength3;
+		long Wavelength4;
 		long PinholePos;
 		long LightPathGGEnable;
 		long LightPathGREnable;
@@ -167,8 +173,8 @@ public:
 	virtual long SetLSM(long areaMode, double areaAngle,long scanMode,long interleave,long pixelX,long pixelY,long channel, long fieldSize, long offsetX, long offsetY,
 		long averageMode, long averageNum, long clockSource, long inputRange1, long inputRange2, long twoWayAlignment, long extClockRate,double dwellTime,long flybackCycles, long inputRange3, long inputRange4, long minimizeFlybackCycles, long polarity1, long polarity2, long polarity3, long polarity4, long verticalFlip, long horizontalFlip)=0;
 
-	virtual long GetMCLS(long &enable1, double &power1,long &enable2, double &power2,long &enable3, double &power3,long &enable4, double &power4)=0;
-	virtual long SetMCLS(long enable1, double power1,long enable2, double power2,long enable3, double power3,long enable4, double power4)=0;
+	virtual long GetMCLS(long& enable1, double& power1, long& enable2, double& power2, long& enable3, double& power3, long& enable4, double& power4, long& allttl, long& allanalog, long& wavelength1, long& wavelength2, long& wavelength3, long& wavelength4) = 0;
+	virtual long SetMCLS(long enable1, double power1,long enable2, double power2,long enable3, double power3,long enable4, double power4, long allttl, long allanalog, long wavelength1, long wavelength2, long wavelength3, long wavelength4)=0;
 
 	virtual long GetPinholeWheel(long &positiion)=0;///pinhole position value
 	virtual long SetPinholeWheel(long position)=0;
@@ -178,8 +184,8 @@ public:
 	virtual long GetStreaming(long& enable, long& frames, long& rawData, long& triggerMode, long& displayImage, long& storageMode, long& zFastEnable, long& zFastMode, long& flybackFrames, long& flybackLines, double& flybackTimeAdjustMS, double& volumeTimeAdjustMS, double& stepTimeAdjustMS, long& stimulusTriggering, long& dmaFrames, long& stimulusMaxFrames, long& previewIndex, long& useReferenceVoltageForPockels, long& displayRollingAveragePreview) = 0;
 	virtual long SetStreaming(long enable,long frames, long rawData, long triggerMode, long displayImage, long storageMode, long zFastEnable, long flybackFrames, long stimulusTriggering,long dmaFrames, long stimulusMaxFrames, long previewIndex, long useReferenceVoltageForPockels)=0;
 
-	virtual long GetPMT(long &enableA, long &gainA, long &bandwidthA, double &offsetA, long &enableB, long &bandwidthB, long &gainB, double &offsetB, long &enableC, long &gainC, long &bandwidthC, double &offsetC, long &enableD, long &gainD, long &bandwidthD, double &offsetD)=0;
-	virtual long SetPMT(long enableA, long gainA, long bandwidthA, double offsetA, long enableB, long gainB, long bandwidthB, double offsetB, long enableC, long gainC, long bandwidthC, double offsetC, long enableD, long gainD, long bandwidthD, double offsetD)=0;
+	virtual long GetPMT(long &enableA, double &gainA, long &bandwidthA, double &offsetA, long &enableB, double& gainB, long &bandwidthB, double &offsetB, long &enableC, double &gainC, long &bandwidthC, double &offsetC, long &enableD, double &gainD, long &bandwidthD, double &offsetD)=0;
+	virtual long SetPMT(long enableA, double gainA, long bandwidthA, double offsetA, long enableB, double gainB, long bandwidthB, double offsetB, long enableC, double gainC, long bandwidthC, double offsetC, long enableD, double gainD, long bandwidthD, double offsetD)=0;
 
 	virtual long GetMagnification(double &mag,string &name)=0;///magnification value
 	virtual long SetMagnification(double mag,string name)=0;

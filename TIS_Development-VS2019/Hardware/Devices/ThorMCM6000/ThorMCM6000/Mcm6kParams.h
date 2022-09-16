@@ -111,8 +111,10 @@ struct Mcm6kParams
 	bool condenser_cw_moving;
 	bool epiTurret_ccw_moving;
 	bool epiTurret_cw_moving;
+	bool epiTurret_homing;
 	bool lightPath_ccw_moving;
 	bool lightPath_cw_moving;
+	bool lightPath_homing;
 	bool ndd_ccw_moving;
 	bool ndd_cw_moving;
 

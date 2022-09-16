@@ -92,8 +92,10 @@ MCM6000::MCM6000()
 	_mcm6kParams->condenser_cw_moving = false;
 	_mcm6kParams->epiTurret_ccw_moving = false;
 	_mcm6kParams->epiTurret_cw_moving = false;
+	_mcm6kParams->epiTurret_homing = false;
 	_mcm6kParams->lightPath_ccw_moving = false;
 	_mcm6kParams->lightPath_cw_moving = false;
+	_mcm6kParams->lightPath_homing = false;
 	_mcm6kParams->ndd_ccw_moving = false;
 	_mcm6kParams->ndd_cw_moving = false;
 
@@ -1326,11 +1328,19 @@ long MCM6000::MoveCondenserTo(double distance)
 
 long MCM6000::MoveLpTo(int pos)
 {
+	if (_mcm6kParams->lightPath_homing)
+	{
+		return FALSE;
+	}
 	return MoveToStoredPos(pos, _mcm6kParams->inverted_lp_slot_id);
 }
 
 long MCM6000::MoveEtTo(int pos)
 {
+	if (_mcm6kParams->epiTurret_homing)
+	{
+		return FALSE;
+	}
 	return MoveToStoredPos(pos, _mcm6kParams->et_slot_id);
 }
 

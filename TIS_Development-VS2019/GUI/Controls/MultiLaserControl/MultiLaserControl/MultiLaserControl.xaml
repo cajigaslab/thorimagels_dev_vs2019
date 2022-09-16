@@ -68,7 +68,13 @@
                     VerticalAlignment="Center"
                     Foreground="White"
                     IsChecked="{Binding Path=LaserAllAnalog, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    Checked="AnalogLaserAll_Checked"
+                    Unchecked="AnalogLaserAll_Unchecked"
+                    Command="{Binding Path=LaserAnalogUncheckCommand}"
                     Width="13" FontSize="12" />
+          <CheckBox Name="AnalogLaserCheckStatus"
+                    IsChecked="{Binding Path=AnalogCheckStatus, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    Visibility="Collapsed" />
           <Label Content="Analog Mode"
                  Margin="0,0,3,0" FontSize="12"
                  Height="26"
@@ -127,6 +133,7 @@
                   IsEnabled="True"
                   Visibility="{Binding Path=TopticaVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                   ValueChanged="sliderLaser1_ValueChanged">
+              <!--Slider behaviors requires us to set the value binding of the slider to OneWay mode and the value binding of SliderDragEndValueBehavior to TwoWay mode-->
              <i:Interaction.Behaviors>
                 <b:SliderDragEndValueBehavior
                     Value="{Binding Path=Laser1Power, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
@@ -193,13 +200,15 @@
             </Button.Style>
           </Button>
           <StackPanel VerticalAlignment="Center">
-            <RepeatButton Content="+"
+            <RepeatButton Name="Laser1Plus"
+                          Content="+"
                           Width="30"
                           Height="20"
                           Command="{Binding Path=Laser1PowerPlusCommand}"
                           Delay="500"
                           Interval="100" />
-            <RepeatButton Content="-"
+            <RepeatButton Name="Laser1Minus"
+                          Content="-"
                           Width="30"
                           Height="20"
                           Command="{Binding Path=Laser1PowerMinusCommand}"
@@ -245,6 +254,7 @@
                   IsEnabled="True"
                   Visibility="{Binding Path=TopticaVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                   ValueChanged="sliderLaser2_ValueChanged">
+                        <!--Slider behaviors requires us to set the value binding of the slider to OneWay mode and the value binding of SliderDragEndValueBehavior to TwoWay mode-->
                         <i:Interaction.Behaviors>
                             <b:SliderDragEndValueBehavior
                         Value="{Binding Path=Laser2Power, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
@@ -311,13 +321,15 @@
                         </Button.Style>
                     </Button>
               <StackPanel VerticalAlignment="Center">
-            <RepeatButton Content="+"
+            <RepeatButton Name="Laser2Plus"
+                          Content="+"
                           Width="30"
                           Height="20"
                           Command="{Binding Path=Laser2PowerPlusCommand}"
                           Delay="500"
                           Interval="100" />
-            <RepeatButton Content="-"
+            <RepeatButton Name="Laser2Minus"
+                          Content="-"
                           Width="30"
                           Height="20"
                           Command="{Binding Path=Laser2PowerMinusCommand}"
@@ -362,6 +374,7 @@
                   IsEnabled="True"
                   Visibility="{Binding Path=TopticaVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                   ValueChanged="sliderLaser3_ValueChanged">
+                        <!--Slider behaviors requires us to set the value binding of the slider to OneWay mode and the value binding of SliderDragEndValueBehavior to TwoWay mode-->
                         <i:Interaction.Behaviors>
                             <b:SliderDragEndValueBehavior
                         Value="{Binding Path=Laser3Power, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
@@ -428,13 +441,15 @@
                         </Button.Style>
                     </Button>
                     <StackPanel VerticalAlignment="Center">
-                        <RepeatButton Content="+"
+                        <RepeatButton Name="Laser3Plus"
+                          Content="+"
                           Width="30"
                           Height="20"
                           Command="{Binding Path=Laser3PowerPlusCommand}"
                           Delay="500"
                           Interval="100" />
-                        <RepeatButton Content="-"
+                        <RepeatButton Name="Laser3Minus"
+                          Content="-"
                           Width="30"
                           Height="20"
                           Command="{Binding Path=Laser3PowerMinusCommand}"
@@ -479,6 +494,7 @@
                   IsEnabled="True"
                   Visibility="{Binding Path=TopticaVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                   ValueChanged="sliderLaser4_ValueChanged">
+                        <!--Slider behaviors requires us to set the value binding of the slider to OneWay mode and the value binding of SliderDragEndValueBehavior to TwoWay mode-->
                         <i:Interaction.Behaviors>
                             <b:SliderDragEndValueBehavior
                         Value="{Binding Path=Laser4Power, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
@@ -545,13 +561,15 @@
                         </Button.Style>
                     </Button>
                     <StackPanel VerticalAlignment="Center">
-                        <RepeatButton Content="+"
+                        <RepeatButton Name="Laser4Plus"
+                          Content="+"
                           Width="30"
                           Height="20"
                           Command="{Binding Path=Laser4PowerPlusCommand}"
                           Delay="500"
                           Interval="100" />
-                        <RepeatButton Content="-"
+                        <RepeatButton Name="Laser4Minus"
+                          Content="-"
                           Width="30"
                           Height="20"
                           Command="{Binding Path=Laser4PowerMinusCommand}"

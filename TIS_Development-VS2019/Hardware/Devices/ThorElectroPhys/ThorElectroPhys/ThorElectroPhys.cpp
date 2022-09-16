@@ -11,18 +11,15 @@ ThorElectroPhys::ThorElectroPhys()
 {
 	_deviceDetected = FALSE;
 	_numDevices = 0;
-	_ringBufferSize = 1;
-	_ringBufferUnit = (long)Constants::ACTIVE_LOAD_UNIT_SIZE;
 	_targetCount = 0;
 
 	_taskHandleDI0 = NULL;
-	for(long i=0; i<MAX_DIG_PORT_OUTPUT; i++)
+	for (long i = 0; i < MAX_DIG_PORT_OUTPUT; i++)
 		_taskHandleDO[i] = NULL;
 
 	_taskTriggerHandle[0] = _taskTriggerHandle[1] = NULL;
 	_taskTriggerCO[0] = _taskTriggerCO[1] = NULL;
 	_parkAnalogLineAtLastVoltage = FALSE;
-	_analogTriggerSet = false;
 	ResetParams();
 }
 
@@ -31,7 +28,7 @@ ThorElectroPhys::~ThorElectroPhys()
 	_instanceFlag = false;
 }
 
-bool ThorElectroPhys:: _instanceFlag = false;
+bool ThorElectroPhys::_instanceFlag = false;
 
 std::auto_ptr<ThorElectroPhys> ThorElectroPhys::_single(new ThorElectroPhys());
 
@@ -43,14 +40,23 @@ EPhysTriggerStruct* _triggerStruct = NULL;
 std::unique_ptr<BoardInfoNI> boardInfoNI;
 std::unique_ptr<WaveformBuilderDLL> waveformDOBuilder(new WaveformBuilderDLL(L".\\Modules_Native\\GeometryUtilitiesCPP.dll"));
 std::unique_ptr<WaveformBuilderDLL> waveformAOBuilder(new WaveformBuilderDLL(L".\\Modules_Native\\GeometryUtilitiesCPP.dll"));
-std::unique_ptr<BlockRingBuffer> ThorElectroPhys::_bRingBuf[2] = {NULL, NULL};	//[0:DO,1:AO]
+std::unique_ptr<BlockRingBuffer> ThorElectroPhys::_bRingBuf[2] = { NULL, NULL };	//[0:DO,1:AO]
 uInt8* ThorElectroPhys::_localBuffer = NULL;
 long ThorElectroPhys::_localBufferSizeInBytes = 0;
+long ThorElectroPhys::_ringBufferSize = 1;
+long ThorElectroPhys::_ringBufferUnit = (long)Constants::ACTIVE_LOAD_UNIT_SIZE;
+CRITICAL_SECTION ThorElectroPhys::_analogCritSection;
+bool ThorElectroPhys::_analogCritSectionInitialized = false;
+long ThorElectroPhys::_analogRepeatCount = 0;
+long ThorElectroPhys::_analogRestarted = 0;
 std::vector<std::string> ThorElectroPhys::_triggerConfig;
-TaskHandle ThorElectroPhys::_taskTriggerHandle[2] = {NULL, NULL};	//[0:DO,1:AO]
-TaskHandle ThorElectroPhys::_taskTriggerCO[2] = {NULL, NULL};		//[0:DO,1:AO]
+TaskHandle ThorElectroPhys::_taskTriggerHandle[2] = { NULL, NULL };	//[0:DO,1:AO]
+TaskHandle ThorElectroPhys::_taskTriggerCO[2] = { NULL, NULL };		//[0:DO,1:AO]
 TaskHandle ThorElectroPhys::_taskTriggerCI = NULL;
+std::string ThorElectroPhys::_analogCounterInternalOutput = "";
+unsigned long long ThorElectroPhys::_targetCount = 0;
 unsigned long long ThorElectroPhys::_outputCount = 0;
+AnalogTaskType ThorElectroPhys::_analogTaskType = AnalogTaskType::LAST_ANALOG_TASK_TYPE;
 double* ThorElectroPhys::_freqMeasure = NULL;
 unsigned int ThorElectroPhys::_freqBufSize = 0;
 std::unique_ptr<CircularBuffer> ThorElectroPhys::_freqCirBuf(new CircularBuffer("FreqProbe"));
@@ -58,11 +64,12 @@ HANDLE ThorElectroPhys::_freqThreadStopped = CreateEvent(NULL, TRUE, TRUE, NULL)
 HANDLE ThorElectroPhys::_freqThread = NULL;
 const uInt8 TASKDO = 0;
 const uInt8 TASKAO = 1;
+const uInt32 MULTIPLE_RATIO = 4;	//multiple of buffer sizes set to on-board memory
 
 
-ThorElectroPhys *ThorElectroPhys::getInstance()
+ThorElectroPhys* ThorElectroPhys::getInstance()
 {
-	if(!_instanceFlag)
+	if (!_instanceFlag)
 	{
 		_single.reset(new ThorElectroPhys());
 		_instanceFlag = true;
@@ -70,36 +77,36 @@ ThorElectroPhys *ThorElectroPhys::getInstance()
 	return _single.get();
 }
 
-int32 CVICALLBACK ThorElectroPhys::TriggerCOCallback (TaskHandle taskHandle, int32 signalID, void *callbackData) 
-{	
+int32 CVICALLBACK ThorElectroPhys::TriggerCOCallback(TaskHandle taskHandle, int32 signalID, void* callbackData)
+{
 	_outputCount++;
 	return 0;
 }
 
-int32 CVICALLBACK ThorElectroPhys::EveryNTriggerCallback (TaskHandle taskHandle, int32 everyNsamplesEventType, uInt32 nSamples, void *callbackData)
+int32 CVICALLBACK ThorElectroPhys::EveryNTriggerCallback(TaskHandle taskHandle, int32 everyNsamplesEventType, uInt32 nSamples, void* callbackData)
 {
 	try
 	{
 		uInt8 id = (uInt8)callbackData;
 
 		//terminate if necessary
-		if(!_triggerStruct->enable)
+		if (!_triggerStruct->enable)
 		{
 			goto TERM_TASK;
 		}
 
-		if(_taskTriggerHandle[id])
+		if (_taskTriggerHandle[id])
 		{
 			//return if no more buffer to read
-			if(0 == _bRingBuf[id]->GetReadableBlockCounts())
+			if (0 == _bRingBuf[id]->GetReadableBlockCounts())
 				return (-1);
 
 			//read then write all available buffer
-			if(FALSE == FillupAvailableBuffer(id))
+			if (FALSE == FillupAvailableBuffer(id))
 				return (-1);
 		}
 	}
-	catch(...)
+	catch (...)
 	{
 		goto TERM_TASK;
 	}
@@ -110,6 +117,70 @@ TERM_TASK:
 	return 0;
 }
 
+/// <summary> Callback function to be invoked in Analog limited or continuous-unlimited modes </summary>
+int32 CVICALLBACK ThorElectroPhys::AnalogCycleDoneCallback(TaskHandle taskHandle, int32 signalID, void* callbackData)
+{
+	int32 error = 0;
+	try
+	{
+		//finished 1 repeat
+		_analogRepeatCount++;
+
+		//[special case]: retriggerable by every triggers if 1 start 0 gaps 0 repeats configured
+		if ((0 == _triggerStruct->stepEdge[0]) && (0 > _triggerStruct->stepEdge[1]))
+		{
+			if ((1 == _triggerStruct->startEdge) && (0 == _triggerStruct->repeats))
+			{
+				//do restart without checking condition
+			}
+		}
+		else if ((0 < _triggerStruct->iterations) && (_analogRepeatCount >= _triggerStruct->repeats))
+		{
+			_analogRestarted = 0;
+			return 0;	//return if already done
+		}
+		//callback is invoked earlier than the task finishes
+		Sleep(12);
+
+		//try to restart tasks
+		if (AnalogTaskType::FINITE_LIMITED == _analogTaskType)
+		{
+			::EnterCriticalSection(&_analogCritSection);
+			DAQmxStopTask(_taskTriggerHandle[TASKAO]);
+			//DAQmxStopTask(_taskTriggerCO[TASKAO]);
+			error &= DAQmxStartTask(_taskTriggerHandle[TASKAO]);
+			//error &= DAQmxStartTask(_taskTriggerCO[TASKAO]);
+			_analogRestarted = (DAQmxSuccess == error) ? TRUE : FALSE;
+			::LeaveCriticalSection(&_analogCritSection);
+		}
+		else if (AnalogTaskType::CONTINUOUS_LIMITED == _analogTaskType || AnalogTaskType::CONTINUOUS_UNLIMITED == _analogTaskType)
+		{
+			if (SetAnalogTriggerTask())
+			{
+				//DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerCO[TASKAO], GetTriggerInputLine().c_str(), DAQmx_Val_Rising));
+				//DAQmxErrChk(L"DAQmxSetStartTrigRetriggerable", error = DAQmxSetStartTrigRetriggerable(_taskTriggerCO[TASKAO], true));
+
+				DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerHandle[TASKAO], GetTriggerInputLine().c_str(), DAQmx_Val_Rising));
+
+				DAQmxErrChk(L"DAQmxTaskControl", error = DAQmxTaskControl(_taskTriggerHandle[TASKAO], DAQmx_Val_Task_Reserve));
+				DAQmxErrChk(L"DAQmxStartTask", error = DAQmxStartTask(_taskTriggerHandle[TASKAO]));
+
+				DAQmxErrChk(L"DAQmxTaskControl", error = DAQmxTaskControl(_taskTriggerCO[TASKAO], DAQmx_Val_Task_Reserve));
+				DAQmxErrChk(L"DAQmxStartTask", error = DAQmxStartTask(_taskTriggerCO[TASKAO]));	//actual start of AO
+				_analogRestarted = TRUE;
+			}
+		}
+	}
+	catch (...)
+	{
+		_analogRestarted = FALSE;
+		StringCbPrintfW(message, _MAX_PATH, L"ThorElectroPhys break at AnalogCycleDoneCallback due to error(%d).", error);
+		LogMessage(message, VERBOSE_EVENT);
+		CloseTriggerTasks();
+	}
+	return 0;
+}
+
 UINT ThorElectroPhys::FreqMeasureAsync(void)
 {
 	int32 error = 0, read = 0;
@@ -117,7 +188,7 @@ UINT ThorElectroPhys::FreqMeasureAsync(void)
 	{
 		while ((0 == error) && (NULL != _freqMeasure))
 		{
-			DAQmxErrChk (L"DAQmxReadCounterF64", error = DAQmxReadCounterF64(_taskTriggerCI,_freqBufSize,10.0,_freqMeasure,_freqBufSize,&read,0));
+			DAQmxErrChk(L"DAQmxReadCounterF64", error = DAQmxReadCounterF64(_taskTriggerCI, _freqBufSize, 10.0, _freqMeasure, _freqBufSize, &read, 0));
 			if (0 < read && _freqCirBuf.get()->TryLock())
 			{
 				_freqCirBuf.get()->Write((const char*)&_freqMeasure[0], sizeof(double));
@@ -125,10 +196,10 @@ UINT ThorElectroPhys::FreqMeasureAsync(void)
 			}
 		}
 	}
-	catch(...)
+	catch (...)
 	{
 		_freqCirBuf.get()->ReleaseLock();
-		StringCbPrintfW(message,_MAX_PATH, L"ThorElectroPhys break at FreqMeasureAsync due to error(%d).", error);
+		StringCbPrintfW(message, _MAX_PATH, L"ThorElectroPhys break at FreqMeasureAsync due to error(%d).", error);
 		LogMessage(message, VERBOSE_EVENT);
 	}
 	//terminate task before leaving and notice the thread is stopped
@@ -137,7 +208,7 @@ UINT ThorElectroPhys::FreqMeasureAsync(void)
 	return 0;
 }
 
-long ThorElectroPhys::FindDevices(long &deviceCount)
+long ThorElectroPhys::FindDevices(long& deviceCount)
 {
 	long ret = TRUE;
 	int32 error = 0;
@@ -146,12 +217,15 @@ long ThorElectroPhys::FindDevices(long &deviceCount)
 	//Get filter parameters from hardware setup.xml
 	std::auto_ptr<ElectroPhysXML> pSetup(new ElectroPhysXML());
 
-	double volts2mm=0;
-	double offsetmm=0;
-	double zPos_min=0;
-	double zPos_max=0;
+	double volts2mm = 0;
+	double offsetmm = 0;
+	double zPos_min = 0;
+	double zPos_max = 0;
 
-	if (ret=pSetup->OpenConfigFile())
+	::InitializeCriticalSection(&_analogCritSection);
+	_analogCritSectionInitialized = true;
+
+	if (ret = pSetup->OpenConfigFile())
 	{
 		//prepare to reset tasks
 		CloseNITasks();
@@ -160,53 +234,53 @@ long ThorElectroPhys::FindDevices(long &deviceCount)
 		ResetParams();
 
 		//get & set electro phys digital input
-		if(pSetup->GetIO(_devName,_digitalPort))
+		if (pSetup->GetIO(_devName, _digitalPort))
 		{
 			try
 			{
-				if((_devName.size() == 0) || (_digitalPort.size() == 0))
+				if ((_devName.size() == 0) || (_digitalPort.size() == 0))
 				{
 					//StringCbPrintfW(message,_MAX_PATH, L"ThorElectroPhys unable to start due to empty line setting.");
 					//LogMessage(message, ERROR_EVENT);
 				}
 				else
 				{
-					DAQmxErrChk(L"DAQmxCreateTask",error = DAQmxCreateTask("", &_taskHandleDI0));	
-					DAQmxErrChk(L"DAQmxCreateDIChan",error = DAQmxCreateDIChan(_taskHandleDI0, (_devName + _digitalPort).c_str(), "", DAQmx_Val_ChanPerLine));
-					DAQmxErrChk(L"DAQmxStartTask",error = DAQmxStartTask(_taskHandleDI0));
+					DAQmxErrChk(L"DAQmxCreateTask", error = DAQmxCreateTask("", &_taskHandleDI0));
+					DAQmxErrChk(L"DAQmxCreateDIChan", error = DAQmxCreateDIChan(_taskHandleDI0, (_devName + _digitalPort).c_str(), "", DAQmx_Val_ChanPerLine));
+					DAQmxErrChk(L"DAQmxStartTask", error = DAQmxStartTask(_taskHandleDI0));
 				}
 			}
-			catch(...)
+			catch (...)
 			{
-				StringCbPrintfW(message,_MAX_PATH, L"ThorElectroPhys unable to create DI due to error (%d).", error);
+				StringCbPrintfW(message, _MAX_PATH, L"ThorElectroPhys unable to create DI due to error (%d).", error);
 				LogMessage(message, ERROR_EVENT);
 			}
 
 		}
 		//get & set electro phys digital output
-		if(pSetup->GetDigOutput(_digitalPortOutput[0],_digitalPortOutput[1],_digitalPortOutput[2],_digitalPortOutput[3],_digitalPortOutput[4],_digitalPortOutput[5],_digitalPortOutput[6],_digitalPortOutput[7]))
+		if (pSetup->GetDigOutput(_digitalPortOutput[0], _digitalPortOutput[1], _digitalPortOutput[2], _digitalPortOutput[3], _digitalPortOutput[4], _digitalPortOutput[5], _digitalPortOutput[6], _digitalPortOutput[7]))
 		{
-			for(int i=0; i<MAX_DIG_PORT_OUTPUT; i++)
+			for (int i = 0; i < MAX_DIG_PORT_OUTPUT; i++)
 			{
 				try
 				{
 					_digitalPortOutputAvailable[i] = (true == _digitalPortOutput[i].empty()) ? false : true;
-					if(_digitalPortOutputAvailable[i])
+					if (_digitalPortOutputAvailable[i])
 					{
-						DAQmxErrChk(L"DAQmxCreateTask",error = DAQmxCreateTask("", &_taskHandleDO[i]));	
-						DAQmxErrChk(L"DAQmxCreateDOChan",error = DAQmxCreateDOChan(_taskHandleDO[i], _digitalPortOutput[i].c_str(), "", DAQmx_Val_ChanPerLine));
+						DAQmxErrChk(L"DAQmxCreateTask", error = DAQmxCreateTask("", &_taskHandleDO[i]));
+						DAQmxErrChk(L"DAQmxCreateDOChan", error = DAQmxCreateDOChan(_taskHandleDO[i], _digitalPortOutput[i].c_str(), "", DAQmx_Val_ChanPerLine));
 					}
 				}
-				catch(...)
+				catch (...)
 				{
-					StringCbPrintfW(message,_MAX_PATH, L"ThorElectroPhys unable to create DO due to error (%d).", error);
+					StringCbPrintfW(message, _MAX_PATH, L"ThorElectroPhys unable to create DO due to error (%d).", error);
 					LogMessage(message, ERROR_EVENT);
 				}
-			}			
+			}
 		}
 		//get & set electro phys frequency measurement
 		long freqAverageCnt = 0;
-		if(pSetup->GetFrequencyProbe(_freqIntervalSec, freqAverageCnt, _freqCounterLine, _freqMeasureLine) && 0 < _freqCounterLine.size() && 0 < _freqMeasureLine.size())
+		if (pSetup->GetFrequencyProbe(_freqIntervalSec, freqAverageCnt, _freqCounterLine, _freqMeasureLine) && 0 < _freqCounterLine.size() && 0 < _freqMeasureLine.size())
 		{
 			//find out all NI boards' info
 			boardInfoNI.get()->getInstance()->GetAllBoardsInfo();
@@ -221,7 +295,7 @@ long ThorElectroPhys::FindDevices(long &deviceCount)
 				else
 				{
 					//prepare buffers for frequency measure task
-					_freqBufSize = static_cast<unsigned int>(DEFAULT_DO_SAMPLE_RATE * std::max(0.01,_freqIntervalSec));
+					_freqBufSize = static_cast<unsigned int>(DEFAULT_DO_SAMPLE_RATE * std::max(0.01, _freqIntervalSec));
 					_freqMeasure = new double[_freqBufSize];
 
 					_freqCirBuf.get()->AllocMem(sizeof(double) * std::max((long)1, freqAverageCnt));
@@ -251,7 +325,7 @@ long ThorElectroPhys::FindDevices(long &deviceCount)
 			//need to reconstruct task when param changed
 			double unitMS = 1.0;
 			pSetup->GetGeneralSettings(_ringBufferSize, unitMS, _triggerStruct->voltageRange[0], _triggerStruct->voltageRange[1], _triggerStruct->responseType, _parkAnalogLineAtLastVoltage);
-			if(pSetup->GetTriggerConfig(&_triggerConfig))
+			if (pSetup->GetTriggerConfig(&_triggerConfig))
 			{
 				std::string compStr1, compStr2;
 				BoardInfo* compInfo = NULL;
@@ -265,14 +339,14 @@ long ThorElectroPhys::FindDevices(long &deviceCount)
 						{
 						case (int)EPhysTriggerLines::DIGITAL_COUNTER:
 							//unable to verify counter name, assume user has correct setting
-							if(EPhysModeConfig::NONE_TRIG < _triggerConfig[i].length())
+							if (EPhysModeConfig::NONE_TRIG < _triggerConfig[i].length())
 							{
 								_triggerStruct->configured = EPhysModeConfig::MANUAL_TRIG;
 							}
 							break;
 						case (int)EPhysTriggerLines::DIGITAL_OUTPUT:
-							compStr1 = GetNIDeviceAttribute(bInfo->devName,DAQmx_Dev_Terminals);
-							if(EPhysModeConfig::MANUAL_TRIG == _triggerStruct->configured)
+							compStr1 = GetNIDeviceAttribute(bInfo->devName, DAQmx_Dev_Terminals);
+							if (EPhysModeConfig::MANUAL_TRIG == _triggerStruct->configured)
 							{
 								//output configured, allow free run
 								_triggerStruct->configured = ((0 < compStr1.size()) && (std::string::npos != compStr1.find(_triggerConfig[i]))) ? EPhysModeConfig::MANUAL_TRIG : EPhysModeConfig::NONE_TRIG;
@@ -281,45 +355,45 @@ long ThorElectroPhys::FindDevices(long &deviceCount)
 						case (int)EPhysTriggerLines::ANALOG_COUNTER:
 							_analogCounterInternalOutput = "";
 							//unable to verify counter name, assume user has correct setting
-							if(EPhysModeConfig::NONE_TRIG < _triggerConfig[i].length())
+							if (EPhysModeConfig::NONE_TRIG < _triggerConfig[i].length())
 							{
 								_triggerStruct->configured = EPhysModeConfig::MANUAL_TRIG;
-								_analogCounterInternalOutput = "/" + GetDevIDName(_triggerConfig[i]) + "/Ctr" + _triggerConfig[i].at(_triggerConfig[i].length()-1) + "InternalOutput";
+								_analogCounterInternalOutput = "/" + GetDevIDName(_triggerConfig[i]) + "/Ctr" + _triggerConfig[i].at(_triggerConfig[i].length() - 1) + "InternalOutput";
 							}
 							break;
 						case (int)EPhysTriggerLines::ANALOG_OUTPUT:
-							compStr1 = GetNIDeviceAttribute(bInfo->devName,DAQmx_Dev_AO_PhysicalChans);
-							if(EPhysModeConfig::MANUAL_TRIG == _triggerStruct->configured)
+							compStr1 = GetNIDeviceAttribute(bInfo->devName, DAQmx_Dev_AO_PhysicalChans);
+							if (EPhysModeConfig::MANUAL_TRIG == _triggerStruct->configured)
 							{
 								//output configured, allow free run; no starting "/" in ao lines
-								_triggerConfig[i] = ('/' == _triggerConfig[i].at(0)) ? (_triggerConfig[i].substr(1, _triggerConfig[i].length()-1)) : (_triggerConfig[i]);
+								_triggerConfig[i] = ('/' == _triggerConfig[i].at(0)) ? (_triggerConfig[i].substr(1, _triggerConfig[i].length() - 1)) : (_triggerConfig[i]);
 								_triggerStruct->configured = ((0 < compStr1.size()) && (std::string::npos != compStr1.find(_triggerConfig[i]))) ? EPhysModeConfig::MANUAL_TRIG : EPhysModeConfig::NONE_TRIG;
 								_ringBufferUnit = static_cast<long>(unitMS * bInfo->aoClockRateHz / Constants::MS_TO_SEC);
 								_triggerStruct->clockRateHz = bInfo->aoClockRateHz;
 							}
 							break;
 						case (int)EPhysTriggerLines::EDGE_OUTPUT:
-							compStr1 = GetNIDeviceAttribute(bInfo->devName,DAQmx_Dev_Terminals);
-							if(EPhysModeConfig::MANUAL_TRIG == _triggerStruct->configured)
+							compStr1 = GetNIDeviceAttribute(bInfo->devName, DAQmx_Dev_Terminals);
+							if (EPhysModeConfig::MANUAL_TRIG == _triggerStruct->configured)
 							{
 								_triggerStruct->configured = ((0 < compStr1.size()) && (std::string::npos != compStr1.find(_triggerConfig[i]))) ? EPhysModeConfig::EDGE_MONITOR : EPhysModeConfig::MANUAL_TRIG;
 							}
 							break;
 						case (int)EPhysTriggerLines::BUFFER_OUTPUT:
-							compStr1 = GetNIDeviceAttribute(bInfo->devName,DAQmx_Dev_DI_Lines);
-							if(EPhysModeConfig::EDGE_MONITOR == _triggerStruct->configured)
+							compStr1 = GetNIDeviceAttribute(bInfo->devName, DAQmx_Dev_DI_Lines);
+							if (EPhysModeConfig::EDGE_MONITOR == _triggerStruct->configured)
 							{
 								//no '/' begin for DI lines for search
-								compStr2 = ('/' == _triggerConfig[i].at(0)) ? _triggerConfig[i].substr(1,_triggerConfig[i].length()-1) : _triggerConfig[i];
+								compStr2 = ('/' == _triggerConfig[i].at(0)) ? _triggerConfig[i].substr(1, _triggerConfig[i].length() - 1) : _triggerConfig[i];
 
 								//output configured, allow trigger
-								_triggerStruct->configured = ((0 < compStr1.size()) && (std::string::npos != compStr1.find(compStr2))) ? EPhysModeConfig::EDGE_MONITOR : EPhysModeConfig::MANUAL_TRIG;	
+								_triggerStruct->configured = ((0 < compStr1.size()) && (std::string::npos != compStr1.find(compStr2))) ? EPhysModeConfig::EDGE_MONITOR : EPhysModeConfig::MANUAL_TRIG;
 							}
 							break;
 						case (int)EPhysTriggerLines::CUSTOM_INPUT:
-							if(EPhysModeConfig::EDGE_MONITOR == _triggerStruct->configured)
+							if (EPhysModeConfig::EDGE_MONITOR == _triggerStruct->configured)
 							{
-								compStr1 = GetNIDeviceAttribute(bInfo->devName,DAQmx_Dev_Terminals);
+								compStr1 = GetNIDeviceAttribute(bInfo->devName, DAQmx_Dev_Terminals);
 								_triggerStruct->configured = ((0 < compStr1.size()) && (std::string::npos != compStr1.find(_triggerConfig[i]))) ? EPhysModeConfig::CUSTOM_CONFIG : EPhysModeConfig::EDGE_MONITOR;
 							}
 							break;
@@ -330,7 +404,7 @@ long ThorElectroPhys::FindDevices(long &deviceCount)
 						//only allow different devices if RTSI configured
 						if (NULL != compInfo)
 						{
-							if (0 != bInfo->devName.compare(compInfo->devName) && 0 == bInfo->rtsiConfigure) 
+							if (0 != bInfo->devName.compare(compInfo->devName) && 0 == bInfo->rtsiConfigure)
 							{
 								_triggerStruct->configured = EPhysModeConfig::NONE_TRIG;
 								break;
@@ -339,12 +413,12 @@ long ThorElectroPhys::FindDevices(long &deviceCount)
 						compInfo = bInfo;
 					}
 				}
-				StringCbPrintfW(message,_MAX_PATH, L"");
+				StringCbPrintfW(message, _MAX_PATH, L"");
 			}
 		}
-		catch(...)
+		catch (...)
 		{
-			StringCbPrintfW(message,_MAX_PATH, L"ThorElectroPhys error on data structure configuration.");
+			StringCbPrintfW(message, _MAX_PATH, L"ThorElectroPhys error on data structure configuration.");
 			LogMessage(message, ERROR_EVENT);
 		}
 		//return device found when dll exist, 
@@ -356,7 +430,7 @@ long ThorElectroPhys::FindDevices(long &deviceCount)
 
 long ThorElectroPhys::SelectDevice(const long device)
 {
-	if((device < 0) || (device >= _numDevices))
+	if ((device < 0) || (device >= _numDevices))
 	{
 		return FALSE;
 	}
@@ -370,105 +444,108 @@ long ThorElectroPhys::TeardownDevice()
 	CloseNITasks();
 	CloseMeasureTasks();
 	CloseTriggerTasks();
+	::DeleteCriticalSection(&_analogCritSection);
+	_analogCritSectionInitialized = false;
 	return TRUE;
 }
 
 long ThorElectroPhys::GetParamInfo
-	(
+(
 	const long	paramID,
-	long		&paramType,
-	long		&paramAvailable,
-	long		&paramReadOnly,
-	double		&paramMin,
-	double		&paramMax,
-	double		&paramDefault
-	)
+	long& paramType,
+	long& paramAvailable,
+	long& paramReadOnly,
+	double& paramMin,
+	double& paramMax,
+	double& paramDefault
+)
 {
 	long	ret = TRUE;
 
-	switch(paramID)
+	switch (paramID)
 	{
 	case PARAM_EPHYS_MEASURE_RATE:
-		{
-			paramType = TYPE_DOUBLE;
-			paramAvailable = TRUE;
-			paramReadOnly = TRUE;
-			paramMin = 0;
-			paramMax = DEFAULT_DO_SAMPLE_RATE;
-			paramDefault = 0;
-		}
-		break;
+	{
+		paramType = TYPE_DOUBLE;
+		paramAvailable = TRUE;
+		paramReadOnly = TRUE;
+		paramMin = 0;
+		paramMax = DEFAULT_DO_SAMPLE_RATE;
+		paramDefault = 0;
+	}
+	break;
 	case PARAM_EPHYS_MEASURE:
-		{
-			paramType = TYPE_LONG;
-			paramAvailable = TRUE;
-			paramReadOnly = FALSE;
-			paramMin = 0;
-			paramMax = 0x1;
-			paramDefault = 0;
-		}
-		break;
+	{
+		paramType = TYPE_LONG;
+		paramAvailable = TRUE;
+		paramReadOnly = FALSE;
+		paramMin = 0;
+		paramMax = 0x1;
+		paramDefault = 0;
+	}
+	break;
 	case PARAM_EPHYS_MEASURE_CONFIGURE:
-		{
-			paramType = TYPE_LONG;
-			paramAvailable = TRUE;
-			paramReadOnly = TRUE;
-			paramMin = 0;
-			paramMax = 0x1;
-			paramDefault = 0;
-		}
-		break;
+	{
+		paramType = TYPE_LONG;
+		paramAvailable = TRUE;
+		paramReadOnly = TRUE;
+		paramMin = 0;
+		paramMax = 0x1;
+		paramDefault = 0;
+	}
+	break;
 	case PARAM_EPHYS_DIG_LINE_IN_1:
-		{
-			paramType = TYPE_LONG;
-			paramAvailable = TRUE;
-			paramReadOnly = TRUE;
-			paramMin = 0;
-			paramMax = 0x1;
-			paramDefault = 0;
-		}
-		break;
-	case PARAM_EPHYS_DIG_LINE_OUT_1:	
-	case PARAM_EPHYS_DIG_LINE_OUT_2:	
+	{
+		paramType = TYPE_LONG;
+		paramAvailable = TRUE;
+		paramReadOnly = TRUE;
+		paramMin = 0;
+		paramMax = 0x1;
+		paramDefault = 0;
+	}
+	break;
+	case PARAM_EPHYS_DIG_LINE_OUT_1:
+	case PARAM_EPHYS_DIG_LINE_OUT_2:
 	case PARAM_EPHYS_DIG_LINE_OUT_3:
 	case PARAM_EPHYS_DIG_LINE_OUT_4:
 	case PARAM_EPHYS_DIG_LINE_OUT_5:
 	case PARAM_EPHYS_DIG_LINE_OUT_6:
-	case PARAM_EPHYS_DIG_LINE_OUT_7:	
+	case PARAM_EPHYS_DIG_LINE_OUT_7:
 	case PARAM_EPHYS_DIG_LINE_OUT_8:
-		{
-			paramType = TYPE_LONG;
-			paramAvailable = TRUE;
-			paramReadOnly = FALSE;
-			paramMin = 0;
-			paramMax = 0x1;
-			paramDefault = 0;
-		}
-		break;
+	{
+		paramType = TYPE_LONG;
+		paramAvailable = TRUE;
+		paramReadOnly = FALSE;
+		paramMin = 0;
+		paramMax = 0x1;
+		paramDefault = 0;
+	}
+	break;
 	case PARAM_DEVICE_TYPE:
-		{
-			paramType = TYPE_LONG;
-			paramAvailable = TRUE;
-			paramReadOnly = TRUE;
-			paramMin = paramMax = paramDefault = EPHYS;
-		}
-		break;
+	{
+		paramType = TYPE_LONG;
+		paramAvailable = TRUE;
+		paramReadOnly = TRUE;
+		paramMin = paramMax = paramDefault = EPHYS;
+	}
+	break;
 	case PARAM_CONNECTION_STATUS:
-		{
-			paramType = TYPE_LONG;
-			paramAvailable = TRUE;
-			paramReadOnly = TRUE;
-			paramMin = CONNECTION_READY;
-			paramMax = paramDefault = CONNECTION_UNAVAILABLE;
-		}
-		break;
+	{
+		paramType = TYPE_LONG;
+		paramAvailable = TRUE;
+		paramReadOnly = TRUE;
+		paramMin = CONNECTION_READY;
+		paramMax = paramDefault = CONNECTION_UNAVAILABLE;
+	}
+	break;
 	case PARAM_EPHYS_TRIG_BUFFER:
-		{
-			paramType = TYPE_BUFFER;
-			paramAvailable = TRUE;
-			paramReadOnly = FALSE;
-		}
-		break;
+	case PARAM_EPHYS_GOTO_BUFFER:
+	{
+		paramType = TYPE_BUFFER;
+		paramAvailable = TRUE;
+		paramReadOnly = FALSE;
+	}
+	break;
 	default:
 		paramAvailable = FALSE;
 		ret = TRUE;
@@ -482,7 +559,7 @@ long ThorElectroPhys::SetParam(const long paramID, const double param)
 	long ret = TRUE;
 	int32 error = 0;
 
-	switch(paramID)
+	switch (paramID)
 	{
 	case PARAM_EPHYS_DIG_LINE_OUT_1:
 	case PARAM_EPHYS_DIG_LINE_OUT_2:
@@ -492,12 +569,12 @@ long ThorElectroPhys::SetParam(const long paramID, const double param)
 	case PARAM_EPHYS_DIG_LINE_OUT_6:
 	case PARAM_EPHYS_DIG_LINE_OUT_7:
 	case PARAM_EPHYS_DIG_LINE_OUT_8:
-		{			
-			long index = paramID - PARAM_EPHYS_DIG_LINE_OUT_1;
+	{
+		long index = paramID - PARAM_EPHYS_DIG_LINE_OUT_1;
 
-			_digitalPortState[index] = static_cast<long>(param);			
-		}
-		break;
+		_digitalPortState[index] = static_cast<long>(param);
+	}
+	break;
 	case PARAM_EPHYS_MEASURE:
 		try
 		{
@@ -509,19 +586,19 @@ long ThorElectroPhys::SetParam(const long paramID, const double param)
 			else
 			{
 				//setup frequency probe and create a thread to read since it is not a buffered task
-				DAQmxErrChk (L"DAQmxCreateTask",error = DAQmxCreateTask("",&_taskTriggerCI));
-				DAQmxErrChk (L"DAQmxCreateCIFreqChan",error = DAQmxCreateCIFreqChan(_taskTriggerCI,_freqCounterLine.c_str(),"",0.01,DEFAULT_DO_SAMPLE_RATE,DAQmx_Val_Hz,DAQmx_Val_Rising,DAQmx_Val_LowFreq1Ctr,_freqIntervalSec,1,NULL));
-				DAQmxErrChk (L"DAQmxSetCIFreqTerm",error = DAQmxSetCIFreqTerm(_taskTriggerCI, "", _freqMeasureLine.c_str()));
-				DAQmxErrChk (L"DAQmxCfgImplicitTiming",error = DAQmxCfgImplicitTiming(_taskTriggerCI,DAQmx_Val_ContSamps,DEFAULT_DO_SAMPLE_RATE));
-				DAQmxErrChk (L"DAQmxCfgInputBuffer",error = DAQmxCfgInputBuffer(_taskTriggerCI, 4 * _freqBufSize));
-				DAQmxErrChk (L"DAQmxStartTask",error = DAQmxStartTask(_taskTriggerCI));
+				DAQmxErrChk(L"DAQmxCreateTask", error = DAQmxCreateTask("", &_taskTriggerCI));
+				DAQmxErrChk(L"DAQmxCreateCIFreqChan", error = DAQmxCreateCIFreqChan(_taskTriggerCI, _freqCounterLine.c_str(), "", 0.01, DEFAULT_DO_SAMPLE_RATE, DAQmx_Val_Hz, DAQmx_Val_Rising, DAQmx_Val_LowFreq1Ctr, _freqIntervalSec, 1, NULL));
+				DAQmxErrChk(L"DAQmxSetCIFreqTerm", error = DAQmxSetCIFreqTerm(_taskTriggerCI, "", _freqMeasureLine.c_str()));
+				DAQmxErrChk(L"DAQmxCfgImplicitTiming", error = DAQmxCfgImplicitTiming(_taskTriggerCI, DAQmx_Val_ContSamps, DEFAULT_DO_SAMPLE_RATE));
+				DAQmxErrChk(L"DAQmxCfgInputBuffer", error = DAQmxCfgInputBuffer(_taskTriggerCI, 4 * _freqBufSize));
+				DAQmxErrChk(L"DAQmxStartTask", error = DAQmxStartTask(_taskTriggerCI));
 				ResetEvent(_freqThreadStopped);
-				_freqThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) &(ThorElectroPhys::FreqMeasureAsync), NULL, 0, NULL);
+				_freqThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) & (ThorElectroPhys::FreqMeasureAsync), NULL, 0, NULL);
 			}
 		}
-		catch(...)
+		catch (...)
 		{
-			StringCbPrintfW(message,_MAX_PATH, L"ThorElectroPhys unable to start or stop frequency measurement.");
+			StringCbPrintfW(message, _MAX_PATH, L"ThorElectroPhys unable to start or stop frequency measurement.");
 			LogMessage(message, ERROR_EVENT);
 			CloseMeasureTasks();
 		}
@@ -529,24 +606,24 @@ long ThorElectroPhys::SetParam(const long paramID, const double param)
 	default:
 		ret = FALSE;
 	}
-	StringCbPrintfW(message,_MAX_PATH, L"");
+	StringCbPrintfW(message, _MAX_PATH, L"");
 	return ret;
 }
 
-long ThorElectroPhys::GetParam(const long paramID, double &param)
+long ThorElectroPhys::GetParam(const long paramID, double& param)
 {
 	long ret = TRUE;
 	int32 error = 0;
-	uInt32 samples[1] = {0};
+	uInt32 samples[1] = { 0 };
 	int32 samplesRead = 0;
 	int32 bytesPerSamp = 0;
-	uInt8 readVal[1] = {0};
+	uInt8 readVal[1] = { 0 };
 	long count = 0;
 	double dVal = 0, dAvg = 0;
 	param = static_cast<double>(samples[0]);
 	try
 	{
-		switch(paramID)
+		switch (paramID)
 		{
 		case PARAM_EPHYS_MEASURE:
 			samples[0] = (NULL == _taskTriggerCI) ? 0x0 : 0x1;
@@ -569,18 +646,18 @@ long ThorElectroPhys::GetParam(const long paramID, double &param)
 			samples[0] = (NULL == _freqMeasure) ? 0x0 : 0x1;
 			break;
 		case PARAM_EPHYS_DIG_LINE_IN_1:
+		{
+			if (NULL != _taskHandleDI0)
 			{
-				if(NULL != _taskHandleDI0)
-				{
-					DAQmxErrChk(L"DAQmxReadDigitalLines",error = DAQmxReadDigitalLines(_taskHandleDI0,1,0.0,DAQmx_Val_GroupByChannel,readVal,1,&samplesRead,&bytesPerSamp,NULL));
-					samples[0] = readVal[0];
+				DAQmxErrChk(L"DAQmxReadDigitalLines", error = DAQmxReadDigitalLines(_taskHandleDI0, 1, 0.0, DAQmx_Val_GroupByChannel, readVal, 1, &samplesRead, &bytesPerSamp, NULL));
+				samples[0] = readVal[0];
 #ifdef LOGGING_ENABLED
-					StringCbPrintfW(messageLog,_MAX_PATH, L"ThorElectroPhys Line read result %d",samples[0]);
-					LogMessage(messageLog, INFORMATION_EVENT);
+				StringCbPrintfW(messageLog, _MAX_PATH, L"ThorElectroPhys Line read result %d", samples[0]);
+				LogMessage(messageLog, INFORMATION_EVENT);
 #endif
-				}
 			}
-			break;
+		}
+		break;
 		case PARAM_EPHYS_DIG_LINE_OUT_1:
 		case PARAM_EPHYS_DIG_LINE_OUT_2:
 		case PARAM_EPHYS_DIG_LINE_OUT_3:
@@ -589,21 +666,21 @@ long ThorElectroPhys::GetParam(const long paramID, double &param)
 		case PARAM_EPHYS_DIG_LINE_OUT_6:
 		case PARAM_EPHYS_DIG_LINE_OUT_7:
 		case PARAM_EPHYS_DIG_LINE_OUT_8:
-			{	
-				long index = paramID - PARAM_EPHYS_DIG_LINE_OUT_1;
-				samples[0] = _digitalPortState[index];
-			}
-			break;
+		{
+			long index = paramID - PARAM_EPHYS_DIG_LINE_OUT_1;
+			samples[0] = _digitalPortState[index];
+		}
+		break;
 		case PARAM_DEVICE_TYPE:
-			{
-				samples[0] = EPHYS;
-			}
-			break;
+		{
+			samples[0] = EPHYS;
+		}
+		break;
 		case PARAM_CONNECTION_STATUS:
-			{
-				samples[0] = (1 ==_numDevices) ? CONNECTION_READY : CONNECTION_UNAVAILABLE;
-			}
-			break;
+		{
+			samples[0] = (1 == _numDevices) ? CONNECTION_READY : CONNECTION_UNAVAILABLE;
+		}
+		break;
 		default:
 			ret = FALSE;
 		}
@@ -612,12 +689,12 @@ long ThorElectroPhys::GetParam(const long paramID, double &param)
 		if (PARAM_EPHYS_MEASURE_RATE != paramID)
 			param = static_cast<double>(samples[0]);
 	}
-	catch(...)
+	catch (...)
 	{
 		if (PARAM_EPHYS_MEASURE_RATE == paramID)
 			_freqCirBuf.get()->ReleaseLock();
 
-		StringCbPrintfW(messageLog,_MAX_PATH, L"ThorElectroPhys unable to get param (%d) error (%d).", paramID, error);
+		StringCbPrintfW(messageLog, _MAX_PATH, L"ThorElectroPhys unable to get param (%d) error (%d).", paramID, error);
 		LogMessage(messageLog, ERROR_EVENT);
 		ret = FALSE;
 	}
@@ -635,7 +712,7 @@ long ThorElectroPhys::SetParamBuffer(const long paramID, char* pBuffer, long siz
 {
 	long ret = TRUE;
 
-	switch(paramID)
+	switch (paramID)
 	{
 	case PARAM_EPHYS_TRIG_BUFFER:
 		if (NULL == _triggerStruct)
@@ -644,6 +721,20 @@ long ThorElectroPhys::SetParamBuffer(const long paramID, char* pBuffer, long siz
 		}
 		memcpy_s(_triggerStruct, size, pBuffer, size);
 		SetTriggerTasks();
+		break;
+	case PARAM_EPHYS_GOTO_BUFFER:
+		CloseTriggerTasks();
+
+		memcpy_s(_gotoValues, sizeof(double) * size, pBuffer, sizeof(double) * size);
+
+		if ((int)EPhysOutputType::DIGITAL_ONLY == _triggerStruct->outputType || (int)EPhysOutputType::BOTH == _triggerStruct->outputType)
+		{
+			TogglePulseToDigitalLine(_taskTriggerHandle[TASKDO], _triggerConfig[EPhysTriggerLines::DIGITAL_OUTPUT], 1, (0 < _gotoValues[0]) ? TogglePulseMode::ToggleHigh : TogglePulseMode::ToggleLow);
+		}
+		if ((int)EPhysOutputType::ANALOG_ONLY == _triggerStruct->outputType || (int)EPhysOutputType::BOTH == _triggerStruct->outputType)
+		{
+			GotoAnalog(_gotoValues[1]);
+		}
 		break;
 	default:
 		ret = FALSE;
@@ -662,10 +753,10 @@ long ThorElectroPhys::GetParamBuffer(const long paramID, char* pBuffer, long siz
 {
 	long ret = TRUE;
 
-	switch(paramID)
+	switch (paramID)
 	{
 	case PARAM_EPHYS_TRIG_BUFFER:
-		if((NULL == _triggerStruct) || (size < sizeof(EPhysTriggerStruct)))
+		if ((NULL == _triggerStruct) || (size < sizeof(EPhysTriggerStruct)))
 			return FALSE;
 
 		memcpy_s(pBuffer, sizeof(EPhysTriggerStruct), _triggerStruct, sizeof(EPhysTriggerStruct));
@@ -727,25 +818,25 @@ long ThorElectroPhys::StartPosition()
 	int32 error = 0;
 	try
 	{
-		for(long i=0; i<MAX_DIG_PORT_OUTPUT; i++)
+		for (long i = 0; i < MAX_DIG_PORT_OUTPUT; i++)
 		{
-			if((NULL !=_taskHandleDO[i]) && (true == _digitalPortOutputAvailable[i]))
+			if ((NULL != _taskHandleDO[i]) && (true == _digitalPortOutputAvailable[i]))
 			{
 				sample = static_cast<uInt8>(_digitalPortState[i]);
-				DAQmxErrChk(L"DAQmxWriteDigitalLines",error = DAQmxWriteDigitalLines(_taskHandleDO[i],1,TRUE,0,DAQmx_Val_GroupByChannel,&sample,&written,NULL));
+				DAQmxErrChk(L"DAQmxWriteDigitalLines", error = DAQmxWriteDigitalLines(_taskHandleDO[i], 1, TRUE, 0, DAQmx_Val_GroupByChannel, &sample, &written, NULL));
 			}
 		}
 	}
-	catch(...)
+	catch (...)
 	{
-		StringCbPrintfW(message,_MAX_PATH, L"ThorElectroPhys unable to start due to error (%d).", error);
+		StringCbPrintfW(message, _MAX_PATH, L"ThorElectroPhys unable to start due to error (%d).", error);
 		LogMessage(message, ERROR_EVENT);
 		return FALSE;
 	}
 	return TRUE;
 }
 
-long ThorElectroPhys::StatusPosition(long &status)
+long ThorElectroPhys::StatusPosition(long& status)
 {
 	status = IDevice::STATUS_READY;
 	bool32 isDone = 0;
@@ -771,8 +862,10 @@ long ThorElectroPhys::StatusPosition(long &status)
 				}
 				if ((NULL != _taskTriggerCO[TASKAO]) && ((int)EPhysOutputType::ANALOG_ONLY == _triggerStruct->outputType || (int)EPhysOutputType::BOTH == _triggerStruct->outputType))
 				{
-					DAQmxErrChk(L"DAQmxIsTaskDone", error = DAQmxIsTaskDone(_taskTriggerCO[TASKAO], &isDone));
-					status &= isDone;
+					//[NOTE]not throw error to close all
+					//DAQmxErrChk(L"DAQmxIsTaskDone", error = DAQmxIsTaskDone(_taskTriggerCO[TASKAO], &isDone));
+					error = DAQmxIsTaskDone(_taskTriggerHandle[TASKAO], &isDone);
+					status &= (DAQmxSuccess != error) ? !_analogRestarted : (_analogRestarted ? 0 : isDone);
 				}
 				if ((EPhysTriggerMode::MANUAL == (EPhysTriggerMode)_triggerStruct->mode) ||
 					((1 == _triggerStruct->startEdge) && (0 == _triggerStruct->stepEdge[0]) && (0 > _triggerStruct->stepEdge[1])) && (0 == _triggerStruct->repeats))
@@ -785,16 +878,17 @@ long ThorElectroPhys::StatusPosition(long &status)
 				}
 			}
 		}
-	}catch(...)
+	}
+	catch (...)
 	{
 		CloseTriggerTasks();
 		//no update this error in GUI
-		StringCbPrintfW(message,_MAX_PATH, L"");
+		StringCbPrintfW(message, _MAX_PATH, L"");
 	}
 	return TRUE;
 }
 
-long ThorElectroPhys::ReadPosition(DeviceType deviceType, double &pos)
+long ThorElectroPhys::ReadPosition(DeviceType deviceType, double& pos)
 {
 	return FALSE;
 }
@@ -804,9 +898,9 @@ long ThorElectroPhys::PostflightPosition()
 	return TRUE;
 }
 
-long ThorElectroPhys::GetLastErrorMsg(wchar_t * msg, long size)
-{	
-	wcsncpy_s(msg,size,message,_MAX_PATH);
+long ThorElectroPhys::GetLastErrorMsg(wchar_t* msg, long size)
+{
+	wcsncpy_s(msg, size, message, _MAX_PATH);
 	return TRUE;
 }
 
@@ -814,8 +908,8 @@ int ThorElectroPhys::CloseNITasks()
 {
 	TerminateTask(_taskHandleDI0);
 
-	for(long i=0; i<MAX_DIG_PORT_OUTPUT; i++)
-	{		
+	for (long i = 0; i < MAX_DIG_PORT_OUTPUT; i++)
+	{
 		TerminateTask(_taskHandleDO[i]);
 	}
 	return TRUE;
@@ -831,21 +925,26 @@ void ThorElectroPhys::CloseMeasureTasks()
 
 void ThorElectroPhys::CloseTriggerTasks(long bringDownLines)
 {
-	TerminateTask(_taskTriggerHandle[TASKDO]);	//[0:DO,1:AO]
-	TerminateTask(_taskTriggerHandle[TASKAO]);
-	TerminateTask(_taskTriggerCO[TASKDO]);
-	TerminateTask(_taskTriggerCO[TASKAO]);
+	if (_analogCritSectionInitialized == true) 
+	{
+		::EnterCriticalSection(&_analogCritSection);
+		TerminateTask(_taskTriggerHandle[TASKDO]);	//[0:DO,1:AO]
+		TerminateTask(_taskTriggerHandle[TASKAO]);
+		TerminateTask(_taskTriggerCO[TASKDO]);
+		TerminateTask(_taskTriggerCO[TASKAO]);
+		::LeaveCriticalSection(&_analogCritSection);
+	}
 
 	//return w/o bring lines down
-	if(FALSE == bringDownLines)
+	if (FALSE == bringDownLines)
 		return;
 
-	if(NULL != _triggerStruct)
+	if (NULL != _triggerStruct)
 	{
 		_triggerStruct->enable = FALSE;
 	}
 	//need to bring lines to low, consider outputMode
-	if(NULL != _triggerStruct)
+	if (NULL != _triggerStruct)
 	{
 		if ((int)EPhysOutputType::DIGITAL_ONLY == _triggerStruct->outputType || (int)EPhysOutputType::BOTH == _triggerStruct->outputType)
 		{
@@ -853,33 +952,17 @@ void ThorElectroPhys::CloseTriggerTasks(long bringDownLines)
 		}
 		if ((int)EPhysOutputType::ANALOG_ONLY == _triggerStruct->outputType || (int)EPhysOutputType::BOTH == _triggerStruct->outputType)
 		{
-			if (TRUE == ThorElectroPhys::getInstance()->_parkAnalogLineAtLastVoltage && _triggerStruct->powerPercent[0] > 0 && ThorElectroPhys::getInstance()->_analogTriggerSet)
+			if (TRUE == ThorElectroPhys::getInstance()->_parkAnalogLineAtLastVoltage && _triggerStruct->powerPercent[0] > 0 && AnalogTaskType::LAST_ANALOG_TASK_TYPE != ThorElectroPhys::getInstance()->_analogTaskType)
 			{
-				double intermediateValue = 0;
-				switch (_triggerStruct->responseType)
-				{
-				case SINE_RESPONSE:
-					intermediateValue = acos(1 - static_cast<double>(Constants::AREA_UNDER_CURVE) * _triggerStruct->powerPercent[0] / (double)Constants::HUNDRED_PERCENT) / PI;
-					break;
-				case LINEAR_RESPONSE:
-				default:
-					intermediateValue = _triggerStruct->powerPercent[0] / (double)Constants::HUNDRED_PERCENT;
-					break;
-				}
-
-				double powerVal = intermediateValue * (_triggerStruct->voltageRange[1] - _triggerStruct->voltageRange[0]) + _triggerStruct->voltageRange[0];
-
-				powerVal = std::max(MIN_AO_VOLTAGE, std::min(MAX_AO_VOLTAGE, powerVal));
-
-				SetAnalogVoltage(_taskTriggerHandle[TASKAO], _triggerConfig[EPhysTriggerLines::ANALOG_OUTPUT], 1, &powerVal);
+				GotoAnalog(_triggerStruct->powerPercent[0]);
 			}
-			else if (!ThorElectroPhys::getInstance()->_analogTriggerSet && FALSE == ThorElectroPhys::getInstance()->_parkAnalogLineAtLastVoltage)
+			else if (FALSE == ThorElectroPhys::getInstance()->_parkAnalogLineAtLastVoltage && AnalogTaskType::LAST_ANALOG_TASK_TYPE == ThorElectroPhys::getInstance()->_analogTaskType)
 			{
 				SetAnalogVoltage(_taskTriggerHandle[TASKAO], _triggerConfig[EPhysTriggerLines::ANALOG_OUTPUT], 1, &_triggerStruct->voltageRange[0]);
 			}
-			ThorElectroPhys::getInstance()->_analogTriggerSet = false;
+			ThorElectroPhys::getInstance()->_analogTaskType = AnalogTaskType::LAST_ANALOG_TASK_TYPE;
 		}
-		if(EPhysModeConfig::EDGE_MONITOR == _triggerStruct->configured)
+		if (EPhysModeConfig::EDGE_MONITOR == _triggerStruct->configured)
 		{
 			TogglePulseToDigitalLine(_taskTriggerHandle[0], _triggerConfig[EPhysTriggerLines::EDGE_OUTPUT], 1, TogglePulseMode::ToggleLow);
 		}
@@ -890,8 +973,9 @@ void ThorElectroPhys::ResetParams()
 {
 	_devName = "";	//"/Dev3/";
 	_digitalPort = "";	//"PFI6";
+	_analogTaskType = AnalogTaskType::LAST_ANALOG_TASK_TYPE;
 
-	for(long i=0; i<MAX_DIG_PORT_OUTPUT; i++)
+	for (long i = 0; i < MAX_DIG_PORT_OUTPUT; i++)
 	{
 		_digitalPortOutput[i].clear();
 		_digitalPortOutputAvailable[i] = false;
@@ -918,12 +1002,7 @@ std::string ThorElectroPhys::GetTriggerInputLine()
 long ThorElectroPhys::SetDigitalTriggerTask()
 {
 	int32 error = DAQmxSuccess;
-	long blockCount = 0;		//# of blocks in one ring buffer
-	uInt32 multipleRatio = 4;	//multiple of buffer sizes set to on-board memory
-	uInt32 bufferSize = 0;		//max possible total buffer count be written per callback
-	uint64_t totalSize = 0;		//total length of units in the waveform
-
-	if(EPhysModeConfig::MANUAL_TRIG <= _triggerStruct->configured && (EPhysOutputType::DIGITAL_ONLY == (EPhysOutputType)_triggerStruct->outputType || EPhysOutputType::BOTH == (EPhysOutputType)_triggerStruct->outputType))
+	if (EPhysModeConfig::MANUAL_TRIG <= _triggerStruct->configured && (EPhysOutputType::DIGITAL_ONLY == (EPhysOutputType)_triggerStruct->outputType || EPhysOutputType::BOTH == (EPhysOutputType)_triggerStruct->outputType))
 	{
 		///*************************************************************///
 		///******	set counter output with specified durations   ******///
@@ -931,25 +1010,25 @@ long ThorElectroPhys::SetDigitalTriggerTask()
 
 		//limit idle time by max duty cycle that card can accept
 		const double MAX_DUTY_CYCLE = 0.985;
-		_triggerStruct->minIdleMS = ((1-MAX_DUTY_CYCLE)/MAX_DUTY_CYCLE) * _triggerStruct->durationMS;
+		_triggerStruct->minIdleMS = ((1 - MAX_DUTY_CYCLE) / MAX_DUTY_CYCLE) * _triggerStruct->durationMS;
 		_triggerStruct->idleMS = (_triggerStruct->minIdleMS > _triggerStruct->idleMS) ? _triggerStruct->minIdleMS : _triggerStruct->idleMS;
 		float64 period = (_triggerStruct->durationMS + _triggerStruct->idleMS) / Constants::MS_TO_SEC;	//[sec]
 		float64 freq = 1 / period;																		//[Hz]
 		float64 dutyCycle = _triggerStruct->durationMS / (_triggerStruct->durationMS + _triggerStruct->idleMS);
 
-		DAQmxErrChk (L"DAQmxCreateTask", error = DAQmxCreateTask("",&_taskTriggerCO[TASKDO]));
+		DAQmxErrChk(L"DAQmxCreateTask", error = DAQmxCreateTask("", &_taskTriggerCO[TASKDO]));
 
 		DAQmxErrChk(L"DAQmxCreateCOPulseChanFreq", error = DAQmxCreateCOPulseChanFreq(_taskTriggerCO[TASKDO], _triggerConfig[DIGITAL_COUNTER].c_str(), "", DAQmx_Val_Hz, DAQmx_Val_Low, _triggerStruct->startIdleMS / Constants::MS_TO_SEC, freq, dutyCycle));
 
-		DAQmxErrChk(L"DAQmxSetChanAttribute", error = DAQmxSetChanAttribute (_taskTriggerCO[TASKDO], "", DAQmx_CO_Pulse_Term, _triggerConfig[DIGITAL_OUTPUT].c_str()));
+		DAQmxErrChk(L"DAQmxSetChanAttribute", error = DAQmxSetChanAttribute(_taskTriggerCO[TASKDO], "", DAQmx_CO_Pulse_Term, _triggerConfig[DIGITAL_OUTPUT].c_str()));
 
 		if (0 < _triggerStruct->iterations)
 		{
-			DAQmxErrChk(L"DAQmxCfgImplicitTiming", error = DAQmxCfgImplicitTiming (_taskTriggerCO[TASKDO], DAQmx_Val_FiniteSamps, _triggerStruct->iterations));
+			DAQmxErrChk(L"DAQmxCfgImplicitTiming", error = DAQmxCfgImplicitTiming(_taskTriggerCO[TASKDO], DAQmx_Val_FiniteSamps, _triggerStruct->iterations));
 		}
 		else
 		{
-			DAQmxErrChk(L"DAQmxCfgImplicitTiming", error = DAQmxCfgImplicitTiming (_taskTriggerCO[TASKDO], DAQmx_Val_ContSamps, DEFAULT_DO_SAMPLE_RATE));
+			DAQmxErrChk(L"DAQmxCfgImplicitTiming", error = DAQmxCfgImplicitTiming(_taskTriggerCO[TASKDO], DAQmx_Val_ContSamps, DEFAULT_DO_SAMPLE_RATE));
 		}
 
 		if (EPhysTriggerMode::MANUAL == (EPhysTriggerMode)_triggerStruct->mode)
@@ -960,7 +1039,7 @@ long ThorElectroPhys::SetDigitalTriggerTask()
 		//[special case]: retriggerable by every triggers if 1 start 0 gaps 0 repeats configured
 		if ((0 == _triggerStruct->stepEdge[0]) && (0 > _triggerStruct->stepEdge[1]))
 		{
-			if((1 == _triggerStruct->startEdge) && (0 == _triggerStruct->repeats))
+			if ((1 == _triggerStruct->startEdge) && (0 == _triggerStruct->repeats))
 			{
 				return TRUE;	//start later
 			}
@@ -968,18 +1047,18 @@ long ThorElectroPhys::SetDigitalTriggerTask()
 
 		if (EPhysTriggerMode::CUSTOM == (EPhysTriggerMode)_triggerStruct->mode && EPhysModeConfig::CUSTOM_CONFIG != _triggerStruct->configured)
 		{
-			StringCbPrintfW(message,_MAX_PATH, L"ThorElectroPhys not configured for custom input line.");
+			StringCbPrintfW(message, _MAX_PATH, L"ThorElectroPhys not configured for custom input line.");
 			LogMessage(message, ERROR_EVENT);
 			goto TERMINATE_TRIGGER;
 		}
-		DAQmxErrChk(L"DAQmxSetDigEdgeArmStartTrigSrc", error = DAQmxSetDigEdgeArmStartTrigSrc(_taskTriggerCO[TASKDO],GetTriggerInputLine().c_str()));
-		DAQmxErrChk(L"DAQmxSetArmStartTrigType", error = DAQmxSetArmStartTrigType(_taskTriggerCO[TASKDO],DAQmx_Val_DigEdge));
-		DAQmxErrChk(L"DAQmxSetDigEdgeArmStartTrigEdge", error = DAQmxSetDigEdgeArmStartTrigEdge(_taskTriggerCO[TASKDO],DAQmx_Val_Rising));
+		DAQmxErrChk(L"DAQmxSetDigEdgeArmStartTrigSrc", error = DAQmxSetDigEdgeArmStartTrigSrc(_taskTriggerCO[TASKDO], GetTriggerInputLine().c_str()));
+		DAQmxErrChk(L"DAQmxSetArmStartTrigType", error = DAQmxSetArmStartTrigType(_taskTriggerCO[TASKDO], DAQmx_Val_DigEdge));
+		DAQmxErrChk(L"DAQmxSetDigEdgeArmStartTrigEdge", error = DAQmxSetDigEdgeArmStartTrigEdge(_taskTriggerCO[TASKDO], DAQmx_Val_Rising));
 
-		DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerCO[TASKDO],_triggerConfig[EPhysTriggerLines::EDGE_OUTPUT].c_str(),DAQmx_Val_Rising));
-		DAQmxErrChk(L"DAQmxSetStartTrigRetriggerable", error = DAQmxSetStartTrigRetriggerable(_taskTriggerCO[TASKDO],true));
+		DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerCO[TASKDO], _triggerConfig[EPhysTriggerLines::EDGE_OUTPUT].c_str(), DAQmx_Val_Rising));
+		DAQmxErrChk(L"DAQmxSetStartTrigRetriggerable", error = DAQmxSetStartTrigRetriggerable(_taskTriggerCO[TASKDO], true));
 
-		DAQmxErrChk(L"DAQmxRegisterSignalEvent", error = DAQmxRegisterSignalEvent(_taskTriggerCO[TASKDO],DAQmx_Val_CounterOutputEvent,0,TriggerCOCallback,NULL));
+		DAQmxErrChk(L"DAQmxRegisterSignalEvent", error = DAQmxRegisterSignalEvent(_taskTriggerCO[TASKDO], DAQmx_Val_CounterOutputEvent, 0, TriggerCOCallback, NULL));
 	}
 	return TRUE;
 
@@ -992,12 +1071,12 @@ TERMINATE_TRIGGER:
 long ThorElectroPhys::SetAnalogTriggerTask()
 {
 	int32 error = DAQmxSuccess;
-	long blockCount = 0;		//# of blocks in one ring buffer
-	uInt32 multipleRatio = 4;	//multiple of buffer sizes set to on-board memory
 	uInt32 bufferSize = 0;		//max possible total buffer count be written per callback
 	uint64_t totalSize = 0;		//total length of units in the waveform
+	_analogTaskType = AnalogTaskType::LAST_ANALOG_TASK_TYPE;	//last type means no running analog task
+	::EnterCriticalSection(&_analogCritSection);
 
-	if(EPhysModeConfig::MANUAL_TRIG <= _triggerStruct->configured && (EPhysOutputType::ANALOG_ONLY == (EPhysOutputType)_triggerStruct->outputType || EPhysOutputType::BOTH == (EPhysOutputType)_triggerStruct->outputType))
+	if (EPhysModeConfig::MANUAL_TRIG <= _triggerStruct->configured && (EPhysOutputType::ANALOG_ONLY == (EPhysOutputType)_triggerStruct->outputType || EPhysOutputType::BOTH == (EPhysOutputType)_triggerStruct->outputType))
 	{
 		///*****************************************************************************************///
 		///******	  	  configure timing with specified durations,            	  	      ******///
@@ -1008,25 +1087,29 @@ long ThorElectroPhys::SetAnalogTriggerTask()
 
 		waveformAOBuilder->SetBuilderType(BuilderType::EPHYS_AO);
 		waveformAOBuilder->SetWaveformParams(_triggerStruct);
-		if(FALSE == waveformAOBuilder->TryBuildWaveform(totalSize))
+		if (FALSE == waveformAOBuilder->TryBuildWaveform(totalSize))
 		{
-			StringCbPrintfW(message,_MAX_PATH, L"Invalid settings to build AO waveform.");
+			StringCbPrintfW(message, _MAX_PATH, L"Invalid settings to build AO waveform.");
 			LogMessage(message, ERROR_EVENT);
 			goto TERMINATE_TRIGGER;
 		}
 
-		blockCount = std::min(std::max((long)Constants::ACTIVE_LOAD_BLKSIZE_DEFAULT, _ringBufferSize), static_cast<long>(ceil((double)totalSize / (double)_ringBufferUnit)));
+		long blockCount = std::min(std::max((long)Constants::ACTIVE_LOAD_BLKSIZE_DEFAULT, _ringBufferSize),
+			static_cast<long>(ceil((double)totalSize / (double)_ringBufferUnit))); //# of blocks in one ring buffer
 		bufferSize = static_cast<uInt32>(blockCount * _ringBufferUnit);
 		_bRingBuf[TASKAO].reset(new BlockRingBuffer(SignalType::ANALOG_POCKEL, sizeof(double), blockCount, _ringBufferUnit));
 		waveformAOBuilder->ConnectCallback(_bRingBuf[TASKAO].get());
 		_bRingBuf[TASKAO].get()->CheckWritableBlockCounts(TRUE);
 
-		if(WAIT_OBJECT_0 != WaitForSingleObject(waveformAOBuilder->GetSignalHandle(), Constants::EVENT_WAIT_TIME))
+		if (WAIT_OBJECT_0 != WaitForSingleObject(waveformAOBuilder->GetSignalHandle(), Constants::EVENT_WAIT_TIME))
 		{
-			StringCbPrintfW(message,_MAX_PATH, L"Failed to build AO waveform in time.");
+			StringCbPrintfW(message, _MAX_PATH, L"Failed to build AO waveform in time.");
 			LogMessage(message, ERROR_EVENT);
 			goto TERMINATE_TRIGGER;
 		}
+
+		TerminateTask(_taskTriggerHandle[TASKAO]);
+		TerminateTask(_taskTriggerCO[TASKAO]);
 
 		///***************************************************************************************************************///
 		///******	set counter output for analog output task clock timing,											******///
@@ -1036,96 +1119,120 @@ long ThorElectroPhys::SetAnalogTriggerTask()
 
 		DAQmxErrChk(L"DAQmxCreateCOPulseChanFreq", error = DAQmxCreateCOPulseChanFreq(_taskTriggerCO[TASKAO], _triggerConfig[ANALOG_COUNTER].c_str(), "", DAQmx_Val_Hz, DAQmx_Val_Low, 0.0, _triggerStruct->clockRateHz, 0.5));
 
-		DAQmxErrChk(L"DAQmxCfgImplicitTiming", error = DAQmxCfgImplicitTiming (_taskTriggerCO[TASKAO], (0 < _triggerStruct->iterations) ? DAQmx_Val_FiniteSamps : DAQmx_Val_ContSamps, totalSize));
+		//DAQmxErrChk(L"DAQmxCfgImplicitTiming", error = DAQmxCfgImplicitTiming(_taskTriggerCO[TASKAO], (0 < _triggerStruct->iterations) ? DAQmx_Val_FiniteSamps : DAQmx_Val_ContSamps, totalSize));
+		DAQmxErrChk(L"DAQmxCfgImplicitTiming", error = DAQmxCfgImplicitTiming(_taskTriggerCO[TASKAO], DAQmx_Val_ContSamps, totalSize));
 
 		///****************************************		configure Task AO		****************************************///
-		DAQmxErrChk(L"DAQmxCreateTask",error = DAQmxCreateTask("", &_taskTriggerHandle[TASKAO]));
-		DAQmxErrChk(L"DAQmxCreateAOVoltageChan",error = DAQmxCreateAOVoltageChan(_taskTriggerHandle[TASKAO], _triggerConfig[ANALOG_OUTPUT].c_str(), "", MIN_AO_VOLTAGE, MAX_AO_VOLTAGE, DAQmx_Val_Volts, NULL));
+		DAQmxErrChk(L"DAQmxCreateTask", error = DAQmxCreateTask("", &_taskTriggerHandle[TASKAO]));
+		DAQmxErrChk(L"DAQmxCreateAOVoltageChan", error = DAQmxCreateAOVoltageChan(_taskTriggerHandle[TASKAO], _triggerConfig[ANALOG_OUTPUT].c_str(), "", MIN_AO_VOLTAGE, MAX_AO_VOLTAGE, DAQmx_Val_Volts, NULL));
 
 		int32 dataXferType = DAQmx_Val_DMA;
 		BoardInfo* bInfo = boardInfoNI.get()->getInstance()->GetBoardInfo(GetDevIDName(_triggerConfig[ANALOG_OUTPUT]));
 		if (NULL != bInfo)
 		{
 			dataXferType = (BoardStyle::USB == bInfo->boardStyle) ? DAQmx_Val_USBbulk : DAQmx_Val_DMA;
-			DAQmxErrChk (L"DAQmxSetAODataXferMech", error = DAQmxSetAODataXferMech(_taskTriggerHandle[TASKAO],"",dataXferType));	
+			DAQmxErrChk(L"DAQmxSetAODataXferMech", error = DAQmxSetAODataXferMech(_taskTriggerHandle[TASKAO], "", dataXferType));
 		}
 
-		DAQmxErrChk (L"DAQmxCfgOutputBuffer", error = DAQmxCfgOutputBuffer(_taskTriggerHandle[TASKAO], multipleRatio * bufferSize));
+		DAQmxErrChk(L"DAQmxCfgOutputBuffer", error = DAQmxCfgOutputBuffer(_taskTriggerHandle[TASKAO], MULTIPLE_RATIO * bufferSize));
 
-		DAQmxErrChk (L"DAQmxSetWriteAttribute",error = DAQmxSetWriteAttribute (_taskTriggerHandle[TASKAO], DAQmx_Write_RegenMode, DAQmx_Val_DoNotAllowRegen));
+		DAQmxErrChk(L"DAQmxRegisterDoneEvent", error = DAQmxRegisterDoneEvent(_taskTriggerHandle[TASKAO], 0, ThorElectroPhys::AnalogCycleDoneCallback, NULL));
 
-		if (bufferSize < totalSize || 0 >= _triggerStruct->iterations)
+		//DAQmxErrChk(L"DAQmxSetWriteAttribute", error = DAQmxSetWriteAttribute(_taskTriggerHandle[TASKAO], DAQmx_Write_RegenMode, DAQmx_Val_DoNotAllowRegen));
+
+		//determine analog task type after waveform gen
+		_analogTaskType = (bufferSize < totalSize) ? AnalogTaskType::CONTINUOUS_LIMITED : AnalogTaskType::FINITE_LIMITED;
+		_analogTaskType = (0 >= _triggerStruct->iterations) ? (AnalogTaskType::CONTINUOUS_LIMITED == _analogTaskType ? AnalogTaskType::CONTINUOUS_UNLIMITED : AnalogTaskType::FINITE_UNLIMITED) : _analogTaskType;
+		switch (_analogTaskType)
 		{
-			DAQmxErrChk (L"DAQmxCfgSampClkTiming", error = DAQmxCfgSampClkTiming(_taskTriggerHandle[TASKAO], _analogCounterInternalOutput.c_str(), static_cast<float64>(_triggerStruct->clockRateHz), DAQmx_Val_Rising, (0 < _triggerStruct->iterations) ? DAQmx_Val_FiniteSamps : DAQmx_Val_ContSamps, totalSize));
+		case FINITE_LIMITED:
+		case FINITE_UNLIMITED:
+			DAQmxErrChk(L"DAQmxCfgSampClkTiming", error = DAQmxCfgSampClkTiming(_taskTriggerHandle[TASKAO], _analogCounterInternalOutput.c_str(), static_cast<float64>(_triggerStruct->clockRateHz), DAQmx_Val_Rising, DAQmx_Val_FiniteSamps, totalSize));
+			break;
+		case CONTINUOUS_LIMITED:
+			DAQmxErrChk(L"DAQmxSetWriteAttribute", error = DAQmxSetWriteAttribute(_taskTriggerHandle[TASKAO], DAQmx_Write_RegenMode, DAQmx_Val_DoNotAllowRegen));
+
+			DAQmxErrChk(L"DAQmxCfgSampClkTiming", error = DAQmxCfgSampClkTiming(_taskTriggerHandle[TASKAO], _analogCounterInternalOutput.c_str(), static_cast<float64>(_triggerStruct->clockRateHz), DAQmx_Val_Rising, DAQmx_Val_FiniteSamps, totalSize));
 
 			DAQmxErrChk(L"DAQmxSetChanAttribute", error = DAQmxSetChanAttribute(_taskTriggerHandle[TASKAO], "", DAQmx_AO_DataXferReqCond, DAQmx_Val_OnBrdMemNotFull));
-		}
-		else
-		{
-			DAQmxErrChk(L"DAQmxCfgSampClkTiming",error = DAQmxCfgSampClkTiming(_taskTriggerHandle[TASKAO], _analogCounterInternalOutput.c_str(), static_cast<float64>(_triggerStruct->clockRateHz), DAQmx_Val_Rising, DAQmx_Val_FiniteSamps, totalSize));
+			break;
+		case CONTINUOUS_UNLIMITED:
+			DAQmxErrChk(L"DAQmxSetWriteAttribute", error = DAQmxSetWriteAttribute(_taskTriggerHandle[TASKAO], DAQmx_Write_RegenMode, DAQmx_Val_DoNotAllowRegen));
+
+			DAQmxErrChk(L"DAQmxCfgSampClkTiming", error = DAQmxCfgSampClkTiming(_taskTriggerHandle[TASKAO], _analogCounterInternalOutput.c_str(), static_cast<float64>(_triggerStruct->clockRateHz), DAQmx_Val_Rising, DAQmx_Val_ContSamps, totalSize));
+
+			DAQmxErrChk(L"DAQmxSetChanAttribute", error = DAQmxSetChanAttribute(_taskTriggerHandle[TASKAO], "", DAQmx_AO_DataXferReqCond, DAQmx_Val_OnBrdMemNotFull));
+			break;
+		case LAST_ANALOG_TASK_TYPE:
+		default:
+			::LeaveCriticalSection(&_analogCritSection);
+			return FALSE;
 		}
 
 		if (FALSE == FillupAvailableBuffer(TASKAO))
 			goto TERMINATE_TRIGGER;
 
 		//error if register event before write 
-		if (bufferSize < totalSize || 0 >= _triggerStruct->iterations)
-		{					
-			DAQmxErrChk (L"DAQmxRegisterEveryNSamplesEvent",error = DAQmxRegisterEveryNSamplesEvent(_taskTriggerHandle[TASKAO], DAQmx_Val_Transferred_From_Buffer, bufferSize, 0, EveryNTriggerCallback, (void*)TASKAO));
-		}
-
-		_analogTriggerSet = true;
+		if (AnalogTaskType::FINITE_UNLIMITED != _analogTaskType)
+			DAQmxErrChk(L"DAQmxRegisterEveryNSamplesEvent", error = DAQmxRegisterEveryNSamplesEvent(_taskTriggerHandle[TASKAO], DAQmx_Val_Transferred_From_Buffer, bufferSize, 0, EveryNTriggerCallback, (void*)TASKAO));
 
 		if (EPhysTriggerMode::MANUAL == (EPhysTriggerMode)_triggerStruct->mode)
 		{
+			::LeaveCriticalSection(&_analogCritSection);
 			return TRUE;		//start later
 		}
 
-		//[special case]: retriggerable by every triggers if 1 start 0 gaps 0 repeats configured
-		if ((0 == _triggerStruct->stepEdge[0]) && (0 > _triggerStruct->stepEdge[1]))
-		{
-			if((1 == _triggerStruct->startEdge) && (0 == _triggerStruct->repeats))
-			{
-				return TRUE;	//start later
-			}
-		}
+		////[special case]: retriggerable by every triggers if 1 start 0 gaps 0 repeats configured
+		//if ((0 == _triggerStruct->stepEdge[0]) && (0 > _triggerStruct->stepEdge[1]))
+		//{
+		//	if ((1 == _triggerStruct->startEdge) && (0 == _triggerStruct->repeats))
+		//	{
+		//		return TRUE;	//start later
+		//	}
+		//}
 
 		if (EPhysTriggerMode::CUSTOM == (EPhysTriggerMode)_triggerStruct->mode && EPhysModeConfig::CUSTOM_CONFIG != _triggerStruct->configured)
 		{
-			StringCbPrintfW(message,_MAX_PATH, L"ThorElectroPhys not configured for custom input line.");
+			StringCbPrintfW(message, _MAX_PATH, L"ThorElectroPhys not configured for custom input line.");
 			LogMessage(message, ERROR_EVENT);
 			goto TERMINATE_TRIGGER;
 		}
 
-		DAQmxErrChk(L"DAQmxSetDigEdgeArmStartTrigSrc", error = DAQmxSetDigEdgeArmStartTrigSrc(_taskTriggerCO[TASKAO],GetTriggerInputLine().c_str()));
+		//DAQmxErrChk(L"DAQmxSetDigEdgeArmStartTrigSrc", error = DAQmxSetDigEdgeArmStartTrigSrc(_taskTriggerCO[TASKAO], GetTriggerInputLine().c_str()));
 
-		DAQmxErrChk(L"DAQmxSetArmStartTrigType", error = DAQmxSetArmStartTrigType(_taskTriggerCO[TASKAO],DAQmx_Val_DigEdge));
-		DAQmxErrChk(L"DAQmxSetDigEdgeArmStartTrigEdge", error = DAQmxSetDigEdgeArmStartTrigEdge(_taskTriggerCO[TASKAO],DAQmx_Val_Rising));
+		//DAQmxErrChk(L"DAQmxSetArmStartTrigType", error = DAQmxSetArmStartTrigType(_taskTriggerCO[TASKAO], DAQmx_Val_DigEdge));
+		//DAQmxErrChk(L"DAQmxSetDigEdgeArmStartTrigEdge", error = DAQmxSetDigEdgeArmStartTrigEdge(_taskTriggerCO[TASKAO], DAQmx_Val_Rising));
 
-		DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerCO[TASKAO],_triggerConfig[EPhysTriggerLines::EDGE_OUTPUT].c_str(),DAQmx_Val_Rising));
-		DAQmxErrChk(L"DAQmxSetStartTrigRetriggerable", error = DAQmxSetStartTrigRetriggerable(_taskTriggerCO[TASKAO],true));
+		//DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerCO[TASKAO], _triggerConfig[EPhysTriggerLines::EDGE_OUTPUT].c_str(), DAQmx_Val_Rising));
+		//DAQmxErrChk(L"DAQmxSetStartTrigRetriggerable", error = DAQmxSetStartTrigRetriggerable(_taskTriggerCO[TASKAO], true));
 
-		//only need one task registered
-		if (EPhysOutputType::ANALOG_ONLY == (EPhysOutputType)_triggerStruct->outputType)
-			DAQmxErrChk(L"DAQmxRegisterSignalEvent", error = DAQmxRegisterSignalEvent(_taskTriggerCO[TASKAO],DAQmx_Val_CounterOutputEvent,0,TriggerCOCallback,NULL));
+		////only need one task registered
+		//if (EPhysOutputType::ANALOG_ONLY == (EPhysOutputType)_triggerStruct->outputType)
+		//	DAQmxErrChk(L"DAQmxRegisterSignalEvent", error = DAQmxRegisterSignalEvent(_taskTriggerCO[TASKAO], DAQmx_Val_CounterOutputEvent, 0, TriggerCOCallback, NULL));
 
 		//AO cannot be armStarted
-		DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerHandle[TASKAO],_triggerConfig[EPhysTriggerLines::EDGE_OUTPUT].c_str(),DAQmx_Val_Rising));
-		DAQmxErrChk(L"DAQmxSetStartTrigRetriggerable", error = DAQmxSetStartTrigRetriggerable(_taskTriggerHandle[TASKAO],true));
+		DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerHandle[TASKAO], _triggerConfig[EPhysTriggerLines::EDGE_OUTPUT].c_str(), DAQmx_Val_Rising));
+
+		//AO cannot be retriggerable in DAQmx_Val_ContSamps 
+		if (AnalogTaskType::FINITE_UNLIMITED == _analogTaskType)
+			DAQmxErrChk(L"DAQmxSetStartTrigRetriggerable", error = DAQmxSetStartTrigRetriggerable(_taskTriggerHandle[TASKAO], true));
+
 	}
+	::LeaveCriticalSection(&_analogCritSection);
 	return TRUE;
 
 TERMINATE_TRIGGER:
+	_analogTaskType = AnalogTaskType::LAST_ANALOG_TASK_TYPE;
 	TerminateTask(_taskTriggerHandle[TASKAO]);
 	TerminateTask(_taskTriggerCO[TASKAO]);
+	::LeaveCriticalSection(&_analogCritSection);
 	return FALSE;
 }
 
 long ThorElectroPhys::SetEdgeMonitorTask()
 {
-	int32 error = DAQmxSuccess;	
+	int32 error = DAQmxSuccess;
 	long blockCount = std::max((long)Constants::ACTIVE_LOAD_BLKSIZE_DEFAULT, _ringBufferSize);//# of blocks in one ring buffer	
-	uInt32 multipleRatio = 4;	//multiple of buffer sizes set to on-board memory	
 	uInt32 bufferSize = static_cast<uInt32>(blockCount * Constants::ACTIVE_LOAD_UNIT_SIZE);	//max possible total buffer count be written per callback
 	uint64_t totalSize = 0;		//total length of units in the waveform
 
@@ -1141,9 +1248,9 @@ long ThorElectroPhys::SetEdgeMonitorTask()
 		waveformDOBuilder->ConnectCallback(_bRingBuf[TASKDO].get());
 		_bRingBuf[TASKDO].get()->CheckWritableBlockCounts(TRUE);
 
-		if(WAIT_OBJECT_0 != WaitForSingleObject(waveformDOBuilder->GetSignalHandle(), Constants::EVENT_WAIT_TIME))
+		if (WAIT_OBJECT_0 != WaitForSingleObject(waveformDOBuilder->GetSignalHandle(), Constants::EVENT_WAIT_TIME))
 		{
-			StringCbPrintfW(message,_MAX_PATH, L"Failed to build waveform in time.");
+			StringCbPrintfW(message, _MAX_PATH, L"Failed to build waveform in time.");
 			LogMessage(message, ERROR_EVENT);
 			goto TERMINATE_TRIGGER;
 		}
@@ -1151,23 +1258,23 @@ long ThorElectroPhys::SetEdgeMonitorTask()
 		///*************************************************************///
 		///******	  	  configure trigger edges by DO	  	      ******///
 		///*************************************************************///
-		DAQmxErrChk (L"DAQmxCreateTask", error = DAQmxCreateTask("",&_taskTriggerHandle[TASKDO]));
+		DAQmxErrChk(L"DAQmxCreateTask", error = DAQmxCreateTask("", &_taskTriggerHandle[TASKDO]));
 
-		DAQmxErrChk (L"DAQmxCreateDOChan", error = DAQmxCreateDOChan(_taskTriggerHandle[TASKDO],_triggerConfig[BUFFER_OUTPUT].c_str(),"",DAQmx_Val_ChanPerLine));
+		DAQmxErrChk(L"DAQmxCreateDOChan", error = DAQmxCreateDOChan(_taskTriggerHandle[TASKDO], _triggerConfig[BUFFER_OUTPUT].c_str(), "", DAQmx_Val_ChanPerLine));
 
 		int32 dataXferType = DAQmx_Val_DMA;
 		BoardInfo* bInfo = boardInfoNI.get()->getInstance()->GetBoardInfo(GetDevIDName(_triggerConfig[BUFFER_OUTPUT]));
 		if (NULL != bInfo)
 			dataXferType = (BoardStyle::USB == bInfo->boardStyle) ? DAQmx_Val_USBbulk : DAQmx_Val_DMA;
-		DAQmxErrChk (L"DAQmxSetDODataXferMech", error = DAQmxSetDODataXferMech(_taskTriggerHandle[TASKDO],"",dataXferType));	
+		DAQmxErrChk(L"DAQmxSetDODataXferMech", error = DAQmxSetDODataXferMech(_taskTriggerHandle[TASKDO], "", dataXferType));
 
-		DAQmxErrChk (L"DAQmxCfgOutputBuffer", error = DAQmxCfgOutputBuffer(_taskTriggerHandle[TASKDO], multipleRatio * bufferSize));
+		DAQmxErrChk(L"DAQmxCfgOutputBuffer", error = DAQmxCfgOutputBuffer(_taskTriggerHandle[TASKDO], MULTIPLE_RATIO * bufferSize));
 
-		DAQmxErrChk (L"DAQmxSetWriteAttribute", error = DAQmxSetWriteAttribute (_taskTriggerHandle[TASKDO], DAQmx_Write_RegenMode, DAQmx_Val_DoNotAllowRegen));
+		DAQmxErrChk(L"DAQmxSetWriteAttribute", error = DAQmxSetWriteAttribute(_taskTriggerHandle[TASKDO], DAQmx_Write_RegenMode, DAQmx_Val_DoNotAllowRegen));
 
 		if (bufferSize < totalSize)
 		{
-			DAQmxErrChk (L"DAQmxCfgSampClkTiming", error = DAQmxCfgSampClkTiming(_taskTriggerHandle[TASKDO], GetTriggerInputLine().c_str(), DEFAULT_DO_SAMPLE_RATE, DAQmx_Val_Rising, DAQmx_Val_ContSamps, bufferSize));
+			DAQmxErrChk(L"DAQmxCfgSampClkTiming", error = DAQmxCfgSampClkTiming(_taskTriggerHandle[TASKDO], GetTriggerInputLine().c_str(), DEFAULT_DO_SAMPLE_RATE, DAQmx_Val_Rising, DAQmx_Val_ContSamps, bufferSize));
 
 			DAQmxErrChk(L"DAQmxSetChanAttribute", error = DAQmxSetChanAttribute(_taskTriggerHandle[TASKDO], "", DAQmx_DO_DataXferReqCond, DAQmx_Val_OnBrdMemNotFull));
 		}
@@ -1182,7 +1289,7 @@ long ThorElectroPhys::SetEdgeMonitorTask()
 		//error:[-200848] if register event before DAQmxWriteDigitalLines 
 		if (bufferSize < totalSize)
 		{
-			DAQmxErrChk (L"DAQmxRegisterEveryNSamplesEvent", error = DAQmxRegisterEveryNSamplesEvent(_taskTriggerHandle[TASKDO], DAQmx_Val_Transferred_From_Buffer, bufferSize, 0, EveryNTriggerCallback, (void*)TASKDO));
+			DAQmxErrChk(L"DAQmxRegisterEveryNSamplesEvent", error = DAQmxRegisterEveryNSamplesEvent(_taskTriggerHandle[TASKDO], DAQmx_Val_Transferred_From_Buffer, bufferSize, 0, EveryNTriggerCallback, (void*)TASKDO));
 		}
 	}
 	return TRUE;
@@ -1203,60 +1310,61 @@ long ThorElectroPhys::StartTriggerTasks()
 	//[special case]: retriggerable by every triggers if 1 start 0 gaps 0 repeats configured
 	if ((0 == _triggerStruct->stepEdge[0]) && (0 > _triggerStruct->stepEdge[1]))
 	{
-		if((1 == _triggerStruct->startEdge) && (0 == _triggerStruct->repeats))
+		if ((1 == _triggerStruct->startEdge) && (0 == _triggerStruct->repeats))
 		{
 			//[special case]: retriggerable by every triggers if 1 start 0 gaps 0 repeats configured
-			if(NULL != _taskTriggerCO[TASKDO] && (EPhysOutputType::DIGITAL_ONLY == (EPhysOutputType)_triggerStruct->outputType || EPhysOutputType::BOTH == (EPhysOutputType)_triggerStruct->outputType))
+			if (NULL != _taskTriggerCO[TASKDO] && (EPhysOutputType::DIGITAL_ONLY == (EPhysOutputType)_triggerStruct->outputType || EPhysOutputType::BOTH == (EPhysOutputType)_triggerStruct->outputType))
 			{
-				DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerCO[TASKDO],GetTriggerInputLine().c_str(),DAQmx_Val_Rising));
-				DAQmxErrChk(L"DAQmxSetStartTrigRetriggerable", error = DAQmxSetStartTrigRetriggerable(_taskTriggerCO[TASKDO],true));
+				DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerCO[TASKDO], GetTriggerInputLine().c_str(), DAQmx_Val_Rising));
+				DAQmxErrChk(L"DAQmxSetStartTrigRetriggerable", error = DAQmxSetStartTrigRetriggerable(_taskTriggerCO[TASKDO], true));
 
-				DAQmxErrChk(L"DAQmxTaskControl",error = DAQmxTaskControl(_taskTriggerCO[TASKDO],DAQmx_Val_Task_Reserve));
+				DAQmxErrChk(L"DAQmxTaskControl", error = DAQmxTaskControl(_taskTriggerCO[TASKDO], DAQmx_Val_Task_Reserve));
 				DAQmxErrChk(L"DAQmxStartTask", error = DAQmxStartTask(_taskTriggerCO[TASKDO]));
 			}
-			if(NULL != _taskTriggerCO[TASKAO] && NULL != _taskTriggerHandle[TASKAO] && (EPhysOutputType::ANALOG_ONLY == (EPhysOutputType)_triggerStruct->outputType || EPhysOutputType::BOTH == (EPhysOutputType)_triggerStruct->outputType))
+			if (NULL != _taskTriggerCO[TASKAO] && NULL != _taskTriggerHandle[TASKAO] && (EPhysOutputType::ANALOG_ONLY == (EPhysOutputType)_triggerStruct->outputType || EPhysOutputType::BOTH == (EPhysOutputType)_triggerStruct->outputType))
 			{
-				DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerCO[TASKAO],GetTriggerInputLine().c_str(),DAQmx_Val_Rising));
-				DAQmxErrChk(L"DAQmxSetStartTrigRetriggerable", error = DAQmxSetStartTrigRetriggerable(_taskTriggerCO[TASKAO],true));
+				DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerCO[TASKAO], GetTriggerInputLine().c_str(), DAQmx_Val_Rising));
+				DAQmxErrChk(L"DAQmxSetStartTrigRetriggerable", error = DAQmxSetStartTrigRetriggerable(_taskTriggerCO[TASKAO], true));
 
-				DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerHandle[TASKAO],GetTriggerInputLine().c_str(),DAQmx_Val_Rising));
-				DAQmxErrChk(L"DAQmxSetStartTrigRetriggerable", error = DAQmxSetStartTrigRetriggerable(_taskTriggerHandle[TASKAO],true));
+				DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerHandle[TASKAO], GetTriggerInputLine().c_str(), DAQmx_Val_Rising));
+				if (AnalogTaskType::FINITE_UNLIMITED == _analogTaskType)
+					DAQmxErrChk(L"DAQmxSetStartTrigRetriggerable", error = DAQmxSetStartTrigRetriggerable(_taskTriggerHandle[TASKAO], true));
 
-				DAQmxErrChk(L"DAQmxTaskControl", error = DAQmxTaskControl(_taskTriggerHandle[TASKAO],DAQmx_Val_Task_Reserve));
+				DAQmxErrChk(L"DAQmxTaskControl", error = DAQmxTaskControl(_taskTriggerHandle[TASKAO], DAQmx_Val_Task_Reserve));
 				DAQmxErrChk(L"DAQmxStartTask", error = DAQmxStartTask(_taskTriggerHandle[TASKAO]));
 
-				DAQmxErrChk(L"DAQmxTaskControl",error = DAQmxTaskControl(_taskTriggerCO[TASKAO],DAQmx_Val_Task_Reserve));
+				DAQmxErrChk(L"DAQmxTaskControl", error = DAQmxTaskControl(_taskTriggerCO[TASKAO], DAQmx_Val_Task_Reserve));
 				DAQmxErrChk(L"DAQmxStartTask", error = DAQmxStartTask(_taskTriggerCO[TASKAO]));	//actual start of AO
 			}
 			return TRUE;
 		}
 		else if (1 != _triggerStruct->repeats)
 		{
-			StringCbPrintfW(message,_MAX_PATH, L"Repeat can only be 1 when Gaps = 0.");
+			StringCbPrintfW(message, _MAX_PATH, L"Repeat can only be 1 when Gaps = 0.");
 			LogMessage(message, ERROR_EVENT);
 			goto TERMINATE_TRIGGERS;
 		}
 	}
 	if (NULL != _taskTriggerHandle[TASKDO])
 	{
-		DAQmxErrChk(L"DAQmxTaskControl", error = DAQmxTaskControl(_taskTriggerHandle[TASKDO],DAQmx_Val_Task_Reserve));
+		DAQmxErrChk(L"DAQmxTaskControl", error = DAQmxTaskControl(_taskTriggerHandle[TASKDO], DAQmx_Val_Task_Reserve));
 		DAQmxErrChk(L"DAQmxStartTask", error = DAQmxStartTask(_taskTriggerHandle[TASKDO]));
 		goto START_TRIGGERS;
 	}
 	return FALSE;
 
 START_TRIGGERS:
-	if(NULL != _taskTriggerCO[TASKDO] && (EPhysOutputType::DIGITAL_ONLY == (EPhysOutputType)_triggerStruct->outputType || EPhysOutputType::BOTH == (EPhysOutputType)_triggerStruct->outputType))
+	if (NULL != _taskTriggerCO[TASKDO] && (EPhysOutputType::DIGITAL_ONLY == (EPhysOutputType)_triggerStruct->outputType || EPhysOutputType::BOTH == (EPhysOutputType)_triggerStruct->outputType))
 	{
-		DAQmxErrChk(L"DAQmxTaskControl",error = DAQmxTaskControl(_taskTriggerCO[TASKDO],DAQmx_Val_Task_Reserve));
+		DAQmxErrChk(L"DAQmxTaskControl", error = DAQmxTaskControl(_taskTriggerCO[TASKDO], DAQmx_Val_Task_Reserve));
 		DAQmxErrChk(L"DAQmxStartTask", error = DAQmxStartTask(_taskTriggerCO[TASKDO]));
 	}
-	if(NULL != _taskTriggerHandle[TASKAO] && (EPhysOutputType::ANALOG_ONLY == (EPhysOutputType)_triggerStruct->outputType || EPhysOutputType::BOTH == (EPhysOutputType)_triggerStruct->outputType))
+	if (NULL != _taskTriggerHandle[TASKAO] && (EPhysOutputType::ANALOG_ONLY == (EPhysOutputType)_triggerStruct->outputType || EPhysOutputType::BOTH == (EPhysOutputType)_triggerStruct->outputType))
 	{
-		DAQmxErrChk(L"DAQmxTaskControl",error = DAQmxTaskControl(_taskTriggerHandle[TASKAO],DAQmx_Val_Task_Reserve));
+		DAQmxErrChk(L"DAQmxTaskControl", error = DAQmxTaskControl(_taskTriggerHandle[TASKAO], DAQmx_Val_Task_Reserve));
 		DAQmxErrChk(L"DAQmxStartTask", error = DAQmxStartTask(_taskTriggerHandle[TASKAO]));
 
-		DAQmxErrChk(L"DAQmxTaskControl",error = DAQmxTaskControl(_taskTriggerCO[TASKAO],DAQmx_Val_Task_Reserve));
+		DAQmxErrChk(L"DAQmxTaskControl", error = DAQmxTaskControl(_taskTriggerCO[TASKAO], DAQmx_Val_Task_Reserve));
 		DAQmxErrChk(L"DAQmxStartTask", error = DAQmxStartTask(_taskTriggerCO[TASKAO]));	//actual start of AO
 	}
 	return TRUE;
@@ -1270,32 +1378,28 @@ long ThorElectroPhys::SetTriggerTasks()
 {
 	long ret = TRUE;
 	int32 error = 0;
-	long blockCount = 0;		//# of blocks in one ring buffer
-	uInt32 multipleRatio = 4;	//multiple of buffer sizes set to on-board memory
-	uInt32 bufferSize = 0;		//max possible total buffer count be written per callback
-	uint64_t totalSize = 0;		//total length of units in the waveform
 
 	CloseTriggerTasks(FALSE);
 
-	if(NULL == _triggerStruct)
+	if (NULL == _triggerStruct)
 		return FALSE;
 
 	try
 	{
 		//reset error message
-		StringCbPrintfW(message,_MAX_PATH, L"");
+		StringCbPrintfW(message, _MAX_PATH, L"");
 
 		//return if mode none
-		if(EPhysTriggerMode::NONE == (EPhysTriggerMode)_triggerStruct->mode)
+		if (EPhysTriggerMode::NONE == (EPhysTriggerMode)_triggerStruct->mode)
 			goto TERMINATE_TRIGGER;
 
-		if((TRUE == _triggerStruct->enable) && EPhysModeConfig::NONE_TRIG < _triggerStruct->configured)
+		if ((TRUE == _triggerStruct->enable) && EPhysModeConfig::NONE_TRIG < _triggerStruct->configured)
 		{
 			///***********************************************************************************************///
 			///******	register & count counter output event to estimate end of retriggerable CO task,	******///
 			///******	find out number of non-zero gaps												******///
 			///***********************************************************************************************///
-			_targetCount = _outputCount = 0;
+			_targetCount = _outputCount = _analogRepeatCount = _analogRestarted = 0;
 			for (int i = 0; i < _MAX_PATH; i++)
 			{
 				if (0 > _triggerStruct->stepEdge[i])
@@ -1322,16 +1426,16 @@ long ThorElectroPhys::SetTriggerTasks()
 		else
 			goto TERMINATE_TRIGGER;
 	}
-	catch(...)
+	catch (...)
 	{
 #ifdef _DEBUG
-		DAQmxGetExtendedErrorInfo(errMsg,_MAX_PATH);
+		DAQmxGetExtendedErrorInfo(errMsg, _MAX_PATH);
 		LogMessage((wchar_t*)StringToWString(std::string(errMsg)).c_str(), ERROR_EVENT);
 #endif
 		CloseTriggerTasks();
-		StringCbPrintfW(message,_MAX_PATH, L"ThorElectroPhys unable to set trigger task due to error (%d).", error);
+		StringCbPrintfW(message, _MAX_PATH, L"ThorElectroPhys unable to set trigger task due to error (%d).", error);
 		LogMessage(message, ERROR_EVENT);
-		StringCbPrintfW(message,_MAX_PATH, L"Unable to generate signal!");
+		StringCbPrintfW(message, _MAX_PATH, L"Unable to generate signal!");
 		return FALSE;
 	}
 	return ret;
@@ -1346,7 +1450,7 @@ long ThorElectroPhys::FillupAvailableBuffer(int id)
 {
 	int32 error = 0;
 	long blocksToRead = _bRingBuf[id]->GetReadableBlockCounts();
-	long curBufferSizeInBytes = (0 < _bRingBuf[id]->GetUnitsInLastBlock()) ? _bRingBuf[id]->GetUnitSizeInBytes() * ((_bRingBuf[id]->GetBlockSize() * (blocksToRead-1)) + _bRingBuf[id]->GetUnitsInLastBlock()) : (_bRingBuf[id]->GetBlockSizeInByte() * blocksToRead);
+	long curBufferSizeInBytes = (0 < _bRingBuf[id]->GetUnitsInLastBlock()) ? _bRingBuf[id]->GetUnitSizeInBytes() * ((_bRingBuf[id]->GetBlockSize() * (blocksToRead - 1)) + _bRingBuf[id]->GetUnitsInLastBlock()) : (_bRingBuf[id]->GetBlockSizeInByte() * blocksToRead);
 	int32 curBufferSize = curBufferSizeInBytes / _bRingBuf[id]->GetUnitSizeInBytes();
 
 	if (_localBufferSizeInBytes != curBufferSizeInBytes)
@@ -1354,9 +1458,9 @@ long ThorElectroPhys::FillupAvailableBuffer(int id)
 		_localBuffer = (uInt8*)realloc((void*)_localBuffer, curBufferSizeInBytes);
 		_localBufferSizeInBytes = curBufferSizeInBytes;
 	}
-	if((NULL == _localBuffer) || (0 >= curBufferSizeInBytes))
+	if ((NULL == _localBuffer) || (0 >= curBufferSizeInBytes))
 	{
-		StringCbPrintfW(message,_MAX_PATH, L"Failed to allocate memory, please check settings.");
+		StringCbPrintfW(message, _MAX_PATH, L"Failed to allocate memory, please check settings.");
 		LogMessage(message, ERROR_EVENT);
 		return FALSE;
 	}
@@ -1366,16 +1470,16 @@ long ThorElectroPhys::FillupAvailableBuffer(int id)
 	{
 		//in case last block is not full
 		long unitsToReadinLastBlock = _bRingBuf[id]->GetUnitsInLastBlock();
-		if ((blocksToRead-1 == i) && (0 < unitsToReadinLastBlock))
+		if ((blocksToRead - 1 == i) && (0 < unitsToReadinLastBlock))
 		{
 			//partially available:
 			long offset = 0;
 			while (0 < _bRingBuf[id]->GetUnitsInLastBlock())
 			{
 				unitsToReadinLastBlock = _bRingBuf[id]->GetUnitsInLastBlock();
-				if(FALSE == _bRingBuf[id]->ReadUnits((UCHAR*)pDst, offset, unitsToReadinLastBlock, FALSE))
+				if (FALSE == _bRingBuf[id]->ReadUnits((UCHAR*)pDst, offset, unitsToReadinLastBlock, FALSE))
 				{
-					StringCbPrintfW(message,_MAX_PATH, L"Failed to read ring buffer units in ThorElectroPhys.");
+					StringCbPrintfW(message, _MAX_PATH, L"Failed to read ring buffer units in ThorElectroPhys.");
 					LogMessage(message, ERROR_EVENT);
 					return FALSE;
 				}
@@ -1385,9 +1489,9 @@ long ThorElectroPhys::FillupAvailableBuffer(int id)
 		}
 		else
 		{
-			if(FALSE == _bRingBuf[id]->ReadBlocks((UCHAR*)pDst, FALSE))
+			if (FALSE == _bRingBuf[id]->ReadBlocks((UCHAR*)pDst, FALSE))
 			{
-				StringCbPrintfW(message,_MAX_PATH, L"Failed to read ring buffer blocks in ThorElectroPhys.");
+				StringCbPrintfW(message, _MAX_PATH, L"Failed to read ring buffer blocks in ThorElectroPhys.");
 				LogMessage(message, ERROR_EVENT);
 				return FALSE;
 			}
@@ -1399,7 +1503,7 @@ long ThorElectroPhys::FillupAvailableBuffer(int id)
 	{
 	case TASKDO:
 		//DAQmxErrChk (L"DAQmxWriteDigitalLines", error = DAQmxResetWriteNextWriteIsLast(_taskTriggerHandle[id]));
-		DAQmxErrChk (L"DAQmxWriteDigitalLines", error = DAQmxWriteDigitalLines(_taskTriggerHandle[id],static_cast<int32>(curBufferSizeInBytes),false,-1,DAQmx_Val_GroupByScanNumber,_localBuffer,NULL,NULL));
+		DAQmxErrChk(L"DAQmxWriteDigitalLines", error = DAQmxWriteDigitalLines(_taskTriggerHandle[id], static_cast<int32>(curBufferSizeInBytes), false, -1, DAQmx_Val_GroupByScanNumber, _localBuffer, NULL, NULL));
 		break;
 	case TASKAO:
 		DAQmxErrChk(L"DAQmxWriteAnalogF64", error = DAQmxWriteAnalogF64(_taskTriggerHandle[id], curBufferSize, false, -1, DAQmx_Val_GroupByScanNumber, (float64*)_localBuffer, NULL, NULL));
@@ -1414,3 +1518,27 @@ long ThorElectroPhys::FillupAvailableBuffer(int id)
 	return TRUE;
 }
 
+//set analog trigger to given value
+void ThorElectroPhys::GotoAnalog(double value)
+{
+	if (NULL != _triggerStruct)
+	{
+		double intermediateValue = 0;
+		switch (_triggerStruct->responseType)
+		{
+		case SINE_RESPONSE:
+			intermediateValue = acos(1 - static_cast<double>(Constants::AREA_UNDER_CURVE) * value / (double)Constants::HUNDRED_PERCENT) / PI;
+			break;
+		case LINEAR_RESPONSE:
+		default:
+			intermediateValue = value / (double)Constants::HUNDRED_PERCENT;
+			break;
+		}
+
+		double powerVal = intermediateValue * (_triggerStruct->voltageRange[1] - _triggerStruct->voltageRange[0]) + _triggerStruct->voltageRange[0];
+
+		powerVal = std::max(MIN_AO_VOLTAGE, std::min(MAX_AO_VOLTAGE, powerVal));
+
+		SetAnalogVoltage(_taskTriggerHandle[TASKAO], _triggerConfig[EPhysTriggerLines::ANALOG_OUTPUT], 1, &powerVal);
+	}
+}

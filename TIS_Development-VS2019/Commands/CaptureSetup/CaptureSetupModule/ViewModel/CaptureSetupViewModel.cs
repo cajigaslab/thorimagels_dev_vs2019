@@ -59,6 +59,8 @@
 
         private readonly CaptureSetup _captureSetup;
 
+        private bool _spinnerWindowShowing = false;
+
         private ICommand _autoContourDisplayCommand;
         private AutoContourWin _autoContourWin = null;
         private bool _autoCoutourWinInit;
@@ -67,6 +69,7 @@
         private BackgroundWorker _bw;
         private BackgroundWorker _bwHardware = null;
         private Double _captureSetupControlPanelWidth = 0;
+        private int _captureSetupModalitySwap = 0;
         private ICommand _clearAllObjectsCommand;
         private Visibility _collapsedPockels0Visibility = Visibility.Collapsed;
         private Visibility _collapsedPockels1Visibility = Visibility.Collapsed;
@@ -89,6 +92,8 @@
         private double _iVScrollBarHeight;
         private LineProfile _lineProfile = null;
         private bool _lineProfileActive;
+        private SpinnerProgress.SpinnerProgressControl _modalitySpinner;
+        private Window _modalitySpinnerWindow = null;
         private MultiROIStatsUC _multiROIStats = null;
         private string _OutputExperiment;
         private double _panelsScale = 1;
@@ -105,6 +110,7 @@
         private bool _showingPMTSafetyMessage;
         private BackgroundWorker _slmBleachWorker;
         private SpinnerProgress.SpinnerProgressControl _spinner;
+        private BackgroundWorker _spinnerBackgroundWorker;
         private Window _spinnerWindow = null;
         private bool _statChartFrz;
 
@@ -232,6 +238,11 @@
             MVMManager.Instance["QuickTemplatesControlViewModel", "QtConstructor"] = true;
             //Pass Capture Setup's event aggregator to RemoteIPC MVM so it can communicate with IPCModules
             MVMManager.Instance["RemoteIPCControlViewModel", "EventAggregator"] = _eventAggregator;
+
+            //Create a background worker that will run a spinner when swapping modalities from Capture Setup
+            _spinnerBackgroundWorker = new BackgroundWorker();
+            _spinnerBackgroundWorker.WorkerSupportsCancellation = true;
+            _spinnerBackgroundWorker.DoWork += spinnerBackgroundWorker_DoWork;
         }
 
         #endregion Constructors
@@ -379,6 +390,20 @@
             {
                 _captureSetupControlPanelWidth = value;
                 OnPropertyChanged("CaptureSetupControlPanelWidth");
+            }
+        }
+
+        //Set in MenuLSViewModel.cs and used in ResourceManagerCS to create the spinner when swapping modalities from Capture Setup
+        public int CaptureSetupModalitySwap
+        {
+            get
+            {
+                return _captureSetupModalitySwap;
+            }
+            set
+            {
+                _captureSetupModalitySwap = value;
+                OnPropertyChanged("CaptureSetupModalitySwap");
             }
         }
 
@@ -1138,6 +1163,42 @@
             }
         }
 
+        //Used in ResourceManagerCS to set when the spinner should be created.
+        //Used in Capture Setup MasterView.xml.cs to set when spinner should be closed
+        public bool ModalitySpinnerWindowShowing
+        {
+            get
+            {
+                return _spinnerWindowShowing;
+            }
+            set
+            {
+                _spinnerWindowShowing = value;
+                OnPropertyChanged("ModalitySpinnerWindowShowing");
+                if (_spinnerWindowShowing == true)
+                {
+                    if (!_spinnerBackgroundWorker.IsBusy)
+                    {
+                        _spinnerBackgroundWorker.RunWorkerAsync();
+                    }
+                    else
+                    {
+                        CloseSpinnerWindow();
+                        _spinnerWindowShowing = false;
+                    }
+
+                }
+                else
+                {
+                    if (_spinnerBackgroundWorker.IsBusy)
+                    {
+                        _spinnerBackgroundWorker.CancelAsync();
+                    }
+                    CloseSpinnerWindow();
+                }
+            }
+        }
+
         public MultiROIStatsUC MultiROIStats
         {
             get { return _multiROIStats; }
@@ -1529,6 +1590,21 @@
             return Visibility.Collapsed;
         }
 
+        public static void RemoveApplicationAttribute(string nodeName, string attrName)
+        {
+            string strTmp = string.Empty;
+            XmlDocument appSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+            XmlNodeList ndList = appSettings.SelectNodes(nodeName);
+            if (null != ndList)
+            {
+                if (XmlManager.GetAttribute(ndList[0], appSettings, attrName, ref strTmp))
+                {
+                    XmlManager.RemoveAttribute(ndList[0], attrName);
+                    MVMManager.Instance.SaveSettings(SettingsFileType.APPLICATION_SETTINGS);
+                }
+            }
+        }
+
         [DllImport(".\\CaptureSetup.dll", EntryPoint = "SetupCaptureBuffers")]
         public static extern int SetupCaptureBuffers();
 
@@ -1580,6 +1656,17 @@
             if (null != this._spinnerWindow)
             {
                 this._spinnerWindow.Close();
+            }
+        }
+
+        public void CloseSpinnerWindow()
+        {
+            if (null != _modalitySpinnerWindow)
+            {
+                _modalitySpinnerWindow.Dispatcher.Invoke(() =>
+                {
+                    _modalitySpinnerWindow.Close();
+                });
             }
         }
 
@@ -2362,6 +2449,21 @@
             }
         }
 
+        public void spinnerBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            if (_spinnerWindowShowing == true)
+            {
+                System.Threading.Thread thread = new System.Threading.Thread(() =>
+                {
+                    CreateSpinnerWindow();
+                    System.Windows.Threading.Dispatcher.Run();
+                });
+                thread.SetApartmentState(System.Threading.ApartmentState.STA);
+                thread.IsBackground = true;
+                thread.Start();
+            }
+        }
+
         public void UpdateOverlayManager()
         {
             try
@@ -2629,6 +2731,37 @@
             _spinnerWindow.Closed += new EventHandler(_spinnerWindow_Closed);
             IsProgressWindowOff = false;
             _spinnerWindow.Show();
+        }
+
+        private void CreateSpinnerWindow()
+        {
+            if (null != _modalitySpinnerWindow)
+                return;
+            //create a popup modal dialog that blocks user clicks while capturing
+            _modalitySpinnerWindow = new Window();
+            _modalitySpinnerWindow.Title = "Spinner";
+            _modalitySpinnerWindow.ResizeMode = ResizeMode.NoResize;
+            _modalitySpinnerWindow.Width = 162;
+            _modalitySpinnerWindow.Height = 162;
+            _modalitySpinnerWindow.WindowStyle = WindowStyle.None;
+            _modalitySpinnerWindow.Background = Brushes.Transparent;
+            _modalitySpinnerWindow.AllowsTransparency = true;
+            System.Windows.Controls.Border border = new System.Windows.Controls.Border();
+            border.BorderThickness = new Thickness(2);
+            _modalitySpinnerWindow.Content = border;
+
+            System.Windows.Controls.StackPanel sp = new System.Windows.Controls.StackPanel();
+            border.Child = sp;
+
+            _modalitySpinner = new SpinnerProgress.SpinnerProgressControl();
+            _modalitySpinner.Margin = new Thickness(30, 5, 30, 5);
+            System.Windows.Controls.Border borderSpinner = new System.Windows.Controls.Border();
+            borderSpinner.Child = _modalitySpinner;
+            sp.Children.Add(borderSpinner);
+
+            _modalitySpinnerWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            _modalitySpinnerWindow.Closed += new EventHandler(_modalitySpinnerWindow_Closed);
+            _modalitySpinnerWindow.Show();
         }
 
         private bool CreateStatsChartWindow()
@@ -3343,6 +3476,11 @@
             CaptureSetup.SetLineProfileLineWidth(lineWidth);
         }
 
+        void _modalitySpinnerWindow_Closed(object sender, EventArgs e)
+        {
+            _modalitySpinnerWindow = null;
+        }
+
         void _multiROIStats_Closed(object sender, EventArgs e)
         {
             if (!this.UnloadWholeStats)
@@ -3390,10 +3528,10 @@
                 _showingPMTSafetyMessage = true;
                 MessageBox.Show("The PMT(s) safety has tripped. To prevent damage to the PMT(s) please reduce the light being sent to the detectors.");
                 _showingPMTSafetyMessage = false;
-                ((HwVal<int>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 0]).Value = 0;
-                ((HwVal<int>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 1]).Value = 0;
-                ((HwVal<int>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 2]).Value = 0;
-                ((HwVal<int>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 3]).Value = 0;
+                ((HwVal<double>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 0]).Value = 0;
+                ((HwVal<double>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 1]).Value = 0;
+                ((HwVal<double>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 2]).Value = 0;
+                ((HwVal<double>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 3]).Value = 0;
                 ((HwVal<int>)MVMManager.Instance["ScanControlViewModel", "PMTGainEnable", 0]).Value = 0;
                 ((HwVal<int>)MVMManager.Instance["ScanControlViewModel", "PMTGainEnable", 1]).Value = 0;
                 ((HwVal<int>)MVMManager.Instance["ScanControlViewModel", "PMTGainEnable", 2]).Value = 0;

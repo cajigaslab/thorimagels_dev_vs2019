@@ -513,7 +513,14 @@ long ThorCam::StartAcquisition(char* pDataBuffer)
 
 	//set the image callback function
 	_camera[_selectedCam]->SetImageNotificationCallback(ThorTSIImageNotificationCallbackFunction, (void*)_selectedCam);
-	if (_camera[_selectedCam]->Start())
+	
+	bool openResult;
+	{
+		std::lock_guard<recursive_mutex> sdkLock(_sdkNotThreadsafeMutex);
+		openResult = _camera[_selectedCam]->Start();
+	}
+	
+	if (true == openResult)
 	{
 		_running = TRUE;
 		_cameraRunning[_selectedCam] = true;

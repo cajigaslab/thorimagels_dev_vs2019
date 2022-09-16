@@ -20,27 +20,33 @@
         private readonly MultiLaserControlModel _MultiLaserControlModel;
 
         private Visibility _AllLaserVisibility; //All Laser Panel Visibility
+        private int _analogCheckStatus;
+        private int _analogStatus;
+        private int _analogUncheckedLightPath;
+        private int _captureSetupModalitySwap;
         private int _enableLaser1;
-        private int _laser1Wavelength;
         private string _EnableLaser1Content;
         private int _enableLaser2;
-        private int _laser2Wavelength;
         private string _EnableLaser2Content;
         private int _enableLaser3;
-        private int _laser3Wavelength;
         private string _EnableLaser3Content;
         private int _enableLaser4;
-        private int _laser4Wavelength;
         private string _EnableLaser4Content;
         private bool _EnableMultiLaserControlPanel;
         private ICommand _Laser1PowerMinusCommand;
         private ICommand _Laser1PowerPlusCommand;
+        private int _laser1Wavelength;
         private ICommand _Laser2PowerMinusCommand;
         private ICommand _Laser2PowerPlusCommand;
+        private int _laser2Wavelength;
         private ICommand _Laser3PowerMinusCommand;
         private ICommand _Laser3PowerPlusCommand;
+        private int _laser3Wavelength;
         private ICommand _Laser4PowerMinusCommand;
         private ICommand _Laser4PowerPlusCommand;
+        private int _laser4Wavelength;
+        private int _laserAnalogModalitySwap;
+        private ICommand _LaserAnalogUncheckCommand;
         private Visibility _OriginalLaserVisibility; //Original panels from MCLS project Visibility
         private Dictionary<string, PropertyInfo> _properties = new Dictionary<string, PropertyInfo>();
         private Visibility _SpLaser1Visibility; //Laser 1 Panel Visibility
@@ -49,6 +55,13 @@
         private Visibility _SpLaser4Visibility; //Laser 4 Panel Visibility
         private Visibility _SpMainLaserVisibility; //Used for OTM
         private Visibility _TopticaVisibility; //Toptica Laser Specific Visibility (Wavelength, TTL, Analog, All Lasers)
+        private int _ttlLaserDisable;
+        private int _ttlLaserEnable1;
+        private int _ttlLaserEnable2;
+        private int _ttlLaserEnable3;
+        private int _ttlLaserEnable4;
+        private int _ttlSaveSettings;
+        private int _ttlStatus;
 
         #endregion Fields
 
@@ -76,6 +89,147 @@
                 _AllLaserVisibility = value;
                 OnPropertyChanged("AllLaserVisibility");
 
+            }
+        }
+
+        //Boolean to determine where the analog mode is being changed from (true means the MultiLaserControl checkbox is being pressed in Capture Setup)
+        public int AnalogCheckStatus
+        {
+            get
+            {
+                return _analogCheckStatus;
+            }
+            set
+            {
+                _analogCheckStatus = value;
+                OnPropertyChanged("AnalogCheckStatus");
+                //Only set the laser power to 0 if the analog mode is being turned off from unchecking the checkbox (otherwise it will get set to 0 when pressing Apply in Light path and when changing tabs)
+                if (_analogStatus == 0)
+                {
+                    if (_analogCheckStatus == 1)
+                    {
+                        this._MultiLaserControlModel.Laser1Power = 0;
+                        this._MultiLaserControlModel.Laser2Power = 0;
+                        this._MultiLaserControlModel.Laser3Power = 0;
+                        this._MultiLaserControlModel.Laser4Power = 0;
+                        OnPropertyChanged("Laser1Power");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedLaser1Power");
+                        OnPropertyChanged("Laser2Power");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedLaser2Power");
+                        OnPropertyChanged("Laser3Power");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedLaser3Power");
+                        OnPropertyChanged("Laser4Power");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedLaser4Power");
+                        this._MultiLaserControlModel.LaserAllAnalog = 0;
+                        OnPropertyChanged("LaserAllAnalog");
+                    }
+                    else
+                    //When analog mode is being turned off and it is not a result of unchecking the checkbox, do not set laser power to 0
+                    {
+                        this._MultiLaserControlModel.LaserAllAnalog = 0;
+                        OnPropertyChanged("LaserAllAnalog");
+                    }
+                }
+            }
+        }
+
+        //Needed to make sure when analog is unchecked and light path settings are applied, the power doesn't get set to 0 as well
+        //Set in CaptureSetupViewModelLightPath
+        public int AnalogUncheckedLightPath
+        {
+            get
+            {
+                return _analogUncheckedLightPath;
+            }
+            set
+            {
+                if (value == 1)
+                {
+                    _analogUncheckedLightPath = 1;
+                }
+                else
+                {
+                    _analogUncheckedLightPath = 0;
+                }
+            }
+        }
+
+        //Set in MenuModuleLS
+        //Used so ResourceManagerCS only calls SetModalityPersistLast when switching the modality from Capture Setup
+        public int CaptureSetupModalitySwap
+        {
+            get
+            {
+                return _captureSetupModalitySwap;
+            }
+            set
+            {
+                _captureSetupModalitySwap = value;
+                OnPropertyChanged("CaptureSetupModalitySwap");
+            }
+        }
+
+        public int CollapsedLaser1Enable
+        {
+            get
+            {
+                return _enableLaser1;
+            }
+        }
+
+        public int CollapsedLaser1Wavelength
+        {
+            get
+            {
+                return _laser1Wavelength;
+            }
+        }
+
+        public int CollapsedLaser2Enable
+        {
+            get
+            {
+                return _enableLaser2;
+            }
+        }
+
+        public int CollapsedLaser2Wavelength
+        {
+            get
+            {
+                return _laser2Wavelength;
+            }
+        }
+
+        public int CollapsedLaser3Enable
+        {
+            get
+            {
+                return _enableLaser3;
+            }
+        }
+
+        public int CollapsedLaser3Wavelength
+        {
+            get
+            {
+                return _laser3Wavelength;
+            }
+        }
+
+        public int CollapsedLaser4Enable
+        {
+            get
+            {
+                return _enableLaser4;
+            }
+        }
+
+        public int CollapsedLaser4Wavelength
+        {
+            get
+            {
+                return _laser4Wavelength;
             }
         }
 
@@ -169,14 +323,6 @@
             }
         }
 
-        public int CollapsedLaser1Enable
-        {
-            get
-            {
-                return _enableLaser1;
-            }
-        }
-
         public double Laser1Max
         {
             get
@@ -197,11 +343,27 @@
         {
             get
             {
-                return Math.Round(this._MultiLaserControlModel.Laser1Power, 2);
+                //Handle rounding in MVM for lasers that are not the MCLS
+                if (_laser1Wavelength != 0)
+                {
+                    return Math.Round(this._MultiLaserControlModel.Laser1Power, 2);
+                }
+                else
+                {
+                    return this._MultiLaserControlModel.Laser1Power;
+                }
             }
             set
             {
-                this._MultiLaserControlModel.Laser1Power = Math.Round(value, 2);
+                //Handle rounding in MVM for lasers that are not the MCLS
+                if (_laser1Wavelength != 0)
+                {
+                    this._MultiLaserControlModel.Laser1Power = Math.Round(value, 2);
+                }
+                else
+                {
+                    this._MultiLaserControlModel.Laser1Power = value;
+                }
                 OnPropertyChanged("Laser1Power");
                 OnPropertyChanged("Laser1Max");
                 OnPropertyChange("Laser1Min");
@@ -241,14 +403,6 @@
             }
         }
 
-        public int CollapsedLaser1Wavelength
-        {
-            get
-            {
-                return _laser1Wavelength;
-            }
-        }
-
         public int Laser2Enable
         {
             get
@@ -262,14 +416,6 @@
                 this._MultiLaserControlModel.Laser2Enable = value;
                 OnPropertyChanged("Laser2Enable");
                 ((ThorSharedTypes.IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedLaser2Enable");
-            }
-        }
-
-        public int CollapsedLaser2Enable
-        {
-            get
-            {
-                return _enableLaser2;
             }
         }
 
@@ -293,11 +439,27 @@
         {
             get
             {
-                return Math.Round(this._MultiLaserControlModel.Laser2Power, 2);
+                //Handle rounding in MVM for lasers that are not the MCLS
+                if (_laser2Wavelength != 0)
+                {
+                    return Math.Round(this._MultiLaserControlModel.Laser2Power, 2);
+                }
+                else
+                {
+                    return this._MultiLaserControlModel.Laser2Power;
+                }
             }
             set
             {
-                this._MultiLaserControlModel.Laser2Power = Math.Round(value, 2);
+                //Handle rounding in MVM for lasers that are not the MCLS
+                if (_laser2Wavelength != 0)
+                {
+                    this._MultiLaserControlModel.Laser2Power = Math.Round(value, 2);
+                }
+                else
+                {
+                    this._MultiLaserControlModel.Laser2Power = value;
+                }
                 OnPropertyChanged("Laser2Power");
                 OnPropertyChanged("Laser2Max");
                 OnPropertyChange("Laser2Min");
@@ -337,14 +499,6 @@
             }
         }
 
-        public int CollapsedLaser2Wavelength
-        {
-            get
-            {
-                return _laser2Wavelength;
-            }
-        }
-
         public int Laser3Enable
         {
             get
@@ -358,14 +512,6 @@
                 this._MultiLaserControlModel.Laser3Enable = value;
                 OnPropertyChanged("Laser3Enable");
                 ((ThorSharedTypes.IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedLaser3Enable");
-            }
-        }
-
-        public int CollapsedLaser3Enable
-        {
-            get
-            {
-                return _enableLaser3;
             }
         }
 
@@ -389,11 +535,27 @@
         {
             get
             {
-                return Math.Round(this._MultiLaserControlModel.Laser3Power, 2);
+                //Handle rounding in MVM for lasers that are not the MCLS
+                if (_laser3Wavelength != 0)
+                {
+                    return Math.Round(this._MultiLaserControlModel.Laser3Power, 2);
+                }
+                else
+                {
+                    return this._MultiLaserControlModel.Laser3Power;
+                }
             }
             set
             {
-                this._MultiLaserControlModel.Laser3Power = Math.Round(value, 2);
+                //Handle rounding in MVM for lasers that are not the MCLS
+                if (_laser3Wavelength != 0)
+                {
+                    this._MultiLaserControlModel.Laser3Power = Math.Round(value, 2);
+                }
+                else
+                {
+                    this._MultiLaserControlModel.Laser3Power = value;
+                }
                 OnPropertyChanged("Laser3Power");
                 OnPropertyChanged("Laser3Max");
                 OnPropertyChange("Laser3Min");
@@ -433,14 +595,6 @@
             }
         }
 
-        public int CollapsedLaser3Wavelength
-        {
-            get
-            {
-                return _laser3Wavelength;
-            }
-        }
-
         public int Laser4Enable
         {
             get
@@ -454,14 +608,6 @@
                 this._MultiLaserControlModel.Laser4Enable = value;
                 OnPropertyChanged("Laser4Enable");
                 ((ThorSharedTypes.IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedLaser4Enable");
-            }
-        }
-
-        public int CollapsedLaser4Enable
-        {
-            get
-            {
-                return _enableLaser4;
             }
         }
 
@@ -485,12 +631,28 @@
         {
             get
             {
-                return Math.Round(this._MultiLaserControlModel.Laser4Power, 2);
+                //Handle rounding in MVM for lasers that are not the MCLS
+                if (_laser4Wavelength != 0)
+                {
+                    return Math.Round(this._MultiLaserControlModel.Laser4Power, 2);
+                }
+                else
+                {
+                    return this._MultiLaserControlModel.Laser4Power;
+                }
             }
             set
             {
 
-                this._MultiLaserControlModel.Laser4Power = Math.Round(value, 2);
+                //Handle rounding in MVM for lasers that are not the MCLS
+                if (_laser4Wavelength != 0)
+                {
+                    this._MultiLaserControlModel.Laser4Power = Math.Round(value, 2);
+                }
+                else
+                {
+                    this._MultiLaserControlModel.Laser4Power = value;
+                }
                 OnPropertyChanged("Laser4Power");
                 OnPropertyChanged("Laser4Max");
                 OnPropertyChange("Laser4Min");
@@ -530,28 +692,57 @@
             }
         }
 
-        public int CollapsedLaser4Wavelength
-        {
-            get
-            {
-                return _laser4Wavelength;
-            }
-        }
-
-        //Turns analog mode on for all lasers
+        //Turns analog mode on/off for all lasers
         public int LaserAllAnalog
         {
             get
             {
-                return this._MultiLaserControlModel.LaserAllAnalog;
+                _analogStatus = this._MultiLaserControlModel.LaserAllAnalog;
+                //Set the laser power to 100 if analog mode is on
+                if (_analogStatus == 1)
+                {
+                    this._MultiLaserControlModel.Laser1Power = 100;
+                    this._MultiLaserControlModel.Laser2Power = 100;
+                    this._MultiLaserControlModel.Laser3Power = 100;
+                    this._MultiLaserControlModel.Laser4Power = 100;
+                    OnPropertyChanged("Laser1Power");
+                    ((ThorSharedTypes.IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedLaser1Power");
+                    OnPropertyChanged("Laser2Power");
+                    ((ThorSharedTypes.IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedLaser2Power");
+                    OnPropertyChanged("Laser3Power");
+                    ((ThorSharedTypes.IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedLaser3Power");
+                    OnPropertyChanged("Laser4Power");
+                    ((ThorSharedTypes.IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedLaser4Power");
+                }
+                return _analogStatus;
             }
             set
             {
-                this._MultiLaserControlModel.LaserAllAnalog = value;
-                OnPropertyChanged("LaserAllAnalog");
+                if (value == 0 && _analogStatus != 0)
+                {
+                    //Set all the power levels to zero in the PowerControl panel when the laser exits analog mode
+                    MVMManager.Instance["PowerControlViewModel", "Power0"] = 0;
+                    MVMManager.Instance["PowerControlViewModel", "Power1"] = 0;
+                    MVMManager.Instance["PowerControlViewModel", "Power2"] = 0;
+                    MVMManager.Instance["PowerControlViewModel", "Power3"] = 0;
+                    ((ThorSharedTypes.IMVM)MVMManager.Instance["PowerControlViewModel", this]).OnPropertyChange("Power0");
+                    ((ThorSharedTypes.IMVM)MVMManager.Instance["PowerControlViewModel", this]).OnPropertyChange("Power1");
+                    ((ThorSharedTypes.IMVM)MVMManager.Instance["PowerControlViewModel", this]).OnPropertyChange("Power2");
+                    ((ThorSharedTypes.IMVM)MVMManager.Instance["PowerControlViewModel", this]).OnPropertyChange("Power3");
+                    _analogStatus = 0;
+                    LaserAnalogUncheck();
+                }
+                //Only handle turning Analog on here, turning analog off is handled in uncheck command
+                else
+                {
+                    this._MultiLaserControlModel.LaserAllAnalog = value;
+                    OnPropertyChanged("LaserAllAnalog");
+                }
+                _laserAnalogModalitySwap = 0;
             }
         }
 
+        //Enables all lasers
         public int LaserAllEnable
         {
             get
@@ -579,12 +770,47 @@
         {
             get
             {
-                return this._MultiLaserControlModel.LaserAllTTL;
+                _ttlStatus = this._MultiLaserControlModel.LaserAllTTL;
+                //Turn the emission for all lasers off if TTL Mode is on
+                if (_ttlStatus == 1)
+                {
+                    this._MultiLaserControlModel.Laser1Emission = 0;
+                    this._MultiLaserControlModel.Laser2Emission = 0;
+                    this._MultiLaserControlModel.Laser3Emission = 0;
+                    this._MultiLaserControlModel.Laser4Emission = 0;
+                }
+                return _ttlStatus;
             }
             set
             {
                 this._MultiLaserControlModel.LaserAllTTL = value;
                 OnPropertyChanged("LaserAllTTL");
+            }
+        }
+
+        //Boolean for keeping track of whether a modality has been swapped
+        //Set in ResourceManagerCS and stops the power from getting set to zero when swapping modalities and analog mode is set to false
+        public int LaserAnalogModalitySwap
+        {
+            get
+            {
+                return _laserAnalogModalitySwap;
+            }
+            set
+            {
+                _laserAnalogModalitySwap = value;
+            }
+        }
+
+        //Command for setting power level to 0 in Capture Setup when Analog Mode is unchecked
+        public ICommand LaserAnalogUncheckCommand
+        {
+            get
+            {
+                if (this._LaserAnalogUncheckCommand == null)
+                    this._LaserAnalogUncheckCommand = new RelayCommand(() => LaserAnalogUncheck());
+
+                return this._LaserAnalogUncheckCommand;
             }
         }
 
@@ -708,6 +934,61 @@
                 _TopticaVisibility = value;
                 OnPropertyChanged("TopticaVisibility");
                 ((ThorSharedTypes.IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedTopticaVisibility");
+            }
+        }
+
+        //Boolean used to disable the lasers when disconnecting laser or swapping to modality with disconnected laser source while TTL is enabled
+        //Set in MenuModuleLS
+        public int TTLLaserDisable
+        {
+            get
+            {
+                return _ttlLaserDisable;
+            }
+            set
+            {
+                //only step through logic if TTL mode is on when disconnecting laser
+                _ttlLaserDisable = value;
+                if (_ttlLaserDisable == 1)
+                {
+                    if (_ttlStatus == 1)
+                    {
+                        //Store temp values for the laser in case it is not disconnected
+                        _ttlLaserEnable1 = _enableLaser1;
+                        _ttlLaserEnable2 = _enableLaser2;
+                        _ttlLaserEnable3 = _enableLaser3;
+                        _ttlLaserEnable4 = _enableLaser4;
+                        this._MultiLaserControlModel.Laser1Enable = 0;
+                        this._MultiLaserControlModel.Laser2Enable = 0;
+                        this._MultiLaserControlModel.Laser3Enable = 0;
+                        this._MultiLaserControlModel.Laser4Enable = 0;
+                    }
+                }
+                else
+                {
+                    //Retain laser enable values if laser is not disconnected
+                    this._MultiLaserControlModel.Laser1Enable = _ttlLaserEnable1;
+                    this._MultiLaserControlModel.Laser2Enable = _ttlLaserEnable2;
+                    this._MultiLaserControlModel.Laser3Enable = _ttlLaserEnable3;
+                    this._MultiLaserControlModel.Laser4Enable = _ttlLaserEnable4;
+                }
+            }
+        }
+
+        //Set in MenuModuleLS and ResourceManagerCS.cs
+        public int TTLModeSaveSettings
+        {
+            get
+            {
+                return _ttlSaveSettings;
+            }
+            set
+            {
+                if (_ttlStatus == 1)
+                {
+                    _ttlSaveSettings = value;
+                }
+                OnPropertyChanged("TTLModeSaveSettings");
             }
         }
 
@@ -889,10 +1170,26 @@
 
             if (ndList.Count >= 4)
             {
-                EnableLaser1Content = string.Format("{0} Enable", ndList[0].Attributes["name"].Value);
-                EnableLaser2Content = string.Format("{0} Enable", ndList[1].Attributes["name"].Value);
-                EnableLaser3Content = string.Format("{0} Enable", ndList[2].Attributes["name"].Value);
-                EnableLaser4Content = string.Format("{0} Enable", ndList[3].Attributes["name"].Value);
+                //Set Laser names to old MCLS values only if wavelengths are 0 (not Toptica)
+                if (Laser1Wavelength == 0)
+                {
+                    EnableLaser1Content = string.Format("{0} Enable", ndList[0].Attributes["name"].Value);
+                    EnableLaser2Content = string.Format("{0} Enable", ndList[1].Attributes["name"].Value);
+                    EnableLaser3Content = string.Format("{0} Enable", ndList[2].Attributes["name"].Value);
+                    EnableLaser4Content = string.Format("{0} Enable", ndList[3].Attributes["name"].Value);
+                }
+                else
+                {
+                    //Could not pinpoint why, but lasers 2-4 need to call actual laser property or they will not update Hardware Settings properly
+                    EnableLaser1Content = _laser1Wavelength.ToString() + " nm";
+                    ndList[0].Attributes["name"].Value = EnableLaser1Content;
+                    EnableLaser2Content = Laser2Wavelength.ToString() + " nm";
+                    ndList[1].Attributes["name"].Value = EnableLaser2Content;
+                    EnableLaser3Content = Laser3Wavelength.ToString() + " nm";
+                    ndList[2].Attributes["name"].Value = EnableLaser3Content;
+                    EnableLaser4Content = Laser4Wavelength.ToString() + " nm";
+                    ndList[3].Attributes["name"].Value = EnableLaser4Content;
+                }
 
             }
 
@@ -969,13 +1266,18 @@
                 }
 
                 XmlManager.SetAttribute(ndList[0], expDoc, "MainLaserSelection", MainLaserIndex.ToString());
-                XmlManager.SetAttribute(ndList[0], expDoc, "enable1", Laser1Enable.ToString());
+                //Do not save laser enable settings when switching modalities (only applicable when laser is in TTL Mode)
+                //MessageBox.Show("_ttlSaveSettings", _ttlSaveSettings.ToString());
+                if (_ttlSaveSettings == 0)
+                {
+                    XmlManager.SetAttribute(ndList[0], expDoc, "enable1", Laser1Enable.ToString());
+                    XmlManager.SetAttribute(ndList[0], expDoc, "enable2", Laser2Enable.ToString());
+                    XmlManager.SetAttribute(ndList[0], expDoc, "enable3", Laser3Enable.ToString());
+                    XmlManager.SetAttribute(ndList[0], expDoc, "enable4", Laser4Enable.ToString());
+                }
                 XmlManager.SetAttribute(ndList[0], expDoc, "power1", Laser1Power.ToString());
-                XmlManager.SetAttribute(ndList[0], expDoc, "enable2", Laser2Enable.ToString());
                 XmlManager.SetAttribute(ndList[0], expDoc, "power2", Laser2Power.ToString());
-                XmlManager.SetAttribute(ndList[0], expDoc, "enable3", Laser3Enable.ToString());
                 XmlManager.SetAttribute(ndList[0], expDoc, "power3", Laser3Power.ToString());
-                XmlManager.SetAttribute(ndList[0], expDoc, "enable4", Laser4Enable.ToString());
                 XmlManager.SetAttribute(ndList[0], expDoc, "power4", Laser4Power.ToString());
                 XmlManager.SetAttribute(ndList[0], expDoc, "allenable", LaserAllEnable.ToString());
                 XmlManager.SetAttribute(ndList[0], expDoc, "allttl", LaserAllTTL.ToString());
@@ -993,42 +1295,139 @@
 
         private void Laser1PowerMinus()
         {
-            Laser1Power -= (Laser1Max - Laser1Min) / 1000;
+            //Sets the Laser power to the minimum value if pressing the minus button would lower it below this value
+            if (Laser1Power - ((Laser1Max - Laser1Min) / 1000) < Laser1Min)
+            {
+                Laser1Power = Laser1Min;
+            }
+            else
+            {
+                Laser1Power -= (Laser1Max - Laser1Min) / 1000;
+            }
         }
 
         private void Laser1PowerPlus()
         {
-            Laser1Power += (Laser1Max - Laser1Min) / 1000;
+            //Sets the Laser power to the maximum value if pressing the plus button would raise it above this value
+            if (Laser1Power + ((Laser1Max - Laser1Min) / 1000) > Laser1Max)
+            {
+                Laser1Power = Laser1Max;
+            }
+            else
+            {
+                Laser1Power += (Laser1Max - Laser1Min) / 1000;
+            }
         }
 
         private void Laser2PowerMinus()
         {
-            Laser2Power -= (Laser2Max - Laser2Min) / 1000;
+            //Sets the Laser power to the minimum value if pressing the minus button would lower it below this value
+            if (Laser2Power - ((Laser2Max - Laser2Min) / 1000) < Laser2Min)
+            {
+                Laser2Power = Laser2Min;
+            }
+            else
+            {
+                Laser2Power -= (Laser2Max - Laser2Min) / 1000;
+            }
         }
 
         private void Laser2PowerPlus()
         {
-            Laser2Power += (Laser2Max - Laser2Min) / 1000;
+            //Sets the Laser power to the maximum value if pressing the plus button would raise it above this value
+            if (Laser2Power + ((Laser2Max - Laser2Min) / 1000) > Laser2Max)
+            {
+                Laser2Power = Laser2Max;
+            }
+            else
+            {
+                Laser2Power += (Laser2Max - Laser2Min) / 1000;
+            }
         }
 
         private void Laser3PowerMinus()
         {
-            Laser3Power -= (Laser3Max - Laser3Min) / 1000;
+            //Sets the Laser power to the minimum value if pressing the minus button would lower it below this value
+            if (Laser3Power - ((Laser3Max - Laser3Min) / 1000) < Laser3Min)
+            {
+                Laser3Power = Laser3Min;
+            }
+            else
+            {
+                Laser3Power -= (Laser3Max - Laser3Min) / 1000;
+            }
         }
 
         private void Laser3PowerPlus()
         {
-            Laser3Power += (Laser3Max - Laser3Min) / 1000;
+            //Sets the Laser power to the maximum value if pressing the plus button would raise it above this value
+            if (Laser3Power + ((Laser3Max - Laser3Min) / 1000) > Laser3Max)
+            {
+                Laser3Power = Laser3Max;
+            }
+            else
+            {
+                Laser3Power += (Laser3Max - Laser3Min) / 1000;
+            }
         }
 
         private void Laser4PowerMinus()
         {
-            Laser4Power -= (Laser4Max - Laser4Min) / 1000;
+            //Sets the Laser power to the minimum value if pressing the minus button would lower it below this value
+            if (Laser4Power - ((Laser4Max - Laser4Min) / 1000) < Laser4Min)
+            {
+                Laser4Power = Laser4Min;
+            }
+            else
+            {
+                Laser4Power -= (Laser4Max - Laser4Min) / 1000;
+            }
         }
 
         private void Laser4PowerPlus()
         {
-            Laser4Power += (Laser4Max - Laser4Min) / 1000;
+            //Sets the Laser power to the maximum value if pressing the plus button would raise it above this value
+            if (Laser4Power + ((Laser4Max - Laser4Min) / 1000) > Laser4Max)
+            {
+                Laser4Power = Laser4Max;
+            }
+            else
+            {
+                Laser4Power += (Laser4Max - Laser4Min) / 1000;
+            }
+        }
+
+        private void LaserAnalogUncheck()
+        {
+            if (_analogStatus == 0)
+            {
+                //This logic ensures that when the apply button in the Light Path Control is pressed and analog mode is turned off as a result, that the laser power does not get overwritten to 0
+                if (_analogUncheckedLightPath == 1 && _laserAnalogModalitySwap == 0)
+                {
+                    this._MultiLaserControlModel.Laser1Power = 0;
+                    this._MultiLaserControlModel.Laser2Power = 0;
+                    this._MultiLaserControlModel.Laser3Power = 0;
+                    this._MultiLaserControlModel.Laser4Power = 0;
+                    OnPropertyChanged("Laser1Power");
+                    ((ThorSharedTypes.IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedLaser1Power");
+                    OnPropertyChanged("Laser2Power");
+                    ((ThorSharedTypes.IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedLaser2Power");
+                    OnPropertyChanged("Laser3Power");
+                    ((ThorSharedTypes.IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedLaser3Power");
+                    OnPropertyChanged("Laser4Power");
+                    ((ThorSharedTypes.IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedLaser4Power");
+                    this._MultiLaserControlModel.LaserAllAnalog = 0;
+                    OnPropertyChanged("LaserAllAnalog");
+                }
+                //Only change the analog mode value
+                else
+                {
+                    this._MultiLaserControlModel.LaserAllAnalog = 0;
+                    OnPropertyChanged("LaserAllAnalog");
+                }
+            }
+            //This value gets set to 0 in CaptureSetupViewModelLightPath.cs if pressing apply in light path settings before this function is called, so it needs to be reset to default value
+            _analogUncheckedLightPath = 1;
         }
 
         private void SetDisplayOptions()
@@ -1084,23 +1483,15 @@
                                 OriginalLaserVisibility = Visibility.Collapsed;
                                 AllLaserVisibility = Visibility.Visible;
                                 TopticaVisibility = Visibility.Visible;
-                                //Repopulates Wavelength labels after switching from MCLS to Toptica
-                                if (_laser1Wavelength == 0) 
-                                {
-                                    OnPropertyChange("Laser1Wavelength");
-                                }
-                                if (_laser2Wavelength == 0)
-                                {
-                                    OnPropertyChange("Laser2Wavelength");
-                                }
-                                if (_laser3Wavelength == 0)
-                                {
-                                    OnPropertyChange("Laser3Wavelength");
-                                }
-                                if (_laser4Wavelength == 0)
-                                {
-                                    OnPropertyChange("Laser4Wavelength");
-                                }
+                                //Repopulates Wavelength labels after switching from no laser/MCLS to Toptica
+                                OnPropertyChange("Laser1Wavelength");
+                                OnPropertyChange("Laser2Wavelength");
+                                OnPropertyChange("Laser3Wavelength");
+                                OnPropertyChange("Laser4Wavelength");
+                                ((ThorSharedTypes.IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedLaser1Wavelength");
+                                ((ThorSharedTypes.IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedLaser2Wavelength");
+                                ((ThorSharedTypes.IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedLaser3Wavelength");
+                                ((ThorSharedTypes.IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedLaser4Wavelength");
                             }
 
                             else //MCLS

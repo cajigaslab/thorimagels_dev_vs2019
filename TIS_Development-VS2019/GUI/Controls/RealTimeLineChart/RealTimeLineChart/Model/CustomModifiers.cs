@@ -1071,13 +1071,17 @@
 
         public override void OnModifierMouseDown(ModifierMouseArgs e)
         {
-            if (e.MouseButtons == MouseButtons.Right)
+            if (e.MouseButtons == MouseButtons.Right && stopwatch.IsRunning)
             {
                 if (stopwatch.ElapsedMilliseconds < GetDoubleClickTime())
                 {
                     base.OnModifierDoubleClick(e);
                 }
                 stopwatch.Restart();
+            }
+            else if (!stopwatch.IsRunning)
+            {
+                stopwatch.Start();
             }
             base.OnModifierMouseDown(e);
         }

@@ -62,3 +62,8 @@ IMAGESTORELIBRARY_API long SaveData(void* buf, uint16_t channelID, uint16_t z, u
 {
 	return ImageStoreWrapper::getInstance()->SaveData(buf, channelID, z, t, s);
 }
+
+IMAGESTORELIBRARY_API long AdjustScanTCount(int tCount)
+{
+	return ImageStoreWrapper::getInstance()->AdjustScanTCount(tCount);
+}

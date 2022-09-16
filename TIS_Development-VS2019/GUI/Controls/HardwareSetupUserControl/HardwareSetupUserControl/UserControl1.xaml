@@ -177,7 +177,8 @@
                                 <ComboBox Name="cbBleachingScanner"
                                           Width="180"
                                           SelectionChanged="cbBleachingScanner_SelectionChanged"
-                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/ImageDetectors/LSM[not(@cameraName\=\'ResonanceGalvo\') and not(@cameraName\=\'ResonanceGalvoGalvo\')]}">
+                                          ItemsSource="{Binding Source={StaticResource dataProvider}, XPath=/HardwareSettings/ImageDetectors/LSM[not(@cameraName\=\'ResonanceGalvo\') and not(@cameraName\=\'ResonanceGalvoGalvo\') and not(@cameraName\=\'ThorDAQResonantGalvo\')]}">
+                                    <!--When changing the ItemsSource to ignore a LSM camera, make sure to also change the function cbBleachingScanner_SelectionChanged and LoadHardwareSelection-->
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal">

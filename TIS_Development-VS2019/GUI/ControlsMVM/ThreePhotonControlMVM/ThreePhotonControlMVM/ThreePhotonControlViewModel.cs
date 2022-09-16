@@ -34,9 +34,20 @@
 
         private readonly ThreePhotonControlModel _threePhotonControlModel;
 
+        Visibility _acquireDuringTurnAroundVisibility = Visibility.Collapsed;
+        ICommand _ddsAmplitude0MinusCommand;
+        ICommand _ddsAmplitude0PlusCommand;
+        ICommand _ddsAmplitude1MinusCommand;
+        ICommand _ddsAmplitude1PlusCommand;
+        ICommand _ddsPhase0MinusCommand;
+        ICommand _ddsPhase0PlusCommand;
+        ICommand _ddsPhase1MinusCommand;
+        ICommand _ddsPhase1PlusCommand;
         bool _disable3PCheckbox = true;
         Visibility _firSettingsVisibility;
         Visibility _multiplaneVisibility;
+        ICommand _numberOfPlanesMinusCommand;
+        ICommand _numberOfPlanesPlusCommand;
         Dictionary<string, PropertyInfo> _properties = new Dictionary<string, PropertyInfo>();
         ICommand _threePhotonMeasureFrequencyCommand;
         int _threePhotonPanelEnable = 1;
@@ -45,8 +56,7 @@
         Visibility _threePhotonPhaseCoarseVisibility;
         ICommand _threePhotonPhaseFineMinusCommand;
         ICommand _threePhotonPhaseFinePlusCommand;
-        ICommand _numberOfPlanesMinusCommand;
-        ICommand _numberOfPlanesPlusCommand;
+
         #endregion Fields
 
         #region Constructors
@@ -59,6 +69,121 @@
         #endregion Constructors
 
         #region Properties
+
+        public int AcquireDuringTurnAround
+        {
+            get => _threePhotonControlModel.AcquireDuringTurnAround;
+            set
+            {
+                _threePhotonControlModel.AcquireDuringTurnAround = value;
+                OnPropertyChanged("AcquireDuringTurnAround");
+            }
+        }
+
+        public Visibility AcquireDuringTurnAroundVisibility
+        {
+            get => _acquireDuringTurnAroundVisibility;
+            set
+            {
+                _acquireDuringTurnAroundVisibility = value;
+                OnPropertyChanged("AcquireDuringTurnAroundVisibility");
+            }
+        }
+
+        public double DDSAmplitude0
+        {
+            get => _threePhotonControlModel.DDSAmplitude0;
+            set
+            {
+                _threePhotonControlModel.DDSAmplitude0 = value;
+
+                OnPropertyChanged("DDSAmplitude0");
+            }
+        }
+
+        public ICommand DDSAmplitude0MinusCommand
+        {
+            get => _ddsAmplitude0MinusCommand ?? (_ddsAmplitude0MinusCommand = new RelayCommand(() => --DDSAmplitude0));
+        }
+
+        public ICommand DDSAmplitude0PlusCommand
+        {
+            get => _ddsAmplitude0PlusCommand ?? (_ddsAmplitude0PlusCommand = new RelayCommand(() => ++DDSAmplitude0));
+        }
+
+        public double DDSAmplitude1
+        {
+            get => _threePhotonControlModel.DDSAmplitude1;
+            set
+            {
+                _threePhotonControlModel.DDSAmplitude1 = value;
+
+                OnPropertyChanged("DDSAmplitude1");
+            }
+        }
+
+        public ICommand DDSAmplitude1MinusCommand
+        {
+            get => _ddsAmplitude1MinusCommand ?? (_ddsAmplitude1MinusCommand = new RelayCommand(() => --DDSAmplitude1));
+        }
+
+        public ICommand DDSAmplitude1PlusCommand
+        {
+            get => _ddsAmplitude1PlusCommand ?? (_ddsAmplitude1PlusCommand = new RelayCommand(() => ++DDSAmplitude1));
+        }
+
+        public int DDSEnable
+        {
+            get => _threePhotonControlModel.DDSEnable;
+            set
+            {
+                _threePhotonControlModel.DDSEnable = value;
+
+                OnPropertyChanged("DDSEnable");
+            }
+        }
+
+        public double DDSPhase0
+        {
+            get => _threePhotonControlModel.DDSPhase0;
+            set
+            {
+                _threePhotonControlModel.DDSPhase0 = value;
+
+                OnPropertyChanged("DDSPhase0");
+            }
+        }
+
+        public ICommand DDSPhase0MinusCommand
+        {
+            get => _ddsPhase0MinusCommand ?? (_ddsPhase0MinusCommand = new RelayCommand(() => --DDSPhase0));
+        }
+
+        public ICommand DDSPhase0PlusCommand
+        {
+            get => _ddsPhase0PlusCommand ?? (_ddsPhase0PlusCommand = new RelayCommand(() => ++DDSPhase0));
+        }
+
+        public double DDSPhase1
+        {
+            get => _threePhotonControlModel.DDSPhase1;
+            set
+            {
+                _threePhotonControlModel.DDSPhase1 = value;
+
+                OnPropertyChanged("DDSPhase1");
+            }
+        }
+
+        public ICommand DDSPhase1MinusCommand
+        {
+            get => _ddsPhase1MinusCommand ?? (_ddsPhase1MinusCommand = new RelayCommand(() => --DDSPhase1));
+        }
+
+        public ICommand DDSPhase1PlusCommand
+        {
+            get => _ddsPhase1PlusCommand ?? (_ddsPhase1PlusCommand = new RelayCommand(() => ++DDSPhase1));
+        }
 
         public bool Disable3PCheckbox
         {
@@ -83,20 +208,6 @@
             {
                 this._threePhotonControlModel.FIR1ManualControlEnable = value;
                 OnPropertyChanged("FIR1ManualControlEnable");
-            }
-        }
-
-
-        public int LUTOffset3P
-        {
-            get
-            {
-                return _threePhotonControlModel.LUTOffset3P;
-            }
-            set
-            {
-                _threePhotonControlModel.LUTOffset3P = value;
-                OnPropertyChanged("LUTOffset3P");
             }
         }
 
@@ -143,17 +254,6 @@
             }
         }
 
-        Visibility _acquireDuringTurnAroundVisibility = Visibility.Collapsed;
-        public Visibility AcquireDuringTurnAroundVisibility
-        {
-            get => _acquireDuringTurnAroundVisibility;
-            set
-            {
-                _acquireDuringTurnAroundVisibility = value;
-                OnPropertyChanged("AcquireDuringTurnAroundVisibility");
-            }
-        }
-
         public double LSMFIRFilterTapValue
         {
             get
@@ -192,6 +292,18 @@
             }
         }
 
+        public int LUTOffset3P
+        {
+            get
+            {
+                return _threePhotonControlModel.LUTOffset3P;
+            }
+            set
+            {
+                _threePhotonControlModel.LUTOffset3P = value;
+                OnPropertyChanged("LUTOffset3P");
+            }
+        }
 
         public Visibility MultiplaneVisibility
         {
@@ -206,8 +318,27 @@
             }
         }
 
+        public ICommand NumberOfPlanesMinusCommand
+        {
+            get
+            {
+                if (this._numberOfPlanesMinusCommand == null)
+                    this._numberOfPlanesMinusCommand = new RelayCommand(() => --LSMNumberOfPlanes);
 
+                return this._numberOfPlanesMinusCommand;
+            }
+        }
 
+        public ICommand NumberOfPlanesPlusCommand
+        {
+            get
+            {
+                if (this._numberOfPlanesPlusCommand == null)
+                    this._numberOfPlanesPlusCommand = new RelayCommand(() => ++LSMNumberOfPlanes);
+
+                return this._numberOfPlanesPlusCommand;
+            }
+        }
 
         public int ThreePhotonEnable
         {
@@ -324,28 +455,6 @@
                     this._threePhotonPhaseCoarsePlusCommand = new RelayCommand(() => ThreePhotonPhaseCoarsePlus());
 
                 return this._threePhotonPhaseCoarsePlusCommand;
-            }
-        }
-
-        public ICommand NumberOfPlanesMinusCommand
-        {
-            get
-            {
-                if (this._numberOfPlanesMinusCommand == null)
-                    this._numberOfPlanesMinusCommand = new RelayCommand(() => --LSMNumberOfPlanes);
-
-                return this._numberOfPlanesMinusCommand;
-            }
-        }
-
-        public ICommand NumberOfPlanesPlusCommand
-        {
-            get
-            {
-                if (this._numberOfPlanesPlusCommand == null)
-                    this._numberOfPlanesPlusCommand = new RelayCommand(() => ++LSMNumberOfPlanes);
-
-                return this._numberOfPlanesPlusCommand;
             }
         }
 
@@ -485,6 +594,7 @@
             int itmp = 0;
             if (ndList.Count > 0)
             {
+                double dtmp = 0;
                 // This is loaded in ScanControlMVM, order matters. It needs to load the status of the 3P checkbox
                 // before it loads the Input Ranges.
                 //if (XmlManager.GetAttribute(ndList[0], doc, "ThreePhotonEnable", ref str) && (Int32.TryParse(str, out itmp)))
@@ -509,6 +619,31 @@
                 if (XmlManager.GetAttribute(ndList[0], doc, "FIR1ManualControlEnable", ref str) && (Int32.TryParse(str, out itmp)))
                 {
                     FIR1ManualControlEnable = itmp;
+                }
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "DDSEnable", ref str) && (Int32.TryParse(str, out itmp)))
+                {
+                    DDSEnable = itmp;
+                }
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "DDSPhase0", ref str) && (double.TryParse(str, out dtmp)))
+                {
+                    DDSPhase0 = dtmp;
+                }
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "DDSPhase1", ref str) && (double.TryParse(str, out dtmp)))
+                {
+                    DDSPhase1 = dtmp;
+                }
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "DDSAmplitude0", ref str) && (double.TryParse(str, out dtmp)))
+                {
+                    DDSAmplitude0 = dtmp;
+                }
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "DDSAmplitude1", ref str) && (double.TryParse(str, out dtmp)))
+                {
+                    DDSAmplitude1 = dtmp;
                 }
             }
 
@@ -540,17 +675,6 @@
             }
         }
 
-
-        public int AcquireDuringTurnAround
-        {
-            get => _threePhotonControlModel.AcquireDuringTurnAround;
-            set
-            {
-                _threePhotonControlModel.AcquireDuringTurnAround = value;
-                OnPropertyChanged("AcquireDuringTurnAround");
-            }
-        }
-
         public void OnPropertyChange(string propertyName)
         {
             if (null != GetPropertyInfo(propertyName))
@@ -558,8 +682,6 @@
                 OnPropertyChanged(propertyName);
             }
         }
-
-
 
         public void UpdateExpXMLSettings(ref XmlDocument experimentFile)
         {
@@ -573,6 +695,12 @@
                 XmlManager.SetAttribute(ndList[0], experimentFile, "ThreePhotonPhaseFine", this.ThreePhotonPhaseFine.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "NumberOfPlanes", this.LSMNumberOfPlanes.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "FIR1ManualControlEnable", (this.FIR1ManualControlEnable).ToString());
+
+                XmlManager.SetAttribute(ndList[0], experimentFile, "DDSEnable", this.DDSEnable.ToString());
+                XmlManager.SetAttribute(ndList[0], experimentFile, "DDSPhase0", this.DDSPhase0.ToString());
+                XmlManager.SetAttribute(ndList[0], experimentFile, "DDSPhase1", this.DDSPhase1.ToString());
+                XmlManager.SetAttribute(ndList[0], experimentFile, "DDSAmplitude0", this.DDSAmplitude0.ToString());
+                XmlManager.SetAttribute(ndList[0], experimentFile, "DDSAmplitude1", this.DDSAmplitude1.ToString());
             }
         }
 

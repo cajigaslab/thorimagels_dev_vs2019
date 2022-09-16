@@ -533,6 +533,7 @@
             double dVal;
             XmlDocument hwSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS];
             XmlNodeList ndObj = hwSettings.SelectNodes("/HardwareSettings/Objectives");
+
             if (0 < ndObj.Count)
             {
                 if (!XmlManager.GetAttribute(ndObj[0], hwSettings, "f1MM", ref str))

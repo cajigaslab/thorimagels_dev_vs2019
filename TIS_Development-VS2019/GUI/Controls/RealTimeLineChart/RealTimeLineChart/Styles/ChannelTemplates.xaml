@@ -11,7 +11,7 @@
     <validator:InvertableBooleanToVisibilityConverter x:Key="_Converter" />
     <validator:InvertableIntegralToVisibilityConverter x:Key="_IntVisConverter" />
     <validator:InvertableVisibilityGateConverter x:Key="_gateVisConverter" />
-
+    
     <!--  ItemTemplate for EEG Channels. Create a single SciChartSurface instance per EEGChannelViewModel  -->
     <DataTemplate x:Key="DataChannelTemplate">
         <Grid>

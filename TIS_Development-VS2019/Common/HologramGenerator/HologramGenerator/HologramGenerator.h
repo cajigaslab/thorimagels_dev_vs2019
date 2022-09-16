@@ -55,8 +55,10 @@ private:
 	HologramGen();
 	long AffineTransform(float* pImgDst);
 	long ProjectTransform(float* pImgDst);
+	long HomogeneousTransform(float* pImgDst, float kzValue);
 	long CalculateAffineCoeffs(const float* pSrcPoints, const float* pTgtPoints, long size, double* affCoeffs);
 	long CalculateProjectCoeffs(const float* pSrcPoints, const float* pTgtPoints, long size, double* projCoeffs);
+	long CalculateHomogeneousCoeffs(const float* pSrcPoints, const float* pTgtPoints, long size, double* projCoeffs);
 	void FFT(float* pPolMagnDst, float* pPolPhaseDst, bool forward);
 	void FilterGauss(float* pImgDst, int kernelSize, double diaRatio);
 	void GetImageIntensity(float* pImg, float* pDst);

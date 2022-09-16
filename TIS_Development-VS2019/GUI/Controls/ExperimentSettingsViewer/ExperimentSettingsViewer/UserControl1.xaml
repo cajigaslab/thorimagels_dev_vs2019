@@ -1900,7 +1900,7 @@
 										   	   XPath=CaptureSetup/MCLSView/@Visibility}"
 						  Name="gbMCLS">
                     <GroupBox.Header>
-                        <Label Content="MCLS"
+                        <Label Content="Laser Control"
 							   Foreground="White" />
                     </GroupBox.Header>
                     <StackPanel Orientation="Horizontal">
@@ -1918,7 +1918,8 @@
 														 XPath=ThorImageExperiment/MCLS/@enable1,
 														 Converter={StaticResource modeVisibilityConverter},
 														 ConverterParameter=1}">
-                            <Label Content="1"
+                            <Label 
+                                   Name="laser1Label"
 								   Foreground="White"
 								   HorizontalContentAlignment="Center"
 								   Width="60" />
@@ -1933,7 +1934,7 @@
 														 XPath=ThorImageExperiment/MCLS/@enable2,
 														 Converter={StaticResource modeVisibilityConverter},
 														 ConverterParameter=1}">
-                            <Label Content="2"
+                            <Label Name="laser2Label"
 								   Foreground="White"
 								   HorizontalContentAlignment="Center"
 								   Width="60" />
@@ -1948,7 +1949,7 @@
 														 XPath=ThorImageExperiment/MCLS/@enable3,
 														 Converter={StaticResource modeVisibilityConverter},
 														 ConverterParameter=1}">
-                            <Label Content="3"
+                            <Label Name="laser3Label"
 								   Foreground="White"
 								   HorizontalContentAlignment="Center"
 								   Width="60" />
@@ -1963,7 +1964,7 @@
 														 XPath=ThorImageExperiment/MCLS/@enable4,
 														 Converter={StaticResource modeVisibilityConverter},
 														 ConverterParameter=1}">
-                            <Label Content="4"
+                            <Label Name="laser4Label"
 								   Foreground="White"
 								   HorizontalContentAlignment="Center"
 								   Width="60" />
@@ -1973,6 +1974,20 @@
 								   HorizontalContentAlignment="Center"
 								   Foreground="White"
 								   Width="70" />
+                        </StackPanel>
+                        <StackPanel Name="splaserAnalogTTL">
+                            <CheckBox Content="TTL"
+                                      Name="cbLaserTTL"
+                                      Margin="10,5,0,0"
+                                      HorizontalAlignment="Left"
+                                      Width="60"
+                                      IsEnabled="False"/>
+                            <CheckBox Content="Analog"
+                                      Name="cbLaserAnalog"
+                                      Margin="10,10,0,0"
+                                      HorizontalAlignment="Left"
+                                      Width="60"
+                                      IsEnabled="False"/>
                         </StackPanel>
                     </StackPanel>
                 </GroupBox>

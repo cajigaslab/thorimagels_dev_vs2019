@@ -114,7 +114,7 @@
             string xPath = "/ApplicationSettings/DisplayOptions/CaptureSetup/ScannerView";
             gbPMTSettings.Visibility = GetVisibility(appDoc, xPath, "Visibility");
 
-            xPath = "/ApplicationSettings/DisplayOptions/CaptureSetup/MCLSView";
+            xPath = "/ApplicationSettings/DisplayOptions/CaptureSetup/MultiLaserControlView";
             gbMCLSSettings.Visibility = GetVisibility(appDoc, xPath, "Visibility");
 
             xPath = "/ApplicationSettings/DisplayOptions/CaptureSetup/MultiphotonView";
@@ -171,7 +171,7 @@
             btChanD.IsEnabled = chanEnable3;
 
             //Load PMT Settings
-            int pmt1Gain = 0, pmt2Gain = 0, pmt3Gain = 0, pmt4Gain = 0;
+            double pmt1Gain = 0, pmt2Gain = 0, pmt3Gain = 0, pmt4Gain = 0;
             _lightPathSequenceStep.GetLightPathSequenceStepPMT(ref pmt1Gain, ref pmt2Gain, ref pmt3Gain, ref pmt4Gain);
             tbGainA.Text = pmt1Gain.ToString();
             tbGainB.Text = pmt2Gain.ToString();
@@ -183,10 +183,11 @@
             tbGainD.IsEnabled = chanEnable3;
 
             //Load MCLS Laser settings
-            int laser1Enable = 0, laser2Enable = 0, laser3Enable = 0, laser4Enable = 0;
+            int laser1Enable = 0, laser2Enable = 0, laser3Enable = 0, laser4Enable = 0, laserAllAnalog = 0, laserAllTTL = 0, laser1Wavelength = 0, laser2Wavelength = 0, laser3Wavelength = 0, laser4Wavelength = 0;
             double laser1Power = 0.0, laser1Percent = 0.0, laser2Power = 0.0, laser2Percent = 0.0, laser3Power = 0.0, laser3Percent = 0.0, laser4Power = 0.0, laser4Percent = 0.0;
             _lightPathSequenceStep.GetLightPathSequenceStepMCLS(ref laser1Enable, ref laser1Power, ref laser1Percent, ref laser2Enable, ref laser2Power, ref laser2Percent,
-                ref laser3Enable, ref laser3Power, ref laser3Percent, ref laser4Enable, ref laser4Power, ref laser4Percent);
+                ref laser3Enable, ref laser3Power, ref laser3Percent, ref laser4Enable, ref laser4Power, ref laser4Percent, ref laserAllAnalog, ref laserAllTTL, ref laser1Wavelength,
+                ref laser2Wavelength, ref laser3Wavelength, ref laser4Wavelength);
             cbLaser1Enable.IsChecked = (1 == laser1Enable) ? true : false;
             tbLaserPowerPercent1.Text = laser1Percent.ToString();
             tbLaserPowerPercent1.IsEnabled = (1 == laser1Enable) ? true : false;
@@ -199,6 +200,54 @@
             cbLaser4Enable.IsChecked = (1 == laser4Enable) ? true : false;
             tbLaserPowerPercent4.Text = laser4Percent.ToString();
             tbLaserPowerPercent4.IsEnabled = (1 == laser4Enable) ? true : false;
+
+            //Populate the label for each laser based off of whether the wavelength can be queried (MCLS vs Toptica)
+            if (laser1Wavelength == 0)
+            {
+                cbLaser1Enable.Content = "Laser1";
+            }
+            else
+            {
+                cbLaser1Enable.Content = laser1Wavelength.ToString() + " nm";
+            }
+            if (laser2Wavelength == 0)
+            {
+                cbLaser2Enable.Content = "Laser2";
+            }
+            else
+            {
+                cbLaser2Enable.Content = laser2Wavelength.ToString() + " nm";
+            }
+            if (laser3Wavelength == 0)
+            {
+                cbLaser3Enable.Content = "Laser3";
+            }
+            else
+            {
+                cbLaser3Enable.Content = laser3Wavelength.ToString() + " nm";
+            }
+            if (laser4Wavelength == 0)
+            {
+                cbLaser4Enable.Content = "Laser4";
+            }
+            else
+            {
+                cbLaser4Enable.Content = laser4Wavelength.ToString() + " nm";
+            }
+
+            //Only make TTL and Analog checkboxes visible for Toptica, read values from light path
+            if (laser1Wavelength == 0 && laser2Wavelength == 0 && laser3Wavelength == 0 && laser4Wavelength == 0)
+            {
+                cbLaserAllAnalog.Visibility = Visibility.Collapsed;
+                cbLaserAllTTL.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                cbLaserAllAnalog.Visibility = Visibility.Visible;
+                cbLaserAllTTL.Visibility = Visibility.Visible;
+                cbLaserAllTTL.IsChecked = (1 == laserAllTTL) ? true : false;
+                cbLaserAllAnalog.IsChecked = (1 == laserAllAnalog) ? true : false;
+            }
 
             //Load Multiphoton Laser Settings
             int laserPosition = 0;

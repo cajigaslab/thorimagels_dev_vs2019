@@ -33,6 +33,23 @@
 
         #region Properties
 
+        //Enables emission for laser 1
+        public int Laser1Emission
+        {
+            get
+            {
+                int temp = 0;
+
+                GetDeviceParamInt((int)SelectedHardware.SELECTED_LASER1, (int)IDevice.Params.PARAM_LASER1_EMISSION, ref temp);
+
+                return temp;
+            }
+            set
+            {
+                SetDeviceParamInt((int)SelectedHardware.SELECTED_LASER1, (int)IDevice.Params.PARAM_LASER1_EMISSION, value, false);
+            }
+        }
+
         public int Laser1Enable
         {
             get
@@ -101,6 +118,23 @@
                 GetDeviceParamInt((int)SelectedHardware.SELECTED_LASER1, (int)IDevice.Params.PARAM_LASER1_WAVELENGTH, ref temp);
 
                 return temp;
+            }
+        }
+
+        //Enables emission for laser 2
+        public int Laser2Emission
+        {
+            get
+            {
+                int temp = 0;
+
+                GetDeviceParamInt((int)SelectedHardware.SELECTED_LASER2, (int)IDevice.Params.PARAM_LASER2_EMISSION, ref temp);
+
+                return temp;
+            }
+            set
+            {
+                SetDeviceParamInt((int)SelectedHardware.SELECTED_LASER2, (int)IDevice.Params.PARAM_LASER2_EMISSION, value, false);
             }
         }
 
@@ -175,6 +209,23 @@
             }
         }
 
+        //Enables emission for laser 3
+        public int Laser3Emission
+        {
+            get
+            {
+                int temp = 0;
+
+                GetDeviceParamInt((int)SelectedHardware.SELECTED_LASER3, (int)IDevice.Params.PARAM_LASER3_EMISSION, ref temp);
+
+                return temp;
+            }
+            set
+            {
+                SetDeviceParamInt((int)SelectedHardware.SELECTED_LASER3, (int)IDevice.Params.PARAM_LASER3_EMISSION, value, false);
+            }
+        }
+
         public int Laser3Enable
         {
             get
@@ -243,6 +294,23 @@
                 GetDeviceParamInt((int)SelectedHardware.SELECTED_LASER3, (int)IDevice.Params.PARAM_LASER3_WAVELENGTH, ref temp);
 
                 return temp;
+            }
+        }
+
+        //Enables emission for laser 4
+        public int Laser4Emission
+        {
+            get
+            {
+                int temp = 0;
+
+                GetDeviceParamInt((int)SelectedHardware.SELECTED_LASER4, (int)IDevice.Params.PARAM_LASER4_EMISSION, ref temp);
+
+                return temp;
+            }
+            set
+            {
+                SetDeviceParamInt((int)SelectedHardware.SELECTED_LASER4, (int)IDevice.Params.PARAM_LASER4_EMISSION, value, false);
             }
         }
 
@@ -324,7 +392,7 @@
             {
                 int temp = 0;
 
-                GetDeviceParamInt((int)SelectedHardware.SELECTED_LASER1, (int)IDevice.Params.PARAM_LASER_ALL_ANALOG_MODE, ref temp); //No getter in lower level right now
+                GetDeviceParamInt((int)SelectedHardware.SELECTED_LASER1, (int)IDevice.Params.PARAM_LASER_ALL_ANALOG_MODE, ref temp); //No getter from device in lower level right now
 
                 return temp;
             }
@@ -340,7 +408,7 @@
             {
                 int temp = 0;
 
-                GetDeviceParamInt((int)SelectedHardware.SELECTED_LASER1, (int)IDevice.Params.PARAM_LASER_ALL_ENABLE, ref temp); //No getter in lower level right now
+                GetDeviceParamInt((int)SelectedHardware.SELECTED_LASER1, (int)IDevice.Params.PARAM_LASER_ALL_ENABLE, ref temp); //No getter from device in lower level right now
 
                 return temp;
             }
@@ -357,7 +425,7 @@
             {
                 int temp = 0;
 
-                GetDeviceParamInt((int)SelectedHardware.SELECTED_LASER1, (int)IDevice.Params.PARAM_LASER_ALL_TTL_MODE, ref temp); //No getter in lower level right now
+                GetDeviceParamInt((int)SelectedHardware.SELECTED_LASER1, (int)IDevice.Params.PARAM_LASER_ALL_TTL_MODE, ref temp); //No getter from device in lower level right now
 
                 return temp;
             }

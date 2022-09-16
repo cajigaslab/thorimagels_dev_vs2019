@@ -171,8 +171,8 @@
                     </StackPanel>
                 </Border>
                 <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Vertical">
-                    <CheckBox Margin="1" Foreground="White" Content="Invert"
-                              IsChecked="{Binding Path=Invert, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    <!--<CheckBox Margin="1" Foreground="White" Content="Invert"
+                              IsChecked="{Binding Path=Invert, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/> By adding % Black and White, Invert not needed-->
                     <StackPanel Orientation="Horizontal">
                         <Label HorizontalContentAlignment="Right" Content="Maximum: "/>
                         <TextBox Width="50" Height="20"
@@ -180,7 +180,7 @@
                                  validator:Validation.NoEmptyValue="False"
                                  validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
                                  validator:Validation.MinValue="0"
-                                 Text="{Binding Path=ValuePercent, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
+                                 Text="{Binding Path=ValuePercentBlack, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
                         <Label Content="% of 2π Black"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">

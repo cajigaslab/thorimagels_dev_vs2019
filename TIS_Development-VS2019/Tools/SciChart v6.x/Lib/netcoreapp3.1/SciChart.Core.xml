@@ -2516,6 +2516,29 @@
             Gets a collection of objects that represents the touch contacts for the manipulation.
             </summary>
         </member>
+        <member name="T:SciChart.Charting.ChartModifiers.ModifierTouchManipulationArgs">
+            <summary>
+            Defines a cross-platform Manipulation event args, used by classes throughout Scichart process manipulation events.
+            </summary>
+        </member>
+        <member name="M:SciChart.Charting.ChartModifiers.ModifierTouchManipulationArgs.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SciChart.Charting.ChartModifiers.ModifierTouchManipulationArgs" /> class.
+            </summary>
+        </member>
+        <member name="M:SciChart.Charting.ChartModifiers.ModifierTouchManipulationArgs.#ctor(System.Collections.Generic.IEnumerable{System.Windows.Input.TouchPoint},System.Boolean,SciChart.Core.Utility.Mouse.IReceiveMouseEvents)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SciChart.Charting.ChartModifiers.ModifierTouchManipulationArgs" /> class.
+            </summary>
+            <param name="touchPoints">The touch points.</param>
+            <param name="isMaster">if set to <c>true</c>, this is a Master event, else Slave event.</param>
+            <param name="master">The master instance in the case where charts are synchronized using <see cref="F:SciChart.Core.Utility.Mouse.MouseManager.MouseEventGroupProperty" />.</param>
+        </member>
+        <member name="P:SciChart.Charting.ChartModifiers.ModifierTouchManipulationArgs.Manipulators">
+            <summary>
+            Gets a collection of objects that represents the touch contacts for the manipulation.
+            </summary>
+        </member>
         <member name="T:TinyMessenger.ITinyMessage">
             <summary>
             A TinyMessage to be published/delivered by TinyMessenger

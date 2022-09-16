@@ -824,6 +824,7 @@
             if (null != node)
             {
                 vm.TileDisplay = XmlManager.GetAttribute(node, appSettings, "TilingEnableOption", ref str) && (str == "1" || str == Boolean.TrueString);
+                vm.VerticalTileDisplay = XmlManager.GetAttribute(node, appSettings, "VerticalTiling", ref str) && (str == "1" || str == Boolean.TrueString);
             }
 
             node = appSettings.SelectSingleNode("/ApplicationSettings/DisplayOptions/General/HistogramSettings");

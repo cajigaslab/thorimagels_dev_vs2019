@@ -1126,7 +1126,8 @@
                 // load reference channel
                 bool refToRefChann = false;
 
-                if (1 == (int)MVMManager.Instance["AreaControlViewModel", "EnableReferenceChannel", (object)0])
+                //only do the reference channel if it's enabled and channel D is enabled
+                if (1 == (int)MVMManager.Instance["AreaControlViewModel", "EnableReferenceChannel", (object)0] && _lsmChannelEnable[3])
                 {
                     string refChannDir = Application.Current.Resources["AppRootFolder"].ToString() + "\\ReferenceChannel.tif";
                     if (File.Exists(refChannDir))   // ref channel file existance
@@ -1337,7 +1338,7 @@
         }
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadChannelImages")]
-        public static extern int ReadChannelImages([MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr)]string[] fileNames, int size, ref IntPtr outputBuffer, int cameraWidth, int cameraHeight);
+        public static extern int ReadChannelImages([MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr)] string[] fileNames, int size, ref IntPtr outputBuffer, int cameraWidth, int cameraHeight);
 
         public static void SetColorChannels(int channels)
         {
@@ -1773,7 +1774,7 @@
         private static extern bool ImgProGenConf(int maxRoiNum, int minSnr);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadImageInfo")]
-        private static extern int ReadImageInfo([MarshalAs(UnmanagedType.LPWStr)]string path, ref int width, ref int height, ref int colorChannels);
+        private static extern int ReadImageInfo([MarshalAs(UnmanagedType.LPWStr)] string path, ref int width, ref int height, ref int colorChannels);
 
         [DllImport("kernel32.dll")]
         static extern void RtlZeroMemory(IntPtr dst, int length);

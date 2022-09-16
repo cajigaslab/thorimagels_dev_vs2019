@@ -23,6 +23,7 @@
     using System.Windows.Threading;
     using System.Xml;
     using System.Xml.Serialization;
+    using System.Threading.Tasks;
 
     using AviFile;
 
@@ -54,6 +55,8 @@
     using d = System.Drawing;
 
     using i = System.Drawing.Imaging;
+
+    using ImageReviewDll.OME;
 
     public static class DispatcherEx
     {
@@ -338,6 +341,7 @@
         private int _imageBlkIndex;
         private string _imagePathandName;
         private Visibility[] _isChannelVisible = new Visibility[ImageReview.MAX_CHANNELS];
+        private bool _isRawExperiment = false;
         private bool _isScaleOnOffChecked = false;
         private double _ivHeight;
         private double _iVScrollBarHeight;
@@ -559,6 +563,14 @@
         #endregion Events
 
         #region Properties
+
+        public ImageReview ImageReviewObject
+        {
+            get
+            {
+                return _imageReview;
+            }
+        }
 
         public bool AllHistogramsExpanded
         {
@@ -1394,6 +1406,20 @@
                     return MatlabEngine.Instance.IsMatlabValid();
                 }
                 return false;
+            }
+        }
+
+        public bool IsRawExperiment
+        {
+            get
+            {
+                return _isRawExperiment;
+            }
+            set 
+            {
+                if (_isRawExperiment != value)
+                    _isRawExperiment = value;
+                OnPropertyChanged("IsRawExperiment");
             }
         }
 
@@ -3692,6 +3718,51 @@
             SetMenuBarEnable(true);
         }
 
+        private Window _spinnerWindow = null;
+        private SpinnerProgress.SpinnerProgressControl _spinner;
+
+        public void CreateProgressWindow()
+        {
+            if (null != _spinnerWindow)
+                return;
+            //create a popup modal dialog that blocks user clicks while capturing
+            _spinnerWindow = new Window();
+            _spinnerWindow.ResizeMode = ResizeMode.NoResize;
+            _spinnerWindow.Width = 150;
+            _spinnerWindow.Height = 150;
+            _spinnerWindow.WindowStyle = WindowStyle.None;
+            _spinnerWindow.Background = Brushes.DimGray;
+            _spinnerWindow.AllowsTransparency = true;
+            Border border = new Border();
+            border.BorderThickness = new Thickness(2);
+            _spinnerWindow.Content = border;
+
+            _spinner = new SpinnerProgress.SpinnerProgressControl("Converting");
+            _spinner.Margin = new Thickness(5);
+            _spinner.SpinnerWidth = 120;
+            _spinner.SpinnerHeight = 120;
+            border.Child = _spinner;
+
+            _spinnerWindow.Owner = Application.Current.MainWindow;
+            _spinnerWindow.Left = _spinnerWindow.Owner.Left + ((Panel)_spinnerWindow.Owner.Content).ActualWidth / 4;
+            _spinnerWindow.Top = _spinnerWindow.Owner.Top + ((Panel)_spinnerWindow.Owner.Content).ActualHeight / 4;
+            _spinnerWindow.Closed += new EventHandler(_spinnerWindow_Closed);
+            _spinnerWindow.Show();
+        }
+
+        void _spinnerWindow_Closed(object sender, EventArgs e)
+        {
+            _spinnerWindow = null;
+        }
+
+        public void CloseProgressWindow()
+        {
+            if (null != this._spinnerWindow)
+            {
+                this._spinnerWindow.Close();
+            }
+        }
+
         public long LaunchThorAnalysis()
         {
             long ret = 0;
@@ -3719,28 +3790,67 @@
             }
             else
             {
-                //Load active.xml to find experiment folder
+                //Load active.xml to find experiment folder and type
                 var experimentDoc = new XmlDocument();
                 experimentDoc.Load(_imageReview.ExperimentXMLPath);
-                XmlNodeList nodeList = experimentDoc.SelectNodes("/ThorImageExperiment/Name");
-                if (nodeList.Count > 0)
+                var pathXmlNode = experimentDoc.SelectSingleNode("/ThorImageExperiment/Name");
+                var typeXmlNode = experimentDoc.SelectSingleNode("/ThorImageExperiment/Streaming");
+                if (pathXmlNode != null && typeXmlNode != null)
                 {
-                    string str = string.Empty;
-                    if (XmlManager.GetAttribute(nodeList[0], experimentDoc, "path", ref str))
+                    string pathString = string.Empty;
+                    string typeString = string.Empty;
+                    if (XmlManager.GetAttribute(pathXmlNode, experimentDoc, "path", ref pathString)
+                        && XmlManager.GetAttribute(typeXmlNode, experimentDoc, "rawData", ref typeString))
                     {
-                        var imgFile = str + "\\Image.tif";
-                        if (File.Exists(imgFile))
+                        if (typeString == "2") // OME-Tiff, open directly
                         {
-                            Process.Start(exePath, imgFile);
-                            ret = 1;
+                            var imgFile = pathString + "\\Image.tif";
+                            if (File.Exists(imgFile))
+                            {
+                                LoadOMETiffInProcess(exePath, imgFile);
+                                ret = 1;
+                            }
                         }
-                        else
-                            MessageBox.Show("The image data needs to be in OME-TIFF format.");
+                        else if (typeString == "0" || typeString == "1")
+                        {
+                            // Start converting
+                            Task task = Task.Run(() =>
+                            {
+                                // Convert from Tiff or RAW to OME Tiff
+                                ClassicTiffConverter tiffConverter = new ClassicTiffConverter(pathString);
+                                long result = tiffConverter.DoConvert(out string convertedImgFile);
+
+                                if (result == 0)
+                                {
+                                    LoadOMETiffInProcess(exePath, convertedImgFile);
+                                    ret = 1;
+                                }
+
+                            });
+                            task.ContinueWith(x =>
+                            {
+                                Application.Current.Dispatcher.BeginInvoke((Action)delegate ()
+                                {
+                                    CloseProgressWindow();
+                                });
+                            });
+
+                            // Show progress window
+                            Application.Current.Dispatcher.BeginInvoke((Action)delegate ()
+                            {
+                                CreateProgressWindow();
+                            });
+                        }
                     }
                 }
             }
 
             return ret;
+        }
+
+        private void LoadOMETiffInProcess(string exePath, string imgFile)
+        {
+            Process.Start(exePath, imgFile);
         }
 
         public long LaunchFijiOMEXML()

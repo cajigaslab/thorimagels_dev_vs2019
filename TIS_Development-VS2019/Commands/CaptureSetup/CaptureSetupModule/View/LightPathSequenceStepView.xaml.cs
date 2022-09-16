@@ -151,7 +151,7 @@
             btChanD.IsEnabled = chanEnable3;
 
             //Load PMT Settings
-            int pmt1Gain = 0, pmt2Gain = 0, pmt3Gain = 0, pmt4Gain = 0;
+            double pmt1Gain = 0, pmt2Gain = 0, pmt3Gain = 0, pmt4Gain = 0;
             _lightPathSequenceStep.GetLightPathSequenceStepPMT(ref pmt1Gain, ref pmt2Gain, ref pmt3Gain, ref pmt4Gain);
             tbGainA.Text = pmt1Gain.ToString();
             tbGainB.Text = pmt2Gain.ToString();
@@ -169,9 +169,10 @@
             double laser2Power = 0.0, laser2Percent = 0.0;
             double laser3Power = 0.0, laser3Percent = 0.0;
             double laser4Power = 0.0, laser4Percent = 0.0;
+            int laserTTL = 0, laserAnalog = 0;
             int laser1Wavelength = 0, laser2Wavelength = 0, laser3Wavelength = 0, laser4Wavelength = 0;
             _lightPathSequenceStep.GetLightPathSequenceStepMCLS(ref mainLaserSelection, ref laser1Enable, ref laser1Power, ref laser1Percent, ref laser2Enable, ref laser2Power, ref laser2Percent,
-                ref laser3Enable, ref laser3Power, ref laser3Percent, ref laser4Enable, ref laser4Power, ref laser4Percent, ref laser1Wavelength, ref laser2Wavelength, ref laser3Wavelength,
+                ref laser3Enable, ref laser3Power, ref laser3Percent, ref laser4Enable, ref laser4Power, ref laser4Percent, ref laserTTL, ref laserAnalog, ref laser1Wavelength, ref laser2Wavelength, ref laser3Wavelength,
                 ref laser4Wavelength);
 
             //Check if wavelength has been populated or not
@@ -184,6 +185,26 @@
             {
                 wavelengthVisibility = 1;
             }
+
+            //If wavelength has been populated display the ttl/analog labels and checkboxes
+            if (wavelengthVisibility == 0)
+            {
+                ttlLabel.Visibility = Visibility.Collapsed;
+                analogLabel.Visibility = Visibility.Collapsed;
+                cbLaserAnalog.Visibility = Visibility.Collapsed;
+                cbLaserTTL.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                ttlLabel.Visibility = Visibility.Visible;
+                analogLabel.Visibility = Visibility.Visible;
+                cbLaserAnalog.Visibility = Visibility.Visible;
+                cbLaserTTL.Visibility = Visibility.Visible;
+            }
+
+            //Check whether TTL/Analog modes are enabled
+            cbLaserAnalog.IsChecked = (1 == laserAnalog) ? true : false;
+            cbLaserTTL.IsChecked = (1 == laserTTL) ? true : false;
 
             //If wavelength has been populated display the wavelength as the label
             cbLaser1Enable.IsChecked = (1 == laser1Enable) ? true : false;

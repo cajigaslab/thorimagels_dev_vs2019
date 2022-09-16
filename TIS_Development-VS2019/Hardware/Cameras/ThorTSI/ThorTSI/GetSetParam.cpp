@@ -378,6 +378,8 @@ long ThorCam::GetParam(const long paramID, double &param)
 		return FALSE;
 	}
 
+	lock_guard<recursive_mutex> sdkLock(_sdkNotThreadsafeMutex);
+
 	// If the camera isn't open, we can't continue either.
 	if (!IsOpen(_selectedCam)) {
 		return FALSE;

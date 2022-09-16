@@ -76,4 +76,5 @@ class ImageStoreLibraryDLL : public PDLL
 
 	DECLARE_FUNCTION5(long, SaveData, void*, uint16_t, uint16_t, uint16_t, uint16_t)
 
+	DECLARE_FUNCTION1(long, AdjustScanTCount, int)
 };

@@ -108,6 +108,7 @@ long ThorShutterDig::SelectDevice(const long device)
 /// <returns>long.</returns>
 long ThorShutterDig::TeardownDevice()
 {
+	SetDigital(SHUTTER_CLOSED);
 	CloseNITasks();
 	return TRUE;
 }

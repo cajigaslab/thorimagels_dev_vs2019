@@ -156,7 +156,7 @@
     </Link>
     <PostBuildEvent>
       <Command>if $(Configuration) == Debug  copy "$(SolutionDir)$(Platform)\$(Configuration)\ThorElectroPhys.dll" $(ProjectDir)..\..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\$(Configuration)\Modules_Native
-if $(Configuration) == Debug  copy "$(SolutionDir)ThorElectroPhysSettings.xml" $(ProjectDir)..\..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\$(Configuration)\
+if $(Configuration) == Debug  copy "$(ProjectDir)..\ThorElectroPhysSettings.xml" $(ProjectDir)..\..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\$(Configuration)\
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>

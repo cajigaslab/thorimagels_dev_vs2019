@@ -324,15 +324,15 @@
                                         {
                                             if (doLifetime)
                                             {
-                                                outputBitmapWidth *= 2;
-                                                outputBitmapHeight *= 1;
+                                                outputBitmapWidth *= VerticalTileDisplay ? 1 : 2;
+                                                outputBitmapHeight *= VerticalTileDisplay ? 2 : 1;
                                             }
                                         }
                                         break;
                                     case 2:
                                         {
-                                            outputBitmapWidth *= 3;
-                                            outputBitmapHeight *= 1;
+                                            outputBitmapWidth *= VerticalTileDisplay ? 1 : 3;
+                                            outputBitmapHeight *= VerticalTileDisplay ? 3 : 1;
                                         }
                                         break;
                                     case 3:
@@ -343,8 +343,8 @@
                                         break;
                                     default:
                                         {// All 4 Channels enabled
-                                            outputBitmapWidth *= 3;
-                                            outputBitmapHeight *= 2;
+                                            outputBitmapWidth *= VerticalTileDisplay ? 2 : 3;
+                                            outputBitmapHeight *= VerticalTileDisplay ? 3 : 2;
                                         }
                                         break;
                                 }
@@ -375,19 +375,50 @@
 
                             if (TileDisplay && (1 < channelNum || doLifetime))
                             {
-                                int offsetWidth = 1;
-                                int offsetHeight = 0;
-                                for (int i = 0; i < _channelEnable.Length; ++i)
+                                int offsetWidth = VerticalTileDisplay ? 0 : 1;
+                                int offsetHeight = VerticalTileDisplay ? 1 : 0;
+                                if (planes > 1)
+                                {
+                                    offsetWidth = 1;
+                                    offsetHeight = 0;
+                                }
+                                else
+                                {
+                                    offsetWidth = VerticalTileDisplay ? 0 : 1;
+                                    offsetHeight = VerticalTileDisplay ? 1 : 0;
+
+                                }
+                                    for (int i = 0; i < _channelEnable.Length; ++i)
                                 {
                                     if (true == (_channelEnable[i]))
                                     {
                                         pd = CaptureSetup.GetPixelDataByteEx(false, i);
                                         _bitmap.WritePixels(new Int32Rect(offsetWidth * width, offsetHeight * height, width, height), pd, rawStride, 0);
-                                        ++offsetWidth;
-                                        if (outputBitmapWidth < (width * offsetWidth + width))
+                                        if (planes > 1)
                                         {
-                                            offsetWidth = 0;
-                                            ++offsetHeight;
+                                            offsetHeight = 0;
+                                            ++offsetWidth;
+                                        }
+                                        else
+                                        {
+                                            if (VerticalTileDisplay)
+                                            {
+                                                ++offsetHeight;
+                                                if (outputBitmapHeight < (height * offsetHeight + height))
+                                                {
+                                                    offsetHeight = 0;
+                                                    ++offsetWidth;
+                                                }
+                                            }
+                                            else
+                                            {
+                                                ++offsetWidth;
+                                                if (outputBitmapWidth < (width * offsetWidth + width))
+                                                {
+                                                    offsetWidth = 0;
+                                                    ++offsetHeight;
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -1800,6 +1831,12 @@
             }
         }
 
+        public bool VerticalTileDisplay
+        {
+            get;
+            set;
+        }
+
         public bool VirtualZStack
         {
             get
@@ -2362,7 +2399,7 @@
                 if (displaySplash)
                 {
                     //get dispatcher to update the contents that was created on the UI thread:
-                   spDispatcher = _splashOrthogonalView.Dispatcher;
+                    spDispatcher = _splashOrthogonalView.Dispatcher;
                 }
 
                 splashWkr.DoWork += delegate (object sender, DoWorkEventArgs e)

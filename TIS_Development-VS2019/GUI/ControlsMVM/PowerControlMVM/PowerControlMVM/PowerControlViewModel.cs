@@ -437,6 +437,106 @@
             }
         }
 
+        public double PockelsDelayUS0
+        {
+            get
+            {
+                return this._powerControlModel.PockelsDelayUS0;
+            }
+            set
+            {
+                this._powerControlModel.PockelsDelayUS0 = value;
+                OnPropertyChanged("PockelsDelayUS0");
+            }
+        }
+
+        public double PockelsDelayUS1
+        {
+            get
+            {
+                return this._powerControlModel.PockelsDelayUS1;
+            }
+            set
+            {
+                this._powerControlModel.PockelsDelayUS1 = value;
+                OnPropertyChanged("PockelsDelayUS1");
+            }
+        }
+
+        public double PockelsDelayUS2
+        {
+            get
+            {
+                return this._powerControlModel.PockelsDelayUS2;
+            }
+            set
+            {
+                this._powerControlModel.PockelsDelayUS2 = value;
+                OnPropertyChanged("PockelsDelayUS2");
+            }
+        }
+
+        public double PockelsDelayUS3
+        {
+            get
+            {
+                return this._powerControlModel.PockelsDelayUS3;
+            }
+            set
+            {
+                this._powerControlModel.PockelsDelayUS3 = value;
+                OnPropertyChanged("PockelsDelayUS3");
+            }
+        }
+
+        public Visibility PockelsDelayVisibility0
+        {
+            get
+            {
+                return _powerControlModel.PockelsDelayAvailable0 ? Visibility.Visible : Visibility.Collapsed;
+            }
+            set
+            {
+
+            }
+        }
+
+        public Visibility PockelsDelayVisibility1
+        {
+            get
+            {
+                return _powerControlModel.PockelsDelayAvailable1 ? Visibility.Visible : Visibility.Collapsed;
+            }
+            set
+            {
+
+            }
+        }
+
+        public Visibility PockelsDelayVisibility2
+        {
+            get
+            {
+                return _powerControlModel.PockelsDelayAvailable2 ? Visibility.Visible : Visibility.Collapsed;
+            }
+            set
+            {
+
+            }
+        }
+
+        public Visibility PockelsDelayVisibility3
+        {
+            get
+            {
+                return _powerControlModel.PockelsDelayUSAvailable3 ? Visibility.Visible : Visibility.Collapsed;
+            }
+            set
+            {
+
+            }
+        }
+
         public string PockelsMaskFile
         {
             get
@@ -2248,7 +2348,11 @@
             OnPropertyChanged("Power2Min");
             OnPropertyChanged("PockelsPowerMax");
             OnPropertyChanged("PockelsPowerMin");
-
+            OnPropertyChanged("PockelsBlankingPhaseShiftPercentVisibility");
+            OnPropertyChanged("PockelsDelayVisibility0");
+            OnPropertyChanged("PockelsDelayVisibility1");
+            OnPropertyChanged("PockelsDelayVisibility2");
+            OnPropertyChanged("PockelsDelayVisibility3");
             ResetBleacherPockelsList();
         }
 

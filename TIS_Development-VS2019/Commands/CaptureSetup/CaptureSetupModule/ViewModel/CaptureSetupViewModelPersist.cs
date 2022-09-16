@@ -345,13 +345,18 @@
                             MVMManager.Instance["OTMControlViewModel", "PersistGlobalOTMCalibration"] = experimentFile;
                             break;
                         case GlobalExpAttribute.SLM_ZREF:
+                            //warn user to update SLM patterns manually after changing Z reference
+                            if ((double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0.0] != SLMZRefMM && SLM3D && 0 < SLMBleachWaveParams.Count)
+                            {
+                                MessageBox.Show("Reference Z position is changed. Individual SLM pattern must be revisited to update.");
+                            }
                             ndList = experimentFile.SelectNodes("/ThorImageExperiment/SLM");
                             if (ndList.Count <= 0)
                             {
                                 CreateXmlNode(experimentFile, "SLM");
                                 ndList = experimentFile.SelectNodes("/ThorImageExperiment/SLM");
                             }
-                            XmlManager.SetAttribute(ndList[0], experimentFile, "zRefMM", (((double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0.0])).ToString());
+                            XmlManager.SetAttribute(ndList[0], experimentFile, "zRefMM", ((double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0.0]).ToString());
                             break;
                         default:
                             break;
@@ -553,8 +558,43 @@
                 }
                 for (int i = 0; i < _captureSequence.Count; i++)
                 {
+
                     XmlNode importNode = ndList[0].OwnerDocument.ImportNode(_captureSequence[i].LightPathSequenceStepNode, true);
                     ndList[0].AppendChild(importNode);
+                }
+                //Add in default values for light path laser elements that did not exist in previous TILS versions (Carrying over from SettingsUpdater)
+                XmlNodeList laserNodeList = xmlDoc.SelectNodes("/ThorImageExperiment/CaptureSequence/LightPathSequenceStep/MCLS");
+                XmlNode wavelengthNode = xmlDoc.SelectSingleNode("/ThorImageExperiment/MCLS");
+
+                foreach (XmlNode laserNode in laserNodeList)
+                {
+                    //Only replace these for the MCLS, and if the node already exists, but is missing the new tags
+                    if (laserNode.Attributes != null && laserNode.Attributes["allttl"] == null)
+                    {
+                        //Fill in the missing attributes with current settings
+                        XmlAttribute wavelengthAttribute = wavelengthNode.Attributes["wavelength1"];
+                        if (wavelengthAttribute != null)
+                        {
+                            XmlAttribute attr1 = xmlDoc.CreateAttribute("allttl");
+                            attr1.Value = wavelengthNode.Attributes["allttl"].Value;
+                            laserNode.Attributes.Append(attr1);
+                            XmlAttribute attr2 = xmlDoc.CreateAttribute("allanalog");
+                            attr2.Value = wavelengthNode.Attributes["allanalog"].Value;
+                            laserNode.Attributes.Append(attr2);
+                            XmlAttribute attr3 = xmlDoc.CreateAttribute("wavelength1");
+                            attr3.Value = wavelengthNode.Attributes["wavelength1"].Value;
+                            laserNode.Attributes.Append(attr3);
+                            XmlAttribute attr4 = xmlDoc.CreateAttribute("wavelength2");
+                            attr4.Value = wavelengthNode.Attributes["wavelength2"].Value;
+                            laserNode.Attributes.Append(attr4);
+                            XmlAttribute attr5 = xmlDoc.CreateAttribute("wavelength3");
+                            attr5.Value = wavelengthNode.Attributes["wavelength3"].Value;
+                            laserNode.Attributes.Append(attr5);
+                            XmlAttribute attr6 = xmlDoc.CreateAttribute("wavelength4");
+                            attr6.Value = wavelengthNode.Attributes["wavelength4"].Value;
+                            laserNode.Attributes.Append(attr6);
+                        }
+                    }
                 }
                 ////End Capture Sequence
 
@@ -701,7 +741,6 @@
                 }
 
                 MVMManager.Instance.SaveSettings(SettingsFileType.HARDWARE_SETTINGS);
-
                 //give back CultureInfo:
                 if (tempSwitchCI)
                 {

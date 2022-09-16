@@ -391,7 +391,7 @@ long ThorStimXML::SetModulations(double lineMinVoltage1, double lineMaxVoltage1,
 }
 const char * const ThorStimXML::WAVEFORM = "Waveform";
 
-const char * const ThorStimXML::WAVEFORM_ATTR[NUM_WAVEFORM_ATTRIBUTES] = {"pockelDigOutput1","completeOutput","cycleOutput","iterationOutput", "patternOutput", "patternComplete","activeOutput","epochOutput","cycleInverse","pockelDigOutput2","pockelDigOutput3","pockelDigOutput4"};
+const char * const ThorStimXML::WAVEFORM_ATTR[NUM_WAVEFORM_ATTRIBUTES] = {"pockelDigOutput1","activeOutput","completeOutput","cycleOutput","iterationOutput", "patternOutput", "patternComplete","epochOutput","cycleInverse","pockelDigOutput2","pockelDigOutput3","pockelDigOutput4"};
 
 long ThorStimXML::GetWaveform(std::vector<std::string> *digiLines)
 {	

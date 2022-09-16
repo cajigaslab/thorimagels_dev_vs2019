@@ -43,6 +43,7 @@
         private double _lampPositionTickFrequency = 25;
         private Dictionary<string, PropertyInfo> _properties = new Dictionary<string, PropertyInfo>();
         private double _tempLampPosition;
+        private bool _stopUpdate = false;
 
         #endregion Fields
 
@@ -228,7 +229,7 @@
             get
             {
                 double lampPosition = _LampControlModel.LampPosition;
-                if (_tempLampPosition != lampPosition)
+                if (_tempLampPosition != lampPosition && false == _stopUpdate)
                 {
                     _tempLampPosition = lampPosition;
                     OnPropertyChanged("TempLampPosition");
@@ -251,6 +252,7 @@
                 }
                 _LampControlModel.LampPosition = value;
                 _tempLampPosition = Math.Round(value, 2);
+                _stopUpdate = false;
                 OnPropertyChanged("LampPosition");
                 OnPropertyChanged("TempLampPosition");
             }
@@ -322,6 +324,7 @@
             get { return _tempLampPosition; }
             set
             {
+                _stopUpdate = true;
                 _tempLampPosition = value;
                 OnPropertyChanged("TempLampPosition");
             }

@@ -11,6 +11,7 @@
     using System.Resources;
     using System.Runtime.InteropServices;
     using System.Text;
+    using System.Threading.Tasks;
     using System.Windows;
     using System.Windows.Data;
     using System.Windows.Input;
@@ -59,6 +60,7 @@
         private bool _helpMenuStatus = true;
         private bool _hwSetupButtonStatus = true;
         private ICommand _imageReviewCommand;
+        private string _initialModality;
         private ICommand _logFileCommand;
         private bool _modalityComboBoxStatus = true;
         private bool _needToReconnectCamera = false;
@@ -83,6 +85,8 @@
         private SubscriptionToken _subscriptionTokenShowDialog;
         private ICommand _supportCommand;
         private ICommand _webUpdateCommand;
+        private int _changeModality;
+        private bool _hardwareConnectionsOpened = false;
 
         #endregion Fields
 
@@ -547,6 +551,7 @@
         {
             System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
             Version version = assembly.GetName().Version;
+            _hardwareConnectionsOpened = true;
             if (ResourceManagerCS.Instance.TabletModeEnabled)
             {
                 AboutDll.TabletSplashScreen splash = new AboutDll.TabletSplashScreen(String.Format("v{0}.{1}.{2}.{3}", version.Major, version.Minor, version.Build, version.Revision));
@@ -554,7 +559,7 @@
             }
             else
             {
-                AboutDll.SplashScreen splash = new AboutDll.SplashScreen(String.Format("v{0}.{1}.{2}.{3}", version.Major, version.Minor, version.Build, version.Revision));
+                AboutDll.SplashScreen splash = new AboutDll.SplashScreen(String.Format("v{0}.{1}.{2}.{3}", version.Major, version.Minor, version.Build, version.Revision), _hardwareConnectionsOpened);
                 splash.Show();
             }
         }
@@ -682,6 +687,23 @@
             }
         }
 
+        //Asynchronous delay necessary to stop RefreshCameraAndCaptureSetup() from overwriting disabling of lasers
+        public async Task TTLSetZero()
+        {
+            await Task.Run(async () =>
+            {
+                await Task.Delay(3300);
+                DisableDisconnectedLaser();
+            });
+        }
+
+        public void DisableDisconnectedLaser()
+        {
+            //Disable lasers when clicking gearbox in case TTL mode is enabled and the laser source is disconnected
+            MVMManager.Instance["MultiLaserControlViewModel", "TTLModeSaveSettings"] = 1;
+            MVMManager.Instance["MultiLaserControlViewModel", "TTLLaserDisable"] = 1;
+        }
+
         public void FileExit()
         {
             Application.Current.MainWindow.Close();
@@ -709,6 +731,16 @@
             _eventAggregator.GetEvent<CommandShowDialogEvent>().Publish(command);
         }
 
+        //Keeps track of when the modality is changed via the Capture Setup pulldown
+        public void ModalitySwap(int _captureSetupModalitySwap)
+        {
+            //used for logic to turn laser off when in TTL
+            MVMManager.Instance["MultiLaserControlViewModel", "CaptureSetupModalitySwap"] = _captureSetupModalitySwap;
+
+            //used for creating spinner window when swapping modalities from Capture Setup tab
+            MVMManager.Instance["CaptureSetupViewModel", "CaptureSetupModalitySwap"] = _captureSetupModalitySwap;
+        }
+
         // reload camera into capturesetup
         public void RefreshCameraAndCaptureSetup()
         {
@@ -729,6 +761,24 @@
                 command.CommandGUID = new Guid("{6ecb028e-754e-4b50-b0ef-df8f344b668e}");
 
                 _eventAggregator.GetEvent<CommandShowDialogEvent>().Publish(command);
+            }
+        }
+
+        public void RetainLaserEnableStates(string _initialModality)
+        {
+            //Retains the values of the laser enable states when in TTL Modes, clicking OK in Hardware Setup, and laser source is not disconnected
+            MVMManager.Instance["MultiLaserControlViewModel", "TTLModeSaveSettings"] = 0;
+            if ((int)MVMManager.Instance["MultiLaserControlViewModel", "LaserAllAnalog"] == 1)
+            {
+                //Do not set the laser power values to zero when swapping from a modality that has analog mode enabled to a modality with analog mode disabled
+                MVMManager.Instance["MultiLaserControlViewModel", "LaserAnalogModalitySwap"] = 1;
+            }
+            if ((int)MVMManager.Instance["MultiLaserControlViewModel", "LaserAllTTL"] == 1)
+            {
+                if (_initialModality == ResourceManagerCS.Instance.ActiveModality)
+                {
+                    MVMManager.Instance["MultiLaserControlViewModel", "TTLLaserDisable"] = 0;
+                }
             }
         }
 
@@ -860,8 +910,8 @@
         {
             //Return to the CaptureSetup panel and reload active camera
             RefreshCameraAndCaptureSetup();
-
             //Stop all of the reading of device position while the hardware setup dialog is open
+            _initialModality = ResourceManagerCS.Instance.ActiveModality;
             Command command = new Command();
             command.Message = "DisableHardwareReading";
             command.CommandGUID = new Guid("8958AFB8-030C-43D5-B190-78130EA0D5A5");
@@ -869,14 +919,16 @@
 
             //update current modality before switching away from CaptureSetup
             ResourceManagerCS.Instance.ActiveModality = ResourceManagerCS.GetModality();
-
             HardwareConnections hc = new HardwareConnections();
             hc.DataContext = this;
             hc.Topmost = true;
+            TTLSetZero();
             hc.ShowDialog();
+            RetainLaserEnableStates(_initialModality);
 
             //settings could have been changed, do load
             MVMManager.Instance.LoadSettings();
+
             //Before loading capture setup, load any possible changes to the list of modalities
             ResourceManagerCS.LoadModalities();
             RefreshCameraAndCaptureSetup();

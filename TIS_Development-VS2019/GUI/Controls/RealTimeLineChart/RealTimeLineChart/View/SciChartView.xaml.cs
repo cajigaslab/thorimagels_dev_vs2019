@@ -33,6 +33,7 @@
     using SciChart.Charting.Visuals.Axes.LabelProviders;
     using SciChart.Charting.Visuals.Events;
     using SciChart.Core;
+    using SciChart.Data.Model;
     using SciChart.Drawing.HighSpeedRasterizer;
     using SciChart.Drawing.VisualXcceleratorRasterizer;
 
@@ -85,6 +86,14 @@
             vm.ChangeVerticalMarkersMode(RealTimeLineChartViewModel.MarkerType.Save);
         }
 
+        private void channelSurface_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (stackTimeAxisSurface.Width != e.NewSize.Width)
+            {
+                stackTimeAxisSurface.Width = (sender as SciChart.Charting.Visuals.SciChartSurface).ActualWidth;
+            }
+        }
+
         private void GridSplitter_MouseEnter(object sender, MouseEventArgs e)
         {
             Mouse.OverrideCursor = Cursors.SizeNS;
@@ -93,6 +102,16 @@
         private void GridSplitter_MouseLeave(object sender, MouseEventArgs e)
         {
             Mouse.OverrideCursor = Cursors.Arrow;
+        }
+
+        private void NumericAxis_VisibleRangeChanged(object sender, VisibleRangeChangedEventArgs e)
+        {
+            RealTimeLineChartViewModel vm = (RealTimeLineChartViewModel)this.DataContext;
+            if (vm == null)
+            {
+                return;
+            }
+            vm.XVisibleRangeStack = e.NewVisibleRange;
         }
 
         /// <summary>
@@ -133,6 +152,26 @@
                 this.sciChartSurface.InvalidateElement();
         }
 
+        private void sciChartSurface_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            RealTimeLineChartViewModel vm = (RealTimeLineChartViewModel)this.DataContext;
+            if (vm == null)
+            {
+                return;
+            }
+            if ((int)RealTimeLineChartViewModel.ChartModes.REVIEW == vm.ChartMode && e.ChangedButton == MouseButton.Left)
+            {
+                this.sciChartSurface.YAxis.VisibleRange.Min = vm.YDataRange.Min;
+                this.sciChartSurface.YAxis.VisibleRange.Max = vm.YDataRange.Max;
+
+                this.sciChartSurface.XAxis.VisibleRange.Min = vm.XDataRange.Min;
+                this.sciChartSurface.XAxis.VisibleRange.Max = vm.XDataRange.Max;
+
+                vm.XVisibleRangeChartMin = (double)this.sciChartSurface.XAxis.VisibleRange.Min;
+                vm.XVisibleRangeChartMax = (double)this.sciChartSurface.XAxis.VisibleRange.Max;
+            }
+        }
+
         /// <summary>
         /// Handles the Loaded event of the SciChartView control.
         /// </summary>
@@ -158,6 +197,7 @@
             var mode = AxisDragModes.Scale;
             yAxisRightDragmodifier.DragMode = mode;
             xAxisDragModifier.DragMode = mode;
+            vm.MainChartSurface = sciChartSurface;
         }
 
         /// <summary>
@@ -240,6 +280,14 @@
             e.Handled = true;
         }
 
+        private void stackX_DataRangeChanged(object sender, EventArgs e)
+        {
+            if ((sender as NumericAxis).IsVisible && (sender as NumericAxis).DataRange != null) //TODO: check if there is data in that axis in particular
+            {
+                stackedViewXScrollbar.Axis = sender as NumericAxis;
+            }
+        }
+
         private void Stack_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
             int increment = 10;
@@ -265,10 +313,10 @@
                 }
                 else if (typeof(ChannelViewModel) == ((ListBox)sender).Items[0].GetType())
                 {
-                    foreach (ChannelViewModel item in lbDataStack.Items)
-                    {
-                        item.Height = (0 > e.Delta) ? item.Height - increment : item.Height + increment;
-                    }
+                    //foreach (ChannelViewModel item in lbDataStack.Items)
+                    //{
+                    //    item.Height = (0 > e.Delta) ? item.Height - increment : item.Height + increment;
+                    //}
                 }
             }
         }
@@ -283,6 +331,7 @@
             Dispatcher.Invoke(new Action(() =>
             {
                 this.sciChartSurface.YAxis.VisibleRange.SetMinMax(minY, maxY);
+                this.dummySurface.YAxis.VisibleRange.SetMinMax(minY, maxY);
             }));
         }
 
@@ -300,16 +349,9 @@
         /// <param name="isScrollbarEnabled">if set to <c>true</c> [is scrollbar enabled].</param>
         void vm_EventScrollbar(bool isScrollbarEnabled)
         {
-            if (isScrollbarEnabled)
-            {
-                yAxis.Scrollbar = new SciChartScrollbar() { Width = 20, Style = (Style)this.MainGrid.Resources["ScrollbarStyle"] };
-                xAxis.Scrollbar = new SciChartScrollbar() { Height = 20, Style = (Style)this.MainGrid.Resources["ScrollbarStyle"] };
-            }
-            else
-            {
-                yAxis.Scrollbar = null;
-                xAxis.Scrollbar = null;
-            }
+            scichartMainXScrollbar.Visibility = isScrollbarEnabled ? Visibility.Visible : Visibility.Collapsed;
+            scichartMainYScrollbar.Visibility = isScrollbarEnabled ? Visibility.Visible : Visibility.Collapsed;
+            dummySurface.Visibility = isScrollbarEnabled ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void Vm_UpdateRenderPriority(RenderPriority renderPriority)

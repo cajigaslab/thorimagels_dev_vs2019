@@ -322,6 +322,18 @@ long TiffData::RemoveScan(uint32_t scan_id)
 	return rewriteOMEHeader();
 }
 
+long TiffData::AdjustScanT(uint32_t t_count)
+{
+	for (map<uint8_t, Scan*>::iterator scanit = scans.begin(); scanit != scans.end(); scanit++)
+	{
+		for (const auto& regionit : scanit->second->Regions)
+		{
+			regionit.second->SizeT = t_count;
+		}
+	}
+	return rewriteOMEHeader();
+}
+
 long TiffData::SetField(uint32_t tag, uint32_t v)
 {
 	switch (tag)

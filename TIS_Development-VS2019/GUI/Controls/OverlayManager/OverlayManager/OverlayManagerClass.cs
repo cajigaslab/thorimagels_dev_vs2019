@@ -12,6 +12,7 @@
     using System.Runtime.Serialization.Formatters.Binary;
     using System.Security.Cryptography;
     using System.Text;
+    using System.Text.RegularExpressions;
     using System.Windows;
     using System.Windows.Controls;
     using System.Windows.Documents;
@@ -31,6 +32,16 @@
         #region Fields
 
         public static Byte ATTENUATE_VALUE = (Byte)(Byte.MaxValue / 2);
+        public static Dictionary<string, Type> ROITypeDictionary = new Dictionary<string, Type>()
+        {
+        {"RECTANGLE", typeof(ROIRect)},
+        {"CROSSHAIR", typeof(ROICrosshair)},
+        {"ELLIPSE", typeof(ROIEllipse)},
+        {"POLYGON", typeof(ROIPoly)},
+        {"POLYLINE", typeof(Polyline)},
+        {"LINE", typeof(Line)},
+        {"MIXED", null}
+        };
 
         //save RGB in int32 in order: [A-B-G-R]
         //byte sections will be used in all necessary cases:
@@ -74,10 +85,13 @@
         private Polygon _selectedPolygon;
         private bool _showLineLength = false;
         private bool _showPolylineLength = false;
+        private bool _simulatorMode = false;
+        private bool _skipRedrawCenter = false;
         private double _umPerPixel;
         private bool _visible = true;
         private int _wavelengthNM = 0;
-        private double _zRefMM = 0;
+        private double _zRefMM = 0.0;
+        private double _zUM = 0.0;
 
         #endregion Fields
 
@@ -255,6 +269,23 @@
             set { _saveEveryChange = value; }
         }
 
+        /// <summary>
+        /// True to ask overlay manager only work with given properties instead of hardware MVMs
+        /// </summary>
+        public bool SimulatorMode
+        {
+            get { return _simulatorMode; }
+            set { _simulatorMode = value; }
+        }
+
+        // Define sub pattern ID is starting from zero;
+        // Draw first with zeroth sub ID, no need to calculate zeroth pattern.
+        public bool SkipRedrawCenter
+        {
+            get { return _skipRedrawCenter; }
+            set { _skipRedrawCenter = value; }
+        }
+
         public double UmPerPixel
         {
             get
@@ -279,6 +310,12 @@
         {
             get { return _zRefMM; }
             set { _zRefMM = value; }
+        }
+
+        public double ZUM
+        {
+            get { return _simulatorMode ? _zUM : (double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0.0] * (double)Constants.UM_TO_MM; }
+            set { _zUM = value; }
         }
 
         #endregion Properties
@@ -323,6 +360,33 @@
             {
                 ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, "LoadXamlROIs exception " + ex.Message);
                 return null;
+            }
+        }
+
+        //At the present only adds a corner to a Polygon ROI or Polyline ROI
+        public void AddPointToObject(ref Canvas canvas, Point pt)
+        {
+            if (false == _isObjectComplete && true == _isObjectCreated)
+            {
+                if (_activeType == typeof(ROIPoly))
+                {
+                    if (false == ((ROIPoly)_roiList[_roiList.Count - 1]).Closed)
+                    {
+                        _selectedPolygon.Points.Add(pt);
+                        ((ROIPoly)_roiList[_roiList.Count - 1]).Points.Add(pt);
+                        canvas.Children.Add(GetCornerEllipse(pt));
+
+                    }
+                }
+                else if (_activeType == typeof(Polyline))
+                {
+                    ((Polyline)_roiList[_roiList.Count - 1]).Points.Add(pt);
+                    canvas.Children.Add(GetCornerEllipse(pt));
+                    if (true == _showPolylineLength)
+                    {
+                        UpdateGeometryAdorner(_roiList.Last());
+                    }
+                }
             }
         }
 
@@ -758,10 +822,82 @@
             return target;
         }
 
+        public void CloseObject(ref Canvas canvas, Point pt)
+        {
+            if (false == _isObjectComplete && true == _isObjectCreated)
+            {
+                if (_activeType == typeof(ROIPoly))
+                {
+                    if (((ROIPoly)_roiList[_roiList.Count - 1]).Closed == false && 3 < ((ROIPoly)_roiList[_roiList.Count - 1]).Points.Count)
+                    {
+                        try
+                        {
+                            int points = ((ROIPoly)_roiList[_roiList.Count - 1]).Points.Count;
+                            for (int i = 0; i < points; i++)
+                            {
+                                canvas.Children.RemoveAt(canvas.Children.Count - 1);
+                            }
+                            canvas.Children.Remove(_selectedPolygon);
+
+                            ((ROIPoly)_roiList[_roiList.Count - 1]).Points.RemoveAt(points - 1);
+
+                            ((ROIPoly)_roiList[_roiList.Count - 1]).Closed = true;
+                            ObjectComplete(_roiList.Count - 1);
+                            _roiCount++;
+
+                            if (null != UpdatingObjectEvent) UpdatingObjectEvent(false); //New objects can be created at this point
+
+                            //add index adorner:
+                            AddIndexToROI(_roiList[_roiList.Count - 1]);
+
+                            InitROIPoly(ref canvas);
+                        }
+                        catch (Exception e)
+                        {
+                            e.ToString();
+                        }
+                    }
+                }
+                else if (_activeType == typeof(Polyline) && 2 < ((Polyline)_roiList[_roiList.Count - 1]).Points.Count)
+                {
+                    int points = ((Polyline)_roiList[_roiList.Count - 1]).Points.Count;
+                    for (int i = 0; i < points; i++)
+                    {
+                        canvas.Children.RemoveAt(canvas.Children.Count - 1);
+                    }
+
+                    ((Polyline)_roiList[_roiList.Count - 1]).Points.RemoveAt(points - 1);
+
+                    ObjectComplete(_roiList.Count - 1);
+                    _roiCount++;
+
+                    if (null != UpdatingObjectEvent) UpdatingObjectEvent(false); //New objects can be created at this point
+
+                    //add index adorner:
+                    AddIndexToROI(_roiList[_roiList.Count - 1]);
+
+                    InitROIPolyline(ref canvas);
+                }
+            }
+        }
+
         public void CreateROICenter(ref Canvas canvas)
         {
-            Point pt = (0 >= _roiList.Count) ? new Point(0, 0) :
-                (typeof(ROICrosshair) == _roiList[_roiList.Count - 1].GetType()) ? (_roiList[_roiList.Count - 1] as ROICrosshair).CenterPoint : (_roiList[_roiList.Count - 1] as ROIEllipse).ROICenter;
+            //return if sub ID is zero-based
+            if (SkipRedrawCenter)
+                return;
+
+            //return if not valid shapes
+            Point pt = new Point(0, 0);
+            if (0 < _roiList.Count)
+            {
+                if (typeof(ROICrosshair) == ROITypeDictionary.FirstOrDefault(x => x.Value == _roiList[_roiList.Count - 1].GetType()).Value)
+                    pt = (_roiList[_roiList.Count - 1] as ROICrosshair).CenterPoint;
+                else if (typeof(ROIEllipse) == ROITypeDictionary.FirstOrDefault(x => x.Value == _roiList[_roiList.Count - 1].GetType()).Value)
+                    pt = (_roiList[_roiList.Count - 1] as ROIEllipse).ROICenter;
+                else
+                    return;
+            }
 
             //return if not in NOSTATS mode or already created:
             if (Mode.PATTERN_NOSTATS != _currentMode)
@@ -831,7 +967,10 @@
             _activeType = shape;
             CreateObject(ref canvas, startPt);
             ResizeObject(ref canvas, endPt, false);
-            ObjectComplete(_roiList.Count - 1);
+
+            //user must close object later after adding points to object
+            if (typeof(ROIPoly) != shape && typeof(Polyline) != shape)
+                ObjectComplete(_roiList.Count - 1);
         }
 
         public void DefaultProperties(Mode mode)
@@ -1086,16 +1225,18 @@
         /// </summary>
         /// <param name="mode"></param>
         /// <param name="patternID"></param>
+        /// <param name="wavelengthNM"></param>
         /// <returns></returns>
-        public List<Shape> GetModeROIs(Mode mode, int patternID = -1, int wavelengthNM = -1)
+        public List<Shape> GetModeROIs(Mode mode, int patternID = -1, int wavelengthNM = -1, int subID = -1)
         {
             List<Shape> roiList = new List<Shape>();
 
             for (int i = 0; i < _roiList.Count; i++)
             {
                 if (mode == (Mode)(GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR)) &&
-                    (0 < patternID && patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID]) &&
-                    (0 < wavelengthNM && wavelengthNM == ((int[])_roiList[i].Tag)[(int)Tag.WAVELENGTH_NM]))
+                    (0 > patternID || patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID]) &&
+                    (0 > wavelengthNM || wavelengthNM == ((int[])_roiList[i].Tag)[(int)Tag.WAVELENGTH_NM]) &&
+                    (0 > subID || subID == ((int[])_roiList[i].Tag)[(int)Tag.SUB_PATTERN_ID]))
                 {
                     roiList.Add(_roiList[i]);
                 }
@@ -1190,29 +1331,59 @@
             return centers;
         }
 
-        public int GetPatternROICount()
-        {
-            int count = 0;
-            for (int i = 0; i < _roiList.Count; i++)
-            {
-                if (_patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID])
-                {
-                    count++;
-                }
-            }
-
-            return count;
-        }
-
-        public Dictionary<double, List<Shape>> GetPatternZROIs(int patternID)
+        /// <summary>
+        /// Get patterns with z[um] as key, all if any attribute is not specified
+        /// </summary>
+        /// <param name="mode"></param>
+        /// <param name="patternID"></param>
+        /// <param name="wavelengthNM"></param>
+        /// <param name="subID"></param>
+        /// <returns></returns>
+        public Dictionary<double, List<Shape>> GetPatternZROIs(int mode = -1, int patternID = -1, int wavelengthNM = -1, string subIDstr = "> 0")
         {
             Dictionary<double, List<Shape>> zShapes = new Dictionary<double, List<Shape>>();
-            double zUM;
+            double zUM = 0.0;
+            int subID = 0;
+            int[] limit = { 0, Int32.MaxValue };
+
+            //parse subIDstr for condition (< or >), expected one side only:
+            if (!Int32.TryParse(subIDstr, out subID))
+            {
+                Match oMatch = Regex.Match(subIDstr, @"\s*([<>=]+)\s*(\d+)\s*?");
+                if (oMatch.Success)
+                {
+                    int lVal = Convert.ToInt32(oMatch.Groups[2].Value);
+                    switch (oMatch.Groups[1].Value)
+                    {
+                        case "<":
+                            limit[1] = Math.Max(0, lVal - 1);
+                            break;
+                        case "<=":
+                        case "=<":
+                            limit[1] = Math.Max(0, lVal);
+                            break;
+                        case ">":
+                            limit[0] = lVal + 1;
+                            break;
+                        case ">=":
+                        case "=>":
+                            limit[0] = lVal;
+                            break;
+                    }
+                }
+            }
+            else
+            {
+                limit[0] = limit[1] = subID;
+            }
+
             for (int i = 0; i < _roiList.Count; i++)
             {
-                //avoid patternID == 0 for Mode.STATSONLY and SUB_PATTERN_ID == 0 for pattern center
-                if (0 < patternID && patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID] &&
-                    0 != ((int[])_roiList[i].Tag)[(int)Tag.SUB_PATTERN_ID])
+                if (0 > mode || (Mode)mode == (Mode)(GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR)) &&
+                    //avoid patternID == 0 for Mode.STATSONLY and SUB_PATTERN_ID == 0 for pattern center
+                    (0 > patternID || patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID]) &&
+                    (0 > wavelengthNM || wavelengthNM == ((int[])_roiList[i].Tag)[(int)Tag.WAVELENGTH_NM]) &&
+                    (limit[0] <= ((int[])_roiList[i].Tag)[(int)Tag.SUB_PATTERN_ID] && limit[1] >= ((int[])_roiList[i].Tag)[(int)Tag.SUB_PATTERN_ID]))
                 {
                     if (Double.TryParse(((int[])_roiList[i].Tag)[(int)Tag.Z_UM_INT].ToString() + "." + ((int[])_roiList[i].Tag)[(int)Tag.Z_UM_DEC].ToString(), out zUM))
                     {
@@ -1517,9 +1688,7 @@
                             {
                                 if (10 <= oldTag.Length)
                                 {
-                                    bool setVal = (1 == oldTag[9]) ? true : false;
-                                    newTag = SetTagBit(newTag, Tag.FLAGS, Flag.GEOMETRY_ADONERS, setVal);
-                                    if ((true == GetTagBit(newTag, Tag.FLAGS, Flag.GEOMETRY_ADONERS)) && (true == canvas.IsVisible))
+                                    if ((_showLineLength == true) && (true == canvas.IsVisible))
                                     {
                                         AddGeometryToROI(_roiList[i]);
                                     }
@@ -2148,10 +2317,10 @@
                         }
                         break;
                     case Mode.PATTERN_NOSTATS:
-                        //determine range for roi center
+                        //determine range for roi center, skip zeroth if not auto draw center
                         if (_patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID])
                         {
-                            if (0 != ((int[])_roiList[i].Tag)[(int)Tag.SUB_PATTERN_ID])
+                            if (0 != ((int[])_roiList[i].Tag)[(int)Tag.SUB_PATTERN_ID] || SkipRedrawCenter)
                             {
                                 if (typeof(ROIEllipse) == _roiList[i].GetType())
                                 {
@@ -2192,8 +2361,8 @@
                         break;
                 }
             }
-            //replace center shape
-            if (top < Int32.MaxValue)
+            //replace center shape when necessary
+            if (top < Int32.MaxValue && !SkipRedrawCenter)
             {
                 Shape roiRef = null;
                 //locate SUB_PATTERN_ID == 1 for reference:
@@ -2325,33 +2494,6 @@
             }
         }
 
-        //At the present only adds a corner to a Polygon ROI or Polyline ROI
-        private void AddPointToObject(ref Canvas canvas, Point pt)
-        {
-            if (false == _isObjectComplete && true == _isObjectCreated)
-            {
-                if (_activeType == typeof(ROIPoly))
-                {
-                    if (false == ((ROIPoly)_roiList[_roiList.Count - 1]).Closed)
-                    {
-                        _selectedPolygon.Points.Add(pt);
-                        ((ROIPoly)_roiList[_roiList.Count - 1]).Points.Add(pt);
-                        canvas.Children.Add(GetCornerEllipse(pt));
-
-                    }
-                }
-                else if (_activeType == typeof(Polyline))
-                {
-                    ((Polyline)_roiList[_roiList.Count - 1]).Points.Add(pt);
-                    canvas.Children.Add(GetCornerEllipse(pt));
-                    if (true == _showPolylineLength)
-                    {
-                        UpdateGeometryAdorner(_roiList.Last());
-                    }
-                }
-            }
-        }
-
         private void BleachCreateROIs(string pathandname, ROICapsule capsule)
         {
             using (FileStream f = new FileStream(pathandname, FileMode.Create, FileAccess.Write))
@@ -2456,65 +2598,6 @@
             return true;
         }
 
-        private void CloseObject(ref Canvas canvas, Point pt)
-        {
-            if (false == _isObjectComplete && true == _isObjectCreated)
-            {
-                if (_activeType == typeof(ROIPoly))
-                {
-                    if (((ROIPoly)_roiList[_roiList.Count - 1]).Closed == false && 3 < ((ROIPoly)_roiList[_roiList.Count - 1]).Points.Count)
-                    {
-                        try
-                        {
-                            int points = ((ROIPoly)_roiList[_roiList.Count - 1]).Points.Count;
-                            for (int i = 0; i < points; i++)
-                            {
-                                canvas.Children.RemoveAt(canvas.Children.Count - 1);
-                            }
-                            canvas.Children.Remove(_selectedPolygon);
-
-                            ((ROIPoly)_roiList[_roiList.Count - 1]).Points.RemoveAt(points - 1);
-
-                            ((ROIPoly)_roiList[_roiList.Count - 1]).Closed = true;
-                            ObjectComplete(_roiList.Count - 1);
-                            _roiCount++;
-
-                            if (null != UpdatingObjectEvent) UpdatingObjectEvent(false); //New objects can be created at this point
-
-                            //add index adorner:
-                            AddIndexToROI(_roiList[_roiList.Count - 1]);
-
-                            InitROIPoly(ref canvas);
-                        }
-                        catch (Exception e)
-                        {
-                            e.ToString();
-                        }
-                    }
-                }
-                else if (_activeType == typeof(Polyline) && 2 < ((Polyline)_roiList[_roiList.Count - 1]).Points.Count)
-                {
-                    int points = ((Polyline)_roiList[_roiList.Count - 1]).Points.Count;
-                    for (int i = 0; i < points; i++)
-                    {
-                        canvas.Children.RemoveAt(canvas.Children.Count - 1);
-                    }
-
-                    ((Polyline)_roiList[_roiList.Count - 1]).Points.RemoveAt(points - 1);
-
-                    ObjectComplete(_roiList.Count - 1);
-                    _roiCount++;
-
-                    if (null != UpdatingObjectEvent) UpdatingObjectEvent(false); //New objects can be created at this point
-
-                    //add index adorner:
-                    AddIndexToROI(_roiList[_roiList.Count - 1]);
-
-                    InitROIPolyline(ref canvas);
-                }
-            }
-        }
-
         private void CreateMask()
         {
             List<Shape> roiList = GetStatsROI();
@@ -2543,7 +2626,7 @@
                 ulong wkrIndex = _maskIndex;
                 if (mask.Length > 0)
                 {
-                    if (mskFile.CompareTo("") != 0)
+                    if (mskFile.CompareTo("") != 0 && File.Exists(mskFile))
                     {
                         using (var stream = File.OpenRead(mskFile))
                         {
@@ -3065,7 +3148,7 @@
             int[] newTag;
             Version ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
             int versionInt = ver.Major * 10 + ver.Minor;
-            string[] zUM = (((double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0.0] - ZRefMM) * (double)Constants.UM_TO_MM).ToString("F3", CultureInfo.InvariantCulture).Split('.');
+            string[] zUMsplit = (ZUM - (ZRefMM * (double)Constants.UM_TO_MM)).ToString("F3", CultureInfo.InvariantCulture).Split('.');
 
             if (null != refTag)
             {
@@ -3141,8 +3224,8 @@
             newTag[(int)Tag.SUB_PATTERN_ID] = 0;                                                        // Sub-Pattern ROI Index, 1-based if used, 0: center
             newTag[(int)Tag.RGB] = _colorRGB;                                                           // RGB for brush color, R starts from lower bits.
             newTag[(int)Tag.WAVELENGTH_NM] = _wavelengthNM;                                             // Wavelength of light in [nm]
-            newTag[(int)Tag.Z_UM_INT] = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ? int.Parse(zUM[0]) : 0;    // z integer value in [um]
-            newTag[(int)Tag.Z_UM_DEC] = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ? int.Parse(zUM[1]) : 0;    // z decimal value in [um]
+            newTag[(int)Tag.Z_UM_INT] = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ? int.Parse(zUMsplit[0]) : 0;    // z integer value in [um]
+            newTag[(int)Tag.Z_UM_DEC] = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ? int.Parse(zUMsplit[1]) : 0;    // z decimal value in [um]
             return newTag;
         }
 
@@ -3289,7 +3372,7 @@
         /// <returns></returns>
         private int GetCurrentSubPatternCount(ref Shape roi)
         {
-            int subPatternCount = 0;
+            int subPatternCount = SkipRedrawCenter ? -1 : 0;
             bool found = false;
             for (int i = 0; i < _roiList.Count; i++)
             {

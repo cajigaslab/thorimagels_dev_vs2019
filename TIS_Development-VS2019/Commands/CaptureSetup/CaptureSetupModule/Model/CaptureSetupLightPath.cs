@@ -37,8 +37,11 @@
             get
             {
                 int val = -1;
-                GetDeviceParamInt((int)SelectedHardware.SELECTED_LIGHTPATH, (int)IDevice.Params.PARAM_LIGHTPATH_INVERTED_POS, ref val);
-                return val;
+                if (1 == GetDeviceParamInt((int)SelectedHardware.SELECTED_LIGHTPATH, (int)IDevice.Params.PARAM_LIGHTPATH_INVERTED_POS, ref val))
+                {
+                    return val;
+                }
+                return -1;
             }
             set
             {

@@ -392,3 +392,7 @@ mkdir "..\..\Hardware\Devices\TopticaiChrome\x64\Release"
 copy .\x64\Release\TopticaiChrome.dll ..\..\Hardware\Devices\TopticaiChrome\x64\Release
 copy .\x64\Release\TopticaiChrome.lib ..\..\Hardware\Devices\TopticaiChrome\x64\Release
 copy .\x64\Release\TopticaiChrome.pdb ..\..\Hardware\Devices\TopticaiChrome\x64\Release
+mkdir "..\..\Common\ConvertUtilities\x64\Release"
+copy .\x64\Release\ClassicTiffConverter.dll ..\..\Common\ConvertUtilities\x64\Release
+copy .\x64\Release\ClassicTiffConverter.lib ..\..\Common\ConvertUtilities\x64\Release
+copy .\x64\Release\ClassicTiffConverter.pdb ..\..\Common\ConvertUtilities\x64\Release

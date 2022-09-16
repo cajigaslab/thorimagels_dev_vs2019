@@ -686,8 +686,8 @@ namespace GeometryUtilities
                                              System.Drawing.Point[] dpts = new System.Drawing.Point[((Polyline)shape).Points.Count];
                                              for (int i = 0; i < ((Polyline)shape).Points.Count; i++)
                                                  dpts[i] = new System.Drawing.Point(Convert.ToInt32(((Polyline)shape).Points[i].X), Convert.ToInt32(((Polyline)shape).Points[i].Y));
-
-                                             gr.DrawLines(new System.Drawing.Pen(new System.Drawing.SolidBrush(System.Drawing.Color.White), 1), dpts);
+                                             if (1 < dpts.Length)
+                                                 gr.DrawLines(new System.Drawing.Pen(new System.Drawing.SolidBrush(System.Drawing.Color.White), 1), dpts);
                                          }
                                      }));
                                     break;

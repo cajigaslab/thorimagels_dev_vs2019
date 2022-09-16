@@ -202,6 +202,8 @@ long HologramGen::CalculateCoeffs(const float* pSrcPoints, const float* pTgtPoin
 		return CalculateAffineCoeffs(pSrcPoints, pTgtPoints, size, coeffs);
 	case GeoFittingAlg::PROJECTIVE:
 		return CalculateProjectCoeffs(pSrcPoints, pTgtPoints, size, coeffs);
+	case GeoFittingAlg::HOMOGENEOUS:
+		return CalculateHomogeneousCoeffs(pSrcPoints, pTgtPoints, size, coeffs);
 	default:
 		break;
 	}
@@ -254,6 +256,15 @@ long HologramGen::SetCoeffs(long algorithm, double* affCoeffs)
 		if ((NULL != _coeffs) && (NULL != affCoeffs))
 		{
 			memcpy_s(_coeffs, PROJECT_COEFF_CNT * sizeof(double), affCoeffs, PROJECT_COEFF_CNT * sizeof(double));
+		}
+		break;
+	case GeoFittingAlg::HOMOGENEOUS:
+		_fittingMethod = GeoFittingAlg::HOMOGENEOUS;
+
+		_coeffs = (double*)realloc(_coeffs, HOMOGENEOUS_COEFF_CNT * sizeof(double));
+		if ((NULL != _coeffs) && (NULL != affCoeffs))
+		{
+			memcpy_s(_coeffs, HOMOGENEOUS_COEFF_CNT * sizeof(double), affCoeffs, HOMOGENEOUS_COEFF_CNT * sizeof(double));
 		}
 		break;
 	default:
@@ -322,6 +333,9 @@ long HologramGen::Generate3DHologram(void* pMemStruct, int zCount)
 	//each thread has one set of intensity and phase
 	for (int i = 0; i < threadCount; i++)
 	{
+		//apply fitting on individual z frame:
+		HomogeneousTransform(pMem[i].GetMem(), pMem[i].GetKz());
+
 		Ipp32f* tmpI = ippsDll->ippsMalloc_32f(_mtrxLength);
 		GetImageIntensity(pMem[i].GetMem(), tmpI);	//prepare array of z intensities
 		FilterGauss(tmpI, 3, 1);
@@ -605,6 +619,42 @@ long HologramGen::ProjectTransform(float* pImgDst)
 	return ret;
 }
 
+//projective transformation with preset coefficients: {kx = C00*x'+C01*y'+C02*z'+C03, ky = C10*x'+C11*y'+C12*z'+C13, kz = C20*x'+C21*y'+C22*z'+C23, k = C30*x'+C31*y'+C32*z'+C33 }
+long HologramGen::HomogeneousTransform(float* pImgDst, float kzValue)
+{
+	long ret = TRUE;
+
+	if ((NULL == _coeffs))
+		return FALSE;
+
+	int stepBytes;
+	Ipp32f* pAff = ippiDll->ippiMalloc_32f_C1(_mtrxWidth, _mtrxHeight, &stepBytes);
+	ippsDll->ippsSet_32f(0.0, pAff, _mtrxLength);
+
+	float* pSrc = pImgDst;
+	float* pDst = pAff;
+	for (int i = 0; i < _mtrxHeight; i++)		//i -> y coordinate
+	{
+		for (int j = 0; j < _mtrxWidth; j++)	//j -> x coordinate
+		{
+			if (0 < *pSrc)
+			{
+				//vertical opposite origins between image and affine (_mtrxHeight-i):
+				double k = _coeffs[12] * j + _coeffs[13] * (_mtrxHeight - i) + _coeffs[14] * kzValue + _coeffs[15];
+				long x = static_cast<long>(floor(((_coeffs[0] * j + _coeffs[1] * (_mtrxHeight - i) + _coeffs[2] * kzValue + _coeffs[3]) / k) + 0.5));
+				long y = static_cast<long>(floor(((_coeffs[4] * j + _coeffs[5] * (_mtrxHeight - i) + _coeffs[6] * kzValue + _coeffs[7]) / k) + 0.5));
+				long xDst = max(0, min(_mtrxHeight, x));
+				long yDst = max(0, min(_mtrxWidth, y));
+				*(pDst + xDst * _mtrxHeight + yDst) = *pSrc;
+			}
+			pSrc++;
+		}
+	}
+	memcpy_s(pImgDst, _mtrxLength * sizeof(float), pAff, _mtrxLength * sizeof(float));
+	ippiDll->ippiFree(pAff);
+	return ret;
+}
+
 //affine coefficients out of source(x1,y1,x2,y2...) to target(x1,y1,x2,y2...): Coeffs = (Src^-1)*Tgt
 long HologramGen::CalculateAffineCoeffs(const float* pSrcPoints, const float* pTgtPoints, long size, double* affCoeffs)
 {
@@ -693,7 +743,7 @@ long HologramGen::CalculateAffineCoeffs(const float* pSrcPoints, const float* pT
 	return ret;
 }
 
-//projective coefficients out of source(x1,y1,x2,y2...) to target(x1,y1,x2,y2...): Coeffs = (Src^-1)*Tgt
+//projective coefficients out of source(x1,y1,x2,y2...) to target(u1,v1,u2,v2...): Coeffs = (Src^-1)*Tgt
 long HologramGen::CalculateProjectCoeffs(const float* pSrcPoints, const float* pTgtPoints, long size, double* projCoeffs)
 {
 	long ret = TRUE;
@@ -782,6 +832,143 @@ long HologramGen::CalculateProjectCoeffs(const float* pSrcPoints, const float* p
 	}
 	ippsDll->ippsFree(pSrc);
 	ippsDll->ippsFree(pDeComp);
+	ippsDll->ippsFree(pBuf);
+	ippsDll->ippsFree(pAff);
+	return ret;
+}
+
+//homogeneous coefficients out of source(x1,y1,z1,x2,y2,z2,...) to target(u1,v1,w1,u2,v2,w2...): Coeffs = (Src^-1)*Tgt
+long HologramGen::CalculateHomogeneousCoeffs(const float* pSrcPoints, const float* pTgtPoints, long size, double* homoCoeffs)
+{
+	long ret = TRUE;
+	const int DEFAULT_DIM = 3;
+	const int DEFAULT_MTXSIDE = 4;
+	int dimension = DEFAULT_DIM;
+	int mtxSide = DEFAULT_MTXSIDE;
+
+	//image origin is vertically opposite to projective origin,
+	//separate 2d to avoid ipp error:
+	Ipp32f* p1 = (Ipp32f*)(pSrcPoints + 1);
+	Ipp32f* p2 = (Ipp32f*)(pTgtPoints + 1);
+	Ipp32f zVal = *(pSrcPoints + 2);
+	bool is3D = false;
+	for (int i = 0; i < static_cast<int>(size / DEFAULT_DIM); i++)	//iterate # of points
+	{
+		*(p1) = _mtrxHeight - *(pSrcPoints + (DEFAULT_DIM * i) + 1);
+		is3D = (zVal == *(p1 + 1)) ? is3D : true;					//2D if z are the same
+		p1 += DEFAULT_DIM;
+		*(p2) = _mtrxHeight - *(pTgtPoints + (DEFAULT_DIM * i) + 1);
+		p2 += DEFAULT_DIM;
+	}
+	dimension = is3D ? dimension : 2;
+	mtxSide = is3D ? mtxSide : 3;
+
+	int unitStride = sizeof(Ipp32f);
+	int strideX = mtxSide * sizeof(Ipp32f);
+	int strideY = size / DEFAULT_DIM;
+	int mtrxSize = strideY * mtxSide;
+	Ipp32f* pSrc = ippsDll->ippsMalloc_32f(mtrxSize);
+	ippsDll->ippsZero_32f(pSrc, mtrxSize);
+	Ipp32f* pDeComp = ippsDll->ippsMalloc_32f(mtrxSize);
+
+	Ipp32f* pTgt = ippsDll->ippsMalloc_32f(strideY);
+	Ipp32f* pBuf = ippsDll->ippsMalloc_32f(strideY);
+	Ipp32f* pAff = ippsDll->ippsMalloc_32f(pow(mtxSide, 2));
+	//******************************************************//
+	//Target:[u1		Source:[x1 y1 z1 1		matrix:[h11	//
+	//        u2			    x2 y2 z2 1              h12	//
+	//       ...	= 				...		X			h13	//
+	//        un				xn yn zn 1]             h14]//
+	//Target:[v1		Source:[x1 y1 z1 1		matrix:[h21 //
+	//        v2			    x2 y2 z2 1              h22 //
+	//       ...	= 				...		X			h23 //
+	//        vn				xn yn zn 1]             h24]//
+	//Target:[w1		Source:[x1 y1 z1 1		matrix:[h31 //
+	//        w2			    x2 y2 z2 1              h32 //
+	//       ...	= 				...		X			h33 //
+	//        wn				xn yn zn 1]             h34]//
+	//Target:[1		Source:[x1 y1 z1 1			matrix:[h41 //
+	//        1			    x2 y2 z2 1				    h42 //
+	//       ...	= 				...		X			h43 //
+	//        1				xn yn zn 1]					h44]//
+	//******************************************************//
+	for (int i = 0; i < mtxSide; i++)
+	{
+		Ipp32f* pS = (Ipp32f*)pSrcPoints;
+		Ipp32f* pTf = (Ipp32f*)pTgtPoints;
+		Ipp32f* pTt = pTgt;
+		Ipp32f* pD = (Ipp32f*)pSrc;
+		for (int j = 0; j < strideY; j++)
+		{
+			*(pD) = *(pS);
+			*(pD + 1) = *(pS + 1);
+			if (is3D)
+			{
+				*(pD + 2) = *(pS + 2);
+				*(pD + 3) = (Ipp32f)1.0;
+			}
+			else
+			{
+				*(pD + 2) = (Ipp32f)1.0;
+			}
+			pD += mtxSide;
+			pS += DEFAULT_DIM;
+
+			*(pTt) = (mtxSide - 1 == i) ? (Ipp32f)1.0 : *(pTf + i);
+			pTf += DEFAULT_DIM;
+			pTt++;
+		}
+
+		//calculate coefficients: (swap of unitStride and strideX will cause error: ippStsDivByZeroErr)
+		IppStatus istatus = ippmDll->ippmQRDecomp_m_32f(pSrc, strideX, unitStride, pBuf, pDeComp, strideX, unitStride, mtxSide, strideY);
+		if (ippStsNoErr != istatus)
+		{
+			StringCbPrintfW(errMsg, MSG_LENGTH, L"HologramGenerator CalculateAffineCoeffs failed: ippmQRDecomp_m_32f, error#: %d", istatus);
+			LogMessage(ERROR_EVENT);
+			ret = FALSE;
+		}
+		istatus = ippmDll->ippmQRBackSubst_mva_32f(pDeComp, strideX, unitStride, pBuf, pTgt, unitStride, unitStride, (pAff + i * mtxSide), unitStride, unitStride, mtxSide, strideY, 1);
+		if (ippStsNoErr != istatus)
+		{
+			StringCbPrintfW(errMsg, MSG_LENGTH, L"HologramGenerator CalculateAffineCoeffs failed: ippmQRBackSubst_mva_32f, error#: %d", istatus);
+			LogMessage(ERROR_EVENT);
+			ret = FALSE;
+		}
+	}
+
+	//copy affine coefficients:
+	if (TRUE == ret)
+	{
+		double* pAffOut = homoCoeffs;
+		Ipp32f* pResl = pAff;
+		if (is3D)
+		{
+			for (int i = 0; i < HOMOGENEOUS_COEFF_CNT; i++)
+			{
+				*pAffOut = *pResl;
+				pAffOut++;
+				pResl++;
+			}
+		}
+		else
+		{
+			//keep 3rd row/column as a unit:
+			memset((void*)pAffOut, 0x0, HOMOGENEOUS_COEFF_CNT * sizeof(double));
+			*(pAffOut) = *(pResl);
+			*(pAffOut + 1) = *(pResl + 1);
+			*(pAffOut + 3) = *(pResl + 2);
+			*(pAffOut + 4) = *(pResl + 3);
+			*(pAffOut + 5) = *(pResl + 4);
+			*(pAffOut + 7) = *(pResl + 5);
+			*(pAffOut + 10) = (double)1.0;
+			*(pAffOut + 12) = *(pResl + 6);
+			*(pAffOut + 13) = *(pResl + 7);
+			*(pAffOut + 15) = *(pResl + 8);
+		}
+	}
+	ippsDll->ippsFree(pSrc);
+	ippsDll->ippsFree(pDeComp);
+	ippsDll->ippsFree(pTgt);
 	ippsDll->ippsFree(pBuf);
 	ippsDll->ippsFree(pAff);
 	return ret;

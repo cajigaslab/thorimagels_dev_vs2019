@@ -130,7 +130,7 @@
     </Link>
     <PostBuildEvent>
       <Command> if $(Configuration) == Debug  copy $(SolutionDir)$(Platform)\$(Configuration)\$(TargetFileName) ..\..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\Debug\Modules_Native
- if $(Configuration) == Debug  copy $(SolutionDir)\ThorSLMPDM512\DLL\*.* ..\..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\Debug\Modules_Native</Command>
+ if $(Configuration) == Debug  copy $(ProjectDir)DLL\*.* ..\..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\Debug\Modules_Native</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

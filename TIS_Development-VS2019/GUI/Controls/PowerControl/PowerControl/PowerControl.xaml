@@ -390,7 +390,9 @@
                             </StackPanel>
                             <StackPanel Orientation="Horizontal"
                                         Visibility="{Binding PockelsBlankingPhaseShiftPercentVisibility}">
-                                <Label Content="Blanking Phase Shift" />
+                                <Label Content="Blanking Phase Shift"
+                                       Width="110"
+                                       HorizontalContentAlignment="Right" />
                                 <TextBox Text="{Binding Path=PockelsBlankingPhaseShiftPercent,Mode=TwoWay, UpdateSourceTrigger=LostFocus,NotifyOnValidationError=True,ValidatesOnDataErrors=True}"
                                          Name="pockelsBlankingPhaseShiftPercentTxt"
                                          Valid:Validation.ValidationType="{x:Type System:Double}"
@@ -416,6 +418,37 @@
                                     </Button.Style>
                                 </Button>
                                 <Label Content="%" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Visibility="{Binding PockelsDelayVisibility}">
+                                <Label Content="Pockels Line Delay"
+                                       Width="110"
+                                       HorizontalContentAlignment="Right" />
+                                <TextBox Text="{Binding Path=PockelsDelayUS,Mode=TwoWay, UpdateSourceTrigger=LostFocus,NotifyOnValidationError=True,ValidatesOnDataErrors=True}"
+                                         Name="pockelsLineDelayTxt"
+                                         Valid:Validation.ValidationType="{x:Type System:Double}"
+                                         Valid:Validation.MinValue="-200"
+                                         Valid:Validation.MaxValue="200"
+                                         Valid:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                         Width="50" />
+                                <Button Width="25"
+                                        Height="25"
+                                        Content="&#x2713;">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility"
+                                                    Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=pockelsLineDelayTxt}"
+                                                             Value="True">
+                                                    <Setter Property="Visibility"
+                                                            Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <Label Content="µs" />
                             </StackPanel>
                         </StackPanel>
                     </Expander>

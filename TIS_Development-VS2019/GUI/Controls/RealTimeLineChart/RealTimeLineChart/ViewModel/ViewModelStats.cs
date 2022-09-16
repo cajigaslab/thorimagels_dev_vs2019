@@ -533,9 +533,28 @@
                 {
                     _isStackedDisplay = value;
                     OnPropertyChanged("IsStackedDisplay");
-                    OnPropertyChanged("XVisibleRangeChart");
-                    OnPropertyChanged("XVisibleRangeStack");
 
+                    for (int j = 0; j < _chartSeriesMetadata?.Count; j++)
+                    {
+                        if (!value)
+                        {
+                            Application.Current.Dispatcher.Invoke(new Action(() =>
+                            {
+                                _chartSeries[j].IsVisible = _channelViewModels[j].IsVisible;
+                                _channelViewModels[j].IsVisible = false;
+                            }));
+                        }
+                        else
+                        {
+                            Application.Current.Dispatcher.Invoke(new Action(() =>
+                            {
+                                _channelViewModels[j].IsVisible = _chartSeries[j].IsVisible;
+                                _chartSeries[j].IsVisible = false;
+                            }));
+                        }
+                    }
+
+                    EnableScrollbar(!_isStackedDisplay && (ChartModes.REVIEW == _chartMode));
                     //update measure cursor if on by hide-then-display,
                     //to avoid x cursors out of range in another panel:
                     if (IsMeasureCursorVisible)
@@ -545,27 +564,7 @@
                     }
                 }
 
-                if (_chartMode == ChartModes.REVIEW && _bwLoadDone)
-                {
-                    for (int j = 0; j < _chartSeriesMetadata?.Count; j++)
-                    {
-                        if (!IsStackedDisplay)
-                        {
-                            Application.Current.Dispatcher.Invoke(new Action(() =>
-                            {
-                                ChartSeries[j].DataSeries = _channelViewModels[j].ChannelSeries;
-                            }));
-                        }
-                        else
-                        {
-                            Application.Current.Dispatcher.Invoke(new Action(() =>
-                            {
-                                _channelViewModels[j].ChannelSeries = (IXyDataSeries<double, double>)ChartSeries[j].DataSeries;
-                            }));
-                        }
-                    }
-                    ZoomExtendChartSeries();
-                }
+                OnPropertyChanged("StackHorizontalDataScrollerVisibility");
             }
         }
 
@@ -628,6 +627,20 @@
                 _settingPath = value;
                 OnPropertyChanged("SettingPath");
                 ReloadProvider("REALTIME");
+            }
+        }
+
+        public Visibility StackHorizontalDataScrollerVisibility
+        {
+            get
+            {
+                if (_isStackedDisplay && ChartModes.REVIEW ==_chartMode &&
+                    _chartSeries?.Count > 0 && _chartSeries[0].DataSeries?.Count > 0)
+                {
+                    return Visibility.Visible;
+                }
+
+                return Visibility.Collapsed;
             }
         }
 

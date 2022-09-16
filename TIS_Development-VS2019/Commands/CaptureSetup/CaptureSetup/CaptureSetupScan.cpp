@@ -110,34 +110,14 @@ DllExportLiveImage CenterLSMScanners(long selectedCamera)
 			//enable LEDs
 			SetBFLampPosition(ENABLE_LEDS);
 
-			//Enable laser emission if analog mode is off
-			long laserAnalog = 0;
-			GetLaserAnalog(laserAnalog);
-			long laser1Enable = 0;
-			GetLaser1Enable(laser1Enable);
-			long laser2Enable = 0;
-			GetLaser2Enable(laser2Enable);
-			long laser3Enable = 0;
-			GetLaser3Enable(laser3Enable);
-			long laser4Enable = 0;
-			GetLaser4Enable(laser4Enable);
-			if (laserAnalog == false)
+			//Enable laser emission if TTL mode is off
+			long laserTTL = 0;
+			GetLaserTTL(laserTTL);
+			if (laserTTL == false)
 			{
 				SetLaser1Emission(ENABLE_EMISSION);
-			}
-
-			if (laserAnalog == false)
-			{
 				SetLaser2Emission(ENABLE_EMISSION);
-			}
-
-			if (laserAnalog == false)
-			{
 				SetLaser3Emission(ENABLE_EMISSION);
-			}
-
-			if (laserAnalog == false)
-			{
 				SetLaser4Emission(ENABLE_EMISSION);
 			}
 		}

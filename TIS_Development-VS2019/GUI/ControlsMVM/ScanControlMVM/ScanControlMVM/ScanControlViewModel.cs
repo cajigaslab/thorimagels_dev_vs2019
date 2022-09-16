@@ -40,7 +40,7 @@
         private ObservableCollection<ObservableCollection<string>> _bandwidthList = new ObservableCollection<ObservableCollection<string>>();
 
         //the order of the Bandwidth tags is important, it needs to match the order from DetectorBandwidths in SharedEnums.cs
-        private string[] _bandwidthTags = { "250 kHz", "2.5 MHz", "15 MHz", "30MHz", "80 MHz", "200MHz", "300 MHz" };
+        private string[] _bandwidthTags = { "250 kHz", "1 MHz", "2.5 MHz", "15 MHz", "30MHz", "80 MHz", "200MHz", "300 MHz" };
         private Dictionary<int, string> _bandwidthToStringMap = new Dictionary<int, string>();
         private Visibility _bipolarityVisibility = Visibility.Collapsed;
         ICommand _ChanDigOffsetMinusCommand;
@@ -48,6 +48,7 @@
         private Visibility _coarsePanelVisibility;
         private Visibility _digOffsetVisibility;
         private bool _dwellTimeSliderEnabled = true;
+        Visibility _fastOneWayImagingModeEnableVisibility = Visibility.Collapsed;
         ICommand _FlybackCyclesMinusCommand;
         ICommand _FlybackCyclesPlusCommand;
         ICommand _LSMAlignmentMinusCoarseCommand;
@@ -257,7 +258,6 @@
             }
         }
 
-        Visibility _fastOneWayImagingModeEnableVisibility = Visibility.Collapsed;
         public Visibility FastOneWayImagingModeEnableVisibility
         {
             get
@@ -270,6 +270,10 @@
                 if (_scanControlModel.LSMIsFastOneWayImagingModeEnableAvailable)
                 {
                     _fastOneWayImagingModeEnableVisibility = value;
+                }
+                else
+                {
+                    _fastOneWayImagingModeEnableVisibility = Visibility.Collapsed;
                 }
                 OnPropertyChanged("FastOneWayImagingModeEnableVisibility");
             }
@@ -943,58 +947,26 @@
             }
         }
 
-        //public ObservableCollection<string> PmtBandwidthSelected
-        //{
-        //    get
-        //    {
-        //        if (_bandwidthList.Count > 0)
-        //        {
-        //            _pmtBwSelected.Clear();
-        //            for (int i = 0; i < NUM_DETECTORS; i++)
-        //            {
-        //                if (Visibility.Visible == PmtBandwidthVisibility[i])
-        //                {
-        //                    _pmtBwSelected.Add(_bandwidthToStringMap[PMTBandwidth[i].Value]);
-        //                }
-        //                else
-        //                {
-        //                    _pmtBwSelected.Add(string.Empty);
-        //                }
-        //            }
-        //        }
-        //        return _pmtBwSelected;
-        //    }
-        //    set
-        //    {
-        //        _pmtBwSelected = value;
-        //        if (_pmtBwSelected.Count == NUM_DETECTORS)
-        //        {
-        //            for(int i = 0; i < NUM_DETECTORS; i++)
-        //            {
-        //                if(PMTBandwidth[i].Value != _stringToBandwidthMap[_pmtBwSelected[i]] && _bandwidthList[i].Contains(_pmtBwSelected[i]))
-        //                {
-        //                    PMTBandwidth[i].Value = _stringToBandwidthMap[_pmtBwSelected[i]];
-        //                }
-        //            }
-        //            OnPropertyChanged("PmtBandwidthSelected");
-        //        }
-        //    }
-        //}
         public string Pmt1BandwidthSelected
         {
             get
             {
-                if (_bandwidthList.Count > 0)
+                if (_bandwidthList.Count > 0 && null != PMTBandwidth[0])
                 {
-                    if (Visibility.Visible == PmtBandwidthVisibility[0])
+                    if (Visibility.Visible == PmtBandwidthVisibility[0] && _bandwidthToStringMap.ContainsKey(PMTBandwidth[0].Value))
                     {
                         _pmtBwSelected[0] = _bandwidthToStringMap[PMTBandwidth[0].Value];
+                        return _pmtBwSelected[0];
                     }
                 }
-                return _pmtBwSelected[0];
+                return string.Empty;
             }
             set
             {
+                if(null == value || null == PMTBandwidth[0])
+                {
+                    return;
+                }
                 _pmtBwSelected[0] = value;
                 if (PMTBandwidth[0].Value != _stringToBandwidthMap[_pmtBwSelected[0]] && _bandwidthList[0].Contains(_pmtBwSelected[0]))
                 {
@@ -1016,9 +988,9 @@
         {
             get
             {
-                if (_bandwidthList.Count > 0)
+                if (_bandwidthList.Count > 0 && null != PMTBandwidth[1])
                 {
-                    if (Visibility.Visible == PmtBandwidthVisibility[1])
+                    if (Visibility.Visible == PmtBandwidthVisibility[1] && _bandwidthToStringMap.ContainsKey(PMTBandwidth[1].Value))
                     {
                         _pmtBwSelected[1] = _bandwidthToStringMap[PMTBandwidth[1].Value];
                     }
@@ -1027,6 +999,10 @@
             }
             set
             {
+                if (null == value || null == PMTBandwidth[1])
+                {
+                    return;
+                }
                 _pmtBwSelected[1] = value;
                 if (PMTBandwidth[1].Value != _stringToBandwidthMap[_pmtBwSelected[1]] && _bandwidthList[1].Contains(_pmtBwSelected[1]))
                 {
@@ -1048,9 +1024,9 @@
         {
             get
             {
-                if (_bandwidthList.Count > 0)
+                if (_bandwidthList.Count > 0 && null != PMTBandwidth[2])
                 {
-                    if (Visibility.Visible == PmtBandwidthVisibility[2])
+                    if (Visibility.Visible == PmtBandwidthVisibility[2] && _bandwidthToStringMap.ContainsKey(PMTBandwidth[2].Value))
                     {
                         _pmtBwSelected[2] = _bandwidthToStringMap[PMTBandwidth[2].Value];
                     }
@@ -1059,6 +1035,10 @@
             }
             set
             {
+                if (null == value || null == PMTBandwidth[2])
+                {
+                    return;
+                }
                 _pmtBwSelected[2] = value;
                 if (PMTBandwidth[2].Value != _stringToBandwidthMap[_pmtBwSelected[2]] && _bandwidthList[2].Contains(_pmtBwSelected[2]))
                 {
@@ -1080,9 +1060,9 @@
         {
             get
             {
-                if (_bandwidthList.Count > 0)
+                if (_bandwidthList.Count > 0 && null != PMTBandwidth[3])
                 {
-                    if (Visibility.Visible == PmtBandwidthVisibility[3])
+                    if (Visibility.Visible == PmtBandwidthVisibility[3] && _bandwidthToStringMap.ContainsKey(PMTBandwidth[3].Value))
                     {
                         _pmtBwSelected[3] = _bandwidthToStringMap[PMTBandwidth[3].Value];
                     }
@@ -1091,6 +1071,10 @@
             }
             set
             {
+                if (null == value || null == PMTBandwidth[3])
+                {
+                    return;
+                }
                 _pmtBwSelected[3] = value;
                 if (PMTBandwidth[3].Value != _stringToBandwidthMap[_pmtBwSelected[3]] && _bandwidthList[3].Contains(_pmtBwSelected[3]))
                 {
@@ -1153,7 +1137,7 @@
             set;
         }
 
-        public CustomCollection<HwVal<int>> PMTGain
+        public CustomCollection<HwVal<double>> PMTGain
         {
             get;
             set;
@@ -1169,7 +1153,7 @@
         {
             get
             {
-                if (this._PMTGainMinusCommand == null) this._PMTGainMinusCommand = new RelayCommandWithParam((x) => PMTGain[Convert.ToInt32(x)].Value--);
+                if (this._PMTGainMinusCommand == null) this._PMTGainMinusCommand = new RelayCommandWithParam((x) => PMTGain[Convert.ToInt32(x)].Value -= _scanControlModel.GetPMTGainStepSize(Convert.ToInt32(x)));
                 return this._PMTGainMinusCommand;
             }
         }
@@ -1178,7 +1162,7 @@
         {
             get
             {
-                if (this._PMTGainPlusCommand == null) this._PMTGainPlusCommand = new RelayCommandWithParam((x) => PMTGain[Convert.ToInt32(x)].Value++);
+                if (this._PMTGainPlusCommand == null) this._PMTGainPlusCommand = new RelayCommandWithParam((x) => PMTGain[Convert.ToInt32(x)].Value += _scanControlModel.GetPMTGainStepSize(Convert.ToInt32(x)));
                 return this._PMTGainPlusCommand;
             }
         }
@@ -1827,8 +1811,8 @@
                 string str = string.Empty;
                 if (XmlManager.GetAttribute(ndList[0], doc, "gainA", ref str))
                 {
-                    int tmp = 0;
-                    if (Int32.TryParse(str, out tmp))
+                    double tmp = 0;
+                    if (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out tmp))
                     {
                         PMTGain[0].Value = tmp;
                     }
@@ -1855,8 +1839,8 @@
                 }
                 if (XmlManager.GetAttribute(ndList[0], doc, "gainB", ref str))
                 {
-                    int tmp = 0;
-                    if (Int32.TryParse(str, out tmp))
+                    double tmp = 0;
+                    if (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out tmp))
                     {
                         PMTGain[1].Value = tmp;
                     }
@@ -1883,8 +1867,8 @@
                 }
                 if (XmlManager.GetAttribute(ndList[0], doc, "gainC", ref str))
                 {
-                    int tmp = 0;
-                    if (Int32.TryParse(str, out tmp))
+                    double tmp = 0;
+                    if (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out tmp))
                     {
                         PMTGain[2].Value = tmp;
                     }
@@ -1912,8 +1896,8 @@
 
                 if (XmlManager.GetAttribute(ndList[0], doc, "gainD", ref str))
                 {
-                    int tmp = 0;
-                    if (Int32.TryParse(str, out tmp))
+                    double tmp = 0;
+                    if (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out tmp))
                     {
                         PMTGain[3].Value = tmp;
                     }
@@ -1992,7 +1976,6 @@
             {
                 FastOneWayImagingModeEnableVisibility = Visibility.Collapsed;
             }
-
 
             ndList = appDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/ScannerView/LSMPixelProcess");
             if (ndList.Count > 0)
@@ -2113,19 +2096,19 @@
             if (ndList.Count > 0)
             {
                 int lsmChannel = (int)MVMManager.Instance["CaptureSetupViewModel", "LSMChannel"];
-                XmlManager.SetAttribute(ndList[0], experimentFile, "gainA", PMTGain[0].Value.ToString());
+                XmlManager.SetAttribute(ndList[0], experimentFile, "gainA", Math.Round(PMTGain[0].Value, 2).ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "enableA", ((lsmChannel == 0) || (lsmChannel == 4)) && (PMTGain[0].Value > 0) ? "1" : "0");
                 XmlManager.SetAttribute(ndList[0], experimentFile, "bandwidthAHz", PMTBandwidth[0].Value.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "offsetAVolts", PMTOffset[0].Value.ToString());
-                XmlManager.SetAttribute(ndList[0], experimentFile, "gainB", PMTGain[1].Value.ToString());
+                XmlManager.SetAttribute(ndList[0], experimentFile, "gainB", Math.Round(PMTGain[1].Value, 2).ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "enableB", ((lsmChannel == 1) || (lsmChannel == 4)) && (PMTGain[1].Value > 0) ? "1" : "0");
                 XmlManager.SetAttribute(ndList[0], experimentFile, "bandwidthBHz", PMTBandwidth[1].Value.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "offsetBVolts", PMTOffset[1].Value.ToString());
-                XmlManager.SetAttribute(ndList[0], experimentFile, "gainC", PMTGain[2].Value.ToString());
+                XmlManager.SetAttribute(ndList[0], experimentFile, "gainC", Math.Round(PMTGain[2].Value, 2).ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "enableC", ((lsmChannel == 2) || (lsmChannel == 4)) && (PMTGain[2].Value > 0) ? "1" : "0");
                 XmlManager.SetAttribute(ndList[0], experimentFile, "bandwidthCHz", PMTBandwidth[2].Value.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "offsetCVolts", PMTOffset[2].Value.ToString());
-                XmlManager.SetAttribute(ndList[0], experimentFile, "gainD", PMTGain[3].Value.ToString());
+                XmlManager.SetAttribute(ndList[0], experimentFile, "gainD", Math.Round(PMTGain[3].Value, 2).ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "enableD", ((lsmChannel == 3) || (lsmChannel == 4)) && (PMTGain[3].Value > 0) ? "1" : "0");
                 XmlManager.SetAttribute(ndList[0], experimentFile, "bandwidthDHz", PMTBandwidth[3].Value.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "offsetDVolts", PMTOffset[3].Value.ToString());
@@ -2253,18 +2236,20 @@
 
         void GenerateBandwidthList()
         {
-            if (_bandwidthList.Count > 0)
-            {
-                for (int i = 0; i < _bandwidthList.Count; i++)
-                {
-                    _bandwidthList[i].Clear();
-                }
-                _bandwidthList.Clear();
-            }
-
             for (int i = 0; i < NUM_DETECTORS; i++)
             {
                 ObservableCollection<string> tempList = new ObservableCollection<string>();
+
+                // Change the combobox selection to a generic one, if the combobox is at the same index but the list of items changes
+                // WPF won't reload the combobox selection, making it a blank combobox. This is a fix for that problem
+                _pmtBwSelected[i] = string.Empty;
+                switch(i)
+                {
+                    case 0: OnPropertyChanged("Pmt1BandwidthSelected"); break;
+                    case 1: OnPropertyChanged("Pmt2BandwidthSelected"); break;
+                    case 2: OnPropertyChanged("Pmt3BandwidthSelected"); break;
+                    case 3: OnPropertyChanged("Pmt4BandwidthSelected"); break;
+                }
 
                 foreach (DetectorBandwidths k in DetectorBandwidths.GetValues(typeof(DetectorBandwidths)))
                 {
@@ -2273,11 +2258,21 @@
                     //If the PMT supports that bandwidth it will return the bandwidth or the closest one it can get to
                     if ((int)k == PMTBandwidth[i].Value)
                     {
-                        tempList.Add(_bandwidthToStringMap[(int)k]);
+                        if (k != DetectorBandwidths.BW_1MHz) // We need to ignore the 1MHz option, it is never used and it is not very stable according to Panchy
+                        {
+                            tempList.Add(_bandwidthToStringMap[(int)k]);
+                        }
                     }
                 }
 
-                _bandwidthList.Add(tempList);
+                if (BandwidthList.Count == NUM_DETECTORS)
+                {
+                    BandwidthList[i] = tempList;
+                }
+                else
+                {
+                    BandwidthList.Add(tempList);
+                }
             }
         }
 
@@ -2313,7 +2308,7 @@
             IsChannelVisible = new CustomCollection<Visibility>();
             PMTBandwidth = new CustomCollection<HwVal<int>>();
             PmtBandwidthVisibility = new CustomCollection<Visibility>();
-            PMTGain = new CustomCollection<HwVal<int>>();
+            PMTGain = new CustomCollection<HwVal<double>>();
             PMTGainEnable = new CustomCollection<HwVal<int>>();
             PMTOffset = new CustomCollection<HwVal<double>>();
             PMTOffsetVisibility = new CustomCollection<Visibility>();
@@ -2351,7 +2346,7 @@
 
                 PmtBandwidthVisibility.Add(_pmtBandwidthLabelVisibility);   //modified from collapsed
 
-                HwVal<int> pmtGain = new HwVal<int>(i,
+                HwVal<double> pmtGain = new HwVal<double>(i,
                                                     (int)Enum.Parse(typeof(SelectedHardware), string.Format("SELECTED_PMT{0}", i + 1)),
                                                     (int)Enum.Parse(typeof(IDevice.Params), string.Format("PARAM_PMT{0}_GAIN_POS", i + 1)),
                                                     (int)IDevice.DeviceSetParamType.EXECUTION_NO_WAIT);
@@ -2593,7 +2588,7 @@
             }
         }
 
-        private void SetGainAdditionalLogic(int index, int val)
+        private void SetGainAdditionalLogic(int index, double val)
         {
             int min = GetPMTMin(index);
             int max = GetPMTMax(index);
@@ -2614,11 +2609,18 @@
                 PMTGainEnable[index].Value = (0 == val) ? 0 : 1;
             }
 
-            if (PMTVoltage != null)
+            if (1 == ResourceManagerCS.GetDeviceParamAvailable((int)SelectedHardware.SELECTED_PMT1 + index, (int)IDevice.Params.PARAM_PMT1_DETECTOR_TYPE + index))
             {
-                if (PMTVoltage.GetLength(1) > val)
+                PMTVolt[index].Value = _scanControlModel.GetDetectorAtenuation(index);
+            }
+            else
+            {
+                if (PMTVoltage != null)
                 {
-                    PMTVolt[index].Value = PMTVoltage[PMTMode[index], val];
+                    if (PMTVoltage.GetLength(1) > val)
+                    {
+                        PMTVolt[index].Value = PMTVoltage[PMTMode[index], (int)val];
+                    }
                 }
             }
         }
@@ -2652,6 +2654,17 @@
                                                          string.Format("PARAM_PMT{0}_OUTPUT_OFFSET", index + 1)),
                                                          ref offset))
             {
+                double min = 0, max = 0, defaultVal = 0;
+                ResourceManagerCS.GetDeviceParamRangeDouble((int)Enum.Parse(typeof(SelectedHardware), string.Format("SELECTED_PMT{0}", index + 1)), (int)Enum.Parse(typeof(IDevice.Params), string.Format("PARAM_PMT{0}_OUTPUT_OFFSET", index + 1)), ref min, ref max, ref defaultVal);
+                if (min > val)
+                {
+                    PMTOffset[index].Value = min;
+                }
+                if (max < val)
+                {
+                    PMTOffset[index].Value = max;
+                }
+
                 PMTOffsetVisibility[index] = Visibility.Visible;
                 PMTOffsetLabelVisibility = Visibility.Visible;
                 _pmtoffsetavailable = 1;
@@ -2723,6 +2736,8 @@
 
                 _twoWayDialog.Show();
 
+                MVMManager.Instance["AreaControlViewModel", "LSMFieldSize"] = (int)MVMManager.Instance["AreaControlViewModel", "LSMFieldSize", (object)5];
+
                 PMTGain[0].Value = 0;
                 PMTGain[1].Value = 0;
                 PMTGain[2].Value = 0;
@@ -2746,17 +2761,24 @@
                 MVMManager.Instance["MultiphotonControlViewModel", "LaserShutter2Position"] = 0;
 
                 //Ensure MCLS lasers are disabled
-                MVMManager.Instance["LaserControlViewModel", "MainLaserIndex"] = 0;
-                MVMManager.Instance["LaserControlViewModel", "Laser1Enable"] = 0;
-                MVMManager.Instance["LaserControlViewModel", "Laser2Enable"] = 0;
-                MVMManager.Instance["LaserControlViewModel", "Laser3Enable"] = 0;
-                MVMManager.Instance["LaserControlViewModel", "Laser4Enable"] = 0;
+                MVMManager.Instance["MultiLaserControlViewModel", "MainLaserIndex"] = 0;
+                MVMManager.Instance["MultiLaserControlViewModel", "Laser1Enable"] = 0;
+                MVMManager.Instance["MultiLaserControlViewModel", "Laser2Enable"] = 0;
+                MVMManager.Instance["MultiLaserControlViewModel", "Laser3Enable"] = 0;
+                MVMManager.Instance["MultiLaserControlViewModel", "Laser4Enable"] = 0;
+
+                //Call OnPropertyChange to make sure laser GUI matches actual values
+                ((IMVM)MVMManager.Instance["MultiLaserControlViewModel", this]).OnPropertyChange("LaserAllAnalog");
+                ((IMVM)MVMManager.Instance["MultiLaserControlViewModel", this]).OnPropertyChange("LaserAllTTL");
+                ((IMVM)MVMManager.Instance["MultiLaserControlViewModel", this]).OnPropertyChange("Laser1Power");
+                ((IMVM)MVMManager.Instance["MultiLaserControlViewModel", this]).OnPropertyChange("Laser2Power");
+                ((IMVM)MVMManager.Instance["MultiLaserControlViewModel", this]).OnPropertyChange("Laser3Power");
+                ((IMVM)MVMManager.Instance["MultiLaserControlViewModel", this]).OnPropertyChange("Laser4Power");
 
                 //Update LightPath Position
                 MVMManager.Instance["CaptureSetupViewModel", "LightPathGGEnable"] = 0;
                 MVMManager.Instance["CaptureSetupViewModel", "LightPathGREnable"] = 0;
                 MVMManager.Instance["CaptureSetupViewModel", "LightPathCamEnable"] = 0;
-
             }
         }
 
@@ -2768,6 +2790,17 @@
             PMTPolarity[1].Value = PMTPolarity[1].Value;
             PMTPolarity[2].Value = PMTPolarity[2].Value;
             PMTPolarity[3].Value = PMTPolarity[3].Value;
+
+            //Call OnPropertyChange to make sure laser GUI matches actual values
+            MVMManager.Instance["MultiLaserControlViewModel", "Laser1Enable"] = 0; //need to set arbitrary parameter once for Toptica lower level
+            ((IMVM)MVMManager.Instance["MultiLaserControlViewModel", this]).OnPropertyChange("LaserAllAnalog");
+            ((IMVM)MVMManager.Instance["MultiLaserControlViewModel", this]).OnPropertyChange("LaserAllTTL");
+            ((IMVM)MVMManager.Instance["MultiLaserControlViewModel", this]).OnPropertyChange("Laser1Power");
+            ((IMVM)MVMManager.Instance["MultiLaserControlViewModel", this]).OnPropertyChange("Laser2Power");
+            ((IMVM)MVMManager.Instance["MultiLaserControlViewModel", this]).OnPropertyChange("Laser3Power");
+            ((IMVM)MVMManager.Instance["MultiLaserControlViewModel", this]).OnPropertyChange("Laser4Power");
+
+            MVMManager.Instance["AreaControlViewModel", "LSMFieldSize"] = (int)MVMManager.Instance["AreaControlViewModel", "LSMFieldSize", (object)5];
         }
 
         void _twoWayDialog_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -2795,11 +2828,11 @@
             MVMManager.Instance["MultiphotonControlViewModel", "LaserShutter2Position"] = 0;
 
             //Ensure MCLS lasers are disabled
-            MVMManager.Instance["LaserControlViewModel", "MainLaserIndex"] = 0;
-            MVMManager.Instance["LaserControlViewModel", "Laser1Enable"] = 0;
-            MVMManager.Instance["LaserControlViewModel", "Laser2Enable"] = 0;
-            MVMManager.Instance["LaserControlViewModel", "Laser3Enable"] = 0;
-            MVMManager.Instance["LaserControlViewModel", "Laser4Enable"] = 0;
+            MVMManager.Instance["MultiLaserControlViewModel", "MainLaserIndex"] = 0;
+            MVMManager.Instance["MultiLaserControlViewModel", "Laser1Enable"] = 0;
+            MVMManager.Instance["MultiLaserControlViewModel", "Laser2Enable"] = 0;
+            MVMManager.Instance["MultiLaserControlViewModel", "Laser3Enable"] = 0;
+            MVMManager.Instance["MultiLaserControlViewModel", "Laser4Enable"] = 0;
 
             //Update LightPath Position
             MVMManager.Instance["CaptureSetupViewModel", "LightPathGGEnable"] = 0;

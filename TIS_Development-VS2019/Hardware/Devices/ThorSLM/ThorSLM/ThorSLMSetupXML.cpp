@@ -263,6 +263,135 @@ long ThorSLMXML::SetCalibration(int id, double coeff1, double coeff2, double coe
 	}
 }
 
+const char* const ThorSLMXML::CALIBRATION3D = "Calibration3D";
+const char* const ThorSLMXML::CALIBRATION3D2 = "Calibration3D2";
+
+const char* const ThorSLMXML::CALIBRATION3D_ATTR[NUM_CALIBRATION3D_ATTRIBUTES] = { "wavelengthNM","phaseMax","offsetZum","coeff1","coeff2","coeff3","coeff4","coeff5","coeff6", "coeff7", "coeff8","coeff9", "coeff10", "coeff11", "coeff12", "coeff13", "coeff14", "coeff15", "coeff16" };
+
+long ThorSLMXML::GetCalibration3D(int id, double& wavelengthNM, long& phaseMax, double& offsetZum, double* affineCoeffs, long size)
+{
+	try
+	{
+		if (NULL == _xmlObj.get()) { OpenConfigFile(); }
+
+		ticpp::Element* configObj = _xmlObj.get()->FirstChildElement(false);
+
+		if (configObj == NULL || NUM_CALIBRATION3D_ATTRIBUTES - CALIBRATION_OFFSET_INDEX > size)
+			return FALSE;
+
+		ticpp::Iterator< ticpp::Element > child(configObj, 1 == id ? CALIBRATION3D : CALIBRATION3D2);
+		child = child.begin(configObj);
+		if (child == child.end())
+		{
+			//node does not exist, default coeffs
+			memset(affineCoeffs, 0x0, sizeof(double) * size);
+			*affineCoeffs = *(affineCoeffs + 5) = *(affineCoeffs + 10) = (double)1.0;
+
+			ticpp::Node* childOld = configObj->FirstChild(1 == id ? CALIBRATION : CALIBRATION2, false);
+			ticpp::Element node(1 == id ? CALIBRATION3D : CALIBRATION3D2);
+			childOld->Parent()->InsertAfterChild(childOld, node);
+			child = ticpp::Iterator< ticpp::Element >(configObj, node.Value());
+			child = child.begin(configObj);
+			goto DEFAULT_NODE;
+		}
+		for (; child != child.end(); child++)
+		{
+			bool resetNode = false;
+			double* pSrc = affineCoeffs;
+			for (long attCount = 0; attCount < NUM_CALIBRATION3D_ATTRIBUTES; attCount++)
+			{
+				if (!child->HasAttribute(CALIBRATION3D_ATTR[attCount]))
+				{
+					resetNode = true;
+					continue;
+				}
+				string str;
+				child->GetAttribute(CALIBRATION3D_ATTR[attCount], &str);
+				stringstream ss(str);
+				switch (attCount)
+				{
+				case 0:
+					ss >> wavelengthNM;
+					break;
+				case 1:
+					ss >> phaseMax;
+					break;
+				case 2:
+					ss >> offsetZum;
+					break;
+				case 3:
+				case 4:
+				case 5:
+				case 6:
+				case 7:
+				case 8:
+				case 9:
+				case 10:
+				case 11:
+				case 12:
+				case 13:
+				case 14:
+				case 15:
+				case 16:
+				case 17:
+				case 18:
+					ss >> *pSrc;
+					pSrc++;
+					break;
+				}
+			}
+			//reconstruct node with preferred attribute order
+			if (resetNode)
+				goto DEFAULT_NODE;
+		}
+		return TRUE;
+
+	DEFAULT_NODE:
+		UpdateNode(child, CALIBRATION3D_ATTR, std::vector<std::string> { std::to_string(wavelengthNM), std::to_string(phaseMax), std::to_string(offsetZum), std::to_string(*affineCoeffs), std::to_string(*(affineCoeffs + 1)), std::to_string(*(affineCoeffs + 2)),
+			std::to_string(*(affineCoeffs + 3)), std::to_string(*(affineCoeffs + 4)), std::to_string(*(affineCoeffs + 5)), std::to_string(*(affineCoeffs + 6)), std::to_string(*(affineCoeffs + 7)), std::to_string(*(affineCoeffs + 8)),
+			std::to_string(*(affineCoeffs + 9)), std::to_string(*(affineCoeffs + 10)), std::to_string(*(affineCoeffs + 11)), std::to_string(*(affineCoeffs + 12)), std::to_string(*(affineCoeffs + 13)), std::to_string(*(affineCoeffs + 14)), std::to_string(*(affineCoeffs + 15))});
+
+		return SaveConfigFile();
+	}
+	catch (exception ex)
+	{
+		StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorSLMXML GetCalibration3D failed: %s", StringToWString(ex.what()).c_str());
+		return FALSE;
+	}
+}
+
+long ThorSLMXML::SetCalibration3D(int id, double* affineCoeffs, long size)
+{
+	try
+	{
+		if (NULL == _xmlObj.get()) { OpenConfigFile(); }
+
+		ticpp::Element* configObj = _xmlObj.get()->FirstChildElement(false);
+
+		if (configObj == NULL || NUM_CALIBRATION3D_ATTRIBUTES - CALIBRATION_OFFSET_INDEX > size)
+			return FALSE;
+
+		std::vector<std::string> attr = { std::to_string(*affineCoeffs), std::to_string(*(affineCoeffs + 1)), std::to_string(*(affineCoeffs + 2)), std::to_string(*(affineCoeffs + 3)),	std::to_string(*(affineCoeffs + 4)),
+			std::to_string(*(affineCoeffs + 5)), std::to_string(*(affineCoeffs + 6)), std::to_string(*(affineCoeffs + 7)), std::to_string(*(affineCoeffs + 8)),	std::to_string(*(affineCoeffs + 9)),
+			std::to_string(*(affineCoeffs + 10)), std::to_string(*(affineCoeffs + 11)), std::to_string(*(affineCoeffs + 12)), std::to_string(*(affineCoeffs + 13)), std::to_string(*(affineCoeffs + 14)), std::to_string(*(affineCoeffs + 15)) };
+
+		for (int index = CALIBRATION_OFFSET_INDEX; index < NUM_CALIBRATION3D_ATTRIBUTES; index++)
+		{
+			// iterate over to get the particular tag element specified as a parameter(tagName)
+			ticpp::Iterator<ticpp::Element> child(configObj->FirstChildElement(1 == id ? CALIBRATION3D : CALIBRATION3D2), 1 == id ? CALIBRATION3D : CALIBRATION3D2);
+			//get the attribute value for the specified attribute name
+			child->SetAttribute(CALIBRATION3D_ATTR[index], attr[index - (int)CALIBRATION_OFFSET_INDEX]);
+		}
+
+		return SaveConfigFile();
+	}
+	catch (exception ex)
+	{
+		StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorSLMXML SetCalibration3D failed: %s", StringToWString(ex.what()).c_str());
+		return FALSE;
+	}
+}
+
 long ThorSLMXML::SetDefocus(int id, double offsetZum)
 {
 	try
@@ -287,9 +416,9 @@ long ThorSLMXML::SetDefocus(int id, double offsetZum)
 
 const char* const ThorSLMXML::SPEC = "Spec";
 
-const char* const ThorSLMXML::SPEC_ATTR[NUM_SPEC_ATTRIBUTES] = { "Name","dmdMode","overDrive","transientFrames","pitchUM","flatDiagRatio","flatPowerMinPercent","flatPowerMaxPercent","pixelX","pixelY","LUT","overDriveLUT","waveFront", "persistHologramZone1", "persistHologramZone2" };
+const char* const ThorSLMXML::SPEC_ATTR[NUM_SPEC_ATTRIBUTES] = { "Name","dmdMode","overDrive","transientFrames","pitchUM","flatDiagRatio","flatPowerMinPercent","flatPowerMaxPercent","pixelX","pixelY","LUT","overDriveLUT","waveFront" };
 
-long ThorSLMXML::GetSpec(string& name, long& dmdMode, long& overDrive, unsigned int& transientFrames, double& pitchUM, double& flatDiagRatio, double& flatPowerMinPercent, double& flatPowerMaxPercent, long& pixelX, long& pixelY, string& lut, string& odLUT, string& wavefront, long& persistHologramZone1, long& persistHologramZone2)
+long ThorSLMXML::GetSpec(string& name, long& dmdMode, long& overDrive, unsigned int& transientFrames, double& pitchUM, double& flatDiagRatio, double& flatPowerMinPercent, double& flatPowerMaxPercent, long& pixelX, long& pixelY, string& lut, string& odLUT, string& wavefront)
 {
 	try
 	{
@@ -317,88 +446,53 @@ long ThorSLMXML::GetSpec(string& name, long& dmdMode, long& overDrive, unsigned 
 				switch (attCount)
 				{
 				case 0:
-				{
 					name = str;
-				}
-				break;
+					break;
 				case 1:
-				{
 					ss >> dmdMode;
-				}
-				break;
+					break;
 				case 2:
-				{
 					ss >> overDrive;
-				}
-				break;
+					break;
 				case 3:
-				{
 					ss >> transientFrames;
-				}
-				break;
+					break;
 				case 4:
-				{
 					ss >> pitchUM;
-				}
-				break;
+					break;
 				case 5:
-				{
 					ss >> flatDiagRatio;
-				}
-				break;
+					break;
 				case 6:
-				{
 					ss >> flatPowerMinPercent;
-				}
-				break;
+					break;
 				case 7:
-				{
 					ss >> flatPowerMaxPercent;
-				}
-				break;
+					break;
 				case 8:
-				{
 					ss >> pixelX;
-				}
-				break;
+					break;
 				case 9:
-				{
 					ss >> pixelY;
-				}
-				break;
+					break;
 				case 10:
-				{
 					lut = str;
-				}
-				break;
+					break;
 				case 11:
-				{
 					odLUT = str;
-				}
-				break;
+					break;
 				case 12:
-				{
 					wavefront = str;
-				}
-				break;
-				case 13:
-				{
-					ss >> persistHologramZone1;
-				}
-				break;
-				case 14:
-				{
-					ss >> persistHologramZone2;
-				}
-				break;
+					break;
 				}
 			}
-			//reconstruct node with preferred attribute order
-			if (resetNode)
+			//reconstruct node with preferred attribute order,
+			//remove old attributes and user should GetBlank before this function
+			if (resetNode || child->HasAttribute("persistHologramZone1") || child->HasAttribute("persistHologramZone2"))
 			{
 				UpdateNode(child, SPEC_ATTR, std::vector<std::string> { name, std::to_string(dmdMode), std::to_string(overDrive), std::to_string(transientFrames), std::to_string(pitchUM), std::to_string(flatDiagRatio),
 					std::to_string(flatPowerMinPercent), std::to_string(flatPowerMaxPercent), std::to_string(pixelX), std::to_string(pixelY), lut,
-					odLUT, wavefront, std::to_string(persistHologramZone1), std::to_string(persistHologramZone2)  });
+					odLUT, wavefront });
 
 				SaveConfigFile();
 			}
@@ -410,6 +504,104 @@ long ThorSLMXML::GetSpec(string& name, long& dmdMode, long& overDrive, unsigned 
 		StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorSLMXML GetSpec failed: %s", StringToWString(ex.what()).c_str());
 		return FALSE;
 	}
+}
+
+const char* const ThorSLMXML::BLANK = "Blank";
+
+const char* const ThorSLMXML::BLANK_ATTR[NUM_BLANK_ATTRIBUTES] = { "dualPatternShiftPx", "persistHologramZone1", "persistHologramZone2" };
+
+long ThorSLMXML::GetBlank(long& dualPatternShiftPx, long& persistHologramZone1, long& persistHologramZone2)
+{
+	try
+	{
+		if (NULL == _xmlObj.get()) { OpenConfigFile(); }
+
+		ticpp::Element* configObj = _xmlObj.get()->FirstChildElement(false);
+
+		if (configObj == NULL)
+			return FALSE;
+
+		ticpp::Iterator< ticpp::Element > child(configObj, BLANK);
+		child = child.begin(configObj);
+		if (child == child.end())
+		{
+			//node does not exist, set default
+			ticpp::Node* nChildOld = configObj->FirstChild(SPEC, false);
+			ticpp::Element node(BLANK);
+			nChildOld->Parent()->InsertAfterChild(nChildOld, node);
+			child = ticpp::Iterator< ticpp::Element >(configObj, node.Value());
+			child = child.begin(configObj);
+
+			//default get from old spec
+			dualPatternShiftPx = 0;
+			ticpp::Iterator< ticpp::Element > childOld(configObj, SPEC);
+			for (childOld = childOld.begin(configObj); childOld != childOld.end(); childOld++)
+			{
+				string str;
+				if (childOld->HasAttribute("persistHologramZone1"))
+				{
+					childOld->GetAttribute("persistHologramZone1", &str);
+					stringstream ss(str);
+					ss >> persistHologramZone1;
+				}
+				if (childOld->HasAttribute("persistHologramZone2"))
+				{
+					childOld->GetAttribute("persistHologramZone2", &str);
+					stringstream ss(str);
+					ss >> persistHologramZone2;
+				}
+			}
+			goto DEFAULT_NODE;
+		}
+		for (; child != child.end(); child++)
+		{
+			bool resetNode = false;
+			for (long attCount = 0; attCount < NUM_BLANK_ATTRIBUTES; attCount++)
+			{
+				if (!child->HasAttribute(BLANK_ATTR[attCount]))
+				{
+					resetNode = true;
+					continue;
+				}
+				string str;
+				child->GetAttribute(BLANK_ATTR[attCount], &str);
+				stringstream ss(str);
+				switch (attCount)
+				{
+				case 0:
+				{
+					ss >> dualPatternShiftPx;
+				}
+				break;
+				case 1:
+				{
+					ss >> persistHologramZone1;
+				}
+				break;
+				case 2:
+				{
+					ss >> persistHologramZone2;
+				}
+				break;
+				}
+			}
+			//reconstruct node with preferred attribute order
+			if (resetNode)
+				goto DEFAULT_NODE;
+		}
+		return TRUE;
+
+	DEFAULT_NODE:
+		UpdateNode(child, BLANK_ATTR, std::vector<std::string> { std::to_string(dualPatternShiftPx), std::to_string(persistHologramZone1), std::to_string(persistHologramZone2)  });
+
+		return SaveConfigFile();
+	}
+	catch (exception ex)
+	{
+		StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorSLMXML GetBLank failed: %s", StringToWString(ex.what()).c_str());
+		return FALSE;
+	}
+
 }
 
 const char* const ThorSLMXML::TRIGGER = "Trigger";
@@ -572,12 +764,11 @@ long ThorSLMXML::SaveConfigFile()
 void ThorSLMXML::UpdateNode(ticpp::Iterator<ticpp::Element> iElement, const char* const attributes[], std::vector<string> attriValues)
 {
 	ticpp::Attribute* att = iElement->FirstAttribute(false);
-	do
+	while (NULL != att)
 	{
 		iElement->RemoveAttribute(att->Name());
 		att = iElement->FirstAttribute(false);
-	} while (NULL != att);
-
+	};
 	for (long attCount = 0; attCount < attriValues.size(); attCount++)
 	{
 		iElement->SetAttribute(attributes[attCount], attriValues[attCount]);

@@ -512,11 +512,26 @@ long ThorPMT2100::GetParam(const long paramID, double &param)
 				param = (_deviceDetected[DEVICE_NUM]) ? CONNECTION_READY : CONNECTION_UNAVAILABLE;
 				return TRUE;
 			}
-			case PARAM_PMT_OFFSET_STEP_SIZE:
+			case PARAM_PMT1_OFFSET_STEP_SIZE:
+			case PARAM_PMT2_OFFSET_STEP_SIZE:
+			case PARAM_PMT3_OFFSET_STEP_SIZE:
+			case PARAM_PMT4_OFFSET_STEP_SIZE:
+			case PARAM_PMT5_OFFSET_STEP_SIZE:
+			case PARAM_PMT6_OFFSET_STEP_SIZE:
 			{
 				//Note: Step size was changed back to 0.002 because we were seeing problems with 0.001 at 0.411 and 0.311
 				// The plus/minus buttons would get stucked
 				param = 0.002;
+				return TRUE;
+			}
+			case PARAM_PMT1_GAIN_POS:
+			case PARAM_PMT2_GAIN_POS:
+			case PARAM_PMT3_GAIN_POS:
+			case PARAM_PMT4_GAIN_POS:
+			case PARAM_PMT5_GAIN_POS:
+			case PARAM_PMT6_GAIN_POS:
+			{
+				param = static_cast<long>(_tableParams[paramID]->GetParamVal());
 				return TRUE;
 			}
 			default:
@@ -2338,7 +2353,7 @@ long ThorPMT2100::CreateParamTable()
 	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_CONNECTION_STATUS, tempParamInfo));
 
 	tempParamInfo = new ParamInfo(
-		PARAM_PMT_OFFSET_STEP_SIZE,
+		PARAM_PMT1_OFFSET_STEP_SIZE,
 		FALSE,
 		FALSE,
 		FALSE,
@@ -2350,7 +2365,82 @@ long ThorPMT2100::CreateParamTable()
 		0,
 		L"",
 		-1);
-	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT_OFFSET_STEP_SIZE, tempParamInfo));
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT1_OFFSET_STEP_SIZE, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT2_OFFSET_STEP_SIZE,
+		FALSE,
+		FALSE,
+		FALSE,
+		TYPE_DOUBLE,
+		TRUE,
+		TRUE,
+		0,
+		100,
+		0,
+		L"",
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT2_OFFSET_STEP_SIZE, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT3_OFFSET_STEP_SIZE,
+		FALSE,
+		FALSE,
+		FALSE,
+		TYPE_DOUBLE,
+		TRUE,
+		TRUE,
+		0,
+		100,
+		0,
+		L"",
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT3_OFFSET_STEP_SIZE, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT4_OFFSET_STEP_SIZE,
+		FALSE,
+		FALSE,
+		FALSE,
+		TYPE_DOUBLE,
+		TRUE,
+		TRUE,
+		0,
+		100,
+		0,
+		L"",
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT4_OFFSET_STEP_SIZE, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT5_OFFSET_STEP_SIZE,
+		FALSE,
+		FALSE,
+		FALSE,
+		TYPE_DOUBLE,
+		TRUE,
+		TRUE,
+		0,
+		100,
+		0,
+		L"",
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT5_OFFSET_STEP_SIZE, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT6_OFFSET_STEP_SIZE,
+		FALSE,
+		FALSE,
+		FALSE,
+		TYPE_DOUBLE,
+		TRUE,
+		TRUE,
+		0,
+		100,
+		0,
+		L"",
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT6_OFFSET_STEP_SIZE, tempParamInfo));
 
 	return TRUE;
 }

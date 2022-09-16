@@ -769,6 +769,20 @@
                                              ref bwPos));
         }
 
+        public double GetPMTGainStepSize(int index)
+        {
+            double gainStep = 1;
+            switch (index)
+            {
+                case 0: ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_PMT1, (int)IDevice.Params.PARAM_PMT1_GAIN_STEP_SIZE, ref gainStep); break;
+                case 1: ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_PMT2, (int)IDevice.Params.PARAM_PMT2_GAIN_STEP_SIZE, ref gainStep); break;
+                case 2: ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_PMT3, (int)IDevice.Params.PARAM_PMT3_GAIN_STEP_SIZE, ref gainStep); break;
+                case 3: ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_PMT4, (int)IDevice.Params.PARAM_PMT4_GAIN_STEP_SIZE, ref gainStep); break;
+            }
+
+            return gainStep;
+        }
+
         public void GetPMTOffsetIsAvailable(int index, ref bool val)
         {
             int param = 0;
@@ -785,16 +799,14 @@
 
         public double GetPMTOffsetStepSize(int index)
         {
-            int device = 0;
+            double offset = 0.02;
             switch (index)
             {
-                case 0: device = (int)SelectedHardware.SELECTED_PMT1; break;
-                case 1: device = (int)SelectedHardware.SELECTED_PMT2; break;
-                case 2: device = (int)SelectedHardware.SELECTED_PMT3; break;
-                case 3: device = (int)SelectedHardware.SELECTED_PMT4; break;
+                case 0: ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_PMT1, (int)IDevice.Params.PARAM_PMT1_OFFSET_STEP_SIZE, ref offset); break;
+                case 1: ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_PMT2, (int)IDevice.Params.PARAM_PMT2_OFFSET_STEP_SIZE, ref offset); break;
+                case 2: ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_PMT3, (int)IDevice.Params.PARAM_PMT3_OFFSET_STEP_SIZE, ref offset); break;
+                case 3: ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_PMT4, (int)IDevice.Params.PARAM_PMT4_OFFSET_STEP_SIZE, ref offset); break;
             }
-            double offset = 0;
-            ResourceManagerCS.GetDeviceParamDouble(device, (int)IDevice.Params.PARAM_PMT_OFFSET_STEP_SIZE, ref offset);
 
             return offset;
         }

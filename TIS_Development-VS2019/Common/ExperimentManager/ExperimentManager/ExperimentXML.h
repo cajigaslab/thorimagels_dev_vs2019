@@ -54,7 +54,7 @@ public:
 	static const char * const PMT_ATTR[NUM_PMT_ATTRIBUTES];
 
 	static const char * const MCLS;
-	enum {NUM_MCLS_ATTRIBUTES = 8};
+	enum {NUM_MCLS_ATTRIBUTES = 14};
 	static const char * const MCLS_ATTR[NUM_MCLS_ATTRIBUTES];
 
 	static const char * const MAGNIFICATION;
@@ -156,7 +156,7 @@ public:
 	enum {NUM_SEQUENCESTEP_MULTIPHOTON_ATTRIBUTES = 1};
 	static const char * const SEQUENCESTEP_MULTIPHOTON_ATTR[NUM_SEQUENCESTEP_MULTIPHOTON_ATTRIBUTES];
 
-	enum {NUM_SEQUENCESTEP_MCLS_ATTRIBUTES = 8};
+	enum {NUM_SEQUENCESTEP_MCLS_ATTRIBUTES = 14};
 	static const char * const SEQUENCESTEP_MCLS_ATTR[NUM_SEQUENCESTEP_MCLS_ATTRIBUTES];
 
 	enum {NUM_SEQUENCESTEP_PINHOLE_ATTRIBUTES = 1};
@@ -210,11 +210,11 @@ public:
 	long SetLSM(long areaMode, double areaAngle,long scanMode,long interleave,long pixelX,long pixelY,long channel, long fieldSize, long offsetX, long offsetY,
 		long averageMode, long averageNum, long clockSource, long inputRange1, long inputRange2, long twoWayAlignment, long extClockRate,double dwellTime, long flybackCycles, long inputRange3, long inputRange4, long minimizeFlybackCycles, long polarity1, long polarity2, long polarity3, long polarity4, long verticalFlip, long horizontalFlip);
 
-	long GetMCLS(long &enable1, double &power1,long &enable2, double &power2,long &enable3, double &power3,long &enable4, double &power4);
-	long SetMCLS(long enable1, double power1,long enable2, double power2,long enable3, double power3,long enable4, double power4);
+	long GetMCLS(long& enable1, double& power1, long& enable2, double& power2, long& enable3, double& power3, long& enable4, double& power4, long& allttl, long& allanalog, long& wavelength1, long& wavelength2, long& wavelength3, long& wavelength4);
+	long SetMCLS(long enable1, double power1,long enable2, double power2,long enable3, double power3,long enable4, double power4, long allttl, long allanalog, long wavelength1, long wavelength2, long wavelength3, long wavelength4);
 
-	long GetPMT(long &enableA, long &gainA, long &bandwidthA, double &offsetA, long &enableB, long &bandwidthB, long &gainB, double &offsetB, long &enableC, long &gainC, long &bandwidthC, double &offsetC, long &enableD, long &gainD, long &bandwidthD, double &offsetD);
-	long SetPMT(long enableA, long gainA, long bandwidthA, double offsetA, long enableB, long gainB, long bandwidthB, double offsetB, long enableC, long gainC, long bandwidthC, double offsetC, long enableD, long gainD, long bandwidthD, double offsetD);
+	long GetPMT(long &enableA, double &gainA, long &bandwidthA, double &offsetA, long &enableB, double &gainB, long &bandwidthB, double &offsetB, long &enableC, double &gainC, long &bandwidthC, double &offsetC, long &enableD, double &gainD, long &bandwidthD, double &offsetD);
+	long SetPMT(long enableA, double gainA, long bandwidthA, double offsetA, long enableB, double gainB, long bandwidthB, double offsetB, long enableC, double gainC, long bandwidthC, double offsetC, long enableD, double gainD, long bandwidthD, double offsetD);
 
 	long GetPinholeWheel(long &positiion);///pinhole position value
 	long SetPinholeWheel(long position);

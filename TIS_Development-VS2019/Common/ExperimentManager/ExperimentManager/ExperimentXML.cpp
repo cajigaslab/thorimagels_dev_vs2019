@@ -759,7 +759,7 @@ const char * const ExperimentXML::PMT = "PMT";
 
 const char * const ExperimentXML::PMT_ATTR[NUM_PMT_ATTRIBUTES] = {"enableA","gainA","bandwidthAHz","offsetAVolts","enableB","gainB","bandwidthBHz","offsetBVolts","enableC","gainC","bandwidthCHz","offsetCVolts","enableD","gainD","bandwidthDHz","offsetDVolts"};
 
-long ExperimentXML::GetPMT(long &enableA, long &gainA, long &bandwidthA, double &offsetA, long &enableB, long &gainB, long &bandwidthB, double &offsetB, long &enableC, long &gainC, long &bandwidthC, double &offsetC, long &enableD, long &gainD, long &bandwidthD, double &offsetD)
+long ExperimentXML::GetPMT(long &enableA, double &gainA, long &bandwidthA, double &offsetA, long &enableB, double &gainB, long &bandwidthB, double &offsetB, long &enableC, double &gainC, long &bandwidthC, double &offsetC, long &enableD, double &gainD, long &bandwidthD, double &offsetD)
 {
 	string str;
 
@@ -829,7 +829,7 @@ long ExperimentXML::GetPMT(long &enableA, long &gainA, long &bandwidthA, double 
 	return TRUE;
 }
 
-long ExperimentXML::SetPMT(long enableA, long gainA, long bandwidthA, double offsetA, long enableB, long gainB, long bandwidthB, double offsetB, long enableC, long gainC, long bandwidthC, double offsetC, long enableD, long gainD, long bandwidthD, double offsetD)
+long ExperimentXML::SetPMT(long enableA, double gainA, long bandwidthA, double offsetA, long enableB, double gainB, long bandwidthB, double offsetB, long enableC, double gainC, long bandwidthC, double offsetC, long enableD, double gainD, long bandwidthD, double offsetD)
 {
 	string str;
 	stringstream ss;
@@ -884,9 +884,9 @@ long ExperimentXML::SetPMT(long enableA, long gainA, long bandwidthA, double off
 
 const char * const ExperimentXML::MCLS = "MCLS";
 
-const char * const ExperimentXML::MCLS_ATTR[NUM_MCLS_ATTRIBUTES] = {"enable1","power1","enable2","power2","enable3","power3","enable4","power4"};
+const char * const ExperimentXML::MCLS_ATTR[NUM_MCLS_ATTRIBUTES] = {"enable1","power1","enable2","power2","enable3","power3","enable4","power4", "allttl", "allanalog", "wavelength1", "wavelength2", "wavelength3", "wavelength4"};
 
-long ExperimentXML::GetMCLS(long &enable1,double &power1,long &enable2,double &power2,long &enable3,double &power3,long &enable4,double &power4)
+long ExperimentXML::GetMCLS(long &enable1,double &power1,long &enable2,double &power2,long &enable3,double &power3,long &enable4,double &power4, long &allttl, long &allanalog, long &wavelength1, long &wavelength2, long &wavelength3, long &wavelength4)
 {
 	string str;
 
@@ -911,12 +911,18 @@ long ExperimentXML::GetMCLS(long &enable1,double &power1,long &enable2,double &p
 		case 5: ss>>power3;break;
 		case 6:	ss>>enable4;break;
 		case 7: ss>>power4;break;
+		case 8: ss>>allttl;break;
+		case 9: ss>>allanalog;break;
+		case 10: ss>>wavelength1;break;
+		case 11: ss>>wavelength2;break;
+		case 12: ss>>wavelength3;break;
+		case 13: ss>>wavelength4;break;
 		}
 	}
 	return TRUE;
 }
 
-long ExperimentXML::SetMCLS(long enable1,double power1,long enable2,double power2,long enable3,double power3,long enable4,double power4)
+long ExperimentXML::SetMCLS(long enable1,double power1,long enable2,double power2,long enable3,double power3,long enable4,double power4,long allttl,long allanalog, long wavelength1, long wavelength2, long wavelength3, long wavelength4)
 {
 	string str;
 	stringstream ss;
@@ -936,6 +942,18 @@ long ExperimentXML::SetMCLS(long enable1,double power1,long enable2,double power
 	ss << enable4;
 	ss << endl;
 	ss << power4;
+	ss << endl;
+	ss << allttl;
+	ss << endl;
+	ss << allanalog;
+	ss << endl;
+	ss << wavelength1;
+	ss << endl;
+	ss << wavelength2;
+	ss << endl;
+	ss << wavelength3;
+	ss << endl;
+	ss << wavelength4;
 	ss << endl;
 
 	long index;
@@ -1324,6 +1342,10 @@ long ExperimentXML::GetZStage(string &name, long &enable, long &steps, double &s
 			break;
 		case 4:
 			ss>>startPos;
+			//We need to round startPos, otherwise when reading a value that is a division by 3 it gets assigned a 
+			//double close to it e.g. 0.06 becomes 0.0599999998. This becomes a problem when saving in big tiff. 
+			//The image store library expects a round number or at least a Z position larger than the stop to create the area.
+			startPos = floor(startPos * 10000 + 0.5f) / 10000;
 			break;
 		case 5:
 			ss>>zStreamFrames;
@@ -2993,7 +3015,7 @@ const char * const ExperimentXML::SEQUENCESTEP_LSM_ATTR[NUM_SEQUENCESTEP_LSM_ATT
 
 const char * const ExperimentXML::SEQUENCESTEP_MULTIPHOTON_ATTR[NUM_SEQUENCESTEP_MULTIPHOTON_ATTRIBUTES]  = {"pos"};
 
-const char * const ExperimentXML::SEQUENCESTEP_MCLS_ATTR[NUM_SEQUENCESTEP_MCLS_ATTRIBUTES] = {"enable1","power1","enable2","power2","enable3","power3","enable4","power4"};
+const char * const ExperimentXML::SEQUENCESTEP_MCLS_ATTR[NUM_SEQUENCESTEP_MCLS_ATTRIBUTES] = {"enable1","power1","enable2","power2","enable3","power3","enable4","power4","allttl","allanalog","wavelength1","wavelength2","wavelength3","wavelength4"};
 
 const char * const ExperimentXML::SEQUENCESTEP_PINHOLE_ATTR[NUM_SEQUENCESTEP_PINHOLE_ATTRIBUTES] = {"position"};
 
@@ -3063,6 +3085,12 @@ long ExperimentXML::GetSequenceSteps(vector<SequenceStep>& captureSequence)
 					case 5: ss>>sequenceStep.MCLSPower3; break;
 					case 6:	ss>>sequenceStep.MCLSEnable4; break;
 					case 7: ss>>sequenceStep.MCLSPower4; break;
+					case 8: ss>>sequenceStep.LaserTTL; break;
+					case 9: ss>>sequenceStep.LaserAnalog; break;
+					case 10: ss>>sequenceStep.Wavelength1; break;
+					case 11: ss>>sequenceStep.Wavelength2; break;
+					case 12: ss>>sequenceStep.Wavelength3; break;
+					case 13: ss>>sequenceStep.Wavelength4; break;
 					}
 				}
 

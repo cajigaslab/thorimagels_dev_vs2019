@@ -1218,13 +1218,33 @@
             <StackPanel Name="stpImportBrowse"
                         Height="Auto"
                         Orientation="Horizontal"
-                        HorizontalAlignment="Center"
+                        HorizontalAlignment="Right"
+                        ToolTip="Import or Export SLM patterns."
                         Visibility="{Binding ElementName=lblSLMPatternStatus, Path=Content, Converter={StaticResource stringToVisConverter}, ConverterParameter=Inverted, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                         Margin="3">
-                <Label Content="Import "
-                       Width="50" />
+                <ToggleButton Name="tbtnImExport"
+                              Margin="1"
+                              Height="25"
+                              Width="60"
+                              VerticalAlignment="Center"
+                              HorizontalAlignment="Center">
+                    <ToggleButton.Style>
+                        <Style TargetType="ToggleButton"
+                               BasedOn="{StaticResource {x:Type ToggleButton}}">
+                            <Setter Property="Content"
+                                    Value="Import" />
+                            <Style.Triggers>
+                                <Trigger Property="IsChecked"
+                                         Value="True">
+                                    <Setter Property="Content"
+                                            Value="Export" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ToggleButton.Style>
+                </ToggleButton>
                 <TextBox Name="tbImport"
-                         Text="{Binding .ImportFilePath, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                         Text="{Binding Path=.SLMImportPath, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                          Width="220" />
                 <Button Content="Browse"
                         Width="70"
@@ -1232,10 +1252,44 @@
                         Click="btnSLMBrowse_Click"
                         Tag="{Binding Path=.Browse}" />
             </StackPanel>
-            <StackPanel Orientation="Horizontal"
+            <StackPanel Orientation="Vertical">
+                <CheckBox Name="chbImportSeq"
+                          Margin="5"
+                          HorizontalAlignment="Right"
+                          Content="Include Sequences"
+                          Foreground="White"
+                          IsChecked="{Binding Path=.SLMImportSequences, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+                <StackPanel Orientation="Horizontal"
                         Visibility="{Binding ElementName=lblSLMPatternStatus, Path=Content, Converter={StaticResource stringToVisConverter}, ConverterParameter=Inverted, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                         HorizontalAlignment="Right">
-                <Button Name="btnImport"
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock Name="txbHelp"
+                               HorizontalAlignment="Left"
+                               Text="If you are not sure about the file format for import, you should try exporting some patterns."
+                               Visibility="{Binding ElementName=tbtnImExport, Path=IsChecked, Converter={StaticResource boolToVisConverter}, ConverterParameter=Inverted, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                               Width="250"
+                               Foreground="White"
+                               TextWrapping="Wrap"
+                               FontSize="16"
+                               FontStyle="Italic" />
+                        <StackPanel Orientation="Horizontal"
+                                Margin="1"
+                                Visibility="{Binding ElementName=tbtnImExport, Path=IsChecked, Converter={StaticResource boolToVisConverter}, ConverterParameter=Normal, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                            <Label Content="File Name"
+                               Height="30"
+                               Width="65"
+                               HorizontalAlignment="Right"
+                               VerticalAlignment="Center" />
+                            <TextBox Name="tbExportName"
+                                 Text="{Binding Path=.SLMExportFileName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                 Width="155" />
+                            <Label Content=".xml"
+                               Height="30"
+                               Width="30"
+                               VerticalAlignment="Center" />
+                        </StackPanel>
+                    </StackPanel>
+                    <Button Name="btnImport"
                         HorizontalAlignment="Center"
                         HorizontalContentAlignment="Center"
                         VerticalAlignment="Center"
@@ -1244,10 +1298,10 @@
                         Margin="3"
                         Click="btnSLMBrowse_Click"
                         Tag="{Binding Path=.Import}">
-                    <TextBlock Text="OK"
-                               ToolTip="Run import of SLM bleach"></TextBlock>
-                </Button>
-                <Button HorizontalAlignment="Center"
+                        <TextBlock Text="OK"
+                               ToolTip="Run import/export of SLM patterns"></TextBlock>
+                    </Button>
+                    <Button HorizontalAlignment="Center"
                         HorizontalContentAlignment="Center"
                         VerticalAlignment="Center"
                         Height="30"
@@ -1255,9 +1309,10 @@
                         Margin="3"
                         Click="btnSLMBrowse_Click"
                         Tag="{Binding Path=.Cancel}">
-                    <TextBlock Text="Cancel"
+                        <TextBlock Text="Cancel"
                                ToolTip="Cancel import of SLM bleach"></TextBlock>
-                </Button>
+                    </Button>
+                </StackPanel>
             </StackPanel>
         </StackPanel>
         <StackPanel Name="stpSLMSequence"
@@ -1330,18 +1385,6 @@
                         Orientation="Horizontal"
                         VerticalAlignment="Center"
                         ToolTip="preview current pattern with specified power value">
-                <Button Name="btnSavePattern" 
-                        HorizontalAlignment="Center"
-                        HorizontalContentAlignment="Center"
-                        VerticalAlignment="Center"
-                        Height="30"
-                        Width="80"
-                        Margin="3"
-                        Visibility="{Binding Path=.AllowSavePattern, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVisConverter}, ConverterParameter=Normal}"
-                        Click="btnSLMPreview_Click"
-                        Tag="{Binding Path=.SavePattern}">
-                    <TextBlock Text="SavePattern"/>
-                </Button>
                 <Button HorizontalAlignment="Center"
                         HorizontalContentAlignment="Center"
                         VerticalAlignment="Center"

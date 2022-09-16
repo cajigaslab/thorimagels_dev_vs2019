@@ -55,6 +55,12 @@
         private string _exposurePath;
         private double _hsBandwithMode;
         private bool _isCSType = false;
+        private int _laser1Wavelength;
+        private int _laser2Wavelength;
+        private int _laser3Wavelength;
+        private int _laser4Wavelength;
+        private int _laserAllAnalog;
+        private int _laserAllTTL;
         private string _outputPath;
         private string _pockels1RampFileName = string.Empty;
         private string _pockels2RampFileName = string.Empty;
@@ -905,7 +911,7 @@
                         appDoc.Load(appSettings);
 
                         gbSequentialCapture.Visibility = Visibility.Collapsed;
-                        ndList = appDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/MCLSView");
+                        ndList = appDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/MultiLaserControlView");
                         if (0 < ndList.Count)
                         {
                             gbMCLS.Visibility = ndList[0].Attributes["Visibility"].Value.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
@@ -1086,6 +1092,99 @@
                         {
                             gbEpiTurret.Visibility = (0 < Int32.Parse(str)) ? Visibility.Visible : Visibility.Collapsed;
 
+                        }
+                    }
+                    //Set the laser labels based off of whether there is a queryable wavelength
+                    str = string.Empty;
+                    node = xDoc.SelectSingleNode("ThorImageExperiment/MCLS");
+                    if (null != node)
+                    {
+                        if (XmlManager.GetAttribute(node, xDoc, "wavelength1", ref str))
+                        {
+                            _laser1Wavelength = Int32.Parse(str);
+                            if (_laser1Wavelength == 0)
+                            {
+                                laser1Label.Content = "1";
+                            }
+                            else
+                            {
+                                laser1Label.Content = _laser1Wavelength + " nm";
+                            }
+                        }
+                        str = string.Empty;
+                        if (XmlManager.GetAttribute(node, xDoc, "wavelength2", ref str))
+                        {
+                            _laser2Wavelength = Int32.Parse(str);
+                            if (_laser2Wavelength == 0)
+                            {
+                                laser2Label.Content = "2";
+                            }
+                            else
+                            {
+                                laser2Label.Content = _laser2Wavelength + " nm";
+                            }
+                        }
+                        str = string.Empty;
+                        if (XmlManager.GetAttribute(node, xDoc, "wavelength3", ref str))
+                        {
+                            _laser3Wavelength = Int32.Parse(str);
+                            if (_laser3Wavelength == 0)
+                            {
+                                laser3Label.Content = "3";
+                            }
+                            else
+                            {
+                                laser3Label.Content = _laser3Wavelength + " nm";
+                            }
+                        }
+                        str = string.Empty;
+                        if (XmlManager.GetAttribute(node, xDoc, "wavelength4", ref str))
+                        {
+                            _laser4Wavelength = Int32.Parse(str);
+                            if (_laser4Wavelength == 0)
+                            {
+                                laser4Label.Content = "4";
+                            }
+                            else
+                            {
+                                laser4Label.Content = _laser4Wavelength + " nm";
+                            }
+                        }
+                        //Set the visibility for the Analog/TTL stackpanel based on whether there is a queryable laser wavelength (MCLS vs Toptica)
+                        if (_laser1Wavelength == 0 && _laser2Wavelength == 0 && _laser3Wavelength == 0 && _laser4Wavelength == 0)
+                        {
+                            splaserAnalogTTL.Visibility = Visibility.Collapsed;
+                        }
+                        else
+                        {
+                            splaserAnalogTTL.Visibility = Visibility.Visible;
+                        }
+                        //Set the checked status of Analog/TTL mode
+                        str = string.Empty;
+                        if (XmlManager.GetAttribute(node, xDoc, "allanalog", ref str))
+                        {
+                            _laserAllAnalog = Int32.Parse(str);
+                            if (_laserAllAnalog == 0)
+                            {
+                                cbLaserAnalog.IsChecked = false;
+                            }
+                            else
+                            {
+                                cbLaserAnalog.IsChecked = true;
+                            }
+                        }
+                        str = string.Empty;
+                        if (XmlManager.GetAttribute(node, xDoc, "allttl", ref str))
+                        {
+                            _laserAllTTL = Int32.Parse(str);
+                            if (_laserAllTTL == 0)
+                            {
+                                cbLaserTTL.IsChecked = false;
+                            }
+                            else
+                            {
+                                cbLaserTTL.IsChecked = true;
+                            }
                         }
                     }
 

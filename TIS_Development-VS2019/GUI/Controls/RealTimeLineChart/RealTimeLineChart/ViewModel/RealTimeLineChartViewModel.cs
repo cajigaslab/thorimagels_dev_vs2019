@@ -83,6 +83,10 @@
         private static RealTimeDataCapture.ReportNewData _dataCallBack;
         private static RealTimeDataCapture.ReportNewSpectral _spectralCallBack;
 
+        List<double> Xmax = new List<double> { };
+        List<double> Xmin = new List<double> { };
+        List<double> Ymax = new List<double> { };
+        List<double> Ymin = new List<double> { };
         private string _boardType;
         private BackgroundWorker _bw = null;
         private bool _bwLoadDone = true;
@@ -90,14 +94,17 @@
         private BackgroundWorker _bwSpecAnalyzer = null;
         private BackgroundWorker _bwWaiter = null;
         private ObservableCollection<ChannelViewModel> _channelViewModels;
+        List<bool> _channelVisibilityChoice;
         private ChartModes _chartMode = ChartModes.CAPTURE;
         private ObservableCollection<IRenderableSeries> _chartSeries;
+        ObservableCollection<IRenderableSeries> _chartSeriesForScrollBar;
         private List<SeriesMetadata> _chartSeriesMetadata;
         private long _clockRate = Constants.ThorRealTimeData.CLK_RATE_20MHZ; // clock rate defined by type of NI card, 20M Hz for NI 6363
         private double _closingPMTShutterDuration;
         private bool _configVisibility = true;
         private RealTimeDataCapture.CompoundDataStruct _dataCaptureStruct;
         private UInt64 _dataSeriesSize = 0;
+        bool _displayDataWhileReviewLoading = false;
         private ObservableCollection<string> _displayOptionList = new ObservableCollection<string>();
         private int _displayOptionSelectedIndex;
         private List<int> _displayParamValue = new List<int>();
@@ -135,6 +142,7 @@
         private SplashProgress _splash;
         private double _stimulusLimit;
         private int _triggerMode = 0;
+        IRange _yDataRange = new DoubleRange(-5, 5);
 
         #endregion Fields
 
@@ -171,6 +179,7 @@
             _channelViewModels = new ObservableCollection<ChannelViewModel>();
             _spectralCallBack = new RealTimeDataCapture.ReportNewSpectral(UpdateSpectral);
             _dataCallBack = new RealTimeDataCapture.ReportNewData(UpdateTimeDomainData);
+            XVisibleRangeStack = new DoubleRange(0, 0);
         }
 
         #endregion Constructors
@@ -336,6 +345,7 @@
                 OnPropertyChanged("ChartMode");
                 OnPropertyChanged("AutoRangeX");
                 OnPropertyChanged("AutoRangeY");
+                OnPropertyChanged("StackHorizontalDataScrollerVisibility");
             }
         }
 
@@ -350,6 +360,30 @@
             get
             {
                 return _chartSeries;
+            }
+            private set
+            {
+                _chartSeries = value;
+                OnPropertyChanged("ChartSeries");
+            }
+        }
+
+        /// <summary>
+        /// Gets the chart series Data.
+        /// </summary>
+        /// <value>
+        /// The chart series.
+        /// </value>
+        public ObservableCollection<IRenderableSeries> ChartSeriesForScrollBar
+        {
+            get
+            {
+                return _chartSeriesForScrollBar;
+            }
+            private set
+            {
+                _chartSeriesForScrollBar = value;
+                OnPropertyChanged("ChartSeriesForScrollBar");
             }
         }
 
@@ -1053,6 +1087,20 @@
             }
         }
 
+        public IRange YDataRange
+        {
+            get
+            {
+                var (min, max) = GetMinMaxEnabledChannels(Ymin, Ymax);
+                if (min != null && max != null)
+                {
+                    _yDataRange.SetMinMax(min.Value - 0.2, max.Value + 0.2);
+                }
+                return _yDataRange;
+            }
+            set => SetProperty(ref _yDataRange, value);
+        }
+
         #endregion Properties
 
         #region Methods
@@ -1305,10 +1353,7 @@
         /// <param name="flag">if set to <c>true</c> [flag].</param>
         public void EnableScrollbar(bool flag)
         {
-            if (null != EventXYAxisScrollbarEnabledChanged)
-            {
-                EventXYAxisScrollbarEnabledChanged(flag);
-            }
+            EventXYAxisScrollbarEnabledChanged?.Invoke(flag);
         }
 
         /// <summary>
@@ -1388,125 +1433,100 @@
                 _viData = new double[_dataCaptureStruct.gcLength];
             }
 
-            bool checkStackOnce = (IsStackedDisplay) ? true : false;
             bool isXSet = false;
-            for (int j = 0; j < ChartSeries.Count; j++)
+            using (MainChartSurface.SuspendUpdates())
             {
-                if (!isXSet)
+                for (int j = 0; j < ChartSeries.Count; j++)
                 {
-                    for (UInt64 i = 0; i < (UInt64)_xdata.Length; i++)
+                    if (!isXSet)
                     {
-                        _xdataDouble[i] = (double)_xdata[i] / (double)_clockRate;
-                    }
-                    isXSet = true;
-                }
-                IList<byte> d = new List<byte>();
-                switch (_chartSeriesMetadata[j].SignalType)
-                {
-                    case SignalType.DIGITAL_IN:
+                        for (UInt64 i = 0; i < (UInt64)_xdata.Length; i++)
                         {
-                            if (_dataCaptureStruct.diLength > 0)
-                            {
-                                int offset = (int)signalTypeCount[(int)SignalType.DIGITAL_IN] * (int)_dataCaptureStruct.gcLength * sizeof(byte);
-                                Marshal.Copy(IntPtr.Add(_dataCaptureStruct.diData, offset), _diData, 0, (int)_dataCaptureStruct.gcLength);
-                                if (checkStackOnce)
-                                {
-                                    Application.Current.Dispatcher.Invoke(new Action(() =>
-                                    {
-                                        ((IXyDataSeries<double, byte>)_channelViewModels[j].ChannelSeries).Append(_xdataDouble, _diData);
-                                    }));
-                                }
-                                else
-                                {
-                                    Application.Current.Dispatcher.Invoke(new Action(() =>
-                                    {
-                                        ((IXyDataSeries<double, byte>)ChartSeries[j].DataSeries).Append(_xdataDouble, _diData);
-                                    }));
-                                }
-                                signalTypeCount[(int)_chartSeriesMetadata[j].SignalType]++;
-                            }
-                            break;
+                            _xdataDouble[i] = (double)_xdata[i] / (double)_clockRate;
                         }
-                    case SignalType.ANALOG_IN:
-                        {
-                            if (_dataCaptureStruct.aiLength > 0)
+                        isXSet = true;
+                    }
+
+                    switch (_chartSeriesMetadata[j].SignalType)
+                    {
+                        case SignalType.DIGITAL_IN:
                             {
-                                int offset = (int)signalTypeCount[(int)SignalType.ANALOG_IN] * (int)_dataCaptureStruct.gcLength * sizeof(double);
-                                Marshal.Copy(IntPtr.Add(_dataCaptureStruct.aiData, offset), _aiData, 0, (int)_dataCaptureStruct.gcLength);
-                                if (checkStackOnce)
+                                if (_dataCaptureStruct.diLength > 0)
                                 {
+                                    int offset = (int)signalTypeCount[(int)SignalType.DIGITAL_IN] * (int)_dataCaptureStruct.gcLength * sizeof(byte);
+                                    Marshal.Copy(IntPtr.Add(_dataCaptureStruct.diData, offset), _diData, 0, (int)_dataCaptureStruct.gcLength);
+
                                     Application.Current.Dispatcher.Invoke(new Action(() =>
                                     {
-                                        ((IXyDataSeries<double, double>)_channelViewModels[j].ChannelSeries).Append(_xdataDouble, _aiData);
+                                        for (int i = 0; i < _xdataDouble.Length; ++i)
+                                        {
+                                            ((IXyDataSeries<double, int>)ChartSeries[j].DataSeries).Append(_xdataDouble[i], _diData[i]);
+                                        }
                                     }));
+
+                                    signalTypeCount[(int)_chartSeriesMetadata[j].SignalType]++;
                                 }
-                                else
+                                break;
+                            }
+                        case SignalType.ANALOG_IN:
+                            {
+                                if (_dataCaptureStruct.aiLength > 0)
                                 {
+                                    int offset = (int)signalTypeCount[(int)SignalType.ANALOG_IN] * (int)_dataCaptureStruct.gcLength * sizeof(double);
+                                    Marshal.Copy(IntPtr.Add(_dataCaptureStruct.aiData, offset), _aiData, 0, (int)_dataCaptureStruct.gcLength);
+
                                     Application.Current.Dispatcher.Invoke(new Action(() =>
                                     {
                                         ((IXyDataSeries<double, double>)ChartSeries[j].DataSeries).Append(_xdataDouble, _aiData);
                                     }));
-                                }
 
-                                signalTypeCount[(int)_chartSeriesMetadata[j].SignalType]++;
+                                    signalTypeCount[(int)_chartSeriesMetadata[j].SignalType]++;
+                                }
+                                break;
                             }
+                        case SignalType.COUNTER_IN:
+                            {
+                                if (_dataCaptureStruct.ciLength > 0)
+                                {
+                                    int offset = (int)signalTypeCount[(int)SignalType.COUNTER_IN] * (int)_dataCaptureStruct.gcLength * sizeof(int);
+                                    Marshal.Copy(IntPtr.Add(_dataCaptureStruct.ciData, offset), _ciData, 0, (int)_dataCaptureStruct.gcLength);
+
+                                    for (int nC = 0; nC < IsCounterLinePlotEnabled.Count; nC++)
+                                    {
+                                        if (IsCounterLinePlotEnabled[nC])
+                                        {
+                                            Application.Current.Dispatcher.Invoke(new Action(() =>
+                                            {
+                                                ((IXyDataSeries<double, int>)ChartSeries[j].DataSeries).Append(_xdataDouble, _ciData);
+                                            }));
+                                        }
+                                    }
+
+                                    ImageCounterNumber = _ciData[_ciData.Length - 1];
+
+                                    signalTypeCount[(int)_chartSeriesMetadata[j].SignalType]++;
+                                }
+                            }
+                            //continue;
                             break;
-                        }
-                    case SignalType.COUNTER_IN:
-                        {
-                            if (_dataCaptureStruct.ciLength > 0)
+                        case SignalType.VIRTUAL:
                             {
-                                int offset = (int)signalTypeCount[(int)SignalType.COUNTER_IN] * (int)_dataCaptureStruct.gcLength * sizeof(int);
-                                Marshal.Copy(IntPtr.Add(_dataCaptureStruct.aiData, offset), _ciData, 0, (int)_dataCaptureStruct.gcLength);
-                                if (checkStackOnce)
+                                if (_dataCaptureStruct.viLength > 0)
                                 {
-                                    Application.Current.Dispatcher.Invoke(new Action(() =>
-                                    {
-                                        ((IXyDataSeries<double, int>)_channelViewModels[j].ChannelSeries).Append(_xdataDouble, _ciData);
-                                    }));
-                                }
-                                else
-                                {
-                                    Application.Current.Dispatcher.Invoke(new Action(() =>
-                                    {
-                                        ((IXyDataSeries<double, int>)ChartSeries[j].DataSeries).Append(_xdataDouble, _ciData);
-                                    }));
-                                }
-                                ImageCounterNumber = _ciData[_ciData.Length - 1];
+                                    int offset = (int)signalTypeCount[(int)SignalType.VIRTUAL] * (int)_dataCaptureStruct.gcLength * sizeof(double);
+                                    Marshal.Copy(IntPtr.Add(_dataCaptureStruct.viData, offset), _viData, 0, (int)_dataCaptureStruct.gcLength);
 
-                                signalTypeCount[(int)_chartSeriesMetadata[j].SignalType]++;
-                            }
-                        }
-                        //continue;
-                        break;
-                    case SignalType.VIRTUAL:
-                        {
-                            if (_dataCaptureStruct.viLength > 0)
-                            {
-                                int offset = (int)signalTypeCount[(int)SignalType.VIRTUAL] * (int)_dataCaptureStruct.gcLength * sizeof(double);
-                                Marshal.Copy(IntPtr.Add(_dataCaptureStruct.aiData, offset), _viData, 0, (int)_dataCaptureStruct.gcLength);
-
-                                if (checkStackOnce)
-                                {
-                                    Application.Current.Dispatcher.Invoke(new Action(() =>
-                                    {
-                                        ((IXyDataSeries<double, double>)_channelViewModels[j].ChannelSeries).Append(_xdataDouble, _viData);
-                                    }));
-                                }
-                                else
-                                {
                                     Application.Current.Dispatcher.Invoke(new Action(() =>
                                     {
                                         ((IXyDataSeries<double, double>)ChartSeries[j].DataSeries).Append(_xdataDouble, _viData);
                                     }));
+
+                                    signalTypeCount[(int)_chartSeriesMetadata[j].SignalType]++;
                                 }
-
-                                signalTypeCount[(int)_chartSeriesMetadata[j].SignalType]++;
+                                break;
                             }
-                            break;
-                        }
+                    }
                 }
-
             }
             return true;
         }
@@ -1664,6 +1684,10 @@
                 if (GetAttribute(settingsList[0], SettingsDoc, "OTM", ref strTemp) && (Int32.TryParse(strTemp, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal)))
                 {
                     Configuration[0] = (1 == iVal) ? true : false;
+                }
+                if (GetAttribute(settingsList[0], SettingsDoc, "DisplayDataWhileReviewLoading", ref strTemp) && (Int32.TryParse(strTemp, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal)))
+                {
+                    _displayDataWhileReviewLoading = (1 == iVal) ? true : false;
                 }
             }
 
@@ -1995,6 +2019,7 @@
                         if (series != null)
                         {
                             SetAttribute(ndList[i], SettingsDoc, "visible", series.IsVisible ? "1" : "0");
+                            SetAttribute(ndList[i], SettingsDoc, "yLock", series.YVisibleLock ? "1" : "0");
                         }
                     }
                     else
@@ -2003,6 +2028,7 @@
                         if (series != null)
                         {
                             SetAttribute(ndList[i], SettingsDoc, "visible", series.IsVisible ? "1" : "0");
+                            SetAttribute(ndList[i], SettingsDoc, "yLock", "0");
                         }
                     }
                 }
@@ -2015,10 +2041,12 @@
                     if (_isStackedDisplay)
                     {
                         SetAttribute(ndList[i], SettingsDoc, "visible", ((_channelViewModels.FirstOrDefault(x => x.ChannelName == str).IsVisible) ? "1" : "0"));
+                        SetAttribute(ndList[i], SettingsDoc, "yLock", (_channelViewModels.FirstOrDefault(x => x.ChannelName == str).YVisibleLock ? "1" : "0"));
                     }
                     else
                     {
                         SetAttribute(ndList[i], SettingsDoc, "visible", ((_chartSeries.FirstOrDefault(x => x.DataSeries.SeriesName == str).IsVisible) ? "1" : "0"));
+                        SetAttribute(ndList[i], SettingsDoc, "yLock", "0");
                     }
                 }
                 //spectral channel visibilities
@@ -2380,7 +2408,7 @@
 
             H5CSWrapper tmpH5 = new H5CSWrapper();
             string str = SaveName;
-            string strFileName = "Episode001.h5";
+            string strFileName = "Episode_0000.h5";
             if (IsSaving || forceSave)
             {
                 if (str == null)
@@ -2393,7 +2421,7 @@
                 {
                     do
                     {
-                        str = CreateUniqueFilename(str);
+                        str = CreateUniqueFilename(SavePath, str);
                     }
                     while (Directory.Exists(SavePath + "\\" + str));
 
@@ -2413,12 +2441,10 @@
                             {
                                 do
                                 {
-                                    strFileName = CreateUniqueFilename(Path.GetFileNameWithoutExtension(strFileName));
+                                    strFileName = CreateUniqueFilename(SavePath + "\\" + str + "\\", strFileName);
 
                                 }
-                                while (File.Exists(SavePath + "\\" + str + "\\" + strFileName + ".h5"));
-
-                                strFileName += ".h5";
+                                while (File.Exists(SavePath + "\\" + str + "\\" + strFileName));
                             }
                         }
                         else if (0 == mBox.ButtonFlag)
@@ -2534,7 +2560,7 @@
 
                     _bwWaiter = new BackgroundWorker();
                     _bwWaiter.WorkerSupportsCancellation = true;
-                    _bwWaiter.DoWork += delegate(object sender, DoWorkEventArgs e)
+                    _bwWaiter.DoWork += delegate (object sender, DoWorkEventArgs e)
                     {
                         do
                         {
@@ -2544,7 +2570,7 @@
                         while (_bw.IsBusy);
                     };
 
-                    _bwWaiter.RunWorkerCompleted += delegate(object sender, RunWorkerCompletedEventArgs e)
+                    _bwWaiter.RunWorkerCompleted += delegate (object sender, RunWorkerCompletedEventArgs e)
                     {
                         if (IsSaving || forceSave)
                         {
@@ -2559,7 +2585,7 @@
                         OnPropertyChanged("AutoRangeY");
                     };
 
-                    splashWkr.DoWork += delegate(object sender, DoWorkEventArgs e)
+                    splashWkr.DoWork += delegate (object sender, DoWorkEventArgs e)
                     {
                         do
                         {
@@ -2575,7 +2601,7 @@
                         while (true == _bwWaiter.IsBusy);
                     };
 
-                    splashWkr.RunWorkerCompleted += delegate(object sender, RunWorkerCompletedEventArgs e)
+                    splashWkr.RunWorkerCompleted += delegate (object sender, RunWorkerCompletedEventArgs e)
                     {
                         _splash.Close();
                         // App inherits from Application, and has a Window property called MainWindow
@@ -2706,11 +2732,11 @@
                 {
                     maxSampleRate = 2000002;
                 }
-                else if (type == "NI6321")
+                else if (type == "NI6321" || type == "NI6323")
                 {
                     maxSampleRate = 250000;
                 }
-                else if (type == "NI6341")
+                else if (type == "NI6341" || type == "NI6343")
                 {
                     maxSampleRate = 500000;
                 }
@@ -2759,24 +2785,78 @@
         /// <summary>
         /// Creates the unique filename.
         /// </summary>
-        /// <param name="currentFilename">The current filename.</param>
+        /// <param name="currentPath">the current save path</param>
+        /// <param name="currentFilename">he current filename.</param>
         /// <returns></returns>
-        private string CreateUniqueFilename(string currentFilename)
+        private string CreateUniqueFilename(string currentPath, string currentFilename)
         {
-            Match match = Regex.Match(currentFilename, "(.*)([0-9]{3,})");
+            ThorSharedTypes.FileName name = new ThorSharedTypes.FileName(currentFilename);
 
-            if (match.Groups.Count > 2)
-            {
-                int val = Convert.ToInt32(match.Groups[2].Value);
-                val++;
-                currentFilename = match.Groups[1].Value + String.Format("{0:000}", val);
-            }
-            else
-            {
-                currentFilename = currentFilename + "001";
-            }
+            name.MakeUnique(currentPath);
 
-            return currentFilename;
+            return name.FullName;
+        }
+
+        /// <summary>
+        /// Gets the min and max values for the enabled channels
+        /// </summary>
+        /// <param name="minList"></param>
+        /// <param name="maxList"></param>
+        /// <returns></returns>
+        private (double?, double?) GetMinMaxEnabledChannels(List<double> minList, List<double> maxList)
+        {
+            if (minList?.Count > 0 && maxList?.Count > 0 && ChartSeries?.Count == maxList?.Count && ChartSeries?.Count == minList?.Count)
+            {
+                double min = double.MaxValue;
+                double max = double.MinValue;
+                Application.Current.Dispatcher.Invoke(new Action(() =>
+                {
+                    for (int i = 0; i < ChartSeries?.Count; i++)
+                    {
+                        bool canCalculateMinMax = false;
+                        if (!_bwLoadDone)
+                        {
+                            if (_channelVisibilityChoice?.Count == ChartSeries?.Count && ChartSeries[i]?.DataSeries?.Count > 0 && _channelVisibilityChoice[i])
+                            {
+                                canCalculateMinMax = true;
+                            }
+                        }
+                        else
+                        {
+                            if (IsStackedDisplay &&
+                                _channelViewModels?.Count > 0 &&
+                                _channelViewModels.Count == ChartSeries?.Count &&
+                                _channelViewModels[i].ChannelSeries?.Count > 0 &&
+                                _channelViewModels[i].IsVisible)
+                            {
+                                canCalculateMinMax = true;
+                            }
+                            else
+                            {
+                                if (ChartSeries[i]?.DataSeries?.Count > 0 && ChartSeries[i].IsVisible)
+                                {
+                                    canCalculateMinMax = true;
+                                }
+                            }
+                        }
+
+                        if (canCalculateMinMax)
+                        {
+                            if (minList[i] < min)
+                            {
+                                min = minList[i];
+                            }
+                            if (maxList[i] > max)
+                            {
+                                max = maxList[i];
+                            }
+                        }
+                    }
+                }));
+
+                return (min, max);
+            }
+            return (null, null);
         }
 
         /// <summary>
@@ -2816,9 +2896,9 @@
             splashWkr.WorkerSupportsCancellation = true;
             _bwLoadDone = false;
             ProgressPercentage = 0;
-            EnableScrollbar(true);
+            EnableScrollbar(!IsStackedDisplay);
             ChangeVerticalMarkersMode(MarkerType.DeleteAll);
-            //UpdateRenderPriority(RenderPriority.Low);
+
             try
             {
                 _splash = new SplashProgress();
@@ -2837,11 +2917,46 @@
                 _bwLoader.DoWork += new DoWorkEventHandler(_bwLoader_DoWork);
                 _bwLoader.RunWorkerCompleted += new RunWorkerCompletedEventHandler(_bwLoader_RunWorkerCompleted);
                 _bwLoader.WorkerSupportsCancellation = true;
+                UpdateRenderPriority(RenderPriority.Low);
+
+                _channelVisibilityChoice = new List<bool>();
+                if (_chartMode == ChartModes.REVIEW)
+                {
+                    for (int i = 0; i < _channelViewModels.Count; ++i)
+                    {
+                        if (IsStackedDisplay)
+                        {
+                            _channelVisibilityChoice.Add(_channelViewModels[i].IsVisible);
+                        }
+                        else
+                        {
+                            _channelVisibilityChoice.Add(_chartSeries[i].IsVisible);
+                        }
+                        if (!_displayDataWhileReviewLoading)
+                        {
+                            _channelViewModels[i].IsVisible = false;
+                            _chartSeries[i].IsVisible = false;
+                        }
+                        else
+                        {
+                            if (IsStackedDisplay)
+                            {
+                                _chartSeries[i].IsVisible = false;
+                            }
+                            else
+                            {
+                                _channelViewModels[i].IsVisible = false;
+                            }
+                        }
+                    }
+                }
+
+                GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
 
                 _bwLoader.RunWorkerAsync();
                 splashWkr.RunWorkerAsync();
 
-                splashWkr.DoWork += delegate(object sender, DoWorkEventArgs e)
+                splashWkr.DoWork += delegate (object sender, DoWorkEventArgs e)
                 {
                     do
                     {
@@ -2862,7 +2977,7 @@
                     while ((true == _bwLoader.IsBusy) || (false == _bwLoadDone));
                 };
 
-                splashWkr.RunWorkerCompleted += delegate(object sender, RunWorkerCompletedEventArgs e)
+                splashWkr.RunWorkerCompleted += delegate (object sender, RunWorkerCompletedEventArgs e)
                 {
                     _splash.Close();
                     // App inherits from Application, and has a Window property called MainWindow
@@ -3006,58 +3121,93 @@
         /// </summary>
         private void ZoomExtendChartSeries()
         {
-            try
+            try //TODO: do Y and X separately
             {
                 if (ChartSeries.Count <= 0)
                 {
                     return;
                 }
 
-                List<double> Ymax = new List<double> { };
-                List<double> Ymin = new List<double> { };
+                int num = 0;
+                Ymax = new List<double> { };
+                Ymin = new List<double> { };
+                Xmax = new List<double> { };
+                Xmin = new List<double> { };
                 Application.Current.Dispatcher.Invoke(new Action(() =>
                 {
                     for (int i = 0; i < ChartSeries?.Count; i++)
                     {
-
-                        if (ChartSeries[i].DataSeries.SeriesName == "Counter")
-                        {
-                            continue;
-                        }
                         if (ChartSeries[i]?.DataSeries?.Count > 0)
                         {
+                            //if (ChartSeries[i].DataSeries.SeriesName == "Counter")
+                            //{
+                            //    continue;
+                            //}
+
+                            //TODO need to get min and max for visible channels
                             Ymax.Add((double.Parse(ChartSeries[i].DataSeries.YMax.ToString())));
                             Ymin.Add((double.Parse(ChartSeries[i].DataSeries.YMin.ToString())));
+                            num = ChartSeries[i].DataSeries.Count;
+
                         }
                     }
                 }));
 
                 if (Ymax.Count > 0 && Ymin.Count > 0 && ((double)(Ymin.Min()) - 0.2) < ((double)(Ymax.Max()) + 0.2))
                 {
-                    EventChartYAxisRangeChanged?.Invoke((double)(Ymin.Min()) - 0.2, (double)(Ymax.Max()) + 0.2);
+                    var (min, max) = GetMinMaxEnabledChannels(Ymin, Ymax);
+                    if (min != null && max != null)
+                    {
+                        EventChartYAxisRangeChanged?.Invoke(min.Value - 0.2, max.Value + 0.2);
+                    }
                 }
+                YDataRange = new DoubleRange((double)(Ymin.Min()) - 0.2, (double)(Ymax.Max()) + 0.2);
+                double spacing = 1 / (double)_sampleRateValue[_sampleRate];
+                double maxX = spacing * num;
+                IRange XMinMax = new DoubleRange(0, maxX);
+                double[] x = new double[num];
+                double[] y = new double[num];
+                double yMin = Ymin.Min() - 0.2;
+                double yMax = Ymax.Max() + 0.2;
+                double yDiff = yMax - yMin;
+                for (int i = 0; i < num; i++)
+                {
+                    x[i] = i * spacing;
+                    y[i] = i * (yDiff) / ((double)num) + yMin;
+                }
+                Application.Current.Dispatcher.Invoke(new Action(() =>
+                {
+                    ChartSeriesForScrollBar = new ObservableCollection<IRenderableSeries>();
 
-                if (IsStackedDisplay)
-                {
-                    Application.Current.Dispatcher.Invoke(new Action(() =>
+                    var l = new FastLineRenderableSeries();
+
+                    l.DataSeries = CreateSingleUniformXyDataSeries("dummy", SignalType.ANALOG_IN);
+
+                    l.IsVisible = true;
+
+                    l.ResamplingMode = SciChart.Data.Numerics.ResamplingMode.Auto;
+                    l.AntiAliasing = false;
+
+                    ((UniformXyDataSeries<double>)l.DataSeries).Append(y);
+                    ChartSeriesForScrollBar.Add(l);
+
+                    for (int i = 0; i < _channelViewModels?.Count; i++)
                     {
-                        _channelViewModels.Each(s => { s.ChannelSeries.InvalidateParentSurface(RangeMode.ZoomToFit); s.YVisibleRange = new DoubleRange((double)s.ChannelSeries.YRange.Min - 0.2, (double)s.ChannelSeries.YRange.Max + 0.2); }, (s => 0 < s.ChannelSeries.Count));
-                    }));
-                }
-                else
-                {
-                    Application.Current.Dispatcher.Invoke(new Action(() =>
-                    {
-                        ChartSeries.Each(s => { s.DataSeries.InvalidateParentSurface(RangeMode.ZoomToFit); }, (s => 0 < s.DataSeries.Count));
-                    }));
-                }
+                        if (ChartSeries[i]?.DataSeries?.Count > 0)
+                        {
+                            _channelViewModels[i].YVisibleRange = new DoubleRange(Ymin[i] - 0.2, Ymax[i] + 0.2);
+                        }
+                    }
+                }));
+
+                XVisibleRangeStack = new DoubleRange(0, maxX);
 
                 Application.Current.Dispatcher.Invoke(new Action(() =>
                 {
                     _specChViewModels.Each(s => { s.ChannelSeries.InvalidateParentSurface(RangeMode.ZoomToFit); s.XVisibleRange = s.ChannelSeries.XRange; }, (s => 0 < s.ChannelSeries.Count));
                 }));
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "RealTimeLineChart ZoomExtendChartSeries Error: " + ex.Message);
             }
@@ -3075,35 +3225,41 @@
             RealTimeDataCapture.Instance.LoadDataFromFile();
             for (int j = 0; j < _chartSeriesMetadata.Count; j++)
             {
-
-                if (IsStackedDisplay)
+                bool done = false;
+                Application.Current.Dispatcher.Invoke(new Action(() =>
                 {
-                    Application.Current.Dispatcher.Invoke(new Action(() =>
+                    if (IsStackedDisplay)
                     {
-                        if (0 == j)
+                        Application.Current.Dispatcher.Invoke(new Action(() =>
                         {
-                            XVisibleRangeStack = _channelViewModels[j].ChannelSeries.XRange;
-                            XDataRange = XVisibleRangeChart = XVisibleRangeStack;
-                        }
-                        _channelViewModels[j].ChannelSeries = _channelViewModels[j].ChannelSeries;
-                    }));
-                }
-                else
+                            if (_channelViewModels[j].IsVisible)
+                            {
+                                XVisibleRangeStack = _channelViewModels[j].ChannelSeries.XRange;
+                                XDataRange = XVisibleRangeChart = XVisibleRangeStack;
+                                done = true;
+                            }
+                        }));
+                    }
+                    else
+                    {
+                        Application.Current.Dispatcher.Invoke(new Action(() =>
+                        {
+                            if (ChartSeries[j].IsVisible)
+                            {
+                                XVisibleRangeChart = ((IDataSeries)ChartSeries[j].DataSeries).XRange;
+                                XDataRange = XVisibleRangeStack = XVisibleRangeChart;
+                                done = true;
+                            }
+                        }));
+                    }
+                }));
+                if (done)
                 {
-                    Application.Current.Dispatcher.Invoke(new Action(() =>
-                    {
-                        if (0 == j)
-                        {
-                            XVisibleRangeChart = ((IDataSeries)ChartSeries[j].DataSeries).XRange;
-                            XDataRange = XVisibleRangeStack = XVisibleRangeChart;
-                        }
-                        ChartSeries[j].DataSeries = ChartSeries[j].DataSeries;
-                    }));
+                    break;
                 }
             }
             ChangeVerticalMarkersMode(MarkerType.Load);
             IsVerticalMarkerVisible = true;
-            OnPropertyChanged("IsVerticalMarkerVisible");
 
             ZoomExtendChartSeries();
             UpdateGUI();
@@ -3116,7 +3272,23 @@
         /// <param name="e">The <see cref="RunWorkerCompletedEventArgs"/> instance containing the event data.</param>
         private void _bwLoader_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
+            if (_chartMode == ChartModes.REVIEW)
+            {
+                for (int i = 0; i < _channelViewModels.Count; ++i)
+                {
+                    if (IsStackedDisplay)
+                    {
+                        _channelViewModels[i].IsVisible = _channelVisibilityChoice[i];
+                    }
+                    else
+                    {
+                        _chartSeries[i].IsVisible = _channelVisibilityChoice[i];
+                    }
+                }
+            }
+
             UpdateRenderPriority(RenderPriority.Normal);
+
             _bwLoadDone = true;
         }
 

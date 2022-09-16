@@ -20,6 +20,7 @@ echo F | xcopy /F/Y ..\..\..\..\Common\ThorLogging\x64\%2\ThorLoggingUnmanaged.d
 echo F | xcopy /F/Y ..\..\..\..\GUI\Controls\ThemeControl\ThemeControl\bin\Debug\ThemeControl.dll %1
 
 echo F | xcopy /F/Y ..\..\..\..\GUI\Controls\RealTimeLineChart\RealTimeLineChart\bin\Debug\RealTimeLineChart.dll %1
+echo F | xcopy /F/Y ..\..\..\..\Common\ThorSharedTypes\ThorSharedTypes\bin\Debug\ThorSharedTypes.dll .\bin\Debug
 
 @echo copying Settings:
 echo F | xcopy /F/Y ..\..\..\..\Hardware\Devices\ThorRealTimeData\ThorRealTimeDataSettings.xml %1

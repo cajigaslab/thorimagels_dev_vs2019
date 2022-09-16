@@ -11,18 +11,23 @@ private:
 	DWORD _bytesSize;
 	BITMAPINFO _bmi;
 	T _kzValue;
+	int _index;			//used for location in buffer array
 
 public:
-	MemoryStruct() { _memPtr = NULL; _bytesSize = 0; _kzValue = 0; };
+	MemoryStruct() { _memPtr = NULL; _bytesSize = 0; _kzValue = 0; _index = -1; };
 	MemoryStruct(T* pMem, DWORD dsize) {
-		if (NULL != pMem) {	_memPtr = pMem; _bytesSize = dsize;	} else { _memPtr = NULL; _bytesSize = 0; }
+		if (NULL != pMem) { _memPtr = pMem; _bytesSize = dsize; }
+		else { _memPtr = NULL; _bytesSize = 0; }
 		_kzValue = 0;
+		_index = -1;
 	};
 	MemoryStruct(T* pMem, BITMAPINFO& bm) {
-		if (NULL != pMem) { _memPtr = pMem; _bmi = bm; } else {	_memPtr = NULL; _bytesSize = 0;	} 
-		_kzValue = 0; 
+		if (NULL != pMem) { _memPtr = pMem; _bmi = bm; }
+		else { _memPtr = NULL; _bytesSize = 0; }
+		_kzValue = 0;
+		_index = -1;
 	};
-	MemoryStruct(T kz) { _memPtr = NULL; _bytesSize = 0; _kzValue = kz; };
+	MemoryStruct(T kz) { _memPtr = NULL; _bytesSize = 0; _kzValue = kz; _index = -1; };
 
 	~MemoryStruct() { ReallocMemChk(0); };
 
@@ -38,6 +43,9 @@ public:
 	T GetKz() { return _kzValue; }
 	void SetKz(T val) { _kzValue = val; }
 
+	int GetIndex() { return _index; }
+	void SetIndex(int val) { _index = val; }
+
 	void ReallocMemChk(DWORD byteSize)
 	{
 		if (0 == byteSize) { if (NULL != _memPtr) { free(_memPtr); _memPtr = NULL; }; _bytesSize = 0; }
@@ -49,15 +57,7 @@ public:
 		ReallocMemChk(0);
 		if (0 != unitSize) { T* tmp = (T*)calloc(unitSize, sizeof(T)); if (NULL != tmp) { _memPtr = tmp; _bytesSize = unitSize * sizeof(T); } }
 	}
-	
-};
 
-struct LoadedBMPWinDVIStruct
-{
-	size_t width;
-	size_t height;
-	size_t size;
-	BYTE* pImga;
 };
 
 #define MAX_ARRAY_CNT	1024
@@ -80,15 +80,24 @@ public:
 		RUNTIME_CALC,
 		WRITE_BUFFER,
 		WRITE_FIRST_BUFFER,
+		GET_CURRENT_BUFFER,
 		SET_TRANSIANT_BUFFER,
 		WRITE_TRANSIANT_BUFFER,
 		RELEASE_TRANSIANT_BUFFER
+	};
+
+	enum SLMBlank
+	{
+		BLANK_ALL,
+		BLANK_LEFT,
+		BLANK_RIGHT
 	};
 
 	virtual long FindSLM(char* slm) = 0;///<returns the number of SLMs
 	virtual long TeardownSLM() = 0;///<release SLM and its resources
 	virtual long SetParam(const long paramID, const double param) = 0;
 	virtual long GetParam(const long paramID, double& param) = 0;
+	virtual long GetParamBuffer(const long paramID, char* pBuffer, long size) = 0;
 	virtual long SetParamBuffer(const long paramID, char* pBuffer, long size) = 0;
 	//virtual long SetBlank(const long paramID) = 0;///<This submits the current parameters to the Device. There may be some first time latencey in settings parameters so its best to call this outside of the shutter control for image capture
 	//virtual long WriteFrame(long frameID, const unsigned char* buf) = 0;///<This submits the parameters that can chage while the Device is active. 
@@ -120,6 +129,6 @@ class SLMDll : public PDLL, public ISLM
 	DECLARE_FUNCTION2(long, GetLastErrorMsg, wchar_t*, long)
 	//DECLARE_FUNCTION2(long, SetParamString, const long, wchar_t*)
 	//DECLARE_FUNCTION3(long, GetParamString, const long, wchar_t*, long)
+	DECLARE_FUNCTION3(long, GetParamBuffer, const long, char*, long)
 	DECLARE_FUNCTION3(long, SetParamBuffer, const long, char*, long)
-	//DECLARE_FUNCTION3(long, GetParamBuffer, const long, char*, long)
 };

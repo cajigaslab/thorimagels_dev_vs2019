@@ -33,10 +33,6 @@
 
     using GeometryUtilities;
 
-    using RunSampleLSDll.View;
-
-    using ThorImage;
-
     using ThorLogging;
 
     using ThorSharedTypes;
@@ -1017,8 +1013,11 @@
             set
             {
                 _fastZStaircase = value;
-                int val = (value) ? 0 : (int)1;
-                SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_MINIMIZE_FLYBACK_CYCLES, val);
+                if (ZFastEnable)
+                {
+                    int val = (value) ? 0 : (int)1;
+                    SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_MINIMIZE_FLYBACK_CYCLES, val);
+                }
             }
         }
 
@@ -1048,7 +1047,10 @@
             }
             set
             {
-                SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_FLYBACK_CYCLE, value);
+                if (ZFastEnable)
+                {
+                    SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_FLYBACK_CYCLE, value);
+                }
                 _flybackLines = value;
                 OnPropertyChanged("FlybackLines");
                 OnPropertyChanged("LSMFlybackTime");
@@ -2594,6 +2596,12 @@
             }
         }
 
+        public bool VerticalTileDisplay
+        {
+            get;
+            set;
+        }
+
         /// <summary>
         /// adjust z stage volume time to better align with frame triggers, lower limit on volume time is 0.
         /// </summary>
@@ -2738,6 +2746,13 @@
             set
             {
                 _zFastEnable = (ZStageType.PIEZO == ZStageType) ? value : false;
+
+                //reset to allow any internal logic to happen
+                if (_zFastEnable)
+                {
+                    FastZStaircase = _fastZStaircase;
+                    FlybackLines = _flybackLines;
+                }
             }
         }
 
@@ -3183,15 +3198,15 @@
                         {
                             if (doLifetime)
                             {
-                                outputBitmapWidth *= 2;
-                                outputBitmapHeight *= 1;
+                                outputBitmapWidth *= VerticalTileDisplay ? 1 : 2;
+                                outputBitmapHeight *= VerticalTileDisplay ? 2 : 1;
                             }
                         }
                         break;
                     case 2:
                         {
-                            outputBitmapWidth *= 3;
-                            outputBitmapHeight *= 1;
+                            outputBitmapWidth *= VerticalTileDisplay ? 1 : 3;
+                            outputBitmapHeight *= VerticalTileDisplay ? 3 : 1;
                         }
                         break;
                     case 3:
@@ -3202,8 +3217,8 @@
                         break;
                     default:
                         {// All 4 Channels enabled
-                            outputBitmapWidth *= 3;
-                            outputBitmapHeight *= 2;
+                            outputBitmapWidth *= VerticalTileDisplay ? 2 : 3;
+                            outputBitmapHeight *= VerticalTileDisplay ? 3 : 2;
                         }
                         break;
                 }
@@ -3220,15 +3235,7 @@
                     _bitmap = new WriteableBitmap(outputBitmapWidth, outputBitmapHeight, 96, 96, pf, null);
                 }
             }
-            if (_pixelDataByte != null)
-            {
-                if (_tileWidth == 0 || _tileHeight == 0) // not fastZ; normal mode
-                {
-                    _tileWidth = _imageWidth;
-                    _tileHeight = _imageHeight;
-                }
-                updateTiledBitmap(_bitmap, _pixelDataByte, _imageWidth, _imageHeight, _tileWidth, _tileHeight);
-            }
+
             CreatePixelDataByte();
 
             //if there is no _pixelDataByte then we shouldn't try to create the bitmap
@@ -3243,25 +3250,46 @@
                 _bitmap.WritePixels(new Int32Rect(0, 0, width, height), pd, rawStride, 0);
                 if (_tileDisplay && (1 < channelNum || doLifetime))
                 {
-                    int offsetWidth = 1;
-                    int offsetHeight = 0;
+                    int offsetWidth = VerticalTileDisplay ? 0 : 1;
+                    int offsetHeight = VerticalTileDisplay ? 1 : 0;
                     for (int i = 0; i < _lsmEnableChannel.Length; ++i)
                     {
                         if (true == (_lsmEnableChannel[i]))
                         {
                             pd = _rawImg[i];
                             _bitmap.WritePixels(new Int32Rect(offsetWidth * width, offsetHeight * height, width, height), pd, rawStride, 0);
-                            ++offsetWidth;
-                            if (outputBitmapWidth < (width * offsetWidth + width))
+                            if (VerticalTileDisplay)
                             {
-                                offsetWidth = 0;
                                 ++offsetHeight;
+                                if (outputBitmapHeight < (height * offsetHeight + height))
+                                {
+                                    offsetHeight = 0;
+                                    ++offsetWidth;
+                                }
+                            }
+                            else
+                            {
+                                ++offsetWidth;
+                                if (outputBitmapWidth < (width * offsetWidth + width))
+                                {
+                                    offsetWidth = 0;
+                                    ++offsetHeight;
+                                }
                             }
                         }
                     }
                 }
             }
+
+            if (_tileWidth == 0 || _tileHeight == 0) // not fastZ; normal mode
+            {
+                _tileWidth = _imageWidth;
+                _tileHeight = _imageHeight;
+            }
+            updateTiledBitmap(_bitmap, _pixelDataByte, _imageWidth, _imageHeight, _tileWidth, _tileHeight);
+
             FinishedCopyingPixel();
+
             return _bitmap;
         }
 
@@ -5880,20 +5908,31 @@
             XmlNodeList mclsNdList = ndList[_channelOrderCurrentIndex].SelectNodes("MCLS");
             if (mclsNdList.Count <= 0) return;
             string str = string.Empty;
-            Visibility vis = Visibility.Collapsed;
-            double pow = 0;
-            GetMCLSChannelInfo(expDoc, mclsNdList, "enable1", "power1percent", ref vis, ref pow);
-            MCLS1Visibility = vis;
-            MCLS1Power = pow;
-            GetMCLSChannelInfo(expDoc, mclsNdList, "enable2", "power2percent", ref vis, ref pow);
-            MCLS2Visibility = vis;
-            MCLS2Power = pow;
-            GetMCLSChannelInfo(expDoc, mclsNdList, "enable3", "power3percent", ref vis, ref pow);
-            MCLS3Visibility = vis;
-            MCLS3Power = pow;
-            GetMCLSChannelInfo(expDoc, mclsNdList, "enable4", "power4percent", ref vis, ref pow);
-            MCLS4Visibility = vis;
-            MCLS4Power = pow;
+            Visibility vis1 = Visibility.Collapsed;
+            Visibility vis2 = Visibility.Collapsed;
+            Visibility vis3 = Visibility.Collapsed;
+            Visibility vis4 = Visibility.Collapsed;
+            double pow1 = 0;
+            double pow2 = 0;
+            double pow3 = 0;
+            double pow4 = 0;
+            //Set all lasers to Visible if one is visible (Otherwise the Capture tab can move up and down depending on the number of lasers visible at the moment)
+            GetMCLSChannelInfo(expDoc, mclsNdList, "enable1", "power1percent", ref vis1, ref pow1);
+            GetMCLSChannelInfo(expDoc, mclsNdList, "enable2", "power2percent", ref vis2, ref pow2);
+            GetMCLSChannelInfo(expDoc, mclsNdList, "enable3", "power3percent", ref vis3, ref pow3);
+            GetMCLSChannelInfo(expDoc, mclsNdList, "enable4", "power4percent", ref vis4, ref pow4);
+            if (vis1 == Visibility.Visible || vis2 == Visibility.Visible || vis3 == Visibility.Visible || vis4 == Visibility.Visible)
+            {
+                MCLS1Visibility = Visibility.Visible;
+                MCLS2Visibility = Visibility.Visible;
+                MCLS3Visibility = Visibility.Visible;
+                MCLS4Visibility = Visibility.Visible;
+            }
+
+            MCLS1Power = pow1;
+            MCLS2Power = pow2;
+            MCLS3Power = pow3;
+            MCLS4Power = pow4;
 
             //Let the viewModel know there have been changes
             if (null != UpdateSequenceStepDisplaySettings) UpdateSequenceStepDisplaySettings();

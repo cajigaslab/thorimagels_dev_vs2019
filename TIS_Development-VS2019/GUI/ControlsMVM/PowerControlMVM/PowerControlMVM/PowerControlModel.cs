@@ -410,6 +410,102 @@
             }
         }
 
+        public double PockelsDelayUS0
+        {
+            get
+            {
+                double pos = 0;
+
+                ThorSharedTypes.ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_DELAY_US_0, ref pos);
+
+                return pos;
+            }
+            set
+            {
+                ThorSharedTypes.ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_DELAY_US_0, value);
+            }
+        }
+
+        public double PockelsDelayUS1
+        {
+            get
+            {
+                double pos = 0;
+
+                ThorSharedTypes.ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_DELAY_US_1, ref pos);
+
+                return pos;
+            }
+            set
+            {
+                ThorSharedTypes.ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_DELAY_US_1, value);
+            }
+        }
+
+        public double PockelsDelayUS2
+        {
+            get
+            {
+                double pos = 0;
+
+                ThorSharedTypes.ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_DELAY_US_2, ref pos);
+
+                return pos;
+            }
+            set
+            {
+                ThorSharedTypes.ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_DELAY_US_2, value);
+            }
+        }
+
+        public double PockelsDelayUS3
+        {
+            get
+            {
+                double pos = 0;
+
+                ThorSharedTypes.ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_DELAY_US_3, ref pos);
+
+                return pos;
+            }
+            set
+            {
+                ThorSharedTypes.ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_DELAY_US_3, value);
+            }
+        }
+
+        public bool PockelsDelayAvailable0
+        {
+            get
+            {
+                return 1 == ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_DELAY_US_0);
+            }
+        }
+
+        public bool PockelsDelayAvailable1
+        {
+            get
+            {
+                return 1 == ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_DELAY_US_1);
+            }
+        }
+
+        public bool PockelsDelayAvailable2
+        {
+            get
+            {
+                return 1 == ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_DELAY_US_2);
+            }
+        }
+
+        public bool PockelsDelayUSAvailable3
+        {
+            get
+            {
+                return 1 == ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_DELAY_US_3);
+            }
+        }
+
         public string PockelsMaskFile
         {
             get

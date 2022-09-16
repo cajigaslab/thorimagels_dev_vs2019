@@ -117,8 +117,8 @@ long AcquireSequence::Execute(long index, long subWell)
 	_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,channel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes);
 
 	//Get all the PMT Settings
-	long enableA,gainA,bandwidthA,enableB,gainB,bandwidthB,enableC,gainC,bandwidthC,enableD,gainD,bandwidthD;
-	double offsetA,offsetB,offsetC,offsetD;
+	long enableA,bandwidthA,enableB,bandwidthB,enableC,bandwidthC,enableD,bandwidthD;
+	double gainA,offsetA,gainB,offsetB,gainC,offsetC,gainD,offsetD;
 	_pExp->GetPMT(enableA,gainA,bandwidthA,offsetA,enableB,gainB,bandwidthB,offsetB,enableC,gainC,bandwidthC,offsetC,enableD,gainD,bandwidthD,offsetD);
 
 	//Get all the Multiphoton Settings
@@ -152,7 +152,7 @@ long AcquireSequence::Execute(long index, long subWell)
 			//Notice that the channel Step settings don't replace every single setting on some of the devices (i.e. it only replaces the channel setting on LSM)
 			_pExp->SetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,channelOrder[i].LSMChannel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip);
 			_pExp->SetPMT(channelOrder[i].PMT1Enable,channelOrder[i].PMT1Gain,bandwidthA,offsetA,channelOrder[i].PMT2Enable,channelOrder[i].PMT2Gain,bandwidthB,offsetB,channelOrder[i].PMT3Enable,channelOrder[i].PMT3Gain,bandwidthC,offsetC,channelOrder[i].PMT4Enable,channelOrder[i].PMT4Gain,bandwidthD,offsetD);
-			_pExp->SetMCLS(channelOrder[i].MCLSEnable1,channelOrder[i].MCLSPower1,channelOrder[i].MCLSEnable2,channelOrder[i].MCLSPower2,channelOrder[i].MCLSEnable3,channelOrder[i].MCLSPower3,channelOrder[i].MCLSEnable4,channelOrder[i].MCLSPower4);
+			_pExp->SetMCLS(channelOrder[i].MCLSEnable1,channelOrder[i].MCLSPower1,channelOrder[i].MCLSEnable2,channelOrder[i].MCLSPower2,channelOrder[i].MCLSEnable3,channelOrder[i].MCLSPower3,channelOrder[i].MCLSEnable4,channelOrder[i].MCLSPower4, channelOrder[i].LaserTTL, channelOrder[i].LaserAnalog, channelOrder[i].Wavelength1, channelOrder[i].Wavelength2, channelOrder[i].Wavelength3, channelOrder[i].Wavelength4);
 			_pExp->SetMultiPhotonLaser(multiphotonEnable,channelOrder[i].MultiphotonPos,multiphotonSeqEnable,multiphotonSeqPos1,multiphotonSeqPos2);
 			_pExp->SetPinholeWheel(channelOrder[i].PinholePos);
 			_pExp->SetLightPath(channelOrder[i].LightPathGGEnable, channelOrder[i].LightPathGREnable, channelOrder[i].LightPathCamEnable, channelOrder[i].InvertedLightPathPosition, channelOrder[i].LightPathNDDPosition);

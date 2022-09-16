@@ -126,7 +126,7 @@ echo F | xcopy /F ..\..\..\..\GUI\Controls\AreaControl\AreaControl\bin\Debug\Are
 echo F | xcopy /F ..\..\..\..\GUI\Controls\ZControl\ZControl\bin\Debug\ZControl.dll .\bin\Debug\Modules
 echo F | xcopy /F ..\..\..\..\GUI\Controls\ScanControl\ScanControl\bin\Debug\ScanControl.dll .\bin\Debug\Modules
 echo F | xcopy /F ..\..\..\..\GUI\Controls\OTMControl\OTMControl\bin\Debug\OTMControl.dll .\bin\Debug\Modules
-echo F | xcopy /F ..\..\..\..\GUI\Controls\LaserControl\LaserControl\bin\Debug\LaserControl.dll .\bin\Debug\Modules
+REM echo F | xcopy /F ..\..\..\..\GUI\Controls\LaserControl\LaserControl\bin\Debug\LaserControl.dll .\bin\Debug\Modules
 echo F | xcopy /F ..\..\..\..\GUI\Controls\MultiphotonControl\MultiphotonControl\bin\Debug\MultiphotonControl.dll .\bin\Debug\Modules
 echo F | xcopy /F ..\..\..\..\GUI\Controls\CameraControl\CameraControl\bin\Debug\CameraControl.dll .\bin\Debug\Modules
 echo F | xcopy /F ..\..\..\..\GUI\Controls\LampControl\LampControl\bin\Debug\LampControl.dll .\bin\Debug\Modules
@@ -150,7 +150,7 @@ echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\AreaControlMVM\AreaControlMVM\bin\
 echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\ZControlMVM\ZControlMVM\bin\Debug\ZControlMVM.dll .\bin\Debug\Modules\MVM
 echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\ScanControlMVM\ScanControlMVM\bin\Debug\ScanControlMVM.dll .\bin\Debug\Modules\MVM
 echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\OTMControlMVM\OTMControlMVM\bin\Debug\OTMControlMVM.dll .\bin\Debug\Modules\MVM
-echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\LaserControlMVM\LaserControlMVM\bin\Debug\LaserControlMVM.dll .\bin\Debug\Modules\MVM
+REM echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\LaserControlMVM\LaserControlMVM\bin\Debug\LaserControlMVM.dll .\bin\Debug\Modules\MVM
 echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\MultiphotonControlMVM\MultiphotonControlMVM\bin\Debug\MultiphotonControlMVM.dll .\bin\Debug\Modules\MVM
 echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\DigitalOutputSwitchesMVM\DigitalOutputSwitchesMVM\bin\Debug\DigitalOutputSwitchesMVM.dll .\bin\Debug\Modules\MVM
 echo F | xcopy /F ..\..\..\..\GUI\ControlsMVM\CameraControlMVM\CameraControlMVM\bin\Debug\CameraControlMVM.dll .\bin\Debug\Modules\MVM
@@ -277,6 +277,9 @@ echo F | xcopy /F ..\..\..\..\Common\ExperimentManager\x64\Debug\ExperimentManag
 echo F | xcopy /F ..\..\..\..\Common\ImageManager\x64\Debug\ImageManager.dll .\bin\Debug\
 echo F | xcopy /F ..\..\..\..\Common\ResourceManager\x64\Debug\ResourceManager.dll .\bin\Debug\
 echo F | xcopy /F ..\..\..\..\Common\RoiDataStore\x64\Debug\RoiDataStore.dll .\bin\Debug
+echo F | xcopy /F ..\..\..\..\Common\ConvertUtilities\x64\Debug\ClassicTiffConverter.dll .\bin\Debug\Modules_Native
+echo F | xcopy /F ..\..\..\..\Common\ConvertUtilities\Libs\classic_tiff_library\*.dll .\bin\Debug\Modules_Native
+echo F | xcopy /F ..\..\..\..\Common\ConvertUtilities\Libs\ImageStoreLibrary\ome_tiff_library.dll .\bin\Debug\Modules_Native
 echo F | xcopy /F ..\..\..\..\Common\ImageStoreLibrary\bin\vs2012\Debug\*.dll .\bin\Debug\Modules_Native
 echo F | xcopy /F ..\..\..\..\Common\Sample\x64\Debug\Sample.dll .\bin\Debug\Modules_Native
 echo F | xcopy /F ..\..\..\..\Common\HardwareCom\x64\Debug\HardwareCom.dll .\bin\Debug\Modules_Native

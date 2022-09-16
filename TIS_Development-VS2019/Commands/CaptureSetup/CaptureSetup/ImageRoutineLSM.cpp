@@ -265,6 +265,8 @@ long ImageRoutineLSM::CopyAcquisition(long isFullFrame)
 
 	Lock lock(CaptureSetup::getInstance()->critSect);
 
+	imageInfo.numberOfPlanes = 1; // assume 1 and let the camera say otherwise if it supports multiplane
+
 	ret = GetCamera(SelectedHardware::SELECTED_CAMERA1)->CopyAcquisition(pChan[0], &imageInfo);
 
 	logDll->TLTraceEvent(VERBOSE_EVENT,1,L"CaptureSetup CopyAcquisition");
@@ -309,6 +311,7 @@ long ImageRoutineLSM::CopyAcquisition(long isFullFrame)
 
 		//if the data is a single channel
 		imageInfo.fullFrame = isFullFrame;
+
 		if(1 == ParseLSMChannels(static_cast<long>(paramValue),NULL,NULL,L""))
 		{
 			imageInfo.channels = 1;
@@ -447,6 +450,8 @@ long CaptureSingleImageWithAverageLSM(char *buffer, double exposureTime, long bi
 	dim.x = imageInfo.imageWidth;
 	dim.y = imageInfo.imageHeight;
 	dim.z = 1;
+
+	imageInfo.numberOfPlanes = 1; // assume 1 and let the camera say otherwise if it supports multiplane
 
 	long imageID;
 
@@ -653,37 +658,16 @@ UINT SnapshotThreadProcLSM(LPVOID pParam)
 
 	SetBFLampPosition(ENABLE_LEDS);
 
-	//Enable laser emission if the laser is enabled and analog mode is off
-	long laserAnalog = 0;
-	GetLaserAnalog(laserAnalog);
-	long laser1Enable = 0;
-	GetLaser1Enable(laser1Enable);
-	long laser2Enable = 0;
-	GetLaser2Enable(laser2Enable);
-	long laser3Enable = 0;
-	GetLaser3Enable(laser3Enable);
-	long laser4Enable = 0;
-	GetLaser4Enable(laser4Enable);
-	if (laser1Enable == true && laserAnalog == false)
+	//Enable laser emission if TTL mode is off
+	long laserTTL = 0;
+	GetLaserTTL(laserTTL);
+	if (laserTTL == false)
 	{
 		SetLaser1Emission(ENABLE_EMISSION);
-	}
-
-	if (laser2Enable == true && laserAnalog == false)
-	{
 		SetLaser2Emission(ENABLE_EMISSION);
-	}
-
-	if (laser3Enable == true && laserAnalog == false)
-	{
 		SetLaser3Emission(ENABLE_EMISSION);
-	}
-
-	if (laser4Enable == true && laserAnalog == false)
-	{
 		SetLaser4Emission(ENABLE_EMISSION);
 	}
-
 	//snapshot shared the parameters with the live mode
 	long avgFrames=1;
 	long avgMode = 0;
@@ -835,34 +819,14 @@ UINT ZStackCaptureThreadProcLSM( LPVOID pParam )
 
 	SetBFLampPosition(ENABLE_LEDS);
 
-	//Enable laser emission if the laser is enabled and analog mode is off
-	long laserAnalog = 0;
-	GetLaserAnalog(laserAnalog);
-	long laser1Enable = 0;
-	GetLaser1Enable(laser1Enable);
-	long laser2Enable = 0;
-	GetLaser2Enable(laser2Enable);
-	long laser3Enable = 0;
-	GetLaser3Enable(laser3Enable);
-	long laser4Enable = 0;
-	GetLaser4Enable(laser4Enable);
-	if (laser1Enable == true && laserAnalog == false)
+	//Enable laser emission if TTL mode is off
+	long laserTTL = 0;
+	GetLaserTTL(laserTTL);
+	if (laserTTL == false)
 	{
 		SetLaser1Emission(ENABLE_EMISSION);
-	}
-
-	if (laser2Enable == true && laserAnalog == false)
-	{
 		SetLaser2Emission(ENABLE_EMISSION);
-	}
-
-	if (laser3Enable == true && laserAnalog == false)
-	{
 		SetLaser3Emission(ENABLE_EMISSION);
-	}
-
-	if (laser4Enable == true && laserAnalog == false)
-	{
 		SetLaser4Emission(ENABLE_EMISSION);
 	}
 
@@ -1092,34 +1056,14 @@ UINT AutoFocusCaptureThreadProcLSM(LPVOID pParam)
 
 	SetBFLampPosition(ENABLE_LEDS);
 
-	//Enable laser emission if the laser is enabled and analog mode is off
-	long laserAnalog = 0;
-	GetLaserAnalog(laserAnalog);
-	long laser1Enable = 0;
-	GetLaser1Enable(laser1Enable);
-	long laser2Enable = 0;
-	GetLaser2Enable(laser2Enable);
-	long laser3Enable = 0;
-	GetLaser3Enable(laser3Enable);
-	long laser4Enable = 0;
-	GetLaser4Enable(laser4Enable);
-	if (laser1Enable == true && laserAnalog == false)
+	//Enable laser emission if TTL mode is off
+	long laserTTL = 0;
+	GetLaserTTL(laserTTL);
+	if (laserTTL == false)
 	{
 		SetLaser1Emission(ENABLE_EMISSION);
-	}
-
-	if (laser2Enable == true && laserAnalog == false)
-	{
 		SetLaser2Emission(ENABLE_EMISSION);
-	}
-
-	if (laser3Enable == true && laserAnalog == false)
-	{
 		SetLaser3Emission(ENABLE_EMISSION);
-	}
-
-	if (laser4Enable == true && laserAnalog == false)
-	{
 		SetLaser4Emission(ENABLE_EMISSION);
 	}
 

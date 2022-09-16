@@ -38,7 +38,7 @@
         const ushort THORDAQ_DIG_PATTERN_COMPLETE = 0x4040;
         const ushort THORDAQ_DIG_PATTERN_ENVELOPE = 0x8080;
         const ushort THORDAQ_DIG_POCKELS_DIGI = 0x808;
-        const double VOLT_TO_THORDAQ_VAL = 65535 / 20;
+        const double VOLT_TO_THORDAQ_VAL = 65535.0 / 20.0;
 
         private readonly WaveformDriverType _waveformDriverType;
 

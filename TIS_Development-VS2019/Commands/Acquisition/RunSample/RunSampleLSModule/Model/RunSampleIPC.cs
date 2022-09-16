@@ -183,8 +183,10 @@
             }
             set
             {
-                SendToIPCController(ThorPipeCommand.ChangeRemoteApp, value);
-
+                if (_remoteAppName != value || _remoteConnection == false)
+                {
+                    SendToIPCController(ThorPipeCommand.ChangeRemoteApp, value);
+                }
                 _remoteAppName = value;
             }
         }
@@ -429,7 +431,7 @@
                     }
                     if (XmlManager.GetAttribute(node, doc, "remoteAppName", ref strTemp))
                     {
-                        RemoteAppName = strTemp;
+                        _remoteAppName = strTemp;
                         OnPropertyChanged("RemoteAppName");
                     }
                 }

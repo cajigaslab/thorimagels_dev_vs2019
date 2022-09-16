@@ -177,6 +177,8 @@ void APT::mcm_stepper_status_update(char* data, int size, Mcm6kParams* params)
 
 	if (params->inverted_lp_slot_id == (CARD_ID_START_ADDRESS + _slot))
 	{
+		// homing
+		params->lightPath_homing = ((data[11] & (1 << 1)) > 0);
 		// ccw moving
 		params->lightPath_ccw_moving = (data[10] & 0x20) > 0;
 		// cw moving
@@ -185,6 +187,8 @@ void APT::mcm_stepper_status_update(char* data, int size, Mcm6kParams* params)
 	}
 	if (params->et_slot_id == (CARD_ID_START_ADDRESS + _slot))
 	{
+		// homing
+		params->epiTurret_homing = ((data[11] & (1 << 1)) > 0);
 		// ccw moving
 		params->epiTurret_ccw_moving = (data[10] & 0x20) > 0;
 		// cw moving

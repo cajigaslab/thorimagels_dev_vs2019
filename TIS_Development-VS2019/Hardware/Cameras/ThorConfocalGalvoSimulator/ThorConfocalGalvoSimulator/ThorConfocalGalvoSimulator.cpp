@@ -544,7 +544,7 @@ long ThorLSMCam::GetParamInfo(const long paramID, long &paramType, long &paramAv
 			paramAvailable = TRUE;
 			paramMin = MIN_FIELD_SIZE_X;
 			paramMax = MAX_FIELD_SIZE_X;
-			paramDefault = 180.0;
+			paramDefault = 90.0;
 			paramReadOnly = TRUE;
 		}
 		break;
@@ -2430,7 +2430,7 @@ long ThorLSMCam::GetParam(const long paramID, double &param)
 		break;
 	case ICamera::PARAM_LSM_1X_FIELD_SIZE:
 		{
-			param = 180;
+			param = 90;
 		}
 		break;
 	case ICamera::PARAM_LSM_REALTIME_DATA_AVERAGING_ENABLE:

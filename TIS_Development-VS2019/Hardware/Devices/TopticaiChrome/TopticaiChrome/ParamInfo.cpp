@@ -5,7 +5,7 @@
 
 
 ParamInfo::ParamInfo(long pID, wstring parameterString, double pVal, double p_C, 
-	                 BOOL p_B, long typ, long avail, long r,double pMin, double pMax, 
+	                 BOOL p_B, BOOL p_F, long typ, long avail, long r,double pMin, double pMax, 
 					 double pDefault, wstring commandSet, wstring commandGet)
 {
 	_paramID = pID;
@@ -13,6 +13,7 @@ ParamInfo::ParamInfo(long pID, wstring parameterString, double pVal, double p_C,
 	_paramVal = pVal;
 	_param_C = p_C;
 	_param_B = p_B;
+	_param_First = p_F;
 	_type = typ;
 	_available = avail;
 	_readOnly = r;
@@ -62,6 +63,15 @@ double ParamInfo::GetParamCurrent()
 BOOL ParamInfo::GetParamBool()
 {
 	return _param_B;
+}
+
+/// <summary>
+///Gets the parameter first.
+/// </summary>
+/// <returns>BOOL.</returns>
+BOOL ParamInfo::GetParamFirst() 
+{
+	return _param_First;
 }
 
 /// <summary>
@@ -161,6 +171,13 @@ wstring ParamInfo::GetParameterString()
 long ParamInfo::SetParamBool(BOOL b)
 {
 	_param_B = b;
+
+	return TRUE;
+}
+
+long ParamInfo::SetParamFirst() 
+{
+	_param_First = FALSE;
 
 	return TRUE;
 }

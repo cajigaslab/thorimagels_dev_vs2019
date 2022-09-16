@@ -138,9 +138,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy  $(SolutionDir)..\..\..\Hardware\Devices\ThorSLMPDM512\ThorSLMPDM512Settings.xml $(TargetDir)
-copy  $(SolutionDir)..\..\..\Hardware\Devices\ThorSLMPDM512\x64\$(ConfigurationName)\ThorSLMPDM512.dll $(TargetDir)
-copy $(SolutionDir)..\..\..\Hardware\Devices\ThorSLMPDM512\ThorSLMPDM512\DLL\Win10\*.* $(TargetDir)
+    <PostBuildEvent>copy  $(SolutionDir)..\..\..\Hardware\Devices\ThorSLM\ThorSLMSettings.xml $(TargetDir)
+copy  $(SolutionDir)..\..\..\Hardware\Devices\ThorSLM\x64\$(ConfigurationName)\ThorSLM.dll $(TargetDir)
+copy  $(SolutionDir)..\..\..\Hardware\Devices\ThorSLM\x64\$(ConfigurationName)\ThorSLMPDM512.dll $(TargetDir)
+copy $(SolutionDir)..\..\..\Hardware\Devices\ThorSLM\ThorSLMPDM512\DLL\*.* $(TargetDir)
 copy  $(SolutionDir)..\..\..\Common\HologramGenerator\x64\$(ConfigurationName)\HologramGenerator.dll $(TargetDir)
 copy  $(SolutionDir)..\..\..\Common\WinDVI\x64\$(ConfigurationName)\WinDVI.dll $(TargetDir)
 xcopy "$(SolutionDir)..\..\..\Tools\Intel IPP\intel64\dll\*.dll" "$(TargetDir)" /Y /E /D</PostBuildEvent>

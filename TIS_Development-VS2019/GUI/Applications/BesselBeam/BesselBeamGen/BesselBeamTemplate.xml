@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <BesselBeam SelectedTab="0">
+    <Parameters D0UM="850" D1UM="1000" WavelengthNM="1040" Invert="False" ValueMaxBlack="50" ValueMaxWhite="50" />
+    <MaskGeneration Sweep="False" PeriodStartPx="40" PeriodStepPx="1" PeriodEndPx="256" GenerateMode="SQUARE" />
+    <ImageSize PixelX="512" PixelY="512" />
+    <FilePath>
+      <OutputFolder></OutputFolder>
+      <FileName>BesselBeam</FileName>
+      <DisplayImage></DisplayImage>
+    </FilePath>
+  </BesselBeam>
+</Template>

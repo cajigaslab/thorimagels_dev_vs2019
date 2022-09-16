@@ -170,6 +170,16 @@
             }
         }
 
+        public int SLMDualPatternShift
+        {
+            get
+            {
+                int val = 0;
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_DUAL_SHIFT_PX, ref val);
+                return val;
+            }
+        }
+
         public bool SLMPhaseDirect
         {
             get
@@ -222,6 +232,20 @@
             }
         }
 
+        public bool SLMSkipFitting
+        {
+            get
+            {
+                int val = -1;
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_SKIP_FITTING, ref val);
+                return (1 == val);
+            }
+            set
+            {
+                ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_SKIP_FITTING, value ? 1 : 0, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
+            }
+        }
+
         public string[] SLMWaveBaseName
         {
             get { return new string[] { "SLMWaveform", "SLMPattern", "SLMSequence" }; }    //generic H5 waveform name, generic phase mask name
@@ -246,7 +270,7 @@
             {
                 double[] val = new double[2] { 0, 0 };
                 ResourceManagerCS.GetDeviceParamBuffer<double>((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_WAVELENGTH, val, (int)Constants.MAX_WIDEFIELD_WAVELENGTH_COUNT);
-                return (0 < Array.FindLastIndex(val, element => 0 >= element) ? Array.FindLastIndex(val, element => 0 >= element) : val.Length);
+                return 0 < Array.FindLastIndex(val, element => 0 >= element) ? Array.FindLastIndex(val, element => 0 >= element) : val.Length;
             }
         }
 
@@ -291,7 +315,7 @@
 
         public bool ResetSLMCalibration()
         {
-            return ((1 == ResetAffineCalibration()) ? true : false);
+            return (1 == ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_RESET_AFFINE, (int)1, (int)IDevice.DeviceSetParamType.NO_EXECUTION));
         }
 
         public bool SaveSLMPatternName(string phaseMaskName)
@@ -301,11 +325,27 @@
 
         public bool SLMCalibration(string bmpPatternName, float[] ptsFrom, float[] ptsTo, int size)
         {
+            int ret = 0;
             IntPtr ptsToPtr = Marshal.AllocHGlobal(size * sizeof(float));
             IntPtr ptsFromPtr = Marshal.AllocHGlobal(size * sizeof(float));
             Marshal.Copy(ptsTo, 0, ptsToPtr, size);
             Marshal.Copy(ptsFrom, 0, ptsFromPtr, size);
-            int ret = CalibrateSLM(bmpPatternName, ptsFromPtr, ptsToPtr, size);
+
+            if (SLM3D)
+            {
+                //calculate coeffs without burning
+                ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_FUNC_MODE, (int)IDevice.SLMFunctionMode.PHASE_CALIBRATION, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
+                ResourceManagerCS.SetDeviceParamString((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_BMP_FILENAME, bmpPatternName, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
+                ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_ARRAY_ID, (int)1, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
+                ResourceManagerCS.SetDeviceParamBuffer((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_POINTS_ARRAY, ptsToPtr, size, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
+                ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_ARRAY_ID, (int)0, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
+                ret = ResourceManagerCS.SetDeviceParamBuffer((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_POINTS_ARRAY, ptsFromPtr, size, (int)IDevice.DeviceSetParamType.EXECUTION_WAIT);
+            }
+            else
+            {
+                //doing waveform gen for burning
+                ret = CalibrateSLM(bmpPatternName, ptsFromPtr, ptsToPtr, size);
+            }
 
             Marshal.FreeHGlobal(ptsToPtr);
             Marshal.FreeHGlobal(ptsFromPtr);
@@ -315,7 +355,7 @@
 
         public bool SLMSetBlank()
         {
-            return ((1 == SetSLMBlank()) ? true : false);
+            return 1 == ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_BLANK, (int)1, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
         }
 
         public bool StartSLMBleach()
@@ -366,14 +406,8 @@
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "LoadSLMPattern", CharSet = CharSet.Unicode)]
         private static extern int LoadSLMPattern(int runtimeCal, int id, string bmpPatternName, int doStart, int phaseDirect, int timeout);
 
-        [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "ResetAffineCalibration")]
-        private static extern int ResetAffineCalibration();
-
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "SaveSLMPattern", CharSet = CharSet.Unicode)]
         private static extern int SaveSLMPattern(string bmpPhaseName);
-
-        [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "SetSLMBlank")]
-        private static extern int SetSLMBlank();
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "SLMBleach")]
         private static extern int SLMBleach();

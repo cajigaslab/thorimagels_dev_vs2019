@@ -373,6 +373,13 @@ long ImageWaveformBuilder::BuildPolyLine()
 	return ret;
 }
 
+long ImageWaveformBuilder::GetPolylineSegments(LineSegVec& polylineSegments, double& field2VoltX)
+{
+	polylineSegments = _lineSegs;
+	field2VoltX = _deltaX_Volt;
+	return TRUE;
+}
+
 long ImageWaveformBuilder::CalculatePolyLinePixelX()
 {
 	long linearStepCnt = 0;

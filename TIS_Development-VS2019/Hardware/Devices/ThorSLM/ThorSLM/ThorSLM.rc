@@ -48,11 +48,11 @@ END
 /////////////////////////////////////////////////////////////////////////////
 //
 // Version
-//
+#include "..\..\..\..\Common\Version.h"
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,1111,2222,3333
- PRODUCTVERSION 0,1111,2222,3333
+ FILEVERSION VERSION_NUMBER
+ PRODUCTVERSION VERSION_NUMBER
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -69,12 +69,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Thorlabs"
             VALUE "FileDescription", "ThorSLM Dynamic Link Library"
-            VALUE "FileVersion", "0000.1111.2222.3333"
+            VALUE "FileVersion", VERSION_STRING "\0"
             VALUE "InternalName", "ThorSLM"
-            VALUE "LegalCopyright", "(C) Thorlabs 2020"
+            VALUE "LegalCopyright", VERSION_COPYRIGHT "\0"
             VALUE "OriginalFilename", "ThorSLM.dll"
             VALUE "ProductName", "ThorSLM Dynamic Link Library"
-            VALUE "ProductVersion", "0000.1111.2222.3333"
+            VALUE "ProductVersion", VERSION_STRING "\0"
         END
     END
     BLOCK "VarFileInfo"

@@ -152,6 +152,7 @@ extern "C"
 		double _saved_Right[MAX_CAM_NUM];
 		double _saved_Top[MAX_CAM_NUM];
 		double _saved_Bottom[MAX_CAM_NUM];
+		recursive_mutex _sdkNotThreadsafeMutex; // for CCD sdk calls that are known to be un-threadsafe
 
 		bool InitTsiSDK();
 		bool IsOpen(const unsigned long cameraIndex);

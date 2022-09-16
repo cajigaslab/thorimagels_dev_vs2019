@@ -127,15 +127,15 @@
         typeof(PowerControlUC),
         new FrameworkPropertyMetadata(new PropertyChangedCallback(onPCTabIndexChanged)));
         public static DependencyProperty PockelsBlankingPhaseShiftPercentProperty = 
-        DependencyProperty.RegisterAttached("PockelsBlankingPhaseShiftPercent",
-        typeof(double),
-        typeof(PowerControlUC),
-        new FrameworkPropertyMetadata(new PropertyChangedCallback(onPockelsBlankingPhaseShiftPercentChanged)));
+            DependencyProperty.RegisterAttached("PockelsBlankingPhaseShiftPercent",
+            typeof(double),
+            typeof(PowerControlUC),
+            new FrameworkPropertyMetadata(new PropertyChangedCallback(onPockelsBlankingPhaseShiftPercentChanged)));
         public static DependencyProperty PockelsBlankingPhaseShiftPercentVisibilityProperty = 
-           DependencyProperty.RegisterAttached("PockelsBlankingPhaseShiftPercentVisibility",
-           typeof(Visibility),
-           typeof(PowerControlUC),
-           new FrameworkPropertyMetadata(new PropertyChangedCallback(onPockelsBlankingPhaseShiftPercentVisibilityChanged)));
+            DependencyProperty.RegisterAttached("PockelsBlankingPhaseShiftPercentVisibility",
+            typeof(Visibility),
+            typeof(PowerControlUC),
+            new FrameworkPropertyMetadata(new PropertyChangedCallback(onPockelsBlankingPhaseShiftPercentVisibilityChanged)));
         public static DependencyProperty PockelsBlankPercentageProperty = 
         DependencyProperty.RegisterAttached("PockelsBlankPercentage",
         typeof(int),
@@ -146,6 +146,16 @@
         typeof(Visibility),
         typeof(PowerControlUC),
         new FrameworkPropertyMetadata(new PropertyChangedCallback(onPockelsCalibrationVisibilityChanged)));
+        public static DependencyProperty PockelsDelayUSProperty = 
+            DependencyProperty.RegisterAttached("PockelsDelayUS",
+            typeof(double),
+            typeof(PowerControlUC),
+            new FrameworkPropertyMetadata(new PropertyChangedCallback(onPockelsDelayChanged)));
+        public static DependencyProperty PockelsDelayVisibilityProperty = 
+            DependencyProperty.RegisterAttached("PockelsDelayVisibility",
+            typeof(Visibility),
+            typeof(PowerControlUC),
+            new FrameworkPropertyMetadata(new PropertyChangedCallback(onPockelsDelayVisibilityChanged)));
         public static DependencyProperty PockelsMaskFileProperty = 
         DependencyProperty.RegisterAttached("PockelsMaskFile",
         typeof(string),
@@ -335,6 +345,18 @@
         {
             get { return (Visibility)GetValue(PockelsCalibrationVisibilityProperty); }
             set { SetValue(PockelsCalibrationVisibilityProperty, value); }
+        }
+
+        public double PockelsDelayUS
+        {
+            get { return (double)GetValue(PockelsDelayUSProperty); }
+            set { SetValue(PockelsDelayUSProperty, value); }
+        }
+
+        public Visibility PockelsDelayVisibility
+        {
+            get { return (Visibility)GetValue(PockelsDelayVisibilityProperty); }
+            set { SetValue(PockelsDelayVisibilityProperty, Visibility); }
         }
 
         public bool PockelsMaskFile
@@ -592,6 +614,14 @@
         }
 
         public static void onPockelsCalibrationVisibilityChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+        }
+
+        public static void onPockelsDelayChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+        }
+
+        public static void onPockelsDelayVisibilityChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
         }
 

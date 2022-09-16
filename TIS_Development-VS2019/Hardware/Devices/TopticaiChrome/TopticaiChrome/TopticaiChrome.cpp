@@ -141,7 +141,7 @@ long TopticaiChrome::FindDevices(long& deviceCount)
 	if (FALSE == _serialPort.Open(portID, baudRate))
 	{
 		StringCbPrintfW(_errMsg, MSG_SIZE, L"TopticaiChrome FindDevices could not open serial port");
-		LogMessage(_errMsg, ERROR_EVENT);
+		LogMessage(_errMsg, WARNING_EVENT);
 		ret = FALSE;
 		_deviceDetected = FALSE;
 	}
@@ -435,7 +435,7 @@ long TopticaiChrome::ExecuteCmdGet(wstring cmdGet)
 	string serialString = ConvertWStringToString(cmdGet);
 	const char* getInst = serialString.c_str();
 	_serialPort.SendData((const unsigned char*)getInst, static_cast<int> (serialString.length()));
-	Sleep(35); //Minimum tested waiting period necessary before reading from serial port
+	Sleep(40); //Minimum tested waiting period necessary before reading from serial port
 	_serialPort.ReadData(_readBuffer, 100);
 	return TRUE;
 	
@@ -485,7 +485,7 @@ long TopticaiChrome::ExecuteCmdSet(long paramID, wstring cmdSet, double val)
 
 			StringCbPrintfA(setInst, INSTRUCTION_LENGTH, strStrFormat, _cmdBytes, _stringVal);
 			_serialPort.SendData((const unsigned char*)setInst, static_cast<int> (strlen(setInst)));
-			Sleep(35); //Minimum tested waiting period necessary before reading from serial port
+			Sleep(40); //Minimum tested waiting period necessary before reading from serial port
 			_serialPort.ReadData(setInst, 100); //Need to read the data to clear the serial port of the sent command
 			return TRUE;
 		}
@@ -499,7 +499,7 @@ long TopticaiChrome::ExecuteCmdSet(long paramID, wstring cmdSet, double val)
 			const char* _powerBytes = powerString.c_str();
 			StringCbPrintfA(setInst, INSTRUCTION_LENGTH, strIntFormat, _cmdBytes, _powerBytes);
 			_serialPort.SendData((const unsigned char*)setInst, static_cast<int> (strlen(setInst)));
-			Sleep(35); //Minimum tested waiting period necessary before reading from serial port
+			Sleep(40); //Minimum tested waiting period necessary before reading from serial port
 			_serialPort.ReadData(setInst, 100); //Need to read the data to clear the serial port of the sent command
 			return TRUE;
 		}
@@ -675,6 +675,13 @@ long TopticaiChrome::StartPosition()
 			StringCbPrintfW(_errMsg, MSG_SIZE, L"StartPosition succeeded at paramID: %d", (iter->second)->GetParamID());
 			LogMessage(_errMsg, INFORMATION_EVENT);
 		}
+		else if ((iter->second)->GetParamFirst() == TRUE)
+		{
+			ret = ExecuteCmdSet((iter->second)->GetParamID(), (iter->second)->GetCmdSet(), (iter->second)->GetParamVal());
+			(iter->second)->SetParamFirst();
+			StringCbPrintfW(_errMsg, MSG_SIZE, L"StartPosition succeeded at paramID: %d", (iter->second)->GetParamID());
+			LogMessage(_errMsg, INFORMATION_EVENT);
+		}
 	}
 	return ret;
 }
@@ -730,8 +737,15 @@ void TopticaiChrome::LogMessage(wchar_t* logMsg, long eventLevel)
 /// <returns>long.</returns>
 long TopticaiChrome::TeardownDevice()
 {
-	//Turn off lasers
-	ExecuteCmdSet(PARAM_LASER_ALL_ENABLE, _tableParams[PARAM_LASER_ALL_ENABLE]->GetCmdSet(), 0);
+	//Turn off lasers Enable State & Emission
+	ExecuteCmdSet(PARAM_LASER1_ENABLE, _tableParams[PARAM_LASER1_ENABLE]->GetCmdSet(), 0);
+	ExecuteCmdSet(PARAM_LASER2_ENABLE, _tableParams[PARAM_LASER2_ENABLE]->GetCmdSet(), 0);
+	ExecuteCmdSet(PARAM_LASER3_ENABLE, _tableParams[PARAM_LASER3_ENABLE]->GetCmdSet(), 0);
+	ExecuteCmdSet(PARAM_LASER4_ENABLE, _tableParams[PARAM_LASER4_ENABLE]->GetCmdSet(), 0);
+	ExecuteCmdSet(PARAM_LASER1_EMISSION, _tableParams[PARAM_LASER1_EMISSION]->GetCmdSet(), 0);
+	ExecuteCmdSet(PARAM_LASER2_EMISSION, _tableParams[PARAM_LASER2_EMISSION]->GetCmdSet(), 0);
+	ExecuteCmdSet(PARAM_LASER3_EMISSION, _tableParams[PARAM_LASER3_EMISSION]->GetCmdSet(), 0);
+	ExecuteCmdSet(PARAM_LASER4_EMISSION, _tableParams[PARAM_LASER4_EMISSION]->GetCmdSet(), 0);
 	_serialPort.Close();
 
 	return TRUE;
@@ -743,12 +757,14 @@ long TopticaiChrome::BuildParamTable()
 	//Execution in order of top to bottom of list:
 	wstring commandSet = L"";
 	wstring commandGet = L"";
+	bool laserStartup;
 	ParamInfo* tempParamInfo = new ParamInfo(
 		PARAM_DEVICE_TYPE,							                //ID
 		L"PARAM_DEVICE_TYPE",                                       //Parameter Description
 		LASER1 | LASER2 | LASER3 | LASER4,							//VAL
 		LASER1 | LASER2 | LASER3 | LASER4,							//PARAM C
 		FALSE,										                //PARAM B
+		FALSE,														//First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		TRUE,                                                       //READ ONLY
@@ -768,6 +784,7 @@ long TopticaiChrome::BuildParamTable()
 		0,					                			            //VAL
 		0,                								            //PARAM C
 		FALSE,										                //PARAM B
+		TRUE,                                                       //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		FALSE,                                                      //READ ONLY
@@ -787,6 +804,7 @@ long TopticaiChrome::BuildParamTable()
 		0,					                			            //VAL
 		0,                								            //PARAM C
 		FALSE,										                //PARAM B
+		TRUE,                                                       //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		FALSE,                                                      //READ ONLY
@@ -806,6 +824,7 @@ long TopticaiChrome::BuildParamTable()
 		0,					                			            //VAL
 		0,                								            //PARAM C
 		FALSE,										                //PARAM B
+		TRUE,                                                       //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		FALSE,                                                      //READ ONLY
@@ -825,6 +844,7 @@ long TopticaiChrome::BuildParamTable()
 		0,					                			            //VAL
 		0,                								            //PARAM C
 		FALSE,										                //PARAM B
+		TRUE,                                                       //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		FALSE,                                                      //READ ONLY
@@ -844,6 +864,7 @@ long TopticaiChrome::BuildParamTable()
 		LASER_POWER_MIN,					                		//VAL
 		LASER_POWER_MIN,                							//PARAM C
 		FALSE,										                //PARAM B
+		TRUE,                                                       //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		FALSE,                                                      //READ ONLY
@@ -863,6 +884,7 @@ long TopticaiChrome::BuildParamTable()
 		LASER_POWER_MIN,					                		//VAL
 		LASER_POWER_MIN,                							//PARAM C
 		FALSE,										                //PARAM B
+		TRUE,                                                       //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		FALSE,                                                      //READ ONLY
@@ -882,6 +904,7 @@ long TopticaiChrome::BuildParamTable()
 		LASER_POWER_MIN,					                		//VAL
 		LASER_POWER_MIN,                							//PARAM C
 		FALSE,										                //PARAM B
+		TRUE,                                                       //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		FALSE,                                                      //READ ONLY
@@ -901,6 +924,7 @@ long TopticaiChrome::BuildParamTable()
 		LASER_POWER_MIN,					                		//VAL
 		LASER_POWER_MIN,                							//PARAM C
 		FALSE,										                //PARAM B
+		TRUE,                                                       //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		FALSE,                                                      //READ ONLY
@@ -920,6 +944,7 @@ long TopticaiChrome::BuildParamTable()
 		LASER_POWER_MIN,					                		//VAL
 		LASER_POWER_MIN,                							//PARAM C
 		FALSE,										                //PARAM B
+		FALSE,                                                      //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		TRUE,                                                       //READ ONLY
@@ -939,6 +964,7 @@ long TopticaiChrome::BuildParamTable()
 		LASER_POWER_MIN,					                		//VAL
 		LASER_POWER_MIN,                							//PARAM C
 		FALSE,										                //PARAM B
+		FALSE,                                                      //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		TRUE,                                                       //READ ONLY
@@ -958,6 +984,7 @@ long TopticaiChrome::BuildParamTable()
 		LASER_POWER_MIN,					                		//VAL
 		LASER_POWER_MIN,                							//PARAM C
 		FALSE,										                //PARAM B
+		FALSE,                                                      //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		TRUE,                                                       //READ ONLY
@@ -977,6 +1004,7 @@ long TopticaiChrome::BuildParamTable()
 		LASER_POWER_MIN,					                		//VAL
 		LASER_POWER_MIN,                							//PARAM C
 		FALSE,										                //PARAM B
+		FALSE,                                                      //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		TRUE,                                                       //READ ONLY
@@ -996,6 +1024,7 @@ long TopticaiChrome::BuildParamTable()
 		0,					                			            //VAL
 		0,                								            //PARAM C
 		FALSE,										                //PARAM B
+		TRUE,                                                       //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		FALSE,                                                      //READ ONLY
@@ -1015,6 +1044,7 @@ long TopticaiChrome::BuildParamTable()
 		0,					                			            //VAL
 		0,                								            //PARAM C
 		FALSE,										                //PARAM B
+		TRUE,                                                       //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		FALSE,                                                      //READ ONLY
@@ -1034,6 +1064,7 @@ long TopticaiChrome::BuildParamTable()
 		0,					                			            //VAL
 		0,                								            //PARAM C
 		FALSE,										                //PARAM B
+		TRUE,                                                       //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		FALSE,                                                      //READ ONLY
@@ -1053,6 +1084,7 @@ long TopticaiChrome::BuildParamTable()
 		0,					                			            //VAL
 		0,                								            //PARAM C
 		FALSE,										                //PARAM B
+		TRUE,                                                       //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		FALSE,                                                      //READ ONLY
@@ -1072,6 +1104,7 @@ long TopticaiChrome::BuildParamTable()
 		LASER_WAVELENGTH_MIN,					                    //VAL
 		LASER_WAVELENGTH_MIN,                						//PARAM C
 		FALSE,										                //PARAM B
+		FALSE,                                                      //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		TRUE,                                                       //READ ONLY
@@ -1091,6 +1124,7 @@ long TopticaiChrome::BuildParamTable()
 		LASER_WAVELENGTH_MIN,					                	//VAL
 		LASER_WAVELENGTH_MIN,                						//PARAM C
 		FALSE,										                //PARAM B
+		FALSE,                                                      //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		TRUE,                                                       //READ ONLY
@@ -1110,6 +1144,7 @@ long TopticaiChrome::BuildParamTable()
 		LASER_WAVELENGTH_MIN,					                	//VAL
 		LASER_WAVELENGTH_MIN,                						//PARAM C
 		FALSE,										                //PARAM B
+		FALSE,                                                      //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		TRUE,                                                       //READ ONLY
@@ -1129,6 +1164,7 @@ long TopticaiChrome::BuildParamTable()
 		LASER_WAVELENGTH_MIN,					                	//VAL
 		LASER_WAVELENGTH_MIN,                						//PARAM C
 		FALSE,										                //PARAM B
+		FALSE,                                                      //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		TRUE,                                                       //READ ONLY
@@ -1148,6 +1184,7 @@ long TopticaiChrome::BuildParamTable()
 		0,					                			            //VAL
 		0,                								            //PARAM C
 		FALSE,										                //PARAM B
+		FALSE,                                                      //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		FALSE,                                                      //READ ONLY
@@ -1167,6 +1204,7 @@ long TopticaiChrome::BuildParamTable()
 		0,					                			            //VAL
 		0,                								            //PARAM C
 		FALSE,										                //PARAM B
+		FALSE,                                                      //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		FALSE,                                                      //READ ONLY
@@ -1186,6 +1224,7 @@ long TopticaiChrome::BuildParamTable()
 		0,															//VAL
 		0,                											//PARAM C
 		FALSE,										                //PARAM B
+		TRUE,                                                       //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		FALSE,                                                      //READ ONLY
@@ -1205,6 +1244,7 @@ long TopticaiChrome::BuildParamTable()
 		0,															//VAL
 		0,                											//PARAM C
 		FALSE,										                //PARAM B
+		TRUE,                                                       //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		FALSE,                                                      //READ ONLY
@@ -1224,6 +1264,7 @@ long TopticaiChrome::BuildParamTable()
 		0,															//VAL
 		0,                											//PARAM C
 		FALSE,										                //PARAM B
+		FALSE,                                                      //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		TRUE,                                                       //READ ONLY
@@ -1244,6 +1285,7 @@ long TopticaiChrome::BuildParamTable()
 		0,															//VAL
 		0,                											//PARAM C
 		FALSE,										                //PARAM B
+		FALSE,                                                      //First Set
 		TYPE_LONG,									                //TYPE
 		TRUE,										                //AVAILABLE
 		FALSE,                                                      //READ ONLY

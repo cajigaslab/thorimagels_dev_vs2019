@@ -17,14 +17,13 @@ wchar_t MeadowlarkPDM::_errMsg[MSG_SIZE];
 bool MeadowlarkPDM::_instanceFlag = false;
 unique_ptr<MeadowlarkPDM> MeadowlarkPDM::_single(new MeadowlarkPDM());
 unique_ptr<ThorSLMXML> pSetup(new ThorSLMXML());
-long MeadowlarkPDM::_arrayOrFileID = 0;		//0-based buffer or sequence index
+long MeadowlarkPDM::_arrayOrFileID = 0;			//0-based buffer or sequence index
 long MeadowlarkPDM::_bufferCount = 1;			//1-based total buffer size
 long MeadowlarkPDM::_slmRuntimeCalculate = FALSE;	//[1]:calculate transient frames at runtime
 MemoryStruct<unsigned char> MeadowlarkPDM::_intermediateBuf[MAX_ARRAY_CNT]; //intermediate buffers for transient or bmp
 Blink_SDK* MeadowlarkPDM::_blinkSDK = NULL;
 unsigned int MeadowlarkPDM::_slmTimeout = SLM_TIMEOUT_MIN;
 MemoryStruct<unsigned char> MeadowlarkPDM::_slmTempBuf;		//tempearary buffer for transient calculation
-mutex MeadowlarkPDM::_callbackMutex;						//mutex lock to update static params used in callback
 
 MeadowlarkPDM::MeadowlarkPDM() :
 	DEFAULT_TRUE_FRAMES(5),
@@ -59,12 +58,17 @@ long MeadowlarkPDM::FindSLM(char* xml)
 	try
 	{
 		double pixelPitchUM = 1.0, flatDiagRatio = 1.0;
-		double flatPowerRange[2] = {0.0};
-		long pixelSize[2] = {0}, dmdMode = 0, persistHologramZone1 = 0, persistHologramZone2 = 0;
+		double flatPowerRange[2] = { 0.0 };
+		long pixelSize[2] = { 0 }, dmdMode = 0, persistHologramZone[2] = { 0 }, dualPatternShiftPx = 0;
 		unsigned int transientFrames = DEFAULT_TRANSIENT_FRAMES;
 		std::string lutFile, overDrivelutFile, wavefrontFile;
 
-		if (FALSE == pSetup->GetSpec(_pSlmName, dmdMode, _overDrive, transientFrames, pixelPitchUM, flatDiagRatio, flatPowerRange[0], flatPowerRange[1], pixelSize[0], pixelSize[1], lutFile, overDrivelutFile, wavefrontFile, persistHologramZone1, persistHologramZone2))
+		if (FALSE == pSetup->GetBlank(dualPatternShiftPx, persistHologramZone[0], persistHologramZone[1]))
+		{
+			pSetup->GetLastErrorMsg(_errMsg, MSG_SIZE);
+			return 0;
+		}
+		if (FALSE == pSetup->GetSpec(_pSlmName, dmdMode, _overDrive, transientFrames, pixelPitchUM, flatDiagRatio, flatPowerRange[0], flatPowerRange[1], pixelSize[0], pixelSize[1], lutFile, overDrivelutFile, wavefrontFile))
 		{
 			pSetup->GetLastErrorMsg(_errMsg, MSG_SIZE);
 			return 0;
@@ -187,7 +191,7 @@ long MeadowlarkPDM::SetParam(const long paramID, const double param)
 		break;
 	case ISLM::SLMParams::WRITE_TRANSIANT_BUFFER:
 		_blinkSDK->Write_overdrive_image(1, _intermediateBuf[static_cast<int>(param)].GetMem(), false, false);
-		break;	
+		break;
 	default:
 		StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorSLMPDM512 Parameter (%d) not implemented", paramID);
 		ret = FALSE;
@@ -214,6 +218,38 @@ long MeadowlarkPDM::TeardownSLM()
 	return TRUE;
 }
 
+long MeadowlarkPDM::GetParamBuffer(const long paramID, char* pBuffer, long size)
+{
+	long ret = TRUE;
+	switch (paramID)
+	{
+	case ISLM::SLMParams::GET_CURRENT_BUFFER:
+		if (0 > _slmTempBuf.GetIndex())
+		{
+			if ((DWORD)size < _firstBuf.GetSize())
+				SAFE_MEMCPY(pBuffer, _firstBuf.GetSize(), _firstBuf.GetMem());
+		}
+		else
+		{
+			if (TRUE == _slmRuntimeCalculate)
+			{
+				if ((DWORD)size < _slmTempBuf.GetSize())
+					SAFE_MEMCPY(pBuffer, _slmTempBuf.GetSize(), _slmTempBuf.GetMem());
+			}
+			else
+			{
+				if ((DWORD)size < _intermediateBuf[_slmTempBuf.GetIndex()].GetSize())
+					SAFE_MEMCPY(pBuffer, _intermediateBuf[_slmTempBuf.GetIndex()].GetSize(), _intermediateBuf[_slmTempBuf.GetIndex()].GetMem());
+			}
+		}
+		break;
+	default:
+		ret = FALSE;
+		break;
+	}
+	return ret;
+}
+
 long MeadowlarkPDM::SetParamBuffer(const long paramID, char* pBuffer, long size)
 {
 	long ret = TRUE;
@@ -228,7 +264,7 @@ long MeadowlarkPDM::SetParamBuffer(const long paramID, char* pBuffer, long size)
 		SAFE_MEMCPY(_firstBuf.GetMem(), size, pBuffer);
 		break;
 	case ISLM::SLMParams::SET_TRANSIANT_BUFFER:
-		tmpBuf = MemoryStruct<unsigned char> { (unsigned char*)pBuffer, (DWORD)size };
+		tmpBuf = MemoryStruct<unsigned char>{ (unsigned char*)pBuffer, (DWORD)size };
 		ret = SetIntermediateBuffer(tmpBuf);
 		break;
 	default:
@@ -249,6 +285,10 @@ long MeadowlarkPDM::StartSLM()
 		}
 		//write first bmp
 		_blinkSDK->Write_overdrive_image(1, _firstBuf.GetMem(), false, false);
+
+		//set current index for on-board buffer,
+		//keep -1 if no updateSLM invoked, then _firstBuf would be current
+		_slmTempBuf.SetIndex(-1);
 	}
 	return TRUE;
 }
@@ -279,6 +319,8 @@ long MeadowlarkPDM::UpdateSLM(long arrayID)
 		//write pre-calculated transient frames:
 		_blinkSDK->Write_transient_frames(1, _intermediateBuf[arrayID].GetMem(), 0U, true, false, _slmTimeout);
 	}
+	//keep current index:
+	_slmTempBuf.SetIndex(arrayID);
 	return TRUE;
 }
 
@@ -312,8 +354,9 @@ void MeadowlarkPDM::ReleaseTransientBuf()
 		_intermediateBuf[i].ReallocMemChk(0);
 	}
 
-	//release first pattern buffer
+	//release first/temp pattern buffer
 	_firstBuf.ReallocMemChk(0);
+	_slmTempBuf.ReallocMemChk(0);
 }
 
 void MeadowlarkPDM::SetDefault()
@@ -338,7 +381,6 @@ long MeadowlarkPDM::SetIntermediateBuffer(MemoryStruct<unsigned char> memStruct)
 	HighPerfTimer timer;
 	timer.Start();
 #endif
-	_callbackMutex.lock();
 
 	if (TRUE == _slmRuntimeCalculate)
 	{
@@ -374,10 +416,8 @@ long MeadowlarkPDM::SetIntermediateBuffer(MemoryStruct<unsigned char> memStruct)
 	timer.Stop();
 	StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorSLMPDM512:%u: SetIntermediateBuffer time: %d ms", __LINE__, static_cast<int>(timer.ElapsedMilliseconds()));
 #endif
-	_callbackMutex.unlock();
 	return TRUE;
 
 FALSE_RETURN:
-	_callbackMutex.unlock();
 	return FALSE;
 }

@@ -469,7 +469,7 @@ namespace RealTimeLineChart.ViewModel
                                 this.SavePath = System.IO.Path.GetDirectoryName(msg[3]);
                                 if (String.IsNullOrEmpty(this.SaveName) || String.IsNullOrWhiteSpace(this.SaveName))
                                 {
-                                    this.SaveName = "SyncData001";
+                                    this.SaveName = "SyncData_0000";
                                 }
                                 if (!Directory.Exists(SavePath))
                                 {
@@ -479,7 +479,7 @@ namespace RealTimeLineChart.ViewModel
                                 {
                                     do
                                     {
-                                        this.SaveName = CreateUniqueFilename(this.SaveName);
+                                        this.SaveName = CreateUniqueFilename(SavePath, this.SaveName);
                                     }
                                     while (Directory.Exists(SavePath + "\\" + this.SaveName));
                                 }

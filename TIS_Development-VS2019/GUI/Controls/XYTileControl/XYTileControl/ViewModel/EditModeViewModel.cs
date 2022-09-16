@@ -1512,7 +1512,14 @@
                 }
 
                 xyTileControl.TileModifier.ResizeEnabled = true;
-
+                //If the show grid option is unchecked we need to connect SizeChanged to the box,
+                // otherwise _gridChangedSize won't change to true   
+                if (false == xyTileControl.ShowGrid.IsChecked)
+                {
+                    box.SizeChanged += GridBackgroundBox_SizeChanged;
+                    box.DragEnded += GridBackgroundBox_DragEnded;
+                    box.DragStarted += GridBackgroundBox_DragStarted;
+                }
                 box.IsEditable = true;
                 box.IsSelected = true;
                 xyTileControl.TileModifier.SetActiveTile(box);

@@ -62,6 +62,9 @@
                                              TriggerDurationMS="{Binding Path=TriggerDurationMS,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                              TriggerIdleMS="{Binding Path=TriggerIdleMS,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                              TriggerIterations="{Binding Path=TriggerIterations,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             GotoDigital="{Binding Path=GotoDigital,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             GotoAnalog="{Binding Path=GotoAnalog,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                             GotoCommand="{Binding Path=GotoCommand}"
                                              TriggerError="{Binding Path=TriggerError,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                              TriggerErrorColor="{Binding Path=TriggerErrorColor,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
                                              />

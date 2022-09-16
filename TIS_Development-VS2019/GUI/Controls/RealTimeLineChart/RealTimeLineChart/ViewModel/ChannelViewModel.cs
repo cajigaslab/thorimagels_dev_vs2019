@@ -103,12 +103,14 @@
         private IDataSeries _channelSeries = null;
         private Color _color;
         private int _height = 150;
+        bool _idDigitalLine = false;
         private bool _isRollOverEnabled = false;
         private bool _isVisible = true;
         private bool _xAxisVisible = false;
+        private IRange _xVisibleRange = new DoubleRange((double)0, (double)10);
         private string _yLabel = string.Empty;
         private bool _yVisibleLock = false;
-        private IRange _yVisibleRange = new DoubleRange((double)0, (double)0.5);
+        private IRange _yVisibleRange = new DoubleRange((double)-0.5, (double)0.5);
 
         #endregion Fields
 
@@ -139,9 +141,9 @@
             get
             {
                 if (null == _channelSeries)
-                    return "Once";
+                    return "Never";
 
-                return (null == _channelSeries.FifoCapacity) ? "Once" : "Always";
+                return (null == _channelSeries?.FifoCapacity) ? "Never" : "Always";
             }
         }
 
@@ -150,11 +152,11 @@
             get
             {
                 if (null == _channelSeries)
-                    return "Once";
+                    return "Never";
 
-                if (null == _channelSeries.FifoCapacity)
+                if (null == _channelSeries?.FifoCapacity || 0 ==  _channelSeries?.FifoCapacity)
                 {
-                    return "Once";
+                    return "Never";
                 }
                 else
                 {
@@ -189,6 +191,12 @@
                 _height = value;
                 OnPropertyChanged("Height");
             }
+        }
+
+        public bool IsDigitalLine
+        {
+            get => _idDigitalLine;
+            set => SetProperty(ref _idDigitalLine, value);
         }
 
         public bool IsRollOverEnabled
@@ -291,6 +299,15 @@
                 {
                     return _xAxisVisible;
                 }
+            }
+        }
+
+        public IRange XVisibleRange
+        {
+            get { return _xVisibleRange; }
+            set
+            {
+                SetProperty(ref _xVisibleRange, value);
             }
         }
 
@@ -452,9 +469,9 @@
                 if (_isVisible != value)
                 {
                     _isVisible = value;
+
+                    XAxisVisibleChanged?.Invoke();
                     OnPropertyChanged("IsVisible");
-                    if (null != XAxisVisibleChanged)
-                        XAxisVisibleChanged();
                 }
             }
         }

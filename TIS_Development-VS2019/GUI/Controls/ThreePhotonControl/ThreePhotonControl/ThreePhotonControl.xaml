@@ -273,54 +273,303 @@
                         IsEnabled="{Binding Path=IsChecked, ElementName=CbThreePhotonModeEnable}"
                         Visibility="{Binding Path=AcquireDuringTurnAroundVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
                 <Label Content="One-way LUT offset"
-                       VerticalAlignment="Center"/>
+                       VerticalAlignment="Center" />
                 <TextBox Text="{Binding LUTOffset3P, Mode=TwoWay}"
                          Width="60"
-                         VerticalAlignment="Center"/>
+                         VerticalAlignment="Center" />
             </StackPanel>
             <StackPanel HorizontalAlignment="Stretch"
-                        Orientation="Horizontal"
                         Margin="0,5"
                         IsEnabled="{Binding Path=IsChecked, ElementName=CbThreePhotonModeEnable}"
                         Visibility="{Binding Path=MultiplaneVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
-                <Label Content="Number of planes"
-                       VerticalAlignment="Center" />
-                <StackPanel Orientation="Horizontal">
-                    <TextBox Name="tbNumOfPlanes"
-                             ToolTip="Set number of planes to image"
-                             VerticalAlignment="Center"
-                             Width="50"
-                             Text="{Binding  Path=LSMNumberOfPlanes, Mode=TwoWay}" />
-                    <Button Width="30"
-                            Height="25"
-                            Content="&#x2713;">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Visibility"
-                                        Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbNumOfPlanes}"
-                                                 Value="True">
-                                        <Setter Property="Visibility"
-                                                Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                    <StackPanel VerticalAlignment="Center">
-                        <RepeatButton Content="+"
-                                      Width="30"
-                                      Height="20"
-                                      Command="{Binding Path=NumberOfPlanesPlusCommand}"
-                                      Delay="500"
-                                      Interval="100" />
-                        <RepeatButton Content="-"
-                                      Width="30"
-                                      Height="20"
-                                      Command="{Binding Path=NumberOfPlanesMinusCommand}"
-                                      Delay="500"
-                                      Interval="100" />
+                <StackPanel HorizontalAlignment="Stretch"
+                            Orientation="Horizontal"
+                            Margin="0,5">
+                    <Label Content="Number of planes"
+                           VerticalAlignment="Center" />
+                    <StackPanel Orientation="Horizontal">
+                        <TextBox Name="tbNumOfPlanes"
+                                 ToolTip="Set number of planes to image"
+                                 VerticalAlignment="Center"
+                                 Width="50"
+                                 Text="{Binding  Path=LSMNumberOfPlanes, Mode=TwoWay}" />
+                        <Button Width="30"
+                                Height="25"
+                                Content="&#x2713;">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbNumOfPlanes}"
+                                                     Value="True">
+                                            <Setter Property="Visibility"
+                                                    Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <StackPanel VerticalAlignment="Center">
+                            <RepeatButton Content="+"
+                                          Width="30"
+                                          Height="20"
+                                          Command="{Binding Path=NumberOfPlanesPlusCommand}"
+                                          Delay="500"
+                                          Interval="100" />
+                            <RepeatButton Content="-"
+                                          Width="30"
+                                          Height="20"
+                                          Command="{Binding Path=NumberOfPlanesMinusCommand}"
+                                          Delay="500"
+                                          Interval="100" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel x:Name="ddsPanel"
+                            Visibility="Collapsed">
+                    <CheckBox x:Name="enableDDScb"
+                              Content="Enable DDS Clock Source"
+                              IsChecked="{Binding DDSEnable}" />
+                    <StackPanel Name="phaseDDS0"
+                                Orientation="Horizontal"
+                                Margin="0,3,0,3"
+                                ToolTip="DDS phase for channel 0"
+                                IsEnabled="{Binding Path=IsChecked, ElementName=enableDDScb}">
+                        <Label Content="DDS 0 Phase (Deg)"
+                               Width="110"
+                               Margin="0,3"
+                               HorizontalContentAlignment="Right"
+                               VerticalAlignment="Center"
+                               Foreground="White" />
+                        <Slider Name="ddsPhase0Slider"
+                                VerticalAlignment="Center"
+                                Minimum="1"
+                                Maximum="360"
+                                Margin="2"
+                                Width="150"
+                                IsEnabled="True"
+                                Foreground="White"
+                                Value="{Binding Path=DDSPhase0, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBox Name="ddsPhase0Slidertb"
+                                 VerticalAlignment="Center"
+                                 Width="40"
+                                 Text="{Binding Path=Value, ElementName=ddsPhase0Slider, Mode=TwoWay}"
+                                 validator:Validation.MaxValue="360.0"
+                                 validator:Validation.MinValue="0.0"
+                                 validator:Validation.ValidationType="{x:Type system:Double}">
+                        </TextBox>
+                        <Button Width="30"
+                                Height="25"
+                                Content="&#x2713;">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=ddsPhase0Slidertb}"
+                                                     Value="True">
+                                            <Setter Property="Visibility"
+                                                    Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <StackPanel VerticalAlignment="Center">
+                            <RepeatButton Content="+"
+                                          Width="30"
+                                          Height="20"
+                                          Command="{Binding Path=DDSPhase0PlusCommand}"
+                                          Delay="500"
+                                          Interval="100" />
+                            <RepeatButton Content="-"
+                                          Width="30"
+                                          Height="20"
+                                          Command="{Binding Path=DDSPhase0MinusCommand}"
+                                          Delay="500"
+                                          Interval="100" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Name="amplitudeDDS0"
+                                Orientation="Horizontal"
+                                Margin="0,3,0,3"
+                                ToolTip="DDS amplitude for channel 0"
+                                IsEnabled="{Binding Path=IsChecked, ElementName=enableDDScb}">
+                        <Label Content="DDS 0 Amplitude (V)"
+                               Margin="0,3"
+                               Width="110"
+                               HorizontalContentAlignment="Right"
+                               VerticalAlignment="Center"
+                               Foreground="White" />
+                        <Slider Name="ddsAmplitude0Slider"
+                                VerticalAlignment="Center"
+                                Minimum="-10"
+                                Maximum="0"
+                                Margin="2"
+                                Width="150"
+                                IsEnabled="True"
+                                Foreground="White"
+                                Value="{Binding Path=DDSAmplitude0, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBox Name="ddsAmplitude0Slidertb"
+                                 VerticalAlignment="Center"
+                                 Width="40"
+                                 Text="{Binding Path=Value, ElementName=ddsAmplitude0Slider, Mode=TwoWay}"
+                                 validator:Validation.MaxValue="0.0"
+                                 validator:Validation.MinValue="-10.0"
+                                 validator:Validation.ValidationType="{x:Type system:Double}">
+                        </TextBox>
+                        <Button Width="30"
+                                Height="25"
+                                Content="&#x2713;">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=ddsAmplitude0Slidertb}"
+                                                     Value="True">
+                                            <Setter Property="Visibility"
+                                                    Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <StackPanel VerticalAlignment="Center">
+                            <RepeatButton Content="+"
+                                          Width="30"
+                                          Height="20"
+                                          Command="{Binding Path=DDSAmplitude0PlusCommand}"
+                                          Delay="500"
+                                          Interval="100" />
+                            <RepeatButton Content="-"
+                                          Width="30"
+                                          Height="20"
+                                          Command="{Binding Path=DDSAmplitude0MinusCommand}"
+                                          Delay="500"
+                                          Interval="100" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Name="phaseDDS1"
+                                Orientation="Horizontal"
+                                Margin="0,3,0,3"
+                                ToolTip="DDS phase for channel 1"
+                                IsEnabled="{Binding Path=IsChecked, ElementName=enableDDScb}">
+                        <Label Content="DDS 1 Phase (Deg)"
+                               Width="110"
+                               Margin="0,3"
+                               HorizontalContentAlignment="Right"
+                               VerticalAlignment="Center"
+                               Foreground="White" />
+                        <Slider Name="ddsPhase1Slider"
+                                VerticalAlignment="Center"
+                                Minimum="1"
+                                Maximum="360"
+                                Margin="2"
+                                Width="150"
+                                IsEnabled="True"
+                                Foreground="White"
+                                Value="{Binding Path=DDSPhase1, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBox Name="ddsPhase1Slidertb"
+                                 VerticalAlignment="Center"
+                                 Width="40"
+                                 Text="{Binding Path=Value, ElementName=ddsPhase1Slider, Mode=TwoWay}"
+                                 validator:Validation.MaxValue="360.0"
+                                 validator:Validation.MinValue="0.0"
+                                 validator:Validation.ValidationType="{x:Type system:Double}">
+                        </TextBox>
+                        <Button Width="30"
+                                Height="25"
+                                Content="&#x2713;">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=ddsPhase1Slidertb}"
+                                                     Value="True">
+                                            <Setter Property="Visibility"
+                                                    Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <StackPanel VerticalAlignment="Center">
+                            <RepeatButton Content="+"
+                                          Width="30"
+                                          Height="20"
+                                          Command="{Binding Path=DDSPhase1PlusCommand}"
+                                          Delay="500"
+                                          Interval="100" />
+                            <RepeatButton Content="-"
+                                          Width="30"
+                                          Height="20"
+                                          Command="{Binding Path=DDSPhase1MinusCommand}"
+                                          Delay="500"
+                                          Interval="100" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Name="amplitudeDDS1"
+                                Orientation="Horizontal"
+                                Margin="0,3,0,3"
+                                ToolTip="DDS amplitude for channel 1"
+                                IsEnabled="{Binding Path=IsChecked, ElementName=enableDDScb}">
+                        <Label Content="DDS 1 Amplitude (V)"
+                               Margin="0,3"
+                               Width="110"
+                               HorizontalContentAlignment="Right"
+                               VerticalAlignment="Center"
+                               Foreground="White" />
+                        <Slider Name="ddsAmplitude1Slider"
+                                VerticalAlignment="Center"
+                                Minimum="-10"
+                                Maximum="0"
+                                Margin="2"
+                                Width="150"
+                                IsEnabled="True"
+                                Foreground="White"
+                                Value="{Binding Path=DDSAmplitude1, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBox Name="ddsAmplitude1Slidertb"
+                                 VerticalAlignment="Center"
+                                 Width="40"
+                                 Text="{Binding Path=Value, ElementName=ddsAmplitude1Slider, Mode=TwoWay}"
+                                 validator:Validation.MaxValue="0.0"
+                                 validator:Validation.MinValue="-10.0"
+                                 validator:Validation.ValidationType="{x:Type system:Double}">
+                        </TextBox>
+                        <Button Width="30"
+                                Height="25"
+                                Content="&#x2713;">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=ddsAmplitude1Slidertb}"
+                                                     Value="True">
+                                            <Setter Property="Visibility"
+                                                    Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <StackPanel VerticalAlignment="Center">
+                            <RepeatButton Content="+"
+                                          Width="30"
+                                          Height="20"
+                                          Command="{Binding Path=DDSAmplitude1PlusCommand}"
+                                          Delay="500"
+                                          Interval="100" />
+                            <RepeatButton Content="-"
+                                          Width="30"
+                                          Height="20"
+                                          Command="{Binding Path=DDSAmplitude1MinusCommand}"
+                                          Delay="500"
+                                          Interval="100" />
+                        </StackPanel>
                     </StackPanel>
                 </StackPanel>
             </StackPanel>

@@ -39,7 +39,7 @@ struct CaptureSetupCustomParams
 	DoubleParam exposureTime1;
 	DoubleParam exposureTime2;
 	LongParam lightMode;
-	LongParam gain;
+	DoubleParam gain;
 	LongParam lsmScanMode;
 	LongParam lsmPixelX;
 	LongParam lsmPixelY;
@@ -217,7 +217,9 @@ DllExportLiveImage SetLaser1Emission(long pos);
 DllExportLiveImage SetLaser2Emission(long pos);
 DllExportLiveImage SetLaser3Emission(long pos);
 DllExportLiveImage SetLaser4Emission(long pos);
+DllExportLiveImage SetLaserAllEmission(long pos);
 DllExportLiveImage GetLaserAnalog(long &pos);
+DllExportLiveImage GetLaserTTL(long& pos);
 DllExportLiveImage GetLaser1Enable(long &pos);
 DllExportLiveImage GetLaser2Enable(long &pos);
 DllExportLiveImage GetLaser3Enable(long &pos);

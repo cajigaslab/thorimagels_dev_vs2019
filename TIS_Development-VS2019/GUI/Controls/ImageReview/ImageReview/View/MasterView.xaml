@@ -54,6 +54,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <StackPanel>
             <Button x:Name="btnShowMostRecent"
@@ -116,6 +117,17 @@
               Content="Open with Matlab"
               ToolTip="Process images with Matlab"
               Visibility="{Binding Path=IsMatlabInstalled, Converter={StaticResource boolToVis}}"/>
+            <Button x:Name="btConvertToTiff"
+              Grid.Row="0"
+              Grid.Column="0"
+              Width="150"
+              Height="40"
+              Margin="1"
+              VerticalAlignment="Top"
+              Click="OnConvertRawToTIFF"
+              Content="Convert to TIFF Data"
+              ToolTip="Convert to TIFF Data"
+              Visibility="{Binding Path=IsRawExperiment, Converter={StaticResource boolToVis}}"/>
             <Label x:Name="labelSelectedExperiment"
              HorizontalAlignment="Center"
              Content="" />

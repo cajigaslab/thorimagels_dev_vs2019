@@ -27,8 +27,11 @@
     {
         #region Fields
 
+        public bool _captureScriptManager;
         public string _thorSyncConfiguratureInformation = string.Empty;
         public bool _thorSyncConnection = false;
+        public int _uncheckIndex;
+        public bool _uncheckRemoteConnection;
 
         string _clientName = string.Empty;
         string _modeThorImage = string.Empty;
@@ -240,6 +243,11 @@
                     {
                         sendData(_eventAggregator, "IPC_CONTROLLER", "RUN_SAMPLE", "Establish");
                         ret = true;
+                    }
+                    //Resets the boolean for unchecking remote connections checkbox if checked in ThorSync within any of these tabs
+                    else if (_modeThorImage == "ScriptManager" || _modeThorImage == "ImageReview" || _modeThorImage == "Capture Setup")
+                    {
+                        _uncheckRemoteConnection = false;
                     }
                     _thorSyncConnection = true;
                     break;

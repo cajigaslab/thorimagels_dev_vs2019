@@ -65,7 +65,7 @@ long ThorStim::MovePockelsToPowerLevel(long index)
 		string eStr = "POCKEL_DIG";
 		eStr = (0 == index) ? eStr : eStr + "_" + std::to_string(index);
 		if (EnumString<BLEACHSCAN_DIGITAL_LINENAME>::To(eEnum, eStr))
-			TogglePulseToDigitalLine(_taskHandleDO, _digiLines[eEnum-1], 1, (_pockelsMinVoltage[index] < mArray[0]) ? TogglePulseMode::ToggleHigh : TogglePulseMode::ToggleLow);
+			TogglePulseToDigitalLine(_taskHandleDO, _digiLines[eEnum], 1, (_pockelsMinVoltage[index] < mArray[0]) ? TogglePulseMode::ToggleHigh : TogglePulseMode::ToggleLow);
 	}
 	return ret;
 }
@@ -93,7 +93,7 @@ long ThorStim::SetupProtocol()
 			//open bleach shutter at setup, and set cycle complementary (cycleInverse) high,
 			//before set digital task due to shared NI task
 			//TogglePulseToDigitalLine(_taskHandleDO, _bleachShutterLine, 1, TogglePulseMode::ToggleHigh, _bleachShutterIdle[0]);
-			TogglePulseToDigitalLine(_taskHandleDO, _digiLines[(int)BLEACHSCAN_DIGITAL_LINENAME::CYCLE_COMPLEMENTARY-1], 1, TogglePulseMode::ToggleHigh);
+			TogglePulseToDigitalLine(_taskHandleDO, _digiLines[(int)BLEACHSCAN_DIGITAL_LINENAME::CYCLE_COMPLEMENTARY], 1, TogglePulseMode::ToggleHigh);
 			SetupTaskMasterDigital();
 
 			//push in more buffer initially then one-per-callback after start

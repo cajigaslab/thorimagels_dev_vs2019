@@ -144,6 +144,11 @@ DllExport_IMGWFBUILDER long BuildPolyLine()
 	return ImageWaveformBuilder::getInstance(_boardID)->BuildPolyLine();
 }
 
+DllExport_IMGWFBUILDER long GetPolylineSegments(LineSegVec& polylineSegments, double& field2VoltX)
+{
+	return ImageWaveformBuilder::getInstance(_boardID)->GetPolylineSegments(polylineSegments, field2VoltX);
+}
+
 DllExport_IMGWFBUILDER long BuildSpiral(long count)
 {
 	return ImageWaveformBuilder::getInstance(_boardID)->BuildSpiral(count);

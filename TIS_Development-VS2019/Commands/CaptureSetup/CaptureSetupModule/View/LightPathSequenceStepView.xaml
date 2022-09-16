@@ -91,6 +91,14 @@
                                      Width="47"
                                      Margin="1" />
                         </StackPanel>
+                        <StackPanel Margin="0,0,13,0"
+                                    Orientation="Horizontal">
+                            <CheckBox Name="cbLaserAnalog"
+                                      Margin="12,0,0,0"
+                                      VerticalAlignment="Center"/>
+                            <Label Name="analogLabel"
+                                   Content="Analog"/>
+                        </StackPanel>
                     </StackPanel>
                     <StackPanel Margin="1"
                                 Orientation="Horizontal">
@@ -110,6 +118,14 @@
                             <TextBox Name="tbLaserPowerPercent4"
                                      Width="47"
                                      Margin="1" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,13,0"
+                                    Orientation="Horizontal">
+                            <CheckBox Name="cbLaserTTL"
+                                      Margin="12,0,0,0"
+                                      VerticalAlignment="Center"/>
+                            <Label Name="ttlLabel" 
+                                   Content="TTL"/>
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>

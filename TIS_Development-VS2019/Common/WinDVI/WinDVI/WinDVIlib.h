@@ -5,6 +5,7 @@ class IWinDVI
 public:
 	virtual long ChooseDVI(const wchar_t* id) = 0;
 	virtual long EditBMP(int id, unsigned char* bmpBuf, BITMAPINFO bmpInfo) = 0;
+	virtual long GetBMP(int id, unsigned char* bmpBuf, BITMAPINFO& bmpInfo) = 0;
 	virtual void ClearBMPs() = 0;
 	virtual long CreateDVIWindow(int w, int h) = 0;
 	virtual long DisplayBMP(int id) = 0;
@@ -22,6 +23,7 @@ class WinDVIDLL : public PDLL, public IWinDVI
 
 	DECLARE_FUNCTION1(long, ChooseDVI, const wchar_t*)
 	DECLARE_FUNCTION3(long, EditBMP, int, unsigned char*, BITMAPINFO)
+	DECLARE_FUNCTION3(long, GetBMP, int, unsigned char*, BITMAPINFO&)
 	DECLARE_FUNCTION0(void, ClearBMPs)
 	DECLARE_FUNCTION2(long, CreateDVIWindow, int, int)
 	DECLARE_FUNCTION1(long, DisplayBMP, int)

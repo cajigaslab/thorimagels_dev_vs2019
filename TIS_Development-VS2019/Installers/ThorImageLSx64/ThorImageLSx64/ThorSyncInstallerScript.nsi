@@ -77,7 +77,7 @@ Section "" CORE_FILES
   ;--------------------- Start and Desktop Shortcuts ------------------------------
   SetOutPath "$INSTDIR"
   CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
-  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\ThorSync.lnk" "$INSTDIR\ThorSync.exe"
+  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\${PRODUCT_NAME}.lnk" "$INSTDIR\ThorSync.exe"
   CreateShortCut "$DESKTOP\${PRODUCT_NAME}.lnk" "$INSTDIR\ThorSync.exe"
   
   ; Grant FullAccess permission for all users to the Program Files folder
@@ -139,7 +139,7 @@ Section Uninstall
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Website.lnk"
   Delete "$DESKTOP\${PRODUCT_NAME}.lnk"
-  Delete "$SMPROGRAMS\${PRODUCT_NAME}\ThorSync.lnk"
+  Delete "$SMPROGRAMS\${PRODUCT_NAME}\${PRODUCT_NAME}.lnk"
 
   RMDir "$SMPROGRAMS\${PRODUCT_NAME}"
   RMDir /r "$INSTDIR\MatlabScripts"
@@ -200,7 +200,7 @@ Function .onInit
       StrCpy $INSTDIR $R1 ;If we are modifying the installation, make the install location the INSTDIR
       IntCmp $1 0 done
     upgrade:
-      MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION "${PRODUCT_NAME} is already installed. $\n$\nClick `OK` to continue with this upgrade." IDOK backupAndUpgrade
+      MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION "${PRODUCT_NAME} is already installed. $\n$\nClick `OK` to continue with this update." IDOK backupAndUpgrade
       Quit
     backupAndUpgrade:
       StrCpy $_upgradeMode "1"

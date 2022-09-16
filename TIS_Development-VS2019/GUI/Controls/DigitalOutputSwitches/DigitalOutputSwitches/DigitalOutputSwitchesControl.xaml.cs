@@ -36,6 +36,21 @@
             "ExperimentMode",
             typeof(int),
             typeof(DigitalOutputSwitchesControl));
+        public static readonly DependencyProperty GotoAnalogProperty =
+            DependencyProperty.Register(
+            "GotoAnalog",
+            typeof(double),
+            typeof(DigitalOutputSwitchesControl));
+        public static readonly DependencyProperty GotoCommandProperty =
+            DependencyProperty.Register(
+            "GotoCommand",
+            typeof(ICommand),
+            typeof(DigitalOutputSwitchesControl));
+        public static readonly DependencyProperty GotoDigitalProperty =
+            DependencyProperty.Register(
+            "GotoDigital",
+            typeof(int),
+            typeof(DigitalOutputSwitchesControl));
         public static readonly DependencyProperty PowerPercentStringProperty =
             DependencyProperty.Register(
             "PowerPercentString",
@@ -289,6 +304,24 @@
         {
             get { return (int)GetValue(ExperimentModeProperty); }
             set { SetValue(ExperimentModeProperty, value); }
+        }
+
+        public double GotoAnalog
+        {
+            get { return (double)GetValue(GotoAnalogProperty); }
+            set { SetValue(GotoAnalogProperty, value); }
+        }
+
+        public ICommand GotoCommand
+        {
+            get { return (ICommand)GetValue(GotoCommandProperty); }
+            set { SetValue(GotoCommandProperty, value); }
+        }
+
+        public int GotoDigital
+        {
+            get { return (int)GetValue(GotoDigitalProperty); }
+            set { SetValue(GotoDigitalProperty, value); }
         }
 
         public string PowerPercentString

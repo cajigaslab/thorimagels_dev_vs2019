@@ -71,10 +71,19 @@
             "Laser4PowerPlusCommand",
             typeof(ICommand),
             typeof(MultiLaserControlUC));
+        public static readonly DependencyProperty LaserAnalogUncheckCommandProperty = 
+            DependencyProperty.Register(
+            "LaserAnalogUncheckCommand",
+            typeof(ICommand),
+            typeof(MultiLaserControlUC));
 
         public static DependencyProperty AllLaserVisibilityProperty = 
            DependencyProperty.Register("AllLaserVisibility",
            typeof(Visibility),
+           typeof(MultiLaserControlUC));
+        public static DependencyProperty AnalogCheckStatusProperty = 
+           DependencyProperty.Register("AnalogCheckStatus",
+           typeof(bool),
            typeof(MultiLaserControlUC));
         public static DependencyProperty EnableLaser1ContentProperty = 
             DependencyProperty.Register("EnableLaser1Content",
@@ -273,6 +282,12 @@
         {
             get { return (Visibility)GetValue(AllLaserVisibilityProperty); }
             set { SetValue(AllLaserVisibilityProperty, value); }
+        }
+
+        public bool AnalogCheckStatus
+        {
+            get { return (bool)GetValue(AnalogCheckStatusProperty); }
+            set { SetValue(AnalogCheckStatusProperty, value); }
         }
 
         public string EnableLaser1Content
@@ -491,6 +506,12 @@
             set { SetValue(LaserAllTTLProperty, value); }
         }
 
+        public ICommand LaserAnalogUncheckCommand
+        {
+            get { return (ICommand)GetValue(LaserAnalogUncheckCommandProperty); }
+            set { SetValue(LaserAnalogUncheckCommandProperty, value); }
+        }
+
         public int MainLaserIndex
         {
             get { return (int)GetValue(MainLaserIndexProperty); }
@@ -590,6 +611,48 @@
         #endregion Properties
 
         #region Methods
+
+        private void AnalogLaserAll_Checked(object sender, RoutedEventArgs e)
+        {
+            AnalogLaserCheckStatus.IsChecked = true;
+            sliderLaser1.IsEnabled = false;
+            tbLaser1.IsEnabled = false;
+            sliderLaser2.IsEnabled = false;
+            tbLaser2.IsEnabled = false;
+            sliderLaser3.IsEnabled = false;
+            tbLaser3.IsEnabled = false;
+            sliderLaser4.IsEnabled = false;
+            tbLaser4.IsEnabled = false;
+            Laser1Plus.IsEnabled = false;
+            Laser1Minus.IsEnabled = false;
+            Laser2Plus.IsEnabled = false;
+            Laser2Minus.IsEnabled = false;
+            Laser3Plus.IsEnabled = false;
+            Laser3Minus.IsEnabled = false;
+            Laser4Plus.IsEnabled = false;
+            Laser4Minus.IsEnabled = false;
+        }
+
+        private void AnalogLaserAll_Unchecked(object sender, RoutedEventArgs e)
+        {
+            AnalogLaserCheckStatus.IsChecked = false;
+            sliderLaser1.IsEnabled = true;
+            tbLaser1.IsEnabled = true;
+            sliderLaser2.IsEnabled = true;
+            tbLaser2.IsEnabled = true;
+            sliderLaser3.IsEnabled = true;
+            tbLaser3.IsEnabled = true;
+            sliderLaser4.IsEnabled = true;
+            tbLaser4.IsEnabled = true;
+            Laser1Plus.IsEnabled = true;
+            Laser1Minus.IsEnabled = true;
+            Laser2Plus.IsEnabled = true;
+            Laser2Minus.IsEnabled = true;
+            Laser3Plus.IsEnabled = true;
+            Laser3Minus.IsEnabled = true;
+            Laser4Plus.IsEnabled = true;
+            Laser4Minus.IsEnabled = true;
+        }
 
         private void EnableLaser1_Checked(object sender, RoutedEventArgs e)
         {

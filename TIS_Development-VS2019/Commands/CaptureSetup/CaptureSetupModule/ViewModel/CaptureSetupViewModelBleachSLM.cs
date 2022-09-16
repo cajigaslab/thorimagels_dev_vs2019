@@ -43,7 +43,10 @@
         private double _slmCalibPower = 0.0;
         private BleachWaveParams _slmCalibWaveParam;
         private double _slmCalibZPos = 0.0;
-        private string _slmImportFilePathName = Environment.SpecialFolder.MyDocuments.ToString();
+        private bool _slmExportChecked = false;
+        private string _slmExportFileName = "SLMExport";
+        private string _slmImportFilePathName = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        private bool _slmImportSequences = false;
         private Int64 _slmLastCalibTimeUnix = 0;
         private bool _slmPanelAvailable = true;
         private bool _slmPanelInUse = true;
@@ -322,20 +325,30 @@
         {
             get
             {
-                string strTmp = string.Empty;
-                int intTmp = 0;
-                ApplicationDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
-                XmlNodeList ndList = ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView");
-                if (null != ndList)
-                {
-                    if (!(XmlManager.GetAttribute(ndList[0], ApplicationDoc, "DualPatternShiftPx", ref strTmp) && Int32.TryParse(strTmp, out intTmp)))
-                    {
-                        intTmp = 0;
-                        XmlManager.SetAttribute(ndList[0], ApplicationDoc, "DualPatternShiftPx", intTmp.ToString());
-                        MVMManager.Instance.SaveSettings(SettingsFileType.APPLICATION_SETTINGS);
-                    }
-                }
-                return intTmp;
+                RemoveApplicationAttribute("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView", "DualPatternShiftPx");
+                return _captureSetup.SLMDualPatternShift;
+            }
+        }
+
+        public bool SLMExportChecked
+        {
+            get
+            { return _slmExportChecked; }
+            set
+            {
+                _slmExportChecked = value;
+                OnPropertyChanged("SLMExportChecked");
+            }
+        }
+
+        public string SLMExportFileName
+        {
+            get
+            { return _slmExportFileName; }
+            set
+            {
+                _slmExportFileName = value;
+                OnPropertyChanged("SLMExportFileName");
             }
         }
 
@@ -347,6 +360,17 @@
             {
                 _slmImportFilePathName = value;
                 OnPropertyChanged("SLMImportFilePathName");
+            }
+        }
+
+        public bool SLMImportSequences
+        {
+            get
+            { return _slmImportSequences; }
+            set
+            {
+                _slmImportSequences = value;
+                OnPropertyChanged("SLMImportSequences");
             }
         }
 
@@ -495,6 +519,12 @@
                     OnPropertyChanged("SLMBleachNowEnabled");
                 }
             }
+        }
+
+        public bool SLMSkipFitting
+        {
+            get { return this._captureSetup.SLMSkipFitting; }
+            set { this._captureSetup.SLMSkipFitting = value; }
         }
 
         public string SLMViewWidth
@@ -908,7 +938,6 @@
             string subFolder = string.Empty;
             string numDigits = "D" + FileName.GetDigitCounts().ToString();
 
-            //SLMBleachWaveParams[_slmPatternSelectedIndex].Name
             FileName compName = new FileName(SLMBleachWaveParams[_slmPatternSelectedIndex].Name, '_');
             compName.FileExtension = ".bmp";
             compName.MakeUnique(SLMWaveformFolder[0]);
@@ -966,6 +995,10 @@
             double dTmp = 0.0;
             System.Collections.Specialized.BitVector32 bitVec32;
             XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/SLM");
+
+            //keep overlay manager access to hardware mvms, property only when import
+            OverlayManagerClass.Instance.SimulatorMode = false;
+
             switch (SLMParamEditWin.SLMPatternTypeDictionary[str])
             {
                 case SLMParamEditWin.SLMPatternType.Add:
@@ -1149,10 +1182,14 @@
                         if (!DisplayROI(BleachROIPath + SLMCalibFile))
                             return;
 
+                        //blank slm before start of calibration:
+                        EditSLMParam("SLM_BLANK");
+
                         ROIToolVisible = new bool[14] { true, false, false, false, false, false, true, false, false, true, true, true, true, false };
 
                         OverlayManagerClass.Instance.CurrentMode = ThorSharedTypes.Mode.PATTERN_NOSTATS;    //keep mode unchanged due to "SLMCalibROIs.xaml"
-                        OverlayManagerClass.Instance.PatternID = 2;      //for user-selection, target is on PatterID 1
+                        OverlayManagerClass.Instance.PatternID = 2;                                         //for user-selection, target is on PatterID 1
+                        OverlayManagerClass.Instance.SkipRedrawCenter = SLM3D;                              //allow start index of 1 or 0 if not calibration by burning(2D)
                         bitVec32 = new System.Collections.Specialized.BitVector32(Convert.ToByte(255));
                         bitVec32[OverlayManagerClass.SecG] = Convert.ToByte(0);
                         bitVec32[OverlayManagerClass.SecB] = Convert.ToByte(0);
@@ -1162,7 +1199,11 @@
                         _slmParamEditWin = new SLMParamEditWin(this);
                         _slmParamEditWin.Topmost = true;
                         _slmParamEditWin.PanelMode = SLMParamEditWin.SLMPanelMode.Calibration;
-                        SLMCalibPanel slmCalib = new SLMCalibPanel("BURN", "DONE", "New Calibration", "Move to another clear area on the\n calibration slide then Press Yes to\n create calibration spots on the slide.");
+                        Dictionary<double, List<Shape>> zShapes = OverlayManagerClass.Instance.GetPatternZROIs(-1, OverlayManagerClass.Instance.PatternID - 1);
+                        _slmParamEditWin.CalibratePointCount = (0 < zShapes.Count) ? zShapes[0].Count : 0;
+                        SLMCalibPanel slmCalib = SLM3D ?
+                            new SLMCalibPanel("RESET_CALIBRATION3D", "DONE", "New Calibration", "Click 'YES' will reset calibrations\nand continue.") :
+                            new SLMCalibPanel("BURN", "DONE", "New Calibration", "Move to another clear area on the\n calibration slide then Press Yes to\n create calibration spots on the slide.");
                         _slmParamEditWin.DataContext = slmCalib;
                         SetSLMParamEditWinPosition();
                         _slmParamEditWin.Closed += _slmParamEditWin_Closed;
@@ -1172,10 +1213,16 @@
                 case SLMParamEditWin.SLMPatternType.Import:
                     if (null == _slmParamEditWin)
                     {
+                        OverlayManagerClass.Instance.ZRefMM = SLMZRefMM;
+
                         _slmParamEditWin = new SLMParamEditWin(this);
                         _slmParamEditWin.Topmost = true;
                         _slmParamEditWin.PanelMode = SLMParamEditWin.SLMPanelMode.Browse;
-                        SLMBrowsePanel slmBrowse = new SLMBrowsePanel("BROWSE", "IMPORT", "CANCEL", _slmImportFilePathName);
+                        SLMBrowsePanel slmBrowse = new SLMBrowsePanel("BROWSE", "IMPORT", "CANCEL",
+                            SLMExportChecked.ToString(),
+                            SLMImportSequences.ToString(),
+                            _slmParamEditWin.SLMImportPath = SLMImportFilePathName,
+                            _slmParamEditWin.SLMExportFileName = SLMExportFileName);
                         _slmParamEditWin.DataContext = slmBrowse;
                         SetSLMParamEditWinPosition();
                         _slmParamEditWin.Closed += _slmParamEditWin_Closed;

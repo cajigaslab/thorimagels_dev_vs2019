@@ -185,7 +185,6 @@
     </ClCompile>
     <ClCompile Include="EPhysAOWaveformBuilder.cpp" />
     <ClCompile Include="EPhysWaveformBuilder.cpp" />
-    <ClCompile Include="GeometryUtilitiesCpp.cpp" />
     <ClCompile Include="ImageWaveformBuilder.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

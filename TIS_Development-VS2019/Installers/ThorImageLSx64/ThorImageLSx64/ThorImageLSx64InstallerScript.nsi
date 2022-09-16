@@ -228,6 +228,10 @@ Section "" CORE_FILES
   File ".\InputRelease\Modules_Native\SelectHardware.dll"
   File ".\InputRelease\Modules_Native\ThorElectroPhys.dll"
   File ".\InputRelease\Modules_Native\ThorLoggingUnmanaged.dll"
+  File ".\InputRelease\Modules_Native\ClassicTiffConverter.dll"
+  File ".\InputRelease\Modules_Native\classic_tiff_library.dll"
+  File ".\InputRelease\Modules_Native\libjpeg_x64.dll"
+  File ".\InputRelease\Modules_Native\ome_tiff_library.dll"
 
   SetOutPath "$INSTDIR\ru-ru"
   File /r ".\InputRelease\ru-ru\*"
@@ -254,7 +258,6 @@ Section "" CORE_FILES
   File /r ".\Application Settings\powerramps\*"
   SetOutPath "$DOCUMENTS\${PRODUCT_NAME}\Capture Templates"
   File /r ".\Capture Templates\*"
-  
   ${If} $_confocalSelected == "1"
     SetOutPath "$DOCUMENTS\${PRODUCT_NAME}\Modalities\Confocal\Application Settings"
     File /r ".\Modalities\Confocal\Application Settings\*"
@@ -272,7 +275,7 @@ Section "" CORE_FILES
   ;--------------------- Start and Desktop Shortcuts ------------------------------
   SetOutPath "$INSTDIR"
   CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
-  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\ThorImageLS.lnk" "$INSTDIR\ThorImageLS.exe"
+  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\${PRODUCT_NAME}.lnk" "$INSTDIR\ThorImageLS.exe"
   CreateShortCut "$DESKTOP\${PRODUCT_NAME}.lnk" "$INSTDIR\ThorImageLS.exe"
   
   ; Grant FullAccess permission for all users to the Program Files and Documents folders.
@@ -311,12 +314,12 @@ SectionGroup /e "!Cameras"
 SetOverwrite off
 Section /o "TSI CCD" SEC_TSI_CCD
   SetOutPath "$INSTDIR\Lib"
-  File ".\InputRelease\Lib\edt_camera_link.dll"
-  File ".\InputRelease\Lib\fenrir.dll"
+  File ".\InputRelease\Lib\thorlabs_ccd_edt_camera_link.dll"
+  File ".\InputRelease\Lib\thorlabs_ccd_fenrir.dll"
   File ".\InputRelease\Lib\pdvlib.dll"
-  File ".\InputRelease\Lib\pleora_ebus.dll"
-  File ".\InputRelease\Lib\tsi_sdk.dll"
-  File ".\InputRelease\Lib\tsi_usb.dll"
+  File ".\InputRelease\Lib\thorlabs_ccd_pleora_ebus.dll"
+  File ".\InputRelease\Lib\thorlabs_ccd_tsi_sdk.dll"
+  File ".\InputRelease\Lib\thorlabs_ccd_tsi_usb.dll"
   SetOutPath "$INSTDIR\Modules_Native"
   File ".\InputRelease\Modules_Native\ThorTSI.dll"
   SetOutPath "$DOCUMENTS\${PRODUCT_NAME}\Modalities\Camera\Application Settings"
@@ -326,11 +329,7 @@ Section /o "TSI CMOS" SEC_TSI_CMOS
   SetOutPath "$INSTDIR\Lib"
   File ".\InputRelease\Lib\thorlabs_tsi_camera_sdk.dll"
   File ".\InputRelease\Lib\thorlabs_tsi_camera_sdk1_cli.dll"
-  File ".\InputRelease\Lib\thorlabs_tsi_cs_camera_device.dll"
-  File ".\InputRelease\Lib\thorlabs_tsi_usb_driver.dll"
   File ".\InputRelease\Lib\thorlabs_tsi_usb_hotplug_monitor.dll"
-  File ".\InputRelease\Lib\thorlabs_unified_sdk_kernel.dll"
-  File ".\InputRelease\Lib\thorlabs_unified_sdk_main.dll"
   File ".\InputRelease\Lib\thorlabs_tsi_zelux_camera_device.dll"
   SetOutPath "$INSTDIR\Modules_Native"
   File ".\InputRelease\Modules_Native\ThorTSI_CS.dll"
@@ -501,6 +500,12 @@ Section /o "Detector" SEC_DETECTOR
   SetOutPath "$INSTDIR\Modules_Native"
   File ".\InputRelease\Modules_Native\ThorDetector.dll"
 SectionEnd
+Section /o "HPD (Legacy)" SEC_HPD
+  SetOutPath "$INSTDIR"
+  File ".\InputRelease\ThorHPDSettings.xml"
+  SetOutPath "$INSTDIR\Modules_Native"
+  File ".\InputRelease\Modules_Native\ThorHPD.dll"
+SectionEnd
 Section /o "PMT2100/1000" SEC_PMT2100
   SetOutPath "$INSTDIR"
   File ".\InputRelease\ThorPMT2100Settings.xml"
@@ -661,17 +666,6 @@ Section /o "Z Stepper Simulator" SEC_Z_STEPPER_SIM
   SetOutPath "$INSTDIR\Modules_Native"
   File ".\InputRelease\Modules_Native\ThorZStepperSimulator.dll"
 SectionEnd
-Section /o "SLM Simulator" SEC_SLM_SIM
-  SetOutPath "$INSTDIR\Lib"
-  File ".\InputRelease\Lib\Blink_SDK.dll"
-  File ".\InputRelease\Lib\wdapi1230.dll"
-  SetOutPath "$INSTDIR"
-  File ".\InputRelease\ThorSLMSettings.xml"
-  SetOutPath "$INSTDIR\Modules_Native"
-  File ".\InputRelease\Modules_Native\HologramGenerator.dll"
-  File ".\InputRelease\Modules_Native\ThorSLM.dll"
-  File ".\InputRelease\Modules_Native\WinDVI.dll"
-SectionEnd
 SectionGroupEnd
 
 SectionGroup "!Shutters"
@@ -716,18 +710,19 @@ SectionGroupEnd
 
 SectionGroup "!SLM" SEC_GROUP_SLM
 SetOverwrite off
-Section /o "Blink" SEC_SLM_BLINK
-  SetOutPath "$INSTDIR\Lib"
+Section /o "Blink Windows 7" SEC_SLM_BLINK_WIN_7
+SetOutPath "$INSTDIR\Lib"
   File ".\InputRelease\Lib\Blink_SDK.dll"
-  File ".\InputRelease\Lib\wdapi1230.dll"
+  File ".\InputRelease\Lib\wdapi1021.dll"
   SetOutPath "$INSTDIR"
   File ".\InputRelease\ThorSLMSettings.xml"
   SetOutPath "$INSTDIR\Modules_Native"
   File ".\InputRelease\Modules_Native\HologramGenerator.dll"
+  File ".\InputRelease\Modules_Native\ThorSLM.dll"
   File ".\InputRelease\Modules_Native\ThorSLMPDM512.dll"
   File ".\InputRelease\Modules_Native\WinDVI.dll"
 SectionEnd
-Section /o "Exulus" SEC_SLM_EXULUS
+Section /o "Blink Windows 10" SEC_SLM_BLINK_WIN_10
   SetOutPath "$INSTDIR\Lib"
   File ".\InputRelease\Lib\Blink_SDK.dll"
   File ".\InputRelease\Lib\wdapi1230.dll"
@@ -735,6 +730,31 @@ Section /o "Exulus" SEC_SLM_EXULUS
   File ".\InputRelease\ThorSLMSettings.xml"
   SetOutPath "$INSTDIR\Modules_Native"
   File ".\InputRelease\Modules_Native\HologramGenerator.dll"
+  File ".\InputRelease\Modules_Native\ThorSLM.dll"
+  File ".\InputRelease\Modules_Native\ThorSLMPDM512.dll"
+  File ".\InputRelease\Modules_Native\WinDVI.dll"
+SectionEnd
+Section /o "Exulus Windows 7" SEC_SLM_EXULUS_WIN_7
+SetOutPath "$INSTDIR\Lib"
+  File ".\InputRelease\Lib\Blink_SDK.dll"
+  File ".\InputRelease\Lib\wdapi1021.dll"
+  SetOutPath "$INSTDIR"
+  File ".\InputRelease\ThorSLMSettings.xml"
+  SetOutPath "$INSTDIR\Modules_Native"
+  File ".\InputRelease\Modules_Native\HologramGenerator.dll"
+  File ".\InputRelease\Modules_Native\ThorSLM.dll"
+  File ".\InputRelease\Modules_Native\ThorSLMPDM512.dll"
+  File ".\InputRelease\Modules_Native\WinDVI.dll"
+SectionEnd
+Section /o "Exulus Windows 10" SEC_SLM_EXULUS_WIN_10
+  SetOutPath "$INSTDIR\Lib"
+  File ".\InputRelease\Lib\Blink_SDK.dll"
+  File ".\InputRelease\Lib\wdapi1230.dll"
+  SetOutPath "$INSTDIR"
+  File ".\InputRelease\ThorSLMSettings.xml"
+  SetOutPath "$INSTDIR\Modules_Native"
+  File ".\InputRelease\Modules_Native\HologramGenerator.dll"
+  File ".\InputRelease\Modules_Native\ThorSLM.dll"
   File ".\InputRelease\Modules_Native\ThorSLMPDM512.dll"
   File ".\InputRelease\Modules_Native\WinDVI.dll"
 SectionEnd
@@ -876,7 +896,7 @@ Section Uninstall
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Website.lnk"
   Delete "$DESKTOP\${PRODUCT_NAME}.lnk"
-  Delete "$SMPROGRAMS\${PRODUCT_NAME}\ThorImageLS.lnk"
+  Delete "$SMPROGRAMS\${PRODUCT_NAME}\${PRODUCT_NAME}.lnk"
 
   RMDir "$SMPROGRAMS\${PRODUCT_NAME}"
   RMDir /r "$INSTDIR\ru-ru"
@@ -895,8 +915,8 @@ Section Uninstall
   Delete "$INSTDIR\*.url"
   Delete "$INSTDIR\*.txt"
   
-  MessageBox MB_YESNO|MB_ICONQUESTION "Do you want to remove all user folders and files (Documents folder, calibrations and xmls)?" IDNO skipDeleteAllFiles
-  MessageBox MB_YESNO|MB_ICONQUESTION "Are you sure you want to delete all settings files?" IDNO skipDeleteAllFiles
+  MessageBox MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON2 "Do you want to remove all user folders and files (Documents folder, calibrations and xmls)?" IDNO skipDeleteAllFiles
+  MessageBox MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON2 "Are you sure you want to delete all settings files?" IDNO skipDeleteAllFiles
   RMDir /r "$INSTDIR"
   RMDir /r "$DOCUMENTS\${PRODUCT_NAME}"
   
@@ -953,38 +973,51 @@ FunctionEnd
 ;-------------------------------- Set Pre Selections ---------------------------------------------
 Function SetPresets
 ${If} $systemTypeSelection == "0" ;Acerra
+	${OrIf} $systemTypeSelection == "0$\n" ;Acerra
       StrCpy $_multiphotonSelected "1"
 ${EndIf}
 ${If} $systemTypeSelection == "1" ;Bergamo
+	${OrIf} $systemTypeSelection == "1$\n" ;Bergamo
       StrCpy $_multiphotonSelected "1"
 ${EndIf}
 ${If} $systemTypeSelection == "2" ;Cerna
+	${OrIf} $systemTypeSelection == "2$\n" ;Cerna
       StrCpy $_confocalSelected "1"
 ${EndIf}
 ${If} $systemTypeSelection == "3" ;CLS
+	${OrIf} $systemTypeSelection == "3$\n" ;CLS
       StrCpy $_confocalSelected "1"
 ${EndIf}
 ${If} $systemTypeSelection == "4" ;Empty
+	${OrIf} $systemTypeSelection == "4$\n" ;Empty
       StrCpy $_multiphotonSelected "1"
 ${EndIf}
 ${If} $systemTypeSelection == "5" ;Entry Level Confocal
+	${OrIf} $systemTypeSelection == "5$\n" ;Entry Level Confocal
       StrCpy $_confocalSelected "1"
 ${EndIf}
 ${If} $systemTypeSelection == "6" ;HyperSpectral
+	${OrIf} $systemTypeSelection == "6$\n" ;HyperSpectral
       ;Uses Camera modality, set in Cameras Section
 ${EndIf}
 ${If} $systemTypeSelection == "7" ;OTM
+	${OrIf} $systemTypeSelection == "7$\n" ;OTM
       ;Uses OTM modality, set in SEC_OTM_LASER Section
 ${EndIf}
 ${If} $systemTypeSelection == "8" ;RGG
+	${OrIf} $systemTypeSelection == "8$\n" ;RGG
+      StrCpy $_multiphotonSelected "1"
 ${EndIf}
 ${If} $systemTypeSelection == "9" ;Simulation
+	${OrIf} $systemTypeSelection == "9$\n" ;Simulation
       ;Uses Simulation modality, set in SEC_GROUP_SIM
 ${EndIf}
 ${If} $systemTypeSelection == "10" ;SLM
+	${OrIf} $systemTypeSelection == "10$\n" ;SLM
       StrCpy $_multiphotonSelected "1"
 ${EndIf}
 ${If} $systemTypeSelection == "11" ;Veneto
+	${OrIf} $systemTypeSelection == "11$\n" ;Veneto
       StrCpy $_venetoSelected "1"
 ${EndIf}
 ; Set the presets if this is a fresh install (modify and upgrade flags are 0)
@@ -1018,6 +1051,7 @@ ${AndIf} $_upgradeMode == "0"
   !insertmacro UnselectSection ${SEC_DDR05}
   !insertmacro UnselectSection ${SEC_POWER_REG}
   !insertmacro UnselectSection ${SEC_DETECTOR}
+  !insertmacro UnselectSection ${SEC_HPD}
   !insertmacro UnselectSection ${SEC_PMT2100}
   !insertmacro UnselectSection ${SEC_MATLAB}
   !insertmacro UnselectSection ${SEC_GR_ALAZAR}
@@ -1042,15 +1076,16 @@ ${AndIf} $_upgradeMode == "0"
   !insertmacro UnselectSection ${SEC_SHUTTER_SIM}
   !insertmacro UnselectSection ${SEC_XY_SIM}
   !insertmacro UnselectSection ${SEC_Z_STEPPER_SIM}
-  !insertmacro UnselectSection ${SEC_SLM_SIM}
   !insertmacro UnselectSection ${SEC_SHUTTER_DIG1}
   !insertmacro UnselectSection ${SEC_SHUTTER_DIG2}
   !insertmacro UnselectSection ${SEC_SHUTTER_DIG3}
   !insertmacro UnselectSection ${SEC_SHUTTER_DIG4}
   !insertmacro UnselectSection ${SEC_SHUTTER_DIG5}
   !insertmacro UnselectSection ${SEC_SHUTTER_DIG6}
-  !insertmacro UnselectSection ${SEC_SLM_BLINK}
-  !insertmacro UnselectSection ${SEC_SLM_EXULUS}
+  !insertmacro UnselectSection ${SEC_SLM_BLINK_WIN_7}
+  !insertmacro UnselectSection ${SEC_SLM_BLINK_WIN_10}
+  !insertmacro UnselectSection ${SEC_SLM_EXULUS_WIN_7}
+  !insertmacro UnselectSection ${SEC_SLM_EXULUS_WIN_10}
   !insertmacro UnselectSection ${SEC_MCM3000}
   !insertmacro UnselectSection ${SEC_MCM3000_AUX}
   !insertmacro UnselectSection ${SEC_BSCOPE}
@@ -1094,7 +1129,6 @@ ${AndIf} $_upgradeMode == "0"
    ${EndIf}
    ${If} $systemTypeSelection == "3" ;CLS
      !insertmacro SelectSection ${SEC_GGNI}
-     !insertmacro SelectSection ${SEC_MCLS}
 	 !insertmacro SelectSection ${SEC_TOPTICA}
      !insertmacro SelectSection ${SEC_MCM3000}
      !insertmacro SelectSection ${SEC_MCM3000_AUX}
@@ -1155,14 +1189,12 @@ ${AndIf} $_upgradeMode == "0"
    ${If} $systemTypeSelection == "11" ;Veneto
      !insertmacro SelectSection ${SEC_GG_ALAZAR}
      !insertmacro SelectSection ${SEC_GR_ALAZAR}
-     !insertmacro SelectSection ${SEC_CHROLIS}
      !insertmacro SelectSection ${SEC_MCM6000}
      !insertmacro SelectSection ${SEC_PMT2100}
      !insertmacro SelectSection ${SEC_TSI_CMOS}
      !insertmacro SelectSection ${SEC_SHUTTER_DIG1}
      !insertmacro SelectSection ${SEC_SHUTTER_DIG2}
      !insertmacro SelectSection ${SEC_Z_PIEZO}
-	 !insertmacro SelectSection ${SEC_TOPTICA}
 
    ${EndIf}
 ${EndIf}
@@ -1228,7 +1260,7 @@ Function .onInit
       ${EndIf}
       IntCmp $1 0 done
     upgrade:
-      MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION "${PRODUCT_NAME} is already installed. $\n$\nClick `OK` to continue with this upgrade." IDOK backupAndUpgrade
+      MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION "${PRODUCT_NAME} is already installed. $\n$\nClick `OK` to continue with this update." IDOK backupAndUpgrade
       Quit
     backupAndUpgrade:
       StrCpy $_upgradeMode "1"
@@ -1255,10 +1287,6 @@ Function .onInit
         RMDir /r "$DOCUMENTS\${PRODUCT_NAME} bk $R2"
       ${EndIf}
       CopyFiles "$DOCUMENTS\${PRODUCT_NAME}" "$DOCUMENTS\${PRODUCT_NAME} bk $R2"
-      
-      ;Delete old version once it is backed up
-      RMDir /r "$INSTDIR"
-      RMDir /r "$DOCUMENTS\${PRODUCT_NAME}"
       StrCpy $backupLocation "$INSTDIR bk $R2"
       StrCpy $backupVersion $R2
     done:
@@ -1301,6 +1329,11 @@ Function deleteFilesOnModify
     Delete "$INSTDIR\*.ico"
     Delete "$INSTDIR\*.config"
     Delete "$INSTDIR\*.url"
+  ${EndIf}
+  ;If an Update is ran, delete old version once it is backed up
+  ${If} $_upgradeMode == "1"
+    RMDir /r "$INSTDIR"
+    RMDir /r "$DOCUMENTS\${PRODUCT_NAME}"
   ${EndIf}
 FunctionEnd
 

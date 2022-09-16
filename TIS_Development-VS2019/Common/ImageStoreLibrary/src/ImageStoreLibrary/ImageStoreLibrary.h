@@ -170,6 +170,14 @@ IMAGESTORELIBRARY_API long fnAISS_get_scans_info(int handle, void * scan_infos, 
 IMAGESTORELIBRARY_API long fnAISS_remove_scan(int handle, uint32_t scan_id);
 
 /// <summary>
+///  Change t count value of scan information.
+/// </summary>
+/// <param name="handle">handle of imaging file.</param>
+/// <param name="t_count">t count value.</param>
+/// <returns> 1: success; -1: handle is not exist; -100: unknown error. </returns>
+IMAGESTORELIBRARY_API long fnAISS_adjust_scan_tcount(int handle, uint32_t t_count);
+
+/// <summary>
 ///  save captured tile image of special scan region.
 /// </summary>
 /// <param name="handle">handle of imaging file.</param>

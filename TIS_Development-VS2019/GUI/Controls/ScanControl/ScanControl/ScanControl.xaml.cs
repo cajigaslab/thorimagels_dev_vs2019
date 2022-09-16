@@ -582,7 +582,7 @@
         typeof(ScanControlUC));
         public static DependencyProperty PMTGainProperty = 
         DependencyProperty.Register("PMTGain",
-        typeof(CustomCollection<HwVal<int>>),
+        typeof(CustomCollection<HwVal<double>>),
         typeof(ScanControlUC));
         public static DependencyProperty PMTOffsetLabelVisibilityProperty = 
         DependencyProperty.Register("PMTOffsetLabelVisibility",
@@ -1019,9 +1019,9 @@
             set { SetValue(PmtBandwidthVisibilityProperty, value); }
         }
 
-        public CustomCollection<HwVal<int>> PMTGain
+        public CustomCollection<HwVal<double>> PMTGain
         {
-            get { return (CustomCollection<HwVal<int>>)GetValue(PMTGainProperty); }
+            get { return (CustomCollection<HwVal<double>>)GetValue(PMTGainProperty); }
             set { SetValue(PMTGainProperty, value); }
         }
 
@@ -1159,132 +1159,23 @@
             UpdateDwellTime = true;
         }
 
-        //public static readonly DependencyProperty **REPLACE**CommandProperty =
-        // DependencyProperty.Register(
-        // "**REPLACE**Command",
-        // typeof(ICommand),
-        // typeof(ScanControlUC));
-        // public ICommand **REPLACE**
-        // {
-        // get { return (ICommand)GetValue(**REPLACE**CommandProperty); }
-        // set { SetValue(**REPLACE**CommandProperty, value); }
-        // }
-        //public static DependencyProperty **REPLACE**Property =
-        //DependencyProperty.Register("**REPLACE**",
-        //typeof(int),
-        //typeof(ScanControlUC));
-        //on**REPLACE**Changed)));
-        //public int **REPLACE**
-        //{
-        // get { return (int)GetValue(**REPLACE**Property); }
-        // set { SetValue(**REPLACE**Property, value); }
-        //}
-        //public static void on**REPLACE**Changed(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        //{
-        //}
-        //public static DependencyProperty **REPLACE**Property =
-        //DependencyProperty.Register("**REPLACE**",
-        //typeof(int),
-        //typeof(ScanControlUC));
-        //on**REPLACE**Changed)));
-        //public int **REPLACE**
-        //{
-        // get { return (int)GetValue(**REPLACE**Property); }
-        // set { SetValue(**REPLACE**Property, value); }
-        //}
-        //public static void on**REPLACE**Changed(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        //{
-        //}
-        //public static DependencyProperty **REPLACE**Property =
-        //DependencyProperty.Register("**REPLACE**",
-        //typeof(int),
-        //typeof(ScanControlUC));
-        //on**REPLACE**Changed)));
-        //public int **REPLACE**
-        //{
-        // get { return (int)GetValue(**REPLACE**Property); }
-        // set { SetValue(**REPLACE**Property, value); }
-        //}
-        //public static void on**REPLACE**Changed(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        //{
-        //}
-        //public static readonly DependencyProperty **REPLACE**Property =
-        //DependencyProperty.Register(
-        //"**REPLACE**",
-        //typeof(int),
-        //typeof(ScanControlUC));
-        //public static DependencyProperty **REPLACE**Property =
-        //DependencyProperty.Register("**REPLACE**",
-        //typeof(int),
-        //typeof(ScanControlUC));
-        //on**REPLACE**Changed)));
-        //public int **REPLACE**
-        //{
-        // get { return (int)GetValue(**REPLACE**Property); }
-        // set { SetValue(**REPLACE**Property, value); }
-        //}
-        //public static void on**REPLACE**Changed(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        //{
-        //}
-        /// <summary>
-        /// Responds to the resolution preset selector being selected by updating the LSM resolutions and
-        /// deselecting the just selected resolution, causing the selector to show the default text again,
-        /// which is the current resolution
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void slDwellTime_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            //if (_liveVM != null && Visibility.Visible == spDwellTime.Visibility)
-            //{
-            // _twoWayDialog.SelectedIndex = Convert.ToInt32(((Slider)sender).Value);
-            //}
-        }
-
-        private void txtTwoWayCoarse_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            //try
-            //{
-            // if (_liveVM != null)
-            // {
-            // if (Visibility.Visible == coarsePanel.Visibility)
-            // {
-            // int convertion = 0;
-            // if (true == Int32.TryParse(((TextBox)sender).Text, out convertion))
-            // {
-            // _twoWayDialog.CurrentOffset = convertion;
-            // }
-            // }
-            // }
-            //}
-            //catch (FormatException ex)
-            //{
-            // string str = ex.Message;
-            //}
-        }
-
-        private void txtTwoWay_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            //try
-            //{
-            // if (_liveVM != null)
-            // {
-            // if (Visibility.Visible != coarsePanel.Visibility)
-            // {
-            // int convertion = 0;
-            // if (true == Int32.TryParse(((TextBox)sender).Text, out convertion))
-            // {
-            // _twoWayDialog.CurrentOffset = convertion;
-            // }
-            // }
-            // }
-            //}
-            //catch (FormatException ex)
-            //{
-            // string str = ex.Message;
-            // ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + ex.Message);
-
-            //}
+            if ("Slider" == sender.GetType().Name)
+            {
+                Slider slider = (Slider)sender;
+                string name = slider.Name;
+                char index = name[name.Length - 1];
+                double i = Char.GetNumericValue(index);
+                switch ((int)i)
+                {
+                    case 1: tbPMT1Gain.Text = Math.Round(slider.Value).ToString(); break;
+                    case 2: tbPMT2Gain.Text = Math.Round(slider.Value).ToString(); break;
+                    case 3: tbPMT3Gain.Text = Math.Round(slider.Value).ToString(); break;
+                    case 4: tbPMT4Gain.Text = Math.Round(slider.Value).ToString(); break;
+                    default: break;
+                }
+            }
         }
 
         #endregion Methods

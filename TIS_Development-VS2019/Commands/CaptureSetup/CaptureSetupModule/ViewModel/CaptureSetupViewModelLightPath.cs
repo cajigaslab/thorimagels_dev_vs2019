@@ -931,6 +931,8 @@
                                                             (double)MVMManager.Instance["MultiLaserControlViewModel", "Laser4Max"],
                                                             (double)MVMManager.Instance["MultiLaserControlViewModel", "Laser4Min"]);
             // SetAttribute(innderNdList[0], lightPathListDoc, "MainLaserSelection", this.MainLaserIndex.ToString());
+            MVMManager.Instance["MultiLaserControlViewModel", "AnalogUncheckedLightPath"] = 0;
+            SetAttribute(innderNdList[0], lightPathListDoc, "allanalog", MVMManager.Instance["MultiLaserControlViewModel", "LaserAllAnalog"].ToString());
             SetAttribute(innderNdList[0], lightPathListDoc, "enable1", MVMManager.Instance["MultiLaserControlViewModel", "Laser1Enable"].ToString());
             SetAttribute(innderNdList[0], lightPathListDoc, "power1", MVMManager.Instance["MultiLaserControlViewModel", "Laser1Power"].ToString());
             SetAttribute(innderNdList[0], lightPathListDoc, "enable2", MVMManager.Instance["MultiLaserControlViewModel", "Laser2Enable"].ToString());
@@ -944,6 +946,7 @@
             SetAttribute(innderNdList[0], lightPathListDoc, "power3percent", power3percent.ToString());
             SetAttribute(innderNdList[0], lightPathListDoc, "power4percent", power4percent.ToString());
             //Set these to set visibility of wavelength value when hovering over sequential capture Light Path
+            SetAttribute(innderNdList[0], lightPathListDoc, "allttl", MVMManager.Instance["MultiLaserControlViewModel", "LaserAllTTL"].ToString());
             SetAttribute(innderNdList[0], lightPathListDoc, "wavelength1", MVMManager.Instance["MultiLaserControlViewModel", "Laser1Wavelength"].ToString());
             SetAttribute(innderNdList[0], lightPathListDoc, "wavelength2", MVMManager.Instance["MultiLaserControlViewModel", "Laser2Wavelength"].ToString());
             SetAttribute(innderNdList[0], lightPathListDoc, "wavelength3", MVMManager.Instance["MultiLaserControlViewModel", "Laser3Wavelength"].ToString());
@@ -989,17 +992,17 @@
             }
 
             //add all the attributes for PMT for the current Capture Sequence Step
-            HwVal<int> ga = (HwVal<int>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 0, (object)0];
-            XmlManager.SetAttribute(innderNdList[0], lightPathListDoc, "gainA", ga.Value.ToString());
+            HwVal<double> ga = (HwVal<double>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 0, (object)0.0];
+            XmlManager.SetAttribute(innderNdList[0], lightPathListDoc, "gainA", Math.Round(ga.Value,2).ToString());
             XmlManager.SetAttribute(innderNdList[0], lightPathListDoc, "enableA", (0 < ga.Value) ? "1" : "0");
-            HwVal<int> gb = (HwVal<int>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 1, (object)0];
-            XmlManager.SetAttribute(innderNdList[0], lightPathListDoc, "gainB", gb.Value.ToString());
+            HwVal<double> gb = (HwVal<double>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 1, (object)0.0];
+            XmlManager.SetAttribute(innderNdList[0], lightPathListDoc, "gainB", Math.Round(gb.Value,2).ToString());
             XmlManager.SetAttribute(innderNdList[0], lightPathListDoc, "enableB", (0 < gb.Value) ? "1" : "0");
-            HwVal<int> gc = (HwVal<int>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 2, (object)0];
-            XmlManager.SetAttribute(innderNdList[0], lightPathListDoc, "gainC", gc.Value.ToString());
+            HwVal<double> gc = (HwVal<double>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 2, (object)0.0];
+            XmlManager.SetAttribute(innderNdList[0], lightPathListDoc, "gainC", Math.Round(gc.Value,2).ToString());
             XmlManager.SetAttribute(innderNdList[0], lightPathListDoc, "enableC", (0 < gc.Value) ? "1" : "0");
-            HwVal<int> gd = (HwVal<int>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 3, (object)0];
-            XmlManager.SetAttribute(innderNdList[0], lightPathListDoc, "gainD", gd.Value.ToString());
+            HwVal<double> gd = (HwVal<double>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 3, (object)0.0];
+            XmlManager.SetAttribute(innderNdList[0], lightPathListDoc, "gainD", Math.Round(gd.Value,2).ToString());
             XmlManager.SetAttribute(innderNdList[0], lightPathListDoc, "enableD", (0 < gd.Value) ? "1" : "0");
 
             //set the lightPath settings
@@ -1158,10 +1161,12 @@
             double laser2Power = 0.0, laser2Percent = 0.0;
             double laser3Power = 0.0, laser3Percent = 0.0;
             double laser4Power = 0.0, laser4Percent = 0.0;
+            int laserTTL = 0, laserAnalog = 0;
             int laser1Wavelength = 0, laser2Wavelength = 0, laser3Wavelength = 0, laser4Wavelength = 0;
             lightPathSequenceStep.GetLightPathSequenceStepMCLS(ref mainLaserSelection, ref laser1Enable, ref laser1Power, ref laser1Percent, ref laser2Enable, ref laser2Power, ref laser2Percent,
-                ref laser3Enable, ref laser3Power, ref laser3Percent, ref laser4Enable, ref laser4Power, ref laser4Percent, ref laser1Wavelength, ref laser2Wavelength, ref laser3Wavelength,
+                ref laser3Enable, ref laser3Power, ref laser3Percent, ref laser4Enable, ref laser4Power, ref laser4Percent, ref laserTTL, ref laserAnalog, ref laser1Wavelength, ref laser2Wavelength, ref laser3Wavelength,
                 ref laser4Wavelength);
+            MVMManager.Instance["MultiLaserControlViewModel", "AnalogUncheckedLightPath"] = 0;
             MVMManager.Instance["MultiLaserControlViewModel", "MainLaserIndex"] = mainLaserSelection;
             MVMManager.Instance["MultiLaserControlViewModel", "Laser1Enable"] = laser1Enable;
             MVMManager.Instance["MultiLaserControlViewModel", "Laser1Power"] = laser1Power;
@@ -1171,6 +1176,8 @@
             MVMManager.Instance["MultiLaserControlViewModel", "Laser3Power"] = laser3Power;
             MVMManager.Instance["MultiLaserControlViewModel", "Laser4Enable"] = laser4Enable;
             MVMManager.Instance["MultiLaserControlViewModel", "Laser4Power"] = laser4Power;
+            MVMManager.Instance["MultiLaserControlViewModel", "LaserAllAnalog"] = laserAnalog;
+            MVMManager.Instance["MultiLaserControlViewModel", "LaserAllTTL"] = laserTTL;
 
             //Load and set Multiphoton Laser Settings
             int laserPosition = 0;
@@ -1178,12 +1185,12 @@
             MVMManager.Instance["MultiphotonControlViewModel", "Laser1Position"] = laserPosition;
 
             //Load and set PMT Settings
-            int pmt1Gain = 0, pmt2Gain = 0, pmt3Gain = 0, pmt4Gain = 0;
+            double pmt1Gain = 0, pmt2Gain = 0, pmt3Gain = 0, pmt4Gain = 0;
             lightPathSequenceStep.GetLightPathSequenceStepPMT(ref pmt1Gain, ref pmt2Gain, ref pmt3Gain, ref pmt4Gain);
-            ((HwVal<int>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 0]).Value = pmt1Gain;
-            ((HwVal<int>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 1]).Value = pmt2Gain;
-            ((HwVal<int>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 2]).Value = pmt3Gain;
-            ((HwVal<int>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 3]).Value = pmt4Gain;
+            ((HwVal<double>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 0]).Value = pmt1Gain;
+            ((HwVal<double>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 1]).Value = pmt2Gain;
+            ((HwVal<double>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 2]).Value = pmt3Gain;
+            ((HwVal<double>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 3]).Value = pmt4Gain;
 
             //Load and set PinholeWheel Settings
             int pinholePosition = 0;

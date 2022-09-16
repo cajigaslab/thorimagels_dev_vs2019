@@ -4,38 +4,6 @@
         <name>SciChart.Drawing</name>
     </assembly>
     <members>
-        <member name="T:SciChart.Drawing.Common.IDashSplittingContext">
-            <summary>
-            Defines interface to context of splitting line into dashes
-            </summary>
-        </member>
-        <member name="P:SciChart.Drawing.Common.IDashSplittingContext.HasDashes">
-            <summary>
-            When true, this instance has dashes 
-            </summary>
-        </member>
-        <member name="P:SciChart.Drawing.Common.IDashSplittingContext.StrokeDashArray">
-            <summary>
-            Optional array with lengths of dash pattern items
-            </summary>
-        </member>
-        <member name="P:SciChart.Drawing.Common.IDashSplittingContext.StrokeDashArrayIndex">
-            <summary>
-            Current index in StrokeDashArray
-            </summary>
-        </member>
-        <member name="P:SciChart.Drawing.Common.IDashSplittingContext.StrokeDashArrayItemPassedLength">
-            <summary>
-            Already passed length of current item in StrokeDashArray
-            </summary>
-        </member>
-        <member name="M:SciChart.Drawing.Common.IDashSplittingContext.Reset(System.Double[])">
-            <summary>
-            Resets a <see cref="T:SciChart.Drawing.Common.IDashSplittingContext" /> instance with provided dash info
-            </summary>
-            <param name="strokeDashArray">
-                <value>Null</value> indicates no dashes</param>
-        </member>
         <member name="T:SciChart.Drawing.Common.DrawEventArgs">
             <summary>
             EventArgs raised when the <see cref="E:SciChart.Drawing.Common.IRenderSurface.Draw" /> event is raised, which occurs at the start of the render pass
@@ -241,14 +209,29 @@
             Gets a value that describes a shape at the end of line
             </summary>
         </member>
-        <member name="P:SciChart.Drawing.Common.IPen2D.HasDashes">
+        <member name="T:SciChart.Drawing.Common.IDashSplittingContext">
+            <summary>
+            Defines interface to context of splitting line into dashes
+            </summary>
+        </member>
+        <member name="P:SciChart.Drawing.Common.IDashSplittingContext.HasDashes">
             <summary>
             When true, this instance has dashes 
             </summary>
         </member>
-        <member name="P:SciChart.Drawing.Common.IPen2D.StrokeDashArray">
+        <member name="P:SciChart.Drawing.Common.IDashSplittingContext.StrokeDashArray">
             <summary>
             Optional array with lengths of dash pattern items
+            </summary>
+        </member>
+        <member name="P:SciChart.Drawing.Common.IDashSplittingContext.StrokeDashArrayIndex">
+            <summary>
+            Current index in StrokeDashArray
+            </summary>
+        </member>
+        <member name="P:SciChart.Drawing.Common.IDashSplittingContext.StrokeDashArrayItemPassedLength">
+            <summary>
+            Already passed length of current item in StrokeDashArray
             </summary>
         </member>
         <member name="T:SciChart.Drawing.Common.IRenderContext2D">
@@ -1620,23 +1603,6 @@
             Intent is to save CPU time by dispatching to the UI thread only once when there are many charts.
             </summary>
         </member>
-        <member name="M:SciChart.Drawing.Common.SharedRenderTimer.#ctor(System.Nullable{System.Double},SciChart.Core.Framework.IDispatcherFacade,System.Action)">
-            <summary>
-            Initializes a new instance of the <see cref="T:SciChart.Drawing.Common.SharedRenderTimer" /> class.
-            </summary>
-            <param name="maxFrameRate">The maximum frame rate from 0 to 100. The default is 60. When null, uses the default or previously set frame rate.</param>
-            <param name="dispatcher">The dispatcher.</param>
-            <param name="drawCallback">The operation to invoke on timer tick.</param>
-        </member>
-        <member name="M:SciChart.Drawing.Common.SharedRenderTimer.SetMaxFrameRate(System.Nullable{System.Double})">
-            <summary>
-            Sets the maximum frame rate for the <see cref="T:SciChart.Drawing.Common.SharedRenderTimer" /></summary>
-            <param name="maxFrameRate">The maximum frame rate from 1 to 100. The default is 60. When null, uses the default or previously set frame rate.</param>
-        </member>
-        <member name="M:SciChart.Drawing.Common.SharedRenderTimer.Dispose">
-            <summary>
-            Removes a draw callback from the callback list of the <see cref="T:SciChart.Drawing.Common.SharedRenderTimer" /></summary>
-        </member>
         <member name="T:SciChart.Drawing.Common.ThreadedRenderScheduler">
             <summary>
                 <para>A timer which uses <see cref="T:System.Timers.Timer" /> to signal when rendering should occur. This can be used to solve problems with WinForms / WPF message loops and priority in certain high performance scenarios</para>
@@ -2110,10 +2076,6 @@
             <summary>
             For smooth appearance of non-digital anti-aliased line, the stroke thickness should be greater than 1 pixel
             </summary>
-        </member>
-        <member name="T:SciChart.Drawing.VisualXcceleratorRasterizer.VxRenderSettings">
-            <summary>
-            Provides configuration parameters for <see cref="T:SciChart.Drawing.VisualXcceleratorRasterizer.VisualXcceleratorRenderSurface" /></summary>
         </member>
         <member name="M:SciChart.Drawing.VisualXcceleratorRasterizer.VxRenderSettings.GetDefault(System.Boolean)">
             <summary>

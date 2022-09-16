@@ -45,7 +45,7 @@
     {
         #region Fields
 
-        const int DISPLAY_PANELS = 23;
+        const int DISPLAY_PANELS = 22;
         const int NUM_CHANNELS = 4;
 
         private bool zExpander_MouseGotFocus = false;
@@ -58,7 +58,7 @@
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/AreaView","Area Control","areaBorder"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/PowerView","Power Control","powBorder"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/ZView","Z Control","zBorder"},
-                {"/ApplicationSettings/DisplayOptions/CaptureSetup/MCLSView","MCLS Control","mclsBorder"},
+                {"/ApplicationSettings/DisplayOptions/CaptureSetup/MultiLaserControlView","MultiLaserControlView","MultiLaserControlBorder"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/MultiphotonView", "Multiphoton Control","multiphotonBorder"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/LightPathView","Light Path Control","LightPathBorder"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView","Stimulation Control","BleachBorder"},
@@ -75,8 +75,7 @@
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/LightEngineView","LightEngineControlView","LightEngineControlBorder"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/EpiturretControlView","EpiturretControlView","EpiturretControlBorder"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/AutoFocusControlView","AutoFocusControlView","AutoFocusControlBorder"},
-                {"/ApplicationSettings/DisplayOptions/CaptureSetup/MiniCircuitsSwitchControlView","MiniCircuitsSwitchControlView","MiniCircuitsSwitchControlBorder"},
-                {"/ApplicationSettings/DisplayOptions/CaptureSetup/MultiLaserControlView","MultiLaserControlView","MultiLaserControlBorder"}
+                {"/ApplicationSettings/DisplayOptions/CaptureSetup/MiniCircuitsSwitchControlView","MiniCircuitsSwitchControlView","MiniCircuitsSwitchControlBorder"}
             };
         Dictionary<int, string> _powerTabVisibility = new Dictionary<int, string>
          {
@@ -986,12 +985,14 @@
 
                 _liveVM.ConnectHandlers();
 
+                _liveVM.ModalitySpinnerWindowShowing = false;
+
                 //Load Image Process Settings
                 LoadImageProcess();
             }
             catch (Exception ex)
             {
-                ThorLogging.ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Error, 1, "CaptureSetup MasterView load error: " + ex.Message);
+                _liveVM.ModalitySpinnerWindowShowing = false;
                 MessageBox.Show("There was an error at loading Capture Setup. Some of your properties may not have been updated.");
             }
         }

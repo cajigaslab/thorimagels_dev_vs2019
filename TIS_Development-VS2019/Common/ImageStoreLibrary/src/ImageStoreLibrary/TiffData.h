@@ -27,6 +27,7 @@ public:
 	long GetScanInfosSize(uint32_t* size);
 	long GetScanInfos(void* scan_infos, uint32_t size);
 	long RemoveScan(uint32_t scan_id);
+	long AdjustScanT(uint32_t t_count);
 	long SetField(uint32_t tag, uint32_t v);
 	char tiff_file_extension[STRING_BUFFER_SIZE];
 	char tiff_file_name[STRING_BUFFER_SIZE];

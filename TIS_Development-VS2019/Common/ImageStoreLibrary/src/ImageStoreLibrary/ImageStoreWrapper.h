@@ -63,4 +63,6 @@ public:
 	//save buffer to ome tif at particular location
 	long SaveData(void* buf, uint16_t channelID, uint16_t z, uint16_t t, uint16_t s = 1);
 
+	//adjust scan frame count, especially when experiment stopped manually
+	long AdjustScanTCount(int count);
 };

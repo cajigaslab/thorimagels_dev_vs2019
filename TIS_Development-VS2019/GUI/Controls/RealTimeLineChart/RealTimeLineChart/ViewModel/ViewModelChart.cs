@@ -98,16 +98,13 @@
     {
         #region Fields
 
+        //TODO: clean up and make this private with properties if needed
         public List<double> _coordinationVerticalMarkers = null;
-        public SciChartSurface _sciChart;
         public VerticalSliceModifier _sliceModifier;
         public List<string> _tooltipVerticalMarkers = null;
         public ObservableCollection<VerticalMarker> _verticalmarker = new ObservableCollection<VerticalMarker>();
         public double _visibleYAxisMax = 0;
         public double _visibleYAxisMin = 0;
-        public IRange _xDataRange = new DoubleRange(0, 0);
-        public IRange _xVisibleRangeChart = new DoubleRange(0, 0);
-        public IRange _xVisibleRangeStack = new DoubleRange(0, 0);
 
         static Dictionary<string, MarkerType> MarkerTypeDictionary = new Dictionary<string, MarkerType>()
         {
@@ -137,6 +134,10 @@
         double[] _viData;
         long[] _xdata;
         double[] _xdataDouble;
+        IRange _xDataRange = new DoubleRange(0, 0);
+        IRange _xVisibleRangeChart = new DoubleRange(0, 0);
+        IRange _xVisibleRangeStack = new DoubleRange(0, 0);
+        IRange _yVisibleRangeChart = new DoubleRange(0, 0);
 
         #endregion Fields
 
@@ -179,7 +180,7 @@
         {
             get
             {
-                return (ChartModes.CAPTURE == _chartMode) ? "Always" : "Once";
+                return (ChartModes.CAPTURE == _chartMode) ? "Always" : "Never";
             }
         }
 
@@ -193,7 +194,7 @@
         {
             get
             {
-                return (ChartModes.CAPTURE == _chartMode) ? "Always" : "Once";
+                return (ChartModes.CAPTURE == _chartMode) ? "Always" : "Never";
             }
         }
 
@@ -300,6 +301,11 @@
                 }
                 OnPropertyChanged("IsVerticalMarkerVisible");
             }
+        }
+
+        public SciChartSurface MainChartSurface
+        {
+            get; set;
         }
 
         public RelayCommandWithParam MarkerRelayCommand
@@ -514,7 +520,7 @@
             }
             set
             {
-                XVisibleRangeChart = new DoubleRange((double)XVisibleRangeChart.Min, value);
+                XVisibleRangeChart.Max = value;
                 OnPropertyChanged("XVisibleRangeChartMax");
             }
         }
@@ -527,7 +533,7 @@
             }
             set
             {
-                XVisibleRangeChart = new DoubleRange(value, (double)XVisibleRangeChart.Max);
+                XVisibleRangeChart.Min = value;
                 OnPropertyChanged("XVisibleRangeChartMin");
             }
         }
@@ -543,7 +549,9 @@
             }
             set
             {
-                switch ((ChartModes)_chartMode)
+                //_xVisibleRangeStack = value;
+                //OnPropertyChanged("XVisibleRangeStack");
+                switch (_chartMode)
                 {
                     case ChartModes.CAPTURE:
                         //realtime update need to limit x visible range, otherwise visible
@@ -551,18 +559,68 @@
                         if (FifoSize < ((DoubleRange)value).Diff)
                             value = new DoubleRange(((DoubleRange)value).Max - FifoSize, ((DoubleRange)value).Max);
                         _xVisibleRangeStack = value;
+
+                        for (int i = 0; i < _channelViewModels.Count; i++)
+                        {
+                            if (_channelViewModels[i].XVisibleRange.Min != _xVisibleRangeStack.Min || _channelViewModels[i].XVisibleRange.Max != _xVisibleRangeStack.Max)
+                            {
+                                _channelViewModels[i].XVisibleRange = _xVisibleRangeStack;
+                            }
+                        }
                         OnPropertyChanged("XVisibleRangeStack");
                         break;
                     case ChartModes.REVIEW:
                         if (((_xVisibleRangeStack.Min != value.Min) || (_xVisibleRangeStack.Max != value.Max)) && (0 < _channelViewModels.Count))
                         {
-                            double lowerRange = (0 < ((DoubleRange)_xDataRange).Diff) ? Math.Max(((DoubleRange)_xDataRange).Min, ((DoubleRange)value).Min) : ((DoubleRange)value).Min;
-                            double upperRange = (0 < ((DoubleRange)_xDataRange).Diff) ? Math.Min(((DoubleRange)_xDataRange).Max, ((DoubleRange)value).Max) : ((DoubleRange)value).Max;
+                            _xVisibleRangeStack = value;
 
-                            if ((lowerRange != upperRange) && ((double)_xVisibleRangeStack.Min != lowerRange || (double)_xVisibleRangeStack.Max != upperRange))
+                            for (int i = 0; i < _channelViewModels.Count; i++)
                             {
-                                _xVisibleRangeStack = new DoubleRange(lowerRange, upperRange);
-                                OnPropertyChanged("XVisibleRangeStack");
+                                if (_channelViewModels[i].XVisibleRange.Min != _xVisibleRangeStack.Min || _channelViewModels[i].XVisibleRange.Max != _xVisibleRangeStack.Max)
+                                {
+                                    _channelViewModels[i].XVisibleRange = _xVisibleRangeStack;
+                                }
+                            }
+
+                            OnPropertyChanged("XVisibleRangeStack");
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the visible y axis minimum.
+        /// </summary>
+        /// <value>
+        /// The visible x axis minimum.
+        /// </value>
+        public IRange YVisibleRangeChart
+        {
+            get
+            {
+                return _yVisibleRangeChart;
+            }
+            set
+            {
+                switch (_chartMode)
+                {
+                    case ChartModes.CAPTURE:
+                        _yVisibleRangeChart = value;
+                        OnPropertyChanged("YVisibleRangeChart");
+                        break;
+                    case ChartModes.REVIEW:
+                        if (((_yVisibleRangeChart.Min != value.Min) || (_yVisibleRangeChart.Max != value.Max)) && (0 < _chartSeries.Count))
+                        {
+                            double lowerRange = (0 < ((DoubleRange)YDataRange).Diff) ? Math.Max(((DoubleRange)YDataRange).Min, ((DoubleRange)value).Min) : ((DoubleRange)value).Min;
+                            double upperRange = (0 < ((DoubleRange)YDataRange).Diff) ? Math.Min(((DoubleRange)YDataRange).Max, ((DoubleRange)value).Max) : ((DoubleRange)value).Max;
+
+                            if ((lowerRange != upperRange) && ((double)_yVisibleRangeChart.Min != lowerRange || (double)_yVisibleRangeChart.Max != upperRange))
+                            {
+                                _yVisibleRangeChart = new DoubleRange(lowerRange, upperRange);
+                                OnPropertyChanged("YVisibleRangeChart");
                             }
                         }
                         break;
@@ -625,7 +683,18 @@
                     sm.PhysicalChannel = physicalChannel;
                     sm.LineColor = Color.FromRgb(Convert.ToByte(red), Convert.ToByte(green), Convert.ToByte(blue));
 
-                    var ds0 = CreateSingleDataSeries(alias, sm.SignalType);
+                    //TODO: might not need logic below as the data series is created and assigned elsewhere
+                    IDataSeries ds0;// = CreateSingleDataSeries(alias, sm.SignalType);
+
+                    if (ChartModes.REVIEW == _chartMode)
+                    {
+                        ds0 = CreateSingleUniformXyDataSeries(alias, sm.SignalType);
+                    }
+                    else
+                    {
+                        ds0 = CreateSingleDataSeries(alias, sm.SignalType);
+                    }
+
                     switch (sm.SignalType)
                     {
                         case SignalType.ANALOG_IN:
@@ -633,21 +702,35 @@
                         case SignalType.COUNTER_IN:
                         case SignalType.VIRTUAL:
                             {
-                                _chartSeriesMetadata.Insert(insertIndex, sm);
-                                //stack view
-                                ChannelViewModel channelViewModel = new ChannelViewModel(sm.LineColor, visible) { };
-                                channelViewModel.ChannelSeries = ds0;
-                                channelViewModel.XAxisVisibleChanged += new Action(XAxis_Changed);
-                                channelViewModel.YLabel = yLabel;
+                                bool found = false;
 
-                                //unlike list, observable collection must use add if index out of bound
-                                if (_channelViewModels.Count <= insertIndex)
+                                for (int i = 0; i < _channelViewModels.Count; i++)
                                 {
-                                    _channelViewModels.Add(channelViewModel);
+                                    if (_channelViewModels[i].ChannelSeries.SeriesName == alias && !string.IsNullOrWhiteSpace(alias))
+                                    {
+                                        found = true;
+                                    }
                                 }
-                                else
+
+                                if (!found)
                                 {
-                                    _channelViewModels.Insert(insertIndex, channelViewModel);
+                                    _chartSeriesMetadata.Insert(insertIndex, sm);
+
+                                    //stack view
+                                    ChannelViewModel channelViewModel = new ChannelViewModel(sm.LineColor, visible) { };
+                                    channelViewModel.ChannelSeries = ds0;
+                                    channelViewModel.XAxisVisibleChanged += new Action(XAxis_Changed);
+                                    channelViewModel.YLabel = yLabel;
+
+                                    //unlike list, observable collection must use add if index out of bound
+                                    if (_channelViewModels.Count <= insertIndex)
+                                    {
+                                        _channelViewModels.Add(channelViewModel);
+                                    }
+                                    else
+                                    {
+                                        _channelViewModels.Insert(insertIndex, channelViewModel);
+                                    }
                                 }
                             }
                             break;
@@ -880,10 +963,16 @@
             {
                 case SignalType.DIGITAL_IN:
                     {
-                        IXyDataSeries<double, byte> series = (ChartModes.CAPTURE == _chartMode) ?
-                            new XyDataSeries<double, byte> { FifoCapacity = _fifoSize, SeriesName = alias } :
-                            new XyDataSeries<double, byte> { FifoCapacity = null, SeriesName = alias };
+                        IXyDataSeries<double, int> series = (ChartModes.CAPTURE == _chartMode) ?
+                            new XyDataSeries<double, int> { FifoCapacity = _fifoSize, SeriesName = alias } :
+                            new XyDataSeries<double, int> { FifoCapacity = null, SeriesName = alias };
                         series.AcceptsUnsortedData = false;
+                        series.DataDistributionCalculator = new UserDefinedDistributionCalculator<double, int>
+                        {
+                            ContainsNaN = false,
+                            IsEvenlySpaced = false,
+                            IsSortedAscending = true,
+                        };
                         return series;
                     }
                 case SignalType.COUNTER_IN:
@@ -892,6 +981,12 @@
                             new XyDataSeries<double, int> { FifoCapacity = _fifoSize, SeriesName = alias } :
                             new XyDataSeries<double, int> { FifoCapacity = null, SeriesName = alias };
                         series.AcceptsUnsortedData = false;
+                        series.DataDistributionCalculator = new UserDefinedDistributionCalculator<double, int>
+                        {
+                            ContainsNaN = false,
+                            IsEvenlySpaced = false,
+                            IsSortedAscending = true,
+                        };
                         return series;
                     }
 
@@ -902,47 +997,46 @@
                             new XyDataSeries<double, double> { FifoCapacity = _fifoSize, SeriesName = alias } :
                             new XyDataSeries<double, double> { FifoCapacity = null, SeriesName = alias };
                         series.AcceptsUnsortedData = false;
-
+                        series.DataDistributionCalculator = new UserDefinedDistributionCalculator<double, double>
+                        {
+                            ContainsNaN = false,
+                            IsEvenlySpaced = false,
+                            IsSortedAscending = true,
+                        };
                         return series;
                     }
             }
         }
 
         /// <summary>
-        /// Creates the single data series.
+        /// Creates the single data series. called in review mode
         /// </summary>
         /// <param name="alias">The alias of lines.</param>
         /// <returns></returns>
         public IDataSeries CreateSingleUniformXyDataSeries(string alias, SignalType type)
         {
             IDataSeries series;
-            double spacing = 1/(double)_sampleRateValue[_sampleRate];
+            double spacing = 1 / (double)_sampleRateValue[_sampleRate];
             //FIFO will always be used with the Capture Mode. Non FIFO is specific to the review mode
             switch (type)
             {
                 case SignalType.ANALOG_IN:
                     {
                         var args = new UniformDataDistributionArgs<double>(false, -10, 10);
-                        series = (ChartModes.CAPTURE == _chartMode) ?
-                        new UniformXyDataSeries<double>(0, args) { FifoCapacity = _fifoSize, SeriesName = alias, XStart = 0, XStep = spacing} :
-                        new UniformXyDataSeries<double>(0, args) { FifoCapacity = null, SeriesName = alias, XStart = 0, XStep = spacing };
+                        series = new UniformXyDataSeries<double>(0, args) { FifoCapacity = null, SeriesName = alias, XStart = 0, XStep = spacing };
                         break;
                     }
                 case SignalType.DIGITAL_IN:
 
                     {
                         var args = new UniformDataDistributionArgs<byte>(false, 0, 1);
-                        series = (ChartModes.CAPTURE == _chartMode) ?
-                            new UniformXyDataSeries<byte>(0, args) { FifoCapacity = _fifoSize, SeriesName = alias, XStart = 0, XStep = spacing } :
-                            new UniformXyDataSeries<byte>(0, args) { FifoCapacity = null, SeriesName = alias, XStart = 0, XStep = spacing };
+                        series = new UniformXyDataSeries<byte>(0, args) { FifoCapacity = null, SeriesName = alias, XStart = 0, XStep = spacing };
                         break;
                     }
                 case SignalType.COUNTER_IN:
 
                     {
-                        series = (ChartModes.CAPTURE == _chartMode) ?
-                            new UniformXyDataSeries<int> { FifoCapacity = _fifoSize, SeriesName = alias } :
-                            new UniformXyDataSeries<int> { FifoCapacity = null, SeriesName = alias, XStart = 0, XStep = spacing };
+                        series = new UniformXyDataSeries<int> { FifoCapacity = null, SeriesName = alias, XStart = 0, XStep = spacing };
                         break;
                     }
                 case SignalType.VIRTUAL:
@@ -950,16 +1044,12 @@
                 case SignalType.SPECTRAL_VIRTUAL:
 
                     {
-                        series = (ChartModes.CAPTURE == _chartMode) ?
-                            new UniformXyDataSeries<double> { FifoCapacity = _fifoSize, SeriesName = alias, XStart = 0, XStep = spacing } :
-                            new UniformXyDataSeries<double> { FifoCapacity = null, SeriesName = alias, XStart = 0, XStep = spacing };
+                        series = new UniformXyDataSeries<double> { FifoCapacity = null, SeriesName = alias, XStart = 0, XStep = spacing };
                         break;
                     }
                 default:
                     {
-                        series = (ChartModes.CAPTURE == _chartMode) ?
-                            new UniformXyDataSeries<double> { FifoCapacity = _fifoSize, SeriesName = alias, XStart = 0, XStep = spacing } :
-                            new UniformXyDataSeries<double> { FifoCapacity = null, SeriesName = alias, XStart = 0, XStep = spacing };
+                        series = new UniformXyDataSeries<double> { FifoCapacity = null, SeriesName = alias, XStart = 0, XStep = spacing };
                         break;
                     }
             }
@@ -975,9 +1065,11 @@
 
                 //clear series
                 _channelViewModels.Each(s => { s.Clear(); });
-                _chartSeries.Each(s => { s.DataSeries.Clear(); });
-                _chartSeries.Clear();
 
+                ChannelViewModels = new ObservableCollection<ChannelViewModel>();
+                _chartSeries?.Each(s => { s.DataSeries?.Clear(); });
+                ChartSeries = new ObservableCollection<IRenderableSeries>();
+                _chartSeriesMetadata.Clear();
                 //get time range
                 _dataSeriesSize = 0;
                 UInt64 size = 0;
@@ -1008,46 +1100,11 @@
                 XmlNodeList ndListToAdd = SettingsDoc.SelectNodes("/RealTimeDataSettings/DaqDevices/AcquireBoard[@active=1]/DataChannel[@enable=1] | /RealTimeDataSettings/DaqDevices/AcquireBoard[@active=1]/VirtualChannel[@enable=1]");
                 string[] aliasToAdd = ndListToAdd.Cast<XmlNode>().Select(node => node.Attributes["alias"].Value).ToArray();
 
-                //remove disabled existing channels
-                if (0 != _chartSeriesMetadata.Count)
-                {
-                    for (int i = _chartSeriesMetadata.Count - 1; i >= 0; i--)
-                    {
-                        if (!aliasToAdd.Contains(_chartSeriesMetadata[i].Alias))
-                        {
-                            _channelViewModels.RemoveAt(i);
-                            _chartSeriesMetadata.RemoveAt(i);
-                        }
-                    }
-                }
-
                 //create time series on both view, stack or non-stack display
                 bool initSetup = (0 == _chartSeriesMetadata.Count);
                 for (int i = 0; i < ndListToAdd.Count; i++)
                 {
-                    int tgtID = Array.FindIndex(aliasAll, a => a == aliasToAdd[i]);
-                    if (null == _chartSeriesMetadata.Find(d => 0 == d.Alias.CompareTo(aliasToAdd[i])))
-                    {
-                        if (!initSetup)
-                        {
-                            bool insert = false;
-                            for (int j = 0; j < _chartSeriesMetadata.Count; j++)
-                            {
-                                if (Array.FindIndex(aliasAll, a => a == _chartSeriesMetadata[j].Alias) > tgtID)
-                                {
-                                    AddChartSeries(ndListToAdd[i], j);
-                                    insert = true;
-                                    break;
-                                }
-                            }
-                            if (!insert)
-                                AddChartSeries(ndListToAdd[i], _chartSeriesMetadata.Count);
-                        }
-                        else
-                        {
-                            AddChartSeries(ndListToAdd[i], _chartSeriesMetadata.Count);
-                        }
-                    }
+                    AddChartSeries(ndListToAdd[i], _chartSeriesMetadata.Count);
                 }
 
                 //update existing data series and meta data with settings other than alias
@@ -1066,6 +1123,9 @@
                     {
                         s.Stroke = _chartSeriesMetadata[i].LineColor;
                         s.IsVisible = ((GetAttribute(ndListToAdd[id], SettingsDoc, "visible", ref str) && (Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal)) && (0 == iVal))) ? false : true;
+                        bool ylock = ((GetAttribute(ndListToAdd[id], SettingsDoc, "yLock", ref str) && (Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal)) && (0 == iVal))) ? false : true;
+                        ylock = ChartModes.CAPTURE == _chartMode && IsStackedDisplay ? ylock : false;
+                        s.YVisibleLock = ylock;
                         s.YLabel = ((GetAttribute(ndListToAdd[id], SettingsDoc, "yLabel", ref str) && (0 < str.Length))) ? str : s.YLabel;
                     }, (s => true == s.ChannelName.Contains(_chartSeriesMetadata[i].Alias)));
                 }
@@ -1084,19 +1144,29 @@
                     var l = new FastLineRenderableSeries();
                     if (ChartModes.REVIEW == _chartMode)
                     {
-                        l.DataSeries = CreateSingleUniformXyDataSeries(_channelViewModels[i].ChannelName, _chartSeriesMetadata[i].SignalType);
+                        l.DataSeries = _channelViewModels[i].ChannelSeries = CreateSingleUniformXyDataSeries(_channelViewModels[i].ChannelName, _chartSeriesMetadata[i].SignalType);
                     }
                     else
                     {
-                        l.DataSeries = CreateSingleDataSeries(_channelViewModels[i].ChannelName, _chartSeriesMetadata[i].SignalType);
+                        l.DataSeries = _channelViewModels[i].ChannelSeries = CreateSingleDataSeries(_channelViewModels[i].ChannelName, _chartSeriesMetadata[i].SignalType);
                     }
+                    l.IsDigitalLine = _channelViewModels[i].IsDigitalLine = SignalType.DIGITAL_IN == _chartSeriesMetadata[i].SignalType;
                     l.StrokeThickness = 2;
-                    l.IsVisible = _channelViewModels[i].IsVisible;
+                    if (IsStackedDisplay)
+                    {
+                        l.IsVisible = false;
+                    }
+                    else
+                    {
+                        l.IsVisible = _channelViewModels[i].IsVisible;
+
+                        _channelViewModels[i].IsVisible = false;
+                    }
                     l.Stroke = _channelViewModels[i].Stroke;
                     l.ResamplingMode = SciChart.Data.Numerics.ResamplingMode.Auto;
                     l.AntiAliasing = false;
+
                     _chartSeries.Add(l);
-                    // _chartSeries.Add(new LineRenderableSeriesViewModel(CreateSingleDataSeries(_channelViewModels[i].ChannelName), new FastLineRenderableSeries() { StrokeThickness = 2, IsVisible = _channelViewModels[i].IsVisible, SeriesColor = _channelViewModels[i].Stroke }));
                 }
 
                 //update display range
@@ -1111,7 +1181,7 @@
             {
                 ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "RealTimeLineChart Create Time Series Error: " + ex.Message);
                 MessageBox.Show("Unable to Create Time Series due to " + ex.Message, "RealTimeDataSettings.xml Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                Environment.Exit(0);
+                //Environment.Exit(0);
             }
         }
 
@@ -1507,92 +1577,66 @@
             }
             if (fileDataStruct.ciLength > 0 && _ciData?.Length != (int)fileDataStruct.gcLength)
             {
-                _ciData = new Int32[fileDataStruct.gcLength];
+                _ciData = new int[fileDataStruct.gcLength];
             }
             if (fileDataStruct.viLength > 0 && _viData?.Length != (int)fileDataStruct.gcLength)
             {
                 _viData = new double[fileDataStruct.gcLength];
             }
 
-            bool checkIsStackOnce = IsStackedDisplay;
-            UInt64 currentSize = 0;
+            ulong currentSize = 0;
             int progressPercent = 0;
 
-            for (int j = 0; j < _chartSeriesMetadata.Count; j++)
+            using (MainChartSurface.SuspendUpdates())
             {
-                switch (_chartSeriesMetadata[j].SignalType)
+                for (int j = 0; j < _chartSeriesMetadata.Count; j++)
                 {
-                    case SignalType.DIGITAL_IN:
-                        {
-                            if (fileDataStruct.diLength > 0)
+                    switch (_chartSeriesMetadata[j].SignalType)
+                    {
+                        case SignalType.DIGITAL_IN:
                             {
+                                if (fileDataStruct.diLength > 0)
+                                {
 
-                                int offset = (int)signalTypeCount[(int)SignalType.DIGITAL_IN] * (int)fileDataStruct.gcLength * sizeof(byte);
-                                Marshal.Copy(IntPtr.Add(fileDataStruct.diData, offset), _diData, 0, (int)fileDataStruct.gcLength);
-                                if (checkIsStackOnce)
-                                {
-                                    Application.Current.Dispatcher.Invoke(new Action(() =>
-                                    {
-                                        ((UniformXyDataSeries<byte>)_channelViewModels[j].ChannelSeries).Append(_diData);
-                                    }));
-                                }
-                                else
-                                {
+                                    int offset = (int)signalTypeCount[(int)SignalType.DIGITAL_IN] * (int)fileDataStruct.gcLength * sizeof(byte);
+                                    Marshal.Copy(IntPtr.Add(fileDataStruct.diData, offset), _diData, 0, (int)fileDataStruct.gcLength);
+
                                     Application.Current.Dispatcher.Invoke(new Action(() =>
                                     {
                                         ((UniformXyDataSeries<byte>)ChartSeries[j].DataSeries).Append(_diData);
                                     }));
-                                }
 
-                                FileVisibleYAxis[0] = 0;
-                                FileVisibleYAxis[1] = 1;
-                                signalTypeCount[(int)_chartSeriesMetadata[j].SignalType]++;
-                            }
-                            break;
-                        }
-                    case SignalType.ANALOG_IN:
-                        {
-                            if (fileDataStruct.aiLength > 0)
-                            {
-                                int offset = (int)signalTypeCount[(int)SignalType.ANALOG_IN] * (int)fileDataStruct.gcLength * sizeof(double);
-                                Marshal.Copy(IntPtr.Add(fileDataStruct.aiData, offset), _aiData, 0, (int)fileDataStruct.gcLength);
-                                if (checkIsStackOnce)
-                                {
-                                    Application.Current.Dispatcher.Invoke(new Action(() =>
-                                    {
-                                        ((UniformXyDataSeries<double>)_channelViewModels[j].ChannelSeries).Append(_aiData);
-                                    }));
+                                    FileVisibleYAxis[0] = 0;
+                                    FileVisibleYAxis[1] = 1;
+                                    signalTypeCount[(int)_chartSeriesMetadata[j].SignalType]++;
                                 }
-                                else
+                                break;
+                            }
+                        case SignalType.ANALOG_IN:
+                            {
+                                if (fileDataStruct.aiLength > 0)
                                 {
+                                    int offset = (int)signalTypeCount[(int)SignalType.ANALOG_IN] * (int)fileDataStruct.gcLength * sizeof(double);
+                                    Marshal.Copy(IntPtr.Add(fileDataStruct.aiData, offset), _aiData, 0, (int)fileDataStruct.gcLength);
+
                                     Application.Current.Dispatcher.Invoke(new Action(() =>
                                     {
                                         ((UniformXyDataSeries<double>)ChartSeries[j].DataSeries).Append(_aiData);
                                     }));
-                                }
-                                signalTypeCount[(int)_chartSeriesMetadata[j].SignalType]++;
-                            }
-                            break;
-                        }
-                    case SignalType.COUNTER_IN:
-                        {
-                            if (fileDataStruct.ciLength > 0)
-                            {
-                                for (int nC = 0; nC < IsCounterLinePlotEnabled.Count; nC++)
-                                {
-                                    if (IsCounterLinePlotEnabled[nC])
-                                    {
-                                        int offset = (int)signalTypeCount[(int)SignalType.COUNTER_IN] * (int)fileDataStruct.gcLength * sizeof(int);
-                                        Marshal.Copy(IntPtr.Add(fileDataStruct.aiData, offset), _ciData, 0, (int)fileDataStruct.gcLength);
-                                        if (checkIsStackOnce)
-                                        {
-                                            Application.Current.Dispatcher.Invoke(new Action(() =>
-                                            {
 
-                                                ((UniformXyDataSeries<int>)_channelViewModels[j].ChannelSeries).Append(_ciData);
-                                            }));
-                                        }
-                                        else
+                                    signalTypeCount[(int)_chartSeriesMetadata[j].SignalType]++;
+                                }
+                                break;
+                            }
+                        case SignalType.COUNTER_IN:
+                            {
+                                if (fileDataStruct.ciLength > 0)
+                                {
+                                    int offset = (int)signalTypeCount[(int)SignalType.COUNTER_IN] * (int)fileDataStruct.gcLength * sizeof(int);
+                                    Marshal.Copy(IntPtr.Add(fileDataStruct.ciData, offset), _ciData, 0, (int)fileDataStruct.gcLength);
+                                    for (int nC = 0; nC < IsCounterLinePlotEnabled.Count; nC++)
+                                    {
+                                        if (IsCounterLinePlotEnabled[nC])
                                         {
                                             Application.Current.Dispatcher.Invoke(new Action(() =>
                                             {
@@ -1601,65 +1645,38 @@
                                         }
                                     }
 
+                                    ImageCounterNumber = _ciData[fileDataStruct.gcLength - 1];
+                                    signalTypeCount[(int)_chartSeriesMetadata[j].SignalType]++;
                                 }
-                                ImageCounterNumber = _ciData[fileDataStruct.gcLength - 1];
-                                signalTypeCount[(int)_chartSeriesMetadata[j].SignalType]++;
                             }
-                        }
-                        break;
-                    case SignalType.VIRTUAL:
-                        {
-                            if (fileDataStruct.viLength > 0)
+                            break;
+                        case SignalType.VIRTUAL:
                             {
-                                int offset = (int)signalTypeCount[(int)SignalType.VIRTUAL] * (int)fileDataStruct.gcLength * sizeof(double);
-                                Marshal.Copy(IntPtr.Add(fileDataStruct.aiData, offset), _viData, 0, (int)fileDataStruct.gcLength);
-                                if (checkIsStackOnce)
+                                if (fileDataStruct.viLength > 0)
                                 {
-                                    Application.Current.Dispatcher.Invoke(new Action(() =>
-                                    {
-                                        ((UniformXyDataSeries<double>)_channelViewModels[j].ChannelSeries).Append(_viData);
-                                    }));
-                                }
-                                else
-                                {
+                                    int offset = (int)signalTypeCount[(int)SignalType.VIRTUAL] * (int)fileDataStruct.gcLength * sizeof(double);
+                                    Marshal.Copy(IntPtr.Add(fileDataStruct.viData, offset), _viData, 0, (int)fileDataStruct.gcLength);
+
                                     Application.Current.Dispatcher.Invoke(new Action(() =>
                                     {
                                         ((UniformXyDataSeries<double>)ChartSeries[j].DataSeries).Append(_viData);
                                     }));
+
+                                    signalTypeCount[(int)_chartSeriesMetadata[j].SignalType]++;
                                 }
-                                signalTypeCount[(int)_chartSeriesMetadata[j].SignalType]++;
+                                break;
                             }
-                            break;
-                        }
-                }
+                    }
 
-                //assign data series to appropriate view:
-                if (checkIsStackOnce)
-                {
                     Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
-                        currentSize = Math.Max((UInt64)(_channelViewModels[j].ChannelSeries).Count, currentSize);
-                    }));
-                }
-                else
-                {
-                    Application.Current.Dispatcher.Invoke(new Action(() =>
-                    {
+
                         currentSize = Math.Max((UInt64)(ChartSeries[j].DataSeries).Count, currentSize);
+
                     }));
+                    progressPercent = (int)(currentSize * Constants.ThorRealTimeData.HUNDRED_PERCENT / _dataSeriesSize);
                 }
-
-                progressPercent = (int)(currentSize * Constants.ThorRealTimeData.HUNDRED_PERCENT / _dataSeriesSize);
             }
-
-            //if (EventChartYAxisRangeChanged != null)
-            //{
-            //    Application.Current.Dispatcher.Invoke(new Action(() =>
-            //    {
-            //        EventChartYAxisRangeChanged(FileVisibleYAxis[0] - 0.2, FileVisibleYAxis[1] + 0.2);
-            //    }));
-            //}
-
             //user request to cancel:
             if (_bwLoader.CancellationPending == true)
             {

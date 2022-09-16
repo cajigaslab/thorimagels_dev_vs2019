@@ -630,13 +630,14 @@ namespace ThorSharedTypes
 
     public enum DetectorBandwidths
     {
-        BW_250kHz = 250000,
-        BW_2_5MHz = 2500000,
-        BW_15MHz = 15000000,
-        BW_30MHz = 30000000,
-        BW_80MHz = 80000000,
-        BW_200MHz = 200000000,
-        BW_300MHz = 300000000,
+        BW_250kHz   = 250000,
+        BW_1MHz     = 1000000,
+        BW_2_5MHz   = 2500000,
+        BW_15MHz    = 15000000,
+        BW_30MHz    = 30000000,
+        BW_80MHz    = 80000000,
+        BW_200MHz   = 200000000,
+        BW_300MHz   = 300000000,
     };
 
 #if __LINE__
