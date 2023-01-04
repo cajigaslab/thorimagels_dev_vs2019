@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ThordaqResonantGalvoSettings>
+
+  <Configuration field2Theta="0.0901639344" crsFrequency="7931.47208" pockelsParkAtMinimum="1"/>
+      
+  <Calibration fieldSizeCalibration="80.0" oneXFieldSize="160" pockelsPhaseAdjustMicroSec="0" pockelsMaskPhaseShiftPercent="2.4"/>
+    
+  <Trigger waitTime="30" />
+  
+  <Stream DCOffset1="0" DCOffset2="0"/>
+  
+  <IO pockelsVoltageSlopeThreshold="0.01" pockelDigOutput="/Dev1/port0/line4" shutterLine="" pockelsLine="/Dev1/ao0" pockelsMinVoltage="0" pockelsMaxVoltage="1.0" pockelsScanVoltageStart="-1.0" pockelsScanVoltageStop="1.3" pockelsPowerInputLine="/Dev3/ai1" pockelsLine1="" pockelsPowerInputLine1="" pockelsScanVoltageStart1="-1.0" pockelsScanVoltageStop1="1.3" pockelsLine2="" pockelsPowerInputLine2="" pockelsScanVoltageStart2="-1.0" pockelsScanVoltageStop2="1.3" pockelsResponseType="0" pockelsResponseType1="0" pockelsResponseType2="0"/>
+</ThordaqResonantGalvoSettings>
