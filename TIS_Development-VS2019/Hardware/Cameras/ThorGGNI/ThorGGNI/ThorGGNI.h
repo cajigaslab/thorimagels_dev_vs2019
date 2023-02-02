@@ -510,7 +510,7 @@ extern "C"
 		static long SetupTaskMasterGalvo(void);
 		static long SetupTaskMasterPockel(void);
 		static long SetupTaskMasterDigital(void);
-		long BuildTaskMaterDigital(void);
+		long BuildTaskMasterDigital(void);
 		void ForceUpdateProperties(void);
 		static long SetFrameInTriggerableTask(TaskHandle taskHandle,long armStart);
 		//static long SetupCompleteWaveformTrigger(long startNow);

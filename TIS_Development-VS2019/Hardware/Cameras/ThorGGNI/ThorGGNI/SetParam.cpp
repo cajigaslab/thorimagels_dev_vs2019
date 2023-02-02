@@ -1181,7 +1181,7 @@ long ThorLSMCam::SetAction(ActionType actionType)
 		return (DAQmxSuccess == SetupFrameTriggerInput()) ? TRUE : FALSE;
 	case BUILD_TASK_MASTER:
 		ForceUpdateProperties();
-		BuildTaskMaterDigital();						//determine digital line selections
+		BuildTaskMasterDigital();						//determine digital line selections
 		return TryBuildTaskMaster();
 	case WRITE_TASK_MASTER_GALVO:
 		for (int i = 0; i < _imageActiveLoadCount; i++)

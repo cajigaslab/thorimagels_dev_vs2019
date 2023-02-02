@@ -31,8 +31,10 @@ MeadowlarkPDM::MeadowlarkPDM() :
 	MAX_TRANSIENT_FRAMES(20U)
 {
 	_deviceCount = 0;
-	SetDefault();
+	_transferBuf[0] = _transferBuf[1] = NULL;
+	_transferBufSize[0] = _transferBufSize[1] = 0;
 	_blinkSDK = NULL;
+	SetDefault();
 }
 
 MeadowlarkPDM* MeadowlarkPDM::getInstance()
@@ -226,8 +228,8 @@ long MeadowlarkPDM::GetParamBuffer(const long paramID, char* pBuffer, long size)
 	case ISLM::SLMParams::GET_CURRENT_BUFFER:
 		if (0 > _slmTempBuf.GetIndex())
 		{
-			if ((DWORD)size < _firstBuf.GetSize())
-				SAFE_MEMCPY(pBuffer, _firstBuf.GetSize(), _firstBuf.GetMem());
+			if (size <= _transferBufSize[0])
+				SAFE_MEMCPY(pBuffer, size, _transferBuf[0]);
 		}
 		else
 		{
@@ -253,19 +255,33 @@ long MeadowlarkPDM::GetParamBuffer(const long paramID, char* pBuffer, long size)
 long MeadowlarkPDM::SetParamBuffer(const long paramID, char* pBuffer, long size)
 {
 	long ret = TRUE;
-	MemoryStruct<unsigned char> tmpBuf;
 	switch (paramID)
 	{
 	case ISLM::SLMParams::WRITE_BUFFER:
-		_blinkSDK->Write_overdrive_image(1, (const unsigned char*)pBuffer, false, false);
+		if (size != _transferBufSize[1])
+		{
+			_transferBuf[1] = (unsigned char*)realloc(_transferBuf[1], size);
+			_transferBufSize[1] = size;
+		}
+		SAFE_MEMCPY(_transferBuf[1], _transferBufSize[1], pBuffer);
+		_blinkSDK->Write_overdrive_image(1, (const unsigned char*)_transferBuf[1], false, false);
 		break;
 	case ISLM::SLMParams::WRITE_FIRST_BUFFER:
-		_firstBuf.ReallocMemChk(size);
-		SAFE_MEMCPY(_firstBuf.GetMem(), size, pBuffer);
+		if (size != _transferBufSize[0])
+		{
+			_transferBuf[0] = (unsigned char*)realloc(_transferBuf[0], size);
+			_transferBufSize[0] = size;
+		}
+		SAFE_MEMCPY(_transferBuf[0], _transferBufSize[0], pBuffer);
 		break;
 	case ISLM::SLMParams::SET_TRANSIANT_BUFFER:
-		tmpBuf = MemoryStruct<unsigned char>{ (unsigned char*)pBuffer, (DWORD)size };
-		ret = SetIntermediateBuffer(tmpBuf);
+		if (size != _transferBufSize[1])
+		{
+			_transferBuf[1] = (unsigned char*)realloc(_transferBuf[1], size);
+			_transferBufSize[1] = size;
+		}
+		SAFE_MEMCPY(_transferBuf[1], _transferBufSize[1], pBuffer);
+		ret = SetIntermediateBuffer(_transferBuf[1], _transferBufSize[1]);
 		break;
 	default:
 		ret = FALSE;
@@ -279,15 +295,16 @@ long MeadowlarkPDM::StartSLM()
 {
 	if (IsOverdrive())
 	{
+		//write first bmp
 		if (1 < _bufferCount)
 		{
-			SetIntermediateBuffer(_firstBuf);
+			SetParam(ISLM::SLMParams::ARRAY_ID, 0);
+			SetIntermediateBuffer(_transferBuf[0], _transferBufSize[0]);
 		}
-		//write first bmp
-		_blinkSDK->Write_overdrive_image(1, _firstBuf.GetMem(), false, false);
+		_blinkSDK->Write_overdrive_image(1, _transferBuf[0], false, false);
 
 		//set current index for on-board buffer,
-		//keep -1 if no updateSLM invoked, then _firstBuf would be current
+		//keep -1 if no updateSLM invoked, then _transferBuf[0] would be current
 		_slmTempBuf.SetIndex(-1);
 	}
 	return TRUE;
@@ -308,7 +325,10 @@ long MeadowlarkPDM::UpdateSLM(long arrayID)
 		if (false == _blinkSDK->Calculate_transient_frames(_intermediateBuf[arrayID].GetMem(), &tmpCount))
 			return FALSE;
 
-		_slmTempBuf.ReallocMemChk(tmpCount * sizeof(unsigned char));
+		DWORD size = tmpCount * sizeof(unsigned char);
+		if (size != _slmTempBuf.GetSize())
+			_slmTempBuf.ReallocMemChk(size);
+
 		if ((0 == tmpCount) || (false == _blinkSDK->Retrieve_transient_frames(_slmTempBuf.GetMem())))
 			return FALSE;
 
@@ -355,7 +375,9 @@ void MeadowlarkPDM::ReleaseTransientBuf()
 	}
 
 	//release first/temp pattern buffer
-	_firstBuf.ReallocMemChk(0);
+	SAFE_DELETE_MEMORY(_transferBuf[0]);
+	SAFE_DELETE_MEMORY(_transferBuf[1]);
+	_transferBufSize[0] = _transferBufSize[1] = 0;
 	_slmTempBuf.ReallocMemChk(0);
 }
 
@@ -366,15 +388,15 @@ void MeadowlarkPDM::SetDefault()
 	_bufferCount = 1;
 	_arrayOrFileID = 0;
 	_overDrive = 0;
-	_slmTempBuf.ReallocMemChk(0);
-	_firstBuf.ReallocMemChk(0);
+	ReleaseTransientBuf();
 }
 
-long MeadowlarkPDM::SetIntermediateBuffer(MemoryStruct<unsigned char> memStruct)
+long MeadowlarkPDM::SetIntermediateBuffer(unsigned char* mem, size_t msize)
 {
 	unsigned int tmpCount = 0U;
+	DWORD size;
 
-	if ((NULL == memStruct.GetMem()) || (0 == memStruct.GetSize()))
+	if ((NULL == mem) || (0 == msize))
 		return FALSE;
 
 #ifdef _DEBUG
@@ -385,16 +407,18 @@ long MeadowlarkPDM::SetIntermediateBuffer(MemoryStruct<unsigned char> memStruct)
 	if (TRUE == _slmRuntimeCalculate)
 	{
 		//persist image buffers, then calculate transient at callback
-		_intermediateBuf[_arrayOrFileID].ReallocMemChk(memStruct.GetSize());
-		SAFE_MEMCPY(_intermediateBuf[_arrayOrFileID].GetMem(), memStruct.GetSize(), memStruct.GetMem());
+		_intermediateBuf[_arrayOrFileID].ReallocMemChk((DWORD)msize);
+		SAFE_MEMCPY(_intermediateBuf[_arrayOrFileID].GetMem(), msize, mem);
 	}
 	else
 	{
 		//calculate transient to current frame, buffer size including header:
-		if (false == _blinkSDK->Calculate_transient_frames(memStruct.GetMem(), &tmpCount))
+		if (false == _blinkSDK->Calculate_transient_frames(mem, &tmpCount))
 			goto FALSE_RETURN;
 
-		_slmTempBuf.ReallocMemChk(tmpCount * sizeof(unsigned char));
+		size = tmpCount * sizeof(unsigned char);
+		if (size != _slmTempBuf.GetSize())
+			_slmTempBuf.ReallocMemChk(size);
 		if ((0 == tmpCount) || (false == _blinkSDK->Retrieve_transient_frames(_slmTempBuf.GetMem())))
 		{
 			_slmTempBuf.ReallocMemChk(0);
@@ -402,15 +426,15 @@ long MeadowlarkPDM::SetIntermediateBuffer(MemoryStruct<unsigned char> memStruct)
 		}
 
 		//persist transient buffers:
-		_intermediateBuf[_arrayOrFileID].ReallocMemChk(tmpCount * sizeof(unsigned char));
-
+		if (size != _intermediateBuf[_arrayOrFileID].GetSize())
+			_intermediateBuf[_arrayOrFileID].ReallocMemChk(size);
 		if (NULL == _intermediateBuf[_arrayOrFileID].GetMem())
 		{
 			_slmTempBuf.ReallocMemChk(0);
 			goto FALSE_RETURN;
 		}
 
-		SAFE_MEMCPY(_intermediateBuf[_arrayOrFileID].GetMem(), tmpCount * sizeof(unsigned char), _slmTempBuf.GetMem());
+		SAFE_MEMCPY(_intermediateBuf[_arrayOrFileID].GetMem(), size, _slmTempBuf.GetMem());
 	}
 #ifdef _DEBUG
 	timer.Stop();

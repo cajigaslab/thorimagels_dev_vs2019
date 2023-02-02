@@ -1,21 +1,28 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
 <ThorSLMPDM512Settings>
-  <Calibration wavelengthNM="1040" phaseMax="255" coeff1="1" coeff2="0" coeff3="0" coeff4="0" coeff5="1" coeff6="0" coeff7="0" coeff8="0"/>
+  <Calibration wavelengthNM="1040" phaseMax="255" offsetZum="0" coeff1="1" coeff2="0" coeff3="0" coeff4="0" coeff5="1" coeff6="0" coeff7="0" coeff8="0"/>
+
+  <Calibration3D wavelengthNM="1040" phaseMax="255" offsetZum="0" coeff1="1" coeff2="0" coeff3="0" coeff4="0" coeff5="0" coeff6="1" coeff7="0" coeff8="0" coeff9="0" coeff10="0" coeff11="1" coeff12="0" coeff13="0" coeff14="0" coeff15="0" coeff16="1"/>
 
   <PostCalibration verticalFlip="0" rotateAngle="0" scaleX="1.0" scaleY="1.0" offsetX="0" offsetY="0" />
 
-  <Calibration2 wavelengthNM="" phaseMax="196" coeff1="1" coeff2="0" coeff3="0" coeff4="0" coeff5="1" coeff6="0" coeff7="0" coeff8="0"/>
+  <Calibration2 wavelengthNM="" phaseMax="196" offsetZum="0" coeff1="1" coeff2="0" coeff3="0" coeff4="0" coeff5="1" coeff6="0" coeff7="0" coeff8="0"/>
 
+  <Calibration3D2 wavelengthNM="" phaseMax="196" offsetZum="0" coeff1="1" coeff2="0" coeff3="0" coeff4="0" coeff5="0" coeff6="1" coeff7="0" coeff8="0" coeff9="0" coeff10="0" coeff11="1" coeff12="0" coeff13="0" coeff14="0" coeff15="0" coeff16="0"/>
+  
   <PostCalibration2 verticalFlip="0" rotateAngle="0" scaleX="1.0" scaleY="1.0" offsetX="0" offsetY="0" />
 
   <!-- <Spec Name="PDM512" overDrive="0" transientFrames="10" pixelXmin="512" pixelXmax="512" pixelYmin="512" pixelYmax="512" LUT="C:\TIS\TIS_Development\Hardware\Devices\ThorSLMPDM512\slm4266_at1064_DVI.lut" overDriveLUT="" waveFront=""/> -->
 
   <!--<Spec Name="EXULUS" overDrive="0" transientFrames="10" pixelXmin="512" pixelXmax="512" pixelYmin="512" pixelYmax="512" LUT="" overDriveLUT="" waveFront=""/>  -->
-  <Spec Name="PDM512" dmdMode="0" overDrive="0" transientFrames="10" flatDiagRatio="0.5054" flatPowerMinPercent="25" flatPowerMaxPercent="75" pixelX="512" pixelY="512" LUT="" overDriveLUT="" waveFront="" persistHologramZone1="1" persistHologramZone2="1"/>
+  <Spec Name="PDM512" dmdMode="0" overDrive="0" transientFrames="10" pitchUM="15" flatDiagRatio="0.5054" flatPowerMinPercent="25" flatPowerMaxPercent="75" pixelX="512" pixelY="512" LUT="" overDriveLUT="" waveFront=""/>
+
+  <Blank dualPatternShiftPx="0" persistHologramZone1="1" persistHologramZone2="1"/>
 
   <!--<Trigger counterLine="/Dev4/ctr2" triggerLine="/Dev4/PFI0" />-->
   <Trigger counterLine="" triggerLine="" />
 
-  <WinDVI monitorID="MONITOR\ACR0000"/>
+  <!--<WinDVI monitorID="MONITOR\ACR0000"/>-->
+  <WinDVI monitorID=""/>
   
 </ThorSLMPDM512Settings>

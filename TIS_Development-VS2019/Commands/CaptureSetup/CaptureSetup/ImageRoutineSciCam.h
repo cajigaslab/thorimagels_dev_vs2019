@@ -13,6 +13,8 @@ public:
 	long EnableCopyToExternalBuffer();
 	long CaptureZStack(double zStartPos, double zStopPos, double zstageStepSize, long zstageSteps);
 	long StopZStackCapture();
+	long SetZStackActive(long zStackActive);
+	long GetZStackActive();
 	long SetDisplayChannels(long);
 	long GetDisplayChannels();
 	long SetupCaptureBuffers();
@@ -30,6 +32,7 @@ public:
 private:	
 	long _channelEnable;
 	long _captureActive;
+	long _zStackActive;
 };
 
 UINT ZStackCaptureThreadProcSciCam( LPVOID pParam );

@@ -26,6 +26,8 @@ public:
 	virtual long EnableCopyToExternalBuffer()=0;
 	virtual long CaptureZStack(double , double , double , long )=0;
 	virtual long StopZStackCapture()=0;
+	virtual long SetZStackActive(long)=0;
+	virtual long GetZStackActive()=0;
 	virtual long SetDisplayChannels(long)=0;
 	virtual long GetDisplayChannels()=0;
 	virtual long SetupCaptureBuffers()=0;

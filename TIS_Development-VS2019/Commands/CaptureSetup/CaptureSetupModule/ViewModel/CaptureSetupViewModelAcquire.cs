@@ -300,7 +300,13 @@
                             {
                                 bool continuousZStackPreview = (bool)MVMManager.Instance["ZControlViewModel", "EnableContinuousZStackPreview", (object)false];
 
-                                //if continuous zstack is checked then continuosly update
+                                //Wait for ImageRoutine Thread to finish up before starting next ZStack
+                                while (ZStackStatus)
+                                {
+                                    System.Threading.Thread.Sleep(10);
+                                }
+
+                                //if continuous zstack is checked then continuously update
                                 if (continuousZStackPreview == true && !IsOrthogonalViewChecked)
                                 {
                                     CloseProgressWindow();
@@ -474,6 +480,15 @@
             }
         }
 
+        //Boolean that tracks when the ZStack ImageRoutine thread has completed. necessary for continuous mode
+        public bool ZStackStatus
+        {
+            get
+            {
+                return this._captureSetup.ZStackStatus;
+            }
+        }
+
         #endregion Properties
 
         #region Methods
@@ -529,6 +544,35 @@
             //failing to call postflight position will cause multiple bugs, that will be hard to track
             ResourceManagerCS.PostflightCamera((int)SelectedHardware.SELECTED_CAMERA1);
             ///End update Camera Active Settings/////
+        }
+
+        /// <summary>
+        /// Stop live image capture
+        /// </summary>
+        public void StopLiveCapture()
+        {
+            if (true == _isLive)
+            {
+                this._captureSetup.Stop();
+                _bw.CancelAsync();
+                _isLive = false;
+                _captureSetup.SendCameraLiveStatus = _isLive;
+
+                //if fast focus is active
+                if (false == FastFocusButtonStatus)
+                {
+                    ApplyOrRevertFastFocusParams(true);
+                }
+
+                FastFocusButtonStatus = true;
+
+                ((IMVM)MVMManager.Instance["ObjectiveControlViewModel", this]).OnPropertyChange("FramesPerSecondText");
+                ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("FramesPerSecondAverage");
+                ((ThorSharedTypes.IMVM)MVMManager.Instance["CameraControlViewModel", this]).OnPropertyChange("ExposureTimeCam");
+                OnPropertyChanged("ImagePathPlay");
+                OnPropertyChanged("IsLive");
+                OnPropertyChanged("ImagePathFastFocus");
+            }
         }
 
         /// <summary>
@@ -748,35 +792,6 @@
             OnPropertyChanged("ImagePathFastFocus");
             OnPropertyChanged("IsLive");
             OnPropertyChanged("FastFocusButtonEnable");
-        }
-
-        /// <summary>
-        /// Stop live image capture
-        /// </summary>
-        private void StopLiveCapture()
-        {
-            if (true == _isLive)
-            {
-                this._captureSetup.Stop();
-                _bw.CancelAsync();
-                _isLive = false;
-                _captureSetup.SendCameraLiveStatus = _isLive;
-
-                //if fast focus is active
-                if (false == FastFocusButtonStatus)
-                {
-                    ApplyOrRevertFastFocusParams(true);
-                }
-
-                FastFocusButtonStatus = true;
-
-                ((IMVM)MVMManager.Instance["ObjectiveControlViewModel", this]).OnPropertyChange("FramesPerSecondText");
-                ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("FramesPerSecondAverage");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["CameraControlViewModel", this]).OnPropertyChange("ExposureTimeCam");
-                OnPropertyChanged("ImagePathPlay");
-                OnPropertyChanged("IsLive");
-                OnPropertyChanged("ImagePathFastFocus");
-            }
         }
 
         private void StopPreview()

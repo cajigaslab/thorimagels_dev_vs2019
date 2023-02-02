@@ -802,8 +802,6 @@
             vm.HistogramPanelUpdate += new Action<bool>(VM_HistogramPanelUpdate);
             this.SizeChanged += new SizeChangedEventHandler(ImageView_SizeChanged);
 
-            OverlayManagerClass.Instance.BinX = vm.BinX;
-            OverlayManagerClass.Instance.BinY = vm.BinY;
             OverlayManagerClass.Instance.UpdatingObjectEvent += new Action<bool>(VM_UpdatingObject);
             OverlayManagerClass.Instance.UpdateParams(vm.SettingsImageWidth, vm.SettingsImageHeight, vm.PixelSizeUM);
             bool reticleActive = false;

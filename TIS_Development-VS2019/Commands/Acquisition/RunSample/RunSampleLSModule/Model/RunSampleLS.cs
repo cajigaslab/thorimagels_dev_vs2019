@@ -84,6 +84,8 @@
 
         private int SC_MONITORPOWER = 0xF170; //Using the system pre-defined MSDN constants that can be used by the SendMessage() function .
         private int WM_SYSCOMMAND = 0x0112;
+
+        //private bool _afterSLMCycle = false; //if item found after a SLM repeat or cycle
         private int _averageMode;
         private int _averageNum;
         BackgroundWorker _backgroundWorker = new BackgroundWorker();
@@ -193,7 +195,9 @@
         private List<string> _sequenceStepWavelengthNameList = new List<string>();
         private int _shiftValue = 6;
         int _simultaneousBleachingAndImaging = 0;
+        private double[] _slmBleachDelay = { 0.0, 0.0 };
         private ObservableCollection<SLMParams> _slmBleachWaveParams = new ObservableCollection<GeometryUtilities.SLMParams>();
+        private int _SLMCallbackCount = 0;
         private List<string> _slmFilesInFolder;
         private List<string> _slmSequencesInFolder;
         private bool _startButtonStatus;
@@ -2089,16 +2093,22 @@
             }
         }
 
-        public double SLMBleachDelay
+        public double[] SLMBleachDelay
         {
-            get;
-            set;
+            get { return _slmBleachDelay; }
+            set { _slmBleachDelay = value; }
         }
 
         public ObservableCollection<SLMParams> SLMBleachWaveParams
         {
             get { return _slmBleachWaveParams; }
             set { _slmBleachWaveParams = value; }
+        }
+
+        public List<int> SLMphaseType
+        {
+            get;
+            set;
         }
 
         public bool SLMSequenceOn
@@ -4334,6 +4344,7 @@
                 }
                 string imgNameFormat = "D" + imgIndxDigiCnts.ToString();
                 string[] fileNames = new string[1];
+                _foundChannelCount = 0;
 
                 string exppath = _experimentFolderPath;
 
@@ -4361,8 +4372,11 @@
                     ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Built color image of " + strTemp);
                 }
 
-                //set the image file path for display
-                DisplayColorImage(fileNames);
+                if (_foundChannelCount > 0)
+                {
+                    //set the image file path for display
+                    DisplayColorImage(fileNames);
+                }
             }
             else
             {
@@ -4896,6 +4910,7 @@
         /// <returns></returns>
         private bool LoadSLMPatternAndFile()
         {
+            bool cycleReset = false;
             PreLoadNextSLMPattern();
             string LoadedSLMName = PreLoadNextSLM();
             LoadedSLMName = (PreLoadNextSLMSequence()) ? LoadedSLMName : string.Empty;
@@ -4903,18 +4918,42 @@
             //check if loaded:
             if (string.Empty == LoadedSLMName)
             {
-                //no more added files located, try next cycle:
-                _currentSLMWaveID = _currentSLMSequenceID = 0;
+                //no more added files located, reset counters before next cycle:
+                if ((BleachFrames - 1) > _currentSLMCycleID)
+                {
+                    _currentSLMWaveID = _currentSLMSequenceID = 0;
+                    _loadedSLMFiles.Clear();
+                    _loadedSLMSequences.Clear();
+                    cycleReset = true;
+
+                    //try search drop-in files for next cycle:
+                    LoadedSLMName = PreLoadNextSLM();
+                    LoadedSLMName = (PreLoadNextSLMSequence()) ? LoadedSLMName : string.Empty;
+                }
                 _currentSLMCycleID++;
-
-                _loadedSLMFiles.Clear();
-                _loadedSLMSequences.Clear();
-
-                LoadedSLMName = PreLoadNextSLM();
-                LoadedSLMName = (PreLoadNextSLMSequence()) ? LoadedSLMName : string.Empty;
             }
 
-            return (string.Empty == LoadedSLMName) ? false : true;
+            //sleep delay time,
+            //do cycle delay at cycle end and do sequence delay in advance sequence mode
+            _SLMCallbackCount++;
+            if (1 < _SLMCallbackCount)
+            {
+                if (cycleReset)
+                {
+                    if (string.Empty != LoadedSLMName && !SLMBleachDelayEx(SLMBleachDelay[0]))
+                    {
+                        return false;
+                    }
+                }
+                else if (SLMSequenceOn)
+                {
+                    if (string.Empty != LoadedSLMName && !SLMBleachDelayEx(SLMBleachDelay[1]))
+                    {
+                        return false;
+                    }
+                }
+            }
+            return (string.Empty != LoadedSLMName || (BleachFrames - 1) <= _currentSLMCycleID);
         }
 
         /// <summary>
@@ -5063,6 +5102,10 @@
             //reset counts:
             _loadedSLMPatternsCnt = 0;
 
+            //default pattern based on current setting,
+            //but follow at edit when available: [0]:raw (phase to be processed), [1]:phase
+            SLMphaseType = new List<int>();
+
             //get files in folder:
             List<string> slmPatternsInFolder = Directory.EnumerateFiles(SLMWaveformPath[0], "*.bmp ", SearchOption.TopDirectoryOnly).ToList();
 
@@ -5075,6 +5118,7 @@
                 if (null != matchingFileName)
                 {
                     _loadedSLMPatternsCnt++;
+                    SLMphaseType.Add(_slmBleachWaveParams[i].PhaseType);
                     _loadedSLMPatterns.Add(waveFileName);
                 }
             }
@@ -5086,6 +5130,10 @@
                 _loadedSLMPatternsCnt++;
                 _loadedSLMPatterns.Add(addedFiles[i]);
             }
+
+            //keep slm phase type available if not from SLM param:
+            if (1 > SLMphaseType.Count)
+                SLMphaseType.Add(SLM3D ? 1 : 0);
 
             //find out maximum pattern time for SLM timeout in msec:
             int timeoutVal = 0;
@@ -5099,7 +5147,7 @@
             for (int i = 0; i < _loadedSLMPatternsCnt; i++)
             {
                 bool doStart = (i == (_loadedSLMPatternsCnt - 1)) ? true : false;
-                this.LoadSLMPatternName(SLMSequenceOn ? 1 : 0, i, _loadedSLMPatterns[i], doStart, phaseDirect, timeoutVal);
+                this.LoadSLMPatternName(SLMSequenceOn ? 1 : 0, i, _loadedSLMPatterns[i], doStart, phaseDirect || 1 == (i < SLMphaseType.Count ? SLMphaseType[i] : SLMphaseType[0]), timeoutVal);
             }
 
             return (0 < _loadedSLMPatternsCnt) ? true : false;
@@ -5124,21 +5172,25 @@
 
                 //check if available in the folder, skip if just loaded:
                 string matchingFileName = _slmFilesInFolder.FirstOrDefault(checkString => checkString.Contains(waveFileName));
-                if (null != matchingFileName)
+                if (null != matchingFileName && !_loadedSLMFiles.Contains(waveFileName))
                 {
                     if (this.SetBleachFile(matchingFileName, 1))
                     {
                         LoadedSLMName = waveFileName;
                         _loadedSLMFiles.Add(LoadedSLMName);
+                        //_afterSLMCycle = false;
                     }
                 }
                 _currentSLMWaveID++;
-                _lastInSLMCycle = (targetCount <= _currentSLMWaveID) ? true : false;
             }
+
+            //flag only if there's more to load:
+            _lastInSLMCycle = (0 < _slmFilesInFolder.Except(_loadedSLMFiles).OrderBy(s => s).ToList().Count()) ? false : true;
 
             //if not loaded from the list, check if other files added:
             if (string.Empty == LoadedSLMName)
             {
+                //_afterSLMCycle = true;
                 List<string> addedFiles = _slmFilesInFolder.Except(_loadedSLMFiles).OrderBy(s => s).ToList();
                 if (0 < addedFiles.Count())
                 {
@@ -5149,7 +5201,7 @@
                         _loadedSLMFiles.Add(LoadedSLMName);
                     }
                 }
-                _lastInSLMCycle = (1 >= addedFiles.Count()) ? true : false;
+                _lastInSLMCycle = (1 >= addedFiles.Count()) ? true : _lastInSLMCycle;
             }
 
             if (string.Empty != LoadedSLMName)
@@ -5167,10 +5219,12 @@
             List<string> slmPatternsInFolder = Directory.EnumerateFiles(SLMWaveformPath[0], "*.bmp ", SearchOption.TopDirectoryOnly).ToList();
 
             //check if other files added:
+            bool phaseDirect = (int)ICamera.LSMType.STIMULATE_MODULATOR == ResourceManagerCS.GetBleacherType();
             List<string> addedFiles = slmPatternsInFolder.Except(_loadedSLMPatterns).OrderBy(s => s).ToList();
             for (int i = 0; i < addedFiles.Count(); i++)
             {
-                if (this.LoadSLMPatternName(SLMSequenceOn ? 1 : 0, _loadedSLMPatternsCnt, addedFiles[i], true))
+                //use last available SLM phaseType since no records of it from other files:
+                if (this.LoadSLMPatternName(SLMSequenceOn ? 1 : 0, _loadedSLMPatternsCnt, addedFiles[i], true, phaseDirect || (1 == SLMphaseType.Last())))
                 {
                     _loadedSLMPatternsCnt++;
                     _loadedSLMPatterns.Add(addedFiles[i]);
@@ -5208,14 +5262,19 @@
                     {
                         LoadedSequenceName = seqFileName;
                         _loadedSLMSequences.Add(LoadedSequenceName);
+                        //_afterSLMCycle = false;
                     }
                 }
                 _currentSLMSequenceID++;
             }
 
+            //flag only if there's more to load:
+            _lastInSLMCycle = (0 < _slmSequencesInFolder.Except(_loadedSLMSequences).OrderBy(s => s).ToList().Count()) ? false : true;
+
             //if not loaded from the list, check if other files added:
             if (string.Empty == LoadedSequenceName)
             {
+                //_afterSLMCycle = true;
                 List<string> addedFiles = _slmSequencesInFolder.Except(_loadedSLMSequences).OrderBy(s => s).ToList();
                 if (0 < addedFiles.Count())
                 {
@@ -5225,6 +5284,7 @@
                         _loadedSLMSequences.Add(LoadedSequenceName);
                     }
                 }
+                _lastInSLMCycle = (1 >= addedFiles.Count()) ? true : _lastInSLMCycle;
             }
 
             if (string.Empty != LoadedSequenceName)
@@ -5632,25 +5692,6 @@
                     case BleachMode.SLM:
                         if ((int)PreCaptureStatus.PRECAPTURE_BLEACHER_IDLE == status)
                         {
-                            //Sleep delay time:
-                            if (_lastInSLMCycle && 0 < SLMBleachDelay)
-                            {
-                                int timeWait = (int)(WaveformBuilder.MS_TO_S * SLMBleachDelay);
-                                //check status every 5 seconds
-                                while (timeWait > 0)
-                                {
-                                    BleachLastRunTime = DateTime.Now;
-                                    System.Threading.Thread.Sleep(((WAITUNIT_MS < timeWait) ? WAITUNIT_MS : timeWait));
-                                    //check if bleaching:
-                                    if (!IsRunning())
-                                    {
-                                        status = (int)PreCaptureStatus.PRECAPTURE_DONE;
-                                        return;
-                                    }
-                                    timeWait -= (int)(new TimeSpan(DateTime.Now.Ticks - BleachLastRunTime.Ticks).TotalMilliseconds);
-                                }
-                            }
-
                             //go through cycles: the last one if no next file to load
                             if (!LoadSLMPatternAndFile())
                             {
@@ -5663,7 +5704,7 @@
                             else
                             {
                                 //last if last waveform of all cycles
-                                status = (_lastInSLMCycle && (BleachFrames - 1) == _currentSLMCycleID) ?
+                                status = (_lastInSLMCycle && (BleachFrames - 1) <= _currentSLMCycleID) ?
                                     (int)PreCaptureStatus.PRECAPTURE_WAVEFORM_LAST_CYCLE : (int)PreCaptureStatus.PRECAPTURE_WAVEFORM_MID_CYCLE;
                             }
                         }
@@ -5936,6 +5977,28 @@
 
             //Let the viewModel know there have been changes
             if (null != UpdateSequenceStepDisplaySettings) UpdateSequenceStepDisplaySettings();
+        }
+
+        /// <summary>
+        /// Execute delay time between SLM repeats
+        /// </summary>
+        /// <returns></returns>
+        private bool SLMBleachDelayEx(double delayTime)
+        {
+            //check status every 5 seconds
+            int timeWait = (int)(WaveformBuilder.MS_TO_S * delayTime);
+            while (timeWait > 0)
+            {
+                BleachLastRunTime = DateTime.Now;
+                System.Threading.Thread.Sleep(((WAITUNIT_MS < timeWait) ? WAITUNIT_MS : timeWait));
+                //check if bleaching:
+                if (!IsRunning())
+                {
+                    return false;
+                }
+                timeWait -= (int)(new TimeSpan(DateTime.Now.Ticks - BleachLastRunTime.Ticks).TotalMilliseconds);
+            }
+            return true;
         }
 
         private void UpdateActiveImage()

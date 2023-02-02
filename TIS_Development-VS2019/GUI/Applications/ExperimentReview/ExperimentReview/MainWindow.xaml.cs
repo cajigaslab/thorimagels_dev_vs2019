@@ -39,6 +39,7 @@
         {
             InitializeComponent();
             ImageReview imageReview = new ImageReview();
+            imageReview.ExperimentReviewOpened = true;
             _vm = new ImageReviewViewModel(null, null, null, imageReview);
             ImageReviewWindow.ViewModel = _vm;
             this.Closed += new EventHandler(MainWindow_Closed);

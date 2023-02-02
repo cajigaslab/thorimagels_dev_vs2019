@@ -96,7 +96,7 @@
             {
                 _cameraControlModel.BinIndex = value;
                 OnPropertyChanged("BinIndex");
-                OnPropertyChanged("CamPixelSizeUM");
+                OnPropertyChanged("PixelSizeUM");
                 OnPropertyChanged("CamImageWidth");
                 OnPropertyChanged("CamImageHeight");
                 OnPropertyChanged("CameraRegionWidthUM");
@@ -137,7 +137,6 @@
             set
             {
                 _cameraControlModel.BinX = value;
-                OverlayManagerClass.Instance.BinX = value;
                 OnPropertyChanged("BinX");
                 OnPropertyChanged("CamImageWidth");
                 OnPropertyChanged("CamImageHeight"); // We need both in case the Image Angle is 90 or 270
@@ -176,7 +175,6 @@
             set
             {
                 _cameraControlModel.BinY = value;
-                OverlayManagerClass.Instance.BinY = value;
                 OnPropertyChanged("BinY");
                 OnPropertyChanged("CamImageHeight");
                 OnPropertyChanged("CamImageWidth"); // We need both in case the Image Angle is 90 or 270
@@ -395,8 +393,9 @@
         {
             get
             {
-                Decimal decY = new Decimal((CamImageHeight) * CamPixelSizeUM);
-                Decimal decX = new Decimal((CamImageWidth) * CamPixelSizeUM);
+                double pixelSize = (1 < BinX || 1 < BinY) ? CamPixelSizeUM * Math.Max(BinY, BinX) : CamPixelSizeUM;
+                Decimal decY = new Decimal((CamImageHeight) * pixelSize);
+                Decimal decX = new Decimal((CamImageWidth) * pixelSize);
                 if (0 != CameraImageAngle && 180 != CameraImageAngle)
                 {
                     return Convert.ToDouble(Decimal.Round(decX, 2).ToString());
@@ -409,8 +408,9 @@
         {
             get
             {
-                Decimal decY = new Decimal((CamImageHeight) * CamPixelSizeUM);
-                Decimal decX = new Decimal((CamImageWidth) * CamPixelSizeUM);
+                double pixelSize = (1 < BinX || 1 < BinY) ? CamPixelSizeUM * Math.Max(BinY, BinX) : CamPixelSizeUM;
+                Decimal decY = new Decimal((CamImageHeight) * pixelSize);
+                Decimal decX = new Decimal((CamImageWidth) * pixelSize);
                 if (0 != CameraImageAngle && 180 != CameraImageAngle)
                 {
                     return Convert.ToDouble(Decimal.Round(decY, 2).ToString());
@@ -958,6 +958,7 @@
             {
                 _liveButtonStatus = value;
                 OnPropertyChanged("ImageStartStatusCamera");
+                OnPropertyChanged("PixelSizeUM");
             }
         }
 
@@ -1341,6 +1342,7 @@
             OnPropertyChanged("IsFrameRateVisible");
             OnPropertyChanged("CoolingVisibility");
             OnPropertyChanged("CoolingModeList");
+            OnPropertyChanged("PixelSizeUM");
 
             if (ndList.Count > 0)
             {
@@ -1620,7 +1622,7 @@
                     XmlManager.SetAttribute(ndList[0], experimentFile, "name", ActiveCameraName);
                     XmlManager.SetAttribute(ndList[0], experimentFile, "width", this.CamImageWidth.ToString());
                     XmlManager.SetAttribute(ndList[0], experimentFile, "height", this.CamImageHeight.ToString());
-                    XmlManager.SetAttribute(ndList[0], experimentFile, "pixelSizeUM", this.CamPixelSizeUM.ToString());
+                    XmlManager.SetAttribute(ndList[0], experimentFile, "pixelSizeUM", (CamPixelSizeUM * Math.Max(1,Math.Max(BinY, BinX))).ToString());
                     XmlManager.SetAttribute(ndList[0], experimentFile, "exposureTimeMS", this.ExposureTimeCam.ToString());
                     XmlManager.SetAttribute(ndList[0], experimentFile, "gain", this.Gain.ToString());
                     XmlManager.SetAttribute(ndList[0], experimentFile, "blackLevel", this.CamBlackLevel.ToString());

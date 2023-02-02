@@ -47,6 +47,7 @@
         ICommand _ChanDigOffsetPlusCommand;
         private Visibility _coarsePanelVisibility;
         private Visibility _digOffsetVisibility;
+        string _displayedCRSFrequency = "Not Running";
         private bool _dwellTimeSliderEnabled = true;
         Visibility _fastOneWayImagingModeEnableVisibility = Visibility.Collapsed;
         ICommand _FlybackCyclesMinusCommand;
@@ -228,6 +229,31 @@
                 OnPropertyChanged("DigOffsetVisibility");
                 OnPropertyChanged("ChanDigOffsetVisibility");
 
+            }
+        }
+
+        public string DisplayedCRSFrequency
+        {
+            get => _displayedCRSFrequency;
+            set
+            {
+                _displayedCRSFrequency = value;
+                OnPropertyChanged("DisplayedCRSFrequency");
+            }
+        }
+
+        public Visibility DisplayedCRSFrequencyVisibility
+        {
+            get
+            {
+                if (_scanControlModel.IsLSMCurrentCRSFrequencyAvailable)
+                {
+                    return Visibility.Visible;
+                }
+                else
+                {
+                    return Visibility.Collapsed;
+                }
             }
         }
 
@@ -490,6 +516,11 @@
                 OnPropertyChanged("LSMExtClockRate");
                 OnPropertyChanged("InputRange");
             }
+        }
+
+        public double LSMCurrentCRSFrequency
+        {
+            get => _scanControlModel.LSMCurrentCRSFrequency;
         }
 
         public int LSMDwellTimeMaxIndex
@@ -963,7 +994,7 @@
             }
             set
             {
-                if(null == value || null == PMTBandwidth[0])
+                if (null == value || null == PMTBandwidth[0])
                 {
                     return;
                 }
@@ -1382,6 +1413,23 @@
                 {
                     return Visibility.Visible;
                 }
+            }
+        }
+
+        public int UpdateCRSFrequency
+        {
+            set
+            {
+                if (1 == (int)MVMManager.Instance["AreaControlViewModel", "RSInitMode", (object)0] || true == (bool)MVMManager.Instance["CaptureSetupViewModel", "IsLive", (object)false])
+                {
+                    _displayedCRSFrequency = String.Format("{0:0.#}", Math.Round(_scanControlModel.LSMCurrentCRSFrequency * 2.5, MidpointRounding.AwayFromZero) / 2.5) + " Hz";
+                }
+                else
+                {
+                    _displayedCRSFrequency = "Not Running";
+                }
+
+                OnPropertyChanged("DisplayedCRSFrequency");
             }
         }
 
@@ -2162,6 +2210,8 @@
 
             const int FINAL_START_POSITION = 50;
 
+            double dwellTimeStep = _scanControlModel.LSMPixelDwellTimeStep;
+
             for (int j = 0; j < PIXELDENSITY_POINTS; j++)
             {
                 for (int i = 0; i < FIELD_SIZE_ARRAY_SIZE; i++)
@@ -2170,7 +2220,7 @@
                     if (i > rampStartPosition)
                     {
                         //Round the value to the nearest value
-                        _minDwellTimeTable[j][i] = _scanControlModel.LSMPixelDwellTimeStep * Math.Round((.6 + (i - rampStartPosition) * (dwellTimeInitialStepPerFieldSize - dwellTimeSlopeChange * j)) / LSMPixelDwellTimeStep, 0);
+                        _minDwellTimeTable[j][i] = dwellTimeStep * Math.Round((.6 + (i - rampStartPosition) * (dwellTimeInitialStepPerFieldSize - dwellTimeSlopeChange * j)) / dwellTimeStep, 0);
                     }
                     else
                     {
@@ -2220,9 +2270,10 @@
                 double m = lines * tmpDwellTime * pixelX * channel / 1000; //ms
                 if (dwellFactor > m)
                 {
+                    double dwellTimeStep = LSMPixelDwellTimeStep;
                     while (true)
                     {
-                        tmpDwellTime += this.LSMPixelDwellTimeStep;
+                        tmpDwellTime += dwellTimeStep;
                         m = lines * tmpDwellTime * pixelX * channel / 1000; //ms
                         if (dwellFactor <= m)
                         {
@@ -2243,7 +2294,7 @@
                 // Change the combobox selection to a generic one, if the combobox is at the same index but the list of items changes
                 // WPF won't reload the combobox selection, making it a blank combobox. This is a fix for that problem
                 _pmtBwSelected[i] = string.Empty;
-                switch(i)
+                switch (i)
                 {
                     case 0: OnPropertyChanged("Pmt1BandwidthSelected"); break;
                     case 1: OnPropertyChanged("Pmt2BandwidthSelected"); break;
@@ -2251,17 +2302,15 @@
                     case 3: OnPropertyChanged("Pmt4BandwidthSelected"); break;
                 }
 
-                foreach (DetectorBandwidths k in DetectorBandwidths.GetValues(typeof(DetectorBandwidths)))
+                string[] bandwidths = _scanControlModel.GetPMTAvailableBandwidths(i);
+
+                for (int k = 0; k < bandwidths.Length; k++)
                 {
-                    //Try to set the bandwidth value to the PMT
-                    PMTBandwidth[i].Value = (int)k;
-                    //If the PMT supports that bandwidth it will return the bandwidth or the closest one it can get to
-                    if ((int)k == PMTBandwidth[i].Value)
+                    int bw;
+                    Int32.TryParse(bandwidths[k], out bw);
+                    if (_bandwidthToStringMap.ContainsKey(bw))
                     {
-                        if (k != DetectorBandwidths.BW_1MHz) // We need to ignore the 1MHz option, it is never used and it is not very stable according to Panchy
-                        {
-                            tempList.Add(_bandwidthToStringMap[(int)k]);
-                        }
+                        tempList.Add(_bandwidthToStringMap[bw]);
                     }
                 }
 

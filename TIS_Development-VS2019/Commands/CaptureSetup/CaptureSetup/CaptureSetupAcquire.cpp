@@ -404,6 +404,11 @@ DllExportLiveImage GetActiveCapture()
 	CHECK_PACTIVEIMAGEROUTINE(GetCaptureActive());
 }
 
+DllExportLiveImage GetActiveZStack()
+{
+	CHECK_PACTIVEIMAGEROUTINE(GetZStackActive());
+}
+
 DllExportLiveImage SetupCaptureBuffers()
 {
 	CHECK_PACTIVEIMAGEROUTINE(SetupCaptureBuffers());

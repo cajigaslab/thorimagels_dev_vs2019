@@ -127,6 +127,7 @@ long ImageRoutineLSM::CaptureZStack(double zStartPos, double zStopPos, double zs
 
 		stopCapture = FALSE;
 		SetCaptureActive(TRUE);
+		SetZStackActive(TRUE);
 		hZStackCaptureThread = ::CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE) ZStackCaptureThreadProcLSM, (LPVOID)zParams, 0, &dwZStackCaptureThreadId );
 
 	}
@@ -148,6 +149,7 @@ long ImageRoutineLSM::StopZStackCapture()
 		stopCapture = TRUE;
 	}
 	CHECK_INLINE_PACTIVEIMAGEROUTINE(SetCaptureActive(FALSE));
+	CHECK_INLINE_PACTIVEIMAGEROUTINE(SetZStackActive(FALSE));
 	if(WaitForSingleObject(hCaptureActive,Constants::EVENT_WAIT_TIME)!=WAIT_OBJECT_0)
 	{
 		return FALSE;
@@ -256,6 +258,17 @@ long ImageRoutineLSM::SetCaptureActive(long active)
 long ImageRoutineLSM::GetCaptureActive()
 {
 	return _captureActive;
+}
+
+long ImageRoutineLSM::SetZStackActive(long zStackActive)
+{
+	_zStackActive = zStackActive;
+	return TRUE;
+}
+
+long ImageRoutineLSM::GetZStackActive()
+{
+	return _zStackActive;
 }
 
 long ImageRoutineLSM::CopyAcquisition(long isFullFrame)
@@ -748,7 +761,7 @@ UINT SnapshotThreadProcLSM(LPVOID pParam)
 UINT ZStackCaptureThreadProcLSM( LPVOID pParam )
 {	
 	struct CaptureSetupZCaptureParams zParams;
-
+	
 	if(NULL != pParam)
 	{
 		memcpy(&zParams,pParam,sizeof(struct CaptureSetupZCaptureParams));
@@ -757,6 +770,7 @@ UINT ZStackCaptureThreadProcLSM( LPVOID pParam )
 	else
 	{
 		CHECK_INLINE_PACTIVEIMAGEROUTINE(SetCaptureActive(FALSE));
+		CHECK_INLINE_PACTIVEIMAGEROUTINE(SetZStackActive(FALSE));
 		disableZRead = FALSE;
 		SetEvent(hCaptureActive);
 		return FALSE;
@@ -989,6 +1003,7 @@ UINT ZStackCaptureThreadProcLSM( LPVOID pParam )
 
 RETURN_TASK:
 	CHECK_INLINE_PACTIVEIMAGEROUTINE(SetCaptureActive(FALSE));
+	CHECK_INLINE_PACTIVEIMAGEROUTINE(SetZStackActive(FALSE));
 	disableZRead = FALSE;
 	SetEvent(hCaptureActive);
 	return 0;

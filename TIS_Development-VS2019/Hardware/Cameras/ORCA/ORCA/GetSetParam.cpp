@@ -347,28 +347,7 @@ long ORCA::SetParam(const long paramID, const double param)
 			{
 				// Binning needs to be set when the camera has stopped, SetBDMA sets binning into the camera
 				_ImgPty_SetSettings.binIndex = static_cast<long>(param);
-				switch (_ImgPty_SetSettings.binIndex)
-				{
-				case 0:
-				{
-					_ImgPty_SetSettings.roiBinY = _ImgPty_SetSettings.roiBinX = 1;
-				}
-				break;
-				case 1:
-				{
-					_ImgPty_SetSettings.roiBinY = _ImgPty_SetSettings.roiBinX = 2;
-				}
-				break;
-				case 2:
-				{
-					_ImgPty_SetSettings.roiBinY = _ImgPty_SetSettings.roiBinX = 4;
-				}
-				break;
-				default:
-				{
-					_ImgPty_SetSettings.roiBinY = _ImgPty_SetSettings.roiBinX = 1;
-				}
-				}
+				_ImgPty_SetSettings.roiBinY = _ImgPty_SetSettings.roiBinX = pow(2, _ImgPty_SetSettings.binIndex);
 			}
 		}
 		break;
@@ -618,7 +597,7 @@ long ORCA::GetParam(const long paramID, double& param)
 		break;
 		case ICamera::PARAM_PIXEL_SIZE:
 		{
-			param = _ImgPty_SetSettings.pixelSizeXUM * _ImgPty_SetSettings.roiBinX;		//could be different in X | Y in future
+			param = _ImgPty_SetSettings.pixelSizeXUM;		//could be different in X | Y in future
 		}
 		break;
 		case ICamera::PARAM_READOUT_SPEED_INDEX:
@@ -710,8 +689,7 @@ long ORCA::GetParam(const long paramID, double& param)
 				LogMessage(_errMsg, ERROR_EVENT);
 				ret = FALSE;
 			}
-			//_ImgPty_SetSettings.roiBinY =_ImgPty_SetSettings.roiBinX = static_cast<long>(binning);
-			//_ImgPty_SetSettings.binIndex = static_cast<int>(floor(binning / 2.0));
+			//_ImgPty_SetSettings.binIndex = _ImgPty_SetSettings.roiBinY = _ImgPty_SetSettings.roiBinX = log2(binning);
 			param = _ImgPty_SetSettings.binIndex;
 		}
 		break;

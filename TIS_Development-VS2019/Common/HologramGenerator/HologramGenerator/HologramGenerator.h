@@ -36,7 +36,7 @@ public:
 	long CalculateCoeffs(const float* pSrcPoints, const float* pTgtPoints, long size, long fittingAlg, double* coeffs);
 	double* CalculateZernikeCoeffs(double n, double k, double z, double alpha);
 	double* CalculateZernikePoly(double u, double v);
-	long NormalizePhase(float* img);
+	long NormalizePhase(float* pImgDst);
 	long Set3DParam(double na, double wavelength);
 	long SetDefocus(double n, double NAeff, long Np);
 	long SetSize(int width, int height, double pixelUM);
@@ -70,7 +70,7 @@ private:
 	long PhaseGenBy3DGS(float* pImg, float* pPolPhase, int iterateCount, double z);
 	long WeightByDistance(float* pImgDst, int weightRadiusPx, double minPercent = 25, double maxPercent = 75);
 	long SinglePassFilter(float* pImgDst);
-	long GenerateZHologram(float* pImgInt, float* pImgPhase, void* pImgCx, float* pTarget, float zValue);
+	long GenerateZHologram(float* pImgInt, float* pImgPhase, void* pImgCx, float* pTarget, float kz);
 
 };
 

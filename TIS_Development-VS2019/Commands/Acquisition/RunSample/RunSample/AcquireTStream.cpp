@@ -1532,6 +1532,8 @@ long AcquireTStream::BreakOutWaitCameraStatus(ICamera* pCamera, SaveParams& sp, 
 						pCamera->PreflightAcquisition(_pMemoryBuffer);
 					}
 
+					UnlockImages(sp.imageIDsMap, totalFrame);
+
 					return TRUE;	
 				}
 			}

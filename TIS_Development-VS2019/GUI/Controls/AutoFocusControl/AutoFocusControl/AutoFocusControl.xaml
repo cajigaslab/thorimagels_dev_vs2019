@@ -338,7 +338,8 @@
                     <StackPanel Margin="1"
                             Grid.Row="3"
                             Grid.Column="0"
-                            Orientation="Horizontal">
+                            Orientation="Horizontal"
+                            ToolTip="Number of Frames until AutoFocus repeats in Time Series Capture">
                         <TextBox Name="txtRepeats" 
                          Text="{Binding Path=Repeats}" 
                          Width="50"
@@ -361,7 +362,7 @@
                                 </Style>
                             </Button.Style>
                         </Button>
-                        <Label Content="# Of Repeats"/>
+                        <Label Content="Frame Repeat #"/>
                     </StackPanel>
                     <StackPanel Margin="1"
                             Grid.Row="4"

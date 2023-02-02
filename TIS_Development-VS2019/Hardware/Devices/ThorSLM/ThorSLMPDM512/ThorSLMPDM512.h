@@ -25,7 +25,9 @@ extern "C"
 		std::string _pSlmName;///<slm device name
 		long _deviceCount; ///<how many SLM being detected
 		long _overDrive; ///<overdrive mode for meadowlark slm
-		MemoryStruct<unsigned char> _firstBuf; ///<buffer for the first SLM pattern, used for calculating transient back to first.
+		unsigned char* _transferBuf[2]; ///<[0]buffer for the first SLM pattern, used for calculating transient back to first.
+										///<[1]buffer to hold for transiant or temp.
+		size_t _transferBufSize[2];
 
 		//params in struct:		
 		long _slmFuncMode; ///<different function mode of slm
@@ -55,7 +57,7 @@ extern "C"
 		void ReleaseMem();
 		void ReleaseTransientBuf();
 		void SetDefault();
-		long SetIntermediateBuffer(MemoryStruct<unsigned char> memStruct);
+		long SetIntermediateBuffer(unsigned char* mem, size_t size);
 
 	};
 

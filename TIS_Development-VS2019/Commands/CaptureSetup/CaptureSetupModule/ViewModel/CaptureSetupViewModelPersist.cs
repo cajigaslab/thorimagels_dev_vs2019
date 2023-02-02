@@ -272,6 +272,7 @@
                             XmlManager.SetAttribute(ndList[0], experimentFile, "advanceMode", this.SLMSequenceOn ? "1" : "0");
                             XmlManager.SetAttribute(ndList[0], experimentFile, "holoGen3D", this.SLM3D ? "1" : "0");
                             XmlManager.SetAttribute(ndList[0], experimentFile, "refractiveIndex", this.RefractiveIndex.ToString());
+                            XmlManager.SetAttribute(ndList[0], experimentFile, "sequenceEpochDelay", this.SLMSequenceEpochDelay.ToString());
 
                             ndList = experimentFile.SelectNodes("/ThorImageExperiment/SLM/Pattern");
                             for (int id = 0; id < ndList.Count; id++)
@@ -322,6 +323,7 @@
                                 XmlManager.SetAttribute(ndList[i], experimentFile, "green", this.SLMBleachWaveParams[i].Green.ToString());
                                 XmlManager.SetAttribute(ndList[i], experimentFile, "blue", this.SLMBleachWaveParams[i].Blue.ToString());
                                 XmlManager.SetAttribute(ndList[i], experimentFile, "fileID", this.SLMBleachWaveParams[i].BleachWaveParams.ID.ToString());
+                                XmlManager.SetAttribute(ndList[i], experimentFile, "phaseType", this.SLMBleachWaveParams[i].PhaseType.ToString());
                                 XmlManager.SetAttribute(ndList[i], experimentFile, "shape", this.SLMBleachWaveParams[i].BleachWaveParams.shapeType);
                             }
                             //persist advance sequence mode, clean up sequences first
@@ -345,11 +347,6 @@
                             MVMManager.Instance["OTMControlViewModel", "PersistGlobalOTMCalibration"] = experimentFile;
                             break;
                         case GlobalExpAttribute.SLM_ZREF:
-                            //warn user to update SLM patterns manually after changing Z reference
-                            if ((double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0.0] != SLMZRefMM && SLM3D && 0 < SLMBleachWaveParams.Count)
-                            {
-                                MessageBox.Show("Reference Z position is changed. Individual SLM pattern must be revisited to update.");
-                            }
                             ndList = experimentFile.SelectNodes("/ThorImageExperiment/SLM");
                             if (ndList.Count <= 0)
                             {
@@ -397,8 +394,9 @@
                     CloseProgressWindow();
                 }
 
-                //Persist ROIs that are in the canvas
-                OverlayManagerClass.Instance.PersistSaveROIs();
+                //Persist ROIs that are in the canvas, except in SLM calibration:
+                if (null == _slmParamEditWin || View.SLMParamEditWin.SLMPanelMode.Calibration != _slmParamEditWin.PanelMode)
+                    OverlayManagerClass.Instance.PersistSaveROIs();
 
                 bool tempSwitchCI;
                 System.Globalization.CultureInfo originalCultureInfo;
@@ -611,6 +609,7 @@
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "advanceMode", this.SLMSequenceOn ? "1" : "0");
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "holoGen3D", this.SLM3D ? "1" : "0");
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "refractiveIndex", this.RefractiveIndex.ToString());
+                    XmlManager.SetAttribute(ndList[0], xmlDoc, "sequenceEpochDelay", this.SLMSequenceEpochDelay.ToString());
                 }
                 ////End (SLM) Bleach non-waveform criticals
 

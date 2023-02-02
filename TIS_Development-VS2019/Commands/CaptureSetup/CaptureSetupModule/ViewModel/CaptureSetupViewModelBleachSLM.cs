@@ -33,13 +33,15 @@
     {
         #region Fields
 
+        public const string DEFAULT_SLMCALIB_XAML = "SLMCalibROIs.xaml";
+
         private RelayCommandWithParam _editSLMParamRelayCommand;
         private List<SLMEpochSequence> _epochSequence = new List<SLMEpochSequence>();
         private bool[] _roiToolVisible = new bool[14] { true, true, true, true, true, true, true, true, true, true, true, true, true, true };
         private ObservableCollection<SLMParams> _slmBleachCompParams = new ObservableCollection<GeometryUtilities.SLMParams>();
-        private string[] _slmBMPSubFolders = new string[3] { "\\PhaseMask", "\\SLMPatternUnshifted", "\\IntermediateZ" };
         private bool _slmBuildOnce = false;
         private double _slmCalibDwell = 0.0;
+        private string _slmCalibFile = DEFAULT_SLMCALIB_XAML;
         private double _slmCalibPower = 0.0;
         private BleachWaveParams _slmCalibWaveParam;
         private double _slmCalibZPos = 0.0;
@@ -56,6 +58,17 @@
 
         #endregion Fields
 
+        #region Enumerations
+
+        public enum SLMBMPSubFolder
+        {
+            PhaseMask,
+            SLMPatternUnshifted,
+            IntermediateZ
+        }
+
+        #endregion Enumerations
+
         #region Properties
 
         public double DefocusSavedUM
@@ -66,8 +79,11 @@
             }
             set
             {
-                _captureSetup.DefocusSavedUM = value;
-                OnPropertyChanged("DefocusSavedUM");
+                if (_captureSetup.DefocusSavedUM != value)
+                {
+                    _captureSetup.DefocusSavedUM = value;
+                    OnPropertyChanged("DefocusSavedUM");
+                }
                 OnPropertyChanged("IsDefocusUMDifferent");
             }
         }
@@ -82,11 +98,10 @@
             {
                 if (_captureSetup.DefocusUM != value)
                 {
-
                     _captureSetup.DefocusUM = value;
                     OnPropertyChanged("DefocusUM");
-                    OnPropertyChanged("IsDefocusUMDifferent");
                 }
+                OnPropertyChanged("IsDefocusUMDifferent");
             }
         }
 
@@ -98,23 +113,6 @@
                     this._editSLMParamRelayCommand = new RelayCommandWithParam(EditSLMParam);
 
                 return this._editSLMParamRelayCommand;
-            }
-        }
-
-        public double EffectiveFocalMM
-        {
-            get
-            {
-                return _captureSetup.EffectiveFocalMM;
-            }
-            set
-            {
-                if (_captureSetup.EffectiveFocalMM != value)
-                {
-
-                    _captureSetup.EffectiveFocalMM = value;
-                    OnPropertyChanged("EffectiveFocalMM");
-                }
             }
         }
 
@@ -228,6 +226,12 @@
             }
         }
 
+        public bool SLM3DBackup
+        {
+            get;
+            set;
+        }
+
         public string SLMActiveFolder
         {
             get
@@ -240,10 +244,10 @@
 
         public double SLMBleachDelay
         {
-            get { return this._captureSetup.SLMBleachDelay; }
+            get { return this._captureSetup.SLMBleachDelay[0]; }
             set
             {
-                this._captureSetup.SLMBleachDelay = value;
+                this._captureSetup.SLMBleachDelay[0] = value;
                 OnPropertyChanged("SLMBleachDelay");
             }
         }
@@ -272,12 +276,41 @@
 
         public string[] SLMbmpSubFolders
         {
-            get { return _slmBMPSubFolders; }
+            get { return Enum.GetNames(typeof(SLMBMPSubFolder)).Select(x => "\\" + x.ToString()).ToArray(); }
         }
 
         public bool SLMCalAlert
         {
             get { return (DateTimeFormatInfo.CurrentInfo.DayNames.Length < (DateTime.Now).Subtract(SLMLastCalibTime).TotalDays) ? true : false; }
+        }
+
+        public bool SLMCalibByBurning
+        {
+            get
+            {
+                string strTmp = string.Empty;
+                int iVal = 0;
+                try
+                {
+                    XmlDocument appSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+                    XmlNodeList ndList = appSettings.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView/BleachCalibrationTool");
+                    if (null != ndList)
+                    {
+                        if (!(XmlManager.GetAttribute(ndList[0], appSettings, "CalibByBurning", ref strTmp) && Int32.TryParse(strTmp, out iVal)))
+                        {
+                            iVal = 0;
+                            XmlManager.SetAttribute(ndList[0], appSettings, "CalibByBurning", iVal.ToString());
+                            MVMManager.Instance.ReloadSettings(SettingsFileType.APPLICATION_SETTINGS);
+                            return 1 == iVal;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Verbose, 1, "Fail to get CalibByBurning: " + ex.Message);
+                }
+                return 1 == iVal;
+            }
         }
 
         public double SLMCalibDwell
@@ -292,7 +325,49 @@
 
         public string SLMCalibFile
         {
-            get { return "SLMCalibROIs.xaml"; }
+            get { return _slmCalibFile; }
+            set
+            {
+                _slmCalibFile = value;
+                OnPropertyChanged("SLMCalibFile");
+            }
+        }
+
+        public double[] SLMCalibPatternScaleXY
+        {
+            get
+            {
+                string strTmp = string.Empty;
+                double[] dVal = new double[2] { 1.0, 1.0 };
+                bool doUpdate = false;
+                try
+                {
+                    XmlDocument appSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+                    XmlNodeList ndList = appSettings.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView/BleachCalibrationTool");
+                    if (null != ndList)
+                    {
+                        if (!(XmlManager.GetAttribute(ndList[0], appSettings, "CalibPatternScaleX", ref strTmp) && Double.TryParse(strTmp, out dVal[0])))
+                        {
+                            dVal[0] = 1.0;
+                            XmlManager.SetAttribute(ndList[0], appSettings, "CalibPatternScaleX", dVal[0].ToString());
+                            doUpdate = true;
+                        }
+                        if (!(XmlManager.GetAttribute(ndList[0], appSettings, "CalibPatternScaleY", ref strTmp) && Double.TryParse(strTmp, out dVal[1])))
+                        {
+                            dVal[1] = 1.0;
+                            XmlManager.SetAttribute(ndList[0], appSettings, "CalibPatternScaleY", dVal[1].ToString());
+                            doUpdate = true;
+                        }
+                        if (doUpdate)
+                            MVMManager.Instance.ReloadSettings(SettingsFileType.APPLICATION_SETTINGS);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ThorLogging.ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Verbose, 1, "Fail to get PatternScale: " + ex.Message);
+                }
+                return new double[2] { Math.Max(0.0, dVal[0]), Math.Max(0.0, dVal[1]) };
+            }
         }
 
         public double SLMCalibPower
@@ -303,6 +378,11 @@
                 _slmCalibPower = value;
                 OnPropertyChanged("SLMCalibPower");
             }
+        }
+
+        public string SLMCalibROIFilePath
+        {
+            get { return BleachROIPath + SLMCalibFile; }
         }
 
         public BleachWaveParams SLMCalibWaveParam
@@ -495,6 +575,19 @@
                     OnPropertyChanged("SLMSelectWavelength");
                     OnPropertyChanged("SLMWavelengthNM");
                 }
+            }
+        }
+
+        public double SLMSequenceEpochDelay
+        {
+            get
+            {
+                return _captureSetup.SLMBleachDelay[1];
+            }
+            set
+            {
+                _captureSetup.SLMBleachDelay[1] = (double)Decimal.Round((Decimal)value, 3);
+                OnPropertyChanged("SLMSequenceEpochDelay");
             }
         }
 
@@ -783,7 +876,9 @@
         /// rearrange SLMBLeachParams's ID after deleting target ID number, similar to DeletePatternROI in OverlayManager.
         /// </summary>
         /// <param name="targetID"></param>
-        public void DeleteSLMBleachParamsID(uint targetID)
+        /// <param name="subFolderIndex"></param>
+        /// <param name="reorder"></param>
+        public void DeleteSLMBleachParamsID(uint targetID, int subFolderIndex = -1, bool reorder = true)
         {
             try
             {
@@ -799,7 +894,8 @@
                         //delete files in subfolders, unshifted & intermediate Z
                         for (int j = 0; j < SLMbmpSubFolders.Length; j++)
                         {
-                            if (Directory.Exists(SLMWaveformFolder[0] + SLMbmpSubFolders[j]))
+                            if (Directory.Exists(SLMWaveformFolder[0] + SLMbmpSubFolders[j]) &&
+                                (0 > subFolderIndex || j == subFolderIndex))
                             {
                                 DirectoryInfo dirInfo = new DirectoryInfo(SLMWaveformFolder[0] + SLMbmpSubFolders[j]);
                                 foreach (FileInfo fInfo in dirInfo.GetFiles())
@@ -812,19 +908,22 @@
                     }
                 }
 
-                //rename pattern files in the folders:
-                ReorderSLMPatternFiles(targetID, SLMWaveformFolder[0]);
-                for (int j = 0; j < SLMbmpSubFolders.Length; j++)
+                if (reorder)
                 {
-                    ReorderSLMPatternFiles(targetID, SLMWaveformFolder[0] + SLMbmpSubFolders[j]);
-                }
-
-                //re-assign IDs:
-                for (int i = 0; i < SLMBleachWaveParams.Count; i++)
-                {
-                    if (targetID <= SLMBleachWaveParams[i].BleachWaveParams.ID)
+                    //rename pattern files in the folders:
+                    ReorderSLMPatternFiles(targetID, SLMWaveformFolder[0]);
+                    for (int j = 0; j < SLMbmpSubFolders.Length; j++)
                     {
-                        SLMBleachWaveParams[i].BleachWaveParams.ID--;
+                        ReorderSLMPatternFiles(targetID, SLMWaveformFolder[0] + SLMbmpSubFolders[j]);
+                    }
+
+                    //re-assign IDs:
+                    for (int i = 0; i < SLMBleachWaveParams.Count; i++)
+                    {
+                        if (targetID <= SLMBleachWaveParams[i].BleachWaveParams.ID)
+                        {
+                            SLMBleachWaveParams[i].BleachWaveParams.ID--;
+                        }
                     }
                 }
             }
@@ -908,7 +1007,7 @@
 
         public bool SLMCalibration(string bmpPatternName, float[] ptsFrom, float[] ptsTo, int size)
         {
-            return _captureSetup.SLMCalibration(bmpPatternName, ptsFrom, ptsTo, size);
+            return _captureSetup.SLMCalibration(bmpPatternName, ptsFrom, ptsTo, size, SLM3DBackup);
         }
 
         public bool SLMSetBlank()
@@ -999,6 +1098,9 @@
             //keep overlay manager access to hardware mvms, property only when import
             OverlayManagerClass.Instance.SimulatorMode = false;
 
+            //back up properties here
+            SLM3DBackup = SLM3D;
+
             switch (SLMParamEditWin.SLMPatternTypeDictionary[str])
             {
                 case SLMParamEditWin.SLMPatternType.Add:
@@ -1033,6 +1135,7 @@
                         _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.UMPerPixelRatio = this.BleachPixelSizeUMRatio;
                         _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.ROIWidthUM = 0;
                         _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.ROIHeight = 0;
+                        _slmParamEditWin.SLMParamsCurrent.PhaseType = (IsStimulator || SLM3D) ? 1 : 0;
                         _slmParamEditWin.UpdateSLMParamPower();
                         _slmParamEditWin.Title = "Add SLM Pattern";
                         _slmParamEditWin.SLMParamID = -1;
@@ -1100,6 +1203,7 @@
 
                         _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.UMPerPixel = (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0];
                         _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.UMPerPixelRatio = this.BleachPixelSizeUMRatio;
+                        _slmParamEditWin.SLMParamsCurrent.PhaseType = (IsStimulator || SLM3D) ? 1 : 0;
                         _slmParamEditWin.Title = "Edit SLM Pattern Name: " + _slmParamEditWin.SLMParamsCurrent.Name;
                         bitVec32 = new System.Collections.Specialized.BitVector32(Convert.ToByte(_slmParamEditWin.SLMParamsCurrent.Red));
                         bitVec32[OverlayManagerClass.SecG] = Convert.ToByte(_slmParamEditWin.SLMParamsCurrent.Green);
@@ -1176,10 +1280,11 @@
                         //persist ActiveROIs first:
                         OverlayManagerClass.Instance.PersistSaveROIs();
 
-                        //scale ROIs to current image, apply scaling-up ratio of default pattern
-                        OverlayManagerClass.Instance.ScaleROIs(BleachROIPath + SLMCalibFile, new int[] { ImageWidth, ImageHeight });
+                        //prepare calibration xaml and file path:
+                        SetSLMCalibROIFilePath();
 
-                        if (!DisplayROI(BleachROIPath + SLMCalibFile))
+                        //display calibration ROIs:
+                        if (!DisplayROI(SLMCalibROIFilePath))
                             return;
 
                         //blank slm before start of calibration:
@@ -1189,7 +1294,7 @@
 
                         OverlayManagerClass.Instance.CurrentMode = ThorSharedTypes.Mode.PATTERN_NOSTATS;    //keep mode unchanged due to "SLMCalibROIs.xaml"
                         OverlayManagerClass.Instance.PatternID = 2;                                         //for user-selection, target is on PatterID 1
-                        OverlayManagerClass.Instance.SkipRedrawCenter = SLM3D;                              //allow start index of 1 or 0 if not calibration by burning(2D)
+                        OverlayManagerClass.Instance.SkipRedrawCenter = SLMCalibByBurning ? false : SLM3D;  //allow start index of 1 or 0 if not calibration by burning(2D)
                         bitVec32 = new System.Collections.Specialized.BitVector32(Convert.ToByte(255));
                         bitVec32[OverlayManagerClass.SecG] = Convert.ToByte(0);
                         bitVec32[OverlayManagerClass.SecB] = Convert.ToByte(0);
@@ -1202,8 +1307,8 @@
                         Dictionary<double, List<Shape>> zShapes = OverlayManagerClass.Instance.GetPatternZROIs(-1, OverlayManagerClass.Instance.PatternID - 1);
                         _slmParamEditWin.CalibratePointCount = (0 < zShapes.Count) ? zShapes[0].Count : 0;
                         SLMCalibPanel slmCalib = SLM3D ?
-                            new SLMCalibPanel("RESET_CALIBRATION3D", "DONE", "New Calibration", "Click 'YES' will reset calibrations\nand continue.") :
-                            new SLMCalibPanel("BURN", "DONE", "New Calibration", "Move to another clear area on the\n calibration slide then Press Yes to\n create calibration spots on the slide.");
+                            new SLMCalibPanel("", "RESET_CALIBRATION3D", "DONE", "New Calibration", "Click 'YES' will reset calibrations\nand continue.") :
+                            new SLMCalibPanel("", "BURN", "DONE", "New Calibration", "Move to another clear area on the\n calibration slide then Press Yes to\n create calibration spots on the slide.");
                         _slmParamEditWin.DataContext = slmCalib;
                         SetSLMParamEditWinPosition();
                         _slmParamEditWin.Closed += _slmParamEditWin_Closed;
@@ -1276,6 +1381,19 @@
                     break;
                 case SLMParamEditWin.SLMPatternType.SaveZOffset:
                     DefocusSavedUM = DefocusUM;
+                    EditSLMParam("SLM_REBUILDALL"); //rebuild SLM patterns if any
+                    break;
+                case SLMParamEditWin.SLMPatternType.RebuildAll:
+                    if (null != _slmParamEditWin) return;
+
+                    _slmParamEditWin = new SLMParamEditWin(this);
+                    _slmParamEditWin.Topmost = true;
+                    _slmParamEditWin.PanelMode = SLMParamEditWin.SLMPanelMode.Build;
+                    _slmParamEditWin.DataContext = this;
+                    SetSLMParamEditWinPosition();
+                    _slmParamEditWin.Closed += _slmParamEditWin_Closed;
+                    _slmParamEditWin.Show();
+                    _slmParamEditWin.ReBuildAll();
                     break;
                 default:
                     break;
@@ -1323,6 +1441,26 @@
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Set SLM calibration file and scale ROIs
+        /// </summary>
+        private void SetSLMCalibROIFilePath()
+        {
+            if (1.0 != SLMCalibPatternScaleXY[0] || 1.0 != SLMCalibPatternScaleXY[1])
+            {
+                SLMCalibFile = System.IO.Path.GetFileNameWithoutExtension(DEFAULT_SLMCALIB_XAML) + "_scale" + System.IO.Path.GetExtension(DEFAULT_SLMCALIB_XAML);
+                FileCopyWithAccessCheck(BleachROIPath + DEFAULT_SLMCALIB_XAML, SLMCalibROIFilePath, true);
+            }
+            else
+                SLMCalibFile = DEFAULT_SLMCALIB_XAML;
+
+            //scale ROIs to current image, apply scaling-up ratio of default pattern
+            OverlayManagerClass.Instance.ScaleROIs(SLMCalibROIFilePath, new int[] { ImageWidth, ImageHeight });
+
+            //scale ROIs within current image by ratio per user request
+            OverlayManagerClass.Instance.ScaleROIsByRatio(SLMCalibROIFilePath, SLMCalibPatternScaleXY);
         }
 
         private void SetSLMParamEditWinPosition()
@@ -1379,12 +1517,18 @@
 
                 //stop the background hardware updates
                 BWHardware = false;
+                SLM3DBackup = SLM3D;
 
                 this._captureSetup.StartSLMBleach();
 
                 //restart the background hardware updates
                 BWHardware = true;
             }
+        }
+
+        private void slmBleachWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            SLM3D = SLM3DBackup;
         }
 
         private bool StartSLMBleach()

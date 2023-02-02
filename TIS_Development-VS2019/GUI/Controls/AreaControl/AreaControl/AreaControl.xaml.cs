@@ -263,6 +263,10 @@
         typeof(ImageResolution),
         typeof(AreaControlUC),
         new FrameworkPropertyMetadata(new PropertyChangedCallback(onCurrentResolutionChanged)));
+        public static DependencyProperty EnablePixelDensityChangeProperty = 
+        DependencyProperty.RegisterAttached("EnablePixelDensityChange",
+        typeof(bool),
+        typeof(AreaControlUC));
         public static DependencyProperty EnableReferenceChannelProperty = 
         DependencyProperty.RegisterAttached("EnableReferenceChannel",
         typeof(int),
@@ -664,6 +668,12 @@
         {
             get { return (int)GetValue(EnablePincushionCorrectionProperty); }
             set { SetValue(EnablePincushionCorrectionProperty, value); }
+        }
+
+        public bool EnablePixelDensityChange
+        {
+            get {return (bool)GetValue(EnablePixelDensityChangeProperty); }
+            set {SetValue(EnablePixelDensityChangeProperty, value); }
         }
 
         public int EnableReferenceChannel
@@ -1468,6 +1478,22 @@
         private void btnMicroView_Click(object sender, RoutedEventArgs e)
         {
             SelectedViewMode = ((int)MesoScanTypes.Micro - (int)MesoScanTypes.Meso);
+        }
+
+        private void cbEnablePixelDensityChange_Checked(object sender, RoutedEventArgs e)
+        {
+            sliderPixelX.IsEnabled = true;
+            sliderPixelY.IsEnabled = true;
+            ResolutionSelector.IsEnabled = true;
+            lbAreaMode.IsEnabled = true;
+        }
+
+        private void cbEnablePixelDensityChange_Unchecked(object sender, RoutedEventArgs e)
+        {
+            sliderPixelX.IsEnabled = false;
+            sliderPixelY.IsEnabled = false;
+            ResolutionSelector.IsEnabled = false;
+            lbAreaMode.IsEnabled = false;
         }
 
         //public static DependencyProperty **REPLACE**Property =

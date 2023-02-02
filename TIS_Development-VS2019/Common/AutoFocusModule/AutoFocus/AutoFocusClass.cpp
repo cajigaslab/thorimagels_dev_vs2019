@@ -479,7 +479,8 @@ long IAutoFocus::SetAFStartZPosition(double afStartPos, BOOL bWait, BOOL afFound
 		double pos = _lastGoodFocusPosition;
 
 		//modify the last good focus position each pass to ensure its unique
-		_lastGoodFocusPosition = _lastGoodFocusPosition - .001;
+		//not sure why this was here, as it only seems to offset image focus during Capture
+		//_lastGoodFocusPosition = _lastGoodFocusPosition - .001;
 
 		pos -= _adaptiveOffset;
 

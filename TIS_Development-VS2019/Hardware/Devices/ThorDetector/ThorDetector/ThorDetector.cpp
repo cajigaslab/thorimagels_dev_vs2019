@@ -309,6 +309,8 @@ long ThorDetector::SelectDevice(const long device)
 
 	RetrieveDevicesInfo();
 	BuildParamTable();
+	GetAvailableBandwidths();
+
 	return ret;
 }
 
@@ -768,6 +770,42 @@ long ThorDetector::GetParamString(const long paramID, wchar_t* str, long size)
 		wcscpy_s(str, size, wsTemp.c_str());
 	}
 	break;
+	case PARAM_PMT1_AVAILABLE_BANDWIDTHS:
+	{
+		wstring wsTemp = utf8toUtf16(_availableBandwidths[0]);
+		wcscpy_s(str, size, wsTemp.c_str());
+	}
+	break;
+	case PARAM_PMT2_AVAILABLE_BANDWIDTHS:
+	{
+		wstring wsTemp = utf8toUtf16(_availableBandwidths[1]);
+		wcscpy_s(str, size, wsTemp.c_str());
+	}
+	break;
+	case PARAM_PMT3_AVAILABLE_BANDWIDTHS:
+	{
+		wstring wsTemp = utf8toUtf16(_availableBandwidths[2]);
+		wcscpy_s(str, size, wsTemp.c_str());
+	}
+	break;
+	case PARAM_PMT4_AVAILABLE_BANDWIDTHS:
+	{
+		wstring wsTemp = utf8toUtf16(_availableBandwidths[3]);
+		wcscpy_s(str, size, wsTemp.c_str());
+	}
+	break;
+	case PARAM_PMT5_AVAILABLE_BANDWIDTHS:
+	{
+		wstring wsTemp = utf8toUtf16(_availableBandwidths[4]);
+		wcscpy_s(str, size, wsTemp.c_str());
+	}
+	break;
+	case PARAM_PMT6_AVAILABLE_BANDWIDTHS:
+	{
+		wstring wsTemp = utf8toUtf16(_availableBandwidths[5]);
+		wcscpy_s(str, size, wsTemp.c_str());
+	}
+	break;
 	default:
 		ret = FALSE;
 	}
@@ -1069,6 +1107,54 @@ void ThorDetector::ExecutePositionNow()
 
 	PostflightPosition();
 }
+
+/// <summary>
+/// Creates a list of all available bandwidths for each connected device.
+/// </summary>
+/// <returns>long.</returns>
+long ThorDetector::GetAvailableBandwidths()
+{
+	Lock lock(_critSect);
+	for (int i = 0; i < DEVICE_NUM; ++i)
+	{
+		if (FALSE == _deviceDetected[i])
+		{
+			continue;
+		}
+
+		double val = 0;
+		long setParamId = PARAM_PMT1_BANDWIDTH_POS, returnParamId = PARAM_PMT1_BANDWIDTH_POS_CURRENT;
+
+		_availableBandwidths[i].clear();
+		for each (long bandwidth in _allBandwidths)
+		{
+			if (BW_1MHz == bandwidth)
+			{
+				continue; //ignore the 1MHz case, we don't really have a use for the 1MHz bandwidth
+			}
+
+			switch (i)
+			{
+			case 0: setParamId = PARAM_PMT1_BANDWIDTH_POS; returnParamId = PARAM_PMT1_BANDWIDTH_POS_CURRENT; break;
+			case 1: setParamId = PARAM_PMT2_BANDWIDTH_POS; returnParamId = PARAM_PMT2_BANDWIDTH_POS_CURRENT; break;
+			case 2: setParamId = PARAM_PMT3_BANDWIDTH_POS; returnParamId = PARAM_PMT3_BANDWIDTH_POS_CURRENT; break;
+			case 3: setParamId = PARAM_PMT4_BANDWIDTH_POS; returnParamId = PARAM_PMT4_BANDWIDTH_POS_CURRENT; break;
+			case 4: setParamId = PARAM_PMT5_BANDWIDTH_POS; returnParamId = PARAM_PMT5_BANDWIDTH_POS_CURRENT; break;
+			case 5: setParamId = PARAM_PMT6_BANDWIDTH_POS; returnParamId = PARAM_PMT6_BANDWIDTH_POS_CURRENT; break;
+			}
+
+			_tableParams[setParamId]->UpdateParam(bandwidth);
+			ExecuteCmdParam(_tableParams[setParamId]);
+			GetParam(returnParamId, val);
+			if (bandwidth == val)
+			{
+				_availableBandwidths[i] += to_string(static_cast<long>(val)) + ',';
+			}
+		}
+	}
+	return TRUE;
+}
+
 
 /// <summary>
 /// Retrieves the serial and version numbers for each connected device.
@@ -2958,6 +3044,108 @@ long ThorDetector::BuildParamTable()
 		5,
 		-1);
 	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT6_GAIN_STEP_SIZE, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT1_AVAILABLE_BANDWIDTHS,
+		L"PARAM_PMT1_AVAILABLE_BANDWIDTHS",
+		0,
+		0,
+		FALSE,
+		TYPE_STRING,
+		TRUE,
+		TRUE,
+		0,
+		0,
+		0,
+		tmpCommandBytes,
+		0,
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT1_AVAILABLE_BANDWIDTHS, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT2_AVAILABLE_BANDWIDTHS,
+		L"PARAM_PMT2_AVAILABLE_BANDWIDTHS",
+		0,
+		0,
+		FALSE,
+		TYPE_STRING,
+		TRUE,
+		TRUE,
+		0,
+		0,
+		0,
+		tmpCommandBytes,
+		0,
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT2_AVAILABLE_BANDWIDTHS, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT3_AVAILABLE_BANDWIDTHS,
+		L"PARAM_PMT3_AVAILABLE_BANDWIDTHS",
+		0,
+		0,
+		FALSE,
+		TYPE_STRING,
+		TRUE,
+		TRUE,
+		0,
+		0,
+		0,
+		tmpCommandBytes,
+		0,
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT3_AVAILABLE_BANDWIDTHS, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT4_AVAILABLE_BANDWIDTHS,
+		L"PARAM_PMT4_AVAILABLE_BANDWIDTHS",
+		0,
+		0,
+		FALSE,
+		TYPE_STRING,
+		TRUE,
+		TRUE,
+		0,
+		0,
+		0,
+		tmpCommandBytes,
+		0,
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT4_AVAILABLE_BANDWIDTHS, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT5_AVAILABLE_BANDWIDTHS,
+		L"PARAM_PMT5_AVAILABLE_BANDWIDTHS",
+		0,
+		0,
+		FALSE,
+		TYPE_STRING,
+		TRUE,
+		TRUE,
+		0,
+		0,
+		0,
+		tmpCommandBytes,
+		0,
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT5_AVAILABLE_BANDWIDTHS, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT6_AVAILABLE_BANDWIDTHS,
+		L"PARAM_PMT6_AVAILABLE_BANDWIDTHS",
+		0,
+		0,
+		FALSE,
+		TYPE_STRING,
+		TRUE,
+		TRUE,
+		0,
+		0,
+		0,
+		tmpCommandBytes,
+		0,
+		-1);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT6_AVAILABLE_BANDWIDTHS, tempParamInfo));
 
 	return TRUE;
 }

@@ -42,6 +42,7 @@
         private bool _configMicroScanArea = true;
         private ICommand _dwellTimeMinusCommand;
         private ICommand _dwellTimePlusCommand;
+        private bool _enablePixelDensityChange = true;
         private bool _enableResolutionPresets = true;
         private bool _fieldFromROIZoomMode = false;
         ICommand _fieldOffsetFineResetCommand;
@@ -423,6 +424,21 @@
             {
                 _areaControlModel.PincushionCorrection = value;
                 OnPropertyChanged("EnablePincushionCorrection");
+            }
+        }
+
+        //Currently used to Disable changing pixel density while Z Preview is running, set in CaptureSetupViewModel.cs
+        //Can be used to disable changing pixel density when needed
+        public bool EnablePixelDensityChange
+        {
+            get
+            {
+                return _enablePixelDensityChange;
+            }
+            set
+            {
+                _enablePixelDensityChange = value;
+                OnPropertyChanged("EnablePixelDensityChange");
             }
         }
 
@@ -2016,7 +2032,7 @@
                 }
                 else
                 {
-                    return (double)MVMManager.Instance["CameraControlViewModel", "CamPixelSizeUM", (object)1.0];
+                    return (double)MVMManager.Instance["CameraControlViewModel", "CamPixelSizeUM", (object)1.0] * Math.Max(1, Math.Max((int)MVMManager.Instance["CameraControlViewModel", "BinY", (object)1], (int)MVMManager.Instance["CameraControlViewModel", "BinX", (object)1]));
                 }
             }
         }
@@ -2394,7 +2410,7 @@
         {
             get
             {
-                if (_timedBasedVisibility && !ResourceManagerCS.Instance.IsThorDAQBoard && ((int)ICamera.LSMType.GALVO_GALVO == ResourceManagerCS.GetLSMType()) && 
+                if (_timedBasedVisibility && !ResourceManagerCS.Instance.IsThorDAQBoard && ((int)ICamera.LSMType.GALVO_GALVO == ResourceManagerCS.GetLSMType()) &&
                     ((int)ICamera.LSMAreaMode.LINE == LSMAreaMode || (int)ICamera.LSMAreaMode.POLYLINE == LSMAreaMode || (int)ICamera.LSMAreaMode.LINE_TIMELAPSE == LSMAreaMode))
                 {
                     return Visibility.Visible;

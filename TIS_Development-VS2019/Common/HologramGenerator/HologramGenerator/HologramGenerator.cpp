@@ -59,22 +59,39 @@ HologramGen* HologramGen::getInstance()
 	return single.get();
 }
 
-long HologramGen::NormalizePhase(float* img)
+/// <summary>
+/// Phase wrapping by pixel range 0-255, apply after all rad operations
+/// </summary>
+/// <param name="img"></param>
+/// <returns></returns>
+long HologramGen::NormalizePhase(float* pImgDst)
 {
+	const double MAX_PHASE = 2 * PI;
+	Ipp32f minPhase;
 
-	Ipp32f minPhase, maxPhase;
-
-	if (img != NULL)
+	//expect input in unit [rad]
+	if (pImgDst != NULL)
 	{
-		ippsDll->ippsMin_32f(img, _mtrxLength, &minPhase);
-		ippsDll->ippsAddC_32f_I(abs(minPhase), img, _mtrxLength);
-		ippsDll->ippsMax_32f(img, _mtrxLength, &maxPhase);
-		ippsDll->ippsMulC_32f_I(MAX_PIXEL_VALUE / maxPhase, img, _mtrxLength);
+		ippsDll->ippsMin_32f(pImgDst, _mtrxLength, &minPhase);
+		//ippsDll->ippsAddC_32f_I(abs(minPhase), pImgDst, _mtrxLength);
+		//ippsDll->ippsMax_32f(img, _mtrxLength, &maxPhase);
+		//ippsDll->ippsMulC_32f_I(MAX_PIXEL_VALUE / maxPhase, pImgDst, _mtrxLength);
+
+		float* pSrc = pImgDst;
+		for (long j = 0; j < _mtrxHeight; j++)
+		{
+			for (long i = 0; i < _mtrxWidth; i++)
+			{
+				//Y = (X - minPhase) % MAX_PHASE
+				*pSrc = static_cast<float>(fmod(*pSrc - minPhase, MAX_PHASE));
+				pSrc++;
+			}
+		}
+		//map rad[2PI] to PixelValue[255]
+		ippsDll->ippsMulC_32f_I(static_cast<float>(MAX_PIXEL_VALUE / MAX_PHASE), pImgDst, _mtrxLength);
 		return TRUE;
 	}
-
-
-	return TRUE;
+	return FALSE;
 }
 
 long HologramGen::Set3DParam(double na, double wavelength)
@@ -185,6 +202,8 @@ long HologramGen::FittingTransform(float* pImgDst)
 		return AffineTransform(pImgDst);
 	case GeoFittingAlg::PROJECTIVE:
 		return ProjectTransform(pImgDst);
+	case GeoFittingAlg::HOMOGENEOUS:
+		return HomogeneousTransform(pImgDst, 0.0);
 	default:
 		break;
 	}
@@ -318,6 +337,7 @@ long HologramGen::Generate3DHologram(void* pMemStruct, int zCount)
 	vector<thread> threadVec(threadCount);
 
 	//identical initial random phase
+	Ipp32f pSpecSum = 0;
 	Ipp32f* pPhase = ippsDll->ippsMalloc_32f(_mtrxLength);
 	IppsRandUniState_32f* pRus;
 	unsigned int seed = 0;
@@ -325,7 +345,7 @@ long HologramGen::Generate3DHologram(void* pMemStruct, int zCount)
 	ippsDll->ippsRandUniform_32f(pPhase, _mtrxLength, pRus);
 	ippsDll->ippsRandUniformFree_32f(pRus);
 
-	vector<Ipp32f*> pImgInt, pImgPhase;
+	vector<Ipp32f*> pImgInt, pPolMagn, pPolPhase;
 	vector<Ipp32fc*> pImgCmplx;
 	IppiSize ippSize = { _mtrxWidth, _mtrxHeight };
 	int stepBytes;
@@ -333,7 +353,7 @@ long HologramGen::Generate3DHologram(void* pMemStruct, int zCount)
 	//each thread has one set of intensity and phase
 	for (int i = 0; i < threadCount; i++)
 	{
-		//apply fitting on individual z frame:
+		//apply fitting on individual z frame
 		HomogeneousTransform(pMem[i].GetMem(), pMem[i].GetKz());
 
 		Ipp32f* tmpI = ippsDll->ippsMalloc_32f(_mtrxLength);
@@ -342,20 +362,23 @@ long HologramGen::Generate3DHologram(void* pMemStruct, int zCount)
 		QuadrantShift(tmpI);						//shift target DC term to center
 		pImgInt.push_back(tmpI);
 
+		Ipp32f* tmpM = ippsDll->ippsMalloc_32f(_mtrxLength);
+		ippsDll->ippsSet_32f((Ipp32f)1.0, tmpM, _mtrxLength);
+		pPolMagn.push_back(tmpM);
+
 		Ipp32f* tmpP = ippsDll->ippsMalloc_32f(_mtrxLength);
 		ippsDll->ippsCopy_32f(pPhase, tmpP, _mtrxLength);
-		pImgPhase.push_back(tmpP);
+		pPolPhase.push_back(tmpP);
 
 		Ipp32fc* tmpC = ippiDll->ippiMalloc_32fc_C1(_mtrxWidth, _mtrxHeight, &stepBytes);
 		pImgCmplx.push_back(tmpC);
 	}
-	ippsDll->ippsFree(pPhase);
 
 	//start 3D hologram gen
 	for (int i = 1; i <= DEFAULT_ITERATIONS; i++)
 	{
 		for (int i = 0; i < threadCount; i++)
-			threadVec[i] = thread(&HologramGen::GenerateZHologram, this, pImgInt[i], pImgPhase[i], (void*)pImgCmplx[i], pMem[i].GetMem(), pMem[i].GetKz());
+			threadVec[i] = thread(&HologramGen::GenerateZHologram, this, pPolMagn[i], pPolPhase[i], (void*)pImgCmplx[i], pImgInt[i], pMem[i].GetKz());
 
 		for (int i = 0; i < threadCount; i++)
 			threadVec[i].join();
@@ -366,47 +389,51 @@ long HologramGen::Generate3DHologram(void* pMemStruct, int zCount)
 
 		//apply average
 		ippsDll->ippsDivC_32fc_I(divC, pImgCmplx[lastElement], _mtrxLength);
-
-		ippsDll->ippsCartToPolar_32fc(pImgCmplx[lastElement], pImgInt[lastElement], pImgPhase[lastElement], _mtrxLength);
+#ifdef _DEBUG
+		//compare sum of power spectrum ?
+		ippsDll->ippsPowerSpectr_32fc(pImgCmplx[lastElement], pPhase, _mtrxLength);
+		ippsDll->ippsSum_32f(pPhase, _mtrxLength, &pSpecSum, IppHintAlgorithm::ippAlgHintFast);
+#endif
+		//transform coordinate
+		ippsDll->ippsCartToPolar_32fc(pImgCmplx[lastElement], pPolMagn[lastElement], pPolPhase[lastElement], _mtrxLength);
 
 		//prepare for next round
 		if (DEFAULT_ITERATIONS > i)
 		{
-			FilterGauss(pImgInt[lastElement], 3, 0.5);
+			//apply gaussian instead of unit intensity
+			FilterGauss(pPolMagn[lastElement], 3, 0.5);
 
 			for (int i = 0; i < lastElement; i++)
 			{
-				ippsDll->ippsCopy_32f(pImgInt[lastElement], pImgInt[i], _mtrxLength);
-				ippsDll->ippsCopy_32f(pImgPhase[lastElement], pImgPhase[i], _mtrxLength);
+				ippsDll->ippsCopy_32f(pPolMagn[lastElement], pPolMagn[i], _mtrxLength);
+				ippsDll->ippsCopy_32f(pPolPhase[lastElement], pPolPhase[i], _mtrxLength);
 			}
 		}
 	}
 
-	//offset & normalize phase
-	Ipp32f minPhase, maxPhase;
-	ippsDll->ippsMin_32f(pImgPhase[lastElement], _mtrxLength, &minPhase);
-	ippsDll->ippsAddC_32f_I(abs(minPhase), pImgPhase[lastElement], _mtrxLength);
-	ippsDll->ippsMax_32f(pImgPhase[lastElement], _mtrxLength, &maxPhase);
-	ippsDll->ippsMulC_32f_I(MAX_PIXEL_VALUE / maxPhase, pImgPhase[lastElement], _mtrxLength);
+	//NormalizePhase(pPolPhase[lastElement]); //to be done by user at the end of rad operations
 
 	//copy to output result
-	ippsDll->ippsCopy_32f(pImgPhase[lastElement], pMem[threadCount].GetMem(), _mtrxLength);
+	ippsDll->ippsCopy_32f(pPolPhase[lastElement], pMem[threadCount].GetMem(), _mtrxLength);
 
 	//clear
+	ippsDll->ippsFree(pPhase);
 	for (size_t i = 0; i < threadCount; i++)
 	{
 		ippsDll->ippsFree(pImgInt[i]);
-		ippsDll->ippsFree(pImgPhase[i]);
+		ippsDll->ippsFree(pPolMagn[i]);
+		ippsDll->ippsFree(pPolPhase[i]);
 		ippiDll->ippiFree(pImgCmplx[i]);
 	}
 	pImgInt.clear();
-	pImgPhase.clear();
+	pPolMagn.clear();
+	pPolPhase.clear();
 	pImgCmplx.clear();
 	threadVec.clear();
 	return TRUE;
 }
 
-//apply z defocus on given hologram
+//apply z defocus on given hologram, expect input unit in [rad]
 long HologramGen::DefocusHologram(float* pImgDst, double kz)
 {
 	if (0.0 != kz && 0 < _fftSize)
@@ -419,7 +446,7 @@ long HologramGen::DefocusHologram(float* pImgDst, double kz)
 			for (long i = 0; i < _mtrxWidth; i++)
 			{
 				double squareRadius = (pow(i - xCenter, 2) + pow(j - yCenter, 2)) / pow(_fftSize / 2, 2);
-				double criticalCondition = pow(_refractiveN, 2) - (squareRadius * pow(_NAeff, 2));
+				double criticalCondition = pow(_refractiveN, 2) - (squareRadius * pow(_NAeff, 2));			//unit: [rad]
 				if (0 < criticalCondition)
 					*pSrc += static_cast<float>(kz * sqrt(criticalCondition));
 
@@ -865,7 +892,7 @@ long HologramGen::CalculateHomogeneousCoeffs(const float* pSrcPoints, const floa
 
 	int unitStride = sizeof(Ipp32f);
 	int strideX = mtxSide * sizeof(Ipp32f);
-	int strideY = size / DEFAULT_DIM;
+	int strideY = size / DEFAULT_DIM;	// equal to number of points
 	int mtrxSize = strideY * mtxSide;
 	Ipp32f* pSrc = ippsDll->ippsMalloc_32f(mtrxSize);
 	ippsDll->ippsZero_32f(pSrc, mtrxSize);
@@ -873,7 +900,7 @@ long HologramGen::CalculateHomogeneousCoeffs(const float* pSrcPoints, const floa
 
 	Ipp32f* pTgt = ippsDll->ippsMalloc_32f(strideY);
 	Ipp32f* pBuf = ippsDll->ippsMalloc_32f(strideY);
-	Ipp32f* pAff = ippsDll->ippsMalloc_32f(pow(mtxSide, 2));
+	Ipp32f* pAff = ippsDll->ippsMalloc_32f(static_cast<int>(pow(mtxSide, 2)));
 	//******************************************************//
 	//Target:[u1		Source:[x1 y1 z1 1		matrix:[h11	//
 	//        u2			    x2 y2 z2 1              h12	//
@@ -923,14 +950,14 @@ long HologramGen::CalculateHomogeneousCoeffs(const float* pSrcPoints, const floa
 		IppStatus istatus = ippmDll->ippmQRDecomp_m_32f(pSrc, strideX, unitStride, pBuf, pDeComp, strideX, unitStride, mtxSide, strideY);
 		if (ippStsNoErr != istatus)
 		{
-			StringCbPrintfW(errMsg, MSG_LENGTH, L"HologramGenerator CalculateAffineCoeffs failed: ippmQRDecomp_m_32f, error#: %d", istatus);
+			StringCbPrintfW(errMsg, MSG_LENGTH, L"HologramGenerator CalculateHomogeneousCoeffs failed: ippmQRDecomp_m_32f, error#: %d", istatus);
 			LogMessage(ERROR_EVENT);
 			ret = FALSE;
 		}
 		istatus = ippmDll->ippmQRBackSubst_mva_32f(pDeComp, strideX, unitStride, pBuf, pTgt, unitStride, unitStride, (pAff + i * mtxSide), unitStride, unitStride, mtxSide, strideY, 1);
 		if (ippStsNoErr != istatus)
 		{
-			StringCbPrintfW(errMsg, MSG_LENGTH, L"HologramGenerator CalculateAffineCoeffs failed: ippmQRBackSubst_mva_32f, error#: %d", istatus);
+			StringCbPrintfW(errMsg, MSG_LENGTH, L"HologramGenerator CalculateHomogeneousCoeffs failed: ippmQRBackSubst_mva_32f, error#: %d", istatus);
 			LogMessage(ERROR_EVENT);
 			ret = FALSE;
 		}
@@ -952,7 +979,7 @@ long HologramGen::CalculateHomogeneousCoeffs(const float* pSrcPoints, const floa
 		}
 		else
 		{
-			//keep 3rd row/column as a unit:
+			//keep 3rd row/column as a unit: [0 0 1 0]
 			memset((void*)pAffOut, 0x0, HOMOGENEOUS_COEFF_CNT * sizeof(double));
 			*(pAffOut) = *(pResl);
 			*(pAffOut + 1) = *(pResl + 1);
@@ -1180,12 +1207,7 @@ long HologramGen::PhaseGenByGS(float* pImg, float* pPolPhase, int iterateCount)
 	//FFT(pPolMagn, pPolPhase, true);
 	//ippsDll->ippsCopy_32f(pPolMagn, pPolPhase, _mtrxLength);
 
-	//offset & normalize phase
-	Ipp32f minPhase, maxPhase;
-	ippsDll->ippsMin_32f(pPolPhase, _mtrxLength, &minPhase);
-	ippsDll->ippsAddC_32f_I(abs(minPhase), pPolPhase, _mtrxLength);
-	ippsDll->ippsMax_32f(pPolPhase, _mtrxLength, &maxPhase);
-	ippsDll->ippsMulC_32f_I(MAX_PIXEL_VALUE / maxPhase, pPolPhase, _mtrxLength);
+	//NormalizePhase(pPolPhase); //to be done by user at the end of rad operations
 
 	//clear:
 	//ippsDll->ippsFree(pUnit);
@@ -1291,21 +1313,12 @@ long HologramGen::PhaseGenBy3DGS(float* pImg, float* pPolPhase, int iterateCount
 		}
 	}
 
-
-	NormalizePhase(pPolPhase);
-
-
 	////*** DEBUG	***//
 	////do FFT to check image
 	//FFT(pPolMagn, pPolPhase, true);
 	//ippsDll->ippsCopy_32f(pPolMagn, pPolPhase, _mtrxLength);
 
-	//offset & normalize phase
-	//Ipp32f minPhase, maxPhase;
-	//ippsDll->ippsMin_32f(pPolPhase, _mtrxLength, &minPhase);
-	//ippsDll->ippsAddC_32f_I(abs(minPhase), pPolPhase, _mtrxLength);
-	//ippsDll->ippsMax_32f(pPolPhase,_mtrxLength,&maxPhase);
-	//ippsDll->ippsMulC_32f_I(MAX_PIXEL_VALUE/maxPhase,pPolPhase,_mtrxLength);
+	//NormalizePhase(pPolPhase); //to be done by user at the end of rad operations
 
 	//clear:
 	//ippsDll->ippsFree(pUnit);
@@ -1411,7 +1424,7 @@ long HologramGen::SinglePassFilter(float* pImgDst)
 }
 
 //calculate phase mask along given z frame
-long HologramGen::GenerateZHologram(float* pImgInt, float* pImgPhase, void* pImgCx, float* pTarget, float zValue)
+long HologramGen::GenerateZHologram(float* pImgInt, float* pImgPhase, void* pImgCx, float* pTarget, float kz)
 {
 	IppiSize ippSize = { _mtrxWidth, _mtrxHeight };
 	IppiDFTSpec_C_32fc* spec;
@@ -1423,7 +1436,7 @@ long HologramGen::GenerateZHologram(float* pImgInt, float* pImgPhase, void* pImg
 	Ipp32fc* pDstC = ippiDll->ippiMalloc_32fc_C1(_mtrxWidth, _mtrxHeight, &stepBytes);
 
 	//defocus on phase ?
-	DefocusHologram(pImgPhase, zValue);
+	DefocusHologram(pImgPhase, kz);
 
 	//polar to complex:
 	ippsDll->ippsPolarToCart_32fc(pImgInt, pImgPhase, pImgCmplx, _mtrxLength);
@@ -1447,7 +1460,7 @@ long HologramGen::GenerateZHologram(float* pImgInt, float* pImgPhase, void* pImg
 	ippsDll->ippsCartToPolar_32fc(pDstC, pImgInt, pImgPhase, _mtrxLength);
 
 	//refocus:
-	DefocusHologram(pImgPhase, (double)(-1.0 * zValue));
+	DefocusHologram(pImgPhase, (double)(-1.0 * kz));
 
 	//polar to complex:
 	ippsDll->ippsPolarToCart_32fc(pImgInt, pImgPhase, pImgCmplx, _mtrxLength);

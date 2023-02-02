@@ -94,3 +94,8 @@ DllExportHoloGen OffsetByPixels(float* pImgDst, long offsetX, long offsetY)
 {
 	return HologramGen::getInstance()->OffsetByPixels(pImgDst, offsetX, offsetY);
 }
+
+DllExportHoloGen NormalizePhase(float* pImgDst)
+{
+	return HologramGen::getInstance()->NormalizePhase(pImgDst);
+}

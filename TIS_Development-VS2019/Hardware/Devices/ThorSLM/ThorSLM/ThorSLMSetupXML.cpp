@@ -276,7 +276,7 @@ long ThorSLMXML::GetCalibration3D(int id, double& wavelengthNM, long& phaseMax, 
 
 		ticpp::Element* configObj = _xmlObj.get()->FirstChildElement(false);
 
-		if (configObj == NULL || NUM_CALIBRATION3D_ATTRIBUTES - CALIBRATION_OFFSET_INDEX > size)
+		if (configObj == NULL || NUM_CALIBRATION3D_ATTRIBUTES - CALIBRATION3D_OFFSET_INDEX > size)
 			return FALSE;
 
 		ticpp::Iterator< ticpp::Element > child(configObj, 1 == id ? CALIBRATION3D : CALIBRATION3D2);
@@ -368,19 +368,19 @@ long ThorSLMXML::SetCalibration3D(int id, double* affineCoeffs, long size)
 
 		ticpp::Element* configObj = _xmlObj.get()->FirstChildElement(false);
 
-		if (configObj == NULL || NUM_CALIBRATION3D_ATTRIBUTES - CALIBRATION_OFFSET_INDEX > size)
+		if (configObj == NULL || NUM_CALIBRATION3D_ATTRIBUTES - CALIBRATION3D_OFFSET_INDEX > size)
 			return FALSE;
 
 		std::vector<std::string> attr = { std::to_string(*affineCoeffs), std::to_string(*(affineCoeffs + 1)), std::to_string(*(affineCoeffs + 2)), std::to_string(*(affineCoeffs + 3)),	std::to_string(*(affineCoeffs + 4)),
 			std::to_string(*(affineCoeffs + 5)), std::to_string(*(affineCoeffs + 6)), std::to_string(*(affineCoeffs + 7)), std::to_string(*(affineCoeffs + 8)),	std::to_string(*(affineCoeffs + 9)),
 			std::to_string(*(affineCoeffs + 10)), std::to_string(*(affineCoeffs + 11)), std::to_string(*(affineCoeffs + 12)), std::to_string(*(affineCoeffs + 13)), std::to_string(*(affineCoeffs + 14)), std::to_string(*(affineCoeffs + 15)) };
 
-		for (int index = CALIBRATION_OFFSET_INDEX; index < NUM_CALIBRATION3D_ATTRIBUTES; index++)
+		for (int index = CALIBRATION3D_OFFSET_INDEX; index < NUM_CALIBRATION3D_ATTRIBUTES; index++)
 		{
 			// iterate over to get the particular tag element specified as a parameter(tagName)
 			ticpp::Iterator<ticpp::Element> child(configObj->FirstChildElement(1 == id ? CALIBRATION3D : CALIBRATION3D2), 1 == id ? CALIBRATION3D : CALIBRATION3D2);
 			//get the attribute value for the specified attribute name
-			child->SetAttribute(CALIBRATION3D_ATTR[index], attr[index - (int)CALIBRATION_OFFSET_INDEX]);
+			child->SetAttribute(CALIBRATION3D_ATTR[index], attr[index - (int)CALIBRATION3D_OFFSET_INDEX]);
 		}
 
 		return SaveConfigFile();
@@ -392,7 +392,15 @@ long ThorSLMXML::SetCalibration3D(int id, double* affineCoeffs, long size)
 	}
 }
 
-long ThorSLMXML::SetDefocus(int id, double offsetZum)
+/// <summary>
+/// set attribute in calibration, [0(2d)-1(3d)], wavelengthID:[1-2], attribute index in calibration node and assigned double value
+/// </summary>
+/// <param name="mode"></param>
+/// <param name="lamdaID"></param>
+/// <param name="attrID"></param>
+/// <param name="val"></param>
+/// <returns></returns>
+long ThorSLMXML::SetCalibrationAttribute(int mode, int lamdaID, int attrID, double val)
 {
 	try
 	{
@@ -402,16 +410,31 @@ long ThorSLMXML::SetDefocus(int id, double offsetZum)
 		if (configObj == NULL)
 			return FALSE;
 
-		ticpp::Iterator<ticpp::Element> child(configObj->FirstChildElement(1 == id ? CALIBRATION : CALIBRATION2), 1 == id ? CALIBRATION : CALIBRATION2);
-		child->SetAttribute(CALIBRATION_ATTR[2], std::to_string(offsetZum));
+		if (1 == mode)
+		{
+			//save at 3D as well
+			ticpp::Iterator<ticpp::Element> child3D(configObj->FirstChildElement(1 == lamdaID ? CALIBRATION3D : CALIBRATION3D2), 1 == lamdaID ? CALIBRATION3D : CALIBRATION3D2);
+			child3D->SetAttribute(CALIBRATION3D_ATTR[attrID], std::to_string(val));
+		}
+		else
+		{
+			ticpp::Iterator<ticpp::Element> child(configObj->FirstChildElement(1 == lamdaID ? CALIBRATION : CALIBRATION2), 1 == lamdaID ? CALIBRATION : CALIBRATION2);
+			child->SetAttribute(CALIBRATION_ATTR[attrID], std::to_string(val));
+		}
 
 		return SaveConfigFile();
 	}
 	catch (exception ex)
 	{
-		StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorSLMXML SetDefocus failed: %s", StringToWString(ex.what()).c_str());
+		StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorSLMXML SetCalibrationAttribute failed: %s", StringToWString(ex.what()).c_str());
 		return FALSE;
 	}
+}
+
+long ThorSLMXML::SetDefocus(int id, double offsetZum)
+{
+	SetCalibrationAttribute(0, id, 2, offsetZum);
+	return SetCalibrationAttribute(1, id, 2, offsetZum);
 }
 
 const char* const ThorSLMXML::SPEC = "Spec";

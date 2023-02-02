@@ -17,12 +17,12 @@ public:
 
 	static const char* const CALIBRATION;
 	static const char* const CALIBRATION2;
-	const int CALIBRATION_OFFSET_INDEX = 3;
 	enum { NUM_CALIBRATION_ATTRIBUTES = 11 };
 	static const char* const CALIBRATION_ATTR[NUM_CALIBRATION_ATTRIBUTES];
 
 	static const char* const CALIBRATION3D;
 	static const char* const CALIBRATION3D2;
+	const int CALIBRATION3D_OFFSET_INDEX = 3;
 	enum { NUM_CALIBRATION3D_ATTRIBUTES = 19 };
 	static const char* const CALIBRATION3D_ATTR[NUM_CALIBRATION3D_ATTRIBUTES];
 
@@ -52,7 +52,9 @@ public:
 	long SetCalibration(int id, double affineCoeff1, double affineCoeff2, double affineCoeff3, double affineCoeff4, double affineCoeff5, double affineCoeff6, double affineCoeff7, double affineCoeff8);
 	long GetCalibration3D(int id, double& wavelengthNM, long& phaseMax, double& offsetZum, double* affineCoeffs, long size);
 	long SetCalibration3D(int id, double* affineCoeffs, long size);
+	long SetCalibrationAttribute(int mode, int lamdaID, int attrID, double val);
 	long SetDefocus(int id, double offsetZum);
+	long SetZRef3Dum(int id, double zRef3Dum);
 
 	long GetSpec(string& name, long& dmdMode, long& overDrive, unsigned int& transientFrames, double& pitchUM, double& flatDiagRatio, double& flatPowerMinPercent, double& flatPowerMaxPercent, long& pixelX, long& pixelY, string& lut, string& odLUT, string& wavefront);
 	long GetBlank(long& dualPatternShiftPx, long& persistHologramZone1, long& persistHologramZone2);

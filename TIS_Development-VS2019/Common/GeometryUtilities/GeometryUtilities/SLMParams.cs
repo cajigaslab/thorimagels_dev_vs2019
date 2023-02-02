@@ -24,7 +24,7 @@
     {
         #region Fields
 
-        private int _pixelSpacing = 1;
+        private int _pixelSpacing = 1, _phaseType = 0;
         private double[] _slmMeasurePowerArea = { 0.0 };
         private bool _slmPowerAlert = false;
 
@@ -49,6 +49,7 @@
             this.Red = slmParams.Red;
             this.Green = slmParams.Green;
             this.Blue = slmParams.Blue;
+            this.PhaseType = slmParams.PhaseType;
             this.BleachWaveParams = slmParams.BleachWaveParams.MakeCopy();
             this.BleachWaveParams.PropertyChanged += BleachWaveParams_PropertyChanged;
         }
@@ -95,6 +96,11 @@
         {
             get;
             set;
+        }
+        public int PhaseType
+        {
+            get { return _phaseType; }
+            set { _phaseType = value; }
         }
 
         public int PixelSpacing
@@ -202,6 +208,8 @@
             if (this.PixelSpacing != slmParams.PixelSpacing)
                 return false;
             if (this.Duration != slmParams.Duration)
+                return false;
+            if (this.PhaseType != slmParams.PhaseType)
                 return false;
 
             return (this.BleachWaveParams.CompareTo(slmParams.BleachWaveParams));

@@ -190,7 +190,7 @@ int32 CVICALLBACK ThorLSMCam::EveryNPockelOutCallback(TaskHandle taskHandle, int
 }
 
 /// <summary> build digital output waveform based on supplied memory [Dropped, check line selection only]</summary>
-long ThorLSMCam::BuildTaskMaterDigital(void)
+long ThorLSMCam::BuildTaskMasterDigital(void)
 {
 	///Copy the arrays for digital output as waveform cycle triggers.
 	///Use P0.6 as Trigger out, followed by pockels Digital output, 

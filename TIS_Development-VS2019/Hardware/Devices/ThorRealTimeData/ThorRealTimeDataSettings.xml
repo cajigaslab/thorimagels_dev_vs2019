@@ -7,7 +7,7 @@
     <Configuration OTM="0" VisibleChoices="63" DisplayDataWhileReviewLoading="0" />
   </UserSettings>
   <DaqDevices>
-    <AcquireBoard type="NI6363" devID="Dev3" active="0" totalAI="2" totalDI="4" duration="0" StimulusLimit="-0.5" hwTrigMode="0" hwTrigChannel="/PFI7" hwTrigType="0">
+    <AcquireBoard type="NI6363" devID="Dev3" active="1" totalAI="2" totalDI="4" duration="0" StimulusLimit="-0.5" hwTrigMode="0" hwTrigChannel="/PFI7" hwTrigType="0">
       <DataChannel enable="1" alias="PiezoMonitor" signalType="0" group="/AI" physicalChannel="/ai0" sample="1" Stimulus="0" red="255" green="200" blue="150" visible="1" yLock="0" />
       <DataChannel enable="1" alias="Pockels1Monitor" signalType="0" group="/AI" physicalChannel="/ai1" sample="0" Stimulus="0" red="99" green="60" blue="233" visible="1" yLock="0" />
       <DataChannel enable="0" alias="ai2" signalType="0" group="/AI" physicalChannel="/ai2" sample="0" Stimulus="0" red="0" green="0" blue="89" />
@@ -81,7 +81,7 @@
       <Bleach shutterLine="/PFI5" bleachLine="/port0/line4" outputLine="/port0/line6" pmtCloseTime="25" bleachTime="100" bleachIdleTime="0" bleachIteration="1" outDelayTime="6" bleachTrigMode="0" hwTrigLine="/PFI7" cycle="1" interval="0" />
       <Invert inputLine="10" outputLine="/PFI11" />
     </AcquireBoard>
-    <AcquireBoard type="NI6321" devID="Dev3" active="1" totalAI="2" totalDI="4" duration="0" StimulusLimit="-0.5" hwTrigMode="0" hwTrigChannel="/PFI7" hwTrigType="0">
+    <AcquireBoard type="NI6321" devID="Dev3" active="0" totalAI="2" totalDI="4" duration="0" StimulusLimit="-0.5" hwTrigMode="0" hwTrigChannel="/PFI7" hwTrigType="0">
       <DataChannel enable="1" alias="PiezoMonitor" signalType="0" group="/AI" physicalChannel="/ai0" sample="1" Stimulus="0" red="255" green="200" blue="150" />
       <DataChannel enable="1" alias="Pockels1Monitor" signalType="0" group="/AI" physicalChannel="/ai1" sample="0" Stimulus="0" red="99" green="60" blue="233" />
       <DataChannel enable="0" alias="ai2" signalType="0" group="/AI" physicalChannel="/ai2" sample="0" Stimulus="0" red="0" green="0" blue="89" />

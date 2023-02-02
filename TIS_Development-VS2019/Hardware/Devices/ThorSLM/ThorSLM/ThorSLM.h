@@ -12,6 +12,7 @@ extern "C"
 	private:
 		static bool _instanceFlag;
 		static unique_ptr<ThorSLM> _single;
+		static CRITICAL_SECTION _accessCritSection; ///<critical section control for access resouces
 
 		static float* _fpPointsXY[MAX_ARRAY_CNT]; ///<interleaved x,y coordinate of slm points for frame per set
 		static float* _fpPointsXYZ[MAX_ARRAY_CNT]; ///<interleaved x,y,z coordinate of slm calibration points
@@ -124,7 +125,7 @@ extern "C"
 		long CoordinatesVerticalFlip(float* ptArrays, long size);
 		long CoordinatesScale(float* ptArrays, long size, double scaleX, double scaleY);
 		void CopyDefocus(int from, int to);
-		long DefocusHologram(void);
+		long DefocusNormalizeHologram(long savedZ);
 		long LoadHologram();
 		double ParseZUM(wstring filename);
 		long PersistAffineValues();

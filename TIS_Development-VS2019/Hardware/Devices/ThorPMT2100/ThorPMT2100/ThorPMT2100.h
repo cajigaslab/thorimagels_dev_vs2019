@@ -88,6 +88,7 @@ private:
 	long _startupGainPercent[DEVICE_NUM];
 	ViSession _viRM;
 	string _deviceAddress[DEVICE_NUM];
+	string _availableBandwidths = "250000,2500000,80000000"; //PMT2100 always have had the same bandwidths, we can hardcode them to save time. Otherwise follow ThorDetector's approach to get the bandwidths
 	long _connectedPMTs;	
     static bool _instanceFlag;
     static auto_ptr<ThorPMT2100> _single;

@@ -230,31 +230,6 @@ long AcquireTSeries::Execute(long index, long subWell)
 
 	_adaptiveOffset = afAdaptiveOffset;
 
-	long aftype,repeat;
-	double expTimeMS,stepSizeUM,startPosMM,stopPosMM;
-
-	_pExp->GetAutoFocus(aftype,repeat,expTimeMS,stepSizeUM,startPosMM,stopPosMM);
-
-	//Determine if we are capturing the first image for the experiment. If so make sure an autofocus is executed if enabled.
-	//After the first iteration the Z position will overlap with the XY motion
-	if((aftype != IAutoFocus::AF_NONE)&&(subWell==1))
-	{
-		_evenOdd = FALSE;
-		_lastGoodFocusPosition = afStartPos + _adaptiveOffset;
-		if(FALSE == SetAutoFocusStartZPosition(afStartPos,TRUE,FALSE))
-		{
-			return FALSE;
-		}
-	}
-
-	BOOL afFound = FALSE;
-
-	if (FALSE == RunAutofocus(index, aftype, afFound))
-	{
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample RunAutofocus failed");
-		return FALSE;
-	}
-
 	_pCamera = GetCamera(SelectedHardware::SELECTED_CAMERA1);
 
 	if(NULL == _pCamera)
@@ -1259,31 +1234,6 @@ long AcquireTSeries::ZStreamExecute(long index, long subWell)
 
 	_adaptiveOffset = afAdaptiveOffset;
 
-	long aftype,repeat;
-	double expTimeMS,stepSizeUM,startPosMM,stopPosMM;
-
-	_pExp->GetAutoFocus(aftype,repeat,expTimeMS,stepSizeUM,startPosMM,stopPosMM);
-
-	//Determine if we are capturing the first image for the experiment. If so make sure an autofocus is executed if enabled.
-	//After the first iteration the Z position will overlap with the XY motion
-	if((aftype != IAutoFocus::AF_NONE)&&(subWell==1))
-	{
-		_evenOdd = FALSE;
-		_lastGoodFocusPosition = afStartPos + _adaptiveOffset;
-		if(FALSE == SetAutoFocusStartZPosition(afStartPos,TRUE,FALSE))
-		{
-			return FALSE;
-		}
-	}
-
-	BOOL afFound = FALSE;
-
-	if (FALSE == RunAutofocus(index, aftype, afFound))
-	{
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample RunAutofocus failed");
-		return FALSE;
-	}
-
 	ICamera *pCamera = NULL;
 
 	pCamera = GetCamera(SelectedHardware::SELECTED_CAMERA1);
@@ -1495,15 +1445,6 @@ long AcquireTSeries::ZStreamExecute(long index, long subWell)
 	}
 
 	pCamera->PostflightAcquisition(NULL);
-
-	if((aftype != IAutoFocus::AF_NONE)&&(TRUE == AutofocusExecuteNextIteration(aftype)))
-	{
-		////move to an offset of of the start location	
-		if(FALSE == SetAutoFocusStartZPosition(afStartPos,FALSE,afFound))
-		{
-			return FALSE;
-		}
-	}
 
 	PhysicalSize physicalSize;	// unit: um
 	double res = floor(umPerPixel*1000+0.5)/1000;	// keep 2 figures after decimal point, that is why 100 (10^2) is multiplied

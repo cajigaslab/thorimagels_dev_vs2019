@@ -28,15 +28,6 @@
 #define PMT_TRIP_THRESH				1500
 #define HPD_TRIP_THRESH				4000
 
-#define BW_300MHz					300000000
-#define BW_200MHz					200000000
-#define BW_80MHz					80000000
-#define BW_30MHz					30000000
-#define BW_15MHz					15000000
-#define BW_2_5MHz					2500000
-#define BW_1MHz						1000000
-#define BW_250kHz					250000
-
 #define MILIVOLTS_TO_VOLTS			1000.0
 
 const string THORLABS_VID = "1313";
@@ -106,25 +97,25 @@ public:
 	static ThorDetector* getInstance();
 	~ThorDetector();
 
-	long FindDevices(long &DeviceCount);
+	long FindDevices(long& DeviceCount);
 	long SelectDevice(const long Device);
 	long TeardownDevice();
-	long GetParamInfo(const long paramID, long &paramType, long &paramAvailable, long &paramReadOnly, double &paramMin, double &paramMax, double &paramDefault);
+	long GetParamInfo(const long paramID, long& paramType, long& paramAvailable, long& paramReadOnly, double& paramMin, double& paramMax, double& paramDefault);
 	long SetParam(const long paramID, const double param);
-	long GetParam(const long paramID, double &param);
-	long SetParamBuffer(const long paramID, char * buffer, long size);
-	long GetParamBuffer(const long paramID, char * buffer, long size);
-	long SetParamString(const long paramID, wchar_t * str);
-	long GetParamString(const long paramID, wchar_t * str, long size);	
+	long GetParam(const long paramID, double& param);
+	long SetParamBuffer(const long paramID, char* buffer, long size);
+	long GetParamBuffer(const long paramID, char* buffer, long size);
+	long SetParamString(const long paramID, wchar_t* str);
+	long GetParamString(const long paramID, wchar_t* str, long size);
 	long PreflightPosition();
 	long SetupPosition();
 	long StartPosition();
-	long StatusPosition(long &status);
-	long ReadPosition(DeviceType deviceType,double &pos);	
+	long StatusPosition(long& status);
+	long ReadPosition(DeviceType deviceType, double& pos);
 	long PostflightPosition();
-	long GetLastErrorMsg(wchar_t *msg, long size);
+	long GetLastErrorMsg(wchar_t* msg, long size);
 
-private:	
+private:
 
 	static bool _instanceFlag;        ///singleton created flag
 	static auto_ptr<ThorDetector> _single;        ///pointer to internal Device object
@@ -135,11 +126,12 @@ private:
 
 	BOOL _deviceDetected[DEVICE_NUM + 1];
 	string _settingsSerialNumber[DEVICE_NUM];
-	long _connectedPMTs;	
+	long _connectedPMTs;
 	long _sleepTimeAfterMoveComplete;
 	long _defaultGain[DEVICE_NUM];
 	string _serialNumber[DEVICE_NUM];
 	string _firmwareVersion[DEVICE_NUM];
+	string _availableBandwidths[DEVICE_NUM];
 	CritSect _critSect;
 	vector<vector<string>> _snList;
 	long _baudRate;
@@ -157,7 +149,9 @@ private:
 	double _offsetMinVolts[DEVICE_NUM];
 	double _offsetMaxVolts[DEVICE_NUM];
 
-	std::map<long, ParamInfo *> _tableParams;
+	list<long> _allBandwidths = { BW_250kHz, BW_1MHz, BW_2_5MHz, BW_15MHz, BW_30MHz, BW_80MHz, BW_200MHz, BW_300MHz };
+
+	std::map<long, ParamInfo*> _tableParams;
 
 	static const string _deviceSignature[DEVICE_NUM];
 	static const long _pmtSelect[DEVICE_NUM];
@@ -166,15 +160,16 @@ private:
 	ThorDetector();
 	long DestroyParamTable();
 	long BuildParamTable();
-	long ExecuteCmdParam(ParamInfo *pParamInfo);
-	long ExecuteCmd(std::vector<unsigned char> cmd, int portIndex, double &readBackValue, long requestStatus, USHORT &returnedCommand);
+	long ExecuteCmdParam(ParamInfo* pParamInfo);
+	long ExecuteCmd(std::vector<unsigned char> cmd, int portIndex, double& readBackValue, long requestStatus, USHORT& returnedCommand);
 	long RetrieveDevicesInfo();
+	long GetAvailableBandwidths();
 	void ExecutePositionNow();
 	long ConnectToComPort(wstring portName, long pmtIndex);
 
 	long GetDeviceParameters();
 
-	double rndup(double val,int decPlace);
+	double rndup(double val, int decPlace);
 
 	static void LogMessage(wchar_t* logMsg, long eventLevel);
 	std::vector<unsigned char> GetBytes(int value);

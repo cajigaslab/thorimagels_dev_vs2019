@@ -1240,6 +1240,7 @@
                                           VerticalContentAlignment="Center"
                                           IsChecked="{Binding Path=LSMPulseMultiplexing, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </StackPanel>
+
                             <StackPanel IsEnabled="{Binding Path=LsmClkPnlEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                         Orientation="Horizontal"
                                         HorizontalAlignment="Left"
@@ -1408,6 +1409,16 @@
                                     <ComboBoxItem Content="Sum" />
                                     <ComboBoxItem Content="Average" />
                                 </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Visibility="{Binding Path=DisplayedCRSFrequencyVisibility}"
+                                        Margin="0,0">
+                                <Label Content="CRS Frequency:"
+                                       VerticalAlignment="Center" />
+                                <Label Height="25"
+                                       Content="{Binding Path=DisplayedCRSFrequency}"
+                                       ToolTip="Current Resonant Scanner Frequency"
+                                       VerticalAlignment="Center" />
                             </StackPanel>
                         </StackPanel>
                     </Expander>

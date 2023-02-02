@@ -262,31 +262,58 @@
                         </Style>
                     </ToggleButton.Style>
                 </ToggleButton>
-                <StackPanel Width="100"  ToolTip="Set reference Z position for 3D SLM pattern" Orientation="Horizontal">
-                    <StackPanel.Style>
-                        <Style TargetType="StackPanel" BasedOn="{StaticResource {x:Type StackPanel}}">
-                            <Setter Property="Visibility"
-                                    Value="Hidden" />
+                <Label Content="Z offset"
+                                   HorizontalAlignment="Center"
+                                   Foreground="White" />
+                <TextBox x:Name="txZOffset"
+                                     Text="{Binding Path=DefocusUM, Mode=TwoWay}"
+                                     validator:Validation.ValidationType="{x:Type system:Double}"
+                                     validator:Validation.MinValue="-5000.0"
+                                     validator:Validation.MaxValue="5000.0"
+                                     validator:Validation.NoEmptyValue="True"
+                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                     Width="40"
+                                     HorizontalAlignment="Center"
+                                     VerticalAlignment="Center"
+                                     Margin="1">
+                    <TextBox.Style>
+                        <Style TargetType="{x:Type TextBox}"
+                                               BasedOn="{StaticResource {x:Type TextBox}}">
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding ElementName=tbtnSLM3D, Path=IsChecked}"
-                                             Value="True">
+                                <Trigger Property="Validation.HasError"
+                                                     Value="True">
+                                    <Setter Property="ToolTip"
+                                                        Value="{Binding RelativeSource={x:Static RelativeSource.Self}, Path=(Validation.Errors).CurrentItem.ErrorContent}" />
+                                </Trigger>
+                                <Trigger Property="Validation.HasError"
+                                                     Value="False">
+                                    <Setter Property="ToolTip"
+                                                        Value="Apply z offset in um on current modality" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+                <Button Width="25"
+                                    Height="25"
+                                    Content="✓">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txZOffset}"
+                                                         Value="True">
                                     <Setter Property="Visibility"
-                                            Value="Visible" />
+                                                        Value="Visible" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
-                    </StackPanel.Style>
-                    <Button HorizontalAlignment="Left"
-                            VerticalAlignment="Center"
-                            Height="25"
-                            Width="100"
-                            Margin="0"
-                            Command="{Binding Path=EditSLMParamRelayCommand}"
-                            CommandParameter="SLM_Z_REF"
-                            IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
-                        <TextBlock Text="{Binding Path=SLMZRefText, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"></TextBlock>
-                    </Button>
-                </StackPanel>
+                    </Button.Style>
+                </Button>
+                <Label Content="[um]"
+                                   HorizontalAlignment="Center"
+                                   Foreground="White" />
                 <StackPanel Orientation="Horizontal">
                     <StackPanel.Style>
                         <Style TargetType="StackPanel"
@@ -311,8 +338,8 @@
                              validator:Validation.MinValue="1"
                              validator:Validation.NoEmptyValue="True"
                              validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
-                             Width="40"
-                             Margin="3"
+                             Width="33"
+                             Margin="1"
                              HorizontalAlignment="Center"
                              VerticalAlignment="Center"
                              HorizontalContentAlignment="Right">
@@ -354,7 +381,7 @@
                 </StackPanel>
                 <Button Name="ConfigureEpochs"
                         VerticalAlignment="Center"
-                        Width="120"
+                        Width="113"
                         Height="25"
                         Command="{Binding Path=EditSLMParamRelayCommand}"
                         CommandParameter="SLM_CONFIG_SEQUENCE"
@@ -458,7 +485,6 @@
                             </Style.Triggers>
                         </Style>
                     </TextBox.Style>
-
                 </TextBox>
                 <Button Width="25"
                         Height="25"
@@ -597,16 +623,6 @@
                         <StackPanel Orientation="Horizontal"
                                     HorizontalAlignment="Left"
                                     ToolTip="Apply axial chromatic shift (Z offset) by SLM with refractive index of the environment.">
-                            <StackPanel.Style>
-                                <Style TargetType="StackPanel" BasedOn="{StaticResource {x:Type StackPanel}}">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding ElementName=tbtnSLM3D, Path=IsChecked}" Value="True">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </StackPanel.Style>
                             <Label Content="Refractive Index"
                                    HorizontalAlignment="Center"
                                    Foreground="White" />
@@ -621,7 +637,7 @@
                                      Margin="1">
                                 <TextBox.Style>
                                     <Style TargetType="{x:Type TextBox}"
-                                               BasedOn="{StaticResource {x:Type TextBox}}">
+                                           BasedOn="{StaticResource {x:Type TextBox}}">
                                         <Style.Triggers>
                                             <Trigger Property="Validation.HasError"
                                                      Value="True">
@@ -637,54 +653,67 @@
                                     </Style>
                                 </TextBox.Style>
                             </TextBox>
-                            <Label Content="Z offset"
-                                   HorizontalAlignment="Center"
-                                   Foreground="White" />
-                            <TextBox Text="{Binding Path=DefocusUM, Mode=TwoWay}"
-                                     validator:Validation.ValidationType="{x:Type system:Double}"
-                                     validator:Validation.MinValue="-5000.0"
-                                     validator:Validation.MaxValue="5000.0"
-                                     validator:Validation.NoEmptyValue="True"
-                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
-                                     Width="40"
-                                     HorizontalAlignment="Center"
-                                     VerticalAlignment="Center"
-                                     Margin="1">
-                                <TextBox.Style>
-                                    <Style TargetType="{x:Type TextBox}"
-                                               BasedOn="{StaticResource {x:Type TextBox}}">
+                            <StackPanel Width="120"  ToolTip="Set reference Z position for 3D SLM pattern" Orientation="Horizontal">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel" BasedOn="{StaticResource {x:Type StackPanel}}">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
                                         <Style.Triggers>
-                                            <Trigger Property="Validation.HasError"
-                                                     Value="True">
-                                                <Setter Property="ToolTip"
-                                                        Value="{Binding RelativeSource={x:Static RelativeSource.Self}, Path=(Validation.Errors).CurrentItem.ErrorContent}" />
-                                            </Trigger>
-                                            <Trigger Property="Validation.HasError"
-                                                     Value="False">
-                                                <Setter Property="ToolTip"
-                                                        Value="Apply z offset in um on current modality" />
-                                            </Trigger>
+                                            <DataTrigger Binding="{Binding ElementName=tbtnSLM3D, Path=IsChecked}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
-                                </TextBox.Style>
-                            </TextBox>
-                            <Label Content="[um]"
-                                   HorizontalAlignment="Center"
-                                   Foreground="White" />
-                            <Label Width="20"
-                                   HorizontalAlignment="Center"
-                                   Foreground="White" />
+                                </StackPanel.Style>
+                                <Button HorizontalAlignment="Left"
+                                        VerticalAlignment="Center"
+                                        Height="25"
+                                        Width="120"
+                                        Margin="0"
+                                        Command="{Binding Path=EditSLMParamRelayCommand}"
+                                        CommandParameter="SLM_Z_REF"
+                                        IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
+                                    <TextBlock Text="{Binding Path=SLMZRefText, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"></TextBlock>
+                                </Button>
+                            </StackPanel>
                             <Button ToolTip="Command to save axial chromatic shift calibration"
-                                    Width="50"
+                                    Width="80"
                                     Margin="1"
-                                    Visibility="{Binding Path=IsDefocusUMDifferent, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVisConverter}, ConverterParameter=Normal}"
                                     Command="{Binding Path=EditSLMParamRelayCommand}"
                                     CommandParameter="SLM_SAVEZOFFSET">
-                                <TextBlock ToolTip="Save Z Offset">Save</TextBlock>
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsDefocusUMDifferent, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Value="False">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding ElementName=tbtnSLM3D, Path=IsChecked}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <TextBlock ToolTip="Save Z Offset">Save Z Offset</TextBlock>
                             </Button>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal"
                                     HorizontalAlignment="Center">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel" BasedOn="{StaticResource {x:Type StackPanel}}">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ElementName=tbtnSLM3D, Path=IsChecked}"
+                                                     Value="True">
+                                            <Setter Property="Visibility"
+                                                    Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
                             <StackPanel Orientation="Horizontal"
                                         VerticalAlignment="Center">
                                 <Label Content="Power"

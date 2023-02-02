@@ -126,6 +126,7 @@ long ImageRoutineSciCam::CaptureZStack(double zStartPos, double zStopPos, double
 		stopCapture = FALSE;
 		hZStackCaptureThread = ::CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE) ZStackCaptureThreadProcSciCam, (LPVOID)zParams, 0, &dwZStackCaptureThreadId );
 		SetCaptureActive(TRUE);
+		SetZStackActive(TRUE);
 	}
 
 	return TRUE;
@@ -238,6 +239,17 @@ long ImageRoutineSciCam::SetCaptureActive(long active)
 long ImageRoutineSciCam::GetCaptureActive()
 {
 	return _captureActive;
+}
+
+long ImageRoutineSciCam::SetZStackActive(long zStackActive)
+{
+	_zStackActive = zStackActive;
+	return TRUE;
+}
+
+long ImageRoutineSciCam::GetZStackActive()
+{
+	return _zStackActive;
 }
 
 long ImageRoutineSciCam::CopyAcquisition(long isFullFrame)
@@ -916,6 +928,7 @@ UINT ZStackCaptureThreadProcSciCam( LPVOID pParam )
 		}	
 	}
 	CHECK_INLINE_PACTIVEIMAGEROUTINE(SetCaptureActive(FALSE));
+	CHECK_INLINE_PACTIVEIMAGEROUTINE(SetZStackActive(FALSE));
 	disableZRead = FALSE;
 
 	return 0;

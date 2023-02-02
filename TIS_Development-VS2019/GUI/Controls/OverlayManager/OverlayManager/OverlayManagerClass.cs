@@ -50,6 +50,7 @@
         public static BitVector32.Section SecG = BitVector32.CreateSection(255, SecR);
         public static BitVector32.Section SecB = BitVector32.CreateSection(255, SecG);
         public static BitVector32.Section SecA = BitVector32.CreateSection(255, SecB);
+        public static double TOLERANCE_ZUM = 0.5;
 
         private static BitVector32 _bitVec32;
         private static OverlayManagerClass _instance = null;
@@ -72,6 +73,7 @@
         private int[] _pixelUnitSizeXY = new int[2] { (int)Constants.PIXEL_X_MIN, (int)Constants.PIXEL_X_MIN };
         private int _pixelX;
         private int _pixelY;
+        private bool _reviewWindowOpened = false;
         private AdornerLayer _roiAdornerLayer;
         private int _roiCount;
         private List<Shape> _roiList;
@@ -176,18 +178,6 @@
             }
         }
 
-        public int BinX
-        {
-            get;
-            set;
-        }
-
-        public int BinY
-        {
-            get;
-            set;
-        }
-
         public int ColorRGB
         {
             get { return _colorRGB; }
@@ -243,6 +233,12 @@
             {
                 return _pixelY;
             }
+        }
+
+        public bool ReviewWindowOpened
+        {
+            get { return _reviewWindowOpened; }
+            set { _reviewWindowOpened = value; }
         }
 
         public int ROICount
@@ -314,8 +310,22 @@
 
         public double ZUM
         {
-            get { return _simulatorMode ? _zUM : (double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0.0] * (double)Constants.UM_TO_MM; }
-            set { _zUM = value; }
+            get
+            {
+                //Only get from ZControlViewModel if instance is not derived from Experiment Review window
+                if (!ReviewWindowOpened)
+                {
+                    return _simulatorMode ? _zUM : (double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0.0] * (double)Constants.UM_TO_MM;
+                }
+                else
+                {
+                    return _zUM;
+                }
+            }
+            set
+            {
+                _zUM = value;
+            }
         }
 
         #endregion Properties
@@ -1260,6 +1270,64 @@
             return iList;
         }
 
+        /// <summary>
+        /// Retrieve ROI centers from given shapes
+        /// </summary>
+        /// <param name="shapes"></param>
+        /// <returns></returns>
+        public List<Point> GetPatternROICenters(List<Shape> shapes)
+        {
+            List<Point> centers = new List<Point>();
+            Point? pt = null;
+            double left = double.MaxValue, right = 0, top = double.MaxValue, bottom = 0;
+            for (int i = 0; i < shapes.Count; i++)
+            {
+                switch (shapes[i].GetType().ToString())
+                {
+                    case "OverlayManager.ROIEllipse":
+                        pt = (shapes[i] as ROIEllipse).Center;
+                        break;
+                    case "OverlayManager.ROICrosshair":
+                        pt = (shapes[i] as ROICrosshair).CenterPoint;
+                        break;
+                    case "OverlayManager.ROIRect":
+                        pt = new Point((((OverlayManager.ROIRect)shapes[i]).TopLeft.X + ((OverlayManager.ROIRect)shapes[i]).BottomRight.X) / 2,
+                            (((OverlayManager.ROIRect)shapes[i]).TopLeft.Y + ((OverlayManager.ROIRect)shapes[i]).BottomRight.Y) / 2);
+                        break;
+                    case "OverlayManager.ROIPoly":
+                        for (int j = 0; j < ((ROIPoly)shapes[i]).Points.Count; j++)
+                        {
+                            left = Math.Min(left, ((ROIPoly)shapes[i]).Points[j].X);
+                            right = Math.Max(right, ((ROIPoly)shapes[i]).Points[j].X);
+                            top = Math.Min(top, ((ROIPoly)shapes[i]).Points[j].Y);
+                            bottom = Math.Min(bottom, ((ROIPoly)shapes[i]).Points[j].Y);
+                        }
+                        pt = new Point((left + right) / 2, (top + bottom) / 2);
+                        break;
+                    case "Line":
+                        pt = new Point((((Line)shapes[i]).X1 + ((Line)shapes[i]).X2) / 2, (((Line)shapes[i]).Y1 + ((Line)shapes[i]).Y2) / 2);
+                        break;
+                    case "Polyline":
+                        for (int j = 0; j < ((Polyline)shapes[i]).Points.Count; j++)
+                        {
+                            left = Math.Min(left, ((Polyline)shapes[i]).Points[j].X);
+                            right = Math.Max(right, ((Polyline)shapes[i]).Points[j].X);
+                            top = Math.Min(top, ((Polyline)shapes[i]).Points[j].Y);
+                            bottom = Math.Min(bottom, ((Polyline)shapes[i]).Points[j].Y);
+                        }
+                        pt = new Point((left + right) / 2, (top + bottom) / 2);
+                        break;
+                    default:
+                        break;
+                }
+                if (null != pt)
+                {
+                    centers.Add((Point)pt);
+                }
+            }
+            return centers;
+        }
+
         public List<Point> GetPatternROICenters(int patternID, ref string roiType, ref Point centerPoint)
         {
             List<Point> centers = new List<Point>();
@@ -1343,39 +1411,7 @@
         {
             Dictionary<double, List<Shape>> zShapes = new Dictionary<double, List<Shape>>();
             double zUM = 0.0;
-            int subID = 0;
-            int[] limit = { 0, Int32.MaxValue };
-
-            //parse subIDstr for condition (< or >), expected one side only:
-            if (!Int32.TryParse(subIDstr, out subID))
-            {
-                Match oMatch = Regex.Match(subIDstr, @"\s*([<>=]+)\s*(\d+)\s*?");
-                if (oMatch.Success)
-                {
-                    int lVal = Convert.ToInt32(oMatch.Groups[2].Value);
-                    switch (oMatch.Groups[1].Value)
-                    {
-                        case "<":
-                            limit[1] = Math.Max(0, lVal - 1);
-                            break;
-                        case "<=":
-                        case "=<":
-                            limit[1] = Math.Max(0, lVal);
-                            break;
-                        case ">":
-                            limit[0] = lVal + 1;
-                            break;
-                        case ">=":
-                        case "=>":
-                            limit[0] = lVal;
-                            break;
-                    }
-                }
-            }
-            else
-            {
-                limit[0] = limit[1] = subID;
-            }
+            int[] limit = ParseLimit(subIDstr);
 
             for (int i = 0; i < _roiList.Count; i++)
             {
@@ -1387,12 +1423,28 @@
                 {
                     if (Double.TryParse(((int[])_roiList[i].Tag)[(int)Tag.Z_UM_INT].ToString() + "." + ((int[])_roiList[i].Tag)[(int)Tag.Z_UM_DEC].ToString(), out zUM))
                     {
-                        if (!zShapes.ContainsKey(zUM))
+                        //consider drifting of z value, keep on the same level if within tolerance
+                        double foundZum = 0;
+                        bool found = false;
+                        foreach (KeyValuePair<double, List<Shape>> entry in zShapes)
+                        {
+                            if (TOLERANCE_ZUM > Math.Abs(entry.Key - zUM))
+                            {
+                                foundZum = entry.Key;
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (found)
+                        {
+                            zShapes[foundZum].Add(_roiList[i]);
+                        }
+                        else
                         {
                             List<Shape> shapeList = new List<Shape>();
                             zShapes.Add(zUM, shapeList);
+                            zShapes[zUM].Add(_roiList[i]);
                         }
-                        zShapes[zUM].Add(_roiList[i]);
                     }
                 }
             }
@@ -1807,16 +1859,7 @@
                                 }
 
                                 //Add properties to the last added item
-                                double zUM = 0.0;
-                                Double.TryParse(tag[(int)Tag.Z_UM_INT].ToString() + "." + tag[(int)Tag.Z_UM_DEC].ToString(), out zUM);
-                                if (Mode.PATTERN_NOSTATS == (Mode)(GetTagByteSection(tag, Tag.MODE, SecR)) || Mode.PATTERN_WIDEFIELD == (Mode)(GetTagByteSection(tag, Tag.MODE, SecR)))
-                                {
-                                    _roiList[i].ToolTip = ((0 == tag[(int)Tag.SUB_PATTERN_ID]) ? "Center" : "ROI #" + tag[(int)Tag.SUB_PATTERN_ID]) + "\nz=" + zUM + "um";
-                                }
-                                else
-                                {
-                                    _roiList[i].ToolTip = "ROI #" + tag[(int)Tag.SUB_PATTERN_ID];
-                                }
+                                UpdateToolTip(_roiList[i]);
                                 _roiList[i].Tag = tag;
                                 _roiList[i].Stroke = GetROIColor(i % 8, tag);
 
@@ -2111,6 +2154,48 @@
                         }
                     }
                     roiCapsule.ROIspec[0] = new Rectangle { Width = scaleTo[0], Height = scaleTo[1] };
+                }
+                SaveROIs(pathandName, roiCapsule);
+            }
+        }
+
+        /// <summary>
+        /// Scale ROIs from center of images by ratio in X and Y
+        /// </summary>
+        /// <param name="pathandName"></param>
+        /// <param name="scaleTo"></param>
+        public void ScaleROIsByRatio(string pathandName, double[] scaleRatio)
+        {
+            if (null == scaleRatio || (1.0 == scaleRatio[0] && 1.0 == scaleRatio[1]))
+                return;
+
+            ROICapsule roiCapsule = LoadXamlROIs(pathandName);
+            if (roiCapsule != null)
+            {
+                if (null == roiCapsule.ROIspec || null == roiCapsule.ROIspec[0])
+                {
+                    roiCapsule.ROIspec = new Shape[] { new Rectangle { Width = (int)Constants.DEFAULT_PIXEL_X, Height = (int)Constants.DEFAULT_PIXEL_X } };
+                }
+                Point imgCenter = new Point(((Rectangle)roiCapsule.ROIspec[0]).Width / 2, ((Rectangle)roiCapsule.ROIspec[0]).Height / 2);
+                if (null != roiCapsule.ROIs)
+                {
+                    for (int i = 0; i < roiCapsule.ROIs.Length; i++)
+                    {
+                        //New (Px,Py) = (Px*Rx+Cx*(1-Rx), Py*Ry+Cy*(1-Ry))
+                        switch (roiCapsule.ROIs[i].GetType().ToString())
+                        {
+                            case "OverlayManager.ROIEllipse":
+                                ((OverlayManager.ROIEllipse)(roiCapsule.ROIs[i])).Center =
+                                    new Point((((OverlayManager.ROIEllipse)(roiCapsule.ROIs[i])).ROICenter.X * scaleRatio[0] + imgCenter.X * (1.0 - scaleRatio[0])),
+                                        ((OverlayManager.ROIEllipse)(roiCapsule.ROIs[i])).ROICenter.Y * scaleRatio[1] + imgCenter.Y * (1.0 - scaleRatio[1]));
+                                break;
+                            case "OverlayManager.ROICrosshair":
+                                ((OverlayManager.ROICrosshair)(roiCapsule.ROIs[i])).CenterPoint =
+                                    new Point((((OverlayManager.ROICrosshair)(roiCapsule.ROIs[i])).CenterPoint.X * scaleRatio[0] + imgCenter.X * (1.0 - scaleRatio[0])),
+                                        ((OverlayManager.ROICrosshair)(roiCapsule.ROIs[i])).CenterPoint.Y * scaleRatio[1] + imgCenter.Y * (1.0 - scaleRatio[1]));
+                                break;
+                        }
+                    }
                 }
                 SaveROIs(pathandName, roiCapsule);
             }
@@ -2442,13 +2527,20 @@
 
         private void AddGeometryToROI(Shape roi)
         {
-            if (roi is Line || roi is Polyline)
+            try
             {
-                _roiAdornerLayer = AdornerLayer.GetAdornerLayer(roi);
-                GeometryAdornerProvider LabelAdornerProvider = new GeometryAdornerProvider(roi, roi.Stroke, _pixelX, _pixelY, BinX, BinY);
-                _roiAdornerLayer.Add(LabelAdornerProvider);
-                int[] tag = SetTagBit(roi.Tag, Tag.FLAGS, Flag.GEOMETRY_ADONERS, true);
-                roi.Tag = tag;
+                if (roi is Line || roi is Polyline)
+                {
+                    _roiAdornerLayer = AdornerLayer.GetAdornerLayer(roi);
+                    GeometryAdornerProvider LabelAdornerProvider = new GeometryAdornerProvider(roi, roi.Stroke, _pixelX, _pixelY);
+                    _roiAdornerLayer.Add(LabelAdornerProvider);
+                    int[] tag = SetTagBit(roi.Tag, Tag.FLAGS, Flag.GEOMETRY_ADONERS, true);
+                    roi.Tag = tag;
+                }
+            }
+            catch (Exception ex)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "OverlayManagerClass.cs AddGeometryToROI failed, exception: " + ex.Message);
             }
         }
 
@@ -2879,7 +2971,7 @@
                 return;
 
             ROIEllipse ellipse = new ROIEllipse();
-            if ((Mode.PATTERN_NOSTATS == _currentMode) && (1 < tag[(int)Tag.SUB_PATTERN_ID]))
+            if ((Mode.PATTERN_NOSTATS == _currentMode) && ((SkipRedrawCenter ? 0 : 1) < tag[(int)Tag.SUB_PATTERN_ID]))
             {
                 //sub-pattern index will increase only in pattern_nostats mode,
                 //copy first ellipse to the rest:
@@ -2910,7 +3002,7 @@
             _isObjectCreated = true;
 
             //complete if ready:
-            if ((Mode.PATTERN_NOSTATS == _currentMode) && (1 < tag[(int)Tag.SUB_PATTERN_ID]))
+            if ((Mode.PATTERN_NOSTATS == _currentMode) && ((SkipRedrawCenter ? 0 : 1) < tag[(int)Tag.SUB_PATTERN_ID]))
             {
                 MouseEvent((int)MouseEventEnum.LEFTMOUSEUP, ref canvas, pt, false);
             }
@@ -3699,6 +3791,52 @@
             }
         }
 
+        /// <summary>
+        /// Determine limit range by parsing input string
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        private int[] ParseLimit(string input)
+        {
+            int[] limit = { 0, Int32.MaxValue };
+            int subID = 0;
+
+            //parse subIDstr for condition (< or >), expected one side only:
+            if (!Int32.TryParse(input, out subID))
+            {
+                Match oMatch = Regex.Match(input, @"\s*([<>=]+)\s*(\d+)\s*?");
+                if (oMatch.Success)
+                {
+                    int lVal = Convert.ToInt32(oMatch.Groups[2].Value);
+                    switch (oMatch.Groups[1].Value)
+                    {
+                        case "<":
+                            limit[1] = Math.Max(0, lVal - 1);
+                            break;
+                        case "<=":
+                        case "=<":
+                            limit[1] = Math.Max(0, lVal);
+                            break;
+                        case ">":
+                            limit[0] = lVal + 1;
+                            break;
+                        case ">=":
+                        case "=>":
+                            limit[0] = lVal;
+                            break;
+                        case "==":
+                            limit[0] = limit[1] = lVal;
+                            break;
+                    }
+                }
+            }
+            else
+            {
+                limit[0] = limit[1] = subID;
+            }
+            return limit;
+        }
+
         private void PersistSettings()
         {
             ResourceManagerCS.BorrowDocMutexCS(SettingsFileType.APPLICATION_SETTINGS);
@@ -4044,9 +4182,10 @@
                 {
                     ((ROIEllipse)_roiList[_roiList.Count - 1]).EndPoint = currentPoint;
 
-                    if (null != ObjectSizeChangedEvent)
+                    if (null != ObjectSizeChangedEvent && (SkipRedrawCenter ? 2 : 1) <= _roiList.Count)
                     {
-                        ObjectSizeChangedEvent(((ROIEllipse)_roiList[_roiList.Count - 1]).ROIWidth, ((ROIEllipse)_roiList[_roiList.Count - 1]).ROIHeight);
+                        ObjectSizeChangedEvent(((ROIEllipse)_roiList[_roiList.Count - (SkipRedrawCenter ? 2 : 1)]).ROIWidth,
+                            ((ROIEllipse)_roiList[_roiList.Count - (SkipRedrawCenter ? 2 : 1)]).ROIHeight);
                     }
                 }
                 UpdateIndexAdorner(_roiList.Last());
@@ -4321,6 +4460,24 @@
             }
         }
 
+        void UpdateToolTip(Shape roi)
+        {
+            double zUM = 0.0;
+            if ((int)Tag.Z_UM_INT < ((int[])roi.Tag).Count())
+            {
+                Double.TryParse(((int[])roi.Tag)[(int)Tag.Z_UM_INT].ToString() + "." + ((int[])roi.Tag)[(int)Tag.Z_UM_DEC].ToString(), out zUM);
+            }
+            if (Mode.PATTERN_NOSTATS == (Mode)(GetTagByteSection(((int[])roi.Tag), Tag.MODE, SecR)) ||
+                Mode.PATTERN_WIDEFIELD == (Mode)(GetTagByteSection(((int[])roi.Tag), Tag.MODE, SecR)))
+            {
+                roi.ToolTip = ((0 == ((int[])roi.Tag)[(int)Tag.SUB_PATTERN_ID]) ? "Center" : "ROI #" + ((int[])roi.Tag)[(int)Tag.SUB_PATTERN_ID]) + "\nz=" + zUM + "um";
+            }
+            else
+            {
+                roi.ToolTip = "ROI #" + ((int[])roi.Tag)[(int)Tag.SUB_PATTERN_ID];
+            }
+        }
+
         /// <summary>
         /// update rois by visibility tags, and set stroke by color tags
         /// </summary>
@@ -4341,6 +4498,7 @@
                         UpdateGeometryAdorner(_roiList[i]);
                         UpdateIndexAdorner(_roiList[i]);
                         UpdatePanningAdorner(_roiList[i]);
+                        UpdateToolTip(_roiList[i]);
                     }
                 }
                 //keep for adoner reference

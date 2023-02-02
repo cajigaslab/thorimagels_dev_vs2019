@@ -804,7 +804,7 @@ DllExportLiveImage CalibrateSLM(const wchar_t* bmpPatternName, float* xyPointFro
 	return ret;
 }
 
-DllExportLiveImage LoadSLMPattern(long runtimeCal, long id, const wchar_t* bmpPatternName, long doStart, long phaseDirect, long timeout)
+DllExportLiveImage LoadSLMPattern(long runtimeCal, long id, const wchar_t* bmpPatternName, long doStart, long phaseDirect, long phaseType, long timeout)
 {
 	long ret = TRUE;
 	SetDeviceParamLong(SelectedHardware::SELECTED_SLM, IDevice::PARAM_SLM_RUNTIME_CALC, runtimeCal, IDevice::DeviceSetParamType::NO_EXECUTION);
@@ -812,6 +812,7 @@ DllExportLiveImage LoadSLMPattern(long runtimeCal, long id, const wchar_t* bmpPa
 	ret = SetDeviceParamLong(SelectedHardware::SELECTED_SLM, IDevice::PARAM_SLM_ARRAY_ID, id, IDevice::DeviceSetParamType::NO_EXECUTION);
 	ret = SetDeviceParamString(SelectedHardware::SELECTED_SLM, IDevice::PARAM_SLM_BMP_FILENAME, (wchar_t*)bmpPatternName, IDevice::DeviceSetParamType::NO_EXECUTION);
 	ret = SetDeviceParamLong(SelectedHardware::SELECTED_SLM, IDevice::PARAM_SLM_PHASE_DIRECT, phaseDirect, IDevice::DeviceSetParamType::NO_EXECUTION);
+	ret = SetDeviceParamLong(SelectedHardware::SELECTED_SLM, IDevice::PARAM_SLM_3D, phaseType, IDevice::DeviceSetParamType::NO_EXECUTION);
 	ret = SetDeviceParamLong(SelectedHardware::SELECTED_SLM, IDevice::PARAM_SLM_TIMEOUT, timeout, IDevice::DeviceSetParamType::NO_EXECUTION);
 
 	IDevice* slm = GetDevice(SelectedHardware::SELECTED_SLM);

@@ -224,7 +224,7 @@
 
                 if (1 == ResourceManagerCS.SetDeviceParamDouble((int)SelectedHardware.SELECTED_ZSTAGE2, (int)IDevice.Params.PARAM_Z_POS, temp, (int)IDevice.DeviceSetParamType.EXECUTION_NO_WAIT))
                 {
-                    temp = value;
+                    _z2Position = value;
                 }
 
                 _enableRead[1] = true;

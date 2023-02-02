@@ -270,6 +270,8 @@
                         return _bitmap;
                     }
 
+                    CaptureSetup.SetColorChannels(CaptureSetup.ImageInfo.channels);
+
                     if (CaptureSetup.GetColorChannels() != _colorChannelsHistory)
                     {
                         _colorChannelsHistory = CaptureSetup.GetColorChannels();

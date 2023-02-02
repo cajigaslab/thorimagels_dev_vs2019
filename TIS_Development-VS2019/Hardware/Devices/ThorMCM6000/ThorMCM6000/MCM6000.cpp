@@ -185,7 +185,8 @@ void MCM6000::GetStatusAllBoards(LPVOID instance)
 				CardTypes::ST_Invert_Stepper_BISS_type == _mcm6kParams->cardType[slotNumber - CARD_ID_START_ADDRESS] ||
 				CardTypes::ST_Invert_Stepper_SSI_type == _mcm6kParams->cardType[slotNumber - CARD_ID_START_ADDRESS] ||
 				CardTypes::MCM_Stepper_Internal_BISS_L6470 == _mcm6kParams->cardType[slotNumber - CARD_ID_START_ADDRESS] ||
-				CardTypes::MCM_Stepper_Internal_SSI_L6470 == _mcm6kParams->cardType[slotNumber - CARD_ID_START_ADDRESS])
+				CardTypes::MCM_Stepper_Internal_SSI_L6470 == _mcm6kParams->cardType[slotNumber - CARD_ID_START_ADDRESS] ||
+				CardTypes::MCM_Stepper_L6470_MicroDB15 == _mcm6kParams->cardType[slotNumber - CARD_ID_START_ADDRESS])
 			{
 				char bytesToSend[6] = { (UCHAR)(MGMSG_MCM_REQ_STATUSUPDATE & 0xFF), (UCHAR)((MGMSG_MCM_REQ_STATUSUPDATE & 0xFF00) >> 8), 0x00, 0x00, static_cast<char>(slotNumber), HOST_ID };
 				result = fnUART_LIBRARY_write(_threadDeviceHandler, bytesToSend, 6);
@@ -493,7 +494,8 @@ long MCM6000::InitializeParams()
 	for (int i = 0; i < TOTAL_CARD_SLOTS; i++)
 	{
 		if ((CardTypes::High_Current_Stepper_Card == _mcm6kParams->cardType[i] ||
-			CardTypes::High_Current_Stepper_Card_HD == _mcm6kParams->cardType[i]) &&
+			CardTypes::High_Current_Stepper_Card_HD == _mcm6kParams->cardType[i] ||
+			CardTypes::MCM_Stepper_L6470_MicroDB15 == _mcm6kParams->cardType[i]) &&
 			(_mcm6kParams->x_slot_id != i + CARD_ID_START_ADDRESS &&
 				_mcm6kParams->y_slot_id != i + CARD_ID_START_ADDRESS &&
 				_mcm6kParams->z_slot_id != i + CARD_ID_START_ADDRESS &&
@@ -501,7 +503,7 @@ long MCM6000::InitializeParams()
 				_mcm6kParams->ze_slot_id != i + CARD_ID_START_ADDRESS &&
 				_mcm6kParams->condenser_slot_id != i + CARD_ID_START_ADDRESS))
 		{
-			wstring messageWstring = L"Card type HC Stepper Card mismatch. There is a card of type HC Stepper that is not accounted for. Please check ThorMCM6000Settings.xml Make sure SlotLayout is configured correctly with the right matching cards. \n\nIf error persists please contact Thorlabs customer support.\nPossible stage types for this type of card: X, Y, Z, R, ZElevator, Condenser";
+			wstring messageWstring = L"Card type HC Stepper Card mismatch. There is a card of type HC Stepper or MicroDB L6470 that is not accounted for. Please check ThorMCM6000Settings.xml Make sure SlotLayout is configured correctly with the right matching cards. \n\nIf error persists please contact Thorlabs customer support.\nPossible stage types for this type of card: X, Y, Z, R, ZElevator, Condenser";
 			MessageBox(NULL, messageWstring.c_str(), L"ThorMCM6000 Error: Card Type Mismatch", MB_OK);
 		}
 		else if (CardTypes::Slider_IO_type == _mcm6kParams->cardType[i] && _mcm6kParams->lp_slot_id != i + CARD_ID_START_ADDRESS)
@@ -510,7 +512,7 @@ long MCM6000::InitializeParams()
 			MessageBox(NULL, messageWstring.c_str(), L"ThorMCM6000 Error: Card Type Mismatch", MB_OK);
 		}
 		else if ((CardTypes::ST_Invert_Stepper_BISS_type == _mcm6kParams->cardType[i] ||
-			CardTypes::ST_Invert_Stepper_SSI_type == _mcm6kParams->cardType[i] || 
+			CardTypes::ST_Invert_Stepper_SSI_type == _mcm6kParams->cardType[i] ||
 			CardTypes::MCM_Stepper_Internal_BISS_L6470 == _mcm6kParams->cardType[i] ||
 			CardTypes::MCM_Stepper_Internal_SSI_L6470 == _mcm6kParams->cardType[i]) &&
 			(_mcm6kParams->et_slot_id != i + CARD_ID_START_ADDRESS &&

@@ -1448,8 +1448,8 @@ long CThorDAQGalvoGalvo::StatusAcquisition(long &status)
 	{
 		status = ICamera::STATUS_READY;
 		printf("_index_of_last_written_frame = %lld; _index_of_last_read_frame = %lld.\n", _index_of_last_written_frame, _index_of_last_read_frame);
-//		StringCbPrintfW(message,MSG_SIZE,L"Status now is ready with frame buffer size of %d.\n", _index_of_last_written_frame - _index_of_last_read_frame);
-//		LogMessage(message,VERBOSE_EVENT);
+		//StringCbPrintfW(message,MSG_SIZE,L"Status now is ready with frame buffer size of %d.\n", _index_of_last_written_frame - _index_of_last_read_frame);
+		//LogMessage(message,VERBOSE_EVENT);
 		if (comparison_index  - _index_of_last_read_frame > _daqAcqCfg.imageCtrl.frameNumPerSec)
 		{
 			status = ICamera::STATUS_ERROR;
@@ -1914,11 +1914,13 @@ long CThorDAQGalvoGalvo::MoveGalvoToParkPosition(int Galvo_X_channel,int Galvo_Y
 {
 	long ret = FALSE;
 	long error = 0, retVal = 0;
+	double xGalvoParkPosition = GALVO_PARK_POSITION;
+	double yGalvoParkPosition = -1 * _imgAcqPty.verticalScanDirection * GALVO_PARK_POSITION;
 
-	ThordaqErrChk (L"ThordaqSetDACParkValue", retVal = ThordaqSetDACParkValue(_DAQDeviceIndex,Galvo_X_channel, GALVO_PARK_POSITION));
+	ThordaqErrChk (L"ThordaqSetDACParkValue", retVal = ThordaqSetDACParkValue(_DAQDeviceIndex,Galvo_X_channel, xGalvoParkPosition));
 	if (retVal == STATUS_SUCCESSFUL)
 	{
-		ThordaqErrChk (L"ThordaqSetDACParkValue", retVal = ThordaqSetDACParkValue(_DAQDeviceIndex,Galvo_Y_channel, GALVO_PARK_POSITION));
+		ThordaqErrChk (L"ThordaqSetDACParkValue", retVal = ThordaqSetDACParkValue(_DAQDeviceIndex,Galvo_Y_channel, yGalvoParkPosition));
 		if (retVal != STATUS_SUCCESSFUL)
 		{
 			ret = 0;

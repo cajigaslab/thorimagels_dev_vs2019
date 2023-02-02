@@ -59,8 +59,6 @@
 
         private readonly CaptureSetup _captureSetup;
 
-        private bool _spinnerWindowShowing = false;
-
         private ICommand _autoContourDisplayCommand;
         private AutoContourWin _autoContourWin = null;
         private bool _autoCoutourWinInit;
@@ -87,6 +85,7 @@
         private bool _ignoreLineProfileGeneration = false;
         private XmlDocument _imageProcessDoc;
         private Visibility _imagerViewVis = Visibility.Visible;
+        private bool _isHandlerConnected = false;
         private bool _isProgressWindowOff = true;
         private double _ivHeight;
         private double _iVScrollBarHeight;
@@ -112,6 +111,7 @@
         private SpinnerProgress.SpinnerProgressControl _spinner;
         private BackgroundWorker _spinnerBackgroundWorker;
         private Window _spinnerWindow = null;
+        private bool _spinnerWindowShowing = false;
         private bool _statChartFrz;
 
         // 0: 2D viewer
@@ -226,9 +226,6 @@
 
             ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Initialized");
             _statChartFrz = false;
-
-            OverlayManagerClass.Instance.BinX = 1;
-            OverlayManagerClass.Instance.BinY = 1;
 
             //TODO: the collect MVM line should probably be higher level, before capture setup loads.
             //reload mvm manager settings files
@@ -955,7 +952,6 @@
             {
                 if ((int)ICamera.CameraType.LSM == ResourceManagerCS.GetCameraType())
                 {
-                    OverlayManagerClass.Instance.BinY = 1;
                     return (double)MVMManager.Instance["AreaControlViewModel", "LSMFieldSizeYUM", (double)1.0];
                 }
                 else
@@ -971,7 +967,6 @@
             {
                 if ((int)ICamera.CameraType.LSM == ResourceManagerCS.GetCameraType())
                 {
-                    OverlayManagerClass.Instance.BinX = 1;
                     return (double)MVMManager.Instance["AreaControlViewModel", "LSMFieldSizeXUM", (object)1.0];
                 }
                 else
@@ -1054,6 +1049,7 @@
             set
             {
                 MVMManager.Instance["PowerControlViewModel", "PockelsCalibrateAgainEnable"] = _isProgressWindowOff = value;
+                MVMManager.Instance["AreaControlViewModel", "EnablePixelDensityChange"] = value;
                 OnPropertyChanged("IsProgressWindowOff");
                 OnPropertyChanged("SLMBleachNowEnabled");
                 OnPropertyChanged("BleachNowEnable");
@@ -1600,7 +1596,7 @@
                 if (XmlManager.GetAttribute(ndList[0], appSettings, attrName, ref strTmp))
                 {
                     XmlManager.RemoveAttribute(ndList[0], attrName);
-                    MVMManager.Instance.SaveSettings(SettingsFileType.APPLICATION_SETTINGS);
+                    MVMManager.Instance.ReloadSettings(SettingsFileType.APPLICATION_SETTINGS);
                 }
             }
         }
@@ -1672,11 +1668,16 @@
 
         public void ConnectHandlers()
         {
+            //keep handlers be connected once and once only before release
+            if (_isHandlerConnected)
+                return;
+
             _bw.DoWork += new DoWorkEventHandler(bw_DoWork);
             _bw.ProgressChanged += new ProgressChangedEventHandler(bw_ProgressChanged);
             _bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler(bw_RunWorkerCompleted);
             _bleachWorker.DoWork += new DoWorkEventHandler(bleachWorker_DoWork);
             _slmBleachWorker.DoWork += new DoWorkEventHandler(slmBleachWorker_DoWork);
+            _slmBleachWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(slmBleachWorker_RunWorkerCompleted);
 
             _pmtSafetyTimer.Tick += new EventHandler(_pmtSafetyTimer_Tick);
             _pmtSafetyTimer.Start();
@@ -1703,6 +1704,8 @@
             OverlayManagerClass.Instance.MaskChangedEvent += _overlayManager_MaskChangedEvent;
 
             this._captureSetup.ConnectHandlers();
+
+            _isHandlerConnected = true;
         }
 
         /// <summary>
@@ -2091,6 +2094,10 @@
                     {
                         sparam.BleachWaveParams.ID = uiTmp;
                     }
+                    if (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "phaseType", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iTmp))
+                    {
+                        sparam.PhaseType = iTmp;
+                    }
                     str = (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "shape", ref str)) ? str : string.Empty;
                     sparam.BleachWaveParams.shapeType = String.IsNullOrWhiteSpace(str) ? ((0 < sparam.BleachWaveParams.ROIWidthUM) ? "Ellipse" : "Crosshair") : str;
                     SLMBleachWaveParams.Add(sparam);
@@ -2161,8 +2168,10 @@
                 {
                     RefractiveIndex = dTmp;
                 }
-                double[] focalLengths = (double[])MVMManager.Instance["ObjectiveControlViewModel", "FocalLengths", (object)new double[4] { 100.0, 100.0, 50.0, 200.0 }];
-                EffectiveFocalMM = focalLengths[0] * focalLengths[2] * (double)Constants.TURRET_FOCALLENGTH_MAGNIFICATION_RATIO / (focalLengths[1] * focalLengths[3] * (double)MVMManager.Instance["ObjectiveControlViewModel", "TurretMagnification", (object)20.0]);
+                if (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "sequenceEpochDelay", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
+                {
+                    SLMSequenceEpochDelay = dTmp;
+                }
                 DefocusUM = DefocusSavedUM;
 
                 //keep epochCount last to update
@@ -2322,6 +2331,8 @@
             _bw.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(bw_RunWorkerCompleted);
             _bleachWorker.DoWork -= new DoWorkEventHandler(bleachWorker_DoWork);
             _slmBleachWorker.DoWork -= new DoWorkEventHandler(slmBleachWorker_DoWork);
+            _slmBleachWorker.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(slmBleachWorker_RunWorkerCompleted);
+
             _pmtSafetyTimer.Stop();
             _pmtSafetyTimer.Tick -= new EventHandler(_pmtSafetyTimer_Tick);
             if (_bwHardware != null)
@@ -2330,6 +2341,8 @@
             OverlayManagerClass.Instance.MaskChangedEvent -= _overlayManager_MaskChangedEvent;
             //close any floating panels or windows
             CloseFloatingWindows();
+            //allow handlers to be connected later
+            _isHandlerConnected = false;
         }
 
         //Get and replace Active Settings from an experiment or a template
@@ -2468,10 +2481,14 @@
         {
             try
             {
-                if (OverlayManagerClass.Instance.UmPerPixel != (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0] ||
-                    OverlayManagerClass.Instance.PixelX != this.DataWidth || OverlayManagerClass.Instance.PixelY != this.DataHeight)
+                double umPerPixel = (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0];
+                if ((int)ICamera.CameraType.LSM != ResourceManagerCS.GetCameraType())
                 {
-                    OverlayManagerClass.Instance.UpdateParams(this.DataWidth, this.DataHeight, (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0]);
+                    umPerPixel = ((double)MVMManager.Instance["CameraControlViewModel", "CamPixelSizeUM", (object)1.0] * Math.Max(1, Math.Max((int)MVMManager.Instance["CameraControlViewModel", "BinY", (object)1], (int)MVMManager.Instance["CameraControlViewModel", "BinX", (object)1])));
+                }
+                if (OverlayManagerClass.Instance.UmPerPixel != umPerPixel || OverlayManagerClass.Instance.PixelX != this.DataWidth || OverlayManagerClass.Instance.PixelY != this.DataHeight)
+                {
+                    OverlayManagerClass.Instance.UpdateParams(this.DataWidth, this.DataHeight, umPerPixel);
 
                     if (null == Bitmap)
                     {
@@ -3352,6 +3369,8 @@
                         ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED6Power");
                         ((ThorSharedTypes.IMVM)MVMManager.Instance["LampControlViewModel", this]).OnPropertyChange("LampON");
                         ((ThorSharedTypes.IMVM)MVMManager.Instance["LampControlViewModel", this]).OnPropertyChange("LampPosition");
+
+                       MVMManager.Instance["ScanControlViewModel", "UpdateCRSFrequency"] = 1;
 
                         //Update any stats
                         RequestROIData();

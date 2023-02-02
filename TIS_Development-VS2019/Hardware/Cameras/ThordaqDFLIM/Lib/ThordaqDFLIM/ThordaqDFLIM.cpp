@@ -1326,11 +1326,11 @@ LONG ThordaqDFLIM::SetWaveformPlayback( DAC_CRTL_STRUCT dac_setting, int channel
 
 	int bits_to_shift = ((channel  % 4) * 16);
 	int index = static_cast<int>(floor(channel / 4));
-	
+
 	gPtrAcqCtrl->galvoCtrl.dacUpdateRate[index] = (gPtrAcqCtrl->galvoCtrl.dacUpdateRate[index] & ~(GalvoBitsMask << bits_to_shift)) |((ULONG64)round(SYS_CLOCK_FREQ/ dac_setting.update_rate - 1) << bits_to_shift);
 	gPtrAcqCtrl->galvoCtrl.dacOffset[index] = (gPtrAcqCtrl->galvoCtrl.dacOffset[index] & ~(GalvoBitsMask << bits_to_shift)) |(static_cast<ULONG64>((dac_setting.offset_val / GALVO_RESOLUTION) + offset_mid) << bits_to_shift);
 	gPtrAcqCtrl->galvoCtrl.dacParkValue[index] = (gPtrAcqCtrl->galvoCtrl.dacParkValue[index] & ~(GalvoBitsMask << bits_to_shift)) |(static_cast<ULONG64>((dac_setting.park_val / GALVO_RESOLUTION) + park_mid) << bits_to_shift);
-	
+
 	if (set_flag)
 	{
 		ULONGLONG update_rate_addr = 0x248 + index * 8; 
@@ -2933,6 +2933,13 @@ THORDAQ_STATUS ThordaqDFLIM::ReadNONI2C_0x1C0(ULONG length)
 	}
 	SAFE_DELETE_ARRAY(buffer);
 	return status;
+}
+
+void ThordaqDFLIM::LogMessage(wchar_t* logMsg, long eventLevel)
+{
+#ifdef LOGGING_ENABLED
+	logDll->TLTraceEvent(eventLevel, 1, logMsg);
+#endif
 }
 
 //THORDAQ_STATUS status = STATUS_SUCCESSFUL;

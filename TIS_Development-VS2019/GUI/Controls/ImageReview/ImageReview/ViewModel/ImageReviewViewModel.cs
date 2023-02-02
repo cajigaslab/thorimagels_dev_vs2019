@@ -14,6 +14,7 @@
     using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading;
+    using System.Threading.Tasks;
     using System.Windows;
     using System.Windows.Controls;
     using System.Windows.Data;
@@ -23,7 +24,6 @@
     using System.Windows.Threading;
     using System.Xml;
     using System.Xml.Serialization;
-    using System.Threading.Tasks;
 
     using AviFile;
 
@@ -32,6 +32,7 @@
     using HDF5CS;
 
     using ImageReviewDll.Model;
+    using ImageReviewDll.OME;
 
     using LineProfileWindow;
 
@@ -42,6 +43,7 @@
     using Microsoft.Practices.Composite.Wpf.Events;
     using Microsoft.Practices.Unity;
     using Microsoft.Win32;
+
     using MultiROIStats;
 
     using OverlayManager;
@@ -55,8 +57,6 @@
     using d = System.Drawing;
 
     using i = System.Drawing.Imaging;
-
-    using ImageReviewDll.OME;
 
     public static class DispatcherEx
     {
@@ -326,6 +326,7 @@
         private List<string> _currentChannelsLutFiles = new List<string>();
         private CurrentMovieParameterEnum _currentMovieParameter;
         private IEventAggregator _eventAggregator;
+        private bool _experimentReviewOpened = false;
         private int _fieldSizeX;
         private int _fieldSizeY;
         private H5CSWrapper _hdf5Reader = null;
@@ -386,6 +387,7 @@
         private bool _roiControlEnabled;
         private ICommand _roiLoadCommand;
         private List<ROIStatsChartWin> _roiStatsCharts = null;
+        private Thickness _roiToolbarMargin = new Thickness(0, 0, 0, 0);
         private ICommand _scanAreaIDMinusCommand;
         private ICommand _scanAreaIDPlusCommand;
         private int _scanAreaIndex = 0;
@@ -394,7 +396,6 @@
         private bool _scanAreaIsEnabled;
         private bool _scanAreaIsLive = false;
         private bool _scanAreaVisible = false;
-        private Thickness _roiToolbarMargin = new Thickness(0, 0, 0, 0);
         private int _sliderSpMax;
         private int _sliderSpMin;
         private int _sliderTMax;
@@ -403,6 +404,9 @@
         private int _sliderZMin;
         private int _sliderZStreamMax;
         private int _sliderZStreamMin;
+        private SpinnerProgress.SpinnerProgressControl _spinner;
+        
+        private Window _spinnerWindow = null;
         private bool _spIsEnabled;
         private bool _spIsLive;
         private ImageReviewDll.View.SplashScreen _splash;
@@ -487,6 +491,13 @@
             _orthogonalViewStat = OrthogonalViewStatus.INACTIVE;
             _currentMovieParameter = CurrentMovieParameterEnum.T;
             OverlayManagerClass.Instance.InitOverlayManagerClass(ExperimentData.ImageInfo.pixelX, ExperimentData.ImageInfo.pixelY * ExperimentData.NumberOfPlanes, ExperimentData.LSMUMPerPixel, false);
+
+            //Set boolean in OverlayManager if instance derived from Experiment Review window
+            if (ExperimentReviewOpened == true)
+            {
+                OverlayManagerClass.Instance.ReviewWindowOpened = true;
+            }
+
             EnableHandlers();
 
             VirtualZStack = true;
@@ -563,14 +574,6 @@
         #endregion Events
 
         #region Properties
-
-        public ImageReview ImageReviewObject
-        {
-            get
-            {
-                return _imageReview;
-            }
-        }
 
         public bool AllHistogramsExpanded
         {
@@ -1093,6 +1096,17 @@
             }
         }
 
+        //Boolean to keep track of whether an Experiment Review Window is open
+        //Set in ImageReviewModel, used for OverlayManager
+        public bool ExperimentReviewOpened
+        {
+            get
+            {
+                _experimentReviewOpened = ImageReview.ExperimentReviewOpened;
+                return _experimentReviewOpened;
+            }
+        }
+
         public string ExperimentXMLPath
         {
             get { return _imageReview.ExperimentXMLPath; }
@@ -1384,6 +1398,14 @@
             }
         }
 
+        public ImageReview ImageReviewObject
+        {
+            get
+            {
+                return _imageReview;
+            }
+        }
+
         public Visibility[] IsChannelVisible
         {
             get
@@ -1415,7 +1437,7 @@
             {
                 return _isRawExperiment;
             }
-            set 
+            set
             {
                 if (_isRawExperiment != value)
                     _isRawExperiment = value;
@@ -3360,6 +3382,14 @@
             }
         }
 
+        public void CloseProgressWindow()
+        {
+            if (null != this._spinnerWindow)
+            {
+                this._spinnerWindow.Close();
+            }
+        }
+
         public void CreateColorMovie(string[][] fileNameList, string destFileNamePath, double fps)
         {
             _movieFileNameList = fileNameList;
@@ -3370,6 +3400,35 @@
             SetMenuBarEnable(false);
 
             _bw.RunWorkerAsync();
+        }
+
+        public void CreateProgressWindow()
+        {
+            if (null != _spinnerWindow)
+                return;
+            //create a popup modal dialog that blocks user clicks while capturing
+            _spinnerWindow = new Window();
+            _spinnerWindow.ResizeMode = ResizeMode.NoResize;
+            _spinnerWindow.Width = 150;
+            _spinnerWindow.Height = 150;
+            _spinnerWindow.WindowStyle = WindowStyle.None;
+            _spinnerWindow.Background = Brushes.DimGray;
+            _spinnerWindow.AllowsTransparency = true;
+            Border border = new Border();
+            border.BorderThickness = new Thickness(2);
+            _spinnerWindow.Content = border;
+
+            _spinner = new SpinnerProgress.SpinnerProgressControl("Converting");
+            _spinner.Margin = new Thickness(5);
+            _spinner.SpinnerWidth = 120;
+            _spinner.SpinnerHeight = 120;
+            border.Child = _spinner;
+
+            _spinnerWindow.Owner = Application.Current.MainWindow;
+            _spinnerWindow.Left = _spinnerWindow.Owner.Left + ((Panel)_spinnerWindow.Owner.Content).ActualWidth / 4;
+            _spinnerWindow.Top = _spinnerWindow.Owner.Top + ((Panel)_spinnerWindow.Owner.Content).ActualHeight / 4;
+            _spinnerWindow.Closed += new EventHandler(_spinnerWindow_Closed);
+            _spinnerWindow.Show();
         }
 
         public void EnableHandlers()
@@ -3718,141 +3777,6 @@
             SetMenuBarEnable(true);
         }
 
-        private Window _spinnerWindow = null;
-        private SpinnerProgress.SpinnerProgressControl _spinner;
-
-        public void CreateProgressWindow()
-        {
-            if (null != _spinnerWindow)
-                return;
-            //create a popup modal dialog that blocks user clicks while capturing
-            _spinnerWindow = new Window();
-            _spinnerWindow.ResizeMode = ResizeMode.NoResize;
-            _spinnerWindow.Width = 150;
-            _spinnerWindow.Height = 150;
-            _spinnerWindow.WindowStyle = WindowStyle.None;
-            _spinnerWindow.Background = Brushes.DimGray;
-            _spinnerWindow.AllowsTransparency = true;
-            Border border = new Border();
-            border.BorderThickness = new Thickness(2);
-            _spinnerWindow.Content = border;
-
-            _spinner = new SpinnerProgress.SpinnerProgressControl("Converting");
-            _spinner.Margin = new Thickness(5);
-            _spinner.SpinnerWidth = 120;
-            _spinner.SpinnerHeight = 120;
-            border.Child = _spinner;
-
-            _spinnerWindow.Owner = Application.Current.MainWindow;
-            _spinnerWindow.Left = _spinnerWindow.Owner.Left + ((Panel)_spinnerWindow.Owner.Content).ActualWidth / 4;
-            _spinnerWindow.Top = _spinnerWindow.Owner.Top + ((Panel)_spinnerWindow.Owner.Content).ActualHeight / 4;
-            _spinnerWindow.Closed += new EventHandler(_spinnerWindow_Closed);
-            _spinnerWindow.Show();
-        }
-
-        void _spinnerWindow_Closed(object sender, EventArgs e)
-        {
-            _spinnerWindow = null;
-        }
-
-        public void CloseProgressWindow()
-        {
-            if (null != this._spinnerWindow)
-            {
-                this._spinnerWindow.Close();
-            }
-        }
-
-        public long LaunchThorAnalysis()
-        {
-            long ret = 0;
-
-            // Judge whether ThorAnalysis has been installed
-            var isThorAnalysisInstalled = false;
-            string exePath = "";
-            var regKey = Registry.LocalMachine;
-            var regSubKey = regKey.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\", false);
-            foreach (var keyName in regSubKey.GetSubKeyNames())
-            {
-                if (keyName.Contains("ThorAnalysis"))
-                {
-                    isThorAnalysisInstalled = true;
-
-                    var subKey = regSubKey.OpenSubKey(keyName);
-                    exePath = subKey.GetValue("")?.ToString();
-                    break;
-                }
-            }
-
-            if (!isThorAnalysisInstalled || string.IsNullOrEmpty(exePath))
-            {
-                MessageBox.Show("Failed to launch ThorAnalysis, please install or contact Thorlabs Support");
-            }
-            else
-            {
-                //Load active.xml to find experiment folder and type
-                var experimentDoc = new XmlDocument();
-                experimentDoc.Load(_imageReview.ExperimentXMLPath);
-                var pathXmlNode = experimentDoc.SelectSingleNode("/ThorImageExperiment/Name");
-                var typeXmlNode = experimentDoc.SelectSingleNode("/ThorImageExperiment/Streaming");
-                if (pathXmlNode != null && typeXmlNode != null)
-                {
-                    string pathString = string.Empty;
-                    string typeString = string.Empty;
-                    if (XmlManager.GetAttribute(pathXmlNode, experimentDoc, "path", ref pathString)
-                        && XmlManager.GetAttribute(typeXmlNode, experimentDoc, "rawData", ref typeString))
-                    {
-                        if (typeString == "2") // OME-Tiff, open directly
-                        {
-                            var imgFile = pathString + "\\Image.tif";
-                            if (File.Exists(imgFile))
-                            {
-                                LoadOMETiffInProcess(exePath, imgFile);
-                                ret = 1;
-                            }
-                        }
-                        else if (typeString == "0" || typeString == "1")
-                        {
-                            // Start converting
-                            Task task = Task.Run(() =>
-                            {
-                                // Convert from Tiff or RAW to OME Tiff
-                                ClassicTiffConverter tiffConverter = new ClassicTiffConverter(pathString);
-                                long result = tiffConverter.DoConvert(out string convertedImgFile);
-
-                                if (result == 0)
-                                {
-                                    LoadOMETiffInProcess(exePath, convertedImgFile);
-                                    ret = 1;
-                                }
-
-                            });
-                            task.ContinueWith(x =>
-                            {
-                                Application.Current.Dispatcher.BeginInvoke((Action)delegate ()
-                                {
-                                    CloseProgressWindow();
-                                });
-                            });
-
-                            // Show progress window
-                            Application.Current.Dispatcher.BeginInvoke((Action)delegate ()
-                            {
-                                CreateProgressWindow();
-                            });
-                        }
-                    }
-                }
-            }
-
-            return ret;
-        }
-
-        private void LoadOMETiffInProcess(string exePath, string imgFile)
-        {
-            Process.Start(exePath, imgFile);
-        }
-
         public long LaunchFijiOMEXML()
         {
             long ret = 0;
@@ -3994,6 +3918,91 @@
                 }
                 ret = 1;
             }
+            return ret;
+        }
+
+        public long LaunchThorAnalysis()
+        {
+            long ret = 0;
+
+            // Judge whether ThorAnalysis has been installed
+            var isThorAnalysisInstalled = false;
+            string exePath = "";
+            var regKey = Registry.LocalMachine;
+            var regSubKey = regKey.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\", false);
+            foreach (var keyName in regSubKey.GetSubKeyNames())
+            {
+                if (keyName.Contains("ThorAnalysis"))
+                {
+                    isThorAnalysisInstalled = true;
+
+                    var subKey = regSubKey.OpenSubKey(keyName);
+                    exePath = subKey.GetValue("")?.ToString();
+                    break;
+                }
+            }
+
+            if (!isThorAnalysisInstalled || string.IsNullOrEmpty(exePath))
+            {
+                MessageBox.Show("Failed to launch ThorAnalysis, please install or contact Thorlabs Support");
+            }
+            else
+            {
+                //Load active.xml to find experiment folder and type
+                var experimentDoc = new XmlDocument();
+                experimentDoc.Load(_imageReview.ExperimentXMLPath);
+                var pathXmlNode = experimentDoc.SelectSingleNode("/ThorImageExperiment/Name");
+                var typeXmlNode = experimentDoc.SelectSingleNode("/ThorImageExperiment/Streaming");
+                if (pathXmlNode != null && typeXmlNode != null)
+                {
+                    string pathString = string.Empty;
+                    string typeString = string.Empty;
+                    if (XmlManager.GetAttribute(pathXmlNode, experimentDoc, "path", ref pathString)
+                        && XmlManager.GetAttribute(typeXmlNode, experimentDoc, "rawData", ref typeString))
+                    {
+                        if (typeString == "2") // OME-Tiff, open directly
+                        {
+                            var imgFile = pathString + "\\Image.tif";
+                            if (File.Exists(imgFile))
+                            {
+                                LoadOMETiffInProcess(exePath, imgFile);
+                                ret = 1;
+                            }
+                        }
+                        else if (typeString == "0" || typeString == "1")
+                        {
+                            // Start converting
+                            Task task = Task.Run(() =>
+                            {
+                                // Convert from Tiff or RAW to OME Tiff
+                                ClassicTiffConverter tiffConverter = new ClassicTiffConverter(pathString);
+                                long result = tiffConverter.DoConvert(out string convertedImgFile);
+
+                                if (result == 0)
+                                {
+                                    LoadOMETiffInProcess(exePath, convertedImgFile);
+                                    ret = 1;
+                                }
+
+                            });
+                            task.ContinueWith(x =>
+                            {
+                                Application.Current.Dispatcher.BeginInvoke((Action)delegate ()
+                                {
+                                    CloseProgressWindow();
+                                });
+                            });
+
+                            // Show progress window
+                            Application.Current.Dispatcher.BeginInvoke((Action)delegate ()
+                            {
+                                CreateProgressWindow();
+                            });
+                        }
+                    }
+                }
+            }
+
             return ret;
         }
 
@@ -5596,6 +5605,11 @@
             }
         }
 
+        private void LoadOMETiffInProcess(string exePath, string imgFile)
+        {
+            Process.Start(exePath, imgFile);
+        }
+
         private void MEndValueMinus()
         {
             MEndValue -= 1;
@@ -6329,6 +6343,11 @@
             _roiStatsCharts[indx].ROIChart.ClearChart();
             //_rOIStatsChart.ROIChart.ClearLegendGroup(true);
             _roiStatsCharts[indx] = null;
+        }
+
+        void _spinnerWindow_Closed(object sender, EventArgs e)
+        {
+            _spinnerWindow = null;
         }
 
         #endregion Methods

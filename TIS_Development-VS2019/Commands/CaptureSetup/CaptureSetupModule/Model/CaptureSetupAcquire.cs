@@ -194,6 +194,15 @@
             }
         }
 
+        //Boolean that tracks when the ZStack ImageRoutine thread has completed. necessary for continuous mode
+        public bool ZStackStatus
+        {
+            get
+            {
+                return GetActiveZStack();
+            }
+        }
+
         #endregion Properties
 
         #region Methods
@@ -493,7 +502,7 @@
             MVMManager.Instance["ScanControlViewModel", "LsmClkPnlEnabled"] = enable;
             MVMManager.Instance["ThreePhotonControlViewModel", "Disable3PCheckbox"] = enable;
             MVMManager.Instance["DFLIMControlViewModel", "DFLIMEnableControlsThatNeedAcquistionOff"] = enable;
-            ((ThorSharedTypes.IMVM)MVMManager.Instance["ZControlViewModel", this]).OnPropertyChange("PreviewButtonEnabled");
+            ((IMVM)MVMManager.Instance["ZControlViewModel", this]).OnPropertyChange("PreviewButtonEnabled");
         }
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "AutoExposure")]
@@ -504,6 +513,9 @@
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "GetActiveCapture")]
         private static extern bool GetActiveCapture();
+
+        [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "GetActiveZStack")]
+        private static extern bool GetActiveZStack();
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "GetFrameRate")]
         private static extern bool GetFrameRate(ref double rate);

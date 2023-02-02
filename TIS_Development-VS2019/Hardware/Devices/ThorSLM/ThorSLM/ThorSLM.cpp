@@ -17,6 +17,7 @@ wchar_t ThorSLM::_errMsg[MSG_SIZE];
 HANDLE ThorSLM::_hStatusHandle = NULL;
 bool ThorSLM::_instanceFlag = false;
 unique_ptr<ThorSLM> ThorSLM::_single(new ThorSLM());
+CRITICAL_SECTION ThorSLM::_accessCritSection = { 0 };
 ISLM* ThorSLM::_slmDevice = NULL;
 unique_ptr<ThorSLMXML> pSetup(new ThorSLMXML());
 float* ThorSLM::_fpPointsXY[MAX_ARRAY_CNT] = { NULL };
@@ -89,6 +90,7 @@ ThorSLM* ThorSLM::getInstance()
 	{
 		_single.reset(new ThorSLM());
 		_instanceFlag = true;
+		::InitializeCriticalSection(&_accessCritSection);
 	}
 	return _single.get();
 }
@@ -96,6 +98,7 @@ ThorSLM* ThorSLM::getInstance()
 ThorSLM::~ThorSLM()
 {
 	_instanceFlag = false;
+	::DeleteCriticalSection(&_accessCritSection);
 
 	for (int i = 0; i < Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT; i++)
 	{
@@ -577,11 +580,15 @@ long ThorSLM::SetParam(const long paramID, const double param)
 		break;
 	case IDevice::PARAM_SLM_TIMEOUT:
 		_slmTimeout = (param >= SLM_TIMEOUT_MIN) ? static_cast<unsigned int>(ceil(param / SLM_TIMEOUT_MIN) * SLM_TIMEOUT_MIN) : SLM_TIMEOUT_MIN;
+		if (IsOverdrive())
+			_slmDevice->SetParam(ISLM::SLMParams::TIMEOUT, _slmTimeout);
 		break;
 	case IDevice::PARAM_SLM_RUNTIME_CALC:
 		if ((param >= FALSE) && (param <= TRUE))
 		{
 			_slmRuntimeCalculate = static_cast<long>(param);
+			if (IsOverdrive())
+				_slmDevice->SetParam(ISLM::SLMParams::RUNTIME_CALC, _slmRuntimeCalculate);
 		}
 		break;
 	default:
@@ -603,17 +610,18 @@ long ThorSLM::SetParamBuffer(const long paramID, char* pBuffer, long size)
 	switch (paramID)
 	{
 	case IDevice::PARAM_SLM_POINTS_ARRAY:
+		//image center at the first [x, y]
+		_power2Px = static_cast<long>(max(max(pow(2, ceil(log2(_pixelSize[0]))), pow(2, ceil(log2(_pixelSize[1])))),
+			max(pow(2, ceil(log2(*pSrc * 2))), pow(2, ceil(log2(*(pSrc + 1) * 2))))));
+		for (int i = 0; i < XY_COORD; i++)
+		{
+			centerTransVec[i] = max(0, static_cast<long>(floor(_power2Px / 2)) - static_cast<long>(*pSrc));
+			pSrc++;
+		}
 		if (_slm3D)
 		{
-			//image center at the first [x, y], 
-			//_power2Px should already be set at loading of SLMCalibROI.bmp
-			for (int i = 0; i < XYZ_COORD; i++)
-			{
-				if (i < XY_COORD)
-					centerTransVec[i] = max(0, static_cast<long>(floor(_power2Px / 2)) - static_cast<long>(*pSrc));
-				pSrc++;
-			}
-
+			//skip z value of center
+			pSrc++;
 			//Expect this waveform include X, Y, Z (interleaved), 
 			//translate both from[0] and target[1] to power of 2 square coordinate
 			_fpPointsXYZ[_arrayOrFileID] = (float*)realloc((void*)_fpPointsXYZ[_arrayOrFileID], (size - XYZ_COORD) * sizeof(float));
@@ -628,16 +636,6 @@ long ThorSLM::SetParamBuffer(const long paramID, char* pBuffer, long size)
 		}
 		else
 		{
-			//image center at the first [x, y]
-			_power2Px = static_cast<long>(max(max(pow(2, ceil(log2(_pixelSize[0]))), pow(2, ceil(log2(_pixelSize[1])))),
-				max(pow(2, ceil(log2(*pSrc * 2))), pow(2, ceil(log2(*(pSrc + 1) * 2))))));
-
-			for (int i = 0; i < XY_COORD; i++)
-			{
-				centerTransVec[i] = max(0, static_cast<long>(floor(_power2Px / 2)) - static_cast<long>(*pSrc));
-				pSrc++;
-			}
-
 			//Expect this waveform include X and Y (interleaved), 
 			//translate both from[0] and target[1] to power of 2 square coordinate
 			_fpPointsXY[_arrayOrFileID] = (float*)realloc((void*)_fpPointsXY[_arrayOrFileID], (size - XY_COORD) * sizeof(float));
@@ -645,7 +643,7 @@ long ThorSLM::SetParamBuffer(const long paramID, char* pBuffer, long size)
 				return FALSE;
 			for (long i = 0; i < (size - (long)XY_COORD); i++)
 			{
-				_fpPointsXY[_arrayOrFileID][i] = *pSrc + centerTransVec[i % (long)2];
+				_fpPointsXY[_arrayOrFileID][i] = *pSrc + centerTransVec[i % (long)XY_COORD];
 				pSrc++;
 			}
 			_fpPointsXYSize[_arrayOrFileID] = (size - XY_COORD);
@@ -658,18 +656,20 @@ long ThorSLM::SetParamBuffer(const long paramID, char* pBuffer, long size)
 		//*************	   Try defocus	   *************//
 		//**********************************************//
 
-		//2D hologram only, return if no image acquired
-		if (_slm3D || 0 == _lastHoloBuf[1].GetSize())
+		//return if no image acquired
+		if (0 == _lastHoloBuf[1].GetSize())
 			return FALSE;
 
 #ifdef _DEBUG
 		_timer.Start();
 #endif
+		::EnterCriticalSection(&_accessCritSection);
+
 		//defocus[0] from focus[1] buffer
 		CopyDefocus(1, 0);
 
 		//apply defocus phase
-		DefocusHologram();
+		DefocusNormalizeHologram(FALSE);
 
 		//push to display
 		BITMAPINFO bmi = _lastHoloBuf[0].GetInfo();
@@ -677,6 +677,7 @@ long ThorSLM::SetParamBuffer(const long paramID, char* pBuffer, long size)
 		ReadAndScaleBitmap(pImg, bmi);
 		if (!IsOverdrive()) { winDVI->DisplayBMP(_arrayOrFileID); }
 
+		::LeaveCriticalSection(&_accessCritSection);
 #ifdef _DEBUG
 		_timer.Stop();
 		StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorSLM apply defocus time: %d ms", static_cast<int>(_timer.ElapsedMilliseconds()));
@@ -739,6 +740,7 @@ long ThorSLM::SetParamString(const long paramID, wchar_t* str)
 long ThorSLM::GetParam(const long paramID, double& param)
 {
 	long ret = TRUE;
+	double dVal = 0;
 	switch (paramID)
 	{
 	case IDevice::PARAM_DEVICE_TYPE:
@@ -774,6 +776,11 @@ long ThorSLM::GetParam(const long paramID, double& param)
 		param = FALSE;
 		break;
 	case IDevice::PARAM_SLM_TIMEOUT:
+		if (IsOverdrive())
+		{
+			_slmDevice->GetParam(ISLM::SLMParams::TIMEOUT, dVal);
+			_slmTimeout = static_cast<unsigned int>(dVal);
+		}
 		param = _slmTimeout;
 		break;
 	case IDevice::PARAM_SLM_RUNTIME_CALC:
@@ -864,7 +871,7 @@ long ThorSLM::SetupPosition()
 		switch (_slmFuncMode)
 		{
 		case SLMFunctionMode::LOAD_PHASE_ONLY:
-			_doHologram = (FALSE == _loadPhaseDirectly && FALSE == _dmdMode);
+			_doHologram = (FALSE == _loadPhaseDirectly && FALSE == _dmdMode && FALSE == _slm3D);
 			ret = LoadHologram();
 			break;
 		case SLMFunctionMode::PHASE_CALIBRATION:
@@ -950,6 +957,7 @@ long ThorSLM::SetupPosition()
 long ThorSLM::StartPosition()
 {
 	long ret = TRUE;
+	_callbackMutex.lock();
 
 	try
 	{
@@ -958,8 +966,10 @@ long ThorSLM::StartPosition()
 		case SLMFunctionMode::LOAD_PHASE_ONLY:
 			//set normal sequence
 			if (FALSE == ResetSequence())
+			{
+				_callbackMutex.unlock();
 				return FALSE;
-
+			}
 			if (IsOverdrive())
 			{
 				if (1 < _bufferCount)
@@ -998,6 +1008,7 @@ long ThorSLM::StartPosition()
 		LogMessage(_errMsg, ERROR_EVENT);
 		ret = FALSE;
 	}
+	_callbackMutex.unlock();
 	return ret;
 }
 
@@ -1033,13 +1044,14 @@ long ThorSLM::PostflightPosition()
 {
 	long ret = TRUE;
 
+	//terminate HW trigger task if any
+	CloseNITasks();
+	//reset buffer count before next load session
+	_bufferCount = 1;
+
 	switch (_slmFuncMode)
 	{
 	case SLMFunctionMode::LOAD_PHASE_ONLY:
-		//terminate HW trigger task, and clear mem:
-		CloseNITasks();
-		_bufferCount = 1;
-
 		if (IsOverdrive())
 			_slmDevice->StopSLM();
 
@@ -1131,6 +1143,8 @@ void ThorSLM::BlankSLM(ISLM::SLMBlank bmode)
 
 	if (ISLM::BLANK_ALL == bmode)
 	{
+		::EnterCriticalSection(&_accessCritSection);
+
 		//blank need to consider defocus calibration,
 		//need rework in partial blanking mode
 		_power2Px = static_cast<long>(max(max(pow(2, ceil(log2(_pixelSize[0]))), pow(2, ceil(log2(_pixelSize[1])))), _power2Px));
@@ -1139,18 +1153,19 @@ void ThorSLM::BlankSLM(ISLM::SLMBlank bmode)
 		bmi.bmiHeader.biWidth = _power2Px;
 		bmi.bmiHeader.biHeight = _power2Px;
 		bmi.bmiHeader.biBitCount = CHAR_BIT;
-		bmi.bmiHeader.biSizeImage = (DWORD)pow(_power2Px, 2);
-
-		_lastHoloBuf[0].CallocMemChk(static_cast<long>(pow(_power2Px, 2)));
+		bmi.bmiHeader.biSizeImage = (DWORD)(pow(_power2Px, 2) * sizeof(float));
+		_lastHoloBuf[0].CallocMemChk(bmi.bmiHeader.biSizeImage);
 		_lastHoloBuf[0].SetInfo(bmi);
 
 		CopyDefocus(0, 1);
 
-		DefocusHologram();
+		DefocusNormalizeHologram(TRUE);
 
 		pImg = CropHologramBMP(NULL, _lastHoloBuf[0].GetMem(), bmi);
 		ReadAndScaleBitmap(pImg, bmi);
 		if (!IsOverdrive()) { winDVI->DisplayBMP(_arrayOrFileID); }
+
+		::LeaveCriticalSection(&_accessCritSection);
 	}
 	else
 	{
@@ -1168,7 +1183,6 @@ void ThorSLM::BlankSLM(ISLM::SLMBlank bmode)
 		{
 			winDVI->GetBMP(_slmSeqVec.at(_arrayOrFileID), _lastBmpBuf.GetMem(), _lastBmpBuf.GetInfo());
 		}
-		_callbackMutex.unlock();
 
 		//do half blanking
 		pImg = _lastBmpBuf.GetMem();
@@ -1195,6 +1209,7 @@ void ThorSLM::BlankSLM(ISLM::SLMBlank bmode)
 			winDVI->CreateDVIWindow((int)_lastBmpBuf.GetInfo().bmiHeader.biWidth, (int)_lastBmpBuf.GetInfo().bmiHeader.biHeight);
 			winDVI->DisplayBMP(0);
 		}
+		_callbackMutex.unlock();
 	}
 }
 
@@ -1277,29 +1292,35 @@ void ThorSLM::CopyDefocus(int from, int to)
 	_lastHoloBuf[to].SetInfo(_lastHoloBuf[from].GetInfo());
 }
 
-
-//Apply defocus on 2D hologram
-long ThorSLM::DefocusHologram()
+//Apply defocus on 2D hologram, savedZ(TRUE) to use calibrated z offset value
+long ThorSLM::DefocusNormalizeHologram(long savedZ)
 {
-	if (0 != _defocusParam[_selectWavelength][0])
+	double defocusZum = savedZ ? _defocusParam[_selectWavelength][3] : _defocusParam[_selectWavelength][0];
+	if (0 != defocusZum)
 	{
-		double kz = 2 * PI * _defocusParam[_selectWavelength][0] * (double)Constants::UM_TO_MM / _wavelength[_selectWavelength];
-		double NAeff = pow(_power2Px * _pixelPitchUM / (2 * _defocusParam[_selectWavelength][2] * (double)Constants::UM_TO_MM), 2);
+		double kz = 2 * PI * defocusZum * (double)Constants::UM_TO_MM / _wavelength[_selectWavelength];
+		double NAeff = _power2Px * _pixelPitchUM / (2 * _defocusParam[_selectWavelength][2] * (double)Constants::UM_TO_MM);
 		holoGen->SetDefocus(_defocusParam[_selectWavelength][1], NAeff, _power2Px);
-		return holoGen->DefocusHologram(_lastHoloBuf[0].GetMem(), kz);
+		//expect buffer in unit [rad] to apply defocus
+		holoGen->DefocusHologram(_lastHoloBuf[0].GetMem(), kz);
 	}
-	return TRUE;
+	//map rad to pixel value
+	return holoGen->NormalizePhase(_lastHoloBuf[0].GetMem());
 }
 
 long ThorSLM::LoadHologram()
 {
 	BITMAPINFO bmi;
-
+	::EnterCriticalSection(&_accessCritSection);
 	unsigned char* imgRead = GetAndProcessBMP(bmi);
 	if (NULL == imgRead)
+	{
+		::LeaveCriticalSection(&_accessCritSection);
 		return FALSE;
-
-	return ReadAndScaleBitmap(imgRead, bmi);
+	}
+	long ret = ReadAndScaleBitmap(imgRead, bmi);
+	::LeaveCriticalSection(&_accessCritSection);
+	return ret;
 }
 
 double ThorSLM::ParseZUM(wstring filename)
@@ -1577,25 +1598,29 @@ void ThorSLM::ReleaseMem()
 			_fpPointsXYZSize[i] = 0;
 		}
 	}
-	if (IsOverdrive())
-	{
-		_slmDevice->SetParam(ISLM::SLMParams::RELEASE_TRANSIANT_BUFFER, TRUE);
-		_slmManager->getInstance()->ReleaseSLMs();
-	}
-
 	_lastHoloBuf[0].ReallocMemChk(0);
 	_lastHoloBuf[1].ReallocMemChk(0);
 	_lastBmpBuf.ReallocMemChk(0);
+
+	if (IsOverdrive())
+	{
+		_callbackMutex.lock();
+		_slmManager->getInstance()->ReleaseSLMs();
+		_callbackMutex.unlock();
+	}
 }
 
 long ThorSLM::SaveHologram(bool saveInSubFolder)
 {
 	long size;
 	BITMAPINFO bmi;
+	::EnterCriticalSection(&_accessCritSection);
 	unsigned char* imgRead = GetAndProcessBMP(bmi);
 	if (NULL == imgRead)
+	{
+		::LeaveCriticalSection(&_accessCritSection);
 		return FALSE;
-
+	}
 	//save grayscale phase mask:
 	_wsplitpath_s(_bmpPathAndName.c_str(), drive, _MAX_DRIVE, dir, _MAX_DIR, fname, _MAX_FNAME, ext, _MAX_EXT);
 	if (wcsstr(dir, L"SLMWaveforms"))	//only create sub-folder under "SLMWaveforms"
@@ -1617,6 +1642,7 @@ long ThorSLM::SaveHologram(bool saveInSubFolder)
 
 	SAFE_DELETE_ARRAY(imgRead);
 	SAFE_DELETE_ARRAY(imgBGR);
+	::LeaveCriticalSection(&_accessCritSection);
 	return TRUE;
 }
 
@@ -1726,7 +1752,8 @@ long ThorSLM::Save3DHologram(bool doSearch, bool reset)
 			_p3DHoloBufVec.resize(currentCount + notFoundKz.size() + 1);
 			for (size_t i = 0; i < notFoundKz.size(); i++)
 			{
-				_p3DHoloBufVec[currentCount + i] = MemoryStruct<float>(notFoundKz[i]);
+				_p3DHoloBufVec[currentCount + i] = MemoryStruct<float>();
+				_p3DHoloBufVec[currentCount + i].SetKz(notFoundKz[i]);
 				imgRead = MapCalibrateHologram(zfileNames[i].c_str(), &_p3DHoloBufVec[currentCount + i]);
 				SAFE_DELETE_ARRAY(imgRead);
 			}
@@ -1737,10 +1764,11 @@ long ThorSLM::Save3DHologram(bool doSearch, bool reset)
 		}
 
 		//execute hologram gen
-		double NAeff = pow(_power2Px * _pixelPitchUM / (2 * _defocusParam[_selectWavelength][2] * (double)Constants::UM_TO_MM), 2);
+		double NAeff = _power2Px * _pixelPitchUM / (2 * _defocusParam[_selectWavelength][2] * (double)Constants::UM_TO_MM);
 		holoGen->SetCoeffs(GeoFittingAlg::HOMOGENEOUS, _fitCoeff3D[_selectWavelength]);
 		holoGen->SetDefocus(_defocusParam[_selectWavelength][1], NAeff, _power2Px);
 		holoGen->Generate3DHologram(_p3DHoloBufVec.data(), static_cast<int>(_p3DHoloBufVec.size()));
+		holoGen->NormalizePhase(_p3DHoloBufVec[_p3DHoloBufVec.size() - 1].GetMem());
 
 		//copy out the result and save as bmp
 		BITMAPINFO bmi = _p3DHoloBufVec[_p3DHoloBufVec.size() - 1].GetInfo();
@@ -1908,13 +1936,29 @@ unsigned char* ThorSLM::MapCalibrateHologram(const wchar_t* pathAndFilename, Mem
 	holoGen->SetSize(pbuf->GetInfo().bmiHeader.biWidth, pbuf->GetInfo().bmiHeader.biHeight, (double)Constants::M_TO_UM / pbuf->GetInfo().bmiHeader.biXPelsPerMeter);
 	if (_skipFitting)
 	{
-		double coeffs[PROJECT_COEFF_CNT] = { 0.0 };
-		coeffs[0] = coeffs[4] = 1.0;
-		holoGen->SetCoeffs(GeoFittingAlg::PROJECTIVE, coeffs);
+		if (_slm3D)
+		{
+			double coeffs[HOMOGENEOUS_COEFF_CNT] = { 0.0 };
+			coeffs[0] = coeffs[5] = coeffs[10] = coeffs[15] = 1.0;
+			holoGen->SetCoeffs(GeoFittingAlg::HOMOGENEOUS, coeffs);
+		}
+		else
+		{
+			double coeffs[PROJECT_COEFF_CNT] = { 0.0 };
+			coeffs[0] = coeffs[4] = 1.0;
+			holoGen->SetCoeffs(GeoFittingAlg::PROJECTIVE, coeffs);
+		}
 	}
 	else
 	{
-		holoGen->SetCoeffs(GeoFittingAlg::PROJECTIVE, _fitCoeff[_selectWavelength]);
+		if (_slm3D)
+		{
+			holoGen->SetCoeffs(GeoFittingAlg::HOMOGENEOUS, _fitCoeff3D[_selectWavelength]);
+		}
+		else
+		{
+			holoGen->SetCoeffs(GeoFittingAlg::PROJECTIVE, _fitCoeff[_selectWavelength]);
+		}
 	}
 	holoGen->SetAlgorithm(HoloGenAlg::GerchbergSaxton);
 
@@ -1948,7 +1992,9 @@ unsigned char* ThorSLM::MapCalibrateHologram(const wchar_t* pathAndFilename, Mem
 	{
 		holoGen->RotateForAngle(pbuf->GetMem(), _rotateAngle[_selectWavelength]);
 	}
-	holoGen->FittingTransform(pbuf->GetMem());
+	//it will do fitting when generating 3D hologram
+	if (!_slm3D)
+		holoGen->FittingTransform(pbuf->GetMem());
 
 	return imgRead;
 }
@@ -1961,7 +2007,7 @@ unsigned char* ThorSLM::CropHologramBMP(unsigned char* pMem, float* pS, BITMAPIN
 	if (NULL == pMem)
 		pMem = new BYTE[(size_t)bmi.bmiHeader.biWidth * bmi.bmiHeader.biHeight * channelCount];
 
-	//copy back from buffer,
+	//copy back from buffer, expect unit already in pixel byte[0-255]
 	//consider phase scaling per wavelength and scale for LUT if necessary:
 	float* pSrc = pS;
 	BYTE* pDst = pMem;
@@ -2052,7 +2098,7 @@ unsigned char* ThorSLM::GetAndProcessBMP(BITMAPINFO& bmi)
 	//keep [1]:on focus, [0]: to be defocused
 	CopyDefocus(0, 1);
 
-	DefocusHologram();
+	DefocusNormalizeHologram(TRUE);
 
 	return CropHologramBMP(imgRead, _lastHoloBuf[0].GetMem(), bmi);
 }

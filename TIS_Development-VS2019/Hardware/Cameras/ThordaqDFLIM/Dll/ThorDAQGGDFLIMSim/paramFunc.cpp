@@ -1883,6 +1883,7 @@ long CThorDAQGGDFLIMSim::GetParam(const long paramID, double &param)
 		{
 			param = _droppedFramesCnt;
 		}
+		break;
 	case ICamera::PARAM_RAW_SAVE_ENABLED_CHANNELS_ONLY:
 		{
 			param = _imgAcqPty.rawSaveEnabledChannelOnly;

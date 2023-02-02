@@ -9,6 +9,7 @@
     using System.IO;
     using System.Reflection;
     using System.Runtime.InteropServices;
+    using System.Text;
     using System.Timers;
     using System.Windows;
     using System.Windows.Data;
@@ -84,6 +85,16 @@
             }
         }
 
+        public bool IsLSMCurrentCRSFrequencyAvailable
+        {
+            get
+            {
+                int val = ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_CURRENT_CRS_FREQUENCY);
+
+                return val == 1;
+            }
+        }
+
         public DateTime LastPMTSafetyUpdate
         {
             get { return _lastPMTSafetyUpdate; }
@@ -107,6 +118,18 @@
             set
             {
                 ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_CLOCKSOURCE, value);
+            }
+        }
+
+        public double LSMCurrentCRSFrequency
+        {
+            get
+            {
+                double val = 0;
+
+                ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_CURRENT_CRS_FREQUENCY, ref val);
+
+                return val;
             }
         }
 
@@ -758,6 +781,20 @@
                 case 3: return PMT4Atenuation;
                 default: return 0;
             }
+        }
+
+        public string[] GetPMTAvailableBandwidths(int index)
+        {
+            const int LENGTH = 255;
+            StringBuilder paramSB = new StringBuilder(LENGTH);
+            switch (index)
+            {
+                case 0: ResourceManagerCS.GetDeviceParamString((int)SelectedHardware.SELECTED_PMT1, (int)IDevice.Params.PARAM_PMT1_AVAILABLE_BANDWIDTHS, paramSB, LENGTH); break;
+                case 1: ResourceManagerCS.GetDeviceParamString((int)SelectedHardware.SELECTED_PMT2, (int)IDevice.Params.PARAM_PMT2_AVAILABLE_BANDWIDTHS, paramSB, LENGTH); break;
+                case 2: ResourceManagerCS.GetDeviceParamString((int)SelectedHardware.SELECTED_PMT3, (int)IDevice.Params.PARAM_PMT3_AVAILABLE_BANDWIDTHS, paramSB, LENGTH); break;
+                case 3: ResourceManagerCS.GetDeviceParamString((int)SelectedHardware.SELECTED_PMT4, (int)IDevice.Params.PARAM_PMT4_AVAILABLE_BANDWIDTHS, paramSB, LENGTH); break;
+            }
+            return paramSB.ToString().Split(',');
         }
 
         public bool GetPMTBandwidthIsAvailable(int index, ref int bwPos)

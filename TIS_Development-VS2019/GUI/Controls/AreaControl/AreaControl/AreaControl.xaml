@@ -289,6 +289,18 @@
                                   IsChecked="{Binding Path=TimeBasedLineScan,
                                                       Mode=TwoWay,
                                                       UpdateSourceTrigger=PropertyChanged}" />
+                        <CheckBox Name="cbEnablePixelDensityChange"
+                                  Margin="20,1"
+                                  VerticalAlignment="Center"
+                                  HorizontalAlignment="Left"
+                                  Content=""
+                                  Foreground="White"
+                                  Visibility="Hidden"
+                                  Checked="cbEnablePixelDensityChange_Checked"
+                                  Unchecked="cbEnablePixelDensityChange_Unchecked"
+                                  IsChecked="{Binding Path=EnablePixelDensityChange,
+                                                      Mode=TwoWay,
+                                                      UpdateSourceTrigger=PropertyChanged}" />
                         <StackPanel Orientation="Horizontal"
                                     Visibility="{Binding Path=IsChecked, ElementName=cbTimeBasedLineScanEnable, Converter={StaticResource boolToVisConverter}}">
                             <Label VerticalContentAlignment="Center"

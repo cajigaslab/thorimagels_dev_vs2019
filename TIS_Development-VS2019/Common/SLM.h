@@ -7,7 +7,7 @@ template <typename T>
 class MemoryStruct
 {
 private:
-	T* _memPtr;
+	T* _memPtr = NULL;
 	DWORD _bytesSize;
 	BITMAPINFO _bmi;
 	T _kzValue;
@@ -15,18 +15,7 @@ private:
 
 public:
 	MemoryStruct() { _memPtr = NULL; _bytesSize = 0; _kzValue = 0; _index = -1; };
-	MemoryStruct(T* pMem, DWORD dsize) {
-		if (NULL != pMem) { _memPtr = pMem; _bytesSize = dsize; }
-		else { _memPtr = NULL; _bytesSize = 0; }
-		_kzValue = 0;
-		_index = -1;
-	};
-	MemoryStruct(T* pMem, BITMAPINFO& bm) {
-		if (NULL != pMem) { _memPtr = pMem; _bmi = bm; }
-		else { _memPtr = NULL; _bytesSize = 0; }
-		_kzValue = 0;
-		_index = -1;
-	};
+
 	MemoryStruct(T kz) { _memPtr = NULL; _bytesSize = 0; _kzValue = kz; _index = -1; };
 
 	~MemoryStruct() { ReallocMemChk(0); };

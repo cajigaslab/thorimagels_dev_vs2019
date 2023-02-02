@@ -691,6 +691,10 @@
                     {
                         vm.SLM3D = (1 == iVal);
                     }
+                    if (XmlManager.GetAttribute(nodeList[0], expDoc, "sequenceEpochDelay", ref str) && (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)))
+                    {
+                        vm.SLMSequenceEpochDelay = dVal;
+                    }
                 }
                 nodeList = expDoc.SelectNodes("/ThorImageExperiment/SLM/Pattern");
                 if (nodeList.Count > 0)
@@ -704,6 +708,9 @@
                         {
                             sparam.Name = str;
                         }
+
+                        sparam.PhaseType = (XmlManager.GetAttribute(nodeList[i], expDoc, "phaseType", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal)) ? iVal : 0;
+
                         if (XmlManager.GetAttribute(nodeList[i], expDoc, "roiWidthUM", ref str) && (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal)))
                         {
                             sparam.BleachWaveParams.ROIWidthUM = dVal;

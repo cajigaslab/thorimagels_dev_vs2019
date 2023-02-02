@@ -195,7 +195,7 @@
                                              CultureInfo.CurrentUICulture,
                                              FlowDirection.LeftToRight,
                                              new Typeface("Arial"),
-                                             (int)(Math.Max(RelativeFactor, _imageWidth / 20)),
+                                             Math.Max((int)(Math.Max(RelativeFactor, _imageWidth / 20)), 1),
                                              Brushes.Green,
                                              VisualTreeHelper.GetDpi(this).PixelsPerDip);
             scaleTxt.TextAlignment = TextAlignment.Center;

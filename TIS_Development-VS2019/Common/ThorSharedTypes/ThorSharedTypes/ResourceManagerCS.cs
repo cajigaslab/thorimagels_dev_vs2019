@@ -160,7 +160,7 @@
 
         public static void DeleteDirectory(string target_dir)
         {
-            if (Directory.Exists(target_dir))
+            if (!Directory.Exists(target_dir))
                 return;
             try
             {

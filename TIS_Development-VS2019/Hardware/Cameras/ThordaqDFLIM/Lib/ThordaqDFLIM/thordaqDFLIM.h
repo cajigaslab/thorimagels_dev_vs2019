@@ -228,5 +228,7 @@ private:
 	void SetDMADescriptors(DMADescriptor& dmaDescp, ULONG64 index, ULONG64* dmaDescpTable, bool& status);
 
 	LONG ExportScript(DATA_ACQ_CTRL_STRUCT*               gPtrAcqCtrl, SCAN_LUT scanLUT);
+
+	void LogMessage(wchar_t* logMsg, long eventLevel);
 };
 

@@ -173,7 +173,14 @@
             }
             set
             {
-                _repeats = value;
+                if (value >= 1)
+                {
+                    _repeats = value;
+                }
+                else
+                {
+                    _repeats = 1;
+                }
                 OnPropertyChanged("Repeats");
             }
         }

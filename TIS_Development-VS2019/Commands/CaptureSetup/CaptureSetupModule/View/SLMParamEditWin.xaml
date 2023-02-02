@@ -1189,6 +1189,18 @@
                         Height="30"
                         Width="60"
                         Margin="3"
+                        Visibility="{Binding Path=.CalibNext, Converter={StaticResource stringToVisConverter}, ConverterParameter=Normal, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                        Click="btnCalibration_Click"
+                        Tag="{Binding Path=.CalibNext}">
+                    <TextBlock Text="{Binding Path=.CalibNext}"
+                               ToolTip=""></TextBlock>
+                </Button>
+                <Button HorizontalAlignment="Center"
+                        HorizontalContentAlignment="Center"
+                        VerticalAlignment="Center"
+                        Height="30"
+                        Width="60"
+                        Margin="3"
                         Click="btnCalibration_Click"
                         Tag="{Binding Path=.CalibYes}">
                     <TextBlock Text="Yes"
@@ -1330,11 +1342,24 @@
                        Foreground="White"
                        HorizontalContentAlignment="Center"
                        VerticalAlignment="Center"
-                       Width="155"></Label>
+                       Width="120"></Label>
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <Label Content="Delay"
+                           Foreground="White"/>
+                    <TextBox Name="txtEpoDelay"
+                             Text="{Binding Path=SLMSequenceEpochDelay, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             Width="40"
+                             Margin="1" />
+                    <Label Content="[s]"
+                           Foreground="White"/>
+                </StackPanel>
                 <Button Grid.Column="2"
                         Content="Add Epoch"
                         Foreground="White"
-                        Margin="130,0,0,0"
+                        Margin="100,0,0,0"
                         HorizontalContentAlignment="Right"
                         VerticalAlignment="Center"
                         Width="100"

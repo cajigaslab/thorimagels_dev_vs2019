@@ -611,8 +611,14 @@ namespace ThorImage
             XmlDocument doc = new XmlDocument();
             XmlDocument doc2 = new XmlDocument();
 
+            if (!result.Contains("</Software>"))
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "Version Checker XML did not download properly");
+                return;
+            }
+
             doc.LoadXml(result);
-            doc2.Load(".//ResourceManager.xml");
+            doc2.Load(AppDomain.CurrentDomain.BaseDirectory + "ResourceManager.xml");
 
             XmlNodeList ndList = doc.SelectNodes("/Software/Version");
             XmlNode node = doc2.SelectSingleNode("/ResourceManager/ThorImageVersionCheck");
@@ -929,14 +935,17 @@ namespace ThorImage
             XmlNode node = doc.SelectSingleNode("/ResourceManager/ThorImageVersionCheck");
             string str = string.Empty;
             string str2 = string.Empty;
-            DateTime thisDay = DateTime.Today;
-            string newDay = thisDay.ToString("d");
+            int thisYear = DateTime.Today.Year;
+            int thisMonth = DateTime.Today.Month;
+            int thisDay = DateTime.Today.Day;
+            string newDay = Convert.ToString(thisMonth + "/" + thisDay + "/" + thisYear);
             int xmlUpdateCheck = 0;
             if (XmlManager.GetAttribute(node, doc, "lastCheckDate", ref str))
             {
-                //If the last update date is blank (default), fill it in with today's date
-                if (String.IsNullOrEmpty(str))
+                //If the last update date is blank (default) or the format is wrong (. instead of /), fill it in with today's date
+                if (String.IsNullOrEmpty(str) || !str.Contains("/"))
                 {
+                    str = newDay;
                     node.Attributes[0].Value = newDay;
                     doc.Save("ResourceManager.xml");
                 }

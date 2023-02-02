@@ -124,6 +124,7 @@
         private int _dataLength;
         private XmlDocument _experimentDoc;
         private string _experimentFolderPath;
+        private bool _experimentReviewOpened;
         private string _experimentXMLPath;
         private int _foundChannelCount = 0;
         private bool _grayscaleForSingleChannel;
@@ -377,6 +378,20 @@
                     }
                 }
                 return str;
+            }
+        }
+
+        //Boolean to tell when Experiment Review window is open
+        //Set in ExperimentReview, used in ImageReviewViewModel/OverlayManager
+        public bool ExperimentReviewOpened
+        {
+            get
+            {
+                return this._experimentReviewOpened;
+            }
+            set
+            {
+                this._experimentReviewOpened = value;
             }
         }
 

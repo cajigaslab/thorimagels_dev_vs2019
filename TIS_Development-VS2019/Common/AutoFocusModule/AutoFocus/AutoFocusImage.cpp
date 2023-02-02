@@ -133,14 +133,14 @@ long AutoFocusImage::Execute(long index, IDevice* pAutoFocus, BOOL& afFound)
 	_autoFocusStatus = AutoFocusStatusTypes::NOT_RUNNING;
 	_frameNumber = 0;
 
-	//the first image will always execute autofocus with (counter == 0) 
+	//the first image will always execute autofocus with (counter == 0)
 	if ((_counter % _repeat) != 0)
 	{
 		_counter++;
 		return TRUE;
 	}
 	_counter++;
-
+	
 	double position = 0;
 
 	_pZStage->GetParam(IDevice::PARAM_Z_POS_CURRENT, position);

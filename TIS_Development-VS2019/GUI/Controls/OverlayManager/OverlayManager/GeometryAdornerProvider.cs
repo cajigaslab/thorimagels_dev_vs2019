@@ -107,18 +107,13 @@
 
         private static double _umPerPixel;
 
-        private int _binX;
-        private int _binY;
-
         #endregion Fields
 
         #region Constructors
 
-        public GeometryAdornerProvider(UIElement adornedElement, Brush foreground, int imageWidth, int imageHeight, int binX, int binY)
+        public GeometryAdornerProvider(UIElement adornedElement, Brush foreground, int imageWidth, int imageHeight)
             : base(adornedElement, foreground, imageWidth, imageHeight)
         {
-            _binX = Math.Max(1, binX);
-            _binY = Math.Max(1, binY);
         }
 
         #endregion Constructors
@@ -197,7 +192,7 @@
                     x2 = (int)Math.Floor(polyline.Points[i].X);
                     y1 = (int)Math.Floor(polyline.Points[i - 1].Y);
                     y2 = (int)Math.Floor(polyline.Points[i].Y);
-                    polylineLength += (int)Math.Round(Math.Sqrt(Math.Pow((x2 - x1) * _binX, 2) + Math.Pow((y2 - y1) * _binY, 2)));
+                    polylineLength += (int)Math.Round(Math.Sqrt(Math.Pow(x2 - x1, 2) + Math.Pow(y2 - y1, 2)));
                 }
 
                 double lenth = _umPerPixel * (double)polylineLength;
@@ -249,7 +244,7 @@
                     }
                 }
 
-                int lineLength = (int)Math.Round(Math.Sqrt(Math.Pow((x2 - x1) * _binX, 2) + Math.Pow((y2 - y1) * _binY, 2))) + 1;
+                int lineLength = (int)Math.Round(Math.Sqrt(Math.Pow(x2 - x1, 2) + Math.Pow(y2 - y1, 2))) + 1;
 
                 double lenth = _umPerPixel * (double)lineLength;
 

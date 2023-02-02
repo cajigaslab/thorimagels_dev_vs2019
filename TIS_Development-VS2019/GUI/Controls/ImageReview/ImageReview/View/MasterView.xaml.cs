@@ -23,6 +23,7 @@
     using ExperimentSettingsBrowser;
 
     using FolderDialogControl;
+
     using ImageReviewDll.OME;
     using ImageReviewDll.View;
     using ImageReviewDll.ViewModel;
@@ -130,29 +131,6 @@
             LoadActiveExp();
         }
 
-        public void OnSelectCapture(object sender, RoutedEventArgs e)
-        {
-            if (_imageReviewVM == null)
-            {
-                return;
-            }
-
-            ExperimentSettingsBrowserWindow settingsDlg = new ExperimentSettingsBrowserWindow();
-            settingsDlg.Title = "Experiment Browser";
-            settingsDlg.BrowserType = ExperimentSettingsBrowserWindow.BrowserTypeEnum.EXPERIMENT;
-            settingsDlg.Owner = Application.Current.MainWindow;
-            try
-            {
-                if (true == settingsDlg.ShowDialog())
-                {
-                    LoadExperiment(settingsDlg.ExperimentPath);
-                }
-            }
-            catch (Exception ex)
-            {
-                ex.ToString();
-            }
-        }
         public void OnConvertRawToTIFF(object sender, RoutedEventArgs e)
         {
             if (_imageReviewVM == null)
@@ -195,6 +173,30 @@
                         _imageReviewVM.CreateProgressWindow();
                     });
                 }
+            }
+        }
+
+        public void OnSelectCapture(object sender, RoutedEventArgs e)
+        {
+            if (_imageReviewVM == null)
+            {
+                return;
+            }
+
+            ExperimentSettingsBrowserWindow settingsDlg = new ExperimentSettingsBrowserWindow();
+            settingsDlg.Title = "Experiment Browser";
+            settingsDlg.BrowserType = ExperimentSettingsBrowserWindow.BrowserTypeEnum.EXPERIMENT;
+            settingsDlg.Owner = Application.Current.MainWindow;
+            try
+            {
+                if (true == settingsDlg.ShowDialog())
+                {
+                    LoadExperiment(settingsDlg.ExperimentPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                ex.ToString();
             }
         }
 
@@ -621,9 +623,6 @@
 
             _imageReviewVM.WavelengthNames = ExperimentData.WaveLengthNames;
 
-            OverlayManagerClass.Instance.BinX = ExperimentData.BinX;
-            OverlayManagerClass.Instance.BinY = ExperimentData.BinY;
-
             //If it is a hyperspectral capture then do spectral bar
             if (CaptureModes.HYPERSPECTRAL == ExperimentData.CaptureMode)
             {
@@ -781,7 +780,7 @@
             var node = _imageReviewVM.ApplicationDoc.SelectSingleNode("/ApplicationSettings/DisplayOptions/Review/OpenInThorAnalysisButton");
             if (XmlManager.GetAttribute(node, _imageReviewVM.ApplicationDoc, "Visibility", ref str) && (str.EndsWith("Visible")))
             {
-                btLoadThorAnalysis.Visibility = Visibility.Visible;                
+                btLoadThorAnalysis.Visibility = Visibility.Visible;
             }
             else
             {

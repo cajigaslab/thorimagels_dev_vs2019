@@ -3101,11 +3101,10 @@
 
         public double SLMBleachDelay
         {
-            get { return this._RunSampleLS.SLMBleachDelay; }
+            get { return this._RunSampleLS.SLMBleachDelay[0]; }
             set
             {
-                Decimal val = Decimal.Round((Decimal)value, 3);
-                this._RunSampleLS.SLMBleachDelay = (double)val;
+                this._RunSampleLS.SLMBleachDelay[0] = (double)Decimal.Round((Decimal)value, 3);
                 OnPropertyChanged("SLMBleachDelay");
             }
         }
@@ -3120,6 +3119,16 @@
             {
                 this._RunSampleLS.SLMBleachWaveParams = value;
                 OnPropertyChanged("SLMBleachWaveParams");
+            }
+        }
+
+        public double SLMSequenceEpochDelay
+        {
+            get { return this._RunSampleLS.SLMBleachDelay[1]; }
+            set
+            {
+                this._RunSampleLS.SLMBleachDelay[1] = (double)Decimal.Round((Decimal)value, 3);
+                OnPropertyChanged("SLMSequenceEpochDelay");
             }
         }
 

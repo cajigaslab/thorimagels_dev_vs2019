@@ -598,77 +598,80 @@ class IPPMDll : public PDLL, IPPMlib
 class IPPSlib
 {
 public:
-	virtual Ipp32f* ippsMalloc_32f(int)= 0;	
+	virtual Ipp32f* ippsMalloc_32f(int) = 0;
 	virtual void ippsFree(void*) = 0;
 	virtual IppStatus ippsSet_32f(Ipp32f, Ipp32f*, int) = 0;
 	virtual IppStatus ippsSet_64f(Ipp64f, Ipp64f*, int) = 0;
-	virtual IppStatus ippsZero_32f(Ipp32f*, int)= 0;
+	virtual IppStatus ippsZero_32f(Ipp32f*, int) = 0;
 	virtual IppStatus ippsZero_64f(Ipp64f*, int) = 0;
 	virtual IppStatus ippsZero_64fc(Ipp64fc*, int) = 0;
-	virtual IppStatus ippsCopy_32f(const Ipp32f*, Ipp32f*, int)= 0;
+	virtual IppStatus ippsCopy_32f(const Ipp32f*, Ipp32f*, int) = 0;
 	virtual IppStatus ippsCopy_64fc(const Ipp64fc*, Ipp64fc*, int) = 0;
 	virtual IppStatus ippsPolarToCart_32fc(const Ipp32f*, const Ipp32f*, Ipp32fc*, int) = 0;
-	virtual IppStatus ippsCartToPolar_32fc(const Ipp32fc*, Ipp32f*, Ipp32f*, int)= 0;
-	virtual IppStatus ippsAbs_64f_I(Ipp64f*,int) = 0;
-	virtual IppStatus ippsAbs_64f(const Ipp64f*, Ipp64f*,int) = 0;
-	virtual IppStatus ippsMin_32f(const Ipp32f*, int, Ipp32f*)= 0;
-	virtual IppStatus ippsMax_32f(const Ipp32f*, int, Ipp32f*)= 0;
-	virtual IppStatus ippsAddC_32f_I(Ipp32f, Ipp32f*, int)= 0;
-	virtual IppStatus ippsAddProduct_64fc( const Ipp64fc*, const Ipp64fc*, Ipp64fc*, int) = 0;	// pSrcDst[n] = pSrcDst[n] + pSrc1[n] * pSrc2[n], n=0,1,2,..len-1.
-	virtual IppStatus ippsMulC_32f_I(Ipp32f, Ipp32f*, int)= 0;
+	virtual IppStatus ippsCartToPolar_32fc(const Ipp32fc*, Ipp32f*, Ipp32f*, int) = 0;
+	virtual IppStatus ippsAbs_64f_I(Ipp64f*, int) = 0;
+	virtual IppStatus ippsAbs_64f(const Ipp64f*, Ipp64f*, int) = 0;
+	virtual IppStatus ippsMin_32f(const Ipp32f*, int, Ipp32f*) = 0;
+	virtual IppStatus ippsMax_32f(const Ipp32f*, int, Ipp32f*) = 0;
+	virtual IppStatus ippsAddC_32f_I(Ipp32f, Ipp32f*, int) = 0;
+	virtual IppStatus ippsAddProduct_64fc(const Ipp64fc*, const Ipp64fc*, Ipp64fc*, int) = 0;	// pSrcDst[n] = pSrcDst[n] + pSrc1[n] * pSrc2[n], n=0,1,2,..len-1.
+	virtual IppStatus ippsMulC_32f_I(Ipp32f, Ipp32f*, int) = 0;
 	virtual IppStatus ippsMul_64f_I(const Ipp64f*, Ipp64f*, int) = 0;
 	virtual IppStatus ippsMul_64fc_I(const Ipp64fc*, Ipp64fc*, int) = 0;
 	virtual IppStatus ippsMul_64f(const Ipp64f*, const Ipp64f*, Ipp64f*, int) = 0;
 	virtual IppStatus ippsMul_64fc(const Ipp64fc*, const Ipp64fc*, Ipp64fc*, int) = 0;
 	virtual IppStatus ippsSqr_64f_I(Ipp64f*, int) = 0;
 	virtual IppStatus ippsSqr_64fc_I(Ipp64fc*, int) = 0;
-	virtual IppStatus ippsSqrt_64f_I(Ipp64f*,int) = 0;
-	virtual IppStatus ippsSqrt_64fc_I(Ipp64fc*,int) = 0;
+	virtual IppStatus ippsSqrt_64f_I(Ipp64f*, int) = 0;
+	virtual IppStatus ippsSqrt_64fc_I(Ipp64fc*, int) = 0;
 	virtual IppStatus ippsDiv_64f_I(const Ipp64f*, Ipp64f*, int) = 0;		// Div(X,Y) : Y[n] = Y[n] / X[n]
 	virtual IppStatus ippsDiv_64fc_I(const Ipp64fc*, Ipp64fc*, int) = 0;	// Div(X,Y) : Y[n] = Y[n] / X[n]
 	virtual IppStatus ippsSortAscend_64f_I(Ipp64f*, int) = 0;
 	virtual IppStatus ippsSortDescend_64f_I(Ipp64f*, int) = 0;
-	virtual IppStatus ippsRandUniformInitAlloc_32f(IppsRandUniState_32f**, Ipp32f, Ipp32f, unsigned int)= 0;
-	virtual IppStatus ippsRandUniform_32f(Ipp32f*, int, IppsRandUniState_32f*)= 0;
-	virtual IppStatus ippsRandUniformFree_32f(IppsRandUniState_32f*)= 0;
-	virtual IppStatus ippsFFTInitAlloc_R_64f(IppsFFTSpec_R_64f**,int, int, IppHintAlgorithm)=0;
-	virtual IppStatus ippsFFTFwd_RToCCS_64f(const Ipp64f*, Ipp64f*,const IppsFFTSpec_R_64f*, Ipp8u*)=0;
-	virtual IppStatus ippsFFTFree_R_64f(IppsFFTSpec_R_64f*)=0;
+	virtual IppStatus ippsRandUniformInitAlloc_32f(IppsRandUniState_32f**, Ipp32f, Ipp32f, unsigned int) = 0;
+	virtual IppStatus ippsRandUniform_32f(Ipp32f*, int, IppsRandUniState_32f*) = 0;
+	virtual IppStatus ippsRandUniformFree_32f(IppsRandUniState_32f*) = 0;
+	virtual IppStatus ippsFFTInitAlloc_R_64f(IppsFFTSpec_R_64f**, int, int, IppHintAlgorithm) = 0;
+	virtual IppStatus ippsFFTFwd_RToCCS_64f(const Ipp64f*, Ipp64f*, const IppsFFTSpec_R_64f*, Ipp8u*) = 0;
+	virtual IppStatus ippsFFTFree_R_64f(IppsFFTSpec_R_64f*) = 0;
 	virtual Ipp64f* ippsMalloc_64f(int) = 0;	
 	virtual Ipp64fc* ippsMalloc_64fc(int) = 0;
-	virtual IppStatus ippsConjCcs_64fc(const Ipp64f*, Ipp64fc*, int)=0;
+	virtual IppStatus ippsConjCcs_64fc(const Ipp64f*, Ipp64fc*, int) = 0;
 	//virtual IppStatus ippsFFTSpec_R_64f(IppsFFTSpec_R_64f** ,int, int, IppHintAlgorithm);
-	virtual IppStatus ippsFFTInitAlloc_R_32f(IppsFFTSpec_R_32f** , int, int, IppHintAlgorithm ) = 0;
-	virtual IppStatus ippsFFTInitAlloc_R_16s(IppsFFTSpec_R_16s** ,int, int, IppHintAlgorithm)=0;
-	virtual IppStatus ippsFFTInitAlloc_R_32s(IppsFFTSpec_R_32s** ,int, int, IppHintAlgorithm)=0;
-	virtual IppStatus ippsFFTFwd_RToCCS_16s_Sfs( const Ipp16s*, Ipp16s*,const IppsFFTSpec_R_16s*,int, Ipp8u*)=0;
-	virtual IppStatus ippsFFTFwd_RToCCS_32s_Sfs( const Ipp32s*, Ipp32s*,const IppsFFTSpec_R_32s*,int, Ipp8u*)=0;
-	virtual IppStatus ippsMagnitude_16sc_Sfs(const Ipp16sc*,Ipp16s*,int,int)=0;
-	virtual IppStatus ippsMagnitude_32sc_Sfs(const Ipp32sc* pSrc,Ipp32s* pDst,int len,int scaleFactor)=0;
+	virtual IppStatus ippsFFTInitAlloc_R_32f(IppsFFTSpec_R_32f**, int, int, IppHintAlgorithm) = 0;
+	virtual IppStatus ippsFFTInitAlloc_R_16s(IppsFFTSpec_R_16s**, int, int, IppHintAlgorithm) = 0;
+	virtual IppStatus ippsFFTInitAlloc_R_32s(IppsFFTSpec_R_32s**, int, int, IppHintAlgorithm) = 0;
+	virtual IppStatus ippsFFTFwd_RToCCS_16s_Sfs(const Ipp16s*, Ipp16s*, const IppsFFTSpec_R_16s*, int, Ipp8u*) = 0;
+	virtual IppStatus ippsFFTFwd_RToCCS_32s_Sfs(const Ipp32s*, Ipp32s*, const IppsFFTSpec_R_32s*, int, Ipp8u*) = 0;
+	virtual IppStatus ippsMagnitude_16sc_Sfs(const Ipp16sc*, Ipp16s*, int, int) = 0;
+	virtual IppStatus ippsMagnitude_32sc_Sfs(const Ipp32sc* pSrc, Ipp32s* pDst, int len, int scaleFactor) = 0;
 	virtual IppStatus ippsMagnitude_64fc(const Ipp64fc*, Ipp64f*, int) = 0;
 	virtual IppStatus ippsMagnitude_64f(const Ipp64f*, const Ipp64f*, Ipp64f*, int) = 0;
 	virtual IppStatus ippsReal_64fc(const Ipp64fc*, Ipp64f*, int) = 0;
 	virtual IppStatus ippsImag_64fc(const Ipp64fc*, Ipp64f*, int) = 0;
 	virtual IppStatus ippsRealToCplx_64f(const Ipp64f*, const Ipp64f*, Ipp64fc*, int) = 0;
-	virtual IppStatus ippsFFTFree_R_32s(IppsFFTSpec_R_32s*)=0;
-	virtual Ipp32s* ippsMalloc_32s(int)=0; 
+	virtual IppStatus ippsFFTFree_R_32s(IppsFFTSpec_R_32s*) = 0;
+	virtual Ipp32s* ippsMalloc_32s(int) = 0;
 	virtual IppStatus ippsDFTInitAlloc_R_64f(IppsDFTSpec_R_64f** , int, int, IppHintAlgorithm ) = 0;
 	virtual IppStatus ippsDFTInitAlloc_R_32f(IppsDFTSpec_R_32f** , int, int, IppHintAlgorithm ) = 0;
 	virtual IppStatus ippsDFTInitAlloc_R_16s(IppsDFTSpec_R_16s** ,int, int, IppHintAlgorithm) = 0;
 	virtual IppStatus ippsDFTInitAlloc_C_64f(IppsDFTSpec_C_64f**, int, int, IppHintAlgorithm) = 0;
 	virtual IppStatus ippsDFTInitAlloc_C_64fc(IppsDFTSpec_C_64fc**, int, int, IppHintAlgorithm) = 0;
-	virtual IppStatus ippsDFTFree_R_64f(IppsDFTSpec_R_64f*)=0;
-	virtual IppStatus ippsDFTFree_R_32f(IppsDFTSpec_R_32f*)=0;
-	virtual IppStatus ippsDFTFree_R_16s(IppsDFTSpec_R_16s*)=0;
-	virtual IppStatus ippsDFTFree_C_64f(IppsDFTSpec_C_64f*)=0;
-	virtual IppStatus ippsDFTFree_C_64fc(IppsDFTSpec_C_64fc*)=0;
-	virtual IppStatus ippsDFTFwd_RToCCS_64f(const Ipp64f*,Ipp64f*,const IppsDFTSpec_R_64f*,Ipp8u*)=0;
-	virtual IppStatus ippsDFTFwd_RToCCS_16s_Sfs(const Ipp16s*,Ipp16s*,const IppsDFTSpec_R_16s*,int,Ipp8u*)=0;
+	virtual IppStatus ippsDFTFree_R_64f(IppsDFTSpec_R_64f*) = 0;
+	virtual IppStatus ippsDFTFree_R_32f(IppsDFTSpec_R_32f*) = 0;
+	virtual IppStatus ippsDFTFree_R_16s(IppsDFTSpec_R_16s*) = 0;
+	virtual IppStatus ippsDFTFree_C_64f(IppsDFTSpec_C_64f*) = 0;
+	virtual IppStatus ippsDFTFree_C_64fc(IppsDFTSpec_C_64fc*) = 0;
+	virtual IppStatus ippsDFTFwd_RToCCS_64f(const Ipp64f*, Ipp64f*, const IppsDFTSpec_R_64f*, Ipp8u*) = 0;
+	virtual IppStatus ippsDFTFwd_RToCCS_16s_Sfs(const Ipp16s*, Ipp16s*, const IppsDFTSpec_R_16s*, int, Ipp8u*) = 0;
 	virtual IppStatus ippsDFTFwd_CToC_64f(const Ipp64f*, const Ipp64f*, Ipp64f*, Ipp64f*, const IppsDFTSpec_C_64f*, Ipp8u*) = 0;
 	virtual IppStatus ippsDFTFwd_CToC_64fc(const Ipp64fc*, Ipp64fc*, const IppsDFTSpec_C_64fc*, Ipp8u*) = 0;
-	virtual Ipp16s* ippsMalloc_16s(int)=0;
-	virtual IppStatus ippsMagnitude_32fc(const Ipp32fc*,Ipp32f*,int)=0;
-	virtual IppStatus ippsAdd_32f_I(const Ipp32f*,Ipp32f*, int)=0;
+	virtual Ipp16s* ippsMalloc_16s(int) = 0;
+	virtual IppStatus ippsMagnitude_32fc(const Ipp32fc*, Ipp32f*, int) = 0;
+	virtual IppStatus ippsAdd_32f_I(const Ipp32f*, Ipp32f*, int) = 0;
+	virtual IppStatus ippsPowerSpectr_32fc(const Ipp32fc* pSrc, Ipp32f* pDst, int len) = 0;
+	virtual IppStatus ippsSum_32f(const Ipp32f* pSrc, int len, Ipp32f* pSum, IppHintAlgorithm hint) = 0;
+	virtual IppStatus ippsSum_32fc(const Ipp32fc* pSrc, int len, Ipp32fc* pSum, IppHintAlgorithm hint) = 0;
 };
 
 class IPPSDll : public PDLL, IPPSlib
@@ -756,6 +759,9 @@ class IPPSDll : public PDLL, IPPSlib
 	DECLARE_FUNCTION1(Ipp16s*, ippsMalloc_16s, int );
 	DECLARE_FUNCTION3(IppStatus, ippsMagnitude_32fc, const Ipp32fc*, Ipp32f*, int);
 	DECLARE_FUNCTION3(IppStatus, ippsAdd_32f_I, const Ipp32f*, Ipp32f*, int);
+	DECLARE_FUNCTION3(IppStatus, ippsPowerSpectr_32fc, const Ipp32fc*, Ipp32f*, int);
+	DECLARE_FUNCTION4(IppStatus, ippsSum_32f, const Ipp32f*, int, Ipp32f*, IppHintAlgorithm);
+	DECLARE_FUNCTION4(IppStatus, ippsSum_32fc, const Ipp32fc*, int, Ipp32fc*, IppHintAlgorithm);
 };
 
 class IPPCORElib

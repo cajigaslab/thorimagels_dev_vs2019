@@ -993,6 +993,7 @@
             catch (Exception ex)
             {
                 _liveVM.ModalitySpinnerWindowShowing = false;
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "CaptureSetup MasterView load error: " + ex.Message);
                 MessageBox.Show("There was an error at loading Capture Setup. Some of your properties may not have been updated.");
             }
         }

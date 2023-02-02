@@ -856,7 +856,8 @@ uint64_t ImageWaveformBuilder::RebuildWaveformFromFile(const wchar_t* waveformFi
 	for (int i = 0; i < static_cast<int>(SignalType::SIGNALTYPE_LAST); i++)
 	{
 		_countTotal[_scanAreaId][i][0] = _countTotal[_scanAreaId][i][2] = 0;												//[0] travel to start, [2] zero pedding end
-		_countTotal[_scanAreaId][i][1] = _gWaveXY[_scanAreaId].analogPockelSize / _gWaveXY[_scanAreaId].pockelsCount;		//[1] unit size of waveform body
+		_countTotal[_scanAreaId][i][1] = (0 < _gWaveXY[_scanAreaId].pockelsCount) ?
+			_gWaveXY[_scanAreaId].analogPockelSize / _gWaveXY[_scanAreaId].pockelsCount : _gWaveXY[_scanAreaId].analogPockelSize;		//[1] unit size of waveform body
 	}
 	_waveformFileName = waveformFileName;
 

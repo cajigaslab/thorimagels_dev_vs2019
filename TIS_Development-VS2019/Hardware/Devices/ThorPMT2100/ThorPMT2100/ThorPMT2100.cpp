@@ -683,6 +683,17 @@ long ThorPMT2100::GetParamString(const long paramID, wchar_t* str, long size)
 			wcscpy_s(str,size, wsTemp.c_str());
 		}
 		break;
+	case PARAM_PMT1_AVAILABLE_BANDWIDTHS:
+	case PARAM_PMT2_AVAILABLE_BANDWIDTHS:
+	case PARAM_PMT3_AVAILABLE_BANDWIDTHS:
+	case PARAM_PMT4_AVAILABLE_BANDWIDTHS:
+	case PARAM_PMT5_AVAILABLE_BANDWIDTHS:
+	case PARAM_PMT6_AVAILABLE_BANDWIDTHS:
+	{
+		wstring wsTemp = utf8toUtf16(_availableBandwidths);
+		wcscpy_s(str, size, wsTemp.c_str());
+	}
+	break;
 	default:
 		ret = FALSE;
 	}
@@ -2441,6 +2452,96 @@ long ThorPMT2100::CreateParamTable()
 		L"",
 		-1);
 	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT6_OFFSET_STEP_SIZE, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT1_AVAILABLE_BANDWIDTHS,
+		0,
+		0,
+		FALSE,
+		TYPE_STRING,
+		TRUE,
+		TRUE,
+		0,
+		0,
+		0,
+		snQuery,
+		0);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT1_AVAILABLE_BANDWIDTHS, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT2_AVAILABLE_BANDWIDTHS,
+		0,
+		0,
+		FALSE,
+		TYPE_STRING,
+		TRUE,
+		TRUE,
+		0,
+		0,
+		0,
+		snQuery,
+		0);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT2_AVAILABLE_BANDWIDTHS, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT3_AVAILABLE_BANDWIDTHS,
+		0,
+		0,
+		FALSE,
+		TYPE_STRING,
+		TRUE,
+		TRUE,
+		0,
+		0,
+		0,
+		snQuery,
+		0);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT3_AVAILABLE_BANDWIDTHS, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT4_AVAILABLE_BANDWIDTHS,
+		0,
+		0,
+		FALSE,
+		TYPE_STRING,
+		TRUE,
+		TRUE,
+		0,
+		0,
+		0,
+		snQuery,
+		0);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT4_AVAILABLE_BANDWIDTHS, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT5_AVAILABLE_BANDWIDTHS,
+		0,
+		0,
+		FALSE,
+		TYPE_STRING,
+		TRUE,
+		TRUE,
+		0,
+		0,
+		0,
+		snQuery,
+		0);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT5_AVAILABLE_BANDWIDTHS, tempParamInfo));
+
+	tempParamInfo = new ParamInfo(
+		PARAM_PMT6_AVAILABLE_BANDWIDTHS,
+		0,
+		0,
+		FALSE,
+		TYPE_STRING,
+		TRUE,
+		TRUE,
+		0,
+		0,
+		0,
+		snQuery,
+		0);
+	_tableParams.insert(std::pair<long, ParamInfo*>(PARAM_PMT6_AVAILABLE_BANDWIDTHS, tempParamInfo));
 
 	return TRUE;
 }

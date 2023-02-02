@@ -823,7 +823,7 @@ long ThorECU::ParseReadBufferStatus(int inquiryID)
 
 	ret = swscanf_s(pInterest, _T("Gain: %d PMT: %ls Peltier: %lld"), &gain, pmterr, _countof(pmterr), pelerr, _countof(pelerr));
 
-	if(wcsstr(pmterr,_T("OK")) && (3 == ret))	//pmt normal
+	if(wcsstr(pmterr,_T("OK")) && (ret >= 2))	//pmt normal
 	{
 		pmtError = false;
 	}
