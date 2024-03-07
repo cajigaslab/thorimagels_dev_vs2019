@@ -39,9 +39,9 @@ public:
 	long rewriteOMEHeader();
 
 	TIFF * tiff;
-	map<uint8_t, Scan*> scans;
+	map<uint32_t, Scan*> scans;
 	map<uint16_t, Plate*> plates;
-	map<uint8_t, Scan*>::iterator removeScan(map<uint8_t, Scan*>::iterator scanit);
+	map<uint32_t, Scan*>::iterator removeScan(map<uint32_t, Scan*>::iterator scanit);
 	bool _is_file_using;
 	bool _is_create_pyramidal_data;
 };

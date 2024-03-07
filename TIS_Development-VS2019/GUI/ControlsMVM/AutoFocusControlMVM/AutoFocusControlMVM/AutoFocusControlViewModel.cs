@@ -71,7 +71,7 @@
         {
             get
             {
-                if (0 == _autoFocusRunning)
+                if (1 != _autoFocusRunning)
                 {
                     _absoluteStartPos = StartPosition + _currentZPosition;
                     _absoluteStartPos = (_absoluteStartPos > ZMax) ? ZMax : _absoluteStartPos;
@@ -85,7 +85,7 @@
         {
             get
             {
-                if (0 == _autoFocusRunning)
+                if (1 != _autoFocusRunning)
                 {
                     _absoluteStopPos = StopPosition + _currentZPosition;
                     _absoluteStopPos = (_absoluteStopPos > ZMax) ? ZMax : _absoluteStopPos;
@@ -116,6 +116,18 @@
             }
         }
 
+        public int AutoFocusComboBoxSelection
+        {
+            get
+            {
+                return (AutoFocusTypes.AF_IMAGE == (AutoFocusTypes)AutoFocusType) ? 0 : 1;
+            }
+            set
+            {
+                AutoFocusType = (0 == value) ? (int)AutoFocusTypes.AF_IMAGE : (int)AutoFocusTypes.AF_NONE;
+            }
+        }
+
         public int AutoFocusType
         {
             get
@@ -125,7 +137,9 @@
             set
             {
                 _autoFocusType = value;
+                AutoFocusButtonEnabled = (int)AutoFocusTypes.AF_NONE != _autoFocusType;
                 OnPropertyChanged("AutoFocusType");
+                OnPropertyChanged("AutoFocusComboBoxSelection");
             }
         }
 
@@ -134,8 +148,6 @@
             get
             {
                 _currentZPosition = ((double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0.0] * 1000);
-                OnPropertyChanged("AbsoluteStartPosition");
-                OnPropertyChanged("AbsoluteStopPosition");
                 return _currentZPosition;
             }
         }
@@ -193,6 +205,18 @@
             }
         }
 
+        public double SliderMax
+        {
+            get;
+            set;
+        }
+
+        public double SliderMin
+        {
+            get;
+            set;
+        }
+
         public double StartPosition
         {
             get
@@ -201,19 +225,24 @@
             }
             set
             {
-                if (value + CurrentZPosition <= ZMin)
+                if (0 >= value)
                 {
-                    _startPosition = ZMin;
+                    if (value + CurrentZPosition <= ZMin)
+                    {
+                        _startPosition = ZMin - CurrentZPosition;
+                    }
+                    else if (value + CurrentZPosition >= ZMax)
+                    {
+                        _startPosition = ZMax - CurrentZPosition;
+                    }
+                    else
+                    {
+                        _startPosition = value;
+                    }
+                    _startPosition = Math.Round(_startPosition, 1);
+                    OnPropertyChanged("StartPosition");
+                    OnPropertyChanged("AbsoluteStartPosition");
                 }
-                else if (value + CurrentZPosition >= ZMax)
-                {
-                    _startPosition = ZMax;
-                }
-                else
-                {
-                    _startPosition = value;
-                }
-                OnPropertyChanged("StartPosition");
             }
         }
 
@@ -225,8 +254,11 @@
             }
             set
             {
-                _stepSizeUM = value;
-                OnPropertyChanged("StepSizeUM");
+                if (0 < value)
+                {
+                    _stepSizeUM = value;
+                    OnPropertyChanged("StepSizeUM");
+                }
             }
         }
 
@@ -239,19 +271,24 @@
             }
             set
             {
-                if (value + CurrentZPosition <= ZMin)
+                if (0 <= value)
                 {
-                    _stopPositon = ZMin;
+                    if (value + CurrentZPosition <= ZMin)
+                    {
+                        _stopPositon = ZMin - CurrentZPosition;
+                    }
+                    else if (value + CurrentZPosition >= ZMax)
+                    {
+                        _stopPositon = ZMax - CurrentZPosition;
+                    }
+                    else
+                    {
+                        _stopPositon = value;
+                    }
+                    _stopPositon = Math.Round(_stopPositon, 1);
+                    OnPropertyChanged("StopPosition");
+                    OnPropertyChanged("AbsoluteStopPosition");
                 }
-                else if(value + CurrentZPosition >= ZMax)
-                {
-                    _stopPositon = ZMax;
-                }
-                else
-                {
-                    _stopPositon = value;
-                }
-                OnPropertyChanged("StopPosition");
             }
         }
 
@@ -338,9 +375,7 @@
         {
             if (null != this._spinnerWindow)
             {
-                _autoFocusRunning = 0;
                 this._spinnerWindow.Close();
-                _spinnerWindow = null;
             }
         }
 
@@ -441,6 +476,11 @@
                         FineAutoFocusPercentageDecrease = Convert.ToDouble(objList[turretPosition].Attributes["fineAfPercentDecrease"].Value.ToString(CultureInfo.InvariantCulture), CultureInfo.InvariantCulture);
                     }
                 }
+
+                SliderMin = ZMin;
+                SliderMax = ZMax;
+                OnPropertyChanged("SliderMax");
+                OnPropertyChanged("SliderMin");
                 OnPropertyChanged("ZMax");
                 OnPropertyChanged("ZMin");
             }
@@ -462,6 +502,24 @@
 
         public void UpdateExpXMLSettings(ref XmlDocument experimentFile)
         {
+            //Check the start and stop to make sure they still are within the limits
+            if (StartPosition + CurrentZPosition <= ZMin)
+            {
+                StartPosition = ZMin - CurrentZPosition;
+            }
+            else if (StartPosition + CurrentZPosition >= ZMax)
+            {
+                StartPosition = ZMax - CurrentZPosition;
+            }
+            if (StopPosition + CurrentZPosition <= ZMin)
+            {
+                StopPosition = ZMin - CurrentZPosition;
+            }
+            else if (StopPosition + CurrentZPosition >= ZMax)
+            {
+                StopPosition = ZMax - CurrentZPosition;
+            }
+
             XmlNodeList ndList = experimentFile.SelectNodes("/ThorImageExperiment/Autofocus");
 
             if (ndList.Count > 0)
@@ -495,7 +553,7 @@
 
             _spinnerWindow.Owner = Application.Current.MainWindow;
             _spinnerWindow.Left = _spinnerWindow.Owner.Left + _spinnerWindow.Width;
-            _spinnerWindow.Top = _spinnerWindow.Owner.Top + ((System.Windows.Controls.Panel)_spinnerWindow.Owner.Content).ActualHeight / 2;
+            _spinnerWindow.Top = _spinnerWindow.Owner.Top + (((System.Windows.Controls.Panel)_spinnerWindow.Owner.Content).ActualHeight / 2);
             _spinnerWindow.Closed += new EventHandler(_spinnerWindow_Closed);
 
             MVMManager.Instance["CaptureSetupViewModel", "IsProgressWindowOff"] = false;
@@ -519,6 +577,24 @@
             //:TODO: Verify later if we need to save the experiment file with the AutoFocusCache
             //update Active.xml
             //MVMManager.Instance["CaptureSetupViewModel", "PersistDataNow"] = true;
+
+            //Check the start and stop to make sure they still are within the limits
+            if (StartPosition + CurrentZPosition <= ZMin)
+            {
+                StartPosition = ZMin - CurrentZPosition;
+            }
+            else if (StartPosition + CurrentZPosition >= ZMax)
+            {
+                StartPosition = ZMax - CurrentZPosition;
+            }
+            if (StopPosition + CurrentZPosition <= ZMin)
+            {
+                StopPosition = ZMin - CurrentZPosition;
+            }
+            else if (StopPosition + CurrentZPosition >= ZMax)
+            {
+                StopPosition = ZMax - CurrentZPosition;
+            }
 
             try
             {
@@ -560,9 +636,19 @@
             MVMManager.Instance["CaptureSetupViewModel", "PixelDataReady"] = false;
 
             //Send the setup values to the correct type of auto focus before running. In other words Preflight the auto focus procedure.
-            AutoFocusModule.Instance.SetupAutoFocus(AutoFocusType, Repeats, 0.1650, 1, StepSizeUM, StartPosition/1000.0, StopPosition/1000.0, 1, FineAutoFocusPercentageDecrease, enableImageUpdate);
+            AutoFocusModule.Instance.SetupAutoFocus(AutoFocusType, Repeats, 0.1650, 1, StepSizeUM, StartPosition / 1000.0, StopPosition / 1000.0, 1, FineAutoFocusPercentageDecrease, enableImageUpdate);
 
             double magnification = (double)MVMManager.Instance["ObjectiveControlViewModel", "TurretMagnification", (object)10.0];
+
+            //Enable the PMTs
+            MVMManager.Instance["ScanControlViewModel", "EnablePMTGains"] = false;
+            MVMManager.Instance["ScanControlViewModel", "EnablePMTGains"] = true;
+
+            //Zoom in slider to only look at working area
+            SliderMin = AbsoluteStartPosition;
+            SliderMax = AbsoluteStopPosition;
+            OnPropertyChanged("SliderMax");
+            OnPropertyChanged("SliderMin");
 
             // Run Autofocus through Capture Setup so we can save the images as tiffs and display them as preview
             _AutoFocusControlModel.AutoFocus(magnification, AutoFocusType, ref afFound);
@@ -573,15 +659,28 @@
 
             bitmapUpdateWorker.DoWork += (obj, eventArg) =>
             {
+                //Give the autofocus thread time to start, timeout after 10 seconds
+                DateTime lastS = DateTime.Now;
+                TimeSpan ts;
+                ts = DateTime.Now - lastS;
+                _autoFocusRunning = AutoFocusModule.Instance.IsAutoFocusRunning();
+                while (10 > ts.TotalSeconds && 0 == _autoFocusRunning)
+                {
+                    System.Threading.Thread.Sleep(30);
+                    lastS = DateTime.Now;
+                    _autoFocusRunning = AutoFocusModule.Instance.IsAutoFocusRunning();
+                }
+
                 do
                 {
+                    System.Threading.Thread.Sleep(30);
                     //Check if CaptureSetupModule has a new image buffer ready from CaptureSetup.cpp
                     pixelDataReady = (bool)MVMManager.Instance["CaptureSetupViewModel", "PixelDataReady", (object)false];
                     if (pixelDataReady)
                     {
                         ((IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("Bitmap");
                     }
-                    System.Threading.Thread.Sleep(30);
+
                     captureStatus = (bool)MVMManager.Instance["CaptureSetupViewModel", "CaptureStatus", (object)false];
                     if (!captureStatus)
                         break;
@@ -609,11 +708,9 @@
                         });
                     }
 
-                    //OnPropertyChanged("CurrentZPosition");
                     _autoFocusRunning = AutoFocusModule.Instance.IsAutoFocusRunning();
                 }
                 while (1 == _autoFocusRunning);
-                _autoFocusRunning = 0;
             };
 
             bitmapUpdateWorker.RunWorkerCompleted += (obj, eventArg) =>
@@ -629,7 +726,24 @@
                 MVMManager.Instance["CaptureSetupViewModel", "WrapPanelEnabled"] = true;
                 //Set the image size back to the original size
                 MVMManager.Instance["CaptureSetupViewModel", "ApplyOrRevertFastFocusParamsMVMCall"] = true;
+
+                //Disable the PMTs
+                MVMManager.Instance["ScanControlViewModel", "EnablePMTGains"] = false;
+
+                //Enable all different controls in Capture Setup
+                MVMManager.Instance["CaptureSetupViewModel", "IsProgressWindowOff"] = true;
+
+                //Set slider to original size
+                SliderMin = ZMin;
+                SliderMax = ZMax;
+                OnPropertyChanged("SliderMax");
+                OnPropertyChanged("SliderMin");
+                OnPropertyChanged("ZMax");
+                OnPropertyChanged("ZMin");
+
                 CloseProgressWindow();
+                _spinnerWindow = null;
+                _autoFocusRunning = 0;
             };
 
             bitmapUpdateWorker.RunWorkerAsync();
@@ -639,16 +753,10 @@
             }
         }
 
-        private void stopButton_Clicked(object sender, RoutedEventArgs e)
-        {
-            StopAutoFocus();
-        }
-
         void _spinnerWindow_Closed(object sender, EventArgs e)
         {
             StopAutoFocus();
-            MVMManager.Instance["CaptureSetupViewModel", "IsProgressWindowOff"] = true;
-            _autoFocusRunning = 0;
+            _spinnerWindow.Closed -= new EventHandler(_spinnerWindow_Closed);
         }
 
         #endregion Methods

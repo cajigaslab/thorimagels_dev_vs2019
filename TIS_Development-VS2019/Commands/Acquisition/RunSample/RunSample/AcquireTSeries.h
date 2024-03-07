@@ -28,6 +28,7 @@ public:
 	virtual long CallStartProgressBar(long index, long resetTotalCount = 0);
 	virtual long CallInformMessage(wchar_t* message);
 	virtual long CallNotifySavedFileIPC(wchar_t* message);
+	virtual long CallAutoFocusStatus(long isRunning, long bestScore, double bestZPos, double nextZPos, long currRepeat);
 
 	static HANDLE hEvent;
 	static HANDLE hEventZ;
@@ -63,6 +64,7 @@ private:
 	string uUIDSetup(auto_ptr<HardwareSetupXML> &pHardware, long timePoints, long zstageSteps, long zStreamFrames, long index, long subWell);
 	long SetPMT();
 	long ScannerEnable(long enable);
+	long PreCaptureAutoFocus(long index, long subWell);
 	IExperiment * _pExp;
 	ICamera * _pCamera;
 

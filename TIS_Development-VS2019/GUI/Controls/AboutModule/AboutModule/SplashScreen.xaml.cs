@@ -3,7 +3,9 @@
     using System;
     using System.Collections.Generic;
     using System.ComponentModel;
+    using System.IO;
     using System.Linq;
+    using System.Reflection;
     using System.ServiceModel;
     using System.Text;
     using System.Windows;
@@ -35,6 +37,9 @@
         public SplashScreen(string title, bool hardwareconnectionsopened)
         {
             InitializeComponent();
+
+            //Line below gets the build date from assembly files
+            DateLabel.Content = "Thorlabs Inc. - " + (new FileInfo(Assembly.GetExecutingAssembly().Location).LastWriteTime).Date.ToString("yyyy");
             bool isBeta = false;
             txtTitle.Text = isBeta ? title + "-Beta" : title;
             txtTILS.Margin = isBeta ? new Thickness(5, 5, 30, 5) : txtTILS.Margin;

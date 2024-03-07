@@ -202,7 +202,8 @@
         {"SLM_PATTERN_DUMPLICATE",SLMPatternType.Duplicate},
         {"SLM_Z_REF",SLMPatternType.ZRef},
         {"SLM_SAVEZOFFSET",SLMPatternType.SaveZOffset},
-        {"SLM_REBUILDALL",SLMPatternType.RebuildAll}
+        {"SLM_REBUILDALL",SLMPatternType.RebuildAll},
+        {"SLM_PATTERN_DELETEALL",SLMPatternType.DeleteAll}
         };
 
         private BackgroundWorker slmBuildAllWorker;
@@ -263,7 +264,8 @@
             Duplicate,
             ZRef,
             SaveZOffset,
-            RebuildAll
+            RebuildAll,
+            DeleteAll
         }
 
         #endregion Enumerations
@@ -1100,7 +1102,6 @@
         private void CalibrationProc(string note)
         {
             SLMCalibPanel slmCalib;
-            string roiPathAndName = _vm.SLMCalibROIFilePath;
             string strBody = string.Empty, roiType = string.Empty;
             Point offCenter = new Point(-1, -1);
             List<Point> pts = new List<Point>();
@@ -1116,7 +1117,7 @@
                     OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, true);
                     slmCalibrator.DoWork += new DoWorkEventHandler(SLMCalibrator_DoWork);
                     slmCalibrator.RunWorkerCompleted += new RunWorkerCompletedEventHandler(SLMCalibrator_RunWorkerCompleted);
-                    slmCalibrator.RunWorkerAsync(roiPathAndName);
+                    slmCalibrator.RunWorkerAsync(_vm.SLMCalibROIFilePath);
                     break;
                 case "REDO":
                     //reset affine values if not matched:
@@ -1137,13 +1138,14 @@
                     _vm.SLMSkipFitting = true;
                     _zOffsetUMs = new List<float>();
 
-                    if (_vm.SLMCalibByBurning)
+                    if (0 < _vm.SLMCalibByBurning)
                     {
                         CalibrationProc("SPOT_SELECT");
                     }
                     else
                     {
-                        slmCalib = new SLMCalibPanel("Next", "SPOT_SELECT", "DONE", "New Calibration", "Keep Z at reference and use Cross Hair\nROI tool to mark the single imaging bead\nthen Press Yes to continue calibration,\nPress No to cancel.");
+                        _vm.SLMSetBlank();
+                        slmCalib = new SLMCalibPanel("", "SPOT_SELECT", "DONE", "New Calibration", "Keep Z at reference and use Cross Hair\nROI tool to mark the single imaging bead\nthen Press Yes to continue calibration,\nPress No to cancel.");
                         this.DataContext = slmCalib;
                         this.Show();
                     }
@@ -1151,8 +1153,8 @@
                 //[For 3D calibration method]
                 case "SPOT_SELECT":
                     //expect center spot selected only: (not SLMCalibByBurning)
-                    pts = _vm.SLMCalibByBurning ? new List<Point>() : OverlayManagerClass.Instance.GetPatternROICenters(OverlayManagerClass.Instance.PatternID, ref roiType, ref offCenter);
-                    if (_vm.SLMCalibByBurning || ((-1 != offCenter.X || -1 != offCenter.Y) && 0 == pts.Count))
+                    pts = (0 < _vm.SLMCalibByBurning) ? new List<Point>() : OverlayManagerClass.Instance.GetPatternROICenters(OverlayManagerClass.Instance.PatternID, ref roiType, ref offCenter);
+                    if ((0 < _vm.SLMCalibByBurning) || ((-1 != offCenter.X || -1 != offCenter.Y) && 0 == pts.Count))
                     {
                         //create mask:
                         List<Shape> rois = OverlayManagerClass.Instance.GetModeROIs(Mode.PATTERN_NOSTATS, OverlayManagerClass.Instance.PatternID - 1);
@@ -1168,7 +1170,9 @@
                     }
                     else
                     {
-                        _vm.SLMSetBlank();
+                        if (0 < _vm.SLMCalibByBurning)
+                            _vm.SLMSetBlank((int)IDevice.Params.PARAM_SLM_BLANK_SAFE);
+
                         OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID);
                         OverlayManagerClass.Instance.ClearNonSaveROIs(ref CaptureSetupViewModel.OverlayCanvas);
                         OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, false);
@@ -1183,7 +1187,7 @@
                     strBody = "Using Cross Hair ROI tool, mark the \ncenter points of the burned calibration \nspots on the image. \nPress Next then move to a different\nZ value & z offset and repeat.\nPress YES when complete, and\npress No to break.\n\n\n\tx4\tx5\tx6\n\n\tx3\n\t\t\t\tx7\n\n\tx2\n\t\t     x8\n\n\n\tx1\t\t\tx9\n";
 
                     pts = OverlayManagerClass.Instance.GetPatternROICenters(OverlayManagerClass.Instance.PatternID, ref roiType, ref offCenter);
-                    if (0 != (pts.Count % CalibratePointCount) || Math.Abs((int)(pts.Count / CalibratePointCount) - _zOffsetUMs.Count) > 1)
+                    if (0 >= pts.Count || 0 != (pts.Count % CalibratePointCount) || Math.Abs((int)(pts.Count / CalibratePointCount) - _zOffsetUMs.Count) > 1)
                     {
                         OverlayManagerClass.Instance.ClearNonSaveROIs(ref CaptureSetupViewModel.OverlayCanvas);
                         OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, false);
@@ -1194,10 +1198,12 @@
                     else
                     {
                         OverlayManagerClass.Instance.SetPatternToSaveROI(OverlayManagerClass.Instance.PatternID);
-                        OverlayManagerClass.Instance.SaveROIs(roiPathAndName);
+                        OverlayManagerClass.Instance.SaveROIs(_vm.SLMCalibROIFilePath);
                         if (0 < pts.Count)
                         {
-                            tmpkz = (float)(2 * Math.PI * _vm.DefocusUM * (float)Constants.UM_TO_MM / _vm.SLMWavelengthNM);
+                            // focal(/first) plane will have to consider optical path difference
+                            tmpkz = (pts.Count == CalibratePointCount) ? (float)((-1) * 2 * Math.PI * (_vm.DefocusUM - _vm.DefocusSavedUM) * (float)Constants.UM_TO_MM / _vm.SLMWavelengthNM) :
+                                 (float)((-1) * 2 * Math.PI * (_vm.DefocusUM) * (float)Constants.UM_TO_MM / _vm.SLMWavelengthNM);
                             if (_zOffsetUMs.Count < (int)(pts.Count / CalibratePointCount))
                             {
                                 _zOffsetUMs.Add(tmpkz);
@@ -1206,6 +1212,8 @@
                             {
                                 _zOffsetUMs[_zOffsetUMs.Count - 1] = tmpkz;
                             }
+
+                            OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, -1, false);
                             strBody = "Info: Spot selections (total count: " + pts.Count + ") and\nz info are updated.\n\n" + strBody;
                             slmCalib = new SLMCalibPanel("Next", "TRY_CALIBRATE", "DONE", "New Calibration", strBody);
                         }
@@ -1224,13 +1232,13 @@
                     { return; }
 
                     //stop Live Capture if GALVO_GALVO in by-burning
-                    if (_vm.SLMCalibByBurning && (int)ICamera.LSMType.GALVO_GALVO == ResourceManagerCS.GetLSMType())
+                    if (0 < _vm.SLMCalibByBurning && (int)ICamera.LSMType.GALVO_GALVO == ResourceManagerCS.GetLSMType())
                     {
                         _vm.StopLiveCapture();
                     }
 
                     OverlayManagerClass.Instance.SetPatternToSaveROI(OverlayManagerClass.Instance.PatternID);
-                    OverlayManagerClass.Instance.SaveROIs(roiPathAndName);
+                    OverlayManagerClass.Instance.SaveROIs(_vm.SLMCalibROIFilePath);
 
                     slmCalibrator.DoWork += new DoWorkEventHandler(SLMCalibrator3D_DoWork);
                     slmCalibrator.RunWorkerCompleted += new RunWorkerCompletedEventHandler(SLMCalibrator3D_RunWorkerCompleted);
@@ -1261,7 +1269,7 @@
                     else
                     {
                         OverlayManagerClass.Instance.SetPatternToSaveROI(OverlayManagerClass.Instance.PatternID);
-                        OverlayManagerClass.Instance.SaveROIs(roiPathAndName);
+                        OverlayManagerClass.Instance.SaveROIs(_vm.SLMCalibROIFilePath);
 
                         //valid count, send for calibration,
                         if (slmCalibrator.IsBusy)
@@ -1275,7 +1283,7 @@
 
                         slmCalibrator.DoWork += new DoWorkEventHandler(SLMCalibrator_DoWork);
                         slmCalibrator.RunWorkerCompleted += new RunWorkerCompletedEventHandler(SLMCalibrator_RunWorkerCompleted);
-                        slmCalibrator.RunWorkerAsync(roiPathAndName);
+                        slmCalibrator.RunWorkerAsync(_vm.SLMCalibROIFilePath);
                     }
                     break;
                 case "CHECK":
@@ -1323,7 +1331,10 @@
                     break;      //closing app or switching tabs
             }
             if (updateFile)
-                UpdateWaveParamsAndFile();
+            {
+                if (UpdateWaveParamsAndFile())
+                    SetPatternToSaveROI(OverlayManagerClass.Instance.PatternID);
+            }
         }
 
         private void ColorDelta_Changed(object sender, MouseWheelEventArgs e)
@@ -1476,6 +1487,9 @@
                     //load xml
                     XmlDocument xmlSLMImportDoc = new XmlDocument();
                     xmlSLMImportDoc.Load(SLMImportPath);
+
+                    //Make overlay manager not accessing hardware mvms, but properties only
+                    OverlayManagerClass.Instance.SimulatorMode = true;
 
                     //load SLM params and determine the import type
                     if (!TryImportPatternSequences(xmlSLMImportDoc, (Boolean)arguments[1]))
@@ -1870,7 +1884,7 @@
                         if (0 < zShapesNoCenter.Count)
                         {
                             //clear intermediate history before save SLM pattern
-                            _vm.DeleteSLMBleachParamsID((uint)OverlayManagerClass.Instance.PatternID, (int)CaptureSetupViewModel.SLMBMPSubFolder.IntermediateZ, false);
+                            _vm.DeleteSLMBleachParamsID(OverlayManagerClass.Instance.PatternID, (int)CaptureSetupViewModel.SLMBMPSubFolder.IntermediateZ, false);
 
                             foreach (KeyValuePair<double, List<Shape>> entry in zShapesNoCenter)
                             {
@@ -1923,6 +1937,32 @@
             return true;
         }
 
+        private void SetPatternToSaveROI(int id)
+        {
+            if (SLMFileSaved)
+            {
+                //persist WaveParams:
+                this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
+                {
+                    //save ROIs:
+                    OverlayManagerClass.Instance.SetPatternToSaveROI(id, (_vm.IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS));
+
+                    //backup ROIs for not being revoked:
+                    OverlayManagerClass.Instance.BackupROIs();
+
+                });
+
+            }
+            else
+            {
+                this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
+                {
+                    //clear ROIs:
+                    OverlayManagerClass.Instance.ClearNonSaveROIs(ref CaptureSetupViewModel.OverlayCanvas);
+                });
+            }
+        }
+
         private void SetupLinePanel()
         {
             if (null != SLMEpochSequences)
@@ -1973,7 +2013,8 @@
                         {
                             SLMFileSaved = true;
                             _waveParamsUpdated = false;
-                            UpdateWaveParamsAndFile();
+                            if (UpdateWaveParamsAndFile())
+                                SetPatternToSaveROI(OverlayManagerClass.Instance.PatternID);
                         }
                         if (worker.CancellationPending)
                             break;
@@ -1994,16 +2035,20 @@
             else if (e.Cancelled == true)
             {
                 SLMPatternStatus = String.Format("Cancelled SLM build all.\n ");
-                UpdateWaveParamsAndFile();
+                if (UpdateWaveParamsAndFile())
+                    SetPatternToSaveROI(OverlayManagerClass.Instance.PatternID);
                 SLMGenResult = false;
             }
             //give back properties
+            SLMPatternStatus = string.Empty;
             _vm.SLMSelectWavelengthProp = (e.Result as bool[])[0];
             _vm.SLM3D = (e.Result as bool[])[1];
             slmBuildAllWorker.DoWork -= new DoWorkEventHandler(slmBuildAllWorker_DoWork);
             slmBuildAllWorker.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(slmBuildAllWorker_RunWorkerCompleted);
 
-            if (SLMGenResult)
+            if (0 >= _vm.SLMBleachWaveParams.Count)
+                this.Close();
+            else if (SLMGenResult)
             {
                 if (_vm.SLMSequenceOn)
                     BuildSequences();
@@ -2103,9 +2148,10 @@
                         for (int i = 0; i < patternIDs.Length; i++)
                         {
                             //verify pattern time to be long enough for SLM runtime calculation
-                            if (PatternMinMS > (_vm.IsStimulator ? _vm.SLMBleachWaveParams[patternIDs[i] - 1].Duration : _vm.SLMBleachWaveParams[patternIDs[i] - 1].BleachWaveParams.EstDuration) * _vm.SLMBleachWaveParams[patternIDs[i] - 1].BleachWaveParams.Iterations)
+                            double estPatternMS = (_vm.IsStimulator ? _vm.SLMBleachWaveParams[patternIDs[i] - 1].Duration : _vm.SLMBleachWaveParams[patternIDs[i] - 1].BleachWaveParams.EstDuration) * _vm.SLMBleachWaveParams[patternIDs[i] - 1].BleachWaveParams.Iterations;
+                            if (PatternMinMS > estPatternMS)
                             {
-                                SLMPatternStatus = String.Format("SLM sequence #" + (seq + 1).ToString() + " pattern time of ID #" + patternIDs[i].ToString() + " should be > " + PatternMinMS.ToString() + " msec.\n");
+                                SLMPatternStatus = String.Format("SLM sequence #" + (seq + 1).ToString() + " est. pattern time of ID #" + patternIDs[i].ToString() + " (" + estPatternMS.ToString("0.##") + " ms)\nshould be > " + PatternMinMS.ToString() + " ms.\n");
                                 seqTextFile.Close();
                                 seqTextFile.Dispose();
                                 return;
@@ -2305,7 +2351,7 @@
                     //PatternID 1 are targets, PatternID 2 are sources for affine calibration
                     Point center = new Point(_vm.ImageWidth / 2, _vm.ImageHeight / 2);
                     //do not translate if calibrated by burning method
-                    Point s2tVec = !_vm.SLMCalibByBurning ? new Point(center.X - offCenter.X, center.Y - offCenter.Y) : new Point(0.0, 0.0);
+                    Point s2tVec = (0 == _vm.SLMCalibByBurning) ? new Point(center.X - offCenter.X, center.Y - offCenter.Y) : new Point(0.0, 0.0);
 
                     //get targets,
                     //keep the first as image center for later transform in SLM
@@ -2337,7 +2383,7 @@
                     foreach (KeyValuePair<double, List<Shape>> entry in zROIs)
                     {
                         //update kzTo for reference patterns
-                        tmpkz = (float)(2 * Math.PI * entry.Key * (float)Constants.UM_TO_MM / _vm.SLMWavelengthNM);
+                        tmpkz = (float)((-1) * 2 * Math.PI * entry.Key * (float)Constants.UM_TO_MM / _vm.SLMWavelengthNM);
                         if (!kzTo.Contains(tmpkz))
                             kzTo.Add(tmpkz);
 
@@ -2350,14 +2396,22 @@
                         {
                             if (slist.GetType() == typeof(OverlayManager.ROICrosshair))
                             {
-                                ptsFrom.Add((float)(((OverlayManager.ROICrosshair)slist).CenterPoint.X + s2tVec.X));
-                                ptsFrom.Add((float)(((OverlayManager.ROICrosshair)slist).CenterPoint.Y + s2tVec.Y));
+                                //the R bead image is inverted in camera's X & Y direction due to GG scanning,
+                                //have it corrected in calibration.
+                                Point invertPt = (0 == _vm.SLMCalibByBurning) ?
+                                    new Point(2 * center.X - ((OverlayManager.ROICrosshair)slist).CenterPoint.X, 2 * center.Y - ((OverlayManager.ROICrosshair)slist).CenterPoint.Y) :
+                                    ((OverlayManager.ROICrosshair)slist).CenterPoint;
+                                ptsFrom.Add((float)(invertPt.X + s2tVec.X));
+                                ptsFrom.Add((float)(invertPt.Y + s2tVec.Y));
                                 ptsFrom.Add(tmpkz);
                             }
                             else if (slist.GetType() == typeof(OverlayManager.ROIEllipse))
                             {
-                                ptsFrom.Add((float)(((OverlayManager.ROIEllipse)slist).ROICenter.X + s2tVec.X));
-                                ptsFrom.Add((float)(((OverlayManager.ROIEllipse)slist).ROICenter.Y + s2tVec.Y));
+                                Point invertPt = (0 == _vm.SLMCalibByBurning) ?
+                                    new Point(2 * center.X - ((OverlayManager.ROIEllipse)slist).ROICenter.X, 2 * center.Y - ((OverlayManager.ROIEllipse)slist).ROICenter.Y) :
+                                    ((OverlayManager.ROIEllipse)slist).ROICenter;
+                                ptsFrom.Add((float)(invertPt.X + s2tVec.X));
+                                ptsFrom.Add((float)(invertPt.Y + s2tVec.Y));
                                 ptsFrom.Add(tmpkz);
                             }
                         }
@@ -2396,15 +2450,13 @@
                         return;
                     }
                     else
-                        e.Result = (_vm.SLMCalibration("", ptsFrom.ToArray(), ptsTo.ToArray(), ptsTo.Count)) ? "0" : String.Format("Calibration Failed\n");
+                        e.Result = _vm.SLMCalibration("", ptsFrom.ToArray(), ptsTo.ToArray(), ptsTo.Count) ? "0" : String.Format("Calibration Failed\n");
                 }
             }
         }
 
         private void SLMCalibrator3D_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            _vm.SLMSetBlank();
-
             //clear user-selected points:
             OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID);
             OverlayManagerClass.Instance.SaveROIs(_vm.SLMCalibROIFilePath);
@@ -2422,10 +2474,10 @@
                 {
                     if (0 != ((string)e.Result).CompareTo("0"))
                     {
-                        string strBody = e.Result + (_vm.SLMCalibByBurning ? "\n\nKeep Z at reference and use Cross Hair\nROI tool to mark the single imaging bead\nthen Press Yes to continue calibration,\nPress No to cancel." :
+                        string strBody = e.Result + ((0 < _vm.SLMCalibByBurning) ? "\n\nKeep Z at reference and use Cross Hair\nROI tool to mark the single imaging bead\nthen Press Yes to continue calibration,\nPress No to cancel." :
                             "\n\nKeep Z at reference and use Cross Hair\nROI tool to mark the single imaging bead\nthen Press Yes to continue calibration,\nPress No to cancel.");
 
-                        SLMCalibPanel slmCalib = _vm.SLMCalibByBurning ? new SLMCalibPanel("Next", "SPOT_SELECT", "DONE", "New Calibration", strBody) :
+                        SLMCalibPanel slmCalib = (0 < _vm.SLMCalibByBurning) ? new SLMCalibPanel("Next", "SPOT_SELECT", "DONE", "New Calibration", strBody) :
                             new SLMCalibPanel("", "SPOT_SELECT", "DONE", "New Calibration", strBody);
 
                         this.DataContext = slmCalib;
@@ -2637,20 +2689,36 @@
                 OverlayManagerClass.Instance.CurrentMode = ThorSharedTypes.Mode.STATSONLY;
                 OverlayManagerClass.Instance.SkipRedrawCenter = false;    //reset sub ID to regular one-based (zero-based for 3D calibration)
 
-                if (SLMPanelMode.Calibration == PanelMode)
+                switch (PanelMode)
                 {
-                    //clear intermediate files created in calibration
-                    if (!String.Equals(_vm.SLMCalibFile, CaptureSetupViewModel.DEFAULT_SLMCALIB_XAML, StringComparison.OrdinalIgnoreCase))
-                        ResourceManagerCS.DeleteFile(_vm.SLMCalibROIFilePath);
-                    ResourceManagerCS.DeleteFile(System.IO.Path.ChangeExtension(_vm.SLMCalibROIFilePath, ".bmp"));
+                    case SLMPanelMode.ParamEdit:    //no longer hit since followed by build
+                    case SLMPanelMode.Build:
+                        //update ActiveROIs but not in import
+                        if (!OverlayManagerClass.Instance.SimulatorMode)
+                        {
+                            //persist ActiveROIs
+                            OverlayManagerClass.Instance.PersistSaveROIs();
+                            //display ActiveROIs
+                            _vm.DisplayROI();
+                        }
+                        break;
+                    case SLMPanelMode.Calibration:
+                        //clear intermediate files created in calibration
+                        if (!String.Equals(_vm.SLMCalibFile, CaptureSetupViewModel.DEFAULT_SLMCALIB_XAML, StringComparison.OrdinalIgnoreCase))
+                            ResourceManagerCS.DeleteFile(_vm.SLMCalibROIFilePath);
+                        ResourceManagerCS.DeleteFile(System.IO.Path.ChangeExtension(_vm.SLMCalibROIFilePath, ".bmp"));
+                        //display ActiveROIs
+                        _vm.DisplayROI();
+                        break;
+                    case SLMPanelMode.Browse:
+                        //only clear all if terminated in import
+                        if (OverlayManagerClass.Instance.SimulatorMode)
+                            _vm.SLMDeleteAll();
+                        break;
+                    case SLMPanelMode.Sequence:
+                    default:
+                        break;
                 }
-                else
-                {
-                    //persist ActiveROIs
-                    OverlayManagerClass.Instance.PersistSaveROIs();
-                }
-                //display ActiveROIs
-                _vm.DisplayROI();
 
                 if (Application.Current.MainWindow != null)
                     Application.Current.MainWindow.Activate();
@@ -2732,7 +2800,8 @@
                 {
                     SLMFileSaved = true;
                     _waveParamsUpdated = false;
-                    UpdateWaveParamsAndFile();
+                    if (UpdateWaveParamsAndFile())
+                        SetPatternToSaveROI(OverlayManagerClass.Instance.PatternID);
                 }
             }
         }
@@ -2743,7 +2812,8 @@
             if (e.Cancelled == true)
             {
                 SLMPatternStatus = String.Format("Cancelled SLM Generation.\n ");
-                UpdateWaveParamsAndFile();
+                if (UpdateWaveParamsAndFile())
+                    SetPatternToSaveROI(OverlayManagerClass.Instance.PatternID);
                 SLMGenResult = false;
             }
 
@@ -3056,36 +3126,44 @@
                 //load patterns on top of waveforms, request permission to overwrite
                 if (0 < _vm.SLMBleachWaveParams.Count)
                 {
-                    MessageBoxResult dresult = MessageBox.Show("Old patterns will be cleared, do you want to continue?", "Import SLM Patterns", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    MessageBoxResult dresult = MessageBoxResult.Yes;
+                    this.Dispatcher.Invoke(() =>
+                    {
+                        dresult = MessageBox.Show(this, "Old patterns will be cleared, do you want to continue?", "Import SLM Patterns", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    });
                     if (dresult == MessageBoxResult.No)
                     {
-                        //SLMPatternStatus = String.Format("Please backup the SLM patterns (as a template) before import or select another xml.");
                         return false;
                     }
+
                 }
                 //backup properties
                 bool backupWavelength = _vm.SLMSelectWavelengthProp;
-                ThorSharedTypes.Mode backupMode = OverlayManagerClass.Instance.CurrentMode;
-                OverlayManagerClass.Instance.CurrentMode = (ICamera.LSMType.STIMULATE_MODULATOR == bType) ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS;
-                OverlayManagerClass.Instance.SimulatorMode = true;   //Make overlay manager not accessing hardware mvms, but properties only
+                OverlayManagerClass.Instance.CurrentMode = _vm.IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS;
 
                 //clear history
                 _vm.SLM3D = (XmlManager.GetAttribute(ndParent[0], xmlSLMImportDoc, "holoGen3D", ref str1) && Int32.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal)) ? (1 == iVal) : false;
                 _vm.SLMSequenceOn = false;
                 this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
                 {
-                    _vm.SLMBleachWaveParams.Clear();
-                    OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, -1, OverlayManagerClass.Instance.CurrentMode);
-                    for (int i = 0; i < _vm.SLMWaveformFolder.Length; i++)
-                        _vm.ClearSLMFiles(_vm.SLMWaveformFolder[i]);
+                    _vm.SLMDeleteAll();
 
                     //start to draw
+                    OverlayManagerClass.Instance.BackupROIs();
                     OverlayManagerClass.Instance.InitSelectROI(ref CaptureSetupViewModel.OverlayCanvas);
                 });
 
                 //through pattern nodes
+                int lastID = 0;
+                System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();  //log timing info
                 for (int i = 0; i < ndList.Count; i++)
                 {
+                    if (slmImportWorker.CancellationPending)
+                    {
+                        workStatus = false;
+                        break;
+                    }
+                    stopwatch.Start();
                     //locate patternID in order, [1-based]
                     //Pattern nodes for galvo waveform params, ROI nodes for individual pattern info
                     XmlNode xNode = null;
@@ -3124,7 +3202,7 @@
                     }
                     else
                     {
-                        SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": 'red','green' or 'blue'\n");
+                        SLMPatternStatus = String.Format("Error at getting pattern " + sparam.Name + ": 'red','green' or 'blue'");
                         workStatus = false;
                         break;
                     }
@@ -3217,6 +3295,11 @@
                     bool firstDraw = true;
                     for (int id = 1, j = 0; j < subIDdic.Count; j++, id++)  //leave id = 0 for later
                     {
+                        if (slmImportWorker.CancellationPending)
+                        {
+                            workStatus = false;
+                            break;
+                        }
                         if (subIDdic.ContainsKey(id))
                         {
                             iVal = (XmlManager.GetAttribute(xNode.ChildNodes[subIDdic[id]], xmlSLMImportDoc, "wavelengthNM", ref str1) && Int32.TryParse(str1, out iVal)) ? iVal : _vm.SLMWavelengthNM;
@@ -3236,46 +3319,52 @@
                             if (XmlManager.GetAttribute(xNode.ChildNodes[subIDdic[id]], xmlSLMImportDoc, "centerX", ref str1) && Double.TryParse(str1, out dVal3) &&
                                 XmlManager.GetAttribute(xNode.ChildNodes[subIDdic[id]], xmlSLMImportDoc, "centerY", ref str2) && Double.TryParse(str2, out dVal4))
                             {
-                                this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
+                                //use vertices to determine shape drawing: polygon, polyline, line
+                                if (typeof(ROIPoly) == stype || typeof(Polyline) == stype || typeof(Line) == stype)
                                 {
-                                    //use vertices to determine shape drawing: polygon, polyline, line
-                                    if (typeof(ROIPoly) == stype || typeof(Polyline) == stype || typeof(Line) == stype)
+                                    if (!firstDraw)
                                     {
-                                        if (!firstDraw)
+                                        this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
                                         {
                                             OverlayManagerClass.Instance.CreateROIShape(ref CaptureSetupViewModel.OverlayCanvas,
                                                 stype,
                                                 new Point(dVal3, dVal4),
                                                 new Point(dVal3 + dVal1 / 2, dVal4 + dVal2 / 2));
-                                        }
-                                        else
+                                        });
+                                    }
+                                    else
+                                    {
+                                        //start draw polys and lines
+                                        if (XmlManager.GetAttribute(xNode.ChildNodes[subIDdic[id]], xmlSLMImportDoc, "vertices", ref str1))
                                         {
-                                            //start draw polys and lines
-                                            if (XmlManager.GetAttribute(xNode.ChildNodes[subIDdic[id]], xmlSLMImportDoc, "vertices", ref str1))
+                                            string[] strVertices = str1.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                                            for (int sV = 0; sV < strVertices.Count(); sV++)
                                             {
-                                                string[] strVertices = str1.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                                                for (int sV = 0; sV < strVertices.Count(); sV++)
+                                                string[] vXY = strVertices[sV].Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                                                if (2 <= vXY.Count())
                                                 {
-                                                    string[] vXY = strVertices[sV].Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                                                    if (2 <= vXY.Count())
+                                                    if (Double.TryParse(vXY[0], out dVal3) && Double.TryParse(vXY[1], out dVal4))
                                                     {
-                                                        if (Double.TryParse(vXY[0], out dVal3) && Double.TryParse(vXY[1], out dVal4))
+                                                        if (0 == sV)
                                                         {
-                                                            if (0 == sV)
+                                                            //define range based on start and end point
+                                                            if (typeof(Line) == stype)
                                                             {
-                                                                //define range based on start and end point
-                                                                if (typeof(Line) == stype)
-                                                                {
-                                                                    //keep start point at [X1=dVal1, Y1=dVal2]
-                                                                    dVal1 = dVal3; dVal2 = dVal4;
-                                                                    continue;
-                                                                }
-                                                                OverlayManagerClass.Instance.CreateROIShape(ref CaptureSetupViewModel.OverlayCanvas,
-                                                                    stype,
-                                                                    new Point(dVal3, dVal4),
-                                                                    new Point(dVal3 + dVal1 / 2, dVal4 + dVal2 / 2));
+                                                                //keep start point at [X1=dVal1, Y1=dVal2]
+                                                                dVal1 = dVal3; dVal2 = dVal4;
+                                                                continue;
                                                             }
-                                                            else
+                                                            this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
+                                                            {
+                                                                OverlayManagerClass.Instance.CreateROIShape(ref CaptureSetupViewModel.OverlayCanvas,
+                                                                stype,
+                                                                new Point(dVal3, dVal4),
+                                                                new Point(dVal3 + dVal1 / 2, dVal4 + dVal2 / 2));
+                                                            });
+                                                        }
+                                                        else
+                                                        {
+                                                            this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
                                                             {
                                                                 if (typeof(Line) == stype)
                                                                 {
@@ -3286,29 +3375,44 @@
                                                                 }
                                                                 else
                                                                     OverlayManagerClass.Instance.AddPointToObject(ref CaptureSetupViewModel.OverlayCanvas, new Point(dVal3, dVal4));
-                                                            }
+                                                            });
                                                         }
                                                     }
                                                 }
-                                                //add a dummy then close for ROIPoly
+                                            }
+                                            //add a dummy then close for ROIPoly
+                                            this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
+                                            {
                                                 OverlayManagerClass.Instance.AddPointToObject(ref CaptureSetupViewModel.OverlayCanvas, new Point(0, 0));
                                                 OverlayManagerClass.Instance.CloseObject(ref CaptureSetupViewModel.OverlayCanvas, new Point(0, 0));
-                                            }
+                                            });
                                         }
                                     }
-                                    else    //use roi size to define shape drawing: rectangle, ellipse
+                                }
+                                else    //use roi size to define shape drawing: rectangle, ellipse
+                                {
+                                    this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
                                     {
                                         OverlayManagerClass.Instance.CreateROIShape(ref CaptureSetupViewModel.OverlayCanvas,
-                                            stype,
-                                            firstDraw ? new Point(dVal3 - dVal1 / 2, dVal4 - dVal2 / 2) : new Point(dVal3, dVal4),
-                                            new Point(dVal3 + dVal1 / 2, dVal4 + dVal2 / 2));
-                                    }
+                                        stype,
+                                        firstDraw ? new Point(dVal3 - dVal1 / 2, dVal4 - dVal2 / 2) : new Point(dVal3, dVal4),
+                                        new Point(dVal3 + dVal1 / 2, dVal4 + dVal2 / 2));
+                                    });
+                                }
+                                this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
+                                {
                                     OverlayManagerClass.Instance.InitSelectROI(ref CaptureSetupViewModel.OverlayCanvas);
                                 });
                                 firstDraw = (ICamera.LSMType.GALVO_GALVO == bType) ? false : true;
+
+                                //leave some time for GUI to update
+                                System.Threading.Thread.Sleep((int)1);
                             }
                         }
-                    }
+                    }   //*** end of sub-patterns ***//
+                    if (!workStatus)
+                        break;
+
                     //set ROI center at the end if provided as subID = 0, fetch otherwise,
                     //no need if STIMULATE_MODULATOR type
                     sparam.BleachWaveParams.Center = new Point(0, 0);
@@ -3326,6 +3430,12 @@
                                 });
                                 sparam.BleachWaveParams.Center = new Point(dVal3, dVal4);
                             }
+                            else
+                            {
+                                SLMPatternStatus = String.Format(sparam.Name + ", id (" + (i + 1).ToString() + "): ROI center info is not provided.");
+                                workStatus = false;
+                                break;
+                            }
                         }
                         else
                         {
@@ -3338,7 +3448,7 @@
                             });
                             if ((0 > offCenter.X) || (0 > offCenter.Y))
                             {
-                                SLMPatternStatus = String.Format("Unable to calculate ROIs center.");
+                                SLMPatternStatus = String.Format(sparam.Name + ", id (" + (i + 1).ToString() + "): Unable to calculate ROIs center.");
                                 workStatus = false;
                                 break;
                             }
@@ -3348,44 +3458,70 @@
                     sparam.BleachWaveParams.Fill = 1;
 
                     SLMParamsCurrent = new SLMParams(sparam);
-                    this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate { _vm.SLMBleachWaveParams.Add(SLMParamsCurrent); });
-
                     SaveSLMFiles();
-                    if (!ValidateWaveformBeforeBuild())
+                    //validate waveform before build at the beginning and the end only
+                    if ((0 == i || i == ndList.Count - 1) && !ValidateWaveformBeforeBuild())
                     {
-                        SLMPatternStatus = String.Format("Unable to save SLM Pattern: " + sparam.Name);
+                        SLMPatternStatus = String.Format("Unable to save SLM Pattern: " + sparam.Name + ", id (" + (i + 1).ToString() + ")");
                         workStatus = false;
                         break;
                     }
                     SLMFileSaved = true;
                     _waveParamsUpdated = false;
-                    UpdateWaveParamsAndFile();
-                }
+                    workStatus = UpdateWaveParamsAndFile();
 
-                //end for loop of ndList,
-                //clear-then-return if break due to error
-                this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
+                    //check timer and break if error
+                    stopwatch.Stop();
+                    lastID = i;
+                    if (!workStatus)
+                        break;
+
+                    TimeSpan timeTaken = stopwatch.Elapsed;
+                    string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}", timeTaken.Hours, timeTaken.Minutes, timeTaken.Seconds);
+                    SLMPatternStatus = String.Format("Imported " + sparam.Name + ", id (" + (lastID + 1).ToString() + ")\nTime elapse: " + elapsedTime);
+                }   //*** end for loop of ndList (patterns) ***//
+
+                //give back properties
+                _vm.SLMSelectWavelengthProp = backupWavelength;
+
+                if (workStatus)
                 {
-                    if (workStatus)
+                    if (ndList.Count < _vm.PatternImportLimit)
                     {
-                        OverlayManagerClass.Instance.PersistSaveROIs();
+                        //update ROIs when within user limit
+                        SLMPatternStatus = String.Format("Saving SLM Patterns after import ...");
+                        System.Threading.Thread.Sleep((int)1);
+                        SetPatternToSaveROI(-1);
                     }
                     else
                     {
-                        _vm.SLMBleachWaveParams.Clear();
-                        OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, -1, OverlayManagerClass.Instance.CurrentMode);
-
-                        for (int id = 0; id < _vm.SLMWaveformFolder.Length; id++)
-                            _vm.ClearSLMFiles(_vm.SLMWaveformFolder[id]);
+                        this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
+                        {
+                            OverlayManagerClass.Instance.RevokeROIs(ref CaptureSetupViewModel.OverlayCanvas);
+                        });
                     }
-                });
+                    this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
+                    {
+                        OverlayManagerClass.Instance.PersistSaveROIs();
 
-                //give back properties
-                OverlayManagerClass.Instance.CurrentMode = backupMode;
-                _vm.SLMSelectWavelengthProp = backupWavelength;
-                OverlayManagerClass.Instance.SimulatorMode = false;      //give back overlay manager access to hardware mvms
+                        //turn off SimulatorMode and update ROIs here, rather than at closed to avoid GUI delay
+                        OverlayManagerClass.Instance.SimulatorMode = false;
+                        OverlayManagerClass.Instance.DisplayModeROI(ref CaptureSetupViewModel.OverlayCanvas, new ThorSharedTypes.Mode[2] { ThorSharedTypes.Mode.PATTERN_NOSTATS, ThorSharedTypes.Mode.PATTERN_WIDEFIELD }, _vm.SLMPatternsVisible);
+                        OverlayManagerClass.Instance.DisplayModeROI(ref CaptureSetupViewModel.OverlayCanvas, new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.STATSONLY }, true);
+                        OverlayManagerClass.Instance.SimulatorMode = true;
+                    });
+                }
+                else
+                {
+                    //clear-then-return if break due to error
+                    this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
+                    {
+                        _vm.SLMDeleteAll();
+                    });
 
-                if (!workStatus) return false;
+                    SLMPatternStatus += String.Format("\nCleared SLM Patterns after import failure,\nlast tried at id (" + (lastID + 1).ToString() + ").");
+                    return false;
+                }
             }
 
             if (includeSequences)
@@ -3562,15 +3698,15 @@
             UpdatePropProc((null != (sender as FrameworkElement)) ? (sender as FrameworkElement).Tag as string : (string)(sender));
         }
 
-        private void UpdateWaveParamsAndFile()
+        private bool UpdateWaveParamsAndFile()
         {
             //force to be invoked once per:
             if (_waveParamsUpdated)
-                return;
+                return false;
 
             //save LSM pattern to a 8bit bitmap:
             if (false == SaveSLMPattern())
-                return;
+                return false;
 
             //handle WaveParams before return:
             if (SLMFileSaved)
@@ -3587,7 +3723,7 @@
                     //add or edit list item:
                     SLMParams paramCopy = new SLMParams(SLMParamsCurrent);
 
-                    if (0 > SLMParamID)
+                    if (0 > SLMParamID || _vm.SLMBleachWaveParams.Count < SLMParamID + 1)   //SLMParamID is 0-based
                     {
                         _vm.SLMBleachWaveParams.Add(paramCopy);
                     }
@@ -3599,26 +3735,12 @@
                     //update list view:
                     _vm.UpdateSLMListGUI();
 
-                    //save ROIs:
-                    OverlayManagerClass.Instance.SetPatternToSaveROI(OverlayManagerClass.Instance.PatternID,
-            (_vm.IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS));
-
-                    //backup ROIs for not being revoked:
-                    OverlayManagerClass.Instance.BackupROIs();
-
                 });
 
-            }
-            else
-            {
-                this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
-                {
-                    //clear ROIs:
-                    OverlayManagerClass.Instance.ClearNonSaveROIs(ref CaptureSetupViewModel.OverlayCanvas);
-                });
             }
 
             _waveParamsUpdated = true;
+            return true;
         }
 
         private bool ValidateWaveformBeforeBuild()

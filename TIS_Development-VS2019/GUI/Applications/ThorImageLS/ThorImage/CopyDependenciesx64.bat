@@ -349,7 +349,7 @@ REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThordaqDFLIM\x64\Debug\ThorDA
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorBCMPA\x64\Debug\ThorBCMPA.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorBCMPA2\x64\Debug\ThorBCMPA2.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorECU\x64\Debug\ThorECU.dll .\bin\Debug\Modules_Native
-REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorElectroPhys\x64\Debug\ThorElectroPhys.dll .\bin\Debug\Modules_Native
+echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorElectroPhys\x64\Debug\ThorElectroPhys.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorEPiTurret\x64\Debug\ThorEpiTurret.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorDC2200\x64\Debug\ThorDC2200.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorDDR05\x64\Debug\ThorDDR05.dll .\bin\Debug\Modules_Native
@@ -360,6 +360,7 @@ REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM3000\x64\Debug\ThorMCM
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM3000Aux\x64\Debug\ThorMCM3000Aux.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM6000\x64\Debug\ThorMCM6000.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM6000_Condenser\x64\Debug\ThorMCM6000_Condenser.dll .\bin\Debug\Modules_Native
+REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM6000_Aux\x64\Debug\ThorMCM6000_Aux.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMLSStage\x64\Debug\ThorMLSStage.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorObjectiveChanger\x64\Debug\ThorObjectiveChanger.dll .\bin\Debug\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorPinholeStepper\x64\Debug\ThorPinholeStepper.dll .\bin\Debug\Modules_Native

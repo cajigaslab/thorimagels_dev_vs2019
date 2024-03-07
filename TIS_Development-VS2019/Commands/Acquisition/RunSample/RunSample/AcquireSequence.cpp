@@ -91,6 +91,12 @@ long AcquireSequence::CallNotifySavedFileIPC(wchar_t* message)
 	return TRUE;
 }
 
+long AcquireSequence::CallAutoFocusStatus(long isRunning, long bestScore, double bestZPos, double nextZPos, long currRepeat)
+{
+	AutoFocusStatus(isRunning, bestScore, bestZPos, nextZPos, currRepeat);
+	return TRUE;
+}
+
 long AcquireSequence::Execute(long index, long subWell, long zFrame, long tFrame)
 {
 	_tFrame = tFrame;

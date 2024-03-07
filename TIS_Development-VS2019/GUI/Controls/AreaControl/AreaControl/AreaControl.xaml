@@ -905,7 +905,7 @@
                         <Expander Foreground="White"
                                   Header="Advanced"
                                   IsExpanded="False">
-                            <StackPanel>
+                            <StackPanel Name="AdvancedAreaControlsStackPanel">
                                 <CheckBox Name="ckRef"
                                           Margin="1"
                                           HorizontalAlignment="Left"
@@ -915,6 +915,19 @@
                                           IsChecked="{Binding Path=EnableReferenceChannel,
                                                               Mode=TwoWay,
                                                               UpdateSourceTrigger=PropertyChanged}" />
+                                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                                    <Grid Width="{Binding ActualWidth, ElementName=AdvancedAreaControlsStackPanel}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="1.8*"/>
+                                            <ColumnDefinition Width="3*"/>
+                                            <ColumnDefinition Width="1.2*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Grid.Column="0" Content="Reference Image: "/>
+                                        <Label Grid.Column="1" Content="{Binding Path= ReferenceChannelImageName}" HorizontalAlignment="Left" Width="Auto" MinWidth="100"/>
+                                        <Button Grid.Column="2" Content="Browse" Margin="0,0,5,0" Width="50" HorizontalAlignment="Right" 
+                                        Command="{Binding Path=BrowseForReferenceImageCommand}"/>
+                                    </Grid>
+                                </StackPanel>
                                 <CheckBox Name="cbFlipScan"
                                           Margin="1"
                                           HorizontalAlignment="Left"
@@ -1122,7 +1135,36 @@
                                             Command="{Binding Path=LSMSaveCalibrationCommand}"
                                             Visibility="{Binding GGLSMScanVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"></Button>
                                     <Label Content="{Binding Path=LSMLastCalibrationDate}"
-                                           Foreground="Yellow" />
+                                           Foreground="White">
+                                        <Label.Style>
+                                            <Style TargetType="Label">
+                                                <Style.Resources>
+                                                    <Storyboard x:Key="flashingAnimation">
+                                                        <DoubleAnimation AutoReverse="True"
+                                                                             Duration="0:0:0.5"
+                                                                             From=".8"
+                                                                             RepeatBehavior="Forever"
+                                                                             Storyboard.TargetProperty="(Background).(Opacity)"
+                                                                             To="0.2" />
+                                                    </Storyboard>
+                                                </Style.Resources>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=GGCalAlert}"
+                                                                     Value="True">
+                                                        <Setter Property="Background"
+                                                                    Value="Red" />
+                                                        <DataTrigger.EnterActions>
+                                                            <BeginStoryboard Name="flashing"
+                                                                                 Storyboard="{StaticResource flashingAnimation}" />
+                                                        </DataTrigger.EnterActions>
+                                                        <DataTrigger.ExitActions>
+                                                            <StopStoryboard BeginStoryboardName="flashing" />
+                                                        </DataTrigger.ExitActions>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Label.Style>
+                                    </Label>
                                 </StackPanel>
                                 <StackPanel Margin="1"
                                             HorizontalAlignment="Center"

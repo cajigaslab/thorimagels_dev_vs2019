@@ -276,6 +276,22 @@
                     {
                         _colorChannelsHistory = CaptureSetup.GetColorChannels();
                     }
+                    ICamera.CameraType cameraType = ICamera.CameraType.LAST_CAMERA_TYPE;
+                    try
+                    {
+                        //Might error if closing down and image view tries to update while cam is disconnected
+                        cameraType = (ICamera.CameraType)ResourceManagerCS.GetCameraType();
+                    }
+                    catch (Exception e)
+                    {
+                        ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "Eror Getting Camera Type" + e.Message);
+                    }
+                    if ((bool)MVMManager.Instance["CameraControlViewModel", "EnableReferenceChannel", false] && TileDisplay && ICamera.CameraType.LSM != cameraType)
+                    {
+                        //case for tile display when using the reference channel on a camera
+                        //Since the color channels returned from the capturesetup model are always 1 for a camera, this needs to be caught for tile view. 
+                        _colorChannelsHistory = 2;
+                    }
                     lock (_syncLock)
                     {
                         byte[] pd = CaptureSetup.GetPixelDataByteEx(true, 0);
@@ -522,7 +538,7 @@
             {
                 PixelFormat pf = PixelFormats.Rgb24;
                 int step = pf.BitsPerPixel / 8;
-                int totalNumOfZstack = (int)MVMManager.Instance["ZControlViewModel", "ZScanNumSteps", (object)1];
+                int totalNumOfZstack = _zScanNumStepsInCache;
                 int width = this._captureSetup.DataWidth;
 
                 if (width != 0 && _pdXZ != null)
@@ -530,10 +546,7 @@
                     // Define parameters used to create the BitmapSource.
                     int rawStrideXZ = (width * pf.BitsPerPixel + 7) / 8; //_bitmapXZ
 
-                    double pixelSizeUM = (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (double)1.0];
-                    double zStepSizeUM = (double)MVMManager.Instance["ZControlViewModel", "ZScanStep", (object)0.0];
-
-                    double yMultiplier = pixelSizeUM / zStepSizeUM / _orthogonalViewZMultiplier;
+                    double yMultiplier = Math.Abs(_zPreviewPixelSize / _zPreviewScanStepSize / _orthogonalViewZMultiplier);
 
                     double dpiX = 96;
                     double dpiY = 96 * yMultiplier;
@@ -559,7 +572,7 @@
             {
                 PixelFormat pf = PixelFormats.Rgb24;
                 int step = pf.BitsPerPixel / 8;
-                int totalNumOfZstack = (int)MVMManager.Instance["ZControlViewModel", "ZScanNumSteps", (object)1];
+                int totalNumOfZstack = _zScanNumStepsInCache;
                 int height = this._captureSetup.DataHeight;
 
                 if (height != 0 && _pdYZ != null)
@@ -567,10 +580,7 @@
                     // Define parameters used to create the BitmapSource.
                     int rawStrideYZ = (totalNumOfZstack * pf.BitsPerPixel + 7) / 8;
 
-                    double pixelSizeUM = (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (double)1.0];
-                    double zStepSizeUM = (double)MVMManager.Instance["ZControlViewModel", "ZScanStep", (object)0.0];
-
-                    double xMultiplier = pixelSizeUM / zStepSizeUM / _orthogonalViewZMultiplier;
+                    double xMultiplier = Math.Abs(_zPreviewPixelSize / _zPreviewScanStepSize / _orthogonalViewZMultiplier);
 
                     double dpiX = 96.0 * xMultiplier;
                     double dpiY = 96.0;
@@ -1733,6 +1743,22 @@
             }
         }
 
+        public string ReferenceChannelImageName
+        {
+            get
+            {
+                return _captureSetup.ReferenceChannelImageName;
+            }
+        }
+
+        public string ReferenceChannelImagePath
+        {
+            get
+            {
+                return _captureSetup.ReferenceChannelImagePath;
+            }
+        }
+
         public int RollOverPointIntensity0
         {
             get
@@ -1978,7 +2004,7 @@
         {
             get
             {
-                return (int)MVMManager.Instance["ZControlViewModel", "ZScanNumSteps", (object)1];
+                return _zScanNumStepsInCache;
             }
         }
 
@@ -2188,7 +2214,7 @@
         {
             PixelFormat pf = PixelFormats.Rgb24;
             int step = pf.BitsPerPixel / 8;
-            int totalNumOfZstack = (int)MVMManager.Instance["ZControlViewModel", "ZScanNumSteps", (object)1];
+            int totalNumOfZstack = _zScanNumStepsInCache;
 
             int width = this._captureSetup.DataWidth;
             int height = this._captureSetup.DataHeight;
@@ -2365,11 +2391,9 @@
 
         public bool UpdateChannelData(string[] fileNames, int zIndexToRead, int tIndexToRead)
         {
-            int pixelX = (int)MVMManager.Instance["AreaControlViewModel", "LSMPixelX", (object)0];
-            int pixelY = (int)MVMManager.Instance["AreaControlViewModel", "LSMPixelY", (object)0];
-            int zSteps = (int)MVMManager.Instance["ZControlViewModel", "ZScanNumSteps", (object)1];
+            int zSteps = _zScanNumStepsInCache;
             byte enabledChannels = (byte)ColorChannels;
-            return _captureSetup.UpdateChannelData(fileNames, enabledChannels, 4, zIndexToRead, tIndexToRead, pixelX, pixelY, zSteps, GetRawContainsDisabledChannels());
+            return _captureSetup.UpdateChannelData(fileNames, enabledChannels, 4, zIndexToRead, tIndexToRead, _zPreviewImageWidth, _zPreviewImageHeight, zSteps, GetRawContainsDisabledChannels());
         }
 
         public void UpdateOrthogonalView(bool displaySplash = true)
@@ -2408,7 +2432,7 @@
                 {
                     PixelFormat pf = PixelFormats.Rgb24;
                     int step = pf.BitsPerPixel / 8;
-                    int totalNumOfZstack = (int)MVMManager.Instance["ZControlViewModel", "ZScanNumSteps", (object)1];
+                    int totalNumOfZstack = _zScanNumStepsInCache;
 
                     _captureSetup.InitializeDataBufferOffset();
                     _captureSetup.InitializePixelDataLut();
@@ -2520,7 +2544,7 @@
             {
                 if (VirtualZStack == true)
                 {
-                    int totalNumOfZstack = (int)MVMManager.Instance["ZControlViewModel", "ZScanNumSteps", (object)1];
+                    int totalNumOfZstack = _zScanNumStepsInCache;
 
                     if ((null == _tiffBufferArray) || (_tiffBufferArray.Length != totalNumOfZstack))
                     {

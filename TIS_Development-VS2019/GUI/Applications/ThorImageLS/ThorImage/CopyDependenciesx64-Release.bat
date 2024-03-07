@@ -361,6 +361,7 @@ REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM3000\x64\Release\ThorM
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM3000Aux\x64\Release\ThorMCM3000Aux.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM6000\x64\Release\ThorMCM6000.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM6000_Condenser\x64\Release\ThorMCM6000_Condenser.dll .\bin\Release\Modules_Native
+REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMCM6000_Aux\x64\Release\ThorMCM6000_Aux.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMLSStage\x64\Release\ThorMLSStage.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorMTS25\x64\Release\ThorMTS25.dll .\bin\Release\Modules_Native
 REM echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorObjectiveChanger\x64\Release\ThorObjectiveChanger.dll .\bin\Release\Modules_Native

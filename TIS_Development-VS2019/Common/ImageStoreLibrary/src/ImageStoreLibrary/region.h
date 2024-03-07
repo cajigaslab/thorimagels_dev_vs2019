@@ -8,7 +8,7 @@ public:
 	region();
 	~region();
 
-	uint8_t ScanID;
+	uint32_t ScanID;
 	uint16_t RegionID;
 	uint16_t PlateID;
 	uint16_t WellID;

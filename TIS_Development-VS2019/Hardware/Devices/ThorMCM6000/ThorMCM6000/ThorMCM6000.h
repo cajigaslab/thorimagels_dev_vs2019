@@ -43,6 +43,7 @@ public:
 	long GetLastErrorMsg(wchar_t* msg, long size);
 	long IsMCM6000Connected();
 	long IsCondenserAvailable();
+	long IsAuxAvailable();
 
 private:
 	double _xPosition;
@@ -50,6 +51,7 @@ private:
 	double _zPosition;
 	double _rPosition;
 	double _condenserPosition;
+	double _auxPosition;
 	long _lpInvertedPos;
 	long _etInvertedPos;
 	long _ggLightpathPos;
@@ -61,12 +63,14 @@ private:
 	double _zMoveByDistance;
 	double _rMoveByDistance;
 	double _condenserMoveByDistance;
+	double _auxMoveByDistance;
 
 	bool _xPosition_B;
 	bool _yPosition_B;
 	bool _zPosition_B;
 	bool _rPosition_B;
 	bool _condenserPosition_B;
+	bool _auxPosition_B;
 	bool _lpInvertedPos_B;
 	bool _etInvertedPos_B;
 	bool _nddPos_B;
@@ -78,6 +82,7 @@ private:
 	bool _zMoveByDistance_B;
 	bool _rMoveByDistance_B;
 	bool _condenserMoveByDistance_B;
+	bool _auxMoveByDistance_B;
 
 	double _xPosition_C;
 	double _yPosition_C;
@@ -85,6 +90,7 @@ private:
 	double _rPosition_C;
 	double _zePosition_C;
 	double _condenserPosition_C;
+	double _auxPosition_C;
 	long _lpInvertedPos_C;
 	long _etInvertedPos_C;
 	long _nddPos_C;

@@ -1,5 +1,3 @@
-// ThorMesoXYZRStage.cpp : Defines the exported functions for the DLL application.
-
 #include "ThorMCM6000.h"
 
 #define BUFFER_LENGTH 255
@@ -14,13 +12,11 @@ double yPosition = 0;
 
 // This is the constructor of a class that has been exported.
 // see ThorMesoXYZRStage.h for the class definition
-
 MCM6000Stage::~MCM6000Stage()
 {
 	_instanceFlag = false;
 	//delete _device;
 }
-
 MCM6000Stage::MCM6000Stage()
 {
 	_xPosition_B = false;
@@ -28,6 +24,7 @@ MCM6000Stage::MCM6000Stage()
 	_zPosition_B = false;
 	_rPosition_B = false;
 	_condenserPosition_B = false;
+	_auxPosition_B = false;
 	_lpInvertedPos_B = false;
 	_etInvertedPos_B = false;
 	_ggLightpathPos_B = false;
@@ -39,12 +36,13 @@ MCM6000Stage::MCM6000Stage()
 	_zMoveByDistance_B = false;
 	_rMoveByDistance_B = false;
 	_condenserMoveByDistance_B = false;
-
+	_auxMoveByDistance_B = false;
 	_xPosition = 0;
 	_yPosition = 0;
 	_zPosition = 0;
 	_rPosition = 0;
 	_condenserPosition = 0;
+	_auxPosition = 0;
 	_lpInvertedPos = 0;
 	_etInvertedPos = 0;
 	_ggLightpathPos = 0;
@@ -56,7 +54,7 @@ MCM6000Stage::MCM6000Stage()
 	_zMoveByDistance = 0;
 	_rMoveByDistance = 0;
 	_condenserMoveByDistance = 0;
-
+	_auxMoveByDistance = 0;
 	_xPosition_C = 0;
 	_yPosition_C = 0;
 	_zPosition_C = 0;
@@ -65,6 +63,7 @@ MCM6000Stage::MCM6000Stage()
 	_lpInvertedPos_C = 0;
 	_etInvertedPos_C = 0;
 	_condenserPosition_C = 0;
+	_auxPosition_C = 0;
 	_nddPos_C = 0;
 }
 
@@ -148,6 +147,16 @@ long MCM6000Stage::SetParam(const long paramID, const double param)
 		break;
 	}
 
+	case PARAM_AUX_POS:
+	{
+		if (param >= _device->_mcm6kParams->auxMin && param <= _device->_mcm6kParams->auxMax)
+		{
+			_auxPosition = param * ((_device->_mcm6kParams->auxInvert) ? -1 : 1);
+			_auxPosition_B = true;
+		}
+		break;
+	}
+
 	case PARAM_X_JOG:
 	{
 		if (param == 0)
@@ -186,6 +195,14 @@ long MCM6000Stage::SetParam(const long paramID, const double param)
 			_device->CondenserJogCW();
 		else
 			_device->CondenserJogCCW();
+		break;
+	}
+	case PARAM_AUX_JOG:
+	{
+		if (param == 0)
+			_device->AuxJogCW();
+		else
+			_device->AuxJogCCW();
 		break;
 	}
 	case PARAM_X_ZERO:
@@ -238,6 +255,16 @@ long MCM6000Stage::SetParam(const long paramID, const double param)
 		_device->ZeroCondenser();
 		break;
 	}
+	case PARAM_AUX_ZERO:
+	{
+		clock_t timeOutStart = clock();
+		while (_device->IsAuxMoving() && (static_cast<unsigned long>(abs(timeOutStart - clock()) / (CLOCKS_PER_SEC / 1000)) < 10000))
+		{
+			// do not set zero until the stage stops moving or 10 seconds have passed. Temporary fix
+		}
+		_device->ZeroAux();
+		break;
+	}
 	case PARAM_X_INVERT:
 	{
 		_device->_mcm6kParams->xInvert = (param > 0.5) ? true : false;
@@ -263,6 +290,11 @@ long MCM6000Stage::SetParam(const long paramID, const double param)
 		_device->_mcm6kParams->condenserInvert = (param > 0.5) ? true : false;
 		break;
 	}
+	case PARAM_AUX_INVERT:
+	{
+		_device->_mcm6kParams->auxInvert = (param > 0.5) ? true : false;
+		break;
+	}
 	case PARAM_X_STOP:
 	{
 		_device->StopX();
@@ -286,6 +318,11 @@ long MCM6000Stage::SetParam(const long paramID, const double param)
 	case PARAM_CONDENSER_STOP:
 	{
 		_device->StopCondenser();
+		break;
+	}
+	case PARAM_AUX_STOP:
+	{
+		_device->StopAux();
 		break;
 	}
 	case PARAM_LIGHTPATH_GG:
@@ -367,6 +404,17 @@ long MCM6000Stage::SetParam(const long paramID, const double param)
 		}
 		break;
 	}
+
+	case PARAM_AUX_POS_MOVE_BY:
+	{
+		if (param >= (-1 * _device->_mcm6kParams->auxMoveByThreshold) && param <= _device->_mcm6kParams->auxMoveByThreshold)
+		{
+			_auxMoveByDistance = param * ((_device->_mcm6kParams->auxInvert) ? -1 : 1);
+			_auxMoveByDistance_B = true;
+		}
+		break;
+	}
+
 	case PARAM_LIGHTPATH_NDD:
 	{
 		_nddPos = (int)param;
@@ -474,6 +522,17 @@ long MCM6000Stage::GetParamInfo
 	}
 	break;
 
+	case PARAM_AUX_POS:
+	{
+		paramType = TYPE_DOUBLE;
+		paramAvailable = TRUE;
+		paramReadOnly = FALSE;
+		paramMin = _device->_mcm6kParams->auxMin;
+		paramMax = _device->_mcm6kParams->auxMax;
+		paramDefault = 0;
+	}
+	break;
+
 	case PARAM_X_POS_CURRENT:
 	{
 		paramType = TYPE_DOUBLE;
@@ -525,6 +584,17 @@ long MCM6000Stage::GetParamInfo
 		paramReadOnly = FALSE;
 		paramMin = _device->_mcm6kParams->condenserMin;
 		paramMax = _device->_mcm6kParams->condenserMax;
+		paramDefault = 0;
+	}
+	break;
+
+	case PARAM_AUX_POS_CURRENT:
+	{
+		paramType = TYPE_DOUBLE;
+		paramAvailable = TRUE;
+		paramReadOnly = FALSE;
+		paramMin = _device->_mcm6kParams->auxMin;
+		paramMax = _device->_mcm6kParams->auxMax;
 		paramDefault = 0;
 	}
 	break;
@@ -584,6 +654,17 @@ long MCM6000Stage::GetParamInfo
 	}
 	break;
 
+	case PARAM_AUX_STATUS:
+	{
+		paramType = TYPE_LONG;
+		paramAvailable = TRUE;
+		paramReadOnly = FALSE;
+		paramMin = _device->_mcm6kParams->auxMin;
+		paramMax = _device->_mcm6kParams->auxMax;
+		paramDefault = 0;
+	}
+	break;
+
 	case PARAM_X_ZERO:
 	{
 		paramType = TYPE_DOUBLE;
@@ -635,6 +716,17 @@ long MCM6000Stage::GetParamInfo
 		paramReadOnly = FALSE;
 		paramMin = _device->_mcm6kParams->condenserMin;
 		paramMax = _device->_mcm6kParams->condenserMax;
+		paramDefault = 0;
+	}
+	break;
+
+	case PARAM_AUX_ZERO:
+	{
+		paramType = TYPE_DOUBLE;
+		paramAvailable = TRUE;
+		paramReadOnly = FALSE;
+		paramMin = _device->_mcm6kParams->auxMin;
+		paramMax = _device->_mcm6kParams->auxMax;
 		paramDefault = 0;
 	}
 	break;
@@ -694,6 +786,17 @@ long MCM6000Stage::GetParamInfo
 		break;
 	}
 
+	case PARAM_AUX_INVERT:
+	{
+		paramType = TYPE_LONG;
+		paramAvailable = TRUE;
+		paramReadOnly = FALSE;
+		paramMin = 0;
+		paramMax = 1;
+		paramDefault = 0;
+		break;
+	}
+
 	case PARAM_X_STOP:
 	{
 		paramType = TYPE_BOOL;
@@ -739,6 +842,17 @@ long MCM6000Stage::GetParamInfo
 	}
 
 	case PARAM_CONDENSER_STOP:
+	{
+		paramType = TYPE_BOOL;
+		paramAvailable = TRUE;
+		paramReadOnly = FALSE;
+		paramMin = FALSE;
+		paramMax = TRUE;
+		paramDefault = FALSE;
+		break;
+	}
+
+	case PARAM_AUX_STOP:
 	{
 		paramType = TYPE_BOOL;
 		paramAvailable = TRUE;
@@ -887,6 +1001,17 @@ long MCM6000Stage::GetParamInfo
 	}
 	break;
 
+	case PARAM_AUX_POS_MOVE_BY:
+	{
+		paramType = TYPE_DOUBLE;
+		paramAvailable = TRUE;
+		paramReadOnly = FALSE;
+		paramMin = (-1 * _device->_mcm6kParams->auxMoveByThreshold);
+		paramMax = _device->_mcm6kParams->auxMoveByThreshold;
+		paramDefault = 0;
+	}
+	break;
+
 	case PARAM_Z_ELEVATOR_POS_CURRENT:
 	{
 		paramType = TYPE_DOUBLE;
@@ -1017,6 +1142,9 @@ long MCM6000Stage::GetParam(const long paramID, double& param)
 	case PARAM_CONDENSER_POS:
 		param = _condenserPosition * ((_device->_mcm6kParams->condenserInvert) ? -1 : 1);
 		break;
+	case PARAM_AUX_POS:
+		param = _auxPosition * ((_device->_mcm6kParams->auxInvert) ? -1 : 1);
+		break;
 	case PARAM_X_POS_CURRENT:
 		_device->GetXPos(_xPosition_C);
 		param = _xPosition_C * ((_device->_mcm6kParams->xInvert) ? -1 : 1);
@@ -1036,6 +1164,10 @@ long MCM6000Stage::GetParam(const long paramID, double& param)
 	case PARAM_CONDENSER_POS_CURRENT:
 		_device->GetCondenserPos(_condenserPosition_C);
 		param = _condenserPosition_C * ((_device->_mcm6kParams->condenserInvert) ? -1 : 1);
+		break;
+	case PARAM_AUX_POS_CURRENT:
+		_device->GetAuxPos(_auxPosition_C);
+		param = _auxPosition_C * ((_device->_mcm6kParams->auxInvert) ? -1 : 1);
 		break;
 	case PARAM_DEVICE_TYPE:
 	{
@@ -1091,6 +1223,11 @@ long MCM6000Stage::GetParam(const long paramID, double& param)
 	case PARAM_CONDENSER_INVERT:
 	{
 		param = (_device->_mcm6kParams->condenserInvert) ? 1 : 0;
+		break;
+	}
+	case PARAM_AUX_INVERT:
+	{
+		param = (_device->_mcm6kParams->auxInvert) ? 1 : 0;
 		break;
 	}
 	case PARAM_SCOPE_TYPE:
@@ -1467,6 +1604,54 @@ long MCM6000Stage::StartPosition() {
 			}
 		}
 
+		if (_auxPosition_B)
+		{
+			double auxMin = _device->_mcm6kParams->auxMin;
+			double auxMax = _device->_mcm6kParams->auxMax;
+			if (_device->_mcm6kParams->auxInvert)
+			{
+				auxMin = -1 * _device->_mcm6kParams->auxMax;
+				auxMax = -1 * _device->_mcm6kParams->auxMin;
+			}
+
+			if (_auxPosition >= auxMin && _auxPosition <= auxMax)
+			{
+				double currentAuxPos = 0;
+				_device->GetAuxPos(currentAuxPos);
+
+				if (currentAuxPos >= auxMin && currentAuxPos <= auxMax)
+				{
+					double diff = (_auxPosition - currentAuxPos) * ((_device->_mcm6kParams->auxInvert) ? -1 : 1);
+					int msgRet = 0;
+					if (abs(diff) > _device->_mcm6kParams->auxThreshold)
+					{
+						wchar_t stageMessage[512];
+						StringCbPrintfW(stageMessage, 512, L"Large Aux stage move (%d.%03d um). Do you want to proceed?\n\nNote: If you are attempting a small stage movement and receiving this message there may be an internal error with the Aux stage.\nPower cycling the Controller Stage may resolve the issue.", static_cast<long>(diff * 1e3), static_cast<long>(abs(static_cast<long>((diff * 1e3 - static_cast<long>(diff * 1e3)) * 1e3))));
+						msgRet = MessageBox(NULL, stageMessage, L"", MB_YESNO);
+					}
+
+					if (abs(diff) <= _device->_mcm6kParams->auxThreshold || msgRet == IDYES)
+					{
+						if (abs(diff) <= _device->_mcm6kParams->auxMoveByThreshold)
+						{
+							_device->MoveAuxBy(diff * 1e3);
+						}
+						else
+						{
+							_device->MoveAuxTo(_auxPosition * 1e3);
+						}
+						_auxPosition_B = false;
+					}
+					else
+					{
+						_device->GetAuxPos(currentAuxPos);
+						_auxPosition = currentAuxPos;
+						_auxPosition_B = false;
+					}
+				}
+			}
+		}
+
 		if (_lpInvertedPos_B)
 		{
 			_device->GetLpPos(_lpInvertedPos_C);
@@ -1544,6 +1729,11 @@ long MCM6000Stage::StartPosition() {
 			_device->MoveCondenserBy(_condenserMoveByDistance * 1e3);
 			_condenserMoveByDistance_B = false;
 		}
+		if (_auxMoveByDistance_B)
+		{
+			_device->MoveAuxBy(_auxMoveByDistance * 1e3);
+			_auxMoveByDistance_B = false;
+		}
 		//---------------------------------------------//
 	}
 
@@ -1571,4 +1761,9 @@ long MCM6000Stage::IsMCM6000Connected()
 long MCM6000Stage::IsCondenserAvailable()
 {
 	return _device->_mcm6kParams->condenserConfigured;
+}
+
+long MCM6000Stage::IsAuxAvailable()
+{
+	return _device->_mcm6kParams->auxConfigured;
 }

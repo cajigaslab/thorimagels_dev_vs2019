@@ -126,12 +126,13 @@
                 </ListView.View>
             </ListView>
         </StackPanel>
-        <StackPanel Grid.Row="2"
-                    Orientation="Horizontal"
+        <StackPanel Grid.Row="2" 
+                    Orientation="Vertical"
                     HorizontalAlignment="Center"
                     IsEnabled="{Binding ElementName=tbtnSLMAdvance,Path=IsChecked,Mode=OneWay,UpdateSourceTrigger=PropertyChanged,ConverterParameter=Inverted,Converter={StaticResource InvertBool}}"
                     Margin="3">
-            <Button ToolTip="Command to add one SLM pattern"
+            <StackPanel Orientation="Horizontal">
+                <Button ToolTip="Command to add one SLM pattern"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Height="20"
@@ -140,9 +141,9 @@
                     Command="{Binding Path=EditSLMParamRelayCommand}"
                     CommandParameter="SLM_PATTERN_ADD"
                     IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
-                <TextBlock ToolTip="Extract SLM ROI data, update settings for SLM waveform">Add</TextBlock>
-            </Button>
-            <Button ToolTip="Command to edit selected SLM pattern"
+                    <TextBlock ToolTip="Extract SLM ROI data, update settings for SLM waveform">Add</TextBlock>
+                </Button>
+                <Button ToolTip="Command to edit selected SLM pattern"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Height="20"
@@ -151,23 +152,23 @@
                     Command="{Binding Path=EditSLMParamRelayCommand}"
                     CommandParameter="SLM_PATTERN_EDIT"
                     IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
-                <Button.Style>
-                    <Style TargetType="Button"
+                    <Button.Style>
+                        <Style TargetType="Button"
                            BasedOn="{StaticResource {x:Type Button}}">
-                        <Setter Property="Visibility"
+                            <Setter Property="Visibility"
                                 Value="Visible" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding SLMBleachWaveParams.Count}"
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SLMBleachWaveParams.Count}"
                                          Value="0">
-                                <Setter Property="Visibility"
+                                    <Setter Property="Visibility"
                                         Value="Collapsed" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Button.Style>
-                <TextBlock ToolTip="Edit settings for SLM waveform">Edit</TextBlock>
-            </Button>
-            <Button ToolTip="Command to delete selected SLM pattern"
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <TextBlock ToolTip="Edit settings for SLM waveform">Edit</TextBlock>
+                </Button>
+                <Button ToolTip="Command to delete selected SLM pattern"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Height="20"
@@ -176,9 +177,9 @@
                     Command="{Binding Path=EditSLMParamRelayCommand}"
                     CommandParameter="SLM_PATTERN_DELETE"
                     IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
-                <TextBlock ToolTip="Delete settings and waveform">Delete</TextBlock>
-            </Button>
-            <Button ToolTip="Command to add one SLM pattern"
+                    <TextBlock ToolTip="Delete settings and waveform">Delete</TextBlock>
+                </Button>
+                <Button ToolTip="Command to add one SLM pattern"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Height="20"
@@ -187,9 +188,20 @@
                     Command="{Binding Path=EditSLMParamRelayCommand}"
                     CommandParameter="SLM_PATTERN_DUMPLICATE"
                     IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
-                <TextBlock ToolTip="Extract SLM ROI data, update settings for SLM waveform">Duplicate</TextBlock>
-            </Button>
-            <Button ToolTip="Command to show or hide all ROIs"
+                    <TextBlock ToolTip="Extract SLM ROI data, update settings for SLM waveform">Duplicate</TextBlock>
+                </Button>
+                <Button ToolTip="Command to delete all SLM patterns"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Height="20"
+                    Width="55"
+                    Margin="1"
+                    Command="{Binding Path=EditSLMParamRelayCommand}"
+                    CommandParameter="SLM_PATTERN_DELETEALL"
+                    IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
+                    <TextBlock ToolTip="Delete all settings and waveform.">DeleteAll</TextBlock>
+                </Button>
+                <Button ToolTip="Command to show or hide all ROIs"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Height="20"
@@ -197,9 +209,11 @@
                     Margin="1"
                     Command="{Binding Path=EditSLMParamRelayCommand}"
                     CommandParameter="SLM_PATTERN_SHOWHIDE">
-                <TextBlock ToolTip="Display or hide all ROIs">Show/Hide</TextBlock>
-            </Button>
-            <Button ToolTip="Command to import SLM specs from a selected file"
+                    <TextBlock ToolTip="Display or hide all ROIs">Show/Hide</TextBlock>
+                </Button>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Button ToolTip="Command to import SLM specs from a selected file"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Height="20"
@@ -208,8 +222,9 @@
                     Command="{Binding Path=EditSLMParamRelayCommand}"
                     CommandParameter="SLM_IMPORT"
                     IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
-                <TextBlock ToolTip="Import or Export custom SLM bleaching patterns.">Im/Export</TextBlock>
-            </Button>
+                    <TextBlock ToolTip="Import or Export custom SLM bleaching patterns.">Im/Export</TextBlock>
+                </Button>
+            </StackPanel>
         </StackPanel>
         <StackPanel Grid.Row="3">
             <StackPanel Orientation="Horizontal"
@@ -573,14 +588,13 @@
                                                 </Style>
                                             </StackPanel.Style>
                                             <Label Content="GG:"
-                                                   Foreground="Yellow" />
+                                                   Foreground="White" />
                                             <Label Content="{Binding Path=LSMLastCalibrationDateForSLM}"
-                                                   Foreground="Yellow" />
+                                                   Foreground="White" />
                                         </StackPanel>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal">
-                                        <Label Content="SLM:"
-                                               Foreground="Yellow" />
+                                        <Label Content="SLM:" Foreground="White"/>
                                         <Label Content="{Binding Path=SLMLastCalibTime, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"
                                                HorizontalAlignment="Left"
                                                Foreground="White">
@@ -590,17 +604,17 @@
                                                         <Storyboard x:Key="flashingAnimation">
                                                             <DoubleAnimation AutoReverse="True"
                                                                              Duration="0:0:0.5"
-                                                                             From="1"
+                                                                             From=".8"
                                                                              RepeatBehavior="Forever"
                                                                              Storyboard.TargetProperty="(Background).(Opacity)"
-                                                                             To="0.5" />
+                                                                             To="0.2" />
                                                         </Storyboard>
                                                     </Style.Resources>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding Path=SLMCalAlert}"
                                                                      Value="True">
                                                             <Setter Property="Background"
-                                                                    Value="Yellow" />
+                                                                    Value="Red" />
                                                             <DataTrigger.EnterActions>
                                                                 <BeginStoryboard Name="flashing"
                                                                                  Storyboard="{StaticResource flashingAnimation}" />

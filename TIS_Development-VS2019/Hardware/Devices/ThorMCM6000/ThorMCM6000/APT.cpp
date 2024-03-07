@@ -251,6 +251,14 @@ void APT::mcm_stepper_status_update(char* data, int size, Mcm6kParams* params)
 		params->condenser_cw_moving = (data[10] & 0x10) > 0;
 		params->condenserPositionCurrent = enc;
 	}
+	if (params->aux_slot_id == (CARD_ID_START_ADDRESS + _slot))
+	{
+		// ccw moving
+		params->aux_ccw_moving = (data[10] & 0x20) > 0;
+		// cw moving
+		params->aux_cw_moving = (data[10] & 0x10) > 0;
+		params->auxPositionCurrent = enc;
+	}
 }
 
 void APT::usb_device_info(char* data, int size, Mcm6kParams* params)
@@ -535,6 +543,8 @@ void APT::stepper_get_drive_params(char* data, int size, Mcm6kParams* params)
 		memcpy(params->rParams, data, size);
 	else if ((slot + CARD_ID_START_ADDRESS) == params->condenser_slot_id)
 		memcpy(params->condenserParams, data, size);
+	else if ((slot + CARD_ID_START_ADDRESS) == params->aux_slot_id)
+		memcpy(params->auxParams, data, size);
 
 	short stage_id = (short)(data[2] | data[3] << 8);
 	short axis_id = (short)(data[4] | data[5] << 8); // (not used)

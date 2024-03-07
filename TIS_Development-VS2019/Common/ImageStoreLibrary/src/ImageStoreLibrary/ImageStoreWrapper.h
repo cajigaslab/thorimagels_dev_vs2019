@@ -21,7 +21,7 @@ private:
 
 	IExperiment* _exp;
 	std::map<uint16_t, Plate*> _plates;	//plate info for all wells, or well samples
-	std::map<uint8_t, Scan*> _scans;	//scan info for all scan sessions
+	std::map<uint32_t, Scan*> _scans;	//scan info for all scan sessions
 	Scan* _activeScan;					//current scan for saving tile
 	region* _activeRegion;				//current region for saving tile
 	int _fileHandle;					//big tiff handle
@@ -61,7 +61,7 @@ public:
 	long SetRegion(long regionID);
 
 	//save buffer to ome tif at particular location
-	long SaveData(void* buf, uint16_t channelID, uint16_t z, uint16_t t, uint16_t s = 1);
+	long SaveData(void* buf, uint16_t channelID, uint32_t z, uint32_t t, uint32_t s = 1);
 
 	//adjust scan frame count, especially when experiment stopped manually
 	long AdjustScanTCount(int count);

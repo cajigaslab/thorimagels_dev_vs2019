@@ -249,6 +249,13 @@
                 return _cameraControlModel.BottomMin;
             }
         }
+        public ICommand BrowseForReferenceImageCommand
+        {
+            get
+            {
+                return ((ICommand)MVMManager.Instance["CaptureSetupViewModel", "BrowseForReferenceImageCommand", (object)new RelayCommand(() => { })]);
+            }
+        }
 
         public ICommand CamAddResolutionCommand
         {
@@ -455,7 +462,7 @@
         public int CamHorizontalFlip
         {
             get
-            {
+            { 
                 return _cameraControlModel.CamHorizontalFlip;
             }
             set
@@ -680,6 +687,33 @@
             get
             {
                 return ((int)ICamera.CCDType.ORCA == ResourceManagerCS.GetCCDType() && _cameraControlModel.CoolingModeAvailable) ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        public bool EnableReferenceChannel
+        {
+            get
+            {
+                return _cameraControlModel.EnableReferenceChannel;
+            }
+            set
+            {
+                if ((int)ICamera.CameraType.LSM != ResourceManagerCS.GetCameraType())
+                {
+                    //Change the visible channels in the ImageView within CaptureSetup when checked
+                    if (value)
+                    {
+                        MVMManager.Instance["CaptureSetupViewModel", "IsChannelVisible3", Visibility.Hidden] = Visibility.Visible;
+                        MVMManager.Instance["CaptureSetupViewModel", "LSMChannelEnable3", false] = true;
+                    }
+                    else
+                    {
+                        MVMManager.Instance["CaptureSetupViewModel", "LSMChannelEnable3", false] = false;
+                        MVMManager.Instance["CaptureSetupViewModel", "IsChannelVisible3", Visibility.Hidden] = Visibility.Collapsed;
+                    }
+                    _cameraControlModel.EnableReferenceChannel = value;
+                    OnPropertyChange("EnableReferenceChannel");
+                }
             }
         }
 
@@ -1115,6 +1149,14 @@
                     _reconnectCameraCommand = new RelayCommand(() => ReconnectCamera());
 
                 return _reconnectCameraCommand;
+            }
+        }
+
+        public string ReferenceChannelImageName
+        {
+            get
+            {
+                return MVMManager.Instance["CaptureSetupViewModel", "ReferenceChannelImageName", ""].ToString();
             }
         }
 
@@ -1601,6 +1643,8 @@
         {
             //stop the camera
             ((ICommand)MVMManager.Instance["CaptureSetupViewModel", "StopCommand", (object)new RelayCommand(() => { })]).Execute(null);
+
+            EnableReferenceChannel = false;
 
             //disconnect the camera
             CSTeardownCommand();

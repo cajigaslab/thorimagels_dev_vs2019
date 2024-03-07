@@ -74,7 +74,6 @@
         private static byte[] _pixelRoiDataLUT;
         private static byte[][] _rawImg = new byte[MAX_CHANNELS + 1][];
         private static ReportImageProcessData _reportImageProcessData;
-        private static int _shiftValue = 6;
         private static double[] _whitePoint;
         private static ushort[] _zPreviewPixelData;
 
@@ -1126,22 +1125,25 @@
                 // load reference channel
                 bool refToRefChann = false;
 
+
                 //only do the reference channel if it's enabled and channel D is enabled
-                if (1 == (int)MVMManager.Instance["AreaControlViewModel", "EnableReferenceChannel", (object)0] && _lsmChannelEnable[3])
+                if ((1 == (int)MVMManager.Instance["AreaControlViewModel", "EnableReferenceChannel", (object)0] && _lsmChannelEnable[3])
+                    || ((bool)MVMManager.Instance["CameraControlViewModel", "EnableReferenceChannel",
+                    false] && _lsmChannelEnable[3]))
                 {
-                    string refChannDir = Application.Current.Resources["AppRootFolder"].ToString() + "\\ReferenceChannel.tif";
-                    if (File.Exists(refChannDir))   // ref channel file existance
+                    //string refChannDir = Application.Current.Resources["AppRootFolder"].ToString() + "\\ReferenceChannel.tif";
+                    if (File.Exists(_referenceChannelImagePath))   // ref channel file existance
                     {
                         long width = 0;
                         long height = 0;
                         long colorChannels = 0;
-                        if (LoadRefChannInfo(refChannDir, ref width, ref height, ref colorChannels))    // load dimention of ref image
+                        if (LoadRefChannInfo(_referenceChannelImagePath, ref width, ref height, ref colorChannels))    // load dimention of ref image
                         {
                             if (width * height == _dataLength)
                             {
                                 refChannIntPtr = Marshal.AllocHGlobal(Convert.ToInt32(width) * Convert.ToInt32(height) * 2);
 
-                                if (LoadRefChann(refChannDir, ref refChannIntPtr))  // load ref image
+                                if (LoadRefChann(_referenceChannelImagePath, ref refChannIntPtr))  // load ref image
                                 {
                                     try
                                     {
@@ -1161,11 +1163,22 @@
                 }
 
                 int shiftValue = GetBitsPerPixel() - 8;
+                ICamera.CameraType cameraType = ICamera.CameraType.LAST_CAMERA_TYPE;
+                try
+                {
+                    //Might error if closing down and image view tries to update while cam is disconnected
+                    cameraType = (ICamera.CameraType)ResourceManagerCS.GetCameraType();
+                }
+                catch (Exception e)
+                {
+                    ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "Eror Getting Camera Type" + e.Message);
+                }
+                bool isCamera = ICamera.CameraType.LSM != cameraType;
 
                 //in the interest of speed we are seperating the reference channel case
                 //without a reference channel the logic will run faster since the
                 //conditionals per pixel are removed.
-                if (refToRefChann)
+                if (refToRefChann && 1 == (int)MVMManager.Instance["AreaControlViewModel", "EnableReferenceChannel", (object)0] && !isCamera)
                 {
                     //factor is derived by taking CAMERA_MAX_INTENSITY_VALUE/256
                     //const double FULL_RANGE_NORMALIZATION_FACTOR = 64.0;
@@ -1208,6 +1221,63 @@
                             }
                         }
                     } // k
+                }
+                else if(refToRefChann && (bool)MVMManager.Instance["CameraControlViewModel", "EnableReferenceChannel", false] && isCamera)
+                {
+                    //Case for camera with enabled reference channel
+                    //Number of color channels from the camera is always 1
+                    //ReferenceChannel data should be added to the current channel
+
+                    ushort[] rawArray = _pixelData;
+                    for (int k = 0; k < MAX_CHANNELS; k++)
+                    {
+                        if (_lsmChannelEnable[k])
+                        {
+                            if (resetPixelDataHistogram)
+                            {
+                                Array.Clear(_pixelDataHistogram[k], 0, _pixelDataHistogram[k].Length);
+                            }
+                            int n = k;
+                            if (3 == k)
+                            {
+                                rawArray = refChannShortArray;
+                                n = 0;
+                            }
+                            for (int i = 0, j = 0; j < _dataLength; i += 3, j++)
+                            {
+                                ushort valRaw;
+                                Color col;
+                                //when the reference channel option is on. do not copy the data from channel 3
+                                if (3 == k)
+                                {
+                                    //Camera only ever has 1 color channel enabled so add the pixel vals from ref channel to the current channel
+                                    ushort refPixel = rawArray[j + n * _dataLength];
+                                    ushort incomingPixel = _pixelData[j + n * _dataLength];
+                                    valRaw = (ushort)((refPixel + incomingPixel) / 2);
+                                }
+                                else
+                                {
+                                    valRaw = rawArray[j + n * _dataLength];
+                                }
+                                valRaw = rawArray[j + n * _dataLength];
+                                col = ChannelLuts[k][_pal[k][valRaw]];
+                                _rawImg[k][i] = col.R;
+                                _rawImg[k][i + 1] = col.G;
+                                _rawImg[k][i + 2] = col.B;
+                                if (_pixelDataByte[i] < col.R) _pixelDataByte[i] = col.R;
+                                if (_pixelDataByte[i + 1] < col.G) _pixelDataByte[i + 1] = col.G;
+                                if (_pixelDataByte[i + 2] < col.B) _pixelDataByte[i + 2] = col.B;
+
+                                //only build the histogram if the color mode is selected when full frame is ready.
+                                //This will allow histograms for all of the channels to be available simultaneously
+                                if (resetPixelDataHistogram)
+                                {
+                                    byte valRawHist = (byte)(valRaw >> shiftValue);
+                                    _pixelDataHistogram[k][valRawHist]++;
+                                }
+                            }
+                        }
+                    }
                 }
                 else
                 {
@@ -1378,10 +1448,7 @@
 
         public void InitializePixelDataLut()
         {
-            double shiftValueResult = 64;
-
-            //original shift value is determined by the examining camera type
-            shiftValueResult = Math.Pow(2, _shiftValue);
+            double shiftValueResult = Math.Pow(2, GetBitsPerPixel() - 8);
 
             if (null == _pixelDataLUT)
             {

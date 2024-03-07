@@ -284,6 +284,7 @@
 
                             if (null != ZStackCaptureFinished)
                             {
+                                LoadZPreviewParameters();
                                 bool continuousZStackPreview = (bool)MVMManager.Instance["ZControlViewModel", "EnableContinuousZStackPreview", (object)false];
                                 if (!IsOrthogonalViewChecked && !continuousZStackPreview)
                                 {
@@ -596,6 +597,7 @@
                 //cannot snapshot while bleaching with the same lsm type:
                 return;
             }
+            HandleAcquireButtonPressed();
             LiveSnapshotStopped = false;
             IsLiveSnapshot = true;
             BitmapReady = true;
@@ -739,6 +741,8 @@
                     }
                 }
 
+                HandleAcquireButtonPressed();
+
                 this._captureSetup.Start();
 
                 if (false == _bw.IsBusy)
@@ -829,6 +833,7 @@
                 this._captureSetup.StopZStackPreview();
                 _bw.CancelAsync();
                 MVMManager.Instance["ZControlViewModel", "IsZStackCapturing"] = false;
+                LoadZPreviewParameters();
                 CloseProgressWindow();
             }
 

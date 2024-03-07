@@ -42,22 +42,26 @@ MCM6000::MCM6000()
 	_mcm6kParams->zPositionCurrent = 0;
 	_mcm6kParams->rPositionCurrent = 0;
 	_mcm6kParams->condenserPositionCurrent = 0;
+	_mcm6kParams->auxPositionCurrent = 0;
 	_mcm6kParams->xThreshold = 0.4;
 	_mcm6kParams->yThreshold = 0.4;
 	_mcm6kParams->zThreshold = 0.4;
 	_mcm6kParams->rThreshold = 0.4;
 	_mcm6kParams->condenserThreshold = 0.4;
+	_mcm6kParams->auxThreshold = 0.4;
 	_mcm6kParams->xInvert = false;
 	_mcm6kParams->yInvert = false;
 	_mcm6kParams->zInvert = false;
 	_mcm6kParams->rInvert = false;
 	_mcm6kParams->condenserInvert = false;
+	_mcm6kParams->auxInvert = false;
 
 	_mcm6kParams->xPidEnable = false;
 	_mcm6kParams->yPidEnable = false;
 	_mcm6kParams->zPidEnable = false;
 	_mcm6kParams->rPidEnable = false;
 	_mcm6kParams->condenserPidEnable = false;
+	_mcm6kParams->auxPidEnable = false;
 
 	_mcm6kParams->x_slot_id = 0;
 	_mcm6kParams->y_slot_id = 0;
@@ -71,12 +75,14 @@ MCM6000::MCM6000()
 	_mcm6kParams->shutter_slot_id = 0;
 	_mcm6kParams->piezo_slot_id = 0;
 	_mcm6kParams->ndd_slot_id = 0;
+	_mcm6kParams->aux_slot_id = 0;
 
 	_mcm6kParams->xPidKickoutEnable = false;
 	_mcm6kParams->yPidKickoutEnable = false;
 	_mcm6kParams->zPidKickoutEnable = false;
 	_mcm6kParams->rPidKickoutEnable = false;
 	_mcm6kParams->condenserPidKickoutEnable = false;
+	_mcm6kParams->auxPidKickoutEnable = false;
 
 	_mcm6kParams->x_ccw_moving = false;
 	_mcm6kParams->x_cw_moving = false;
@@ -98,6 +104,8 @@ MCM6000::MCM6000()
 	_mcm6kParams->lightPath_homing = false;
 	_mcm6kParams->ndd_ccw_moving = false;
 	_mcm6kParams->ndd_cw_moving = false;
+	_mcm6kParams->aux_ccw_moving = false;
+	_mcm6kParams->aux_cw_moving = false;
 
 	_mcm6kParams->xConfigured = FALSE;
 	_mcm6kParams->yConfigured = FALSE;
@@ -110,6 +118,7 @@ MCM6000::MCM6000()
 	_mcm6kParams->piezoConfigured = FALSE;
 	_mcm6kParams->nddConfigured = FALSE;
 	_mcm6kParams->shutterConfigured = FALSE;
+	_mcm6kParams->auxConfigured = FALSE;
 
 	_mcm6kParams->shuttersPositions[0] = SHUTTER_CLOSED;
 	_mcm6kParams->shuttersPositions[1] = SHUTTER_CLOSED;
@@ -501,9 +510,10 @@ long MCM6000::InitializeParams()
 				_mcm6kParams->z_slot_id != i + CARD_ID_START_ADDRESS &&
 				_mcm6kParams->r_slot_id != i + CARD_ID_START_ADDRESS &&
 				_mcm6kParams->ze_slot_id != i + CARD_ID_START_ADDRESS &&
-				_mcm6kParams->condenser_slot_id != i + CARD_ID_START_ADDRESS))
+				_mcm6kParams->condenser_slot_id != i + CARD_ID_START_ADDRESS &&
+				_mcm6kParams->aux_slot_id != i + CARD_ID_START_ADDRESS))
 		{
-			wstring messageWstring = L"Card type HC Stepper Card mismatch. There is a card of type HC Stepper or MicroDB L6470 that is not accounted for. Please check ThorMCM6000Settings.xml Make sure SlotLayout is configured correctly with the right matching cards. \n\nIf error persists please contact Thorlabs customer support.\nPossible stage types for this type of card: X, Y, Z, R, ZElevator, Condenser";
+			wstring messageWstring = L"Card type HC Stepper Card mismatch. There is a card of type HC Stepper or MicroDB L6470 that is not accounted for. Please check ThorMCM6000Settings.xml Make sure SlotLayout is configured correctly with the right matching cards. \n\nIf error persists please contact Thorlabs customer support.\nPossible stage types for this type of card: X, Y, Z, R, ZElevator, Condenser, Aux";
 			MessageBox(NULL, messageWstring.c_str(), L"ThorMCM6000 Error: Card Type Mismatch", MB_OK);
 		}
 		else if (CardTypes::Slider_IO_type == _mcm6kParams->cardType[i] && _mcm6kParams->lp_slot_id != i + CARD_ID_START_ADDRESS)
@@ -596,6 +606,11 @@ long MCM6000::InitializeParams()
 		ConfigPid(_mcm6kParams->condenser_slot_id, _mcm6kParams->condenserParams, _mcm6kParams->condenserPidEnable);
 		ConfigPidKickout(_mcm6kParams->condenser_slot_id, _mcm6kParams->condenserParams, _mcm6kParams->condenserPidKickoutEnable);
 	}
+	if (IsSlotIdValid(_mcm6kParams->aux_slot_id))
+	{
+		ConfigPid(_mcm6kParams->aux_slot_id, _mcm6kParams->auxParams, _mcm6kParams->auxPidEnable);
+		ConfigPidKickout(_mcm6kParams->aux_slot_id, _mcm6kParams->auxParams, _mcm6kParams->auxPidKickoutEnable);
+	}
 	*/
 
 	// Panchy mentioned setting the jog parameters a lot might take an effect on the EPROM. 
@@ -609,7 +624,9 @@ long MCM6000::InitializeParams()
 	if(IsSlotIdValid(_mcm6kParams->r_slot_id))
 	SaveJogSize(_mcm6kParams->r_slot_id, _mcm6kParams->rJogSize);
 	if (IsSlotIdValid(_mcm6kParams->condenser_slot_id))
-		SaveJogSize(_mcm6kParams->condenser_slot_id, _mcm6kParams->condenserJogSize); */
+	SaveJogSize(_mcm6kParams->condenser_slot_id, _mcm6kParams->condenserJogSize);
+	if (IsSlotIdValid(_mcm6kParams->aux_slot_id))
+	SaveJogSize(_mcm6kParams->aux_slot_id, _mcm6kParams->auxJogSize);*/
 
 	return TRUE;
 }
@@ -1010,6 +1027,14 @@ long MCM6000::HomeCondenser()
 	return result;
 }
 
+long MCM6000::HomeAux()
+{
+	logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"MCM6000 Start -> Home Aux stage");
+	long result = Home(_mcm6kParams->aux_slot_id);
+	logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"MCM6000 End -> Home Aux stage");
+	return result;
+}
+
 // :TODO: Not used yet. Should check if the the slot_id is configured before calling all stages
 //long MCM6000::Home()
 //{
@@ -1018,7 +1043,8 @@ long MCM6000::HomeCondenser()
 //	long resultZ = HomeZ();
 //	long resultR = HomeR();
 //	long resultCondenser = HomeCondenser();
-//	return (resultX == FALSE || resultY == FALSE || resultZ == FALSE || resultR == FALSE || resultCondenser == FALSE) ? FALSE : TRUE;
+//	long resultAux = HomeAux();
+//	return (resultX == FALSE || resultY == FALSE || resultZ == FALSE || resultR == FALSE || resultCondenser == FALSE || resultAux == FALSE) ? FALSE : TRUE;
 //}
 
 long MCM6000::ZeroX()
@@ -1061,6 +1087,14 @@ long MCM6000::ZeroCondenser()
 	return result;
 }
 
+long MCM6000::ZeroAux()
+{
+	logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"MCM6000 Start -> Zero Aux stage");
+	long result = Zero(_mcm6kParams->aux_slot_id);
+	logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"MCM6000 End -> Zero Aux stage");
+	return result;
+}
+
 // :TODO: Not used yet. Should check if the the slot_id is configured before calling all stages
 //long MCM6000::Zero()
 //{
@@ -1069,7 +1103,8 @@ long MCM6000::ZeroCondenser()
 //	long resultZ = ZeroZ();
 //	long resultR = ZeroR();
 //	long resultCondenser = ZeroCondenser();
-//	return (resultX == FALSE || resultY == FALSE || resultZ == FALSE || resultR == FALSE || resultCondenser == FALSE) ? FALSE : TRUE;
+//	long resultAux = ZeroAux();
+//	return (resultX == FALSE || resultY == FALSE || resultZ == FALSE || resultR == FALSE || resultCondenser == FALSE || resultAux == FALSE) ? FALSE : TRUE;
 //}
 
 long MCM6000::StopX()
@@ -1112,6 +1147,14 @@ long MCM6000::StopCondenser()
 	return result;
 }
 
+long MCM6000::StopAux()
+{
+	logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"MCM6000 Start -> Stop Aux stage");
+	long result = Stop(_mcm6kParams->aux_slot_id);
+	logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"MCM6000 End -> Stop Aux stage");
+	return result;
+}
+
 // :TODO: Not used yet. Should check if the the slot_id is configured before calling all stages
 //long MCM6000::Stop()
 //{
@@ -1120,7 +1163,8 @@ long MCM6000::StopCondenser()
 //	long resultZ = StopZ();
 //	long resultR = StopR();
 //	long resultCondenser = StopCondenser();
-//	return (resultX == FALSE || resultY == FALSE || resultZ == FALSE || resultR == FALSE || resultCondenser == FALSE) ? FALSE : TRUE;
+//	long resultAux = StopAux();
+//	return (resultX == FALSE || resultY == FALSE || resultZ == FALSE || resultR == FALSE || resultCondenser == FALSE || resultAux == FALSE) ? FALSE : TRUE;
 //}
 
 long MCM6000::MoveXBy(double distance)
@@ -1328,6 +1372,47 @@ long MCM6000::MoveCondenserTo(double distance)
 	return result;
 }
 
+long MCM6000::MoveAuxBy(double distance)
+{
+	wchar_t logText[BUFFER_LENGTH];
+	wsprintf(logText, L"MCM6000 %s -> Move Aux By %lf", "Start", distance);
+	logDll->TLTraceEvent(INFORMATION_EVENT, 1, logText);
+	double distanceNM = distance;
+
+	distance = (UM_TO_MM * distance) / _mcm6kParams->slot_nm_per_count[_mcm6kParams->aux_slot_id - CARD_ID_START_ADDRESS];
+	distance = round(distance); //Temporary solution, the calculated encoder distance might be below the target number of encoder steps
+
+	wchar_t errMsg[MSG_SIZE];
+	StringCbPrintfW(errMsg, MSG_SIZE, L"MCM6000:   Aux Move By distance uM: %.3Lf, Encoder counts: %Lf", distanceNM, distance);
+	LogMessage(errMsg, ERROR_EVENT); //Temporary, show in logger whenever a stage is trying to move.
+
+	long result = MoveBy(_mcm6kParams->aux_slot_id, distance);
+
+	wsprintf(logText, L"MCM6000 %s -> Move Aux By %lf", "End", distance);
+	logDll->TLTraceEvent(INFORMATION_EVENT, 1, logText);
+	return result;
+}
+
+long MCM6000::MoveAuxTo(double distance)
+{
+	wchar_t logText[BUFFER_LENGTH];
+	wsprintf(logText, L"MCM6000 %s -> Move Aux To %lf", "Start", distance);
+	logDll->TLTraceEvent(INFORMATION_EVENT, 1, logText);
+	double distanceNM = distance;
+
+	distance = (UM_TO_MM * distance) / _mcm6kParams->slot_nm_per_count[_mcm6kParams->aux_slot_id - CARD_ID_START_ADDRESS];
+
+	wchar_t errMsg[MSG_SIZE];
+	StringCbPrintfW(errMsg, MSG_SIZE, L"MCM6000:   Aux Move TO distance uM: %.3Lf, Encoder counts: %Lf", distanceNM, distance);
+	LogMessage(errMsg, ERROR_EVENT); //Temporary, show in logger whenever a stage is trying to move.
+
+	long result = MoveTo(_mcm6kParams->aux_slot_id, distance);
+
+	wsprintf(logText, L"MCM6000 %s -> Move Aux To %lf", "End", distance);
+	logDll->TLTraceEvent(INFORMATION_EVENT, 1, logText);
+	return result;
+}
+
 long MCM6000::MoveLpTo(int pos)
 {
 	if (_mcm6kParams->lightPath_homing)
@@ -1410,6 +1495,16 @@ long MCM6000::CondenserJogCW()
 	return Jog(_mcm6kParams->condenser_slot_id, 0);
 }
 
+long MCM6000::AuxJogCW()
+{
+	return Jog(_mcm6kParams->aux_slot_id, 0);
+}
+
+long MCM6000::AuxJogCCW()
+{
+	return Jog(_mcm6kParams->aux_slot_id, 1);
+}
+
 long MCM6000::CondenserJogCCW()
 {
 	return Jog(_mcm6kParams->condenser_slot_id, 1);
@@ -1442,6 +1537,12 @@ long MCM6000::GetRPos(double& value)
 long MCM6000::GetCondenserPos(double& value)
 {
 	value = _mcm6kParams->condenserPositionCurrent;
+	return TRUE;
+}
+
+long MCM6000::GetAuxPos(double& value)
+{
+	value = _mcm6kParams->auxPositionCurrent;
 	return TRUE;
 }
 
@@ -1494,6 +1595,11 @@ bool MCM6000::IsCondenserMoving()
 	return (_mcm6kParams->condenser_ccw_moving || _mcm6kParams->condenser_cw_moving);
 }
 
+bool MCM6000::IsAuxMoving()
+{
+	return (_mcm6kParams->aux_ccw_moving || _mcm6kParams->aux_cw_moving);
+}
+
 bool MCM6000::IsZEmoving()
 {
 	return (_mcm6kParams->ze_ccw_moving || _mcm6kParams->ze_cw_moving);
@@ -1524,7 +1630,7 @@ long MCM6000::StatusPosition(long& status)
 	while (static_cast<unsigned long>(abs(nextUpdateLoop - clock()) / (CLOCKS_PER_SEC / 1000)) < (_numberOfSetSlots * _responseWaitTime))
 	{
 		status = IDevice::STATUS_READY;
-		if (IsXmoving() || IsYmoving() || IsZmoving() || IsRmoving() || IsCondenserMoving() || IsLighPathMoving() || IsEpiTurretMoving() || IsNDDmoving())
+		if (IsXmoving() || IsYmoving() || IsZmoving() || IsRmoving() || IsCondenserMoving() || IsAuxMoving() || IsLighPathMoving() || IsEpiTurretMoving() || IsNDDmoving())
 		{
 			status = IDevice::STATUS_BUSY;
 		}

@@ -89,7 +89,7 @@
         {
             set
             {
-                SaveOTMCalibration(value);
+                //SaveOTMCalibration(value);
             }
         }
 
@@ -727,7 +727,7 @@
             MVMManager.Instance["CaptureSetupViewModel", "PersistGlobalExperimentXMLNow"] = GlobalExpAttribute.OTM;
         }
 
-        private void SaveOTMCalibration(XmlDocument xmlDoc)
+        /*private void SaveOTMCalibration(XmlDocument xmlDoc)
         {
             XmlNodeList ndList = xmlDoc.SelectNodes("/ThorImageExperiment/OTM");
             if (0 >= ndList.Count)
@@ -748,8 +748,7 @@
                 XmlManager.SetAttribute(ndList[0], xmlDoc, "TrapBScaleY", this.TrapBScale[1].Value.ToString());
             }
             TrapLastCalibTimeUnix = ResourceManagerCS.DateTimeToUnixTimestamp(DateTime.Now);
-        }
-
+        }*/
         private void TrapAOffsetMinus(object x)
         {
             this.TrapAOffset[Int32.Parse(x.ToString())].Value -= 0.001;

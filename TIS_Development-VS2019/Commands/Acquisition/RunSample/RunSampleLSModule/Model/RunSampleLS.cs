@@ -70,6 +70,7 @@
         private static int[][] _pixelDataHistogram;
         private static bool _pixelDataReady;
         private static byte[][] _rawImg = new byte[MAX_CHANNELS + 1][];
+        private static ReportAutoFocusStatus _reportAutoFocusStatus;
         private static Report _reportCallBack;
         private static ReportIndex _reportCallBackImage;
         private static ReportInformMessage _reportInformMessage;
@@ -185,8 +186,8 @@
         private int _rollOverPointY;
         private RunSampleLSCustomParams _rsParams = new RunSampleLSCustomParams();
         private bool _runComplete;
-        private int _runCompleteCount;
         System.Timers.Timer _runPlateTimer;
+        private int _runTimeCal = 0;
         private string _sampleConfig;
         StringBuilder _sbNewDir;
         private int _scanMode;
@@ -199,6 +200,7 @@
         private ObservableCollection<SLMParams> _slmBleachWaveParams = new ObservableCollection<GeometryUtilities.SLMParams>();
         private int _SLMCallbackCount = 0;
         private List<string> _slmFilesInFolder;
+        BackgroundWorker _slmLoader = new BackgroundWorker();
         private List<string> _slmSequencesInFolder;
         private bool _startButtonStatus;
         private DateTime _startDateTime;
@@ -322,6 +324,7 @@
             _reportSequenceStepCurrentIndexCallBack = new ReportSequenceStepCurrentIndex(RunsampleLSUpdateSequenceStepCurrentIndx);
             _reportInformMessage = new ReportInformMessage(RunsampleLSUpdateMessage);
             _reportSavedFileIPC = new ReportSavedFileIPC(RunsampleLSNotifySavedFileToIPC);
+            _reportAutoFocusStatus = new ReportAutoFocusStatus(AutoFocusStatusMessage);
 
             try
             {
@@ -366,6 +369,9 @@
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void Report(ref int index, ref int completed, ref int total, ref int timeElapsed, ref int timeRemaining, ref int captureComplete);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void ReportAutoFocusStatus(ref int isRunning, ref int bestScore, ref double bestZPos, ref double nextZPos, ref int currRepeatatus);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void ReportIndex(ref int index);
@@ -647,7 +653,7 @@
         }
 
         /// <summary>
-        /// BleachTrigger(0: SW, 1: TRIGGER_FIRST, 2:TRIGGER_EACH)
+        /// BleachTrigger(0: SW, 1: TRIGGER_FIRST, 2:TRIGGER_EACH, 3:TRIGGER_CONT)
         /// </summary>
         public int BleachTrigger
         {
@@ -2161,6 +2167,11 @@
             {
                 _statusMessage = value;
 
+                if (Visibility.Collapsed != (Visibility)MVMManager.Instance["RunSampleLSViewModel", "AFStatusVisibility"])
+                {
+                    MVMManager.Instance["RunSampleLSViewModel", "AFStatusVisibility"] = Visibility.Collapsed;
+                }
+
                 if (null != Update)
                     Update(_statusMessage);
             }
@@ -3164,7 +3175,8 @@
                 _reportPreCaptureCallBack,
                 _reportSequenceStepCurrentIndexCallBack,
                 _reportInformMessage,
-                _reportSavedFileIPC
+                _reportSavedFileIPC,
+                _reportAutoFocusStatus
                 );
 
             InitCallBackROIDataStore(_multiROIStatsCallBack);
@@ -3410,6 +3422,10 @@
             _backgroundWorker.DoWork += BackgroundWorker_DoWork;
             _backgroundWorker.RunWorkerCompleted += BackgroundWorker_RunWorkerCompleted;
             _backgroundWorker.WorkerSupportsCancellation = true;
+
+            _slmLoader.DoWork += SLMLoader_DoWork;
+            _slmLoader.RunWorkerCompleted += SLMLoader_RunWorkerCompleted;
+            _slmLoader.WorkerSupportsCancellation = true;
 
             _panelsEnable = true;
             // event trigerred to the view model to enable the Panels
@@ -3704,9 +3720,9 @@
             return (1 == ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_FIELD_SIZE_CALIBRATION, ref fieldSizeCal));
         }
 
-        public bool LoadSLMPatternName(int runtimeCal, int id, string bmpPatternName, bool start, bool phaseDirect = false, int timeoutVal = 0)
+        public bool LoadSLMPatternName(int runtimeCal, int id, string bmpPatternName, bool start, bool phaseDirect = false, int phaseType = 0, int timeoutVal = 0)
         {
-            return ((1 == LoadSLMPattern(runtimeCal, id, bmpPatternName, (start) ? 1 : 0, (phaseDirect) ? 1 : 0, timeoutVal)) ? true : false);
+            return ((1 == LoadSLMPattern(runtimeCal, id, bmpPatternName, (start) ? 1 : 0, (phaseDirect) ? 1 : 0, phaseType, timeoutVal)) ? true : false);
         }
 
         public void MarshalStrArray(IntPtr pUnStrArray, int AryCnt, out string[] StrArray)
@@ -3740,6 +3756,9 @@
             _backgroundWorker.DoWork -= BackgroundWorker_DoWork;
             _backgroundWorker.RunWorkerCompleted -= BackgroundWorker_RunWorkerCompleted;
 
+            _slmLoader.DoWork -= SLMLoader_DoWork;
+            _slmLoader.RunWorkerCompleted -= SLMLoader_RunWorkerCompleted;
+
             DataStore.Instance.Close();
         }
 
@@ -3758,258 +3777,18 @@
 
         public bool Start()
         {
-            try
-            {
-                if (IsRunning())
-                    return false;
+            if (IsRunning() || _slmLoader.IsBusy)
+                return false;
 
-                ActiveExperimentPath = ResourceManagerCS.GetCaptureTemplatePathString() + "Active.xml";
-                if (true == _runComplete)
-                {
+            // event trigerred to the view model to change the status of the Start and Stop button
+            _startButtonStatus = false;
+            _stopButtonStatus = true;
+            UpdateButton(false);
 
-                    //Load active.xml accounting for possible lockup during scripting
-                    XmlDocument expDoc = new XmlDocument();
-                    if (!TryLoadDocument(expDoc, ActiveExperimentPath))
-                    {
-                        return false;
-                    }
+            // event trigerred to the view model to change the status of the menu bar buttons
+            UpdateMenuBarButton(false);
 
-                    //Check for compatibility
-                    if (!ExperimentSettingsValidForCapture(expDoc))
-                    {
-                        return false;
-                    }
-
-                    _currentWellCount = 0;
-                    _currentImageCount = 0;
-                    _runCompleteCount = 0;
-                    _totalImagesCompleted = 0;
-                    //Kirk: T and Z counters set to 0 then Updated to fix Redmine Bug #33
-                    _currentTCount = 0;
-                    _currentZCount = 0;
-                    Update("Reset Counters");
-
-                    //image counter used to determine the end of a row for kicking the background image generation process
-                    _imageCounter = 0;
-
-                    _sbNewDir = new StringBuilder(_outputPath + "\\" + _experimentName.FullName);
-
-                    // This is done for customers who are looking to index their files from the first experiment itself
-                    string strTemp = string.Empty;
-                    System.Xml.XmlDocument appSettings = new System.Xml.XmlDocument();
-                    string appSettingsFile = ResourceManagerCS.GetApplicationSettingsFileString();
-                    ResourceManagerCS.BorrowDocMutexCS(SettingsFileType.APPLICATION_SETTINGS);
-                    appSettings.Load(appSettingsFile);
-                    ResourceManagerCS.ReturnDocMutexCS(SettingsFileType.APPLICATION_SETTINGS);
-                    System.Xml.XmlNode node = appSettings.SelectSingleNode("/ApplicationSettings/ImageNameFormat");
-
-                    if (node != null && node.Attributes != null)
-                    {
-                        _indexDigitCounts = Convert.ToInt32(node.Attributes["indexDigitCounts"].Value);
-
-                    }
-
-                    if (Directory.Exists(_sbNewDir.ToString()) || (XmlManager.GetAttribute(node, appSettings, "alwaysAppendIndex", ref strTemp) && ("1" == strTemp || Boolean.TrueString == strTemp)))
-                    {
-                        FileName name = new FileName(_experimentName);
-                        name.MakeUnique(_outputPath);
-
-                        //Confirm That User Wants New Name
-                        if (!DontAskUniqueExperimentName)
-                        {
-
-                            string msg = string.Format("A data set already exists at this location. Would you like to use the name {0} instead?", name.FullName);
-                            CustomMessageBox messageBox = new CustomMessageBox(msg, "Data already exists", "Don't ask again", "Yes", "No");
-                            if (!messageBox.ShowDialog().GetValueOrDefault(false))
-                            {
-                                return false;
-                            }
-                            else
-                            {
-                                DontAskUniqueExperimentName = messageBox.CheckBoxChecked;
-                            }
-                        }
-
-                        //Rename
-                        _experimentName = name;
-                        _sbNewDir = new StringBuilder(_outputPath + "\\" + _experimentName.FullName);
-
-                    }
-
-                    string totalPath = _sbNewDir.ToString();
-
-                    int totalPathLength;
-                    if (_indexDigitCounts <= 0)
-                    {
-                        totalPathLength = TOTAL_PATH_LENGTH;
-                    }
-                    else
-                    {
-                        totalPathLength = TOTAL_PATH_LENGTH - (_indexDigitCounts - 1) * 4;
-                    }
-
-                    if (totalPath.Length > totalPathLength)
-                    {
-                        string msg = string.Format(" Your path name and file name combined should be less than {0} characters", totalPathLength);
-                        MessageBox.Show(msg);
-                        return false;
-                    }
-
-                    if (IPCDownlinkFlag == false && RemoteConnection == true && RemoteSavingStats == true)
-                    {
-                        SendToIPCController(ThorPipeCommand.StartAcquiring, _sbNewDir.ToString());
-                    }
-
-                    //Create the new ROIDataStore to hold the ROI stats
-                    const int DSTYPE_SQLITE = 1;
-                    CreateStatsManagerROIDS(DSTYPE_SQLITE, _streamingPath + "\\ROIDataStore");
-
-                    //Create the new experiment directory(s)
-                    Directory.CreateDirectory(_sbNewDir.ToString() + @"\jpeg");
-                    Directory.CreateDirectory(_sbNewDir.ToString() + @"\jpeg\1x");
-
-                    //assign the experiment xml path
-                    _experimentXMLPath = _sbNewDir.ToString() + "\\Experiment.xml";
-
-                    _experimentFolderPath = _sbNewDir.ToString() + "\\";
-
-                    string batchName = DataStore.Instance.GetBatchName();
-
-                    DataStore.Instance.AddExperiment(_experimentName.FullName, _experimentFolderPath, batchName);
-
-                    StringBuilder sbExp = new StringBuilder(_experimentXMLPath);
-
-                    //copy the experiment path to the runsample parameters
-                    _rsParams.path = String.Copy(_experimentXMLPath);
-
-                    try
-                    {
-                        XmlNodeList nlA = expDoc.SelectNodes("/ThorImageExperiment/Name");
-                        if (0 < nlA.Count)
-                        {
-                            XmlManager.SetAttribute(nlA[0], expDoc, "name", _experimentName.FullName);
-                            XmlManager.SetAttribute(nlA[0], expDoc, "path", _sbNewDir.ToString());
-                        }
-                        ResourceManagerCS.BorrowDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
-                        expDoc.Save(ActiveExperimentPath);
-                        ResourceManagerCS.ReturnDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
-                    }
-                    catch (Exception ex)
-                    {
-                        string str = ex.Message;
-                        ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + "RunSampleLSModule: Unable to save new experiment path.");
-                    }
-                    //overwrite the active experiment settings
-                    File.Copy(ActiveExperimentPath, _experimentXMLPath);
-
-                    try
-                    {
-                        //Update the variables list LAST OUTPUT value
-                        const string PATH_LAST_OUTPUT = "LAST OUTPUT";
-                        string strVar = Application.Current.Resources["ApplicationSettingsFolder"].ToString() + "\\VariableList.xml";
-                        XmlDocument varDoc = new XmlDocument();
-                        varDoc.Load(strVar);
-                        XmlNodeList ndList = varDoc.SelectNodes("/VariableList/Path");
-
-                        foreach (XmlNode nd in ndList)
-                        {
-                            string str = nd.Attributes["name"].Value;
-                            if (str.Equals(PATH_LAST_OUTPUT))
-                            {
-                                nd.Attributes["value"].Value = _sbNewDir.ToString();
-                                break;
-                            }
-                        }
-                        varDoc.Save(strVar);
-                    }
-                    catch (Exception ex)
-                    {
-                        string str = ex.Message;
-                        //error loading/saving the variables list
-                        ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Unable to load/save variables list");
-                    }
-
-                    _tiffCompressionEnabled = GetTiffCompressionEnbaledSetting();
-
-                    //Copy bleach ROI and waveform:
-                    if ((int)CaptureModes.BLEACHING == CaptureMode)
-                    {
-                        //do preBleach arm and check:
-                        PreBleachCheck();
-                    }
-
-                    _runComplete = false;
-                    _experimentCompleteForProgressBar = false;
-
-                    // event trigerred to the view model to change the status of the Start and Stop button
-                    _startButtonStatus = false;
-                    _stopButtonStatus = true;
-                    UpdateButton(false);
-
-                    _statusMessageZUpdate = true;
-
-                    // event trigerred to the view model to change the status of the menu bar buttons
-                    UpdateMenuBarButton(false);
-
-                    // event trigerred to let the viewModel know that the experiment has started
-                    ExperimentStarted();
-
-                    //enable digital trigger at start, digital output view model will fetch for average
-                    //frame number from active.xml, make sure it happens when active and exp are the same copy.
-                    MVMManager.Instance["DigitalOutputSwitchesViewModel", "TriggerEnable"] = 1;
-
-                    _experimentStatus = "started";
-                    _startDateTime = DateTime.Now;
-                    _startUTC = DateTime.UtcNow;
-                    if (true == UpdateExperimentFile(_experimentXMLPath, false))
-                    {
-                        if (SetActiveExperiment(_experimentXMLPath) == 1)
-                        {
-                            //Check the sequential capture settings and set the channel appropiately
-                            SetCaptureSequence();
-                            //save experiment path to applicationSettings.xml
-                            SaveLastExperimentInfo(_experimentFolderPath);
-
-                            BuildChannelPalettes();
-
-                            if (SetCustomParamsBinary(ref _rsParams) == 1)
-                            {
-                                if (TurnOffMonitorsDuringCapture)
-                                {
-                                    //turn off the monitors
-                                    SendMessage(0xffff, WM_SYSCOMMAND, SC_MONITORPOWER, 2);
-                                }
-
-                                // Set the Simulator Image Index to the first frame in the experiment folder
-                                SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_SIM_INDEX, (int)1);
-
-                                if (RunSampleLSExecute() == 1)
-                                {
-                                    StatusMessage = "Starting Experiment";
-
-                                    UpdateBitmapTimer(true);
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        _startButtonStatus = true;
-                        _stopButtonStatus = false;
-                        UpdateButton(true);
-                        UpdateMenuBarButton(true);
-                    }
-                }
-            }
-            catch (System.DllNotFoundException ex)
-            {
-                MessageBox.Show(ex.Message.ToString());
-                //RunSampleLSdll is missing
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message.ToString());
-            }
+            _slmLoader.RunWorkerAsync();
             return true;
         }
 
@@ -4028,7 +3807,7 @@
                     {
                         System.Threading.Thread.Sleep(1);//wait till the background process and/or image tile capturing process completes
                     }
-                    while ((_backgroundWorker.IsBusy) || (IsRunning() == true));
+                    while ((_slmLoader.IsBusy) || (_backgroundWorker.IsBusy) || (IsRunning() == true));
                 };
 
                 worker.RunWorkerCompleted += (o, ea) =>
@@ -4070,6 +3849,8 @@
                         SendToIPCController(ThorPipeCommand.StopAcquiring);
                     }
                 };
+
+                _slmLoader.CancelAsync();
                 _panelsEnable = false;
                 UpdatePanels(_panelsEnable);
                 splash.ShowInTaskbar = false;
@@ -4200,7 +3981,7 @@
         private static extern int GetZStage(StringBuilder name, int length, ref int zstageSteps, ref double zstageStepSize, ref double zStartPos);
 
         [DllImport(".\\Modules_Native\\RunSample.dll", EntryPoint = "InitCallBack")]
-        private static extern void InitCallBack(Report report, ReportIndex reportIndex, ReportSubRowStartIndex reportSubRowStartIndex, ReportSubRowEndIndex reportSubRowEndIndex, ReportZIndex reportZIndex, ReportTIndex reportTIndex, ReportPreCapture reportPreCapture, ReportSequenceStepCurrentIndex reporSequenceStepCurrentIndx, ReportInformMessage reportInformMessage, ReportSavedFileIPC reportSavedFileIPC);
+        private static extern void InitCallBack(Report report, ReportIndex reportIndex, ReportSubRowStartIndex reportSubRowStartIndex, ReportSubRowEndIndex reportSubRowEndIndex, ReportZIndex reportZIndex, ReportTIndex reportTIndex, ReportPreCapture reportPreCapture, ReportSequenceStepCurrentIndex reporSequenceStepCurrentIndx, ReportInformMessage reportInformMessage, ReportSavedFileIPC reportSavedFileIPC, ReportAutoFocusStatus reportAutoFocusStatus);
 
         [DllImport(".\\StatsManager.dll", EntryPoint = "InitCallBackLineProfilePush")]
         private static extern void InitCallBackLineProfilePush(ReportLineProfile reportLineProfile);
@@ -4209,7 +3990,7 @@
         private static extern void InitCallBackROIDataStore(ReportMultiROIStats reportMultiROIStats);
 
         [DllImport(".\\Modules_Native\\RunSample.dll", EntryPoint = "LoadSLMPattern", CharSet = CharSet.Unicode)]
-        private static extern int LoadSLMPattern(int runtimeCal, int id, string bmpPatternName, int doStart, int phaseDirect, int timeoutVal);
+        private static extern int LoadSLMPattern(int runtimeCal, int id, string bmpPatternName, int doStart, int phaseDirect, int phaseType, int timeoutVal);
 
         [DllImport("msvcrt.dll", EntryPoint = "memset", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         private static extern IntPtr memset(IntPtr dest, int c, int count);
@@ -4270,6 +4051,29 @@
 
         [DllImport(".\\Modules_Native\\RunSample.dll", EntryPoint = "SetSaving")]
         private static extern bool SetSaving(bool _toSave);
+
+        private void AutoFocusStatusMessage(ref int status, ref int bestScore, ref double bestZPos, ref double nextZPos, ref int currRepeatatus)
+        {
+            string state = string.Empty;
+            switch (status)
+            {
+                case (int)AutoFocusStatusTypes.NOT_RUNNING:
+                    state = "-Not Running-";
+                    break;
+                case (int)AutoFocusStatusTypes.STOPPED:
+                    state = "-Stopped-";
+                    break;
+                case (int)AutoFocusStatusTypes.COARSE_AUTOFOCUS:
+                    state = "-Coarse autofocus-";
+                    break;
+                case (int)AutoFocusStatusTypes.FINE_AUTOFOCUS:
+                    state = "-Fine autofocus-";
+                    break;
+            }
+            MVMManager.Instance["RunSampleLSViewModel", "AFStatusVisibility"] = Visibility.Visible;
+            bestZPos = Math.Round(bestZPos * 1000, 1);
+            MVMManager.Instance["RunSampleLSViewModel", "AFStatusMessage"] = "\nAutofocus Running. Status: " + state + " Best Z Position found: " + bestZPos.ToString();
+        }
 
         // Worker Method
         private void BackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
@@ -4923,9 +4727,13 @@
                 {
                     _currentSLMWaveID = _currentSLMSequenceID = 0;
                     _loadedSLMFiles.Clear();
-                    _loadedSLMSequences.Clear();
-                    cycleReset = true;
 
+                    if (1 < _loadedSLMSequences.Count)
+                    {
+                        _loadedSLMSequences.Clear();
+                    }
+
+                    cycleReset = true;
                     //try search drop-in files for next cycle:
                     LoadedSLMName = PreLoadNextSLM();
                     LoadedSLMName = (PreLoadNextSLMSequence()) ? LoadedSLMName : string.Empty;
@@ -4954,6 +4762,65 @@
                 }
             }
             return (string.Empty != LoadedSLMName || (BleachFrames - 1) <= _currentSLMCycleID);
+        }
+
+        /// <summary>
+        /// reload available SLM patterns from sequence file, return true if loaded any.
+        /// </summary>
+        /// <returns></returns>
+        private bool LoadSLMSequence(string sequenceFile)
+        {
+            if (null == sequenceFile)
+                return false;
+
+            bool retVal = true;
+            try
+            {
+                switch (_runTimeCal)
+                {
+                    case 2:
+                        //reload patterns here when extremely short pattern time
+                        List<int> patternIDs = new List<int>();
+                        using (TextReader reader = new StreamReader(sequenceFile))
+                        {
+                            string line;
+                            while ((line = reader.ReadLine()) != null)
+                            {
+                                patternIDs.Add(Int32.Parse(line));
+                            }
+                        }
+                        //find out maximum pattern time for SLM timeout in msec, PatternID:1-based
+                        int timeoutVal = 0;
+                        foreach (int i in patternIDs)
+                        {
+                            timeoutVal = (int)Math.Max(timeoutVal,
+                                _slmBleachWaveParams[i - 1].BleachWaveParams.PrePatIdleTime + _slmBleachWaveParams[i - 1].BleachWaveParams.Iterations * (_slmBleachWaveParams[i - 1].BleachWaveParams.PreIdleTime + _slmBleachWaveParams[i - 1].Duration + _slmBleachWaveParams[i - 1].BleachWaveParams.PostIdleTime) + _slmBleachWaveParams[i - 1].BleachWaveParams.PostPatIdleTime);
+                        }
+
+                        //load to SLM
+                        for (int j = 0; j < patternIDs.Count; j++)
+                        {
+                            string waveFileName = SLMWaveformFolder[0] + "\\" + SLMWaveBaseName[1] + "_" + _slmBleachWaveParams[patternIDs[j] - 1].BleachWaveParams.ID.ToString("D" + FileName.GetDigitCounts().ToString()) + ".bmp";
+                            if (File.Exists(waveFileName))
+                            {
+                                bool doStart = (j == (patternIDs.Count - 1)) ? true : false;
+                                retVal = this.LoadSLMPatternName(_runTimeCal, j, waveFileName, doStart, (int)ICamera.LSMType.STIMULATE_MODULATOR == ResourceManagerCS.GetBleacherType(), _slmBleachWaveParams[patternIDs[j] - 1].PhaseType, timeoutVal);
+                                if (!retVal)
+                                    break;
+                            }
+                        }
+                        break;
+                    default:
+                        //allow runtime load of SLM sequence
+                        return (1 == ResourceManagerCS.SetDeviceParamString((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_SEQ_FILENAME, sequenceFile, (int)IDevice.DeviceSetParamType.NO_EXECUTION));
+                }
+                return retVal;
+            }
+            catch (Exception e)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "ReLoadSLMPatterns Error:" + e.Message);
+                return false;
+            }
         }
 
         /// <summary>
@@ -5042,12 +4909,15 @@
                 case BleachMode.SLM:
                     if (Directory.Exists(SLMWaveformFolder[0]))
                     {
+                        StatusMessage = "Start loading SLM ...";
                         Directory.CreateDirectory(SLMWaveformPath[0]);
                         DirectoryInfo diSource = new DirectoryInfo(SLMWaveformFolder[0]);
                         DirectoryInfo diPath = new DirectoryInfo(SLMWaveformPath[0]);
                         foreach (FileInfo finfo in diSource.GetFiles())
                         {
                             finfo.CopyTo(Path.Combine(diPath.FullName, finfo.Name), true);
+                            if (_slmLoader.CancellationPending)
+                                return false;
                         }
                         //copy sequences if selected
                         if (SLMSequenceOn && Directory.Exists(SLMWaveformFolder[1]))
@@ -5058,6 +4928,8 @@
                             foreach (FileInfo finfo in diSource.GetFiles())
                             {
                                 finfo.CopyTo(Path.Combine(diPath.FullName, finfo.Name), true);
+                                if (_slmLoader.CancellationPending)
+                                    return false;
                             }
                         }
                     }
@@ -5089,7 +4961,7 @@
             if (BleachMode.SLM == _bleachScanMode)
             {
                 //preload all available SLM patterns:
-                PreLoadAllSLMPattern();
+                ret = PreLoadAllSLMPattern();
             }
             return ret;
         }
@@ -5131,26 +5003,41 @@
                 _loadedSLMPatterns.Add(addedFiles[i]);
             }
 
+            //find out maximum pattern time for SLM timeout in msec and determine run-time calculation mode:
+            int timeoutVal = 0;
+            _runTimeCal = SLMSequenceOn ? 1 : 0;
+            for (int i = 0; i < _slmBleachWaveParams.Count; i++)
+            {
+                timeoutVal = (int)Math.Max(timeoutVal, _slmBleachWaveParams[i].BleachWaveParams.PrePatIdleTime + _slmBleachWaveParams[i].BleachWaveParams.Iterations * (_slmBleachWaveParams[i].BleachWaveParams.PreIdleTime + _slmBleachWaveParams[i].Duration + _slmBleachWaveParams[i].BleachWaveParams.PostIdleTime) + _slmBleachWaveParams[i].BleachWaveParams.PostPatIdleTime);
+                if (_slmBleachWaveParams[i].Duration < (double)Constants.SLM_PATTERN_TIME_MIN_MS)
+                    _runTimeCal = 2;
+            }
+
             //keep slm phase type available if not from SLM param:
             if (1 > SLMphaseType.Count)
                 SLMphaseType.Add(SLM3D ? 1 : 0);
 
-            //find out maximum pattern time for SLM timeout in msec:
-            int timeoutVal = 0;
-            for (int i = 0; i < _slmBleachWaveParams.Count; i++)
-            {
-                timeoutVal = (int)Math.Max(timeoutVal, (_slmBleachWaveParams[i].BleachWaveParams.PreIdleTime + _slmBleachWaveParams[i].Duration + _slmBleachWaveParams[i].BleachWaveParams.PostIdleTime));
-            }
-
             //load to SLM:
-            bool phaseDirect = (int)ICamera.LSMType.STIMULATE_MODULATOR == ResourceManagerCS.GetBleacherType();
-            for (int i = 0; i < _loadedSLMPatternsCnt; i++)
+            if (2 == _runTimeCal && SLMSequenceOn)
             {
-                bool doStart = (i == (_loadedSLMPatternsCnt - 1)) ? true : false;
-                this.LoadSLMPatternName(SLMSequenceOn ? 1 : 0, i, _loadedSLMPatterns[i], doStart, phaseDirect || 1 == (i < SLMphaseType.Count ? SLMphaseType[i] : SLMphaseType[0]), timeoutVal);
+                //do load of patterns at sequence reload ...
+            }
+            else
+            {
+                bool phaseDirect = (int)ICamera.LSMType.STIMULATE_MODULATOR == ResourceManagerCS.GetBleacherType();
+                for (int i = 0; i < _loadedSLMPatternsCnt; i++)
+                {
+                    if (!_slmLoader.CancellationPending)
+                    {
+                        StatusMessage = "Loading SLM pattern # (" + i + ")";
+                        bool doStart = (i == (_loadedSLMPatternsCnt - 1)) ? true : false;
+                        this.LoadSLMPatternName(_runTimeCal, i, _loadedSLMPatterns[i], doStart, phaseDirect, (i < SLMphaseType.Count ? SLMphaseType[i] : SLMphaseType[0]), timeoutVal);
+                        System.Threading.Thread.Sleep(1);
+                    }
+                }
             }
 
-            return (0 < _loadedSLMPatternsCnt) ? true : false;
+            return (!_slmLoader.CancellationPending && 0 < _loadedSLMPatternsCnt) ? true : false;
         }
 
         private string PreLoadNextSLM()
@@ -5207,6 +5094,7 @@
             if (string.Empty != LoadedSLMName)
             {
                 StatusMessage = string.Format("Loading cycle {0}, SLM stimulation: '{1}' ...", (_currentSLMCycleID + 1).ToString(), Path.GetFileNameWithoutExtension(LoadedSLMName));
+                System.Threading.Thread.Sleep(1);
             }
             return LoadedSLMName;
         }
@@ -5224,7 +5112,7 @@
             for (int i = 0; i < addedFiles.Count(); i++)
             {
                 //use last available SLM phaseType since no records of it from other files:
-                if (this.LoadSLMPatternName(SLMSequenceOn ? 1 : 0, _loadedSLMPatternsCnt, addedFiles[i], true, phaseDirect || (1 == SLMphaseType.Last())))
+                if (this.LoadSLMPatternName(_runTimeCal, _loadedSLMPatternsCnt, addedFiles[i], true, phaseDirect, SLMphaseType.Last()))
                 {
                     _loadedSLMPatternsCnt++;
                     _loadedSLMPatterns.Add(addedFiles[i]);
@@ -5255,12 +5143,17 @@
                 string seqFileName = SLMWaveformPath[1] + "\\" + SLMWaveBaseName[2] + "_" + (_currentSLMSequenceID + 1).ToString("D" + FileName.GetDigitCounts().ToString()) + ".txt";
 
                 //check if available in the folder, skip if just loaded:
-                string matchingFileName = _slmSequencesInFolder.FirstOrDefault(checkString => checkString.Contains(seqFileName));
-                if (null != matchingFileName)
+                string loadedFileName = _loadedSLMSequences.FirstOrDefault(checkString => checkString.Contains(seqFileName));
+                if (null != loadedFileName)
                 {
-                    if (1 == ResourceManagerCS.SetDeviceParamString((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_SEQ_FILENAME, matchingFileName, (int)IDevice.DeviceSetParamType.NO_EXECUTION))
+                    LoadedSequenceName = loadedFileName;
+                }
+                else
+                {
+                    string matchingFileName = _slmSequencesInFolder.FirstOrDefault(checkString => checkString.Contains(seqFileName));
+                    if (LoadSLMSequence(matchingFileName))
                     {
-                        LoadedSequenceName = seqFileName;
+                        LoadedSequenceName = matchingFileName;
                         _loadedSLMSequences.Add(LoadedSequenceName);
                         //_afterSLMCycle = false;
                     }
@@ -5278,7 +5171,7 @@
                 List<string> addedFiles = _slmSequencesInFolder.Except(_loadedSLMSequences).OrderBy(s => s).ToList();
                 if (0 < addedFiles.Count())
                 {
-                    if (1 == ResourceManagerCS.SetDeviceParamString((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_SEQ_FILENAME, addedFiles[0], (int)IDevice.DeviceSetParamType.NO_EXECUTION))
+                    if (LoadSLMSequence(addedFiles[0]))
                     {
                         LoadedSequenceName = addedFiles[0];
                         _loadedSLMSequences.Add(LoadedSequenceName);
@@ -5442,22 +5335,26 @@
 
                     UpdateExperimentFile(_experimentXMLPath, true);
 
-                    if (0 == _runCompleteCount)
+                    if (IPCDownlinkFlag == false && RemoteConnection == true)
                     {
-                        UpdateScript("Complete");
-                        if (IPCDownlinkFlag == false && RemoteConnection == true)
-                        {
-                            SendToIPCController(ThorPipeCommand.StopAcquiring);
-                        }
+                        SendToIPCController(ThorPipeCommand.StopAcquiring);
                     }
-                    _runComplete = true;
-
-                    _runCompleteCount++;
 
                     if (TurnOffMonitorsDuringCapture)
                     {
                         SendMessage(0xffff, WM_SYSCOMMAND, SC_MONITORPOWER, -1);//DLL function
                     }
+
+                    if (null != UpdateButton) UpdateButton(true);
+
+                    _runComplete = true;
+
+                    //UpdateScript("Complete") needs to be the last function called when a Capture is complete. Otherwise
+                    //it could try to start a new capture before the current one is completely done.
+                    UpdateScript("Complete");
+
+                    return;
+
                     //  _currentZCount = 1;
                     //  _currentTCount = 1;
                     //  _currentWellCount = 1;
@@ -5999,6 +5896,253 @@
                 timeWait -= (int)(new TimeSpan(DateTime.Now.Ticks - BleachLastRunTime.Ticks).TotalMilliseconds);
             }
             return true;
+        }
+
+        private void SLMLoader_DoWork(object sender, DoWorkEventArgs e)
+        {
+            ActiveExperimentPath = ResourceManagerCS.GetCaptureTemplatePathString() + "Active.xml";
+            if (true == _runComplete)
+            {
+
+                //Load active.xml accounting for possible lockup during scripting
+                XmlDocument expDoc = new XmlDocument();
+                if (!TryLoadDocument(expDoc, ActiveExperimentPath))
+                {
+                    return;// false;
+                }
+
+                //Check for compatibility
+                if (!ExperimentSettingsValidForCapture(expDoc))
+                {
+                    return;// false;
+                }
+
+                _currentWellCount = 0;
+                _currentImageCount = 0;
+                _totalImagesCompleted = 0;
+                //Kirk: T and Z counters set to 0 then Updated to fix Redmine Bug #33
+                _currentTCount = 0;
+                _currentZCount = 0;
+                Update("Reset Counters");
+
+                //image counter used to determine the end of a row for kicking the background image generation process
+                _imageCounter = 0;
+
+                _sbNewDir = new StringBuilder(_outputPath + "\\" + _experimentName.FullName);
+
+                // This is done for customers who are looking to index their files from the first experiment itself
+                string strTemp = string.Empty;
+                System.Xml.XmlDocument appSettings = new System.Xml.XmlDocument();
+                string appSettingsFile = ResourceManagerCS.GetApplicationSettingsFileString();
+                ResourceManagerCS.BorrowDocMutexCS(SettingsFileType.APPLICATION_SETTINGS);
+                appSettings.Load(appSettingsFile);
+                ResourceManagerCS.ReturnDocMutexCS(SettingsFileType.APPLICATION_SETTINGS);
+                System.Xml.XmlNode node = appSettings.SelectSingleNode("/ApplicationSettings/ImageNameFormat");
+
+                if (node != null && node.Attributes != null)
+                {
+                    _indexDigitCounts = Convert.ToInt32(node.Attributes["indexDigitCounts"].Value);
+
+                }
+
+                if (Directory.Exists(_sbNewDir.ToString()) || (XmlManager.GetAttribute(node, appSettings, "alwaysAppendIndex", ref strTemp) && ("1" == strTemp || Boolean.TrueString == strTemp)))
+                {
+                    FileName name = new FileName(_experimentName);
+                    name.MakeUnique(_outputPath);
+
+                    //Confirm That User Wants New Name
+                    if (!DontAskUniqueExperimentName)
+                    {
+                        Application.Current.Dispatcher.Invoke((Action)delegate
+                        {
+                            string msg = string.Format("A data set already exists at this location. Would you like to use the name {0} instead?", name.FullName);
+                            CustomMessageBox messageBox = new CustomMessageBox(msg, "Data already exists", "Don't ask again", "Yes", "No");
+                            if (!messageBox.ShowDialog().GetValueOrDefault(false))
+                            {
+                                return;// false;
+                            }
+                            else
+                            {
+                                DontAskUniqueExperimentName = messageBox.CheckBoxChecked;
+                            }
+                        });
+                    }
+
+                    //Rename
+                    _experimentName = name;
+                    _sbNewDir = new StringBuilder(_outputPath + "\\" + _experimentName.FullName);
+
+                }
+
+                string totalPath = _sbNewDir.ToString();
+
+                int totalPathLength;
+                if (_indexDigitCounts <= 0)
+                {
+                    totalPathLength = TOTAL_PATH_LENGTH;
+                }
+                else
+                {
+                    totalPathLength = TOTAL_PATH_LENGTH - (_indexDigitCounts - 1) * 4;
+                }
+
+                if (totalPath.Length > totalPathLength)
+                {
+                    string msg = string.Format(" Your path name and file name combined should be less than {0} characters", totalPathLength);
+                    MessageBox.Show(msg);
+                    return; //false;
+                }
+
+                if (IPCDownlinkFlag == false && RemoteConnection == true && RemoteSavingStats == true)
+                {
+                    SendToIPCController(ThorPipeCommand.StartAcquiring, _sbNewDir.ToString());
+                }
+
+                //Create the new ROIDataStore to hold the ROI stats
+                const int DSTYPE_SQLITE = 1;
+                CreateStatsManagerROIDS(DSTYPE_SQLITE, _streamingPath + "\\ROIDataStore");
+
+                //Create the new experiment directory(s)
+                Directory.CreateDirectory(_sbNewDir.ToString() + @"\jpeg");
+                Directory.CreateDirectory(_sbNewDir.ToString() + @"\jpeg\1x");
+
+                //assign the experiment xml path
+                _experimentXMLPath = _sbNewDir.ToString() + "\\Experiment.xml";
+
+                _experimentFolderPath = _sbNewDir.ToString() + "\\";
+
+                string batchName = DataStore.Instance.GetBatchName();
+
+                DataStore.Instance.AddExperiment(_experimentName.FullName, _experimentFolderPath, batchName);
+
+                StringBuilder sbExp = new StringBuilder(_experimentXMLPath);
+
+                //copy the experiment path to the runsample parameters
+                _rsParams.path = String.Copy(_experimentXMLPath);
+
+                try
+                {
+                    XmlNodeList nlA = expDoc.SelectNodes("/ThorImageExperiment/Name");
+                    if (0 < nlA.Count)
+                    {
+                        XmlManager.SetAttribute(nlA[0], expDoc, "name", _experimentName.FullName);
+                        XmlManager.SetAttribute(nlA[0], expDoc, "path", _sbNewDir.ToString());
+                    }
+                    ResourceManagerCS.BorrowDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
+                    expDoc.Save(ActiveExperimentPath);
+                    ResourceManagerCS.ReturnDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
+                }
+                catch (Exception ex)
+                {
+                    string str = ex.Message;
+                    ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + "RunSampleLSModule: Unable to save new experiment path.");
+                }
+                //overwrite the active experiment settings
+                File.Copy(ActiveExperimentPath, _experimentXMLPath);
+
+                try
+                {
+                    //Update the variables list LAST OUTPUT value
+                    const string PATH_LAST_OUTPUT = "LAST OUTPUT";
+                    string strVar = Application.Current.Resources["ApplicationSettingsFolder"].ToString() + "\\VariableList.xml";
+                    XmlDocument varDoc = new XmlDocument();
+                    varDoc.Load(strVar);
+                    XmlNodeList ndList = varDoc.SelectNodes("/VariableList/Path");
+
+                    foreach (XmlNode nd in ndList)
+                    {
+                        string str = nd.Attributes["name"].Value;
+                        if (str.Equals(PATH_LAST_OUTPUT))
+                        {
+                            nd.Attributes["value"].Value = _sbNewDir.ToString();
+                            break;
+                        }
+                    }
+                    varDoc.Save(strVar);
+                }
+                catch (Exception ex)
+                {
+                    string str = ex.Message;
+                    //error loading/saving the variables list
+                    ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Unable to load/save variables list");
+                }
+
+                _tiffCompressionEnabled = GetTiffCompressionEnbaledSetting();
+
+                //Copy bleach ROI and waveform:
+                if ((int)CaptureModes.BLEACHING == CaptureMode)
+                {
+                    //do preBleach arm and check:
+                    if (!PreBleachCheck())
+                        return;
+                }
+
+                _runComplete = false;
+                _experimentCompleteForProgressBar = false;
+
+                _statusMessageZUpdate = true;
+
+                // event trigerred to let the viewModel know that the experiment has started
+                ExperimentStarted();
+
+                //enable digital trigger at start, digital output view model will fetch for average
+                //frame number from active.xml, make sure it happens when active and exp are the same copy.
+                MVMManager.Instance["DigitalOutputSwitchesViewModel", "TriggerEnable"] = 1;
+
+                _experimentStatus = "started";
+                _startDateTime = DateTime.Now;
+                _startUTC = DateTime.UtcNow;
+                if (true == UpdateExperimentFile(_experimentXMLPath, false))
+                {
+                    if (SetActiveExperiment(_experimentXMLPath) == 1)
+                    {
+                        //Check the sequential capture settings and set the channel appropiately
+                        SetCaptureSequence();
+                        //save experiment path to applicationSettings.xml
+                        SaveLastExperimentInfo(_experimentFolderPath);
+
+                        BuildChannelPalettes();
+
+                        if (SetCustomParamsBinary(ref _rsParams) == 1)
+                        {
+                            if (TurnOffMonitorsDuringCapture)
+                            {
+                                //turn off the monitors
+                                SendMessage(0xffff, WM_SYSCOMMAND, SC_MONITORPOWER, 2);
+                            }
+
+                            // Set the Simulator Image Index to the first frame in the experiment folder
+                            SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_SIM_INDEX, (int)1);
+
+                            if (RunSampleLSExecute() == 1)
+                            {
+                                StatusMessage = "Starting Experiment";
+
+                                UpdateBitmapTimer(true);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    _startButtonStatus = true;
+                    _stopButtonStatus = false;
+                    UpdateButton(true);
+                    UpdateMenuBarButton(true);
+                }
+            }
+        }
+
+        private void SLMLoader_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (e.Cancelled)
+            {
+            }
+            else if (e.Error != null)
+            {
+                MessageBox.Show(e.Error.Message.ToString());
+                Stop();
+            }
         }
 
         private void UpdateActiveImage()

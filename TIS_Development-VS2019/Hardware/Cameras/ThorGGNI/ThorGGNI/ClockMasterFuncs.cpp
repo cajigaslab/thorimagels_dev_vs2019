@@ -334,13 +334,10 @@ long ThorLSMCam::MoveGalvoToParkPosition(long parkAtParking)
 		posTo[1] = -1.0 * _verticalScanDirection * _analogXYmode[0][1] * GALVO_PARK_POSITION;
 		break;
 	case 1:		//park at parking position and honor selected mode
-		posTo[0] = _verticalScanDirection * _analogXYmode[0][0] * GALVO_PARK_POSITION;;
-		posTo[1] = -1.0 * _verticalScanDirection * _analogXYmode[0][1] * GALVO_PARK_POSITION;
-		break;
 	case 0:
 	default:
-		posTo[0] = _verticalScanDirection * GALVO_PARK_POSITION;;
-		posTo[1] = -1.0 * _verticalScanDirection * GALVO_PARK_POSITION;
+		posTo[0] = _verticalScanDirection * _analogXYmode[0][0] * GALVO_PARK_POSITION;;
+		posTo[1] = -1.0 * _verticalScanDirection * _analogXYmode[0][1] * GALVO_PARK_POSITION;
 		break;
 	}
 	MoveGalvoToPosition(posTo, 0);

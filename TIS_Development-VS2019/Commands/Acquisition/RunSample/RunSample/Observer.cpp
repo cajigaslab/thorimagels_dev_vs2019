@@ -12,6 +12,7 @@ extern void (*myFunctionPointerPreCapture)(long * status);
 extern void (*myFunctionPointerSequenceStepCurrent)(long* index);
 extern void (*myFunctionPointerInformMessage)(wchar_t* message);
 extern void (*myFunctionPointerFileSavedNameAndPathForIPC)(wchar_t* message);
+extern void (*myFunctionPointerAutoFocusStatus)(long* isRunning, long* bestScore, double* bestZPos, double* nextZPos, long* currRepeat);
 
 Observer::Observer()
 {
@@ -198,6 +199,11 @@ void Observer::OnProgressBarStart(long index, long resetTotalCount)
 	{
 		_totalImageCount = resetTotalCount;
 	}
+}
+
+void Observer::OnAutoFocusRunning(long isRunning, long bestScore, double bestZPos, double nextZPos, long currRepeat)
+{
+	myFunctionPointerAutoFocusStatus(&isRunning, &bestScore, &bestZPos, &nextZPos, &currRepeat);
 }
 
 void Observer::OnInformMessage(wchar_t* message)

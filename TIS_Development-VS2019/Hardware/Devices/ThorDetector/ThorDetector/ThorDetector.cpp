@@ -158,7 +158,6 @@ long ThorDetector::FindDevices(long& deviceCount)
 			wstring message = L"ThorDetector: Unable to find any serial device connected in the registry associated with this PID and VID " + _listOfTypes[i];
 			StringCbPrintfW(_errMsg, MSG_SIZE, message.c_str());
 			logDll->TLTraceEvent(INFORMATION_EVENT, 1, _errMsg);
-			ret = FALSE;
 		}
 	}
 

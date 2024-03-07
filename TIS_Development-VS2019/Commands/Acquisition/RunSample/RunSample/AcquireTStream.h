@@ -63,6 +63,7 @@ public:
 	virtual long CallStartProgressBar(long index, long resetTotalCount = 0);
 	virtual long CallInformMessage(wchar_t* message);
 	virtual long CallNotifySavedFileIPC(wchar_t* message);
+	virtual long CallAutoFocusStatus(long isRunning, long bestScore, double bestZPos, double nextZPos, long currRepeat);
 
 	static HANDLE hEvent;
 	static HANDLE hEventZ;
@@ -245,7 +246,7 @@ private:
 	void SaveImagesPostCapture(long index, long subWell, long streamFrames, SaveParams *sp, bool rawContainsDisabledChannels, long subwell);
 	long SetupZStage(int setupMode, ICamera *pCamera, ZRangeInfo* zRange);
 	//void ExtractBufferDetails(ICamera *pCamera,double magnification, double fieldSizeCalibration, long channel,long pixelX,long pixelY, long left, long top, long right, long bottom, long binningX, long binningY, ICamera::CameraType &cameraType, double &umPerPixel, long &bufferChannels);
-	long PreCaptureAutoFocus(long index, long subWell, double afStartPos, double afAdaptiveOffset);
+	long PreCaptureAutoFocus(ICamera* pCamera, long index, long subWell, double afStartPos, double afAdaptiveOffset, double magnification, long cameraType);
 	long GetStimulusActive(void);
 	void ControlShutterInStream(long zFastEnable);	
 	shared_ptr<InternallyStoredImage <unsigned short> > createFullChannelCopy(char* bufferWithOnlyEnabledChannels, SaveParams& sp);

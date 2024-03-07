@@ -1205,13 +1205,13 @@ UINT AutoFocusStatusThreadProcLSM()
 	
 	//wait until Auto Focus has started or timeout at 200ms
 	clock_t nextUpdateLoop = clock();
-	while (static_cast<unsigned long>(abs(nextUpdateLoop - clock()) / (CLOCKS_PER_SEC / 1000)) < 200 && FALSE == autoFocusRunning)
+	while (static_cast<unsigned long>(abs(nextUpdateLoop - clock()) / (CLOCKS_PER_SEC / 1000)) < 1000 && FALSE == autoFocusRunning)
 	{
 		GetAutoFocusStatusAndImage(pChan[0], imageReadyToCopy, autoFocusRunning, frameNumber, currentRepeat, status, numOfZSteps, currentZIndex);
 	}
 	if (FALSE == autoFocusRunning) // if auto focus is still not running, throw an error message to the log
 	{
-		logDll->TLTraceEvent(ERROR_EVENT, 1, L"CaptureSetup AutoFocusStatusThreadProcLSM Failed to start autofocus. AutoFocusCaptureThreadProcLSM didn't call RunAutofocus in time. Timed out after 200ms.");
+		logDll->TLTraceEvent(ERROR_EVENT, 1, L"CaptureSetup AutoFocusStatusThreadProcLSM Failed to start autofocus. AutoFocusCaptureThreadProcLSM didn't call RunAutofocus in time. Timed out after 1000ms.");
 	}
 
 	//Check constantly for an image buffer from AutoFocusModule, when an image is ready copy it to the local buffer pChan in CaptureSetup

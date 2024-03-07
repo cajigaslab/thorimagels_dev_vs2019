@@ -58,9 +58,9 @@
                     </Image>
 
                     <Label
+                       Name="DateLabel"
                        Margin="5"
                        Background="{x:Null}"
-                       Content="Thorlabs Inc - 2021                                                                                         sfn2019"
                        HorizontalContentAlignment="Left"
                        Foreground="#FFFFFFFF"
                        FontSize="12"

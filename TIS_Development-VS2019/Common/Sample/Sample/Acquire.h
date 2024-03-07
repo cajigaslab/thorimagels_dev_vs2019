@@ -20,6 +20,7 @@ public:
 	signal2<long, long> StartProgressBar;
 	signal1<wchar_t*> InformMessage;
 	signal1<wchar_t*> NotifySavedFileIPC;
+	signal5<long, long, double, double, long> AutoFocusStatus;
 
 	virtual long Execute(long index, long subWell) = 0;//Synchronous acquisition of data
 	virtual long Execute(long index, long subWell, long zFrame, long tFrame)=0;//
@@ -37,4 +38,5 @@ public:
 	virtual long CallStartProgressBar(long index, long resetTotalCount = 0) = 0;
 	virtual long CallInformMessage(wchar_t* message) = 0;
 	virtual long CallNotifySavedFileIPC(wchar_t* message) = 0;
+	virtual long CallAutoFocusStatus(long isRunning, long bestScore, double bestZPos, double nextZPos, long currRepeat) = 0;
 };

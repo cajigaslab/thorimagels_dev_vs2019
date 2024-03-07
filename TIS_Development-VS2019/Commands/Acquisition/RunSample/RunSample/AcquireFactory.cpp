@@ -91,6 +91,7 @@ IAcquire * AcquireFactory::getAcquireInstance(AcquireType type, Observer *pOb, I
 		pAcquire->StartProgressBar.connect(pOb,&Observer::OnProgressBarStart);
 		pAcquire->InformMessage.connect(pOb, &Observer::OnInformMessage);
 		pAcquire->NotifySavedFileIPC.connect(pOb, &Observer::OnNotifySavedFileIPC);
+		pAcquire->AutoFocusStatus.connect(pOb, &Observer::OnAutoFocusRunning);
 	}
 
 	return pAcquire;

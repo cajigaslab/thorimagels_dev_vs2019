@@ -207,14 +207,13 @@ static BOOL SaveBMP(T* Buffer, int width, int height, long paddedsize, LPCTSTR b
 		return FALSE;
 	}
 
-	BYTE* localBuf;
 	if(typeid(float) == typeid(T))
 	{
 		const int MAX_FLOAT_VAL = 65535;
 		const int MAX_BYTE_VAL = 255;
 
 		//linear scale:
-		localBuf = new BYTE[paddedsize];
+		BYTE* localBuf = new BYTE[paddedsize];
 		T* pSrc = Buffer;
 		for (int i = 0; i < paddedsize; i++)
 		{
@@ -236,6 +235,7 @@ static BOOL SaveBMP(T* Buffer, int width, int height, long paddedsize, LPCTSTR b
 				WriteFile(file, &localBuf[i * width], width, &bwritten, NULL );
 				WriteFile(file, empty,  BMP_BYTE_NUM - width % BMP_BYTE_NUM, &bwritten, NULL );
 			}
+			delete[] empty;
 		}
 
 		delete[] localBuf;
@@ -255,6 +255,7 @@ static BOOL SaveBMP(T* Buffer, int width, int height, long paddedsize, LPCTSTR b
 				WriteFile(file, &Buffer[i * width], width, &bwritten, NULL );
 				WriteFile(file, empty,  BMP_BYTE_NUM - width % BMP_BYTE_NUM, &bwritten, NULL );
 			}
+			delete[] empty;
 		}
 	}
 

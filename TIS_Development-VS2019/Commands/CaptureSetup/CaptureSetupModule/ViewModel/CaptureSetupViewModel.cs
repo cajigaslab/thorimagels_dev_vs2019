@@ -64,6 +64,7 @@
         private bool _autoCoutourWinInit;
         private bool _bleachBorderEnabled;
         private BackgroundWorker _bleachWorker;
+        private ICommand _browseForReferenceImageCommand;
         private BackgroundWorker _bw;
         private BackgroundWorker _bwHardware = null;
         private Double _captureSetupControlPanelWidth = 0;
@@ -209,7 +210,7 @@
             _showingPMTSafetyMessage = false;
 
             _pmtSafetyTimer = new DispatcherTimer();
-            _pmtSafetyTimer.Interval = TimeSpan.FromMilliseconds(10000);
+            _pmtSafetyTimer.Interval = TimeSpan.FromMilliseconds(1000);
 
             this._captureSetup.PropertyChanged += new PropertyChangedEventHandler(LiveImage_PropertyChanged);
 
@@ -265,6 +266,8 @@
         public event Action ActiveSettingsReplaced;
 
         public event Action DrawLineForLineScanEvent;
+
+        public event Action AcquireButtonPressed; //handle any view logic corresponding to one of the capture buttons being pressed
 
         #endregion Events
 
@@ -330,6 +333,18 @@
             set
             {
                 this._bleachBorderEnabled = value;
+            }
+        }
+
+        public ICommand BrowseForReferenceImageCommand
+        {
+            get
+            {
+                if (_browseForReferenceImageCommand == null)
+                {
+                    _browseForReferenceImageCommand = new RelayCommand(() => BrowseForReferenceImage());
+                }
+                return _browseForReferenceImageCommand;
             }
         }
 
@@ -1604,6 +1619,16 @@
         [DllImport(".\\CaptureSetup.dll", EntryPoint = "SetupCaptureBuffers")]
         public static extern int SetupCaptureBuffers();
 
+        public void BrowseForReferenceImage()
+        {
+            if (_captureSetup.BrowseForReferenceImage())
+            {
+                OnPropertyChange("ReferenceChannelImageName");
+                ((ThorSharedTypes.IMVM)MVMManager.Instance["CameraControlViewModel"]).OnPropertyChange("ReferenceChannelImageName");
+                ((ThorSharedTypes.IMVM)MVMManager.Instance["AreaControlViewModel"]).OnPropertyChange("ReferenceChannelImageName");
+            }
+        }
+
         public void CloseFloatingWindows()
         {
             this.UnloadWholeStats = true;
@@ -1956,6 +1981,15 @@
             //determine the bleach type, GG or WideField
             SLMPhaseDirect = IsStimulator;
 
+            //***************************************************//
+            //  Reload shared settings based on UI selections    //
+            //***************************************************//
+            if (!BleachExpandHeader.Contains("OTM"))
+            {
+                //OTM shared some properties with AreaControl, reload SLM if not selected
+                ((ThorSharedTypes.IMVM)MVMManager.Instance["AreaControlViewModel"]).LoadXMLSettings();
+            }
+
             //load exp
             ExperimentDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS];
 
@@ -2172,12 +2206,20 @@
                 {
                     SLMSequenceEpochDelay = dTmp;
                 }
-                DefocusUM = DefocusSavedUM;
-
-                //keep epochCount last to update
+                //update epochCount will trigger waveform rebuild
                 if (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "epochCount", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iTmp))
                 {
                     EpochCount = iTmp;
+                }
+                //update calibrated z offset will trigger rebuild all
+                if (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "calibZoffsetUM", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
+                {
+                    if (DefocusSavedUM != dTmp)
+                    {
+                        DefocusSavedUM = DefocusUM = dTmp;
+                        if (SLMBleachWaveParams.Count < PatternImportLimit)
+                            EditSLMParam("SLM_REBUILDALL");
+                    }
                 }
             }
 
@@ -3002,6 +3044,86 @@
             return colorAssignments;
         }
 
+        //Handle any tasks needed when a capture button is pressed (Snapsot, live, etc...)
+        public void HandleAcquireButtonPressed()
+        {
+            AcquireButtonPressed?.Invoke();
+        }
+
+        int _zScanNumStepsInCache = 0; //pulled from control MVM
+        int _zPreviewImageWidth = 0; //pixelX or width
+        int _zPreviewImageHeight = 0; //pixelY or height
+        double _zPreviewPixelSize = 0; //pixelSizeUM
+        double _zPreviewScanStepSize = 0; //stepSizeUM
+        public void LoadZPreviewParameters()
+        {
+            //Reset settings to 0 before reading from file
+            _zPreviewImageWidth = 0;
+            _zPreviewImageHeight = 0;
+            _zPreviewPixelSize = 0;
+            _zPreviewScanStepSize = 0;
+
+            bool isLsmCameraType = (int)ICamera.CameraType.LSM == ResourceManagerCS.GetCameraType();
+            string zStackCacheDirectory = string.Empty;
+            zStackCacheDirectory = (string)MVMManager.Instance["ZControlViewModel", "ZStackCacheDirectory", string.Empty];
+
+            XmlNodeList ndList;
+            string attr = string.Empty;
+            XmlDocument doc = new XmlDocument();
+            if (File.Exists(zStackCacheDirectory + "\\Experiment.xml"))
+            {
+                doc.Load(zStackCacheDirectory + "\\Experiment.xml");
+                ndList = isLsmCameraType ? doc.SelectNodes("/ThorImageExperiment/LSM") : doc.SelectNodes("/ThorImageExperiment/Camera");
+
+                if (0 < ndList.Count)
+                {
+                    if (XmlManager.GetAttribute(ndList[0], doc, isLsmCameraType ? "pixelX" : "width", ref attr))
+                    {
+                        int temp;
+                        if (int.TryParse(attr, out temp))
+                        {
+                            _zPreviewImageWidth = temp;
+                        }
+                    }
+                    if (XmlManager.GetAttribute(ndList[0], doc, isLsmCameraType ? "pixelY" : "height", ref attr))
+                    {
+                        int temp;
+                        if (int.TryParse(attr, out temp))
+                        {
+                            _zPreviewImageHeight = temp;
+                        }
+                    }
+                    if (XmlManager.GetAttribute(ndList[0], doc, "pixelSizeUM", ref attr))
+                    {
+                        double temp;
+                        if (double.TryParse(attr, out temp))
+                        {
+                            _zPreviewPixelSize = temp;
+                        }
+                    }
+                }
+
+                ndList = doc.SelectNodes("/ThorImageExperiment/ZStage");
+                if (0 < ndList.Count)
+                {
+                    if (XmlManager.GetAttribute(ndList[0], doc, "stepSizeUM", ref attr))
+                    {
+                        double temp;
+                        if (double.TryParse(attr, out temp))
+                        {
+                            _zPreviewScanStepSize = temp;
+                        }
+                    }
+                }
+                _zScanNumStepsInCache = (int)MVMManager.Instance["ZControlViewModel", "ZScanNumStepsInCache", (object)1];
+            }
+        }
+
+        public bool IsZPreviewSettingsValid()
+        {
+            return _zPreviewImageHeight == DataHeight && _zPreviewImageWidth == DataWidth && _zPreviewPixelSize != 0 && _zPreviewScanStepSize != 0;
+        }
+
         void LiveImage_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if ((e.PropertyName == "IsBleaching") && (false == IsBleachStopped)) //check if bleach finished
@@ -3188,7 +3310,6 @@
                         }
                         ((ThorSharedTypes.IMVM)MVMManager.Instance["ZControlViewModel", this]).OnPropertyChange("ZPosition");
                         ((ThorSharedTypes.IMVM)MVMManager.Instance["ZControlViewModel", this]).OnPropertyChange("ZPositionBar");
-                        ((ThorSharedTypes.IMVM)MVMManager.Instance["AutoFocusControlViewModel", this]).OnPropertyChange("CurrentZPosition");
                     }
 
                     if ((bool)MVMManager.Instance["ZControlViewModel", "EnableRead", 1, (object)false])
@@ -3245,6 +3366,14 @@
                         }
                         tmpPos = (double)MVMManager.Instance["XYTileControlViewModel", "XPosition", (object)0.0];
                         tmpPos = (double)MVMManager.Instance["XYTileControlViewModel", "YPosition", (object)0.0];
+                    }
+
+                    if (ts.TotalSeconds > .2)
+                    {
+                        //Update Autofocus control values
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["AutoFocusControlViewModel", this]).OnPropertyChange("CurrentZPosition");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["AutoFocusControlViewModel", this]).OnPropertyChange("AbsoluteStartPosition");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["AutoFocusControlViewModel", this]).OnPropertyChange("AbsoluteStopPosition");
                     }
 
                     ts = DateTime.Now - lastS;
@@ -3370,7 +3499,7 @@
                         ((ThorSharedTypes.IMVM)MVMManager.Instance["LampControlViewModel", this]).OnPropertyChange("LampON");
                         ((ThorSharedTypes.IMVM)MVMManager.Instance["LampControlViewModel", this]).OnPropertyChange("LampPosition");
 
-                       MVMManager.Instance["ScanControlViewModel", "UpdateCRSFrequency"] = 1;
+                        MVMManager.Instance["ScanControlViewModel", "UpdateCRSFrequency"] = 1;
 
                         //Update any stats
                         RequestROIData();
@@ -3545,6 +3674,7 @@
             if ((false == (bool)MVMManager.Instance["ScanControlViewModel", "PMTSafetyStatus", (object)false]) && (_showingPMTSafetyMessage == false))
             {
                 _showingPMTSafetyMessage = true;
+                StopLiveCapture();
                 MessageBox.Show("The PMT(s) safety has tripped. To prevent damage to the PMT(s) please reduce the light being sent to the detectors.");
                 _showingPMTSafetyMessage = false;
                 ((HwVal<double>)MVMManager.Instance["ScanControlViewModel", "PMTGain", 0]).Value = 0;

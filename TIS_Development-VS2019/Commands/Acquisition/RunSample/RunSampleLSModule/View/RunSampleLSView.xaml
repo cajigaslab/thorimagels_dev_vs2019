@@ -1988,6 +1988,20 @@
                                                    HorizontalContentAlignment="Center"
                                                    Content="Stimulation Cycles" />
                                             <StackPanel Orientation="Horizontal">
+                                                <StackPanel.Style>
+                                                    <Style TargetType="StackPanel"
+                                                            BasedOn="{StaticResource {x:Type StackPanel}}">
+                                                        <Setter Property="Visibility"
+                                                                Value="Visible" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Path=SelectedIndex, ElementName=cbBleachTrig, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                         Value="3">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Hidden" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </StackPanel.Style>
                                                 <TextBox Name="tbBleachFrames"
                                                          Width="50"
                                                          Margin="1"
@@ -2012,7 +2026,7 @@
                                                 </Button>
                                             </StackPanel>
                                             <StackPanel Orientation="Horizontal"
-                                                        Visibility="{Binding Path=CurrentBleachMode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=0, Converter={StaticResource boolToVisibilityConverter}}">
+                                                        Visibility="{Binding Path=IsStimulationIntervalVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, ConverterParameter=0, Converter={StaticResource boolToVisibilityConverter}}">
                                                 <TextBox Name="tbBleachRepeatIdle"
                                                          Width="50"
                                                          Margin="1"
@@ -2051,6 +2065,7 @@
                                                               Visibility="{Binding Path=IsChecked, ElementName=cbSimultaneousBleachingAndImaging, ConverterParameter=1, Converter={StaticResource boolToVisibilityConverter}}" />
                                                 <ComboBoxItem Content="HW TrigFirst" />
                                                 <ComboBoxItem Content="HW TrigEach" />
+                                                <ComboBoxItem Content="HW TrigCont" />
                                             </ComboBox>
                                             <StackPanel>
                                                 <Label Content="Enable PMTs while stimulating" />
@@ -2762,16 +2777,18 @@
                                    TextAlignment="Center" />
                     </StackPanel>
                     <UniformGrid Grid.Row="6">
-                        <TextBlock Grid.Row="4"
-                                   Grid.Column="1"
-                                   Height="30"
-                                   Margin="1"
-                                   HorizontalAlignment="Center"
-                                   Foreground="#FFFFFFFF"
-                                   Text="{Binding Path=StatusMessage,
-                                                  Mode=OneWay,
-                                                  UpdateSourceTrigger=PropertyChanged}"
-                                   TextAlignment="Center" />
+                        <StackPanel>
+                            <TextBlock HorizontalAlignment="Center"
+                                       Foreground="#FFFFFFFF"
+                                       Text="{Binding Path=StatusMessage, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                       TextAlignment="Center" />
+                            <TextBlock HorizontalAlignment="Center"
+                                       Foreground="Yellow"
+                                       Text="{Binding Path=AFStatusMessage, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                       TextAlignment="Center" 
+                                       FontWeight="DemiBold"
+                                       Visibility="{Binding Path=AFStatusVisibility, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
                     </UniformGrid>
                     <UniformGrid Grid.Row="7">
                         <ProgressBar Width="400"

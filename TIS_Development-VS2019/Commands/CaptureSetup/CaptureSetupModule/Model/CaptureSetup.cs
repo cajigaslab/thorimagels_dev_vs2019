@@ -15,6 +15,8 @@
     using System.Windows.Media.Imaging;
     using System.Windows.Threading;
     using System.Xml;
+    using Microsoft.Win32;
+
 
     using LineProfileWindow;
 
@@ -25,7 +27,8 @@
     public partial class CaptureSetup : INotifyPropertyChanged
     {
         #region Fields
-
+        private static string _referenceChannelImagePath = "";
+        private static string _referenceChannelImageName = "";
         public double[] Stats;
         public string[] StatsNames;
 
@@ -59,6 +62,8 @@
             _lightPathGGEnable = 0;
             _lightPathGREnable = 1;
             _lightPathCamEnable = 0;
+            _referenceChannelImageName = "ReferenceChannel.tif";
+            _referenceChannelImagePath = Application.Current.Resources["AppRootFolder"].ToString() + "\\ReferenceChannel.tif";
 
             //enable the first 4 channels only
             for (int i = 0; i < MAX_CHANNELS; i++)
@@ -399,6 +404,26 @@
             //           }
         }
 
+        public string ReferenceChannelImageName
+        {
+            get
+            {
+                return _referenceChannelImageName;
+            }
+            set
+            {
+                _referenceChannelImageName = value;
+            }
+        }
+
+        public string ReferenceChannelImagePath
+        {
+            get
+            {
+                return _referenceChannelImagePath;
+            }
+        }
+
         public double YScale
         {
             get
@@ -417,6 +442,29 @@
         #endregion Properties
 
         #region Methods
+
+        public bool BrowseForReferenceImage()
+        {
+            OpenFileDialog dlg = new OpenFileDialog();
+            dlg.Title = "Select a Reference Image File";
+            dlg.DefaultExt = "tif";
+            dlg.InitialDirectory = Application.Current.Resources["AppRootFolder"].ToString();
+            dlg.Filter = "16 Bit Tiff file (*.tif)|*.tif";
+
+            // Show save file dialog box
+            Nullable<bool> result = dlg.ShowDialog();
+            // Process save file dialog box results
+            if (result == true && dlg.FileName != "")
+            {
+                _referenceChannelImageName = dlg.SafeFileName;
+                _referenceChannelImagePath = dlg.FileName;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
 
         [DllImport(".\\StatsManager.dll", EntryPoint = "SetLineProfileLineWidth")]
         public static extern int SetLineProfileLineWidth(int width);

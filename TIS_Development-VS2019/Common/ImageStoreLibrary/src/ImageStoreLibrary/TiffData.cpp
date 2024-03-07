@@ -16,7 +16,7 @@ TiffData::~TiffData()
 	if (_is_file_using = true) {
 		remove(tiff_tmp_file);
 	}
-	map<uint8_t, Scan*>::iterator scanit = scans.begin();
+	map<uint32_t, Scan*>::iterator scanit = scans.begin();
 	while (scanit != scans.end())
 	{
 		delete scanit->second;
@@ -108,7 +108,7 @@ long TiffData::Init(char* file_name, OpenMode openMode, bool is_create_pyramidal
 
 long TiffData::SaveTileData(void * image_data, uint32_t stride, frame_info frame, unsigned int tile_row, unsigned int tile_column)
 {
-	map<uint8_t, Scan*>::iterator scanit = scans.find(frame.scan_id);
+	map<uint32_t, Scan*>::iterator scanit = scans.find(frame.scan_id);
 	if (scanit == scans.end())	return FRAMEINFO_IS_NOT_CORRECT;
 	auto regionit = scanit->second->Regions.find(frame.region_id);
 	if (regionit == scanit->second->Regions.end())	return FRAMEINFO_IS_NOT_CORRECT;
@@ -118,7 +118,7 @@ long TiffData::SaveTileData(void * image_data, uint32_t stride, frame_info frame
 long TiffData::GeneratePyramidalData(uint8_t scan_id)
 {
 	if (!_is_create_pyramidal_data)return FALSE;
-	map<uint8_t, Scan*>::iterator scanit = scans.find(scan_id);
+	map<uint32_t, Scan*>::iterator scanit = scans.find(scan_id);
 	if (scanit == scans.end()) 		return FRAMEINFO_IS_NOT_CORRECT;
 	map<uint16_t, region*>* regions = &(*scanit).second->Regions;
 	for(map<uint16_t, region*>::iterator regionit = regions->begin();regionit!=regions->end();regionit++)
@@ -134,7 +134,7 @@ long TiffData::GeneratePyramidalData(uint8_t scan_id)
 long TiffData::GeneratePyramidalData(frame_info frame, uint8_t* image, uint32_t image_width, uint32_t image_height)
 {
 	if (!_is_create_pyramidal_data)return FALSE;
-	map<uint8_t, Scan*>::iterator scanit = scans.find(frame.scan_id);
+	map<uint32_t, Scan*>::iterator scanit = scans.find(frame.scan_id);
 	if (scanit == scans.end()) 		return FRAMEINFO_IS_NOT_CORRECT;
 	auto regionit = scanit->second->Regions.find(frame.region_id);
 	if(regionit== scanit->second->Regions.end()) return FRAMEINFO_IS_NOT_CORRECT;
@@ -143,7 +143,7 @@ long TiffData::GeneratePyramidalData(frame_info frame, uint8_t* image, uint32_t 
 
 long TiffData::LoadRawData(frame_info frame, IplRect src_rect, void* buffer)
 {
-	map<uint8_t, Scan*>::iterator scanit = scans.find(frame.scan_id);
+	map<uint32_t, Scan*>::iterator scanit = scans.find(frame.scan_id);
 	if (scanit == scans.end()) 		return FRAMEINFO_IS_NOT_CORRECT;
 	auto regionit = scanit->second->Regions.find(frame.region_id);
 	if (regionit == scanit->second->Regions.end()) return FRAMEINFO_IS_NOT_CORRECT;
@@ -152,7 +152,7 @@ long TiffData::LoadRawData(frame_info frame, IplRect src_rect, void* buffer)
 
 long TiffData::LoadScaledData(frame_info frame, IplSize dst_size, IplRect src_rect, void* buffer)
 {
-	map<uint8_t, Scan*>::iterator scanit = scans.find(frame.scan_id);
+	map<uint32_t, Scan*>::iterator scanit = scans.find(frame.scan_id);
 	if (scanit == scans.end()) 		return FRAMEINFO_IS_NOT_CORRECT;
 	auto regionit = scanit->second->Regions.find(frame.region_id);
 	if (regionit == scanit->second->Regions.end()) return FRAMEINFO_IS_NOT_CORRECT;
@@ -161,7 +161,7 @@ long TiffData::LoadScaledData(frame_info frame, IplSize dst_size, IplRect src_re
 
 long TiffData::LoadScaledData(frame_info frame, uint16_t scaleLevel, uint16_t row, uint16_t column, void* buffer)
 {
-	map<uint8_t, Scan*>::iterator scanit = scans.find(frame.scan_id);
+	map<uint32_t, Scan*>::iterator scanit = scans.find(frame.scan_id);
 	if (scanit == scans.end()) 	return FRAMEINFO_IS_NOT_CORRECT; 
 	auto regionit = scanit->second->Regions.find(frame.region_id);
 	if (regionit == scanit->second->Regions.end()) return FRAMEINFO_IS_NOT_CORRECT;
@@ -196,7 +196,7 @@ long TiffData::DeleteAdditionalData(char* name)
 
 long TiffData::CleanData()
 {
-	map<uint8_t, Scan*>::iterator scanit = scans.begin();
+	map<uint32_t, Scan*>::iterator scanit = scans.begin();
 	while (scanit != scans.end())
 	{
 		scanit = removeScan(scanit);
@@ -268,7 +268,7 @@ long TiffData::AddScanInfo(void* scan_info, uint32_t size)
 		delete scan;
 		return UNKNOWN_ERROR;
 	}
-	map<uint8_t, Scan*>::iterator scanit = scans.find(scan->ScanID);
+	map<uint32_t, Scan*>::iterator scanit = scans.find(scan->ScanID);
 	if (scanit != scans.end())
 	{
 		removeScan(scanit);
@@ -316,7 +316,7 @@ long TiffData::GetScanInfos(void* scan_infos, uint32_t size)
 
 long TiffData::RemoveScan(uint32_t scan_id)
 {
-	map<uint8_t, Scan*>::iterator scanit = scans.find(scan_id);
+	map<uint32_t, Scan*>::iterator scanit = scans.find(scan_id);
 	if (scanit == scans.end()) 		return SCAN_ID_IS_NOT_EXIST;
 	removeScan(scanit);
 	return rewriteOMEHeader();
@@ -324,7 +324,7 @@ long TiffData::RemoveScan(uint32_t scan_id)
 
 long TiffData::AdjustScanT(uint32_t t_count)
 {
-	for (map<uint8_t, Scan*>::iterator scanit = scans.begin(); scanit != scans.end(); scanit++)
+	for (map<uint32_t, Scan*>::iterator scanit = scans.begin(); scanit != scans.end(); scanit++)
 	{
 		for (const auto& regionit : scanit->second->Regions)
 		{
@@ -356,7 +356,7 @@ long TiffData::SetField(uint32_t tag, uint32_t v)
 	return UNKNOWN_ERROR;
 }
 
-map<uint8_t, Scan*>::iterator TiffData::removeScan(map<uint8_t, Scan*>::iterator scanit)
+map<uint32_t, Scan*>::iterator TiffData::removeScan(map<uint32_t, Scan*>::iterator scanit)
 {
 	for (map<uint16_t, region*>::iterator regionit = scanit->second->Regions.begin(); regionit != scanit->second->Regions.end(); regionit++)
 	{

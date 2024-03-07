@@ -42,7 +42,7 @@ public:
 	Scan(TiffData* parent = NULL);
 	~Scan();
 
-	uint8_t ScanID;
+	uint32_t ScanID;
 	uint16_t PlateID;
 	double PhysicalSizeX;
 	double PhysicalSizeY;

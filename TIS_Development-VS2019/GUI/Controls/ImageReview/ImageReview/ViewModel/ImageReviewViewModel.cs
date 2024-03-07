@@ -1474,6 +1474,7 @@
             }
         }
 
+
         //Save the current height of the image display space
         public double IVHeight
         {
@@ -2488,6 +2489,9 @@
             {
                 _sliderTMax = value;
                 OnPropertyChanged("TMax");
+                OnPropertyChanged("IsTVisible");
+                OnPropertyChanged("IsMovieAvailable");
+
             }
         }
 
@@ -2501,6 +2505,9 @@
             {
                 _sliderTMin = value;
                 OnPropertyChanged("TMin");
+                OnPropertyChanged("IsTVisible");
+                OnPropertyChanged("IsMovieAvailable");
+
             }
         }
 
@@ -2885,6 +2892,7 @@
             {
                 _sliderZMax = value;
                 OnPropertyChanged("ZMax");
+                OnPropertyChanged("ZVisible");
             }
         }
 
@@ -2898,6 +2906,7 @@
             {
                 _sliderZMin = value;
                 OnPropertyChanged("ZMin");
+                OnPropertyChanged("ZVisible");
             }
         }
 
@@ -2979,6 +2988,7 @@
             {
                 _sliderZStreamMax = value;
                 OnPropertyChanged("ZStreamMax");
+                OnPropertyChanged("IsZStreamVisible");
             }
         }
 
@@ -2992,6 +3002,7 @@
             {
                 _sliderZStreamMin = value;
                 OnPropertyChanged("ZStreamMin");
+                OnPropertyChanged("IsZStreamVisible");
             }
         }
 
@@ -3148,13 +3159,52 @@
             }
         }
 
-        public bool ZVisible
+
+        public Visibility ZVisible
         {
-            get { return _zVisible; }
+            get
+            {
+                /*
+                if (ZMax == ZMin) 
+                    return Visibility.Hidden;
+                return _zVisible ? Visibility.Visible : Visibility.Collapsed; 
+                */
+                return ZMax == ZMin ? Visibility.Collapsed : Visibility.Visible;
+            }
             set
             {
-                _zVisible = value;
+                if (ZMax == ZMin)
+                {
+                    _zVisible = false;
+                    return;
+                }
+                _zVisible = value == Visibility.Visible;
                 OnPropertyChanged("ZVisible");
+            }
+        }
+
+        public Visibility IsTVisible
+        {
+            get
+            {
+                return _sliderTMin == _sliderTMax ? Visibility.Collapsed : Visibility.Visible;
+            }
+        }
+
+        public Visibility IsZStreamVisible
+        {
+            get
+            {
+                return (_sliderZStreamMax == _sliderZStreamMin) ? Visibility.Collapsed : Visibility.Visible;
+
+            }
+        }
+
+        public Visibility IsMovieAvailable
+        {
+            get
+            {
+                return IsSpVisible.Equals(Visibility.Visible) || IsZStreamVisible.Equals(Visibility.Visible) || IsTVisible.Equals(Visibility.Visible) || ZVisible.Equals(Visibility.Visible) ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
@@ -4313,7 +4363,7 @@
             ndList = ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/ZView");
             if (ndList.Count > 0)
             {
-                ZVisible = ndList[0].Attributes["Visibility"].Value.Equals("Visible");
+                ZVisible = ndList[0].Attributes["Visibility"].Value.Equals("Visible") ? Visibility.Visible : Visibility.Hidden;
             }
         }
 

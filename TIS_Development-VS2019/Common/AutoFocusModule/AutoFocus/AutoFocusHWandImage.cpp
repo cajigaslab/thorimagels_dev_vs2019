@@ -92,6 +92,7 @@ AutoFocusHWandImage::AutoFocusHWandImage()
 	_currentZIndex = -1;
 	_finePercentageDecrease = 0.15;
 	_enableGUIUpdate = FALSE;
+	_numberOfChannels = 1;
 }
 
 HANDLE AutoFocusHWandImage::hEventAutoFocus = NULL;
@@ -131,6 +132,7 @@ long AutoFocusHWandImage::Execute(long index, IDevice * pAutoFocus, BOOL &afFoun
 {	
 	_autoFocusStatus = AutoFocusStatusTypes::NOT_RUNNING;
 	_frameNumber = 0;
+	_stopFlag = FALSE;
 
 	//the first image will always execute autofocus with (counter == 0) 
 	if ((_counter % _repeat) != 0)
@@ -187,6 +189,14 @@ long AutoFocusHWandImage::Execute(long index, IDevice * pAutoFocus, BOOL &afFoun
 	}
 
 	//begin image based autofocus
+	long zParamType;
+	long zParamAvailable;
+	long zParamReadOnly;
+	double zParamMin;
+	double zParamMax;
+	double zParamDefault;
+
+	_pZStage->GetParamInfo(IDevice::PARAM_Z_POS_CURRENT, zParamType, zParamAvailable, zParamReadOnly, zParamMin, zParamMax, zParamDefault);
 
 	double focusPosition;
 	pAutoFocus->GetParam(IDevice::PARAM_Z_POS_CURRENT,focusPosition);
@@ -194,8 +204,8 @@ long AutoFocusHWandImage::Execute(long index, IDevice * pAutoFocus, BOOL &afFoun
 	StringCbPrintfW(msg,MSG_LENGTH,L"AutoFocusHWandImage HW Focus Location %d.%03d",static_cast<long>(focusPosition),abs(static_cast<long>((focusPosition - static_cast<long>(focusPosition))*1000)));
 	logDll->TLTraceEvent(VERBOSE_EVENT,1, msg);
 
-	double start = _startPosMM + focusPosition;
-	double stop = _stopPosMM + focusPosition;
+	double start = max(_startPosMM + focusPosition, zParamMin);
+	double stop = min(_stopPosMM + focusPosition, zParamMax);
 	double step = _stepSizeUM / 1000;
 
 	StringCbPrintfW(msg,MSG_LENGTH,L"AutoFocusHWandImage Start %d.%03d Stop %d.%03d Step %d.%03d",static_cast<long>(start),abs(static_cast<long>((start - static_cast<long>(start))*1000)),static_cast<long>(stop),abs(static_cast<long>((stop - static_cast<long>(stop))*1000)),static_cast<long>(step),abs(static_cast<long>((step - static_cast<long>(step))*1000)));
@@ -221,13 +231,28 @@ long AutoFocusHWandImage::Execute(long index, IDevice * pAutoFocus, BOOL &afFoun
 
 	
 	double left, right, top, bottom, binX, binY, val, pixelX, pixelY, bitDepth, numChannels;
-	long width = 0, height = 0, cameraType = ICamera::CameraType::LSM, numberOfChannels = 1, channel = 1;
+	long width = 0, height = 0, cameraType = ICamera::CameraType::LSM, channel = 1;
+	_numberOfChannels = 1;
 
 	_pCamera->GetParam(ICamera::PARAM_CAMERA_TYPE, val);
 	cameraType = static_cast<long>(val);
+	wchar_t message[MSG_LENGTH];
 
 	if (ICamera::CameraType::LSM == cameraType)
 	{
+		if (FALSE == SetCameraParamDouble(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_LSM_AVERAGEMODE, ICamera::AVG_MODE_NONE))
+		{
+			StringCbPrintfW(message, MSG_LENGTH, L"AutoFocusModule AutoFocusHWandImage SetParam PARAM_LSM_AVERAGEMODE failed");
+			logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+		}
+
+		if (FALSE == SetCameraParamDouble(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_MULTI_FRAME_COUNT, 1.0))
+		{
+			StringCbPrintfW(message, MSG_LENGTH, L"AutoFocusModule AutoFocusHWandImage SetParam PARAM_MULTI_FRAME_COUNT failed");
+			logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+			return FALSE;
+		}
+
 		_pCamera->GetParam(ICamera::PARAM_LSM_PIXEL_X, pixelX);
 		_pCamera->GetParam(ICamera::PARAM_LSM_PIXEL_Y, pixelY);
 		_pCamera->GetParam(ICamera::PARAM_LSM_CHANNEL, numChannels);
@@ -238,10 +263,10 @@ long AutoFocusHWandImage::Execute(long index, IDevice * pAutoFocus, BOOL &afFoun
 
 		switch (channel)
 		{
-		case 0x1:numberOfChannels = 1; break;
-		case 0x2:numberOfChannels = 1; break;
-		case 0x4:numberOfChannels = 1; break;
-		case 0x8:numberOfChannels = 1; break;
+		case 0x1:_numberOfChannels = 1; break;
+		case 0x2:_numberOfChannels = 1; break;
+		case 0x4:_numberOfChannels = 1; break;
+		case 0x8:_numberOfChannels = 1; break;
 		default:
 		{
 			long paramType;
@@ -254,9 +279,9 @@ long AutoFocusHWandImage::Execute(long index, IDevice * pAutoFocus, BOOL &afFoun
 			_pCamera->GetParamInfo(ICamera::PARAM_LSM_CHANNEL, paramType, paramAvailable, paramReadOnly, paramMin, paramMax, paramDefault);
 			switch (static_cast<long>(paramMax))
 			{
-			case 0x3:numberOfChannels = 3; break;
-			case 0xF:numberOfChannels = 4; break;
-			default:numberOfChannels = 3;
+			case 0x3:_numberOfChannels = 3; break;
+			case 0xF:_numberOfChannels = 4; break;
+			default:_numberOfChannels = 3;
 			}
 		}
 		break;
@@ -264,6 +289,20 @@ long AutoFocusHWandImage::Execute(long index, IDevice * pAutoFocus, BOOL &afFoun
 	}
 	else if (ICamera::CameraType::CCD == cameraType)
 	{
+		if (FALSE == SetCameraParamDouble(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_CAMERA_AVERAGENUM, 1.0))
+		{
+			StringCbPrintfW(message, MSG_LENGTH, L"AutoFocusModule AutoFocusHWandImage SetParam PARAM_MULTI_FRAME_COUNT failed");
+			logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+			return FALSE;
+		}
+
+		if (FALSE == SetCameraParamDouble(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_MULTI_FRAME_COUNT, 1.0))
+		{
+			StringCbPrintfW(message, ERROR_EVENT, L"AutoFocusModule AutoFocusHWandImage SetParam PARAM_MULTI_FRAME_COUNT failed");
+			logDll->TLTraceEvent(WARNING_EVENT, 1, message);
+			return FALSE;
+		}
+
 		_pCamera->GetParam(ICamera::PARAM_CAPTURE_REGION_LEFT, left);
 		_pCamera->GetParam(ICamera::PARAM_CAPTURE_REGION_RIGHT, right);
 		_pCamera->GetParam(ICamera::PARAM_CAPTURE_REGION_TOP, top);
@@ -279,10 +318,10 @@ long AutoFocusHWandImage::Execute(long index, IDevice * pAutoFocus, BOOL &afFoun
 
 	Dimensions d;
 
-	d.c = 1;
+	d.c = _numberOfChannels;
 	d.dType = INT_16BIT;
 	d.m = 1;
-	d.mType = DETACHED_CHANNEL;
+	d.mType = CONTIGUOUS_CHANNEL_MEM_MAP;
 	d.t = 1;
 	d.x = width;
 	d.y = height;
@@ -301,15 +340,15 @@ long AutoFocusHWandImage::Execute(long index, IDevice * pAutoFocus, BOOL &afFoun
 	double loc;
 	long score =0;
 	long highScore=0;
-	//start with a focus point at the midpoint of the range
-	double focusLoc= start + (stop - start)/2.0;
+	//start with a focus point at the current position
+	double focusLoc = focusPosition;
 	const long PIXEL_SKIP_SIZE = 16;
 
 	_currentZIndex = -1;
 	_autoFocusStatus = AutoFocusStatusTypes::COARSE_AUTOFOCUS;
 	_zSteps = abs((stop - start) / step) + 1;
 
-	if(step > 0)
+	if(step > 0) //currently step is always > 0
 	{
 		for(loc = start; loc<= stop; loc += step)
 		{			
@@ -632,7 +671,7 @@ long AutoFocusHWandImage::GetImageBuffer(char* pBuffer, long& frameNumber, long&
 {
 	if (TRUE == _imageReady)
 	{
-		memcpy(pBuffer, _imageBuffer, static_cast<unsigned long long>(_width) * static_cast<unsigned long long>(_height) * sizeof(unsigned short));
+		memcpy(pBuffer, _imageBuffer, static_cast<unsigned long long>(_width) * static_cast<unsigned long long>(_height) * sizeof(unsigned short) * _numberOfChannels);
 		_imageReady = FALSE;
 		frameNumber = _frameNumber;
 		currentRepeat = _counter;

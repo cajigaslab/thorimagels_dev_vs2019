@@ -225,6 +225,10 @@ mkdir "..\..\Hardware\Devices\ThorMCM6000_Condenser\x64\Release"
 copy .\x64\Release\ThorMCM6000_Condenser.dll ..\..\Hardware\Devices\ThorMCM6000_Condenser\x64\Release
 copy .\x64\Release\ThorMCM6000_Condenser.lib ..\..\Hardware\Devices\ThorMCM6000_Condenser\x64\Release
 copy .\x64\Release\ThorMCM6000_Condenser.pdb ..\..\Hardware\Devices\ThorMCM6000_Condenser\x64\Release
+mkdir "..\..\Hardware\Devices\ThorMCM6000_Aux\x64\Release"
+copy .\x64\Release\ThorMCM6000_Aux.dll ..\..\Hardware\Devices\ThorMCM6000_Aux\x64\Release
+copy .\x64\Release\ThorMCM6000_Aux.lib ..\..\Hardware\Devices\ThorMCM6000_Aux\x64\Release
+copy .\x64\Release\ThorMCM6000_Aux.pdb ..\..\Hardware\Devices\ThorMCM6000_Aux\x64\Release
 mkdir "..\..\Hardware\Devices\ThorBCMPA\x64\Release"
 copy .\x64\Release\ThorBCMPA.dll ..\..\Hardware\Devices\ThorBCMPA\x64\Release
 copy .\x64\Release\ThorBCMPA.lib ..\..\Hardware\Devices\ThorBCMPA\x64\Release

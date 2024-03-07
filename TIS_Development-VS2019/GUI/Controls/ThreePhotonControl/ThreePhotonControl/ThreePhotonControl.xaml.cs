@@ -138,6 +138,16 @@
             "ThreePhotonPhaseFinePlusCommand",
             typeof(ICommand),
             typeof(ThreePhotonControlUC));
+        public static readonly DependencyProperty DownsamplingRateMinusCommandProperty =
+           DependencyProperty.Register(
+           "DownsamplingRateMinusCommand",
+           typeof(ICommand),
+           typeof(ThreePhotonControlUC));
+        public static readonly DependencyProperty DownsamplingRatePlusCommandProperty =
+           DependencyProperty.Register(
+           "DownsamplingRatePlusCommand",
+           typeof(ICommand),
+           typeof(ThreePhotonControlUC));
 
         public static DependencyProperty Disable3PCheckboxProperty = 
             DependencyProperty.Register("Disable3PCheckbox",
@@ -199,6 +209,18 @@
             DependencyProperty.Register("ThreePhotonPhaseFine",
             typeof(int),
             typeof(ThreePhotonControlUC));
+        public static DependencyProperty ThreePhotonDownsamplingRateProperty =
+            DependencyProperty.Register("ThreePhotonDownsamplingRate",
+            typeof(int),
+            typeof(ThreePhotonControlUC));
+        public static DependencyProperty DownsamplingRateVisibilityProperty =
+            DependencyProperty.Register("DownsamplingRateVisibility",
+            typeof(int),
+            typeof(ThreePhotonControlUC));
+        public static DependencyProperty EnableDownsamplingRateChangeProperty =
+           DependencyProperty.Register("EnableDownsamplingRateChange",
+           typeof(bool),
+           typeof(ThreePhotonControlUC));
 
         #endregion Fields
 
@@ -279,6 +301,12 @@
             set { SetValue(ThreePhotonEnableProperty, value); }
         }
 
+        public bool EnableDownsamplingRateChange
+        {
+            get { return (bool)GetValue(EnableDownsamplingRateChangeProperty); }
+            set { SetValue(EnableDownsamplingRateChangeProperty, value); }
+        }
+
         public double ThreePhotonFreq
         {
             get { return (double)GetValue(ThreePhotonFreqProperty); }
@@ -340,6 +368,30 @@
         {
             get { return (ICommand)GetValue(ThreePhotonPhaseFinePlusCommandProperty); }
             set { SetValue(ThreePhotonPhaseFinePlusCommandProperty, value); }
+        }
+
+        public Visibility DownsamplingRateVisibility
+        {
+            get { return (Visibility)GetValue(DownsamplingRateVisibilityProperty); }
+            set { SetValue(DownsamplingRateVisibilityProperty, value); }
+        }
+
+        public ICommand DownsamplingRateMinusCommand
+        {
+            get { return (ICommand)GetValue(DownsamplingRateMinusCommandProperty); }
+            set { SetValue(DownsamplingRateMinusCommandProperty, value); }
+        }
+
+        public ICommand DownsamplingRatePlusommand
+        {
+            get { return (ICommand)GetValue(DownsamplingRatePlusCommandProperty); }
+            set { SetValue(DownsamplingRatePlusCommandProperty, value); }
+        }
+
+        public int ThreePhotonDownsamplingRate
+        {
+            get { return (int)GetValue(ThreePhotonDownsamplingRateProperty); }
+            set { SetValue(ThreePhotonDownsamplingRateProperty, value); }
         }
 
         #endregion Properties

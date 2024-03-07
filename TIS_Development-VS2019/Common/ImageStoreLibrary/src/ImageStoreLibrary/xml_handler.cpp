@@ -120,8 +120,8 @@ long xml_set_plate_info(char* plate_info, map<uint16_t, Plate*>* plates)
 				{
 					WellSample *wellSample = new WellSample();
 					XML_SCANF(elementWellSample->Attribute("ID"), "WellSample:%hd.%hd.%hd", &wellSample->PlateID, &wellSample->WellID, &wellSample->WellSampleID);
-					XML_SCANF(elementWellSample->Attribute("ImageID"), "%hd", &wellSample->ImageID);
-					XML_SCANF(elementWellSample->Attribute("ScanID"), "%hd", &wellSample->ScanID);
+					XML_SCANF(elementWellSample->Attribute("ImageID"), "%d", &wellSample->ImageID);
+					XML_SCANF(elementWellSample->Attribute("ScanID"), "%d", &wellSample->ScanID);
 					well->WellSamples.insert(make_pair(wellSample->WellSampleID, wellSample));
 
 					for (const XMLElement* elementSampleRegion = elementWellSample->FirstChildElement("SampleRegion"); elementSampleRegion; elementSampleRegion = elementSampleRegion->NextSiblingElement("SampleRegion"))
@@ -162,7 +162,7 @@ long xml_add_scan_info(char* scan_info, map<uint16_t, Plate*> plates, Scan** sca
 	{
 		const XMLElement* elementScan = doc.FirstChildElement("Scan");
 		if (elementScan == NULL)	throw new exception("Scan");
-		XML_SCANF(elementScan->Attribute("ID"), "%hhd", &scan->ScanID);
+		XML_SCANF(elementScan->Attribute("ID"), "%d", &scan->ScanID);
 		XML_SCANF(elementScan->Attribute("PlateID"), "%hd", &scan->PlateID);
 		XML_SCANF(elementScan->Attribute("PhysicalSizeX"), "%lf", &scan->PhysicalSizeX);
 		XML_SCANF(elementScan->Attribute("PhysicalSizeY"), "%lf", &scan->PhysicalSizeY);
@@ -333,7 +333,7 @@ long xml_get_plate_info(map<uint16_t, Plate*> plates, char** xml)
 	return SUCCESS;
 }
 
-long xml_get_scan_infos(map<uint16_t, Plate*> plates, map<uint8_t, Scan*> scans, char** xml)
+long xml_get_scan_infos(map<uint16_t, Plate*> plates, map<uint32_t, Scan*> scans, char** xml)
 {
 	char tmp[STRING_BUFFER_SIZE] = { 0 };
 	tinyxml2::XMLDocument doc;
@@ -341,7 +341,7 @@ long xml_get_scan_infos(map<uint16_t, Plate*> plates, map<uint8_t, Scan*> scans,
 	{
 		XMLElement *elementScans = doc.NewElement("Scans");
 		doc.InsertEndChild(elementScans);
-		for (map<uint8_t, Scan*>::iterator scanit = scans.begin(); scanit != scans.end(); scanit++)
+		for (map<uint32_t, Scan*>::iterator scanit = scans.begin(); scanit != scans.end(); scanit++)
 		{
 			XMLElement *elementScan = doc.NewElement("Scan");
 			elementScans->InsertEndChild(elementScan);
@@ -435,7 +435,7 @@ XMLElement* createTiffDataElement(tinyxml2::XMLDocument* doc, image_container* p
 	return elementTiffData;
 }
 
-long xml_write_ome(map<uint16_t, Plate*> plates, map<uint8_t, Scan*> scans, char** xml, char* pre_file_name, bool is_create_thumbnailIFD)
+long xml_write_ome(map<uint16_t, Plate*> plates, map<uint32_t, Scan*> scans, char** xml, char* pre_file_name, bool is_create_thumbnailIFD)
 {
 	char tmp[STRING_BUFFER_SIZE] = { 0 };
 	uint16_t imageID = 0;
@@ -509,112 +509,220 @@ long xml_write_ome(map<uint16_t, Plate*> plates, map<uint8_t, Scan*> scans, char
 				elementWell->SetAttribute("Column", wellit->second->Column);
 
 				//uint16_t wellSampleID = 1;
-				for (map<uint16_t, WellSample*>::iterator wellSampleit = wellit->second->WellSamples.begin(); wellSampleit != wellit->second->WellSamples.end(); wellSampleit++)
+				//Special case for multiple well samples or stimulus streaming, shouldn't have both
+				int totalStimScanNumber = scans.size() - wellit->second->WellSamples.size() + 1;
+				if (wellit->second->WellSamples.size() > 1)
 				{
-					Scan* scan = scans[wellSampleit->second->ScanID];
-					if (scan == NULL) throw new exception("scan");
-					XMLElement *elementWellSample = doc.NewElement("WellSample");
-					elementWell->InsertEndChild(elementWellSample);
-					memset(tmp, 0, STRING_BUFFER_SIZE);
-					sprintf_s(tmp, "WellSample:%hd.%hd.%hd", plateit->second->PlateID, wellit->second->WellID, wellSampleit->second->WellSampleID);	//wellSampleID
-					elementWellSample->SetAttribute("ID", tmp);
-
-					XMLElement *elementImageRef = doc.NewElement("ImageRef");
-					elementWellSample->InsertEndChild(elementImageRef);
-					memset(tmp, 0, STRING_BUFFER_SIZE);
-					sprintf_s(tmp, "Image:%hd", imageID);
-					elementImageRef->SetAttribute("ID", tmp);
-
-					XMLElement *elementImage = doc.NewElement("Image");
-					elementOME->InsertEndChild(elementImage);
-					elementImage->SetAttribute("ID", tmp);
-
-					for (map<uint16_t, SampleRegion*>::iterator sampleRegionit = wellSampleit->second->SampleRegions.begin(); sampleRegionit != wellSampleit->second->SampleRegions.end(); sampleRegionit++)
+					for (map<uint16_t, WellSample*>::iterator wellSampleit = wellit->second->WellSamples.begin(); wellSampleit != wellit->second->WellSamples.end(); wellSampleit++)
 					{
-						region* region = scan->Regions[sampleRegionit->second->RegionID];
-						if (region == NULL) throw new exception("region");
-
-						XMLElement *elementSampleRegion = doc.NewElement("Region");
-						elementWellSample->InsertEndChild(elementSampleRegion);
+						Scan* scan = scans[wellSampleit->second->ScanID];
+						if (scan == NULL) throw new exception("scan");
+						XMLElement* elementWellSample = doc.NewElement("WellSample");
+						elementWell->InsertEndChild(elementWellSample);
 						memset(tmp, 0, STRING_BUFFER_SIZE);
-						sprintf_s(tmp, "Region:%hd.%hd.%hd.%hd", plateit->second->PlateID, wellit->second->WellID, sampleRegionit->second->WellSampleID, sampleRegionit->second->RegionID);
-						elementSampleRegion->SetAttribute("ID", tmp);
+						sprintf_s(tmp, "WellSample:%hd.%hd.%hd", plateit->second->PlateID, wellit->second->WellID, wellSampleit->second->WellSampleID);	//wellSampleID
+						elementWellSample->SetAttribute("ID", tmp);
 
-						XMLElement *elementWellSampleRef = doc.NewElement("WellSampleRef");
-						map_PlateAcquisition.insert(make_pair(scan->ScanID, elementWellSampleRef));
+						XMLElement* elementImageRef = doc.NewElement("ImageRef");
+						elementWellSample->InsertEndChild(elementImageRef);
 						memset(tmp, 0, STRING_BUFFER_SIZE);
-						sprintf_s(tmp, "WellSample:%hd.%hd.%hd", plateit->second->PlateID, wellit->second->WellID, sampleRegionit->second->WellSampleID);
-						elementWellSampleRef->SetAttribute("ID", tmp);
-						elementWellSampleRef->SetAttribute("RegionID", region->RegionID);
-						elementWellSampleRef->SetAttribute("PositionX", convertDouble(sampleRegionit->second->PositionX, tmp));
-						elementWellSampleRef->SetAttribute("PositionY", convertDouble(sampleRegionit->second->PositionY, tmp));
-						elementWellSampleRef->SetAttribute("PositionZ", convertDouble(sampleRegionit->second->PositionZ, tmp));
-						elementWellSampleRef->SetAttribute("PositionXUnit", convertResUnit2String(sampleRegionit->second->PhysicalSizeXUnit));
-						elementWellSampleRef->SetAttribute("PositionYUnit", convertResUnit2String(sampleRegionit->second->PhysicalSizeYUnit));
-						elementWellSampleRef->SetAttribute("PositionZUnit", convertResUnit2String(sampleRegionit->second->PhysicalSizeZUnit));
-						elementWellSampleRef->SetAttribute("SizeX", convertDouble(sampleRegionit->second->SizeX, tmp));
-						elementWellSampleRef->SetAttribute("SizeY", convertDouble(sampleRegionit->second->SizeY, tmp));
-						elementWellSampleRef->SetAttribute("SizeZ", convertDouble(sampleRegionit->second->SizeZ, tmp));
+						sprintf_s(tmp, "Image:%d", scan->ScanID);
+						elementImageRef->SetAttribute("ID", tmp);
 
-						XMLElement *elementPixels = doc.NewElement("Pixels");
-						elementImage->InsertEndChild(elementPixels);
-						elementPixels->SetAttribute("ID", "Pixels:0");
-						elementPixels->SetAttribute("DimensionOrder", scan->DimensionOrder);
-						elementPixels->SetAttribute("PhysicalSizeX", convertDouble(scan->PhysicalSizeX, tmp));
-						elementPixels->SetAttribute("PhysicalSizeY", convertDouble(scan->PhysicalSizeY, tmp));
-						elementPixels->SetAttribute("PhysicalSizeZ", convertDouble(scan->PhysicalSizeZ, tmp));
-						elementPixels->SetAttribute("PhysicalSizeXUnit", convertResUnit2String(scan->PhysicalSizeXUnit));
-						elementPixels->SetAttribute("PhysicalSizeYUnit", convertResUnit2String(scan->PhysicalSizeYUnit));
-						elementPixels->SetAttribute("PhysicalSizeZUnit", convertResUnit2String(scan->PhysicalSizeZUnit));
-						elementPixels->SetAttribute("TimeIncrement", scan->TimeIncrement);
-						elementPixels->SetAttribute("TimeIncrementUnit", scan->TimeIncrementUnit);
-						elementPixels->SetAttribute("Type", PixelTypeString[scan->Type].c_str());
-						elementPixels->SetAttribute("SizeC", (int)scan->Channels.size());
-						elementPixels->SetAttribute("TileWidth", scan->TileWidth);
-						elementPixels->SetAttribute("TileHeight", scan->TileHeight);
-						elementPixels->SetAttribute("SignificantBits", scan->SignificantBits);
-						elementPixels->SetAttribute("SizeT", region->SizeT);
-						elementPixels->SetAttribute("SizeX", region->SizeX);
-						elementPixels->SetAttribute("SizeY", region->SizeY);
-						elementPixels->SetAttribute("SizeZ", region->SizeZ);
-						elementPixels->SetAttribute("SizeS", region->SizeS);
-						elementPixels->SetAttribute("MaxScaleLevel", region->MaxScaleLevel);
+						XMLElement* elementImage = doc.NewElement("Image");
+						elementOME->InsertEndChild(elementImage);
+						elementImage->SetAttribute("ID", tmp);
 
-						map<uint16_t, image_container*>* rawContainers = &region->RawContainers;
-						for(map<uint16_t, image_container*>::iterator containerIt = (*rawContainers).begin();containerIt!=(*rawContainers).end();containerIt++)
+						for (map<uint16_t, SampleRegion*>::iterator sampleRegionit = wellSampleit->second->SampleRegions.begin(); sampleRegionit != wellSampleit->second->SampleRegions.end(); sampleRegionit++)
 						{
-							auto pContainer = (*containerIt).second;
-							for(map<frame_info_ext, uint16_t>::iterator frameIt = pContainer->_frameIfds.begin();frameIt!= pContainer->_frameIfds.end();frameIt++)
+							region* region = scan->Regions[sampleRegionit->second->RegionID];
+							if (region == NULL) throw new exception("region");
+
+							XMLElement* elementSampleRegion = doc.NewElement("Region");
+							elementWellSample->InsertEndChild(elementSampleRegion);
+							memset(tmp, 0, STRING_BUFFER_SIZE);
+							sprintf_s(tmp, "Region:%hd.%hd.%hd.%hd", plateit->second->PlateID, wellit->second->WellID, sampleRegionit->second->WellSampleID, sampleRegionit->second->RegionID);
+							elementSampleRegion->SetAttribute("ID", tmp);
+
+							XMLElement* elementWellSampleRef = doc.NewElement("WellSampleRef");
+							map_PlateAcquisition.insert(make_pair(scan->ScanID, elementWellSampleRef));
+							memset(tmp, 0, STRING_BUFFER_SIZE);
+							sprintf_s(tmp, "WellSample:%hd.%hd.%hd", plateit->second->PlateID, wellit->second->WellID, sampleRegionit->second->WellSampleID);
+							elementWellSampleRef->SetAttribute("ID", tmp);
+							elementWellSampleRef->SetAttribute("RegionID", region->RegionID);
+							elementWellSampleRef->SetAttribute("PositionX", convertDouble(sampleRegionit->second->PositionX, tmp));
+							elementWellSampleRef->SetAttribute("PositionY", convertDouble(sampleRegionit->second->PositionY, tmp));
+							elementWellSampleRef->SetAttribute("PositionZ", convertDouble(sampleRegionit->second->PositionZ, tmp));
+							elementWellSampleRef->SetAttribute("PositionXUnit", convertResUnit2String(sampleRegionit->second->PhysicalSizeXUnit));
+							elementWellSampleRef->SetAttribute("PositionYUnit", convertResUnit2String(sampleRegionit->second->PhysicalSizeYUnit));
+							elementWellSampleRef->SetAttribute("PositionZUnit", convertResUnit2String(sampleRegionit->second->PhysicalSizeZUnit));
+							elementWellSampleRef->SetAttribute("SizeX", convertDouble(sampleRegionit->second->SizeX, tmp));
+							elementWellSampleRef->SetAttribute("SizeY", convertDouble(sampleRegionit->second->SizeY, tmp));
+							elementWellSampleRef->SetAttribute("SizeZ", convertDouble(sampleRegionit->second->SizeZ, tmp));
+
+							XMLElement* elementPixels = doc.NewElement("Pixels");
+							elementImage->InsertEndChild(elementPixels);
+							elementPixels->SetAttribute("ID", "Pixels:0");
+							elementPixels->SetAttribute("DimensionOrder", scan->DimensionOrder);
+							elementPixels->SetAttribute("PhysicalSizeX", convertDouble(scan->PhysicalSizeX, tmp));
+							elementPixels->SetAttribute("PhysicalSizeY", convertDouble(scan->PhysicalSizeY, tmp));
+							elementPixels->SetAttribute("PhysicalSizeZ", convertDouble(scan->PhysicalSizeZ, tmp));
+							elementPixels->SetAttribute("PhysicalSizeXUnit", convertResUnit2String(scan->PhysicalSizeXUnit));
+							elementPixels->SetAttribute("PhysicalSizeYUnit", convertResUnit2String(scan->PhysicalSizeYUnit));
+							elementPixels->SetAttribute("PhysicalSizeZUnit", convertResUnit2String(scan->PhysicalSizeZUnit));
+							elementPixels->SetAttribute("TimeIncrement", scan->TimeIncrement);
+							elementPixels->SetAttribute("TimeIncrementUnit", scan->TimeIncrementUnit);
+							elementPixels->SetAttribute("Type", PixelTypeString[scan->Type].c_str());
+							elementPixels->SetAttribute("SizeC", (int)scan->Channels.size());
+							elementPixels->SetAttribute("TileWidth", scan->TileWidth);
+							elementPixels->SetAttribute("TileHeight", scan->TileHeight);
+							elementPixels->SetAttribute("SignificantBits", scan->SignificantBits);
+							elementPixels->SetAttribute("SizeT", region->SizeT);
+							elementPixels->SetAttribute("SizeX", region->SizeX);
+							elementPixels->SetAttribute("SizeY", region->SizeY);
+							elementPixels->SetAttribute("SizeZ", region->SizeZ);
+							elementPixels->SetAttribute("SizeS", region->SizeS);
+							elementPixels->SetAttribute("MaxScaleLevel", region->MaxScaleLevel);
+
+							map<uint16_t, image_container*>* rawContainers = &region->RawContainers;
+							for (map<uint16_t, image_container*>::iterator containerIt = (*rawContainers).begin(); containerIt != (*rawContainers).end(); containerIt++)
 							{
-								auto elementTiffData = createTiffDataElement(&doc, pContainer, (*frameIt).first);
-								elementPixels->InsertEndChild(elementTiffData);
+								auto pContainer = (*containerIt).second;
+								for (map<frame_info_ext, uint16_t>::iterator frameIt = pContainer->_frameIfds.begin(); frameIt != pContainer->_frameIfds.end(); frameIt++)
+								{
+									auto elementTiffData = createTiffDataElement(&doc, pContainer, (*frameIt).first);
+									elementPixels->InsertEndChild(elementTiffData);
+								}
+							}
+							for (map<uint16_t, Channel*>::iterator channelit = scan->Channels.begin(); channelit != scan->Channels.end(); channelit++)
+							{
+								XMLElement* elementChannel = doc.NewElement("Channel");
+								elementPixels->InsertEndChild(elementChannel);
+								memset(tmp, 0, STRING_BUFFER_SIZE);
+								sprintf_s(tmp, "Channel:%hd", channelit->second->ChannelID);
+								elementChannel->SetAttribute("ID", tmp);
+								sprintf_s(tmp, "%hd", channelit->second->ChannelRefID);
+								elementChannel->SetAttribute("RefID", tmp);
+								elementChannel->SetAttribute("Name", channelit->second->Name);
+								elementChannel->SetAttribute("SamplesPerPixel", 1);
+							}
+
+							imageID++;
+							//wellSampleID++;
+						}
+					}
+				}
+				else 
+				{
+					for (int stimScanit = 0; stimScanit < totalStimScanNumber; stimScanit++)
+					{
+						for (map<uint16_t, WellSample*>::iterator wellSampleit = wellit->second->WellSamples.begin(); wellSampleit != wellit->second->WellSamples.end(); wellSampleit++)
+						{
+							Scan* scan = scans[stimScanit + 1];
+							if (scan == NULL) throw new exception("scan");
+							XMLElement* elementWellSample = doc.NewElement("WellSample");
+							elementWell->InsertEndChild(elementWellSample);
+							memset(tmp, 0, STRING_BUFFER_SIZE);
+							sprintf_s(tmp, "WellSample:%hd.%hd.%hd", plateit->second->PlateID, wellit->second->WellID, wellSampleit->second->WellSampleID + stimScanit);	//wellSampleID
+							elementWellSample->SetAttribute("ID", tmp);
+
+							XMLElement* elementImageRef = doc.NewElement("ImageRef");
+							elementWellSample->InsertEndChild(elementImageRef);
+							memset(tmp, 0, STRING_BUFFER_SIZE);
+							sprintf_s(tmp, "Image:%d", scan->ScanID);
+							elementImageRef->SetAttribute("ID", tmp);
+
+							XMLElement* elementImage = doc.NewElement("Image");
+							elementOME->InsertEndChild(elementImage);
+							elementImage->SetAttribute("ID", tmp);
+
+							for (map<uint16_t, SampleRegion*>::iterator sampleRegionit = wellSampleit->second->SampleRegions.begin(); sampleRegionit != wellSampleit->second->SampleRegions.end(); sampleRegionit++)
+							{
+								region* region = scan->Regions[sampleRegionit->second->RegionID];
+								if (region == NULL) throw new exception("region");
+
+								XMLElement* elementSampleRegion = doc.NewElement("Region");
+								elementWellSample->InsertEndChild(elementSampleRegion);
+								memset(tmp, 0, STRING_BUFFER_SIZE);
+								sprintf_s(tmp, "Region:%hd.%hd.%hd.%hd", plateit->second->PlateID, wellit->second->WellID, sampleRegionit->second->WellSampleID, sampleRegionit->second->RegionID);
+								elementSampleRegion->SetAttribute("ID", tmp);
+
+								XMLElement* elementWellSampleRef = doc.NewElement("WellSampleRef");
+								map_PlateAcquisition.insert(make_pair(scan->ScanID, elementWellSampleRef));
+								memset(tmp, 0, STRING_BUFFER_SIZE);
+								sprintf_s(tmp, "WellSample:%hd.%hd.%hd", plateit->second->PlateID, wellit->second->WellID, sampleRegionit->second->WellSampleID + stimScanit);
+								elementWellSampleRef->SetAttribute("ID", tmp);
+								elementWellSampleRef->SetAttribute("RegionID", region->RegionID);
+								elementWellSampleRef->SetAttribute("PositionX", convertDouble(sampleRegionit->second->PositionX, tmp));
+								elementWellSampleRef->SetAttribute("PositionY", convertDouble(sampleRegionit->second->PositionY, tmp));
+								elementWellSampleRef->SetAttribute("PositionZ", convertDouble(sampleRegionit->second->PositionZ, tmp));
+								elementWellSampleRef->SetAttribute("PositionXUnit", convertResUnit2String(sampleRegionit->second->PhysicalSizeXUnit));
+								elementWellSampleRef->SetAttribute("PositionYUnit", convertResUnit2String(sampleRegionit->second->PhysicalSizeYUnit));
+								elementWellSampleRef->SetAttribute("PositionZUnit", convertResUnit2String(sampleRegionit->second->PhysicalSizeZUnit));
+								elementWellSampleRef->SetAttribute("SizeX", convertDouble(sampleRegionit->second->SizeX, tmp));
+								elementWellSampleRef->SetAttribute("SizeY", convertDouble(sampleRegionit->second->SizeY, tmp));
+								elementWellSampleRef->SetAttribute("SizeZ", convertDouble(sampleRegionit->second->SizeZ, tmp));
+
+								XMLElement* elementPixels = doc.NewElement("Pixels");
+								elementImage->InsertEndChild(elementPixels);
+								elementPixels->SetAttribute("ID", "Pixels:0");
+								elementPixels->SetAttribute("DimensionOrder", scan->DimensionOrder);
+								elementPixels->SetAttribute("PhysicalSizeX", convertDouble(scan->PhysicalSizeX, tmp));
+								elementPixels->SetAttribute("PhysicalSizeY", convertDouble(scan->PhysicalSizeY, tmp));
+								elementPixels->SetAttribute("PhysicalSizeZ", convertDouble(scan->PhysicalSizeZ, tmp));
+								elementPixels->SetAttribute("PhysicalSizeXUnit", convertResUnit2String(scan->PhysicalSizeXUnit));
+								elementPixels->SetAttribute("PhysicalSizeYUnit", convertResUnit2String(scan->PhysicalSizeYUnit));
+								elementPixels->SetAttribute("PhysicalSizeZUnit", convertResUnit2String(scan->PhysicalSizeZUnit));
+								elementPixels->SetAttribute("TimeIncrement", scan->TimeIncrement);
+								elementPixels->SetAttribute("TimeIncrementUnit", scan->TimeIncrementUnit);
+								elementPixels->SetAttribute("Type", PixelTypeString[scan->Type].c_str());
+								elementPixels->SetAttribute("SizeC", (int)scan->Channels.size());
+								elementPixels->SetAttribute("TileWidth", scan->TileWidth);
+								elementPixels->SetAttribute("TileHeight", scan->TileHeight);
+								elementPixels->SetAttribute("SignificantBits", scan->SignificantBits);
+								elementPixels->SetAttribute("SizeT", region->SizeT);
+								elementPixels->SetAttribute("SizeX", region->SizeX);
+								elementPixels->SetAttribute("SizeY", region->SizeY);
+								elementPixels->SetAttribute("SizeZ", region->SizeZ);
+								elementPixels->SetAttribute("SizeS", region->SizeS);
+								elementPixels->SetAttribute("MaxScaleLevel", region->MaxScaleLevel);
+
+								map<uint16_t, image_container*>* rawContainers = &region->RawContainers;
+								for (map<uint16_t, image_container*>::iterator containerIt = (*rawContainers).begin(); containerIt != (*rawContainers).end(); containerIt++)
+								{
+									auto pContainer = (*containerIt).second;
+									for (map<frame_info_ext, uint16_t>::iterator frameIt = pContainer->_frameIfds.begin(); frameIt != pContainer->_frameIfds.end(); frameIt++)
+									{
+										auto elementTiffData = createTiffDataElement(&doc, pContainer, (*frameIt).first);
+										elementPixels->InsertEndChild(elementTiffData);
+									}
+								}
+								for (map<uint16_t, Channel*>::iterator channelit = scan->Channels.begin(); channelit != scan->Channels.end(); channelit++)
+								{
+									XMLElement* elementChannel = doc.NewElement("Channel");
+									elementPixels->InsertEndChild(elementChannel);
+									memset(tmp, 0, STRING_BUFFER_SIZE);
+									sprintf_s(tmp, "Channel:%hd", channelit->second->ChannelID);
+									elementChannel->SetAttribute("ID", tmp);
+									sprintf_s(tmp, "%hd", channelit->second->ChannelRefID);
+									elementChannel->SetAttribute("RefID", tmp);
+									elementChannel->SetAttribute("Name", channelit->second->Name);
+									elementChannel->SetAttribute("SamplesPerPixel", 1);
+								}
+
+								imageID++;
+								//wellSampleID++;
 							}
 						}
 					}
-
-					for (map<uint16_t, Channel*>::iterator channelit = scan->Channels.begin(); channelit != scan->Channels.end(); channelit++)
-					{
-						XMLElement *elementChannel = doc.NewElement("Channel");
-						elementPixels->InsertEndChild(elementChannel);
-						memset(tmp, 0, STRING_BUFFER_SIZE);
-						sprintf_s(tmp, "Channel:%hd", channelit->second->ChannelID);
-						elementChannel->SetAttribute("ID", tmp);
-						sprintf_s(tmp, "%hd", channelit->second->ChannelRefID);
-						elementChannel->SetAttribute("RefID", tmp);
-						elementChannel->SetAttribute("Name", channelit->second->Name);
-						elementChannel->SetAttribute("SamplesPerPixel", 1);
-					}
-
-					imageID++;
-					//wellSampleID++;
 				}
 			}
-			for (map<uint8_t, Scan*>::iterator scanit = scans.begin(); scanit != scans.end(); scanit++)
+			for (map<uint32_t, Scan*>::iterator scanit = scans.begin(); scanit != scans.end(); scanit++)
 			{
 				XMLElement *elementPlateAcquisition = doc.NewElement("PlateAcquisition");
 				elementPlate->InsertEndChild(elementPlateAcquisition);
 				memset(tmp, 0, STRING_BUFFER_SIZE);
-				sprintf_s(tmp, "PlateAcquisition:%hd.%hhd", plateit->second->PlateID, scanit->second->ScanID);
+				sprintf_s(tmp, "PlateAcquisition:%hd.%d", plateit->second->PlateID, scanit->second->ScanID);
 				elementPlateAcquisition->SetAttribute("ID", tmp);
 				for (multimap<uint16_t, XMLElement*>::iterator plateAcquisitionit = map_PlateAcquisition.find(scanit->second->ScanID); plateAcquisitionit != map_PlateAcquisition.end(); plateAcquisitionit++)
 				{
@@ -634,7 +742,7 @@ long xml_write_ome(map<uint16_t, Plate*> plates, map<uint8_t, Scan*> scans, char
 				sprintf_s(tmp, "%f", scale);
 				elementPyramidal->SetAttribute("Scale", tmp);
 				bool hasChildren = false;
-				for (map<uint8_t, Scan*>::iterator scanit = scans.begin(); scanit != scans.end(); scanit++)
+				for (map<uint32_t, Scan*>::iterator scanit = scans.begin(); scanit != scans.end(); scanit++)
 				{
 					for (map<uint16_t, region*>::iterator regionit = scanit->second->Regions.begin(); regionit != scanit->second->Regions.end(); regionit++)
 					{
@@ -699,7 +807,7 @@ long xml_write_ome(map<uint16_t, Plate*> plates, map<uint8_t, Scan*> scans, char
 	}
 }
 
-long xml_read_ome(char* xml, map<uint16_t, Plate*>* plates, map<uint8_t, Scan*>* scans, TiffData* parent_tiff, OpenMode openMode)
+long xml_read_ome(char* xml, map<uint16_t, Plate*>* plates, map<uint32_t, Scan*>* scans, TiffData* parent_tiff, OpenMode openMode)
 {
 	map<int, WellSample*> map_image;
 	tinyxml2::XMLDocument doc;
@@ -749,7 +857,7 @@ long xml_read_ome(char* xml, map<uint16_t, Plate*>* plates, map<uint8_t, Scan*>*
 					XML_SCANF(elementWellSample->Attribute("ID"), "WellSample:%hd.%hd.%hd", &plate->PlateID, &well->WellID, &wellSample->WellSampleID);
 					const XMLElement* elementImageRef = elementWellSample->FirstChildElement("ImageRef");
 					if (elementImageRef == NULL)	throw new exception("ImageRef");
-					XML_SCANF(elementImageRef->Attribute("ID"), "Image:%hd", &wellSample->ImageID);
+					XML_SCANF(elementImageRef->Attribute("ID"), "Image:%d", &wellSample->ImageID);
 					map_image.insert(make_pair(wellSample->ImageID, wellSample));
 					well->WellSamples.insert(make_pair(wellSample->WellSampleID, wellSample));
 					for (const XMLElement* elementRegion = elementWellSample->FirstChildElement("Region"); elementRegion; elementRegion = elementRegion->NextSiblingElement("Region"))
@@ -764,7 +872,7 @@ long xml_read_ome(char* xml, map<uint16_t, Plate*>* plates, map<uint8_t, Scan*>*
 			for (const XMLElement* elementPlateAcquisition = elementPlate->FirstChildElement("PlateAcquisition"); elementPlateAcquisition; elementPlateAcquisition = elementPlateAcquisition->NextSiblingElement("PlateAcquisition"))
 			{
 				Scan* scan = new Scan(parent_tiff);
-				XML_SCANF(elementPlateAcquisition->Attribute("ID"), "PlateAcquisition:%hd.%hhd", &scan->PlateID, &scan->ScanID);
+				XML_SCANF(elementPlateAcquisition->Attribute("ID"), "PlateAcquisition:%hd.%d", &scan->PlateID, &scan->ScanID);
 				(*scans).insert(make_pair(scan->ScanID, scan));
 				for (const XMLElement* elementWellSampleRef = elementPlateAcquisition->FirstChildElement("WellSampleRef"); elementWellSampleRef; elementWellSampleRef = elementWellSampleRef->NextSiblingElement("WellSampleRef"))
 				{
@@ -795,13 +903,15 @@ long xml_read_ome(char* xml, map<uint16_t, Plate*>* plates, map<uint8_t, Scan*>*
 			}
 		}
 		map<uint16_t, Channel*> Channels;
+		/*std::unique_ptr<uint16_t> image_id(new uint16_t);*/
+		uint16_t* image_id = new uint16_t;
 		for (const XMLElement* elementImage = elementOME->FirstChildElement("Image"); elementImage; elementImage = elementImage->NextSiblingElement("Image"))
 		{
-			uint16_t image_id = 0;
-			XML_SCANF(elementImage->Attribute("ID"), "Image:%hd", &image_id);
+			/*XML_SCANF(elementImage->Attribute("ID"), "Image:%d", image_id.get());*/
+			XML_SCANF(elementImage->Attribute("ID"), "Image:%d", image_id);
 			const XMLElement* elementPixels = elementImage->FirstChildElement("Pixels");
 			//get scan channels
-			if (image_id == 0 && elementPixels != NULL)
+			if (*image_id == 0 && elementPixels != NULL)
 			{
 				for (const XMLElement* elementChannel = elementPixels->FirstChildElement("Channel"); elementChannel; elementChannel = elementChannel->NextSiblingElement("Channel"))
 				{
@@ -815,7 +925,7 @@ long xml_read_ome(char* xml, map<uint16_t, Plate*>* plates, map<uint8_t, Scan*>*
 				continue;
 			}
 
-			WellSample* wellSample = map_image[image_id];
+			WellSample* wellSample = map_image[*image_id];
 			if (wellSample == NULL) throw new exception("wellSample");
 			Scan* scan = (*scans)[wellSample->ScanID];
 			if (scan == NULL) throw new exception("scan");
@@ -895,6 +1005,7 @@ long xml_read_ome(char* xml, map<uint16_t, Plate*>* plates, map<uint8_t, Scan*>*
 				elementPixels = elementPixels->NextSiblingElement("Pixels");
 			}
 		}
+
 		const XMLElement* elementPyramidals = elementOME->FirstChildElement("Pyramidals");
 		if (elementPyramidals == NULL)	return SUCCESS;//throw new exception("Pyramidals");
 		XML_SCANF(elementPyramidals->Attribute("ThumbnailTileSize"), "%hd", &thumbnailTileSize);
@@ -907,14 +1018,14 @@ long xml_read_ome(char* xml, map<uint16_t, Plate*>* plates, map<uint8_t, Scan*>*
 			XML_SCANF(elementPyramidal->Attribute("Scale"), "%lf", &scale);
 			for (const XMLElement* elementImage = elementPyramidal->FirstChildElement("Image"); elementImage; elementImage = elementImage->NextSiblingElement("Image"))
 			{
-				XML_SCANF(elementImage->Attribute("ScanID"), "%hd", &scanID);
+				XML_SCANF(elementImage->Attribute("ScanID"), "%d", &scanID);
 				XML_SCANF(elementImage->Attribute("RegionID"), "%hd", &regionID);
 				Scan* scan = scans->at((unsigned char)scanID);
 				region* region = scan->Regions[regionID];
 				for (const XMLElement* elementTiffData = elementImage->FirstChildElement("TiffData"); elementTiffData; elementTiffData = elementTiffData->NextSiblingElement("TiffData"))
 				{
 					frame_info frame;
-					frame.scan_id = static_cast<uint8_t>(scanID);
+					frame.scan_id = static_cast<uint32_t>(scanID);
 					frame.region_id = regionID;
 					frame.channel_id = atoi(elementTiffData->Attribute("FirstC"));
 					frame.time_id = atoi(elementTiffData->Attribute("FirstT")) + 1;
@@ -995,8 +1106,8 @@ long ResolvePlatesXML(char* plates_xml, std::map<uint16_t, Plate*>* plates)
 				{
 					WellSample* wellSample = new WellSample();
 					XML_SCANF(elementWellSample->Attribute("ID"), "WellSample:%hd.%hd.%hd", &wellSample->PlateID, &wellSample->WellID, &wellSample->WellSampleID);
-					XML_SCANF(elementWellSample->Attribute("ScanID"), "%hd", &wellSample->ScanID);
-					XML_SCANF(elementWellSample->Attribute("ImageID"), "%hd", &wellSample->ImageID);
+					XML_SCANF(elementWellSample->Attribute("ScanID"), "%d", &wellSample->ScanID);
+					XML_SCANF(elementWellSample->Attribute("ImageID"), "%d", &wellSample->ImageID);
 					for (const XMLElement* elementSampleRegion = elementWellSample->FirstChildElement("SampleRegion"); elementSampleRegion; elementSampleRegion = elementSampleRegion->NextSiblingElement("SampleRegion"))
 					{
 						SampleRegion* sampleRegion = new SampleRegion();
@@ -1025,7 +1136,7 @@ long ResolvePlatesXML(char* plates_xml, std::map<uint16_t, Plate*>* plates)
 
 }
 
-long ResolveScansXML(char* scans_xml, std::map<uint16_t, Plate*>* plates, std::map<uint8_t, Scan*>* scans)
+long ResolveScansXML(char* scans_xml, std::map<uint16_t, Plate*>* plates, std::map<uint32_t, Scan*>* scans)
 {
 	tinyxml2::XMLDocument doc;
 	if (doc.Parse(scans_xml) != XMLError::XML_SUCCESS)
@@ -1037,7 +1148,7 @@ long ResolveScansXML(char* scans_xml, std::map<uint16_t, Plate*>* plates, std::m
 		for (const XMLElement* elementScan = elementScans->FirstChildElement("Scan"); elementScan; elementScan = elementScan->NextSiblingElement("Scan"))
 		{
 			Scan* scan = new Scan();
-			XML_SCANF(elementScan->Attribute("ID"), "%hhd", &scan->ScanID);
+			XML_SCANF(elementScan->Attribute("ID"), "%d", &scan->ScanID);
 			XML_SCANF(elementScan->Attribute("PlateID"), "%hd", &scan->PlateID);
 			XML_SCANF(elementScan->Attribute("PhysicalSizeX"), "%lf", &scan->PhysicalSizeX);
 			XML_SCANF(elementScan->Attribute("PhysicalSizeY"), "%lf", &scan->PhysicalSizeY);

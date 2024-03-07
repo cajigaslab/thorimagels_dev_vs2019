@@ -745,7 +745,7 @@ DllExportLiveImage SLMBleach()
 	return TRUE;
 }
 
-DllExportLiveImage CalibrateSLM(const wchar_t* bmpPatternName, float* xyPointFrom, float* xyPointTo, long size)
+DllExportLiveImage CalibrateSLM(const wchar_t* bmpPatternName, float* xyPointFrom, float* xyPointTo, long size, long setBleacher)
 {
 	long ret = TRUE;
 
@@ -757,6 +757,9 @@ DllExportLiveImage CalibrateSLM(const wchar_t* bmpPatternName, float* xyPointFro
 	//going to display id == 0:
 	SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_ARRAY_ID, 0, IDevice::DeviceSetParamType::NO_EXECUTION);
 	SetDeviceParamBuffer(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_POINTS_ARRAY,(char*)xyPointFrom,size, IDevice::DeviceSetParamType::EXECUTION_WAIT);
+	//return if no need to use bleach scanner
+	if (!setBleacher)
+		return TRUE;
 
 	///***	Galvo-Galvo	 ***///
 	std::wstring pathName(bmpPatternName);

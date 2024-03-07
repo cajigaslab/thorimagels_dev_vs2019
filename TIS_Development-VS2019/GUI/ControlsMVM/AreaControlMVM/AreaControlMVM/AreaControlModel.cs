@@ -404,11 +404,12 @@
             }
             set
             {
-                if (1 == SetDeviceParamInt((int)SelectedHardware.SELECTED_CONTROLUNIT, (int)IDevice.Params.PARAM_SCANNER_ZOOM_POS, value, false))
-                {
-                }
-
+                //Set the camera field size first, so Thordaq is ready to change and doesn't get stuck waiting for frame
                 SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_FIELD_SIZE, value);
+                //Need to sleep 200ms for the resonant to settle at the smaller field sizes. Otherwise the timing might leave Thordaq waiting for a frame
+                //200ms was found testing at 2K x 2K in one-way
+                System.Threading.Thread.Sleep(200);
+                SetDeviceParamInt((int)SelectedHardware.SELECTED_CONTROLUNIT, (int)IDevice.Params.PARAM_SCANNER_ZOOM_POS, value, false);
                 // set the two way alignment to its current dispayed value
                 MVMManager.Instance["ScanControlViewModel", "LSMTwoWayAlignmentCoarse"] = (int)MVMManager.Instance["ScanControlViewModel", "LSMTwoWayAlignmentCoarse", (object)0];
                 MVMManager.Instance["ScanControlViewModel", "LSMTwoWayAlignment"] = (int)MVMManager.Instance["ScanControlViewModel", "LSMTwoWayAlignment", (object)0];
@@ -843,6 +844,7 @@
         public void CloseShutter()
         {
             MVMManager.Instance["PowerControlViewModel", "ShutterPosition"] = 1;
+            ResourceManagerCS.PostflightCamera((int)SelectedHardware.SELECTED_CAMERA1);
             TurnOffLaser();
         }
 

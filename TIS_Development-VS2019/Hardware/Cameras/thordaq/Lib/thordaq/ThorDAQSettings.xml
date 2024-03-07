@@ -1,5 +1,0 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
-<ThorDAQSettings>
-	<DACParkingLastPositions DAC0="32768" DAC1="32768" DAC2="32768" DAC3="32768" DAC4="32768" DAC5="32768" DAC6="32768" DAC7="32768" DAC8="32768" DAC9="32768" DAC10="32768" DAC11="32768"/>
-	<HWConnectionInfo lastConnectionTime="-1" />
-</ThorDAQSettings>

@@ -313,14 +313,7 @@
             get
             {
                 //Only get from ZControlViewModel if instance is not derived from Experiment Review window
-                if (!ReviewWindowOpened)
-                {
-                    return _simulatorMode ? _zUM : (double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0.0] * (double)Constants.UM_TO_MM;
-                }
-                else
-                {
-                    return _zUM;
-                }
+                return _reviewWindowOpened || _simulatorMode ? _zUM : (double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0.0] * (double)Constants.UM_TO_MM;
             }
             set
             {
@@ -956,7 +949,7 @@
             _roiList[_roiList.Count - 1].Tag = tag;
             _roiList[_roiList.Count - 1].Tag = SetTagRGB(_roiList[_roiList.Count - 1]);
 
-            canvas.Children.Add(_roiList[_roiList.Count - 1]);
+            if (!_simulatorMode) canvas.Children.Add(_roiList[_roiList.Count - 1]);
             ObjectComplete(_roiList.Count - 1);
 
             //add index adorner:
@@ -1162,7 +1155,7 @@
         {
             for (int i = 0; i < _roiList.Count; i++)
             {
-                if (patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID])
+                if (0 > patternID || patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID])
                 {
                     SetTagBit(_roiList[i].Tag, Tag.FLAGS, Flag.DISPLAY, setVisible);
                 }
@@ -2250,12 +2243,12 @@
             SelectROIIndexWithErrorChecking(nextIndex);
         }
 
-        public void SetPatternToSaveROI(int patternID, Mode pMode = Mode.PATTERN_NOSTATS)
+        public void SetPatternToSaveROI(int patternID = -1, Mode pMode = Mode.PATTERN_NOSTATS)
         {
             for (int i = 0; i < _roiList.Count; i++)
             {
                 if ((pMode == (Mode)(GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR))) &&
-                    (patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID]))
+                    (0 > patternID || patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID]))
                 {
                     int[] tag = SetTagBit(_roiList[i].Tag, Tag.FLAGS, Flag.SAVE, true);
                     _roiList[i].Tag = tag;
@@ -2692,6 +2685,9 @@
 
         private void CreateMask()
         {
+            if (_simulatorMode)
+                return;
+
             List<Shape> roiList = GetStatsROI();
 
             _maskIndex++;
@@ -2769,10 +2765,11 @@
                             }
                         }
                     }
+                    IntPtr maskPtr = IntPtr.Zero;
                     try
                     {
                         ea.Result = mask;
-                        IntPtr maskPtr = Marshal.AllocHGlobal(2 * mask.Length);
+                        maskPtr = Marshal.AllocHGlobal(2 * mask.Length);
                         Marshal.Copy(mask, 0, maskPtr, mask.Length);
                         if (wkrIndex < _maskIndex)
                         {
@@ -2817,6 +2814,14 @@
                     catch (Exception e)
                     {
                         e.ToString();
+                    }
+                    finally
+                    {
+                        if (IntPtr.Zero != maskPtr)
+                        {
+                            Marshal.FreeHGlobal(maskPtr);
+                            maskPtr = IntPtr.Zero;
+                        }
                     }
                 }
             };
@@ -2908,7 +2913,7 @@
             _roiCount++;
             _roiList[_roiList.Count - 1].Tag = tag;
             _roiList[_roiList.Count - 1].ToolTip = "ROI #" + tag[(int)Tag.SUB_PATTERN_ID];
-            canvas.Children.Add(_roiList[_roiList.Count - 1]);
+            if (!_simulatorMode) canvas.Children.Add(_roiList[_roiList.Count - 1]);
 
             ObjectComplete(_roiList.Count - 1);
             if (null != UpdatingObjectEvent) UpdatingObjectEvent(false);
@@ -2944,7 +2949,7 @@
             _roiList[_roiList.Count - 1].Tag = tag;
             _roiList[_roiList.Count - 1].Tag = SetTagRGB(_roiList[_roiList.Count - 1]);
 
-            canvas.Children.Add(_roiList[_roiList.Count - 1]);
+            if (!_simulatorMode) canvas.Children.Add(_roiList[_roiList.Count - 1]);
             ObjectComplete(_roiList.Count - 1);
 
             //add index adorner:
@@ -2998,7 +3003,7 @@
             _roiList[_roiList.Count - 1].Tag = tag;
             _roiList[_roiList.Count - 1].Tag = SetTagRGB(_roiList[_roiList.Count - 1]);
 
-            canvas.Children.Add(_roiList[_roiList.Count - 1]);
+            if (!_simulatorMode) canvas.Children.Add(_roiList[_roiList.Count - 1]);
             _isObjectCreated = true;
 
             //complete if ready:
@@ -3036,7 +3041,7 @@
             _roiList[_roiList.Count - 1].Tag = tag;
             _roiList[_roiList.Count - 1].Tag = SetTagRGB(_roiList[_roiList.Count - 1]);
 
-            canvas.Children.Add(_roiList[_roiList.Count - 1]);
+            if (!_simulatorMode) canvas.Children.Add(_roiList[_roiList.Count - 1]);
             _isObjectCreated = true;
             _lastLineIndex = _roiList.Count - 1;
 
@@ -3067,14 +3072,16 @@
             roundedPolygon.MouseLeftButtonDown += ROI_MouseDown;
             _roiList.Add(roundedPolygon);
 
-            canvas.Children.Add(_selectedPolygon);
-            canvas.Children.Add(_roiList[_roiList.Count - 1]);
-
+            if (!_simulatorMode)
+            {
+                canvas.Children.Add(_selectedPolygon);
+                canvas.Children.Add(_roiList[_roiList.Count - 1]);
+            }
             _roiList[_roiList.Count - 1].ToolTip = "ROI #" + tag[(int)Tag.SUB_PATTERN_ID];
             _roiList[_roiList.Count - 1].Tag = tag;
             _roiList[_roiList.Count - 1].Tag = SetTagRGB(_roiList[_roiList.Count - 1]);
 
-            canvas.Children.Add(GetCornerEllipse(pt));
+            if (!_simulatorMode) canvas.Children.Add(GetCornerEllipse(pt));
 
             ((ROIPoly)_roiList[_roiList.Count - 1]).Points.Add(pt);
 
@@ -3108,7 +3115,7 @@
             _roiList[_roiList.Count - 1].Tag = tag;
             _roiList[_roiList.Count - 1].Tag = SetTagRGB(_roiList[_roiList.Count - 1]);
 
-            canvas.Children.Add(GetCornerEllipse(pt));
+            if (!_simulatorMode) canvas.Children.Add(GetCornerEllipse(pt));
 
             _activeType = typeof(Polyline);
             _isObjectCreated = true;
@@ -3145,7 +3152,7 @@
             _roiList[_roiList.Count - 1].Tag = tag;
             _roiList[_roiList.Count - 1].Tag = SetTagRGB(_roiList[_roiList.Count - 1]);
 
-            canvas.Children.Add(_roiList[_roiList.Count - 1]);
+            if (!_simulatorMode) canvas.Children.Add(_roiList[_roiList.Count - 1]);
             _isObjectCreated = true;
         }
 
@@ -4443,8 +4450,11 @@
 
         void UpdateIndexAdorner(Shape roi)
         {
-            RemoveAdornerFromROI(roi, AdornerType.INDEX_ADORNER);
-            AddIndexToROI(roi);
+            if (!_simulatorMode)
+            {
+                RemoveAdornerFromROI(roi, AdornerType.INDEX_ADORNER);
+                AddIndexToROI(roi);
+            }
         }
 
         /// <summary>
@@ -4484,7 +4494,7 @@
         /// <param name="canvas"></param>
         private void UpdateVisibleROIs(ref Canvas canvas)
         {
-            if (null != canvas)
+            if (null != canvas && !_simulatorMode)
             {
                 canvas.IsVisibleChanged -= canvas_IsVisibleChanged;
                 canvas.IsVisibleChanged += canvas_IsVisibleChanged;

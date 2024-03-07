@@ -92,6 +92,7 @@ AutoFocusImage::AutoFocusImage()
 	_currentZIndex = -1;
 	_finePercentageDecrease = 0.15;
 	_enableGUIUpdate = FALSE;
+	_numberOfChannels = 1;
 }
 
 HANDLE AutoFocusImage::hEventAutoFocus = NULL;
@@ -132,6 +133,7 @@ long AutoFocusImage::Execute(long index, IDevice* pAutoFocus, BOOL& afFound)
 {
 	_autoFocusStatus = AutoFocusStatusTypes::NOT_RUNNING;
 	_frameNumber = 0;
+	_stopFlag = FALSE;
 
 	//the first image will always execute autofocus with (counter == 0)
 	if ((_counter % _repeat) != 0)
@@ -140,6 +142,15 @@ long AutoFocusImage::Execute(long index, IDevice* pAutoFocus, BOOL& afFound)
 		return TRUE;
 	}
 	_counter++;
+
+	long zParamType;
+	long zParamAvailable;
+	long zParamReadOnly;
+	double zParamMin;
+	double zParamMax;
+	double zParamDefault;
+
+	_pZStage->GetParamInfo(IDevice::PARAM_Z_POS_CURRENT, zParamType, zParamAvailable, zParamReadOnly, zParamMin, zParamMax, zParamDefault);
 	
 	double position = 0;
 
@@ -148,8 +159,8 @@ long AutoFocusImage::Execute(long index, IDevice* pAutoFocus, BOOL& afFound)
 	_bestZPositionFound = position;
 	_nextZPosition = position;
 
-	double start = _startPosMM + position;
-	double stop = _stopPosMM + position;
+	double start = max(_startPosMM + position, zParamMin);
+	double stop = min(_stopPosMM + position, zParamMax);
 	double step = _stepSizeUM / 1000;
 
 	StringCbPrintfW(msg, MSG_LENGTH, L"AutoFocusImage Start %d.%03d Stop %d.%03d Step %d.%03d", static_cast<long>(start), abs(static_cast<long>((start - static_cast<long>(start)) * 1000)), static_cast<long>(stop), abs(static_cast<long>((stop - static_cast<long>(stop)) * 1000)), static_cast<long>(step), abs(static_cast<long>((step - static_cast<long>(step)) * 1000)));
@@ -174,13 +185,28 @@ long AutoFocusImage::Execute(long index, IDevice* pAutoFocus, BOOL& afFound)
 	}
 
 	double left, right, top, bottom, binX, binY, val, pixelX, pixelY, bitDepth, numChannels;
-	long width = 0, height = 0, cameraType = ICamera::CameraType::LSM, numberOfChannels = 1, channel = 1;
+	long width = 0, height = 0, cameraType = ICamera::CameraType::LSM, channel = 1;
+	_numberOfChannels = 1;
 
 	_pCamera->GetParam(ICamera::PARAM_CAMERA_TYPE, val);
 	cameraType = static_cast<long>(val);
+	wchar_t message[MSG_LENGTH];
 
 	if (ICamera::CameraType::LSM == cameraType)
 	{
+		if (FALSE == SetCameraParamDouble(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_LSM_AVERAGEMODE, ICamera::AVG_MODE_NONE))
+		{
+			StringCbPrintfW(message, MSG_LENGTH, L"AutoFocus AutoFocusImage SetParam PARAM_LSM_AVERAGEMODE failed");
+			logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+		}
+
+		if (FALSE == SetCameraParamDouble(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_MULTI_FRAME_COUNT, 1.0))
+		{
+			StringCbPrintfW(message, MSG_LENGTH, L"AutoFocus AutoFocusImage SetParam PARAM_MULTI_FRAME_COUNT failed");
+			logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+			return FALSE;
+		}
+
 		_pCamera->GetParam(ICamera::PARAM_LSM_PIXEL_X, pixelX);
 		_pCamera->GetParam(ICamera::PARAM_LSM_PIXEL_Y, pixelY);
 		_pCamera->GetParam(ICamera::PARAM_LSM_CHANNEL, numChannels);
@@ -191,10 +217,10 @@ long AutoFocusImage::Execute(long index, IDevice* pAutoFocus, BOOL& afFound)
 
 		switch (channel)
 		{
-		case 0x1:numberOfChannels = 1; break;
-		case 0x2:numberOfChannels = 1; break;
-		case 0x4:numberOfChannels = 1; break;
-		case 0x8:numberOfChannels = 1; break;
+		case 0x1:_numberOfChannels = 1; break;
+		case 0x2:_numberOfChannels = 1; break;
+		case 0x4:_numberOfChannels = 1; break;
+		case 0x8:_numberOfChannels = 1; break;
 		default:
 		{
 			long paramType;
@@ -207,9 +233,9 @@ long AutoFocusImage::Execute(long index, IDevice* pAutoFocus, BOOL& afFound)
 			_pCamera->GetParamInfo(ICamera::PARAM_LSM_CHANNEL, paramType, paramAvailable, paramReadOnly, paramMin, paramMax, paramDefault);
 			switch (static_cast<long>(paramMax))
 			{
-			case 0x3:numberOfChannels = 3; break;
-			case 0xF:numberOfChannels = 4; break;
-			default:numberOfChannels = 3;
+			case 0x3:_numberOfChannels = 3; break;
+			case 0xF:_numberOfChannels = 4; break;
+			default:_numberOfChannels = 3;
 			}
 		}
 		break;
@@ -217,6 +243,20 @@ long AutoFocusImage::Execute(long index, IDevice* pAutoFocus, BOOL& afFound)
 	}
 	else if (ICamera::CameraType::CCD == cameraType)
 	{
+		if (FALSE == SetCameraParamDouble(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_CAMERA_AVERAGENUM, 1.0))
+		{
+			StringCbPrintfW(message, MSG_LENGTH, L"AutoFocus AutoFocusImage SetParam PARAM_MULTI_FRAME_COUNT failed");
+			logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+			return FALSE;
+		}
+
+		if (FALSE == SetCameraParamDouble(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_MULTI_FRAME_COUNT, 1.0))
+		{
+			StringCbPrintfW(message, ERROR_EVENT, L"AutoFocus AutoFocusImage SetParam PARAM_MULTI_FRAME_COUNT failed");
+			logDll->TLTraceEvent(WARNING_EVENT, 1, message);
+			return FALSE;
+		}
+
 		_pCamera->GetParam(ICamera::PARAM_CAPTURE_REGION_LEFT, left);
 		_pCamera->GetParam(ICamera::PARAM_CAPTURE_REGION_RIGHT, right);
 		_pCamera->GetParam(ICamera::PARAM_CAPTURE_REGION_TOP, top);
@@ -232,10 +272,10 @@ long AutoFocusImage::Execute(long index, IDevice* pAutoFocus, BOOL& afFound)
 
 	Dimensions d;
 
-	d.c = numberOfChannels;
+	d.c = _numberOfChannels;
 	d.dType = INT_16BIT;
 	d.m = 1;
-	d.mType = DETACHED_CHANNEL;
+	d.mType = CONTIGUOUS_CHANNEL_MEM_MAP;
 	d.t = 1;
 	d.x = _width;
 	d.y = _height;
@@ -254,15 +294,15 @@ long AutoFocusImage::Execute(long index, IDevice* pAutoFocus, BOOL& afFound)
 	double loc;
 	long score =0;
 	long highScore=0;
-	//start with a focus point at the midpoint of the range
-	double focusLoc= start + (stop - start)/2.0;
+	//start with a focus point at the current position
+	double focusLoc= position;
 	const long PIXEL_SKIP_SIZE = 16;
 
 	_currentZIndex = -1;
 	_autoFocusStatus = AutoFocusStatusTypes::COARSE_AUTOFOCUS;
 	_zSteps = abs((stop - start) / step) + 1;
 
-	if(step > 0)
+	if(step > 0) //currently step is always > 0
 	{
 		for(loc = start; loc<= stop; loc += step)
 		{		
@@ -367,13 +407,13 @@ long AutoFocusImage::Execute(long index, IDevice* pAutoFocus, BOOL& afFound)
 	_currentZIndex = -1;
 
 	//second pass at a % times less resolution  of the coarse auto focus
-	start = (_finePercentageDecrease * start) + focusLoc;
-	stop = (_finePercentageDecrease * stop) + focusLoc;
+	start = max((_finePercentageDecrease * _startPosMM) + focusLoc, zParamMin);
+	stop = min((_finePercentageDecrease * _stopPosMM) + focusLoc, zParamMax);
 	step = step * _finePercentageDecrease;
 
 	_zSteps = abs((stop - start) / step) + 1;
 
-	if(step > 0)
+	if(step > 0) //currently step is always > 0
 	{
 		for(loc = start; loc<= stop; loc += step)
 		{		
@@ -699,7 +739,7 @@ long AutoFocusImage::GetImageBuffer(char* pBuffer, long& frameNumber, long &curr
 {
 	if (TRUE == _imageReady)
 	{
-		memcpy(pBuffer, _imageBuffer, static_cast<unsigned long long>(_width) * static_cast<unsigned long long>(_height) * sizeof(unsigned short));
+		memcpy(pBuffer, _imageBuffer, static_cast<unsigned long long>(_width) * static_cast<unsigned long long>(_height) * sizeof(unsigned short) * _numberOfChannels);
 		_imageReady = FALSE;
 		frameNumber = _frameNumber;
 		currentRepeat = _counter;

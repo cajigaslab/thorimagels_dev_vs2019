@@ -2828,6 +2828,13 @@
                 MVMManager.Instance["CaptureSetupViewModel", "LightPathGGEnable"] = 0;
                 MVMManager.Instance["CaptureSetupViewModel", "LightPathGREnable"] = 0;
                 MVMManager.Instance["CaptureSetupViewModel", "LightPathCamEnable"] = 0;
+
+                //Set the digital switches to the low position, since TearDown will set all TTL signals to low. This way the GUI will match their state
+                foreach (IntPC digiSwitch in (ObservableCollection<IntPC>)MVMManager.Instance["DigitalOutputSwitchesViewModel", "SwitchState"])
+                {
+                    digiSwitch.Value = 0;
+                }
+                ((IMVM)MVMManager.Instance["DigitalOutputSwitchesViewModel", this]).OnPropertyChange("SwitchState");
             }
         }
 
@@ -2887,6 +2894,13 @@
             MVMManager.Instance["CaptureSetupViewModel", "LightPathGGEnable"] = 0;
             MVMManager.Instance["CaptureSetupViewModel", "LightPathGREnable"] = 0;
             MVMManager.Instance["CaptureSetupViewModel", "LightPathCamEnable"] = 0;
+
+            //Set the digital switches to the low position, since TearDown will set all TTL signals to low. This way the GUI will match their state
+            foreach (IntPC digiSwitch in (ObservableCollection<IntPC>)MVMManager.Instance["DigitalOutputSwitchesViewModel", "SwitchState"])
+            {
+                digiSwitch.Value = 0;
+            }
+                ((IMVM)MVMManager.Instance["DigitalOutputSwitchesViewModel", this]).OnPropertyChange("SwitchState");
         }
 
         void _twoWayDialog_EnableImaging(bool obj)

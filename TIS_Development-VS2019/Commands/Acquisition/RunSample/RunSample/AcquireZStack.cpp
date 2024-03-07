@@ -125,6 +125,12 @@ long AcquireZStack::CallNotifySavedFileIPC(wchar_t* message)
 	return TRUE;
 }
 
+long AcquireZStack::CallAutoFocusStatus(long isRunning, long bestScore, double bestZPos, double nextZPos, long currRepeat)
+{
+	AutoFocusStatus(isRunning, bestScore, bestZPos, nextZPos, currRepeat);
+	return TRUE;
+}
+
 long AcquireZStack::Execute(long index, long subWell, long zFrame, long tFrame)
 {
 	_tFrame = tFrame;
@@ -165,25 +171,68 @@ long AcquireZStack::Execute(long index, long subWell)
 
 	_pExp->GetAutoFocus(aftype,repeat,expTimeMS,stepSizeUM,startPosMM,stopPosMM);
 
-	//Determine if we are capturing the first image for the experiment. If so make sure an autofocus is executed if enabled.
-	//After the first iteration the Z position will overlap with the XY motion
-	if((aftype != IAutoFocus::AF_NONE)&&(subWell==1))
+	if (aftype != IAutoFocus::AF_NONE)
 	{
-		_evenOdd = FALSE;
-		_lastGoodFocusPosition = afStartPos + _adaptiveOffset;
+		BOOL afFound = FALSE;
 
-		if(FALSE == SetAutoFocusStartZPosition(afStartPos,TRUE,FALSE))
+		long autoFocusStatus = 0, bestConstrastScore = 0, currentRepeat = 0;
+		double bestZPosition = 0, nextZPosition = 0;
+
+		// Define a Lambda Expression
+		auto f = [](tuple<long, long> afParams)
 		{
-			return FALSE;
+			BOOL found;
+			long type = get<0>(afParams);
+			long afMag = get<1>(afParams);
+
+			RunAutofocus(afMag, type, found);
+		};
+
+		//Create a tuple with the params
+		long mag = static_cast<long>(magnification);
+		tuple<long, long> params;
+		get<0>(params) = aftype;
+		get<1>(params) = mag;
+
+		//Start the thread to run the autofocus
+		std::thread thread_object(f, ref(params));
+
+		//Check if the autofocus process started
+		clock_t nextUpdateLoop = clock();
+		long autoFocusRunning = IsAutofocusRunning();
+		while (static_cast<unsigned long>(abs(nextUpdateLoop - clock()) / (CLOCKS_PER_SEC / 1000)) < 500 && FALSE == autoFocusRunning)
+		{
+			autoFocusRunning = IsAutofocusRunning();
 		}
-	}
+		if (FALSE == autoFocusRunning) // if auto focus is still not running, throw an error message to the log
+		{
+			logDll->TLTraceEvent(ERROR_EVENT, 1, L"RunSample auto focus thread failed to start autofocus. Timed out after 500ms.");
+		}
 
-	BOOL afFound = FALSE;
+		long stopStatus = 0;
 
-	if (FALSE == RunAutofocus(index, aftype, afFound))
-	{
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample RunAutofocus failed");
-		return FALSE;
+		//While the autofocus procedure is running, check the status
+		while (TRUE == autoFocusRunning)
+		{
+			autoFocusRunning = IsAutofocusRunning();
+			// Get the autofocus status from AutofocusModule
+			GetAutofocusStatus(autoFocusStatus, bestConstrastScore, bestZPosition, nextZPosition, currentRepeat);
+			// Send the status values to the RunSample GUI for update
+			CallAutoFocusStatus(autoFocusStatus, bestConstrastScore, bestZPosition, nextZPosition, currentRepeat);
+
+			StopCaptureEventCheck(stopStatus);
+
+			//user has asked to stop the capture
+			if (1 == stopStatus)
+			{
+				StopAutofocus();
+				break;
+			}
+			Sleep(200);
+		}
+
+		//Wait for the thread to complete and close
+		thread_object.join();
 	}
 
 	_pCamera = GetCamera(SelectedHardware::SELECTED_CAMERA1);

@@ -44,6 +44,7 @@ struct Mcm6kParams
 	UCHAR et_slot_id; // Epi Turret
 	UCHAR inverted_lp_slot_id; // Inverted Light Path
 	UCHAR condenser_slot_id; // Condenser
+	UCHAR aux_slot_id; // Aux stage
 	UCHAR shutter_slot_id; //Shutter
 	UCHAR piezo_slot_id;
 	UCHAR ndd_slot_id;
@@ -54,48 +55,56 @@ struct Mcm6kParams
 	double rPositionCurrent;
 	double zePositionCurrent;
 	double condenserPositionCurrent;
+	double auxPositionCurrent;
 
 	double xMax;
 	double yMax;
 	double zMax;
 	double rMax;
 	double condenserMax;
+	double auxMax;
 
 	double xMin;
 	double yMin;
 	double zMin;
 	double rMin;
 	double condenserMin;
+	double auxMin;
 
 	double xThreshold;
 	double yThreshold;
 	double zThreshold;
 	double rThreshold;
 	double condenserThreshold;
+	double auxThreshold;
 
 	double xMoveByThreshold;
 	double yMoveByThreshold;
 	double zMoveByThreshold;
 	double rMoveByThreshold;
 	double condenserMoveByThreshold;
+	double auxMoveByThreshold;
 
 	bool xInvert;
 	bool yInvert;
 	bool zInvert;
 	bool rInvert;
 	bool condenserInvert;
+	bool auxInvert;
 
 	bool xPidEnable;
 	bool yPidEnable;
 	bool zPidEnable;
 	bool rPidEnable;
 	bool condenserPidEnable;
+	bool auxPidEnable;
 
 	bool xPidKickoutEnable;
 	bool yPidKickoutEnable;
 	bool zPidKickoutEnable;
 	bool rPidKickoutEnable;
 	bool condenserPidKickoutEnable;
+	bool auxPidKickoutEnable;
 
 	bool x_ccw_moving;
 	bool x_cw_moving;
@@ -109,6 +118,8 @@ struct Mcm6kParams
 	bool ze_cw_moving;
 	bool condenser_ccw_moving;
 	bool condenser_cw_moving;
+	bool aux_ccw_moving;
+	bool aux_cw_moving;
 	bool epiTurret_ccw_moving;
 	bool epiTurret_cw_moving;
 	bool epiTurret_homing;
@@ -123,6 +134,7 @@ struct Mcm6kParams
 	BYTE zParams[96];
 	BYTE rParams[96];
 	BYTE condenserParams[96];
+	BYTE auxParams[96];
 
 	long invertedLightPathPos;
 	long epiTurretCurrentPos;
@@ -140,6 +152,7 @@ struct Mcm6kParams
 	long epiTurretConfigured;
 	long zeConfigured;
 	long condenserConfigured;
+	long auxConfigured;
 	long piezoConfigured;
 	long nddConfigured;
 	long shutterConfigured;

@@ -57,6 +57,7 @@ private:
 	long _autoFocusStatus;
 	long _bestContrastScore;
 	long _enableGUIUpdate;
+	long _numberOfChannels;
 	double _bestZPositionFound;
 	double _nextZPosition;
 	double _finePercentageDecrease;

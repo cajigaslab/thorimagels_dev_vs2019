@@ -40,12 +40,12 @@ enum CardTypes
 	High_Current_Stepper_Card,      // 3 42-0093 MCM6000 HC Stepper Module
 	Servo_type,                     // 4 42-0098 MCM Servo Module
 	Shutter_type,                   // 5 42-0098 MCM Servo Module
-	OTM_Dac_type,                   // 6
-	OTM_RS232_type,                 // 7
+	OTM_Dac_type,                   // 6 41-0094
+	OTM_RS232_type,                 // 7 41-0094
 	High_Current_Stepper_Card_HD,   // 8 42-0107 MCM6000 HC Stepper Module Micro DB15
-	Slider_IO_type,                 // 9
+	Slider_IO_type,                 // 9 41-0104 Slider IO (4 mirror)
 	Shutter_4_type,                 // 10 42-0108 MCM6000 4 Shutter Card PCB
-	Piezo_Elliptec_type,            // 11
+	Piezo_Elliptec_type,            // 11 41-0115 
 	ST_Invert_Stepper_BISS_type,    // 12 42-0113 MCM Stepper ABS BISS encoder Module
 	ST_Invert_Stepper_SSI_type,     // 13 42-0113 MCM Stepper ABS BISS encoder Module
 	Piezo_Type,                     // 14 42-0123 Piezo Slot Card PCB
@@ -81,28 +81,33 @@ public:
 	long HomeZ();
 	long HomeR();
 	long HomeCondenser();
+	long HomeAux();
 	long Zero();
 	long ZeroX();
 	long ZeroY();
 	long ZeroZ();
 	long ZeroR();
 	long ZeroCondenser();
+	long ZeroAux();
 	long Stop();
 	long StopX();
 	long StopY();
 	long StopZ();
 	long StopR();
 	long StopCondenser();
+	long StopAux();
 	long MoveXTo(double);
 	long MoveYTo(double);
 	long MoveZTo(double);
 	long MoveRTo(double);
 	long MoveCondenserTo(double);
+	long MoveAuxTo(double);
 	long MoveXBy(double);
 	long MoveYBy(double);
 	long MoveZBy(double);
 	long MoveRBy(double);
 	long MoveCondenserBy(double);
+	long MoveAuxBy(double);
 	long MoveLpTo(int);
 	long MoveEtTo(int);
 	long MoveNDDTo(int);
@@ -115,16 +120,19 @@ public:
 	long ZJogCW();
 	long RJogCW();
 	long CondenserJogCW();
+	long AuxJogCW();
 	long XJogCCW();
 	long YJogCCW();
 	long ZJogCCW();
 	long RJogCCW();
 	long CondenserJogCCW();
+	long AuxJogCCW();
 	long GetXPos(double&);
 	long GetYPos(double&);
 	long GetZPos(double&);
 	long GetRPos(double&);
 	long GetCondenserPos(double&);
+	long GetAuxPos(double&);
 	long GetLpPos(long&);
 	long GetEtPos(long&);
 	long GetZElevatorPos(double&);
@@ -138,6 +146,7 @@ public:
 	bool IsZmoving();
 	bool IsRmoving();
 	bool IsCondenserMoving();
+	bool IsAuxMoving();
 	bool IsZEmoving();
 	bool IsLighPathMoving();
 	bool IsEpiTurretMoving();

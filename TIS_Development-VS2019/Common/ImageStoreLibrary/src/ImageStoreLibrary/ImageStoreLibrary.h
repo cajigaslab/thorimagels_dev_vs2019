@@ -26,12 +26,12 @@
 */
 struct frame_info
 {
-	uint8_t scan_id;
+	uint32_t scan_id;
 	uint16_t region_id;
 	uint16_t channel_id;
-	uint16_t z_id;
-	uint16_t time_id;
-	uint16_t s_id;
+	uint32_t z_id;
+	uint32_t time_id;
+	uint32_t s_id;
 };
 
 struct frame_info_ext

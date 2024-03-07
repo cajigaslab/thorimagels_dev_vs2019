@@ -56,6 +56,10 @@
         Visibility _threePhotonPhaseCoarseVisibility;
         ICommand _threePhotonPhaseFineMinusCommand;
         ICommand _threePhotonPhaseFinePlusCommand;
+        ICommand _downsamplingRateMinusCommand;
+        ICommand _downsamplingRatePlusCommand;
+        Visibility _downsamplingRateVisibility;
+
 
         #endregion Fields
 
@@ -267,6 +271,19 @@
             }
         }
 
+        public int ThreePhotonDownsamplingRate
+        {
+            get
+            {
+                return this._threePhotonControlModel.ThreePhotonDownsamplingRate;
+            }
+            set
+            {
+                this._threePhotonControlModel.ThreePhotonDownsamplingRate = value;
+                OnPropertyChanged("ThreePhotonDownsamplingRate");
+            }
+        }
+
         public int LSMNumberOfPlanes
         {
             get
@@ -315,6 +332,41 @@
             {
                 _multiplaneVisibility = value;
                 OnPropertyChanged("MultiplaneVisibility");
+            }
+        }
+
+        public Visibility DownsamplingRateVisibility
+        {
+            get
+            {
+                return _downsamplingRateVisibility;
+            }
+            set
+            {
+                _downsamplingRateVisibility = value;
+                OnPropertyChanged("DownsamplingRateVisibility");
+            }
+        }
+
+        public ICommand DownsamplingRateMinusCommand
+        {
+            get
+            {
+                if (this._downsamplingRateMinusCommand == null)
+                    this._downsamplingRateMinusCommand = new RelayCommand(() => --ThreePhotonDownsamplingRate);
+
+                return this._downsamplingRateMinusCommand;
+            }
+        }
+
+        public ICommand DownsamplingRatePlusCommand
+        {
+            get
+            {
+                if (this._downsamplingRatePlusCommand == null)
+                    this._downsamplingRatePlusCommand = new RelayCommand(() => ++ThreePhotonDownsamplingRate);
+
+                return this._downsamplingRatePlusCommand;
             }
         }
 
@@ -383,6 +435,19 @@
                 ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("LSMPixelDwellTimeMaxIndex");
                 ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("PulsesPerPixelVisibility");
 
+            }
+        }
+
+        public int EnableDownsamplingRateChange
+        {
+            get
+            {
+                return _threePhotonControlModel.EnableDownsamplingRateChange;
+            }
+            set
+            {
+                _threePhotonControlModel.EnableDownsamplingRateChange = value;
+                OnPropertyChanged("EnableDownsamplingRateChange");
             }
         }
 
@@ -626,6 +691,16 @@
                     DDSEnable = itmp;
                 }
 
+                if (XmlManager.GetAttribute(ndList[0], doc, "EnableDownsamplingRateChange", ref str) && (Int32.TryParse(str, out itmp)))
+                {
+                    EnableDownsamplingRateChange = itmp;
+                }
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "ThreePhotonDownsamplingRate", ref str) && (Int32.TryParse(str, out itmp)))
+                {
+                    ThreePhotonDownsamplingRate = itmp;
+                }
+
                 if (XmlManager.GetAttribute(ndList[0], doc, "DDSPhase0", ref str) && (double.TryParse(str, out dtmp)))
                 {
                     DDSPhase0 = dtmp;
@@ -663,6 +738,10 @@
                 {
                     MultiplaneVisibility = str.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
                 }
+                if (XmlManager.GetAttribute(ndList[0], appDoc, "DownsamplingRateVisibility", ref str))
+                {
+                    DownsamplingRateVisibility = str.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
+                }
                 if (XmlManager.GetAttribute(ndList[0], appDoc, "AcquireDuringGalvoTurnAroundVisibility", ref str))
                 {
                     AcquireDuringTurnAroundVisibility = str.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
@@ -695,6 +774,8 @@
                 XmlManager.SetAttribute(ndList[0], experimentFile, "ThreePhotonPhaseFine", this.ThreePhotonPhaseFine.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "NumberOfPlanes", this.LSMNumberOfPlanes.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "FIR1ManualControlEnable", (this.FIR1ManualControlEnable).ToString());
+                XmlManager.SetAttribute(ndList[0], experimentFile, "ThreePhotonDownsamplingRate", (this.ThreePhotonDownsamplingRate).ToString());
+                XmlManager.SetAttribute(ndList[0], experimentFile, "EnableDownsamplingRateChange", (this.EnableDownsamplingRateChange).ToString());
 
                 XmlManager.SetAttribute(ndList[0], experimentFile, "DDSEnable", this.DDSEnable.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "DDSPhase0", this.DDSPhase0.ToString());

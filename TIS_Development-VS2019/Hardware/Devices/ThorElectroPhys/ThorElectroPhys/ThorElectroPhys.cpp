@@ -441,6 +441,19 @@ long ThorElectroPhys::SelectDevice(const long device)
 long ThorElectroPhys::TeardownDevice()
 {
 	_parkAnalogLineAtLastVoltage = FALSE;
+
+	//Move all digital lines low. This is so the mirrors move out of position for laser safety
+	uInt8 sample = 0;
+	int32 written = 0;
+	int32 error = 0;
+	for (long i = 0; i < MAX_DIG_PORT_OUTPUT; i++)
+	{
+		if ((NULL != _taskHandleDO[i]) && (true == _digitalPortOutputAvailable[i]))
+		{
+			DAQmxErrChk(L"DAQmxWriteDigitalLines", error = DAQmxWriteDigitalLines(_taskHandleDO[i], 1, TRUE, 0, DAQmx_Val_GroupByChannel, &sample, &written, NULL));
+		}
+	}
+
 	CloseNITasks();
 	CloseMeasureTasks();
 	CloseTriggerTasks();

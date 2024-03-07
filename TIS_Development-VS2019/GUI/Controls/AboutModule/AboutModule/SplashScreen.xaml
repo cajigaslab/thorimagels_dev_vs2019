@@ -141,9 +141,11 @@
                                    FontFamily="Cambria" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
-                        <Label Margin="5"
+                        <Label 
+                                Name ="DateLabel"
+                                Margin="5"
                                Background="{x:Null}"
-                               Content="Thorlabs Inc - 2022"
+                               
                                HorizontalContentAlignment="Left"
                                Foreground="#FFFFFFFF"
                                FontSize="12"

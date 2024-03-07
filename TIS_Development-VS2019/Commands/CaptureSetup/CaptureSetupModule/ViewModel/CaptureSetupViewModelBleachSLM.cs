@@ -182,6 +182,35 @@
             }
         }
 
+        public double PatternImportLimit
+        {
+            get
+            {
+                string strTmp = string.Empty;
+                const int DEFAULT_PATTERN_COUNT_MAX = 100;  //max # of pattern ROIs to be imported, none is available if over the limit
+                int iVal = DEFAULT_PATTERN_COUNT_MAX;
+                try
+                {
+                    XmlDocument appSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+                    XmlNodeList ndList = appSettings.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView");
+                    if (null != ndList)
+                    {
+                        if (!(XmlManager.GetAttribute(ndList[0], appSettings, "PatternImportLimit", ref strTmp) && int.TryParse(strTmp, out iVal)))
+                        {
+                            iVal = DEFAULT_PATTERN_COUNT_MAX;
+                            XmlManager.SetAttribute(ndList[0], appSettings, "PatternImportLimit", iVal.ToString());
+                            MVMManager.Instance.ReloadSettings(SettingsFileType.APPLICATION_SETTINGS);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ThorLogging.ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Verbose, 1, "Fail to get PatternImportLimit: " + ex.Message);
+                }
+                return iVal;
+            }
+        }
+
         public double RefractiveIndex
         {
             get
@@ -284,32 +313,11 @@
             get { return (DateTimeFormatInfo.CurrentInfo.DayNames.Length < (DateTime.Now).Subtract(SLMLastCalibTime).TotalDays) ? true : false; }
         }
 
-        public bool SLMCalibByBurning
+        public int SLMCalibByBurning
         {
             get
             {
-                string strTmp = string.Empty;
-                int iVal = 0;
-                try
-                {
-                    XmlDocument appSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
-                    XmlNodeList ndList = appSettings.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView/BleachCalibrationTool");
-                    if (null != ndList)
-                    {
-                        if (!(XmlManager.GetAttribute(ndList[0], appSettings, "CalibByBurning", ref strTmp) && Int32.TryParse(strTmp, out iVal)))
-                        {
-                            iVal = 0;
-                            XmlManager.SetAttribute(ndList[0], appSettings, "CalibByBurning", iVal.ToString());
-                            MVMManager.Instance.ReloadSettings(SettingsFileType.APPLICATION_SETTINGS);
-                            return 1 == iVal;
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Verbose, 1, "Fail to get CalibByBurning: " + ex.Message);
-                }
-                return 1 == iVal;
+                return _captureSetup.SLMCalibByBurning;
             }
         }
 
@@ -873,12 +881,13 @@
         }
 
         /// <summary>
-        /// rearrange SLMBLeachParams's ID after deleting target ID number, similar to DeletePatternROI in OverlayManager.
+        /// rearrange SLMBLeachParams's ID after deleting target ID number, similar to DeletePatternROI in OverlayManager;
+        /// Default -1 means all.
         /// </summary>
         /// <param name="targetID"></param>
         /// <param name="subFolderIndex"></param>
         /// <param name="reorder"></param>
-        public void DeleteSLMBleachParamsID(uint targetID, int subFolderIndex = -1, bool reorder = true)
+        public void DeleteSLMBleachParamsID(int targetID = -1, int subFolderIndex = -1, bool reorder = true)
         {
             try
             {
@@ -887,10 +896,10 @@
                 //delete pattern file:
                 for (int i = 0; i < SLMBleachWaveParams.Count; i++)
                 {
-                    if (targetID == SLMBleachWaveParams[i].BleachWaveParams.ID)
+                    if (-1 == targetID || targetID == (uint)SLMBleachWaveParams[i].BleachWaveParams.ID)
                     {
-                        ResourceManagerCS.DeleteFile(SLMWaveformFolder[0] + "\\" + SLMWaveBaseName[1] + "_" + targetID.ToString(numDigits) + ".bmp");
-                        ResourceManagerCS.DeleteFile(SLMWaveformFolder[0] + "\\" + SLMWaveBaseName[1] + "_" + targetID.ToString(numDigits) + ".txt");
+                        ResourceManagerCS.DeleteFile(SLMWaveformFolder[0] + "\\" + SLMWaveBaseName[1] + "_" + SLMBleachWaveParams[i].BleachWaveParams.ID.ToString(numDigits) + ".bmp");
+                        ResourceManagerCS.DeleteFile(SLMWaveformFolder[0] + "\\" + SLMWaveBaseName[1] + "_" + SLMBleachWaveParams[i].BleachWaveParams.ID.ToString(numDigits) + ".txt");
                         //delete files in subfolders, unshifted & intermediate Z
                         for (int j = 0; j < SLMbmpSubFolders.Length; j++)
                         {
@@ -900,7 +909,7 @@
                                 DirectoryInfo dirInfo = new DirectoryInfo(SLMWaveformFolder[0] + SLMbmpSubFolders[j]);
                                 foreach (FileInfo fInfo in dirInfo.GetFiles())
                                 {
-                                    if (System.IO.Path.GetFileNameWithoutExtension(fInfo.Name).Contains(SLMWaveBaseName[1] + "_" + targetID.ToString(numDigits)))
+                                    if (System.IO.Path.GetFileNameWithoutExtension(fInfo.Name).Contains(SLMWaveBaseName[1] + "_" + SLMBleachWaveParams[i].BleachWaveParams.ID.ToString(numDigits)))
                                         fInfo.Delete();
                                 }
                             }
@@ -908,7 +917,7 @@
                     }
                 }
 
-                if (reorder)
+                if (reorder && -1 != targetID)
                 {
                     //rename pattern files in the folders:
                     ReorderSLMPatternFiles(targetID, SLMWaveformFolder[0]);
@@ -981,8 +990,8 @@
             //set bleach scanner power to zero
             MVMManager.Instance["PowerControlViewModel", "BleacherPower0"] = MVMManager.Instance["PowerControlViewModel", "BleacherPower1"] = 0.0;
 
-            //not leaving pattern on
-            SLMSetBlank();
+            //instead of blank, defocus to avoid burning out zeroth order mask
+            SLMSetBlank((int)IDevice.Params.PARAM_SLM_BLANK_SAFE);
         }
 
         public void InitializeWaveformBuilder(int clockRateHz)
@@ -1007,12 +1016,26 @@
 
         public bool SLMCalibration(string bmpPatternName, float[] ptsFrom, float[] ptsTo, int size)
         {
-            return _captureSetup.SLMCalibration(bmpPatternName, ptsFrom, ptsTo, size, SLM3DBackup);
+            return _captureSetup.SLMCalibration(bmpPatternName, ptsFrom, ptsTo, size, SLM3DBackup ? 1 : 0);
         }
 
-        public bool SLMSetBlank()
+        /// <summary>
+        /// Delete all SLM patterns, sequences and waveforms
+        /// </summary>
+        public void SLMDeleteAll()
         {
-            return _captureSetup.SLMSetBlank();
+            SLMBleachWaveParams.Clear();
+
+            OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, -1,
+                (IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS));
+
+            for (int i = 0; i < SLMWaveformFolder.Length; i++)
+                ClearSLMFiles(SLMWaveformFolder[i]);
+        }
+
+        public bool SLMSetBlank(int blankMode = (int)IDevice.Params.PARAM_SLM_BLANK)
+        {
+            return _captureSetup.SLMSetBlank(blankMode);
         }
 
         public void UpdateSLMCompParams()
@@ -1086,17 +1109,21 @@
 
         private void EditSLMParam(object type)
         {
-            //back up LSMScanMode in case SLM panel changes it
-            if (ICamera.ScanMode.FORWARD_SCAN >= (ICamera.ScanMode)MVMManager.Instance["ScanControlViewModel", "LSMScanMode", (object)0])
-                MVMManager.Instance["ScanControlViewModel", "LastLSMScanMode"] = (int)MVMManager.Instance["ScanControlViewModel", "LSMScanMode", (object)0];
-
             string str = (string)type;
             double dTmp = 0.0;
             System.Collections.Specialized.BitVector32 bitVec32;
             XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/SLM");
 
-            //keep overlay manager access to hardware mvms, property only when import
-            OverlayManagerClass.Instance.SimulatorMode = false;
+            //no need to do backup in show-hide, so do it beforehand
+            if (SLMParamEditWin.SLMPatternType.ShowHide == SLMParamEditWin.SLMPatternTypeDictionary[str])
+            {
+                SLMPatternsVisible = !SLMPatternsVisible;
+                return;
+            }
+
+            //back up LSMScanMode in case SLM panel changes it
+            if (ICamera.ScanMode.FORWARD_SCAN >= (ICamera.ScanMode)MVMManager.Instance["ScanControlViewModel", "LSMScanMode", (object)0])
+                MVMManager.Instance["ScanControlViewModel", "LastLSMScanMode"] = (int)MVMManager.Instance["ScanControlViewModel", "LSMScanMode", (object)0];
 
             //back up properties here
             SLM3DBackup = SLM3D;
@@ -1236,7 +1263,7 @@
                         OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, (int)SLMBleachWaveParams[_slmPatternSelectedIndex].BleachWaveParams.ID,              //ID: 1 based
                             (IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS));
                         OverlayManagerClass.Instance.BackupROIs();
-                        DeleteSLMBleachParamsID(SLMBleachWaveParams[_slmPatternSelectedIndex].BleachWaveParams.ID);
+                        DeleteSLMBleachParamsID((int)SLMBleachWaveParams[_slmPatternSelectedIndex].BleachWaveParams.ID);
 
                         //delete from list at last, since selected index will be lost afterward;
                         //replace collection to update view:
@@ -1247,10 +1274,13 @@
                         if (!CompareSLMParams())
                             EditSLMParam("SLM_BUILD");
                     }
-
                     break;
-                case SLMParamEditWin.SLMPatternType.ShowHide:
-                    SLMPatternsVisible = !SLMPatternsVisible;
+                case SLMParamEditWin.SLMPatternType.DeleteAll:
+                    //delete not compatible with other mode
+                    if (null != _slmParamEditWin)
+                        return;
+
+                    SLMDeleteAll();
                     break;
                 case SLMParamEditWin.SLMPatternType.Execute:
                     if (null != _slmParamEditWin)
@@ -1271,7 +1301,7 @@
                             return;
                         }
                         //stop Live Capture if GALVO_GALVO:
-                        if ((int)ICamera.LSMType.GALVO_GALVO == ResourceManagerCS.GetLSMType())
+                        if (0 < SLMCalibByBurning && (int)ICamera.LSMType.GALVO_GALVO == ResourceManagerCS.GetLSMType())
                         {
                             StopLiveCapture();
                         }
@@ -1288,13 +1318,13 @@
                             return;
 
                         //blank slm before start of calibration:
-                        EditSLMParam("SLM_BLANK");
+                        SLMSetBlank((int)IDevice.Params.PARAM_SLM_BLANK_SAFE);
 
                         ROIToolVisible = new bool[14] { true, false, false, false, false, false, true, false, false, true, true, true, true, false };
 
                         OverlayManagerClass.Instance.CurrentMode = ThorSharedTypes.Mode.PATTERN_NOSTATS;    //keep mode unchanged due to "SLMCalibROIs.xaml"
                         OverlayManagerClass.Instance.PatternID = 2;                                         //for user-selection, target is on PatterID 1
-                        OverlayManagerClass.Instance.SkipRedrawCenter = SLMCalibByBurning ? false : SLM3D;  //allow start index of 1 or 0 if not calibration by burning(2D)
+                        OverlayManagerClass.Instance.SkipRedrawCenter = (0 < SLMCalibByBurning) ? false : SLM3D;  //allow start index of 1 or 0 if not calibration by burning(2D)
                         bitVec32 = new System.Collections.Specialized.BitVector32(Convert.ToByte(255));
                         bitVec32[OverlayManagerClass.SecG] = Convert.ToByte(0);
                         bitVec32[OverlayManagerClass.SecB] = Convert.ToByte(0);
@@ -1334,6 +1364,7 @@
                         _slmParamEditWin.ShowDialog();
                     }
                     break;
+                //rebuild SLM sequences and waveforms
                 case SLMParamEditWin.SLMPatternType.Build:
                     if ((null == _slmParamEditWin) && !CompareSLMFiles(EpochSequence))
                     {
@@ -1374,8 +1405,8 @@
                         DuplicateSelectedSLMPattern();
                     }
                     break;
+                //set Z reference position for SLM 3D and display text on button
                 case SLMParamEditWin.SLMPatternType.ZRef:
-                    //set Z reference position for SLM 3D and display text on button
                     PersistGlobalExperimentXML(GlobalExpAttribute.SLM_ZREF);
                     OnPropertyChanged("SLMZRefText");
                     break;
@@ -1383,6 +1414,7 @@
                     DefocusSavedUM = DefocusUM;
                     EditSLMParam("SLM_REBUILDALL"); //rebuild SLM patterns if any
                     break;
+                //rebuild all SLM patterns, sequences and waveforms
                 case SLMParamEditWin.SLMPatternType.RebuildAll:
                     if (null != _slmParamEditWin) return;
 
@@ -1407,8 +1439,11 @@
         /// <param name="targetID"></param>
         /// <param name="directoryName"></param>
         /// <param name="ext"></param>
-        private void ReorderSLMPatternFiles(uint targetID, string directoryName, string ext = ".all")
+        private void ReorderSLMPatternFiles(int targetID, string directoryName, string ext = ".all")
         {
+            if (!Directory.Exists(directoryName))
+                return;
+
             string numDigits = "D" + FileName.GetDigitCounts().ToString();
 
             string[] sType = (0 <= ext.IndexOf(".all", StringComparison.OrdinalIgnoreCase)) ? new string[2] { ".bmp", ".txt" } : new string[1] { ext };
@@ -1436,7 +1471,11 @@
                             for (int j = 0; j < nameParts.Count() - lastPartID; j++)
                                 newName += nameParts[j] + "_";
 
-                            File.Move(filesInFolder[i], newName + newID.ToString(numDigits) + ((filesInFolder[i].Contains("_Z[") && 3 <= nameParts.Count()) ? "_" + nameParts[nameParts.Count() - 1].Substring(0, nameParts[nameParts.Count() - 1].LastIndexOf('.')) : "") + sType[itype]);
+                            string fMoveTo = newName + newID.ToString(numDigits) + ((filesInFolder[i].Contains("_Z[") && 3 <= nameParts.Count()) ?
+                                "_" + nameParts[nameParts.Count() - 1].Substring(0, nameParts[nameParts.Count() - 1].LastIndexOf('.')) :
+                                "") + sType[itype];
+                            ResourceManagerCS.DeleteFile(fMoveTo);
+                            File.Move(filesInFolder[i], fMoveTo);
                         }
                     }
                 }
@@ -1680,23 +1719,29 @@
 
         private void _slmParamEditWin_Closed(object sender, EventArgs e)
         {
+            //persist SLM param edit window position
             ApplicationDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
             XmlNode node = ApplicationDoc.SelectSingleNode("/ApplicationSettings/DisplayOptions/CaptureSetup/EditBleachWindow");
 
             if (null != node && null != _slmParamEditWin)
             {
-                string str = string.Empty;
-
-                //// Code below this point is not being reached ////
                 XmlManager.SetAttribute(node, ApplicationDoc, "left", ((int)Math.Round(_slmParamEditWin.Left)).ToString());
                 XmlManager.SetAttribute(node, ApplicationDoc, "top", ((int)Math.Round(_slmParamEditWin.Top)).ToString());
 
-                MVMManager.Instance.SaveSettings(SettingsFileType.APPLICATION_SETTINGS);
+                MVMManager.Instance.SaveSettings(SettingsFileType.APPLICATION_SETTINGS, true);
             }
-            _slmParamEditWin = null;
+
             OverlayManagerClass.Instance.InitSelectROI(ref CaptureSetupViewModel.OverlayCanvas);
-            OverlayManagerClass.Instance.DisplayModeROI(ref CaptureSetupViewModel.OverlayCanvas, new ThorSharedTypes.Mode[2] { ThorSharedTypes.Mode.PATTERN_NOSTATS, ThorSharedTypes.Mode.PATTERN_WIDEFIELD }, _slmPatternsVisible);
-            OverlayManagerClass.Instance.DisplayModeROI(ref CaptureSetupViewModel.OverlayCanvas, new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.STATSONLY }, true);
+            //no redraw if import
+            if (!OverlayManagerClass.Instance.SimulatorMode)
+            {
+                OverlayManagerClass.Instance.DisplayModeROI(ref CaptureSetupViewModel.OverlayCanvas, new ThorSharedTypes.Mode[2] { ThorSharedTypes.Mode.PATTERN_NOSTATS, ThorSharedTypes.Mode.PATTERN_WIDEFIELD }, _slmPatternsVisible);
+                OverlayManagerClass.Instance.DisplayModeROI(ref CaptureSetupViewModel.OverlayCanvas, new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.STATSONLY }, true);
+            }
+            //give back overlay manager access to hardware mvms and update visible ROIs & masks
+            OverlayManagerClass.Instance.SimulatorMode = false;
+
+            _slmParamEditWin = null;
             OnPropertyChanged("SLMBleachNowEnabled");
         }
 

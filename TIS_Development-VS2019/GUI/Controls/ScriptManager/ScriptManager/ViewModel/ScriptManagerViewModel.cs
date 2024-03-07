@@ -1515,7 +1515,7 @@
 
                 //allow cpu time for other activities
                 //failure to do so hangs the script
-                System.Threading.Thread.Sleep(2);
+                System.Threading.Thread.Sleep(5);
             }
             _timer.Stop();
             _timer.Tick -= _timer_Tick;
@@ -1606,7 +1606,7 @@
                                 stopPressed = true;
                             //allow cpu time for other activities
                             //failure to do so hangs the script
-                            System.Threading.Thread.Sleep(2);
+                            System.Threading.Thread.Sleep(5);
                         };
                     }
 
@@ -1629,7 +1629,7 @@
                             //allow cpu time for other activities
                             //failure to do so hangs the script
                             UpdateMenuBarButton(false);
-                            System.Threading.Thread.Sleep(2);
+                            System.Threading.Thread.Sleep(5);
                         } while (true);
                     }
 

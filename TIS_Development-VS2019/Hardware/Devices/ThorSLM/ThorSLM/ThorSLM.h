@@ -31,6 +31,9 @@ extern "C"
 		static std::vector<unsigned int> _slmSeqVec; ///<sequence of pattern in random order
 		static mutex _callbackMutex; ///<mutex lock to update static params used in callback
 		static ISLM* _slmDevice;
+		static HANDLE _hThread;
+		static HANDLE _hStopThread; ///<event to stop SLM thread
+		static HANDLE _hThreadStopped; ///<Signals if the SLM thread has stopped
 
 		std::unique_ptr<SlmManager> _slmManager;
 		long _fileSettingsLoaded; ///<Flag set when the settings from the settings file have been read
@@ -61,6 +64,7 @@ extern "C"
 		std::wstring _bmpPathAndName; ///<current working bmp file path and name
 		std::wstring _seqPathAndName; ///<current sequence file path and name to set pattern sequence
 		static long _arrayOrFileID; ///<index of slm points set or bitmap buffers
+		static long _lastArrayOrFileID; ///<previous index of slm points set or bitmap buffers
 		long _verticalFlip[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT]; ///<preset vertical flip before pattern generation
 		double _rotateAngle[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT]; ///<preset rotation before pattern generation
 		double _scaleFactor[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT][2]; ///<preset scaling before pattern generation
@@ -76,6 +80,7 @@ extern "C"
 		long _loadPhaseDirectly; ///<load or save phase mask directly (TRUE) or default load-then-convert (FALSE)
 		long _dmdMode; ///<use SLM in DMD mode if TRUE
 		bool _doHologram; ///<phase image applied by hologram & transform if TRUE
+		bool _inSave; ///<if TRUE in save hologram mode, otherwise in load hologram
 		double _defocusParam[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT][4]; ///<defocus applied on all holograms, [0]:z defocus in [um], [1]:refractive index, [2]:effective focal length in [mm], [3]: saved defocus value [um]
 		long _skipFitting; ///<skip fitting when loading of SLM mask
 
@@ -93,8 +98,8 @@ extern "C"
 	public:
 		static ThorSLM* getInstance();
 
-		long FindDevices(long& deviceCount); ///<Search system to find meadowlark slm
-		long SelectDevice(const long device);///<
+		long FindDevices(long& deviceCount); ///<Search system to find meadowlark or other slms
+		long SelectDevice(const long device);///<select a particular slm
 		long TeardownDevice(); ///<close handles
 		long GetParamInfo(const long paramID, long& paramType, long& paramAvailable, long& paramReadOnly, double& paramMin, double& paramMax, double& paramDefault); ///<get the information for each parameter
 		long SetParam(const long paramID, const double param);///<set parameter value
@@ -118,6 +123,8 @@ extern "C"
 	private:
 		ThorSLM();
 		static int32 CVICALLBACK ThorSLM::HWTriggerCallback(TaskHandle taskHandle, int32 signalID, void* callbackData);
+		static int32 ThorSLM::SLMAsync(void* data);
+		static void CloseSLMAsync(void);
 		static BOOL IsOverdrive();
 		void BlankSLM(ISLM::SLMBlank bmode);
 		void CloseNITasks();
@@ -125,7 +132,7 @@ extern "C"
 		long CoordinatesVerticalFlip(float* ptArrays, long size);
 		long CoordinatesScale(float* ptArrays, long size, double scaleX, double scaleY);
 		void CopyDefocus(int from, int to);
-		long DefocusNormalizeHologram(long savedZ);
+		long DefocusNormalizeHologram(double defocusZum);
 		long LoadHologram();
 		double ParseZUM(wstring filename);
 		long PersistAffineValues();

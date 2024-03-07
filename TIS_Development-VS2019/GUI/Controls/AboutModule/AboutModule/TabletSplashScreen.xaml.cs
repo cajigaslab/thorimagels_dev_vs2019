@@ -3,7 +3,9 @@
     using System;
     using System.Collections.Generic;
     using System.ComponentModel;
+    using System.IO;
     using System.Linq;
+    using System.Reflection;
     using System.ServiceModel;
     using System.Text;
     using System.Windows;
@@ -34,6 +36,8 @@
             InitializeComponent();
             txtTitle.Text = title;
             _hides = false;
+            //sfn 2019 was originally part of the string below \/
+            DateLabel.Content = "Thorlabs Inc. - " + (new FileInfo(Assembly.GetExecutingAssembly().Location).LastWriteTime).Date.ToString("yyyy");
             this.Closing += new CancelEventHandler(SplashScreen_Closing);
             this.Deactivated += new EventHandler(SplashScreen_Deactivated);
             this.ShowInTaskbar = false;

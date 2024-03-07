@@ -213,6 +213,12 @@ long AcquireTStream::CallNotifySavedFileIPC(wchar_t* message)
 	return TRUE;
 }
 
+long AcquireTStream::CallAutoFocusStatus(long isRunning, long bestScore, double bestZPos, double nextZPos, long currRepeat)
+{
+	AutoFocusStatus(isRunning, bestScore, bestZPos, nextZPos, currRepeat);
+	return TRUE;
+}
+
 /// <return> return next created image ID, -1 if failed. </return>
 long AcquireTStream::CreateSaveThread(SaveParams& sp, char* pMem)
 {
@@ -938,7 +944,7 @@ long AcquireTStream::SetupImageData(wstring streamPath, ICamera *pCamera, long a
 	return TRUE;
 }
 
-long AcquireTStream::PreCaptureAutoFocus(long index, long subWell, double afStartPos, double afAdaptiveOffset)
+long AcquireTStream::PreCaptureAutoFocus(ICamera* pCamera, long index, long subWell, double afStartPos, double afAdaptiveOffset, double magnification, long cameraType)
 {
 	_adaptiveOffset = afAdaptiveOffset;
 
@@ -949,6 +955,8 @@ long AcquireTStream::PreCaptureAutoFocus(long index, long subWell, double afStar
 
 	//Determine if we are capturing the first image for the experiment. If so make sure an autofocus is executed if enabled.
 	//After the first iteration the Z position will overlap with the XY motion
+	/* :TODO: need to figure out if this is the right way to set the initial position. By default it sets it to 0 which would move
+	* the stage to 0
 	if((aftype != IAutoFocus::AF_NONE)&&(subWell==1))
 	{
 		_evenOdd = FALSE;
@@ -957,14 +965,82 @@ long AcquireTStream::PreCaptureAutoFocus(long index, long subWell, double afStar
 		{
 			return FALSE;
 		}
-	}
+	}*/
 
-	BOOL afFound = FALSE;
-
-	if (FALSE == RunAutofocus(index, aftype, afFound))
+	if (aftype != IAutoFocus::AF_NONE)
 	{
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample RunAutofocus failed");
-		return FALSE;
+		BOOL afFound = FALSE;
+
+		//Enable the PMTs, set the LEDs and open the shutter
+		SetPMT();
+
+		double ledPower1 = 0, ledPower2 = 0, ledPower3 = 0, ledPower4 = 0, ledPower5 = 0, ledPower6 = 0;
+		SetLEDs(_pExp, NULL, 0, ledPower1, ledPower2, ledPower3, ledPower4, ledPower5, ledPower6);
+
+		OpenShutter();
+
+		pCamera->SetParam(ICamera::PARAM_TRIGGER_MODE, ICamera::SW_MULTI_FRAME);
+
+		long autoFocusStatus = 0, bestConstrastScore = 0, currentRepeat = 0;
+		double bestZPosition = 0, nextZPosition = 0;
+
+		// Define a Lambda Expression
+		auto f = [](tuple<long, long> afParams)
+		{
+			BOOL found;
+			long type = get<0>(afParams);
+			long afMag = get<1>(afParams);
+
+			RunAutofocus(afMag, type, found);
+		};
+
+		//Create a tuple with the params
+		long mag = static_cast<long>(magnification);
+		tuple<long, long> params;
+		get<0>(params) = aftype;
+		get<1>(params) = mag;
+
+		//Start the thread to run the autofocus
+		std::thread thread_object(f, ref(params));
+
+		//Check if the autofocus process started
+		clock_t nextUpdateLoop = clock();
+		long autoFocusRunning = IsAutofocusRunning();
+		while (static_cast<unsigned long>(abs(nextUpdateLoop - clock()) / (CLOCKS_PER_SEC / 1000)) < 500 && FALSE == autoFocusRunning)
+		{
+			autoFocusRunning = IsAutofocusRunning();
+		}
+		if (FALSE == autoFocusRunning) // if auto focus is still not running, throw an error message to the log
+		{
+			logDll->TLTraceEvent(ERROR_EVENT, 1, L"RunSample auto focus thread failed to start autofocus. Timed out after 500ms.");
+		}
+
+		long stopStatus = 0;
+
+		//While the autofocus procedure is running, check the status
+		while (TRUE == autoFocusRunning)
+		{
+			autoFocusRunning = IsAutofocusRunning();
+			// Get the autofocus status from AutofocusModule
+			GetAutofocusStatus(autoFocusStatus, bestConstrastScore, bestZPosition, nextZPosition, currentRepeat);
+			// Send the status values to the RunSample GUI for update
+			CallAutoFocusStatus(autoFocusStatus, bestConstrastScore, bestZPosition, nextZPosition, currentRepeat);
+
+			StopCaptureEventCheck(stopStatus);
+
+			//user has asked to stop the capture
+			if (1 == stopStatus)
+			{
+				CloseShutter();
+				StopAutofocus();
+				thread_object.join();
+				return FALSE;
+			}
+			Sleep(200);
+		}
+
+		//Wait for the thread to complete and close
+		thread_object.join();
 	}
 
 	return TRUE;
@@ -1353,7 +1429,6 @@ long AcquireTStream::PrepareAndStartAcquisition(ICamera* pCamera, long& dmaFrame
 
 	SetPMT();
 
-
 	double ledPower1 = 0, ledPower2 = 0, ledPower3 = 0, ledPower4 = 0, ledPower5 = 0, ledPower6 = 0;
 	SetLEDs(_pExp, pCamera, 0, ledPower1, ledPower2, ledPower3, ledPower4, ledPower5, ledPower6);
 
@@ -1587,11 +1662,6 @@ long AcquireTStream::Execute(long index, long subWell)
 
 	pHardware->GetMagInfoFromName(objName,magnification,position,numAperture,afStartPos,afFocusOffset,afAdaptiveOffset,beamExpPos,beamExpWavelength,beamExpPos2,beamExpWavelength2,turretPosition,zAxisToEscape,zAxisEscapeDistance,fineAutoFocusPercentage);
 
-	if(FALSE == PreCaptureAutoFocus(index, subWell,  afStartPos, afAdaptiveOffset))
-	{
-		return FALSE;
-	}
-
 	ICamera *pCamera = GetCamera(SelectedHardware::SELECTED_CAMERA1);
 	if(NULL == pCamera)
 	{	
@@ -1645,6 +1715,11 @@ long AcquireTStream::Execute(long index, long subWell)
 	long numberOfPlanes = 1;
 	//Set camera settings and get settings needed in this function
 	SetGetCameraSettings(pCamera, channel, bufferChannels, width, height, averageMode, averageNum, umPerPixel, fieldSize, dwelltime, numberOfPlanes);
+
+	if (FALSE == PreCaptureAutoFocus(pCamera, index, subWell, afStartPos, afAdaptiveOffset, magnification, cameraType))
+	{
+		return FALSE;
+	}
 
 	long saveEnabledChannelsOnlyLong;
 	_pExp->GetRaw(saveEnabledChannelsOnlyLong);
@@ -2540,11 +2615,11 @@ long AcquireTStream::Execute(long index, long subWell)
 							case CaptureFile::FILE_BIG_TIFF:
 								if (IExperiment::HYPERSPECTRAL == captureMode)
 								{
-									bigTiff->SaveData(pBuf, static_cast<uint16_t>(i), static_cast<uint16_t>(zIndex), 1, static_cast<uint16_t>(tVolume));
+									bigTiff->SaveData(pBuf, static_cast<uint16_t>(i), static_cast<uint32_t>(zIndex), 1, static_cast<uint32_t>(tVolume));
 								}
 								else
 								{
-									bigTiff->SaveData(pBuf, static_cast<uint16_t>(i), static_cast<uint16_t>(zIndex), static_cast<uint16_t>(tVolume), 1);
+									bigTiff->SaveData(pBuf, static_cast<uint16_t>(i), static_cast<uint32_t>(zIndex), static_cast<uint32_t>(tVolume), 1);
 								}
 								break;
 							default:
@@ -2976,14 +3051,6 @@ long AcquireTStream::Execute(long index, long subWell)
 
 	SAFE_DELETE_ARRAY (pSumBufferDFLIMSinglePhoton);
 
-	// Adjust T if OME-Tiff and stopped manually
-	if (IDYES == _messageID && STORAGE_FINITE == storageMode)
-	{
-		bigTiff->AdjustScanTCount((int)currentTCount);
-	}
-
-	bigTiff->ClearImageStore();
-
 	//========================================================
 	//   Process Memory Stream After All Images Aqcuired
 	//========================================================
@@ -2997,6 +3064,15 @@ long AcquireTStream::Execute(long index, long subWell)
 		else
 		{sp.pMemoryBuffer = _pMemoryBuffer;}
 		//#endif
+
+		// Adjust T if OME-Tiff and stopped manually
+		if (!averageMode)
+		{
+			if (IDYES == _messageID && STORAGE_FINITE == storageMode)
+			{
+				bigTiff->AdjustScanTCount((int)currentTCount);
+			}
+		}
 		DestroyImages(sp.imageIDsMap);
 		DestroyImages(sp.regionImageIDsMap);
 		//no post process if Big tiff without compression or average
@@ -3017,6 +3093,7 @@ long AcquireTStream::Execute(long index, long subWell)
 			//clear all temp files
 			HandleStimStreamRawFile(&sp,DELETE_ALL_TEMP);
 		}
+		bigTiff->ClearImageStore();
 		break;
 	case STORAGE_STIMULUS:
 		//resume and wait for all saving threads:
@@ -3056,6 +3133,13 @@ long AcquireTStream::Execute(long index, long subWell)
 		//#else
 		else
 		{
+			// Adjust T if OME-Tiff and stopped manually
+			if (IDYES == _messageID && STORAGE_FINITE == storageMode)
+			{
+				bigTiff->AdjustScanTCount((int)currentTCount);
+			}
+
+			bigTiff->ClearImageStore();
 			DestroyImages(sp.imageIDsMap);
 			DestroyImages(sp.regionImageIDsMap);
 			sp.regionMap.begin()->second.SizeT = totalSavedImages;					
@@ -3079,6 +3163,7 @@ long AcquireTStream::Execute(long index, long subWell)
 		break;
 	}
 
+	
 	pCamera->SetParam(ICamera::PARAM_LSM_AVERAGEMODE,averageMode);
 
 	pCamera->SetParam(ICamera::PARAM_RAW_SAVE_ENABLED_CHANNELS_ONLY, FALSE);
@@ -4136,11 +4221,11 @@ void AcquireTStream::SaveData( SaveParams *sp, long imageMode, bool stopCheckAll
 						case CaptureFile::FILE_BIG_TIFF:
 							if (IExperiment::HYPERSPECTRAL == captureMode)
 							{
-								bigTiff->SaveData(bufferAtPos, static_cast<uint16_t>(i), static_cast<uint16_t>(z+1), 1, static_cast<uint16_t>(t+1));
+								bigTiff->SaveData(bufferAtPos, static_cast<uint16_t>(i), static_cast<uint32_t>(z+1), 1, static_cast<uint32_t>(t+1));
 							}
 							else
 							{
-								bigTiff->SaveData(bufferAtPos, static_cast<uint16_t>(i), static_cast<uint16_t>(z+1), static_cast<uint16_t>(t+1), 1);
+								bigTiff->SaveData(bufferAtPos, static_cast<uint16_t>(i), static_cast<uint32_t>(z+1), static_cast<uint32_t>(t+1), 1);
 							}
 							break;
 						default:

@@ -279,6 +279,62 @@
                          VerticalAlignment="Center" />
             </StackPanel>
             <StackPanel HorizontalAlignment="Stretch"
+                        Orientation="Horizontal"
+                        Margin="0,5"
+                        IsEnabled="{Binding Path=IsChecked, ElementName=CbThreePhotonModeEnable}"
+                        Visibility="{Binding Path=DownsamplingRateVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <Label Content="3P Downsampling Rate"
+                       IsEnabled="{Binding Path=IsChecked, ElementName=cbEnableDownsamplingRateChange}"
+                       VerticalAlignment="Center" />
+                <StackPanel Orientation="Horizontal">
+                    <TextBox Name="tbDownsamplingRate"
+                                 ToolTip="Change the 3P Downsampling Rate"
+                                 VerticalAlignment="Center"
+                                 Width="50"
+                                 Text="{Binding Path=ThreePhotonDownsamplingRate, Mode=TwoWay}" 
+                                 IsEnabled="{Binding Path=IsChecked, ElementName=cbEnableDownsamplingRateChange}"/>
+                    <Button Width="30"
+                                Height="25"
+                                Content="&#x2713;">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tb3PDownsamplingRate}"
+                                                     Value="True">
+                                        <Setter Property="Visibility"
+                                                    Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <StackPanel VerticalAlignment="Center">
+                        <RepeatButton Content="+"
+                                          Width="30"
+                                          Height="20"
+                                          Command="{Binding Path=DownsamplingRatePlusCommand}"
+                                          IsEnabled="{Binding Path=IsChecked, ElementName=cbEnableDownsamplingRateChange}"
+                                          Delay="500"
+                                          Interval="100" />
+                        <RepeatButton Content="-"
+                                          Width="30"
+                                          Height="20"
+                                          Command="{Binding Path=DownsamplingRateMinusCommand}"
+                                          IsEnabled="{Binding Path=IsChecked, ElementName=cbEnableDownsamplingRateChange}"
+                                          Delay="500"
+                                          Interval="100" />
+                    </StackPanel>
+                </StackPanel>
+                <CheckBox Content="Enable Manual DS Rate"
+                          Name="cbEnableDownsamplingRateChange"
+                          VerticalContentAlignment="Center"
+                          IsChecked="{Binding Path=EnableDownsamplingRateChange, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}"
+                          Margin="3"
+                          VerticalAlignment="Center" />
+            </StackPanel>
+            <StackPanel HorizontalAlignment="Stretch"
                         Margin="0,5"
                         IsEnabled="{Binding Path=IsChecked, ElementName=CbThreePhotonModeEnable}"
                         Visibility="{Binding Path=MultiplaneVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">

@@ -20,6 +20,7 @@
 #include <Strsafe.h>
 #include <math.h>
 #include <shlwapi.h>
+#include <thread>
 
 #include <io.h>
 #include <sys/types.h>

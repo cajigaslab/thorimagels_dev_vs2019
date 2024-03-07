@@ -127,6 +127,20 @@
         private void Button_OnOK(object sender, RoutedEventArgs e)
         {
             _setFlag = true;
+
+            //nudge the value as needed if it is negative or 0
+            double val = 0;
+            if (double.TryParse(zPixelMultiplierTextBox.Text, out val))
+            {
+                if (val == 0)
+                {
+                    zPixelMultiplierTextBox.Text = "1";
+                }
+                else if (val < 0)
+                {
+                    zPixelMultiplierTextBox.Text = Math.Abs(val).ToString();
+                }
+            }
             this.Close();
         }
 

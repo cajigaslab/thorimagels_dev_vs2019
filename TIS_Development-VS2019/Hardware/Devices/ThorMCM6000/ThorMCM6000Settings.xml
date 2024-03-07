@@ -11,6 +11,7 @@
 		LightPath:				slot#="LP"
 		Coarse Z:				slot#="ZElevator"
 		Condenser:				slot#="Condenser"
+    Aux Stage:				slot#="Aux"
 		Shutter:				slot#="Shutter"
 		Inverted Epi Turret:	slot#="EpiTurret"
 		Inverted Z:				slot#="InvertedZ"
@@ -23,4 +24,5 @@
 	<ZRangeConfig minMM="-3" maxMM="3" threshold="1" invert="0" moveByThresholduM="-1"/>
 	<RRangeConfig min="-10" max="10" threshold="2" invert="0" moveByThresholduM="-1"/>
 	<CondenserRangeConfig minMM="-3" maxMM="3" threshold="1" invert="0" moveByThresholduM="-1"/>
+  <AuxRangeConfig minMM="-3" maxMM="3" threshold="1" invert="0" moveByThresholduM="-1"/>
 </MCM6000Settings>

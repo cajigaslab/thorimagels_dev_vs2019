@@ -143,6 +143,14 @@
             }
         }
 
+        public ICommand BrowseForReferenceImageCommand
+        {
+            get
+            {
+                return ((ICommand)MVMManager.Instance["CaptureSetupViewModel", "BrowseForReferenceImageCommand", (object)new RelayCommand(() => { })]);
+            }
+        }
+
         public ICommand CenterROICommand
         {
             get
@@ -1386,6 +1394,14 @@
             }
         }
 
+        public bool GGCalAlert
+        {
+            get
+            {
+                return (DateTimeFormatInfo.CurrentInfo.DayNames.Length < (DateTime.Now).Subtract(ResourceManagerCS.ToDateTimeFromUnix(LSMLastCalibrationDateUnix)).TotalDays) ? true : false;
+            }
+        }
+
         public string LSMLastCalibrationDate
         {
             get
@@ -1405,6 +1421,7 @@
                 _lsmLastCalibrationDateUnix = value;
                 OnPropertyChanged("LSMLastCalibrationDateUnix");
                 OnPropertyChanged("LSMLastCalibrationDate");
+                OnPropertyChanged("GGCalAlert");
             }
         }
 
@@ -2136,6 +2153,14 @@
                     _returnToOriginalAreaCommand = new RelayCommand(() => ReturnToOriginalArea());
 
                 return _returnToOriginalAreaCommand;
+            }
+        }
+
+        public string ReferenceChannelImageName
+        {
+            get
+            {
+                return MVMManager.Instance["CaptureSetupViewModel", "ReferenceChannelImageName", ""].ToString();
             }
         }
 

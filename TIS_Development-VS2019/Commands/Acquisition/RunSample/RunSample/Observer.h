@@ -21,6 +21,7 @@ public:
 	void OnNotifySavedFileIPC(wchar_t* message);
 	void SetStopCapture(long status);
 	void SetTotalImagecount(long count, long channelCount);		///< count: total frame #, channelCount: total channel steps for CaptureSequence mode
+	void OnAutoFocusRunning(long isRunning, long bestScore, double bestZPos, double nextZPos, long currRepeat);
 
 private:
 

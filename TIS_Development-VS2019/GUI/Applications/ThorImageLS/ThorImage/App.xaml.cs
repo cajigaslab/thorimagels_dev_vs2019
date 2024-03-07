@@ -599,9 +599,31 @@ namespace ThorImage
         //Function that compares current version to newest release version and opens a messagebox informing the user of an available update
         void client_DownloadDataCompleted(object sender, DownloadDataCompletedEventArgs e)
         {
+            XmlDocument doc2 = new XmlDocument();
+            doc2.Load(AppDomain.CurrentDomain.BaseDirectory + "ResourceManager.xml");
+            XmlNode node = doc2.SelectSingleNode("/ResourceManager/ThorImageVersionCheck");
+
             if (e.Error != null)
             {
-                MessageBox.Show("Unable to check for updates. Please check your network connection.");
+                Dispatcher.Invoke(() =>
+                {
+                    string strCheck = string.Empty;
+                    XmlManager.GetAttribute(node, doc2, "stopDisplayingConnectionError", ref strCheck);
+                    if (node.Attributes[2].Value == "0")
+                    {
+                        CustomMessageBox messageBox = new CustomMessageBox("Unable to check for updates. Please check your network connection.", "Check For Updates", "Stop displaying this message", "Ok");
+                        //Displays Check For Updates message box and changes the stopUpdateCheck to 1 if the checkbox was pressed upon closing the window
+                        if (messageBox.ShowDialog().GetValueOrDefault(true))
+                        {
+                            if (messageBox.CheckBoxChecked)
+                            {
+                                node.Attributes[2].Value = "1";
+                                doc2.Save("ResourceManager.xml");
+                            }
+                        }
+                    }
+                }, System.Windows.Threading.DispatcherPriority.Normal);
+
                 return;
             }
 
@@ -609,7 +631,6 @@ namespace ThorImage
             string result = System.Text.Encoding.UTF8.GetString(raw);
 
             XmlDocument doc = new XmlDocument();
-            XmlDocument doc2 = new XmlDocument();
 
             if (!result.Contains("</Software>"))
             {
@@ -618,10 +639,8 @@ namespace ThorImage
             }
 
             doc.LoadXml(result);
-            doc2.Load(AppDomain.CurrentDomain.BaseDirectory + "ResourceManager.xml");
 
             XmlNodeList ndList = doc.SelectNodes("/Software/Version");
-            XmlNode node = doc2.SelectSingleNode("/ResourceManager/ThorImageVersionCheck");
 
             string str = string.Empty;
             string str2 = string.Empty;

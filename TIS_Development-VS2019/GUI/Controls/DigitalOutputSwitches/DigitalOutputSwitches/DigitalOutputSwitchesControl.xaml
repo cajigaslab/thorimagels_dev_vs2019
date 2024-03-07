@@ -442,6 +442,7 @@
                                 Height="40"
                                 Margin="1"
                                 Content="Go"
+                                VerticalAlignment="Bottom"
                                 ToolTip="Goto defined value(s)"
                                 Command="{Binding Path=GotoCommand}">
                             <Button.Style>

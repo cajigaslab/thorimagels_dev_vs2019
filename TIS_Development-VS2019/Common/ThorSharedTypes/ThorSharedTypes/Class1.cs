@@ -1194,6 +1194,8 @@
             PARAM_3P_REVERB_DDS1_PHASE,
             PARAM_3P_REVERB_DDS0_AMPLITUDE,
             PARAM_3P_REVERB_DDS1_AMPLITUDE,
+            PARAM_3P_ENABLE_DOWNSAMPLING_RATE_CHANGE,
+            PARAM_3P_DOWNSAMPLING_RATE,
             PARAM_LIGHTPATH_TYPE,
             PARAM_LSM_CURRENT_CRS_FREQUENCY,
             PARAM_RESEARCH_CAMERA_0,
@@ -1338,6 +1340,7 @@
             HW_MULTI_FRAME_TRIGGER_EACH,
             HW_MULTI_FRAME_TRIGGER_EACH_BULB,
             HW_TDI_TRIGGER_MODE,
+            HW_MULTI_FRAME_TRIGGER_CONT,
             LAST_TRIGGER_MODE
         }
 
@@ -1753,6 +1756,7 @@
             PARAM_SLM_BMP_FILENAME,
             PARAM_SLM_RESET_AFFINE,
             PARAM_SLM_BLANK,
+            PARAM_SLM_BLANK_SAFE,
             PARAM_SLM_TIMEOUT,
             PARAM_SLM_RUNTIME_CALC,
             PARAM_SLM_SEQ_FILENAME,
@@ -1762,7 +1766,6 @@
             PARAM_SLM_3D,
             PARAM_SLM_PHASE_DIRECT,
             PARAM_SLM_DEFOCUS,
-            PARAM_SLM_SAVE_DEFOCUS,
             PARAM_SLM_DUAL_SHIFT_PX,
 
             PARAM_R_POS = 1200,
@@ -1789,6 +1792,15 @@
             PARAM_CONDENSER_INVERT = 1220,
             PARAM_CONDENSER_STOP = 1221,
             PARAM_CONDENSER_POS_MOVE_BY = 1222,
+
+            PARAM_AUX_POS = 1240,
+            PARAM_AUX_JOG,
+            PARAM_AUX_POS_CURRENT,
+            PARAM_AUX_STATUS,
+            PARAM_AUX_ZERO,
+            PARAM_AUX_INVERT,
+            PARAM_AUX_STOP,
+            PARAM_AUX_POS_MOVE_BY,
 
             PARAM_ECU_TWO_WAY_ZONE_1 = 1300,
             PARAM_ECU_TWO_WAY_ZONE_2,

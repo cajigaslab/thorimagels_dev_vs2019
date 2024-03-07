@@ -73,6 +73,7 @@ public:
 	virtual long CallStartProgressBar(long index, long resetTotalCount = 0);
 	virtual long CallInformMessage(wchar_t* message);
 	virtual long CallNotifySavedFileIPC(wchar_t* message);
+	virtual long CallAutoFocusStatus(long isRunning, long bestScore, double bestZPos, double nextZPos, long currRepeat);
 
 	//wrappers:
 	static long CaptureWrap(void* pObj, ICamera * pCamera, long currentT, long streaming, long numFrames, double timeInterval, Dimensions d, SaveParams *sp, long simultaneous)

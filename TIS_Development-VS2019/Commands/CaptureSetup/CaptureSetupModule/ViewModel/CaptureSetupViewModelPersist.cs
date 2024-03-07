@@ -610,6 +610,9 @@
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "holoGen3D", this.SLM3D ? "1" : "0");
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "refractiveIndex", this.RefractiveIndex.ToString());
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "sequenceEpochDelay", this.SLMSequenceEpochDelay.ToString());
+
+                    //non-global SLM properties:
+                    XmlManager.SetAttribute(ndList[0], xmlDoc, "calibZoffsetUM", this.DefocusSavedUM.ToString());
                 }
                 ////End (SLM) Bleach non-waveform criticals
 

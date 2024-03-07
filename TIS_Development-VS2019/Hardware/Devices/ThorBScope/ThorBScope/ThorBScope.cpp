@@ -538,7 +538,9 @@ long ThorBScope::SetupPosition()
 		{
 			continue;
 		}
-		else if((iter->second)->GetParamVal() != (iter->second)->GetParamCurrent())
+		// We special case the PMT/CAM mirror because it is inverted. If the MCM5000 is turned off
+		//ThorImageLS has no way to know the TTL is down, so we should move this mirror regardless
+		else if((iter->second)->GetParamVal() != (iter->second)->GetParamCurrent() || PARAM_LIGHTPATH_CAMERA == (iter->second)->GetParamID())
 		{
 			(iter->second)->SetParamBool(TRUE);
 		}

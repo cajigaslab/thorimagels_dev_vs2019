@@ -97,6 +97,7 @@ long MCM6000XML::ReadSettingsFile(Mcm6kParams* mcm6kParams, ScopeType& scopeType
 	mcm6kParams->et_slot_id = 0;
 	mcm6kParams->inverted_lp_slot_id = 0;
 	mcm6kParams->condenser_slot_id = 0;
+	mcm6kParams->aux_slot_id = 0;
 	mcm6kParams->shutter_slot_id = 0;
 	mcm6kParams->piezo_slot_id = 0;
 	mcm6kParams->ndd_slot_id = 0;
@@ -108,6 +109,7 @@ long MCM6000XML::ReadSettingsFile(Mcm6kParams* mcm6kParams, ScopeType& scopeType
 	mcm6kParams->epiTurretConfigured = FALSE;
 	mcm6kParams->zeConfigured = FALSE;
 	mcm6kParams->condenserConfigured = FALSE;
+	mcm6kParams->auxConfigured = FALSE;
 	mcm6kParams->piezoConfigured = FALSE;
 	mcm6kParams->nddConfigured = FALSE;
 	mcm6kParams->shutterConfigured = FALSE;
@@ -214,6 +216,11 @@ long MCM6000XML::ReadSettingsFile(Mcm6kParams* mcm6kParams, ScopeType& scopeType
 						mcm6kParams->condenser_slot_id = CARD_ID_START_ADDRESS + i;
 						mcm6kParams->condenserConfigured = TRUE;
 					}
+					if (wstring(val.bstrVal).compare(L"Aux") == 0)
+					{
+						mcm6kParams->aux_slot_id = CARD_ID_START_ADDRESS + i;
+						mcm6kParams->auxConfigured = TRUE;
+					}
 					if (wstring(val.bstrVal).compare(L"ZElevator") == 0)
 					{
 						mcm6kParams->ze_slot_id = CARD_ID_START_ADDRESS + i;
@@ -247,6 +254,7 @@ long MCM6000XML::ReadSettingsFile(Mcm6kParams* mcm6kParams, ScopeType& scopeType
 			setSlots |= (IsSlotIdValid(mcm6kParams->shutter_slot_id)) ? 1 << (mcm6kParams->shutter_slot_id - CARD_ID_START_ADDRESS) : setSlots;
 			setSlots |= (IsSlotIdValid(mcm6kParams->piezo_slot_id)) ? 1 << (mcm6kParams->piezo_slot_id - CARD_ID_START_ADDRESS) : setSlots;
 			setSlots |= (IsSlotIdValid(mcm6kParams->ndd_slot_id)) ? 1 << (mcm6kParams->ndd_slot_id - CARD_ID_START_ADDRESS) : setSlots;
+			setSlots |= (IsSlotIdValid(mcm6kParams->aux_slot_id)) ? 1 << (mcm6kParams->aux_slot_id - CARD_ID_START_ADDRESS) : setSlots;
 
 			numberOfSetSlots = CountSetBits(setSlots);
 
@@ -302,6 +310,16 @@ long MCM6000XML::ReadSettingsFile(Mcm6kParams* mcm6kParams, ScopeType& scopeType
 			}
 			SysFreeString(bstrQuery);
 
+			bq = L"/MCM6000Settings/AuxRangeConfig/@maxMM";
+			bstrQuery = SysAllocString(bq.c_str());
+			pXMLDom->selectSingleNode(bstrQuery, &pNode);
+			if (pNode)
+			{
+				pNode->get_nodeValue(&val);
+				mcm6kParams->auxMax = _wtof(val.bstrVal);
+			}
+			SysFreeString(bstrQuery);
+
 			// --------------------------- min --------------------------- 
 
 			bq = L"/MCM6000Settings/XRangeConfig/@minMM";
@@ -351,6 +369,16 @@ long MCM6000XML::ReadSettingsFile(Mcm6kParams* mcm6kParams, ScopeType& scopeType
 			{
 				pNode->get_nodeValue(&val);
 				mcm6kParams->condenserMin = _wtof(val.bstrVal);
+			}
+			SysFreeString(bstrQuery);
+
+			bq = L"/MCM6000Settings/AuxRangeConfig/@minMM";
+			bstrQuery = SysAllocString(bq.c_str());
+			pXMLDom->selectSingleNode(bstrQuery, &pNode);
+			if (pNode)
+			{
+				pNode->get_nodeValue(&val);
+				mcm6kParams->auxMin = _wtof(val.bstrVal);
 			}
 			SysFreeString(bstrQuery);
 
@@ -406,6 +434,16 @@ long MCM6000XML::ReadSettingsFile(Mcm6kParams* mcm6kParams, ScopeType& scopeType
 			}
 			SysFreeString(bstrQuery);
 
+			bq = L"/MCM6000Settings/AuxRangeConfig/@threshold";
+			bstrQuery = SysAllocString(bq.c_str());
+			pXMLDom->selectSingleNode(bstrQuery, &pNode);
+			if (pNode)
+			{
+				pNode->get_nodeValue(&val);
+				mcm6kParams->auxThreshold = _wtof(val.bstrVal);
+			}
+			SysFreeString(bstrQuery);
+
 			// --------------------------- invert --------------------------- 
 
 			bq = L"/MCM6000Settings/XRangeConfig/@invert";
@@ -458,6 +496,16 @@ long MCM6000XML::ReadSettingsFile(Mcm6kParams* mcm6kParams, ScopeType& scopeType
 			}
 			SysFreeString(bstrQuery);
 
+			bq = L"/MCM6000Settings/AuxRangeConfig/@invert";
+			bstrQuery = SysAllocString(bq.c_str());
+			pXMLDom->selectSingleNode(bstrQuery, &pNode);
+			if (pNode)
+			{
+				pNode->get_nodeValue(&val);
+				mcm6kParams->auxInvert = (_wtoi(val.bstrVal) == 1) ? true : false;
+			}
+			SysFreeString(bstrQuery);
+
 			// --------------------------- Move by Threshold --------------------------- 
 			bq = L"/MCM6000Settings/XRangeConfig/@moveByThresholduM";
 			bstrQuery = SysAllocString(bq.c_str());
@@ -506,6 +554,16 @@ long MCM6000XML::ReadSettingsFile(Mcm6kParams* mcm6kParams, ScopeType& scopeType
 			{
 				pNode->get_nodeValue(&val);
 				mcm6kParams->condenserMoveByThreshold = _wtof(val.bstrVal) / static_cast<double>(UM_TO_MM);
+			}
+			SysFreeString(bstrQuery);
+
+			bq = L"/MCM6000Settings/AuxRangeConfig/@moveByThresholduM";
+			bstrQuery = SysAllocString(bq.c_str());
+			pXMLDom->selectSingleNode(bstrQuery, &pNode);
+			if (pNode)
+			{
+				pNode->get_nodeValue(&val);
+				mcm6kParams->auxMoveByThreshold = _wtof(val.bstrVal) / static_cast<double>(UM_TO_MM);
 			}
 			SysFreeString(bstrQuery);
 
@@ -561,6 +619,16 @@ long MCM6000XML::ReadSettingsFile(Mcm6kParams* mcm6kParams, ScopeType& scopeType
 			}
 			SysFreeString(bstrQuery);
 
+			bq = L"/MCM6000Settings/AuxRangeConfig/@pid";
+			bstrQuery = SysAllocString(bq.c_str());
+			pXMLDom->selectSingleNode(bstrQuery, &pNode);
+			if (pNode)
+			{
+				pNode->get_nodeValue(&val);
+				mcm6kParams->auxPidEnable = (_wtoi(val.bstrVal) == 1) ? true : false;
+			}
+			SysFreeString(bstrQuery);
+
 			// --------------------------- PidKickout ---------------------------
 			bq = L"/MCM6000Settings/XRangeConfig/@pidKickout";
 			bstrQuery = SysAllocString(bq.c_str());
@@ -609,6 +677,16 @@ long MCM6000XML::ReadSettingsFile(Mcm6kParams* mcm6kParams, ScopeType& scopeType
 			{
 				pNode->get_nodeValue(&val);
 				mcm6kParams->condenserPidKickoutEnable = (_wtoi(val.bstrVal) == 1) ? true : false;
+			}
+			SysFreeString(bstrQuery);
+
+			bq = L"/MCM6000Settings/AuxRangeConfig/@pidKickout";
+			bstrQuery = SysAllocString(bq.c_str());
+			pXMLDom->selectSingleNode(bstrQuery, &pNode);
+			if (pNode)
+			{
+				pNode->get_nodeValue(&val);
+				mcm6kParams->auxPidKickoutEnable = (_wtoi(val.bstrVal) == 1) ? true : false;
 			}
 			SysFreeString(bstrQuery);
 			*/
@@ -827,6 +905,14 @@ long MCM6000XML::SaveSlotNameToSettingsFile(Mcm6kParams* mcm6kParams, long& sett
 							pNode->put_nodeValue(varStage);
 						}
 
+						if (slotName.compare("A") == 0 ||
+							slotName.compare("Aux") == 0 ||
+							slotName.compare("Aux Stage") == 0)
+						{
+							CHK_HR(VariantFromString(L"Aux", varStage));
+							pNode->put_nodeValue(varStage);
+						}
+
 						if (slotName.compare("E") == 0 ||
 							slotName.compare("E Axis") == 0 ||
 							slotName.compare("Z Elevator") == 0)
@@ -965,6 +1051,15 @@ long MCM6000XML::VerifySlotCards(Mcm6kParams* mcm6kParams, ScopeType& scopeType)
 			mcm6kParams->condenserConfigured = FALSE;
 			wstring messageWstring = L"The slot configured for the Condenser doesn't have the correct card. Please check ThorMCM6000Settings.xml and make sure SlotLayout is configured correctly. The card might have been moved or it is missing a parameter configuration. \n\nIf error persists please contact techsupport@thorlabs.com.";
 			MessageBox(NULL, messageWstring.c_str(), L"ThorMCM6000 Error: Condenser Card", MB_OK);
+			ret = FALSE;
+		}
+
+		if (i + CARD_ID_START_ADDRESS == mcm6kParams->aux_slot_id && (0 != slotName.compare("A") && 0 != slotName.compare("Aux") && 0 != slotName.compare("Aux Stage")))
+		{
+			mcm6kParams->aux_slot_id = 0;
+			mcm6kParams->auxConfigured = FALSE;
+			wstring messageWstring = L"The slot configured for the Aux stage doesn't have the correct card. Please check ThorMCM6000Settings.xml and make sure SlotLayout is configured correctly. The card might have been moved or it is missing a parameter configuration. \n\nIf error persists please contact techsupport@thorlabs.com.";
+			MessageBox(NULL, messageWstring.c_str(), L"ThorMCM6000 Error: Aux stage Card", MB_OK);
 			ret = FALSE;
 		}
 

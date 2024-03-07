@@ -233,6 +233,12 @@ long AcquireBleaching::CallNotifySavedFileIPC(wchar_t* message)
 	return TRUE;
 }
 
+long AcquireBleaching::CallAutoFocusStatus(long isRunning, long bestScore, double bestZPos, double nextZPos, long currRepeat)
+{
+	AutoFocusStatus(isRunning, bestScore, bestZPos, nextZPos, currRepeat);
+	return TRUE;
+}
+
 long AcquireBleaching::Execute(long index, long subWell, long zFrame, long tFrame)
 {
 	AcquireBleaching::_lastImageUpdateTime = 0;
@@ -698,52 +704,109 @@ long AcquireBleaching::LoadBleachWaveform(const wchar_t* bleachH5PathName, int C
 
 long AcquireBleaching::PreCaptureAutoFocus(long index, long subWell)
 {
-	double magnification;
-	string objName;
-	_pExp->GetMagnification(magnification,objName);
-
-	long position=0;
-	double numAperture;
-	double afStartPos=0;
-	double afFocusOffset=0;
-	double afAdaptiveOffset=0;
-	long beamExpPos=0;
-	long beamExpWavelength=0;
-	long beamExpPos2=0;
-	long beamExpWavelength2=0;
-	long turretPosition=0;
-	long zAxisToEscape=0;
-	double zAxisEscapeDistance=0;
-	double fineAutoFocusPercentage = 0.15;
-
-	//Get filter parameters from hardware setup.xml
-	pHardware->GetMagInfoFromName(objName,magnification,position,numAperture,afStartPos,afFocusOffset,afAdaptiveOffset,beamExpPos,beamExpWavelength,beamExpPos2,beamExpWavelength2,turretPosition,zAxisToEscape,zAxisEscapeDistance,fineAutoFocusPercentage);
-	_adaptiveOffset = afAdaptiveOffset;
-
 	long aftype,repeat;
 	double expTimeMS,stepSizeUM,startPosMM,stopPosMM;
 
 	_pExp->GetAutoFocus(aftype,repeat,expTimeMS,stepSizeUM,startPosMM,stopPosMM);
 
-
 	//Determine if we are capturing the first image for the experiment. If so make sure an autofocus is executed if enabled.
 	//After the first iteration the Z position will overlap with the XY motion
-	if((aftype != IAutoFocus::AF_NONE)&&(subWell==1))
+	/* :TODO: need to figure out if this is the right way to set the initial position. By default it sets it to 0 which would move
+	* the stage to 0
+	if ((aftype != IAutoFocus::AF_NONE) && (subWell == 1))
 	{
 		_evenOdd = FALSE;
 		_lastGoodFocusPosition = afStartPos + _adaptiveOffset;
-		if(FALSE == SetAutoFocusStartZPosition(afStartPos,TRUE,FALSE))
+		if (FALSE == SetAutoFocusStartZPosition(afStartPos, TRUE, FALSE))
 		{
 			return FALSE;
 		}
-	}
+	}*/
 
-	BOOL afFound = FALSE;
-
-	if (FALSE == RunAutofocus(index, aftype, afFound))
+	if (aftype != IAutoFocus::AF_NONE)
 	{
-		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample RunAutoFocus failed");
-		return FALSE;
+		double magnification;
+		string objName;
+		_pExp->GetMagnification(magnification, objName);
+
+		long position = 0;
+		double numAperture;
+		double afStartPos = 0;
+		double afFocusOffset = 0;
+		double afAdaptiveOffset = 0;
+		long beamExpPos = 0;
+		long beamExpWavelength = 0;
+		long beamExpPos2 = 0;
+		long beamExpWavelength2 = 0;
+		long turretPosition = 0;
+		long zAxisToEscape = 0;
+		double zAxisEscapeDistance = 0;
+		double fineAutoFocusPercentage = 0.15;
+
+		//Get filter parameters from hardware setup.xml
+		pHardware->GetMagInfoFromName(objName, magnification, position, numAperture, afStartPos, afFocusOffset, afAdaptiveOffset, beamExpPos, beamExpWavelength, beamExpPos2, beamExpWavelength2, turretPosition, zAxisToEscape, zAxisEscapeDistance, fineAutoFocusPercentage);
+		_adaptiveOffset = afAdaptiveOffset;
+
+		BOOL afFound = FALSE;
+
+		long autoFocusStatus = 0, bestConstrastScore = 0, currentRepeat = 0;
+		double bestZPosition = 0, nextZPosition = 0;
+
+		// Define a Lambda Expression
+		auto f = [](tuple<long, long> afParams)
+		{
+			BOOL found;
+			long type = get<0>(afParams);
+			long afMag = get<1>(afParams);
+
+			RunAutofocus(afMag, type, found);
+		};
+
+		//Create a tuple with the params
+		long mag = static_cast<long>(magnification);
+		tuple<long, long> params;
+		get<0>(params) = aftype;
+		get<1>(params) = mag;
+
+		//Start the thread to run the autofocus
+		std::thread thread_object(f, ref(params));
+
+		//Check if the autofocus process started
+		clock_t nextUpdateLoop = clock();
+		long autoFocusRunning = IsAutofocusRunning();
+		while (static_cast<unsigned long>(abs(nextUpdateLoop - clock()) / (CLOCKS_PER_SEC / 1000)) < 500 && FALSE == autoFocusRunning)
+		{
+			autoFocusRunning = IsAutofocusRunning();
+		}
+		if (FALSE == autoFocusRunning) // if auto focus is still not running, throw an error message to the log
+		{
+			logDll->TLTraceEvent(ERROR_EVENT, 1, L"RunSample auto focus thread failed to start autofocus. Timed out after 500ms.");
+		}
+
+		long stopStatus = 0;
+
+		//While the autofocus procedure is running, check the status
+		while (TRUE == autoFocusRunning)
+		{
+			autoFocusRunning = IsAutofocusRunning();
+			// Get the autofocus status from AutofocusModule
+			GetAutofocusStatus(autoFocusStatus, bestConstrastScore, bestZPosition, nextZPosition, currentRepeat);
+			// Send the status values to the RunSample GUI for update
+			CallAutoFocusStatus(autoFocusStatus, bestConstrastScore, bestZPosition, nextZPosition, currentRepeat);
+
+			StopCaptureEventCheck(stopStatus);
+
+			//user has asked to stop the capture
+			if (1 == stopStatus)
+			{
+				StopAutofocus();
+				break;
+			}
+			Sleep(200);
+		}
+
+		//Wait for the thread to complete and close
+		thread_object.join();
 	}
 
 	return TRUE;
@@ -1443,12 +1506,6 @@ long AcquireBleaching::CompareROIFile(wchar_t* path)
 
 long AcquireBleaching::Execute(long index, long subWell)
 {	
-	//perform an autofocus
-	if(FALSE == PreCaptureAutoFocus(index, subWell))
-	{
-		return FALSE;
-	}
-
 	ICamera *pCamera = NULL;
 
 	pCamera = GetCamera(SelectedHardware::SELECTED_CAMERA1);
@@ -1513,6 +1570,11 @@ long AcquireBleaching::Execute(long index, long subWell)
 			trigMode = ICamera::HW_MULTI_FRAME_TRIGGER_EACH;
 		}
 		break;
+	case 3:
+		{
+			trigMode = ICamera::HW_MULTI_FRAME_TRIGGER_CONT;
+		}
+		break;
 	default:
 		{
 			trigMode = ICamera::SW_MULTI_FRAME;
@@ -1547,6 +1609,13 @@ long AcquireBleaching::Execute(long index, long subWell)
 	{
 		OpenShutter();
 	}
+
+	//perform an autofocus
+	if (FALSE == PreCaptureAutoFocus(index, subWell))
+	{
+		return FALSE;
+	}
+
 
 	//master time index
 	long currentT = 1;
@@ -1654,7 +1723,7 @@ long AcquireBleaching::Execute(long index, long subWell)
 	long isPostBleachSetupDone = FALSE;
 	char* buf = NULL;
 	DWORD dwThread;
-	HANDLE hThread, hCaptureThread;
+	HANDLE hThread, hCaptureThread = NULL;
 	InitializeCriticalSection(&loadAccess);
 
 	//initialize waveform params:
@@ -1823,6 +1892,7 @@ long AcquireBleaching::Execute(long index, long subWell)
 		//set flag to invoke post bleach capture setup once only:
 		isPostBleachSetupDone = TRUE;
 
+		//wait until current bleach cycle is done:
 		while(WaitForSingleObject( hEventBleach, 10) != WAIT_OBJECT_0)
 		{
 			StopCaptureEventCheck(_stopStatus);
@@ -1830,6 +1900,24 @@ long AcquireBleaching::Execute(long index, long subWell)
 			{
 				pBleachScanner->PostflightAcquisition(NULL);
 				SetEvent(hStopBleach);
+			}
+			//return if simultaneous imaging is done:
+			if (NULL != hCaptureThread && NULL != hEventCapture) 
+			{
+				if (WaitForSingleObject(hEventCapture, 10) == WAIT_OBJECT_0)
+				{
+					pBleachScanner->PostflightAcquisition(NULL);
+					SetEvent(hStopBleach);
+
+					SetEvent(hStopCapture);
+					//Close the shutter before returning
+					if (TRUE == _digiShutterEnabled)
+					{
+						CloseShutter();
+					}
+					//let it return outside the while loop
+					preCapStatus = PreCaptureStatus::PRECAPTURE_DONE;
+				}
 			}
 		};
 
@@ -2770,7 +2858,7 @@ DllExport_RunSample SetBleachWaveformFile(const wchar_t* bleachH5PathName, int C
 	return TRUE;
 }
 
-DllExport_RunSample LoadSLMPattern(long runtimeCal, long id, const wchar_t* bleachH5PathName, long doStart, long phaseDirect, long timeout)
+DllExport_RunSample LoadSLMPattern(long runtimeCal, long id, const wchar_t* bleachH5PathName, long doStart, long phaseDirect, long phaseType, long timeout)
 {
 	long ret = TRUE;
 	string slmDLLName;
@@ -2782,6 +2870,7 @@ DllExport_RunSample LoadSLMPattern(long runtimeCal, long id, const wchar_t* blea
 		ret = SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_ARRAY_ID,id,IDevice::DeviceSetParamType::NO_EXECUTION);
 		ret = SetDeviceParamString(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_BMP_FILENAME,(wchar_t*)bleachH5PathName,IDevice::DeviceSetParamType::NO_EXECUTION);
 		ret = SetDeviceParamLong(SelectedHardware::SELECTED_SLM, IDevice::PARAM_SLM_PHASE_DIRECT, phaseDirect, IDevice::DeviceSetParamType::NO_EXECUTION);
+		ret = SetDeviceParamLong(SelectedHardware::SELECTED_SLM, IDevice::PARAM_SLM_3D, phaseType, IDevice::DeviceSetParamType::NO_EXECUTION);
 		ret = SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_TIMEOUT,timeout,IDevice::DeviceSetParamType::NO_EXECUTION);
 
 		IDevice* slm = GetDevice(SelectedHardware::SELECTED_SLM);

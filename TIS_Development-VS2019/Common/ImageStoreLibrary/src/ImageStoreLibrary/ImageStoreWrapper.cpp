@@ -196,7 +196,7 @@ long ImageStoreWrapper::AddScan(double zStartPosUM, double zStopPosUM, double zS
 						rgnInfo->SizeY = (0 < scanAreaPixelY) ? scanAreaPixelY : 1;
 						break;
 					}
-					uint32 sizeZ = static_cast<uint32>(abs(zStartPosUM - zStopPosUM) / zStepSizeUM);
+					uint32 sizeZ = static_cast<uint32>(abs((zStartPosUM - zStopPosUM) / zStepSizeUM));
 					rgnInfo->SizeZ = (0 < sizeZ) ? (sizeZ+1) : 1;															//zID: 1-based
 					rgnInfo->SizeT = ((IExperiment::HYPERSPECTRAL != captureMode) && (0 < frameCount)) ? frameCount : 1;	//tID: 1-based
 					rgnInfo->SizeS = ((IExperiment::HYPERSPECTRAL == captureMode) && (0 < frameCount)) ? frameCount : 1;	//sID: 1-based
@@ -273,7 +273,6 @@ long ImageStoreWrapper::GetImageStoreInfo(long regionID, long &regionCount, long
 				zMaxCount = (zMaxCount < static_cast<long>(curScan->Regions[static_cast<uint16_t>(regionID)]->SizeZ)) ? static_cast<long>(curScan->Regions[static_cast<uint16_t>(regionID)]->SizeZ) : zMaxCount;
 				timeCount += static_cast<long>(curScan->Regions[static_cast<uint16_t>(regionID)]->SizeT);
 				specCount = (specCount < static_cast<long>(curScan->Regions[static_cast<uint16_t>(regionID)]->SizeS)) ? static_cast<long>(curScan->Regions[static_cast<uint16_t>(regionID)]->SizeS) : specCount;
-				break;
 			}
 		}
 	}
@@ -403,7 +402,7 @@ long ImageStoreWrapper::ReadChannelData(char* buf, long channelCount, long width
 						{
 							if(i == static_cast<long>(ch.second->ChannelRefID))
 							{
-								frame_info frame = { _activeScan->ScanID, _activeRegion->RegionID, static_cast<uint16_t>(ch.second->ChannelID), static_cast<uint16_t>((zSliceID+1)), static_cast<uint16_t>(timeID+1), 1 };
+								frame_info frame = { _activeScan->ScanID, _activeRegion->RegionID, static_cast<uint16_t>(ch.second->ChannelID), static_cast<uint32_t>((zSliceID+1)), static_cast<uint32_t>(timeID+1), 1 };
 								if(SUCCESS != fnAISS_get_raw_data(_fileHandle, frame, src_rect, tgt))
 								{
 									StringCbPrintfW(message,_MAX_PATH,L"ImageStoreWrapper unable to read %d channel, %d z, %d t\n", i, zSliceID, timeID);
@@ -653,7 +652,7 @@ long ImageStoreWrapper::SetRegion(long regionID)
 	return FALSE;
 }
 
-long ImageStoreWrapper::SaveData(void* buf, uint16_t channelID, uint16_t z, uint16_t t, uint16_t s)
+long ImageStoreWrapper::SaveData(void* buf, uint16_t channelID, uint32_t z, uint32_t t, uint32_t s)
 {
 	if ((NULL == _activeScan) || (NULL == _activeRegion))
 		return FALSE;

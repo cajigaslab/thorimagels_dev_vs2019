@@ -443,9 +443,12 @@
             try
             {
                 //Pass Experiment Settings File Location to Settings Viewer
-                _experimentSettingsName = cbChooseFromTamplate.SelectedItem.ToString();
-                _experimentSettingsPath = _settingTemplatesDirInfo.ToString() + "\\" + _experimentSettingsName + ".xml";
-                SetExperimentSettingsViewer();
+                if (null != cbChooseFromTamplate)
+                {
+                    _experimentSettingsName = cbChooseFromTamplate.SelectedItem.ToString();
+                    _experimentSettingsPath = _settingTemplatesDirInfo.ToString() + "\\" + _experimentSettingsName + ".xml";
+                    SetExperimentSettingsViewer();
+                }
             }
             catch { };
         }

@@ -78,6 +78,7 @@ public:
 	enum SLMBlank
 	{
 		BLANK_ALL,
+		BLANK_ALL_SAFE,
 		BLANK_LEFT,
 		BLANK_RIGHT
 	};

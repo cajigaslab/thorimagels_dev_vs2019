@@ -55,6 +55,10 @@ typedef void(_cdecl* myPrototypeFileSavedNameAndPathForIPC)(wchar_t* message);
 //funtion pointer for sending an IPC command out with the name and path when a file has been saved. 
 void (*myFunctionPointerFileSavedNameAndPathForIPC)(wchar_t* message) = NULL;
 
+typedef void(_cdecl* myPrototypeAutoFocusStatus)(long * isRunning, long * bestScore, double * bestZPos, double * nextZPos, long * currRepeat);
+//funtion pointer for sending back the index of the current completed T 
+void (*myFunctionPointerAutoFocusStatus)(long* isRunning, long* bestScore, double* bestZPos, double* nextZPos, long* currRepeat) = NULL;
+
 long SetDeviceParameterValue(IDevice *pDevice,long paramID, double val,long bWait,HANDLE hEvent,long waitTime);
 
 DWORD dwRunSampleThreadId = NULL;
@@ -76,7 +80,7 @@ DWORD _dwSafetyInterLockCheckThreadId = NULL;
 HANDLE _hSafetyInterLockCheckThread = NULL;
 atomic<BOOL> _shutterOpened = FALSE;
 
-DllExport_RunSample InitCallBack(myPrototype dm, myPrototypeBeginImage di, myPrototypeBeginSubImage bsi, myPrototypeEndSubImage esi, myPrototypeSaveZImage szi, myPrototypeSaveTImage sti, myPrototypePreCapture pc, myPrototypeSequenceStepCurrentIndex cs, myPrototypeInformMessage sm, myPrototypeFileSavedNameAndPathForIPC savedFileIPC) //myPrototypeCaptureComplete cc,
+DllExport_RunSample InitCallBack(myPrototype dm, myPrototypeBeginImage di, myPrototypeBeginSubImage bsi, myPrototypeEndSubImage esi, myPrototypeSaveZImage szi, myPrototypeSaveTImage sti, myPrototypePreCapture pc, myPrototypeSequenceStepCurrentIndex cs, myPrototypeInformMessage sm, myPrototypeFileSavedNameAndPathForIPC savedFileIPC, myPrototypeAutoFocusStatus afs) //myPrototypeCaptureComplete cc,
 {
 	myFunctionPointer = dm;
 
@@ -99,6 +103,8 @@ DllExport_RunSample InitCallBack(myPrototype dm, myPrototypeBeginImage di, myPro
 	myFunctionPointerInformMessage = sm;
 
 	myFunctionPointerFileSavedNameAndPathForIPC = savedFileIPC;
+
+	myFunctionPointerAutoFocusStatus = afs;
 
 	if(myFunctionPointer != NULL)
 	{
@@ -194,6 +200,7 @@ RunSample::RunSample()
 
 	_params.version = 1.0;
 	_params.showDialog = FALSE;
+	_totalNumOfTiles = 0;
 
 	memset(&_paramsCustom,0,sizeof _paramsCustom);	
 
@@ -1086,11 +1093,16 @@ void RunSample::PostCaptureProtocol(IExperiment* exp)
 	long photoBleachingEnable, laserPositiion, durationMS, bleachTrigger, preBleachingFrames, bleachWidth, bleachHeight, bleachOffsetX, bleachOffsetY, bleachingFrames, bleachFieldSize, postBleachingFrames1, postBleachingFrames2, preBleachingStream, postBleachingStream1, postBleachingStream2, powerEnable, laserEnable, bleachQuery, bleachPostTrigger, enableSimultaneousBleachingAndImaging, pmtEnableDuringBleach[4];
 	double powerPosition, preBleachingInterval, postBleachingInterval1, postBleachingInterval2;
 
+	long enable1, enable2, enable3, enable4, allTTL, allAnalog, wavelength1, wavelength2, wavelength3, wavelength4;
+	double power1, power2, power3, power4;
+
 	exp->GetPhotobleaching(photoBleachingEnable, laserPositiion, durationMS, powerPosition, bleachWidth, bleachHeight, bleachOffsetX, bleachOffsetY, bleachingFrames, bleachFieldSize, bleachTrigger, preBleachingFrames, preBleachingInterval, preBleachingStream, postBleachingFrames1, postBleachingInterval1, postBleachingStream1, postBleachingFrames2, postBleachingInterval2, postBleachingStream2, powerEnable, laserEnable, bleachQuery, bleachPostTrigger, enableSimultaneousBleachingAndImaging, pmtEnableDuringBleach[0], pmtEnableDuringBleach[1], pmtEnableDuringBleach[2], pmtEnableDuringBleach[3]);
 
 	long multiphotonEnable, multiphotonPos, multiphotonSeqEnable, multiphotonSeqPos1, multiphotonSeqPos2;
 
 	exp->GetMultiPhotonLaser(multiphotonEnable, multiphotonPos, multiphotonSeqEnable, multiphotonSeqPos1, multiphotonSeqPos2);
+
+	exp->GetMCLS(enable1, power1, enable2, power2, enable3, power3, enable4, power4, allTTL, allAnalog, wavelength1, wavelength2, wavelength3, wavelength4);
 
 	//disable the sequence mode at the end of the capture
 	if (multiphotonSeqEnable)
@@ -1104,15 +1116,18 @@ void RunSample::PostCaptureProtocol(IExperiment* exp)
 	//Turn OFF all LEDs once acquisition is finished 
 	SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP, IDevice::PARAM_LEDS_ENABLE_DISABLE, FALSE, TRUE);
 
-	//Disable Laser Emission and enable state once aquisition is finished
-	SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_EMISSION, DISABLE_EMISSION, FALSE);
-	SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_EMISSION, DISABLE_EMISSION, FALSE);
-	SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_EMISSION, DISABLE_EMISSION, FALSE);
-	SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_EMISSION, DISABLE_EMISSION, FALSE);
-	SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_ENABLE, DISABLE_EMISSION, FALSE);
-	SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_ENABLE, DISABLE_EMISSION, FALSE);
-	SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_ENABLE, DISABLE_EMISSION, FALSE);
-	SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_ENABLE, DISABLE_EMISSION, FALSE);
+	//Disable Laser Emission and enable state once aquisition is finished if not MCLS
+	if ((405 <= wavelength1) && (wavelength2 <= 785))
+	{
+		SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_EMISSION, DISABLE_EMISSION, FALSE);
+		SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_EMISSION, DISABLE_EMISSION, FALSE);
+		SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_EMISSION, DISABLE_EMISSION, FALSE);
+		SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_EMISSION, DISABLE_EMISSION, FALSE);
+		SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_ENABLE, DISABLE_EMISSION, FALSE);
+		SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_ENABLE, DISABLE_EMISSION, FALSE);
+		SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_ENABLE, DISABLE_EMISSION, FALSE);
+		SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_ENABLE, DISABLE_EMISSION, FALSE);
+	}
 }
 
 UINT RunSampleThreadProc( LPVOID pParam )
@@ -1163,6 +1178,7 @@ UINT RunSampleThreadProc( LPVOID pParam )
 			RunSample::getInstance()->SetupZStage(ENABLE_Z_HOLDING_VOLOTAGE);
 
 			totalNumOfTiles = CreateSample(exp);
+			RunSample::getInstance()->_totalNumOfTiles = totalNumOfTiles;
 
 			long wavelengths = exp->GetNumberOfWavelengths();	
 
@@ -2298,4 +2314,9 @@ void SetLEDs(IExperiment* exp, ICamera* camera, double zPos, double &power1, dou
 
 	//Turn ON LEDS 
 	SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP, IDevice::PARAM_LEDS_ENABLE_DISABLE, TRUE, TRUE);
+}
+
+long GetTotalNumOfTiles()
+{
+	return RunSample::getInstance()->_totalNumOfTiles;
 }

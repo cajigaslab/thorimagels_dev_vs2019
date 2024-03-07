@@ -712,7 +712,7 @@ SectionGroup "!SLM" SEC_GROUP_SLM
 SetOverwrite off
 Section /o "Blink Windows 7" SEC_SLM_BLINK_WIN_7
 SetOutPath "$INSTDIR\Lib"
-  File ".\InputRelease\Lib\Blink_SDK.dll"
+  File /oname=Blink_SDK.dll ".\InputRelease\Lib\Blink_SDKWin7.dll"
   File ".\InputRelease\Lib\wdapi1021.dll"
   SetOutPath "$INSTDIR"
   File ".\InputRelease\ThorSLMSettings.xml"
@@ -743,7 +743,6 @@ SetOutPath "$INSTDIR\Lib"
   SetOutPath "$INSTDIR\Modules_Native"
   File ".\InputRelease\Modules_Native\HologramGenerator.dll"
   File ".\InputRelease\Modules_Native\ThorSLM.dll"
-  File ".\InputRelease\Modules_Native\ThorSLMPDM512.dll"
   File ".\InputRelease\Modules_Native\WinDVI.dll"
 SectionEnd
 Section /o "Exulus Windows 10" SEC_SLM_EXULUS_WIN_10
@@ -755,7 +754,6 @@ Section /o "Exulus Windows 10" SEC_SLM_EXULUS_WIN_10
   SetOutPath "$INSTDIR\Modules_Native"
   File ".\InputRelease\Modules_Native\HologramGenerator.dll"
   File ".\InputRelease\Modules_Native\ThorSLM.dll"
-  File ".\InputRelease\Modules_Native\ThorSLMPDM512.dll"
   File ".\InputRelease\Modules_Native\WinDVI.dll"
 SectionEnd
 SectionGroupEnd
@@ -951,9 +949,7 @@ Function SystemTypePresetPage
       ${NSD_CB_ADDSTRING} $hwnd "Cerna"
       ${NSD_CB_ADDSTRING} $hwnd "Confocal Laser Scanning"
       ${NSD_CB_ADDSTRING} $hwnd "Empty"
-      ${NSD_CB_ADDSTRING} $hwnd "Entry Level Confocal"
       ${NSD_CB_ADDSTRING} $hwnd "HyperSpectral"
-      ${NSD_CB_ADDSTRING} $hwnd "OTM"
       ${NSD_CB_ADDSTRING} $hwnd "RGG"
       ${NSD_CB_ADDSTRING} $hwnd "Simulation"
       ${NSD_CB_ADDSTRING} $hwnd "SLM"
@@ -992,32 +988,24 @@ ${If} $systemTypeSelection == "4" ;Empty
 	${OrIf} $systemTypeSelection == "4$\n" ;Empty
       StrCpy $_multiphotonSelected "1"
 ${EndIf}
-${If} $systemTypeSelection == "5" ;Entry Level Confocal
-	${OrIf} $systemTypeSelection == "5$\n" ;Entry Level Confocal
-      StrCpy $_confocalSelected "1"
-${EndIf}
-${If} $systemTypeSelection == "6" ;HyperSpectral
-	${OrIf} $systemTypeSelection == "6$\n" ;HyperSpectral
+${If} $systemTypeSelection == "5" ;HyperSpectral
+	${OrIf} $systemTypeSelection == "5$\n" ;HyperSpectral
       ;Uses Camera modality, set in Cameras Section
 ${EndIf}
-${If} $systemTypeSelection == "7" ;OTM
-	${OrIf} $systemTypeSelection == "7$\n" ;OTM
-      ;Uses OTM modality, set in SEC_OTM_LASER Section
-${EndIf}
-${If} $systemTypeSelection == "8" ;RGG
-	${OrIf} $systemTypeSelection == "8$\n" ;RGG
+${If} $systemTypeSelection == "6" ;RGG
+	${OrIf} $systemTypeSelection == "6$\n" ;RGG
       StrCpy $_multiphotonSelected "1"
 ${EndIf}
-${If} $systemTypeSelection == "9" ;Simulation
-	${OrIf} $systemTypeSelection == "9$\n" ;Simulation
+${If} $systemTypeSelection == "7" ;Simulation
+	${OrIf} $systemTypeSelection == "7$\n" ;Simulation
       ;Uses Simulation modality, set in SEC_GROUP_SIM
 ${EndIf}
-${If} $systemTypeSelection == "10" ;SLM
-	${OrIf} $systemTypeSelection == "10$\n" ;SLM
+${If} $systemTypeSelection == "8" ;SLM
+	${OrIf} $systemTypeSelection == "8$\n" ;SLM
       StrCpy $_multiphotonSelected "1"
 ${EndIf}
-${If} $systemTypeSelection == "11" ;Veneto
-	${OrIf} $systemTypeSelection == "11$\n" ;Veneto
+${If} $systemTypeSelection == "9" ;Veneto
+	${OrIf} $systemTypeSelection == "9$\n" ;Veneto
       StrCpy $_venetoSelected "1"
 ${EndIf}
 ; Set the presets if this is a fresh install (modify and upgrade flags are 0)
@@ -1115,7 +1103,6 @@ ${AndIf} $_upgradeMode == "0"
      !insertmacro SelectSection ${SEC_GGNI}
      !insertmacro SelectSection ${SEC_GG_ALAZAR}
      !insertmacro SelectSection ${SEC_GR_ALAZAR}
-     !insertmacro SelectSection ${SEC_MCM6000}
      !insertmacro SelectSection ${SEC_PMT2100}
      !insertmacro SelectSection ${SEC_SHUTTER_DIG1}
      !insertmacro SelectSection ${SEC_SHUTTER_DIG2}
@@ -1137,56 +1124,41 @@ ${AndIf} $_upgradeMode == "0"
    ${EndIf}
    ${If} $systemTypeSelection == "4" ;Empty
    ${EndIf}
-   ${If} $systemTypeSelection == "5" ;Entry Level Confocal
-     !insertmacro SelectSection ${SEC_GGNI}
-     !insertmacro SelectSection ${SEC_MCM3000}
-     !insertmacro SelectSection ${SEC_MCM3000_AUX}
-     !insertmacro SelectSection ${SEC_PINHOLE}
-     !insertmacro SelectSection ${SEC_SHUTTER_DIG1}
-   ${EndIf}
-   ${If} $systemTypeSelection == "6" ;HyperSpectral
+   ${If} $systemTypeSelection == "5" ;HyperSpectral
      !insertmacro SelectSection ${SEC_TSI_CMOS}
      !insertmacro SelectSection ${SEC_KURIOS}
      !insertmacro SelectSection ${SEC_MCM3000}
      !insertmacro SelectSection ${SEC_MCM3000_AUX}
      !insertmacro SelectSection ${SEC_SHUTTER_DIG1}
    ${EndIf}
-   ${If} $systemTypeSelection == "7" ;OTM
-     !insertmacro SelectSection ${SEC_GGNI}
-     !insertmacro SelectSection ${SEC_PMT2100}
-     !insertmacro SelectSection ${SEC_LSKGR}
-     !insertmacro SelectSection ${SEC_OTM_LASER}
-     !insertmacro SelectSection ${SEC_SHUTTER_DIG1}
-     !insertmacro SelectSection ${SEC_PIPiezo_XYZ}
-   ${EndIf}
-   ${If} $systemTypeSelection == "8" ;RGG
+   ${If} $systemTypeSelection == "6" ;RGG
      !insertmacro SelectSection ${SEC_BCMPA}
      !insertmacro SelectSection ${SEC_PMT2100}
      !insertmacro SelectSection ${SEC_LSKGR}
      !insertmacro SelectSection ${SEC_MCM6000}
-     !insertmacro SelectSection ${SEC_MESO}
+     !insertmacro SelectSection ${SEC_GG_THORDAQ}
+	 !insertmacro SelectSection ${SEC_GR_THORDAQ}
      !insertmacro SelectSection ${SEC_SHUTTER_DIG1}
      !insertmacro SelectSection ${SEC_SHUTTER_DIG2}
    ${EndIf}
-   ${If} $systemTypeSelection == "9" ;Simulation
+   ${If} $systemTypeSelection == "7" ;Simulation
      !insertmacro SelectSection ${SEC_GROUP_SIM}
    ${EndIf}
-   ${If} $systemTypeSelection == "10" ;SLM
+   ${If} $systemTypeSelection == "8" ;SLM
      !insertmacro SelectSection ${SEC_BSCOPE}
      !insertmacro SelectSection ${SEC_BCMPA}
      !insertmacro SelectSection ${SEC_LSKGR}
      !insertmacro SelectSection ${SEC_GGNI}
      !insertmacro SelectSection ${SEC_GG_ALAZAR}
      !insertmacro SelectSection ${SEC_GR_ALAZAR}
-     !insertmacro SelectSection ${SEC_MCM6000}
      !insertmacro SelectSection ${SEC_PMT2100}
-     !insertmacro SelectSection ${SEC_GROUP_SLM}
+     !insertmacro SelectSection ${SEC_SLM_BLINK_WIN_10}
      !insertmacro SelectSection ${SEC_SHUTTER_DIG1}
      !insertmacro SelectSection ${SEC_SHUTTER_DIG2}
      !insertmacro SelectSection ${SEC_THORSTIM}
      !insertmacro SelectSection ${SEC_Z_PIEZO}
    ${EndIf}
-   ${If} $systemTypeSelection == "11" ;Veneto
+   ${If} $systemTypeSelection == "9" ;Veneto
      !insertmacro SelectSection ${SEC_GG_ALAZAR}
      !insertmacro SelectSection ${SEC_GR_ALAZAR}
      !insertmacro SelectSection ${SEC_MCM6000}

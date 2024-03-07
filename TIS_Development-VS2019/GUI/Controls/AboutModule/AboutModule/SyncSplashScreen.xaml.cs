@@ -2,7 +2,9 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
+    using System.Reflection;
     using System.Text;
     using System.Threading.Tasks;
     using System.Windows;
@@ -17,12 +19,17 @@
     /// <summary>
     /// Interaction logic for SyncSplashScreen.xaml
     /// </summary>
+    /// 
+
     public partial class SyncSplashScreen : Window
     {
         #region Fields
 
         bool _closing = false;
         bool _hideScreen;
+
+        
+
 
         #endregion Fields
 
@@ -31,6 +38,9 @@
         public SyncSplashScreen(string title)
         {
             InitializeComponent();
+            //The line below gets the latest build date
+            Date.Content = "Thorlabs Inc. - " + (new FileInfo(Assembly.GetExecutingAssembly().Location).LastWriteTime).Date.ToString("yyyy");
+
             RTTitle.Text = title;
             _hideScreen = false;
             this.Closing += new System.ComponentModel.CancelEventHandler(SyncSplashScreen_Closing);

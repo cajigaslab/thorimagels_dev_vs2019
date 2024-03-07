@@ -225,6 +225,10 @@ mkdir "..\..\Hardware\Devices\ThorMCM6000_Condenser\x64\Debug"
 copy .\x64\Debug\ThorMCM6000_Condenser.dll ..\..\Hardware\Devices\ThorMCM6000_Condenser\x64\Debug
 copy .\x64\Debug\ThorMCM6000_Condenser.lib ..\..\Hardware\Devices\ThorMCM6000_Condenser\x64\Debug
 copy .\x64\Debug\ThorMCM6000_Condenser.pdb ..\..\Hardware\Devices\ThorMCM6000_Condenser\x64\Debug
+mkdir "..\..\Hardware\Devices\ThorMCM6000_Aux\x64\Debug"
+copy .\x64\Debug\ThorMCM6000_Aux.dll ..\..\Hardware\Devices\ThorMCM6000_Aux\x64\Debug
+copy .\x64\Debug\ThorMCM6000_Aux.lib ..\..\Hardware\Devices\ThorMCM6000_Aux\x64\Debug
+copy .\x64\Debug\ThorMCM6000_Aux.pdb ..\..\Hardware\Devices\ThorMCM6000_Aux\x64\Debug
 mkdir "..\..\Hardware\Devices\ThorBCMPA\x64\Debug"
 copy .\x64\Debug\ThorBCMPA.dll ..\..\Hardware\Devices\ThorBCMPA\x64\Debug
 copy .\x64\Debug\ThorBCMPA.lib ..\..\Hardware\Devices\ThorBCMPA\x64\Debug

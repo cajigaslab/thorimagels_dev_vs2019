@@ -64,6 +64,8 @@
         // wrapped RunSampleLS object
         private readonly RunSampleLS _RunSampleLS;
 
+        private string _aFStatusMessage = string.Empty;
+        private Visibility _aFStatusVisibility = Visibility.Collapsed;
         private bool _allHistogramsExpanded = false;
         private bool[] _autoManualTogChecked = { false, false, false, false };
         private WriteableBitmap _bitmap;
@@ -236,6 +238,32 @@
             {
                 this._RunSampleLS.ActiveExperimentPath = value;
                 OnPropertyChanged("ActiveExperimentPath");
+            }
+        }
+
+        public string AFStatusMessage
+        {
+            get
+            {
+                return _aFStatusMessage;
+            }
+            set
+            {
+                _aFStatusMessage = value;
+                OnPropertyChanged("AFStatusMessage");
+            }
+        }
+
+        public Visibility AFStatusVisibility
+        {
+            get
+            {
+                return _aFStatusVisibility;
+            }
+            set
+            {
+                _aFStatusVisibility = value;
+                OnPropertyChanged("AFStatusVisibility");
             }
         }
 
@@ -521,6 +549,7 @@
             {
                 this._RunSampleLS.BleachTrigger = value;
                 OnPropertyChanged("BleachTrigger");
+                OnPropertyChanged("IsStimulationIntervalVisible");
             }
         }
 
@@ -1433,6 +1462,14 @@
         {
             get;
             set;
+        }
+
+        public bool IsStimulationIntervalVisible
+        {
+            get
+            {
+                return !(3 == BleachTrigger || 0 == CurrentBleachMode);
+            }
         }
 
         public bool IsStimulusSaving

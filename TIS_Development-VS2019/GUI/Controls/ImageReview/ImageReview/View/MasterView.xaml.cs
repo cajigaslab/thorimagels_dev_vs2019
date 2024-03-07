@@ -634,6 +634,14 @@
 
                 btnSp.IsChecked = true;
             }
+            else if (_imageReviewVM.CaptureMode == CaptureModes.STREAMING) {
+                _imageReviewVM.MStart = _imageReviewVM.TMin;
+                _imageReviewVM.MEnd = _imageReviewVM.TMax;
+                _imageReviewVM.MStartValue = _imageReviewVM.TMin;
+                _imageReviewVM.MEndValue = _imageReviewVM.TMax;
+
+                btnT.IsChecked = true;
+            }
             else
             {
                 //loading the default movie slider parameters for LSM configurationi

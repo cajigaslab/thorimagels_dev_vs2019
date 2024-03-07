@@ -6,7 +6,7 @@ public:
 	uint16_t PlateID;
 	uint16_t WellID;
 	uint16_t WellSampleID;
-	uint8_t ScanID;
+	uint32_t ScanID;
 	uint16_t ImageID;
 
 	map<uint16_t, SampleRegion*> SampleRegions;

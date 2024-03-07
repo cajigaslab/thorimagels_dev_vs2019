@@ -564,6 +564,18 @@
                 vm.BitmapPoint = new Point(image1.ImageSource.Width / 2, image1.ImageSource.Height / 2); //initiation with middle point
             }
 
+            if (true == OrthogonalViewEnable.IsChecked)
+            {
+                vm.LoadZPreviewParameters();
+                if (!vm.IsZPreviewSettingsValid())
+                {
+                    //Current image in view does not match the zstack size or the zstack is empty
+                    //prevent the button from being enabled
+                    OrthogonalViewEnable.IsChecked = false;
+                    return;
+                }
+            }
+
             if (vm.LiveStartButtonStatus == true)
             {
                 if (vm != null && image1.ImageSource != null && OrthogonalViewEnable.IsChecked == true)
@@ -1046,6 +1058,7 @@
                 vm.ActiveSettingsReplaced -= new Action(VM_ActiveSettingsReplaced);
                 vm.OrthogonalViewImagesLoaded -= vm_OrthogonalViewImagesLoaded;
                 this.SizeChanged -= new SizeChangedEventHandler(ImageView_SizeChanged);
+                vm.AcquireButtonPressed -= vm_AcquireButtonPressed;
 
                 //persist application settings
                 MVMManager.Instance.ReloadSettings(SettingsFileType.APPLICATION_SETTINGS);
@@ -1125,6 +1138,7 @@
             vm.ActiveSettingsReplaced += new Action(VM_ActiveSettingsReplaced);
             this.SizeChanged += new SizeChangedEventHandler(ImageView_SizeChanged);
             vm.OrthogonalViewImagesLoaded += vm_OrthogonalViewImagesLoaded;
+            vm.AcquireButtonPressed += vm_AcquireButtonPressed;
 
             ROIDrawingTools.SelectedIndex = 0;
 
@@ -1280,6 +1294,7 @@
             vm.ROIUpdateRequested -= new Action<string>(VM_ROIUpdateRequested);
             vm.ActiveSettingsReplaced -= new Action(VM_ActiveSettingsReplaced);
             vm.OrthogonalViewImagesLoaded -= vm_OrthogonalViewImagesLoaded;
+            vm.AcquireButtonPressed -= vm_AcquireButtonPressed;
 
             this.SizeChanged -= new SizeChangedEventHandler(ImageView_SizeChanged);
 
@@ -1685,6 +1700,39 @@
 
                 string msg = string.Format("Reference channel saved to {0}", refChan);
                 MessageBox.Show(msg);
+            }
+            else
+            {
+                MessageBox.Show("Cannot create a reference channel from a multichannel image. Choose a single channel image instead.");
+            }
+        }
+        private void saveReferenceChannelAs_Click(object sender, RoutedEventArgs e)
+        {
+            CaptureSetupViewModel vm = (CaptureSetupViewModel)this.DataContext;
+
+            if (1 == CaptureSetup.GetColorChannels())
+            {
+                //string refChan = Application.Current.Resources["AppRootFolder"].ToString() + "\\ReferenceChannel.tif";
+                SaveFileDialog dlg = new SaveFileDialog();
+                dlg.Title = "Save an Image File";
+                dlg.AddExtension = true;
+                dlg.DefaultExt = "tif";
+                dlg.FileName = string.Format("Image_{0:yyyy-MM-dd_hh-mm-ss}", DateTime.Now);
+                dlg.InitialDirectory = Application.Current.Resources["AppRootFolder"].ToString();
+                dlg.Filter = "16 Bit Tiff file (*.tif)|*.tif";
+
+                // Show save file dialog box
+                Nullable<bool> result = dlg.ShowDialog();
+                // Process save file dialog box results
+                if (result == true && dlg.FileName != "")
+                {
+                    // Save the image file
+                    string filename = dlg.FileName;
+                    vm.SaveImage(filename, 2);
+
+                    string msg = string.Format("Reference channel saved to {0}", filename);
+                    MessageBox.Show(msg);
+                }
             }
             else
             {
@@ -2176,6 +2224,11 @@
             OverlayManagerClass.Instance.PersistLoadROIs(ref overlayCanvas, ref reticleActive, ref scaleActive);
             ReticleOnOff.IsChecked = reticleActive;
             ScaleOnOff.IsChecked = scaleActive;
+        }
+
+        void vm_AcquireButtonPressed()
+        {
+            vm_CloseOrthogonalView();
         }
 
         private void VM_BleachROICheck()

@@ -280,6 +280,38 @@
             }
         }
 
+        public int ThreePhotonDownsamplingRate
+        {
+            get
+            {
+                int temp = 0;
+
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_3P_DOWNSAMPLING_RATE, ref temp);
+
+                return temp;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_3P_DOWNSAMPLING_RATE, value);
+            }
+        }
+
+        public int EnableDownsamplingRateChange
+        {
+            get
+            {
+                int temp = 0;
+
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_3P_ENABLE_DOWNSAMPLING_RATE_CHANGE, ref temp);
+
+                return temp;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_3P_ENABLE_DOWNSAMPLING_RATE_CHANGE, value);
+            }
+        }
+
         #endregion Properties
     }
 }

@@ -196,6 +196,133 @@ long AcquireTSeries::CallNotifySavedFileIPC(wchar_t* message)
 	return TRUE;
 }
 
+long AcquireTSeries::CallAutoFocusStatus(long isRunning, long bestScore, double bestZPos, double nextZPos, long currRepeat)
+{
+	AutoFocusStatus(isRunning, bestScore, bestZPos, nextZPos, currRepeat);
+	return TRUE;
+}
+
+long AcquireTSeries::PreCaptureAutoFocus(long index, long subWell)
+{
+	long aftype, repeat;
+	double expTimeMS, stepSizeUM, startPosMM, stopPosMM;
+
+	_pExp->GetAutoFocus(aftype, repeat, expTimeMS, stepSizeUM, startPosMM, stopPosMM);
+
+	double zStartPos, zStopPos, zTiltPos, zStepSizeMM;
+	double zMin, zMax, zDefault;
+	double z2Min, z2Max, z2Default;
+	double z2ScaleFactor = 0.0;
+	long zstageSteps, zStreamFrames, zStreamMode;
+	GetZPositions(_pExp, NULL, zStartPos, zStopPos, zTiltPos, zStepSizeMM, zstageSteps, zStreamFrames, zStreamMode);
+
+	long totalNumOfTiles = GetTotalNumOfTiles();
+
+	long tOffset = 0;
+	_pExp->GetTimelapseTOffset(tOffset);
+	long updateIndex = index + tOffset;
+
+	//Determine if we are capturing the first image for the experiment. If so make sure an autofocus is executed if enabled.
+	//After the first iteration the Z position will overlap with the XY motion
+	/* :TODO: need to figure out if this is the right way to set the initial position. By default it sets it to 0 which would move
+	* the stage to 0
+	if ((aftype != IAutoFocus::AF_NONE) && (subWell == 1))
+	{
+		_evenOdd = FALSE;
+		_lastGoodFocusPosition = afStartPos + _adaptiveOffset;
+		if (FALSE == SetAutoFocusStartZPosition(afStartPos, TRUE, FALSE))
+		{
+			return FALSE;
+		}
+	}*/
+
+	//Only run the autofocus process if this isn't a Z Stack capture and only run it the first time in a T Series if tiling mode is not enabled
+	if (aftype != IAutoFocus::AF_NONE && 1 >= zstageSteps && (1 < totalNumOfTiles || 1 == updateIndex))
+	{
+		double magnification;
+		string objName;
+		_pExp->GetMagnification(magnification, objName);
+
+		BOOL afFound = FALSE;
+
+		//Enable the PMTs, set the LEDs and open the shutter
+		SetPMT();
+
+		double power0 = 0, power1 = 0, power2 = 0, power3 = 0, power4 = 0, power5 = 0;
+		SetPower(_pExp, _pCamera, zStartPos, power0, power1, power2, power3, power4, power5);
+
+		double ledPower1 = 0, ledPower2 = 0, ledPower3 = 0, ledPower4 = 0, ledPower5 = 0, ledPower6 = 0;
+		SetLEDs(_pExp, _pCamera, zStartPos, ledPower1, ledPower2, ledPower3, ledPower4, ledPower5, ledPower6);
+
+		OpenShutter();
+
+		_pCamera->SetParam(ICamera::PARAM_TRIGGER_MODE, ICamera::SW_SINGLE_FRAME);
+
+		long autoFocusStatus = 0, bestConstrastScore = 0, currentRepeat = 0;
+		double bestZPosition = 0, nextZPosition = 0;
+
+		// Define a Lambda Expression
+		auto f = [](tuple<long, long> afParams)
+		{
+			BOOL found;
+			long type = get<0>(afParams);
+			long afMag = get<1>(afParams);
+
+			RunAutofocus(afMag, type, found);
+		};
+
+		//Create a tuple with the params
+		long mag = static_cast<long>(magnification);
+		tuple<long, long> params;
+		get<0>(params) = aftype;
+		get<1>(params) = mag;
+
+		//Start the thread to run the autofocus
+		std::thread thread_object(f, ref(params));
+
+		//Check if the autofocus process started
+		clock_t nextUpdateLoop = clock();
+		long autoFocusRunning = IsAutofocusRunning();
+		while (static_cast<unsigned long>(abs(nextUpdateLoop - clock()) / (CLOCKS_PER_SEC / 1000)) < 500 && FALSE == autoFocusRunning)
+		{
+			autoFocusRunning = IsAutofocusRunning();
+		}
+		if (FALSE == autoFocusRunning) // if auto focus is still not running, throw an error message to the log
+		{
+			logDll->TLTraceEvent(ERROR_EVENT, 1, L"RunSample auto focus thread failed to start autofocus. Timed out after 500ms.");
+		}
+
+		long stopStatus = 0;
+
+		//While the autofocus procedure is running, check the status
+		while (TRUE == autoFocusRunning)
+		{
+			autoFocusRunning = IsAutofocusRunning();
+			// Get the autofocus status from AutofocusModule
+			GetAutofocusStatus(autoFocusStatus, bestConstrastScore, bestZPosition, nextZPosition, currentRepeat);
+			// Send the status values to the RunSample GUI for update
+			CallAutoFocusStatus(autoFocusStatus, bestConstrastScore, bestZPosition, nextZPosition, currentRepeat);
+
+			StopCaptureEventCheck(stopStatus);
+
+			//user has asked to stop the capture
+			if (1 == stopStatus)
+			{
+				CloseShutter();
+				StopAutofocus();
+				thread_object.join();
+				return FALSE;
+			}
+			Sleep(200);
+		}
+
+		//Wait for the thread to complete and close
+		thread_object.join();
+	}
+
+	return TRUE;
+}
+
 long AcquireTSeries::Execute(long index, long subWell, long zFrame, long tFrame)
 {
 	_tFrame = tFrame;
@@ -235,6 +362,11 @@ long AcquireTSeries::Execute(long index, long subWell)
 	if(NULL == _pCamera)
 	{	
 		logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create camera");
+		return FALSE;
+	}
+
+	if (FALSE == PreCaptureAutoFocus(index, subWell))
+	{
 		return FALSE;
 	}
 
@@ -737,37 +869,37 @@ long AcquireTSeries::CaptureTSeries(long index, long subWell, auto_ptr<IAcquire>
 		}
 		else
 		{
-			switch(triggerModeTimelapse)
-			{ 
+			switch (triggerModeTimelapse)
+			{
 			case TIMLAPSE_TRIG_MODE_TRIG_FIRST:
+			{
+				//if operating in trigger first mode switch back to software trigger 
+				//after the first frame of the first subwell/tile
+				if (2 <= (t + tOffset) || 2 <= subWell)
 				{
-					//if operating in trigger first mode switch back to software trigger 
-					//after the first frame of the first subwell/tile
-					if(2 <= (t + tOffset) || 2 <= subWell)
-					{
-						pCamera->SetParam(ICamera::PARAM_TRIGGER_MODE, ICamera::SW_SINGLE_FRAME);
-					}
+					pCamera->SetParam(ICamera::PARAM_TRIGGER_MODE, ICamera::SW_SINGLE_FRAME);
 				}
-				break;
+			}
+			break;
 			case TIMLAPSE_TRIG_MODE_TRIG_EACH:
+			{
+				//if operating in trigger each mode. switch back to software trigger after the first frame
+				//and switch into HW_MULTI_FRAME_TRIGGER_FIRST for the first tile
+				if (1 == subWell)
 				{
-					//if operating in trigger each mode. switch back to software trigger after the first frame
-					//and switch into HW_MULTI_FRAME_TRIGGER_FIRST for the first tile
-					if(1 == subWell)
-					{		
-						pCamera->SetParam(ICamera::PARAM_TRIGGER_MODE, ICamera::HW_MULTI_FRAME_TRIGGER_FIRST);
-					}
-					else
-					{	
-						pCamera->SetParam(ICamera::PARAM_TRIGGER_MODE, ICamera::SW_SINGLE_FRAME);
-					}
+					pCamera->SetParam(ICamera::PARAM_TRIGGER_MODE, ICamera::HW_MULTI_FRAME_TRIGGER_FIRST);
 				}
-				break;
+				else
+				{
+					pCamera->SetParam(ICamera::PARAM_TRIGGER_MODE, ICamera::SW_SINGLE_FRAME);
+				}
+			}
+			break;
 			}
 
 			OpenShutter();
 
-			updateIndex = index + t+tOffset-1;
+			updateIndex = index + t + tOffset - 1;
 
 			SetPower(_pExp, pCamera, zStartPos, power0, power1, power2, power3, power4, power5);
 

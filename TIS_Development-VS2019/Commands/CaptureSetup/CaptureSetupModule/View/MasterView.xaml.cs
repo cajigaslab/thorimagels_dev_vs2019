@@ -223,6 +223,16 @@
 
             //Set the Holding modality to the modality in the experiment template that you are about
             // to load.
+
+            //Copies Photobleaching tag from original active XML to prevent overwriting when loading a template
+            string tempFolder = ResourceManagerCS.GetCaptureTemplatePathString();
+            string pathActiveXML = tempFolder + "Active.xml";
+            XmlDocument originalActive = new XmlDocument();
+            XmlNode oldNode;
+
+            originalActive.Load(pathActiveXML);
+            oldNode = originalActive.SelectSingleNode("/ThorImageExperiment/Photobleaching");
+
             XmlDocument expSettings = new XmlDocument();
             expSettings.Load(expSettingsFile);
             XmlNodeList nodeList = expSettings.SelectNodes("/ThorImageExperiment/Modality");
@@ -246,11 +256,27 @@
                 TilesControlView.xyTileControl.XYTileDisplay_Load();
             }
 
-            //persist global params in all modalities after loading:
-            for (int i = 0; i < (int)GlobalExpAttribute.LAST; i++)
+            //persist global params except for the GG calibration Photobleaching tag in all modalities after loading:
+            for (int i = 2; i < (int)GlobalExpAttribute.LAST; i++)
             {
                 _liveVM.PersistGlobalExperimentXML((GlobalExpAttribute)i);
             }
+
+            //Resets the photobleaching tag values in Active xml to old values and reloads Active
+            XmlDocument newActive = new XmlDocument();
+            XmlNode newNode;
+            XmlNode newChild;
+            newActive.Load(pathActiveXML);
+
+            //Overwriting of Photobleaching tag
+            newNode = newActive.SelectSingleNode("/ThorImageExperiment");
+            newChild = newNode.SelectSingleNode("/ThorImageExperiment/Photobleaching");
+            newNode.ReplaceChild(newActive.ImportNode(oldNode, true), newChild);
+
+            newActive.Save(pathActiveXML);
+            //Update Capture Setup View Model with modified active
+            _liveVM.ExperimentDoc = newActive;
+            MVMManager.Instance.LoadSettings(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
         }
 
         public void UpdateHardwareListView()

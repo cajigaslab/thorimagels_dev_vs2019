@@ -145,9 +145,15 @@ int32 CVICALLBACK ThorLSMCam::EveryNDigitalOutCallback(TaskHandle taskHandle, in
 	{
 		//callback is invoked earlier than the task finishes,
 		//could be further triggered if sleep too long:
-		Sleep(12);
+		double cycleTimeMS = _totalLength[SignalType::ANALOG_XY] * (double)Constants::MS_TO_SEC / 2 / (double)_gGalvoWaveParams.ClockRate;
+		Sleep((DWORD)(12 + cycleTimeMS));
 		//Done last cycle:		
-		return WaveformModeFinished();
+		WaveformModeFinished();
+		//Toggle digital lines if not active load:
+		TogglePulseToDigitalLine(_taskHandleDO1, _waveformCompleteOut, 1, TogglePulseMode::ToggleHigh);
+		TogglePulseToDigitalLine(_taskHandleDO1, _bleachActiveOut, 1, TogglePulseMode::ToggleLow);
+
+		return TRUE;
 	}
 
 	//prepare for last cycle:
@@ -331,16 +337,37 @@ long ThorLSMCam::SetupTaskMasterGalvo(void)
 		}
 		if(_dLengthPerAOCallback[SignalType::ANALOG_XY] < _totalLength[SignalType::ANALOG_XY])
 		{
-			DAQmxErrChk (L"DAQmxSetWriteAttribute",retVal = DAQmxSetWriteAttribute (_taskHandleAO1, DAQmx_Write_RegenMode, DAQmx_Val_DoNotAllowRegen));
-			DAQmxErrChk (L"DAQmxRegisterEveryNSamplesEvent",retVal = DAQmxRegisterEveryNSamplesEvent(_taskHandleAO1, DAQmx_Val_Transferred_From_Buffer, static_cast<uInt32>(_dLengthPerAOCallback[SignalType::ANALOG_XY]), 0, EveryNGalvoOutCallback, NULL));
+			if (ICamera::HW_MULTI_FRAME_TRIGGER_CONT == (ICamera::TriggerMode)_imgPtyDll.triggerMode)
+			{
+				//load all in trigger continue mode and HW retriggerable
+				DAQmxErrChk(L"DAQmxSetWriteAttribute", retVal = DAQmxSetWriteAttribute(_taskHandleAO1, DAQmx_Write_RegenMode, DAQmx_Val_AllowRegen));
+			}
+			else
+			{
+				DAQmxErrChk(L"DAQmxSetWriteAttribute", retVal = DAQmxSetWriteAttribute(_taskHandleAO1, DAQmx_Write_RegenMode, DAQmx_Val_DoNotAllowRegen));
+				DAQmxErrChk(L"DAQmxRegisterEveryNSamplesEvent", retVal = DAQmxRegisterEveryNSamplesEvent(_taskHandleAO1, DAQmx_Val_Transferred_From_Buffer, static_cast<uInt32>(_dLengthPerAOCallback[SignalType::ANALOG_XY]), 0, EveryNGalvoOutCallback, NULL));
+			}
 		}
-		DAQmxErrChk(L"DAQmxRegisterDoneEvent",retVal = DAQmxRegisterDoneEvent(_taskHandleAO1,0,ThorLSMCam::CycleDoneCallback,NULL));
+		//HW retriggerable will not honor Done event
+		if (ICamera::HW_MULTI_FRAME_TRIGGER_CONT != (ICamera::TriggerMode)_imgPtyDll.triggerMode) 
+		{
+			DAQmxErrChk(L"DAQmxRegisterDoneEvent", retVal = DAQmxRegisterDoneEvent(_taskHandleAO1, 0, ThorLSMCam::CycleDoneCallback, NULL));
+		}
 		DAQmxErrChk(L"DAQmxCfgSampClkTiming",retVal = DAQmxCfgSampClkTiming(_taskHandleAO1, _controllerInternalOutput0.c_str(), static_cast<float64>(_gGalvoWaveParams.ClockRate), DAQmx_Val_Rising, DAQmx_Val_FiniteSamps, _totalLength[SignalType::ANALOG_XY]));
 		DAQmxErrChk (L"DAQmxCfgOutputBuffer",retVal = DAQmxCfgOutputBuffer(_taskHandleAO1,static_cast<uInt32>(_totalLength[SignalType::ANALOG_XY])));
 		//AO cannot be armStarted:
 		SetFrameInTriggerableTask(_taskHandleAO1, FALSE);
 		DAQmxErrChk(L"DAQmxWriteAnalogF64",retVal = DAQmxWriteAnalogF64(_taskHandleAO1, static_cast<int32>(_dLengthPerAOCallback[SignalType::ANALOG_XY]), false, -1, DAQmx_Val_GroupByScanNumber, _gGalvoWaveParams.GalvoWaveformXY, NULL, NULL));
 		DAQmxErrChk(L"DAQmxTaskControl",retVal = DAQmxTaskControl(_taskHandleAO1,DAQmx_Val_Task_Reserve));
+		//load all in trigger continue mode before start
+		if (ICamera::HW_MULTI_FRAME_TRIGGER_CONT == (ICamera::TriggerMode)_imgPtyDll.triggerMode)
+		{
+			while (_totalLength[SignalType::ANALOG_XY] > _currentIndex[SignalType::ANALOG_XY])
+			{
+				if (FALSE == TryWriteTaskMasterGalvoWaveform(FALSE))
+					break;
+			}
+		}
 		DAQmxErrChk(L"DAQmxStartTask",retVal = DAQmxStartTask(_taskHandleAO1));
 	}
 	catch(...)
@@ -381,8 +408,16 @@ long ThorLSMCam::SetupTaskMasterPockel(void)
 		}
 		if(_dLengthPerAOCallback[SignalType::ANALOG_POCKEL] < _totalLength[SignalType::ANALOG_POCKEL])
 		{
-			DAQmxErrChk (L"DAQmxSetWriteAttribute",retVal = DAQmxSetWriteAttribute (_taskHandleAOPockels, DAQmx_Write_RegenMode, DAQmx_Val_DoNotAllowRegen));
-			DAQmxErrChk (L"DAQmxRegisterEveryNSamplesEvent",retVal = DAQmxRegisterEveryNSamplesEvent(_taskHandleAOPockels, DAQmx_Val_Transferred_From_Buffer, static_cast<int32>(_dLengthPerAOCallback[SignalType::ANALOG_POCKEL]), 0, EveryNPockelOutCallback, NULL));
+			if (ICamera::HW_MULTI_FRAME_TRIGGER_CONT == (ICamera::TriggerMode)_imgPtyDll.triggerMode)
+			{
+				//load all in trigger continue mode and HW retriggerable
+				DAQmxErrChk(L"DAQmxSetWriteAttribute", retVal = DAQmxSetWriteAttribute(_taskHandleAOPockels, DAQmx_Write_RegenMode, DAQmx_Val_AllowRegen));
+			}
+			else
+			{
+				DAQmxErrChk (L"DAQmxSetWriteAttribute",retVal = DAQmxSetWriteAttribute (_taskHandleAOPockels, DAQmx_Write_RegenMode, DAQmx_Val_DoNotAllowRegen));
+				DAQmxErrChk (L"DAQmxRegisterEveryNSamplesEvent",retVal = DAQmxRegisterEveryNSamplesEvent(_taskHandleAOPockels, DAQmx_Val_Transferred_From_Buffer, static_cast<int32>(_dLengthPerAOCallback[SignalType::ANALOG_POCKEL]), 0, EveryNPockelOutCallback, NULL));
+			}
 		}			
 		DAQmxErrChk(L"DAQmxCfgSampClkTiming",retVal = DAQmxCfgSampClkTiming(_taskHandleAOPockels, _controllerInternalOutput2.c_str(), static_cast<float64>(_gGalvoWaveParams.ClockRate), DAQmx_Val_Rising, DAQmx_Val_FiniteSamps, _totalLength[SignalType::ANALOG_POCKEL]));
 
@@ -391,6 +426,10 @@ long ThorLSMCam::SetupTaskMasterPockel(void)
 		DAQmxErrChk (L"DAQmxCfgOutputBuffer",retVal = DAQmxCfgOutputBuffer(_taskHandleAOPockels,static_cast<uInt32>(_totalLength[SignalType::ANALOG_POCKEL])));
 
 		retVal = DAQmxCfgDigEdgeStartTrig(_taskHandleAOPockels,_pockelsTriggerIn.c_str() ,DAQmx_Val_Rising);
+		if (ICamera::HW_MULTI_FRAME_TRIGGER_CONT == (ICamera::TriggerMode)_imgPtyDll.triggerMode)
+		{
+			retVal = DAQmxSetStartTrigRetriggerable(_taskHandleAOPockels, true);
+		}
 
 		retVal = DAQmxWriteAnalogF64(_taskHandleAOPockels, static_cast<int32>(_dLengthPerAOCallback[SignalType::ANALOG_POCKEL]), false, -1, DAQmx_Val_GroupByChannel, _gGalvoWaveParams.GalvoWaveformPockel, NULL, NULL);
 
@@ -408,6 +447,15 @@ long ThorLSMCam::SetupTaskMasterPockel(void)
 		if(0 == retVal)
 		{
 			DAQmxErrChk(L"DAQmxTaskControl",retVal = DAQmxTaskControl(_taskHandleAOPockels,DAQmx_Val_Task_Reserve));
+			//load all in trigger continue mode before start
+			if (ICamera::HW_MULTI_FRAME_TRIGGER_CONT == (ICamera::TriggerMode)_imgPtyDll.triggerMode)
+			{
+				while (_totalLength[SignalType::ANALOG_POCKEL] > _currentIndex[SignalType::ANALOG_POCKEL])
+				{
+					if (FALSE == TryWriteTaskMasterPockelWaveform(FALSE))
+						break;
+				}
+			}
 			DAQmxErrChk(L"DAQmxStartTask",retVal = DAQmxStartTask(_taskHandleAOPockels));
 		}
 		StringCbPrintfW(message,_MAX_PATH, L"ThorGGNI SetupTaskMasterPockel DAQmxStartTask AO2 Return = %d", retVal);
@@ -438,7 +486,15 @@ long ThorLSMCam::SetupTaskMasterDigital(void)
 			}
 			if(_dLengthPerAOCallback[SignalType::DIGITAL_LINES] < _totalLength[SignalType::DIGITAL_LINES])
 			{
-				DAQmxErrChk (L"DAQmxSetWriteAttribute",retVal = DAQmxSetWriteAttribute (_taskHandleDO1, DAQmx_Write_RegenMode, DAQmx_Val_DoNotAllowRegen));
+				if (ICamera::HW_MULTI_FRAME_TRIGGER_CONT == (ICamera::TriggerMode)_imgPtyDll.triggerMode)
+				{
+					//load all in trigger continue mode and HW retriggerable
+					DAQmxErrChk(L"DAQmxSetWriteAttribute", retVal = DAQmxSetWriteAttribute(_taskHandleDO1, DAQmx_Write_RegenMode, DAQmx_Val_AllowRegen));
+				}
+				else
+				{
+					DAQmxErrChk(L"DAQmxSetWriteAttribute", retVal = DAQmxSetWriteAttribute(_taskHandleDO1, DAQmx_Write_RegenMode, DAQmx_Val_DoNotAllowRegen));
+				}
 			}
 			DAQmxErrChk (L"DAQmxCfgSampClkTiming",retVal = DAQmxCfgSampClkTiming(_taskHandleDO1,_controllerInternalOutput0.c_str(),static_cast<float64>(_gGalvoWaveParams.ClockRate),DAQmx_Val_Rising,DAQmx_Val_FiniteSamps,_totalLength[SignalType::DIGITAL_LINES]));
 			DAQmxErrChk (L"DAQmxCfgOutputBuffer",retVal = DAQmxCfgOutputBuffer(_taskHandleDO1,static_cast<uInt32>(_totalLength[SignalType::DIGITAL_LINES])));	
@@ -452,6 +508,15 @@ long ThorLSMCam::SetupTaskMasterDigital(void)
 			//}
 			DAQmxErrChk (L"DAQmxWriteDigitalLines",retVal = DAQmxWriteDigitalLines(_taskHandleDO1, static_cast<int32>(_dLengthPerAOCallback[SignalType::DIGITAL_LINES]),FALSE,0,DAQmx_Val_GroupByChannel,_gGalvoWaveParams.DigBufWaveform,NULL,NULL));
 			DAQmxErrChk (L"DAQmxTaskControl",retVal = DAQmxTaskControl(_taskHandleDO1,DAQmx_Val_Task_Reserve));
+			//load all in trigger continue mode before start
+			if (ICamera::HW_MULTI_FRAME_TRIGGER_CONT == (ICamera::TriggerMode)_imgPtyDll.triggerMode)
+			{
+				while (_totalLength[SignalType::DIGITAL_LINES] > _currentIndex[SignalType::DIGITAL_LINES])
+				{
+					if (FALSE == TryWriteTaskMasterLineWaveform(FALSE))
+						break;
+				}
+			}
 			DAQmxErrChk(L"DAQmxStartTask",retVal = DAQmxStartTask(_taskHandleDO1));
 		}
 		catch(...)
@@ -576,6 +641,7 @@ long ThorLSMCam::SetFrameInTriggerableTask(TaskHandle taskHandle, long armStart)
 	{
 	case ICamera::TriggerMode::HW_MULTI_FRAME_TRIGGER_EACH:
 	case ICamera::TriggerMode::HW_MULTI_FRAME_TRIGGER_FIRST:
+	case ICamera::TriggerMode::HW_MULTI_FRAME_TRIGGER_CONT:
 	case ICamera::TriggerMode::HW_SINGLE_FRAME:
 		retVal = DAQmxCfgDigEdgeStartTrig(taskHandle,_frameTriggerLineIn.c_str() ,DAQmx_Val_Rising);
 		if(armStart)
@@ -584,11 +650,11 @@ long ThorLSMCam::SetFrameInTriggerableTask(TaskHandle taskHandle, long armStart)
 			retVal = DAQmxSetDigEdgeArmStartTrigSrc(taskHandle, _frameTriggerLineIn.c_str());
 			retVal = DAQmxSetDigEdgeArmStartTrigEdge(taskHandle, DAQmx_Val_Rising);
 		}
-		////No retriggable in active loading:
-		//if(_imgPtyDll.triggerMode == ICamera::HW_MULTI_FRAME_TRIGGER_EACH)
-		//{
-		//	retVal = DAQmxSetStartTrigRetriggerable(taskHandle,true);
-		//}
+		//No retriggable in active loading:
+		if(ICamera::HW_MULTI_FRAME_TRIGGER_CONT == (ICamera::TriggerMode)_imgPtyDll.triggerMode)
+		{
+			retVal = DAQmxSetStartTrigRetriggerable(taskHandle,true);
+		}
 		break;
 	}
 	return retVal;
@@ -639,7 +705,7 @@ long ThorLSMCam::TryWriteTaskMasterGalvoWaveform(long checkStop)
 		if(FALSE == ImageWaveformBuilder->GetGGalvoWaveformParamsWithStatus(SignalType::ANALOG_XY,&_gGalvoWaveParams, _precaptureStatus, ThorLSMCam::_currentIndex[SignalType::ANALOG_XY]))
 		{
 			StringCbPrintfW(message, _MAX_PATH, L"ThorGGNI:%hs@%u: failed to get buffer for Galvo.", __FILE__, __LINE__);
-			LogMessage(message, ERROR_EVENT);
+			LogMessage(message, VERBOSE_EVENT);
 			return FALSE;
 		}
 
@@ -689,7 +755,7 @@ long ThorLSMCam::TryWriteTaskMasterPockelWaveform(long checkStop)
 		if(FALSE == ImageWaveformBuilder->GetGGalvoWaveformParamsWithStatus(SignalType::ANALOG_POCKEL,&_gGalvoWaveParams, _precaptureStatus, ThorLSMCam::_currentIndex[SignalType::ANALOG_POCKEL]))
 		{
 			StringCbPrintfW(message, _MAX_PATH, L"ThorGGNI:%hs@%u: failed to get buffer for Pockels.", __FILE__, __LINE__);
-			LogMessage(message, ERROR_EVENT);
+			LogMessage(message, VERBOSE_EVENT);
 			return FALSE;
 		}
 
@@ -738,7 +804,7 @@ long ThorLSMCam::TryWriteTaskMasterLineWaveform(long checkStop)
 		if(FALSE == ImageWaveformBuilder->GetGGalvoWaveformParamsWithStatus(SignalType::DIGITAL_LINES,&_gGalvoWaveParams, _precaptureStatus, ThorLSMCam::_currentIndex[SignalType::DIGITAL_LINES]))
 		{
 			StringCbPrintfW(message, _MAX_PATH, L"ThorGGNI:%hs@%u: failed to get buffer for Digital lines.", __FILE__, __LINE__);
-			LogMessage(message, ERROR_EVENT);
+			LogMessage(message, VERBOSE_EVENT);
 			return FALSE;
 		}
 

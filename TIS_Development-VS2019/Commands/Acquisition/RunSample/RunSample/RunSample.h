@@ -73,6 +73,7 @@ public:
 	static bool _isSaving;
 	const long ENABLE_EMISSION = 1;
 	const long DISABLE_EMISSION = 0;
+	long _totalNumOfTiles;
 
 	~RunSample();
 };
@@ -93,3 +94,4 @@ void SetLEDs(IExperiment* exp, ICamera* camera, double zPos, double &ledPower1, 
 void PreCaptureProtocol(IExperiment *exp);
 UINT SafetyInterlockStatusCheck();
 void InitiateSafetyInterlockStatusCheck();
+long GetTotalNumOfTiles();

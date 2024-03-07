@@ -26,7 +26,7 @@
     {
         #region Fields
 
-        public static Dictionary<int, string> LocationDictionary = new Dictionary<int, string>() 
+        public static Dictionary<int, string> LocationDictionary = new Dictionary<int, string>()
         {
         {0, "location1"},
         {1, "location2"},
@@ -35,7 +35,7 @@
         {4, "location5"},
         {5, "location6"},
         };
-        public static Dictionary<int, string> LocationNameDictionary = new Dictionary<int, string>() 
+        public static Dictionary<int, string> LocationNameDictionary = new Dictionary<int, string>()
         {
         {0, "locationName1"},
         {1, "locationName2"},
@@ -910,6 +910,15 @@
                 // _zScanNumSteps = (int)Math.Abs((_zScanStart - _zScanStop) / (_zScanStep * UM_TO_MM));
                 _zScanNumSteps = (int)Math.Round(Math.Abs(Math.Round((_zScanStart - _zScanStop), 5) / (_zScanStep * UM_TO_MM)) + 1); // 0.001mm-0.0045mm@0.5micron: 8 steps
                 return _zScanNumSteps;
+            }
+        }
+
+        public int ZScanNumStepsInCache
+        {
+            get 
+            {
+                //return the number of files in the Zstackcache that are TIFFS or 0 if no directory set
+                return ZStackCacheDirectory != string.Empty ? Directory.GetFiles(ZStackCacheDirectory, "*.tif").Length : 0;
             }
         }
 

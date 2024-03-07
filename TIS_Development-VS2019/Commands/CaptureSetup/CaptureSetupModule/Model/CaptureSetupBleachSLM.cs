@@ -45,6 +45,7 @@
         private int _loadedSLMPatternsCnt = 0;
         private List<string> _loadedSLMSequences = new List<string>();
         private Mutex _mDefocus = new Mutex();
+        private int _runTimeCal = 0;
         private double[] _slmBleachDelay = { 0.0, 0.0 };
         private ObservableCollection<SLMParams> _slmBleachWaveParams = new ObservableCollection<GeometryUtilities.SLMParams>();
         private int _SLMCallbackCount = 0;
@@ -75,7 +76,8 @@
             }
             set
             {
-                ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_SAVE_DEFOCUS, (int)1, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
+                _defocusParams[3] = value;
+                SetDefocusParam();
             }
         }
 
@@ -153,6 +155,40 @@
             { return _slmBleachWaveParams; }
             set
             { _slmBleachWaveParams = value; }
+        }
+
+        /// <summary>
+        /// [0]: Bead Calibration, no burning.
+        /// [1]: Calibration by burning 2D at various planes.
+        /// [2]: Calibration by burning a 3D pattern. [N/A]
+        /// </summary>
+        public int SLMCalibByBurning
+        {
+            get
+            {
+                string strTmp = string.Empty;
+                int iVal = 0;
+                try
+                {
+                    XmlDocument appSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+                    XmlNodeList ndList = appSettings.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView/BleachCalibrationTool");
+                    if (null != ndList)
+                    {
+                        if (!(XmlManager.GetAttribute(ndList[0], appSettings, "CalibByBurning", ref strTmp) && Int32.TryParse(strTmp, out iVal)))
+                        {
+                            iVal = 0;
+                            XmlManager.SetAttribute(ndList[0], appSettings, "CalibByBurning", iVal.ToString());
+                            MVMManager.Instance.ReloadSettings(SettingsFileType.APPLICATION_SETTINGS);
+                            return iVal;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Verbose, 1, "Fail to get CalibByBurning: " + ex.Message);
+                }
+                return iVal;
+            }
         }
 
         public int SLMDualPatternShift
@@ -317,7 +353,7 @@
             return ((1 == SaveSLMPattern(phaseMaskName)) ? true : false);
         }
 
-        public bool SLMCalibration(string bmpPatternName, float[] ptsFrom, float[] ptsTo, int size, bool slm3D)
+        public bool SLMCalibration(string bmpPatternName, float[] ptsFrom, float[] ptsTo, int size, int slm3D)
         {
             if (!String.IsNullOrEmpty(bmpPatternName) && !File.Exists(bmpPatternName))
                 return false;
@@ -328,22 +364,10 @@
             Marshal.Copy(ptsTo, 0, ptsToPtr, size);
             Marshal.Copy(ptsFrom, 0, ptsFromPtr, size);
 
-            if (slm3D)
-            {
-                //calculate coeffs without burning
-                ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_FUNC_MODE, (int)IDevice.SLMFunctionMode.PHASE_CALIBRATION, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
-                ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_3D, (int)1, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
-                ResourceManagerCS.SetDeviceParamString((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_BMP_FILENAME, bmpPatternName, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
-                ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_ARRAY_ID, (int)1, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
-                ResourceManagerCS.SetDeviceParamBuffer((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_POINTS_ARRAY, ptsToPtr, size, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
-                ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_ARRAY_ID, (int)0, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
-                ret = ResourceManagerCS.SetDeviceParamBuffer((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_POINTS_ARRAY, ptsFromPtr, size, (int)IDevice.DeviceSetParamType.EXECUTION_WAIT);
-            }
-            else
-            {
-                //doing waveform gen for burning
-                ret = CalibrateSLM(bmpPatternName, ptsFromPtr, ptsToPtr, size);
-            }
+            ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_3D, slm3D, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
+
+            //doing SLM calibraton and waveform gen for burning
+            ret = CalibrateSLM(bmpPatternName, ptsFromPtr, ptsToPtr, size, (0 == slm3D || 2 == SLMCalibByBurning) ? 1 : 0);
 
             Marshal.FreeHGlobal(ptsToPtr);
             Marshal.FreeHGlobal(ptsFromPtr);
@@ -351,9 +375,9 @@
             return (1 == ret) ? true : false;
         }
 
-        public bool SLMSetBlank()
+        public bool SLMSetBlank(int blankMode)
         {
-            return 1 == ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_BLANK, (int)1, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
+            return 1 == ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, blankMode, (int)1, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
         }
 
         public bool StartSLMBleach()
@@ -390,7 +414,7 @@
         }
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "CalibrateSLM", CharSet = CharSet.Unicode)]
-        private static extern int CalibrateSLM(string bmpPatternName, IntPtr xyPointFrom, IntPtr xyPointTo, int size);
+        private static extern int CalibrateSLM(string bmpPatternName, IntPtr xyPointFrom, IntPtr xyPointTo, int size, int setBleacher);
 
         [DllImport(".\\Modules_Native\\HologramGenerator.dll", EntryPoint = "CombineHologramFiles", CharSet = CharSet.Unicode)]
         private static extern int CombineHologramFiles(string bmpPhaseName1, string bmpPhaseName2, int shiftPx);
@@ -481,9 +505,13 @@
                 {
                     _currentSLMWaveID = _currentSLMSequenceID = 0;
                     _loadedSLMFiles.Clear();
-                    _loadedSLMSequences.Clear();
-                    cycleReset = true;
 
+                    if (1 < _loadedSLMSequences.Count)
+                    {
+                        _loadedSLMSequences.Clear();
+                    }
+
+                    cycleReset = true;
                     //try search drop-in files for next cycle:
                     LoadedSLMName = PreLoadNextSLM();
                     LoadedSLMName = (PreLoadNextSLMSequence()) ? LoadedSLMName : string.Empty;
@@ -515,11 +543,72 @@
         }
 
         /// <summary>
+        /// reload available SLM patterns from sequence file, return true if loaded any.
+        /// </summary>
+        /// <returns></returns>
+        private bool LoadSLMSequence(string sequenceFile)
+        {
+            if (null == sequenceFile)
+                return false;
+
+            bool retVal = true;
+            try
+            {
+                switch (_runTimeCal)
+                {
+                    case 2:
+                        //reload patterns here when extremely short pattern time
+                        List<int> patternIDs = new List<int>();
+                        using (TextReader reader = new StreamReader(sequenceFile))
+                        {
+                            string line;
+                            while ((line = reader.ReadLine()) != null)
+                            {
+                                patternIDs.Add(Int32.Parse(line));
+                            }
+                        }
+                        //find out maximum pattern time for SLM timeout in msec, PatternID:1-based
+                        int timeoutVal = 0;
+                        foreach (int i in patternIDs)
+                        {
+                            timeoutVal = (int)Math.Max(timeoutVal,
+                                _slmBleachWaveParams[i - 1].BleachWaveParams.PrePatIdleTime + _slmBleachWaveParams[i - 1].BleachWaveParams.Iterations * (_slmBleachWaveParams[i - 1].BleachWaveParams.PreIdleTime + _slmBleachWaveParams[i - 1].Duration + _slmBleachWaveParams[i - 1].BleachWaveParams.PostIdleTime) + _slmBleachWaveParams[i - 1].BleachWaveParams.PostPatIdleTime);
+                        }
+
+                        //load to SLM
+                        for (int j = 0; j < patternIDs.Count; j++)
+                        {
+                            string waveFileName = SLMWaveformFolder[0] + "\\" + SLMWaveBaseName[1] + "_" + _slmBleachWaveParams[patternIDs[j] - 1].BleachWaveParams.ID.ToString("D" + FileName.GetDigitCounts().ToString()) + ".bmp";
+                            if (File.Exists(waveFileName))
+                            {
+                                bool doStart = (j == (patternIDs.Count - 1)) ? true : false;
+                                retVal = this.LoadSLMPatternName(_runTimeCal, j, waveFileName, doStart, IsStimulator, _slmBleachWaveParams[patternIDs[j] - 1].PhaseType, timeoutVal);
+                                if (!retVal)
+                                    break;
+                            }
+                        }
+                        break;
+                    default:
+                        //allow runtime load of SLM sequence
+                        return (1 == ResourceManagerCS.SetDeviceParamString((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_SEQ_FILENAME, sequenceFile, (int)IDevice.DeviceSetParamType.NO_EXECUTION));
+                }
+                return retVal;
+            }
+            catch (Exception e)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "ReLoadSLMPatterns Error:" + e.Message);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// load available SLM patterns all at once, return true if loaded any.
         /// </summary>
         /// <returns></returns>
         private bool PreLoadAllSLMPatterns()
         {
+            bool retVal = true;
+
             //reset counts:
             _loadedSLMPatternsCnt = 0;
 
@@ -552,11 +641,14 @@
                 _loadedSLMPatterns.Add(addedFiles[i]);
             }
 
-            //find out maximum pattern time for SLM timeout in msec:
+            //find out maximum pattern time for SLM timeout in msec and determine run-time calculation mode:
             int timeoutVal = 0;
+            _runTimeCal = _slmSequenceOn ? 1 : 0;
             for (int i = 0; i < _slmBleachWaveParams.Count; i++)
             {
                 timeoutVal = (int)Math.Max(timeoutVal, _slmBleachWaveParams[i].BleachWaveParams.PrePatIdleTime + _slmBleachWaveParams[i].BleachWaveParams.Iterations * (_slmBleachWaveParams[i].BleachWaveParams.PreIdleTime + _slmBleachWaveParams[i].Duration + _slmBleachWaveParams[i].BleachWaveParams.PostIdleTime) + _slmBleachWaveParams[i].BleachWaveParams.PostPatIdleTime);
+                if (_slmBleachWaveParams[i].Duration < (double)Constants.SLM_PATTERN_TIME_MIN_MS)
+                    _runTimeCal = 2;
             }
 
             //keep slm phase type available if not from SLM param:
@@ -564,20 +656,29 @@
                 SLMphaseType.Add(SLM3D ? 1 : 0);
 
             //load to SLM:
-            for (int i = 0; i < _loadedSLMPatternsCnt; i++)
+            if (2 == _runTimeCal && _slmSequenceOn)
             {
-                //user asked to stop while loading:
-                if (IsBleachStopped)
+                //do load of patterns at sequence reload ...
+            }
+            else
+            {
+                for (int i = 0; i < _loadedSLMPatternsCnt; i++)
                 {
-                    IsBleachFinished = true;
-                    StopBleach();
-                    return false;
+                    //user asked to stop while loading:
+                    if (IsBleachStopped)
+                    {
+                        IsBleachFinished = true;
+                        StopBleach();
+                        return false;
+                    }
+                    bool doStart = (i == (_loadedSLMPatternsCnt - 1)) ? true : false;
+                    retVal = this.LoadSLMPatternName(_runTimeCal, i, _loadedSLMPatterns[i], doStart, IsStimulator, (i < SLMphaseType.Count ? SLMphaseType[i] : 0), timeoutVal);
+                    if (!retVal)
+                        break;
                 }
-                bool doStart = (i == (_loadedSLMPatternsCnt - 1)) ? true : false;
-                this.LoadSLMPatternName(_slmSequenceOn ? 1 : 0, i, _loadedSLMPatterns[i], doStart, IsStimulator, (i < SLMphaseType.Count ? SLMphaseType[i] : 0), timeoutVal);
             }
 
-            return (0 < _loadedSLMPatternsCnt) ? true : false;
+            return (0 < _loadedSLMPatternsCnt) ? retVal : false;
         }
 
         /// <summary>
@@ -646,7 +747,7 @@
             List<string> addedFiles = slmPatternsInFolder.Except(_loadedSLMPatterns).OrderBy(s => s).ToList();
             for (int i = 0; i < addedFiles.Count; i++)
             {
-                if (this.LoadSLMPatternName(_slmSequenceOn ? 1 : 0, _loadedSLMPatternsCnt, addedFiles[i], true, IsStimulator, SLMphaseType.Last()))
+                if (this.LoadSLMPatternName(_runTimeCal, _loadedSLMPatternsCnt, addedFiles[i], true, IsStimulator, SLMphaseType.Last()))
                 {
                     _loadedSLMPatternsCnt++;
                     _loadedSLMPatterns.Add(addedFiles[i]);
@@ -677,12 +778,17 @@
                 string seqFileName = SLMWaveformFolder[1] + "\\" + SLMWaveBaseName[2] + "_" + (_currentSLMSequenceID + 1).ToString("D" + FileName.GetDigitCounts().ToString()) + ".txt";
 
                 //check if available in the folder, skip if just loaded:
-                string matchingFileName = _slmSequencesInFolder.FirstOrDefault(checkString => checkString.Contains(seqFileName));
-                if (null != matchingFileName)
+                string loadedFileName = _loadedSLMSequences.FirstOrDefault(checkString => checkString.Contains(seqFileName));
+                if (null != loadedFileName)
                 {
-                    if (1 == ResourceManagerCS.SetDeviceParamString((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_SEQ_FILENAME, matchingFileName, (int)IDevice.DeviceSetParamType.NO_EXECUTION))
+                    LoadedSequenceName = loadedFileName;
+                }
+                else
+                {
+                    string matchingFileName = _slmSequencesInFolder.FirstOrDefault(checkString => checkString.Contains(seqFileName));
+                    if (LoadSLMSequence(matchingFileName))
                     {
-                        LoadedSequenceName = seqFileName;
+                        LoadedSequenceName = matchingFileName;
                         _loadedSLMSequences.Add(LoadedSequenceName);
                         //_afterSLMCycle = false;
                     }
@@ -700,7 +806,7 @@
                 List<string> addedFiles = _slmSequencesInFolder.Except(_loadedSLMSequences).OrderBy(s => s).ToList();
                 if (0 < addedFiles.Count())
                 {
-                    if (1 == ResourceManagerCS.SetDeviceParamString((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_SEQ_FILENAME, addedFiles[0], (int)IDevice.DeviceSetParamType.NO_EXECUTION))
+                    if (LoadSLMSequence(addedFiles[0]))
                     {
                         LoadedSequenceName = addedFiles[0];
                         _loadedSLMSequences.Add(LoadedSequenceName);

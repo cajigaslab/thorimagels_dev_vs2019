@@ -479,6 +479,12 @@
             }
         }
 
+        public bool EnableReferenceChannel
+        {
+            get;
+            set;
+        }
+
         public double ExposureTimeCam
         {
             get

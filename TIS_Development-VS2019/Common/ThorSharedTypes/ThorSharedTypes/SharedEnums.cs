@@ -87,6 +87,7 @@ namespace ThorSharedTypes
         BITS_PER_BYTE = 8,
         ACTIVE_LOAD_BLKSIZE_DEFAULT = 8,
         MAX_MULTI_AREA_SCAN_COUNT = 10,
+        SLM_PATTERN_TIME_MIN_MS = 12,
         PIXEL_X_MIN = 32,
         ACTIVE_LOAD_UNIT_SIZE = 100,
         HUNDRED_PERCENT = 100,
@@ -406,12 +407,15 @@ namespace ThorSharedTypes
         oDigital_Waveform_14 = 0x18,
         oDigital_Waveform_15 = 0x19,
         oCapture_Active = 0x1A, // 26d
+        // FPGA "indexes" 0-15 can by MUXed by the BOB CPLD; indexes 0-7 are the hi-speed hardware lines to FPGA's digital MUX
+        // FPGA indexes 8-15 are registers accessible via I2C command (i.e. "slow") and can also be MUXed
+        // Indexes 16-31 are NOT MUXed and are CPLD wired 1:1
         Aux_GPIO_0 = 0x1B,   // General Purpose NOT related to "GlobalScan"-enable status, separate REGISTER for DIR
         Aux_GPIO_1 = 0x1C,
         Aux_GPIO_2 = 0x1D, // 29d
         Aux_GPIO_3 = 0x1E,
         Aux_GPIO_4 = 0x1F,
-        BOB3U_GPIO = 0x30  // "slow" general purpose GPIO D8-D31 on 3U Panel, DIR configured and I/O value through CPLD via I2C
+        BOB3U_GPIO = 0x30  // 48d "slow" general purpose GPIO D16-D31 on 3U Panel, DIR configured and I/O value through CPLD via I2C (not MUXed by BOB's CPLD)
     };
 
     public enum BleachMode

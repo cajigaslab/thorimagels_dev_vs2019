@@ -548,8 +548,55 @@
                 }
             }
             SetModality(new StringBuilder(modality));
+            SaveRemotePCHostNameToXML(modality);
             MVMManager.Instance.LoadSettings();
         }
+
+
+        public static void SaveRemotePCHostNameToXML(string modality)
+        {
+            string remotePCHostNameList = String.Join("/", System.Environment.MachineName);
+            string remotePCIPAddressList = String.Join("/", ResourceManagerCS.GetLocalIP());
+
+            XmlDocument doc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+            
+            if (null == doc)
+            {
+                return;
+            }
+            var root = doc.DocumentElement;//Get to the root node
+            XmlElement node = (XmlElement)doc.SelectSingleNode("ApplicationSettings/IPCRemoteHostPCName");
+            if (node == null)
+            {
+                XmlElement elementRoot = doc.CreateElement(string.Empty, "IPCRemoteHostPCName", string.Empty);
+                XmlElement rootNode = (XmlElement)doc.SelectSingleNode("ApplicationSettings");
+                rootNode.AppendChild(elementRoot);
+                node = (XmlElement)doc.SelectSingleNode("ApplicationSettings/IPCRemoteHostPCName");
+            }
+            node.SetAttribute("name", remotePCHostNameList.ToString() + "///");
+            node.SetAttribute("IP", remotePCIPAddressList.ToString() + "///");
+            node.SetAttribute("IDMode", "0");
+            node.SetAttribute("activeIndex", "0");
+            node.SetAttribute("remoteAppName", "ThorSync");
+            //doc.Save(GetMyDocumentsThorImageFolderString() + "Modalities\\" + modality + "\\Application Settings\\ApplicationSettings.xml");
+        }
+
+        public static string GetLocalIP()
+        {
+            if (true == System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable())
+            {
+                var host = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName());
+                foreach (var ip in host.AddressList)
+                {
+                    if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                    {
+                        return ip.ToString();
+                    }
+                }
+            }
+            return "";
+        }
+
 
         /// <summary>
         /// Set modality with persisting last active xml

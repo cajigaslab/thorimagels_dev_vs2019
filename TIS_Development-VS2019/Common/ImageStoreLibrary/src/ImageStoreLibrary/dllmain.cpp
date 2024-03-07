@@ -58,7 +58,7 @@ IMAGESTORELIBRARY_API long SetRegion(long regionID)
 	return ImageStoreWrapper::getInstance()->SetRegion(regionID);
 }
 
-IMAGESTORELIBRARY_API long SaveData(void* buf, uint16_t channelID, uint16_t z, uint16_t t, uint16_t s = 1)
+IMAGESTORELIBRARY_API long SaveData(void* buf, uint16_t channelID, uint32_t z, uint32_t t, uint32_t s = 1)
 {
 	return ImageStoreWrapper::getInstance()->SaveData(buf, channelID, z, t, s);
 }

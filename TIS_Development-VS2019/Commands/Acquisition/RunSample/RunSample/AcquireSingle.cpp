@@ -147,6 +147,12 @@ long AcquireSingle::CallNotifySavedFileIPC(wchar_t* message)
 	return TRUE;
 }
 
+long AcquireSingle::CallAutoFocusStatus(long status, long bestScore, double bestZPos, double nextZPos, long currRepeat)
+{
+	AutoFocusStatus(status, bestScore, bestZPos, nextZPos, currRepeat);
+	return TRUE;
+}
+
 int Call_TiffVSetField(TIFF* out, uint32 ttag_t, ...)
 {
 	int retv;
@@ -1427,31 +1433,6 @@ long AcquireSingle::Execute(long index, long subWell)
 
 	_adaptiveOffset = afAdaptiveOffset;
 
-	long aftype, repeat;
-	double expTimeMS, stepSizeUM, startPosMM, stopPosMM;
-
-	_pExp->GetAutoFocus(aftype, repeat, expTimeMS, stepSizeUM, startPosMM, stopPosMM);
-
-	//Determine if we are capturing the first image for the experiment. If so make sure an autofocus is executed if enabled.
-	//After the first iteration the Z position will overlap with the XY motion
-	if ((aftype != IAutoFocus::AF_NONE) && (subWell == 1))
-	{
-		_evenOdd = FALSE;
-		_lastGoodFocusPosition = afStartPos + _adaptiveOffset;
-		if (FALSE == SetAutoFocusStartZPosition(afStartPos, TRUE, FALSE))
-		{
-			return FALSE;
-		}
-	}
-
-	BOOL afFound = FALSE;
-
-	if (FALSE == RunAutofocus(index, aftype, afFound))
-	{
-		logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample RunAutoFocus failed");
-		return FALSE;
-	}
-
 	ICamera* pCamera = NULL;
 
 	pCamera = GetCamera(SelectedHardware::SELECTED_CAMERA1);
@@ -2032,15 +2013,6 @@ long AcquireSingle::Execute(long index, long subWell)
 		_acquireSaveInfo->getInstance()->ClearTimestamps();
 	}
 
-	if ((aftype != IAutoFocus::AF_NONE) && (TRUE == AutofocusExecuteNextIteration(aftype)))
-	{
-		////move to an offset of of the start location	
-		if (FALSE == SetAutoFocusStartZPosition(afStartPos, FALSE, afFound))
-		{
-			return FALSE;
-		}
-	}
-
 	long red;
 	long green;
 	long blue;
@@ -2277,36 +2249,40 @@ long AcquireSingle::Execute(long index, long subWell)
 	break;
 	}
 
-
-	std::wstringstream rawImgNameFormat;
-	rawImgNameFormat << L"%s%s\\Image_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
-		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
-		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
-		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.raw";
-
-	StringCbPrintfW(filePathAndName, _MAX_PATH, rawImgNameFormat.str().c_str(), drive, dir, index, subWell, _zFrame, _tFrame);
-
-	ofstream rawFile(filePathAndName, ios_base::binary);
-	long numberOfchannels = _pExp->GetNumberOfWavelengths();
 	Dimensions d = dSum;
-	long rawFrameSize = dIntensity.x * dIntensity.y * sizeof(unsigned short);
-	for (long i = 0; i < bufferChannels; i++)
-	{
-		if (i < _pExp->GetNumberOfWavelengths())
-		{
-			_pExp->GetWavelength(i, wavelengthName, exposureTimeMS);
-			//A single buffer is used for one channel capture so no offset is needed for that case
-			if (bufferChannels > 1)
-			{
-				pHardware->GetWavelengthIndex(wavelengthName, bufferOffsetIndex);
-			}
 
-			rawFile.write(pMemoryBuffer + ((size_t)bufferOffsetIndex * d.x * d.y * sizeof(unsigned short)), rawFrameSize);
-			CallNotifySavedFileIPC(filePathAndName);
+	if (imageMethod == 1)
+	{
+		std::wstringstream rawImgNameFormat;
+		rawImgNameFormat << L"%s%s\\Image_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+			<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+			<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+			<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.raw";
+
+		StringCbPrintfW(filePathAndName, _MAX_PATH, rawImgNameFormat.str().c_str(), drive, dir, index, subWell, _zFrame, _tFrame);
+
+		ofstream rawFile(filePathAndName, ios_base::binary);
+		long numberOfchannels = _pExp->GetNumberOfWavelengths();
+
+		long rawFrameSize = dIntensity.x * dIntensity.y * sizeof(unsigned short);
+		for (long i = 0; i < bufferChannels; i++)
+		{
+			if (i < _pExp->GetNumberOfWavelengths())
+			{
+				_pExp->GetWavelength(i, wavelengthName, exposureTimeMS);
+				//A single buffer is used for one channel capture so no offset is needed for that case
+				if (bufferChannels > 1)
+				{
+					pHardware->GetWavelengthIndex(wavelengthName, bufferOffsetIndex);
+				}
+
+				rawFile.write(pMemoryBuffer + ((size_t)bufferOffsetIndex * d.x * d.y * sizeof(unsigned short)), rawFrameSize);
+				CallNotifySavedFileIPC(filePathAndName);
+			}
 		}
+
+		rawFile.close();
 	}
-	
-	rawFile.close();
 
 	std::wstringstream imgNameFormat;
 	imgNameFormat << L"%s%s%S_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
