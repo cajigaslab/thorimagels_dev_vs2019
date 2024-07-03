@@ -39,6 +39,7 @@ ThorPMTSimulator::ThorPMTSimulator()
 	_pmt3Gain_C=PMT_GAIN_DEFAULT-1;
 	_pmt4Gain_C=PMT_GAIN_DEFAULT-1;
 	_crsEnable_C=true;
+	_alignPos = 0;
 
 	_deviceDetected = FALSE;
 }
@@ -258,6 +259,17 @@ long ThorPMTSimulator::GetParamInfo
 		}
 		break;
 
+	case PARAM_SCANNER_ALIGN_POS:
+	{
+		paramType = TYPE_LONG;
+		paramAvailable = TRUE;
+		paramReadOnly = FALSE;
+		paramMin = 0;
+		paramMax = 255;
+		paramDefault = 0;
+	}
+	break;
+
 	default:
 		paramAvailable = FALSE;
 		ret = TRUE;
@@ -391,6 +403,11 @@ long ThorPMTSimulator::SetParam(const long paramID, const double param)
 			}
 		}
 		break;
+	case PARAM_SCANNER_ALIGN_POS:
+	{
+		_alignPos = static_cast<long>(param);
+	}
+	break;
 	}
 
 	return ret;
@@ -457,6 +474,11 @@ long ThorPMTSimulator::GetParam(const long paramID, double &param)
 			param = static_cast<long>(CONNECTION_READY);
 		}
 		break;
+	case PARAM_SCANNER_ALIGN_POS:
+	{
+		param = static_cast<double>(_alignPos);
+	}
+	break;
 	default:
 		ret = FALSE;
 	}

@@ -239,7 +239,7 @@ long HDF5IO::CreateGroupDatasets(std::string groupnm, std::vector<std::string>* 
 	}
 	catch(H5::DataSetIException err)
 	{
-		err.printError();
+		err.printErrorStack();
 		ret = FALSE;
 	}		
 	return ret;
@@ -303,19 +303,19 @@ long HDF5IO::ExtendData(const char* groupnm, const char* datasetnm, void* buf, l
 			switch (datatype)
 			{
 			case 1:
-				_dataset.write(buf,H5::PredType::NATIVE_DOUBLE,_dataspace,_filespace,H5P_DEFAULT);//static_cast<double*>
+				_dataset.write(buf,H5::PredType::NATIVE_DOUBLE,_dataspace,_filespace);//static_cast<double*>
 				break;
 			case 2:
-				_dataset.write(buf,H5::PredType::NATIVE_UINT32,_dataspace,_filespace,H5P_DEFAULT);//static_cast<unsigned long*>
+				_dataset.write(buf,H5::PredType::NATIVE_UINT32,_dataspace,_filespace);//static_cast<unsigned long*>
 				break;
 			case 3:				
-				_dataset.write(buf,H5::PredType::NATIVE_UINT64,_dataspace,_filespace,H5P_DEFAULT);//static_cast<unsigned long long*>
+				_dataset.write(buf,H5::PredType::NATIVE_UINT64,_dataspace,_filespace);//static_cast<unsigned long long*>
 				break;
 			case 4:				
-				_dataset.write(buf,H5::PredType::NATIVE_FLOAT,_dataspace,_filespace,H5P_DEFAULT);//static_cast<float*>
+				_dataset.write(buf,H5::PredType::NATIVE_FLOAT,_dataspace,_filespace);//static_cast<float*>
 				break;
 			case 5:				
-				_dataset.write(buf,H5::PredType::NATIVE_UCHAR,_dataspace,_filespace,H5P_DEFAULT);
+				_dataset.write(buf,H5::PredType::NATIVE_UCHAR,_dataspace,_filespace);
 				break;
 			default:
 				ret = FALSE;
@@ -339,7 +339,7 @@ long HDF5IO::ExtendData(const char* groupnm, const char* datasetnm, void* buf, l
 	}
 	catch(H5::DataSetIException err)
 	{
-		err.printError();
+		err.printErrorStack();
 		ret = FALSE;
 	}
 	return ret;
@@ -488,19 +488,19 @@ long HDF5IO::ReadData(const char* groupnm,const char* datasetnm,void* buf,long d
 			switch(datatype)
 			{
 			case 1:
-				_dataset.read(buf,H5::PredType::NATIVE_DOUBLE,_dataspace,_filespace,H5P_DEFAULT);	//static_cast<double*>
+				_dataset.read(buf,H5::PredType::NATIVE_DOUBLE,_dataspace,_filespace);	//static_cast<double*>
 				break;
 			case 2:
-				_dataset.read(buf,H5::PredType::NATIVE_UINT32,_dataspace,_filespace,H5P_DEFAULT);	//static_cast<unsigned long*>
+				_dataset.read(buf,H5::PredType::NATIVE_UINT32,_dataspace,_filespace);	//static_cast<unsigned long*>
 				break;
 			case 3:
-				_dataset.read(buf,H5::PredType::NATIVE_UINT64,_dataspace,_filespace,H5P_DEFAULT);	//static_cast<unsigned long long*>
+				_dataset.read(buf,H5::PredType::NATIVE_UINT64,_dataspace,_filespace);	//static_cast<unsigned long long*>
 				break;
 			case 4:
-				_dataset.read(buf,H5::PredType::NATIVE_FLOAT,_dataspace,_filespace,H5P_DEFAULT);	//static_cast<float*>
+				_dataset.read(buf,H5::PredType::NATIVE_FLOAT,_dataspace,_filespace);	//static_cast<float*>
 				break;
 			case 5:
-				_dataset.read(buf,H5::PredType::NATIVE_UCHAR,_dataspace,_filespace,H5P_DEFAULT);	
+				_dataset.read(buf,H5::PredType::NATIVE_UCHAR,_dataspace,_filespace);	
 				break;
 			default:
 				ret = FALSE;
@@ -524,7 +524,7 @@ long HDF5IO::ReadData(const char* groupnm,const char* datasetnm,void* buf,long d
 	}
 	catch(H5::DataSetIException err)
 	{
-		err.printError();
+		err.printErrorStack();
 		ret = FALSE;
 	}
 	return ret;
@@ -581,19 +581,19 @@ long HDF5IO::WriteData(const char* groupnm,const char* datasetnm,void* buf,long 
 			switch (datatype)
 			{
 			case 1:
-				_dataset.write(buf,H5::PredType::NATIVE_DOUBLE,_dataspace,_filespace,H5P_DEFAULT);
+				_dataset.write(buf,H5::PredType::NATIVE_DOUBLE,_dataspace,_filespace);
 				break;
 			case 2:
-				_dataset.write(buf,H5::PredType::NATIVE_UINT32,_dataspace,_filespace,H5P_DEFAULT);
+				_dataset.write(buf,H5::PredType::NATIVE_UINT32,_dataspace,_filespace);
 				break;
 			case 3:				
-				_dataset.write(buf,H5::PredType::NATIVE_UINT64,_dataspace,_filespace,H5P_DEFAULT);
+				_dataset.write(buf,H5::PredType::NATIVE_UINT64,_dataspace,_filespace);
 				break;
 			case 4:				
-				_dataset.write(buf,H5::PredType::NATIVE_FLOAT,_dataspace,_filespace,H5P_DEFAULT);
+				_dataset.write(buf,H5::PredType::NATIVE_FLOAT,_dataspace,_filespace);
 				break;
 			case 5:				
-				_dataset.write(buf,H5::PredType::NATIVE_UCHAR,_dataspace,_filespace,H5P_DEFAULT);
+				_dataset.write(buf,H5::PredType::NATIVE_UCHAR,_dataspace,_filespace);
 				break;
 			default:
 				ret = FALSE;
@@ -617,7 +617,7 @@ long HDF5IO::WriteData(const char* groupnm,const char* datasetnm,void* buf,long 
 	}
 	catch(H5::DataSetIException err)
 	{
-		err.printError();
+		err.printErrorStack();
 		ret = FALSE;
 	}
 	return ret;

@@ -28,7 +28,7 @@
 
     using ThorSharedTypes;
 
-    public class DFLIMControlViewModel : DFLIMControlViewModelBase, IViewModelActions
+    public class DFLIMControlViewModel : DFLIMControlViewModelBase, IViewModelActions, IMVM
     {
         #region Fields
 
@@ -67,11 +67,11 @@
             : base()
         {
             _mainViewModelName = "CaptureSetupViewModel";
+            _imageViewMVMName = "ImageViewCaptureSetupVM";
             _DFLIMControlModel = new DFLIMControlModel();
 
             System.Windows.Application.Current.Exit += Current_Exit;
-            _dataUpdateThread = new Thread(DFLIMDataUpdate);
-            _dataUpdateThread.Start();
+            
 
             //TODO: remove HPD Gain if not needed
             HPDGain = new CustomCollection<HwVal<int>>();
@@ -463,64 +463,64 @@
             }
         }
 
-        public int HPD1Gain
+        public double HPD1Gain
         {
             get
             {
-                var gain = ((CustomCollection<HwVal<int>>)MVMManager.Instance["ScanControlViewModel", "PMTGain"]);
+                var gain = ((CustomCollection<HwVal<double>>)MVMManager.Instance["ScanControlViewModel", "PMTGain"]);
                 return gain[0].Value;
             }
             set
             {
-                var gain = ((CustomCollection<HwVal<int>>)MVMManager.Instance["ScanControlViewModel", "PMTGain"]);
+                var gain = ((CustomCollection<HwVal<double>>)MVMManager.Instance["ScanControlViewModel", "PMTGain"]);
                 gain[0].Value = value;
                 MVMManager.Instance["ScanControlViewModel", "PMTGain"] = gain;
                 OnPropertyChanged("HPD1Gain");
             }
         }
 
-        public int HPD2Gain
+        public double HPD2Gain
         {
             get
             {
-                var gain = ((CustomCollection<HwVal<int>>)MVMManager.Instance["ScanControlViewModel", "PMTGain"]);
+                var gain = ((CustomCollection<HwVal<double>>)MVMManager.Instance["ScanControlViewModel", "PMTGain"]);
                 return gain[1].Value;
             }
             set
             {
-                var gain = ((CustomCollection<HwVal<int>>)MVMManager.Instance["ScanControlViewModel", "PMTGain"]);
+                var gain = ((CustomCollection<HwVal<double>>)MVMManager.Instance["ScanControlViewModel", "PMTGain"]);
                 gain[1].Value = value;
                 MVMManager.Instance["ScanControlViewModel", "PMTGain"] = gain;
                 OnPropertyChanged("HPD2Gain");
             }
         }
 
-        public int HPD3Gain
+        public double HPD3Gain
         {
             get
             {
-                var gain = ((CustomCollection<HwVal<int>>)MVMManager.Instance["ScanControlViewModel", "PMTGain"]);
+                var gain = ((CustomCollection<HwVal<double>>)MVMManager.Instance["ScanControlViewModel", "PMTGain"]);
                 return gain[2].Value;
             }
             set
             {
-                var gain = ((CustomCollection<HwVal<int>>)MVMManager.Instance["ScanControlViewModel", "PMTGain"]);
+                var gain = ((CustomCollection<HwVal<double>>)MVMManager.Instance["ScanControlViewModel", "PMTGain"]);
                 gain[2].Value = value;
                 MVMManager.Instance["ScanControlViewModel", "PMTGain"] = gain;
                 OnPropertyChanged("HPD3Gain");
             }
         }
 
-        public int HPD4Gain
+        public double HPD4Gain
         {
             get
             {
-                var gain = ((CustomCollection<HwVal<int>>)MVMManager.Instance["ScanControlViewModel", "PMTGain"]);
+                var gain = ((CustomCollection<HwVal<double>>)MVMManager.Instance["ScanControlViewModel", "PMTGain"]);
                 return gain[3].Value;
             }
             set
             {
-                var gain = ((CustomCollection<HwVal<int>>)MVMManager.Instance["ScanControlViewModel", "PMTGain"]);
+                var gain = ((CustomCollection<HwVal<double>>)MVMManager.Instance["ScanControlViewModel", "PMTGain"]);
                 gain[3].Value = value;
                 MVMManager.Instance["ScanControlViewModel", "PMTGain"] = gain;
                 OnPropertyChanged("HPD4Gain");
@@ -543,14 +543,21 @@
         public void HandleViewLoaded()
         {
             InitCallBackDFLIMROIHistogramsPush(_dFLIMROIHistogramsCallback);
-            _dataUpdateThread = new Thread(DFLIMDataUpdate);
-            _dataUpdateThread.Start();
+            
+            if (_DFLIMControlModel.DFLIMAvailable)
+            {
+                //If _dataUpdateThread is re-initialized while the other thread is not aborted,
+                //the thread will lose it's reference and will keep running
+                if (_dataUpdateThread == null) _dataUpdateThread = new Thread(DFLIMDataUpdate);
+                if (!_dataUpdateThread.IsAlive) _dataUpdateThread.Start();
+            }
         }
 
         public void HandleViewUnloaded()
         {
             InitCallBackDFLIMROIHistogramsPush(null);
-            _dataUpdateThread.Abort();
+            _dataUpdateThread?.Abort();
+            _dataUpdateThread = null;
         }
 
         [DllImport(".\\StatsManager.dll", EntryPoint = "InitCallBackDFLIMROIHistogramsPush")]
@@ -582,10 +589,9 @@
                     {
                         CopyDiagnostics();
                     }
-
-                    if (_dflimSetupAssistant != null)
+                    Application.Current.Dispatcher.Invoke(() =>
                     {
-                        Application.Current.Dispatcher.Invoke(() =>
+                        if (_dflimSetupAssistant != null)
                         {
                             if (_dflimSetupAssistant.IsLoaded)
                             {
@@ -600,11 +606,13 @@
                                     DiagnosticsDataReady = false;
                                 }
                             }
-                        });
-                    }
+                        }
+                    });
+                    
                 }
                 catch (Exception ex)
                 {
+                    ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + " DFLIMDataUpdate " + ex.Message);
                     ex.ToString();
                 }
                 Thread.Sleep(100);
@@ -703,6 +711,7 @@
                 }
                 catch (Exception ex)
                 {
+                    ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + " DFLIMROIHistogramsUpdate " + ex.Message);
                     ex.ToString();
                 }
             }
@@ -754,62 +763,67 @@
                             }
 
                             var lsmChannelEnable = roiHistogramsDataUpdateStruct.channelEnableBinary;
-
-                            Brush[] lsmChannelColor = (Brush[])MVMManager.Instance[_mainViewModelName, "LSMChannelColor"];
-
-                            List<int> channels = new List<int>();
-                            for (int i = 0; i < NUM_CHANNELS; ++i)
+                            Application.Current.Dispatcher.Invoke(new Action(() =>
                             {
-                                if (((lsmChannelEnable >> i) & 0x1) > 0)
-                                {
-                                    channels.Add(i);
-                                }
-                            }
+                                _channelsColors = (Color[])MVMManager.Instance[_imageViewMVMName, "DefaultChannelColors"];
 
-                            //FLIMFitting.FLIMHistogramGroupData histogramGroupData = null;
-                            lock (DFLIMHistogramMVMDataLock)
-                            {
-                                OnPropertyChanged("DFLIMHistogramMVMDataLock");
-                                _dflimHistogramDictionary = new Dictionary<KeyValuePair<int, SolidColorBrush>, uint[]>();
-                                for (int i = 0; i < dflimHistogramData.Length; ++i)
+                                List<int> channels = new List<int>();
+                                for (int i = 0; i < NUM_CHANNELS; ++i)
                                 {
-                                    if (NUM_CHANNELS == dflimHistogramData.Length)
+                                    if (((lsmChannelEnable >> i) & 0x1) > 0)
                                     {
-                                        if (((lsmChannelEnable >> i) & 0x1) > 0)
+                                        channels.Add(i);
+                                    }
+                                }
+
+                                //FLIMFitting.FLIMHistogramGroupData histogramGroupData = null;
+                                lock (DFLIMHistogramMVMDataLock)
+                                {
+                                    OnPropertyChanged("DFLIMHistogramMVMDataLock");
+                                    _dflimHistogramDictionary = new Dictionary<KeyValuePair<int, SolidColorBrush>, uint[]>();
+                                    for (int i = 0; i < dflimHistogramData.Length; ++i)
+                                    {
+                                        if (NUM_CHANNELS == dflimHistogramData.Length)
                                         {
-                                            var channel = new KeyValuePair<int, SolidColorBrush>(i, (SolidColorBrush)lsmChannelColor[i]);
+                                            if (((lsmChannelEnable >> i) & 0x1) > 0)
+                                            {
+                                                var channel = new KeyValuePair<int, SolidColorBrush>(i, new SolidColorBrush(_channelsColors[i]));
+                                                _dflimHistogramDictionary.Add(channel, (dflimHistogramData[i]));
+                                            }
+                                        }
+                                        else
+                                        {
+
+                                            var channel = new KeyValuePair<int, SolidColorBrush>(channels[i], new SolidColorBrush(_channelsColors[channels[i]]));
                                             _dflimHistogramDictionary.Add(channel, (dflimHistogramData[i]));
                                         }
                                     }
-                                    else
-                                    {
+                                    ++_histogramCopyCounter;
+                                    _histogramDataReady = true;
+                                }
 
-                                        var channel = new KeyValuePair<int, SolidColorBrush>(channels[i], (SolidColorBrush)lsmChannelColor[channels[i]]);
-                                        _dflimHistogramDictionary.Add(channel, (dflimHistogramData[i]));
+                                OnPropertyChanged("DFLIMHistogramMVMDataLock");
+                                OnPropertyChanged("DFLIMHistogramCopyCounter");
+                                OnPropertyChanged("DFLIMHistogramDictionary");
+
+                                try
+                                {
+                                    if (null != _flimFittingWindow)
+                                    {
+                                        _flimFittingWindow.FLIMHistogramGroups = PrepareFLIMFitROIHistogramData(roiHistogramsDataUpdateStruct);
                                     }
                                 }
-                                ++_histogramCopyCounter;
-                                _histogramDataReady = true;
-                            }
-                            OnPropertyChanged("DFLIMHistogramMVMDataLock");
-                            OnPropertyChanged("DFLIMHistogramCopyCounter");
-                            OnPropertyChanged("DFLIMHistogramDictionary");
-
-                            try
-                            {
-                                if (null != _flimFittingWindow)
+                                catch (Exception ex)
                                 {
-                                    _flimFittingWindow.FLIMHistogramGroups = PrepareFLIMFitROIHistogramData(roiHistogramsDataUpdateStruct);
+                                    ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + " DFLIMUpdateFlimFit inner " + ex.Message);
+                                    ex.ToString();
                                 }
-                            }
-                            catch (Exception ex)
-                            {
-                                ex.ToString();
-                            }
+                            }));
                         }
                     }
                     catch (Exception ex)
                     {
+                        ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + " DFLIMUpdateFlimFit outter " + ex.Message);
                         ex.ToString();
                     }
                 }
@@ -895,7 +909,7 @@
                 var histoGroups = new List<FLIMFitting.FLIMHistogramGroupData>();
 
                 int i = 0;
-                Brush[] lsmChannelColor = (Brush[])MVMManager.Instance[_mainViewModelName, "LSMChannelColor"];
+                _channelsColors = (Color[])MVMManager.Instance[_imageViewMVMName, "DefaultChannelColors"];
                 for (int c = 0; c < NUM_CHANNELS; ++c)
                 {
                     if (((lsmChannelEnable >> c) & 0x1) > 0)
@@ -919,7 +933,7 @@
 
                         uint[] channelHistogram = new uint[roiHistogramsDataUpdateStruct.tNum];
                         Array.Copy(roiHistogramsDataUpdateStruct.roiHistograms, offsetC, channelHistogram, 0, roiHistogramsDataUpdateStruct.tNum);
-                        histogramGroupData.Colors.Add((SolidColorBrush)lsmChannelColor[c]);
+                        histogramGroupData.Colors.Add(new SolidColorBrush(_channelsColors[c]));
                         histogramGroupData.Histograms.Add(channelHistogram);
                         for (int r = 1; r <= roiHistogramsDataUpdateStruct.roiNum; ++r)
                         {
@@ -942,6 +956,7 @@
             }
             catch (Exception ex)
             {
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + " PrepareFLIMFitROIHistogramData " + ex.Message);
                 ex.ToString();
                 return null;
             }

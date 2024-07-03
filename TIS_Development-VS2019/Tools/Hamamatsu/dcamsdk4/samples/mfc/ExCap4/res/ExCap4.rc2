@@ -19,7 +19,7 @@
 #endif
 #endif
 
-#define	MY_FILEVERSION 21,6,VERKIND,6291
+#define	MY_FILEVERSION 22,12,VERKIND,6552
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -28,7 +28,7 @@
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION MY_FILEVERSION
- PRODUCTVERSION 21,6,0,0
+ PRODUCTVERSION 22,12,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -51,10 +51,10 @@ BEGIN
 #endif
             VALUE "FileVersion", MY_FILEVERSION
             VALUE "InternalName", "ExCap4.exe"
-            VALUE "LegalCopyright", "Copyright (C) 2006-2021, Hamamatsu Photonics K.K."
+            VALUE "LegalCopyright", "Copyright (C) 2006-2022, Hamamatsu Photonics K.K."
             VALUE "OriginalFilename", "ExCap4.exe"
             VALUE "ProductName", "DCAM-API"
-            VALUE "ProductVersion", "21.6"
+            VALUE "ProductVersion", "22.12"
         END
     END
     BLOCK "VarFileInfo"

@@ -1,0 +1,352 @@
+﻿  dllmain.cpp
+  ImageStoreLibrary.cpp
+  ImageStoreWrapper.cpp
+  image_container.cpp
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\utility(242,55): warning C4267: 'initializing': conversion from 'size_t' to '_Ty2', possible loss of data
+          with
+          [
+              _Ty2=uint16_t
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xmemory(681): message : see reference to function template instantiation 'std::pair<const frame_info_ext,uint16_t>::pair<frame_info_ext,unsigned __int64,0>(std::pair<frame_info_ext,unsigned __int64> &&) noexcept' being compiled
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xmemory(681): message : see reference to function template instantiation 'std::pair<const frame_info_ext,uint16_t>::pair<frame_info_ext,unsigned __int64,0>(std::pair<frame_info_ext,unsigned __int64> &&) noexcept' being compiled
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(805): message : see reference to function template instantiation 'void std::_Default_allocator_traits<_Alloc>::construct<_Ty,std::pair<frame_info_ext,unsigned __int64>>(_Alloc &,_Objty *const ,std::pair<frame_info_ext,unsigned __int64> &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::_Tree_node<std::pair<const frame_info_ext,uint16_t>,std::_Default_allocator_traits<std::allocator<std::pair<const frame_info_ext,uint16_t>>>::void_pointer>>,
+              _Ty=std::pair<const frame_info_ext,uint16_t>,
+              _Objty=std::pair<const frame_info_ext,uint16_t>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(805): message : see reference to function template instantiation 'void std::_Default_allocator_traits<_Alloc>::construct<_Ty,std::pair<frame_info_ext,unsigned __int64>>(_Alloc &,_Objty *const ,std::pair<frame_info_ext,unsigned __int64> &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::_Tree_node<std::pair<const frame_info_ext,uint16_t>,std::_Default_allocator_traits<std::allocator<std::pair<const frame_info_ext,uint16_t>>>::void_pointer>>,
+              _Ty=std::pair<const frame_info_ext,uint16_t>,
+              _Objty=std::pair<const frame_info_ext,uint16_t>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(1012): message : see reference to function template instantiation 'std::_Tree_temp_node<std::allocator<std::_Tree_node<std::pair<const frame_info_ext,uint16_t>,std::_Default_allocator_traits<_Alloc>::void_pointer>>>::_Tree_temp_node<_Ty>(_Alnode &,std::_Tree_node<std::pair<const frame_info_ext,uint16_t>,std::_Default_allocator_traits<_Alloc>::void_pointer> *,_Ty &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::pair<const frame_info_ext,uint16_t>>,
+              _Ty=std::pair<frame_info_ext,unsigned __int64>,
+              _Alnode=std::allocator<std::_Tree_node<std::pair<const frame_info_ext,uint16_t>,std::_Default_allocator_traits<std::allocator<std::pair<const frame_info_ext,uint16_t>>>::void_pointer>>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(1012): message : see reference to function template instantiation 'std::_Tree_temp_node<std::allocator<std::_Tree_node<std::pair<const frame_info_ext,uint16_t>,std::_Default_allocator_traits<_Alloc>::void_pointer>>>::_Tree_temp_node<_Ty>(_Alnode &,std::_Tree_node<std::pair<const frame_info_ext,uint16_t>,std::_Default_allocator_traits<_Alloc>::void_pointer> *,_Ty &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::pair<const frame_info_ext,uint16_t>>,
+              _Ty=std::pair<frame_info_ext,unsigned __int64>,
+              _Alnode=std::allocator<std::_Tree_node<std::pair<const frame_info_ext,uint16_t>,std::_Default_allocator_traits<std::allocator<std::pair<const frame_info_ext,uint16_t>>>::void_pointer>>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(1037): message : see reference to function template instantiation 'std::pair<std::_Tree_node<std::pair<const frame_info_ext,uint16_t>,std::_Default_allocator_traits<_Alloc>::void_pointer> *,bool> std::_Tree<std::_Tmap_traits<_Kty,_Ty,_Pr,_Alloc,false>>::_Emplace<std::pair<frame_info_ext,unsigned __int64>>(std::pair<frame_info_ext,unsigned __int64> &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::pair<const frame_info_ext,uint16_t>>,
+              _Kty=frame_info_ext,
+              _Ty=uint16_t,
+              _Pr=std::less<frame_info_ext>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(1037): message : see reference to function template instantiation 'std::pair<std::_Tree_node<std::pair<const frame_info_ext,uint16_t>,std::_Default_allocator_traits<_Alloc>::void_pointer> *,bool> std::_Tree<std::_Tmap_traits<_Kty,_Ty,_Pr,_Alloc,false>>::_Emplace<std::pair<frame_info_ext,unsigned __int64>>(std::pair<frame_info_ext,unsigned __int64> &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::pair<const frame_info_ext,uint16_t>>,
+              _Kty=frame_info_ext,
+              _Ty=uint16_t,
+              _Pr=std::less<frame_info_ext>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\map(163): message : see reference to function template instantiation 'std::pair<std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<std::pair<const frame_info_ext,uint16_t>>>>,bool> std::_Tree<std::_Tmap_traits<_Kty,_Ty,_Pr,_Alloc,false>>::emplace<std::pair<frame_info_ext,unsigned __int64>>(std::pair<frame_info_ext,unsigned __int64> &&)' being compiled
+          with
+          [
+              _Kty=frame_info_ext,
+              _Ty=uint16_t,
+              _Pr=std::less<frame_info_ext>,
+              _Alloc=std::allocator<std::pair<const frame_info_ext,uint16_t>>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\map(163): message : see reference to function template instantiation 'std::pair<std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<std::pair<const frame_info_ext,uint16_t>>>>,bool> std::_Tree<std::_Tmap_traits<_Kty,_Ty,_Pr,_Alloc,false>>::emplace<std::pair<frame_info_ext,unsigned __int64>>(std::pair<frame_info_ext,unsigned __int64> &&)' being compiled
+          with
+          [
+              _Kty=frame_info_ext,
+              _Ty=uint16_t,
+              _Pr=std::less<frame_info_ext>,
+              _Alloc=std::allocator<std::pair<const frame_info_ext,uint16_t>>
+          ]
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\image_container.cpp(140): message : see reference to function template instantiation 'std::pair<std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<std::pair<const frame_info_ext,uint16_t>>>>,bool> std::map<frame_info_ext,uint16_t,std::less<frame_info_ext>,std::allocator<std::pair<const frame_info_ext,uint16_t>>>::insert<std::pair<frame_info_ext,unsigned __int64>,0>(_Valty &&)' being compiled
+          with
+          [
+              _Valty=std::pair<frame_info_ext,unsigned __int64>
+          ]
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\image_container.cpp(140): message : see reference to function template instantiation 'std::pair<std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<std::pair<const frame_info_ext,uint16_t>>>>,bool> std::map<frame_info_ext,uint16_t,std::less<frame_info_ext>,std::allocator<std::pair<const frame_info_ext,uint16_t>>>::insert<std::pair<frame_info_ext,unsigned __int64>,0>(_Valty &&)' being compiled
+          with
+          [
+              _Valty=std::pair<frame_info_ext,unsigned __int64>
+          ]
+  jpeg_handler.cpp
+  region.cpp
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\utility(242,16): warning C4244: 'initializing': conversion from '_Ty' to '_Ty1', possible loss of data
+          with
+          [
+              _Ty=unsigned __int64
+          ]
+          and
+          [
+              _Ty1=const uint16_t
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xmemory(681): message : see reference to function template instantiation 'std::pair<const uint16_t,image_container *>::pair<unsigned __int64,image_container*,0>(std::pair<unsigned __int64,image_container *> &&) noexcept' being compiled
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xmemory(681): message : see reference to function template instantiation 'std::pair<const uint16_t,image_container *>::pair<unsigned __int64,image_container*,0>(std::pair<unsigned __int64,image_container *> &&) noexcept' being compiled
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(805): message : see reference to function template instantiation 'void std::_Default_allocator_traits<_Alloc>::construct<_Ty,std::pair<unsigned __int64,image_container *>>(_Alloc &,_Objty *const ,std::pair<unsigned __int64,image_container *> &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::_Tree_node<std::pair<const uint16_t,image_container *>,std::_Default_allocator_traits<std::allocator<std::pair<const uint16_t,image_container *>>>::void_pointer>>,
+              _Ty=std::pair<const uint16_t,image_container *>,
+              _Objty=std::pair<const uint16_t,image_container *>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(805): message : see reference to function template instantiation 'void std::_Default_allocator_traits<_Alloc>::construct<_Ty,std::pair<unsigned __int64,image_container *>>(_Alloc &,_Objty *const ,std::pair<unsigned __int64,image_container *> &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::_Tree_node<std::pair<const uint16_t,image_container *>,std::_Default_allocator_traits<std::allocator<std::pair<const uint16_t,image_container *>>>::void_pointer>>,
+              _Ty=std::pair<const uint16_t,image_container *>,
+              _Objty=std::pair<const uint16_t,image_container *>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(1015): message : see reference to function template instantiation 'std::_Tree_temp_node<std::allocator<std::_Tree_node<std::pair<const uint16_t,image_container *>,std::_Default_allocator_traits<_Alloc>::void_pointer>>>::_Tree_temp_node<_Ty>(_Alnode &,std::_Tree_node<std::pair<const uint16_t,image_container *>,std::_Default_allocator_traits<_Alloc>::void_pointer> *,_Ty &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::pair<const uint16_t,image_container *>>,
+              _Ty=std::pair<unsigned __int64,image_container *>,
+              _Alnode=std::allocator<std::_Tree_node<std::pair<const uint16_t,image_container *>,std::_Default_allocator_traits<std::allocator<std::pair<const uint16_t,image_container *>>>::void_pointer>>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(1015): message : see reference to function template instantiation 'std::_Tree_temp_node<std::allocator<std::_Tree_node<std::pair<const uint16_t,image_container *>,std::_Default_allocator_traits<_Alloc>::void_pointer>>>::_Tree_temp_node<_Ty>(_Alnode &,std::_Tree_node<std::pair<const uint16_t,image_container *>,std::_Default_allocator_traits<_Alloc>::void_pointer> *,_Ty &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::pair<const uint16_t,image_container *>>,
+              _Ty=std::pair<unsigned __int64,image_container *>,
+              _Alnode=std::allocator<std::_Tree_node<std::pair<const uint16_t,image_container *>,std::_Default_allocator_traits<std::allocator<std::pair<const uint16_t,image_container *>>>::void_pointer>>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(1037): message : see reference to function template instantiation 'std::pair<std::_Tree_node<std::pair<const uint16_t,image_container *>,std::_Default_allocator_traits<_Alloc>::void_pointer> *,bool> std::_Tree<std::_Tmap_traits<_Kty,_Ty,_Pr,_Alloc,false>>::_Emplace<std::pair<unsigned __int64,image_container *>>(std::pair<unsigned __int64,image_container *> &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::pair<const uint16_t,image_container *>>,
+              _Kty=uint16_t,
+              _Ty=image_container *,
+              _Pr=std::less<uint16_t>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(1037): message : see reference to function template instantiation 'std::pair<std::_Tree_node<std::pair<const uint16_t,image_container *>,std::_Default_allocator_traits<_Alloc>::void_pointer> *,bool> std::_Tree<std::_Tmap_traits<_Kty,_Ty,_Pr,_Alloc,false>>::_Emplace<std::pair<unsigned __int64,image_container *>>(std::pair<unsigned __int64,image_container *> &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::pair<const uint16_t,image_container *>>,
+              _Kty=uint16_t,
+              _Ty=image_container *,
+              _Pr=std::less<uint16_t>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\map(163): message : see reference to function template instantiation 'std::pair<std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<std::pair<const uint16_t,image_container *>>>>,bool> std::_Tree<std::_Tmap_traits<_Kty,_Ty,_Pr,_Alloc,false>>::emplace<std::pair<unsigned __int64,image_container *>>(std::pair<unsigned __int64,image_container *> &&)' being compiled
+          with
+          [
+              _Kty=uint16_t,
+              _Ty=image_container *,
+              _Pr=std::less<uint16_t>,
+              _Alloc=std::allocator<std::pair<const uint16_t,image_container *>>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\map(163): message : see reference to function template instantiation 'std::pair<std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<std::pair<const uint16_t,image_container *>>>>,bool> std::_Tree<std::_Tmap_traits<_Kty,_Ty,_Pr,_Alloc,false>>::emplace<std::pair<unsigned __int64,image_container *>>(std::pair<unsigned __int64,image_container *> &&)' being compiled
+          with
+          [
+              _Kty=uint16_t,
+              _Ty=image_container *,
+              _Pr=std::less<uint16_t>,
+              _Alloc=std::allocator<std::pair<const uint16_t,image_container *>>
+          ]
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\region.cpp(246): message : see reference to function template instantiation 'std::pair<std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<std::pair<const uint16_t,image_container *>>>>,bool> std::map<uint16_t,image_container *,std::less<uint16_t>,std::allocator<std::pair<const uint16_t,image_container *>>>::insert<std::pair<unsigned __int64,image_container *>,0>(_Valty &&)' being compiled
+          with
+          [
+              _Valty=std::pair<unsigned __int64,image_container *>
+          ]
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\region.cpp(246): message : see reference to function template instantiation 'std::pair<std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<std::pair<const uint16_t,image_container *>>>>,bool> std::map<uint16_t,image_container *,std::less<uint16_t>,std::allocator<std::pair<const uint16_t,image_container *>>>::insert<std::pair<unsigned __int64,image_container *>,0>(_Valty &&)' being compiled
+          with
+          [
+              _Valty=std::pair<unsigned __int64,image_container *>
+          ]
+  scan.cpp
+  TiffData.cpp
+  xml_handler.cpp
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(123,6): warning C4477: 'sscanf_s' : format string '%d' requires an argument of type 'int *', but variadic argument 1 has type 'uint16_t *'
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(123,6): message : consider using '%hd' in the format string
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(137,7): warning C4477: 'sscanf_s' : format string '%hd' requires an argument of type 'short *', but variadic argument 1 has type 'ResUnit *'
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(137,7): message : consider using '%d' in the format string
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(137,7): message : consider using '%I32d' in the format string
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(138,7): warning C4477: 'sscanf_s' : format string '%hd' requires an argument of type 'short *', but variadic argument 1 has type 'ResUnit *'
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(138,7): message : consider using '%d' in the format string
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(138,7): message : consider using '%I32d' in the format string
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(139,7): warning C4477: 'sscanf_s' : format string '%hd' requires an argument of type 'short *', but variadic argument 1 has type 'ResUnit *'
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(139,7): message : consider using '%d' in the format string
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(139,7): message : consider using '%I32d' in the format string
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(513,84): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(860,6): warning C4477: 'sscanf_s' : format string '%d' requires an argument of type 'int *', but variadic argument 1 has type 'uint16_t *'
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(860,6): message : consider using '%hd' in the format string
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(911,4): warning C4477: 'sscanf_s' : format string '%d' requires an argument of type 'int *', but variadic argument 1 has type 'uint16_t *'
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(911,4): message : consider using '%hd' in the format string
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(1021,5): warning C4477: 'sscanf_s' : format string '%d' requires an argument of type 'int *', but variadic argument 1 has type 'uint16_t *'
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(1021,5): message : consider using '%hd' in the format string
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(1110,6): warning C4477: 'sscanf_s' : format string '%d' requires an argument of type 'int *', but variadic argument 1 has type 'uint16_t *'
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(1110,6): message : consider using '%hd' in the format string
+  zip.cpp
+  Generating Code...
+libtiffd.lib(tif_close.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_close.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+libtiffd.lib(tif_dir.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_dir.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+libtiffd.lib(tif_open.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_open.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+libtiffd.lib(tif_dirwrite.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_dirwrite.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+libtiffd.lib(tif_unix.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_unix.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+libtiffd.lib(tif_error.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_error.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+libtiffd.lib(tif_tile.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_tile.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+libtiffd.lib(tif_write.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_write.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+libtiffd.lib(tif_read.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_read.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+libtiffd.lib(tif_flush.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_flush.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+libtiffd.lib(tif_dirinfo.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_dirinfo.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+libtiffd.lib(tif_dirread.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_dirread.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+libtiffd.lib(tif_warning.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_warning.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+libtiffd.lib(tif_swab.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_swab.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+libtiffd.lib(tif_compress.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_compress.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+libtiffd.lib(tif_aux.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_aux.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+libtiffd.lib(tif_strip.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_strip.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+libtiffd.lib(tif_codec.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_codec.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+libtiffd.lib(tif_dumpmode.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_dumpmode.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+libtiffd.lib(tif_lzw.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_lzw.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+libtiffd.lib(tif_predict.obj) : warning LNK4099: PDB 'libtiffd.pdb' was not found with 'libtiffd.lib(tif_predict.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libtiffd.pdb'; linking object as if no debug info
+tinyxml2d.lib(tinyxml2.obj) : warning LNK4099: PDB 'tinyxml2d.pdb' was not found with 'tinyxml2d.lib(tinyxml2.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\tinyxml2d.pdb'; linking object as if no debug info
+turbojpegd.lib(turbojpeg.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(turbojpeg.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jerror.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jerror.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jcapimin.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jcapimin.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jdapimin.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jdapimin.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jcparam.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jcparam.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jcomapi.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jcomapi.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jcapistd.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jcapistd.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jdapistd.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jdapistd.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jdmaster.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jdmaster.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jdtrans.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jdtrans.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jctrans.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jctrans.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jcmaster.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jcmaster.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jccolor.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jccolor.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jcsample.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jcsample.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jutils.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jutils.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(transupp.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(transupp.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jdatadst-tj.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jdatadst-tj.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jdatasrc-tj.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jdatasrc-tj.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jcmarker.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jcmarker.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jmemmgr.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jmemmgr.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jdinput.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jdinput.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jdmarker.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jdmarker.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jcinit.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jcinit.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jdsample.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jdsample.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jdmainct.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jdmainct.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jdcoefct.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jdcoefct.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jdpostct.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jdpostct.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jdhuff.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jdhuff.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jdphuff.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jdphuff.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jdarith.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jdarith.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jddctmgr.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jddctmgr.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jdcolor.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jdcolor.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jquant1.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jquant1.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jquant2.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jquant2.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jdmerge.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jdmerge.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jsimd_x86_64.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jsimd_x86_64.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jchuff.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jchuff.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jcphuff.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jcphuff.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jcarith.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jcarith.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jmemnobs.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jmemnobs.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jcmainct.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jcmainct.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jcprepct.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jcprepct.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jccoefct.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jccoefct.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jcdctmgr.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jcdctmgr.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jaricom.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jaricom.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jidctint.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jidctint.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jidctfst.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jidctfst.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jidctflt.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jidctflt.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jidctred.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jidctred.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jfdctint.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jfdctint.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jfdctfst.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jfdctfst.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+turbojpegd.lib(jfdctflt.obj) : warning LNK4099: PDB 'turbojpegd.pdb' was not found with 'turbojpegd.lib(jfdctflt.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\turbojpegd.pdb'; linking object as if no debug info
+libzipd.lib(zip_close.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_close.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_delete.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_delete.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_fclose.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_fclose.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_file_add.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_file_add.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_fopen.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_fopen.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_fread.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_fread.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+     Creating library D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\ImageStoreLibrary.lib and object D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\ImageStoreLibrary.exp
+libzipd.lib(zip_open.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_open.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_buffer.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_buffer.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_close.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_close.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_stat.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_stat.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_discard.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_discard.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_error.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_error.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_begin_write.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_begin_write.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_commit_write.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_commit_write.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_free.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_free.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_function.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_function.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_open.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_open.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_read.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_read.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_rollback_write.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_rollback_write.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_seek.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_seek.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_seek_write.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_seek_write.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_stat.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_stat.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_tell_write.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_tell_write.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_get_encryption_implementation.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_get_encryption_implementation.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_compress.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_compress.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_crc.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_crc.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_remove.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_remove.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_dirent.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_dirent.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_file_get_offset.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_file_get_offset.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_progress.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_progress.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_io_util.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_io_util.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_extra_field.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_extra_field.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_get_compression_flags.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_get_compression_flags.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_zip_new.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_zip_new.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_hash.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_hash.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_get_name.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_get_name.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_unchange.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_unchange.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_file_replace.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_file_replace.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_fopen_index_encrypted.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_fopen_index_encrypted.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_name_locate.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_name_locate.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_error.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_error.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_win32utf8.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_win32utf8.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_supports.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_supports.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_tell.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_tell.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_stat_init.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_stat_init.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_buffer.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_buffer.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_string.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_string.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_new.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_new.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_call.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_call.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_stat_index.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_stat_index.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_entry.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_entry.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_window.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_window.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_err_str.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_err_str.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_pkware.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_pkware.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_winzip_aes_decode.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_winzip_aes_decode.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_winzip_aes_encode.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_winzip_aes_encode.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_algorithm_deflate.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_algorithm_deflate.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_layered.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_layered.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_utf-8.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_utf-8.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_write.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_write.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_memdup.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_memdup.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_unchange_data.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_unchange_data.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_add_entry.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_add_entry.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_set_name.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_set_name.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_win32w.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_win32w.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(gladman-fcrypt.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(gladman-fcrypt.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_random_win32.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_random_win32.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+libzipd.lib(zip_source_win32handle.obj) : warning LNK4099: PDB 'libzipd.pdb' was not found with 'libzipd.lib(zip_source_win32handle.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\libzipd.pdb'; linking object as if no debug info
+zlibd.lib(crc32.obj) : warning LNK4099: PDB 'zlibd.pdb' was not found with 'zlibd.lib(crc32.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\zlibd.pdb'; linking object as if no debug info
+zlibd.lib(deflate.obj) : warning LNK4099: PDB 'zlibd.pdb' was not found with 'zlibd.lib(deflate.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\zlibd.pdb'; linking object as if no debug info
+zlibd.lib(inflate.obj) : warning LNK4099: PDB 'zlibd.pdb' was not found with 'zlibd.lib(inflate.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\zlibd.pdb'; linking object as if no debug info
+zlibd.lib(adler32.obj) : warning LNK4099: PDB 'zlibd.pdb' was not found with 'zlibd.lib(adler32.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\zlibd.pdb'; linking object as if no debug info
+zlibd.lib(zutil.obj) : warning LNK4099: PDB 'zlibd.pdb' was not found with 'zlibd.lib(zutil.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\zlibd.pdb'; linking object as if no debug info
+zlibd.lib(trees.obj) : warning LNK4099: PDB 'zlibd.pdb' was not found with 'zlibd.lib(trees.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\zlibd.pdb'; linking object as if no debug info
+zlibd.lib(inftrees.obj) : warning LNK4099: PDB 'zlibd.pdb' was not found with 'zlibd.lib(inftrees.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\zlibd.pdb'; linking object as if no debug info
+zlibd.lib(inffast.obj) : warning LNK4099: PDB 'zlibd.pdb' was not found with 'zlibd.lib(inffast.obj)' or at 'D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\zlibd.pdb'; linking object as if no debug info
+  ImageStoreLibrary.vcxproj -> D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\ImageStoreLibrary.dll
+  D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\ImageStoreLibrary.dll
+  1 File(s) copied
+  D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Debug\ImageStoreLibrary.lib
+  1 File(s) copied
+  packages\ImageProcessLibrary.1.0.1\build\native\ImageProcessLibraryBasic.dll
+  1 File(s) copied
+  ..\..\..\src\ImageStoreLibrary\ImageStoreLibrary.h
+  1 File(s) copied
+  D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\msvc\vs2012\ImageStoreLibrary\..\..\..\Bin\vs2012\Debug\ImageProcessLibraryBasic.dll
+  D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\msvc\vs2012\ImageStoreLibrary\..\..\..\Bin\vs2012\Debug\ImageStoreLibrary.dll
+          2 file(s) copied.

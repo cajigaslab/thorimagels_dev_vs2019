@@ -69,6 +69,7 @@ enum TL_COLOR_FORMAT
    TL_COLOR_FORMAT_BGR_PLANAR /*!< The color pixels blue, green, and red are grouped in separate planes in the buffer: BBBBBBBB..., GGGGGGGG..., RRRRRRRR.... */
  , TL_COLOR_FORMAT_BGR_PIXEL /*!< The color pixels blue, green, and red are clustered and stored consecutively in the following pattern: BGRBGRBGR... */
  , TL_COLOR_FORMAT_RGB_PIXEL /*!< The color pixels blue, green, and red are clustered and stored consecutively in the following pattern: RGBRGBRGB... */
+ , TL_COLOR_FORMAT_RGB_PLANAR /*!< The color pixels red, green, and blue are grouped in separate planes in the buffer: RRRRRRRR..., GGGGGGGG..., BBBBBBBB.... */
  , TL_COLOR_FORMAT_MAX /*!< A sentinel value (DO NOT USE). */
 };
 

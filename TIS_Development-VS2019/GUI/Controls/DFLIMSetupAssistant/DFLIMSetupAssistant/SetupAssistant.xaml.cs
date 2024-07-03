@@ -77,25 +77,25 @@
                 switch (keyVal.Key.Key)
                 {
                     case 0:
-                        if ((bool)MVMManager.Instance["CaptureSetupViewModel", "LSMChannelEnable0"])
+                        if ((bool)MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable0"])
                         {
                             DFLIMDiagnostics1.Plot(keyVal.Key, keyVal.Value);
                         }
                         break;
                     case 1:
-                        if ((bool)MVMManager.Instance["CaptureSetupViewModel", "LSMChannelEnable1"])
+                        if ((bool)MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable1"])
                         {
                             DFLIMDiagnostics2.Plot(keyVal.Key, keyVal.Value);
                         }
                         break;
                     case 2:
-                        if ((bool)MVMManager.Instance["CaptureSetupViewModel", "LSMChannelEnable2"])
+                        if ((bool)MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable2"])
                         {
                             DFLIMDiagnostics3.Plot(keyVal.Key, keyVal.Value);
                         }
                         break;
                     case 3:
-                        if ((bool)MVMManager.Instance["CaptureSetupViewModel", "LSMChannelEnable3"])
+                        if ((bool)MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable3"])
                         {
                             DFLIMDiagnostics4.Plot(keyVal.Key, keyVal.Value);
                         }
@@ -103,22 +103,22 @@
                 }
             }
 
-            if (!(bool)MVMManager.Instance["CaptureSetupViewModel", "LSMChannelEnable0"])
+            if (!(bool)MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable0"])
             {
                 DFLIMDiagnostics1.Clear();
             }
 
-            if (!(bool)MVMManager.Instance["CaptureSetupViewModel", "LSMChannelEnable1"])
+            if (!(bool)MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable1"])
             {
                 DFLIMDiagnostics2.Clear();
             }
 
-            if (!(bool)MVMManager.Instance["CaptureSetupViewModel", "LSMChannelEnable2"])
+            if (!(bool)MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable2"])
             {
                 DFLIMDiagnostics3.Clear();
             }
 
-            if (!(bool)MVMManager.Instance["CaptureSetupViewModel", "LSMChannelEnable3"])
+            if (!(bool)MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable3"])
             {
                 DFLIMDiagnostics4.Clear();
             }
@@ -145,22 +145,22 @@
                 }
             }
 
-            if (!(bool)MVMManager.Instance["CaptureSetupViewModel", "LSMChannelEnable0"])
+            if (!(bool)MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable0"])
             {
                 DFLIMHistogram1.Clear();
             }
 
-            if (!(bool)MVMManager.Instance["CaptureSetupViewModel", "LSMChannelEnable1"])
+            if (!(bool)MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable1"])
             {
                 DFLIMHistogram2.Clear();
             }
 
-            if (!(bool)MVMManager.Instance["CaptureSetupViewModel", "LSMChannelEnable2"])
+            if (!(bool)MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable2"])
             {
                 DFLIMHistogram3.Clear();
             }
 
-            if (!(bool)MVMManager.Instance["CaptureSetupViewModel", "LSMChannelEnable3"])
+            if (!(bool)MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable3"])
             {
                 DFLIMHistogram4.Clear();
             }

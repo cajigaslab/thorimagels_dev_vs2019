@@ -1,0 +1,9 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Geometry x:Key="Indicator_NormalGeometry">F1 M64,64z M0,0z M56,32C56,45.256 45.256,56 32,56 18.745,56 8,45.256 8,32 8,18.745 18.745,8 32,8 45.256,8 56,18.745 56,32z</Geometry>
+  <DrawingGroup x:Key="Indicator_NormalDrawingGroup" ClipGeometry="M0,0 V64 H64 V0 H0 Z">
+    <DrawingGroup Opacity="1">
+      <GeometryDrawing Brush="Lime" Geometry="{StaticResource Indicator_NormalGeometry}" />
+    </DrawingGroup>
+  </DrawingGroup>
+  <DrawingImage x:Key="Indicator_NormalDrawingImage" Drawing="{StaticResource Indicator_NormalDrawingGroup}" />
+</ResourceDictionary>

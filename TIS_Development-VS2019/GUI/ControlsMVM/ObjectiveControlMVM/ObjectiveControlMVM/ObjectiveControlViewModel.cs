@@ -56,6 +56,12 @@
 
         #endregion Constructors
 
+        #region Events
+
+        public event EventHandler<IntPropertyArgs> TurretPositionChangedEvent;
+
+        #endregion Events
+
         #region Properties
 
         public string BeamExp2Text
@@ -149,8 +155,8 @@
                 }
                 framesPerSecond = (double)MVMManager.Instance["CaptureSetupViewModel", "FramesPerSecond", (object)0.0];
                 return String.Format(formating + "\n{1} ms/f",
-                                     framesPerSecond.ToString("#0.0"),
-                                     (1000.0 / framesPerSecond).ToString("#0.0"));
+                                     framesPerSecond.ToString("#0.000"),
+                                     (1000.0 / framesPerSecond).ToString("#0.000"));
             }
         }
 
@@ -272,9 +278,13 @@
                 ((IMVM)MVMManager.Instance["CameraControlViewModel", this]).OnPropertyChange("CamPixelSizeUM");
                 ((IMVM)MVMManager.Instance["XYTileControlViewModel", this]).OnPropertyChange("ScanAreaWidth");
                 ((IMVM)MVMManager.Instance["XYTileControlViewModel", this]).OnPropertyChange("ScanAreaHeight");
+                ((IMVM)MVMManager.Instance["ZControlViewModel", this]).OnPropertyChange("DynamicLabels");
 
                 _ObjectiveControlModel.GetBeamExpansion(value); //update info from hardware settings
                 NA = _ObjectiveControlModel.NumericalAperture;
+
+                //Notice event register about turret change
+                TurretPositionChangedEvent?.Invoke(this, new IntPropertyArgs(value));
                 OnPropertyChanged("TurretPosition");
 
             }

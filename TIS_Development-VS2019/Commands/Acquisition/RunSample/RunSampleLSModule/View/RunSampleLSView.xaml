@@ -12,6 +12,7 @@
              xmlns:View="clr-namespace:RunSampleLSModule.View"
              xmlns:Validator="clr-namespace:Validations;assembly=Validations"
              xmlns:System="clr-namespace:System;assembly=mscorlib"
+             xmlns:ig="http://schemas.infragistics.com/xaml"
              FocusManager.FocusedElement="{Binding ElementName=btnStart}"
              IsEnabled="{Binding Path=PanelsEnable,
                                  Mode=OneWay,
@@ -362,6 +363,7 @@
                                         </Button.Style>
                                     </Button>
                                 </StackPanel>
+                                
                             </StackPanel>
                         </GroupBox>
                     </StackPanel>
@@ -394,7 +396,7 @@
                                                         Orientation="Horizontal"
                                                         ToolTip="Z Stack Start Position">
                                                 <Label Width="130"
-                                                       Content="Start Position" />
+                                                       Content="{Binding ZStartPositionLabel}" />
                                                 <TextBox Name="tbZStartPosition"
                                                          Width="50"
                                                          Text="{Binding ZStartPosition, ConverterParameter=1000, Converter={StaticResource doubleCultureUnitConverter}, Mode=TwoWay}" />
@@ -415,15 +417,17 @@
                                                     </Button.Style>
                                                 </Button>
                                                 <Label Width="80"
-                                                       Content="[um]" />
+                                                       Content="[um]"
+                                                       Visibility="{Binding Path=IsRemoteFocus, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVisibilityConverter}, ConverterParameter=1}"/>
                                             </StackPanel>
                                             <StackPanel Margin="1"
                                                         Orientation="Horizontal"
                                                         ToolTip="Z Stack Stop Position">
                                                 <Label Width="130"
-                                                       Content="Stop Position" />
+                                                       Content="{Binding ZStopPositionLabel}" />
                                                 <TextBox Name="tbZStopPosition"
                                                          Width="50"
+                                                         Foreground="White"
                                                          Text="{Binding Path=ZStopPosition,
                                                                         Mode=TwoWay,
                                                                         ConverterParameter=1000,
@@ -453,6 +457,11 @@
                                                                         <StopStoryboard BeginStoryboardName="flashing" />
                                                                     </DataTrigger.ExitActions>
                                                                 </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Path=ZStopPositionNotValid, UpdateSourceTrigger=PropertyChanged}"
+                                                                             Value="False">
+                                                                    <Setter Property="Background"
+                                                                            Value="Transparent" />
+                                                                </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </TextBox.Style>
@@ -474,7 +483,8 @@
                                                     </Button.Style>
                                                 </Button>
                                                 <Label Width="80"
-                                                       Content="[um]" />
+                                                       Content="[um]"
+                                                       Visibility="{Binding Path=IsRemoteFocus, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVisibilityConverter}, ConverterParameter=1}"/>
                                             </StackPanel>
                                             <StackPanel Margin="1"
                                                         ToolTip="Z Slice Spacing"
@@ -503,7 +513,8 @@
                                                     </Button.Style>
                                                 </Button>
                                                 <Label Width="80"
-                                                       Content="[um]" />
+                                                       Content="[um]" 
+                                                       Visibility="{Binding Path=IsRemoteFocus, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVisibilityConverter}, ConverterParameter=1}"/>
                                             </StackPanel>
                                             <StackPanel Margin="1"
                                                         Orientation="Horizontal"
@@ -1198,7 +1209,8 @@
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
                                             <StackPanel>
-                                                <ComboBox Width="150"
+                                                <ComboBox Name="cbStreamingCaptureDataType"
+                                                          Width="150"
                                                           Height="30"
                                                           Margin="1"
                                                           HorizontalAlignment="Left"
@@ -1460,6 +1472,7 @@
                                     </Button>
 
                                 </StackPanel>
+                               
                                 <GroupBox Name="groupBoxFastZ"
                                           Height="Auto"
                                           Margin="1">
@@ -1471,285 +1484,967 @@
                                                                       Mode=TwoWay,
                                                                       UpdateSourceTrigger=PropertyChanged}" />
                                     </GroupBox.Header>
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                        </Grid.RowDefinitions>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Grid.Column="0"
+                                    <StackPanel>
+                                        <Grid Visibility="{Binding Path=IsRemoteFocus, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVisibilityConverter}, ConverterParameter=1}">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0"
                                                     IsEnabled="{Binding ElementName=cbZFastEnable, Path=IsChecked}">
-                                            <StackPanel Grid.Row="0"
+                                                <StackPanel Grid.Row="0"
                                                         Margin="1"
                                                         Orientation="Horizontal"
                                                         ToolTip="Z Stack Start Position">
-                                                <Label Width="120"
+                                                    <Label Width="120"
                                                        Content="Start Position" />
-                                                <TextBox Name="tb2ZStartPosition"
+                                                    <TextBox Name="tb2ZStartPosition"
                                                          Width="50"
                                                          Text="{Binding Path=ZStartPosition,
                                                                     Mode=TwoWay,
                                                                     ConverterParameter=1000,
                                                                     Converter={StaticResource doubleCultureUnitConverter}}" />
-                                                <Button Width="30"
+                                                    <Button Width="30"
                                                         Content="✓">
-                                                    <Button.Style>
-                                                        <Style TargetType="Button">
-                                                            <Setter Property="Visibility"
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Setter Property="Visibility"
                                                                     Value="Collapsed" />
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tb2ZStartPosition}"
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tb2ZStartPosition}"
                                                                              Value="True">
-                                                                    <Setter Property="Visibility"
+                                                                        <Setter Property="Visibility"
                                                                             Value="Visible" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Button.Style>
-                                                </Button>
-                                                <Label Width="50"
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                    <Label Width="50"
                                                        Content="[um]" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Row="1"
+                                                </StackPanel>
+                                                <StackPanel Grid.Row="1"
                                                         Margin="1"
                                                         Orientation="Horizontal"
                                                         ToolTip="Z Stack Stop Position">
-                                                <Label Width="120"
+                                                    <Label Width="120"
                                                        Content="Stop Position" />
-                                                <TextBox Name="tb2ZStopPosition"
+                                                    <TextBox Name="tb2ZStopPosition"
                                                          Width="50"
                                                          Text="{Binding Path=ZStopPosition,
                                                                     Mode=TwoWay,                                                                            ConverterParameter=1000,
                                                                     Converter={StaticResource doubleCultureUnitConverter}}" />
-                                                <Button Width="30"
+                                                    <Button Width="30"
                                                         Content="✓">
-                                                    <Button.Style>
-                                                        <Style TargetType="Button">
-                                                            <Setter Property="Visibility"
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Setter Property="Visibility"
                                                                     Value="Collapsed" />
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tb2ZStopPosition}"
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tb2ZStopPosition}"
                                                                              Value="True">
-                                                                    <Setter Property="Visibility"
+                                                                        <Setter Property="Visibility"
                                                                             Value="Visible" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Button.Style>
-                                                </Button>
-                                                <Label Width="50"
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                    <Label Width="50"
                                                        Content="[um]" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Row="2"
+                                                </StackPanel>
+                                                <StackPanel Grid.Row="2"
                                                         Margin="1"
                                                         Orientation="Horizontal"
                                                         ToolTip="Z Slice Spacing">
-                                                <Label Width="120"
+                                                    <Label Width="120"
                                                        Content="Step Size" />
-                                                <TextBox Name="tb2ZStepSize"
+                                                    <TextBox Name="tb2ZStepSize"
                                                          Width="50"
                                                          Text="{Binding Path=ZStepSize,
                                                                     Mode=TwoWay,
                                                                     Converter={StaticResource doubleCulture}}" />
-                                                <Button Width="30"
+                                                    <Button Width="30"
                                                         Content="✓">
-                                                    <Button.Style>
-                                                        <Style TargetType="Button">
-                                                            <Setter Property="Visibility"
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Setter Property="Visibility"
                                                                     Value="Collapsed" />
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tb2ZStepSize}"
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tb2ZStepSize}"
                                                                              Value="True">
-                                                                    <Setter Property="Visibility"
+                                                                        <Setter Property="Visibility"
                                                                             Value="Visible" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Button.Style>
-                                                </Button>
-                                                <Label Width="50"
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                    <Label Width="50"
                                                        Content="[um]" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Row="3"
+                                                </StackPanel>
+                                                <StackPanel Grid.Row="3"
                                                         Margin="1"
                                                         Orientation="Horizontal"
                                                         ToolTip="Z Flyback Frames">
-                                                <Label Width="120"
+                                                    <Label Width="120"
                                                        Content="Flyback Frames" />
-                                                <TextBox Name="tbFlybackFrames"
+                                                    <TextBox Name="tbFlybackFrames"
                                                          Width="50"
                                                          Text="{Binding Path=FlybackFrames, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                                                          Validator:Validation.ValidationType="{x:Type System:Int32}"
                                                          Validator:Validation.NoEmptyValue="True"
                                                          Validator:Validation.MinValue="0"
                                                          Validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
-                                                <Button Width="30"
+                                                    <Button Width="30"
                                                         Content="✓">
-                                                    <Button.Style>
-                                                        <Style TargetType="Button">
-                                                            <Setter Property="Visibility"
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Setter Property="Visibility"
                                                                     Value="Collapsed" />
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbFlybackFrames}"
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbFlybackFrames}"
                                                                              Value="True">
-                                                                    <Setter Property="Visibility"
+                                                                        <Setter Property="Visibility"
                                                                             Value="Visible" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Button.Style>
-                                                </Button>
-                                            </StackPanel>
-                                            <StackPanel Grid.Row="4"
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                </StackPanel>
+                                                <StackPanel Grid.Row="4"
                                                         Margin="1"
                                                         Orientation="Horizontal"
                                                         ToolTip="Z Transition Cycles"
                                                         Visibility="{Binding Path=IsChecked, ElementName=ckbStaircase, ConverterParameter=0, Converter={StaticResource boolToVisibilityConverter}}">
-                                                <Label Width="120"
+                                                    <Label Width="120"
                                                        Content="Transition Cycles" />
-                                                <TextBox Name="tbFlybackLines"
+                                                    <TextBox Name="tbFlybackLines"
                                                          Width="50"
                                                          Text="{Binding Path=FlybackLines, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                                                          Validator:Validation.ValidationType="{x:Type System:Int32}"
                                                          Validator:Validation.NoEmptyValue="True"
                                                          Validator:Validation.MinValue="0"
                                                          Validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
-                                                <Button Width="30"
+                                                    <Button Width="30"
                                                         Content="✓">
-                                                    <Button.Style>
-                                                        <Style TargetType="Button">
-                                                            <Setter Property="Visibility"
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Setter Property="Visibility"
                                                                     Value="Collapsed" />
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbFlybackLines}"
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbFlybackLines}"
                                                                              Value="True">
-                                                                    <Setter Property="Visibility"
+                                                                        <Setter Property="Visibility"
                                                                             Value="Visible" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Button.Style>
-                                                </Button>
-                                                <Label Content="{Binding Path=LSMFlybackTime}"
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                    <Label Content="{Binding Path=LSMFlybackTime}"
                                                        VerticalAlignment="Center" />
-                                                <Label Content="[s]"
+                                                    <Label Content="[s]"
                                                        VerticalAlignment="Center" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Row="5"
+                                                </StackPanel>
+                                                <StackPanel Grid.Row="5"
                                                         Margin="1"
                                                         Orientation="Horizontal"
                                                         ToolTip="Total Number of Z Slices">
-                                                <Label Width="120"
+                                                    <Label Width="120"
                                                        Content="Number of Slices" />
-                                                <Label Width="50"
+                                                    <Label Width="50"
                                                        Content="{Binding Path=ZNumSteps, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Row="6"
+                                                </StackPanel>
+                                                <StackPanel Grid.Row="6"
                                                         Margin="1"
                                                         Orientation="Horizontal"
                                                         ToolTip="Slice to Show in Preview">
-                                                <Label Width="120"
+                                                    <Label Width="120"
                                                        Content="Preview Index" />
-                                                <TextBox x:Name="tbPreviewIndex"
+                                                    <TextBox x:Name="tbPreviewIndex"
                                                          Width="50"
                                                          Text="{Binding Path=PreviewIndex,
                                                                     Mode=TwoWay}" />
-                                                <Button Width="30"
+                                                    <Button Width="30"
                                                         Content="✓">
-                                                    <Button.Style>
-                                                        <Style TargetType="{x:Type Button}">
-                                                            <Setter Property="Visibility"
+                                                        <Button.Style>
+                                                            <Style TargetType="{x:Type Button}">
+                                                                <Setter Property="Visibility"
                                                                     Value="Collapsed" />
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsFocused, ElementName=tbPreviewIndex}"
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsFocused, ElementName=tbPreviewIndex}"
                                                                              Value="True">
-                                                                    <Setter Property="Visibility"
+                                                                        <Setter Property="Visibility"
                                                                             Value="Visible" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Button.Style>
-                                                </Button>
-                                            </StackPanel>
-                                            <StackPanel Grid.Row="7"
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                </StackPanel>
+                                                <StackPanel Grid.Row="7"
                                                         Orientation="Horizontal">
-                                                <CheckBox Content="Use reference voltage to control pockels"
+                                                    <CheckBox Content="Use reference voltage to control pockels"
                                                           Visibility="{Binding Path=PockelsOutputReferenceVisibility}"
                                                           VerticalAlignment="Center"
                                                           Margin="5"
                                                           IsChecked="{Binding Path=UseReferenceVoltageForFastZPockels}" />
+                                                </StackPanel>
                                             </StackPanel>
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="1"
+                                            <StackPanel Grid.Column="1"
                                                     Orientation="Vertical"
                                                     IsEnabled="{Binding ElementName=cbZFastEnable, Path=IsChecked}">
-                                            <!-- first three rows are empty labels -->
-                                            <StackPanel Grid.Row="0"
+                                                <!-- first three rows are empty labels -->
+                                                <StackPanel Grid.Row="0"
                                                         Orientation="Horizontal"
                                                         Margin="1">
-                                                <CheckBox Name="ckbStaircase"
+                                                    <CheckBox Name="ckbStaircase"
                                                           Content="Staircase Mode"
                                                           VerticalAlignment="Center"
                                                           Margin="5"
                                                           IsChecked="{Binding Path=FastZStaircase, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Row="1"
+                                                </StackPanel>
+                                                <StackPanel Grid.Row="1"
                                                         Margin="1">
-                                                <Label Width="50"
+                                                    <Label Width="50"
                                                        Content="" />
-                                            </StackPanel>
-                                            <StackPanel Name="stackPanelVolumeTimeAdjustment"
+                                                </StackPanel>
+                                                <StackPanel Name="stackPanelVolumeTimeAdjustment"
                                                         Grid.Row="2"
                                                         Margin="1"
                                                         Orientation="Horizontal"
                                                         ToolTip="Z Volume Time Adjustment in msec, positive or negative.">
-                                                <StackPanel Orientation="Horizontal"
+                                                    <StackPanel Orientation="Horizontal"
                                                             Visibility="{Binding Path=IsChecked, ElementName=ckbStaircase, ConverterParameter=1, Converter={StaticResource boolToVisibilityConverter}}">
-                                                    <Label Width="150"
+                                                        <Label Width="150"
                                                            Content="Volume Time Adjustment" />
-                                                    <TextBox Name="tbVolumeTimeAdjust"
+                                                        <TextBox Name="tbVolumeTimeAdjust"
                                                              Width="50"
                                                              Text="{Binding Path=VolumeTimeAdjustMS, Mode=TwoWay, UpdateSourceTrigger=LostFocus,NotifyOnValidationError=True,ValidatesOnDataErrors=True}"
                                                              Validator:Validation.ValidationType="{x:Type System:Double}"
                                                              Validator:Validation.NoEmptyValue="True"
                                                              Validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
-                                                    <Button Width="30"
+                                                        <Button Width="30"
                                                             Content="✓">
+                                                            <Button.Style>
+                                                                <Style TargetType="Button">
+                                                                    <Setter Property="Visibility"
+                                                                        Value="Collapsed" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbVolumeTimeAdjust}"
+                                                                                 Value="True">
+                                                                            <Setter Property="Visibility"
+                                                                                Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Button.Style>
+                                                        </Button>
+                                                        <Label Width="50"
+                                                           Content="[ms]" />
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal"
+                                                            Visibility="{Binding Path=IsChecked, ElementName=ckbStaircase, ConverterParameter=0, Converter={StaticResource boolToVisibilityConverter}}">
+                                                        <Label Width="150"
+                                                           Content="  Frame Time Adjustment" />
+                                                        <TextBox Name="tbStepTimeAdjust"
+                                                             Width="50"
+                                                             Text="{Binding Path=StepTimeAdjustMS, Mode=TwoWay, UpdateSourceTrigger=LostFocus,NotifyOnValidationError=True,ValidatesOnDataErrors=True}"
+                                                             Validator:Validation.ValidationType="{x:Type System:Double}"
+                                                             Validator:Validation.NoEmptyValue="True"
+                                                             Validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
+                                                        <Button Width="30"
+                                                            Content="✓">
+                                                            <Button.Style>
+                                                                <Style TargetType="Button">
+                                                                    <Setter Property="Visibility"
+                                                                        Value="Collapsed" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbStepTimeAdjust}"
+                                                                                 Value="True">
+                                                                            <Setter Property="Visibility"
+                                                                                Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Button.Style>
+                                                        </Button>
+                                                        <Label Width="50"
+                                                           Content="[ms]" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <StackPanel Grid.Row="3"
+                                                        Margin="1"
+                                                        Orientation="Horizontal"
+                                                        ToolTip="Z Flyback Time Adjustment in msec, positive or negative.">
+                                                    <Label Width="150"
+                                                       Content="Flyback Time Adjustment" />
+                                                    <TextBox Name="tbFlybackTimeAdjust"
+                                                         Width="50"
+                                                         Text="{Binding Path=FlybackTimeAdjustMS, Mode=TwoWay, UpdateSourceTrigger=LostFocus,NotifyOnValidationError=True,ValidatesOnDataErrors=True}"
+                                                         Validator:Validation.ValidationType="{x:Type System:Double}"
+                                                         Validator:Validation.NoEmptyValue="True"
+                                                         Validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
+                                                    <Button Width="30"
+                                                        Content="✓">
                                                         <Button.Style>
                                                             <Style TargetType="Button">
                                                                 <Setter Property="Visibility"
-                                                                        Value="Collapsed" />
+                                                                    Value="Collapsed" />
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbVolumeTimeAdjust}"
-                                                                                 Value="True">
+                                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbFlybackTimeAdjust}"
+                                                                             Value="True">
                                                                         <Setter Property="Visibility"
-                                                                                Value="Visible" />
+                                                                            Value="Visible" />
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
                                                         </Button.Style>
                                                     </Button>
                                                     <Label Width="50"
-                                                           Content="[ms]" />
+                                                       Content="[ms]" />
                                                 </StackPanel>
-                                                <StackPanel Orientation="Horizontal"
-                                                            Visibility="{Binding Path=IsChecked, ElementName=ckbStaircase, ConverterParameter=0, Converter={StaticResource boolToVisibilityConverter}}">
-                                                    <Label Width="150"
-                                                           Content="  Frame Time Adjustment" />
-                                                    <TextBox Name="tbStepTimeAdjust"
+                                            </StackPanel>
+                                        </Grid>
+                                        <Grid x:Name="remoteFocusGrid"
+                                              IsEnabled="{Binding ElementName=cbZFastEnable, Path=IsChecked}"
+                                              Visibility="{Binding Path=IsRemoteFocus, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVisibilityConverter}, ConverterParameter=0}">
+                                            <Grid.Resources>
+                                                <!--Template for the tick marks, every clickable position-->
+                                                <DataTemplate x:Key="VerticalTick">
+                                                    <Border Width="55" 
+                                                            Height="13" 
+                                                            CornerRadius="10" 
+                                                            BorderThickness="2,0,0,2" 
+                                                            BorderBrush="White">
+                                                        <Border.Background>
+                                                            <LinearGradientBrush StartPoint="0,0" 
+                                                                                 EndPoint="0,1">
+                                                                <GradientStop Offset="0" 
+                                                                              Color="DarkGray"/>
+                                                                <GradientStop Offset="1" 
+                                                                              Color="Gray"/>
+                                                            </LinearGradientBrush>
+                                                        </Border.Background>
+                                                        <Border.Effect>
+                                                            <DropShadowEffect ShadowDepth="10" 
+                                                                              Color="Black"
+                                                                              Opacity="1" 
+                                                                              BlurRadius="5"/>
+                                                        </Border.Effect>
+                                                        <Border.RenderTransform>
+                                                            <TransformGroup>
+                                                                <ScaleTransform ScaleX="1" 
+                                                                                ScaleY="1"/>
+                                                                <SkewTransform AngleX="0" 
+                                                                               AngleY="20"/>
+                                                                <RotateTransform Angle="-20"/>
+                                                            </TransformGroup>
+                                                        </Border.RenderTransform>
+                                                        <TextBlock Text="{Binding}" 
+                                                                   TextWrapping="Wrap"
+                                                                   Background="Transparent"
+                                                                   Foreground="White" 
+                                                                   VerticalAlignment="Center" 
+                                                                   HorizontalAlignment="Center"
+                                                                   FontSize="12" 
+                                                                   FontWeight="Bold"/>
+                                                    </Border>
+                                                </DataTemplate>
+                                                <!--Style for the slider track and base-->
+                                                <Style x:Key="SliderBase" 
+                                                       TargetType="ig:XamSliderBase">
+                                                    <Setter Property="Orientation" 
+                                                            Value="Vertical"/>
+                                                    <Setter Property="IsMouseWheelEnabled" 
+                                                            Value="False"/>
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="ig:XamSliderBase">
+                                                                <Grid x:Name="RootElement" 
+                                                                      Background="{TemplateBinding Background}">
+                                                                    <VisualStateManager.VisualStateGroups>
+                                                                        <VisualStateGroup x:Name="OrientationStates">
+                                                                            <VisualState x:Name="Vertical"/>
+                                                                        </VisualStateGroup>
+                                                                    </VisualStateManager.VisualStateGroups>
+                                                                    <Grid x:Name="VerticalSlider">
+                                                                        <Grid x:Name="VerticalSlidersGrid" 
+                                                                              Margin="20,0,0,0" 
+                                                                              HorizontalAlignment="Right">
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="*"/>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                <ColumnDefinition Width="*"/>
+                                                                            </Grid.ColumnDefinitions>
+                                                                        </Grid>
+                                                                        <Grid x:Name="VerticalTickMarks" 
+                                                                              Background="Transparent">
+                                                                            <Border Width="43" 
+                                                                                    Background="SteelBlue" 
+                                                                                    Margin="3,0,0,0" 
+                                                                                    Opacity="0.4" 
+                                                                                    BorderBrush="Transparent"/>
+                                                                        </Grid>
+                                                                        <Grid x:Name="VerticalTrack" 
+                                                                              Width="65" 
+                                                                              Background="Transparent" 
+                                                                              Margin="10,0,0,0">
+
+                                                                            <Canvas x:Name="VerticalThumbs"/>
+                                                                        </Grid>
+                                                                    </Grid>
+                                                                </Grid>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                                <Style x:Key="XamNumericRangeSliderStyle" 
+                                                       BasedOn="{StaticResource SliderBase}" 
+                                                       TargetType="ig:XamNumericRangeSlider">
+                                                    <Setter Property="SmallChange" 
+                                                            Value="1"/>
+                                                    <Setter Property="LargeChange" 
+                                                            Value="10"/>
+                                                </Style>
+                                                <!--Style for the start thumb-->
+                                                <Style x:Key="StartThumbStyle"
+                                                       TargetType="ig:XamSliderNumericThumb">
+                                                    <Setter Property="IsSnapToTickEnabled" 
+                                                            Value="true" />
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="ig:XamSliderNumericThumb">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <Border Width="56" 
+                                                                            Height="13" 
+                                                                            CornerRadius="10" 
+                                                                            BorderBrush="Lime" 
+                                                                            BorderThickness="2,0,0,2" >
+                                                                        <Border.Background>
+                                                                            <LinearGradientBrush StartPoint="0,0" 
+                                                                                                 EndPoint="0,1">
+                                                                                <GradientStop Offset="0" 
+                                                                                              Color="LimeGreen"/>
+                                                                                <GradientStop Offset="1" 
+                                                                                              Color="DarkGreen"/>
+                                                                            </LinearGradientBrush>
+                                                                        </Border.Background>
+                                                                        <Border.Effect>
+                                                                            <DropShadowEffect ShadowDepth="10" 
+                                                                                              Color="Black"
+                                                                                              Opacity="1" 
+                                                                                              BlurRadius="5"/>
+                                                                        </Border.Effect>
+                                                                        <Border.RenderTransform>
+                                                                            <TransformGroup>
+                                                                                <ScaleTransform ScaleX="1" 
+                                                                                                ScaleY="1"/>
+                                                                                <SkewTransform AngleX="0" 
+                                                                                               AngleY="20"/>
+                                                                                <RotateTransform Angle="-20"/>
+                                                                            </TransformGroup>
+                                                                        </Border.RenderTransform>
+                                                                        <TextBlock Text="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}" 
+                                                                                   TextWrapping="Wrap"
+                                                                                   Background="Transparent"
+                                                                                   Foreground="White" 
+                                                                                   VerticalAlignment="Center" 
+                                                                                   HorizontalAlignment="Center"
+                                                                                   FontSize="12" 
+                                                                                   FontWeight="Bold"/>
+                                                                    </Border>
+                                                                    <Grid Height="26"
+                                                                          Width="47"
+                                                                          Background="{x:Null}"
+                                                                          HorizontalAlignment="Right"
+                                                                          VerticalAlignment="Center" 
+                                                                          Margin="8,1,-50,0">
+                                                                        <Path Margin="-0.050933837890625,0,0,0"
+                                                                              HorizontalAlignment="Left"
+                                                                              VerticalAlignment="Top"
+                                                                              Height="26"
+                                                                              Width="47.050933837890625"
+                                                                              Stretch="Fill"
+                                                                              Opacity="1"
+                                                                              Data="M 5,5 C5,5 5,7.85498046875 5,7.85498046875 5,7.85498046875 0.518524169921875,11.69842529296875 0.518524169921875,11.69842529296875 -0.240753173828125,12.349212646484375 -0.240753173828125,13.650787353515625 0.518524169921875,14.30157470703125 0.518524169921875,14.30157470703125 5,18.144989013671875 5,18.144989013671875 5,18.144989013671875 5,21 5,21 5,23.5 7.5,26 10,26 10,26 42,26 42,26 44.5,26 47,23.5 47,21 47,21 47,5 47,5 47,2.5 44.5,0 42,0 42,0 10,0 10,0 7.5,0 5,2.5 5,5 z"
+                                                                              Fill="#999999" />
+                                                                        <Grid VerticalAlignment="Center" 
+                                                                              HorizontalAlignment="Center"
+                                                                              Width="40"
+                                                                              Margin="5,0,0,0">
+                                                                            <Grid.ColumnDefinitions >
+                                                                                <ColumnDefinition Width="26"/>
+                                                                                <ColumnDefinition />
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <TextBlock Text="Start"  
+                                                                                       Grid.Column="0"
+                                                                                       TextWrapping="Wrap" 
+                                                                                       Foreground="White" 
+                                                                                       HorizontalAlignment="Left" 
+                                                                                       VerticalAlignment="Center" 
+                                                                                       FontSize="11"/>
+                                                                            <TextBlock Text="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}" 
+                                                                                       Grid.Column="1"
+                                                                                       TextWrapping="Wrap" 
+                                                                                       Foreground="White" 
+                                                                                       HorizontalAlignment="Left" 
+                                                                                       VerticalAlignment="Center" 
+                                                                                       FontSize="12" 
+                                                                                       FontWeight="Bold"/>
+                                                                        </Grid>
+                                                                    </Grid>
+                                                                </StackPanel>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                                <!--Style for the stop thumb-->
+                                                <Style x:Key="StopThumbStyle"
+                                                       TargetType="ig:XamSliderNumericThumb">
+                                                    <Setter Property="IsSnapToTickEnabled" 
+                                                            Value="true" />
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="ig:XamSliderNumericThumb">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <Border Width="56" 
+                                                                            Height="13" 
+                                                                            CornerRadius="10" 
+                                                                            BorderBrush="Lime" 
+                                                                            BorderThickness="2,0,0,2" >
+                                                                        <Border.Background>
+                                                                            <LinearGradientBrush StartPoint="0,0" 
+                                                                                                 EndPoint="0,1">
+                                                                                <GradientStop Offset="0" 
+                                                                                              Color="LimeGreen"/>
+                                                                                <GradientStop Offset="1" 
+                                                                                              Color="DarkGreen"/>
+                                                                            </LinearGradientBrush>
+                                                                        </Border.Background>
+                                                                        <Border.Effect>
+                                                                            <DropShadowEffect ShadowDepth="10" 
+                                                                                              Color="Black"
+                                                                                              Opacity="1" 
+                                                                                              BlurRadius="5"/>
+                                                                        </Border.Effect>
+                                                                        <Border.RenderTransform>
+                                                                            <TransformGroup>
+                                                                                <ScaleTransform ScaleX="1" 
+                                                                                                ScaleY="1"/>
+                                                                                <SkewTransform AngleX="0" 
+                                                                                               AngleY="20"/>
+                                                                                <RotateTransform Angle="-20"/>
+                                                                            </TransformGroup>
+                                                                        </Border.RenderTransform>
+                                                                        <TextBlock Text="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}" 
+                                                                                   TextWrapping="Wrap"
+                                                                                   Background="Transparent"
+                                                                                   Foreground="White" 
+                                                                                   VerticalAlignment="Center" 
+                                                                                   HorizontalAlignment="Center"
+                                                                                   FontSize="12" 
+                                                                                   FontWeight="Bold"/>
+                                                                    </Border>
+                                                                    <Grid Height="26"
+                                                                          Width="47"
+                                                                          Background="{x:Null}"
+                                                                          HorizontalAlignment="Right"
+                                                                          VerticalAlignment="Center" 
+                                                                          Margin="8,1,-50,0">
+                                                                        <Path Margin="-0.050933837890625,0,0,0"
+                                                                              HorizontalAlignment="Left"
+                                                                              VerticalAlignment="Top"
+                                                                              Height="26"
+                                                                              Width="47.050933837890625"
+                                                                              Stretch="Fill"
+                                                                              Opacity="1"
+                                                                              Data="M 5,5 C5,5 5,7.85498046875 5,7.85498046875 5,7.85498046875 0.518524169921875,11.69842529296875 0.518524169921875,11.69842529296875 -0.240753173828125,12.349212646484375 -0.240753173828125,13.650787353515625 0.518524169921875,14.30157470703125 0.518524169921875,14.30157470703125 5,18.144989013671875 5,18.144989013671875 5,18.144989013671875 5,21 5,21 5,23.5 7.5,26 10,26 10,26 42,26 42,26 44.5,26 47,23.5 47,21 47,21 47,5 47,5 47,2.5 44.5,0 42,0 42,0 10,0 10,0 7.5,0 5,2.5 5,5 z"
+                                                                              Fill="#999999" />
+                                                                        <Grid VerticalAlignment="Center" 
+                                                                              HorizontalAlignment="Center"
+                                                                              Width="40"
+                                                                              Margin="5,0,0,0">
+                                                                            <Grid.ColumnDefinitions >
+                                                                                <ColumnDefinition Width="26"/>
+                                                                                <ColumnDefinition />
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <TextBlock Text="Stop" 
+                                                                                       Grid.Column="0"
+                                                                                       TextWrapping="Wrap" 
+                                                                                       Background="Transparent"
+                                                                                       Foreground="White" 
+                                                                                       HorizontalAlignment="Left" 
+                                                                                       VerticalAlignment="Center" 
+                                                                                       FontSize="11"/>
+                                                                            <TextBlock Text="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}" 
+                                                                                       Grid.Column="1"
+                                                                                       TextWrapping="Wrap" 
+                                                                                       Foreground="White" 
+                                                                                       HorizontalAlignment="Left" 
+                                                                                       VerticalAlignment="Center" 
+                                                                                       FontSize="12" 
+                                                                                       FontWeight="Bold"/>
+                                                                        </Grid>
+                                                                    </Grid>
+                                                                </StackPanel>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                                <!--Style for the slider thumbs-->
+                                                <Style x:Key="ThumbStyle"
+                                                       TargetType="ig:XamSliderNumericThumb">
+                                                    <Setter Property="IsSnapToTickEnabled" 
+                                                            Value="true" />
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="ig:XamSliderNumericThumb">
+                                                                <StackPanel Orientation="Horizontal"
+                                                                            Margin="0,-7,0,0">
+                                                                    <Border Width="56" 
+                                                                            Height="13" 
+                                                                            CornerRadius="10" 
+                                                                            BorderBrush="Lime" 
+                                                                            BorderThickness="2,0,0,2" >
+                                                                        <Border.Background>
+                                                                            <LinearGradientBrush StartPoint="0,0" 
+                                                                                                 EndPoint="0,1">
+                                                                                <GradientStop Offset="0" 
+                                                                                              Color="LimeGreen"/>
+                                                                                <GradientStop Offset="1" 
+                                                                                              Color="DarkGreen"/>
+                                                                            </LinearGradientBrush>
+                                                                        </Border.Background>
+                                                                        <Border.Effect>
+                                                                            <DropShadowEffect ShadowDepth="10" 
+                                                                                              Color="Black"
+                                                                                              Opacity="1" 
+                                                                                              BlurRadius="5"/>
+                                                                        </Border.Effect>
+                                                                        <Border.RenderTransform>
+                                                                            <TransformGroup>
+                                                                                <ScaleTransform ScaleX="1" 
+                                                                                                ScaleY="1"/>
+                                                                                <SkewTransform AngleX="0" 
+                                                                                               AngleY="20"/>
+                                                                                <RotateTransform Angle="-20"/>
+                                                                            </TransformGroup>
+                                                                        </Border.RenderTransform>
+                                                                        <TextBlock Text="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}" 
+                                                                                   TextWrapping="Wrap"
+                                                                                   Background="Transparent"
+                                                                                   Foreground="White" 
+                                                                                   VerticalAlignment="Center" 
+                                                                                   HorizontalAlignment="Center"
+                                                                                   FontSize="12" 
+                                                                                   FontWeight="Bold"/>
+                                                                    </Border>
+                                                                </StackPanel>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                            </Grid.Resources>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="200"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0"
+                                                        Margin="5,0,0,10">
+                                                <Grid Height="320">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="70"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0"
+                                                                HorizontalAlignment="Right">
+                                                        <ItemsControl ItemsSource="{Binding DynamicLabels}">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <TextBlock Text="{Binding StringFormat={}{0:F1} [um]}"  
+                                                                               Foreground="White" 
+                                                                               Margin="0,4,0,0"
+                                                                               TextAlignment="Right"
+                                                                               Background="Transparent"
+                                                                               Width="70"
+                                                                               HorizontalAlignment="Left" />
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </StackPanel>
+                                                    <ig:XamNumericRangeSlider x:Name="remoteFocusSlider"
+                                                                              Grid.Column="1"
+                                                                              Height="300"
+                                                                              MinValue="1"
+                                                                              MaxValue="16"
+                                                                              IsEnabled="True"
+                                                                              Margin="-50,8,0,0"
+                                                                              Orientation="Vertical"
+                                                                              TrackFillBrush="Transparent"
+                                                                              ThumbStyle="{StaticResource ThumbStyle}"
+                                                                              Style="{StaticResource XamNumericRangeSliderStyle}"
+                                                                              IsDirectionReversed="{Binding Path=ZInvert, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToOppositeBoolConverter}}"
+                                                                              HorizontalAlignment="Center"
+                                                                              TrackClick="remoteFocusSlider_TrackClick"
+                                                                              VerticalAlignment="Center">
+                                                        <ig:XamNumericRangeSlider.TickMarks>
+                                                            <ig:SliderTickMarks x:Name="rfTickMarks"
+                                                                                IncludeSliderEnds="True" 
+                                                                                UseFrequency="False"
+                                                                                VerticalTickMarksTemplate="{StaticResource VerticalTick}"
+                                                                                NumberOfTickMarks="{Binding RelativeSource={RelativeSource Self}, Path=Owner.DataContext.RemoteFocusNumberOfTicks}" />
+                                                        </ig:XamNumericRangeSlider.TickMarks>
+                                                        <ig:XamSliderNumericThumb x:Name="rfThumbStart"
+                                                                                  InteractionMode="Free" 
+                                                                                  IsActive="True" 
+                                                                                  IsDragEnabled="True" 
+                                                                                  IsManipulationEnabled="True" 
+                                                                                  IsSnapToTickEnabled="True" 
+                                                                                  IsTrackFillVisible="True"
+                                                                                  ToolTipVisibility="Visible"
+                                                                                  Margin="0,-14,0,0"
+                                                                                  Style="{StaticResource StartThumbStyle}"
+                                                                                  Value="{Binding Path=RemoteFocusStartPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                                  Visibility="{Binding Path=RemoteFocusCaptureMode, Mode=OneWay, ConverterParameter=0, Converter={StaticResource storageModeVisibilityConverter}}">
+                                                        </ig:XamSliderNumericThumb>
+                                                        <ig:XamSliderNumericThumb x:Name="rfThumbStop"
+                                                                                  InteractionMode="Free" 
+                                                                                  IsActive="True" 
+                                                                                  IsDragEnabled="True" 
+                                                                                  IsManipulationEnabled="True" 
+                                                                                  IsSnapToTickEnabled="True" 
+                                                                                  IsTrackFillVisible="True"
+                                                                                  ToolTipVisibility="Visible"
+                                                                                  Margin="0,-14,0,0"
+                                                                                  Style="{StaticResource StopThumbStyle}"
+                                                                                  Value="{Binding Path=RemoteFocusStopPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                                  Visibility="{Binding Path=RemoteFocusCaptureMode, Mode=OneWay, ConverterParameter=0, Converter={StaticResource storageModeVisibilityConverter}}">
+                                                        </ig:XamSliderNumericThumb>
+                                                    </ig:XamNumericRangeSlider>
+                                                </Grid>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1"
+                                                        VerticalAlignment="Top">
+                                                <Label Content="Capture Mode"
+                                                       Margin="0,55,0,0"/>
+                                                <ComboBox Grid.Row="0"
+                                                          Width="150"
+                                                          Height="30"
+                                                          Margin="5,1"
+                                                          HorizontalAlignment="Left"
+                                                          SelectedIndex="{Binding Path=RemoteFocusCaptureMode,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                                          ToolTip="Choose Capture Mode for the Remote Focus"
+                                                          SelectionChanged="RemoteFocusCB_SelectionChanged">
+                                                    <ComboBoxItem>Linear</ComboBoxItem>
+                                                    <ComboBoxItem>Custom</ComboBoxItem>
+                                                </ComboBox>
+                                                <Grid Visibility="{Binding Path=RemoteFocusCaptureMode, Mode=OneWay, ConverterParameter=0, Converter={StaticResource storageModeVisibilityConverter}}">
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
+                                                    <StackPanel Grid.Row="0"
+                                                            Margin="1"
+                                                            Orientation="Horizontal"
+                                                            ToolTip="Z Stack Start Plane">
+                                                        <Label Width="120"
+                                                           Content="Start Plane" />
+                                                        <TextBox Name="tbZStartPlane"
                                                              Width="50"
-                                                             Text="{Binding Path=StepTimeAdjustMS, Mode=TwoWay, UpdateSourceTrigger=LostFocus,NotifyOnValidationError=True,ValidatesOnDataErrors=True}"
-                                                             Validator:Validation.ValidationType="{x:Type System:Double}"
+                                                             Text="{Binding Path=RemoteFocusStartPosition, Mode=TwoWay}" />
+                                                        <Button Width="30"
+                                                            Content="✓">
+                                                            <Button.Style>
+                                                                <Style TargetType="Button">
+                                                                    <Setter Property="Visibility"
+                                                                        Value="Collapsed" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbZStartPlane}"
+                                                                                 Value="True">
+                                                                            <Setter Property="Visibility"
+                                                                                Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Button.Style>
+                                                        </Button>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Row="1"
+                                                            Margin="1"
+                                                            Orientation="Horizontal"
+                                                            ToolTip="Z Stack Stop Plane">
+                                                        <Label Width="120"
+                                                               Content="Stop Plane" />
+                                                        <TextBox Name="tbZStopPlane"
+                                                                 Width="50"
+                                                                 Foreground="White"
+                                                                 Text="{Binding Path=RemoteFocusStopPosition, Mode=TwoWay}">
+                                                            <TextBox.Style>
+                                                                <Style TargetType="TextBox">
+                                                                    <Style.Resources>
+                                                                        <Storyboard x:Key="flashingAnimation">
+                                                                            <DoubleAnimation AutoReverse="True"
+                                                                                             Duration="0:0:0.5"
+                                                                                             From="1"
+                                                                                             RepeatBehavior="Forever"
+                                                                                             Storyboard.TargetProperty="(Background).(Opacity)"
+                                                                                             To="0.5" />
+                                                                        </Storyboard>
+                                                                    </Style.Resources>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Path=ZStopPositionNotValid}"
+                                                                                     Value="True">
+                                                                            <Setter Property="Background"
+                                                                                    Value="Red" />
+                                                                            <DataTrigger.EnterActions>
+                                                                                <BeginStoryboard Name="flashing"
+                                                                                                 Storyboard="{StaticResource flashingAnimation}" />
+                                                                            </DataTrigger.EnterActions>
+                                                                            <DataTrigger.ExitActions>
+                                                                                <StopStoryboard BeginStoryboardName="flashing" />
+                                                                            </DataTrigger.ExitActions>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Path=ZStopPositionNotValid, UpdateSourceTrigger=PropertyChanged}"
+                                                                                     Value="False">
+                                                                            <Setter Property="Background"
+                                                                                    Value="Transparent" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBox.Style>
+                                                        </TextBox>
+                                                        <Button Width="30"
+                                                            Content="✓">
+                                                            <Button.Style>
+                                                                <Style TargetType="Button">
+                                                                    <Setter Property="Visibility"
+                                                                        Value="Collapsed" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbZStopPlane}"
+                                                                                 Value="True">
+                                                                            <Setter Property="Visibility"
+                                                                                Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Button.Style>
+                                                        </Button>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Row="2"
+                                                            Margin="1"
+                                                            Orientation="Horizontal"
+                                                            ToolTip="Z Slice Spacing">
+                                                        <Label Width="120"
+                                                           Content="Step Size" />
+                                                        <TextBox Name="tbRFStepSize"
+                                                             Width="50"
+                                                             Text="{Binding Path=RemoteFocusStepSize, Mode=TwoWay}" />
+                                                        <Button Width="30"
+                                                            Content="✓">
+                                                            <Button.Style>
+                                                                <Style TargetType="Button">
+                                                                    <Setter Property="Visibility"
+                                                                        Value="Collapsed" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbRFStepSize}"
+                                                                                 Value="True">
+                                                                            <Setter Property="Visibility"
+                                                                                Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Button.Style>
+                                                        </Button>
+                                                    </StackPanel>
+                                                </Grid>
+                                                <Grid Visibility="{Binding Path=RemoteFocusCaptureMode, Mode=OneWay, ConverterParameter=1, Converter={StaticResource storageModeVisibilityConverter}}">
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
+                                                    <TextBlock Grid.Row="0"
+                                                               TextWrapping="Wrap"
+                                                               Width="260"
+                                                               HorizontalAlignment="Left"
+                                                               Margin="5,0"
+                                                               Text="Select the planes you want to image from the graph"
+                                                               Foreground="White">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Path=IsChecked, ElementName=cbCustomRF}"
+                                                                                 Value="True">
+                                                                        <Setter Property="Visibility"
+                                                                                Value="Collapsed" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                    <CheckBox Grid.Row="1"
+                                                              x:Name="cbCustomRF"
+                                                              Margin="5"
+                                                              Content="Enable Custom Order"
+                                                              Checked="cbCustomRF_Checked"
+                                                              Unchecked="cbCustomRF_Unchecked"
+                                                              IsChecked="{Binding RemoteFocusCustomChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                                    <StackPanel Grid.Row="2">
+                                                        <StackPanel.Style>
+                                                            <Style TargetType="StackPanel">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Collapsed" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Path=IsChecked, ElementName=cbCustomRF}"
+                                                                                 Value="True">
+                                                                        <Setter Property="Visibility"
+                                                                                Value="Visible" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </StackPanel.Style>
+                                                        <TextBlock Text="Write the plane numbers, in the order you want to image, separated by ':'"
+                                                                   TextWrapping="Wrap"
+                                                                   HorizontalAlignment="Left"
+                                                                   Margin="5,0"
+                                                                   Width="260"/>
+                                                        <TextBox HorizontalAlignment="Left"
+                                                                 TextWrapping="Wrap"
+                                                                 Margin="5"
+                                                                 Height="50"
+                                                                 Width="260"
+                                                                 Text="{Binding RemoteFocusCustomOrder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                                <StackPanel Margin="1"
+                                                            Orientation="Horizontal"
+                                                            ToolTip="Z Transition Cycles">
+                                                    <Label Width="120"
+                                                           Content="Transition Cycles" />
+                                                    <TextBox Name="tbRFFlybackLines"
+                                                             Width="50"
+                                                             Text="{Binding Path=FlybackLines, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                             Validator:Validation.ValidationType="{x:Type System:Int32}"
                                                              Validator:Validation.NoEmptyValue="True"
+                                                             Validator:Validation.MinValue="0"
                                                              Validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
                                                     <Button Width="30"
                                                             Content="✓">
@@ -1758,7 +2453,7 @@
                                                                 <Setter Property="Visibility"
                                                                         Value="Collapsed" />
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbStepTimeAdjust}"
+                                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbRFFlybackLines}"
                                                                                  Value="True">
                                                                         <Setter Property="Visibility"
                                                                                 Value="Visible" />
@@ -1767,43 +2462,22 @@
                                                             </Style>
                                                         </Button.Style>
                                                     </Button>
+                                                    <Label Content="{Binding Path=LSMFlybackTime}"
+                                                           VerticalAlignment="Center" />
+                                                    <Label Content="[s]"
+                                                           VerticalAlignment="Center" />
+                                                </StackPanel>
+                                                <StackPanel Margin="1"
+                                                            Orientation="Horizontal"
+                                                            ToolTip="Total Number of Z Slices">
+                                                    <Label Width="120"
+                                                           Content="Number of Slices" />
                                                     <Label Width="50"
-                                                           Content="[ms]" />
+                                                           Content="{Binding Path=ZNumSteps, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
                                                 </StackPanel>
                                             </StackPanel>
-                                            <StackPanel Grid.Row="3"
-                                                        Margin="1"
-                                                        Orientation="Horizontal"
-                                                        ToolTip="Z Flyback Time Adjustment in msec, positive or negative.">
-                                                <Label Width="150"
-                                                       Content="Flyback Time Adjustment" />
-                                                <TextBox Name="tbFlybackTimeAdjust"
-                                                         Width="50"
-                                                         Text="{Binding Path=FlybackTimeAdjustMS, Mode=TwoWay, UpdateSourceTrigger=LostFocus,NotifyOnValidationError=True,ValidatesOnDataErrors=True}"
-                                                         Validator:Validation.ValidationType="{x:Type System:Double}"
-                                                         Validator:Validation.NoEmptyValue="True"
-                                                         Validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text" />
-                                                <Button Width="30"
-                                                        Content="✓">
-                                                    <Button.Style>
-                                                        <Style TargetType="Button">
-                                                            <Setter Property="Visibility"
-                                                                    Value="Collapsed" />
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbFlybackTimeAdjust}"
-                                                                             Value="True">
-                                                                    <Setter Property="Visibility"
-                                                                            Value="Visible" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Button.Style>
-                                                </Button>
-                                                <Label Width="50"
-                                                       Content="[ms]" />
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Grid>
+                                        </Grid>
+                                    </StackPanel>
                                 </GroupBox>
                             </StackPanel>
                         </GroupBox>
@@ -2057,9 +2731,7 @@
                                             <ComboBox Name="cbBleachTrig"
                                                       Margin="1"
                                                       Width="100"
-                                                      SelectedIndex="{Binding Path=BleachTrigger,
-                                                                              Mode=TwoWay,
-                                                                              UpdateSourceTrigger=PropertyChanged}"
+                                                      SelectedIndex="{Binding Path=BleachTrigger, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                       ToolTip="Select stimulation trigger mode.">
                                                 <ComboBoxItem Content="SW Trigger"
                                                               Visibility="{Binding Path=IsChecked, ElementName=cbSimultaneousBleachingAndImaging, ConverterParameter=1, Converter={StaticResource boolToVisibilityConverter}}" />
@@ -2067,6 +2739,25 @@
                                                 <ComboBoxItem Content="HW TrigEach" />
                                                 <ComboBoxItem Content="HW TrigCont" />
                                             </ComboBox>
+                                            <CheckBox Name="cbRandomEpochs"
+                                                      Content="Random Epochs"
+                                                      ToolTip="Select to randomize epochs every cycle."
+                                                      IsChecked="{Binding Path=SLMRandomEpochs,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                                <CheckBox.Style>
+                                                    <Style TargetType="{x:Type CheckBox}"
+                                                           BasedOn="{StaticResource {x:Type CheckBox}}">
+                                                        <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Path=SLMSequenceOn, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                         Value="True">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </CheckBox.Style>
+                                            </CheckBox>
                                             <StackPanel>
                                                 <Label Content="Enable PMTs while stimulating" />
                                                 <StackPanel Orientation="Horizontal">
@@ -2521,6 +3212,202 @@
                                                          DFLIMHistogramDictionary="{Binding DFLIMHistogramDictionary, Mode=OneWay}" />
                         </Expander>
                     </Border>
+                    <Border Name="mROIDisplay"
+                    Margin="1">
+                        <Expander Foreground="White" Header="mROI" IsExpanded="True">
+                            <StackPanel Orientation="Vertical">
+                                <GroupBox Header="Display" BorderThickness="0.5">
+                                    <StackPanel>
+                                        <RadioButton Content="Spatial Display" GroupName="CapturemROIDisplayType" Margin="3"
+                         IsChecked="{Binding mROISpatialDisplaybleEnableCapture}" />
+                                        <RadioButton Content="Only Scan ROIs" Margin="3"
+                         GroupName="CapturemROIDisplayType"
+                         IsChecked="False" />
+                                    </StackPanel>
+                                </GroupBox>
+
+                                <StackPanel Orientation="Horizontal"
+                        Margin="1"
+                        HorizontalAlignment="Left" >
+                                    <Label VerticalAlignment="Center"
+                       Content="Stripe Pixels"/>
+
+                                    <Label Name="tbStripPixel"
+                         Width="35"
+                       VerticalContentAlignment="Center"
+                       VerticalAlignment="Center"
+                       Content="{Binding Path=mROIStripePixels}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="1"
+                        HorizontalAlignment="Left" >
+                                    <Label Content="Stripe Width" VerticalContentAlignment="Center"/>
+
+                                    <Label Content="{Binding mROIStripePhysicalFieldSizeUM}"
+                       VerticalContentAlignment="Center"
+                       VerticalAlignment="Center" />
+                                    <Label Content="[µm]" VerticalContentAlignment="Center" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal"
+                                Margin="0"
+                                VerticalAlignment="Center">
+                                        </StackPanel>
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Left">
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility"
+                                                    Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Path=SelectedViewMode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                             Value="1">
+                                                    <Setter Property="Visibility"
+                                                            Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+                                </StackPanel>
+                                <ListView Name="mROIListView"
+                      Height="150"
+                      Background="#FF333333"
+                      Margin="1"
+                      SelectedIndex="{Binding SelectedmROIIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                      ItemsSource="{Binding mROIList}"
+                      SelectionMode="Single"
+                      HorizontalContentAlignment="Center"                      
+                      ToolTip="List of mROI Scan Areas"
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="ListViewItem">
+                                            <Setter Property="Focusable"
+                                                    Value="True" />
+                                            <Setter Property="HorizontalContentAlignment"
+                                                    Value="Stretch" />
+                                            <Setter Property="Background"
+                                                    Value="#FF333333" />
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
+                                    <ListView.Style>
+                                        <Style TargetType="{x:Type ListView}">
+                                            <Setter Property="HorizontalContentAlignment"
+                                                    Value="Stretch" />
+                                            <Setter Property="Background"
+                                                    Value="#FF333333" />
+                                        </Style>
+                                    </ListView.Style>
+                                    <ListView.View>
+                                        <GridView AllowsColumnReorder="False">
+                                            <GridViewColumn Header="ID"                                        
+                                                            Width="Auto" >
+                                                <GridViewColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock x:Name="Txt" Text="{Binding ScanAreaID}" Foreground="{Binding Color}" FontWeight="Bold"  />
+                                                    </DataTemplate>
+                                                </GridViewColumn.CellTemplate>
+                                            </GridViewColumn>
+                                            <GridViewColumn Header="   Z&#x0a;(µm)"
+                                                            Width="Auto"
+                                                            DisplayMemberBinding="{Binding ZPosition, ConverterParameter=1000, Converter={StaticResource doubleCultureUnitConverter}}" />
+                                            <GridViewColumn Header="P1"
+                                                            Width="Auto"
+                                                            DisplayMemberBinding="{Binding Path=Power0}" />
+                                            <GridViewColumn Header=" Width&#x0a;(Pixels)"
+                                                            Width="Auto"
+                                                            DisplayMemberBinding="{Binding Path=SizeXPixels}" />
+                                            <GridViewColumn Header="Height&#x0a;(Pixels)"
+                                                            Width="Auto"
+                                                            DisplayMemberBinding="{Binding Path=SizeYPixels}" />
+                                            <GridViewColumn Header="Width&#x0a; (um)"
+                                                            Width="Auto"
+                                                            DisplayMemberBinding="{Binding Path=PhysicalSizeXUM, StringFormat={}{0:F1}}" />
+                                            <GridViewColumn Header="Height&#x0a;  (um)"
+                                                            Width="Auto"
+                                                            DisplayMemberBinding="{Binding Path=PhysicalSizeYUM, StringFormat={}{0:F1}}" />
+                                            <GridViewColumn Header="Left&#x0a;(um)"
+                                                            Width="Auto"
+                                                            DisplayMemberBinding="{Binding Path=LeftUM, StringFormat={}{0:F1}}" />
+                                            <GridViewColumn Header="Top&#x0a;(um)"
+                                                            Width="Auto"
+                                                            DisplayMemberBinding="{Binding Path=TopUM, StringFormat={}{0:F1}}" />
+                                            <!--<GridViewColumn Header="IntraROI&#x0a;Delay (ms)" Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=FlyToNextAreaLineCycles}" />-->
+                                        </GridView>
+                                    </ListView.View>
+                                </ListView>
+                                <StackPanel Orientation="Horizontal"
+                                            Margin="1"
+                                            HorizontalAlignment="Center">
+                                    <ToggleButton Name="tbCfgMicroView"
+                                                  Margin="2,0"
+                                                  Height="25"
+                                                  HorizontalAlignment="Center"
+                                                  ToolTip="ON to show Overlay ROIs, OFF to hide">
+                                        <ToggleButton.Style>
+                                            <Style TargetType="ToggleButton"
+                                                   BasedOn="{StaticResource {x:Type ToggleButton}}">
+                                                <Setter Property="IsChecked"
+                                                        Value="{Binding Path=mROIShowOverlays, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                <Setter Property="Content"
+                                                        Value="Show Overlay ROIs" />
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsChecked"
+                                                             Value="True">
+                                                        <Setter Property="Content"
+                                                                Value="Hide Overlay ROIs" />
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ToggleButton.Style>
+                                    </ToggleButton>
+                                </StackPanel>
+                            </StackPanel>
+                        </Expander>
+                    </Border>
+                    <Border Name="advancedImageControlDisplay" Visibility="{Binding Path=AdvancedImageControlPanelVisibility}">
+                        <Expander Foreground="White"
+                          Header="Advanced Image Controls"
+                          IsExpanded="False">
+                            <StackPanel>
+                                <Grid Margin="0,2,0,5" Visibility="{Binding Path=DisplayAspectRatioOptionVisibility}">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition></RowDefinition>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition></ColumnDefinition>
+                                        <ColumnDefinition></ColumnDefinition>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0"
+                                            HorizontalAlignment="Left"
+                                            Orientation="Horizontal"
+                                            ToolTip="Pixel aspect ratio X:Y">
+                                        <Label Content="Pixel Aspect Ratio X:Y"
+                                           Foreground="White" />
+                                        <Label Content="1:"
+                                           Foreground="White" 
+                                           HorizontalContentAlignment="Right"
+                                           HorizontalAlignment="Right"/>
+                                        <Label Name="tbLSMScaleYScan"
+                                             Width="Auto"
+                                             MinWidth="15"
+                                             MaxWidth="30"
+                                             HorizontalContentAlignment="Left"
+                                             HorizontalAlignment="Left"
+                                             VerticalAlignment="Stretch" 
+                                             VerticalContentAlignment="Center"
+                                             Content="{Binding Path=PixelAspectRatioYScale,
+                                                            Mode=TwoWay,
+                                                            Converter={StaticResource doubleCulture}}" />
+                                    </StackPanel>
+                                    <CheckBox Grid.Column="1" VerticalAlignment="Center" Content="Display Aspect Ratio in Image" HorizontalAlignment="Left" IsChecked="{Binding Path=DisplayAspectRatio}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Expander>
+                    </Border>
                     <Border>
                         <StackPanel Margin="1"
                                     IsEnabled="{Binding Path=StartButtonStatus, UpdateSourceTrigger=PropertyChanged}">
@@ -2688,7 +3575,6 @@
                                     <RowDefinition Height="22" />
                                     <RowDefinition Height="22" />
                                     <RowDefinition Height="22" />
-                                    <RowDefinition Height="22" />
                                 </Grid.RowDefinitions>
                                 <Button x:Name="OpenNewReviewer"
                                         Grid.Row="0"
@@ -2718,28 +3604,6 @@
                                           Visibility="{Binding Path=ImageUpdaterVisibility,
                                                                Mode=TwoWay,
                                                                UpdateSourceTrigger=PropertyChanged}" />
-                                <StackPanel Orientation="Horizontal"
-                                            Margin="1"
-                                            Grid.Row="2">
-                                    <CheckBox Name="chkRemoteConnection"
-                                              HorizontalAlignment="Left"
-                                              Foreground="#FFFFFFFF"
-                                              VerticalAlignment="Bottom"
-                                              VerticalContentAlignment="Bottom"
-                                              IsChecked="{Binding Path=RemoteConnection,
-                                                              Mode=TwoWay,
-                                                              UpdateSourceTrigger=PropertyChanged}"
-                                              ToolTip="Connect / Disconnect remote application."
-                                              Content="Remote Connection">
-                                    </CheckBox>
-                                    <Button Content="Setup"
-                                            MinWidth="45"
-                                            Margin="1,0,0,0"
-                                            VerticalAlignment="Bottom"
-                                            VerticalContentAlignment="Bottom"
-                                            Click="ConnectionSettings_Click">
-                                    </Button>
-                                </StackPanel>
                                 <CheckBox Grid.Row="3"
                                           Margin="1"
                                           Content="Turn Off Monitors"

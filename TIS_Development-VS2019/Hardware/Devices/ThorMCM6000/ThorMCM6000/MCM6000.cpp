@@ -524,7 +524,8 @@ long MCM6000::InitializeParams()
 		else if ((CardTypes::ST_Invert_Stepper_BISS_type == _mcm6kParams->cardType[i] ||
 			CardTypes::ST_Invert_Stepper_SSI_type == _mcm6kParams->cardType[i] ||
 			CardTypes::MCM_Stepper_Internal_BISS_L6470 == _mcm6kParams->cardType[i] ||
-			CardTypes::MCM_Stepper_Internal_SSI_L6470 == _mcm6kParams->cardType[i]) &&
+			CardTypes::MCM_Stepper_Internal_SSI_L6470 == _mcm6kParams->cardType[i] ||
+			CardTypes::MCM_Stepper_L6470_MicroDB15 == _mcm6kParams->cardType[i]) &&
 			(_mcm6kParams->et_slot_id != i + CARD_ID_START_ADDRESS &&
 				_mcm6kParams->inverted_lp_slot_id != i + CARD_ID_START_ADDRESS &&
 				_mcm6kParams->z_slot_id != i + CARD_ID_START_ADDRESS &&
@@ -640,7 +641,7 @@ long MCM6000::ConfigPid(UCHAR slotId, byte* params, bool pidEn)
 		(UCHAR)((MGMSG_MCM_SET_STAGEPARAMS & 0xFF00) >> 8),
 		96,
 		0x00,
-		slotId | 0x80,
+		(byte) (slotId | 0x80),
 		HOST_ID };
 	memcpy(bytesToSend, head, sizeof(head));
 	if (pidEn)
@@ -664,7 +665,7 @@ long MCM6000::ConfigPidKickout(UCHAR slotId, byte* params, bool pidEn)
 		(UCHAR)((MGMSG_MCM_SET_STAGEPARAMS & 0xFF00) >> 8),
 		96,
 		0x00,
-		slotId | 0x80,
+		(byte)(slotId | 0x80),
 		HOST_ID };
 	memcpy(bytesToSend, head, sizeof(head));
 	if (pidEn)
@@ -809,8 +810,8 @@ long MCM6000::MoveBy(UCHAR slotId, double distance)
 
 	memcpy(data, &distanceToMove, SIZE_OF_INT32);
 	byte bytesToSend[12] = { (UCHAR)(cmd & 0xFF), (UCHAR)((cmd & 0xFF00) >> 8),
-		0x06, 0x00, slotId | 0x80, HOST_ID,
-		slotId & 0x0f - 1, 0x00,         // Chan Ident
+		0x06, 0x00, (byte)(slotId | 0x80), HOST_ID,
+		(byte)(slotId & 0x0f - 1), 0x00,         // Chan Ident
 		data[0], data[1], data[2], data[3],    // Move By step size in encoder counts
 	};
 	long result = fnUART_LIBRARY_write(_deviceHandler, reinterpret_cast<char*>(bytesToSend), sizeof(bytesToSend));
@@ -852,8 +853,8 @@ long MCM6000::SaveJogSize(UCHAR slotId, double size)
 	USHORT cmd = (USHORT)MGMSG_MOT_SET_JOGPARAMS;
 
 	byte bytesToSend[28] = { (UCHAR)(cmd & 0xFF), (UCHAR)((cmd & 0xFF00) >> 8),
-		22, 0x00, slotId | 0x80, HOST_ID,
-		slotId & 0x0f - 1, 0,         // Chan Ident
+		22, 0x00, (byte)(slotId | 0x80), HOST_ID,
+		(byte)(slotId & 0x0f - 1), 0,         // Chan Ident
 		2, 0,                    // Jog Mode - single step jogging
 		data[0], data[1], data[2], data[3],    // Jog Step Size in encoder counts
 		0x00, 0x00, 0x00, 0x00,    // Jog Min Velocity (not used)

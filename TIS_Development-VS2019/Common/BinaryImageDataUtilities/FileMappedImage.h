@@ -16,7 +16,7 @@ class FileMappedImage : public GenericImage<T>
 public:
 	
 	//Constructor
-	FileMappedImage(std::wstring filepath, long long offsetInFile, int width, int height, int numZSlices, int numChannels, int numM, MemoryType memModelType, const std::vector<int>& enabledChannels = std::vector<int>());
+	FileMappedImage(std::wstring filepath, long long offsetInFile, int width, int height, int numPlanes, int numZSlices, int numChannels, int numM, MemoryType memModelType, const std::vector<int>& enabledChannels = std::vector<int>());
 
 	//File Information
 	bool isValid(); 
@@ -34,12 +34,13 @@ private:
 /// <param name="offsetInFile"> Offset from the front of the file to begin reading information from </param>
 ///<param name="width"> The width in pixels for this image </param>
 ///<param name="height"> The width in pixels for this image </param>
+///<param name="height"> The number of planes for this image </param>
 ///<param name="numZSlices"> The depth in pixels of this image </param>
 ///<param name="numChannels"> The number of channels for this image </param>
 ///<param name="numM"> the length of the 'm' dimension in pixels for this image </param>
 ///<param name="enabledChannels"> Optional vector containing the enabled channels in this image. If a value is given, the total channel parameters will remain the same, but only the enabled channels will be stored in memory </param>
-template <typename T> FileMappedImage<T>::FileMappedImage(std::wstring filepath, long long offsetInFile, int width, int height, int numZSlices, int numChannels, int numM, MemoryType memModelType, const std::vector<int>& enabledChannels) :
-	GenericImage(width,height,numZSlices,numChannels,numM,memModelType, enabledChannels),
+template <typename T> FileMappedImage<T>::FileMappedImage(std::wstring filepath, long long offsetInFile, int width, int height, int numPlanes, int numZSlices, int numChannels, int numM, MemoryType memModelType, const std::vector<int>& enabledChannels) :
+	GenericImage(width,height,numPlanes,numZSlices,numChannels,numM,memModelType, enabledChannels),
 	fileMap(filepath, offsetInFile, GenericImage::getSizeInBytes())
 {
 	setMemoryBuffer((T*)fileMap.getDataPointer());

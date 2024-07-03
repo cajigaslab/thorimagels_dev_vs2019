@@ -391,8 +391,8 @@ long TopticaiChrome::GetParam(const long paramID, double& param)
 							if (powerString != "") 
 							{
 								//Serial port displays format "(param-ref 'laser1:power)\r\n100\r\n> " and we need to separate the power
-								int pos1 = powerString.find_first_of("\n") + 1; //finds first instance of \n and sets value to position after it
-								int pos2 = powerString.find_last_of("\r") - 1; //finds the second instance of \r and sets value to position before it
+								int pos1 = (int)(powerString.find_first_of("\n") + 1); //finds first instance of \n and sets value to position after it
+								int pos2 = (int)(powerString.find_last_of("\r") - 1); //finds the second instance of \r and sets value to position before it
 								memcpy(_powerBuffer, _readBuffer + pos1, (pos2 - pos1));
 								param = atof(_powerBuffer);
 								return TRUE;
@@ -757,7 +757,6 @@ long TopticaiChrome::BuildParamTable()
 	//Execution in order of top to bottom of list:
 	wstring commandSet = L"";
 	wstring commandGet = L"";
-	bool laserStartup;
 	ParamInfo* tempParamInfo = new ParamInfo(
 		PARAM_DEVICE_TYPE,							                //ID
 		L"PARAM_DEVICE_TYPE",                                       //Parameter Description

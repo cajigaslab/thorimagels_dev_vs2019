@@ -37,13 +37,14 @@ private:
 
 	//Memory offset storage
 	long long offsetPerX;
+	long long offsetPerPlane;
 	long long offsetPerChannel;
 	long long offsetPerYUnit;
 	long long offsetPerM;
 	long long offsetPerZSlice;
 
 	//Direct memory access
-	virtual T* getPointerForCoordinates(int x, int y, int z, int channel, int m);
+	virtual T* getPointerForCoordinates(int x, int y, int p, int channel, int m, int z);
 
 	//Helper methods for iteration
 	bool nextChannel(int& c, int& m, int& z);
@@ -62,7 +63,8 @@ template <typename T> InterlacedChannelImageMemoryModel<T>::InterlacedChannelIma
 
 	//Calculate Byte Offsets Per Each Image Dimension
 	offsetPerX = 1;
-	offsetPerChannel = width;
+	offsetPerPlane = width;
+	offsetPerChannel = offsetPerPlane * numPlanes;// width;
 	offsetPerYUnit = offsetPerChannel * channels;
 	offsetPerM = offsetPerYUnit * height;
 	offsetPerZSlice = offsetPerM * numM;
@@ -78,16 +80,17 @@ template <typename T> InterlacedChannelImageMemoryModel<T>::~InterlacedChannelIm
 /// <summary> Gets a poointer to a the memory location of the requested pixel </summary>
 /// <param name="x"> The x coordinate of the requested pixel </param>
 /// <param name="y"> The y coordinate of the requested pixel </param>
+/// <param name="p"> The plane of the requested pixel </param>
 /// <param name="z"> The z coordinate of the requested pixel </param>
 /// <param name="channel"> The channel of the requested pixel </param>
 /// <param name="m"> The mosaic number of the requested pixel </param>
 /// <returns> Pointer to the pixel value at the specified coordinate </returns>
-template <typename T> T* InterlacedChannelImageMemoryModel<T>::getPointerForCoordinates(int x, int y, int z, int channel, int m)
+template <typename T> T* InterlacedChannelImageMemoryModel<T>::getPointerForCoordinates(int x, int y, int p, int channel, int m, int z)
 {
 
 
 	//Multiply Byte Offsets By Current Position and Combine
-	long long thisOffset = x*offsetPerX + channel*offsetPerChannel + y*offsetPerYUnit + m*offsetPerM + z*offsetPerZSlice;
+	long long thisOffset = x*offsetPerX + p*offsetPerPlane + channel*offsetPerChannel + y*offsetPerYUnit + m*offsetPerM + z*offsetPerZSlice;
 	T* bufPtr = buffer+thisOffset;
 	return bufPtr;
 
@@ -101,7 +104,7 @@ template <typename T> T* InterlacedChannelImageMemoryModel<T>::getPointerForCoor
 template <typename T> long long InterlacedChannelImageMemoryModel<T>::getSizeInBytes()
 {
 
-	long long pixels = width * channels * height * numM * zSlices; 
+	long long pixels = width * numPlanes * channels * height * numM * zSlices; 
 	pixels *= bytesPerPixel();
 	return pixels;
 
@@ -112,7 +115,7 @@ template <typename T> long long InterlacedChannelImageMemoryModel<T>::getSizeInB
 /// <returns> A pointer to the begining of the model </returns>
 template <typename T> ImageIterator<T> InterlacedChannelImageMemoryModel<T>::begin()
 {
-	std::shared_ptr<InterlacedMemoryIterator<T> > implementationIterator(new InterlacedMemoryIterator<T>(buffer,width, height, channels, numM, zSlices));
+	std::shared_ptr<InterlacedMemoryIterator<T> > implementationIterator(new InterlacedMemoryIterator<T>(buffer,width, height, numPlanes, channels, numM, zSlices));
 	return ImageIterator<T>(implementationIterator);
 }
 
@@ -121,7 +124,7 @@ template <typename T> ImageIterator<T> InterlacedChannelImageMemoryModel<T>::beg
 /// <returns> A pointer to the end of the model </returns>
 template <typename T> ImageIterator<T> InterlacedChannelImageMemoryModel<T>::end()
 {
-	std::shared_ptr<InterlacedMemoryIterator<T> > implementationIterator(new InterlacedMemoryIterator<T>(buffer + getSizeInPixels(),width, height, channels, numM, zSlices));
+	std::shared_ptr<InterlacedMemoryIterator<T> > implementationIterator(new InterlacedMemoryIterator<T>(buffer + getSizeInPixels(),width, height, numPlanes, channels, numM, zSlices));
 	return ImageIterator<T>(implementationIterator);
 }
 

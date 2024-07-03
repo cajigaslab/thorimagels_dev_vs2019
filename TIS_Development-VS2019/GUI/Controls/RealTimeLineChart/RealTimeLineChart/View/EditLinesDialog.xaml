@@ -50,7 +50,7 @@
                 <Label HorizontalAlignment="Left"
                        HorizontalContentAlignment="Left"
                        Content="Stimulus"
-                       Width="60"></Label>
+                       Width="140"></Label>
                 <Label HorizontalAlignment="Left"
                        HorizontalContentAlignment="Center"
                        Content="Color"

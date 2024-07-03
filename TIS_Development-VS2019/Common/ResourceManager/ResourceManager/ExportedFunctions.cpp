@@ -190,6 +190,11 @@ DllExportFunc long GetApplicationPath(wchar_t* stringBuffer, unsigned int buffer
 	return true;
 }
 
+DllExportFunc long SetMyDocumentsThorImageFolderPath(wchar_t* folderPath)
+{
+	return ResourceManager::getInstance()->SetMyDocumentsThorImageFolderPath(folderPath);
+}
+
 DllExportFunc long GetMyDocumentsThorImageFolder(wchar_t* stringBuffer, unsigned int bufferLength)
 {
 
@@ -215,9 +220,34 @@ DllExportFunc long GetSettingsParamLong(int settingsFileType, wchar_t* tagName, 
 	return ResourceManager::getInstance()->GetSettingsParamLong(settingsFileType, tagName, attribute, defaultValue);
 }
 
+DllExportFunc long ReloadDirectories()
+{
+	return ResourceManager::getInstance()->ReloadDirectories();
+}
+
 DllExportFunc long LoadSettings()
 {
 	return ResourceManager::getInstance()->LoadSettings();
+}
+
+DllExportFunc long GetStartupFlag(wchar_t* stringBuffer, unsigned int bufferLength)
+{
+	std::wstring value = ResourceManager::getInstance()->GetStartupFlag();
+	if (value.size() > bufferLength)
+	{
+		return false;
+	}
+	else 
+	{
+		wcsncpy_s(stringBuffer, bufferLength, value.c_str(), bufferLength);
+	}
+
+	return true;
+}
+
+DllExportFunc long SetStartupFlag(wchar_t* value)
+{
+	return ResourceManager::getInstance()->SetStartupFlag(value);
 }
 
 DllExportFunc bool BorrowDocMutex(long sfType, long timeMS)

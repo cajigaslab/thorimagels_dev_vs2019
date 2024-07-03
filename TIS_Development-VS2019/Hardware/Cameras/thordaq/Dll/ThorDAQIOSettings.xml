@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<ThorDAQIOSettings>
+	<DIOSettings captureActiveInvert="0" />
+  <!--The first value corresponds to a DIO MUX code; second text number (e.g. "6") is the BNC label on the BOB (1-bases, so "6" is D5 or DIO6) 
+      [change to 0-based]
+			e.g. DI_ResonantScannerLineClock="5_D13" means FPGA DIO MUX index 5 is configured with MUX code 0x00, and the BOB BNC connection is at D13	/>-->
+  <DIOLinesConfig
+		DI_ImagingHardwareTrigger1="5" DI_ImagingHardwareTrigger2="" DI_ImagingInternalDigitalTrigger="" DI_ResonantScannerLineClock="4"
+		DO_GRFrameTrigger="3" DO_GRPockelsDigitalLine="1" DO_GGFrameTrigger="3" DO_GGLineTrigger="7"  DO_GGPockelsDigitalLine="1" DO_CaptureActive="0" DO_BufferReady="2"
+		DI_StimHardwareTrigger1="13" DI_StimHardwareTrigger2="" DI_StimInternalDigitalTrigger=""
+		DO_StimPockelsDigitalLine="9" DO_StimActiveEnvelope="15" DO_StimComplete="14" DO_StimCycleEnvelope=""
+		DO_StimIterationEnvelope="" DO_StimEpochEnvelope="" DO_StimPatternComplete="" DO_StimPatternEnvelope=""
+		DO_InternalLinetrigger="" DO_InternalFrameTrigger="" DO_InternalPixelClock="" DO_InternalLineClock=""/>
+
+	<!--Defaults for DIOLinesConfig Leave empty if unused. Only 8 "fast" Digital IO FPGA indexes are available; 
+    with BOB CPLD ver 2.x, these can be MUXed to D0 - D15 on the BOB.  (There is no MUX permitted on Legacy BOB DIO1 - DIO8 corresponding to 0-7). 
+    BNCs are zero indexed 
+    (But here, now numbered 1-8 matching the old Legacy BOB "DIO1, DIO2..."  TO CHANGE?) 
+    DO_GRFrameTrigger and DO_GGFrameTrigger Can be set to the same line. DO_GRPockelsDigitalLine, DO_StimPockelsDigitalLine can be set to the same line. 
+		For all others if two or more lines are set to the same DIO channel number, only the first one will be respected, and the other will be turned off
+		For Simultaneous GR-Imaging and GG-Stimulation the pockels digital line cannot be shared-->
+	<!--<DIOLinesConfig  
+		DI_HarwareTrigger="6" DI_ResonantScannerLineClock="5"
+		DO_GRFrameTrigger="4" DO_GRPockelsDigitalLine="2" DO_GGFrameTrigger="4" DO_GGLineTrigger="8"  DO_GGPockelsDigitalLine="2" DO_CaptureActive="1" DO_BufferReady="3" 
+		DO_StimPockelsDigitalLine="2" DO_StimActiveEnvelope="" DO_StimComplete="7" DO_StimCycleEnvelope=""
+		DO_StimIterationEnvelope="" DO_StimEpochEnvelope="" DO_StimPatternComplete="" DO_StimPatternEnvelope=""
+		DO_InternalLinetrigger="" DO_InternalFrameTrigger="" DO_InternalPixelClock="" DO_InternalLineClock=""/>-->
+
+	<AOLinesConfig
+		GR_Y="2" GR_P0="4" GR_P1="" GR_P2="" GR_P3="" 
+		GG0_X="1" GG0_Y="2" GG0_P0="4" GG0_P1="" GG0_P2="" GG0_P3=""
+		GG1_X="" GG1_Y="" GG1_P0="" GG1_P1="" GG1_P2="" GG1_P3=""
+		Z="6" RemoteFocus=""/>
+</ThorDAQIOSettings>

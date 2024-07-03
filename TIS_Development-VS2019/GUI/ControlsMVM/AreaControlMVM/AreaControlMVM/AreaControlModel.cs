@@ -6,6 +6,7 @@
     using System.Diagnostics;
     using System.Globalization;
     using System.IO;
+    using System.Linq;
     using System.Reflection;
     using System.Runtime.InteropServices;
     using System.Timers;
@@ -15,6 +16,7 @@
     using System.Windows.Media.Imaging;
     using System.Windows.Threading;
     using System.Xml;
+    using System.Xml.Linq;
 
     using ThorLogging;
 
@@ -23,6 +25,8 @@
     public class AreaControlModel
     {
         #region Fields
+
+        const int FIELDSIZE_CNT = 256;
 
         private double _coeff1;
         private double _coeff2;
@@ -56,6 +60,8 @@
             _enablePincushionCorrection = 0;
             _enableBackgroundSubtraction = 0;
             _enableFlatField = 0;
+            ZoomArray = new int[FIELDSIZE_CNT];
+            LoadZoomCal();
         }
 
         #endregion Constructors
@@ -164,6 +170,16 @@
         {
             get;
             set;
+        }
+
+        public double FieldSizeCalibrationXML
+        {
+            get
+            {
+                double val = 0.0;
+                GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_FIELD_SIZE_CALIBRATION_XML, ref val);
+                return val;
+            }
         }
 
         public bool GGSuperUserMode
@@ -302,6 +318,16 @@
                     testVal = 0;
                 }
                 SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_OFFSET_X, testVal);
+            }
+        }
+
+        public bool  IsLSMFieldOffsetXAvailable
+        {
+            get
+            {
+                int val = ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_OFFSET_X);
+
+                return val == 1;
             }
         }
 
@@ -607,8 +633,7 @@
 
                 //restrict the pixel density in color mode if not RGG
                 //based on the stored limit value
-                if ((int)MVMManager.Instance["CaptureSetupViewModel", "LSMChannel"] == 4 &&
-                    (int)ICamera.LSMType.RESONANCE_GALVO_GALVO != ResourceManagerCS.GetLSMType())
+                if ((int)ICamera.LSMType.RESONANCE_GALVO_GALVO != ResourceManagerCS.GetLSMType() && (int)MVMManager.Instance["CaptureSetupViewModel", "LSMChannel"] == 4)
                 {
                     return Math.Min(yMax, _yMax);
                 }
@@ -686,6 +711,20 @@
             {
                 double val = value;
                 SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_SCANAREA_ANGLE, val);
+            }
+        }
+
+        public int MROIModeEnable
+        {
+            get
+            {
+                int val = 0;
+                GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_MROI_MODE_ENABLE, ref val);
+                return val;
+            }
+            set
+            {
+                SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_MROI_MODE_ENABLE, value);
             }
         }
 
@@ -821,6 +860,11 @@
                 double val = Math.Round(value, 3); ;
                 SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_TB_LINE_SCAN_TIME_MS, val);
             }
+        }
+
+        public int[] ZoomArray
+        {
+            get;
         }
 
         #endregion Properties
@@ -1202,6 +1246,31 @@
 
         [DllImport(".\\Modules_Native\\GeometryUtilitiesCPP.dll", EntryPoint = "VerifyPolyLine")]
         private static extern int VerifyPolyLine(int[] PointX, int[] PointY, int count, int fieldSize, double field2Volts, double fieldScaleFineX, double fieldScaleFineY, int PixelY, ref int PixelX);
+
+        private void LoadZoomCal()
+        {
+            string path = System.IO.Directory.GetCurrentDirectory();
+            string zoomFile = path + "\\ZoomData.txt";
+            if (!File.Exists(zoomFile))
+                return;
+            {
+                List<int[]> fieldSizePercentage = File.ReadLines(zoomFile).Select(line => line.Split(' ').Select(s => int.Parse(s)).ToArray()).ToList();
+
+                if (FIELDSIZE_CNT != fieldSizePercentage.Count)
+                {
+                    ThorLogging.ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Warning, 1, "Number of calibrated field size is not 256 but: " + fieldSizePercentage.Count);
+                    return;
+                }
+
+                for (int i = 0; i < FIELDSIZE_CNT; ++i)
+                {
+                    if (fieldSizePercentage[i]?.Length > 0)
+                    {
+                        ZoomArray[i] = fieldSizePercentage[i][0];
+                    }
+                }
+            }
+        }
 
         #endregion Methods
     }

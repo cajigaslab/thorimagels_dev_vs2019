@@ -10,6 +10,6 @@
 	  analogResponseType = 0 for sinusoidal response -->
   <!--<TriggerConfiguration digitalCounter="/Dev4/ctr1" digitalOutput="/Dev4/PFI2" analogCounter="/Dev4/ctr0" analogOutput="Dev4/ao0" edgeOutput="/Dev4/PFI7" bufferOutput="/Dev4/port0/line7" customInput="/Dev4/PFI1"/>-->
   <TriggerConfiguration digitalCounter="" digitalOutput="" analogCounter="" analogOutput="" edgeOutput="" bufferOutput="" customInput=""/>
-  <!--<FrequencyProbe probeIntervalSec="0.01 averageCount="10" counterLine="/Dev1/ctr1" measureLine="/Dev3/PFI4" />-->
+  <!--<FrequencyProbe probeIntervalSec="0.01 averageCount="10" counterLine="/Dev3/ctr1" measureLine="/Dev3/PFI4" />-->
   <FrequencyProbe probeIntervalSec="0.01" averageCount="10" counterLine="" measureLine="" />
 </ElectroPhysSettings>

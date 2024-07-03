@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ThorDAQZSettings>
+  <!-- For Thorlabs Piezo PFM450E -->
+  <Conversion volts2mm="0.010" offsetmm="0" mm_min="0" mm_max="0.100"></Conversion>
+  <SettlingConfig settlingTimeTypicalMove_sec="0.006" typicalMove_mm="0.010"></SettlingConfig>
+  <Dma piezoActiveLoadMS="100" preLoadCount="20"/>
+  <!-- For PI 400um Piezo
+  <Conversion volts2mm="0.040" offsetmm="0" mm_min="0" mm_max="0.400"></Conversion>
+  -->
+    <!-- For PI 400um Piezo
+  <Conversion volts2mm="0.045" offsetmm="0" mm_min="0" mm_max="0.450"></Conversion>
+  -->
+  
+</ThorDAQZSettings>

@@ -32,11 +32,15 @@ SimDataStruct* AcquireSim::_simData = NULL;
 std::list<HANDLE> AcquireSim::_hSaveThreads;
 HANDLE AcquireSim::_hProcessSaveThread = NULL;
 unsigned long AcquireSim::gCtrOverflowCnt = 0;
+unsigned long AcquireSim::lastCountValue = 0;
+std::wstring AcquireSim::ciLogFile = L"";
+unsigned int AcquireSim::ciLogSuffix = 0;
 unsigned long simCurrentFirstGCtr = 0; 
 bool simInitializedGCtr = false;
 bool simExtendBuf = false;
 size_t simInitialGCtr = 0;
 BOOL simSkipOverflowCheck = FALSE;
+unsigned long AcquireSim::elapsedTimeUS = 0;
 
 ///******	End static members	******///
 
@@ -93,6 +97,26 @@ UINT SimSaveFileThreadProc(LPVOID pParam)
 
 	//get hdf5 path and filename (which user has defined):
 	std::wstring tmpStr = ChannelCenter::getInstance()-> GetEpisodeName();
+	
+	//get frame timing log in same folder
+	if (AcquireSim::ciLogSuffix == 0)
+		AcquireSim::ciLogFile = tmpStr.substr(0, tmpStr.find_last_of('\\') + 1) + L"FrameTiming.txt";
+	else
+		AcquireSim::ciLogFile = tmpStr.substr(0, tmpStr.find_last_of('\\') + 1) + L"FrameTiming_" + to_wstring(AcquireSim::ciLogSuffix) + L".txt";
+
+	// Judge whether excceeds the file size limitation
+	ifstream ifs(AcquireSim::ciLogFile, ios::in);
+	if (ifs.is_open())
+	{
+		ifs.seekg(0, ios::end);
+		if (ifs.tellg() >= 10 * 1024 * 1024)
+		{
+			AcquireSim::ciLogSuffix++;
+			AcquireSim::ciLogFile = tmpStr.substr(0, tmpStr.find_last_of('\\') + 1) + L"FrameTiming_" + to_wstring(AcquireSim::ciLogSuffix) + L".txt";
+		}
+		ifs.close();
+	}
+	ofstream cistream;
 
 	//try write to file if user wants to:
 	if((TRUE == cdTemp->GetSaving()) && (tmpStr.size()>0))
@@ -144,7 +168,32 @@ UINT SimSaveFileThreadProc(LPVOID pParam)
 				{
 					if(cdDataForSave->GetciLengthValue() > 0)
 					{
-						if(FALSE == simH5io->ExtendData(ChannelCenter::getInstance()->_dataChannel.at(i).type.c_str(),("/" + ChannelCenter::getInstance()->_dataChannel.at(i).alias).c_str(),cdDataForSave->GetStrucData()->ciDataPtr+idx_ci*cdDataForSave->GetgcLengthComValue(),H5DataType::DATA_UINT32,simExtendBuf,static_cast<unsigned long>(cdDataForSave->GetgcLengthComValue())))
+						if (ChannelCenter::getInstance()->_dataChannel.at(i).saveTiming == 1) {
+							size_t nNumber = cdDataForSave->GetgcLengthComValue();
+							unsigned long* startCounter = cdDataForSave->GetStrucData()->ciDataPtr + idx_ci * cdDataForSave->GetgcLengthComValue();
+							unsigned long* endCounter = startCounter + nNumber - 1;
+
+							if (*endCounter > AcquireSim::lastCountValue)
+							{
+								cistream.open(AcquireSim::ciLogFile, ofstream::app);
+
+								// calculate for each time count increasing 1
+								for (int i = 0; i < nNumber; i++)
+								{
+									if (*startCounter > AcquireSim::lastCountValue) {
+										string str = AcquireSim::CalcTimeString((unsigned int)(i * 1000000 / ChannelCenter::getInstance()->_mode.sampleRate)); // add the time by i/freq (unit us)
+										AcquireSim::lastCountValue = *startCounter;
+										// write to file
+										cistream << str << " " << *startCounter << endl;
+									}
+									startCounter++;
+								}
+								AcquireSim::elapsedTimeUS += (unsigned long) (nNumber * 1000000 / ChannelCenter::getInstance()->_mode.sampleRate);
+								cistream.close();
+							}
+						}
+
+						if(FALSE == simH5io->ExtendData(ChannelCenter::getInstance()->_dataChannel.at(i).type.c_str(),("/" + ChannelCenter::getInstance()->_dataChannel.at(i).alias).c_str(), cdDataForSave->GetStrucData()->ciDataPtr + idx_ci * cdDataForSave->GetgcLengthComValue(),H5DataType::DATA_UINT32,simExtendBuf,static_cast<unsigned long>(cdDataForSave->GetgcLengthComValue())))
 						{
 							StringCbPrintfW(message,MSG_LENGTH,L"Error writing HDF5 file counter channel at thread (%d)",AcquireSim::_saveThreadCnt);
 							LogMessage(message,ERROR_EVENT);
@@ -720,6 +769,31 @@ long AcquireSim::Status()
 	return ret;
 }
 
+
+// Calculate baseTimeMS+deltaTimeMS and return a time format string
+std::string AcquireSim::CalcTimeString(unsigned int deltaTimeUS)
+{
+	unsigned long timeUS = AcquireSim::elapsedTimeUS + deltaTimeUS;
+	long long cvrt = 60 * 1000000;//64 bit integer not large enough TODO check for warning here
+	cvrt *= 60;
+	int hour = timeUS / cvrt;
+	int minute = timeUS % cvrt / (60 * 1000000);
+	int second = timeUS % (60 * 1000000) / 1000000;
+	int mSecond = timeUS % 1000000 / 1000;
+	int uSecond = timeUS % 1000000 % 1000;
+
+	string hourStr = hour < 10 ? "0" + to_string(hour) : to_string(hour);
+	string minuteStr = minute < 10 ? "0" + to_string(minute) : to_string(minute);
+	string secondStr = second < 10 ? "0" + to_string(second) : to_string(second);
+	string mSecondStr = mSecond < 10 ? "00" + to_string(mSecond) : mSecond < 100 ? "0" + to_string(mSecond) : to_string(mSecond);
+	string uSecondStr = uSecond < 10 ? "00" + to_string(uSecond) : uSecond < 100 ? "0" + to_string(uSecond) : to_string(uSecond);
+
+	stringstream str(stringstream::out | stringstream::binary);
+	str << hourStr << ":" << minuteStr << ":" << secondStr << ":" << mSecondStr << ":" << uSecondStr;
+
+	return str.str();
+}
+
 ///******	Private Functions	******///
 
 void AcquireSim::ResetParams()
@@ -768,9 +842,14 @@ void AcquireSim::ResetTimingParams()
 	simInitialGCtr = 0;
 	simCurrentFirstGCtr = 0;
 	AcquireSim::gCtrOverflowCnt = 0;
+	AcquireSim::ciLogFile = L"";
+	AcquireSim::ciLogSuffix = 0;
 	simInitializedGCtr = false;
 	simSkipOverflowCheck = FALSE;
+	AcquireSim::lastCountValue = 0;
+	AcquireSim::elapsedTimeUS = 0;
 }
+
 ///********************************	END Run Synchronous Tasks	********************************///
 
 ///********************************	Run Asynchronous Tasks		********************************///

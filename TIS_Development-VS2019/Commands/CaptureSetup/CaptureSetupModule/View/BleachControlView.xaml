@@ -343,7 +343,7 @@
                 <TextBox Name="tbBleacherPower"
                          Text="{Binding Path=BleacherPowerGo, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged,NotifyOnValidationError=True,ValidatesOnDataErrors=True}"
                          ToolTip="Enter the power value of bleach scanner to go to"
-                         Width="40"
+                         Width="25"
                          VerticalAlignment="Center"
                          validator:Validation.ValidationType="{x:Type system:Double}"
                          validator:Validation.NoEmptyValue="False"
@@ -375,6 +375,29 @@
                         MinWidth="25"
                         Margin="1">
                 </Button>
+            </StackPanel>
+            <StackPanel ToolTip="Power phase shift in micro seconds: (+) means delay"
+                        Orientation="Vertical"
+                        HorizontalAlignment="Left"
+                        Visibility="{Binding Path=PowerDistributionVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <Label Content="PowerShift"
+                       HorizontalAlignment="Left"
+                       VerticalAlignment="Center" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBox Text="{Binding Path=PowerShiftUS, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}"
+                             Width="30"
+                             VerticalAlignment="Center"
+                             HorizontalAlignment="Left"
+                             HorizontalContentAlignment="Right"
+                             validator:Validation.ValidationType="{x:Type system:Double}"
+                             validator:Validation.MinValue="-100000"
+                             validator:Validation.MaxValue="100000"
+                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text">
+                    </TextBox>
+                    <Label Content="[us]"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Center" />
+                </StackPanel>
             </StackPanel>
         </StackPanel>
     </Grid>

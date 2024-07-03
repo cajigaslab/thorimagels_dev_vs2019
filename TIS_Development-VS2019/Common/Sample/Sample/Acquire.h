@@ -24,6 +24,7 @@ public:
 
 	virtual long Execute(long index, long subWell) = 0;//Synchronous acquisition of data
 	virtual long Execute(long index, long subWell, long zFrame, long tFrame)=0;//
+	virtual long ZStreamExecute(long index, long subWell, ICamera* pCamera, long zstageSteps, long timePoints, long undefinedVar) = 0;
 
 	virtual long CallCaptureImage(long index) = 0;
 	virtual long CallSaveImage(long index, BOOL isImageUpdate) = 0;

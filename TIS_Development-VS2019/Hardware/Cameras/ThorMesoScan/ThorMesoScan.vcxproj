@@ -1,0 +1,224 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{F7EB3EA8-2E6E-4F3C-878F-9677176B73D4}</ProjectGuid>
+    <RootNamespace>ThorMesoScan</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <SccProjectName>$/ThorImageLS/TIS_Development-VS2019/Hardware/Cameras/ThorMesoScan</SccProjectName>
+    <SccAuxPath>http://stl-tfs1:8080/tfs/thorimagels</SccAuxPath>
+    <SccLocalPath>.</SccLocalPath>
+    <SccProvider>{4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}</SccProvider>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>.\includes;$(ProjectDir)..\..\..\Tools\National Instruments\NIDAQmx\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_WINDLL;%(PreprocessorDefinitions);THORMESOSCAN_EXPORTS</PreprocessorDefinitions>
+      <OpenMPSupport>true</OpenMPSupport>
+      <CompileAs>CompileAsCpp</CompileAs>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>.\libs\x64;$(ProjectDir)..\..\..\Tools\National Instruments\NIDAQmx\lib\x64;$(ProjectDir)..\..\..\Common\ResourceManager\$(Platform)\$(Configuration);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>..\..\..\Tools\tinyxml2\lib\x64-Debug-Lib\tinyxml2d.lib;ATSApi.lib;NIDAQmx.lib;ResourceManager.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalOptions> /ignore:4099 </AdditionalOptions>
+    </Link>
+    <PostBuildEvent>
+      <Command>if $(Configuration) == Debug  copy $(SolutionDir)$(Platform)\$(Configuration)\$(TargetFileName) ..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\Debug\Modules_Native</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>.\includes;$(ProjectDir)..\..\..\Tools\National Instruments\NIDAQmx\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_WINDLL;%(PreprocessorDefinitions);THORMESOSCAN_EXPORTS</PreprocessorDefinitions>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>.\libs\x64;$(ProjectDir)..\..\..\Tools\National Instruments\NIDAQmx\lib\x64;$(ProjectDir)..\..\..\Common\ResourceManager\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>..\..\..\Tools\tinyxml2\lib\x64-Debug-Lib\tinyxml2d.lib;ATSApi.lib;NIDAQmx.lib;ResourceManager.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalOptions> /ignore:4099 </AdditionalOptions>
+    </Link>
+    <PostBuildEvent>
+      <Command>if $(Configuration) == Debug  copy $(SolutionDir)$(Platform)\$(Configuration)\$(TargetFileName) ..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\Debug\Modules_Native</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>.\includes;$(ProjectDir)..\..\..\Tools\National Instruments\NIDAQmx\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_WINDLL;%(PreprocessorDefinitions);THORMESOSCAN_EXPORTS;</PreprocessorDefinitions>
+      <OpenMPSupport>true</OpenMPSupport>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>.\libs\x64;..\..\..\Tools\National Instruments\NIDAQmx\lib\x64;..\..\..\Common\ResourceManager\x64\$(Configuration);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>..\..\..\Tools\tinyxml2\lib\x64-Release-Lib\tinyxml2.lib;ATSApi.lib;NIDAQmx.lib;ResourceManager.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>.\includes;$(ProjectDir)..\..\..\Tools\National Instruments\NIDAQmx\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_WINDLL;%(PreprocessorDefinitions);THORMESOSCAN_EXPORTS;</PreprocessorDefinitions>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>.\libs\x64;..\..\..\Tools\National Instruments\NIDAQmx\lib\x64;..\..\..\Common\ResourceManager\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>..\..\..\Tools\tinyxml2\lib\x64-Release-Lib\tinyxml2.lib;ATSApi.lib;NIDAQmx.lib;ResourceManager.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\Tools\National Instruments\NIDAQmx\include\BoardInfoNI.h" />
+    <ClInclude Include="AlazarBoard.h" />
+    <ClInclude Include="CircleBuffer.h" />
+    <ClInclude Include="CommonWaveform.h" />
+    <ClInclude Include="DAQBoard.h" />
+    <ClInclude Include="DevParamDef.h" />
+    <ClInclude Include="CameraConfig.h" />
+    <ClInclude Include="FrameTriggerWaveform.h" />
+    <ClInclude Include="GalvoXWaveForm.h" />
+    <ClInclude Include="GalvoYWaveForm.h" />
+    <ClInclude Include="Logger.h" />
+    <ClInclude Include="includes\AlazarApi.h" />
+    <ClInclude Include="includes\AlazarCmd.h" />
+    <ClInclude Include="includes\AlazarError.h" />
+    <ClInclude Include="MesoWaveformManager.h" />
+    <ClInclude Include="PockelsCalibration.h" />
+    <ClInclude Include="PokelsCellWaveForm.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="ScanMeso.h" />
+    <ClInclude Include="Types.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="ThorMesoScan.h" />
+    <ClInclude Include="VoiceCoilWaveform.h" />
+    <ClInclude Include="WaveformManagerBase.h" />
+    <ClInclude Include="WaveformModel.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\Tools\National Instruments\NIDAQmx\include\BoardInfoNI.cpp" />
+    <ClCompile Include="AlazarBoard.cpp" />
+    <ClCompile Include="CameraConfig.cpp" />
+    <ClCompile Include="CircleBuffer.cpp" />
+    <ClCompile Include="CommonWaveform.cpp" />
+    <ClCompile Include="DAQBoard.cpp" />
+    <ClCompile Include="DllMain.cpp" />
+    <ClCompile Include="FrameTriggerWaveform.cpp" />
+    <ClCompile Include="GalvoXWaveForm.cpp" />
+    <ClCompile Include="GalvoYWaveForm.cpp" />
+    <ClCompile Include="GenericFuncs.cpp" />
+    <ClCompile Include="GetParams.cpp" />
+    <ClCompile Include="MesoWaveformManager.cpp" />
+    <ClCompile Include="PockelsCalibration.cpp" />
+    <ClCompile Include="PokelsCellWaveForm.cpp" />
+    <ClCompile Include="SetParams.cpp" />
+    <ClCompile Include="ThorMesoScan.cpp" />
+    <ClCompile Include="Types.cpp" />
+    <ClCompile Include="VoiceCoilWaveform.cpp" />
+    <ClCompile Include="WaveformManagerBase.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ThorMesoScan.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

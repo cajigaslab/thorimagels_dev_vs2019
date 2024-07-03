@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<RemoteFocusNISettings>
+  <Dma rfActiveLoadMS="100" preLoadCount="20"/>
+
+  <IO devCard="" analogLine="" triggerLine=""/>
+  <!--
+  <IO devCard="/Dev3/" analogLine="ao2" triggerLine="PFI3"/>
+  -->
+</RemoteFocusNISettings>

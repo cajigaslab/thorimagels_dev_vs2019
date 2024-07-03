@@ -522,14 +522,20 @@
 
             XmlNodeList ndList = experimentFile.SelectNodes("/ThorImageExperiment/Autofocus");
 
-            if (ndList.Count > 0)
+            if (ndList.Count <= 0)
             {
-                XmlManager.SetAttribute(ndList[0], experimentFile, "type", AutoFocusType.ToString());
-                XmlManager.SetAttribute(ndList[0], experimentFile, "repeat", Repeats.ToString());
-                XmlManager.SetAttribute(ndList[0], experimentFile, "stepSizeUM", StepSizeUM.ToString());
-                XmlManager.SetAttribute(ndList[0], experimentFile, "startPosMM", (StartPosition / 1000).ToString());
-                XmlManager.SetAttribute(ndList[0], experimentFile, "stopPosMM", (StopPosition / 1000).ToString());
+                if (ndList.Count <= 0)
+                {
+                    XmlManager.CreateXmlNode(experimentFile, "Autofocus");
+                    ndList = experimentFile.SelectNodes("/ThorImageExperiment/Autofocus");
+                }
             }
+            XmlManager.SetAttribute(ndList[0], experimentFile, "type", AutoFocusType.ToString());
+            XmlManager.SetAttribute(ndList[0], experimentFile, "repeat", Repeats.ToString());
+            XmlManager.SetAttribute(ndList[0], experimentFile, "stepSizeUM", StepSizeUM.ToString());
+            XmlManager.SetAttribute(ndList[0], experimentFile, "startPosMM", (StartPosition / 1000).ToString());
+            XmlManager.SetAttribute(ndList[0], experimentFile, "stopPosMM", (StopPosition / 1000).ToString());
+
             //Stop autofocus if user switches tabs, switches modalities, or opens Hardware Setup
             StopAutoFocus();
         }
@@ -663,6 +669,7 @@
                 DateTime lastS = DateTime.Now;
                 TimeSpan ts;
                 ts = DateTime.Now - lastS;
+                AutoFocusButtonEnabled = false;
                 _autoFocusRunning = AutoFocusModule.Instance.IsAutoFocusRunning();
                 while (10 > ts.TotalSeconds && 0 == _autoFocusRunning)
                 {
@@ -742,6 +749,7 @@
                 OnPropertyChanged("ZMin");
 
                 CloseProgressWindow();
+                AutoFocusButtonEnabled = true;
                 _spinnerWindow = null;
                 _autoFocusRunning = 0;
             };

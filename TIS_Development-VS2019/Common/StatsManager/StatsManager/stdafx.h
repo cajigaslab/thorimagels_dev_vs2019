@@ -50,6 +50,8 @@ using namespace std;
 
 #include "..\..\Log.h"
 
+#include "..\..\..\..\Tools\Intel IPP\intel64\include\IPPlib.h"
+
 extern auto_ptr<LogDll> logDll;
 extern wchar_t message[256];
 

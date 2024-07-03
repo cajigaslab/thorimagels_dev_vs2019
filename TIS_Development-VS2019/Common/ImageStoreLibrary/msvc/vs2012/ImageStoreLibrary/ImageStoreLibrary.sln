@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.34301.259
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImageStoreLibrary", "ImageStoreLibrary.vcxproj", "{1890307B-28AA-4152-8EBA-FE78B2CC0F1C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tiff", "..\tiff\tiff.vcxproj", "{DCAFC767-A049-326E-964E-E7B0A4947E32}"
@@ -21,29 +23,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{D6D83B
 	EndProjectSection
 EndProject
 Global
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 7
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://stl-tfs1:8080/tfs/thorimagels
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = ImageStoreLibrary.vcxproj
-		SccLocalPath1 = .
-		SccProjectUniqueName2 = ..\\tiff\\tiff.vcxproj
-		SccProjectName2 = ../tiff
-		SccLocalPath2 = ..\\tiff
-		SccProjectUniqueName3 = ..\\turbojpeg\\turbojpeg-static.vcxproj
-		SccProjectName3 = ../turbojpeg
-		SccLocalPath3 = ..\\turbojpeg
-		SccProjectUniqueName4 = ..\\tinyxml2\\tinyxml2.vcxproj
-		SccProjectName4 = ../tinyxml2
-		SccLocalPath4 = ..\\tinyxml2
-		SccProjectUniqueName5 = ..\\libzip\\zip.vcxproj
-		SccProjectName5 = ../libzip
-		SccLocalPath5 = ..\\libzip
-		SccProjectUniqueName6 = ..\\zlib\\zlibstatic.vcxproj
-		SccProjectName6 = ../zlib
-		SccLocalPath6 = ..\\zlib
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -73,6 +52,7 @@ Global
 		{DCAFC767-A049-326E-964E-E7B0A4947E32}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
 		{DCAFC767-A049-326E-964E-E7B0A4947E32}.Debug|Win32.ActiveCfg = Debug|x64
 		{DCAFC767-A049-326E-964E-E7B0A4947E32}.Debug|x64.ActiveCfg = Debug|x64
+		{DCAFC767-A049-326E-964E-E7B0A4947E32}.Debug|x64.Build.0 = Debug|x64
 		{DCAFC767-A049-326E-964E-E7B0A4947E32}.Release|Any CPU.ActiveCfg = Release|x64
 		{DCAFC767-A049-326E-964E-E7B0A4947E32}.Release|Mixed Platforms.ActiveCfg = Release|x64
 		{DCAFC767-A049-326E-964E-E7B0A4947E32}.Release|Win32.ActiveCfg = Release|x64
@@ -81,6 +61,7 @@ Global
 		{07675AD8-CB09-37FA-AD52-67F4F140D635}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
 		{07675AD8-CB09-37FA-AD52-67F4F140D635}.Debug|Win32.ActiveCfg = Debug|x64
 		{07675AD8-CB09-37FA-AD52-67F4F140D635}.Debug|x64.ActiveCfg = Debug|x64
+		{07675AD8-CB09-37FA-AD52-67F4F140D635}.Debug|x64.Build.0 = Debug|x64
 		{07675AD8-CB09-37FA-AD52-67F4F140D635}.Release|Any CPU.ActiveCfg = Release|x64
 		{07675AD8-CB09-37FA-AD52-67F4F140D635}.Release|Mixed Platforms.ActiveCfg = Release|x64
 		{07675AD8-CB09-37FA-AD52-67F4F140D635}.Release|Win32.ActiveCfg = Release|x64
@@ -89,6 +70,7 @@ Global
 		{D1C528B6-AA02-4D29-9D61-DC08E317A70D}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
 		{D1C528B6-AA02-4D29-9D61-DC08E317A70D}.Debug|Win32.ActiveCfg = Debug|x64
 		{D1C528B6-AA02-4D29-9D61-DC08E317A70D}.Debug|x64.ActiveCfg = Debug|x64
+		{D1C528B6-AA02-4D29-9D61-DC08E317A70D}.Debug|x64.Build.0 = Debug|x64
 		{D1C528B6-AA02-4D29-9D61-DC08E317A70D}.Release|Any CPU.ActiveCfg = Release|x64
 		{D1C528B6-AA02-4D29-9D61-DC08E317A70D}.Release|Mixed Platforms.ActiveCfg = Release|x64
 		{D1C528B6-AA02-4D29-9D61-DC08E317A70D}.Release|Win32.ActiveCfg = Release|x64
@@ -97,6 +79,7 @@ Global
 		{F271C836-CBA1-377C-89FF-D38E4B849FBC}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
 		{F271C836-CBA1-377C-89FF-D38E4B849FBC}.Debug|Win32.ActiveCfg = Debug|x64
 		{F271C836-CBA1-377C-89FF-D38E4B849FBC}.Debug|x64.ActiveCfg = Debug|x64
+		{F271C836-CBA1-377C-89FF-D38E4B849FBC}.Debug|x64.Build.0 = Debug|x64
 		{F271C836-CBA1-377C-89FF-D38E4B849FBC}.Release|Any CPU.ActiveCfg = Release|x64
 		{F271C836-CBA1-377C-89FF-D38E4B849FBC}.Release|Mixed Platforms.ActiveCfg = Release|x64
 		{F271C836-CBA1-377C-89FF-D38E4B849FBC}.Release|Win32.ActiveCfg = Release|x64
@@ -105,6 +88,7 @@ Global
 		{541DFB11-8A8C-3661-9C11-11F5C26B9828}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
 		{541DFB11-8A8C-3661-9C11-11F5C26B9828}.Debug|Win32.ActiveCfg = Debug|x64
 		{541DFB11-8A8C-3661-9C11-11F5C26B9828}.Debug|x64.ActiveCfg = Debug|x64
+		{541DFB11-8A8C-3661-9C11-11F5C26B9828}.Debug|x64.Build.0 = Debug|x64
 		{541DFB11-8A8C-3661-9C11-11F5C26B9828}.Release|Any CPU.ActiveCfg = Release|x64
 		{541DFB11-8A8C-3661-9C11-11F5C26B9828}.Release|Mixed Platforms.ActiveCfg = Release|x64
 		{541DFB11-8A8C-3661-9C11-11F5C26B9828}.Release|Win32.ActiveCfg = Release|x64
@@ -112,5 +96,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F34A0E92-43F5-46CC-A91F-96DA8518E464}
 	EndGlobalSection
 EndGlobal

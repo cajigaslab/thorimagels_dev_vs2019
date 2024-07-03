@@ -60,9 +60,6 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="ThorImageInfastructure">
-      <HintPath>..\..\..\GUI\Applications\ThorImageLS\ThorImageInfastructure\bin\Debug\ThorImageInfastructure.dll</HintPath>
-    </Reference>
     <Reference Include="ThorLogging">
       <HintPath>..\..\..\Common\ThorLogging\ThorLogging\bin\Debug\ThorLogging.dll</HintPath>
     </Reference>

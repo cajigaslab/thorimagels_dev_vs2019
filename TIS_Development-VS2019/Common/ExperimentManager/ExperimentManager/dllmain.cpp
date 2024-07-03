@@ -606,7 +606,7 @@ DllExportExpManger SetWells(long startRow, long startColumn, long rows, long col
 }
 
 
-DllExportExpManger GetSubImages(vector<IExperiment::SubImage>& subImages, long cameraType, long lsmType)
+DllExportExpManger GetSubImages(vector<IExperiment::SubImage>& subImages, long cameraType, long lsmType, long mROIenabled)
 {
 	logDll->TLTraceEvent(VERBOSE_EVENT,1,L"ExperimentManger  GetSubImages");	
 
@@ -619,7 +619,7 @@ DllExportExpManger GetSubImages(vector<IExperiment::SubImage>& subImages, long c
 		return FALSE;
 	}
 
-	ret = exp->GetSubImages(subImages, cameraType, lsmType);
+	ret = exp->GetSubImages(subImages, cameraType, lsmType, mROIenabled);
 
 	return ret;
 }
@@ -645,7 +645,7 @@ DllExportExpManger SetSubImages(long subRows,long subColumns, double subOffsetXM
 DllExportExpManger 	GetLSM(long &areaMode, double &areaAngle, long &scanMode,long &interleave,long &pixelX,long &pixelY,long &channel, long &fieldSize, long &offsetX, long &offsetY,
 						   long &averageMode, long &averageNum, long &clockSource, long &inputRange1, long &inputRange2, long &twoWayAlignment, long &extClockRate, double &dwellTime, 
 						   long &flybackCycles, long &inputRange3, long &inputRange4, long &minimizeFlybackCycles, long &polarity1, long &polarity2, long &polarity3, long &polarity4,
-						   long &verticalFlip, long &horizontalFlip, double &crsFrequencyHz, long& timeBasedLineScan, long& timeBasedLSTimeMS, long& threePhotonEnable, long& numberOfPlanes)
+						   long &verticalFlip, long &horizontalFlip, double &crsFrequencyHz, long& timeBasedLineScan, long& timeBasedLSTimeMS, long& threePhotonEnable, long& numberOfPlanes, long& selectedImagingGG, long& selectedStimGG, double& pixelAspectRatioYScale)
 {
 	logDll->TLTraceEvent(VERBOSE_EVENT,1,L"ExperimentManger  GetLSM");
 
@@ -658,7 +658,7 @@ DllExportExpManger 	GetLSM(long &areaMode, double &areaAngle, long &scanMode,lon
 		return FALSE;
 	}
 
-	ret = 	exp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,channel, fieldSize, offsetX, offsetY,averageMode, averageNum, clockSource, inputRange1, inputRange2, twoWayAlignment, extClockRate, dwellTime, flybackCycles, inputRange3, inputRange4, minimizeFlybackCycles,polarity1, polarity2, polarity3,polarity4, verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLSTimeMS, threePhotonEnable, numberOfPlanes);
+	ret = 	exp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,channel, fieldSize, offsetX, offsetY,averageMode, averageNum, clockSource, inputRange1, inputRange2, twoWayAlignment, extClockRate, dwellTime, flybackCycles, inputRange3, inputRange4, minimizeFlybackCycles,polarity1, polarity2, polarity3,polarity4, verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLSTimeMS, threePhotonEnable, numberOfPlanes, selectedImagingGG, selectedStimGG, pixelAspectRatioYScale);
 
 	return ret;
 }

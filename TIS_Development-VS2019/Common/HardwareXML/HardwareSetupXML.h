@@ -72,7 +72,7 @@ public:
 	 enum {NUM_WAVELENGTH_ATTRIBUTES = 9};
 	 enum {NUM_OBJECTIVE_ATTRIBUTES = 14};
 	 enum {NUM_COLORCHANNEL_ATTRIBUTES = 1};
-	 enum {NUM_STREAMING_ATTRIBUTES = 2};
+	 enum {NUM_STREAMING_ATTRIBUTES = 3};
 	 enum {NUM_LSM_ATTRIBUTES = 1};
 	 enum {NUM_HARDWARE_ATTRIBUTES = 6};
 	 enum { NUM_INVERTED_ATTRIBUTES = 1 };
@@ -106,7 +106,7 @@ public:
 	long GetMagInfoFromPosition(long position,  string &name, double &mag, double &numAper, double &afScanStart,double &afFocusOffset, double &afAdaptiveOffset,long &beamExpPos,long &beamExpWavelength,long &beamExpPos2, long &beamExpWavelength2,long &turretPosition,long &zAxisToEscape, double &zAxisEscapeDistance, double& finePercentage);//magnification details from position index
 	long GetMagInfoFromName(string name, double &mag, long &position, double &numAper, double &afScanStart,double &afFocusOffset, double &afAdaptiveOffset,long &beamExpPos,long &beamExpWavelength,long &beamExpPos2, long &beamExpWavelength2,long &turretPosition,long &zAxisToEscape, double &zAxisEscapeDistance, double &finePercentage);
 	long GetColorChannels(string &nameRed, string &nameGreen,string &nameBlue,string &nameCyan, string &nameMagenta, string &nameYellow,string &nameGray);///color channel assignment details
-	long GetStreaming(wstring &path, double &previewRate);
+	long GetStreaming(wstring &path, double &previewRate, long &alwaysSaveImagesWhenStopped);
 	long GetLSM(double &fieldSizeCalibration);
 	long OpenConfigFile(string path);
 

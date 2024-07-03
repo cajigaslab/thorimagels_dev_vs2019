@@ -26,7 +26,10 @@
     {
         #region Fields
 
+        public const int MAX_CHANNELS = 4;
+
         private DateTime _lastPMTSafetyUpdate = DateTime.Now;
+        bool[] _lsmChannelEnable;
         private int[] _pmtMode;
         bool _pmtSafetyStatus = true;
         private double[,] _pmtVoltage;
@@ -40,9 +43,13 @@
         /// </summary>
         public ScanControlModel()
         {
-            const int MAX_CHANNELS = 4;
             _pmtMode = new int[MAX_CHANNELS];
             LsmClkPnlEnabled = true;
+            _lsmChannelEnable = new bool[MAX_CHANNELS];
+            for (int i = 0; i < MAX_CHANNELS; i++)
+            {
+                _lsmChannelEnable[i] = true;
+            }
         }
 
         #endregion Constructors
@@ -75,6 +82,17 @@
             set;
         }
 
+        public int ControlUnitType
+        {
+            get
+            {
+                int type = (int)ScopeType.UPRIGHT;
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_CONTROLUNIT, (int)IDevice.Params.PARAM_CONTROL_UNIT_TYPE, ref type);
+
+                return type;
+            }
+        }
+
         public double FramesPerSecond
         {
             get
@@ -82,6 +100,30 @@
                 double val = 0;
                 ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_FRAME_RATE, ref val);
                 return val;
+            }
+        }
+
+        public int ImagingRampExtensionCycles
+        {
+            get
+            {
+                int val = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_IMAGING_RAMP_EXTENSION_CYCLES, ref val);
+                return val;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_IMAGING_RAMP_EXTENSION_CYCLES, value);
+            }
+        }
+
+        public bool IsImagingRampExtensionCyclesAvailable
+        {
+            get
+            {
+                int val = ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_IMAGING_RAMP_EXTENSION_CYCLES);
+
+                return val == 1;
             }
         }
 
@@ -95,10 +137,139 @@
             }
         }
 
+        public bool IsLSMImageDistortionCorrectionAvailable
+        {
+            get
+            {
+                int val = ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_IMAGE_DISTORTION_CORRECTION_ENABLE);
+
+                return val == 1;
+            }
+        }
+
+        public bool IsLSMImageDistortionCorrectionCalibrationGalvoTiltAngleAvailable
+        {
+            get
+            {
+                int val = ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_IMAGE_DISTORTION_CORRECTION_CALIBRATION_GALVO_TILT_ANGLE);
+
+                return val == 1;
+            }
+        }
+
+        public bool IsLSMImageDistortionCorrectionCalibrationXAngleMaxAvailable
+        {
+            get
+            {
+                int val = ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_IMAGE_DISTORTION_CORRECTION_CALIBRATION_X_ANGLE_MAX);
+
+                return val == 1;
+            }
+        }
+
+        public bool IsLSMImageDistortionCorrectionCalibrationYAngleMaxAvailable
+        {
+            get
+            {
+                int val = ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_IMAGE_DISTORTION_CORRECTION_CALIBRATION_Y_ANGLE_MAX);
+
+                return val == 1;
+            }
+        }
+
+        public bool IsPreImagingCalibrationCyclesAvailable
+        {
+            get
+            {
+                int val = ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_PREIMAGING_CALIBRATION_CYCLES);
+
+                return val == 1;
+            }
+        }
+
         public DateTime LastPMTSafetyUpdate
         {
             get { return _lastPMTSafetyUpdate; }
             set { _lastPMTSafetyUpdate = value; }
+        }
+
+        public int LSMChannel
+        {
+            get
+            {
+                int val = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_CHANNEL, ref val);
+                return val;
+            }
+        }
+
+        public bool[] LSMChannelEnable
+        {
+            get => _lsmChannelEnable;
+        }
+
+        public bool LSMChannelEnable0
+        {
+            get
+            {
+                return _lsmChannelEnable[0];
+            }
+            set
+            {
+                if (_lsmChannelEnable[0] != value)
+                {
+                    _lsmChannelEnable[0] = value;
+                    SetChannelFromEnable();
+                }
+            }
+        }
+
+        public bool LSMChannelEnable1
+        {
+            get
+            {
+                return _lsmChannelEnable[1];
+            }
+            set
+            {
+                if (_lsmChannelEnable[1] != value)
+                {
+                    _lsmChannelEnable[1] = value;
+                    SetChannelFromEnable();
+                }
+            }
+        }
+
+        public bool LSMChannelEnable2
+        {
+            get
+            {
+                return _lsmChannelEnable[2];
+            }
+            set
+            {
+                if (_lsmChannelEnable[2] != value)
+                {
+                    _lsmChannelEnable[2] = value;
+                    SetChannelFromEnable();
+                }
+            }
+        }
+
+        public bool LSMChannelEnable3
+        {
+            get
+            {
+                return _lsmChannelEnable[3];
+            }
+            set
+            {
+                if (_lsmChannelEnable[3] != value)
+                {
+                    _lsmChannelEnable[3] = value;
+                    SetChannelFromEnable();
+                }
+            }
         }
 
         public bool LsmClkPnlEnabled
@@ -207,6 +378,76 @@
             set;
         }
 
+        public double LSMImageDistortionCorrectionCalibrationGalvoTiltAngle
+        {
+            get
+            {
+                double val = 0;
+                ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_IMAGE_DISTORTION_CORRECTION_CALIBRATION_GALVO_TILT_ANGLE, ref val);
+                return val;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_IMAGE_DISTORTION_CORRECTION_CALIBRATION_GALVO_TILT_ANGLE, value);
+            }
+        }
+
+        public double LSMImageDistortionCorrectionCalibrationXAngleMax
+        {
+            get
+            {
+                double val = 0;
+                ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_IMAGE_DISTORTION_CORRECTION_CALIBRATION_X_ANGLE_MAX, ref val);
+                return val;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_IMAGE_DISTORTION_CORRECTION_CALIBRATION_X_ANGLE_MAX, value);
+            }
+        }
+
+        public double LSMImageDistortionCorrectionCalibrationYAngleMax
+        {
+            get
+            {
+                double val = 0;
+                ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_IMAGE_DISTORTION_CORRECTION_CALIBRATION_Y_ANGLE_MAX, ref val);
+                return val;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_IMAGE_DISTORTION_CORRECTION_CALIBRATION_Y_ANGLE_MAX, value);
+            }
+        }
+
+        public int LSMImageDistortionCorrectionEnable
+        {
+            get
+            {
+                int val = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_IMAGE_DISTORTION_CORRECTION_ENABLE, ref val);
+                return val;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_IMAGE_DISTORTION_CORRECTION_ENABLE, value);
+            }
+        }
+
+        public int LSMImageOnFlyback
+        {
+            get
+            {
+                int val = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_IMAGE_ON_FLYBACK, ref val);
+                return val;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_IMAGE_ON_FLYBACK, value);
+            }
+        }
+
         public int LSMInterleaveScan
         {
             get
@@ -229,6 +470,53 @@
                 int val = ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_FAST_ONEWAY_MODE_ENABLE);
 
                 return val == 1;
+            }
+        }
+
+        public int LSMIsImageOnFlybackAvailable
+        {
+            get
+            {
+                int val = ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_IMAGE_ON_FLYBACK);
+                return val;
+            }
+        }
+
+        public bool LSMIsLineAveragingAvailable
+        {
+            get
+            {
+                int val = ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_LINE_AVERAGING_ENABLE);
+
+                return val == 1;
+            }
+        }
+
+        public int LSMLineAveragingEnable
+        {
+            get
+            {
+                int val = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_LINE_AVERAGING_ENABLE, ref val);
+                return val;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_LINE_AVERAGING_ENABLE, value);
+            }
+        }
+
+        public int LSMLineAveragingNumber
+        {
+            get
+            {
+                int val = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_LINE_AVERAGING_NUMBER, ref val);
+                return val;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_LINE_AVERAGING_NUMBER, value);
             }
         }
 
@@ -395,6 +683,7 @@
                 switch ((ICamera.LSMType)type)
                 {
                     case ICamera.LSMType.GALVO_RESONANCE: str = "Galvo/Resonance Scanner Control"; break;
+                    case ICamera.LSMType.RESONANCE_GALVO_GALVO: str = "Resonance/Galvo/Galvo Scanner Control"; break;
                     case ICamera.LSMType.GALVO_GALVO: str = "Galvo/Galvo Scanner Control"; break;
                 }
 
@@ -424,7 +713,7 @@
                 ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_TYPE, ref lsmType);
 
                 int val = 0;
-                if ((int)ICamera.LSMType.GALVO_RESONANCE == lsmType)
+                if ((int)ICamera.LSMType.GALVO_RESONANCE == lsmType || (int)ICamera.LSMType.RESONANCE_GALVO_GALVO == lsmType)
                 {
                     GetTwoWayAlignmentFine((int)MVMManager.Instance["AreaControlViewModel", "LSMFieldSize"], ref val);
                 }
@@ -439,7 +728,7 @@
                 int lsmType = 0;
                 ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_TYPE, ref lsmType);
 
-                if ((int)ICamera.LSMType.GALVO_RESONANCE == lsmType)
+                if ((int)ICamera.LSMType.GALVO_RESONANCE == lsmType || (int)ICamera.LSMType.RESONANCE_GALVO_GALVO == lsmType)
                 {
                     SetTwoWayAlignmentFine((int)MVMManager.Instance["AreaControlViewModel", "LSMFieldSize"], value);
                 }
@@ -460,7 +749,31 @@
             }
             set
             {
+                int valMin = 0, valMax = 0, valDefault = 0;
+                ResourceManagerCS.GetDeviceParamRangeInt((int)SelectedHardware.SELECTED_CONTROLUNIT, (int)IDevice.Params.PARAM_SCANNER_ALIGN_POS, ref valMin, ref valMax, ref valDefault);
+                if (valMax < value)
+                {
+                    value = valMax;
+                }
+                if (valMin > value)
+                {
+                    value = valMin;
+                }
                 SetTwoWayAlignmentCoarse((int)MVMManager.Instance["AreaControlViewModel", "LSMFieldSize"], value);
+            }
+        }
+
+        public int MovingAvarageFilterEnable
+        {
+            get
+            {
+                int val = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_RESEARCH_CAMERA_0, ref val);
+                return val;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_RESEARCH_CAMERA_0, value);
             }
         }
 
@@ -715,6 +1028,20 @@
             }
         }
 
+        public int PreImagingCalibrationCycles
+        {
+            get
+            {
+                int val = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_PREIMAGING_CALIBRATION_CYCLES, ref val);
+                return val;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_PREIMAGING_CALIBRATION_CYCLES, value);
+            }
+        }
+
         public int SignalAverageFrames
         {
             get
@@ -822,16 +1149,14 @@
 
         public void GetPMTOffsetIsAvailable(int index, ref bool val)
         {
-            int param = 0;
+            double offset = 0;
             switch (index)
             {
-                case 0: param = (int)IDevice.Params.PARAM_PMT1_OUTPUT_OFFSET; break;
-                case 1: param = (int)IDevice.Params.PARAM_PMT2_OUTPUT_OFFSET; break;
-                case 2: param = (int)IDevice.Params.PARAM_PMT3_OUTPUT_OFFSET; break;
-                case 3: param = (int)IDevice.Params.PARAM_PMT4_OUTPUT_OFFSET; break;
+                case 0: val = 1 == ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_PMT1, (int)IDevice.Params.PARAM_PMT1_OUTPUT_OFFSET, ref offset); break;
+                case 1: val = 1 == ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_PMT2, (int)IDevice.Params.PARAM_PMT2_OUTPUT_OFFSET, ref offset); break;
+                case 2: val = 1 == ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_PMT3, (int)IDevice.Params.PARAM_PMT3_OUTPUT_OFFSET, ref offset); break;
+                case 3: val = 1 == ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_PMT4, (int)IDevice.Params.PARAM_PMT4_OUTPUT_OFFSET, ref offset); break;
             }
-            double offset = 0;
-            val = (1 == ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_PMT1, param, ref offset)) || (1 == ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_PMT2, param, ref offset)) || (1 == ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_PMT3, param, ref offset)) || (1 == ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_PMT4, param, ref offset));
         }
 
         public double GetPMTOffsetStepSize(int index)
@@ -857,11 +1182,23 @@
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "GetTwoWayAlignmentFine")]
         private static extern int GetTwoWayAlignmentFine(int fieldSize, ref int value);
 
+        [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "SetDisplayChannels")]
+        static extern long SetDisplayChannels(int chan);
+
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "SetTwoWayAlignmentCoarse")]
         private static extern int SetTwoWayAlignmentCoarse(int fieldSize, int value);
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "SetTwoWayAlignmentFine")]
         private static extern int SetTwoWayAlignmentFine(int fieldSize, int value);
+
+        void SetChannelFromEnable()
+        {
+            //update the channel value also
+            int chan = (Convert.ToInt32(_lsmChannelEnable[0]) | (Convert.ToInt32(_lsmChannelEnable[1]) << 1) | (Convert.ToInt32(_lsmChannelEnable[2]) << 2) | (Convert.ToInt32(_lsmChannelEnable[3]) << 3));
+
+            ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_CHANNEL, chan);
+            SetDisplayChannels(chan);
+        }
 
         #endregion Methods
     }

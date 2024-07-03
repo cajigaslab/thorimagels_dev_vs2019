@@ -38,6 +38,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="IPCModules, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Common\IPCModules\IPCModules\bin\Debug\IPCModules.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Practices.Composite">
       <HintPath>..\..\..\Composite Application\Source\CAL\Composite.UnityExtensions\bin\Debug\Microsoft.Practices.Composite.dll</HintPath>
     </Reference>
@@ -62,9 +66,6 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="ThorImageInfastructure">
-      <HintPath>..\..\..\Applications\ThorImageLS\ThorImageInfastructure\bin\Debug\ThorImageInfastructure.dll</HintPath>
-    </Reference>
     <Reference Include="ThorLogging">
       <HintPath>..\..\..\..\Common\ThorLogging\ThorLogging\bin\Debug\ThorLogging.dll</HintPath>
     </Reference>
@@ -74,8 +75,8 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="RemoteIPCControlModel.cs" />
-    <Compile Include="RemoteIPCControlViewModel.cs" />
+    <Compile Include="Models\RemoteIPCControlModelBase.cs" />
+    <Compile Include="ViewModels\RemoteIPCControlViewModelBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

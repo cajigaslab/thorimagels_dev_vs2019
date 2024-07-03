@@ -243,6 +243,56 @@
 
                 return pos;
             }
+            set
+            {
+                //if using thordaq, use the first available pockels line for bleaching
+                if (WaveformDriverType == WaveformDriverType.WaveformDriver_ThorDAQ)
+                {
+                    for (int i = 0; i < MAX_POCKELS_COUNT; ++i)
+                    {
+                        switch (i)
+                        {
+                            case 0:
+                                {
+
+                                    if (BleacherPockelsEnable0)
+                                    {
+                                        ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_POCKELS_MAX_VOLTAGE_0, value);
+                                    }
+                                    break;
+                                }
+                            case 1:
+                                {
+                                    if (BleacherPockelsEnable1)
+                                    {
+                                        ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_POCKELS_MAX_VOLTAGE_1, value);
+                                    }
+                                    break;
+                                }
+                            case 2:
+                                {
+                                    if (BleacherPockelsEnable2)
+                                    {
+                                        ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_POCKELS_MAX_VOLTAGE_2, value);
+                                    }
+                                    break;
+                                }
+                            case 3:
+                                {
+                                    if (BleacherPockelsEnable3)
+                                    {
+                                        ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_POCKELS_MAX_VOLTAGE_3, value);
+                                    }
+                                    break;
+                                }
+                        }
+                    }
+                }
+                else
+                {
+                    ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_POCKELS_MAX_VOLTAGE_0, value);
+                }
+            }
         }
 
         public double BleachPockelsVoltageMin0
@@ -304,6 +354,55 @@
 
                 return pos;
             }
+            set
+            {
+                if (WaveformDriverType == WaveformDriverType.WaveformDriver_ThorDAQ)
+                {
+                    for (int i = 0; i < MAX_POCKELS_COUNT; ++i)
+                    {
+                        switch (i)
+                        {
+                            case 0:
+                                {
+
+                                    if (BleacherPockelsEnable0)
+                                    {
+                                        ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_POCKELS_MIN_VOLTAGE_0, value);
+                                    }
+                                    break;
+                                }
+                            case 1:
+                                {
+                                    if (BleacherPockelsEnable1)
+                                    {
+                                        ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_POCKELS_MIN_VOLTAGE_1, value);
+                                    }
+                                    break;
+                                }
+                            case 2:
+                                {
+                                    if (BleacherPockelsEnable2)
+                                    {
+                                        ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_POCKELS_MIN_VOLTAGE_2, value);
+                                    }
+                                    break;
+                                }
+                            case 3:
+                                {
+                                    if (BleacherPockelsEnable3)
+                                    {
+                                        ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_POCKELS_MIN_VOLTAGE_3, value);
+                                    }
+                                    break;
+                                }
+                        }
+                    }
+                }
+                else
+                {
+                    ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_POCKELS_MIN_VOLTAGE_0, value);
+                }
+            }
         }
 
         public int EnablePockelsMask
@@ -346,67 +445,91 @@
             }
         }
 
-        public int PockelsBlankPercentage0
+        public double PockelsBlankPercentage0
         {
             get
             {
-                int pos = 0;
+                double pos = 0;
 
-                ThorSharedTypes.ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_BLANKING_PERCENTAGE_0, ref pos);
+                ThorSharedTypes.ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_BLANKING_PERCENTAGE_0, ref pos);
 
                 return pos;
             }
             set
             {
-                ThorSharedTypes.ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_BLANKING_PERCENTAGE_0, value);
+                ThorSharedTypes.ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_BLANKING_PERCENTAGE_0, value);
             }
         }
 
-        public int PockelsBlankPercentage1
+        public double PockelsBlankPercentage1
         {
             get
             {
-                int pos = 0;
+                double pos = 0;
 
-                ThorSharedTypes.ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_BLANKING_PERCENTAGE_1, ref pos);
+                ThorSharedTypes.ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_BLANKING_PERCENTAGE_1, ref pos);
 
                 return pos;
             }
             set
             {
-                ThorSharedTypes.ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_BLANKING_PERCENTAGE_1, value);
+                ThorSharedTypes.ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_BLANKING_PERCENTAGE_1, value);
             }
         }
 
-        public int PockelsBlankPercentage2
+        public double PockelsBlankPercentage2
         {
             get
             {
-                int pos = 0;
+                double pos = 0;
 
-                ThorSharedTypes.ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_BLANKING_PERCENTAGE_2, ref pos);
+                ThorSharedTypes.ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_BLANKING_PERCENTAGE_2, ref pos);
 
                 return pos;
             }
             set
             {
-                ThorSharedTypes.ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_BLANKING_PERCENTAGE_2, value);
+                ThorSharedTypes.ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_BLANKING_PERCENTAGE_2, value);
             }
         }
 
-        public int PockelsBlankPercentage3
+        public double PockelsBlankPercentage3
         {
             get
             {
-                int pos = 0;
+                double pos = 0;
 
-                ThorSharedTypes.ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_BLANKING_PERCENTAGE_3, ref pos);
+                ThorSharedTypes.ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_BLANKING_PERCENTAGE_3, ref pos);
 
                 return pos;
             }
             set
             {
-                ThorSharedTypes.ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_BLANKING_PERCENTAGE_3, value);
+                ThorSharedTypes.ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_BLANKING_PERCENTAGE_3, value);
+            }
+        }
+
+        public bool PockelsDelayAvailable0
+        {
+            get
+            {
+                return 1 == ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_DELAY_US_0);
+            }
+        }
+
+        public bool PockelsDelayAvailable1
+        {
+            get
+            {
+                return 1 == ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_DELAY_US_1);
+            }
+        }
+
+        public bool PockelsDelayAvailable2
+        {
+            get
+            {
+                return 1 == ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_DELAY_US_2);
             }
         }
 
@@ -471,30 +594,6 @@
             set
             {
                 ThorSharedTypes.ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_DELAY_US_3, value);
-            }
-        }
-
-        public bool PockelsDelayAvailable0
-        {
-            get
-            {
-                return 1 == ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_DELAY_US_0);
-            }
-        }
-
-        public bool PockelsDelayAvailable1
-        {
-            get
-            {
-                return 1 == ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_DELAY_US_1);
-            }
-        }
-
-        public bool PockelsDelayAvailable2
-        {
-            get
-            {
-                return 1 == ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_POCKELS_LINE_DELAY_US_2);
             }
         }
 

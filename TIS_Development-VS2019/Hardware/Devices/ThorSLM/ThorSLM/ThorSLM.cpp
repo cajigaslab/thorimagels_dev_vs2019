@@ -25,7 +25,8 @@ float* ThorSLM::_fpPointsXYZ[MAX_ARRAY_CNT] = { NULL };
 long ThorSLM::_arrayOrFileID = 0;		//0-based buffer or sequence index
 long ThorSLM::_lastArrayOrFileID = -1;	//previous 0-based buffer or sequence index
 long ThorSLM::_bufferCount = 1;			//1-based total buffer size
-long ThorSLM::_slmRuntimeCalculate = 0;	//[0]:fixed transient frames,[1]:calculate transient frames at runtime,[2]:fixed transient frames but NO NI callback.
+long ThorSLM::_slmRuntimeCalculate = 0;	//[0]:fixed transient frames,[1]:calculate transient frames at runtime.
+long ThorSLM::_slmSetArmTrigger = 1;	//[0]:run software mode for switching SLM patterns, [1]:configure NI task as arming trigger for SLM patterns
 unique_ptr<WinDVIDLL> winDVI(new WinDVIDLL(L".\\WinDVI.dll"));
 unique_ptr<HoloGenDLL> holoGen(new HoloGenDLL(L".\\HologramGenerator.dll"));
 TaskHandle ThorSLM::_taskHandleCI = NULL;
@@ -40,6 +41,7 @@ vector<MemoryStruct<float>> _p3DHoloBufVec;
 HANDLE ThorSLM::_hThread = NULL;
 HANDLE ThorSLM::_hStopThread = CreateEvent(NULL, true, false, NULL);  //2nd parameter "true" so it needs manual "Reset" after "Set (signal)" event
 HANDLE ThorSLM::_hThreadStopped = CreateEvent(NULL, true, true, NULL);
+HANDLE ThorSLM::_hThreadPause = CreateEvent(NULL, true, false, NULL);
 
 wchar_t drive[_MAX_DRIVE];
 wchar_t dir[_MAX_DIR];
@@ -55,8 +57,7 @@ ThorSLM::ThorSLM() :
 	MAX_TRANSIENT_FRAMES(20U)
 {
 	_deviceCount = 0;
-	_deviceDetected = FALSE;
-	_fileSettingsLoaded = FALSE;
+	_deviceDetected = _fileSettingsLoaded = _stopRequested = FALSE;
 	_pixelSize[0] = _pixelSize[1] = 512;	//X, Y
 	_fpPointsXYSize = new long[MAX_ARRAY_CNT];
 	_fpPointsXYZSize = new long[MAX_ARRAY_CNT];
@@ -65,11 +66,11 @@ ThorSLM::ThorSLM() :
 	SetDefault();
 	_transientFrames = DEFAULT_TRANSIENT_FRAMES;
 	_dmdMode = _loadPhaseDirectly = _slm3D = FALSE;
-	_doHologram = _inSave = false;
+	_doHologram = false;
 	_pixelPitchUM = 15.0;
-	_flatDiagRatio = 1;
-	_flatPowerRange[0] = 25;
-	_flatPowerRange[1] = 75;
+	_powerParam[0] = 1;
+	_powerParam[1] = 25;
+	_powerParam[2] = 75;
 	_selectWavelength = 0;
 	_power2Px = 0;
 	_skipFitting = FALSE;
@@ -132,7 +133,7 @@ long ThorSLM::FindDevices(long& deviceCount)
 			LogMessage(_errMsg, ERROR_EVENT);
 			return 0;
 		}
-		if (FALSE == pSetup.get()->GetSpec(_pSlmName, _dmdMode, _overDrive, _transientFrames, _pixelPitchUM, _flatDiagRatio, _flatPowerRange[0], _flatPowerRange[1], _pixelSize[0], _pixelSize[1], _lutFile, _overDrivelutFile, _wavefrontFile))
+		if (FALSE == pSetup.get()->GetSpec(_pSlmName, _dmdMode, _overDrive, _transientFrames, _pixelPitchUM, _powerParam[0], _powerParam[1], _powerParam[2], _pixelSize[0], _pixelSize[1], _lutFile, _overDrivelutFile, _wavefrontFile))
 		{
 			StringCbPrintfW(_errMsg, MSG_SIZE, L"GetSpec from ThorSLMSettings failed.");
 			LogMessage(_errMsg, ERROR_EVENT);
@@ -165,16 +166,17 @@ long ThorSLM::SelectDevice(const long device)
 			_wavelength[0] = _wavelength[1] = 0;
 			for (int i = 0; i < Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT; i++)
 			{
-				if (FALSE == pSetup.get()->GetCalibration(i + 1, _wavelength[i], _phaseMax[i], _fitCoeff[i][0], _fitCoeff[i][1], _fitCoeff[i][2], _fitCoeff[i][3], _fitCoeff[i][4], _fitCoeff[i][5], _fitCoeff[i][6], _fitCoeff[i][7]))
+				if (FALSE == pSetup.get()->GetCalibration(i + 1, _wavelength[i], _phaseMax[i], _defocusParam[i][3], _fitCoeff[i][0], _fitCoeff[i][1], _fitCoeff[i][2], _fitCoeff[i][3], _fitCoeff[i][4], _fitCoeff[i][5], _fitCoeff[i][6], _fitCoeff[i][7]))
 				{
 					StringCbPrintfW(_errMsg, MSG_SIZE, L"GetCalibration from ThorSLMSettings failed.");
 					LogMessage(_errMsg, ERROR_EVENT);
 				}
-				if (FALSE == pSetup.get()->GetCalibration3D(i + 1, _wavelength[i], _phaseMax[i], _fitCoeff3D[i], (int)HOMOGENEOUS_COEFF_CNT))
+				if (FALSE == pSetup.get()->GetCalibration3D(i + 1, _wavelength[i], _phaseMax[i], _defocusParam[i][3], _fitCoeff3D[i], (int)HOMOGENEOUS_COEFF_CNT))
 				{
 					StringCbPrintfW(_errMsg, MSG_SIZE, L"GetCalibration3D from ThorSLMSettings failed.");
 					LogMessage(_errMsg, ERROR_EVENT);
 				}
+				_defocusParam[i][0] = _defocusParam[i][3];		//update z defocus[0] value to be changed by user
 				_phaseMax[i] = max(0, min(255, _phaseMax[i]));
 				if (FALSE == pSetup.get()->GetPostTransform(i + 1, _verticalFlip[i], _rotateAngle[i], _scaleFactor[i][0], _scaleFactor[i][1], _offsetPixels[i][0], _offsetPixels[i][1]))
 				{
@@ -187,7 +189,7 @@ long ThorSLM::SelectDevice(const long device)
 				StringCbPrintfW(_errMsg, MSG_SIZE, L"GetBlank from ThorSLMSettings failed.");
 				LogMessage(_errMsg, ERROR_EVENT);
 			}
-			if (FALSE == pSetup.get()->GetSpec(_pSlmName, _dmdMode, _overDrive, _transientFrames, _pixelPitchUM, _flatDiagRatio, _flatPowerRange[0], _flatPowerRange[1], _pixelSize[0], _pixelSize[1], _lutFile, _overDrivelutFile, _wavefrontFile))
+			if (FALSE == pSetup.get()->GetSpec(_pSlmName, _dmdMode, _overDrive, _transientFrames, _pixelPitchUM, _powerParam[0], _powerParam[1], _powerParam[2], _pixelSize[0], _pixelSize[1], _lutFile, _overDrivelutFile, _wavefrontFile))
 			{
 				StringCbPrintfW(_errMsg, MSG_SIZE, L"GetSpec from ThorSLMSettings failed.");
 				LogMessage(_errMsg, ERROR_EVENT);
@@ -208,7 +210,7 @@ long ThorSLM::SelectDevice(const long device)
 			//load LUT and calibration:
 			ReadLUTFile(StringToWString(_lutFile));
 
-			if ((!_overDrive) || (0 != _pSlmName.compare("PDM512")))
+			if ((!_overDrive) || (string::npos == _pSlmName.find("PDM")))
 			{
 				ReadWavefrontFile(StringToWString(_wavefrontFile));
 			}
@@ -426,6 +428,16 @@ long ThorSLM::GetParamInfo(const long paramID, long& paramType, long& paramAvail
 		paramReadOnly = FALSE;
 	}
 	break;
+	case IDevice::PARAM_SLM_SAVE_DEFOCUS:
+	{
+		paramType = IDevice::TYPE_LONG;
+		paramAvailable = TRUE;
+		paramMin = FALSE;
+		paramMax = TRUE;
+		paramDefault = FALSE;
+		paramReadOnly = FALSE;
+	}
+	break;
 	case IDevice::PARAM_SLM_TIMEOUT:
 	{
 		paramType = IDevice::TYPE_LONG;
@@ -440,9 +452,19 @@ long ThorSLM::GetParamInfo(const long paramID, long& paramType, long& paramAvail
 	{
 		paramType = IDevice::TYPE_LONG;
 		paramAvailable = TRUE;
-		paramMin = 0;
-		paramMax = 2;
-		paramDefault = 0;
+		paramMin = FALSE;
+		paramMax = TRUE;
+		paramDefault = FALSE;
+		paramReadOnly = FALSE;
+	}
+	break;
+	case PARAM_SLM_SET_ARM_TRIGGER:
+	{
+		paramType = IDevice::TYPE_LONG;
+		paramAvailable = TRUE;
+		paramMin = FALSE;
+		paramMax = TRUE;
+		paramDefault = TRUE;
 		paramReadOnly = FALSE;
 	}
 	break;
@@ -464,6 +486,16 @@ long ThorSLM::GetParamInfo(const long paramID, long& paramType, long& paramAvail
 		paramMax = _pixelSize[0];
 		paramDefault = 0;
 		paramReadOnly = TRUE;
+	}
+	break;
+	case IDevice::PARAM_SLM_POWER_DISTRIBUTION:
+	{
+		paramType = IDevice::TYPE_BUFFER;
+		paramAvailable = TRUE;
+		paramMin = 0;
+		paramMax = 0;
+		paramDefault = 0;
+		paramReadOnly = FALSE;
 	}
 	break;
 	default:
@@ -571,18 +603,31 @@ long ThorSLM::SetParam(const long paramID, const double param)
 		if ((param >= FALSE) && (param <= TRUE) && static_cast<long> (param))
 			BlankSLM(ISLM::BLANK_ALL_SAFE);
 		break;
+	case IDevice::PARAM_SLM_SAVE_DEFOCUS:
+		if (static_cast<long> (param))
+		{
+			pSetup.get()->SetDefocus(_selectWavelength + 1, _defocusParam[_selectWavelength][0]);
+			_defocusParam[_selectWavelength][3] = _defocusParam[_selectWavelength][0];	//update saved defocus value
+		}
+		break;
 	case IDevice::PARAM_SLM_TIMEOUT:
 		_slmTimeout = (param >= SLM_TIMEOUT_MIN) ? static_cast<unsigned int>(ceil(param / SLM_TIMEOUT_MIN) * SLM_TIMEOUT_MIN) : SLM_TIMEOUT_MIN;
 		if (IsOverdrive())
 			_slmDevice->SetParam(ISLM::SLMParams::TIMEOUT, _slmTimeout);
 		break;
 	case IDevice::PARAM_SLM_RUNTIME_CALC:
-		if ((param >= 0) && (param <= 2))
+		if ((param >= FALSE) && (param <= TRUE))
 		{
 			_slmRuntimeCalculate = static_cast<long>(param);
 			if (IsOverdrive()) {
 				_slmDevice->SetParam(ISLM::SLMParams::RUNTIME_CALC, param);
 			}
+		}
+		break;
+	case IDevice::PARAM_SLM_SET_ARM_TRIGGER:
+		if ((param >= FALSE) && (param <= TRUE))
+		{
+			_slmSetArmTrigger = static_cast<long>(param);
 		}
 		break;
 	default:
@@ -678,6 +723,14 @@ long ThorSLM::SetParamBuffer(const long paramID, char* pBuffer, long size)
 		LogMessage(_errMsg, INFORMATION_EVENT);
 #endif
 		break;
+	case IDevice::PARAM_SLM_POWER_DISTRIBUTION:
+		if (size <= sizeof(_powerParam) / sizeof(_powerParam[0]))
+		{
+			SAFE_MEMCPY((void*)_powerParam, size * sizeof(double), (void*)pBuffer);
+			int attrID[3] = { 5, 6, 7 };
+			pSetup.get()->SetSpecAttributes<double>(attrID, _powerParam, 3);
+		}
+		break;
 	default:
 		ret = FALSE;
 		break;
@@ -694,20 +747,22 @@ long ThorSLM::SetParamString(const long paramID, wchar_t* str)
 		_bmpPathAndName = std::wstring(str);
 		break;
 	case IDevice::PARAM_SLM_SEQ_FILENAME:
-		if (1 != _slmRuntimeCalculate)
+		if (FALSE == _slmRuntimeCalculate)
 		{
 			StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorSLM cannot set sequence file while not in PARAM_SLM_RUNTIME_CALC mode.");
 			LogMessage(_errMsg, ERROR_EVENT);
 			return FALSE;
 		}
 
-		//load sequence file
+		//load sequence file, pause Async thread to load next pattern
+		SetEvent(ThorSLM::_hThreadPause);
+		if (IsOverdrive()) { _slmDevice->StopSLM(); }
 		_callbackMutex.lock();
 		ret = ResetSequence(str);
 		_seqPathAndName = (TRUE == ret) ? L"" : std::wstring(str);
 		if (FALSE == ret)
 		{
-			StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorSLM unable to load sequence file.");
+			StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorSLM unable to load sequence: %s", _seqPathAndName.c_str());
 			LogMessage(_errMsg, ERROR_EVENT);
 			_callbackMutex.unlock();
 			return FALSE;
@@ -724,6 +779,7 @@ long ThorSLM::SetParamString(const long paramID, wchar_t* str)
 			winDVI->DisplayBMP(_slmSeqVec.at(_arrayOrFileID));
 		}
 		_callbackMutex.unlock();
+		ResetEvent(ThorSLM::_hThreadPause);
 		break;
 	default:
 		ret = FALSE;
@@ -768,6 +824,7 @@ long ThorSLM::GetParam(const long paramID, double& param)
 	case IDevice::PARAM_SLM_RESET_AFFINE:
 	case IDevice::PARAM_SLM_BLANK:
 	case IDevice::PARAM_SLM_BLANK_SAFE:
+	case IDevice::PARAM_SLM_SAVE_DEFOCUS:
 		param = FALSE;
 		break;
 	case IDevice::PARAM_SLM_TIMEOUT:
@@ -780,6 +837,9 @@ long ThorSLM::GetParam(const long paramID, double& param)
 		break;
 	case IDevice::PARAM_SLM_RUNTIME_CALC:
 		param = _slmRuntimeCalculate;
+		break;
+	case IDevice::PARAM_SLM_SET_ARM_TRIGGER:
+		param = _slmSetArmTrigger;
 		break;
 	case IDevice::PARAM_SLM_SKIP_FITTING:
 		param = _skipFitting;
@@ -821,6 +881,10 @@ long ThorSLM::GetParamBuffer(const long paramID, char* pBuffer, long size)
 	case IDevice::PARAM_SLM_DEFOCUS:
 		SAFE_MEMCPY((void*)pBuffer, size * sizeof(double), _defocusParam[_selectWavelength]);
 		break;
+	case IDevice::PARAM_SLM_POWER_DISTRIBUTION:
+		if (size <= sizeof(_powerParam) / sizeof(_powerParam[0]))
+			SAFE_MEMCPY((void*)pBuffer, size * sizeof(double), _powerParam);
+		break;
 	default:
 		StringCbPrintfW(_errMsg, MSG_SIZE, L"Parameter (%d) not implemented", paramID);
 		LogMessage(_errMsg, ERROR_EVENT);
@@ -861,12 +925,12 @@ long ThorSLM::PreflightPosition()
 long ThorSLM::SetupPosition()
 {
 	long ret = TRUE;
+	_stopRequested = FALSE;
 	try
 	{
 		switch (_slmFuncMode)
 		{
 		case SLMFunctionMode::LOAD_PHASE_ONLY:
-			_inSave = false;
 			_doHologram = (FALSE == _loadPhaseDirectly && FALSE == _dmdMode && FALSE == _slm3D);
 			ret = LoadHologram();
 			break;
@@ -928,12 +992,12 @@ long ThorSLM::SetupPosition()
 				_bufferCount = 1;
 				_doHologram = true;
 				ret = LoadHologram();
+				SaveHologram(false);
 			}
 			break;
 		case SLMFunctionMode::SAVE_PHASE:
-			_inSave = true;
 			_doHologram = (TRUE == _loadPhaseDirectly && FALSE == _dmdMode) || (TRUE == _slm3D);
-			ret = (TRUE == _slm3D) ? Save3DHologram() : SaveHologram(FALSE == _loadPhaseDirectly);
+			ret = (TRUE == _slm3D) ? Save3DHologram() : SaveHologram(true);
 			break;
 		default:
 			StringCbPrintfW(_errMsg, MSG_SIZE, L"SetupSLM Failed: Invalid SLM Function Mode");
@@ -967,10 +1031,6 @@ long ThorSLM::StartPosition()
 
 			if (IsOverdrive())
 			{
-				if (1 < _bufferCount)
-				{
-					SetupHWTriggerIn();
-				}
 				_slmDevice->StartSLM();
 			}
 			else
@@ -978,11 +1038,11 @@ long ThorSLM::StartPosition()
 				_callbackMutex.lock();
 				winDVI->DisplayBMP(_slmSeqVec.at(_arrayOrFileID));
 				_callbackMutex.unlock();
-				SetupHWTriggerIn();
 			}
+			(1 < _bufferCount && TRUE == _slmSetArmTrigger) ? SetupHWTriggerIn() : CreateSLMAsync();
 			break;
 		case SLMFunctionMode::PHASE_CALIBRATION:
-			if ((_overDrive) && (0 == _pSlmName.compare("PDM512")))
+			if ((_overDrive) && (string::npos != _pSlmName.find("PDM")))
 			{
 				//already wrote, do nothing
 			}
@@ -1013,13 +1073,12 @@ long ThorSLM::StatusPosition(long& status)
 	{
 	case SLMFunctionMode::LOAD_PHASE_ONLY:
 	case SLMFunctionMode::PHASE_CALIBRATION:
-		if (IsOverdrive())
+		holoGen->GetStatus(status);
+		if ((_overDrive) && (string::npos != _pSlmName.find("PDM")))
 		{
-			//already wrote or transient buf prepared:
-			status = StatusType::STATUS_READY;
-			return TRUE;
+			//do nothing ...
 		}
-		else
+		else if (StatusType::STATUS_BUSY != status)
 		{
 			return winDVI->GetStatus(status);
 		}
@@ -1065,8 +1124,8 @@ long ThorSLM::PostflightPosition()
 		}
 		break;
 	case SLMFunctionMode::PHASE_CALIBRATION:
-		_doHologram = true;
-		SaveHologram(false);
+		_stopRequested = TRUE;
+		StopHoloGen();
 		return TRUE;
 	}
 	return ret;
@@ -1114,14 +1173,38 @@ ERROR_STATE:
 
 int32 ThorSLM::SLMAsync(void* data)
 {
-	while ((WAIT_OBJECT_0 != WaitForSingleObject(ThorSLM::_hStopThread, 0)))
+	while (WAIT_OBJECT_0 != WaitForSingleObject(ThorSLM::_hStopThread, 0))
 	{
-		HWTriggerCallback(NULL, 0, NULL);
+		if (WAIT_OBJECT_0 == WaitForSingleObject(ThorSLM::_hThreadPause, 0)) {
+			continue;
+		}
+		else
+			HWTriggerCallback(NULL, 0, NULL);
 	}
-	SetEvent(_hThreadStopped);
+	SetEvent(ThorSLM::_hThreadStopped);
 	return 0;
 }
 
+/// <summary>
+/// fast software mode, will hold and wait at created thread.
+/// </summary>
+/// <param name=""></param>
+/// <returns></returns>
+long ThorSLM::CreateSLMAsync(void)
+{
+	long ret = TRUE;
+	DWORD threadID;
+
+	CloseSLMAsync();
+	ResetEvent(_hStopThread);
+	ResetEvent(_hThreadStopped);
+	_hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) & (ThorSLM::SLMAsync), NULL, HIGH_PRIORITY_CLASS, &threadID);
+	if (NULL == _hThread)
+		ret = FALSE;
+	else
+		SetThreadPriority(_hThread, THREAD_PRIORITY_HIGHEST);
+	return ret;
+}
 void ThorSLM::CloseSLMAsync(void)
 {
 	if (IsOverdrive()) { _slmDevice->StopSLM(); }
@@ -1129,6 +1212,7 @@ void ThorSLM::CloseSLMAsync(void)
 	if (_hThread)
 	{
 		SetEvent(_hStopThread);
+		SetEvent(_hThreadPause);
 		if (WAIT_OBJECT_0 != WaitForSingleObject(_hThreadStopped, INFINITE))
 		{
 			StringCbPrintfW(_errMsg, _MAX_PATH, L"Close SLMThread Failed.");
@@ -1144,10 +1228,10 @@ BOOL ThorSLM::IsOverdrive()
 	if (NULL == _slmDevice)
 		return FALSE;
 
-	return ((_overDrive) && (0 == _pSlmName.compare("PDM512")) && (TRUE == _slmDevice->GetParam(ISLM::SLMParams::IS_AVAILABLE, dVal)) && TRUE == (int)dVal) ? TRUE : FALSE;
+	return ((_overDrive) && (TRUE == _slmDevice->GetParam(ISLM::SLMParams::IS_AVAILABLE, dVal)) && TRUE == (int)dVal) ? TRUE : FALSE;
 }
 
-void ThorSLM::BlankSLM(ISLM::SLMBlank bmode)
+void ThorSLM::BlankSLM(int bmode)
 {
 	const double BLANK_SAFE_UM = 500.0;
 	unsigned char* pImg = NULL;
@@ -1166,10 +1250,15 @@ void ThorSLM::BlankSLM(ISLM::SLMBlank bmode)
 	size_t shiftRGB = _dualPatternShiftPx * RGB_CNT;	//[+] extend left region to right, [-] extend right region to left
 	size_t widthRGB = 0;
 
+	::EnterCriticalSection(&_accessCritSection);
+
+	//stop hologram generation before blank
+	StopHoloGen();
+
+	//allow blank with crop hologram
+	_stopRequested = FALSE;
 	if (ISLM::BLANK_ALL == (ISLM::SLMBlank)bmode || ISLM::BLANK_ALL_SAFE == (ISLM::SLMBlank)bmode)
 	{
-		::EnterCriticalSection(&_accessCritSection);
-
 		//blank need to consider defocus calibration,
 		//need rework in partial blanking mode
 		_power2Px = static_cast<long>(max(max(pow(2, ceil(log2(_pixelSize[0]))), pow(2, ceil(log2(_pixelSize[1])))), _power2Px));
@@ -1184,13 +1273,11 @@ void ThorSLM::BlankSLM(ISLM::SLMBlank bmode)
 
 		CopyDefocus(0, 1);
 
-		DefocusNormalizeHologram((ISLM::BLANK_ALL_SAFE == (ISLM::SLMBlank)bmode) ? BLANK_SAFE_UM : _defocusParam[_selectWavelength][3]);
+		DefocusNormalizeHologram((ISLM::BLANK_ALL_SAFE == (ISLM::SLMBlank)bmode) ? BLANK_SAFE_UM : 0);
 
 		pImg = CropHologramBMP(NULL, _lastHoloBuf[0].GetMem(), bmi);
 		ReadAndScaleBitmap(pImg, bmi);
 		if (!IsOverdrive()) { winDVI->DisplayBMP(_arrayOrFileID); }
-
-		::LeaveCriticalSection(&_accessCritSection);
 	}
 	else
 	{
@@ -1236,6 +1323,7 @@ void ThorSLM::BlankSLM(ISLM::SLMBlank bmode)
 		}
 		_callbackMutex.unlock();
 	}
+	::LeaveCriticalSection(&_accessCritSection);
 }
 
 void ThorSLM::CloseNITasks()
@@ -1320,14 +1408,13 @@ void ThorSLM::CopyDefocus(int from, int to)
 //Apply defocus on 2D hologram, savedZ(TRUE) to use calibrated z offset value
 long ThorSLM::DefocusNormalizeHologram(double defocusZum)
 {
-	if (0 != defocusZum)
-	{
-		double kz = 2 * PI * defocusZum * (double)Constants::UM_TO_MM / _wavelength[_selectWavelength];
-		double NAeff = _power2Px * _pixelPitchUM / (2 * _defocusParam[_selectWavelength][2] * (double)Constants::UM_TO_MM);
-		holoGen->SetDefocus(_defocusParam[_selectWavelength][1], NAeff, _power2Px);
-		//expect buffer in unit [rad] to apply defocus
-		holoGen->DefocusHologram(_lastHoloBuf[0].GetMem(), kz);
-	}
+	if (_stopRequested) { return FALSE; }
+
+	double kz = 2 * PI * defocusZum * (double)Constants::UM_TO_MM / _wavelength[_selectWavelength];
+	double NAeff = _power2Px * _pixelPitchUM / (2 * _defocusParam[_selectWavelength][2] * (double)Constants::UM_TO_MM);
+	holoGen->SetDefocus(_defocusParam[_selectWavelength][1], NAeff, _power2Px);
+	//expect buffer in unit [rad] to apply defocus
+	holoGen->DefocusHologram(_lastHoloBuf[0].GetMem(), kz);
 	//map rad to pixel value
 	return holoGen->NormalizePhase(_lastHoloBuf[0].GetMem());
 }
@@ -1523,7 +1610,7 @@ BOOL ThorSLM::ReadAndScaleBitmap(unsigned char* imgRead, BITMAPINFO& bmi)
 		return FALSE;
 	}
 
-	if (0 == _pSlmName.compare("PDM512"))
+	if (string::npos != _pSlmName.find("PDM"))
 	{
 		//Meadowlark: (R: Volt, G: Hologram, B: 0)
 		int PixVal;
@@ -1645,25 +1732,51 @@ long ThorSLM::SaveHologram(bool saveInSubFolder)
 		::LeaveCriticalSection(&_accessCritSection);
 		return FALSE;
 	}
-	//save grayscale phase mask:
+	if (_stopRequested)
+	{
+		SAFE_DELETE_ARRAY(imgRead);
+		::LeaveCriticalSection(&_accessCritSection);
+		return FALSE;
+	}
+	//save pattern or phase mask
 	_wsplitpath_s(_bmpPathAndName.c_str(), drive, _MAX_DRIVE, dir, _MAX_DIR, fname, _MAX_FNAME, ext, _MAX_EXT);
-	//if (wcsstr(dir, L"SLMWaveforms"))	//only create sub-folder under "SLMWaveforms"
-	//{
-	//	StringCbPrintfW(rawPath, _MAX_PATH, L"%s%s%s", drive, dir, L"PhaseMask\\");
-	//	CreateDirectory(rawPath, NULL);
-	//}
-	//if (saveInSubFolder)
-	//{
-	//	StringCbPrintfW(rawPath, _MAX_PATH, L"%s%s%s%s%s", drive, dir, L"PhaseMask\\", fname, ext);
-	//}
-	//else
-	//{
 	StringCbPrintfW(rawPath, _MAX_PATH, L"%s%s%s%s", drive, dir, fname, ext);
-	//}
-
 	unsigned char* imgBGR = ConvertRGBToBGRBuffer(imgRead, bmi.bmiHeader, &size);
 	SaveBMP(imgBGR, bmi.bmiHeader.biWidth, bmi.bmiHeader.biHeight, size, rawPath);
 
+	//save a backup
+	if (saveInSubFolder)
+	{
+		if (wcsstr(dir, L"SLMWaveforms"))	//only create sub-folder under "SLMWaveforms"
+		{
+			StringCbPrintfW(rawPath, _MAX_PATH, L"%s%s%s", drive, dir, PHASEMASK_DIRNAME);
+			CreateDirectory(rawPath, NULL);
+		}
+		bool bdoHologram = _doHologram;
+		StringCbPrintfW(rawPath, _MAX_PATH, L"%s%s%s%s%s", drive, dir, PHASEMASK_DIRNAME, fname, ext);
+		if (_loadPhaseDirectly)
+		{
+			//back up phase mask if already phase
+			wstring sourcePath = wstring(drive) + wstring(dir) + wstring(fname) + wstring(ext);
+			CopyFile(sourcePath.c_str(), rawPath, FALSE);
+		}
+		else
+		{
+			//generate and save phase mask if not phase yet
+			SAFE_DELETE_ARRAY(imgRead);
+			SAFE_DELETE_ARRAY(imgBGR);
+			_doHologram = true;
+			imgRead = GetAndProcessBMP(bmi);
+			if (NULL != imgRead && !_stopRequested)
+			{
+				imgBGR = ConvertRGBToBGRBuffer(imgRead, bmi.bmiHeader, &size);
+				SaveBMP(imgBGR, bmi.bmiHeader.biWidth, bmi.bmiHeader.biHeight, size, rawPath);
+			}
+		}
+		_doHologram = bdoHologram;
+	}
+
+	//clean before return
 	SAFE_DELETE_ARRAY(imgRead);
 	SAFE_DELETE_ARRAY(imgBGR);
 	::LeaveCriticalSection(&_accessCritSection);
@@ -1682,7 +1795,7 @@ long ThorSLM::Save3DHologram(bool doSearch, bool reset)
 	wstring baseName = fname;
 
 	//determine z displacement [UM] including default defocus
-	float kz = static_cast<float>(2 * PI * ((-1) * ParseZUM(baseName) + _defocusParam[_selectWavelength][3]) * (double)Constants::UM_TO_MM / _wavelength[_selectWavelength]);
+	float kz = static_cast<float>(2 * PI * (ParseZUM(baseName) + _defocusParam[_selectWavelength][3]) * (double)Constants::UM_TO_MM / _wavelength[_selectWavelength]);
 
 	//find file name base
 	size_t found = baseName.find_last_of(L"_");
@@ -1715,7 +1828,7 @@ long ThorSLM::Save3DHologram(bool doSearch, bool reset)
 				if (wstring::npos != foundName.find(baseName))
 				{
 					zfileNames.push_back(wstring(drive) + wstring(dir) + foundName);
-					kzValues.push_back(static_cast<float>(2 * PI * ((-1) * ParseZUM(foundName) + _defocusParam[_selectWavelength][3]) * (double)Constants::UM_TO_MM / _wavelength[_selectWavelength]));
+					kzValues.push_back(static_cast<float>(2 * PI * (ParseZUM(foundName) + _defocusParam[_selectWavelength][3]) * (double)Constants::UM_TO_MM / _wavelength[_selectWavelength]));
 				}
 			}
 		} while (FindNextFile(hFind, &ffd) != 0);
@@ -1791,6 +1904,7 @@ long ThorSLM::Save3DHologram(bool doSearch, bool reset)
 		double NAeff = _power2Px * _pixelPitchUM / (2 * _defocusParam[_selectWavelength][2] * (double)Constants::UM_TO_MM);
 		holoGen->SetCoeffs(GeoFittingAlg::HOMOGENEOUS, _fitCoeff3D[_selectWavelength]);
 		holoGen->SetDefocus(_defocusParam[_selectWavelength][1], NAeff, _power2Px);
+		holoGen->SetPowerWeight(static_cast<int>(ceil(max(sqrt(pow(_pixelX, 2) + pow(_pixelY, 2)) / 2 * max(0.0, _powerParam[0]), 0))), _powerParam[1], _powerParam[2]);
 		holoGen->Generate3DHologram(_p3DHoloBufVec.data(), static_cast<int>(_p3DHoloBufVec.size()));
 		holoGen->NormalizePhase(_p3DHoloBufVec[_p3DHoloBufVec.size() - 1].GetMem());
 
@@ -1804,6 +1918,9 @@ long ThorSLM::Save3DHologram(bool doSearch, bool reset)
 			_p3DHoloBufVec[_p3DHoloBufVec.size() - 1].SetInfo(bmi);
 			unsigned char* imgBGR = ConvertRGBToBGRBuffer(imgRead, _p3DHoloBufVec[_p3DHoloBufVec.size() - 1].GetInfo().bmiHeader, &size);
 			SaveBMP(imgBGR, _p3DHoloBufVec[_p3DHoloBufVec.size() - 1].GetInfo().bmiHeader.biWidth, _p3DHoloBufVec[_p3DHoloBufVec.size() - 1].GetInfo().bmiHeader.biHeight, size, searchPath.c_str());
+			//back up phase
+			wstring backupPath = wstring(drive) + wstring(parent).substr(0, wstring(parent).find_last_of(L"/\\") + 1) + PHASEMASK_DIRNAME + baseName + L".bmp";
+			CopyFile(searchPath.c_str(), backupPath.c_str(), FALSE);
 
 			SAFE_DELETE_ARRAY(imgRead);
 			SAFE_DELETE_ARRAY(imgBGR);
@@ -1950,7 +2067,7 @@ unsigned char* ThorSLM::MapCalibrateHologram(const wchar_t* pathAndFilename, Mem
 	unsigned char* imgRGB = ConvertBGRToRGBBuffer(imgRead, pbuf->GetInfo().bmiHeader, &newSize);
 
 	//return if no need to apply hologram & transform, [LoadPhaseDirect or DMD]
-	if (!_doHologram)
+	if (!_doHologram || _stopRequested)
 	{
 		SAFE_DELETE_ARRAY(imgRead);
 		return imgRGB;
@@ -1998,6 +2115,8 @@ unsigned char* ThorSLM::MapCalibrateHologram(const wchar_t* pathAndFilename, Mem
 	}
 	SAFE_DELETE_ARRAY(imgRGB);
 
+	if (_stopRequested) { return imgRead; }
+
 	//pre-offset, flip, scale or rotate before affine:
 	if ((0 != _offsetPixels[_selectWavelength][0]) || (0 != _offsetPixels[_selectWavelength][1]))
 	{
@@ -2020,6 +2139,17 @@ unsigned char* ThorSLM::MapCalibrateHologram(const wchar_t* pathAndFilename, Mem
 	if (!_slm3D)
 		holoGen->FittingTransform(pbuf->GetMem());
 
+	if (_stopRequested) { return imgRead; }
+
+	//copy to output buffer:
+	float* pSrc1 = pbuf->GetMem();
+	unsigned char* pDst1 = imgRead;
+	for (int i = 0; i < pbuf->GetInfo().bmiHeader.biWidth * pbuf->GetInfo().bmiHeader.biHeight; i++)
+	{
+		*pDst1 = static_cast<unsigned char>(*pSrc1);
+		pDst1++;
+		pSrc1++;
+	}
 	return imgRead;
 }
 
@@ -2030,6 +2160,8 @@ unsigned char* ThorSLM::CropHologramBMP(unsigned char* pMem, float* pS, BITMAPIN
 
 	if (NULL == pMem)
 		pMem = new BYTE[(size_t)bmi.bmiHeader.biWidth * bmi.bmiHeader.biHeight * channelCount];
+
+	if (_stopRequested) { return pMem; }
 
 	//copy back from buffer, expect unit already in pixel byte[0-255]
 	//consider phase scaling per wavelength and scale for LUT if necessary:
@@ -2113,19 +2245,16 @@ unsigned char* ThorSLM::GetAndProcessBMP(BITMAPINFO& bmi)
 		return NULL;
 
 	//return if no need to apply hologram & transform, [LoadPhaseDirect or DMD]
-	//but need to apply defocus on 2D phase
 	bmi = _lastHoloBuf[0].GetInfo();
-	if (!_doHologram)
-	{
-		if (_slm3D || _inSave) return imgRead;
-	}
-	else
-	{
-		holoGen->GenerateHologram(_lastHoloBuf[0].GetMem(), ITERATIONS_2D, static_cast<int>(ceil(max(sqrt(pow(_pixelX, 2) + pow(_pixelY, 2)) / 2 * max(0.0, min(1.0, _flatDiagRatio)), 0))), _flatPowerRange[0], _flatPowerRange[1], 0);	//183 for default 512x512, image dimension (_pixelX,_pixelY)
-	}
+	if (!_doHologram || _stopRequested)
+		return imgRead;
+
+	holoGen->SetPowerWeight(static_cast<int>(ceil(max(sqrt(pow(_pixelX, 2) + pow(_pixelY, 2)) / 2 * max(0.0, _powerParam[0]), 0))), _powerParam[1], _powerParam[2]);	//183 for default 512x512, image dimension (_pixelX,_pixelY)
+	holoGen->GenerateHologram(_lastHoloBuf[0].GetMem(), ITERATIONS_2D, 0);
+
 	//keep [1]:on focus, [0]: to be defocused
 	CopyDefocus(0, 1);
-	//defocus should not apply to DMD, no effect as long as the defocus param stays 0
+
 	DefocusNormalizeHologram(_defocusParam[_selectWavelength][3]);
 
 	return CropHologramBMP(imgRead, _lastHoloBuf[0].GetMem(), bmi);
@@ -2203,43 +2332,42 @@ long ThorSLM::ResetSequence(wchar_t* filename)
 	return ret;
 }
 
+/// <summary>
+/// Use NI task to create arming triggers for SLM patterns.
+/// </summary>
+/// <returns></returns>
 long ThorSLM::SetupHWTriggerIn()
 {
 	int32 retVal = 0, error = 0;
-	DWORD threadID;
-	if (2 == _slmRuntimeCalculate)	//Not setting up HW arm trigger but switching patterns directly in async thread
+	try
 	{
-		CloseSLMAsync();
+		if ((0 < _counterLine.size()) && (string::npos != _counterLine.find("ctr")) && (0 < _hwTriggerInput.size()))
+		{
+			TerminateTask(_taskHandleCI);
 
-		ResetEvent(_hStopThread);
-		ResetEvent(_hThreadStopped);
-		_hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) & (ThorSLM::SLMAsync), NULL, HIGH_PRIORITY_CLASS, &threadID);
-		if (NULL == _hThread)
-			return -1;
-
-		SetThreadPriority(_hThread, THREAD_PRIORITY_HIGHEST);
+			DAQmxErrChk(L"DAQmxCreateTask", retVal = DAQmxCreateTask("", &_taskHandleCI));
+			DAQmxErrChk(L"DAQmxCreateCICountEdgesChan", retVal = DAQmxCreateCICountEdgesChan(_taskHandleCI, _counterLine.c_str(), "", DAQmx_Val_Rising, 0, DAQmx_Val_CountUp));
+			DAQmxErrChk(L"DAQmxSetCICountEdgesTerm", retVal = DAQmxSetCICountEdgesTerm(_taskHandleCI, _counterLine.c_str(), _hwTriggerInput.c_str()));
+			DAQmxErrChk(L"DAQmxCfgSampClkTiming", retVal = DAQmxCfgSampClkTiming(_taskHandleCI, _hwTriggerInput.c_str(), 1000, DAQmx_Val_Rising, DAQmx_Val_HWTimedSinglePoint, 0));
+			DAQmxErrChk(L"DAQmxRegisterSignalEvent", retVal = DAQmxRegisterSignalEvent(_taskHandleCI, DAQmx_Val_SampleClock, 0, ThorSLM::HWTriggerCallback, NULL));
+			DAQmxErrChk(L"DAQmxStartTask", retVal = DAQmxStartTask(_taskHandleCI));
+		}
 	}
-	else	//setting up HW arm trigger
+	catch (...)
 	{
-		try
-		{
-			if ((0 < _counterLine.size()) && (string::npos != _counterLine.find("ctr")) && (0 < _hwTriggerInput.size()))
-			{
-				TerminateTask(_taskHandleCI);
-
-				DAQmxErrChk(L"DAQmxCreateTask", retVal = DAQmxCreateTask("", &_taskHandleCI));
-				DAQmxErrChk(L"DAQmxCreateCICountEdgesChan", retVal = DAQmxCreateCICountEdgesChan(_taskHandleCI, _counterLine.c_str(), "", DAQmx_Val_Rising, 0, DAQmx_Val_CountUp));
-				DAQmxErrChk(L"DAQmxSetCICountEdgesTerm", retVal = DAQmxSetCICountEdgesTerm(_taskHandleCI, _counterLine.c_str(), _hwTriggerInput.c_str()));
-				DAQmxErrChk(L"DAQmxCfgSampClkTiming", retVal = DAQmxCfgSampClkTiming(_taskHandleCI, _hwTriggerInput.c_str(), 1000, DAQmx_Val_Rising, DAQmx_Val_HWTimedSinglePoint, 0));
-				DAQmxErrChk(L"DAQmxRegisterSignalEvent", retVal = DAQmxRegisterSignalEvent(_taskHandleCI, DAQmx_Val_SampleClock, 0, ThorSLM::HWTriggerCallback, NULL));
-				DAQmxErrChk(L"DAQmxStartTask", retVal = DAQmxStartTask(_taskHandleCI));
-			}
-		}
-		catch (...)
-		{
-			StringCbPrintfW(_errMsg, _MAX_PATH, L"ThorSLM SetupHWTriggerIn failed, error: (%d)", retVal);
-			LogMessage(_errMsg, ERROR_EVENT);
-		}
+		StringCbPrintfW(_errMsg, _MAX_PATH, L"ThorSLM SetupHWTriggerIn failed, error: (%d)", retVal);
+		LogMessage(_errMsg, ERROR_EVENT);
 	}
 	return retVal;
+}
+
+long ThorSLM::StopHoloGen()
+{
+	holoGen->StopGeneration();
+	long status = StatusType::STATUS_BUSY;
+	while (holoGen->GetStatus(status) && StatusType::STATUS_BUSY == status)
+	{
+		Sleep(Constants::REARM_TIME_MS);
+	}
+	return TRUE;
 }

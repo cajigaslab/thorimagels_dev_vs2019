@@ -389,7 +389,7 @@ enum TL_CAMERA_USB_PORT_TYPE
 
 /// @cond HIDDEN_VARIABLES  // NOLINT(clang-diagnostic-documentation-unknown-command)
 // ReSharper disable once CppInconsistentNaming
-typedef int (*_INTERNAL_COMMAND)(void* tl_camera_handle, char* data, size_t command_size_bytes_including_any_null_terminator, char* response, size_t response_size);  // NOLINT(bugprone-reserved-identifier)
+typedef int (*_INTERNAL_COMMAND)(void *tl_camera_handle, char *data, size_t command_size_bytes_including_any_null_terminator, char *response, size_t response_size);  // NOLINT(bugprone-reserved-identifier)
 
 /// @endcond
 
@@ -421,7 +421,7 @@ typedef int (*_INTERNAL_COMMAND)(void* tl_camera_handle, char* data, size_t comm
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_ARM)(void* tl_camera_handle, int number_of_frames_to_buffer);
+typedef int (*TL_CAMERA_ARM)(void *tl_camera_handle, int number_of_frames_to_buffer);
 
 /// <summary>
 /// Terminates the host application's connection to the specified camera.\n\n
@@ -436,7 +436,7 @@ typedef int (*TL_CAMERA_ARM)(void* tl_camera_handle, int number_of_frames_to_buf
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_CLOSE_CAMERA)(void* tl_camera_handle);
+typedef int (*TL_CAMERA_CLOSE_CAMERA)(void *tl_camera_handle);
 
 /// <summary>
 /// Releases any platform resources that were used by the SDK and generally cleans up SDK state.\n\n
@@ -454,7 +454,7 @@ typedef int (*TL_CAMERA_CLOSE_SDK)(void);
 /// <param name="cameraSerialNumber">The serial number of the connected device.</param>
 /// <param name="usb_port_type">The USB port type that the device was connected to.</param>
 /// <param name="context">A pointer to a user specified context.  This parameter is ignored by the SDK.</param>
-typedef void (*TL_CAMERA_CONNECT_CALLBACK)(char* cameraSerialNumber, enum TL_CAMERA_USB_PORT_TYPE usb_port_type, void* context);
+typedef void (*TL_CAMERA_CONNECT_CALLBACK)(char *cameraSerialNumber, enum TL_CAMERA_USB_PORT_TYPE usb_port_type, void *context);
 
 /// <summary>
 ///     Converts the decibel value received from tl_camera_convert_gain_to_decibels back into a gain index value.
@@ -467,7 +467,7 @@ typedef void (*TL_CAMERA_CONNECT_CALLBACK)(char* cameraSerialNumber, enum TL_CAM
 ///     0 if successful or a positive integer error code to indicate failure. In case of error, call
 ///     tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_CONVERT_DECIBELS_TO_GAIN)(void* tl_camera_handle, double gain_dB, int* index_of_gain_value);
+typedef int (*TL_CAMERA_CONVERT_DECIBELS_TO_GAIN)(void *tl_camera_handle, double gain_dB, int *index_of_gain_value);
 
 /// <summary>
 ///     The gain value is set in the camera with tl_camera_set_gain. It is retrieved from the camera with tl_camera_get_gain.
@@ -482,7 +482,7 @@ typedef int (*TL_CAMERA_CONVERT_DECIBELS_TO_GAIN)(void* tl_camera_handle, double
 ///     0 if successful or a positive integer error code to indicate failure. In case of error, call
 ///     tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_CONVERT_GAIN_TO_DECIBELS)(void* tl_camera_handle, int index_of_gain_value, double* gain_dB);
+typedef int (*TL_CAMERA_CONVERT_GAIN_TO_DECIBELS)(void *tl_camera_handle, int index_of_gain_value, double *gain_dB);
 
 /// <summary>
 /// When finished issuing software or hardware triggers, call
@@ -497,7 +497,7 @@ typedef int (*TL_CAMERA_CONVERT_GAIN_TO_DECIBELS)(void* tl_camera_handle, int in
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_DISARM)(void* tl_camera_handle);
+typedef int (*TL_CAMERA_DISARM)(void *tl_camera_handle);
 
 /// <summary>
 /// Enables the user application to register for notifications of device disconnect events.\n\n
@@ -505,7 +505,7 @@ typedef int (*TL_CAMERA_DISARM)(void* tl_camera_handle);
 /// </summary>
 /// <param name="cameraSerialNumber">The serial number of the disconnected device.</param>
 /// <param name="context">A pointer to a user specified context.  This parameter is ignored by the SDK.</param>
-typedef void (*TL_CAMERA_DISCONNECT_CALLBACK)(char* cameraSerialNumber, void* context);
+typedef void (*TL_CAMERA_DISCONNECT_CALLBACK)(char *cameraSerialNumber, void *context);
 
 /// <summary>
 /// Returns a space character delimited list of detected camera serial numbers.\n\n
@@ -514,7 +514,7 @@ typedef void (*TL_CAMERA_DISCONNECT_CALLBACK)(char* cameraSerialNumber, void* co
 /// <param name="serial_numbers">A pointer to a character string to receive the serial number list.</param>
 /// <param name="str_length">The size in bytes of the character buffer specified in the serial_numbers parameter.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_DISCOVER_AVAILABLE_CAMERAS)(char* serial_numbers, int str_length);
+typedef int (*TL_CAMERA_DISCOVER_AVAILABLE_CAMERAS)(char *serial_numbers, int str_length);
 
 /// <summary>
 /// <para>Register a callback function for notifications of frame (image) availability.</para>
@@ -541,7 +541,7 @@ typedef int (*TL_CAMERA_DISCOVER_AVAILABLE_CAMERAS)(char* serial_numbers, int st
 /// <param name="metadata_size_in_bytes">The size (in bytes) of the image metadata buffer. If the metadata section was not found, this will be 0.</param>
 /// <param name="context">A pointer to a user specified context.  This parameter is ignored by the SDK.</param>
 /// For more information on the image metadata format, click here: \ref IMAGE_METADATA_DOCUMENTATION
-typedef void (*TL_CAMERA_FRAME_AVAILABLE_CALLBACK)(void* tl_camera_handle_sender, unsigned short* image_buffer, int frame_count, unsigned char* metadata, int metadata_size_in_bytes, void* context);
+typedef void (*TL_CAMERA_FRAME_AVAILABLE_CALLBACK)(void *tl_camera_handle_sender, unsigned short *image_buffer, int frame_count, unsigned char *metadata, int metadata_size_in_bytes, void *context);
 
 /// <summary>
 ///     Binning sums adjacent sensor pixels into "super pixels". It trades
@@ -557,7 +557,7 @@ typedef void (*TL_CAMERA_FRAME_AVAILABLE_CALLBACK)(void* tl_camera_handle_sender
 /// <param name="tl_camera_handle">The camera handle associated with the horizontal binning request.</param>
 /// <param name="binx">A reference to receive the current horizontal binning value.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_BINX)(void* tl_camera_handle, int* binx);
+typedef int (*TL_CAMERA_GET_BINX)(void *tl_camera_handle, int *binx);
 
 /// <summary>
 ///     Binning sums adjacent sensor pixels into "super pixels". It trades
@@ -574,7 +574,7 @@ typedef int (*TL_CAMERA_GET_BINX)(void* tl_camera_handle, int* binx);
 /// <param name="hbin_min">A reference to receive the minimum acceptable value for horizontal binning.</param>
 /// <param name="hbin_max">A reference to receive the maximum acceptable value for horizontal binning.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_BINX_RANGE)(void* tl_camera_handle, int* hbin_min, int* hbin_max);
+typedef int (*TL_CAMERA_GET_BINX_RANGE)(void *tl_camera_handle, int *hbin_min, int *hbin_max);
 
 /// <summary>
 ///     Binning sums adjacent sensor pixels into "super pixels". It trades
@@ -593,7 +593,7 @@ typedef int (*TL_CAMERA_GET_BINX_RANGE)(void* tl_camera_handle, int* hbin_min, i
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_GET_BINY)(void* tl_camera_handle, int* biny);
+typedef int (*TL_CAMERA_GET_BINY)(void *tl_camera_handle, int *biny);
 
 /// <summary>
 ///     Binning sums adjacent sensor pixels into "super pixels". It trades
@@ -613,7 +613,7 @@ typedef int (*TL_CAMERA_GET_BINY)(void* tl_camera_handle, int* biny);
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_GET_BINY_RANGE)(void* tl_camera_handle, int* vbin_min, int* vbin_max);
+typedef int (*TL_CAMERA_GET_BINY_RANGE)(void *tl_camera_handle, int *vbin_min, int *vbin_max);
 
 /// <summary>
 /// The number of bits to which a pixel value is digitized on a camera.\n\n
@@ -626,7 +626,7 @@ typedef int (*TL_CAMERA_GET_BINY_RANGE)(void* tl_camera_handle, int* vbin_min, i
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_GET_BIT_DEPTH)(void* tl_camera_handle, int* pixel_bit_depth);
+typedef int (*TL_CAMERA_GET_BIT_DEPTH)(void *tl_camera_handle, int *pixel_bit_depth);
 
 /// <summary>
 /// Gets the current black level value for the specified camera.
@@ -637,7 +637,7 @@ typedef int (*TL_CAMERA_GET_BIT_DEPTH)(void* tl_camera_handle, int* pixel_bit_de
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_GET_BLACK_LEVEL)(void* tl_camera_handle, int* black_level);
+typedef int (*TL_CAMERA_GET_BLACK_LEVEL)(void *tl_camera_handle, int *black_level);
 
 /// <summary>
 /// Gets the black level maximum value for the specified camera.
@@ -650,27 +650,27 @@ typedef int (*TL_CAMERA_GET_BLACK_LEVEL)(void* tl_camera_handle, int* black_leve
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_GET_BLACK_LEVEL_RANGE)(void* tl_camera_handle, int* min, int* max);
+typedef int (*TL_CAMERA_GET_BLACK_LEVEL_RANGE)(void *tl_camera_handle, int *min, int *max);
 
 /// <summary>
 /// Gets the output color space of the camera.
 /// </summary>
-typedef int (*TL_CAMERA_GET_CAMERA_COLOR_CORRECTION_MATRIX_OUTPUT_COLOR_SPACE)(void* tl_camera_handle, char* output_color_space);
+typedef int (*TL_CAMERA_GET_CAMERA_COLOR_CORRECTION_MATRIX_OUTPUT_COLOR_SPACE)(void *tl_camera_handle, char *output_color_space);
 
 /// <summary>
 /// Gets the camera sensor type.
 /// </summary>
-typedef int (*TL_CAMERA_GET_CAMERA_SENSOR_TYPE)(void* tl_camera_handle, enum TL_CAMERA_SENSOR_TYPE* camera_sensor_type);
+typedef int (*TL_CAMERA_GET_CAMERA_SENSOR_TYPE)(void *tl_camera_handle, enum TL_CAMERA_SENSOR_TYPE *camera_sensor_type);
 
 /// <summary>
 /// Gets the default color correction matrix of the camera.
 /// </summary>
-typedef int (*TL_CAMERA_GET_COLOR_CORRECTION_MATRIX)(void* tl_camera_handle, float* matrix);
+typedef int (*TL_CAMERA_GET_COLOR_CORRECTION_MATRIX)(void *tl_camera_handle, float *matrix);
 
 /// <summary>
 /// Gets the the color filter array of the camera.
 /// </summary>
-typedef int (*TL_CAMERA_GET_COLOR_FILTER_ARRAY_PHASE)(void* tl_camera_handle, enum TL_COLOR_FILTER_ARRAY_PHASE* cfaPhase);
+typedef int (*TL_CAMERA_GET_COLOR_FILTER_ARRAY_PHASE)(void *tl_camera_handle, enum TL_COLOR_FILTER_ARRAY_PHASE *cfaPhase);
 
 /// <summary>
 /// Determine if active-cooling mode is enabled.
@@ -681,7 +681,7 @@ typedef int (*TL_CAMERA_GET_COLOR_FILTER_ARRAY_PHASE)(void* tl_camera_handle, en
 /// <param name="tl_camera_handle">The camera handle associated with the cooling mode get request.</param>
 /// <param name="is_cooling_enabled">A reference that receives the cooling mode enable status.\n 0 (zero) for off and 1 (one) for on.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_IS_COOLING_ENABLED)(void* tl_camera_handle, int* is_cooling_enabled);
+typedef int (*TL_CAMERA_GET_IS_COOLING_ENABLED)(void *tl_camera_handle, int *is_cooling_enabled);
 
 /// <summary>
 /// Gets the current value of the camera sensor-level data readout rate.
@@ -692,12 +692,12 @@ typedef int (*TL_CAMERA_GET_IS_COOLING_ENABLED)(void* tl_camera_handle, int* is_
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_GET_DATA_RATE)(void* tl_camera_handle, enum TL_CAMERA_DATA_RATE* data_rate);
+typedef int (*TL_CAMERA_GET_DATA_RATE)(void *tl_camera_handle, enum TL_CAMERA_DATA_RATE *data_rate);
 
 /// <summary>
 /// Gets the default white balance matrix of the camera.
 /// </summary>
-typedef int (*TL_CAMERA_GET_DEFAULT_WHITE_BALANCE_MATRIX)(void* tl_camera_handle, float* matrix);
+typedef int (*TL_CAMERA_GET_DEFAULT_WHITE_BALANCE_MATRIX)(void *tl_camera_handle, float *matrix);
 
 /// <summary>
 /// Returns the current camera exposure value in microseconds.\n\n
@@ -705,7 +705,7 @@ typedef int (*TL_CAMERA_GET_DEFAULT_WHITE_BALANCE_MATRIX)(void* tl_camera_handle
 /// <param name="tl_camera_handle">The camera handle associated with the exposure request.</param>
 /// <param name="exposure_time_us">A reference to receive the integer exposure value in microseconds.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_EXPOSURE_TIME)(void* tl_camera_handle, long long* exposure_time_us);
+typedef int (*TL_CAMERA_GET_EXPOSURE_TIME)(void *tl_camera_handle, long long *exposure_time_us);
 
 /// <summary>
 /// Returns the range of supported exposure values in whole microseconds for the specified camera.\n\n
@@ -714,7 +714,7 @@ typedef int (*TL_CAMERA_GET_EXPOSURE_TIME)(void* tl_camera_handle, long long* ex
 /// <param name="exposure_time_us_min">A reference to receive the minimum exposure value in whole microseconds supported by the specified camera.</param>
 /// <param name="exposure_time_us_max">A reference to receive the maximum exposure value in whole microseconds supported by the specified camera.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_EXPOSURE_TIME_RANGE)(void* tl_camera_handle, long long* exposure_time_us_min, long long* exposure_time_us_max);
+typedef int (*TL_CAMERA_GET_EXPOSURE_TIME_RANGE)(void *tl_camera_handle, long long *exposure_time_us_min, long long *exposure_time_us_max);
 
 /// <summary>
 /// Returns a string containing the version information for all firmware components for the specified camera.\n\n
@@ -725,14 +725,14 @@ typedef int (*TL_CAMERA_GET_EXPOSURE_TIME_RANGE)(void* tl_camera_handle, long lo
 /// <param name="firmware_version">A pointer to a character string to receive the version information.</param>
 /// <param name="str_length">The length in bytes of the firmware_version buffer.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_FIRMWARE_VERSION)(void* tl_camera_handle, char* firmware_version, int str_length);
+typedef int (*TL_CAMERA_GET_FIRMWARE_VERSION)(void *tl_camera_handle, char *firmware_version, int str_length);
 
 /// <summary>
 /// Gets the TL_CAMERA_FRAME_AVAILABLE_CALLBACK callback function.\n\n
 /// </summary>
 /// <param name="tl_camera_handle">The camera handle to associate with the callback.</param>
 /// <param name="handler">A pointer to the callback function.\n This function must conform to the TL_CAMERA_FRAME_AVAILABLE_CALLBACK prototype.</param>
-typedef int (*TL_CAMERA_GET_FRAME_AVAILABLE_CALLBACK)(void* tl_camera_handle, TL_CAMERA_FRAME_AVAILABLE_CALLBACK* handler);
+typedef int (*TL_CAMERA_GET_FRAME_AVAILABLE_CALLBACK)(void *tl_camera_handle, TL_CAMERA_FRAME_AVAILABLE_CALLBACK *handler);
 
 /// <summary>
 /// Gets the current frame rate value for the specified camera.
@@ -743,7 +743,7 @@ typedef int (*TL_CAMERA_GET_FRAME_AVAILABLE_CALLBACK)(void* tl_camera_handle, TL
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_GET_FRAME_RATE_CONTROL_VALUE)(void* tl_camera_handle, double* frame_rate_fps);
+typedef int (*TL_CAMERA_GET_FRAME_RATE_CONTROL_VALUE)(void *tl_camera_handle, double *frame_rate_fps);
 
 /// <summary>
 /// Returns the time, in microseconds (us), required for a frame to be exposed and read out from the sensor.
@@ -756,7 +756,7 @@ typedef int (*TL_CAMERA_GET_FRAME_RATE_CONTROL_VALUE)(void* tl_camera_handle, do
 /// <param name="tl_camera_handle">The camera handle associated with the frame time request.</param>
 /// <param name="frame_time_us">A reference to receive the current frame_time_us value for the specified camera.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_FRAME_TIME)(void* tl_camera_handle, int* frame_time_us);
+typedef int (*TL_CAMERA_GET_FRAME_TIME)(void *tl_camera_handle, int *frame_time_us);
 
 /// <summary>
 /// Returns the current camera image poll time out value in milliseconds.\n\n
@@ -764,7 +764,7 @@ typedef int (*TL_CAMERA_GET_FRAME_TIME)(void* tl_camera_handle, int* frame_time_
 /// <param name="tl_camera_handle">The camera handle associated with the exposure request.</param>
 /// <param name="timeout_ms">A reference to receive the time out value.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_IMAGE_POLL_TIMEOUT)(void* tl_camera_handle, int* timeout_ms);
+typedef int (*TL_CAMERA_GET_IMAGE_POLL_TIMEOUT)(void *tl_camera_handle, int *timeout_ms);
 
 /// <summary>
 /// Gets the communication interface that the camera is connected to.
@@ -772,7 +772,7 @@ typedef int (*TL_CAMERA_GET_IMAGE_POLL_TIMEOUT)(void* tl_camera_handle, int* tim
 /// <param name="tl_camera_handle">The camera handle associated with the communication interface request.</param>
 /// <param name="communication_interface">A reference that receives the COMMUNICATION_INTERFACE.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_COMMUNICATION_INTERFACE)(void* tl_camera_handle, enum TL_CAMERA_COMMUNICATION_INTERFACE* communication_interface);
+typedef int (*TL_CAMERA_GET_COMMUNICATION_INTERFACE)(void *tl_camera_handle, enum TL_CAMERA_COMMUNICATION_INTERFACE *communication_interface);
 
 /// <summary>
 /// Equal Exposure Pulse (EEP) mode is an LVTTL-level signal that is
@@ -790,7 +790,7 @@ typedef int (*TL_CAMERA_GET_COMMUNICATION_INTERFACE)(void* tl_camera_handle, enu
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_GET_EEP_STATUS)(void* tl_camera_handle, enum TL_CAMERA_EEP_STATUS* eep_status_enum);
+typedef int (*TL_CAMERA_GET_EEP_STATUS)(void *tl_camera_handle, enum TL_CAMERA_EEP_STATUS *eep_status_enum);
 
 /// <summary>
 /// Gets the range of acceptable values for the frames per trigger camera parameter.
@@ -799,7 +799,7 @@ typedef int (*TL_CAMERA_GET_EEP_STATUS)(void* tl_camera_handle, enum TL_CAMERA_E
 /// <param name="number_of_frames_per_trigger_min">A reference that receives the minimum valid frames per trigger value.</param>
 /// <param name="number_of_frames_per_trigger_max">A reference that receives the maximum valid frames per trigger value.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_FRAMES_PER_TRIGGER_RANGE)(void* tl_camera_handle, unsigned int* number_of_frames_per_trigger_min, unsigned int* number_of_frames_per_trigger_max);
+typedef int (*TL_CAMERA_GET_FRAMES_PER_TRIGGER_RANGE)(void *tl_camera_handle, unsigned int *number_of_frames_per_trigger_min, unsigned int *number_of_frames_per_trigger_max);
 
 /// <summary>
 /// Gets the number of frames per trigger.
@@ -807,7 +807,7 @@ typedef int (*TL_CAMERA_GET_FRAMES_PER_TRIGGER_RANGE)(void* tl_camera_handle, un
 /// <param name="tl_camera_handle">The camera handle associated with the frames per trigger request.</param>
 /// <param name="number_of_frames_per_trigger_or_zero_for_unlimited">A reference that receives the number of frames per trigger value.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_FRAMES_PER_TRIGGER_ZERO_FOR_UNLIMITED)(void* tl_camera_handle, unsigned int* number_of_frames_per_trigger_or_zero_for_unlimited);
+typedef int (*TL_CAMERA_GET_FRAMES_PER_TRIGGER_ZERO_FOR_UNLIMITED)(void *tl_camera_handle, unsigned int *number_of_frames_per_trigger_or_zero_for_unlimited);
 
 /// <summary>
 /// Gets the range of acceptable values for the frame rate control setting for the specified camera. If the maximum is zero, then
@@ -820,7 +820,7 @@ typedef int (*TL_CAMERA_GET_FRAMES_PER_TRIGGER_ZERO_FOR_UNLIMITED)(void* tl_came
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_GET_FRAME_RATE_CONTROL_VALUE_RANGE)(void* tl_camera_handle, double* frame_rate_fps_min, double* frame_rate_fps_max);
+typedef int (*TL_CAMERA_GET_FRAME_RATE_CONTROL_VALUE_RANGE)(void *tl_camera_handle, double *frame_rate_fps_min, double *frame_rate_fps_max);
 
 /// <summary>
 ///     Gets the current gain value for the specified camera.\n\n
@@ -833,7 +833,7 @@ typedef int (*TL_CAMERA_GET_FRAME_RATE_CONTROL_VALUE_RANGE)(void* tl_camera_hand
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_GET_GAIN)(void* tl_camera_handle, int* gain);
+typedef int (*TL_CAMERA_GET_GAIN)(void *tl_camera_handle, int *gain);
 
 /// <summary>
 ///     Get the range of possible gain values.\n\n
@@ -844,7 +844,7 @@ typedef int (*TL_CAMERA_GET_GAIN)(void* tl_camera_handle, int* gain);
 /// <param name="gain_min">A reference that receives the minimum value in dB * 10 for gain.</param>
 /// <param name="gain_max">A reference that receives the maximum value in dB * 10 for gain.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_GAIN_RANGE)(void* tl_camera_handle, int* gain_min, int* gain_max);
+typedef int (*TL_CAMERA_GET_GAIN_RANGE)(void *tl_camera_handle, int *gain_min, int *gain_max);
 
 /// <summary>
 /// This function may be used to get the current threshold value for hot-pixel correction.\n\n
@@ -854,7 +854,7 @@ typedef int (*TL_CAMERA_GET_GAIN_RANGE)(void* tl_camera_handle, int* gain_min, i
 /// <param name="tl_camera_handle">The camera handle associated with the hot pixel correction threshold command.</param>
 /// <param name="hot_pixel_correction_threshold">A reference that receives the current value of the hot pixel correction threshold for the specified camera.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_HOT_PIXEL_CORRECTION_THRESHOLD)(void* tl_camera_handle, int* hot_pixel_correction_threshold);
+typedef int (*TL_CAMERA_GET_HOT_PIXEL_CORRECTION_THRESHOLD)(void *tl_camera_handle, int *hot_pixel_correction_threshold);
 
 /// <summary>
 /// This function may be used to get the range of acceptable hot pixel correction threshold values.\n\n
@@ -865,7 +865,7 @@ typedef int (*TL_CAMERA_GET_HOT_PIXEL_CORRECTION_THRESHOLD)(void* tl_camera_hand
 /// <param name="hot_pixel_correction_threshold_min">A reference that receives the minimum acceptable value for the hot pixel correction threshold.</param>
 /// <param name="hot_pixel_correction_threshold_max">A reference that receives the maximum acceptable value for the hot pixel correction threshold.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_HOT_PIXEL_CORRECTION_THRESHOLD_RANGE)(void* tl_camera_handle, int* hot_pixel_correction_threshold_min, int* hot_pixel_correction_threshold_max);
+typedef int (*TL_CAMERA_GET_HOT_PIXEL_CORRECTION_THRESHOLD_RANGE)(void *tl_camera_handle, int *hot_pixel_correction_threshold_min, int *hot_pixel_correction_threshold_max);
 
 /// <summary>
 /// Gets the current image height in pixels.
@@ -873,7 +873,7 @@ typedef int (*TL_CAMERA_GET_HOT_PIXEL_CORRECTION_THRESHOLD_RANGE)(void* tl_camer
 /// <param name="tl_camera_handle">The camera handle associated with the image width request.</param>
 /// <param name="height_pixels">A reference that receives the value in pixels for the current image height.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_IMAGE_HEIGHT)(void* tl_camera_handle, int* height_pixels);
+typedef int (*TL_CAMERA_GET_IMAGE_HEIGHT)(void *tl_camera_handle, int *height_pixels);
 
 /// <summary>
 /// Gets the range of possible image height values.
@@ -882,7 +882,7 @@ typedef int (*TL_CAMERA_GET_IMAGE_HEIGHT)(void* tl_camera_handle, int* height_pi
 /// <param name="image_height_pixels_min">A reference that receives the minimum value in pixels for the image height.</param>
 /// <param name="image_height_pixels_max">A reference that receives the maximum value in pixels for the image height.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_IMAGE_HEIGHT_RANGE)(void* tl_camera_handle, int* image_height_pixels_min, int* image_height_pixels_max);
+typedef int (*TL_CAMERA_GET_IMAGE_HEIGHT_RANGE)(void *tl_camera_handle, int *image_height_pixels_min, int *image_height_pixels_max);
 
 /// <summary>
 /// Gets the current image width in pixels.
@@ -890,7 +890,7 @@ typedef int (*TL_CAMERA_GET_IMAGE_HEIGHT_RANGE)(void* tl_camera_handle, int* ima
 /// <param name="tl_camera_handle">The camera handle associated with the image width request.</param>
 /// <param name="width_pixels">A reference that receives the value in pixels for the current image width.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_IMAGE_WIDTH)(void* tl_camera_handle, int* width_pixels);
+typedef int (*TL_CAMERA_GET_IMAGE_WIDTH)(void *tl_camera_handle, int *width_pixels);
 
 /// <summary>
 /// Get the range of possible image width values.
@@ -899,17 +899,17 @@ typedef int (*TL_CAMERA_GET_IMAGE_WIDTH)(void* tl_camera_handle, int* width_pixe
 /// <param name="image_width_pixels_min">A reference that receives the minimum value in pixels for the image width.</param>
 /// <param name="image_width_pixels_max">A reference that receives the maximum value in pixels for the image width.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_IMAGE_WIDTH_RANGE)(void* tl_camera_handle, int* image_width_pixels_min, int* image_width_pixels_max);
+typedef int (*TL_CAMERA_GET_IMAGE_WIDTH_RANGE)(void *tl_camera_handle, int *image_width_pixels_min, int *image_width_pixels_max);
 
 /// <summary>
 /// Gets the camera is armed or not.
 /// </summary>
-typedef int (*TL_CAMERA_GET_IS_ARMED)(void* tl_camera_handle, int* is_armed);
+typedef int (*TL_CAMERA_GET_IS_ARMED)(void *tl_camera_handle, int *is_armed);
 
 /// <summary>
 /// Gets the cooling is supported or not of the camera.
 /// </summary>
-typedef int (*TL_CAMERA_GET_IS_COOLING_SUPPORTED)(void* tl_camera_handle, int* is_cooling_supported);
+typedef int (*TL_CAMERA_GET_IS_COOLING_SUPPORTED)(void *tl_camera_handle, int *is_cooling_supported);
 
 /// <summary>
 /// Scientific-CCD cameras and compact-scientific cameras handle sensor-
@@ -923,12 +923,12 @@ typedef int (*TL_CAMERA_GET_IS_COOLING_SUPPORTED)(void* tl_camera_handle, int* i
 /// A 1 (one) indicates that the specified data rate is supported and a 0 (zero) indicates that the specified data rate is not supported.
 /// </param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_IS_DATA_RATE_SUPPORTED)(void* tl_camera_handle, enum TL_CAMERA_DATA_RATE data_rate, int* is_data_rate_supported);
+typedef int (*TL_CAMERA_GET_IS_DATA_RATE_SUPPORTED)(void *tl_camera_handle, enum TL_CAMERA_DATA_RATE data_rate, int *is_data_rate_supported);
 
 /// <summary>
 /// Gets the EEP is supported or not of the camera.
 /// </summary>
-typedef int (*TL_CAMERA_GET_IS_EEP_SUPPORTED)(void* tl_camera_handle, int* is_eep_supported);
+typedef int (*TL_CAMERA_GET_IS_EEP_SUPPORTED)(void *tl_camera_handle, int *is_eep_supported);
 
 /// <summary>
 /// Gets the status of the frame rate control.
@@ -939,7 +939,7 @@ typedef int (*TL_CAMERA_GET_IS_EEP_SUPPORTED)(void* tl_camera_handle, int* is_ee
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_GET_IS_FRAME_RATE_CONTROL_ENABLED)(void* tl_camera_handle, int* is_enabled);
+typedef int (*TL_CAMERA_GET_IS_FRAME_RATE_CONTROL_ENABLED)(void *tl_camera_handle, int *is_enabled);
 
 /// <summary>
 /// Some scientific cameras include an LED indicator light on the back panel.\n\n
@@ -951,12 +951,12 @@ typedef int (*TL_CAMERA_GET_IS_FRAME_RATE_CONTROL_ENABLED)(void* tl_camera_handl
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_GET_IS_LED_ON)(void* tl_camera_handle, int* is_led_on);
+typedef int (*TL_CAMERA_GET_IS_LED_ON)(void *tl_camera_handle, int *is_led_on);
 
 /// <summary>
 /// Gets the LED is supported or not of the camera.
 /// </summary>
-typedef int (*TL_CAMERA_GET_IS_LED_SUPPORTED)(void* tl_camera_handle, int* is_led_supported);
+typedef int (*TL_CAMERA_GET_IS_LED_SUPPORTED)(void *tl_camera_handle, int *is_led_supported);
 
 /// <summary>
 /// Due to variability in manufacturing, some pixels have inherently higher
@@ -972,22 +972,22 @@ typedef int (*TL_CAMERA_GET_IS_LED_SUPPORTED)(void* tl_camera_handle, int* is_le
 /// A 0 (zero) value indicates that hot pixel correction is disabled and a 1 (one) indicates that it is enabled.\n\n
 /// </param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_IS_HOT_PIXEL_CORRECTION_ENABLED)(void* tl_camera_handle, int* is_hot_pixel_correction_enabled);
+typedef int (*TL_CAMERA_GET_IS_HOT_PIXEL_CORRECTION_ENABLED)(void *tl_camera_handle, int *is_hot_pixel_correction_enabled);
 
 /// <summary>
 /// Gets the NIRBoost is supported or not of the camera.
 /// </summary>
-typedef int (*TL_CAMERA_GET_IS_NIR_BOOST_SUPPORTED)(void* tl_camera_handle, int* is_nir_boost_supported);
+typedef int (*TL_CAMERA_GET_IS_NIR_BOOST_SUPPORTED)(void *tl_camera_handle, int *is_nir_boost_supported);
 
 /// <summary>
 /// Gets the operation mode of the camera.
 /// </summary>
-typedef int (*TL_CAMERA_GET_IS_OPERATION_MODE_SUPPORTED)(void* tl_camera_handle, enum TL_CAMERA_OPERATION_MODE operation_mode, int* is_operation_mode_supported);
+typedef int (*TL_CAMERA_GET_IS_OPERATION_MODE_SUPPORTED)(void *tl_camera_handle, enum TL_CAMERA_OPERATION_MODE operation_mode, int *is_operation_mode_supported);
 
 /// <summary>
 /// Gets the tap is supported or not of the camera.
 /// </summary>
-typedef int (*TL_CAMERA_GET_IS_TAPS_SUPPORTED)(void* tl_camera_handle, int* is_taps_supported, enum TL_CAMERA_TAPS tap);
+typedef int (*TL_CAMERA_GET_IS_TAPS_SUPPORTED)(void *tl_camera_handle, int *is_taps_supported, enum TL_CAMERA_TAPS tap);
 
 /// <summary>
 /// Provides a character string that describes the most recent error that has occurred.\n\n
@@ -997,7 +997,7 @@ typedef int (*TL_CAMERA_GET_IS_TAPS_SUPPORTED)(void* tl_camera_handle, int* is_t
 /// The application must NOT attempt modify or deallocate the character string.
 /// Any attempt to do so is not permitted and could result in undefined behavior.
 /// </returns>
-typedef char* (*TL_CAMERA_GET_LAST_ERROR)(void);
+typedef char *(*TL_CAMERA_GET_LAST_ERROR)(void);
 
 /// <summary>
 /// Gets the current rate of frames in frames per second that are delivered to the host computer.
@@ -1008,7 +1008,7 @@ typedef char* (*TL_CAMERA_GET_LAST_ERROR)(void);
 /// <param name="tl_camera_handle">The camera handle associated with the fps request.</param>
 /// <param name="frames_per_second">A reference to receive the current fps value for the specified camera.  Note that this parameter is specified as a reference to a double precision floating point value.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_MEASURED_FRAME_RATE)(void* tl_camera_handle, double* frames_per_second);
+typedef int (*TL_CAMERA_GET_MEASURED_FRAME_RATE)(void *tl_camera_handle, double *frames_per_second);
 
 /// <summary>
 /// Gets the camera model information.
@@ -1017,7 +1017,7 @@ typedef int (*TL_CAMERA_GET_MEASURED_FRAME_RATE)(void* tl_camera_handle, double*
 /// <param name="model">A pointer to a character buffer to receive the model information.</param>
 /// <param name="str_length">The length in bytes of the specified character buffer.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_MODEL)(void* tl_camera_handle, char* model, int str_length);
+typedef int (*TL_CAMERA_GET_MODEL)(void *tl_camera_handle, char *model, int str_length);
 
 /// <summary>
 /// Gets the range of valid character string buffer lengths that must be specified to receive the camera model string.
@@ -1026,7 +1026,7 @@ typedef int (*TL_CAMERA_GET_MODEL)(void* tl_camera_handle, char* model, int str_
 /// <param name="model_min">A reference that receives the minimum length of the model character string.</param>
 /// <param name="model_max">A reference that receives the maximum length of the model character string.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_MODEL_STRING_LENGTH_RANGE)(void* tl_camera_handle, int* model_min, int* model_max);
+typedef int (*TL_CAMERA_GET_MODEL_STRING_LENGTH_RANGE)(void *tl_camera_handle, int *model_min, int *model_max);
 
 /// <summary>
 /// Gets the camera name.
@@ -1035,7 +1035,7 @@ typedef int (*TL_CAMERA_GET_MODEL_STRING_LENGTH_RANGE)(void* tl_camera_handle, i
 /// <param name="name">A pointer to a character string to receive the camera name.</param>
 /// <param name="str_length">The length of the name character string.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_NAME)(void* tl_camera_handle, char* name, int str_length);
+typedef int (*TL_CAMERA_GET_NAME)(void *tl_camera_handle, char *name, int str_length);
 
 /// <summary>
 /// Gets the range of valid character string buffer lengths that must be specified to receive or set the camera name string.
@@ -1044,7 +1044,7 @@ typedef int (*TL_CAMERA_GET_NAME)(void* tl_camera_handle, char* name, int str_le
 /// <param name="name_min">A reference that receives the minimum length of the name character string.</param>
 /// <param name="name_max">A reference that receives the maximum length of the name character string.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_NAME_STRING_LENGTH_RANGE)(void* tl_camera_handle, int* name_min, int* name_max);
+typedef int (*TL_CAMERA_GET_NAME_STRING_LENGTH_RANGE)(void *tl_camera_handle, int *name_min, int *name_max);
 
 /// <summary>
 /// Determine if near-infrared-boost mode is enabled.
@@ -1055,12 +1055,12 @@ typedef int (*TL_CAMERA_GET_NAME_STRING_LENGTH_RANGE)(void* tl_camera_handle, in
 /// <param name="tl_camera_handle">The camera handle associated with the NIR boost get request.</param>
 /// <param name="nir_boost_enable">A reference that receives the NIR boost enable status.\n 0 (zero) for off and 1 (one) for on.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_NIR_BOOST_ENABLE)(void* tl_camera_handle, int* nir_boost_enable);
+typedef int (*TL_CAMERA_GET_NIR_BOOST_ENABLE)(void *tl_camera_handle, int *nir_boost_enable);
 
 /// <summary>
 /// Gets the operation mode of the camera.
 /// </summary>
-typedef int (*TL_CAMERA_GET_OPERATION_MODE)(void* tl_camera_handle, enum TL_CAMERA_OPERATION_MODE* operation_mode);
+typedef int (*TL_CAMERA_GET_OPERATION_MODE)(void *tl_camera_handle, enum TL_CAMERA_OPERATION_MODE *operation_mode);
 
 // ReSharper disable once CppDoxygenUnresolvedReference
 /// <summary>
@@ -1116,7 +1116,7 @@ typedef int (*TL_CAMERA_GET_OPERATION_MODE)(void* tl_camera_handle, enum TL_CAME
 ///  - `timestamp_clock_frequency` can be found using the following function: `tl_camera_get_timestamp_clock_frequency()`.\n
 ///  .
 /// This timestamp is relative to an internal timer and is recorded immediately after exposure finishes. To get the time elapsed, subtract the relative timestamp of the first frame from the relative timestamp of the last frame. If `tl_camera_get_timestamp_clock_frequency()` returns an error code, then the camera does not support relative time stamping.\n\n
-typedef int (*TL_CAMERA_GET_PENDING_FRAME_OR_NULL)(void* tl_camera_handle, unsigned short** image_buffer, int* frame_count, unsigned char** metadata, int* metadata_size_in_bytes);
+typedef int (*TL_CAMERA_GET_PENDING_FRAME_OR_NULL)(void *tl_camera_handle, unsigned short **image_buffer, int *frame_count, unsigned char **metadata, int *metadata_size_in_bytes);
 
 /// <summary>
 /// Gets the camera polar phase information.
@@ -1124,7 +1124,7 @@ typedef int (*TL_CAMERA_GET_PENDING_FRAME_OR_NULL)(void* tl_camera_handle, unsig
 /// <param name="tl_camera_handle">The camera handle associated with the model info request.</param>
 /// <param name="polar_phase">A pointer to a TL_POLARIZATION_PROCESSOR_POLAR_PHASE enumeration value.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_POLAR_PHASE)(void* tl_camera_handle, enum TL_POLARIZATION_PROCESSOR_POLAR_PHASE* polar_phase);
+typedef int (*TL_CAMERA_GET_POLAR_PHASE)(void *tl_camera_handle, enum TL_POLARIZATION_PROCESSOR_POLAR_PHASE *polar_phase);
 
 /// <summary>
 /// Gets the current Region of Interest (ROI) values.\n\n
@@ -1141,7 +1141,7 @@ typedef int (*TL_CAMERA_GET_POLAR_PHASE)(void* tl_camera_handle, enum TL_POLARIZ
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_GET_ROI)(void* tl_camera_handle, int* upper_left_x_pixels, int* upper_left_y_pixels, int* lower_right_x_pixels, int* lower_right_y_pixels);
+typedef int (*TL_CAMERA_GET_ROI)(void *tl_camera_handle, int *upper_left_x_pixels, int *upper_left_y_pixels, int *lower_right_x_pixels, int *lower_right_y_pixels);
 
 /// <summary>
 /// Gets the range of acceptable values for Region of Interest (ROI) coordinates.\n\n
@@ -1162,7 +1162,7 @@ typedef int (*TL_CAMERA_GET_ROI)(void* tl_camera_handle, int* upper_left_x_pixel
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_GET_ROI_RANGE)(void* tl_camera_handle, int* upper_left_x_pixels_min, int* upper_left_y_pixels_min, int* lower_right_x_pixels_min, int* lower_right_y_pixels_min, int* upper_left_x_pixels_max, int* upper_left_y_pixels_max, int* lower_right_x_pixels_max, int* lower_right_y_pixels_max);
+typedef int (*TL_CAMERA_GET_ROI_RANGE)(void *tl_camera_handle, int *upper_left_x_pixels_min, int *upper_left_y_pixels_min, int *lower_right_x_pixels_min, int *lower_right_y_pixels_min, int *upper_left_x_pixels_max, int *upper_left_y_pixels_max, int *lower_right_x_pixels_max, int *lower_right_y_pixels_max);
 
 /// <summary>
 /// Gets the sensor height in pixels.
@@ -1170,7 +1170,7 @@ typedef int (*TL_CAMERA_GET_ROI_RANGE)(void* tl_camera_handle, int* upper_left_x
 /// <param name="tl_camera_handle">The camera handle associated with the sensor height request.</param>
 /// <param name="height_pixels">A reference that receives the value in pixels for the sensor height.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_SENSOR_HEIGHT)(void* tl_camera_handle, int* height_pixels);
+typedef int (*TL_CAMERA_GET_SENSOR_HEIGHT)(void *tl_camera_handle, int *height_pixels);
 
 /// <summary>
 /// Get the physical height, in micrometers, of a single light-sensitive photo site on the sensor.
@@ -1181,7 +1181,7 @@ typedef int (*TL_CAMERA_GET_SENSOR_HEIGHT)(void* tl_camera_handle, int* height_p
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_GET_SENSOR_PIXEL_HEIGHT)(void* tl_camera_handle, double* pixel_height_um);
+typedef int (*TL_CAMERA_GET_SENSOR_PIXEL_HEIGHT)(void *tl_camera_handle, double *pixel_height_um);
 
 /// <summary>
 /// Get the current pixel size in bytes.  This represents the amount of space 1 pixel will occupy in the frame buffer.
@@ -1192,7 +1192,7 @@ typedef int (*TL_CAMERA_GET_SENSOR_PIXEL_HEIGHT)(void* tl_camera_handle, double*
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_GET_SENSOR_PIXEL_SIZE_BYTES)(void* tl_camera_handle, int* sensor_pixel_size_bytes);
+typedef int (*TL_CAMERA_GET_SENSOR_PIXEL_SIZE_BYTES)(void *tl_camera_handle, int *sensor_pixel_size_bytes);
 
 /// <summary>
 /// Get the physical width, in micrometers, of a single light-sensitive photo site on the sensor.
@@ -1203,7 +1203,7 @@ typedef int (*TL_CAMERA_GET_SENSOR_PIXEL_SIZE_BYTES)(void* tl_camera_handle, int
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_GET_SENSOR_PIXEL_WIDTH)(void* tl_camera_handle, double* pixel_width_um);
+typedef int (*TL_CAMERA_GET_SENSOR_PIXEL_WIDTH)(void *tl_camera_handle, double *pixel_width_um);
 
 /// <summary>
 /// Gets the send readout time for the specified camera.
@@ -1211,7 +1211,7 @@ typedef int (*TL_CAMERA_GET_SENSOR_PIXEL_WIDTH)(void* tl_camera_handle, double* 
 /// <param name="tl_camera_handle">The camera handle associated with the sensor readout time request.</param>
 /// <param name="sensor_readout_time_ns">A reference to receive the current send readout time value in nanoseconds.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_SENSOR_READOUT_TIME)(void* tl_camera_handle, int* sensor_readout_time_ns);
+typedef int (*TL_CAMERA_GET_SENSOR_READOUT_TIME)(void *tl_camera_handle, int *sensor_readout_time_ns);
 
 /// <summary>
 /// Gets the sensor width in pixels.
@@ -1219,7 +1219,7 @@ typedef int (*TL_CAMERA_GET_SENSOR_READOUT_TIME)(void* tl_camera_handle, int* se
 /// <param name="tl_camera_handle">The camera handle associated with the sensor width request.</param>
 /// <param name="width_pixels">A reference that receives the value in pixels for the sensor width.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_SENSOR_WIDTH)(void* tl_camera_handle, int* width_pixels);
+typedef int (*TL_CAMERA_GET_SENSOR_WIDTH)(void *tl_camera_handle, int *width_pixels);
 
 /// <summary>
 /// Gets the camera serial number.
@@ -1231,7 +1231,7 @@ typedef int (*TL_CAMERA_GET_SENSOR_WIDTH)(void* tl_camera_handle, int* width_pix
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_GET_SERIAL_NUMBER)(void* tl_camera_handle, char* serial_number, int str_length);
+typedef int (*TL_CAMERA_GET_SERIAL_NUMBER)(void *tl_camera_handle, char *serial_number, int str_length);
 
 /// <summary>
 /// Gets the range of valid character string buffer lengths that must be specified to receive the camera serial number string.
@@ -1243,7 +1243,7 @@ typedef int (*TL_CAMERA_GET_SERIAL_NUMBER)(void* tl_camera_handle, char* serial_
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_GET_SERIAL_NUMBER_STRING_LENGTH_RANGE)(void* tl_camera_handle, int* serial_number_min, int* serial_number_max);
+typedef int (*TL_CAMERA_GET_SERIAL_NUMBER_STRING_LENGTH_RANGE)(void *tl_camera_handle, int *serial_number_min, int *serial_number_max);
 
 /// <summary>
 /// Gets the value of the current camera tap balance setting.
@@ -1256,7 +1256,7 @@ typedef int (*TL_CAMERA_GET_SERIAL_NUMBER_STRING_LENGTH_RANGE)(void* tl_camera_h
 /// <param name="tl_camera_handle">The camera handle associated with the taps request.</param>
 /// <param name="taps_balance_enable">A reference that receives the tap balance enable status.\n 0 (zero) for off and 1 (one) for on.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_TAP_BALANCE_ENABLE)(void* tl_camera_handle, int* taps_balance_enable);
+typedef int (*TL_CAMERA_GET_TAP_BALANCE_ENABLE)(void *tl_camera_handle, int *taps_balance_enable);
 
 /// <summary>
 /// Gets the current camera taps value.
@@ -1269,7 +1269,7 @@ typedef int (*TL_CAMERA_GET_TAP_BALANCE_ENABLE)(void* tl_camera_handle, int* tap
 /// <param name="tl_camera_handle">The camera handle associated with the taps request.</param>
 /// <param name="taps">A pointer to a TL_CAMERA_TAPS enumeration value.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_TAPS)(void* tl_camera_handle, enum TL_CAMERA_TAPS* taps);
+typedef int (*TL_CAMERA_GET_TAPS)(void *tl_camera_handle, enum TL_CAMERA_TAPS *taps);
 
 /// <summary>
 /// Gets the timestamp clock frequency for the camera in Hz. This can be used along with the
@@ -1281,7 +1281,7 @@ typedef int (*TL_CAMERA_GET_TAPS)(void* tl_camera_handle, enum TL_CAMERA_TAPS* t
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_GET_TIMESTAMP_CLOCK_FREQUENCY)(void* tl_camera_handle, int* timestamp_clock_frequency_hz_or_zero);
+typedef int (*TL_CAMERA_GET_TIMESTAMP_CLOCK_FREQUENCY)(void *tl_camera_handle, int *timestamp_clock_frequency_hz_or_zero);
 
 /// <summary>
 /// Gets the current hardware trigger polarity of the specified camera.\n\n
@@ -1289,7 +1289,7 @@ typedef int (*TL_CAMERA_GET_TIMESTAMP_CLOCK_FREQUENCY)(void* tl_camera_handle, i
 /// <param name="tl_camera_handle">The camera handle associated with the hardware trigger mode request.</param>
 /// <param name="trigger_polarity_enum">A reference to a TRIGGER_POLARITY to receive the currently configured trigger polarity.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_TRIGGER_POLARITY)(void* tl_camera_handle, enum TL_CAMERA_TRIGGER_POLARITY* trigger_polarity_enum);
+typedef int (*TL_CAMERA_GET_TRIGGER_POLARITY)(void *tl_camera_handle, enum TL_CAMERA_TRIGGER_POLARITY *trigger_polarity_enum);
 
 /// <summary>
 /// Gets the USB port type that the camera is connected to.
@@ -1297,7 +1297,7 @@ typedef int (*TL_CAMERA_GET_TRIGGER_POLARITY)(void* tl_camera_handle, enum TL_CA
 /// <param name="tl_camera_handle">The camera handle associated with the USB port type request.</param>
 /// <param name="usb_port_type">A reference that receives the USB port type.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_GET_USB_PORT_TYPE)(void* tl_camera_handle, enum TL_CAMERA_USB_PORT_TYPE* usb_port_type);
+typedef int (*TL_CAMERA_GET_USB_PORT_TYPE)(void *tl_camera_handle, enum TL_CAMERA_USB_PORT_TYPE *usb_port_type);
 
 /// <summary>
 ///     Read on-camera, non-volatile memory that is available to the user.\n\n
@@ -1312,7 +1312,7 @@ typedef int (*TL_CAMERA_GET_USB_PORT_TYPE)(void* tl_camera_handle, enum TL_CAMER
 /// <seealso cref="TL_CAMERA_GET_USER_MEMORY_MAXIMUM_SIZE" />
 /// <seealso cref="TL_CAMERA_SET_USER_MEMORY" />
 /// </summary>
-typedef int (*TL_CAMERA_GET_USER_MEMORY)(void* tl_camera_handle, unsigned char* destination_data_buffer, long long number_of_bytes_to_read, long long camera_user_memory_offset_bytes);
+typedef int (*TL_CAMERA_GET_USER_MEMORY)(void *tl_camera_handle, unsigned char *destination_data_buffer, long long number_of_bytes_to_read, long long camera_user_memory_offset_bytes);
 
 /// <summary>
 ///     Gets the number of bytes of on-camera, non-volatile memory storage available to the user.
@@ -1320,7 +1320,7 @@ typedef int (*TL_CAMERA_GET_USER_MEMORY)(void* tl_camera_handle, unsigned char* 
 ///     <param name="maximum_size_bytes">A reference that receives the 64-bit number of available bytes.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
 /// </summary>
-typedef int (*TL_CAMERA_GET_USER_MEMORY_MAXIMUM_SIZE)(void* tl_camera_handle, long long* maximum_size_bytes);
+typedef int (*TL_CAMERA_GET_USER_MEMORY_MAXIMUM_SIZE)(void *tl_camera_handle, long long *maximum_size_bytes);
 
 /// This function will generate a trigger through the camera SDK
 /// rather than through the hardware trigger input.\n\n
@@ -1342,7 +1342,7 @@ typedef int (*TL_CAMERA_GET_USER_MEMORY_MAXIMUM_SIZE)(void* tl_camera_handle, lo
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_ISSUE_SOFTWARE_TRIGGER)(void* tl_camera_handle);
+typedef int (*TL_CAMERA_ISSUE_SOFTWARE_TRIGGER)(void *tl_camera_handle);
 
 /// <summary>
 /// Gets a handle to a camera with the specified serial number.\n\n
@@ -1356,7 +1356,7 @@ typedef int (*TL_CAMERA_ISSUE_SOFTWARE_TRIGGER)(void* tl_camera_handle);
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_OPEN_CAMERA)(char* camera_serial_number, void** tl_camera_handle);
+typedef int (*TL_CAMERA_OPEN_CAMERA)(char *camera_serial_number, void **tl_camera_handle);
 
 /// <summary>
 /// The tl_camera_open_sdk function is used to initialize the SDK.  This function must be called prior to calling any other API function.\n\n
@@ -1378,7 +1378,7 @@ typedef int (*TL_CAMERA_OPEN_SDK)(void);
 /// <param name="tl_camera_handle">The camera handle associated with the horizontal binning command.</param>
 /// <param name="binx">A value that is used to configure the horizontal binning setting.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_SET_BINX)(void* tl_camera_handle, int binx);
+typedef int (*TL_CAMERA_SET_BINX)(void *tl_camera_handle, int binx);
 
 /// <summary>
 ///     Binning sums adjacent sensor pixels into "super pixels". It trades
@@ -1397,7 +1397,7 @@ typedef int (*TL_CAMERA_SET_BINX)(void* tl_camera_handle, int binx);
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_SET_BINY)(void* tl_camera_handle, int biny);
+typedef int (*TL_CAMERA_SET_BINY)(void *tl_camera_handle, int biny);
 
 /// <summary>
 /// Sets the black level value for the specified camera.
@@ -1409,7 +1409,7 @@ typedef int (*TL_CAMERA_SET_BINY)(void* tl_camera_handle, int biny);
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_SET_BLACK_LEVEL)(void* tl_camera_handle, int black_level);
+typedef int (*TL_CAMERA_SET_BLACK_LEVEL)(void *tl_camera_handle, int black_level);
 
 /// <summary>
 /// Sets the TL_CAMERA_CONNECT_CALLBACK callback function.\n\n
@@ -1417,7 +1417,7 @@ typedef int (*TL_CAMERA_SET_BLACK_LEVEL)(void* tl_camera_handle, int black_level
 /// <param name="handler">A pointer to the callback function.\n This function must conform to the TL_CAMERA_CONNECT_CALLBACK prototype.</param>
 /// <param name="context">A pointer to a user specified context.  This parameter is ignored by the SDK.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_SET_CAMERA_CONNECT_CALLBACK)(TL_CAMERA_CONNECT_CALLBACK handler, void* context);
+typedef int (*TL_CAMERA_SET_CAMERA_CONNECT_CALLBACK)(TL_CAMERA_CONNECT_CALLBACK handler, void *context);
 
 /// <summary>
 /// Sets the TL_CAMERA_DISCONNECT_CALLBACK callback function.\n\n
@@ -1425,7 +1425,7 @@ typedef int (*TL_CAMERA_SET_CAMERA_CONNECT_CALLBACK)(TL_CAMERA_CONNECT_CALLBACK 
 /// <param name="handler">A pointer to the callback function.\n This function must conform to the TL_CAMERA_DISCONNECT_CALLBACK prototype.</param>
 /// <param name="context">A pointer to a user specified context.  This parameter is ignored by the SDK.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_SET_CAMERA_DISCONNECT_CALLBACK)(TL_CAMERA_DISCONNECT_CALLBACK handler, void* context);
+typedef int (*TL_CAMERA_SET_CAMERA_DISCONNECT_CALLBACK)(TL_CAMERA_DISCONNECT_CALLBACK handler, void *context);
 
 /// <summary>
 /// Sets the current value of the camera sensor-level data readout rate.
@@ -1436,7 +1436,7 @@ typedef int (*TL_CAMERA_SET_CAMERA_DISCONNECT_CALLBACK)(TL_CAMERA_DISCONNECT_CAL
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_SET_DATA_RATE)(void* tl_camera_handle, enum TL_CAMERA_DATA_RATE data_rate);
+typedef int (*TL_CAMERA_SET_DATA_RATE)(void *tl_camera_handle, enum TL_CAMERA_DATA_RATE data_rate);
 
 /// <summary>
 /// Sets the specified camera's exposure to a value which must be specified in microseconds.\n\n
@@ -1444,7 +1444,7 @@ typedef int (*TL_CAMERA_SET_DATA_RATE)(void* tl_camera_handle, enum TL_CAMERA_DA
 /// <param name="tl_camera_handle">The camera handle associated with the exposure change.</param>
 /// <param name="exposure_time_us">A whole number of microseconds which represents the new exposure value.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_SET_EXPOSURE_TIME)(void* tl_camera_handle, long long exposure_time_us);
+typedef int (*TL_CAMERA_SET_EXPOSURE_TIME)(void *tl_camera_handle, long long exposure_time_us);
 
 /// <summary>
 /// <para>Sets the TL_CAMERA_FRAME_AVAILABLE_CALLBACK callback function.</para>
@@ -1456,7 +1456,7 @@ typedef int (*TL_CAMERA_SET_EXPOSURE_TIME)(void* tl_camera_handle, long long exp
 /// <param name="tl_camera_handle">The camera handle to associate with the callback.</param>
 /// <param name="handler">A pointer to the callback function.\n This function must conform to the TL_CAMERA_FRAME_AVAILABLE_CALLBACK prototype.</param>
 /// <param name="context">A pointer to a user specified context.  This parameter is ignored by the SDK.</param>
-typedef int (*TL_CAMERA_SET_FRAME_AVAILABLE_CALLBACK)(void* tl_camera_handle, TL_CAMERA_FRAME_AVAILABLE_CALLBACK handler, void* context);
+typedef int (*TL_CAMERA_SET_FRAME_AVAILABLE_CALLBACK)(void *tl_camera_handle, TL_CAMERA_FRAME_AVAILABLE_CALLBACK handler, void *context);
 
 /// <summary>
 /// Sets the frame rate value in frames per second for the specified camera.
@@ -1468,7 +1468,7 @@ typedef int (*TL_CAMERA_SET_FRAME_AVAILABLE_CALLBACK)(void* tl_camera_handle, TL
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_SET_FRAME_RATE_CONTROL_VALUE)(void* tl_camera_handle, double frame_rate_fps);
+typedef int (*TL_CAMERA_SET_FRAME_RATE_CONTROL_VALUE)(void *tl_camera_handle, double frame_rate_fps);
 
 /// <summary>
 /// Sets the number of frames per trigger.
@@ -1476,7 +1476,7 @@ typedef int (*TL_CAMERA_SET_FRAME_RATE_CONTROL_VALUE)(void* tl_camera_handle, do
 /// <param name="tl_camera_handle">The camera handle associated with the frames per trigger request.</param>
 /// <param name="number_of_frames_per_trigger_or_zero_for_unlimited">The number of frames per trigger value to set.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_SET_FRAMES_PER_TRIGGER_ZERO_FOR_UNLIMITED)(void* tl_camera_handle, unsigned int number_of_frames_per_trigger_or_zero_for_unlimited);
+typedef int (*TL_CAMERA_SET_FRAMES_PER_TRIGGER_ZERO_FOR_UNLIMITED)(void *tl_camera_handle, unsigned int number_of_frames_per_trigger_or_zero_for_unlimited);
 
 /// <summary>
 ///     Sets the current gain value for the specified camera. To determine if a camera supports gain, see tl_camera_get_gain_range().
@@ -1487,7 +1487,7 @@ typedef int (*TL_CAMERA_SET_FRAMES_PER_TRIGGER_ZERO_FOR_UNLIMITED)(void* tl_came
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_SET_GAIN)(void* tl_camera_handle, int gain);
+typedef int (*TL_CAMERA_SET_GAIN)(void *tl_camera_handle, int gain);
 
 /// <summary>
 /// This function may be used to set the current threshold value for hot-pixel correction.\n\n
@@ -1496,7 +1496,7 @@ typedef int (*TL_CAMERA_SET_GAIN)(void* tl_camera_handle, int gain);
 /// <param name="tl_camera_handle">The camera handle associated with the hot pixel correction threshold command.</param>
 /// <param name="hot_pixel_correction_threshold">A reference that specifies the current value of the hot pixel correction threshold for the specified camera.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_SET_HOT_PIXEL_CORRECTION_THRESHOLD)(void* tl_camera_handle, int hot_pixel_correction_threshold);
+typedef int (*TL_CAMERA_SET_HOT_PIXEL_CORRECTION_THRESHOLD)(void *tl_camera_handle, int hot_pixel_correction_threshold);
 
 /// <summary>
 /// Sets the current camera image poll time out value in milliseconds.\n\n
@@ -1504,7 +1504,7 @@ typedef int (*TL_CAMERA_SET_HOT_PIXEL_CORRECTION_THRESHOLD)(void* tl_camera_hand
 /// <param name="tl_camera_handle">The camera handle associated with the exposure request.</param>
 /// <param name="timeout_ms">The time out value to be set.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_SET_IMAGE_POLL_TIMEOUT)(void* tl_camera_handle, int timeout_ms);
+typedef int (*TL_CAMERA_SET_IMAGE_POLL_TIMEOUT)(void *tl_camera_handle, int timeout_ms);
 
 /// <summary>
 /// Enables or disables the EEP operating mode.
@@ -1515,7 +1515,7 @@ typedef int (*TL_CAMERA_SET_IMAGE_POLL_TIMEOUT)(void* tl_camera_handle, int time
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_SET_IS_EEP_ENABLED)(void* tl_camera_handle, int is_eep_enabled);
+typedef int (*TL_CAMERA_SET_IS_EEP_ENABLED)(void *tl_camera_handle, int is_eep_enabled);
 
 /// <summary>
 /// Enables or disables frame rate control.
@@ -1526,7 +1526,7 @@ typedef int (*TL_CAMERA_SET_IS_EEP_ENABLED)(void* tl_camera_handle, int is_eep_e
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_SET_IS_FRAME_RATE_CONTROL_ENABLED)(void* tl_camera_handle, int is_enabled);
+typedef int (*TL_CAMERA_SET_IS_FRAME_RATE_CONTROL_ENABLED)(void *tl_camera_handle, int is_enabled);
 
 /// <summary>
 /// This function may be used to set the current state of hot-pixel correction.\n\n
@@ -1537,7 +1537,7 @@ typedef int (*TL_CAMERA_SET_IS_FRAME_RATE_CONTROL_ENABLED)(void* tl_camera_handl
 /// A 0 (zero) value disables hot pixel correction and a 1 (one) enables hot pixel correction.\n\n
 /// </param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_SET_IS_HOT_PIXEL_CORRECTION_ENABLED)(void* tl_camera_handle, int is_hot_pixel_correction_enabled);
+typedef int (*TL_CAMERA_SET_IS_HOT_PIXEL_CORRECTION_ENABLED)(void *tl_camera_handle, int is_hot_pixel_correction_enabled);
 
 /// <summary>
 /// Some scientific cameras include an LED indicator light on the back panel.\n\n
@@ -1549,7 +1549,7 @@ typedef int (*TL_CAMERA_SET_IS_HOT_PIXEL_CORRECTION_ENABLED)(void* tl_camera_han
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_SET_IS_LED_ON)(void* tl_camera_handle, int is_led_on);
+typedef int (*TL_CAMERA_SET_IS_LED_ON)(void *tl_camera_handle, int is_led_on);
 
 /// <summary>
 /// Sets the camera name.
@@ -1557,7 +1557,7 @@ typedef int (*TL_CAMERA_SET_IS_LED_ON)(void* tl_camera_handle, int is_led_on);
 /// <param name="tl_camera_handle">The camera handle associated with the name request.</param>
 /// <param name="name">A pointer to a character string containing the new camera name.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_SET_NAME)(void* tl_camera_handle, char* name);
+typedef int (*TL_CAMERA_SET_NAME)(void *tl_camera_handle, char *name);
 
 /// <summary>
 /// Enable or disable near-infrared-boost mode.
@@ -1565,12 +1565,12 @@ typedef int (*TL_CAMERA_SET_NAME)(void* tl_camera_handle, char* name);
 /// <param name="tl_camera_handle">The camera handle associated with the cooling mode set request.</param>
 /// <param name="nir_boost_enable">A value that enables/disables NIR boost mode.\n 0 (zero) for off and 1 (one) for on.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_SET_NIR_BOOST_ENABLE)(void* tl_camera_handle, int nir_boost_enable);
+typedef int (*TL_CAMERA_SET_NIR_BOOST_ENABLE)(void *tl_camera_handle, int nir_boost_enable);
 
 /// <summary>
 /// Gets the operation mode of the camera.
 /// </summary>
-typedef int (*TL_CAMERA_SET_OPERATION_MODE)(void* tl_camera_handle, enum TL_CAMERA_OPERATION_MODE operation_mode);
+typedef int (*TL_CAMERA_SET_OPERATION_MODE)(void *tl_camera_handle, enum TL_CAMERA_OPERATION_MODE operation_mode);
 
 /// <summary>
 /// Sets the current Region of Interest (ROI) values.\n\n
@@ -1587,7 +1587,7 @@ typedef int (*TL_CAMERA_SET_OPERATION_MODE)(void* tl_camera_handle, enum TL_CAME
 /// 0 if successful or a positive integer error code to indicate failure. In case of error, call
 /// tl_camera_get_last_error to get details. This error string is valid until another API called on the same thread.
 /// </returns>
-typedef int (*TL_CAMERA_SET_ROI)(void* tl_camera_handle, int upper_left_x_pixels, int upper_left_y_pixels, int lower_right_x_pixels, int lower_right_y_pixels);
+typedef int (*TL_CAMERA_SET_ROI)(void *tl_camera_handle, int upper_left_x_pixels, int upper_left_y_pixels, int lower_right_x_pixels, int lower_right_y_pixels);
 
 /// <summary>
 /// Sets the camera tap balance value.
@@ -1595,7 +1595,7 @@ typedef int (*TL_CAMERA_SET_ROI)(void* tl_camera_handle, int upper_left_x_pixels
 /// <param name="tl_camera_handle">The camera handle associated with the taps request.</param>
 /// <param name="taps_balance_enable">A value that enables/disables the tap balance feature.\n 0 (zero) for off and 1 (one) for on.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_SET_TAP_BALANCE_ENABLE)(void* tl_camera_handle, int taps_balance_enable);
+typedef int (*TL_CAMERA_SET_TAP_BALANCE_ENABLE)(void *tl_camera_handle, int taps_balance_enable);
 
 /// <summary>
 /// Sets the camera taps value.
@@ -1603,7 +1603,7 @@ typedef int (*TL_CAMERA_SET_TAP_BALANCE_ENABLE)(void* tl_camera_handle, int taps
 /// <param name="tl_camera_handle">The camera handle associated with the taps request.</param>
 /// <param name="taps">A TL_CAMERA_TAPS enumeration value.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_SET_TAPS)(void* tl_camera_handle, enum TL_CAMERA_TAPS taps);
+typedef int (*TL_CAMERA_SET_TAPS)(void *tl_camera_handle, enum TL_CAMERA_TAPS taps);
 
 /// <summary>
 /// Sets the current hardware trigger polarity for the specified camera.
@@ -1611,7 +1611,7 @@ typedef int (*TL_CAMERA_SET_TAPS)(void* tl_camera_handle, enum TL_CAMERA_TAPS ta
 /// <param name="tl_camera_handle">The camera handle associated with the hardware trigger mode request.</param>
 /// <param name="trigger_polarity_enum">A TRIGGER_POLARITY value that is used to configure the trigger polarity.</param>
 /// <returns>0 if successful or a positive integer error code to indicate failure.</returns>
-typedef int (*TL_CAMERA_SET_TRIGGER_POLARITY)(void* tl_camera_handle, enum TL_CAMERA_TRIGGER_POLARITY trigger_polarity_enum);
+typedef int (*TL_CAMERA_SET_TRIGGER_POLARITY)(void *tl_camera_handle, enum TL_CAMERA_TRIGGER_POLARITY trigger_polarity_enum);
 
 /// <summary>
 ///     Write to the on-camera, non-volatile memory that is available to the user.\n\n
@@ -1627,7 +1627,7 @@ typedef int (*TL_CAMERA_SET_TRIGGER_POLARITY)(void* tl_camera_handle, enum TL_CA
 /// <seealso cref="TL_CAMERA_GET_USER_MEMORY_MAXIMUM_SIZE" />
 /// <seealso cref="TL_CAMERA_GET_USER_MEMORY" />
 /// </summary>
-typedef int (*TL_CAMERA_SET_USER_MEMORY)(void* tl_camera_handle, unsigned char* source_data_buffer, long long number_of_bytes_to_write, long long camera_user_memory_offset_bytes);
+typedef int (*TL_CAMERA_SET_USER_MEMORY)(void *tl_camera_handle, unsigned char *source_data_buffer, long long number_of_bytes_to_write, long long camera_user_memory_offset_bytes);
 
 #ifndef thorlabs_tsi_camera_sdk_EXPORTS
 

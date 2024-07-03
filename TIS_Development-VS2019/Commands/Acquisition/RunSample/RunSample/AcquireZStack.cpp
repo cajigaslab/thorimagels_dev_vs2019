@@ -254,10 +254,13 @@ long AcquireZStack::Execute(long index, long subWell)
 	long tapsIndex, tapsBalance;
 	long readoutSpeedIndex;
 	long camAverageMode, camAverageNum;
-	long camVericalFlip, camHorizontalFlip, imageAngle;
-	
+	long camVericalFlip, camHorizontalFlip, imageAngle, camChannel;
+	long colorImageType, polarImageType;
+	long isContinuousWhiteBalance, continuousWhiteBalanceNumFrames;
+	double redGain, greenGain, blueGain;
+
 	//getting the values from the experiment setup XML files
-	_pExp->GetCamera(camName,camImageWidth,camImageHeight,camPixelSize,camExposureTimeMS,gain,blackLevel,lightMode,left,top,right,bottom,binningX,binningY,tapsIndex,tapsBalance,readoutSpeedIndex,camAverageMode,camAverageNum,camVericalFlip,camHorizontalFlip,imageAngle);
+	_pExp->GetCamera(camName, camImageWidth, camImageHeight, camPixelSize, camExposureTimeMS, gain, blackLevel, lightMode, left, top, right, bottom, binningX, binningY, tapsIndex, tapsBalance, readoutSpeedIndex, camAverageMode, camAverageNum, camVericalFlip, camHorizontalFlip, imageAngle, camChannel, colorImageType, polarImageType, isContinuousWhiteBalance, continuousWhiteBalanceNumFrames, redGain, greenGain, blueGain);
 
 	long areaMode,scanMode,interleave,pixelX,pixelY,channel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[4], verticalFlip, horizontalFlip;
 	double areaAngle,dwellTime, crsFrequencyHz = 0;
@@ -265,7 +268,11 @@ long AcquireZStack::Execute(long index, long subWell)
 	long timeBasedLineScanMS = 0;
 	long threePhotonEnable = FALSE;
 	long numberOfPlanes = 1;
-	_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,channel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource, inputRange1, inputRange2, twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes);
+	long selectedImagingGG = 0;
+	long selectedStimGG = 0;
+	double pixelAspectRatioYScale = 1;
+
+	_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,channel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource, inputRange1, inputRange2, twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes, selectedImagingGG, selectedStimGG, pixelAspectRatioYScale);
 
 	ICamera::CameraType cameraType;
 
@@ -361,6 +368,14 @@ long AcquireZStack::Execute(long index, long subWell)
 	_pCamera->SetParam(ICamera::PARAM_CAPTURE_REGION_RIGHT,top);
 	_pCamera->SetParam(ICamera::PARAM_CAPTURE_REGION_BOTTOM,bottom);
 
+	_pCamera->SetParam(ICamera::PARAM_CAMERA_COLOR_IMAGE_TYPE, colorImageType);
+	_pCamera->SetParam(ICamera::PARAM_CAMERA_POLAR_IMAGE_TYPE, polarImageType);
+	_pCamera->SetParam(ICamera::PARAM_CAMERA_IS_CONTINUOUS_WHITE_BALANCE_ENABLED, isContinuousWhiteBalance);
+	_pCamera->SetParam(ICamera::PARAM_CAMERA_CONTINUOUS_WHITE_BALANCE_NUM_FRAMES, continuousWhiteBalanceNumFrames);
+	_pCamera->SetParam(ICamera::PARAM_CAMERA_RED_GAIN, redGain);
+	_pCamera->SetParam(ICamera::PARAM_CAMERA_GREEN_GAIN, greenGain);
+	_pCamera->SetParam(ICamera::PARAM_CAMERA_BLUE_GAIN, blueGain);
+
 	_pCamera->SetParam(ICamera::PARAM_LSM_SCANMODE,scanMode);
 	_pCamera->SetParam(ICamera::PARAM_LSM_INTERLEAVE_SCAN,interleave);
 	_pCamera->SetParam(ICamera::PARAM_LSM_PIXEL_X,pixelX);
@@ -387,8 +402,11 @@ long AcquireZStack::Execute(long index, long subWell)
 	_pCamera->SetParam(ICamera::PARAM_LSM_HORIZONTAL_FLIP, horizontalFlip);
 	_pCamera->SetParam(ICamera::PARAM_LSM_TIME_BASED_LINE_SCAN, timeBasedLineScan);
 	_pCamera->SetParam(ICamera::PARAM_LSM_TB_LINE_SCAN_TIME_MS, timeBasedLineScanMS);
-
 	_pCamera->SetParam(ICamera::PARAM_LSM_3P_ENABLE, threePhotonEnable);
+	_pCamera->SetParam(ICamera::PARAM_LSM_NUMBER_OF_PLANES, numberOfPlanes);
+	_pCamera->SetParam(ICamera::PARAM_LSM_SELECTED_IMAGING_GG, selectedImagingGG);
+	_pCamera->SetParam(ICamera::PARAM_LSM_Y_AMPLITUDE_SCALER, (int)(pixelAspectRatioYScale * 100));
+
 
 	//notify the ECU of the zoom change also
 	if(SetDeviceParamLong(SelectedHardware::SELECTED_CONTROLUNIT,IDevice::PARAM_SCANNER_ZOOM_POS,fieldSize,FALSE))
@@ -730,4 +748,9 @@ long AcquireZStack::SetZPosition(double pos,BOOL bWait)
 
 	return ret;
 
+}
+
+long AcquireZStack::ZStreamExecute(long index, long subWell, ICamera* pCamera, long zstageSteps, long timePoints, long undefinedVar)
+{
+	return FALSE;
 }

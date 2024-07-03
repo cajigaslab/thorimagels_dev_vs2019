@@ -19,12 +19,6 @@
 
     using LineProfileWindow.ViewModel;
 
-    using Microsoft.Research.DynamicDataDisplay;
-    using Microsoft.Research.DynamicDataDisplay.Charts;
-    using Microsoft.Research.DynamicDataDisplay.DataSources;
-    using Microsoft.Research.DynamicDataDisplay.PointMarkers;
-    using Microsoft.Research.DynamicDataDisplay.ViewportRestrictions;
-
     using ThorLogging;
 
     public struct LineProfileData
@@ -35,9 +29,9 @@
         public int LengthPerChannel;
         public double PixeltoµmConversionFactor;
 
-        //public long numChannel;
         public double[] profileDataX;
-        public double[][] profileDataY;
+
+        public  double[][] profileDataY;
 
         #endregion Fields
     }
@@ -59,53 +53,10 @@
         {
             InitializeComponent();
 
-            plotter.Legend.Remove();
-            _vm = new LineProfileViewModel();
+            _vm = new LineProfileViewModel(colorAssignment);
+            _vm.MaxChannels = maxChannels;
             this.DataContext = _vm;
             _vm.LineWidthChange += _vm_LineWidthChange;
-            _vm.MaxChannels = maxChannels;
-            _vm.InitialChildrenCount = plotter.Children.Count;
-            _vm.ChannelEnable = new bool[_vm.MaxChannels];
-            int count = plotter.Children.Count;
-
-            //do not remove the initial children
-            if (count > _vm.InitialChildrenCount)
-            {
-                for (int i = count - 1; i >= _vm.InitialChildrenCount; i--)
-                {
-                    plotter.Children.RemoveAt(i);
-                }
-            }
-
-            _vm.ColorAssigment = colorAssignment;
-
-            LineGraph lg = new LineGraph();
-
-            if (_vm.ColorAssigment.Length == _vm.MaxChannels)    // plotter init
-            {
-                double[] dataXOneCh = new double[1];
-                double[] dataYOneCh = new double[1];
-
-                dataXOneCh[0] = 0;
-                dataYOneCh[0] = 0;
-
-                for (int i = 0; i < _vm.MaxChannels; i++)
-                {
-                    EnumerableDataSource<double> xOneCh = new EnumerableDataSource<double>(dataXOneCh);
-                    EnumerableDataSource<double> yOneCh = new EnumerableDataSource<double>(dataYOneCh);
-
-                    xOneCh.SetXMapping(xVal => xVal);
-                    yOneCh.SetXMapping(yVal => yVal);
-
-                    CompositeDataSource dsOneCh = new CompositeDataSource(xOneCh, yOneCh);
-
-                    lg = plotter.AddLineGraph(dsOneCh, _vm.ColorAssigment[i], 1, "Data");
-
-                    lg.FilteringEnabled = false;
-                }
-
-                plotter.FitToView();
-            }
             try
             {
                 // Make this window the topmost within the app
@@ -149,7 +100,6 @@
             set
             {
                 _vm.ColorAssigment = value;
-                RedrawLinePlot();
             }
         }
 
@@ -217,70 +167,11 @@
 
         #region Methods
 
-        public void RedrawLinePlot()
-        {
-            int startIndex = _vm.InitialChildrenCount;
-
-            if ((_vm.NumChannel > 0) && (null != _vm.LineProfileData.profileDataX) && (null != _vm.LineProfileData.profileDataY))
-            {
-                CompositeDataSource[] dsCh = new CompositeDataSource[_vm.NumChannel];
-
-                for (int i = 0; i < _vm.MaxChannels; i++)    // color reset
-                {
-                    ((LineGraph)plotter.Children.ElementAt(startIndex + i)).LinePen = new Pen(new SolidColorBrush(Colors.Transparent), 1);
-                }
-
-                int j = 0;
-                for (int i = 0; i < _vm.MaxChannels; i++)
-                {
-                    if (j < _vm.LineProfileData.profileDataY.Length &&
-                        _vm.LineProfileData.profileDataX.Length == _vm.LineProfileData.profileDataY[j].Length &&
-                        true == _vm.ChannelEnable[i])
-                    {
-                        // If the conversion is active, change the ProfileDataX to show values in µm instead
-                        if (_vm.IsConversionActive)
-                        {
-                            for (int k = 0; k < _vm.LineProfileData.LengthPerChannel; k++)
-                            {
-                                _vm.LineProfileData.profileDataX[k] = k * _vm.LineProfileData.PixeltoµmConversionFactor;
-                            }
-                        }
-
-                        EnumerableDataSource<double> xOneCh = new EnumerableDataSource<double>(_vm.LineProfileData.profileDataX);
-                        xOneCh.SetXMapping(xVal => xVal);
-                        EnumerableDataSource<double> yOneCh = new EnumerableDataSource<double>(_vm.LineProfileData.profileDataY[j]);
-                        yOneCh.SetYMapping(yVal => yVal);
-                        CompositeDataSource ds = new CompositeDataSource(xOneCh, yOneCh);
-
-                        ((LineGraph)plotter.Children.ElementAt(startIndex + i)).DataSource = ds;
-
-                        ((LineGraph)plotter.Children.ElementAt(startIndex + i)).LinePen = new Pen(new SolidColorBrush(_vm.ColorAssigment[i]), 1);
-                        j++;
-                    }
-                }
-
-                plotter.FitToView();
-                if (false == _vm.IsAutoScaleActive)
-                {
-                    // Autoscale adds 20 to each limit for easier view of the plot, should do the same
-                    plotter.Visible = new Rect(-20, _vm.YminValue, (double)_vm.LineProfileData.profileDataX.Max()+40, _vm.YmaxValue-_vm.YminValue);
-
-                }
-
-                //if (true == _vm.IsConversionActive)
-                //{
-                //    // Here the conversion pushed x axis forward by 20 so it started from -20 and we made it to fit between between it's first and last value by using below command so it starts from 0 now
-                //    plotter.Visible = new Rect(_vm.LineProfileData.profileDataX[0], _vm.YminValue, (double)_vm.LineProfileData.profileDataX[_vm.LineProfileData.profileDataX.Length-1], _vm.YmaxValue - _vm.YminValue);
-                //}
-
-            }
-        }
+        
 
         public void SetData(LineProfileData lineprofileData)
         {
             _vm.SetData(lineprofileData);
-
-            RedrawLinePlot();
         }
 
         void LineProfile_Closed(object sender, EventArgs e)

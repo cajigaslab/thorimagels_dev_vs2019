@@ -15,9 +15,10 @@
     using System.Windows;
     using System.Windows.Input;
     using System.Windows.Media;
+    using System.Windows.Shapes;
     using System.Xml;
     using System.Xml.Linq;
-
+    using System.Xml.Schema;
     using global::RealTimeLineChart.Model;
     using global::RealTimeLineChart.View;
 
@@ -106,6 +107,9 @@
         public double _visibleYAxisMax = 0;
         public double _visibleYAxisMin = 0;
 
+
+
+
         static Dictionary<string, MarkerType> MarkerTypeDictionary = new Dictionary<string, MarkerType>()
         {
         {"MARKER_ADD", MarkerType.Add},
@@ -123,12 +127,15 @@
         byte[] _diData;
         private double[] _fileVisibleYAxis = new double[2];
         private bool _isMeasureCursorVisible = false;
+        private bool _isFrameCursorVisible = false;
         private bool _isRollOverEnabled = false;
         private ICommand _isRollOverEnabledCommand;
         private bool _isVerticalMarkerVisible = true;
         private RelayCommandWithParam _markerRelayCommand;
         private ICommand _removeChannelCommand;
         private ICommand _showMeasureCursorCommand;
+        private ICommand _showFrameCursorCommand;
+        private ICommand _showExportCommand;
         private bool _statsPanelEnable = true;
         private string _verticalMarkerTooltipText = string.Empty;
         double[] _viData;
@@ -228,7 +235,7 @@
         /// Gets or sets a value indicating whether measurement cursor is visible.
         /// </summary>
         /// <value>
-        /// <c>true</c> if measurement cursor is visible; otherwise, <c>false</c>.
+        /// <c>true</c> if measurement cursor is visible; otherwise, <c>false</c>.  
         /// </value>
         public bool IsMeasureCursorVisible
         {
@@ -244,6 +251,40 @@
                     OnPropertyChanged("IsMeasureCursorVisible");
                 }
             }
+        }
+
+        public bool IsFrameCursorVisible
+        {
+            get
+            {
+                return _isFrameCursorVisible;
+            }
+            set
+            {
+                if (_isFrameCursorVisible != value)
+                {
+                    _isFrameCursorVisible = value;
+                    OnPropertyChanged("IsFrameCursorVisible");
+                }
+            }
+        }
+
+        public Visibility FrameButtonVisible
+        {
+            get
+            {
+                if(RealTimeDataCapture.Instance.FrameTimes != null)
+                {
+                    return Visibility.Visible; 
+                }
+                else
+                {
+                    return Visibility.Collapsed;
+
+                }
+
+            }
+
         }
 
         /// <summary>
@@ -368,6 +409,30 @@
                     this._showMeasureCursorCommand = new RelayCommand(ShowMeasureCursor);
 
                 return this._showMeasureCursorCommand;
+            }
+        }
+
+        public ICommand ShowFrameCursorCommand
+        {
+            get
+            {
+
+                if (this._showFrameCursorCommand == null)
+                    this._showFrameCursorCommand = new RelayCommand(ShowFrameCursor);
+
+                return this._showFrameCursorCommand;
+            }
+        }
+
+        public ICommand ShowExportCommand
+        {
+            get
+            {   
+
+                if (this._showExportCommand == null)
+                    this._showExportCommand = new RelayCommand(ExportFrameTimes);
+
+                return this._showExportCommand;
             }
         }
 
@@ -1064,7 +1129,15 @@
                 int iVal = 0;
 
                 //clear series
-                _channelViewModels.Each(s => { s.Clear(); });
+                    Dictionary<String, IRange> seriesNameToRange = new Dictionary<String, IRange>();
+                Dictionary<String, Boolean> seriesNameToYLock = new Dictionary<String, Boolean>();
+                //Save the Visible range and if the Ylock is enabled before the chart series is reset.
+                //Line editor may remove or add lines, so associate range with channel name.
+                _channelViewModels.Each(s => {
+                    seriesNameToRange.Add(s.ChannelName, s.YVisibleRange);
+                    seriesNameToYLock.Add(s.ChannelName, s.YVisibleLock);
+                    s.Clear(); 
+                });
 
                 ChannelViewModels = new ObservableCollection<ChannelViewModel>();
                 _chartSeries?.Each(s => { s.DataSeries?.Clear(); });
@@ -1169,6 +1242,28 @@
                     _chartSeries.Add(l);
                 }
 
+                //Restore the Y axis if the selected chart is in YLock
+                //also restore the YLock
+                _channelViewModels.Each(s => {
+                    IRange i;
+                    if (seriesNameToRange.TryGetValue(s.ChannelName, out i))
+                    {
+                        s.YVisibleRange = i;
+                    }
+                    else
+                    {
+                        s.YVisibleRange = new DoubleRange(-5, 5);
+                    }
+                    Boolean b;
+                    if (seriesNameToYLock.TryGetValue(s.ChannelName, out b))
+                    {
+                        s.YVisibleLock = b;
+                    }
+                    else
+                    {
+                        s.YVisibleLock = false;
+                    }
+                });
                 //update display range
                 if (null != xRange)
                 {
@@ -1348,6 +1443,7 @@
         {
             ChangeVerticalMarkersMode(MarkerType.DeleteAll);
             IsMeasureCursorVisible = false;
+            IsFrameCursorVisible = false;
             ChangeVerticalMarkersMode(MarkerType.DisplayAll);
             IsVerticalMarkerVisible = true;
             Mouse.OverrideCursor = null;
@@ -1404,6 +1500,87 @@
         private void ShowMeasureCursor()
         {
             IsMeasureCursorVisible = !IsMeasureCursorVisible;
+        }
+
+        private void ShowFrameCursor()
+        {
+            IsFrameCursorVisible = !IsFrameCursorVisible;
+        }
+
+        private void ExportFrameTimes()
+        {
+            if (RealTimeDataCapture.Instance.FrameTimes == null)
+            {
+                return;
+            }
+            //using (//var dialog = new System.Windows.Forms.FolderBrowserDialog())
+            //{
+            //System.Windows.Forms.DialogResult result = dialog.ShowDialog();
+            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+            dlg.Title = "Select a destination to export Frame Timings";
+            dlg.InitialDirectory = "C:\\temp";//vm.OutputPath;
+            dlg.FileName = "FrameTiming";
+            dlg.DefaultExt = ".csv";
+            dlg.AddExtension = true;
+            dlg.Filter = "CSV Files (*.csv)|*.csv|Text Files (*.txt)|*.txt|All Files (*.*)|*.*";
+
+            Nullable<bool> result = dlg.ShowDialog();
+
+            try
+            {
+                if (false == result)
+                {
+                    return;
+                }
+                else
+                {
+                    string path = System.IO.Path.GetDirectoryName(dlg.FileName);
+
+                    writeFrameTiming(path + "\\" + dlg.FileName, dlg);
+
+                }
+            }
+            catch 
+            {
+
+            }
+
+        }
+
+        private void writeFrameTiming(string path, Microsoft.Win32.SaveFileDialog dlg)
+        {
+            string[] seperators = { "" , ".", ""};
+            bool csv = true;
+            
+            if (!path.EndsWith(".csv"))
+            {
+                seperators[0] = "\t";
+                seperators[1] = ":";
+                seperators[2] = ":";
+                csv = false;
+            }
+
+            using (System.IO.FileStream writer = (System.IO.FileStream)dlg.OpenFile())
+            {
+                int i = 1; //framecounter, start at one most frame as counted starting at one
+                foreach (double time in RealTimeDataCapture.Instance.FrameTimes)
+                {
+                    TimeSpan t = TimeSpan.FromSeconds(time);
+                    string millisAndUS = t.ToString(@"hh\:mm\:ss\:ffffff").Split(':')[3];
+                    string millis = millisAndUS.Substring(0,3);
+                    string USec = millisAndUS.Substring(3);
+                    string hoursAndSeconds = t.ToString(@"hh\:mm\:ss");
+                    string printCount = "";
+                    if (false == csv)
+                    {
+                        printCount = "" + i;
+                    }
+                    byte[] info = new UTF8Encoding(true).GetBytes(printCount + seperators[0] + hoursAndSeconds + seperators[1] + millis + seperators[2] + USec + "\n");
+                    writer.Write(info, 0, info.Length);
+                    writer.Flush();
+                    i++;
+                }
+            }
         }
 
         private void UpdateRollOverEnable()

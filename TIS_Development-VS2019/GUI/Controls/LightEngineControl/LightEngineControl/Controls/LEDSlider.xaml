@@ -181,8 +181,7 @@
         </Slider>
         <!-- Plus/Minus -->
         <StackPanel Orientation="Horizontal"
-                    Grid.Column="3"
-                    Grid.Row="1">
+                    Grid.Column="3" Margin="0,0,24,0">
             <TextBox Name="NUMERIC_INPUT_PART"
                      VerticalAlignment="Center"
                      Width="40"
@@ -255,5 +254,16 @@
                    Content="ºC">
             </Label>
         </Grid>
+        <CheckBox x:Name="EXTERNAL_MODE"
+                Grid.Column="3"
+                TabIndex="0"
+                Width="17"
+                VerticalAlignment="Center"
+                ToolTip="Enable/Disable External Trigger mode for lamp"
+                Foreground="{Binding Foreground, ElementName=ControlRoot}"
+                FontSize="{Binding FontSize, ElementName=ControlRoot}"
+                FontFamily="{Binding FontFamily, ElementName=ControlRoot}"
+                Visibility="{Binding IsCheckable, Converter={StaticResource VisibilityConverter}}"
+                IsChecked="{Binding ExternalMode, Mode=TwoWay}" Margin="77,0,2,0"/>
     </Grid>
 </UserControl>

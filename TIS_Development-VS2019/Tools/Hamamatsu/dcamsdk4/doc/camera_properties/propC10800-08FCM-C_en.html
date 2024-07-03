@@ -96,7 +96,7 @@
   <body>
     <div>
       <div class="fileinformation">
-		<div>v21.6.6291</div>
+		<div>v22.12.6552</div>
 	</div>
     </div>
     <div><a class="go-top" href="#Chapter_appendix_detail"></a></div>
@@ -378,7 +378,7 @@
                       <td width="5%" class="prop_indent"></td>
                       <td>1 to 16127
         , step 1
-        , default 1</td>
+        , default 128</td>
                       <td colspan="6">
                       </td>
                     </tr>
@@ -525,11 +525,10 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>0 to 255
+                      <td>0 to n
         , step 1
         , default 0</td>
-                      <td colspan="6">
-                      </td>
+                      <td colspan="6">@ DCAM_IDPROP_TESTPATTERN_KIND, <br>DCAMPROP_TESTPATTERN_KIND__FLAT(IFLAT), n = 255 <br>DCAMPROP_TESTPATTERN_KIND__HORZGRADATION(IHORZGRADATION), n = 9 <br>DCAMPROP_TESTPATTERN_KIND__VERTGRADATION(IVERTGRADATION), n = 9 <br>DCAMPROP_TESTPATTERN_KIND__LINE(ILINE), n = 8</td>
                     </tr>
                     <tr>
                       <td width="100%" colspan="8">
@@ -1218,7 +1217,7 @@
                     <tr>
                       <td width="5%" class="prop_indent"></td>
                       <td>DCAMPROP_CAPTUREMODE__SHADINGCALIB</td>
-                      <td colspan="6">@ DCAM_IDPROP_SUBTRACT, DCAMPROP_MODE__ON<br>To use after dark correction</td>
+                      <td colspan="6">@ DCAM_IDPROP_SUBTRACT, DCAMPROP_MODE__ON <br>To use after dark correction</td>
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
@@ -1476,13 +1475,13 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>DCAMPROP_SHADINGCALIB_METHOD__AVERAGE (default)</td>
+                      <td>DCAMPROP_SHADINGCALIB_METHOD__AVERAGE</td>
                       <td colspan="6">
                       </td>
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>DCAMPROP_SHADINGCALIB_METHOD__MAXIMUM</td>
+                      <td>DCAMPROP_SHADINGCALIB_METHOD__MAXIMUM (default)</td>
                       <td colspan="6">
                       </td>
                     </tr>
@@ -2245,7 +2244,7 @@
                         <div class="prop_id">DCAM_IDPROP_BUFFER_ROWBYTES</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2274,7 +2273,7 @@
                         <div class="prop_id">DCAM_IDPROP_BUFFER_FRAMEBYTES</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2303,7 +2302,7 @@
                         <div class="prop_id">DCAM_IDPROP_BUFFER_TOPOFFSETBYTES</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2332,7 +2331,7 @@
                         <div class="prop_id">DCAM_IDPROP_BUFFER_PIXELTYPE</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2361,7 +2360,7 @@
                         <div class="prop_id">DCAM_IDPROP_RECORDFIXEDBYTES_PERFILE</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2390,7 +2389,7 @@
                         <div class="prop_id">DCAM_IDPROP_RECORDFIXEDBYTES_PERSESSION</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2419,7 +2418,7 @@
                         <div class="prop_id">DCAM_IDPROP_RECORDFIXEDBYTES_PERFRAME</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2483,7 +2482,7 @@
                         <div class="prop_id">DCAM_IDPROP_IMAGEDETECTOR_PIXELWIDTH</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2514,7 +2513,7 @@
                         <div class="prop_id">DCAM_IDPROP_IMAGEDETECTOR_PIXELHEIGHT</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2545,7 +2544,7 @@
                         <div class="prop_id">DCAM_IDPROP_TIMESTAMP_PRODUCER</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2574,7 +2573,7 @@
                         <div class="prop_id">DCAM_IDPROP_FRAMESTAMP_PRODUCER</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>

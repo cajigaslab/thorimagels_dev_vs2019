@@ -26,6 +26,10 @@ public:
 	long GetImageDimensions(long &width, long &height);
 	long CaptureSingleImageWithAverage(char *buffer, double exposureTime, long binningX, long binningY , long avgFrames, long snapshotFlag);
 	long StartAutoFocus(double magnification, long autoFocusType, BOOL& afFound);
+	long StartAutoExposure();
+	long StopAutoExposure();
+	long CaptureSequentialPreview();
+	long StopSequentialPreview();
 
 	static BOOL _enableCopy;
 
@@ -40,3 +44,8 @@ UINT SnapshotThreadProcSciCam(LPVOID pParam);
 
 UINT AutoFocusCaptureThreadProcSciCam(LPVOID pParam);
 UINT AutoFocusStatusThreadProcSciCam();
+
+UINT AutoExposureCaptureThreadProcSciCam();
+UINT AutoExposureStatusThreadProcSciCam();
+
+UINT SequentialPreviewCaptureThreadProcSciCam();

@@ -34,7 +34,9 @@
         static GGalvoWaveformParams _gWaveParams = new GGalvoWaveformParams() { GalvoWaveformXY = IntPtr.Zero, GalvoWaveformPockel = IntPtr.Zero, DigBufWaveform = IntPtr.Zero };
         private static bool _inSaving;
         static PixelArray _pixelArray = new PixelArray();
+        private static double _powerPhaseShiftUS = 0; //Power phase shift relative to galvo, delay(+) or advance(-)
         private static bool _saveSuccessed;
+        private static int _startBodyIndex = 0; //Keep the start index of waveform body excludes galvo travel part
         static ThorDAQGGWaveformParams _thorDAQGGWaveformParams = new ThorDAQGGWaveformParams() { GalvoWaveformX = IntPtr.Zero, GalvoWaveformY = IntPtr.Zero, GalvoWaveformPockel = IntPtr.Zero, DigBufWaveform = IntPtr.Zero };
         static BleachWaveform _waveform = null;
         static BackgroundWorker _waveformSaver;
@@ -420,6 +422,9 @@
 
         public static void BuildPrePatIdle(BleachWaveParams bwParams, bool cycleBegin, bool epochBegin)
         {
+            if (cycleBegin)
+                _startBodyIndex = (0 < _waveform.Count) ? _waveform.Count : 0;    //BuildTravel may be skipped.
+
             //set cycle line transition first:
             byte cycleEnv = (cycleBegin) ? (byte)0 : (byte)1;
             byte epochEnv = (epochBegin) ? (byte)0 : (byte)1;
@@ -606,6 +611,8 @@
             double TargetVecVx = ImgRefX_volt - HorizontalScanDirection * target.X * PixelX_Volt;
             double TargetVecVy = ImgRefY_volt + VerticalScanDirection * target.Y * PixelY_Volt;
             BuildTransition(TargetVecVx, TargetVecVy, 0, PowerIdle, 0, cycleEnvelope, (byte)0, patnEnvelope, (byte)0, epochEnvelope, (byte)1);
+            if (0 == cycleEnvelope) //mark start of waveform body after travel to start
+                _startBodyIndex = (0 < _waveform.Count) ? _waveform.Count : 0;
         }
 
         public static bool CheckSaveState()
@@ -740,7 +747,7 @@
             return _waveform;
         }
 
-        public static bool InitializeParams(int fieldSize, double[] fieldScaleFine, int[] Pixel, int[] OffsetActual, double[] OffsetFine, double ScaleYScan, int verticalFlipScan, int horizontalFlipScan, double[] PwIdle, WaveformDriverType waveformDriverType)
+        public static bool InitializeParams(int fieldSize, double[] fieldScaleFine, int[] Pixel, int[] OffsetActual, double[] OffsetFine, double ScaleYScan, int verticalFlipScan, int horizontalFlipScan, double[] PwIdle, WaveformDriverType waveformDriverType, double? powerPhaseShiftUS)
         {
             //Calculate parameters:
             if ((fieldScaleFine.Count() != 2) || (Pixel.Count() != 2) || (OffsetActual.Count() != 2) || (OffsetFine.Count() != 2))
@@ -772,7 +779,7 @@
             DeltaX_Px = DeltaX_volt / WaveformBuilder.PixelX_Volt;
 
             _waveform = new BleachWaveform(waveformDriverType);
-
+            _powerPhaseShiftUS = (null != powerPhaseShiftUS) ? powerPhaseShiftUS.Value : 0.0;
             return true;
         }
 
@@ -1166,8 +1173,12 @@
 
         public static void ReturnHome(bool final)
         {
-            Byte complete = (final) ? (Byte)1 : (Byte)0;
-            Byte active = (final) ? (Byte)0 : (Byte)1;
+            byte complete = final ? BleachWaveform.BYTE_HIGH : BleachWaveform.BYTE_LOW;
+            byte active = final ? BleachWaveform.BYTE_LOW : BleachWaveform.BYTE_HIGH;
+
+            //Adjust waveform body(exclude travel head and tail) for power phase shift before return home
+            _waveform.ShiftPockel(final, _startBodyIndex, (int)(_powerPhaseShiftUS / MinDwellTime));
+
             if (0 < _waveform.Count)
             {
                 if ((0 >= _waveform.X_Volt.Count || _waveform.X_Volt.Last() == _waveform.X_Volt[0]) && (0 >= _waveform.Y_Volt.Count || _waveform.Y_Volt.Last() == _waveform.Y_Volt[0]))
@@ -1426,6 +1437,8 @@
                             //copy the XY analog lines into a single IntPtr buffer _thorDAQGGWaveformParams.GalvoWaveformXY
                             //offset the IntPtr using the IntPtr.Add() function
                             CopyUShortToIntPtr(_waveform.X_Volt_16bit.ToArray(), 0, _thorDAQGGWaveformParams.GalvoWaveformX, _waveform.X_Volt_16bit.Count);
+
+                            _thorDAQGGWaveformParams.GalvoWaveformXOffset = _waveform.XOffset16bit;
                         }
 
                         if (IntPtr.Zero != _thorDAQGGWaveformParams.GalvoWaveformY && 0 < _waveform.Y_Volt_16bit.Count)
@@ -1433,13 +1446,17 @@
                             //copy the XY analog lines into a single IntPtr buffer _thorDAQGGWaveformParams.GalvoWaveformXY
                             //offset the IntPtr using the IntPtr.Add() function
                             CopyUShortToIntPtr(_waveform.Y_Volt_16bit.ToArray(), 0, _thorDAQGGWaveformParams.GalvoWaveformY, _waveform.Y_Volt_16bit.Count);
+                            _thorDAQGGWaveformParams.GalvoWaveformYOffset = _waveform.YOffset16bit;
                         }
 
                         //copy the pockels analog line into a single IntPtr buffer _thorDAQGGWaveformParams.GalvoWaveformPockel
                         for (int i = 0; i < _waveform.Pockel_16bit.Count; i++)
                         {
                             if (0 < _waveform.Pockel_16bit[i].Count)
+                            {
                                 CopyUShortToIntPtr(_waveform.Pockel_16bit[i].ToArray(), 0, IntPtr.Add(_thorDAQGGWaveformParams.GalvoWaveformPockel, i * (int)_thorDAQGGWaveformParams.analogPockelSize * sizeof(ushort)), (int)_thorDAQGGWaveformParams.analogPockelSize);
+                                _thorDAQGGWaveformParams.GalvoWaveformPoceklsOffset = _waveform.PockelsOffset16bit[i]; //TODO: if we ever use multiple pockels this will have to be updated
+                            }
                         }
 
                         //copy the digital lines into a single IntPtr buffer _thorDAQGGWaveformParams.DigBufWaveform

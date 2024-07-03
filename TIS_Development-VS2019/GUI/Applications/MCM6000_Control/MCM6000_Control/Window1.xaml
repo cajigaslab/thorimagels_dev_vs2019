@@ -1,0 +1,1116 @@
+﻿<Window x:Class="MCM6000_Control.Window1"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:MCM6000_Control"
+        Title="MCM6000 Control"
+        Height="640"
+        Loaded="Window1_Loaded"
+        Unloaded="Window1_Unloaded"
+        ResizeMode="NoResize"
+        SizeToContent="WidthAndHeight"
+        Name="ControlApp">
+    <Window.Resources>
+        <ResourceDictionary>
+            <local:DoubleCultureConverter x:Key="doubleConverter" />
+            <Style 
+                TargetType="{x:Type ListBox}">
+                <Setter Property="ListBox.ItemTemplate">
+                    <Setter.Value>
+                        <DataTemplate>
+                            <ToggleButton Content="{Binding}"
+                                          IsChecked="{Binding IsSelected, Mode=TwoWay, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListBoxItem}}}"/>
+                        </DataTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <MultiTrigger>
+                        <MultiTrigger.Conditions>
+                            <Condition Property="Selector.IsSelectionActive"
+                                       Value="True" />
+                        </MultiTrigger.Conditions>
+                        <Setter Property="Background"
+                                Value="SteelBlue" />
+                    </MultiTrigger>
+                    <MultiTrigger>
+                        <MultiTrigger.Conditions>
+                            <Condition Property="Selector.IsSelectionActive"
+                                       Value="False" />
+                        </MultiTrigger.Conditions>
+                        <Setter Property="Background"
+                                Value="SteelBlue" />
+                        <Setter Property="Opacity"
+                                Value="50" />
+                    </MultiTrigger>
+                </Style.Triggers>
+            </Style>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Margin="5">
+                <Menu Width="910"
+                      Background="#FF333333"
+                      Foreground="White">
+                    <MenuItem Header="File"
+                              Background="#FF333333">
+                        <MenuItem Name="btnExit"
+                                  Header="Exit"
+                                  Background="#FF333333"
+                                  Click="btnExit_Click" />
+                    </MenuItem>
+                </Menu>
+                <Image Source=".\Thorlabs.png"
+                       Width="100"></Image>
+            </StackPanel>
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Border CornerRadius="12"
+                            BorderBrush="White"
+                            BorderThickness="1"
+                            Margin="5">
+                        <Grid Margin="5"
+                              Name="gridMCM6000ControlX"
+                              MouseWheel="xSlider_MouseWheel">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Margin="10,5,10,5">
+                                <TextBox HorizontalAlignment="Center"
+                                         VerticalAlignment="Top"
+                                         ToolTip="Max X-axis value"
+                                         Width="36"
+                                         Height="20"
+                                         Text="{Binding ElementName=ControlApp, Path=XMax}"
+                                         TextWrapping="Wrap"
+                                         IsReadOnly="true" />
+                                <StackPanel Orientation="Horizontal">
+                                    <local:FormattedSlider x:Name="xSlider"
+                                                       ToolTip="Slider to move the X-axis"
+                                                       Value="{Binding ElementName=ControlApp, Path=XPosition, Mode=TwoWay, UpdateSourceTrigger=Explicit}"
+                                                       Minimum="{Binding ElementName=ControlApp, Path=XMin, Mode=OneWay}"
+                                                       Maximum="{Binding ElementName=ControlApp, Path=XMax, Mode=OneWay}"
+                                                       TickPlacement="TopLeft"
+                                                       AutoToolTipFormat="{}{0:F4}"
+                                                       AutoToolTipPlacement="BottomRight"
+                                                       Orientation="Vertical"
+                                                       HorizontalAlignment="Right"
+                                                       Height="220"
+                                                       Width="55"
+                                                       TickFrequency="1"
+                                                       IsMoveToPointEnabled="False"
+                                                       IsSnapToTickEnabled="False"
+                                                       Thumb.DragStarted="xSlider_DragStarted"
+                                                       Thumb.DragCompleted="xSlider_DragCompleted"
+                                                       MouseWheel="xSlider_MouseWheel"
+                                                       LargeChange="0"
+                                                       LostMouseCapture="xSlider_LostMouseCapture">
+                                        <local:FormattedSlider.RenderTransform>
+                                            <ScaleTransform ScaleX="2.0"
+                                                        ScaleY="1.0" />
+                                        </local:FormattedSlider.RenderTransform>
+                                    </local:FormattedSlider>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <RepeatButton Name="btnXPlus"
+                                                Content="+"
+                                                Width="30"
+                                                Height="25"
+                                                Style="{x:Null}"
+                                                      Click="btnXPlus_Click"></RepeatButton>
+                                        <RepeatButton Name="btnXMinus"
+                                                Content="-"
+                                                Width="30"
+                                                Height="25"
+                                                Style="{x:Null}"
+                                                      Click="btnXMinus_Click"></RepeatButton>
+                                    </StackPanel>
+                                </StackPanel>
+                                <TextBox HorizontalAlignment="Center"
+                                         VerticalAlignment="Bottom"
+                                         ToolTip="Min X-axis value"
+                                         Width="36"
+                                         Height="20"
+                                         Text="{Binding ElementName=ControlApp, Path=XMin}"
+                                         TextWrapping="Wrap"
+                                         IsReadOnly="true" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <StackPanel Margin="5,10,5,10"
+                                            Orientation="Horizontal"
+                                            HorizontalAlignment="Center">
+                                    <Label Content="X: "
+                                           HorizontalAlignment="Center"
+                                           Foreground="White"
+                                           VerticalAlignment="Center" />
+                                    <Label Name="xLabel"
+                                           Content="{Binding ElementName=ControlApp, Path=XPosition, Mode=TwoWay}"
+                                           ToolTip="Current X-axis position"
+                                           Width="100"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="White">
+                                        <Label.Style>
+                                            <Style TargetType="Label">
+                                                <Style.Resources>
+                                                    <Storyboard x:Key="flashingAnimation">
+                                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                         From="1"
+                                                                         To="0.5"
+                                                                         AutoReverse="True"
+                                                                         Duration="0:0:0.5"
+                                                                         RepeatBehavior="Forever" />
+                                                    </Storyboard>
+                                                </Style.Resources>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ElementName=ControlApp, Path=XPosOutOfBounds}"
+                                                                 Value="True">
+                                                        <Setter Property="Background"
+                                                                Value="Red" />
+                                                        <DataTrigger.EnterActions>
+                                                            <BeginStoryboard Name="flashing"
+                                                                             Storyboard="{StaticResource flashingAnimation}" />
+                                                        </DataTrigger.EnterActions>
+                                                        <DataTrigger.ExitActions>
+                                                            <StopStoryboard BeginStoryboardName="flashing" />
+                                                        </DataTrigger.ExitActions>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Label.Style>
+                                    </Label>
+                                    <Label Content="[mm]"
+                                           HorizontalAlignment="Center"
+                                           Foreground="White"
+                                           VerticalAlignment="Center" />
+                                </StackPanel>
+
+                                <TextBox Name="txtXGoto"
+                                         Margin="5,10,5,10"
+                                         ToolTip="X Goto value"
+                                         Width="70"
+                                         Height="25"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center" />
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Center"
+                                            Margin="5,10,5,10">
+                                    <Button Content="Go"
+                                            Name="btnGoX"
+                                            Click="btnGoX_Click"
+                                            ToolTip="Command to move the X-axis"
+                                            Width="50"
+                                            Height="30"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Margin="5" />
+                                    <Button Content="Stop"
+                                            Name="btnStopX"
+                                            ToolTip="Command to stop the X-axis"
+                                            Width="50"
+                                            Height="30"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Margin="5"
+                                            Foreground="White"
+                                            Background="Red"
+                                            Style="{x:Null}"
+                                            Click="btnStopX_Click"
+                                            ClickMode="Press" />
+                                    <Button Content="Set Zero"
+                                            Name="btnSetZeroX"
+                                            ToolTip="Command to set current location to zero"
+                                            Margin="5"
+                                            Width="50"
+                                            Height="30"
+                                            Click="btnSetZeroX_Click" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <StackPanel Orientation="Horizontal"
+                                                Margin="5,10,5,10">
+                                        <Label Content="Slider Step Size"
+                                               Foreground="White"
+                                               Height="25" />
+                                        <TextBox Name="txtStepSizeX"
+                                                 Text="{Binding ElementName=ControlApp, Path=XStepSize, Mode=TwoWay,Converter={StaticResource doubleConverter}}"
+                                                 ToolTip="Enter the StepSize value"
+                                                 Width="60"
+                                                 Height="25" />
+                                        <Label Content="[mm]"
+                                               Foreground="White"
+                                               Height="25" />
+                                    </StackPanel>
+                                    <StackPanel VerticalAlignment="Center"
+                                                ToolTip="Select slider step type">
+                                        <RadioButton Name="rbCoarseX"
+                                                     GroupName="FineCoarse"
+                                                     Content="Coarse"
+                                                     Margin="5"
+                                                     Foreground="White"
+                                                     Click="rbCoarseX_Click" />
+                                        <RadioButton Name="rbFineX"
+                                                     GroupName="FineCoarse"
+                                                     Content="Fine"
+                                                     Margin="5"
+                                                     Foreground="White"
+                                                     Click="rbFineX_Click" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <Border CornerRadius="12"
+                            BorderBrush="White"
+                            BorderThickness="1"
+                            Margin="5">
+                        <Grid Margin="5"
+                              Name="gridMCM6000ControlY"
+                              MouseWheel="ySlider_MouseWheel">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Margin="10,5,10,5">
+                                <TextBox HorizontalAlignment="Center"
+                                         VerticalAlignment="Top"
+                                         ToolTip="Max Y-axis value"
+                                         Width="36"
+                                         Height="20"
+                                         Text="{Binding ElementName=ControlApp, Path=YMax}"
+                                         TextWrapping="Wrap"
+                                         IsReadOnly="true" />
+                                <StackPanel Orientation="Horizontal">
+                                    <local:FormattedSlider x:Name="ySlider"
+                                                       ToolTip="Slider to move the Y-axis"
+                                                       Value="{Binding ElementName=ControlApp, Path=YPosition, Mode=TwoWay, UpdateSourceTrigger=Explicit}"
+                                                       Minimum="{Binding ElementName=ControlApp, Path=YMin, Mode=OneWay}"
+                                                       Maximum="{Binding ElementName=ControlApp, Path=YMax, Mode=OneWay}"
+                                                       TickPlacement="TopLeft"
+                                                       AutoToolTipFormat="{}{0:F4}"
+                                                       AutoToolTipPlacement="BottomRight"
+                                                       Orientation="Vertical"
+                                                       HorizontalAlignment="Right"
+                                                       Height="220"
+                                                       Width="55"
+                                                       TickFrequency="1"
+                                                       IsMoveToPointEnabled="False"
+                                                       IsSnapToTickEnabled="False"
+                                                       Thumb.DragStarted="ySlider_DragStarted"
+                                                       Thumb.DragCompleted="ySlider_DragCompleted"
+                                                       MouseWheel="ySlider_MouseWheel"
+                                                       LargeChange="0"
+                                                       LostMouseCapture="ySlider_LostMouseCapture">
+                                        <local:FormattedSlider.RenderTransform>
+                                            <ScaleTransform ScaleX="2.0"
+                                                        ScaleY="1.0" />
+                                        </local:FormattedSlider.RenderTransform>
+                                    </local:FormattedSlider>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <RepeatButton Name="btnYPlus"
+                                            Content="+"
+                                            Width="30"
+                                            Height="25"
+                                            Style="{x:Null}"
+                                                      Click="btnYPlus_Click"></RepeatButton>
+                                        <RepeatButton Name="btnYMinus"
+                                            Content="-"
+                                            Width="30"
+                                            Height="25"
+                                            Style="{x:Null}"
+                                                      Click="btnYMinus_Click"></RepeatButton>
+                                    </StackPanel>
+                                </StackPanel>
+                                <TextBox HorizontalAlignment="Center"
+                                         VerticalAlignment="Bottom"
+                                         ToolTip="Min Y-axis value"
+                                         Width="36"
+                                         Height="20"
+                                         Text="{Binding ElementName=ControlApp, Path=YMin}"
+                                         TextWrapping="Wrap"
+                                         IsReadOnly="true" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <StackPanel Margin="5,10,5,10"
+                                            Orientation="Horizontal"
+                                            HorizontalAlignment="Center">
+                                    <Label Content="Y: "
+                                           HorizontalAlignment="Center"
+                                           Foreground="White"
+                                           VerticalAlignment="Center" />
+                                    <Label Name="yLabel"
+                                           Content="{Binding ElementName=ControlApp, Path=YPosition, Mode=TwoWay}"
+                                           ToolTip="Current Y-axis position"
+                                           Width="100"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="White">
+                                        <Label.Style>
+                                            <Style TargetType="Label">
+                                                <Style.Resources>
+                                                    <Storyboard x:Key="flashingAnimation">
+                                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                         From="1"
+                                                                         To="0.5"
+                                                                         AutoReverse="True"
+                                                                         Duration="0:0:0.5"
+                                                                         RepeatBehavior="Forever" />
+                                                    </Storyboard>
+                                                </Style.Resources>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ElementName=ControlApp, Path=YPosOutOfBounds}"
+                                                                 Value="True">
+                                                        <Setter Property="Background"
+                                                                Value="Red" />
+                                                        <DataTrigger.EnterActions>
+                                                            <BeginStoryboard Name="flashing"
+                                                                             Storyboard="{StaticResource flashingAnimation}" />
+                                                        </DataTrigger.EnterActions>
+                                                        <DataTrigger.ExitActions>
+                                                            <StopStoryboard BeginStoryboardName="flashing" />
+                                                        </DataTrigger.ExitActions>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Label.Style>
+                                    </Label>
+                                    <Label Content="[mm]"
+                                           HorizontalAlignment="Center"
+                                           Foreground="White"
+                                           VerticalAlignment="Center" />
+                                </StackPanel>
+
+                                <TextBox Name="txtYGoto"
+                                         Margin="5,10,5,10"
+                                         ToolTip="Z Goto value"
+                                         Width="70"
+                                         Height="25"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center" />
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Center"
+                                            Margin="5,10,5,10">
+                                    <Button Content="Go"
+                                            Name="btnGoY"
+                                            Click="btnGoY_Click"
+                                            ToolTip="Command to move the Y-axis"
+                                            Width="50"
+                                            Height="30"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Margin="5" />
+                                    <Button Content="Stop"
+                                            Name="btnStopY"
+                                            ToolTip="Command to stop the Y-axis"
+                                            Width="50"
+                                            Height="30"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Margin="5"
+                                            Foreground="White"
+                                            Background="Red"
+                                            Style="{x:Null}"
+                                            Click="btnStopY_Click"
+                                            ClickMode="Press" />
+                                    <Button Content="Set Zero"
+                                            Name="btnSetZeroY"
+                                            ToolTip="Command to set current location to zero"
+                                            Margin="5"
+                                            Width="50"
+                                            Height="30"
+                                            Click="btnSetZeroY_Click" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <StackPanel Orientation="Horizontal"
+                                                Margin="5,10,5,10">
+                                        <Label Content="Slider Step Size"
+                                               Foreground="White"
+                                               Height="25" />
+                                        <TextBox Name="txtStepSizeY"
+                                                 Text="{Binding ElementName=ControlApp, Path=YStepSize, Mode=TwoWay,Converter={StaticResource doubleConverter}}"
+                                                 ToolTip="Enter the StepSize value"
+                                                 Width="60"
+                                                 Height="25" />
+                                        <Label Content="[mm]"
+                                               Foreground="White"
+                                               Height="25" />
+                                    </StackPanel>
+                                    <StackPanel VerticalAlignment="Center"
+                                                ToolTip="Select slider step type">
+                                        <RadioButton Name="rbCoarseY"
+                                                     GroupName="FineCoarse"
+                                                     Content="Coarse"
+                                                     Margin="5"
+                                                     Foreground="White"
+                                                     Click="rbCoarseY_Click" />
+                                        <RadioButton Name="rbFineY"
+                                                     GroupName="FineCoarse"
+                                                     Content="Fine"
+                                                     Margin="5"
+                                                     Foreground="White"
+                                                     Click="rbFineY_Click" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <Border CornerRadius="12"
+                            BorderBrush="White"
+                            BorderThickness="1"
+                            Margin="5">
+                        <StackPanel Margin="5">
+                            <StackPanel Orientation="Horizontal">
+                                <Label Width="110"
+                                       Content="Galvo/Galvo"
+                                       VerticalAlignment="Center" />
+                                <ListBox Name="rbGG"
+                                         Margin="3"
+                                         SelectedIndex="{Binding ElementName=ControlApp, Path=LightPathGG, Mode=TwoWay}">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel IsItemsHost="True"
+                                                        Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                    <ListBox.Resources>
+                                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}">#007ACC</SolidColorBrush>
+                                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}">#007ACC</SolidColorBrush>
+                                    </ListBox.Resources>
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Style.Triggers>
+                                                <MultiTrigger>
+                                                    <MultiTrigger.Conditions>
+                                                        <Condition Property="IsSelected"
+                                                               Value="True" />
+                                                        <Condition Property="IsFocused"
+                                                               Value="True" />
+                                                    </MultiTrigger.Conditions>
+                                                    <Setter Property="BorderThickness"
+                                                        Value="4" />
+                                                    <Setter Property="BorderBrush"
+                                                        Value="White" />
+                                                </MultiTrigger>
+                                                <MultiTrigger>
+                                                    <MultiTrigger.Conditions>
+                                                        <Condition Property="IsSelected"
+                                                               Value="True" />
+                                                        <Condition Property="IsFocused"
+                                                               Value="False" />
+                                                    </MultiTrigger.Conditions>
+                                                    <Setter Property="BorderThickness"
+                                                        Value="4" />
+                                                    <Setter Property="BorderBrush"
+                                                        Value="White" />
+                                                </MultiTrigger>
+                                                <Trigger Property="IsSelected"
+                                                     Value="false">
+                                                    <Setter Property="BorderThickness"
+                                                        Value="4" />
+                                                    <Setter Property="BorderBrush"
+                                                        Value="White" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBoxItem Width="56"
+                                                 Height="50"
+                                                 Background="#FF595959"
+                                                 Foreground="White"
+                                                 HorizontalContentAlignment="Center">OUT</ListBoxItem>
+                                    <ListBoxItem Width="56"
+                                                 Height="50"
+                                                 Background="#FF595959"
+                                                 Foreground="White"
+                                                 HorizontalContentAlignment="Center">IN</ListBoxItem>
+                                </ListBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Width="110"
+                                       Content="Galvo/Resonance"
+                                       VerticalAlignment="Center" />
+                                <ListBox Name="rbGR"
+                                         Margin="3"
+                                         SelectedIndex="{Binding ElementName=ControlApp, Path=LightPathGR, Mode=TwoWay}">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel IsItemsHost="True"
+                                                        Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                    <ListBox.Resources>
+                                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}">#007ACC</SolidColorBrush>
+                                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}">#007ACC</SolidColorBrush>
+                                    </ListBox.Resources>
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Style.Triggers>
+                                                <MultiTrigger>
+                                                    <MultiTrigger.Conditions>
+                                                        <Condition Property="IsSelected"
+                                                               Value="True" />
+                                                        <Condition Property="IsFocused"
+                                                               Value="True" />
+                                                    </MultiTrigger.Conditions>
+                                                    <Setter Property="BorderThickness"
+                                                        Value="4" />
+                                                    <Setter Property="BorderBrush"
+                                                        Value="White" />
+                                                </MultiTrigger>
+                                                <MultiTrigger>
+                                                    <MultiTrigger.Conditions>
+                                                        <Condition Property="IsSelected"
+                                                               Value="True" />
+                                                        <Condition Property="IsFocused"
+                                                               Value="False" />
+                                                    </MultiTrigger.Conditions>
+                                                    <Setter Property="BorderThickness"
+                                                        Value="4" />
+                                                    <Setter Property="BorderBrush"
+                                                        Value="White" />
+                                                </MultiTrigger>
+                                                <Trigger Property="IsSelected"
+                                                     Value="false">
+                                                    <Setter Property="BorderThickness"
+                                                        Value="4" />
+                                                    <Setter Property="BorderBrush"
+                                                        Value="White" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBoxItem Width="56"
+                                                 Height="50"
+                                                 Background="#FF595959"
+                                                 Foreground="White"
+                                                 HorizontalContentAlignment="Center">OUT</ListBoxItem>
+                                    <ListBoxItem Width="56"
+                                                 Height="50"
+                                                 Background="#FF595959"
+                                                 Foreground="White"
+                                                 HorizontalContentAlignment="Center">IN</ListBoxItem>
+                                </ListBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Width="110"
+                                       Content="Camera"
+                                       VerticalAlignment="Center" />
+                                <ListBox Name="rbCamera"
+                                         Margin="3"
+                                         SelectedIndex="{Binding ElementName=ControlApp, Path=LightPathCamera, Mode=TwoWay}">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel IsItemsHost="True"
+                                                        Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                    <ListBox.Resources>
+                                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}">#007ACC</SolidColorBrush>
+                                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}">#007ACC</SolidColorBrush>
+                                    </ListBox.Resources>
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Style.Triggers>
+                                                <MultiTrigger>
+                                                    <MultiTrigger.Conditions>
+                                                        <Condition Property="IsSelected"
+                                                               Value="True" />
+                                                        <Condition Property="IsFocused"
+                                                               Value="True" />
+                                                    </MultiTrigger.Conditions>
+                                                    <Setter Property="BorderThickness"
+                                                        Value="4" />
+                                                    <Setter Property="BorderBrush"
+                                                        Value="White" />
+                                                </MultiTrigger>
+                                                <MultiTrigger>
+                                                    <MultiTrigger.Conditions>
+                                                        <Condition Property="IsSelected"
+                                                               Value="True" />
+                                                        <Condition Property="IsFocused"
+                                                               Value="False" />
+                                                    </MultiTrigger.Conditions>
+                                                    <Setter Property="BorderThickness"
+                                                        Value="4" />
+                                                    <Setter Property="BorderBrush"
+                                                        Value="White" />
+                                                </MultiTrigger>
+                                                <Trigger Property="IsSelected"
+                                                     Value="false">
+                                                    <Setter Property="BorderThickness"
+                                                        Value="4" />
+                                                    <Setter Property="BorderBrush"
+                                                        Value="White" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBoxItem Width="56"
+                                                 Height="50"
+                                                 Background="#FF595959"
+                                                 Foreground="White"
+                                                 HorizontalContentAlignment="Center">PMT</ListBoxItem>
+                                    <ListBoxItem Width="56"
+                                                 Height="50"
+                                                 Background="#FF595959"
+                                                 Foreground="White"
+                                                 HorizontalContentAlignment="Center">Camera</ListBoxItem>
+                                </ListBox>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Border CornerRadius="12"
+                            BorderBrush="White"
+                            BorderThickness="1"
+                            Margin="5">
+                        <Grid Margin="5"
+                              Name="gridMCM6000Control"
+                              MouseWheel="zSlider_MouseWheel">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Margin="10,5,10,5">
+                                <TextBox HorizontalAlignment="Center"
+                                         VerticalAlignment="Top"
+                                         ToolTip="Max Z-axis value"
+                                         Width="36"
+                                         Height="20"
+                                         Text="{Binding ElementName=ControlApp, Path=ZMax}"
+                                         TextWrapping="Wrap"
+                                         IsReadOnly="true" />
+                                <StackPanel Orientation="Horizontal">
+                                    <local:FormattedSlider x:Name="zSlider"
+                                                           ToolTip="Slider to move the Z-axis"
+                                                           Value="{Binding ElementName=ControlApp, Path=ZPosition, Mode=TwoWay, UpdateSourceTrigger=Explicit}"
+                                                           Minimum="{Binding ElementName=ControlApp, Path=ZMin, Mode=OneWay}"
+                                                           Maximum="{Binding ElementName=ControlApp, Path=ZMax, Mode=OneWay}"
+                                                           TickPlacement="TopLeft"
+                                                           AutoToolTipFormat="{}{0:F4}"
+                                                           AutoToolTipPlacement="BottomRight"
+                                                           Orientation="Vertical"
+                                                           HorizontalAlignment="Right"
+                                                           Height="220"
+                                                           Width="55"
+                                                           TickFrequency="1"
+                                                           IsMoveToPointEnabled="False"
+                                                           IsSnapToTickEnabled="False"
+                                                           Thumb.DragStarted="zSlider_DragStarted"
+                                                           Thumb.DragCompleted="zSlider_DragCompleted"
+                                                           MouseWheel="zSlider_MouseWheel"
+                                                           LargeChange="0"
+                                                           LostMouseCapture="zSlider_LostMouseCapture">
+                                        <local:FormattedSlider.RenderTransform>
+                                            <ScaleTransform ScaleX="2.0"
+                                                            ScaleY="1.0" />
+                                        </local:FormattedSlider.RenderTransform>
+                                    </local:FormattedSlider>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <RepeatButton Name="btnZPlus"
+                                                Content="+"
+                                                Width="30"
+                                                Height="25"
+                                                Style="{x:Null}"
+                                                      Click="btnZPlus_Click"></RepeatButton>
+                                        <RepeatButton Name="btnZMinus"
+                                                Content="-"
+                                                Width="30"
+                                                Height="25"
+                                                Style="{x:Null}"
+                                                      Click="btnZMinus_Click"></RepeatButton>
+                                    </StackPanel>
+                                </StackPanel>
+                                <TextBox HorizontalAlignment="Center"
+                                         VerticalAlignment="Bottom"
+                                         ToolTip="Min Z-axis value"
+                                         Width="36"
+                                         Height="20"
+                                         Text="{Binding ElementName=ControlApp, Path=ZMin}"
+                                         TextWrapping="Wrap"
+                                         IsReadOnly="true" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <StackPanel Margin="5,10,5,10"
+                                            Orientation="Horizontal"
+                                            HorizontalAlignment="Center">
+                                    <Label Content="Z: "
+                                           HorizontalAlignment="Center"
+                                           Foreground="White"
+                                           VerticalAlignment="Center" />
+                                    <Label Name="zLabel"
+                                           Content="{Binding ElementName=ControlApp, Path=ZPosition, Mode=TwoWay}"
+                                           ToolTip="Current Z-axis position"
+                                           Width="100"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="White">
+                                        <Label.Style>
+                                            <Style TargetType="Label">
+                                                <Style.Resources>
+                                                    <Storyboard x:Key="flashingAnimation">
+                                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                         From="1"
+                                                                         To="0.5"
+                                                                         AutoReverse="True"
+                                                                         Duration="0:0:0.5"
+                                                                         RepeatBehavior="Forever" />
+                                                    </Storyboard>
+                                                </Style.Resources>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ElementName=ControlApp, Path=ZPosOutOfBounds}"
+                                                                 Value="True">
+                                                        <Setter Property="Background"
+                                                                Value="Red" />
+                                                        <DataTrigger.EnterActions>
+                                                            <BeginStoryboard Name="flashing"
+                                                                             Storyboard="{StaticResource flashingAnimation}" />
+                                                        </DataTrigger.EnterActions>
+                                                        <DataTrigger.ExitActions>
+                                                            <StopStoryboard BeginStoryboardName="flashing" />
+                                                        </DataTrigger.ExitActions>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Label.Style>
+                                    </Label>
+                                    <Label Content="[mm]"
+                                           HorizontalAlignment="Center"
+                                           Foreground="White"
+                                           VerticalAlignment="Center" />
+                                </StackPanel>
+
+                                <TextBox Name="txtZGoto"
+                                         Margin="5,10,5,10"
+                                         ToolTip="Z Goto value"
+                                         Width="70"
+                                         Height="25"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center" />
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Center"
+                                            Margin="5,10,5,10">
+                                    <Button Content="Go"
+                                            Name="btnGoZ"
+                                            Click="btnGoZ_Click"
+                                            ToolTip="Command to move the Z-axis"
+                                            Width="50"
+                                            Height="30"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Margin="5" />
+                                    <Button Content="Stop"
+                                            Name="btnStopZ"
+                                            ToolTip="Command to stop the Z-axis"
+                                            Width="50"
+                                            Height="30"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Margin="5"
+                                            Foreground="White"
+                                            Background="Red"
+                                            Style="{x:Null}"
+                                            Click="btnStopZ_Click"
+                                            ClickMode="Press" />
+                                    <Button Content="Set Zero"
+                                            Name="btnSetZeroZ"
+                                            ToolTip="Command to set current location to zero"
+                                            Margin="5"
+                                            Width="50"
+                                            Height="30"
+                                            Click="btnSetZeroZ_Click" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <StackPanel Orientation="Horizontal"
+                                                Margin="5,10,5,10">
+                                        <Label Content="Slider Step Size"
+                                               Foreground="White"
+                                               Height="25" />
+                                        <TextBox Name="txtStepSizeZ"
+                                                 Text="{Binding ElementName=ControlApp, Path=ZStepSize, Mode=TwoWay,Converter={StaticResource doubleConverter}}"
+                                                 ToolTip="Enter the StepSize value"
+                                                 Width="60"
+                                                 Height="25" />
+                                        <Label Content="[mm]"
+                                               Foreground="White"
+                                               Height="25" />
+                                    </StackPanel>
+                                    <StackPanel VerticalAlignment="Center"
+                                                ToolTip="Select slider step type">
+                                        <RadioButton Name="rbCoarseZ"
+                                                     GroupName="FineCoarse"
+                                                     Content="Coarse"
+                                                     Margin="5"
+                                                     Foreground="White"
+                                                     Click="rbCoarseZ_Click" />
+                                        <RadioButton Name="rbFineZ"
+                                                     GroupName="FineCoarse"
+                                                     Content="Fine"
+                                                     Margin="5"
+                                                     Foreground="White"
+                                                     Click="rbFineZ_Click" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <Border CornerRadius="12"
+                            BorderBrush="White"
+                            BorderThickness="1"
+                            Margin="5">
+                        <Grid Margin="5"
+                              Name="gridMCM6000ControlR"
+                              MouseWheel="rSlider_MouseWheel">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Margin="10,5,10,5">
+                                <TextBox HorizontalAlignment="Center"
+                                         VerticalAlignment="Top"
+                                         ToolTip="Max R-axis value"
+                                         Width="36"
+                                         Height="20"
+                                         Text="{Binding ElementName=ControlApp, Path=RMax}"
+                                         TextWrapping="Wrap"
+                                         IsReadOnly="true" />
+                                <StackPanel Orientation="Horizontal">
+                                    <local:FormattedSlider x:Name="rSlider"
+                                                           ToolTip="Slider to move the R-axis"
+                                                           Value="{Binding ElementName=ControlApp, Path=RPosition, Mode=TwoWay, UpdateSourceTrigger=Explicit}"
+                                                           Minimum="{Binding ElementName=ControlApp, Path=RMin, Mode=OneWay}"
+                                                           Maximum="{Binding ElementName=ControlApp, Path=RMax, Mode=OneWay}"
+                                                           TickPlacement="TopLeft"
+                                                           AutoToolTipFormat="{}{0:F4}"
+                                                           AutoToolTipPlacement="BottomRight"
+                                                           Orientation="Vertical"
+                                                           HorizontalAlignment="Right"
+                                                           Height="220"
+                                                           Width="55"
+                                                           TickFrequency="1"
+                                                           IsMoveToPointEnabled="False"
+                                                           IsSnapToTickEnabled="False"
+                                                           Thumb.DragStarted="rSlider_DragStarted"
+                                                           Thumb.DragCompleted="rSlider_DragCompleted"
+                                                           MouseWheel="rSlider_MouseWheel"
+                                                           LargeChange="0"
+                                                           LostMouseCapture="rSlider_LostMouseCapture">
+                                        <local:FormattedSlider.RenderTransform>
+                                            <ScaleTransform ScaleX="2.0"
+                                                            ScaleY="1.0" />
+                                        </local:FormattedSlider.RenderTransform>
+                                    </local:FormattedSlider>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <RepeatButton Name="btnRPlus"
+                                                Content="+"
+                                                Width="30"
+                                                Height="25"
+                                                Style="{x:Null}"
+                                                      Click="btnRPlus_Click"></RepeatButton>
+                                        <RepeatButton Name="btnRMinus"
+                                                Content="-"
+                                                Width="30"
+                                                Height="25"
+                                                Style="{x:Null}"
+                                                      Click="btnRMinus_Click"></RepeatButton>
+                                    </StackPanel>
+                                </StackPanel>
+                                <TextBox HorizontalAlignment="Center"
+                                         VerticalAlignment="Bottom"
+                                         ToolTip="Min Y-axis value"
+                                         Width="36"
+                                         Height="20"
+                                         Text="{Binding ElementName=ControlApp, Path=RMin}"
+                                         TextWrapping="Wrap"
+                                         IsReadOnly="true" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <StackPanel Margin="5,10,5,10"
+                                            Orientation="Horizontal"
+                                            HorizontalAlignment="Center">
+                                    <Label Content="R: "
+                                           HorizontalAlignment="Center"
+                                           Foreground="White"
+                                           VerticalAlignment="Center" />
+                                    <Label Name="rLabel"
+                                           Content="{Binding ElementName=ControlApp, Path=RPosition, Mode=TwoWay}"
+                                           ToolTip="Current R-axis position"
+                                           Width="100"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="White">
+                                        <Label.Style>
+                                            <Style TargetType="Label">
+                                                <Style.Resources>
+                                                    <Storyboard x:Key="flashingAnimation">
+                                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                         From="1"
+                                                                         To="0.5"
+                                                                         AutoReverse="True"
+                                                                         Duration="0:0:0.5"
+                                                                         RepeatBehavior="Forever" />
+                                                    </Storyboard>
+                                                </Style.Resources>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ElementName=ControlApp, Path=RPosOutOfBounds}"
+                                                                 Value="True">
+                                                        <Setter Property="Background"
+                                                                Value="Red" />
+                                                        <DataTrigger.EnterActions>
+                                                            <BeginStoryboard Name="flashing"
+                                                                             Storyboard="{StaticResource flashingAnimation}" />
+                                                        </DataTrigger.EnterActions>
+                                                        <DataTrigger.ExitActions>
+                                                            <StopStoryboard BeginStoryboardName="flashing" />
+                                                        </DataTrigger.ExitActions>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Label.Style>
+                                    </Label>
+                                    <Label Content="[deg]"
+                                           HorizontalAlignment="Center"
+                                           Foreground="White"
+                                           VerticalAlignment="Center" />
+                                </StackPanel>
+
+                                <TextBox Name="txtRGoto"
+                                         Margin="5,10,5,10"
+                                         ToolTip="Z Goto value"
+                                         Width="70"
+                                         Height="25"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center" />
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Center"
+                                            Margin="5,10,5,10">
+                                    <Button Content="Go"
+                                            Name="btnGoR"
+                                            Click="btnGoR_Click"
+                                            ToolTip="Command to move the R-axis"
+                                            Width="50"
+                                            Height="30"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Margin="5" />
+                                    <Button Content="Stop"
+                                            Name="btnStopR"
+                                            ToolTip="Command to stop the R-axis"
+                                            Width="50"
+                                            Height="30"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Margin="5"
+                                            Foreground="White"
+                                            Background="Red"
+                                            Style="{x:Null}"
+                                            Click="btnStopR_Click"
+                                            ClickMode="Press" />
+                                    <Button Content="Set Zero"
+                                            Name="btnSetZeroR"
+                                            ToolTip="Command to set current location to zero"
+                                            Margin="5"
+                                            Width="50"
+                                            Height="30"
+                                            Click="btnSetZeroR_Click" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <StackPanel Orientation="Horizontal"
+                                                Margin="5,10,5,10">
+                                        <Label Content="Slider Step Size"
+                                               Foreground="White"
+                                               Height="25" />
+                                        <TextBox Name="txtStepSizeR"
+                                                 Text="{Binding ElementName=ControlApp, Path=RStepSize, Mode=TwoWay,Converter={StaticResource doubleConverter}}"
+                                                 ToolTip="Enter the StepSize value"
+                                                 Width="60"
+                                                 Height="25" />
+                                        <Label Content="[deg]"
+                                               Foreground="White"
+                                               Height="25" />
+                                    </StackPanel>
+                                    <StackPanel VerticalAlignment="Center"
+                                                ToolTip="Select slider step type">
+                                        <RadioButton Name="rbCoarseR"
+                                                     GroupName="FineCoarse"
+                                                     Content="Coarse"
+                                                     Margin="5"
+                                                     Foreground="White"
+                                                     Click="rbCoarseR_Click" />
+                                        <RadioButton Name="rbFineR"
+                                                     GroupName="FineCoarse"
+                                                     Content="Fine"
+                                                     Margin="5"
+                                                     Foreground="White"
+                                                     Click="rbFineR_Click" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <Border CornerRadius="12"
+                            BorderBrush="White"
+                            BorderThickness="1"
+                            Margin="5"
+                            Visibility="{Binding ElementName=ControlApp, Path=ZElevatorVis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        <StackPanel Margin="5"
+                                    Width="232">
+                            <StackPanel Margin="5,10,5,10"
+                                            Orientation="Horizontal"
+                                            HorizontalAlignment="Center">
+                                <Label Content="Z Elevator: "
+                                           HorizontalAlignment="Center"
+                                           Foreground="White"
+                                           VerticalAlignment="Center" />
+                                <Label Name="zeLabel"
+                                           Content="{Binding ElementName=ControlApp, Path=ZEPosition, Mode=TwoWay}"
+                                           ToolTip="Current position of the Z Elevator"
+                                           Width="80"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="White">
+                                    <Label.Style>
+                                        <Style TargetType="Label">
+                                            <Style.Resources>
+                                                <Storyboard x:Key="flashingAnimation">
+                                                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                         From="1"
+                                                                         To="0.5"
+                                                                         AutoReverse="True"
+                                                                         Duration="0:0:0.5"
+                                                                         RepeatBehavior="Forever" />
+                                                </Storyboard>
+                                            </Style.Resources>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ElementName=ControlApp, Path=ZEPosOutOfBounds}"
+                                                                 Value="True">
+                                                    <Setter Property="Background"
+                                                                Value="Red" />
+                                                    <DataTrigger.EnterActions>
+                                                        <BeginStoryboard Name="flashing"
+                                                                             Storyboard="{StaticResource flashingAnimation}" />
+                                                    </DataTrigger.EnterActions>
+                                                    <DataTrigger.ExitActions>
+                                                        <StopStoryboard BeginStoryboardName="flashing" />
+                                                    </DataTrigger.ExitActions>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Label.Style>
+                                </Label>
+                                <Label Content="[mm]"
+                                           HorizontalAlignment="Center"
+                                           Foreground="White"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+
+        </StackPanel>
+    </Grid>
+</Window>

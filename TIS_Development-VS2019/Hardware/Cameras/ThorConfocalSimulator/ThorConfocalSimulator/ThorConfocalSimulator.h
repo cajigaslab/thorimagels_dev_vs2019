@@ -18,7 +18,8 @@
 #define ThorFnFailed(error)             ( 200 > (error) > 100 )
 #define AlazarFailed(error)             ((error) > 513)
 
-
+#define MAX_NUMBER_OF_PLANES		16
+#define MIN_NUMBER_OF_PLANES		1
 
 #ifdef __cplusplus
 extern "C"
@@ -165,6 +166,7 @@ extern "C"
 		long _galvoEnable;
 		AreaMode _areaMode;
 		long _yAmplitudeScaler;
+		long _numberOfPlanes;
 
 		long _pixelX_C;
 		long _pixelY_C;

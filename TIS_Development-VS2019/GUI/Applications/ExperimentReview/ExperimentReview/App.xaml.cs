@@ -10,6 +10,7 @@
     using System.Threading.Tasks;
     using System.Windows;
     using System.Xml;
+    using ThorSharedTypes;
 
     /// <summary>
     /// Interaction logic for App.xaml
@@ -28,14 +29,14 @@
                 return;
             }
             SetDependenciesPath();
-            string hwSettingsFile = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString() + "\\" + docFolder + "\\Application Settings\\HardwareSettings.xml";
-            string appSettingsFile = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString() + "\\" + docFolder + "\\Application Settings\\ApplicationSettings.xml";
-            string appSettingsFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString() + "\\" + docFolder + "\\Application Settings";
-            string templatesFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString() + "\\" + docFolder + "\\Capture Templates";
-            string thorDatabase = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString() + "\\" + docFolder + "\\Application Settings\\ThorDatabase.db";
-            string zStackCacheFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString() + "\\" + docFolder + "\\ZStackCache";
-            string tilesCacheFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString() + "\\" + docFolder + "\\TilesCache";
-            string appRootFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString() + "\\" + docFolder;
+            string hwSettingsFile = docFolder + "Application Settings\\HardwareSettings.xml";
+            string appSettingsFile = docFolder + "Application Settings\\ApplicationSettings.xml";
+            string appSettingsFolder = docFolder + "Application Settings";
+            string templatesFolder = docFolder + "Capture Templates";
+            string thorDatabase = docFolder + "Application Settings\\ThorDatabase.db";
+            string zStackCacheFolder = docFolder + "ZStackCache";
+            string tilesCacheFolder = docFolder + "TilesCache";
+            string appRootFolder = docFolder;
 
             Application.Current.Resources.Add("HardwareSettingsFile", hwSettingsFile);
             Application.Current.Resources.Add("ApplicationSettingsFile", appSettingsFile);
@@ -61,20 +62,20 @@
 
             if (true == File.Exists(rmPath))
             {
-                rmDoc.Load(rmPath);
-
-                XmlNode node = rmDoc.SelectSingleNode("/ResourceManager/DocumentsFolder");
-
-                if (null != node && null != node.Attributes.GetNamedItem("value"))
+                //Get the path to the documents folder from the Resource Manager
+                //Resource Manager finds location of documents folder based on location given in XML. This can be different than the system documents folder. 
+                string documentsFolderPathString = ResourceManagerCS.GetMyDocumentsThorImageFolderString();
+                if (false == Directory.Exists(documentsFolderPathString))
                 {
-                    docFolder = node.Attributes["value"].Value;
-                    if (false == Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString() + "\\" + docFolder))
-                    {
-                        MessageBox.Show(String.Format("Application failed to locate the Documents Folder {0}. Application exiting.", docFolder), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                        docFolder = string.Empty;
-                    }
+                    MessageBox.Show(String.Format("Application failed to locate the Documents Folder {0}. Application exiting.", docFolder), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    docFolder = string.Empty;
+                }
+                else 
+                {
+                    docFolder = documentsFolderPathString;
                 }
             }
+
             return docFolder;
         }
 

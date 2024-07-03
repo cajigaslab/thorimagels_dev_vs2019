@@ -8,17 +8,16 @@
     using System.IO;
     using System.Linq;
     using System.Reflection;
-    using System.Runtime.CompilerServices;
-    using System.Text;
-    using System.Threading.Tasks;
     using System.Windows;
-    using System.Windows.Controls;
     using System.Windows.Input;
-    using System.Windows.Media.Imaging;
     using System.Windows.Threading;
     using System.Xml;
 
     using AreaControl.Model;
+
+    using GongSolutions.Wpf.DragDrop;
+
+    using MesoScan.Params;
 
     using OverlayManager;
 
@@ -26,10 +25,14 @@
 
     using ThorSharedTypes;
 
-    public class AreaControlViewModel : ThorSharedTypes.VMBase, ThorSharedTypes.IMVM
+    using DragDrop = GongSolutions.Wpf.DragDrop.DragDrop;
+
+    public class AreaControlViewModel : ThorSharedTypes.VMBase, ThorSharedTypes.IMVM, IDropTarget
     {
         #region Fields
 
+        const int MIN_CYCLES_BETWEEN_STRIPES = 16; //The real number at the camera level might be less, but it's important to be conservative
+        const int TWO_WAY_SCAN = 0;
         const int ZOOM_TABLE_LENGTH = 8;
 
         private readonly AreaControlModel _areaControlModel;
@@ -39,7 +42,9 @@
         private ICommand _centerROICommand;
         private ICommand _centerScannersCommand;
         private ICommand _closeShutterCommand;
-        private bool _configMicroScanArea = true;
+        private bool _configmROISettings = true;
+        bool _configmROISettingsTmp = true;
+        private bool _displayAspectRatio = false;
         private ICommand _dwellTimeMinusCommand;
         private ICommand _dwellTimePlusCommand;
         private bool _enablePixelDensityChange = true;
@@ -63,19 +68,30 @@
         private ICommand _fieldSizeMinusCommand;
         private ICommand _fieldSizePlusCommand;
         private Visibility _fieldSizeVisibility;
+        bool _fullFOVImageValid = false;
+        int _fullFOVStripeFieldSize = 45;
+        private int _fullFOVStripePixels = 256;
+        private ICommand _ggRegistrationClearAllCommand;
+        private ICommand _ggRegistrationClearCommand;
+        private int _ggRegistrationIndex = -1;
+        private ObservableCollection<string> _ggRegistrationItems = new ObservableCollection<string>();
         private ICommand _imagingCenterScannersCommand;
         private bool _imagingStatus = true;
         private long _lsmLastCalibrationDateUnix;
         private ICommand _lsmSaveCalibrationCommand;
         ICommand _lsmScanAreaAngleMinusCommand;
         ICommand _lsmScanAreaAnglePlusCommand;
-        double _LSMUMPerPixel = 0.0;
-        private int _mesoStripPixels;
+        PixelSizeUM _LSMUMPerPixel = new PixelSizeUM(0.0, 0.0);
         private ICommand _mesoStripPixelsMinusCommand;
         private ICommand _mesoStripPixelsPlusCommand;
+        bool _mROIPreviewAllROIs = true;
+        private bool _mROIShowFullFovAsBackground = false;
+        bool _mROISpatialDisplaybleEnable = false;
+        int _mROIStripeFieldSize = 45;
+        private int _mROIStripePixels = 256;
+        private ICommand _mROIStripPixelsMinusCommand;
+        private ICommand _mROIStripPixelsPlusCommand;
         private ICommand _nyquistCommand;
-        private Canvas _overlayCanvas;
-        private Canvas _overviewOverlayCanvas;
         private bool _overviewVisible = false;
         private MesoOverview _overviewWin = null;
         private bool _previousAlwaysUseFastestState = true;
@@ -86,16 +102,20 @@
         private ICommand _returnToOriginalAreaCommand;
         private ICommand _roiZoomInCommand;
         private ICommand _selectBackgroundCommand;
-        private int _selectedScanArea = 1;
-        private int _selectedStripSize = 300;
+        private int _selectedScanArea = 0;
+
+        //private int _selectedStripSize = 300;
         private int _selectedViewMode = 0;
         private ICommand _selectFlatFieldCommand;
+        bool _singleLinePolyline = false;
         private DispatcherTimer _statusTimer = null;
         private ICommand _storeRSRateCommand = null;
-        private List<int> _stripSizes = new List<int>(new int[] { 300, 400, 500, 600 });
+
+        // private List<int> _stripSizes = new List<int>(new int[] { 300, 400, 500, 600 });
         private ICommand _timeBasedLSTimeMSMinusCommand;
         private ICommand _timeBasedLSTimeMSPlusCommand;
         private bool _timedBasedVisibility = false;
+        private ICommand _togglemROIStripeEditCommand;
         bool _useCalibrationArray = false;
         private ICommand _zoomMinusCommand;
         private ICommand _zoomPlusCommand;
@@ -109,13 +129,13 @@
         {
             this._areaControlModel = new AreaControlModel();
 
-            //default properties
-            _mesoStripPixels = MesoStripPixelsRange[0];
-            LockFieldOffset = false;
-            ConfigMicroScanArea = false;
-
             LoadZoomData();
+            //default properties
+            _fullFOVStripePixels = MesoStripPixelsRange[0];
+            LockFieldOffset = false;
+            ConfigmROISettings = false;
 
+            _configmROISettingsTmp = false;
             //use timer to update status
             _statusTimer = new DispatcherTimer();
             _statusTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
@@ -123,6 +143,12 @@
         }
 
         #endregion Constructors
+
+        #region Events
+
+        public event EventHandler RegistrationChangedEvent;
+
+        #endregion Events
 
         #region Properties
 
@@ -147,7 +173,7 @@
         {
             get
             {
-                return ((ICommand)MVMManager.Instance["CaptureSetupViewModel", "BrowseForReferenceImageCommand", (object)new RelayCommand(() => { })]);
+                return ((ICommand)MVMManager.Instance["ImageViewCaptureSetupVM", "BrowseForReferenceImageCommand", (object)new RelayCommand(() => { })]);
             }
         }
 
@@ -236,54 +262,93 @@
             }
         }
 
-        public bool ConfigMicroScanArea
+        public bool ConfigmROISettings
         {
             get
             {
-                return _configMicroScanArea;
+                return _configmROISettings;
             }
             set
             {
-                if (_configMicroScanArea != value)
+                if (_configmROISettings != value)
                 {
-                    _configMicroScanArea = value;
-                    OnPropertyChanged("ConfigMicroScanArea");
+                    _configmROISettings = value;
+                    OnPropertyChanged("ConfigmROISettings");
 
-                    MVMManager.Instance["CaptureSetupViewModel", "WrapPanelEnabled"] = !_configMicroScanArea;
-                    MVMManager.Instance["CaptureSetupViewModel", "ROIToolVisible"] = (_configMicroScanArea) ?
+                    if (value)
+                    {
+                        mROISpatialDisplaybleEnable = true;
+                    }
+
+                    MVMManager.Instance["ImageViewCaptureSetupVM", "ROIToolVisible"] = (_configmROISettings) ?
                         new bool[14] { true, false, true, false, false, false, false, false, false, true, true, true, true, false } :
                         new bool[14] { true, true, true, true, true, true, true, true, true, true, true, true, true, true };
 
-                    OverlayManagerClass.Instance.InitSelectROI(ref _overlayCanvas);
-                    OverlayManagerClass.Instance.DisplayModeROI(ref _overlayCanvas, _configMicroScanArea ? new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.STATSONLY } : new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.MICRO_SCANAREA }, false);
-                    OverlayManagerClass.Instance.DisplayModeROI(ref _overlayCanvas, _configMicroScanArea ? new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.MICRO_SCANAREA } : new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.STATSONLY }, true);
-                    OverlayManagerClass.Instance.CurrentMode = _configMicroScanArea ? ThorSharedTypes.Mode.MICRO_SCANAREA : ThorSharedTypes.Mode.STATSONLY;
-
-                    if (_configMicroScanArea)
+                    if (_configmROISettings)
                     {
                         OverlayManagerClass.Instance.ObjectSizeChangedEvent += OverlayManager_ObjectSizeChangedEvent;
                         MVMManager.Instance["CaptureSetupViewModel", "SLMPatternsVisible"] = false;
-
-                        //save overview
-                        if (null != MVMManager.Instance["CaptureSetupViewModel", "Bitmap", null])
-                        {
-                            BitmapSource bmSource = ((WriteableBitmap)MVMManager.Instance["CaptureSetupViewModel", "Bitmap"]).Clone();
-                            using (FileStream stream = new FileStream(MesoOverview.MesoOverviewPathAndName, FileMode.Create))
-                            {
-                                BmpBitmapEncoder bmEncoder = new BmpBitmapEncoder();
-                                bmEncoder.Frames.Add(BitmapFrame.Create(bmSource));
-                                bmEncoder.Save(stream);
-                            }
-                        }
                     }
                     else
                     {
                         OverlayManagerClass.Instance.ObjectSizeChangedEvent -= OverlayManager_ObjectSizeChangedEvent;
-                        OnPropertyChanged("MicroScanAreas");
-                        OnPropertyChanged("SelectedScanArea");
                     }
+
                     OnPropertyChanged("StripVisible");
                     OnPropertyChanged("ROIFrameRate");
+
+                    OnPropertyChanged("MicroScanAreas");
+                    OnPropertyChanged("SelectedScanArea");
+
+                    if (_configmROISettings)
+                    {
+                        FrameInfoStruct fi = (FrameInfoStruct)MVMManager.Instance["ImageViewCaptureSetupVM", "LastFrameInfo", (object)null];
+
+                        if (fi.isMROI == 1)
+                        {
+                            int newPixels = (int)(Math.Round(_mROIStripePixels * mROIStripePhysicalFieldSizeUM / GetPhysicalSizeUMForFieldSize(fi.mROIStripeFieldSize)));
+                            OverlayManagerClass.Instance.PixelUnitSizeXY = new int[2] { newPixels, 4 };
+                            MVMManager.Instance["MesoScanViewModel", "ResizeROIsFormROIPixelDensity"] = true;
+                        }
+                        else
+                        {
+                            int newPixels = (int)(Math.Round(_fullFOVStripePixels * mROIStripePhysicalFieldSizeUM / FullFOVPhysicalFieldSizeUM));
+                            OverlayManagerClass.Instance.PixelUnitSizeXY = new int[2] { newPixels, 1 };
+                            MVMManager.Instance["MesoScanViewModel", "ResizeROIsForFullFOVPixelDensity"] = true;
+                        }
+                        OverlayManagerClass.Instance.ValidateROIs();
+
+                        var ROIs = OverlayManagerClass.Instance.GetModeROIs(Mode.MICRO_SCANAREA);
+                        if (ROIs.Count > SelectedmROIIndex && SelectedmROIIndex >= 0)
+                        {
+                            MVMManager.Instance["ImageViewCaptureSetupVM", "mROIPriorityIndex"] = SelectedmROIIndex;
+                            OverlayManagerClass.Instance.SelectSingleROI(ROIs[SelectedmROIIndex]);
+                        }
+                        else
+                        {
+                            OverlayManagerClass.Instance.DeselectAllROIs();
+                        }
+                    }
+
+                    OverlayManagerClass.Instance.InitSelectROI();
+                    OverlayManagerClass.Instance.DisplayModeROI(_configmROISettings ? new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.STATSONLY } : new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.MICRO_SCANAREA }, false);
+                    OverlayManagerClass.Instance.DisplayModeROI(_configmROISettings ? new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.MICRO_SCANAREA } : new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.STATSONLY }, true);
+                    OverlayManagerClass.Instance.CurrentMode = _configmROISettings ? ThorSharedTypes.Mode.MICRO_SCANAREA : ThorSharedTypes.Mode.STATSONLY;
+
+                    if (_configmROISettings)
+                    {
+                        MVMManager.Instance["ImageViewCaptureSetupVM", "mROIPriorityIndex"] = SelectedmROIIndex;
+                        var ROIs = OverlayManagerClass.Instance.GetModeROIs(Mode.MICRO_SCANAREA);
+                        if (ROIs.Count > SelectedmROIIndex && SelectedmROIIndex >= 0)
+                        {
+                            OverlayManagerClass.Instance.SelectSingleROI(ROIs[SelectedmROIIndex]);
+                        }
+                        else
+                        {
+                            OverlayManagerClass.Instance.DeselectAllROIs();
+                        }
+                        MVMManager.Instance["MesoScanViewModel", "UpdateROIs"] = true; //Trigger for line percent update
+                    }
                 }
             }
         }
@@ -318,7 +383,6 @@
                         }
                     case ICamera.LSMAreaMode.LINE:
                         {
-                            const int TWO_WAY_SCAN = 0;
                             if (TWO_WAY_SCAN == (int)MVMManager.Instance["ScanControlViewModel", "LSMScanMode", (object)0])
                             {
                                 if (1 == LSMPixelY)
@@ -348,9 +412,33 @@
                         break;
                     case ICamera.LSMAreaMode.POLYLINE:
                         {
-                            lines = LSMPixelY;
+                            if (SingleLinePolyline && TWO_WAY_SCAN == (int)MVMManager.Instance["ScanControlViewModel", "LSMScanMode", (object)0])
+                            {
+                                if (1 == LSMPixelY)
+                                {
+                                    lines = 2;
+                                }
+                                else
+                                {
+                                    lines = LSMPixelY;
+                                }
+
+                                dwellFactor = 0.24; //0.24 was determined experimentally
+                            }
+                            else
+                            {
+                                if (2 == LSMPixelY)
+                                {
+                                    lines = 1;
+                                }
+                                else
+                                {
+                                    lines = LSMPixelY;
+                                }
+                                dwellFactor = 0.72; //Determined experimentally
+                            }
+
                             channel = 1; //channel buffer size has no effect for polyline acquisition. Thus, it is not being considered
-                            dwellFactor = 0.72; //0.72 was determined experimentally
                         }
                         break;
                 }
@@ -393,6 +481,16 @@
             get
             {
                 return new ImageResolution(this._areaControlModel.LSMPixelX, this._areaControlModel.LSMPixelY);
+            }
+        }
+
+        public bool DisplayAspectRatio
+        {
+            get => _displayAspectRatio;
+            set
+            {
+                _displayAspectRatio = value;
+                MVMManager.Instance["ImageViewCaptureSetupVM", "DisplayPixelAspectRatio"] = value;
             }
         }
 
@@ -530,6 +628,162 @@
             }
         }
 
+        public double FullFOVFieldSizeUM
+        {
+            get
+            {
+                int mult = (int)Math.Floor(LSMFieldSizeXUM / FullFOVPhysicalFieldSizeUM);
+
+                return FullFOVPhysicalFieldSizeUM * FullFOVStripeNum;
+            }
+        }
+
+        public double FullFOVFieldSizeXUM
+        {
+            get
+            {
+                return FullFOVPhysicalFieldSizeUM * FullFOVStripeNum;
+            }
+        }
+
+        public double FullFOVFieldSizeYUM
+        {
+            get
+            {
+                return FullFOVPhysicalFieldSizeUM * FullFOVStripeNum; ;
+            }
+        }
+
+        public int FullFOVMaxStripePixels
+        {
+            get
+            {
+                double maxStripePixels = (double)_areaControlModel.LSMPixelYMax / ((double)Math.Pow(FullFOVStripeNum, 2));
+                int flybackLines = TWO_WAY_SCAN == (int)MVMManager.Instance["ScanControlViewModel", "LSMScanMode"] ? 2 * MIN_CYCLES_BETWEEN_STRIPES : MIN_CYCLES_BETWEEN_STRIPES;
+                if (FullFOVStripeNum > 1)
+                {
+                    maxStripePixels = maxStripePixels - flybackLines + flybackLines / (FullFOVStripeNum);
+                }
+
+                int stripePixels = (int)Math.Floor(maxStripePixels / _areaControlModel.LSMPixelYMultiple) * _areaControlModel.LSMPixelYMultiple;
+                
+                if (stripePixels > LSMPixelXMax)
+                {
+                    stripePixels = LSMPixelXMax;
+                }
+                if (FullFOVStripePixels > stripePixels)
+                {
+                    _fullFOVStripePixels = stripePixels;
+                    OnPropertyChange("FullFOVStripePixels");
+                }
+
+                return stripePixels;
+            }
+        }
+
+        public double FullFOVPhysicalFieldSizeUM
+        {
+            get
+            {
+                return GetPhysicalSizeUMForFieldSize(_fullFOVStripeFieldSize);
+            }
+            set
+            {
+                //TODO: remove
+            }
+        }
+
+        public int FullFOVStripeFieldSize
+        {
+            get => _fullFOVStripeFieldSize;
+            set
+            {
+                if (value >= LSMFieldSizeMin && value <= LSMFieldSizeMax)
+                {
+                    _fullFOVStripeFieldSize = value;
+
+                    if (_imagingStatus)
+                    {
+                        _fullFOVImageValid = false;
+                    }
+                    OnPropertyChanged("mROIStatusMessage");
+
+                    OnPropertyChanged("FullFOVStripeFieldSize");
+
+                    OnPropertyChanged("FullFOVStripeNum");
+
+                    OnPropertyChanged("FullFOVPhysicalFieldSizeUM");
+
+                    OnPropertyChanged("FullFOVFieldSizeUM");
+
+                    OnPropertyChanged("FullFOVFieldSizeXUM");
+
+                    OnPropertyChanged("FullFOVFieldSizeYUM");
+
+                    OnPropertyChanged("FullFOVMaxStripePixels");
+
+                    OnPropertyChanged("mROIStripeFieldSizeMax");
+
+                    OnPropertyChanged("mROIStripeFieldSize");
+
+                    OnPropertyChanged("mROIStripePhysicalFieldSizeUM");
+
+
+                    MVMManager.Instance["MesoScanViewModel", "TryForceUpdateLines"] = true;
+                }
+            }
+        }
+
+        public int FullFOVStripeNum
+        {
+            get
+            {
+                int mult = (int)Math.Round(LSMFieldSizeXUM / FullFOVPhysicalFieldSizeUM);
+                return mult == 0? 1: mult;
+            }
+        }
+
+        public int FullFOVStripePixels
+        {
+            get
+            {
+                return _fullFOVStripePixels;
+            }
+            set
+            {
+                if (FullFOVMaxStripePixels > value)
+                {
+                    _fullFOVStripePixels = value;
+                }
+                else
+                {
+                    _fullFOVStripePixels = FullFOVMaxStripePixels;
+                }
+
+                if (_fullFOVStripePixels < _areaControlModel.LSMPixelXMin)
+                {
+                    _fullFOVStripePixels = _areaControlModel.LSMPixelXMin;
+                }
+
+                if (_imagingStatus)
+                {
+                    _fullFOVImageValid = false;
+                }
+                OnPropertyChanged("mROIStatusMessage");     
+
+                OnPropertyChange("FullFOVStripePixels");
+                MVMManager.Instance["MesoScanViewModel", "TryForceUpdateLines"] = true;
+            }
+        }
+
+        public bool GGCalAlert
+        {
+            get
+            {
+                return (DateTimeFormatInfo.CurrentInfo.DayNames.Length < (DateTime.Now).Subtract(ResourceManagerCS.ToDateTimeFromUnix(LSMLastCalibrationDateUnix)).TotalDays) ? true : false;
+            }
+        }
+
         public Visibility GGLSMScanVisibility
         {
             get
@@ -537,6 +791,93 @@
                 return (((int)ThorSharedTypes.ICamera.CameraType.LSM == ResourceManagerCS.GetCameraType()) &&
                     ((int)ThorSharedTypes.ICamera.LSMType.GALVO_GALVO == ResourceManagerCS.GetLSMType())) ?
                     Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        public bool GGRegistrationAbleToClear
+        {
+            get
+            {
+                XmlNodeList ndList = RegistrationDoc.SelectNodes("/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "'][@CameraType='1']/LUT");
+                return (null != ndList && 0 < ndList.Count);
+            }
+        }
+
+        public ICommand GGRegistrationClearAllCommand
+        {
+            get
+            {
+                if (this._ggRegistrationClearAllCommand == null)
+                    this._ggRegistrationClearAllCommand = new RelayCommand(() => GGRegistrationClearAll());
+
+                return this._ggRegistrationClearAllCommand;
+            }
+        }
+
+        public ICommand GGRegistrationClearCommand
+        {
+            get
+            {
+                if (this._ggRegistrationClearCommand == null)
+                    this._ggRegistrationClearCommand = new RelayCommand(() => GGRegistrationClear());
+
+                return this._ggRegistrationClearCommand;
+            }
+        }
+
+        public int GGRegistrationIndex
+        {
+            get
+            {
+                return _ggRegistrationIndex;
+            }
+            set
+            {
+                if (_ggRegistrationIndex != value)
+                {
+                    //update active in registration.xml and rebuild SLM
+                    XmlNodeList ndList = RegistrationDoc.SelectNodes("/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "'][@CameraType='1']/LUT");
+                    if (0 < ndList.Count && value < _ggRegistrationItems.Count)
+                    {
+                        XmlNodeList lut = RegistrationDoc.SelectNodes("/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "'][@CameraType='1']/LUT[@RefZoom=" + "'" + _ggRegistrationItems.ElementAt(value) + "']");
+                        if (null != lut && 0 < lut.Count)
+                        {
+                            foreach (XmlNode item in ndList)
+                            {
+                                XmlManager.SetAttribute(item, RegistrationDoc, "Active", "0");
+                            }
+                            XmlManager.SetAttribute(lut[0], RegistrationDoc, "Active", "1");
+                            MVMManager.Instance.ReloadSettings(SettingsFileType.REGISTRATION_SETTINGS);
+
+                            //update related properties after setting active registration
+                            _ggRegistrationIndex = value;
+                            OnPropertyChange("GGRegistrationIndex");
+                            long date = _lsmLastCalibrationDateUnix;
+                            if (XmlManager.ReadAttribute<long>(out date, RegistrationDoc, "/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "'][@CameraType='1']/LUT[@Active='1']", "calibrationDateUnix", _lsmLastCalibrationDateUnix, 0))
+                                LSMLastCalibrationDateUnix = date;
+                            //notice others about changd registration
+                            RegistrationChangedEvent?.Invoke(this, null);
+                        }
+                    }
+                }
+            }
+        }
+
+        public ObservableCollection<string> GGRegistrationItems
+        {
+            get
+            {
+                XmlNodeList ndList = RegistrationDoc.SelectNodes("/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "'][@CameraType='1']/LUT");
+                if (0 < ndList.Count)
+                {
+                    _ggRegistrationItems = new ObservableCollection<string>();
+                    foreach (XmlNode item in ndList)
+                    {
+                        _ggRegistrationItems.Add(item.Attributes["RefZoom"].Value);
+                    }
+                    return _ggRegistrationItems;
+                }
+                return null;
             }
         }
 
@@ -572,6 +913,18 @@
             set
             {
                 _imagingStatus = value;
+                if (!_imagingStatus)
+                {
+                    StripeEditToggleButtonChecked = false;
+                    OnPropertyChanged("StripeEditToggleButtonChecked");
+                }
+                if (!_fullFOVImageValid && SelectedViewMode == 0)
+                {
+                    _fullFOVImageValid = true;
+                    OnPropertyChanged("mROIStatusMessage");
+                    OnPropertyChanged("mROIStatusErrorAlert");
+                    OnPropertyChanged("mROIStatusWarningAlert");
+                }
                 OnPropertyChanged("ImageStartStatusArea");
             }
         }
@@ -592,6 +945,15 @@
             get
             {
                 return ((int)ICamera.LSMType.GALVO_RESONANCE == ResourceManagerCS.GetLSMType()) ? Visibility.Hidden : Visibility.Visible;
+            }
+        }
+
+        public int IsmROIAvaliable
+        {
+            get
+            {
+                return ((int)ICamera.CameraType.LSM == ResourceManagerCS.GetCameraType() && (int)ICamera.LSMType.RESONANCE_GALVO_GALVO == ResourceManagerCS.GetLSMType()) ?
+                    (int)1 : (int)0;
             }
         }
 
@@ -819,7 +1181,7 @@
                 }
                 if ((value <= (this.LSMFieldSizeMax - this.LSMFieldSize) / 2) && (value >= -(this.LSMFieldSizeMax - this.LSMFieldSize) / 2))
                 {
-                    if (LSMAreaName.Contains("Resonance"))
+                    if (!_areaControlModel.IsLSMFieldOffsetXAvailable)
                     {
                         _areaControlModel.LSMFieldOffsetX = 0;
                     }
@@ -1133,12 +1495,19 @@
                 this._areaControlModel.LSMFieldSize = value;
                 OnPropertyChanged("LSMFieldSize");
 
+                FullFOVStripeFieldSize = _areaControlModel.LSMFieldSize;
+
                 OnPropertyChanged("LSMFieldSizeDisplayX");
                 OnPropertyChanged("LSMFieldSizeDisplayY");
                 OnPropertyChanged("LSMFieldOffsetYDisplay");
                 OnPropertyChanged("LSMFieldOffsetXDisplay");
 
                 OnPropertyChanged("LSMFieldSizeXUM");
+                OnPropertyChanged("FullFOVFieldSizeUM");
+                OnPropertyChanged("FullFOVFieldSizeXUM");
+                OnPropertyChanged("FullFOVFieldSizeYUM");
+                OnPropertyChanged("FullFOVStripeNum");
+                OnPropertyChanged("FullFOVMaxStripePixels");
                 ((IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("FieldSizeWidthUM");
                 OnPropertyChanged("LSMFieldSizeYUM");
                 ((IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("FieldSizeHeightUM");
@@ -1180,7 +1549,7 @@
                 ((IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("CollapsedLSMZoom");
                 ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("LSMFlybackCycles");
                 ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("LSMFlybackTime");
-
+                ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("LSMPixelDwellTime");
             }
         }
 
@@ -1201,28 +1570,17 @@
                     retVal = _fieldSizeCalibration;
                 }
 
-                //use the zoomdata calibration if
-                //the scanner is G/R
-
-                //*NOTE* this logic is moved
-                //into the G/R dll, since it has the zoom
-                //information available to return the adjusted
-                //value
-                //if ((int)ICamera.LSMType.GALVO_RESONANCE == GetLSMType())
-                //{
-                //    if (_useCalibrationArray)
-                //    {
-                //        retVal = retVal + retVal * _calibrationArray[LSMFieldSize];
-                //    }
-                //}
-
                 return retVal;
-
             }
             set
             {
                 _fieldSizeCalibration = value;
                 OnPropertyChanged("LSMFieldSizeXUM");
+                OnPropertyChanged("FullFOVFieldSizeUM");
+                OnPropertyChanged("FullFOVFieldSizeXUM");
+                OnPropertyChanged("FullFOVFieldSizeYUM");
+                OnPropertyChanged("FullFOVStripeNum");
+                OnPropertyChanged("FullFOVMaxStripePixels");
                 ((IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("FieldSizeWidthUM");
                 OnPropertyChanged("LSMFieldSizeYUM");
                 ((IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("FieldSizeHeightUM");
@@ -1353,7 +1711,7 @@
                 }
                 else
                 {
-                    double pixelXYRatio = Convert.ToDouble(LSMPixelY) / Convert.ToDouble(LSMPixelX);
+                    double pixelXYRatio = Convert.ToDouble(LSMPixelY * LSMScaleYScan) / Convert.ToDouble(LSMPixelX);
                     dVal = this._areaControlModel.LSMFieldSize * this.LSMFieldSizeCalibration / (double)MVMManager.Instance["ObjectiveControlViewModel", "TurretMagnification", (object)0.0] * pixelXYRatio;
                 }
 
@@ -1391,14 +1749,6 @@
             {
                 this._areaControlModel.LSMFlipVerticalScan = value;
                 OnPropertyChanged("LSMFlipVerticalScan");
-            }
-        }
-
-        public bool GGCalAlert
-        {
-            get
-            {
-                return (DateTimeFormatInfo.CurrentInfo.DayNames.Length < (DateTime.Now).Subtract(ResourceManagerCS.ToDateTimeFromUnix(LSMLastCalibrationDateUnix)).TotalDays) ? true : false;
             }
         }
 
@@ -1441,6 +1791,14 @@
                 OnPropertyChanged("LSMFieldOffsetXDisplay");
                 OnPropertyChanged("LSMFieldSizeYUM");
                 ((IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("FieldSizeHeightUM");
+            }
+        }
+
+        public double LSMMaxFieldSizeXUM
+        {
+            get
+            {
+                return GetPhysicalSizeUMForFieldSize(_areaControlModel.LSMFieldSizeMax);
             }
         }
 
@@ -1507,6 +1865,11 @@
                     OnPropertyChanged("LSMFieldOffsetYDisplay");
                     OnPropertyChanged("LSMFieldOffsetXDisplay");
                     OnPropertyChanged("LSMFieldSizeXUM");
+                    OnPropertyChanged("FullFOVFieldSizeUM");
+                    OnPropertyChanged("FullFOVFieldSizeXUM");
+                    OnPropertyChanged("FullFOVFieldSizeYUM");
+                    OnPropertyChanged("FullFOVStripeNum");
+                    OnPropertyChanged("FullFOVMaxStripePixels");
                     ((IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("FieldSizeWidthUM");
                     OnPropertyChanged("LSMFieldSizeYUM");
                     ((IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("FieldSizeHeightUM");
@@ -1608,8 +1971,6 @@
                     value = 1;
                 }
 
-                const int TWO_WAY_SCAN = 0;
-
                 if ((int)ICamera.LSMType.GALVO_GALVO == ResourceManagerCS.GetLSMType() &&
                     (ICamera.LSMAreaMode.LINE == (ICamera.LSMAreaMode)LSMAreaMode ||
                     ICamera.LSMAreaMode.POLYLINE == (ICamera.LSMAreaMode)LSMAreaMode))
@@ -1637,8 +1998,16 @@
                             break;
                         case ICamera.LSMAreaMode.POLYLINE:
                             {
+                                if (SingleLinePolyline && 1 == value && TWO_WAY_SCAN == (int)MVMManager.Instance["ScanControlViewModel", "LSMScanMode"])
+                                {
+                                    value = 2;
+                                    dwellFactor = 0.24; //Determined experimentally
+                                }
+                                else
+                                {
+                                    dwellFactor = 0.72; //Determined experimentally
+                                }
                                 channel = 1; //channel buffer size has no effect for polyline acquisition. Thus, it is not being considered
-                                dwellFactor = 0.72; //Determined experimentally
                             }
                             break;
                     }
@@ -1678,6 +2047,11 @@
                 OnPropertyChanged("LSMPixelXMax");
                 OnPropertyChanged("LSMPixelYMax");
                 OnPropertyChanged("LSMFieldSizeXUM");
+                OnPropertyChanged("FullFOVFieldSizeUM");
+                OnPropertyChanged("FullFOVFieldSizeXUM");
+                OnPropertyChanged("FullFOVFieldSizeYUM");
+                OnPropertyChanged("FullFOVStripeNum");
+                OnPropertyChanged("FullFOVMaxStripePixels");
                 ((IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("FieldSizeWidthUM");
                 OnPropertyChanged("LSMFieldSizeYUM");
                 ((IMVM)MVMManager.Instance["CaptureSetupViewModel", this]).OnPropertyChange("FieldSizeHeightUM");
@@ -1747,7 +2121,14 @@
             set
             {
                 this._areaControlModel.LSMScaleYScan = value;
+                OnPropertyChanged("LSMFieldSizeDisplayY");
+                OnPropertyChanged("LSMUMPerPixel");
+                OnPropertyChanged("LSMUMPerPixelDisplayString");
+                OnPropertyChanged("LSMFieldSizeYUM");
                 OnPropertyChanged("LSMScaleYScan");
+                OnPropertyChanged("FullFOVFieldSizeUM");
+                OnPropertyChanged("FullFOVFieldSizeXUM");
+                OnPropertyChanged("FullFOVFieldSizeYUM");
             }
         }
 
@@ -1786,14 +2167,14 @@
             }
         }
 
-        public double LSMUMPerPixel
+        public PixelSizeUM LSMUMPerPixel
         {
             get
             {
                 if ((int)ICamera.LSMAreaMode.POLYLINE != this.LSMAreaMode)
                 {
                     double dVal = ((this.LSMFieldSize * this.LSMFieldSizeCalibration) / ((double)MVMManager.Instance["ObjectiveControlViewModel", "TurretMagnification", (object)0.0] * this.LSMPixelX));
-                    _LSMUMPerPixel = Math.Round(dVal, 3);
+                    _LSMUMPerPixel = new PixelSizeUM(Math.Round(dVal, 3), Math.Round(dVal, 3) * LSMScaleYScan);
                 }
 
                 return _LSMUMPerPixel;
@@ -1802,6 +2183,15 @@
             {
                 _LSMUMPerPixel = value;
                 OnPropertyChanged("LSMUMPerPixel");
+                OnPropertyChanged("LSMUMPerPixelDisplayString");
+            }
+        }
+
+        public string LSMUMPerPixelDisplayString
+        {
+            get
+            {
+                return _LSMUMPerPixel.PixelHeightUM != _LSMUMPerPixel.PixelWidthUM ? _LSMUMPerPixel.PixelWidthUM + " x " + _LSMUMPerPixel.PixelHeightUM : _LSMUMPerPixel.PixelWidthUM.ToString();
             }
         }
 
@@ -1854,23 +2244,8 @@
         {
             get
             {
-                return ((int)ICamera.CameraType.LSM == ResourceManagerCS.GetCameraType() && (int)ICamera.LSMType.RESONANCE_GALVO_GALVO == ResourceManagerCS.GetLSMType()) ?
+                return (1 == IsmROIAvaliable && 1 == MROIModeEnable) ?
                     (int)1 : (int)0;
-            }
-        }
-
-        public int MesoStripPixels
-        {
-            get
-            {
-                return _mesoStripPixels;
-            }
-            set
-            {
-                _mesoStripPixels = value;
-                OverlayManagerClass.Instance.PixelUnitSizeXY = new int[2] { _mesoStripPixels, (int)Constants.PIXEL_X_MIN };
-                OverlayManagerClass.Instance.ValidateROIs(ref _overlayCanvas);
-                OnPropertyChange("MesoStripPixels");
             }
         }
 
@@ -1901,9 +2276,14 @@
             get { return new int[2] { 64, 2048 }; }   // { min, max }
         }
 
-        public int MesoStripPixelsStep
+        public int MesoStripPixelsCourseStep
         {
-            get { return (int)Constants.PIXEL_X_MIN; }
+            get { return 64; }
+        }
+
+        public int MesoStripPixelsFineStep
+        {
+            get { return 4; }
         }
 
         public List<int> MicroScanAreas
@@ -1927,6 +2307,261 @@
                         return 0;
                     return (_areaControlModel.CamSensorPixelSizeUM / ((double)MVMManager.Instance["ObjectiveControlViewModel", "TurretMagnification", (object)0] * 1000));
                 }
+            }
+        }
+
+        public ObservableCollection<ScanArea> mROIList
+        {
+            get
+            {
+                var mROIParams = (MesoParams)MVMManager.Instance["MesoScanViewModel", "mROIParams", (object)null];
+                if (mROIParams?.TemplateScans != null)
+                {
+                    for (int i = 0; i < mROIParams.TemplateScans.Count; ++i)
+                    {
+                        if (mROIParams.TemplateScans[i].Name == Enum.GetName(typeof(MesoScanTypes), MesoScanTypes.Micro))
+                        {
+                            return mROIParams.TemplateScans[i].ScanAreas;
+                        }
+                    }
+                }
+
+                return null;
+            }
+            set
+            {
+                var x = value; // need this dummy setter
+            }
+        }
+
+        public int MROIModeEnable
+        {
+            get => _areaControlModel.MROIModeEnable;
+            set
+            {
+                _areaControlModel.MROIModeEnable = value;
+
+                if (0 == _areaControlModel.MROIModeEnable)
+                {
+                    SelectedViewMode = 0;
+                }
+                OnPropertyChanged("MROIModeEnable");
+                OnPropertyChanged("MesoMicroVisible");
+                OnPropertyChange("StripVisible");
+            }
+        }
+
+        public bool mROIPreviewAllROIs
+        {
+            get => _mROIPreviewAllROIs;
+            set
+            {
+                SetProperty(ref _mROIPreviewAllROIs, value);
+                MVMManager.Instance["MesoScanViewModel", "PreviewAllROIs"] = _mROIPreviewAllROIs;
+            }
+        }
+
+        public bool mROIShowFullFovAsBackground
+        {
+            get
+            {
+                return _mROIShowFullFovAsBackground;
+            }
+            set
+            {
+                _mROIShowFullFovAsBackground = value;
+                MVMManager.Instance["ImageViewCaptureSetupVM", "AllowmROIBackgroundImage"] = value;
+                //OnPropertyChange("mROIShowFullFovAsBackground");
+            }
+        }
+
+        public bool mROISpatialDisplaybleEnable
+        {
+            get => _mROISpatialDisplaybleEnable;
+            set
+            {
+                _mROISpatialDisplaybleEnable = value;
+                if (!value)
+                {
+                    ConfigmROISettings = false;
+                }
+                OnPropertyChanged("mROISpatialDisplaybleEnable");
+                MVMManager.Instance["ImageViewCaptureSetupVM", "mROISpatialDisplaybleEnable"] = value;
+            }
+        }
+
+        private DispatcherTimer _messageTimer;
+        private volatile bool _displayDeletedMesage = false;
+        private string _mROIStatusMessage = "OK";
+        public string mROIStatusMessage
+        {
+            get
+            {
+                if (_displayDeletedMesage)
+                {
+                    _mROIStatusMessage = "WARNING - Scan Area out of bounds and has been deleted";
+                    OnPropertyChanged("mROIStatusWarningAlert");
+                }
+                else if (!_fullFOVImageValid)
+                {
+                    _mROIStatusMessage = "WARNING - FullFOV Image Invalidated. Please image to apply settings changes";
+                    OnPropertyChanged("mROIStatusWarningAlert");
+                }
+                else if (mROIStatusPercentLines > 100)
+                {
+                    _mROIStatusMessage = "ERROR - Too many lines in mROI's";
+                    OnPropertyChanged("mROIStatusErrorAlert");
+                }
+                else
+                {
+                    _mROIStatusMessage = "OK";
+                    OnPropertyChanged("mROIStatusErrorAlert");
+                    OnPropertyChanged("mROIStatusWarningAlert");
+                }
+                return _mROIStatusMessage;
+            }
+        }
+
+        private double _mROIStatusPercentLines = 0.0;
+        public double mROIStatusPercentLines
+        {
+            get => _mROIStatusPercentLines;
+            set
+            {
+                _mROIStatusPercentLines = value;
+                OnPropertyChanged("mROIStatusMessage");
+                OnPropertyChanged("mROIStatusPercentLines");
+            }
+        }
+
+        public bool mROIStatusErrorAlert
+        {
+            get
+            {
+                return _mROIStatusMessage.ToLower().Contains("error");
+            }
+        }
+
+        public bool mROIStatusWarningAlert
+        {
+            get
+            {
+                return _mROIStatusMessage.ToLower().Contains("warning");
+            }
+        }
+
+        public int mROIStripeFieldSize
+        {
+            get
+            {
+                if (_mROIStripeFieldSize > mROIStripeFieldSizeMax)
+                {
+                    _mROIStripeFieldSize = mROIStripeFieldSizeMax;
+                    OnPropertyChanged("mROIStripeFieldSize");
+                    OnPropertyChanged("mROIStripePhysicalFieldSizeUM");
+                }
+                return _mROIStripeFieldSize;
+            }
+            set
+            {
+                if (value >= LSMFieldSizeMin && value <= LSMFieldSizeMax)
+                {
+                    _mROIStripeFieldSize = value;
+
+                    if (_configmROISettings)
+                    {
+                        FrameInfoStruct fi = (FrameInfoStruct)MVMManager.Instance["ImageViewCaptureSetupVM", "LastFrameInfo", (object)null];
+
+                        if (fi.isMROI == 1)
+                        {
+                            int newPixels = (int)(Math.Round(_mROIStripePixels * mROIStripePhysicalFieldSizeUM / GetPhysicalSizeUMForFieldSize(fi.mROIStripeFieldSize)));
+                            OverlayManagerClass.Instance.PixelUnitSizeXY = new int[2] { newPixels, 4 }; // TODO:
+                        }
+                        else
+                        {
+                            int newPixels = (int)(Math.Round(_fullFOVStripePixels * mROIStripePhysicalFieldSizeUM / FullFOVPhysicalFieldSizeUM));
+                            OverlayManagerClass.Instance.PixelUnitSizeXY = new int[2] { newPixels, 1 }; // TODO:
+                        }
+                        OverlayManagerClass.Instance.ValidateROIs();
+                        OverlayManagerClass.Instance.DisplayModeROI(_configmROISettings ? new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.MICRO_SCANAREA } : new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.STATSONLY }, true);
+                    }
+
+                    OnPropertyChanged("mROIStripeFieldSize");
+
+                    OnPropertyChanged("mROIStripePhysicalFieldSizeUM");
+                    MVMManager.Instance["MesoScanViewModel", "TryForceUpdateLines"] = true;
+                }
+            }
+        }
+
+        public int mROIStripeFieldSizeMax
+        {
+            get 
+            {
+                return FullFOVStripeFieldSize * FullFOVStripeNum;
+            }
+        }
+
+        public double mROIStripePhysicalFieldSizeUM
+        {
+            get
+            {
+                return GetPhysicalSizeUMForFieldSize(_mROIStripeFieldSize);
+            }
+            set
+            {
+                //TODO: remove
+            }
+        }
+
+        public int mROIStripePixels
+        {
+            get
+            {
+                return _mROIStripePixels;
+            }
+            set
+            {
+                _mROIStripePixels = value;
+
+                OnPropertyChange("mROIStripePixels");
+            }
+        }
+
+        public int[] mROIStripePixelsRange
+        {
+            get { return new int[2] { 16, 1024 }; }   // { min, max }
+        }
+
+        public int mROIStripePixelsCourseStep
+        {
+            get { return 16; }
+        } 
+        
+        public int mROIStripePixelsFineStep
+        {
+            get { return 4; }
+        }
+
+        public ICommand mROIStripPixelsMinusCommand
+        {
+            get
+            {
+                if (this._mROIStripPixelsMinusCommand == null)
+                    this._mROIStripPixelsMinusCommand = new RelayCommand(() => mROIStripePixelMinus());
+
+                return this._mROIStripPixelsMinusCommand;
+            }
+        }
+
+        public ICommand mROIStripPixelsPlusCommand
+        {
+            get
+            {
+                if (this._mROIStripPixelsPlusCommand == null)
+                    this._mROIStripPixelsPlusCommand = new RelayCommand(() => mROIStripePixelPlus());
+
+                return this._mROIStripPixelsPlusCommand;
             }
         }
 
@@ -1970,18 +2605,6 @@
             }
         }
 
-        public Canvas OverviewOverlayCanvas
-        {
-            get
-            {
-                return _overviewOverlayCanvas;
-            }
-            set
-            {
-                _overviewOverlayCanvas = value;
-            }
-        }
-
         public bool OverviewVisible
         {
             get
@@ -1997,7 +2620,6 @@
                     {
                         _overviewWin = new MesoOverview();
                         _overviewWin.Closed += _overviewWin_Closed;
-                        OverviewOverlayCanvas = _overviewWin.OverlayCanvas;
                         _overviewWin.Show();
                     }
                 }
@@ -2039,17 +2661,32 @@
             }
         }
 
-        public double PixelSizeUM
+        public PixelSizeUM PixelSizeUM
         {
             get
             {
                 if ((int)ICamera.CameraType.LSM == this._areaControlModel.CameraType)
                 {
-                    return this.LSMUMPerPixel;
+                    if (1 == MROIModeEnable)
+                    {
+                        if (_configmROISettings)
+                        {
+                            return new PixelSizeUM(mROIStripePhysicalFieldSizeUM / _mROIStripePixels, mROIStripePhysicalFieldSizeUM * LSMScaleYScan / _mROIStripePixels);
+                        }
+                        else
+                        {
+                            return new PixelSizeUM(FullFOVPhysicalFieldSizeUM / _fullFOVStripePixels, FullFOVPhysicalFieldSizeUM * LSMScaleYScan / _fullFOVStripePixels);
+                        }
+                    }
+                    else
+                    {
+                        return new PixelSizeUM(this.LSMUMPerPixel.PixelWidthUM, this.LSMUMPerPixel.PixelHeightUM);
+                    }
                 }
                 else
                 {
-                    return (double)MVMManager.Instance["CameraControlViewModel", "CamPixelSizeUM", (object)1.0] * Math.Max(1, Math.Max((int)MVMManager.Instance["CameraControlViewModel", "BinY", (object)1], (int)MVMManager.Instance["CameraControlViewModel", "BinX", (object)1]));
+                    double camPixelVal = (double)MVMManager.Instance["CameraControlViewModel", "CamPixelSizeUM", (object)1.0] * Math.Max(1, Math.Max((int)MVMManager.Instance["CameraControlViewModel", "BinY", (object)1], (int)MVMManager.Instance["CameraControlViewModel", "BinX", (object)1]));
+                    return new PixelSizeUM(camPixelVal, camPixelVal);
                 }
             }
         }
@@ -2099,15 +2736,31 @@
             }
         }
 
-        public Canvas propOverlayCanvas
+        public double Power0
+        {
+            get => (double)MVMManager.Instance["PowerControlViewModel", "Power0", (object)0.0];
+        }
+
+        public double Power1
+        {
+            get => (double)MVMManager.Instance["PowerControlViewModel", "Power1", (object)0.0];
+        }
+
+        public double Power2
+        {
+            get => (double)MVMManager.Instance["PowerControlViewModel", "Power2", (object)0.0];
+        }
+
+        public double Power3
+        {
+            get => (double)MVMManager.Instance["PowerControlViewModel", "Power3", (object)0.0];
+        }
+
+        public ObservableCollection<StringPC> PowerControlName
         {
             get
             {
-                return _overlayCanvas;
-            }
-            set
-            {
-                _overlayCanvas = value;
+                return (ObservableCollection<StringPC>)MVMManager.Instance["PowerControlViewModel", "PowerControlName"];
             }
         }
 
@@ -2124,6 +2777,19 @@
                     return Visibility.Collapsed;
                 }
             }
+        }
+
+        public string ReferenceChannelImageName
+        {
+            get
+            {
+                return MVMManager.Instance["ImageViewCaptureSetupVM", "ReferenceChannelImageName", ""].ToString();
+            }
+        }
+
+        public XmlDocument RegistrationDoc
+        {
+            get { return MVMManager.Instance.SettingsDoc[(int)SettingsFileType.REGISTRATION_SETTINGS]; }
         }
 
         public ICommand ResolutionAddCommand
@@ -2153,14 +2819,6 @@
                     _returnToOriginalAreaCommand = new RelayCommand(() => ReturnToOriginalArea());
 
                 return _returnToOriginalAreaCommand;
-            }
-        }
-
-        public string ReferenceChannelImageName
-        {
-            get
-            {
-                return MVMManager.Instance["CaptureSetupViewModel", "ReferenceChannelImageName", ""].ToString();
             }
         }
 
@@ -2245,6 +2903,28 @@
             }
         }
 
+        public int SelectedmROIIndex
+        {
+            get
+            {
+                return SelectedScanArea - 1;
+            }
+            set
+            {
+                SelectedScanArea = value + 1;
+
+                if (value >= 0)
+                {
+
+                    if (!_mROIPreviewAllROIs)
+                    {
+                        MVMManager.Instance["MesoScanViewModel", "ScanAreaID"] = value + 1;
+                        MVMManager.Instance["MesoScanViewModel", "UpdateROIs"] = true;
+                    }
+                }
+            }
+        }
+
         public int SelectedScanArea
         {
             get
@@ -2255,24 +2935,49 @@
             {
                 _selectedScanArea = value;
                 OnPropertyChanged("SelectedScanArea");
+                OnPropertyChanged("SelectedmROIIndex");
+
+                MVMManager.Instance["ImageViewCaptureSetupVM", "mROIPriorityIndex"] = value - 1;
+
+                if (SelectedmROIIndex >= 0)
+                {
+                    if (_configmROISettings)
+                    {
+                        var ROIs = OverlayManagerClass.Instance.GetModeROIs(Mode.MICRO_SCANAREA);
+                        if (ROIs?.Count > SelectedmROIIndex)
+                        {
+
+                            ROIs = OverlayManagerClass.Instance.GetModeROIs(Mode.MICRO_SCANAREA);
+                            OverlayManagerClass.Instance.SelectSingleROI(ROIs[SelectedmROIIndex]);
+                        }
+                        else
+                        {
+                            OverlayManagerClass.Instance.DeselectAllROIs();
+                        }
+                    }
+                }
+                else if (_configmROISettings)
+                {
+                    OverlayManagerClass.Instance.DeselectAllROIs();
+                }
             }
         }
 
-        public int SelectedStripSize
-        {
-            get
-            {
-                return _selectedStripSize;
-            }
-            set
-            {
-                _selectedStripSize = value;
-                OnPropertyChange("SelectedStripSize");
-            }
-        }
-
+        //public int SelectedStripSize
+        //{
+        //    get
+        //    {
+        //        return _selectedStripSize;
+        //    }
+        //    set
+        //    {
+        //        _selectedStripSize = value;
+        //        OnPropertyChange("SelectedStripSize");
+        //    }
+        //}
         public int SelectedViewMode
         {
+            //TODO: Update state of background checkbox when view is switched
             get
             {
                 if (0 == MesoMicroVisible)
@@ -2285,19 +2990,30 @@
             {
                 _selectedViewMode = (0 == MesoMicroVisible) ? 0 : value;
                 OnPropertyChange("MicroScanAreas");
-                if (0 == _selectedViewMode)
+                OnPropertyChange("mROIList");
+
+                if (0 == _selectedViewMode) // meso
                 {
-                    ConfigMicroScanArea = false;
-                    MVMManager.Instance["CaptureSetupViewModel", "WrapPanelEnabled"] = true;
+                    ConfigmROISettings = false;
+                    //MVMManager.Instance["CaptureSetupViewModel", "WrapPanelEnabled"] = true;
                 }
                 else
                 {
-                    MVMManager.Instance["CaptureSetupViewModel", "WrapPanelEnabled"] = (0 >= MicroScanAreas.Count) ? false : true;
+                    // MVMManager.Instance["CaptureSetupViewModel", "WrapPanelEnabled"] = (0 >= MicroScanAreas.Count) ? false : true;
                 }
                 ((ThorSharedTypes.IMVM)MVMManager.Instance["ZControlViewModel", this]).OnPropertyChange("PreviewButtonEnabled");
 
                 if (1 == MesoMicroVisible)
+                {
                     MVMManager.Instance["MesoScanViewModel", "ScanID"] = _selectedViewMode + (int)MesoScanTypes.Meso;
+                }
+                if (1 == _selectedViewMode) // micro (mROI)
+                {
+                    if (mROISpatialDisplaybleEnable)
+                    {
+                        ConfigmROISettings = true;
+                    }
+                }
 
                 OnPropertyChange("SelectedViewMode");
                 OnPropertyChange("SelectedScanArea");
@@ -2316,6 +3032,14 @@
             }
         }
 
+        public bool SingleLinePolyline
+        {
+            get
+            {
+                return _singleLinePolyline;
+            }
+        }
+
         public ICommand StoreRSRateCommand
         {
             get
@@ -2327,14 +3051,13 @@
             }
         }
 
-        public List<int> StripSizes
-        {
-            get
-            {
-                return _stripSizes;
-            }
-        }
-
+        //public List<int> StripSizes
+        //{
+        //    get
+        //    {
+        //        return _stripSizes;
+        //    }
+        //}
         public bool StripVisible
         {
             get
@@ -2343,7 +3066,7 @@
                 {
                     if (0 == SelectedViewMode)
                         return true;
-                    else if (ConfigMicroScanArea)
+                    else if (ConfigmROISettings)
                         return true;
                 }
                 return false;
@@ -2445,6 +3168,53 @@
             }
         }
 
+        //TODO: when we switch to .NET 8 we can update this to a RelayCommand with parameter. Should be built in
+        public ICommand TogglemROIStripeEditCommand
+        {
+            get
+            {
+                if (this._togglemROIStripeEditCommand == null)
+                    this._togglemROIStripeEditCommand = new RelayCommandWithParam((x) => TogglemROIStripeEdit((bool)x));
+
+                return this._togglemROIStripeEditCommand;
+            }
+        }
+
+        private bool _stripeEditToggleButtonChecked = false;
+        public bool StripeEditToggleButtonChecked
+        {
+            get => _stripeEditToggleButtonChecked;
+            set
+            {
+                TogglemROIStripeEdit(value);
+                _stripeEditToggleButtonChecked = value;
+                OnPropertyChanged("StripeEditToggleButtonChecked");
+            }
+        }
+
+        public int TotalScanAreas
+        {
+            get { return MicroScanAreas.Count > 1 ? MicroScanAreas.Count : 1; }
+        }
+
+        public bool TwoWayAvailable
+        {
+            get
+            {
+                if (ICamera.LSMAreaMode.POLYLINE == (ICamera.LSMAreaMode)LSMAreaMode)
+                {
+                    return _singleLinePolyline;
+                }
+
+                return true;
+            }
+        }
+
+        public double ZPosition
+        {
+            get => 1000 * (double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0.0];
+        }
+
         #endregion Properties
 
         #region Indexers
@@ -2526,16 +3296,127 @@
             return myPropInfo;
         }
 
+        void IDropTarget.DragOver(IDropInfo dropInfo)
+        {
+            DragDrop.DefaultDropHandler.DragOver(dropInfo);
+            if (dropInfo.DragInfo.SourceCollection.Equals(mROIList) &&
+                dropInfo.TargetCollection.Equals(mROIList))
+            {
+                dropInfo.Effects = DragDropEffects.Move;
+                //if (false == _isDraggingTemplateSequenceStep)
+                //{
+                //    //Persist the dragged script item
+                //    SequenceStep data = (SequenceStep)dropInfo.Data;
+                //    _previousCaptureSequenceSelectedLine = data.SequenceLineNumber;
+                //    if (null != CollectionCaptureSequence[_previousCaptureSequenceSelectedLine])
+                //    {
+                //        _draggedTemplateSequenceStep = CollectionCaptureSequence[_previousCaptureSequenceSelectedLine];
+                //        _isDraggingTemplateSequenceStep = true;
+                //    }
+                //}
+            }
+            //else if (dropInfo.DragInfo.SourceCollection.Equals(CollectionSequences) &&
+            //    dropInfo.TargetCollection.Equals(CollectionSequences))
+            //{
+            //    dropInfo.Effects = DragDropEffects.Move;
+            //    if (false == _isDraggingTemplateSequenceStep)
+            //    {
+            //        //Persist the dragged script item
+            //        SequenceStep data = (SequenceStep)dropInfo.Data;
+            //        _previousCaptureTemplateSelectedLine = data.TemplateLineNumber;
+            //        if (null != CollectionSequences[_previousCaptureTemplateSelectedLine])
+            //        {
+            //            _draggedTemplateSequenceStep = CollectionSequences[_previousCaptureTemplateSelectedLine];
+            //            _isDraggingTemplateSequenceStep = true;
+            //        }
+            //    }
+            //}
+            //else if (dropInfo.DragInfo.SourceCollection.Equals(CollectionCaptureSequence) &&
+            //    dropInfo.TargetCollection.Equals(CollectionSequences))
+            //{
+            //    dropInfo.Effects = DragDropEffects.None;
+            //    _isDraggingTemplateSequenceStep = false;
+            //}
+        }
+
+        void IDropTarget.Drop(IDropInfo dropInfo)
+        {
+            try
+            {
+                //_isDraggingTemplateSequenceStep = false;
+                if (dropInfo.DragInfo.SourceCollection.Equals(mROIList) &&
+                    dropInfo.TargetCollection.Equals(mROIList))
+                {
+                    //if (_draggedTemplateSequenceStep != null)
+                    //{
+                    //    //Persist the dragged script item
+                    //    CollectionCaptureSequence[_previousCaptureSequenceSelectedLine] = _draggedTemplateSequenceStep;
+                    //}
+                    //moving an existing item in the list
+                    DragDrop.DefaultDropHandler.Drop(dropInfo);
+                    MVMManager.Instance["MesoScanViewModel", "ReorderROIs"] = true;
+
+                    //_sequentialControlModel.ReassignCaptureSequenceLineNumbers();
+                }
+                //    else if (dropInfo.DragInfo.SourceCollection.Equals(CollectionSequences) &&
+                //        dropInfo.TargetCollection.Equals(CollectionCaptureSequence))
+                //    {
+                //        SequenceStep data = (SequenceStep)dropInfo.Data;
+                //        SequenceStep si = new SequenceStep(data.Name, data.SequenceStepNode, dropInfo.InsertIndex);
+
+                //        CollectionCaptureSequence.Insert(dropInfo.InsertIndex, si);
+                //        _sequentialControlModel.ReassignCaptureSequenceLineNumbers();
+                //    }
+                //    else if (dropInfo.DragInfo.SourceCollection.Equals(CollectionSequences) &&
+                //        dropInfo.TargetCollection.Equals(CollectionSequences))
+                //    {
+                //        if (_draggedTemplateSequenceStep != null)
+                //        {
+                //            //Persist the dragged script item
+                //            CollectionSequences[_previousCaptureTemplateSelectedLine] = _draggedTemplateSequenceStep;
+                //        }
+                //        //moving an existing item in the list
+                //        DragDrop.DefaultDropHandler.Drop(dropInfo);
+                //        _sequentialControlModel.ReassignTemplateListLineNumbers();
+                //    }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+        }
+
         public void LoadXMLSettings()
         {
             string str = string.Empty;
             int iTmp = 0;
             double dTmp = 0.0;
-            Int64 i64Tmp = 0;
+            long i64Tmp = 0;
+            XmlDocument doc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS];
+
+            //load registration
+            XmlNodeList ndList = RegistrationDoc.SelectNodes("/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "'][@CameraType='1']/LUT");
+            if (0 < ndList.Count)
+            {
+                ndList = RegistrationDoc.SelectNodes("/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "'][@CameraType='1']/LUT");
+                for (int i = 0; i < ndList.Count; i++)
+                {
+                    if (XmlManager.GetAttribute(ndList[i], RegistrationDoc, "Active", ref str) && Int32.TryParse(str, out iTmp) && 1 == iTmp)
+                        GGRegistrationIndex = i;
+                }
+            }
+            else
+            {
+                if (XmlManager.ReadAttribute<long>(out i64Tmp, doc, "/ThorImageExperiment/Photobleaching", "calibrationDateUnix", 0, 0))
+                {
+                    LSMLastCalibrationDateUnix = i64Tmp;
+                }
+
+            }
 
             //load from hardware settings first, then load exp
             XmlDocument hardwareDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS];
-            XmlNodeList ndList = hardwareDoc.SelectNodes("/HardwareSettings/LSM");
+            ndList = hardwareDoc.SelectNodes("/HardwareSettings/LSM");
 
             if (ndList.Count > 0)
             {
@@ -2555,7 +3436,7 @@
                 }
             }
 
-            //load from hardware settings first, then load exp
+            //load from application settings then load exp
             XmlDocument appDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
             ndList = appDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/AreaView/FieldFromROIZoom");
             if (ndList.Count > 0)
@@ -2585,7 +3466,14 @@
                 OnPropertyChanged("TimedBasedVisiblity");
             }
 
-            XmlDocument doc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS];
+            ndList = appDoc.SelectNodes("/ApplicationSettings/mROIMode");
+            if (ndList.Count > 0)
+            {
+                str = string.Empty;
+                XmlManager.GetAttribute(ndList[0], appDoc, "enable", ref str);
+
+                MROIModeEnable = ("1" == str) ? 1 : 0;
+            }
 
             ndList = doc.SelectNodes("/ThorImageExperiment/LSM");
 
@@ -2618,16 +3506,26 @@
                     }
                 }
 
-                if (XmlManager.GetAttribute(ndList[0], doc, "pixelSizeUM", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
+                //if (XmlManager.GetAttribute(ndList[0], doc, "pixelSizeUM", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
+                //{
+                //    LSMUMPerPixel = dTmp;
+                //}
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "pixelWidthUM", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
                 {
-                    LSMUMPerPixel = dTmp;
+                    LSMUMPerPixel.PixelWidthUM = dTmp;
+                }
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "pixelHeightUM", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
+                {
+                    LSMUMPerPixel.PixelHeightUM = dTmp;
                 }
 
                 if (XmlManager.GetAttribute(ndList[0], doc, "fieldSize", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iTmp))
                 {
                     LSMFieldSize = iTmp;
                 }
-                if ((int)ICamera.LSMType.GALVO_GALVO == ResourceManagerCS.GetLSMType())
+                if ((int)ICamera.LSMType.GALVO_GALVO == ResourceManagerCS.GetLSMType() || (int)ICamera.LSMType.RESONANCE_GALVO_GALVO == ResourceManagerCS.GetLSMType())
                 {
                     if (XmlManager.GetAttribute(ndList[0], doc, "areaAngle", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
                     {
@@ -2683,6 +3581,11 @@
                 if (XmlManager.GetAttribute(ndList[0], doc, "fineScaleY", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
                 {
                     LSMFieldScaleYFine = dTmp;
+                }
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "pixelAspectRatioYScale", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
+                {
+                    LSMScaleYScan = dTmp;
                 }
 
                 if (XmlManager.GetAttribute(ndList[0], doc, "tbLineScanTimeMS", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
@@ -2763,13 +3666,6 @@
                 }
             }
 
-            ndList = doc.SelectNodes("/ThorImageExperiment/Photobleaching");
-
-            if (XmlManager.GetAttribute(ndList[0], doc, "calibrationDateUnix", ref str) && Int64.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out i64Tmp))
-            {
-                LSMLastCalibrationDateUnix = i64Tmp;
-            }
-
             //Update Waveform for Polyline Scan
             if (ICamera.LSMAreaMode.POLYLINE == (ICamera.LSMAreaMode)LSMAreaMode)
             {
@@ -2782,9 +3678,16 @@
             { _statusTimer.Start(); }
             else
             { _statusTimer.Stop(); }
-
+            mROISpatialDisplaybleEnable = true;
             //After the modality is changed we need to rebuild the zoom table. Set _zoomTable[0] = 0 to rebuild it.
             _zoomTable[0] = 0;
+
+            ConfigmROISettings = _configmROISettingsTmp && (1 == _selectedViewMode); // display the config mode if in mROI view and was already in that mode when leaving the tab
+
+            OverlayManagerClass.Instance.mROIsUpdated += Instance_OverlaymROIsUpdated;
+            OverlayManagerClass.Instance.mROIDeletedEvent += Instance_OverlaymROIDeleted;           
+            OverlayManagerClass.Instance.ParamsUpdatedEvent += Instance_OverlayParamsUpdatedEvent;
+            OverlayManagerClass.Instance.mROISelectedEvent += Instance_OverlaymROISelectedEvent;
         }
 
         public void OnPropertyChange(string propertyName)
@@ -2808,24 +3711,10 @@
             }
         }
 
-        /// <summary>
-        /// Try to set LSM field size, return old value if not valid.
-        /// </summary>
-        /// <param name="setVal"></param>
-        /// :TODO: This wont be needed anymore. This is handled in the lower level
-        //public void TrySetLSMFieldSize(int setVal)
-        //{
-        //    int originalVal = this.LSMFieldSize;
-        //    this.LSMFieldSize = setVal;
-        //    if (setVal != this.LSMFieldSize)
-        //    {
-        //        this.LSMFieldSize = originalVal;
-        //    }
-        //}
         public void UpdateExpXMLSettings(ref XmlDocument experimentFile)
         {
-            ConfigMicroScanArea = false;
-
+            _configmROISettingsTmp = ConfigmROISettings;
+            ConfigmROISettings = false;
             XmlNodeList ndList = experimentFile.SelectNodes("/ThorImageExperiment/LSM");
 
             if (ndList.Count > 0)
@@ -2847,7 +3736,10 @@
 
                 XmlManager.SetAttribute(ndList[0], experimentFile, "heightUM", this.LSMFieldSizeYUM.ToString());
 
-                XmlManager.SetAttribute(ndList[0], experimentFile, "pixelSizeUM", this.LSMUMPerPixel.ToString());
+                //XmlManager.SetAttribute(ndList[0], experimentFile, "pixelSizeUM", this.LSMUMPerPixel.ToString());
+                XmlManager.SetAttribute(ndList[0], experimentFile, "pixelWidthUM", this.LSMUMPerPixel.PixelWidthUM.ToString());
+
+                XmlManager.SetAttribute(ndList[0], experimentFile, "pixelHeightUM", this.LSMUMPerPixel.PixelHeightUM.ToString());
 
                 XmlManager.SetAttribute(ndList[0], experimentFile, "horizontalFlip", this.LSMFlipHorizontal.ToString());
 
@@ -2860,6 +3752,8 @@
                 XmlManager.SetAttribute(ndList[0], experimentFile, "fineScaleX", this.LSMFieldScaleXFine.ToString());
 
                 XmlManager.SetAttribute(ndList[0], experimentFile, "fineScaleY", this.LSMFieldScaleYFine.ToString());
+
+                XmlManager.SetAttribute(ndList[0], experimentFile, "pixelAspectRatioYScale", this.LSMScaleYScan.ToString());
 
                 XmlManager.SetAttribute(ndList[0], experimentFile, "timeBasedLineScan", (Convert.ToInt32(this.TimeBasedLineScan)).ToString());
 
@@ -2886,6 +3780,10 @@
                 XmlManager.SetAttribute(ndList[0], experimentFile, "enableFlatField", this.EnableFlatField.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "pathFlatField", this.PathFlatField.ToString());
             }
+
+            OverlayManagerClass.Instance.mROIsUpdated -= Instance_OverlaymROIsUpdated;
+            OverlayManagerClass.Instance.ParamsUpdatedEvent -= Instance_OverlayParamsUpdatedEvent;
+            OverlayManagerClass.Instance.mROISelectedEvent -= Instance_OverlaymROISelectedEvent;
         }
 
         private void BuildZoomTable()
@@ -2918,7 +3816,8 @@
             if ((pixelX != 0) || (pixelY != 0))
             {
                 double xyRatio = (double)pixelY / (double)pixelX;
-                return fieldSize / (Math.Sqrt(1 + 1 / (xyRatio * xyRatio)) * 2.0);
+                double pixelSizeRatio = _LSMUMPerPixel.PixelWidthUM / _LSMUMPerPixel.PixelHeightUM;
+                return fieldSize * LSMScaleYScan / (Math.Sqrt(1 + 1 / (xyRatio * xyRatio)) * 2.0);
             }
             return 0;
         }
@@ -3200,6 +4099,24 @@
             return val;
         }
 
+        private double GetPhysicalSizeUMForFieldSize(int fieldSize)
+        {
+            if (fieldSize >= LSMFieldSizeMin && fieldSize <= LSMFieldSizeMax)
+            {
+                double currentMag = (double)MVMManager.Instance["ObjectiveControlViewModel", "TurretMagnification", (object)0.0];
+                long offset = _areaControlModel.ZoomArray[120];
+                double fscXML = _areaControlModel.FieldSizeCalibrationXML;
+                double fsCalibration = fscXML + fscXML * (_areaControlModel.ZoomArray[fieldSize] - offset) / 100.0;
+
+                double fsUM = fieldSize * fsCalibration / currentMag;
+                return Math.Round(fsUM, 2);
+            }
+            else
+            {
+                return 0.0001;
+            }
+        }
+
         private double GetPixelsPerInch()
         {
             double pixelsPerInch = 96;
@@ -3231,6 +4148,44 @@
             return pixelsPerInch;
         }
 
+        private void GGRegistrationClear()
+        {
+            XmlNodeList ndList = RegistrationDoc.SelectNodes("/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "'][@CameraType='1']/LUT");
+            if (0 < ndList.Count)
+            {
+                XmlNodeList lut = RegistrationDoc.SelectNodes("/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "'][@CameraType='1']/LUT[@RefZoom=" + "'" + _ggRegistrationItems.ElementAt(_ggRegistrationIndex) + "']");
+                if (null != lut && 0 < lut.Count)
+                {
+                    foreach (XmlNode nd in lut)
+                    {
+                        nd.ParentNode.RemoveChild(nd);
+                    }
+                    MVMManager.Instance.ReloadSettings(SettingsFileType.REGISTRATION_SETTINGS);
+
+                    GGRegistrationIndex = -1;
+                    OnPropertyChange("GGRegistrationItems");
+                    OnPropertyChange("GGRegistrationAbleToClear");
+                }
+            }
+        }
+
+        private void GGRegistrationClearAll()
+        {
+            XmlNodeList ndList = RegistrationDoc.SelectNodes("/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "'][@CameraType='1']/LUT");
+            if (0 < ndList.Count)
+            {
+                foreach (XmlNode nd in ndList)
+                {
+                    nd.ParentNode.RemoveChild(nd);
+                }
+                MVMManager.Instance.ReloadSettings(SettingsFileType.REGISTRATION_SETTINGS);
+
+                GGRegistrationIndex = -1;
+                OnPropertyChange("GGRegistrationItems");
+                OnPropertyChange("GGRegistrationAbleToClear");
+            }
+        }
+
         private void ImagingCenterScanners(object type)
         {
             switch ((SelectedHardware)type)
@@ -3242,6 +4197,96 @@
                         this._areaControlModel.CenterScanners((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, true);
                     }
                     break;
+            }
+        }
+
+        private void Instance_OverlaymROISelectedEvent(int obj)
+        {
+            if (_configmROISettings)
+            {
+                _selectedScanArea = obj;
+                OnPropertyChanged("SelectedScanArea");
+                OnPropertyChanged("SelectedmROIIndex");
+                MVMManager.Instance["MesoScanViewModel", "ScanAreaID"] = obj;
+                if (!_mROIPreviewAllROIs)
+                {
+                    MVMManager.Instance["MesoScanViewModel", "UpdateROIs"] = true;
+                }
+
+                MVMManager.Instance["ImageViewCaptureSetupVM", "mROIPriorityIndex"] = obj - 1;
+            }
+        }
+
+        private void Instance_OverlaymROIDeleted()
+        {
+            _displayDeletedMesage = true;
+            if (_messageTimer == null)
+            {
+                _messageTimer = new DispatcherTimer();
+                _messageTimer.Interval = TimeSpan.FromSeconds(4);
+                _messageTimer.Tick += MessageTimer_Tick;
+            }
+            _messageTimer.Start();
+            OnPropertyChanged("mROIStatusMessage");
+        }
+
+        private void MessageTimer_Tick(object sender, EventArgs e)
+        {
+            _displayDeletedMesage = false;
+            _messageTimer.Stop();
+            OnPropertyChanged("mROIStatusMessage");
+        }
+
+        private void Instance_OverlaymROIsUpdated()
+        {
+            MVMManager.Instance["MesoScanViewModel", "UpdateROIs"] = true;
+            MVMManager.Instance["ImageViewCaptureSetupVM", "mROIPriorityIndex"] = SelectedmROIIndex;
+            var ROIs = OverlayManagerClass.Instance.GetModeROIs(Mode.MICRO_SCANAREA);
+            if (ROIs.Count > SelectedmROIIndex && SelectedmROIIndex >= 0)
+            {
+                OverlayManagerClass.Instance.SelectSingleROI(ROIs[SelectedmROIIndex]);
+            }
+            else
+            {
+                OverlayManagerClass.Instance.DeselectAllROIs();
+            }
+        }
+
+        private void Instance_OverlayParamsUpdatedEvent()
+        {
+            if (_configmROISettings)
+            {
+                FrameInfoStruct fi = (FrameInfoStruct)MVMManager.Instance["ImageViewCaptureSetupVM", "LastFrameInfo", (object)null];
+
+                if (fi.isMROI == 1)
+                {
+                    int newPixels = (int)(Math.Round(_mROIStripePixels * mROIStripePhysicalFieldSizeUM / GetPhysicalSizeUMForFieldSize(fi.mROIStripeFieldSize)));
+                    OverlayManagerClass.Instance.PixelUnitSizeXY = new int[2] { newPixels, 4 };
+                    MVMManager.Instance["MesoScanViewModel", "ResizeROIsFormROIPixelDensity"] = true;
+                }
+                else
+                {
+                    int newPixels = (int)(Math.Round(_fullFOVStripePixels * mROIStripePhysicalFieldSizeUM / FullFOVPhysicalFieldSizeUM));
+                    OverlayManagerClass.Instance.PixelUnitSizeXY = new int[2] { newPixels, 1 };
+                    MVMManager.Instance["MesoScanViewModel", "ResizeROIsForFullFOVPixelDensity"] = true;
+                }
+                OverlayManagerClass.Instance.ValidateROIs();
+
+                OverlayManagerClass.Instance.InitSelectROI();
+                OverlayManagerClass.Instance.DisplayModeROI(_configmROISettings ? new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.STATSONLY } : new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.MICRO_SCANAREA }, false);
+                OverlayManagerClass.Instance.DisplayModeROI(_configmROISettings ? new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.MICRO_SCANAREA } : new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.STATSONLY }, true);
+                OverlayManagerClass.Instance.CurrentMode = _configmROISettings ? ThorSharedTypes.Mode.MICRO_SCANAREA : ThorSharedTypes.Mode.STATSONLY;
+
+                MVMManager.Instance["ImageViewCaptureSetupVM", "mROIPriorityIndex"] = SelectedmROIIndex;
+                var ROIs = OverlayManagerClass.Instance.GetModeROIs(Mode.MICRO_SCANAREA);
+                if (ROIs.Count > SelectedmROIIndex && SelectedmROIIndex >= 0)
+                {
+                    OverlayManagerClass.Instance.SelectSingleROI(ROIs[SelectedmROIIndex]);
+                }
+                else
+                {
+                    OverlayManagerClass.Instance.DeselectAllROIs();
+                }
             }
         }
 
@@ -3285,12 +4330,22 @@
 
         private void MesoStripPixelsMinus()
         {
-            MesoStripPixels = Math.Max(MesoStripPixelsRange[0], MesoStripPixels - MesoStripPixelsStep);
+            FullFOVStripePixels = Math.Max(MesoStripPixelsRange[0], FullFOVStripePixels - MesoStripPixelsCourseStep);
         }
 
         private void MesoStripPixelsPlus()
         {
-            MesoStripPixels = Math.Min(MesoStripPixelsRange[1], MesoStripPixels + MesoStripPixelsStep);
+            FullFOVStripePixels = Math.Min(MesoStripPixelsRange[1], FullFOVStripePixels + MesoStripPixelsCourseStep);
+        }
+
+        void mROIStripePixelMinus()
+        {
+            mROIStripePixels = Math.Max(mROIStripePixelsRange[0], mROIStripePixels - mROIStripePixelsCourseStep);
+        }
+
+        void mROIStripePixelPlus()
+        {
+            mROIStripePixels = Math.Max(mROIStripePixelsRange[0], mROIStripePixels + mROIStripePixelsCourseStep);
         }
 
         private void Nyquist()
@@ -3386,9 +4441,10 @@
             }
         }
 
+        //TODO: grab it directly from the View VM
         private void OverlayManager_ObjectSizeChangedEvent(double arg1, double arg2)
         {
-            OverlayManagerClass.Instance.ValidateROIs(ref _overlayCanvas);
+            OverlayManagerClass.Instance.ValidateROIs();
         }
 
         private void ResolutionAdd()
@@ -3414,7 +4470,7 @@
             double dwellTime = (double)MVMManager.Instance["ScanControlViewModel", "LSMPixelDwellTimeMin", (object)0];
             int interleaveScan = 0;
 
-            if (true == OverlayManagerClass.Instance.LoadOriginalFieldAndROIs(ref areaMode, ref scanMode, ref fieldSize, ref offsetX, ref offsetY, ref pixelX, ref pixelY, ref areaAngle, ref dwellTime, ref interleaveScan, ref _overlayCanvas))
+            if (true == OverlayManagerClass.Instance.LoadOriginalFieldAndROIs(ref areaMode, ref scanMode, ref fieldSize, ref offsetX, ref offsetY, ref pixelX, ref pixelY, ref areaAngle, ref dwellTime, ref interleaveScan))
             {
                 //The order in which each property is updated is critical
                 //areaMode should be assigned first to allow the camera
@@ -3470,7 +4526,7 @@
                                 MessageBox.Show("Invalid range  to zoom in");
                                 return;
                             }
-                            OverlayManagerClass.Instance.NewFieldFromROI(originalAreaMode, originalScanMode, originalFieldSize, originalOffsetX, originalOffsetY, originalPixelX, originalPixelY, originalAngle, originalDwellTime, originalInterleaveScan, ref _overlayCanvas);
+                            OverlayManagerClass.Instance.NewFieldFromROI(originalAreaMode, originalScanMode, originalFieldSize, originalOffsetX, originalOffsetY, originalPixelX, originalPixelY, originalAngle, originalDwellTime, originalInterleaveScan);
 
                             // Change Pixel Density for faster Scan Time
                             // Floor the X and Y values to get the Rectangle Size (no decimals)
@@ -3492,73 +4548,36 @@
                         }
                         break;
                     case OverlayManagerClass.ROIType.LINE:
-                        {
-                            if (LockFieldOffset == true)
-                            {
-                                LockFieldOffset = false;
-                            }
-
-                            if (false == _areaControlModel.ROIZoomInLine(points[0], points[1]))
-                            {
-                                this.LSMScanAreaAngle = originalAngle;
-                                MessageBox.Show("Invalid range  to zoom in");
-                                return;
-                            }
-                            OverlayManagerClass.Instance.NewFieldFromROI(originalAreaMode, originalScanMode, originalFieldSize, originalOffsetX, originalOffsetY, originalPixelX, originalPixelY, originalAngle, originalDwellTime, originalInterleaveScan, ref _overlayCanvas);
-
-                            //Floor the X and Y values to get the pixel location (no decimals)
-                            double x1 = Math.Floor(points[0].X);
-                            double x2 = Math.Floor(points[1].X);
-                            double y1 = Math.Floor(points[0].Y);
-                            double y2 = Math.Floor(points[1].Y);
-
-                            double opp = y2 - y1;
-                            double adj = x2 - x1;
-
-                            //Math.Atan handles +-infinity cases
-                            LSMScanAreaAngle += (1 == LSMFlipHorizontal) ? -Math.Atan(opp / adj) * 180.0 / Math.PI : Math.Atan(opp / adj) * 180.0 / Math.PI;
-                            LSMAreaMode = (int)ICamera.LSMAreaMode.LINE;
-                        }
-                        break;
                     case OverlayManagerClass.ROIType.POLYLINE:
                         {
                             if ((int)ICamera.LSMType.GALVO_GALVO != ResourceManagerCS.GetLSMType())
                             {
                                 return;
                             }
-                            double umPerPixel = _LSMUMPerPixel;
+                            PixelSizeUM umPerPixel = _LSMUMPerPixel;
                             if (false == _areaControlModel.ROIZoomInPolyline(points))
                             {
                                 MessageBox.Show("Invalid range  to zoom in");
                                 return;
                             }
-                            OverlayManagerClass.Instance.NewFieldFromROI(originalAreaMode, originalScanMode, originalFieldSize, originalOffsetX, originalOffsetY, originalPixelX, originalPixelY, originalAngle, originalDwellTime, originalInterleaveScan, ref _overlayCanvas);
+                            OverlayManagerClass.Instance.NewFieldFromROI(originalAreaMode, originalScanMode, originalFieldSize, originalOffsetX, originalOffsetY, originalPixelX, originalPixelY, originalAngle, originalDwellTime, originalInterleaveScan);
+
+                            _singleLinePolyline = points?.Count == 2;
+
                             OnPropertyChanged("LSMPixelX");
                             LSMAreaMode = (int)ICamera.LSMAreaMode.POLYLINE;
                             bool modified = ConfirmAreaModeSettingsForGG;
 
                             _LSMUMPerPixel = umPerPixel;
                             OnPropertyChanged("LSMUMPerPixel");
+
+                            if (points?.Count > 2)
+                            {
+                                MVMManager.Instance["ScanControlViewModel", "LastLSMScanMode"] = ICamera.ScanMode.FORWARD_SCAN;
+                            }
                         }
                         break;
                 }
-
-                //ReticleBotton.IsChecked = false;
-
-                //if (null != _multiROIStats)
-                //{
-                //    _multiROIStats.Close();
-                //}
-
-                //if (null != _roiStatsChart)
-                //{
-                //    _roiStatsChart.Close();
-                //}
-
-                //if (null != _lineProfile)
-                //{
-                //    _lineProfile.Close();
-                //}
 
                 ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("LSMScanMode");
                 OnPropertyChanged("LSMFieldOffsetXActual");
@@ -3566,6 +4585,11 @@
                 OnPropertyChanged("LSMFieldSize");
                 OnPropertyChanged("LSMZoom");
                 OnPropertyChanged("LSMFieldSizeXUM");
+                OnPropertyChanged("FullFOVFieldSizeUM");
+                OnPropertyChanged("FullFOVFieldSizeXUM");
+                OnPropertyChanged("FullFOVFieldSizeYUM");
+                OnPropertyChanged("FullFOVStripeNum");
+                OnPropertyChanged("FullFOVMaxStripePixels");
                 OnPropertyChanged("LSMFieldSizeYUM");
                 OnPropertyChanged("LSMScanAreaAngle");
                 OnPropertyChanged("LSMFieldSizeDisplayX");
@@ -3582,10 +4606,95 @@
 
         private void SaveCalibrationCommand()
         {
-            this.LSMLastCalibrationDateUnix = ResourceManagerCS.DateTimeToUnixTimestamp(DateTime.Now);
+            try
+            {
+                //persist galvo calibration only when valid using ScaleFine:
+                if (0 >= LSMFieldScaleXFine)
+                    return;
 
-            //persist calibration as global params to all modalities:
-            MVMManager.Instance["CaptureSetupViewModel", "PersistGlobalExperimentXMLNow"] = GlobalExpAttribute.GALVO_CALIBTATION;
+                this.LSMLastCalibrationDateUnix = ResourceManagerCS.DateTimeToUnixTimestamp(DateTime.Now);
+
+                ////no persist calibration as global params to all modalities, replace with Registration.xml:
+                //MVMManager.Instance["CaptureSetupViewModel", "PersistGlobalExperimentXMLNow"] = GlobalExpAttribute.GALVO_CALIBTATION;
+
+                //update registration:
+                MVMManager.Instance.ReloadSettings(SettingsFileType.REGISTRATION_SETTINGS);
+                XmlNodeList ndList = RegistrationDoc.SelectNodes("/ThorImageRegistration/Registrations/Registration[@Active='1']");
+                if (0 >= ndList.Count)
+                {
+                    return;
+                }
+                string str = string.Empty;
+                string width = string.Empty, height = string.Empty;
+                string refFS = string.Empty, refZoom = string.Empty;
+                int cameraType = XmlManager.ReadAttribute<int>(RegistrationDoc, "/ThorImageRegistration/Registrations/Registration[@Active='1']", "CameraType", -1, 0);
+                switch ((ICamera.CameraType)cameraType)
+                {
+                    case ICamera.CameraType.CCD:
+                        XmlManager.GetAttribute(ndList[0], RegistrationDoc, "Width", ref width);
+                        XmlManager.GetAttribute(ndList[0], RegistrationDoc, "Height", ref height);
+                        break;
+                    case ICamera.CameraType.LSM:
+                        XmlManager.GetAttribute(ndList[0], RegistrationDoc, "FieldSize", ref refFS);
+                        XmlManager.GetAttribute(ndList[0], RegistrationDoc, "Zoom", ref refZoom);
+                        break;
+                    default:
+                        return;
+                }
+                //reset all LUT as not active
+                ndList = RegistrationDoc.SelectNodes("/ThorImageRegistration/Registrations/Registration[@Active='1']/LUT");
+                foreach (XmlNode item in ndList)
+                {
+                    XmlManager.SetAttribute(item, RegistrationDoc, "Active", "0");
+                }
+                //locate target LUT
+                ndList = string.IsNullOrEmpty(refFS) ? RegistrationDoc.SelectNodes("/ThorImageRegistration/Registrations/Registration[@Active='1']/LUT[@RefZoom=" + "'" + refZoom + "']") :
+                    RegistrationDoc.SelectNodes("/ThorImageRegistration/Registrations/Registration[@Active='1']/LUT[@Width=" + "'" + width + "'][@Height=" + "'" + height + "']");
+                if (ndList.Count <= 0)
+                {
+                    //create a new LUT node
+                    ndList = RegistrationDoc.SelectNodes("/ThorImageRegistration/Registrations/Registration[@Active='1']");
+                    XmlManager.CreateXmlNodeWithinNode(RegistrationDoc, ndList[0], "LUT");
+                    ndList = RegistrationDoc.SelectNodes("/ThorImageRegistration/Registrations/Registration[@Active='1']/LUT");
+                }
+                XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "calibrationDate", LSMLastCalibrationDate);
+                XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "calibrationDateUnix", LSMLastCalibrationDateUnix.ToString());
+                switch ((ICamera.CameraType)cameraType)
+                {
+                    case ICamera.CameraType.CCD:
+                        XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "RefWidth", width);
+                        XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "RefHeight", height);
+                        break;
+                    case ICamera.CameraType.LSM:
+                        XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "RefZoom", refZoom);
+                        XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "RefFieldSize", refFS);
+                        break;
+                    default:
+                        break;
+                }
+                XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "fieldSize", LSMFieldSize.ToString());
+                XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "pixelX", LSMPixelX.ToString());
+                XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "pixelY", LSMPixelY.ToString());
+                XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "scaleYScan", LSMScaleYScan.ToString());
+                XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "pixelSizeUM", LSMUMPerPixel.PixelWidthUM.ToString());
+                XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "offsetX", LSMFieldOffsetXActual.ToString());
+                XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "offsetY", LSMFieldOffsetYActual.ToString());
+                XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "fineOffsetX", LSMFieldOffsetXFine.ToString());
+                XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "fineOffsetY", LSMFieldOffsetYFine.ToString());
+                XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "fineScaleX", LSMFieldScaleXFine.ToString());
+                XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "fineScaleY", LSMFieldScaleYFine.ToString());
+                XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "areaAngle", LSMScanAreaAngle.ToString());
+                XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "horizontalFlip", LSMFlipHorizontal.ToString());
+                XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "verticalFlip", LSMFlipVerticalScan.ToString());
+                XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "powerMin", MVMManager.Instance["PowerControlViewModel", "PockelsVoltageMin0", (object)0].ToString());
+                XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "powerMax", MVMManager.Instance["PowerControlViewModel", "PockelsVoltageMax0", (object)0].ToString());
+                XmlManager.SetAttribute(ndList[ndList.Count - 1], RegistrationDoc, "Active", "1");
+                MVMManager.Instance.SaveSettings(SettingsFileType.REGISTRATION_SETTINGS);
+            }
+            catch (Exception ex)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, "AreaControlViewModel SaveCalibrationCommand: " + ex.Message);
+            }
         }
 
         private void ScanAreaAngleMinus()
@@ -3655,6 +4764,20 @@
             this.TimeBasedLSTimeMS += _areaControlModel.TimeBasedLineScanTimeIncrementMS;
         }
 
+        public void TogglemROIStripeEdit(bool isChecked)
+        {
+            if (isChecked)
+            {
+                if (!_imagingStatus)
+                {
+                    ((ICommand)MVMManager.Instance["CaptureSetupViewModel", "StopCommand", (object)null]).Execute(null);
+                }
+                MVMManager.Instance["ImageViewCaptureSetupVM", "EnableFullFOVReset"] = true;
+            }
+            else
+            { }
+        }
+
         private void ZoomMinus()
         {
             BuildZoomTable();
@@ -3701,4 +4824,42 @@
 
         #endregion Methods
     }
+
+    /*public class ParameterCommand<T> : ICommand
+    {
+        readonly Action<T> _execute = null;
+        readonly Predicate<T> _canExecute = null;
+
+
+        public ParameterCommand(Action<T> execute)
+            : this(execute, null)
+        {
+        }
+
+        public ParameterCommand(Action<T> execute, Predicate<T> canExecute)
+        {
+            if (execute == null)
+                throw new ArgumentNullException("execute");
+
+            _execute = execute;
+            _canExecute = canExecute;
+        }
+
+
+        public bool CanExecute(object parameter)
+        {
+            return _canExecute == null ? true : _canExecute((T)parameter);
+        }
+
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
+
+        public void Execute(object parameter)
+        {
+            _execute((T)parameter);
+        }
+    }*/
 }

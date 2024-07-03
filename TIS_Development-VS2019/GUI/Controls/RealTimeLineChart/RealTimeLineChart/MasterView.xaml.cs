@@ -21,6 +21,7 @@
     using System.Windows.Shapes;
 
     using RealTimeLineChart.ViewModel;
+    using ThorSharedTypes;
 
     /// <summary>
     /// Interaction logic for UserControl1.xaml
@@ -82,11 +83,12 @@
                     _vm.SaveDocumentSettings();
             }
         }
-
+        
         void MasterView_Loaded(object sender, RoutedEventArgs e)
         {
             if (null != _vm)
             {
+                _vm.IPCDisabled = _vm.checkToDisableIPC();
                 try
                 {
                     this.DataContext = _vm;
@@ -97,7 +99,8 @@
                     _vm.LoadDocumentSettings();
                     _vm.CreateChartLines();
                     _vm.InitAcquisition();
-                    _vm.InitIPC();
+                    if (false == _vm.IPCDisabled)
+                        _vm.InitIPC();
                 }
                 catch (Exception ex)
                 {

@@ -84,9 +84,14 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CaptureNotification.cs" />
     <Compile Include="CarrierInfo.cs" />
     <Compile Include="Class1.cs" />
     <Compile Include="HWVal.cs" />
+    <Compile Include="FrameData.cs" />
+    <Compile Include="ImageIdentifier.cs" />
+    <Compile Include="mROIParams.cs" />
+    <Compile Include="DynamicEventHandler.cs" />
     <Compile Include="PMTSwitch.cs" />
     <Compile Include="Converter.cs" />
     <Compile Include="CustomCollection.cs" />

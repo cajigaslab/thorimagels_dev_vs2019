@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <functional>
+#include <math.h>
 
 using namespace std;
 
@@ -237,8 +238,8 @@ long ThorLSMCam::SelectCamera(const long camera)
 			while(TRUE == FindNextFile(hFind,&FindFileData));
 
 
-			long c=1;
-			ReadImageInfo((wchar_t*)wsResult.c_str(),_fileWidth,_fileHeight,c);
+			long c=1, b=0;
+			ReadImageInfo((wchar_t*)wsResult.c_str(),_fileWidth,_fileHeight,c,b);
 
 			if(_pMemoryBuffer)
 			{
@@ -3216,7 +3217,7 @@ long ThorLSMCam::StatusAcquisitionEx(long &status, long &indexOfLastFrame)
 
 /// draw the specified string as text into buffer pointed by pDataBuffer
 /// c - specified channels, 0, 1, 2, 3 correspond to R, G, B, A, respectively
-void ThorLSMCam::PrintText(char *pDataBuffer, int x, int y, wchar_t *str, int c) 
+void ThorLSMCam::PrintText(char *pDataBuffer, int x, int y, wchar_t *str, int p, int c, int z)
 {
 	int           char_value = 0;
 	stb_fontchar *cd         = 0;
@@ -3255,7 +3256,7 @@ void ThorLSMCam::PrintText(char *pDataBuffer, int x, int y, wchar_t *str, int c)
 		if((x + x_advance >= imageWidth) || (y + h >= imageHeight))
 			return;
 
-		index = c * imageWidth * imageHeight + (y * (int)_pixelX_C) + x + x_advance;
+		index = (c * _numberOfPlanes * imageWidth * imageHeight) + (p * imageWidth * imageHeight) + (y * (int)_pixelX_C) + x + x_advance;
 
 		for(i=0;i<h;i++)
 		{
@@ -3279,34 +3280,66 @@ void ThorLSMCam::PrintText(char *pDataBuffer, int x, int y, wchar_t *str, int c)
 	return;
 }
 
-unsigned short ThorLSMCam::GetGradientValue(int x, int y, int channelNum)
+unsigned short ThorLSMCam::GetGradientValue(double xRatio, double yRatio, int plane, int channelNum)
 {
-	switch(channelNum)
+	xRatio = min(1.0, max(0, xRatio));
+	yRatio = min(1.0, max(0, yRatio));
+	const int maxIntensity = static_cast<int>(16384 *.8);
+	const int numPatterns = 8;
+	int pattern = (channelNum + (static_cast<int>(plane / numPatterns)) + (plane % numPatterns)) % numPatterns;
+	switch(pattern)
 	{
 	case 0:
 		{
-			int intensity = ((y<<2)%16384);
-			return (unsigned short)min(16383,max(0,intensity-1));
+			// dark to bright from top to bottom
+			return (unsigned short)(yRatio * maxIntensity);
 		}
 		break;
 	case 1:
 		{
-			return min(16383,max(0,(x<<2)%16384));	
+			// dark to bright from left to right
+			return (unsigned short)(xRatio * maxIntensity);
 		}
+		break;
 	case 2:
 		{
-			int intensity2 = ((y<<4)%16384);
-			return (unsigned short)min(16383,max(0,(intensity2-1)));
+			// dark diagonal from top left to bottom right
+			return (unsigned short)((abs(xRatio - yRatio)) * maxIntensity);
 		}
 		break;
 	case 3:
 		{
-			return min(16383,max(0,(x<<4)%16384));
+			// dark lower right corner
+			return (unsigned short)((xRatio * yRatio) * maxIntensity);
+		}
+		break;
+	case 4:
+		{
+			// dark lower left corner
+			return (unsigned short)(((1.0 - xRatio) * yRatio) * maxIntensity);
+		}
+		break;
+	case 5:
+		{
+			// dark upper right corner
+			return (unsigned short)((xRatio * (1.0 - yRatio)) * maxIntensity);
+		}
+		break;
+	case 6:
+		{
+			// inverted radial
+			return (unsigned short)(sqrt(((xRatio - 0.5) * (xRatio - 0.5)) + ((yRatio - 0.5) * (yRatio - 0.5))) * maxIntensity);
+		}
+		break;
+	case 7:
+		{
+			// radial
+			return (unsigned short)((1.0 - sqrt(((xRatio - 0.5) * (xRatio - 0.5)) + ((yRatio - 0.5) * (yRatio - 0.5)))) * maxIntensity);
 		}
 		break;
 	default:
 		{
-			int intensity = ((y<<2)%16384);
+			int intensity = (int)(yRatio*maxIntensity);
 			return (unsigned short)min(16383,max(0,intensity-1));
 		}
 		break;
@@ -3316,18 +3349,40 @@ unsigned short ThorLSMCam::GetGradientValue(int x, int y, int channelNum)
 
 void ThorLSMCam::FillImageWithGradient(GenericImage<unsigned short>& image)
 {
-
-	for(int chan=0; chan<image.getNumChannels(); chan++)
+	int width = image.getWidth();
+	std::vector<double> xRatioMap;
+	xRatioMap.resize(width);
+	for (int i = 0; i < width; i++)
 	{
-		if(image.isChannelEnabled(chan))
+		xRatioMap[i] = static_cast<double>(i) / width;
+	}
+
+	int height = image.getHeight();
+	std::vector<double> yRatioMap;
+	yRatioMap.resize(height);
+	for (int i = 0; i < height; i++)
+	{
+		yRatioMap[i] = static_cast<double>(i) / height;
+	}
+
+	for (int z = 0; z < image.getNumZSlices(); z++)
+	{
+		for(int chan=0; chan<image.getNumChannels(); chan++)
 		{
-			auto chanIt = image.channelBegin(chan,0,0);
-			for (long y = 0; y<image.getHeight(); y++)
+			if(image.isChannelEnabled(chan))
 			{
-				for(long x=0; x<image.getWidth(); x++)
+				auto chanIt = image.channelBegin(chan, 0, z);
+				for (int p = 0; p < image.getNumPlanes(); p++) 
 				{
-					*chanIt = GetGradientValue(x,y,chan);
-					++chanIt;
+					for (double y = 0; y < height; y++)
+					{
+						for (double x = 0; x < width; x++)
+						{
+							auto gradientVal = GetGradientValue(xRatioMap[x], yRatioMap[y], p, chan);
+							*chanIt = gradientVal;
+							++chanIt;
+						}
+					}
 				}
 			}
 		}
@@ -3484,6 +3539,7 @@ long ThorLSMCam::CopyAcquisition(char *pDataBuffer, void* frameInfo)
 	int selectedChannels = CountSetBits(_channel_C);		
 	int numChannels = (selectedChannels > 1)? numAllChannels : selectedChannels;
 	int channelIndex; 	// index of selected channel (icon clicked) on 
+	int numPlanes = _numberOfPlanes;
 	// channel ListView, CaptureSetup; 
 	// Ex: ChanA icon clicked -> channelIndex = 0; 
 	//     ChanB icon clicked -> channelIndex = 1;
@@ -3502,10 +3558,10 @@ long ThorLSMCam::CopyAcquisition(char *pDataBuffer, void* frameInfo)
 	//===========================
 	//   Create Image
 	//===========================
-	GenericImage<unsigned short> image(imageWidth, imageHeight, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
+	GenericImage<unsigned short> image(imageWidth, imageHeight, numPlanes, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
 	if(_rawSaveEnabledChannelsOnly)
 	{
-		image = GenericImage<unsigned short>(imageWidth, imageHeight, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL,ChannelManipulator<unsigned short>::getEnabledChannels(_channel_C));
+		image = GenericImage<unsigned short>(imageWidth, imageHeight, numPlanes, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL,ChannelManipulator<unsigned short>::getEnabledChannels(_channel_C));
 	}
 	image.setMemoryBuffer((unsigned short*)pDataBuffer);
 
@@ -3515,9 +3571,9 @@ long ThorLSMCam::CopyAcquisition(char *pDataBuffer, void* frameInfo)
 		//   Fill Image With Experienment Data
 		//=====================================
 		static bool doOnce = true;
-		static InternallyStoredImage<unsigned short> gradientImage(imageWidth, imageHeight, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
+		static InternallyStoredImage<unsigned short> gradientImage(imageWidth, imageHeight, numPlanes, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
 
-		gradientImage = InternallyStoredImage<unsigned short>(imageWidth, imageHeight, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
+		gradientImage = InternallyStoredImage<unsigned short>(imageWidth, imageHeight, numPlanes, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
 		FillImageWithData(gradientImage, channelIndex);
 
 		image.copyFrom(gradientImage);
@@ -3528,10 +3584,10 @@ long ThorLSMCam::CopyAcquisition(char *pDataBuffer, void* frameInfo)
 		//   Fill Image With Simulated Data
 		//=====================================
 		static bool doOnce = true;
-		static InternallyStoredImage<unsigned short> gradientImage(imageWidth, imageHeight, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
-		if(gradientImage.getWidth() != imageWidth || gradientImage.getHeight() != imageHeight || gradientImage.getNumChannels() != numChannels || doOnce)
+		static InternallyStoredImage<unsigned short> gradientImage(imageWidth, imageHeight, numPlanes, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
+		if(gradientImage.getWidth() != imageWidth || gradientImage.getHeight() != imageHeight || gradientImage.getNumChannels() != numChannels || gradientImage.getNumZSlices() != numPlanes || doOnce)
 		{
-			gradientImage = InternallyStoredImage<unsigned short>(imageWidth, imageHeight, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
+			gradientImage = InternallyStoredImage<unsigned short>(imageWidth, imageHeight, numPlanes, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
 			FillImageWithGradient(gradientImage);
 			doOnce = false;
 		}
@@ -3552,6 +3608,29 @@ long ThorLSMCam::CopyAcquisition(char *pDataBuffer, void* frameInfo)
 		PrintMessage(image, dTime);
 	}
 
+	//===========================
+	//   Set Frame Info
+	//===========================
+	FrameInfoStruct* frameInfoStruct = static_cast<FrameInfoStruct*>(frameInfo);
+	if (frameInfoStruct)
+	{
+		frameInfoStruct->imageWidth = imageWidth;
+		frameInfoStruct->imageHeight = imageHeight;
+		frameInfoStruct->fullImageWidth = imageWidth;
+		frameInfoStruct->fullImageHeight = imageHeight;
+		frameInfoStruct->channels = numChannels;
+		frameInfoStruct->numberOfPlanes = numPlanes;
+		frameInfoStruct->copySize = numChannels * imageWidth * imageHeight * numPlanes * sizeof(USHORT);
+		frameInfoStruct->isNewMROIFrame = 1;
+		frameInfoStruct->totalScanAreas = 1;
+		frameInfoStruct->scanAreaIndex = 0;
+		frameInfoStruct->scanAreaID = 0;
+		frameInfoStruct->isMROI = FALSE;
+		frameInfoStruct->topInFullImage = 0;
+		frameInfoStruct->leftInFullImage = 0;
+		frameInfoStruct->mROIStripeFieldSize = 0;
+	}
+
 	_frameIndex++;
 
 	return 1;
@@ -3560,127 +3639,133 @@ long ThorLSMCam::CopyAcquisition(char *pDataBuffer, void* frameInfo)
 
 void ThorLSMCam::PrintMessage(GenericImage<unsigned short>& image, double printTime)
 {
-	char* imageBuffer = (char*)(image.getDirectPointerToData(0,0,0,0,0));
+	char* imageBuffer = (char*)(image.getDirectPointerToData(0,0,0,0,0,0));
 
 	for(int chan=0; chan<image.getNumEnabledChannels(); ++chan)
 	{
 		vector<int> enabledChannel = ChannelManipulator<unsigned short>::getEnabledChannels(_channel_C);
 
-		//=== Fill Frame Message ===
-		memset(message, 0, sizeof(message));
-		wsprintf(message,L"F %06d",_frameIndex);
-		PrintText(imageBuffer, 10, 10, message, chan);
-
-		//=== Fill Time Message ===
-		double dVal = floor(printTime);
-		wsprintf(message,L"T %06d.%06d",static_cast<long>(printTime),static_cast<long>(1000000 * (printTime - dVal)));
-		PrintText(imageBuffer, 10, 50, message, chan);
-
-		//=== Fill Channels Enabled: A,B,C,D
-		if(chan < enabledChannel.size())
+		for (int plane = 0; plane < image.getNumPlanes(); plane++)
 		{
-			switch(enabledChannel[chan])
+			//=== Fill Frame Message ===
+			memset(message, 0, sizeof(message));
+			wsprintf(message, L"F %06d", _frameIndex);
+			PrintText(imageBuffer, 10, 10, message, plane, chan, 0);
+
+			//=== Fill Time Message ===
+			double dVal = floor(printTime);
+			wsprintf(message, L"T %06d.%06d", static_cast<long>(printTime), static_cast<long>(1000000 * (printTime - dVal)));
+			PrintText(imageBuffer, 10, 50, message, plane, chan, 0);
+
+			//=== Fill Channels Enabled: A,B,C,D
+			if (chan < enabledChannel.size())
 			{
-			case 0: 
+				switch (enabledChannel[chan])
 				{
-					wsprintf(message,L"Ch A");
+				case 0:
+				{
+					wsprintf(message, L"Ch A");
 					if (2 == _channel_C)
 					{
-						wsprintf(message,L"Ch   B");
+						wsprintf(message, L"Ch   B");
 					}
 					if (4 == _channel_C)
 					{
-						wsprintf(message,L"Ch     C");
+						wsprintf(message, L"Ch     C");
 					}
 					if (8 == _channel_C)
 					{
-						wsprintf(message,L"Ch       D");
+						wsprintf(message, L"Ch       D");
 					}
-					PrintText(imageBuffer, 10, 90, message, ((1 == image.getNumEnabledChannels() || _rawSaveEnabledChannelsOnly) ? chan : enabledChannel[chan]));
+					PrintText(imageBuffer, 10, 90, message, plane, ((1 == image.getNumEnabledChannels() || _rawSaveEnabledChannelsOnly) ? chan : enabledChannel[chan]), 0);
 					break;
 				}
-			case 1: 
-				{    
-					wsprintf(message,L"Ch   B");
-					PrintText(imageBuffer, 10, 90, message, ((1 == image.getNumEnabledChannels() || _rawSaveEnabledChannelsOnly) ? chan : enabledChannel[chan]));
-					break;
-				}
-
-			case 2: 
-				{    
-					wsprintf(message,L"Ch     C");
-					PrintText(imageBuffer, 10, 90, message, ((1 == image.getNumEnabledChannels() || _rawSaveEnabledChannelsOnly) ? chan : enabledChannel[chan]));
+				case 1:
+				{
+					wsprintf(message, L"Ch   B");
+					PrintText(imageBuffer, 10, 90, message, plane, ((1 == image.getNumEnabledChannels() || _rawSaveEnabledChannelsOnly) ? chan : enabledChannel[chan]), 0);
 					break;
 				}
 
+				case 2:
+				{
+					wsprintf(message, L"Ch     C");
+					PrintText(imageBuffer, 10, 90, message, plane, ((1 == image.getNumEnabledChannels() || _rawSaveEnabledChannelsOnly) ? chan : enabledChannel[chan]), 0);
+					break;
+				}
 
-			case 3: 
-				{    
-					wsprintf(message,L"Ch       D");
-					PrintText(imageBuffer, 10, 90, message, ((1 == image.getNumEnabledChannels() || _rawSaveEnabledChannelsOnly) ? chan : enabledChannel[chan]));
+
+				case 3:
+				{
+					wsprintf(message, L"Ch       D");
+					PrintText(imageBuffer, 10, 90, message, plane, ((1 == image.getNumEnabledChannels() || _rawSaveEnabledChannelsOnly) ? chan : enabledChannel[chan]), 0);
 					break;
 				}
 				break;
 
+				}
 			}
-		}
-		//=== Fill AreaMode ===
-		switch (_areaMode)
-		{
-		case SQUARE:
+			//=== Fill AreaMode ===
+			switch (_areaMode)
 			{
-				wsprintf(message,L"AM: SQR");
-				PrintText(imageBuffer, 10, 130, message, chan);
+			case SQUARE:
+			{
+				wsprintf(message, L"AM: SQR");
+				PrintText(imageBuffer, 10, 130, message, plane, chan, 0);
 				break;
 			}
-		case RECTANGLE:
+			case RECTANGLE:
 			{
-				wsprintf(message,L"AM: REC"); 
-				PrintText(imageBuffer, 10, 130, message, chan);
+				wsprintf(message, L"AM: REC");
+				PrintText(imageBuffer, 10, 130, message, plane, chan, 0);
 				break;
 			}
-		case LINE:
+			case LINE:
 			{
-				wsprintf(message,L"AM: LINE");
-				PrintText(imageBuffer, 10, 130, message, chan);
+				wsprintf(message, L"AM: LINE");
+				PrintText(imageBuffer, 10, 130, message, plane, chan, 0);
 				break;
 			}
 			break;
+			}
+
+			//=== Fill FieldSizee ===
+			wsprintf(message, L"FS %d", static_cast<long>(_fieldSize));
+			PrintText(imageBuffer, 10, 170, message, plane, chan, 0);
+
+			//=== Fill Piexel X and Y ===
+			wsprintf(message, L"PX: %d PY: %d", static_cast<long>(_pixelX_C), static_cast<long>(_pixelY_C));
+			PrintText(imageBuffer, 10, 210, message, plane, chan, 0);
+
+			//=== Scan Mode ===
+			wsprintf(message, L"SM %d way", static_cast<long>(-1 * _scanMode + 2));
+			PrintText(imageBuffer, 10, 250, message, plane, chan, 0);
+
+			//=== Fill Offset X and Y ===
+			wsprintf(message, L"OX: %d OY: %d", static_cast<long>(_offsetX), static_cast<long>(_offsetY));
+			PrintText(imageBuffer, 10, 290, message, plane, chan, 0);
+
+			//=== Fill Average Mode and Average Count ===
+			if (_averageMode == 0)
+			{
+				wsprintf(message, L"Av?: N Av#: %d", static_cast<long>(_averageNum));
+			}
+			else
+			{
+				wsprintf(message, L"Av?: C Av#: %d", static_cast<long>(_averageNum));
+			}
+			PrintText(imageBuffer, 10, 330, message, plane, chan, 0);
+
+			//=== Fill input range A,B,C,D ===
+			wsprintf(message, L"Input Range:");
+			PrintText(imageBuffer, 10, 370, message, plane, chan, 0);
+			wsprintf(message, L"A:%d B:%d C:%d D:%d", static_cast<long>(_inputRangeChannel1), static_cast<long>(_inputRangeChannel2), static_cast<long>(_inputRangeChannel3), static_cast<long>(_inputRangeChannel4));
+			PrintText(imageBuffer, 10, 410, message, plane, chan, 0);
+
+			//=== Fill Plane ===
+			wsprintf(message, L"PLANE: %d", static_cast<long>(plane));
+			PrintText(imageBuffer, 10, 450, message, plane, chan, 0);
 		}
-
-		//=== Fill FieldSizee ===
-		wsprintf(message,L"FS %d",static_cast<long>(_fieldSize));
-		PrintText(imageBuffer, 10, 170, message, chan);
-
-		//=== Fill Piexel X and Y ===
-		wsprintf(message,L"PX: %d PY: %d",static_cast<long>(_pixelX_C),static_cast<long>(_pixelY_C));
-		PrintText(imageBuffer, 10, 210, message, chan);
-
-		//=== Scan Mode ===
-		wsprintf(message,L"SM %d way",static_cast<long>(-1*_scanMode+2));
-		PrintText(imageBuffer, 10, 250, message, chan);
-
-		//=== Fill Offset X and Y ===
-		wsprintf(message,L"OX: %d OY: %d",static_cast<long>(_offsetX),static_cast<long>(_offsetY));
-		PrintText(imageBuffer, 10, 290, message, chan);
-
-		//=== Fill Average Mode and Average Count ===
-		if (_averageMode==0)
-		{
-			wsprintf(message,L"Av?: N Av#: %d",static_cast<long>(_averageNum));
-		}
-		else
-		{
-			wsprintf(message,L"Av?: C Av#: %d",static_cast<long>(_averageNum));
-		}
-		PrintText(imageBuffer, 10, 330, message, chan);
-
-		//=== Fill input range A,B,C,D ===
-		wsprintf(message,L"Input Range:");
-		PrintText(imageBuffer, 10, 370, message, chan);
-		wsprintf(message,L"A:%d B:%d C:%d D:%d",static_cast<long>(_inputRangeChannel1),static_cast<long>(_inputRangeChannel2),static_cast<long>(_inputRangeChannel3),static_cast<long>(_inputRangeChannel4));
-		PrintText(imageBuffer, 10, 410, message, chan);
-
 	}
 }
 

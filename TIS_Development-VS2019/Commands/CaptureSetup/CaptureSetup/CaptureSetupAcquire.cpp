@@ -3,6 +3,8 @@
 #include "CaptureSetup.h"
 #include "HardwareSetupXML.h"
 
+CaptureNotification captureNotification = { 0 };
+
 //camera 0 thread proc
 UINT StatusThreadProc0( LPVOID pParam )
 {
@@ -128,6 +130,7 @@ void PostflightPMT()
 long SetupBuffers(long colorChans)
 {
 	imageInfo.channels = colorChans;
+	const size_t DFLIM_MAX_PER_CHANNEL_SIZE = 224 * 1024 * 1024; //224MB
 	const int HISTOGRAM_SIZE_BYTES = 256 * sizeof(ULONG);
 	const int DFLIM_BUFFER_CNT = 4;
 
@@ -138,8 +141,8 @@ long SetupBuffers(long colorChans)
 	//[dflim] 2 datalength for arrival time sum buffer (UINT32)
 	//[REMARK]: image could be large from RGG, limit size below 2GB for bitmap display
 	long dflimMode = 0, dflimCapable = (TRUE == GetCameraParamLong(SelectedHardware::SELECTED_CAMERA1,ICamera::PARAM_DFLIM_ACQUISITION_MODE,dflimMode)) ? TRUE : FALSE;
-	unsigned long long bufferSize = (TRUE == dflimCapable) ? 
-		((sizeof(unsigned short) * imageInfo.imageWidth * imageInfo.imageHeight * DFLIM_BUFFER_CNT  + HISTOGRAM_SIZE_BYTES) * imageInfo.channels) :
+	size_t bufferSize = (TRUE == dflimCapable) ?
+		(DFLIM_MAX_PER_CHANNEL_SIZE * imageInfo.channels) :
 	(sizeof(unsigned short) * imageInfo.imageWidth * imageInfo.imageHeight * imageInfo.channels);
 
 	if (MAX_IMAGE_SIZE < bufferSize)
@@ -149,7 +152,7 @@ long SetupBuffers(long colorChans)
 		static_cast<long>(sqrt(MAX_IMAGE_SIZE / sizeof(unsigned short) / imageInfo.channels));
 
 		bufferSize = (TRUE == dflimCapable) ? 
-			((sizeof(unsigned short) * imageInfo.imageWidth * imageInfo.imageHeight * DFLIM_BUFFER_CNT  + HISTOGRAM_SIZE_BYTES) * imageInfo.channels) :
+			(DFLIM_MAX_PER_CHANNEL_SIZE * imageInfo.channels) :
 		(sizeof(unsigned short) * imageInfo.imageWidth * imageInfo.imageHeight * imageInfo.channels);
 	}
 
@@ -249,6 +252,17 @@ UINT LiveThreadProc( LPVOID pParam )
 	if (FALSE == PreflightAcquisition())
 		goto RETURN;
 
+	long isResync = 0;
+	if (0 != GetCameraParamLong(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_CAMERA_RESYNC_FLAG, isResync))
+	{
+		if (0 != isResync && nullptr != captureNotificiationFuncPtr)
+		{
+			captureNotification.isAsyncParamUpdate = 1;
+			(*captureNotificiationFuncPtr)(captureNotification);
+			SetCameraParamLong(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_CAMERA_RESYNC_FLAG, 0);
+		}
+	}
+
 	PreflightPMT();
 
 	//open shutter
@@ -286,6 +300,17 @@ UINT LiveThreadProc( LPVOID pParam )
 		if (FALSE ==  GetCamera(SelectedHardware::SELECTED_CAMERA1)->SetupAcquisition(pChan[0]))
 			break;
 
+		isResync = 0;
+		if (0 != GetCameraParamLong(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_CAMERA_RESYNC_FLAG, isResync))
+		{
+			if (0 != isResync && nullptr != captureNotificiationFuncPtr)
+			{
+				captureNotification.isAsyncParamUpdate = 1;
+				(*captureNotificiationFuncPtr)(captureNotification);
+				SetCameraParamLong(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_CAMERA_RESYNC_FLAG, 0);
+			}
+		}
+
 		if (FALSE == GetCamera(SelectedHardware::SELECTED_CAMERA1)->StartAcquisition(pChan[0]))
 			break;
 
@@ -312,7 +337,6 @@ UINT LiveThreadProc( LPVOID pParam )
 		switch(camType)
 		{
 		case ICamera::CCD:
-		case ICamera::CCD_MOSAIC:
 			{
 				if(currentRate < 5.0)
 					ratePrev = currentRate;
@@ -429,12 +453,11 @@ DllExportLiveImage StopLiveCapture()
 /// <param name="TiFF_Compression_Enabled"> Enable TIFF compression </param>
 void GetTIFFConfiguration(long &OME_Enabled, long &TiFF_Compression_Enabled)
 {
-	wchar_t fileName[MAX_PATH];
 	wstring tempPath = ResourceManager::getInstance()->GetApplicationSettingsFilePathAndName();
-	StringCbPrintfW(fileName,_MAX_PATH, tempPath.c_str());
+	
 
 	// load the ApplicationSettings.xml 
-	ticpp::Document doc(CaptureSetup::ConvertWStringToString(fileName).c_str());
+	ticpp::Document doc(CaptureSetup::ConvertWStringToString(tempPath).c_str());
 	doc.LoadFile();
 
 	// parse through all children
@@ -668,9 +691,24 @@ DllExportLiveImage CaptureZStack(double zStartPos, double zStopPos, double zstag
 	CHECK_PACTIVEIMAGEROUTINE(CaptureZStack(zStartPos,zStopPos,zstageStepSize,zstageSteps));
 }
 
+DllExportLiveImage CaptureSequentialPreview()
+{
+	CHECK_PACTIVEIMAGEROUTINE(CaptureSequentialPreview());
+}
+
+DllExportLiveImage StopSequentialPreview()
+{
+	CHECK_PACTIVEIMAGEROUTINE(StopSequentialPreview());
+}
+
 DllExportLiveImage SetDisplayChannels(int channelEnable)
 {
 	return CaptureSetup::getInstance()->SetDisplayChannels(channelEnable);
+}
+
+DllExportLiveImage GetDisplayChannels(int channelEnable)
+{
+	return CaptureSetup::getInstance()->GetDisplayChannels();
 }
 
 DllExportLiveImage AutoTrackingEnable(long channelIndex)//0 = disable 1,2,3,4 A,B,C,D
@@ -800,4 +838,14 @@ DllExportLiveImage StartAutoFocus(double magnification, int autoFocusType, BOOL&
 	//return TRUE;
 
 	CHECK_PACTIVEIMAGEROUTINE(StartAutoFocus(magnification, autoFocusType, afFound));
+}
+
+DllExportLiveImage CallStartAutoExposure()
+{
+	return CaptureSetup::getInstance()->_pActiveImageRoutine->StartAutoExposure();
+}
+
+DllExportLiveImage CallStopAutoExposure()
+{
+	return CaptureSetup::getInstance()->_pActiveImageRoutine->StopAutoExposure();
 }

@@ -21,6 +21,8 @@
     using System.Windows;
     using System.Windows.Controls;
     using System.Windows.Data;
+    using System.Windows.Input;
+    using System.Windows.Interop;
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
     using System.Windows.Threading;
@@ -33,6 +35,8 @@
 
     using GeometryUtilities;
 
+    using MesoScan.Params;
+
     using ThorLogging;
 
     using ThorSharedTypes;
@@ -43,33 +47,29 @@
 
         public const int MAX_CHANNELS = 4;
 
+        public ObservableCollection<string> _dynamicLabels = new ObservableCollection<string>();
+
         private const int DEFAULT_BITS_PER_PIXEL = 14;
-        private const double LUT_MAX = 255;
-        private const double LUT_MIN = 0;
-        private const int LUT_SIZE = 256;
-        private const int PATH_LENGTH = 261;
-        private const int PIXEL_DATA_HISTOGRAM_SIZE = 256;
         private const int TOTAL_PATH_LENGTH = 111;
         private const int WAITUNIT_MS = 5000;
 
-        private static readonly float[] _dflimColorMap = new float[] { 0.0f, 0.0f, 0.9125f, 0.0f, 0.0f, 0.925f, 0.0f, 0.0f, 0.9375f, 0.0f, 0.0f, 0.95f, 0.0f, 0.0f, 0.9625f, 0.0f, 0.0f, 0.975f, 0.0f, 0.0f, 0.9875f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0125f, 1.0f, 0.0f, 0.025f, 1.0f, 0.0f, 0.0375f, 1.0f, 0.0f, 0.05f, 1.0f, 0.0f, 0.0625f, 1.0f, 0.0f, 0.075f, 1.0f, 0.0f, 0.0875f, 1.0f, 0.0f, 0.1f, 1.0f, 0.0f, 0.1125f, 1.0f, 0.0f, 0.125f, 1.0f, 0.0f, 0.1375f, 1.0f, 0.0f, 0.15f, 1.0f, 0.0f, 0.1625f, 1.0f, 0.0f, 0.175f, 1.0f, 0.0f, 0.1875f, 1.0f, 0.0f, 0.2f, 1.0f, 0.0f, 0.2125f, 1.0f, 0.0f, 0.225f, 1.0f, 0.0f, 0.2375f, 1.0f, 0.0f, 0.25f, 1.0f, 0.0f, 0.2625f, 1.0f, 0.0f, 0.275f, 1.0f, 0.0f, 0.2875f, 1.0f, 0.0f, 0.3f, 1.0f, 0.0f, 0.3125f, 1.0f, 0.0f, 0.325f, 1.0f, 0.0f, 0.3375f, 1.0f, 0.0f, 0.35f, 1.0f, 0.0f, 0.3625f, 1.0f, 0.0f, 0.375f, 1.0f, 0.0f, 0.3875f, 1.0f, 0.0f, 0.4f, 1.0f, 0.0f, 0.4125f, 1.0f, 0.0f, 0.425f, 1.0f, 0.0f, 0.4375f, 1.0f, 0.0f, 0.45f, 1.0f, 0.0f, 0.4625f, 1.0f, 0.0f, 0.475f, 1.0f, 0.0f, 0.4875f, 1.0f, 0.0f, 0.5f, 1.0f, 0.0f, 0.5125f, 1.0f, 0.0f, 0.525f, 1.0f, 0.0f, 0.5375f, 1.0f, 0.0f, 0.55f, 1.0f, 0.0f, 0.5625f, 1.0f, 0.0f, 0.575f, 1.0f, 0.0f, 0.5875f, 1.0f, 0.0f, 0.6f, 1.0f, 0.0f, 0.6125f, 1.0f, 0.0f, 0.625f, 1.0f, 0.0f, 0.6375f, 1.0f, 0.0f, 0.65f, 1.0f, 0.0f, 0.6625f, 1.0f, 0.0f, 0.675f, 1.0f, 0.0f, 0.6875f, 1.0f, 0.0f, 0.7f, 1.0f, 0.0f, 0.7125f, 1.0f, 0.0f, 0.725f, 1.0f, 0.0f, 0.7375f, 1.0f, 0.0f, 0.75f, 1.0f, 0.0f, 0.7625f, 1.0f, 0.0f, 0.775f, 1.0f, 0.0f, 0.7875f, 1.0f, 0.0f, 0.8f, 1.0f, 0.0f, 0.8125f, 1.0f, 0.0f, 0.825f, 1.0f, 0.0f, 0.8375f, 1.0f, 0.0f, 0.85f, 1.0f, 0.0f, 0.8625f, 1.0f, 0.0f, 0.875f, 1.0f, 0.0f, 0.8875f, 1.0f, 0.0f, 0.9f, 1.0f, 0.0f, 0.9125f, 1.0f, 0.0f, 0.925f, 1.0f, 0.0f, 0.9375f, 1.0f, 0.0f, 0.95f, 1.0f, 0.0f, 0.9625f, 1.0f, 0.0f, 0.975f, 1.0f, 0.0f, 0.9875f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0125f, 1.0f, 0.9875f, 0.025f, 1.0f, 0.975f, 0.0375f, 1.0f, 0.9625f, 0.05f, 1.0f, 0.95f, 0.0625f, 1.0f, 0.9375f, 0.075f, 1.0f, 0.925f, 0.0875f, 1.0f, 0.9125f, 0.1f, 1.0f, 0.9f, 0.1125f, 1.0f, 0.8875f, 0.125f, 1.0f, 0.875f, 0.1375f, 1.0f, 0.8625f, 0.15f, 1.0f, 0.85f, 0.1625f, 1.0f, 0.8375f, 0.175f, 1.0f, 0.825f, 0.1875f, 1.0f, 0.8125f, 0.2f, 1.0f, 0.8f, 0.2125f, 1.0f, 0.7875f, 0.225f, 1.0f, 0.775f, 0.2375f, 1.0f, 0.7625f, 0.25f, 1.0f, 0.75f, 0.2625f, 1.0f, 0.7375f, 0.275f, 1.0f, 0.725f, 0.2875f, 1.0f, 0.7125f, 0.3f, 1.0f, 0.7f, 0.3125f, 1.0f, 0.6875f, 0.325f, 1.0f, 0.675f, 0.3375f, 1.0f, 0.6625f, 0.35f, 1.0f, 0.65f, 0.3625f, 1.0f, 0.6375f, 0.375f, 1.0f, 0.625f, 0.3875f, 1.0f, 0.6125f, 0.4f, 1.0f, 0.6f, 0.4125f, 1.0f, 0.5875f, 0.425f, 1.0f, 0.575f, 0.4375f, 1.0f, 0.5625f, 0.45f, 1.0f, 0.55f, 0.4625f, 1.0f, 0.5375f, 0.475f, 1.0f, 0.525f, 0.4875f, 1.0f, 0.5125f, 0.5f, 1.0f, 0.5f, 0.5125f, 1.0f, 0.4875f, 0.525f, 1.0f, 0.475f, 0.5375f, 1.0f, 0.4625f, 0.55f, 1.0f, 0.45f, 0.5625f, 1.0f, 0.4375f, 0.575f, 1.0f, 0.425f, 0.5875f, 1.0f, 0.4125f, 0.6f, 1.0f, 0.4f, 0.6125f, 1.0f, 0.3875f, 0.625f, 1.0f, 0.375f, 0.6375f, 1.0f, 0.3625f, 0.65f, 1.0f, 0.35f, 0.6625f, 1.0f, 0.3375f, 0.675f, 1.0f, 0.325f, 0.6875f, 1.0f, 0.3125f, 0.7f, 1.0f, 0.3f, 0.7125f, 1.0f, 0.2875f, 0.725f, 1.0f, 0.275f, 0.7375f, 1.0f, 0.2625f, 0.75f, 1.0f, 0.25f, 0.7625f, 1.0f, 0.2375f, 0.775f, 1.0f, 0.225f, 0.7875f, 1.0f, 0.2125f, 0.8f, 1.0f, 0.2f, 0.8125f, 1.0f, 0.1875f, 0.825f, 1.0f, 0.175f, 0.8375f, 1.0f, 0.1625f, 0.85f, 1.0f, 0.15f, 0.8625f, 1.0f, 0.1375f, 0.875f, 1.0f, 0.125f, 0.8875f, 1.0f, 0.1125f, 0.9f, 1.0f, 0.1f, 0.9125f, 1.0f, 0.0875f, 0.925f, 1.0f, 0.075f, 0.9375f, 1.0f, 0.0625f, 0.95f, 1.0f, 0.05f, 0.9625f, 1.0f, 0.0375f, 0.975f, 1.0f, 0.025f, 0.9875f, 1.0f, 0.0125f, 1.0f, 1.0f, 0.0f, 1.0f, 0.9875f, 0.0f, 1.0f, 0.975f, 0.0f, 1.0f, 0.9625f, 0.0f, 1.0f, 0.95f, 0.0f, 1.0f, 0.9375f, 0.0f, 1.0f, 0.925f, 0.0f, 1.0f, 0.9125f, 0.0f, 1.0f, 0.9f, 0.0f, 1.0f, 0.8875f, 0.0f, 1.0f, 0.875f, 0.0f, 1.0f, 0.8625f, 0.0f, 1.0f, 0.85f, 0.0f, 1.0f, 0.8375f, 0.0f, 1.0f, 0.825f, 0.0f, 1.0f, 0.8125f, 0.0f, 1.0f, 0.8f, 0.0f, 1.0f, 0.7875f, 0.0f, 1.0f, 0.775f, 0.0f, 1.0f, 0.7625f, 0.0f, 1.0f, 0.75f, 0.0f, 1.0f, 0.7375f, 0.0f, 1.0f, 0.725f, 0.0f, 1.0f, 0.7125f, 0.0f, 1.0f, 0.7f, 0.0f, 1.0f, 0.6875f, 0.0f, 1.0f, 0.675f, 0.0f, 1.0f, 0.6625f, 0.0f, 1.0f, 0.65f, 0.0f, 1.0f, 0.6375f, 0.0f, 1.0f, 0.625f, 0.0f, 1.0f, 0.6125f, 0.0f, 1.0f, 0.6f, 0.0f, 1.0f, 0.5875f, 0.0f, 1.0f, 0.575f, 0.0f, 1.0f, 0.5625f, 0.0f, 1.0f, 0.55f, 0.0f, 1.0f, 0.5375f, 0.0f, 1.0f, 0.525f, 0.0f, 1.0f, 0.5125f, 0.0f, 1.0f, 0.5f, 0.0f, 1.0f, 0.4875f, 0.0f, 1.0f, 0.475f, 0.0f, 1.0f, 0.4625f, 0.0f, 1.0f, 0.45f, 0.0f, 1.0f, 0.4375f, 0.0f, 1.0f, 0.425f, 0.0f, 1.0f, 0.4125f, 0.0f, 1.0f, 0.4f, 0.0f, 1.0f, 0.3875f, 0.0f, 1.0f, 0.375f, 0.0f, 1.0f, 0.3625f, 0.0f, 1.0f, 0.35f, 0.0f, 1.0f, 0.3375f, 0.0f, 1.0f, 0.325f, 0.0f, 1.0f, 0.3125f, 0.0f, 1.0f, 0.3f, 0.0f, 1.0f, 0.2875f, 0.0f, 1.0f, 0.275f, 0.0f, 1.0f, 0.2625f, 0.0f, 1.0f, 0.25f, 0.0f, 1.0f, 0.2375f, 0.0f, 1.0f, 0.225f, 0.0f, 1.0f, 0.2125f, 0.0f, 1.0f, 0.2f, 0.0f, 1.0f, 0.1875f, 0.0f, 1.0f, 0.175f, 0.0f, 1.0f, 0.1625f, 0.0f, 1.0f, 0.15f, 0.0f, 1.0f, 0.1375f, 0.0f, 1.0f, 0.125f, 0.0f, 1.0f, 0.1125f, 0.0f, 1.0f, 0.1f, 0.0f, 1.0f, 0.0875f, 0.0f, 1.0f, 0.075f, 0.0f, 1.0f, 0.0625f, 0.0f, 1.0f, 0.05f, 0.0f, 1.0f, 0.0375f, 0.0f, 1.0f, 0.025f, 0.0f, 1.0f, 0.0125f, 0.0f, 1.0f, 0.0f, 0.0f, 0.9875f, 0.0f, 0.0f, 0.975f, 0.0f, 0.0f, 0.9625f, 0.0f, 0.0f, 0.95f, 0.0f, 0.0f, 0.9375f, 0.0f, 0.0f, 0.925f, 0.0f, 0.0f, 0.9125f, 0.0f, 0.0f, 0.9f, 0.0f, 0.0f };
         private static readonly object _dflimHistogramDataLock = new object();
 
-        private static int[] _colorAssigment;
+        readonly FrameData _frameData = new FrameData();
+
+        private static PixelSizeUM _camPixelSizeUM;
         private static int _dataLength;
         private static uint[] _dflimArrivalTimeSumData;
+        private static double[] _dFLIMBinDurations = new double[MAX_CHANNELS];
         private static uint[][] _dflimHistogramData;
         private static bool _dflimNewHistogramData;
         private static ushort[] _dflimSinglePhotonData;
         private static int _lsmChannel;
         private static bool[] _lsmEnableChannel;
+        private static PixelSizeUM _lsmPixelSizeUM;
         private static int _maxChannels;
         private static ReportMultiROIStats _multiROIStatsCallBack;
         private static ushort[] _pixelData;
-        private static byte[] _pixelDataByte;
-        private static int[][] _pixelDataHistogram;
-        private static bool _pixelDataReady;
-        private static byte[][] _rawImg = new byte[MAX_CHANNELS + 1][];
         private static ReportAutoFocusStatus _reportAutoFocusStatus;
         private static Report _reportCallBack;
         private static ReportIndex _reportCallBackImage;
@@ -93,23 +93,18 @@
         private bool _backgroundWorkerDone;
         int _binX = 1;
         int _binY = 1;
-        private WriteableBitmap _bitmap;
-        private double[] _blackPoint;
         private int _bleachFrameIndex = 0;
-        private string _bleachPath = string.Empty;
         private int _bleachPixelArrayIndex = 0;
         private List<PixelArray> _bleachPixelArrayList = new List<PixelArray>();
         private int _bleachPixelIndex = 0;
         private BleachMode _bleachScanMode;
         private int _camBitsPerPixel = 14;
         private bool _cbZSEnable;
-        private Brush[] _channelColor = new Brush[MAX_CHANNELS];
         private int _channelOrderCurrentIndex = 0;
         private int _channelOrderCurrentLSMChannel = 0;
         int _channelSelection = 0;
         private Guid _commandGuid;
         private int _completedImageCount;
-        private List<string> _currentChannelsLutFiles = new List<string>();
         private int _currentImageCount;
         private int _currentSLMCycleID = 0;
         private int _currentSLMSequenceID = 0;
@@ -118,8 +113,7 @@
         private int _currentTCount;
         private int _currentWellCount;
         private int _currentZCount;
-        private ushort[] _dataBuffer = null;
-        private bool _displayImage;
+        private bool _displayImage = false;
         private int _dmaFrames = 4;
         private bool _experimentCompleteForProgressBar = false;
         private XmlDocument _experimentDoc;
@@ -141,8 +135,9 @@
         private Visibility _imageUpdaterVis;
         private int _imageWidth;
         private int _indexDigitCounts = 3;
-        private bool _IPCDownlinkFlag = false;
+        bool _ismROICapture = false;
         private bool _isSaving;
+        private bool _isSequentialCapture = false;
         private bool _lastInSLMCycle = false;
         private int _leftLabelCount;
         private List<string> _loadedSLMFiles = new List<string>();
@@ -159,6 +154,11 @@
         private Visibility _mCLS4Visibility = Visibility.Collapsed;
         private int _mosaicColumnCount;
         private int _mosaicRowCount;
+        FULLFOVMetadata _mROIFullFOVMetadata = new FULLFOVMetadata();
+        double _mROIPixelSizeXUM = 1;
+        double _mROIPixelSizeYUM = 1;
+        ObservableCollection<ScanArea> _mROIs;
+        double _mROIStripLength = 1;
         private bool _newImageAvailable = false;
         private int _numberOfImageTiles = 1;
         private string _outputPath;
@@ -169,7 +169,6 @@
         private double _photobleachPowerPosition;
         private int _pinholePosition;
         private Visibility _pinholeVisibility = Visibility.Collapsed;
-        private byte[][] _pixelDataLUT;
         private int _pixelX;
         private int _pixelY;
         private int _pmtTripCount;
@@ -182,25 +181,29 @@
         private int _previewIndex;
         private int _previousSubImageCount;
         private int _rawDataCapture;
-        private int _rollOverPointX;
-        private int _rollOverPointY;
+        private int _rawDataCaptureStreamingValue;
+        private int _remoteFocusCaptureMode = 0;
+        private string _remoteFocusCustomOrder = string.Empty;
+        private ObservableCollection<double> _remoteFocusCustomSelectedPlanes = new ObservableCollection<double>();
+        private double _remoteFocusStartPosition = 1;
+        private int _remoteFocusStepSize = 1;
+        private double _remoteFocusStopPosition = 16;
         private RunSampleLSCustomParams _rsParams = new RunSampleLSCustomParams();
         private bool _runComplete;
+        private int _runCompleteCount;
         System.Timers.Timer _runPlateTimer;
-        private int _runTimeCal = 0;
         private string _sampleConfig;
         StringBuilder _sbNewDir;
         private int _scanMode;
         private string _selectedWavelengthValue;
         private int _sequenceStepsNum = 0;
         private List<string> _sequenceStepWavelengthNameList = new List<string>();
-        private int _shiftValue = 6;
         int _simultaneousBleachingAndImaging = 0;
         private double[] _slmBleachDelay = { 0.0, 0.0 };
         private ObservableCollection<SLMParams> _slmBleachWaveParams = new ObservableCollection<GeometryUtilities.SLMParams>();
         private int _SLMCallbackCount = 0;
         private List<string> _slmFilesInFolder;
-        BackgroundWorker _slmLoader = new BackgroundWorker();
+        private BackgroundWorker _slmLoader = new BackgroundWorker(); //Each event is unregistered before being registered to prevent duplicates
         private List<string> _slmSequencesInFolder;
         private bool _startButtonStatus;
         private DateTime _startDateTime;
@@ -209,9 +212,6 @@
         private string _statusMessageZ = string.Empty;
         private bool _statusMessageZUpdate = true;
         private double _stepTimeAdjustMS = 0;
-
-        //private string _startColumn;
-        //private string _startRow;
         private bool _stopButtonStatus;
         private bool _stopClicked = false;
         private int _streamEnable;
@@ -236,7 +236,6 @@
         private int _useReferenceVoltageForFastZPockels = 0;
         private double _volumeTimeAdjustMS = 0;
         private ArrayList _wavelengthList;
-        private double[] _whitePoint;
         private bool _z2StageLock;
         private bool _z2StageMirror;
         private int _zEnable;
@@ -245,6 +244,7 @@
         private List<double> _zFilePosList;
         private int _zFilePosRead;
         private double _zFilePosScale;
+        private bool _zInvert = false;
         private int _zNumSteps;
         private double _zStartPosition;
         private double _zStepSize;
@@ -273,6 +273,8 @@
             _currentZCount = 0;
             _currentTCount = 0;
             _currentWellCount = 1;
+            _lsmPixelSizeUM = new PixelSizeUM(1.0, 1.0);
+            _camPixelSizeUM = new PixelSizeUM(1.0, 1.0);
             _panelsEnable = true;
             _runComplete = true;
             _displayImage = true;
@@ -282,35 +284,15 @@
             _tEnable = true;
             _backgroundWorkerDone = true;
             _maxChannels = 4;
-            _blackPoint = new double[_maxChannels];
-            _whitePoint = new double[_maxChannels];
             _lsmEnableChannel = new bool[MAX_CHANNELS];
 
             _tiffCompressionEnabled = true;
-            InitializeClassArrays(_maxChannels);
             //_tbZSEnable = false;
             _tbZSEnableFGColor = Brushes.Gray;
             // _zStreamFrames = 1;
             _pmtTripCount = 0;
-            //timer for stop command
-            _runPlateTimer = new System.Timers.Timer();
-
             //Image _counter for determining the end of the row
             _imageCounter = 0;
-
-            const int LUT_SIZE = 256;
-
-            ChannelLuts = new Color[_maxChannels][];
-
-            for (int i = 0; i < _maxChannels; i++)
-            {
-                ChannelLuts[i] = new Color[LUT_SIZE];
-            }
-
-            for (int i = 0; i < _maxChannels; i++)
-            {
-                _currentChannelsLutFiles.Add(string.Empty);
-            }
 
             //create and assign callback for C++ unmanaged updates
             _reportCallBack = new Report(RunSampleLSUpdate);
@@ -341,7 +323,7 @@
             }
 
             _experimentXMLPath = ActiveExperimentPath = ResourceManagerCS.GetCaptureTemplatePathString() + "Active.xml";
-            IsDisplayImageReady = false;
+
             _zFilePosList = new List<double>();
             _zFilePosRead = 0;
 
@@ -380,7 +362,7 @@
         private delegate void ReportInformMessage(string index);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode)]
-        private delegate void ReportLineProfile(IntPtr lineProfile, int length, int channelEnable, int numChannel);
+        private delegate void ReportLineProfile(IntPtr lineProfile, int length, int realLength, int channelEnable, int numChannel);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode)]
         private delegate void ReportMultiROIStats(IntPtr statsName, IntPtr stats, ref int length, ref int isLast);
@@ -410,13 +392,13 @@
 
         #region Events
 
+        public event Action CaptureComplete;
+
         public event Action ExperimentStarted;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         public event EventHandler ROIStatsChanged;
-
-        public event Action UpdataFilePath;
 
         public event Action<string> Update;
 
@@ -426,15 +408,11 @@
 
         public event Action<string> UpdateEndSubWell;
 
-        public event Action<string> UpdateImage;
-
         public event Action<string> UpdateImageName;
 
         public event Action<bool> UpdateMenuBarButton;
 
         public event Action<bool> UpdatePanels;
-
-        public event Action<bool> UpdateRemoteConnection;
 
         public event Action<string> UpdateScript;
 
@@ -456,12 +434,6 @@
                 ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_TYPE, ref cameraType);
                 return (ICamera.CameraType)cameraType;
             }
-        }
-
-        public static Color[][] ChannelLuts
-        {
-            get;
-            set;
         }
 
         public static int ImageMethod
@@ -574,54 +546,6 @@
             }
         }
 
-        public double BlackPoint0
-        {
-            get
-            {
-                return _blackPoint[0];
-            }
-            set
-            {
-                _blackPoint[0] = Math.Min(LUT_MAX, Math.Max(LUT_MIN, value));
-            }
-        }
-
-        public double BlackPoint1
-        {
-            get
-            {
-                return _blackPoint[1];
-            }
-            set
-            {
-                _blackPoint[1] = Math.Min(LUT_MAX, Math.Max(LUT_MIN, value));
-            }
-        }
-
-        public double BlackPoint2
-        {
-            get
-            {
-                return _blackPoint[2];
-            }
-            set
-            {
-                _blackPoint[2] = Math.Min(LUT_MAX, Math.Max(LUT_MIN, value));
-            }
-        }
-
-        public double BlackPoint3
-        {
-            get
-            {
-                return _blackPoint[3];
-            }
-            set
-            {
-                _blackPoint[3] = Math.Min(LUT_MAX, Math.Max(LUT_MIN, value));
-            }
-        }
-
         public int BleachFrames
         {
             get;
@@ -706,10 +630,10 @@
             set;
         }
 
-        public double CamPixelSizeUM
+        public PixelSizeUM CamPixelSizeUM
         {
-            get;
-            set;
+            get => _camPixelSizeUM;
+            set => _camPixelSizeUM = value;
         }
 
         public int CaptureMode
@@ -935,6 +859,18 @@
             }
         }
 
+        public ObservableCollection<string> DynamicLabels
+        {
+            get
+            {
+                return _dynamicLabels;
+            }
+            set
+            {
+                _dynamicLabels = value;
+            }
+        }
+
         public string EpiTurretName
         {
             get
@@ -1123,8 +1059,6 @@
 
                 _maxChannels = ndListHW.Count;
 
-                InitializeClassArrays(_maxChannels);
-
                 // load pmt trip count:
                 ndListHW = _hardwareDoc.SelectNodes("/HardwareSettings/PMT");
                 if (ndListHW.Count > 0)
@@ -1135,50 +1069,6 @@
                     {
                         _pmtTripCount = tripCount;
                     }
-                }
-            }
-        }
-
-        public int[] HistogramData0
-        {
-            get
-            {
-
-                {
-                    return _pixelDataHistogram[0];
-                }
-            }
-        }
-
-        public int[] HistogramData1
-        {
-            get
-            {
-
-                {
-                    return _pixelDataHistogram[1];
-                }
-            }
-        }
-
-        public int[] HistogramData2
-        {
-            get
-            {
-
-                {
-                    return _pixelDataHistogram[2];
-                }
-            }
-        }
-
-        public int[] HistogramData3
-        {
-            get
-            {
-
-                {
-                    return _pixelDataHistogram[3];
                 }
             }
         }
@@ -1224,15 +1114,19 @@
             get { return _imageWidth; }
         }
 
-        public bool IPCDownlinkFlag
+        public bool IsmROICapture
         {
-            get { return _IPCDownlinkFlag; }
-            set { _IPCDownlinkFlag = value; }
+            get => _ismROICapture;
         }
 
-        public bool IsDisplayImageReady
+        public bool IsRemoteFocus
         {
-            get; set;
+            get
+            {
+                int zType = (int)ZStageType.PIEZO;
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_ZSTAGE, (int)IDevice.Params.PARAM_Z_STAGE_TYPE, ref zType);
+                return (int)ZStageType.REMOTE_FOCUS == zType;
+            }
         }
 
         public bool IsStimulusSaving
@@ -1276,18 +1170,6 @@
             set
             {
                 _lsmChannel = value;
-            }
-        }
-
-        public Brush[] LSMChannelColor
-        {
-            get
-            {
-                return _channelColor;
-            }
-            set
-            {
-                _channelColor = value;
             }
         }
 
@@ -1373,10 +1255,10 @@
             set { _pixelY = value; }
         }
 
-        public double LSMUMPerPixel
+        public PixelSizeUM LSMUMPerPixel
         {
-            get;
-            set;
+            get => _lsmPixelSizeUM;
+            set => value = _lsmPixelSizeUM;
         }
 
         public double MCLS1Power
@@ -1497,6 +1379,11 @@
             {
                 _mosaicRowCount = value;
             }
+        }
+
+        public ObservableCollection<ScanArea> mROIList
+        {
+            get => _mROIs;
         }
 
         public string[] MVMNames
@@ -1628,23 +1515,12 @@
             }
         }
 
-        public int PixelBitShiftValue
+        public double PixelAspectRatioYScale
         {
-            get
-            {
-
-                _shiftValue = this.BitsPerPixel - 8;
-                return _shiftValue;
-            }
+            get; set;
         }
 
-        public byte[] PixelDataByte
-        {
-            get { return _pixelDataByte; }
-            set { _pixelDataByte = value; }
-        }
-
-        public double PixelSizeUM
+        public PixelSizeUM PixelSizeUM
         {
             get
             {
@@ -1754,6 +1630,12 @@
             get { return Math.Round(_power5, 2); }
         }
 
+        public double PowerShiftUS
+        {
+            get;
+            set;
+        }
+
         public int PreBleachFrames
         {
             get;
@@ -1803,173 +1685,112 @@
             }
         }
 
+        public int RawDataCaptureStreamingValue
+        {
+            get
+            {
+                return _rawDataCaptureStreamingValue;
+            }
+            set
+            {
+                _rawDataCaptureStreamingValue = value;
+            }
+        }
+
         public int RawOption
         {
             get;
             set;
         }
 
-        public int RollOverPointIntensity0
+        public int RemoteFocusCaptureMode
         {
             get
             {
-                if (_pixelData != null && _imageHeight != 0)
-                {
-                    //if the requested pixel is within the buffer size
-                    int location;
-                    if (1 < _numberOfImageTiles)
-                    {
-                        location = GetTilePixelDataLocation(_rollOverPointX, _rollOverPointY);
-                    }
-                    else
-                    {
-                        location = (int)(_rollOverPointX + (_imageWidth * _rollOverPointY));
-                    }
-                    if ((location >= 0) && (location < _pixelData.Length))
-                    {
-                        int val;
-                        if (_pixelData[location] < 0)
-                        {
-                            val = (int)(_pixelData[location] + 32768.0);
-                        }
-                        else
-                        {
-                            val = (_pixelData[location]);
-                        }
-
-                        return val;
-                    }
-                }
-                return 0;
-            }
-        }
-
-        public int RollOverPointIntensity1
-        {
-            get
-            {
-                if (_pixelData != null && _imageHeight != 0 && _imageColorChannels >= 2)
-                {
-                    //if the requested pixel is within the buffer size
-                    int location;
-                    if (1 < _numberOfImageTiles)
-                    {
-                        location = GetTilePixelDataLocation(_rollOverPointX, _rollOverPointY);
-                    }
-                    else
-                    {
-                        location = (int)(_rollOverPointX + (_imageWidth * _rollOverPointY));
-                    }
-                    if ((location >= 0) && (location + _dataLength < _pixelData.Length))
-                    {
-                        int val;
-                        if (_pixelData[location] < 0)
-                        {
-                            val = (int)(_pixelData[location + _dataLength] + 32768.0);
-                        }
-                        else
-                        {
-                            val = (_pixelData[location + _dataLength]);
-                        }
-
-                        return val;
-                    }
-                }
-                return 0;
-            }
-        }
-
-        public int RollOverPointIntensity2
-        {
-            get
-            {
-                if (_pixelData != null && _imageHeight != 0 && _imageColorChannels >= 3)
-                {
-                    //if the requested pixel is within the buffer size
-                    int location;
-                    if (1 < _numberOfImageTiles)
-                    {
-                        location = GetTilePixelDataLocation(_rollOverPointX, _rollOverPointY);
-                    }
-                    else
-                    {
-                        location = (int)(_rollOverPointX + (_imageWidth * _rollOverPointY));
-                    }
-                    if ((location >= 0) && ((location + 2 * _dataLength) < _pixelData.Length))
-                    {
-                        int val;
-                        if (_pixelData[location] < 0)
-                        {
-                            val = (int)(_pixelData[location + 2 * _dataLength] + 32768.0);
-                        }
-                        else
-                        {
-                            val = (_pixelData[location + 2 * _dataLength]);
-                        }
-
-                        return val;
-                    }
-                }
-                return 0;
-            }
-        }
-
-        public int RollOverPointIntensity3
-        {
-            get
-            {
-                if (_pixelData != null && _imageHeight != 0 && _imageColorChannels >= 4)
-                {
-                    //if the requested pixel is within the buffer size
-                    int location;
-                    if (1 < _numberOfImageTiles)
-                    {
-                        location = GetTilePixelDataLocation(_rollOverPointX, _rollOverPointY);
-                    }
-                    else
-                    {
-                        location = (int)(_rollOverPointX + (_imageWidth * _rollOverPointY));
-                    }
-                    if ((location >= 0) && ((location + 3 * _dataLength) < _pixelData.Length))
-                    {
-                        int val;
-                        if (_pixelData[location] < 0)
-                        {
-                            val = (int)(_pixelData[location + 3 * _dataLength] + 32768.0);
-                        }
-                        else
-                        {
-                            val = (_pixelData[location + 3 * _dataLength]);
-                        }
-
-                        return val;
-                    }
-                }
-                return 0;
-            }
-        }
-
-        public int RollOverPointX
-        {
-            get
-            {
-                return _rollOverPointX;
+                return _remoteFocusCaptureMode;
             }
             set
             {
-                _rollOverPointX = value;
+                _remoteFocusCaptureMode = value;
             }
         }
 
-        public int RollOverPointY
+        public bool RemoteFocusCustomChecked
+        {
+            get;
+            set;
+        }
+
+        public string RemoteFocusCustomOrder
         {
             get
             {
-                return _rollOverPointY;
+                return _remoteFocusCustomOrder;
             }
             set
             {
-                _rollOverPointY = value;
+                _remoteFocusCustomOrder = value;
+            }
+        }
+
+        public ObservableCollection<double> RemoteFocusCustomSelectedPlanes
+        {
+            get
+            {
+                return _remoteFocusCustomSelectedPlanes;
+            }
+            set
+            {
+                _remoteFocusCustomSelectedPlanes = value;
+            }
+        }
+
+        public int RemoteFocusNumberOfPlanes
+        {
+            get
+            {
+                int numberOfPlanes = 0;
+                if (0 == ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_ZSTAGE, (int)IDevice.Params.PARAM_REMOTE_FOCUS_NUMBER_OF_PLANES, ref numberOfPlanes))
+                {
+                    ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, "RunSampleLS can't get param PARAM_REMOTE_FOCUS_NUMBER_OF_PLANES");
+                }
+                return numberOfPlanes;
+            }
+        }
+
+        public double RemoteFocusStartPosition
+        {
+            get
+            {
+                return _remoteFocusStartPosition;
+            }
+            set
+            {
+                _remoteFocusStartPosition = value;
+            }
+        }
+
+        public int RemoteFocusStepSize
+        {
+            get
+            {
+                return _remoteFocusStepSize;
+            }
+            set
+            {
+                _remoteFocusStepSize = value;
+            }
+        }
+
+        public double RemoteFocusStopPosition
+        {
+            get
+            {
+                return _remoteFocusStopPosition;
+            }
+            set
+            {
+                _remoteFocusStopPosition = value;
             }
         }
 
@@ -2012,14 +1833,7 @@
             {
                 if ((int)ICamera.CameraType.LSM == this.ActiveCameraType)
                 {
-                    if (ThreePhotonEnable && NumberOfPlanes > 1)
-                    {
-                        return LSMPixelY * NumberOfPlanes;
-                    }
-                    else
-                    {
-                        return LSMPixelY;
-                    }
+                    return LSMPixelY;
                 }
                 else
                 {
@@ -2112,6 +1926,12 @@
         }
 
         public List<int> SLMphaseType
+        {
+            get;
+            set;
+        }
+
+        public bool SLMRandomEpochs
         {
             get;
             set;
@@ -2668,54 +2488,6 @@
             }
         }
 
-        public double WhitePoint0
-        {
-            get
-            {
-                return _whitePoint[0];
-            }
-            set
-            {
-                _whitePoint[0] = Math.Min(LUT_MAX, Math.Max(LUT_MIN, value));
-            }
-        }
-
-        public double WhitePoint1
-        {
-            get
-            {
-                return _whitePoint[1];
-            }
-            set
-            {
-                _whitePoint[1] = Math.Min(LUT_MAX, Math.Max(LUT_MIN, value));
-            }
-        }
-
-        public double WhitePoint2
-        {
-            get
-            {
-                return _whitePoint[2];
-            }
-            set
-            {
-                _whitePoint[2] = Math.Min(LUT_MAX, Math.Max(LUT_MIN, value));
-            }
-        }
-
-        public double WhitePoint3
-        {
-            get
-            {
-                return _whitePoint[3];
-            }
-            set
-            {
-                _whitePoint[3] = Math.Min(LUT_MAX, Math.Max(LUT_MIN, value));
-            }
-        }
-
         public double XPosition
         {
             get
@@ -2737,6 +2509,16 @@
                 GetYPosition(ref val);
 
                 return Math.Round(val, 3);
+            }
+        }
+
+        public double Z2Position
+        {
+            get
+            {
+                double val = 0;
+                ResourceManagerCS.GetDeviceParamDouble((int)SelectedHardware.SELECTED_ZSTAGE2, (int)IDevice.Params.PARAM_Z_POS_CURRENT, ref val);
+                return val;
             }
         }
 
@@ -2766,7 +2548,7 @@
             }
             set
             {
-                _zFastEnable = (ZStageType.PIEZO == ZStageType) ? value : false;
+                _zFastEnable = (ZStageType.PIEZO == ZStageType || ZStageType.REMOTE_FOCUS == ZStageType) ? value : false;
 
                 //reset to allow any internal logic to happen
                 if (_zFastEnable)
@@ -2793,6 +2575,18 @@
         {
             get { return _zFilePosScale; }
             set { _zFilePosScale = value; }
+        }
+
+        public bool ZInvert
+        {
+            get
+            {
+                return _zInvert;
+            }
+            set
+            {
+                _zInvert = value;
+            }
         }
 
         public double ZMax
@@ -2851,15 +2645,38 @@
                         }
                         else
                         {
-                            _zNumSteps = Math.Max(1, (int)Math.Round(Math.Abs(Math.Round((_zStopPosition - _zStartPosition), 5) / (_zStepSize / (double)Constants.UM_TO_MM)) + 1));
+                            double stepFactor = (double)Constants.UM_TO_MM; //IsRemoteFocus ? 1 : (double)Constants.UM_TO_MM;
+                            _zNumSteps = Math.Max(1, (int)Math.Round(Math.Abs(Math.Round((_zStopPosition - _zStartPosition), 5) / (_zStepSize / stepFactor)) + 1));
                         }
                         break;
                     case CaptureModes.STREAMING:
                         //stepping less than one is not realistic experiment configuration,
                         //special case for single step for step size == (stop - start)
-                        _zNumSteps = ((!FastZStaircase) && (_zStepSize == (_zStopPosition - _zStartPosition) * (double)Constants.UM_TO_MM)) ?
-                            Math.Max(1, (int)Math.Round(Math.Abs(Math.Round((_zStopPosition - _zStartPosition), 5) / (_zStepSize / (double)Constants.UM_TO_MM)))) :
-                            Math.Max(1, (int)Math.Round(Math.Abs(Math.Round((_zStopPosition - _zStartPosition), 5) / (_zStepSize / (double)Constants.UM_TO_MM)) + 1));
+                        if (IsRemoteFocus)
+                        {
+                            if ((int)RemoteFocusCaptureModes.Custom == RemoteFocusCaptureMode)
+                            {
+                                if (RemoteFocusCustomChecked) // When user types the planes we need to count the number of planes typed
+                                {
+                                    string[] values = RemoteFocusCustomOrder.Split(':');
+                                    _zNumSteps = (string.Empty == values[values.Length - 1]) ? values.Length - 1 : values.Length;
+                                }
+                                else
+                                {
+                                    _zNumSteps = RemoteFocusCustomSelectedPlanes.Count;
+                                }
+                            }
+                            else
+                            {
+                                _zNumSteps = Math.Max(1, (int)Math.Round(Math.Abs((RemoteFocusStopPosition - RemoteFocusStartPosition) / RemoteFocusStepSize) + 1));
+                            }
+                        }
+                        else
+                        {
+                            _zNumSteps = ((!FastZStaircase) && (_zStepSize == (_zStopPosition - _zStartPosition) * (double)Constants.UM_TO_MM)) ?
+                                Math.Max(1, (int)Math.Round(Math.Abs(Math.Round((_zStopPosition - _zStartPosition), 5) / (_zStepSize / (double)Constants.UM_TO_MM)))) :
+                                Math.Max(1, (int)Math.Round(Math.Abs(Math.Round((_zStopPosition - _zStartPosition), 5) / (_zStepSize / (double)Constants.UM_TO_MM)) + 1));
+                        }
                         break;
                     case CaptureModes.BLEACHING:
                     case CaptureModes.HYPERSPECTRAL:
@@ -2938,38 +2755,6 @@
             return val;
         }
 
-        public static Color GetColorAssignment(int index)
-        {
-            Color colorAssignment = new Color();
-            const int LUT_SIZE = 256;
-
-            colorAssignment = ChannelLuts[index][LUT_SIZE - 1];
-
-            double luminance = (0.2126 * colorAssignment.R + 0.7152 * colorAssignment.G + 0.0722 * colorAssignment.B);
-
-            //if the color is too bright it will not
-            //display on a white background
-            //substitute gray if the color is too bright
-            if (luminance > 240)
-            {
-                colorAssignment = Colors.Gray;
-            }
-            return colorAssignment;
-        }
-
-        public static Color[] GetColorAssignments()
-        {
-            Color[] colorAssignments = new Color[_maxChannels];
-            const int LUT_SIZE = 256;
-
-            for (int i = 0; i < _maxChannels; i++)
-            {
-                colorAssignments[i] = ChannelLuts[i][LUT_SIZE - 1];
-            }
-
-            return colorAssignments;
-        }
-
         public static ushort[] GetPixelData()
         {
             return _pixelData;
@@ -3009,159 +2794,6 @@
             return false;
         }
 
-        [DllImport(".\\Modules_Native\\SelectHardware.dll", EntryPoint = "UpdateAndPersistCurrentDevices")]
-        public static extern int UpdateAndPersistCurrentDevices();
-
-        public static void UpdatePMTSwitchBox()
-        {
-            //switch depending on LSM camera type
-            switch (LSMType)
-            {
-                case ICamera.LSMType.GALVO_RESONANCE:
-                    SetDeviceParamInt((int)SelectedHardware.SELECTED_PMTSWITCH, (int)IDevice.Params.PARAM_PMT_SWITCH_POS, 0, false);
-                    break;
-                case ICamera.LSMType.GALVO_GALVO:
-                    SetDeviceParamInt((int)SelectedHardware.SELECTED_PMTSWITCH, (int)IDevice.Params.PARAM_PMT_SWITCH_POS, 1, false);
-                    break;
-            }
-        }
-
-        public bool BuildChannelPalettes()
-        {
-            bool ret = false;
-
-            if (null == HardwareDoc)
-            {
-                return ret;
-            }
-
-            string str = string.Empty;
-            bool grayscaleForSingleChannel = false;
-
-            XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/Wavelengths/Wavelength");
-
-            //if this is a single channel experiment
-            //check to see user wants to view the data
-            //as grayscale
-            if (1 == ndList.Count && 1 >= _sequenceStepWavelengthNameList.Count)
-            {
-                XmlDocument appSettingsDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
-
-                if (null == appSettingsDoc)
-                {
-                    return ret;
-                }
-
-                ndList = appSettingsDoc.SelectNodes("/ApplicationSettings/DisplayOptions/General/GrayscaleForSingleChannel");
-
-                if (ndList.Count > 0)
-                {
-                    grayscaleForSingleChannel = (XmlManager.GetAttribute(ndList[0], appSettingsDoc, "value", ref str) && ("1" == str || Boolean.TrueString == str)) ?
-                        true : false;
-                }
-            }
-
-            ndList = HardwareDoc.SelectNodes("/HardwareSettings/ColorChannels/*");
-
-            string chanName = string.Empty;
-
-            for (int j = 0; j < _maxChannels; j++)
-            {
-                switch (j)
-                {
-                    case 0: chanName = "ChanA"; break;
-                    case 1: chanName = "ChanB"; break;
-                    case 2: chanName = "ChanC"; break;
-                    case 3: chanName = "ChanD"; break;
-                }
-
-                for (int i = 0; i < ndList.Count; i++)
-                {
-                    if (XmlManager.GetAttribute(ndList[i], HardwareDoc, "name", ref str))
-                    {
-                        if (str.Contains(chanName))
-                        {
-                            if (grayscaleForSingleChannel)
-                            {
-                                str = Application.Current.Resources["ApplicationSettingsFolder"].ToString() + "\\luts\\" + "Gray.txt";
-                            }
-                            else
-                            {
-                                str = Application.Current.Resources["ApplicationSettingsFolder"].ToString() + "\\luts\\" + ndList[i].Name + ".txt";
-                            }
-
-                            //if the current lut for the channel has not changed
-                            //continue on
-                            //if ((_currentChannelsLutFiles.Count > 0) && (_currentChannelsLutFiles[j].Equals(str)))
-                            //{
-                            //    continue;
-                            //}
-
-                            if (File.Exists(str))
-                            {
-                                StreamReader fs = new StreamReader(str);
-                                string line;
-                                int counter = 0;
-                                try
-                                {
-                                    while ((line = fs.ReadLine()) != null)
-                                    {
-                                        string[] split = line.Split(',');
-
-                                        if (split[0] != null)
-                                        {
-                                            if (split[1] != null)
-                                            {
-                                                if (split[2] != null)
-                                                {
-                                                    ChannelLuts[j][counter] = Color.FromRgb(Convert.ToByte(split[0]), Convert.ToByte(split[1]), Convert.ToByte(split[2]));
-                                                }
-                                            }
-                                        }
-                                        counter++;
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    string msg = ex.Message;
-                                }
-
-                                fs.Close();
-
-                                _currentChannelsLutFiles[j] = str;
-                            }
-                        }
-                    }
-                }
-            }
-
-            for (int i = 0; i < _maxChannels; i++)
-            {
-                Brush brush;
-
-                const int PALETTE_SIZE = 256;
-
-                double luminance = (0.2126 * ChannelLuts[i][PALETTE_SIZE - 1].R + 0.7152 * ChannelLuts[i][PALETTE_SIZE - 1].G + 0.0722 * ChannelLuts[i][PALETTE_SIZE - 1].B);
-
-                //if the color is too bright it will not
-                //display on a white background
-                //substitute gray if the color is too bright
-                if (luminance > 240)
-                {
-                    brush = new SolidColorBrush(Colors.Gray);
-                }
-                else
-                {
-                    brush = new SolidColorBrush(ChannelLuts[i][PALETTE_SIZE - 1]);
-                }
-
-                LSMChannelColor[i] = brush;
-            }
-
-            ret = true;
-            return ret;
-        }
-
         public void ConnectCallbacks()
         {
             InitCallBack
@@ -3183,139 +2815,42 @@
             InitCallBackLineProfilePush(null);
         }
 
-        public WriteableBitmap CreateBitmap()
+        public void CreateRemoteFocusPositionValuesTextFile()
         {
-            // Define parameters used to create the BitmapSource.
-            PixelFormat pf = PixelFormats.Rgb24;
-            int width = _imageWidth;
-            int height = _imageHeight;
-            //can't build bitmap if width and/or height are zero
-            if (width <= 0 || height <= 0)
+            try
             {
-                return null;
-            }
-            int rawStride = (width * pf.BitsPerPixel + 7) / 8;
-            int outputBitmapWidth = width;
-            int outputBitmapHeight = height;
-            bool dflimDisplayLifetimeImage = (bool)MVMManager.Instance["DFLIMControlCaptureViewModel", "DFLIMDisplayLifetimeImage", (object)false];
-            bool doLifetime = (1 == ImageMethod && dflimDisplayLifetimeImage);
-            int channelNum = 0;
-            for (int i = 0; i < _lsmEnableChannel.Length; ++i)
-            {
-                if (true == (_lsmEnableChannel[i]))
+                if (!Directory.Exists(_experimentFolderPath + "\\RemoteFocus\\"))
                 {
-                    ++channelNum;
-                }
-            }
-            if (0 == channelNum)
-            {
-                return null;
-            }
-            if (_tileDisplay && (channelNum > 1 || doLifetime))
-            {
+                    Directory.CreateDirectory(_experimentFolderPath + "\\RemoteFocus\\");
+                    string positionsPath = _experimentFolderPath + "\\RemoteFocus\\RemoteFocusPositionsValues.txt";
 
-                switch (channelNum)
-                {
-                    case 1:
-                        {
-                            if (doLifetime)
-                            {
-                                outputBitmapWidth *= VerticalTileDisplay ? 1 : 2;
-                                outputBitmapHeight *= VerticalTileDisplay ? 2 : 1;
-                            }
-                        }
-                        break;
-                    case 2:
-                        {
-                            outputBitmapWidth *= VerticalTileDisplay ? 1 : 3;
-                            outputBitmapHeight *= VerticalTileDisplay ? 3 : 1;
-                        }
-                        break;
-                    case 3:
-                        {
-                            outputBitmapWidth *= 2;
-                            outputBitmapHeight *= 2;
-                        }
-                        break;
-                    default:
-                        {// All 4 Channels enabled
-                            outputBitmapWidth *= VerticalTileDisplay ? 2 : 3;
-                            outputBitmapHeight *= VerticalTileDisplay ? 3 : 2;
-                        }
-                        break;
-                }
-            }
-            //create a new bitmpap when one does not exist or the size of the image changes
-            if (_bitmap == null)
-            {
-                _bitmap = new WriteableBitmap(outputBitmapWidth, outputBitmapHeight, 96, 96, pf, null);
-            }
-            else
-            {
-                if ((_bitmap.Width != outputBitmapWidth) || (_bitmap.Height != outputBitmapHeight) || (_bitmap.Format != pf))
-                {
-                    _bitmap = new WriteableBitmap(outputBitmapWidth, outputBitmapHeight, 96, 96, pf, null);
-                }
-            }
-
-            CreatePixelDataByte();
-
-            //if there is no _pixelDataByte then we shouldn't try to create the bitmap
-            if (null == _pixelDataByte)
-            {
-                return null;
-            }
-
-            byte[] pd = _pixelDataByte;
-            if ((pd.Length / 3) == (width * height))
-            {
-                _bitmap.WritePixels(new Int32Rect(0, 0, width, height), pd, rawStride, 0);
-                if (_tileDisplay && (1 < channelNum || doLifetime))
-                {
-                    int offsetWidth = VerticalTileDisplay ? 0 : 1;
-                    int offsetHeight = VerticalTileDisplay ? 1 : 0;
-                    for (int i = 0; i < _lsmEnableChannel.Length; ++i)
+                    // Create a StreamWriter object to write to the file
+                    using (StreamWriter writer = new StreamWriter(positionsPath))
                     {
-                        if (true == (_lsmEnableChannel[i]))
+                        if (ZInvert)
                         {
-                            pd = _rawImg[i];
-                            _bitmap.WritePixels(new Int32Rect(offsetWidth * width, offsetHeight * height, width, height), pd, rawStride, 0);
-                            if (VerticalTileDisplay)
+                            for (int i = DynamicLabels.Count - 1; i >= 0; i--)
                             {
-                                ++offsetHeight;
-                                if (outputBitmapHeight < (height * offsetHeight + height))
-                                {
-                                    offsetHeight = 0;
-                                    ++offsetWidth;
-                                }
+                                writer.WriteLine(DynamicLabels[i]);
                             }
-                            else
+                        }
+                        else
+                        {
+                            foreach (string val in DynamicLabels)
                             {
-                                ++offsetWidth;
-                                if (outputBitmapWidth < (width * offsetWidth + width))
-                                {
-                                    offsetWidth = 0;
-                                    ++offsetHeight;
-                                }
+                                writer.WriteLine(val);
                             }
                         }
                     }
                 }
             }
-
-            if (_tileWidth == 0 || _tileHeight == 0) // not fastZ; normal mode
+            catch (Exception)
             {
-                _tileWidth = _imageWidth;
-                _tileHeight = _imageHeight;
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + "RunSampleLSModule: Could not create RemoteFocusPositionsValues file.");
             }
-            updateTiledBitmap(_bitmap, _pixelDataByte, _imageWidth, _imageHeight, _tileWidth, _tileHeight);
-
-            FinishedCopyingPixel();
-
-            return _bitmap;
         }
 
-        public void DisplayColorImage(string[] fileNames)
+        public void DisplayColorImage(List<string> fileNames, int regionID = 0, int regionIndex = 0)
         {
             try
             {
@@ -3366,7 +2901,7 @@
                     int tileWidth = 0;
                     int tileHeight = 0;
                     // get the image parameters
-                    for (int i = 0; i < _maxChannels; i++)
+                    for (int i = 0; i < fileNames.Count; i++)
                     {
                         if (fileNames[i] != null)
                         {
@@ -3377,12 +2912,38 @@
                         }
                     }
 
+                    // multi-channel = single file with mutliple channel; normal = one file per channel
+                    bool isMultiChannel = fileNames.Count == 1 && colorChannels > 1;
+
                     // setting the parameters to be used in the View Model
                     _imageWidth = width;
                     _imageHeight = height;
                     _tileWidth = tileWidth;
                     _tileHeight = tileHeight;
-                    _imageColorChannels = fileNames.Length;
+                    _imageColorChannels = isMultiChannel ? colorChannels : fileNames.Count;
+
+                    if (_isSequentialCapture)
+                    {
+                        int count = 0;
+                        for (int i = 0; i < MAX_CHANNELS; i++)
+                        {
+                            if ((_channelOrderCurrentLSMChannel & (0x0001 << i)) > 0)
+                            {
+                                count++;
+                            }
+                        }
+
+                        List<string> sublistFileNames = new List<string>();
+                        for (int i = fileNames.Count - count; i < fileNames.Count; i++)
+                        {
+                            sublistFileNames.Add(fileNames[i]);
+                        }
+                        fileNames.Clear();
+                        fileNames = sublistFileNames;
+
+                        _imageColorChannels = count;
+                    }
+
                     //allocate the buffer size
                     _imageData = Marshal.AllocHGlobal(_imageWidth * _imageHeight * _imageColorChannels * 2);
 
@@ -3393,17 +2954,35 @@
 
                     //read the image and output the buffer with image data
                     int result = 0;
-                    if (tileWidth != 0 && tileHeight != 0) // FastZ
+
+                    bool isTiled = tileWidth != 0 && tileHeight != 0;
+
+                    if (isMultiChannel)
                     {
-                        result = ReadChannelTiledImages(fileNames, _imageColorChannels, ref _imageData);
+                        if (isTiled) // FastZ
+                        {
+                            result = ReadMultiChannelTiledImage(fileNames[0], _imageColorChannels, ref _imageData);
+                        }
+                        else
+                        {
+                            result = ReadMultiChannelImage(fileNames[0], _imageColorChannels, ref _imageData, _imageWidth, _imageHeight);
+                        }
+
                     }
                     else
                     {
-                        result = ReadChannelImages(fileNames, _imageColorChannels, ref _imageData, _imageWidth, _imageHeight);
+                        if (isTiled) // FastZ
+                        {
+                            result = ReadChannelTiledImages(fileNames.ToArray(), _imageColorChannels, ref _imageData);
+                        }
+                        else
+                        {
+                            result = ReadChannelImages(fileNames.ToArray(), _imageColorChannels, ref _imageData, _imageWidth, _imageHeight);
+                        }
                     }
                 }
 
-                CopyChannelData();
+                CopyChannelData(regionID, regionIndex);
             }
             catch (Exception ex)
             {
@@ -3422,8 +3001,10 @@
             _backgroundWorker.DoWork += BackgroundWorker_DoWork;
             _backgroundWorker.RunWorkerCompleted += BackgroundWorker_RunWorkerCompleted;
             _backgroundWorker.WorkerSupportsCancellation = true;
-
+            _slmLoader.DoWork -= SLMLoader_DoWork; //Ensure event is not registered twice
             _slmLoader.DoWork += SLMLoader_DoWork;
+
+            _slmLoader.RunWorkerCompleted -= SLMLoader_RunWorkerCompleted;
             _slmLoader.RunWorkerCompleted += SLMLoader_RunWorkerCompleted;
             _slmLoader.WorkerSupportsCancellation = true;
 
@@ -3466,49 +3047,16 @@
 
                 if (enable)
                 {
-                    //=== Sequential Capture Mode is not compatible with the CCD type Cameras ===
-                    if ((int)ICamera.CameraType.CCD == this.ActiveCameraType)
-                    {
-                        MessageBox.Show("\"Sequential Capture Mode\" is incompatible with CCD camera captures. Please clear your channel sequence options for the experiment and start again.");
-                        return false;
-                    }
-
                     //Capture Sequence Mode
                     if (1 < _sequenceStepsNum)
                     {
-                        int chan0 = 0;
-                        int chan1 = 0;
-                        int chan2 = 0;
-                        int chan3 = 0;
-                        for (int i = 0; i < ndList.Count; i++)
-                        {
-                            XmlNodeList lsmNdList = ndList[i].SelectNodes("LSM");
-                            if (0 < lsmNdList.Count)
-                            {
-                                int binaryValue = 0;
-                                if (XmlManager.GetAttribute(lsmNdList[0], expDoc, "channel", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out binaryValue))
-                                {
-                                    chan0 += (Convert.ToBoolean(binaryValue & 0x1)) ? 1 : 0;
-                                    chan1 += (Convert.ToBoolean(binaryValue & 0x2)) ? 1 : 0;
-                                    chan2 += (Convert.ToBoolean(binaryValue & 0x4)) ? 1 : 0;
-                                    chan3 += (Convert.ToBoolean(binaryValue & 0x8)) ? 1 : 0;
-                                }
-                            }
-                        }
-
                         //check when streaming or bleaching
-                        if (1 == this.CaptureMode || 3 == this.CaptureMode)
+                        if (1 == CaptureMode || 3 == CaptureMode)
                         {
                             MessageBox.Show("\"Sequential Capture Mode\" is incompatible with Streaming and Bleaching captures. Please clear your channel sequence options for the experiment and start again.");
                             return false;
                         }
-
-                        //=== Sequential Capture Mode only allows referencing a channel once per Capture Sequence ===
-                        if (1 < chan0 || 1 < chan1 || 1 < chan2 || 1 < chan3)
-                        {
-                            MessageBox.Show("\"Sequential Capture Mode\" Each channel is allowed only once per Capture Sequence. Please go back to Capture Setup and ensure you don't have a channel selected in more than one sequence step.");
-                            return false;
-                        }
+                        _isSequentialCapture = true;
                     }
                 }
             }
@@ -3720,6 +3268,11 @@
             return (1 == ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_FIELD_SIZE_CALIBRATION, ref fieldSizeCal));
         }
 
+        public void LoadmROISettings(XmlDocument expDoc)
+        {
+            _ismROICapture = mROIXMLMapper.MapXml2mROIParams(expDoc, LSMType, out _mROIs, out _mROIPixelSizeXUM, out _mROIPixelSizeYUM, out _mROIStripLength, out _mROIFullFOVMetadata);
+        }
+
         public bool LoadSLMPatternName(int runtimeCal, int id, string bmpPatternName, bool start, bool phaseDirect = false, int phaseType = 0, int timeoutVal = 0)
         {
             return ((1 == LoadSLMPattern(runtimeCal, id, bmpPatternName, (start) ? 1 : 0, (phaseDirect) ? 1 : 0, phaseType, timeoutVal)) ? true : false);
@@ -3762,14 +3315,6 @@
             DataStore.Instance.Close();
         }
 
-        public void ResetImage()
-        {
-            _pixelDataReady = false;
-            _pixelData = null;
-            _pixelDataByte = null;
-            this.IsDisplayImageReady = false;
-        }
-
         public bool SetBleachFile(string slmFileName, int cycleNum)
         {
             return ((1 == SetBleachWaveformFile(slmFileName, cycleNum)) ? true : false);
@@ -3777,18 +3322,20 @@
 
         public bool Start()
         {
-            if (IsRunning() || _slmLoader.IsBusy)
+            if (IsRunning() || _slmLoader.IsBusy || ((int)CaptureModes.STREAMING == CaptureMode && 0 == _streamFrames))
                 return false;
 
             // event trigerred to the view model to change the status of the Start and Stop button
             _startButtonStatus = false;
             _stopButtonStatus = true;
+
             UpdateButton(false);
 
             // event trigerred to the view model to change the status of the menu bar buttons
             UpdateMenuBarButton(false);
 
             _slmLoader.RunWorkerAsync();
+
             return true;
         }
 
@@ -3844,10 +3391,6 @@
                     _backgroundWorkerDone = true;
                     //notify any running script that the command has stopped
                     UpdateScript("Stop");
-                    if (IPCDownlinkFlag == false && RemoteConnection == true)
-                    {
-                        SendToIPCController(ThorPipeCommand.StopAcquiring);
-                    }
                 };
 
                 _slmLoader.CancelAsync();
@@ -3861,7 +3404,17 @@
                 //disable digital trigger at stop
                 MVMManager.Instance["DigitalOutputSwitchesViewModel", "TriggerEnable"] = 0;
                 RunSampleLSStop();
-
+                Thread t2 = new Thread(delegate ()
+                {
+                    Thread.Sleep(300);        //delay so there is a small amount of time after the last pulse in o-scope data
+                    bool ipcDownlinkFlag = (bool)MVMManager.Instance["RemoteIPCControlViewModelBase", "IPCDownlinkFlag", (object)false];
+                    bool remoteConnection = (bool)MVMManager.Instance["RemoteIPCControlViewModelBase", "RemoteConnection", (object)false];
+                    if (ipcDownlinkFlag == false && remoteConnection == true)
+                    {
+                        MVMManager.Instance["RemoteIPCControlViewModelBase", "StopAcquisition"] = true;
+                    }
+                });
+                t2.Start();
                 ////resetting the well color
                 //int index;
                 //for (index = 0; index < _collection.Count; index++)
@@ -3920,6 +3473,17 @@
             }
 
             ExperimentDoc.Save(ActiveExperimentPath);
+        }
+
+        public bool ValidateRemoteFocusCustom(string input)
+        {
+            string pattern = @"^\d+(\:\d+)*$";
+            if (Regex.IsMatch(input, pattern))
+            {
+                return true;
+            }
+            MessageBox.Show("The Custom Remote Focus step set doesn't match the correct syntax. Please verify each plane number is separated by colon ':' e.g. 1:2:3");
+            return false;
         }
 
         protected virtual void OnPropertyChanged(string propertyName)
@@ -4011,10 +3575,16 @@
         private static extern int ReadImage([MarshalAs(UnmanagedType.LPWStr)] string path, ref IntPtr outputBuffer);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadImageInfo")]
-        private static extern int ReadImageInfo([MarshalAs(UnmanagedType.LPWStr)] string path, ref int width, ref int height, ref int colorChannels);
+        private static extern int ReadImageInfo([MarshalAs(UnmanagedType.LPWStr)] string path, ref int width, ref int height, ref int colorChannels, ref int bitsPerPixel);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadImageInfo2")]
         private static extern int ReadImageInfo2([MarshalAs(UnmanagedType.LPWStr)] string path, ref int width, ref int height, ref int colorChannels, ref int numOfTiles, ref int tileWidth, ref int tileHeight);
+
+        [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadMultiChannelImage")]
+        private static extern int ReadMultiChannelImage([MarshalAs(UnmanagedType.LPWStr)] string fileName, int numChannels, ref IntPtr outputBuffer, int cameraWidth, int cameraHeight);
+
+        [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadMultiChannelTiledImage")]
+        private static extern int ReadMultiChannelTiledImage([MarshalAs(UnmanagedType.LPWStr)] string fileName, int numChannels, ref IntPtr outputBuffer);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadImagesRaw")]
         private static extern int ReadRawImages([MarshalAs(UnmanagedType.LPWStr)] string path, long size, ref IntPtr outputBuffer, long offset);
@@ -4147,7 +3717,7 @@
                     imgIndxDigiCnts = (XmlManager.GetAttribute(node, appSettings, "indexDigitCounts", ref str) && Int32.TryParse(str, out imgIndxDigiCnts)) ? imgIndxDigiCnts : (int)Constants.DEFAULT_FILE_FORMAT_DIGITS;
                 }
                 string imgNameFormat = "D" + imgIndxDigiCnts.ToString();
-                string[] fileNames = new string[1];
+                List<string> fileNames = new List<string>();
                 _foundChannelCount = 0;
 
                 string exppath = _experimentFolderPath;
@@ -4165,13 +3735,13 @@
 
                 if (File.Exists(strPreview))
                 {
-                    fileNames[0] = strPreview;
+                    fileNames.Add(strPreview);
                     _foundChannelCount++;
                     ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Built color image of " + strPreview);
                 }
                 else if (File.Exists(strTemp))
                 {
-                    fileNames[0] = strTemp;
+                    fileNames.Add(strTemp);
                     _foundChannelCount++;
                     ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Built color image of " + strTemp);
                 }
@@ -4196,27 +3766,31 @@
                 }
                 string imgNameFormat = "D" + imgIndxDigiCnts.ToString();
 
-                XmlNodeList ndList = _hardwareDoc.SelectNodes("/HardwareSettings/ColorChannels/*");
-                XmlNodeList ndListHW = _hardwareDoc.SelectNodes("/HardwareSettings/Wavelength");
-
-                List<string> fileNames = new List<string>();
+                XmlNodeList wavelengthNodes = ExperimentDoc.SelectNodes("/ThorImageExperiment/Wavelengths/Wavelength");
                 _foundChannelCount = 0;
 
-                for (int k = 0; k < ndListHW.Count; k++)
+                if (_isSequentialCapture)
                 {
-                    for (int i = 0; i < ndList.Count; i++)
-                    {
-                        str = ndList[i].Attributes["name"].Value.ToString();
+                    wavelengthNodes = ExperimentDoc.SelectNodes("/ThorImageExperiment/CaptureSequence/LightPathSequenceStep/Wavelengths/Wavelength");
+                }
 
-                        if (str.Contains(ndListHW[k].Attributes["name"].Value.ToString()))
+                if (_ismROICapture)
+                {
+                    for (int j = 0; j < _mROIs.Count; ++j)
+                    {
+                        List<string> fileNames = new List<string>();
+                        var roi = _mROIs[j];
+                        for (int i = 0; i < wavelengthNodes.Count; i++)
                         {
+                            str = wavelengthNodes[i].Attributes["name"].Value.ToString();
+
                             StringBuilder sbTemp = new StringBuilder();
-                            sbTemp.AppendFormat("{0}{1}{2}{3}{4}{5}", exppath, ndListHW[k].Attributes["name"].Value.ToString(), "_" + ((int)1).ToString(imgNameFormat),
+                            sbTemp.AppendFormat("{0}{1}{2}{3}{4}{5}", exppath, str, "_" + ((int)1).ToString(imgNameFormat),
                                 "_" + _currentSubImageCount.ToString(imgNameFormat), "_" + _currentZCount.ToString(imgNameFormat), "_" + _currentTCount.ToString(imgNameFormat) + ".tif");
                             string strTemp = sbTemp.ToString();
 
                             StringBuilder sbPreview = new StringBuilder();
-                            sbPreview.AppendFormat("{0}{1}_Preview.tif", exppath, ndListHW[k].Attributes["name"].Value.ToString());
+                            sbPreview.AppendFormat("{0}{1}_region_{2}_Preview.tif", exppath, str, roi.ScanAreaID);
                             string strPreview = sbPreview.ToString();
 
                             ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Building color image of " + strTemp);
@@ -4234,86 +3808,109 @@
                                 ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Built color image of " + strTemp);
                             }
                         }
+                        if (_foundChannelCount > 0)
+                        {
+                            //set the image file path for display
+                            DisplayColorImage(fileNames, roi.ScanAreaID, j);
+                        }
                     }
                 }
-
-                if (_foundChannelCount > 0)
+                else
                 {
-                    //set the image file path for display
-                    DisplayColorImage(fileNames.ToArray());
+                    List<string> fileNames = new List<string>();
+                    for (int i = 0; i < wavelengthNodes.Count; i++)
+                    {
+
+                        str = wavelengthNodes[i].Attributes["name"].Value.ToString();
+
+                        StringBuilder sbTemp = new StringBuilder();
+                        sbTemp.AppendFormat("{0}{1}{2}{3}{4}{5}", exppath, str, "_" + ((int)1).ToString(imgNameFormat),
+                            "_" + _currentSubImageCount.ToString(imgNameFormat), "_" + _currentZCount.ToString(imgNameFormat), "_" + _currentTCount.ToString(imgNameFormat) + ".tif");
+                        string strTemp = sbTemp.ToString();
+
+                        StringBuilder sbPreview = new StringBuilder();
+                        sbPreview.AppendFormat("{0}{1}_Preview.tif", exppath, str);
+                        string strPreview = sbPreview.ToString();
+
+                        ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Building color image of " + strTemp);
+
+                        if (File.Exists(strPreview))
+                        {
+                            fileNames.Add(strPreview);
+                            _foundChannelCount++;
+                            ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Built color image of " + strPreview);
+                        }
+                        else if (File.Exists(strTemp))
+                        {
+                            fileNames.Add(strTemp);
+                            _foundChannelCount++;
+                            ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Built color image of " + strTemp);
+                        }
+                    }
+
+                    if (_foundChannelCount > 0)
+                    {
+                        //set the image file path for display
+                        DisplayColorImage(fileNames);
+                    }
                 }
             }
         }
 
-        private void buildLookUpTable()
+        /// <summary>
+        /// Stops experiment without updating experiment file.
+        /// </summary>
+        private void CancelAcquisition()
         {
-            double shiftValueResult = 64;
+            _experimentStatus = "Stopped";
 
-            //original shift value is determined by the examining camera type
-            shiftValueResult = Math.Pow(2, _shiftValue);
+            // App inherits from Application, and has a Window property called MainWindow
+            // and a List<Window> property called OpenWindows.
+            Application.Current.MainWindow.Activate();
 
-            if (null == _pixelDataLUT)
-            {
-                _pixelDataLUT = new byte[_maxChannels][];
+            _completedImageCount = _currentImageCount = _currentSubImageCount = 0;
 
-                for (int m = 0; m < _maxChannels; m++)
-                {
-                    _pixelDataLUT[m] = new byte[ushort.MaxValue + 1];
-                }
-            }
+            // event trigerred to the view model to update the status of the progress feedback
+            StatusMessage = "The experiment has stopped";
 
-            //Build the 12/14-bit to 8-bit Lut
-            for (int m = 0; m < _maxChannels; m++)
-            {
-                for (int k = 0; k < _pixelDataLUT[m].Length; k++)
-                {
-                    double val = (255.0 / (shiftValueResult * (_whitePoint[m] - _blackPoint[m]))) * (k - _blackPoint[m] * shiftValueResult);
-                    val = (val >= 0) ? val : 0;
-                    val = (val <= 255) ? val : 255;
+            _startButtonStatus = true;
+            _stopButtonStatus = false;
+            UpdateButton(true);
+            // event trigerred to the view model to change the status of the menu bar button
+            UpdateMenuBarButton(true);
 
-                    _pixelDataLUT[m][k] = (byte)Math.Round(val);
-                }
-            }
+            _panelsEnable = true;
+            // event trigerred to the view model to enable the Panels
+            UpdatePanels(_panelsEnable);
+
+            IsStimulusSaving = false;
+            _runComplete = true;
+            _backgroundWorkerDone = true;
+            //notify any running script that the command has stopped
+            UpdateScript("Stop");
         }
 
-        private void clearDataHistogram()
+        private void CopyChannelData(int regionID, int regionIndex)
         {
-            for (int k = 0; k < _maxChannels; k++)
-            {
-                Array.Clear(_pixelDataHistogram[k], 0, PIXEL_DATA_HISTOGRAM_SIZE);
-            }
-        }
-
-        private void CopyChannelData()
-        {
-            //only copy to the buffer when pixel data is not being read
-            if (_pixelDataReady == false)
+            lock (_frameData.dataLock)
             {
                 _dataLength = (_imageWidth * _imageHeight);
 
                 if ((_pixelData == null) || (_pixelData.Length != (_dataLength * _imageColorChannels)))
                 {
                     _pixelData = new ushort[_dataLength * _imageColorChannels];
-
-                    _pixelDataByte = new byte[_dataLength * 3];
                 }
 
-                if (1 == ImageMethod)
+                if (1 == ImageMethod) //dFLIM
                 {
                     const int DFLIM_HISTOGRAM_BINS = 256;
+
+                    //DFLIM data description
                     //1 datalength for photon num buffer (intensity) (USHORT)
                     //1 datalength for single photon sum buffer (USHORT)
                     //2 datalength for arrival time sum buffer (UINT32)
                     //4 DFLIM_HISTOGRAM_BINS for dflim histogram (UINT32)
-                    int intensityDataBufferSize = _imageWidth * _imageHeight * sizeof(ushort);
 
-                    int totalBufferSize = (_dataLength * 4 + DFLIM_HISTOGRAM_BINS * 2);
-
-                    if (_dataBuffer == null || _dataBuffer.Length != totalBufferSize * _imageColorChannels)
-                    {
-                        _dataBuffer = new ushort[totalBufferSize * _imageColorChannels];
-                    }
-                    MemoryCopyManager.CopyIntPtrMemory(_imageData, _dataBuffer, 0, _dataBuffer.Length);
                     const int SHORTS_PER_BIN = 2;
                     //copy out dflim histogram buffer
                     lock (_dflimHistogramDataLock)
@@ -4329,7 +3926,7 @@
 
                         for (int i = 0; i < _imageColorChannels; ++i)
                         {
-                            Buffer.BlockCopy(_dataBuffer, i * DFLIM_HISTOGRAM_BINS * sizeof(UInt32), _dflimHistogramData[i], 0, DFLIM_HISTOGRAM_BINS * sizeof(UInt32));
+                            MemoryCopyManager.CopyIntPtrMemory(_imageData, i * DFLIM_HISTOGRAM_BINS, _dflimHistogramData[i], 0, DFLIM_HISTOGRAM_BINS);
                         }
 
                         _dflimNewHistogramData = true;
@@ -4346,13 +3943,26 @@
                         _dflimArrivalTimeSumData = new uint[_dataLength * _imageColorChannels];
                     }
 
-                    Array.Copy(_dataBuffer, DFLIM_HISTOGRAM_BINS * SHORTS_PER_BIN * _imageColorChannels, _pixelData, 0, _dataLength * _imageColorChannels);
+                    //copy out the pixel data
+                    MemoryCopyManager.CopyIntPtrMemory(_imageData, DFLIM_HISTOGRAM_BINS * SHORTS_PER_BIN * _imageColorChannels, _pixelData, 0, _dataLength * _imageColorChannels);
 
                     //copy out dflim single photon data buffer
-                    Array.Copy(_dataBuffer, DFLIM_HISTOGRAM_BINS * SHORTS_PER_BIN * _imageColorChannels + _dataLength * _imageColorChannels, _dflimSinglePhotonData, 0, _imageColorChannels * _dataLength);
+                    MemoryCopyManager.CopyIntPtrMemory(_imageData, DFLIM_HISTOGRAM_BINS * SHORTS_PER_BIN * _imageColorChannels + _dataLength * _imageColorChannels, _dflimSinglePhotonData, 0, _dataLength * _imageColorChannels);
 
                     //copy out dflim arrival time sum data buffer
-                    Buffer.BlockCopy(_dataBuffer, DFLIM_HISTOGRAM_BINS * sizeof(UInt32) * _imageColorChannels + _dataLength * sizeof(UInt32) * _imageColorChannels, _dflimArrivalTimeSumData, 0, _dataLength * sizeof(Int32) * _imageColorChannels);
+                    MemoryCopyManager.CopyIntPtrMemory(_imageData, DFLIM_HISTOGRAM_BINS * _imageColorChannels + _dataLength * _imageColorChannels, _dflimArrivalTimeSumData, 0, _dataLength * _imageColorChannels);
+
+                    for (int k = 0; k < MAX_CHANNELS; k++)
+                    {
+                        int histoIndex = (_foundChannelCount > 1) ? k : 0;
+
+                        if (null == _dflimHistogramData || _dflimHistogramData[histoIndex].Length < 256 ||
+                            0 == _dflimHistogramData[histoIndex][254] || 0 == _dflimHistogramData[histoIndex][255])
+                        {
+                            continue;
+                        }
+                        _dFLIMBinDurations[k] = 5.0 * (double)_dflimHistogramData[histoIndex][255] / 128.0 / (double)_dflimHistogramData[histoIndex][254];
+                    }
                 }
                 else
                 {
@@ -4370,172 +3980,59 @@
                             break;
                     }
                 }
-                _pixelDataReady = true;
-            }
-        }
 
-        private void CreatePixelDataByte()
-        {
-            if (null == _pixelDataByte)
-            {
-                return;
-            }
-
-            //need to rebuid the color image because a palette option is not available for RGB images
-            if ((_pixelData != null) && (_dataLength * _imageColorChannels == _pixelData.Length))
-            {
-                clearDataHistogram();
-                buildLookUpTable();
-
-                //if the capture sequence Steps > 1, update the LSM channel
-                //to the current one after each image.
-                if (0 < _sequenceStepsNum)
+                FrameInfoStruct imageInfo = new FrameInfoStruct();
+                if (_ismROICapture)
                 {
-                    this.ChannelSelection = _channelOrderCurrentLSMChannel;
+                    int top = (int)Math.Floor((double)_mROIFullFOVMetadata.PixelHeight / 2 + _mROIs[regionIndex].PositionYUM / _mROIPixelSizeYUM);
+                    int left = (int)Math.Floor((double)_mROIFullFOVMetadata.PixelWidth / 2 + (_mROIs[regionIndex].PositionXUM - _mROIs[regionIndex].PhysicalSizeXUM / _mROIs[regionIndex].Stripes / 2) / _mROIPixelSizeXUM);
+                    imageInfo.bufferType = ImageMethod;
+                    imageInfo.numberOfPlanes = NumberOfPlanes;
+                    imageInfo.fullFrame = 1;
+                    imageInfo.copySize = (ulong)(_dataLength * _imageColorChannels);
+                    imageInfo.channels = _imageColorChannels;
+                    imageInfo.isNewMROIFrame = regionIndex == 0 ? 1 : 0;
+                    imageInfo.isMROI = _ismROICapture ? 1 : 0;
+                    imageInfo.totalScanAreas = _mROIs.Count;
+                    imageInfo.scanAreaIndex = regionIndex;
+                    imageInfo.scanAreaID = regionID;
+                    imageInfo.fullImageWidth = _mROIFullFOVMetadata.PixelWidth;
+                    imageInfo.fullImageHeight = _mROIFullFOVMetadata.PixelHeight;
+                    imageInfo.topInFullImage = top;
+                    imageInfo.leftInFullImage = left;
+                    imageInfo.imageHeight = _imageHeight;
+                    imageInfo.imageWidth = _imageWidth;
                 }
-                try
+                else
                 {
-                    byte valRaw;
-                    byte valNormalized;
-                    ushort pixelVal = 0;
-                    Array.Clear(_pixelDataByte, 0, _pixelDataByte.Length);
-
-                    int chan = 0;
-                    for (int k = 0; k < _maxChannels; k++)
-                    {
-                        if (((ChannelSelection >> k) & 0x1) > 0)
-                        {
-                            if (_rawImg[k] == null || _rawImg[k].Length != 3 * _dataLength)
-                            {
-                                _rawImg[k] = new byte[3 * _dataLength];
-                            }
-                            for (int j = 0; j < _dataLength; j++)
-                            {
-                                int i = 3 * j;
-                                pixelVal = _pixelData[j + chan * _dataLength];
-                                valRaw = (byte)(pixelVal >> _shiftValue);
-                                valNormalized = _pixelDataLUT[k][pixelVal];
-                                Color col = ChannelLuts[k][valNormalized];
-                                _rawImg[k][i] = col.R;
-                                _rawImg[k][i + 1] = col.G;
-                                _rawImg[k][i + 2] = col.B;
-                                if (col.R > _pixelDataByte[i]) _pixelDataByte[i] = col.R;
-                                if (col.G > _pixelDataByte[i + 1]) _pixelDataByte[i + 1] = col.G;
-                                if (col.B > _pixelDataByte[i + 2]) _pixelDataByte[i + 2] = col.B;
-                                _pixelDataHistogram[k][valRaw]++;
-                            }
-                            ++chan;
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    string str = e.Message;
-                    ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "RunSampleLS GetPixelDataByte " + this.GetType().Name + str);
-                }
-            }
-
-            bool dflimDisplayLifetimeImage = (bool)MVMManager.Instance["DFLIMControlCaptureViewModel", "DFLIMDisplayLifetimeImage", (object)false];
-            if (1 == ImageMethod && dflimDisplayLifetimeImage) //DFLIM Image
-            {
-                CreatePixelDataByteDFLIM();
-            }
-        }
-
-        private void CreatePixelDataByteDFLIM()
-        {
-            try
-            {
-                int idx;
-                if (null == _pixelDataByte)
-                {
-                    return;
-                }
-                for (int k = 0; k < MAX_CHANNELS; k++)
-                {
-                    if (_rawImg[k] == null || _rawImg[k].Length != 3 * _dataLength)
-                    {
-                        _rawImg[k] = new byte[3 * _dataLength];
-                    }
+                    imageInfo.bufferType = ImageMethod;
+                    imageInfo.imageHeight = (NumberOfPlanes > 1) ? _imageHeight / NumberOfPlanes : _imageHeight;
+                    imageInfo.imageWidth = _imageWidth;
+                    imageInfo.numberOfPlanes = NumberOfPlanes;
+                    imageInfo.fullFrame = 1;
+                    imageInfo.copySize = (ulong)(_dataLength * _imageColorChannels);
+                    imageInfo.channels = _imageColorChannels;
+                    imageInfo.sequenceIndex = _channelOrderCurrentIndex;
+                    imageInfo.totalSequences = _sequenceStepsNum;
+                    imageInfo.sequenceSelectedChannels = _channelOrderCurrentLSMChannel;
                 }
 
-                var tau_high_ns = ((CustomCollection<float>)MVMManager.Instance["DFLIMControlCaptureViewModel", "DFLIMTauHigh"]);
-                var tau_low_ns = ((CustomCollection<float>)MVMManager.Instance["DFLIMControlCaptureViewModel", "DFLIMTauLow"]);
-                var lut_high_bins = ((CustomCollection<uint>)MVMManager.Instance["DFLIMControlCaptureViewModel", "DFLIMLUTHigh"]);
-                var lut_low_bins = ((CustomCollection<uint>)MVMManager.Instance["DFLIMControlCaptureViewModel", "DFLIMLUTLow"]);
-                var tZero_ns = ((CustomCollection<float>)MVMManager.Instance["DFLIMControlCaptureViewModel", "DFLIMTZero"]);
-                int chan = 0;
-                for (int k = 0; k < MAX_CHANNELS; k++)
-                {
-                    double binDuration = 1;
-
-                    if (_lsmEnableChannel[k])
-                    {
-                        lock (_dflimHistogramDataLock)
-                        {
-                            if (null == _dflimHistogramData || _dflimHistogramData[chan].Length < 256 ||
-                                0 == _dflimHistogramData[chan][254] || 0 == _dflimHistogramData[chan][255])
-                            {
-                                continue;
-                            }
-                            binDuration = 5.0 * (double)_dflimHistogramData[chan][255] / 128.0 / (double)_dflimHistogramData[chan][254];
-                        }
-
-                        double tau_high = tau_high_ns[k] / binDuration;
-                        double tau_low = tau_low_ns[k] / binDuration;
-                        double lut_high = lut_high_bins[k];
-                        double lut_low = lut_low_bins[k];
-                        double tZeroBins = tZero_ns[k] / binDuration;
-
-                        int num_total = _dataLength;
-                        int averageMode = _averageMode;
-                        int averageFrames = 0 == averageMode ? 1 : _averageNum;
-                        double tauscale = (tau_high > tau_low) ? (1.0f / (tau_high - tau_low)) : 1.0f;
-                        double brightness;
-                        double tau_scaled;
-
-                        //Build the LifeTime Image
-                        for (int pix = 0; pix < num_total; pix++)
-                        {
-                            try
-                            {
-                                int q = pix;
-                                int n = q * 3;
-                                brightness = ((double)_dflimSinglePhotonData[q + chan * num_total] / (double)averageFrames - lut_low) / (lut_high - lut_low);
-                                brightness = (brightness < 0) ? 0 : ((brightness > 1) ? 1 : brightness);
-
-                                if (_dflimSinglePhotonData[q + chan * num_total] != 0)
-                                {
-                                    tau_scaled = tauscale * ((double)_dflimArrivalTimeSumData[q + chan * num_total] / _dflimSinglePhotonData[q + chan * num_total] - tau_low - tZeroBins);
-                                }
-                                else
-                                {
-                                    tau_scaled = 0;
-                                }
-
-                                idx = (tau_scaled < 0) ? 0 : ((tau_scaled > 1) ? 255 : (int)(tau_scaled * 255 + 0.5));
-
-                                byte red = (byte)(brightness * 255 * _dflimColorMap[3 * idx]);
-                                byte green = (byte)(brightness * 255 * _dflimColorMap[3 * idx + 1]);
-                                byte blue = (byte)(brightness * 255 * _dflimColorMap[3 * idx + 2]);
-
-                                _rawImg[k][n] = red;
-                                _rawImg[k][n + 1] = green;
-                                _rawImg[k][n + 2] = blue;
-                            }
-                            catch (Exception ex)
-                            {
-                                ex.ToString();
-                            }
-                        }
-                        ++chan;
-                    }
-                }
+                _frameData.pixelData = _pixelData;
+                _frameData.bitsPerPixel = GetBitsPerPixel();
+                _frameData.dFLIMArrivalTimeSumData = _dflimArrivalTimeSumData;
+                _frameData.dFLIMSinglePhotonData = _dflimSinglePhotonData;
+                _frameData.dFLIMBinDurations = _dFLIMBinDurations;
+                _frameData.averageMode = _averageMode;
+                _frameData.averageFrameCount = _averageNum;
+                _frameData.contiguousChannels = true;
+                _frameData.channelSelection = _channelSelection;
+                _frameData.frameInfo = imageInfo;
+                _frameData.frameInfo.pixelAspectRatioYScale = (int)(PixelAspectRatioYScale * 100);
+                _frameData.pixelSizeUM = PixelSizeUM;
+                _frameData.isFastZPreviewImage = ZFastEnable && CaptureMode == (int)CaptureModes.STREAMING;
             }
-            catch (Exception ex)
-            {
-                ex.ToString();
-            }
+
+            MVMManager.Instance["ImageViewCaptureVM", "FrameData"] = _frameData;
         }
 
         private XmlElement CreateWavelengthTag(string name, int exposureTime)
@@ -4553,11 +4050,6 @@
             newElement.Attributes.Append(expAttribute);
 
             return newElement;
-        }
-
-        private void FinishedCopyingPixel()
-        {
-            _pixelDataReady = false;
         }
 
         private void GetMCLSChannelInfo(XmlDocument expDoc, XmlNodeList nodeList, string enableString, string powerString, ref Visibility vis, ref double power)
@@ -4680,22 +4172,7 @@
             int[] OffsetActual = { (int)bFieldOffsetXActual, (int)bFieldOffsetYActual };
             double[] OffsetFine = { bFieldOffsetXFine, bFieldOffsetYFine };
             double[] FieldScaleFine = { bFieldScaleXFine, bFieldScaleYFine };
-            WaveformBuilder.InitializeParams((int)bFieldSize, FieldScaleFine, Pixel, OffsetActual, OffsetFine, bScaleYScan / 100, (int)bVerticalScan, (int)bHorizontalFlip, bPowerMin, WaveformDriverType);
-        }
-
-        private void InitializeClassArrays(int channels)
-        {
-            _whitePoint = new double[channels];
-            _blackPoint = new double[channels];
-            _pixelDataHistogram = new int[channels][];
-            _colorAssigment = new int[channels];
-
-            for (int i = 0; i < channels; i++)
-            {
-                _whitePoint[i] = LUT_SIZE - 1;
-                _blackPoint[i] = 0;
-                _pixelDataHistogram[i] = new int[PIXEL_DATA_HISTOGRAM_SIZE];
-            }
+            WaveformBuilder.InitializeParams((int)bFieldSize, FieldScaleFine, Pixel, OffsetActual, OffsetFine, bScaleYScan / 100, (int)bVerticalScan, (int)bHorizontalFlip, bPowerMin, WaveformDriverType, PowerShiftUS);
         }
 
         bool IsXyViewVisible()
@@ -4717,7 +4194,7 @@
             bool cycleReset = false;
             PreLoadNextSLMPattern();
             string LoadedSLMName = PreLoadNextSLM();
-            LoadedSLMName = (PreLoadNextSLMSequence()) ? LoadedSLMName : string.Empty;
+            LoadedSLMName = (PreLoadNextSLMSequence(LoadedSLMName)) ? LoadedSLMName : string.Empty;
 
             //check if loaded:
             if (string.Empty == LoadedSLMName)
@@ -4736,7 +4213,7 @@
                     cycleReset = true;
                     //try search drop-in files for next cycle:
                     LoadedSLMName = PreLoadNextSLM();
-                    LoadedSLMName = (PreLoadNextSLMSequence()) ? LoadedSLMName : string.Empty;
+                    LoadedSLMName = (PreLoadNextSLMSequence(LoadedSLMName)) ? LoadedSLMName : string.Empty;
                 }
                 _currentSLMCycleID++;
             }
@@ -4762,65 +4239,6 @@
                 }
             }
             return (string.Empty != LoadedSLMName || (BleachFrames - 1) <= _currentSLMCycleID);
-        }
-
-        /// <summary>
-        /// reload available SLM patterns from sequence file, return true if loaded any.
-        /// </summary>
-        /// <returns></returns>
-        private bool LoadSLMSequence(string sequenceFile)
-        {
-            if (null == sequenceFile)
-                return false;
-
-            bool retVal = true;
-            try
-            {
-                switch (_runTimeCal)
-                {
-                    case 2:
-                        //reload patterns here when extremely short pattern time
-                        List<int> patternIDs = new List<int>();
-                        using (TextReader reader = new StreamReader(sequenceFile))
-                        {
-                            string line;
-                            while ((line = reader.ReadLine()) != null)
-                            {
-                                patternIDs.Add(Int32.Parse(line));
-                            }
-                        }
-                        //find out maximum pattern time for SLM timeout in msec, PatternID:1-based
-                        int timeoutVal = 0;
-                        foreach (int i in patternIDs)
-                        {
-                            timeoutVal = (int)Math.Max(timeoutVal,
-                                _slmBleachWaveParams[i - 1].BleachWaveParams.PrePatIdleTime + _slmBleachWaveParams[i - 1].BleachWaveParams.Iterations * (_slmBleachWaveParams[i - 1].BleachWaveParams.PreIdleTime + _slmBleachWaveParams[i - 1].Duration + _slmBleachWaveParams[i - 1].BleachWaveParams.PostIdleTime) + _slmBleachWaveParams[i - 1].BleachWaveParams.PostPatIdleTime);
-                        }
-
-                        //load to SLM
-                        for (int j = 0; j < patternIDs.Count; j++)
-                        {
-                            string waveFileName = SLMWaveformFolder[0] + "\\" + SLMWaveBaseName[1] + "_" + _slmBleachWaveParams[patternIDs[j] - 1].BleachWaveParams.ID.ToString("D" + FileName.GetDigitCounts().ToString()) + ".bmp";
-                            if (File.Exists(waveFileName))
-                            {
-                                bool doStart = (j == (patternIDs.Count - 1)) ? true : false;
-                                retVal = this.LoadSLMPatternName(_runTimeCal, j, waveFileName, doStart, (int)ICamera.LSMType.STIMULATE_MODULATOR == ResourceManagerCS.GetBleacherType(), _slmBleachWaveParams[patternIDs[j] - 1].PhaseType, timeoutVal);
-                                if (!retVal)
-                                    break;
-                            }
-                        }
-                        break;
-                    default:
-                        //allow runtime load of SLM sequence
-                        return (1 == ResourceManagerCS.SetDeviceParamString((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_SEQ_FILENAME, sequenceFile, (int)IDevice.DeviceSetParamType.NO_EXECUTION));
-                }
-                return retVal;
-            }
-            catch (Exception e)
-            {
-                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "ReLoadSLMPatterns Error:" + e.Message);
-                return false;
-            }
         }
 
         /// <summary>
@@ -5005,35 +4423,29 @@
 
             //find out maximum pattern time for SLM timeout in msec and determine run-time calculation mode:
             int timeoutVal = 0;
-            _runTimeCal = SLMSequenceOn ? 1 : 0;
+            int setArmTrigger = 1;
             for (int i = 0; i < _slmBleachWaveParams.Count; i++)
             {
                 timeoutVal = (int)Math.Max(timeoutVal, _slmBleachWaveParams[i].BleachWaveParams.PrePatIdleTime + _slmBleachWaveParams[i].BleachWaveParams.Iterations * (_slmBleachWaveParams[i].BleachWaveParams.PreIdleTime + _slmBleachWaveParams[i].Duration + _slmBleachWaveParams[i].BleachWaveParams.PostIdleTime) + _slmBleachWaveParams[i].BleachWaveParams.PostPatIdleTime);
-                if (_slmBleachWaveParams[i].Duration < (double)Constants.SLM_PATTERN_TIME_MIN_MS)
-                    _runTimeCal = 2;
+                if (_slmBleachWaveParams[i].Duration < (double)Constants.REARM_TIME_MS)
+                    setArmTrigger = 0;
             }
+            ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_SET_ARM_TRIGGER, setArmTrigger, (int)IDevice.DeviceSetParamType.NO_EXECUTION);
 
             //keep slm phase type available if not from SLM param:
             if (1 > SLMphaseType.Count)
                 SLMphaseType.Add(SLM3D ? 1 : 0);
 
             //load to SLM:
-            if (2 == _runTimeCal && SLMSequenceOn)
+            bool phaseDirect = (int)ICamera.LSMType.STIMULATE_MODULATOR == ResourceManagerCS.GetBleacherType();
+            for (int i = 0; i < _loadedSLMPatternsCnt; i++)
             {
-                //do load of patterns at sequence reload ...
-            }
-            else
-            {
-                bool phaseDirect = (int)ICamera.LSMType.STIMULATE_MODULATOR == ResourceManagerCS.GetBleacherType();
-                for (int i = 0; i < _loadedSLMPatternsCnt; i++)
+                if (!_slmLoader.CancellationPending)
                 {
-                    if (!_slmLoader.CancellationPending)
-                    {
-                        StatusMessage = "Loading SLM pattern # (" + i + ")";
-                        bool doStart = (i == (_loadedSLMPatternsCnt - 1)) ? true : false;
-                        this.LoadSLMPatternName(_runTimeCal, i, _loadedSLMPatterns[i], doStart, phaseDirect, (i < SLMphaseType.Count ? SLMphaseType[i] : SLMphaseType[0]), timeoutVal);
-                        System.Threading.Thread.Sleep(1);
-                    }
+                    StatusMessage = "Loading SLM pattern # (" + i + ")";
+                    bool doStart = (i == (_loadedSLMPatternsCnt - 1)) ? true : false;
+                    this.LoadSLMPatternName(SLMSequenceOn ? 1 : 0, i, _loadedSLMPatterns[i], doStart, phaseDirect, (i < SLMphaseType.Count ? SLMphaseType[i] : SLMphaseType[0]), timeoutVal);
+                    System.Threading.Thread.Sleep(1);
                 }
             }
 
@@ -5043,32 +4455,48 @@
         private string PreLoadNextSLM()
         {
             string LoadedSLMName = string.Empty;
+            Random rnd = new Random();
 
             if (!Directory.Exists((SLMSequenceOn ? SLMWaveformPath[1] : SLMWaveformPath[0])))
                 return LoadedSLMName;
 
             //get files in folder:
             _slmFilesInFolder = Directory.EnumerateFiles((SLMSequenceOn ? SLMWaveformPath[1] : SLMWaveformPath[0]), "*.raw ", SearchOption.TopDirectoryOnly).ToList();
+            List<string> candidates = _slmFilesInFolder.Except(_loadedSLMFiles).OrderBy(s => s).ToList();
 
-            //locate first filename to load from the list:
-            int targetCount = SLMSequenceOn ? _slmFilesInFolder.Count : _slmBleachWaveParams.Count;
-            while ((string.Empty == LoadedSLMName) && (targetCount > _currentSLMWaveID))
+            if (SLMSequenceOn && SLMRandomEpochs && 0 < candidates.Count)
             {
-                string waveFileName = (SLMSequenceOn ? SLMWaveformPath[1] : SLMWaveformPath[0]) + "\\" + SLMWaveBaseName[0] + "_" +
-                    (SLMSequenceOn ? (uint)(_currentSLMWaveID + 1) : _slmBleachWaveParams[_currentSLMWaveID].BleachWaveParams.ID).ToString("D" + FileName.GetDigitCounts().ToString()) + ".raw";
-
-                //check if available in the folder, skip if just loaded:
-                string matchingFileName = _slmFilesInFolder.FirstOrDefault(checkString => checkString.Contains(waveFileName));
-                if (null != matchingFileName && !_loadedSLMFiles.Contains(waveFileName))
+                //random select epoch waveform:
+                string targetFile = candidates[rnd.Next(candidates.Count())];
+                if (this.SetBleachFile(targetFile, 1))   //set cycle count = 1 to reload waveform everytime
                 {
-                    if (this.SetBleachFile(matchingFileName, 1))
-                    {
-                        LoadedSLMName = waveFileName;
-                        _loadedSLMFiles.Add(LoadedSLMName);
-                        //_afterSLMCycle = false;
-                    }
+                    LoadedSLMName = targetFile;
+                    _loadedSLMFiles.Add(LoadedSLMName);
+                    _currentSLMWaveID++;
                 }
-                _currentSLMWaveID++;
+            }
+            else
+            {
+                //locate first filename to load from the list:
+                int targetCount = SLMSequenceOn ? _slmFilesInFolder.Count : _slmBleachWaveParams.Count;
+                while ((string.Empty == LoadedSLMName) && (targetCount > _currentSLMWaveID))
+                {
+                    string waveFileName = (SLMSequenceOn ? SLMWaveformPath[1] : SLMWaveformPath[0]) + "\\" + SLMWaveBaseName[0] + "_" +
+                        (SLMSequenceOn ? (uint)(_currentSLMWaveID + 1) : _slmBleachWaveParams[_currentSLMWaveID].BleachWaveParams.ID).ToString("D" + FileName.GetDigitCounts().ToString()) + ".raw";
+
+                    //check if available in the folder, skip if just loaded:
+                    string matchingFileName = _slmFilesInFolder.FirstOrDefault(checkString => checkString.Contains(waveFileName));
+                    if (null != matchingFileName && !_loadedSLMFiles.Contains(waveFileName))
+                    {
+                        if (this.SetBleachFile(matchingFileName, 1))
+                        {
+                            LoadedSLMName = waveFileName;
+                            _loadedSLMFiles.Add(LoadedSLMName);
+                            //_afterSLMCycle = false;
+                        }
+                    }
+                    _currentSLMWaveID++;
+                }
             }
 
             //flag only if there's more to load:
@@ -5112,7 +4540,7 @@
             for (int i = 0; i < addedFiles.Count(); i++)
             {
                 //use last available SLM phaseType since no records of it from other files:
-                if (this.LoadSLMPatternName(_runTimeCal, _loadedSLMPatternsCnt, addedFiles[i], true, phaseDirect, SLMphaseType.Last()))
+                if (this.LoadSLMPatternName(SLMSequenceOn ? 1 : 0, _loadedSLMPatternsCnt, addedFiles[i], true, phaseDirect, SLMphaseType.Last()))
                 {
                     _loadedSLMPatternsCnt++;
                     _loadedSLMPatterns.Add(addedFiles[i]);
@@ -5126,13 +4554,13 @@
         /// load next SLM Sequence, return true if loaded new and in sync with PreLoadNextSLM
         /// </summary>
         /// <returns></returns>
-        private bool PreLoadNextSLMSequence()
+        private bool PreLoadNextSLMSequence(string LoadedSLMName)
         {
             //return if not in advance sequence mode
             if (!SLMSequenceOn)
                 return true;
 
-            string LoadedSequenceName = string.Empty;
+            string LoadedSequenceName = string.Empty, seqFileName = string.Empty;
 
             //get files in folder:
             _slmSequencesInFolder = Directory.EnumerateFiles(SLMWaveformPath[1], "*.txt ", SearchOption.TopDirectoryOnly).ToList();
@@ -5140,7 +4568,7 @@
             //locate first filename to load from the list:
             while ((string.Empty == LoadedSequenceName) && (_slmSequencesInFolder.Count > _currentSLMSequenceID))
             {
-                string seqFileName = SLMWaveformPath[1] + "\\" + SLMWaveBaseName[2] + "_" + (_currentSLMSequenceID + 1).ToString("D" + FileName.GetDigitCounts().ToString()) + ".txt";
+                seqFileName = SLMWaveformPath[1] + "\\" + SLMWaveBaseName[2] + "_" + (_currentSLMSequenceID + 1).ToString("D" + FileName.GetDigitCounts().ToString()) + ".txt";
 
                 //check if available in the folder, skip if just loaded:
                 string loadedFileName = _loadedSLMSequences.FirstOrDefault(checkString => checkString.Contains(seqFileName));
@@ -5151,11 +4579,14 @@
                 else
                 {
                     string matchingFileName = _slmSequencesInFolder.FirstOrDefault(checkString => checkString.Contains(seqFileName));
-                    if (LoadSLMSequence(matchingFileName))
+                    if (null != matchingFileName)
                     {
-                        LoadedSequenceName = matchingFileName;
-                        _loadedSLMSequences.Add(LoadedSequenceName);
-                        //_afterSLMCycle = false;
+                        if (1 == ResourceManagerCS.SetDeviceParamString((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_SEQ_FILENAME, matchingFileName, (int)IDevice.DeviceSetParamType.NO_EXECUTION))
+                        {
+                            LoadedSequenceName = matchingFileName;
+                            _loadedSLMSequences.Add(LoadedSequenceName);
+                            //_afterSLMCycle = false;
+                        }
                     }
                 }
                 _currentSLMSequenceID++;
@@ -5165,13 +4596,13 @@
             _lastInSLMCycle = (0 < _slmSequencesInFolder.Except(_loadedSLMSequences).OrderBy(s => s).ToList().Count()) ? false : true;
 
             //if not loaded from the list, check if other files added:
-            if (string.Empty == LoadedSequenceName)
+            if (String.IsNullOrEmpty(LoadedSequenceName))
             {
                 //_afterSLMCycle = true;
                 List<string> addedFiles = _slmSequencesInFolder.Except(_loadedSLMSequences).OrderBy(s => s).ToList();
                 if (0 < addedFiles.Count())
                 {
-                    if (LoadSLMSequence(addedFiles[0]))
+                    if (1 == ResourceManagerCS.SetDeviceParamString((int)SelectedHardware.SELECTED_SLM, (int)IDevice.Params.PARAM_SLM_SEQ_FILENAME, addedFiles[0], (int)IDevice.DeviceSetParamType.NO_EXECUTION))
                     {
                         LoadedSequenceName = addedFiles[0];
                         _loadedSLMSequences.Add(LoadedSequenceName);
@@ -5180,12 +4611,12 @@
                 _lastInSLMCycle = (1 >= addedFiles.Count()) ? true : _lastInSLMCycle;
             }
 
-            if (string.Empty != LoadedSequenceName)
+            if (!String.IsNullOrEmpty(LoadedSequenceName))
             {
                 StatusMessage = string.Format("Loading cycle {0}, SLM sequence: '{1}' ...", (_currentSLMCycleID + 1).ToString(), Path.GetFileNameWithoutExtension(LoadedSequenceName));
             }
 
-            return (string.Empty == LoadedSequenceName) ? false : true;
+            return String.IsNullOrEmpty(LoadedSequenceName) ? false : true;
         }
 
         private bool RunSampleLSBleachPixelArray(List<BleachWaveParams> bParams)
@@ -5240,7 +4671,7 @@
 
         private void RunsampleLSNotifySavedFileToIPC(string message)
         {
-            SendToIPCController(ThorPipeCommand.NotifySavedFile, message);
+            MVMManager.Instance["RemoteIPCControlViewModelBase", "NotifyOfSavedFile"] = message;
         }
 
         //to update the completed working WELL status and progress feedback
@@ -5273,6 +4704,21 @@
                 _completedImageCount = Math.Min(lCompleted, lTotal);
                 _totalImagesCompleted = lCompleted;
                 _totalImageCount = lTotal;
+
+                if ((_completedImageCount == _totalImageCount))
+                {
+                    Thread t2 = new Thread(delegate ()
+                    {
+                        Thread.Sleep(300);        //delay so there is a small amount of time after the last pulse in o-scope data
+                        bool ipcDownlinkFlag = (bool)MVMManager.Instance["RemoteIPCControlViewModelBase", "IPCDownlinkFlag", (object)false];
+                        bool remoteConnection = (bool)MVMManager.Instance["RemoteIPCControlViewModelBase", "RemoteConnection", (object)false];
+                        if (ipcDownlinkFlag == false && remoteConnection == true)
+                        {
+                            MVMManager.Instance["RemoteIPCControlViewModelBase", "StopAcquisition"] = true;
+                        }
+                    });
+                    t2.Start();
+                }
 
                 //user stopped the experiment
                 if (_stopClicked == true)
@@ -5326,19 +4772,20 @@
                     // event trigerred to the view model to change the status of the menu bar buttons
                     if (null != UpdateMenuBarButton) UpdateMenuBarButton(true);
 
-                    //Ensure that the bitmap has updated with the most recent data
-                    if (null != UpdateImage) UpdateImage("image");
-
                     _experimentStatus = "Complete";
 
                     LogPMTTripCount();
 
                     UpdateExperimentFile(_experimentXMLPath, true);
+                    CaptureComplete();
 
-                    if (IPCDownlinkFlag == false && RemoteConnection == true)
+                    if (0 == _runCompleteCount)
                     {
-                        SendToIPCController(ThorPipeCommand.StopAcquiring);
+                        UpdateScript("Complete");
                     }
+                    _runComplete = true;
+
+                    _runCompleteCount++;
 
                     if (TurnOffMonitorsDuringCapture)
                     {
@@ -5435,10 +4882,6 @@
 
                 if (null != UpdateButton) UpdateButton(true);
             }
-        }
-
-        private void RunSampleLSUpdateCaptureComplete(ref int index)
-        {
         }
 
         private void RunsampleLSUpdateMessage(string message)
@@ -5615,6 +5058,11 @@
             _channelOrderCurrentIndex = currentIndex;   // zero-based index
             SetSequenceStepDisplaySettings(ExperimentDoc);
             SetSequenceStepMCLS(ExperimentDoc);
+            SetSequenceDigitalSwitches(ExperimentDoc);
+            if (_isSequentialCapture)
+            {
+                ChannelSelection |= _channelOrderCurrentLSMChannel;
+            }
         }
 
         //to update the current working WELL status
@@ -5769,8 +5217,9 @@
                         if (0 < _sequenceStepsNum)
                         {
                             SetSequenceStepDisplaySettings(expDoc);
-                            this.ChannelSelection = _channelOrderCurrentLSMChannel;
+                            ChannelSelection = _channelOrderCurrentLSMChannel;
                             SetSequenceStepMCLS(expDoc);
+                            SetSequenceDigitalSwitches(ExperimentDoc);
                         }
                     }
                     else
@@ -5786,6 +5235,71 @@
             else
             {
                 _sequenceStepWavelengthNameList = new List<string>();
+            }
+        }
+
+        private void SetSequenceDigitalSwitches(XmlDocument expDoc)
+        {
+            if (null == expDoc) return;
+            XmlNodeList ndList = expDoc.SelectNodes("/ThorImageExperiment/CaptureSequence/LightPathSequenceStep");
+            if (ndList.Count <= _channelOrderCurrentIndex) return;
+
+            XmlNodeList digitalNdList = ndList[_channelOrderCurrentIndex].SelectNodes("DigitalIO");
+            if (digitalNdList.Count <= 0) return;
+            string str = string.Empty;
+            int[] switchPositions = new int[8];
+            int enable = 0;
+            if (XmlManager.GetAttribute(digitalNdList[0], expDoc, "enable", ref str))
+            {
+                Int32.TryParse(str, out enable);
+            }
+            if (XmlManager.GetAttribute(digitalNdList[0], expDoc, "digOut1", ref str))
+            {
+                Int32.TryParse(str, out switchPositions[0]);
+            }
+            if (XmlManager.GetAttribute(digitalNdList[0], expDoc, "digOut2", ref str))
+            {
+                Int32.TryParse(str, out switchPositions[1]);
+            }
+            if (XmlManager.GetAttribute(digitalNdList[0], expDoc, "digOut3", ref str))
+            {
+                Int32.TryParse(str, out switchPositions[2]);
+            }
+            if (XmlManager.GetAttribute(digitalNdList[0], expDoc, "digOut4", ref str))
+            {
+                Int32.TryParse(str, out switchPositions[3]);
+            }
+            if (XmlManager.GetAttribute(digitalNdList[0], expDoc, "digOut5", ref str))
+            {
+                Int32.TryParse(str, out switchPositions[4]);
+            }
+            if (XmlManager.GetAttribute(digitalNdList[0], expDoc, "digOut6", ref str))
+            {
+                Int32.TryParse(str, out switchPositions[5]);
+            }
+            if (XmlManager.GetAttribute(digitalNdList[0], expDoc, "digOut7", ref str))
+            {
+                Int32.TryParse(str, out switchPositions[6]);
+            }
+            if (XmlManager.GetAttribute(digitalNdList[0], expDoc, "digOut8", ref str))
+            {
+                Int32.TryParse(str, out switchPositions[7]);
+            }
+            MVMManager.Instance["DigitalOutputSwitchesViewModel", "SwitchEnable"] = enable;
+            ObservableCollection<IntPC> switchState = new ObservableCollection<IntPC>();
+
+            for (int i = 0; i < (int)Constants.MAX_SWITCHES; i++)
+            {
+                switchState.Add(new IntPC());
+                switchState[i].Value = switchPositions[i];
+            }
+
+            MVMManager.Instance["DigitalOutputSwitchesViewModel", "SwitchState"] = switchState;
+            ((IMVM)MVMManager.Instance["DigitalOutputSwitchesViewModel", this]).OnPropertyChange("SwitchState");
+            ICommand digitalSwitchCommand = (ICommand)MVMManager.Instance["DigitalOutputSwitchesViewModel", "DigitalSwitchCommand", (object)null];
+            for (int i = 0; i < (int)Constants.MAX_SWITCHES; i++)
+            {
+                digitalSwitchCommand.Execute(i);
             }
         }
 
@@ -5811,6 +5325,23 @@
                         _channelOrderCurrentLSMChannel = iVal;
                     }
 
+                    //If the imaging camera is a CCD or CMOS, we need to read the camera tag. If there is not camera tag it should set the channel number to 1
+                    if (ResourceManagerCS.GetCameraType() == (int)ICamera.CameraType.CCD)
+                    {
+                        XmlNodeList camNdList = ndList[_channelOrderCurrentIndex].SelectNodes("Camera");
+                        if (camNdList.Count > 0)
+                        {
+                            if (XmlManager.GetAttribute(camNdList[0], expDoc, "channel", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal))
+                            {
+                                _channelOrderCurrentLSMChannel = iVal;
+                            }
+                        }
+                        else
+                        {
+                            _channelOrderCurrentLSMChannel = 1;
+                        }
+                    }
+
                     XmlNodeList wavelengthsNdList = ndList[_channelOrderCurrentIndex].SelectNodes("Wavelengths");
                     XmlNodeList wavelengthNdList = wavelengthsNdList[0].SelectNodes("Wavelength");
                     for (int j = 0; j < wavelengthNdList.Count; j++)
@@ -5818,7 +5349,6 @@
                         if (XmlManager.GetAttribute(wavelengthNdList[j], expDoc, "name", ref str))
                             _sequenceStepWavelengthNameList.Add(str);
                     }
-                    BuildChannelPalettes();
                 }
 
                 //Pinhole Settings
@@ -5900,236 +5430,347 @@
 
         private void SLMLoader_DoWork(object sender, DoWorkEventArgs e)
         {
-            ActiveExperimentPath = ResourceManagerCS.GetCaptureTemplatePathString() + "Active.xml";
-            if (true == _runComplete)
+            try
             {
-
-                //Load active.xml accounting for possible lockup during scripting
-                XmlDocument expDoc = new XmlDocument();
-                if (!TryLoadDocument(expDoc, ActiveExperimentPath))
+                ActiveExperimentPath = ResourceManagerCS.GetCaptureTemplatePathString() + "Active.xml";
+                if (true == _runComplete)
                 {
-                    return;// false;
-                }
-
-                //Check for compatibility
-                if (!ExperimentSettingsValidForCapture(expDoc))
-                {
-                    return;// false;
-                }
-
-                _currentWellCount = 0;
-                _currentImageCount = 0;
-                _totalImagesCompleted = 0;
-                //Kirk: T and Z counters set to 0 then Updated to fix Redmine Bug #33
-                _currentTCount = 0;
-                _currentZCount = 0;
-                Update("Reset Counters");
-
-                //image counter used to determine the end of a row for kicking the background image generation process
-                _imageCounter = 0;
-
-                _sbNewDir = new StringBuilder(_outputPath + "\\" + _experimentName.FullName);
-
-                // This is done for customers who are looking to index their files from the first experiment itself
-                string strTemp = string.Empty;
-                System.Xml.XmlDocument appSettings = new System.Xml.XmlDocument();
-                string appSettingsFile = ResourceManagerCS.GetApplicationSettingsFileString();
-                ResourceManagerCS.BorrowDocMutexCS(SettingsFileType.APPLICATION_SETTINGS);
-                appSettings.Load(appSettingsFile);
-                ResourceManagerCS.ReturnDocMutexCS(SettingsFileType.APPLICATION_SETTINGS);
-                System.Xml.XmlNode node = appSettings.SelectSingleNode("/ApplicationSettings/ImageNameFormat");
-
-                if (node != null && node.Attributes != null)
-                {
-                    _indexDigitCounts = Convert.ToInt32(node.Attributes["indexDigitCounts"].Value);
-
-                }
-
-                if (Directory.Exists(_sbNewDir.ToString()) || (XmlManager.GetAttribute(node, appSettings, "alwaysAppendIndex", ref strTemp) && ("1" == strTemp || Boolean.TrueString == strTemp)))
-                {
-                    FileName name = new FileName(_experimentName);
-                    name.MakeUnique(_outputPath);
-
-                    //Confirm That User Wants New Name
-                    if (!DontAskUniqueExperimentName)
+                    //Load active.xml accounting for possible lockup during scripting
+                    XmlDocument expDoc = new XmlDocument();
+                    _isSequentialCapture = false;
+                    if (!TryLoadDocument(expDoc, ActiveExperimentPath))
                     {
-                        Application.Current.Dispatcher.Invoke((Action)delegate
-                        {
-                            string msg = string.Format("A data set already exists at this location. Would you like to use the name {0} instead?", name.FullName);
-                            CustomMessageBox messageBox = new CustomMessageBox(msg, "Data already exists", "Don't ask again", "Yes", "No");
-                            if (!messageBox.ShowDialog().GetValueOrDefault(false))
-                            {
-                                return;// false;
-                            }
-                            else
-                            {
-                                DontAskUniqueExperimentName = messageBox.CheckBoxChecked;
-                            }
-                        });
+                        return; //false;
                     }
 
-                    //Rename
-                    _experimentName = name;
+                    //Check for compatibility
+                    if (!ExperimentSettingsValidForCapture(expDoc))
+                    {
+                        return; //false;
+                    }
+
+                    _ismROICapture = mROIXMLMapper.MapXml2mROIParams(expDoc, LSMType, out _mROIs, out _mROIPixelSizeXUM, out _mROIPixelSizeYUM, out _mROIStripLength, out _mROIFullFOVMetadata);
+                    bool noExpName = false;
+                    _currentWellCount = 0;
+                    _currentImageCount = 0;
+                    _runCompleteCount = 0;
+                    _totalImagesCompleted = 0;
+                    //Kirk: T and Z counters set to 0 then Updated to fix Redmine Bug #33
+                    _currentTCount = 0;
+                    _currentZCount = 0;
+                    Update("Reset Counters");
+
+                    //image counter used to determine the end of a row for kicking the background image generation process
+                    _imageCounter = 0;
+
                     _sbNewDir = new StringBuilder(_outputPath + "\\" + _experimentName.FullName);
 
-                }
+                    // This is done for customers who are looking to index their files from the first experiment itself
+                    string strTemp = string.Empty;
+                    System.Xml.XmlDocument appSettings = new System.Xml.XmlDocument();
+                    string appSettingsFile = ResourceManagerCS.GetApplicationSettingsFileString();
+                    ResourceManagerCS.BorrowDocMutexCS(SettingsFileType.APPLICATION_SETTINGS);
+                    appSettings.Load(appSettingsFile);
+                    ResourceManagerCS.ReturnDocMutexCS(SettingsFileType.APPLICATION_SETTINGS);
+                    System.Xml.XmlNode node = appSettings.SelectSingleNode("/ApplicationSettings/ImageNameFormat");
 
-                string totalPath = _sbNewDir.ToString();
-
-                int totalPathLength;
-                if (_indexDigitCounts <= 0)
-                {
-                    totalPathLength = TOTAL_PATH_LENGTH;
-                }
-                else
-                {
-                    totalPathLength = TOTAL_PATH_LENGTH - (_indexDigitCounts - 1) * 4;
-                }
-
-                if (totalPath.Length > totalPathLength)
-                {
-                    string msg = string.Format(" Your path name and file name combined should be less than {0} characters", totalPathLength);
-                    MessageBox.Show(msg);
-                    return; //false;
-                }
-
-                if (IPCDownlinkFlag == false && RemoteConnection == true && RemoteSavingStats == true)
-                {
-                    SendToIPCController(ThorPipeCommand.StartAcquiring, _sbNewDir.ToString());
-                }
-
-                //Create the new ROIDataStore to hold the ROI stats
-                const int DSTYPE_SQLITE = 1;
-                CreateStatsManagerROIDS(DSTYPE_SQLITE, _streamingPath + "\\ROIDataStore");
-
-                //Create the new experiment directory(s)
-                Directory.CreateDirectory(_sbNewDir.ToString() + @"\jpeg");
-                Directory.CreateDirectory(_sbNewDir.ToString() + @"\jpeg\1x");
-
-                //assign the experiment xml path
-                _experimentXMLPath = _sbNewDir.ToString() + "\\Experiment.xml";
-
-                _experimentFolderPath = _sbNewDir.ToString() + "\\";
-
-                string batchName = DataStore.Instance.GetBatchName();
-
-                DataStore.Instance.AddExperiment(_experimentName.FullName, _experimentFolderPath, batchName);
-
-                StringBuilder sbExp = new StringBuilder(_experimentXMLPath);
-
-                //copy the experiment path to the runsample parameters
-                _rsParams.path = String.Copy(_experimentXMLPath);
-
-                try
-                {
-                    XmlNodeList nlA = expDoc.SelectNodes("/ThorImageExperiment/Name");
-                    if (0 < nlA.Count)
+                    if (node != null && node.Attributes != null)
                     {
-                        XmlManager.SetAttribute(nlA[0], expDoc, "name", _experimentName.FullName);
-                        XmlManager.SetAttribute(nlA[0], expDoc, "path", _sbNewDir.ToString());
+                        _indexDigitCounts = Convert.ToInt32(node.Attributes["indexDigitCounts"].Value);
+
                     }
-                    ResourceManagerCS.BorrowDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
-                    expDoc.Save(ActiveExperimentPath);
-                    ResourceManagerCS.ReturnDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
-                }
-                catch (Exception ex)
-                {
-                    string str = ex.Message;
-                    ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + "RunSampleLSModule: Unable to save new experiment path.");
-                }
-                //overwrite the active experiment settings
-                File.Copy(ActiveExperimentPath, _experimentXMLPath);
 
-                try
-                {
-                    //Update the variables list LAST OUTPUT value
-                    const string PATH_LAST_OUTPUT = "LAST OUTPUT";
-                    string strVar = Application.Current.Resources["ApplicationSettingsFolder"].ToString() + "\\VariableList.xml";
-                    XmlDocument varDoc = new XmlDocument();
-                    varDoc.Load(strVar);
-                    XmlNodeList ndList = varDoc.SelectNodes("/VariableList/Path");
+                    bool folderExists = Directory.Exists(_sbNewDir.ToString()); //first check to see if the directory we are about to create already exists
 
-                    foreach (XmlNode nd in ndList)
+                    bool alwaysAppendOn = (XmlManager.GetAttribute(node, appSettings, "alwaysAppendIndex", ref strTemp) && ("1" == strTemp || Boolean.TrueString == strTemp));
+
+                    FileName strGen = new FileName(_experimentName.NameWithoutNumber, false); //string generator used to generate string the same was as ThorSync
+
+                    if (folderExists || alwaysAppendOn)
                     {
-                        string str = nd.Attributes["name"].Value;
-                        if (str.Equals(PATH_LAST_OUTPUT))
+                        FileName name = new FileName(_experimentName.NameWithoutNumber, false); //override the global FileName with this
+
+                        if (_experimentName.NameWithoutNumber == _experimentName.FullName)//if nothings appended
                         {
-                            nd.Attributes["value"].Value = _sbNewDir.ToString();
-                            break;
+                            //case for Append On and it is the first file being created
+
+                            name.NameNumberInt = 1; //this part is confusing
+                            name.MakeUnique(_outputPath);
+                            name.NameNumberInt = 0;      //the reason for doing this is, calling make unique when NameNumber is 0 and append index is on
+                            name.MakeUnique(_outputPath);  // calling only make unique with NameNumber as zero and append on will create a file with no append becuase that is a unique file to the FileName class
                         }
-                    }
-                    varDoc.Save(strVar);
-                }
-                catch (Exception ex)
-                {
-                    string str = ex.Message;
-                    //error loading/saving the variables list
-                    ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Unable to load/save variables list");
-                }
-
-                _tiffCompressionEnabled = GetTiffCompressionEnbaledSetting();
-
-                //Copy bleach ROI and waveform:
-                if ((int)CaptureModes.BLEACHING == CaptureMode)
-                {
-                    //do preBleach arm and check:
-                    if (!PreBleachCheck())
-                        return;
-                }
-
-                _runComplete = false;
-                _experimentCompleteForProgressBar = false;
-
-                _statusMessageZUpdate = true;
-
-                // event trigerred to let the viewModel know that the experiment has started
-                ExperimentStarted();
-
-                //enable digital trigger at start, digital output view model will fetch for average
-                //frame number from active.xml, make sure it happens when active and exp are the same copy.
-                MVMManager.Instance["DigitalOutputSwitchesViewModel", "TriggerEnable"] = 1;
-
-                _experimentStatus = "started";
-                _startDateTime = DateTime.Now;
-                _startUTC = DateTime.UtcNow;
-                if (true == UpdateExperimentFile(_experimentXMLPath, false))
-                {
-                    if (SetActiveExperiment(_experimentXMLPath) == 1)
-                    {
-                        //Check the sequential capture settings and set the channel appropiately
-                        SetCaptureSequence();
-                        //save experiment path to applicationSettings.xml
-                        SaveLastExperimentInfo(_experimentFolderPath);
-
-                        BuildChannelPalettes();
-
-                        if (SetCustomParamsBinary(ref _rsParams) == 1)
+                        else if (name.NameNumberInt == 0)
                         {
-                            if (TurnOffMonitorsDuringCapture)
+                            //case for Append On and it is the second file (indexed at 0 so it would look like _0001)
+                            name.NameNumberInt = 1;
+                            name.MakeUnique(_outputPath);
+                        }
+                        else
+                        {
+                            //default case
+                            name.MakeUnique(_outputPath);
+                        }
+
+                        //if block is to force ThorImage to name a new folder the same way as ThorSync
+                        if (false == alwaysAppendOn) //Always append is off here overwrite previous cases
+                        {
+                            strGen.MakeUnique(_outputPath);
+                            name.NameNumber = strGen.NameNumber;
+
+                        }
+                        //Confirm That User Wants New Name
+                        if ((folderExists) && !DontAskUniqueExperimentName)
+                        {
+                            Application.Current.Dispatcher.Invoke((Action)delegate
                             {
-                                //turn off the monitors
-                                SendMessage(0xffff, WM_SYSCOMMAND, SC_MONITORPOWER, 2);
-                            }
-
-                            // Set the Simulator Image Index to the first frame in the experiment folder
-                            SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_SIM_INDEX, (int)1);
-
-                            if (RunSampleLSExecute() == 1)
+                                string msg = string.Format("A data set already exists at this location. Would you like to use the name {0} instead?", name.FullName);
+                                CustomMessageBox messageBox = new CustomMessageBox(msg, "Data already exists", "Don't ask again", "Yes", "No");
+                                if (!messageBox.ShowDialog().GetValueOrDefault(false))
+                                {
+                                    noExpName = true;
+                                    e.Cancel = true;
+                                    return; //false;
+                                }
+                                else
+                                {
+                                    DontAskUniqueExperimentName = messageBox.CheckBoxChecked;
+                                }
+                            });
+                            if (noExpName)
                             {
-                                StatusMessage = "Starting Experiment";
-
-                                UpdateBitmapTimer(true);
+                                return;
                             }
                         }
+
+                        _experimentName = name;
+
+                        _sbNewDir = new StringBuilder(_outputPath + "\\" + _experimentName.FullName);
+                        OnPropertyChanged("ExperimentName");
+
+                    }
+
+                    string totalPath = _sbNewDir.ToString();
+
+                    int totalPathLength;
+                    if (_indexDigitCounts <= 0)
+                    {
+                        totalPathLength = TOTAL_PATH_LENGTH;
+                    }
+                    else
+                    {
+                        totalPathLength = TOTAL_PATH_LENGTH - (_indexDigitCounts - 1) * 4;
+                    }
+
+                    if (totalPath.Length > totalPathLength)
+                    {
+                        string msg = string.Format(" Your path name and file name combined should be less than {0} characters", totalPathLength);
+                        MessageBox.Show(msg);
+                        return; //false;
+                    }
+
+                    bool ipcDownlinkFlag = (bool)MVMManager.Instance["RemoteIPCControlViewModelBase", "IPCDownlinkFlag", (object)false];
+                    bool remoteConnection = (bool)MVMManager.Instance["RemoteIPCControlViewModelBase", "RemoteConnection", (object)false];
+                    bool remoteSavingStats = (bool)MVMManager.Instance["RemoteIPCControlViewModelBase", "RemoteSavingStats", (object)false];
+                    if (ipcDownlinkFlag == false && remoteConnection == true && remoteSavingStats == true)
+                    {
+                        MVMManager.Instance["RemoteIPCControlViewModelBase", "StartAcquisition"] = OutputPath + "\\" + ExperimentName;
+                    }
+
+                    //Create the new ROIDataStore to hold the ROI stats
+                    const int DSTYPE_SQLITE = 1;
+                    CreateStatsManagerROIDS(DSTYPE_SQLITE, _streamingPath + "\\ROIDataStore");
+
+                    //Create the new experiment directory(s)
+                    Directory.CreateDirectory(_sbNewDir.ToString() + @"\jpeg");
+                    Directory.CreateDirectory(_sbNewDir.ToString() + @"\jpeg\1x");
+
+                    //assign the experiment xml path
+                    _experimentXMLPath = _sbNewDir.ToString() + "\\Experiment.xml";
+
+                    _experimentFolderPath = _sbNewDir.ToString() + "\\";
+
+                    string batchName = DataStore.Instance.GetBatchName();
+
+                    DataStore.Instance.AddExperiment(_experimentName.FullName, _experimentFolderPath, batchName);
+
+                    StringBuilder sbExp = new StringBuilder(_experimentXMLPath);
+
+                    //copy the experiment path to the runsample parameters
+                    _rsParams.path = String.Copy(_experimentXMLPath);
+
+                    try
+                    {
+                        XmlNodeList nlA = expDoc.SelectNodes("/ThorImageExperiment/Name");
+                        if (0 < nlA.Count)
+                        {
+                            XmlManager.SetAttribute(nlA[0], expDoc, "name", _experimentName.FullName);
+                            XmlManager.SetAttribute(nlA[0], expDoc, "path", _sbNewDir.ToString());
+                        }
+                        ResourceManagerCS.BorrowDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
+                        expDoc.Save(ActiveExperimentPath);
+                        ResourceManagerCS.ReturnDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
+
+                        //Save power ramp & pockel info to experiment folder
+                        Directory.CreateDirectory(_experimentFolderPath + "\\powerramp\\");
+                        XmlNodeList pockels = expDoc.SelectNodes("/ThorImageExperiment/Pockels");
+                        foreach (XmlNode x in pockels)
+                        {
+                            string pockel_path = string.Empty;
+                            XmlManager.GetAttribute(x, expDoc, "path", ref pockel_path);
+                            if (!pockel_path.Equals(string.Empty))
+                            {
+                                if ((!File.Exists(_experimentFolderPath + "\\powerramp\\" + Path.GetFileName(pockel_path))) &&
+                                    File.Exists(pockel_path))
+                                {
+                                    File.Copy(pockel_path, _experimentFolderPath + "\\powerramp\\" + Path.GetFileName(pockel_path));
+                                }
+                            }
+                        }
+
+                        XmlNodeList powerramps = expDoc.SelectNodes("/ThorImageExperiment/PowerRegulator");
+                        string fval = string.Empty;
+                        XmlManager.GetAttribute(powerramps[0], expDoc, "path", ref fval);
+
+                        if ((!File.Exists(_experimentFolderPath + "\\powerramp\\" + Path.GetFileName(fval))) && File.Exists(fval))
+
+                            File.Copy(fval, _experimentFolderPath + "\\powerramp\\" + Path.GetFileName(fval));
+
+                        XmlNodeList powerramps2 = expDoc.SelectNodes("/ThorImageExperiment/PowerRegulator2");
+                        string fval2 = string.Empty;
+                        XmlManager.GetAttribute(powerramps2[0], expDoc, "path", ref fval2);
+
+                        if ((!File.Exists(_experimentFolderPath + "\\powerramp\\" + Path.GetFileName(fval2))) && File.Exists(fval2))
+
+                            File.Copy(fval2, _experimentFolderPath + "\\powerramp\\" + Path.GetFileName(fval2));
+
+                    }
+                    catch (Exception ex)
+                    {
+                        string str = ex.Message;
+                        ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + "RunSampleLSModule: Unable to save new experiment path.");
+                    }
+                    //overwrite the active experiment settings
+                    File.Copy(ActiveExperimentPath, _experimentXMLPath);
+
+                    //update the channel view for sequential capture
+                    MVMManager.Instance["ImageViewCaptureVM", "IsInSequentialMode"] = _isSequentialCapture;
+                    if (_isSequentialCapture)
+                    {
+                        if (_experimentXMLPath.Substring(_experimentXMLPath.Length - 4) == ".xml")
+                        {
+                            //Create a copy of the Experiment.xml file to modify the colors in the file. This way Experiment.xml stays unmodified.
+                            string colorExperiment = _experimentXMLPath.Substring(0, _experimentXMLPath.Length - 4) + "SequentialColorSettings.xml";
+                            if (false == File.Exists(colorExperiment))
+                            {
+                                File.Copy(_experimentXMLPath, colorExperiment);
+                            }
+                            MVMManager.Instance["ImageViewCaptureVM", "SequentialExperimentPath"] = colorExperiment;
+                        }
+                    }
+
+                    try
+                    {
+                        //Update the variables list LAST OUTPUT value
+                        const string PATH_LAST_OUTPUT = "LAST OUTPUT";
+                        string strVar = Application.Current.Resources["ApplicationSettingsFolder"].ToString() + "\\VariableList.xml";
+                        XmlDocument varDoc = new XmlDocument();
+                        varDoc.Load(strVar);
+                        XmlNodeList ndList = varDoc.SelectNodes("/VariableList/Path");
+
+                        foreach (XmlNode nd in ndList)
+                        {
+                            string str = nd.Attributes["name"].Value;
+                            if (str.Equals(PATH_LAST_OUTPUT))
+                            {
+                                nd.Attributes["value"].Value = _sbNewDir.ToString();
+                                break;
+                            }
+                        }
+                        varDoc.Save(strVar);
+                    }
+                    catch (Exception ex)
+                    {
+                        string str = ex.Message;
+                        //error loading/saving the variables list
+                        ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Unable to load/save variables list");
+                    }
+
+                    _tiffCompressionEnabled = GetTiffCompressionEnbaledSetting();
+
+                    //Copy bleach ROI and waveform:
+                    if ((int)CaptureModes.BLEACHING == CaptureMode)
+                    {
+                        //do preBleach arm and check:
+                        PreBleachCheck();
+                    }
+
+                    _runComplete = false;
+                    _experimentCompleteForProgressBar = false;
+
+                    // event trigerred to the view model to change the status of the Start and Stop button
+                    _startButtonStatus = false;
+                    _stopButtonStatus = true;
+                    UpdateButton(false);
+
+                    _statusMessageZUpdate = true;
+
+                    // event trigerred to the view model to change the status of the menu bar buttons
+                    UpdateMenuBarButton(false);
+
+                    // event trigerred to let the viewModel know that the experiment has started
+                    ExperimentStarted();
+
+                    //enable digital trigger at start, digital output view model will fetch for average
+                    //frame number from active.xml, make sure it happens when active and exp are the same copy.
+                    MVMManager.Instance["DigitalOutputSwitchesViewModel", "TriggerEnable"] = 1;
+
+                    _experimentStatus = "started";
+                    _startDateTime = DateTime.Now;
+                    _startUTC = DateTime.UtcNow;
+                    if (true == UpdateExperimentFile(_experimentXMLPath, false))
+                    {
+                        if (SetActiveExperiment(_experimentXMLPath) == 1)
+                        {
+                            //Check the sequential capture settings and set the channel appropiately
+                            SetCaptureSequence();
+                            //save experiment path to applicationSettings.xml
+                            SaveLastExperimentInfo(_experimentFolderPath);
+
+                            if (SetCustomParamsBinary(ref _rsParams) == 1)
+                            {
+                                if (TurnOffMonitorsDuringCapture)
+                                {
+                                    //turn off the monitors
+                                    SendMessage(0xffff, WM_SYSCOMMAND, SC_MONITORPOWER, 2);
+                                }
+
+                                // Set the Simulator Image Index to the first frame in the experiment folder
+                                SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_SIM_INDEX, (int)1);
+                                if (RunSampleLSExecute() == 1)
+                                {
+                                    StatusMessage = "Starting Experiment";
+                                    UpdateBitmapTimer(true);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        _startButtonStatus = true;
+                        _stopButtonStatus = false;
+                        UpdateButton(true);
+                        UpdateMenuBarButton(true);
                     }
                 }
-                else
-                {
-                    _startButtonStatus = true;
-                    _stopButtonStatus = false;
-                    UpdateButton(true);
-                    UpdateMenuBarButton(true);
-                }
+            }
+            catch (System.DllNotFoundException ex)
+            {
+                MessageBox.Show(ex.Message.ToString());
+                //RunSampleLSdll is missing
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message.ToString());
             }
         }
 
@@ -6137,6 +5778,7 @@
         {
             if (e.Cancelled)
             {
+                CancelAcquisition();
             }
             else if (e.Error != null)
             {
@@ -6148,12 +5790,10 @@
         private void UpdateActiveImage()
         {
             // updating the images in the image viewer synchronously
-            if ((true == _newImageAvailable) && (false == IsDisplayImageReady) && (_displayImage))
+            if ((true == _newImageAvailable) && (_displayImage))
             {
                 BuildColorImage();
-                IsDisplayImageReady = true;
                 _newImageAvailable = false;
-                //do not trigger view model for the bitmap. A timer will update the bitmap and read from the model changes
             }
         }
 
@@ -6226,6 +5866,7 @@
                     //update the stream frames if the fast z is enabled in Finite Stream mode(0):
                     if ((this.StreamStorageMode == 0) && (true == this.ZFastEnable))
                     {
+                        FlybackFrames = IsRemoteFocus ? 0 : FlybackFrames;
                         this.StreamFrames = (this.ZNumSteps + this.FlybackFrames) * this.StreamVolumes;
                     }
                     //update the saved stream frames in Stimulus Stream mode(1):
@@ -6274,7 +5915,7 @@
                 }
                 XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "storageMode", StreamStorageMode.ToString());
                 XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "zFastEnable", (Convert.ToInt32(ZFastEnable)).ToString());
-                XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "zFastMode", (Convert.ToInt32(FastZStaircase) + (int)ZPiezoAnalogMode.ANALOG_MODE_SINGLE_WAVEFORM).ToString());
+                XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "zFastMode", (Convert.ToInt32(FastZStaircase || IsRemoteFocus) + (int)ZPiezoAnalogMode.ANALOG_MODE_SINGLE_WAVEFORM).ToString());
                 XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "flybackFrames", FlybackFrames.ToString());
                 XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "flybackLines", FlybackLines.ToString());
                 XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "flybackTimeAdjustMS", FlybackTimeAdjustMS.ToString());
@@ -6301,8 +5942,10 @@
                         //use the existing z start/stop/step
                         //t frames is not known at setup.
                         //When the stop button is pressed the t frames will be updated
-
-                        _tFrames = _streamFrames / (_zNumSteps + FlybackFrames);
+                        if (0 != _zNumSteps + FlybackFrames)
+                        {
+                            _tFrames = _streamFrames / (_zNumSteps + FlybackFrames);
+                        }
                     }
                     else
                     {
@@ -6387,7 +6030,7 @@
                 }
 
                 //check if a Z stack is being captured
-                if (((0 == CaptureMode) && (1 == _zEnable)) || ((1 == CaptureMode) && (ZFastEnable)))
+                if (((int)CaptureModes.T_AND_Z == CaptureMode && 1 == _zEnable) || ((int)CaptureModes.STREAMING == CaptureMode && ZFastEnable))
                 {
                     XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "steps", _zNumSteps.ToString());
                 }
@@ -6465,7 +6108,38 @@
             {
                 XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "name", Environment.MachineName.ToString());
             }
+            bool remoteConnection = (bool)MVMManager.Instance["RemoteIPCControlViewModelBase", "RemoteConnection", (object)false];
 
+            bool isSaving = (bool)MVMManager.Instance["RemoteIPCControlViewModelBase", "IsSaving", (object)false];
+            nodeList = ExperimentDoc.SelectNodes("/ThorImageExperiment/ThorSyncDataPath");
+            if (remoteConnection)
+            {
+                string filePath = (string)MVMManager.Instance["RemoteIPCControlViewModelBase", "ThorSyncFilePath", (object)false];
+
+                if (filePath == "" || !isSaving)
+                {
+                    if (nodeList.Count != 0)
+                    {
+                        XmlNode removeNode = ExperimentDoc.SelectSingleNode("/ThorImageExperiment");
+                        removeNode.RemoveChild(nodeList[0]);
+                    }
+                }
+                else
+                {
+
+                    if (nodeList.Count == 0)
+                        XmlManager.CreateXmlNode(ExperimentDoc, "ThorSyncDataPath");
+                    XmlManager.SetAttribute(ExperimentDoc.SelectNodes("/ThorImageExperiment/ThorSyncDataPath")[0], ExperimentDoc, "path", filePath);
+                }
+            }
+            else
+            {
+                if (nodeList.Count != 0)
+                {
+                    XmlNode removeNode = ExperimentDoc.SelectSingleNode("/ThorImageExperiment");
+                    removeNode.RemoveChild(nodeList[0]);
+                }
+            }
             nodeList = ExperimentDoc.SelectNodes("/ThorImageExperiment/Software");
 
             if (nodeList.Count > 0)
@@ -6531,7 +6205,68 @@
             {
                 //SetAttribute(nodeList[0], ExperimentDoc, "onlyEnabledChannels", "1");
                 XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "onlyEnabledChannels", RawContainsEnabledOnly);
-            }//hello
+            }
+
+            nodeList = ExperimentDoc.SelectNodes("/ThorImageExperiment/RemoteFocus");
+
+            if (nodeList.Count <= 0)
+            {
+                XmlManager.CreateXmlNode(ExperimentDoc, "RemoteFocus");
+                ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/RemoteFocus");
+            }
+            if (nodeList.Count > 0)
+            {
+                //For streaming capture use the values from the Remotefocus panel. For Z&T use the values from the usual Z Stack panel
+                if ((int)CaptureModes.STREAMING == CaptureMode)
+                {
+                    double rfStepSize = (RemoteFocusStartPosition > RemoteFocusStopPosition) ? RemoteFocusStepSize * -1 : RemoteFocusStepSize;
+                    int steps = ZFastEnable ? _zNumSteps : 1;
+                    XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "steps", steps.ToString());
+                    XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "startPlane", RemoteFocusStartPosition.ToString());
+                    XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "stepSize", rfStepSize.ToString());
+
+                }
+                else if ((int)CaptureModes.T_AND_Z == CaptureMode)
+                {
+                    double stepSize = (_zStartPosition > _zStopPosition) ? _zStepSize * -1 : _zStepSize;
+                    int steps = (1 == _zEnable) ? _zNumSteps : 1;
+                    XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "steps", steps.ToString());
+                    XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "startPlane", (_zStartPosition * (double)Constants.UM_TO_MM).ToString());
+                    XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "stepSize", stepSize.ToString());
+                }
+
+                XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "IsRemoteFocus", Convert.ToInt32(IsRemoteFocus).ToString());
+                XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "captureMode", RemoteFocusCaptureMode.ToString());
+                XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "customSequenceEnabled", Convert.ToInt32(RemoteFocusCustomChecked).ToString());
+
+                if (IsRemoteFocus)
+                {
+                    if ((int)RemoteFocusCaptureModes.Custom == RemoteFocusCaptureMode && !RemoteFocusCustomChecked)
+                    {
+                        ObservableCollection<double> sortedPlanes = new ObservableCollection<double>(RemoteFocusCustomSelectedPlanes.OrderBy(n => n));
+                        if (sortedPlanes.Count > 0)
+                        {
+                            string planeSequence = sortedPlanes[0].ToString();
+                            for (int i = 1; i < RemoteFocusCustomSelectedPlanes.Count; i++)
+                            {
+                                planeSequence += ":";
+                                planeSequence += sortedPlanes[i].ToString();
+                            }
+                            XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "customSequence", planeSequence);
+                        }
+                    }
+                    else if (RemoteFocusCustomChecked && (int)RemoteFocusCaptureModes.Custom == RemoteFocusCaptureMode && ValidateRemoteFocusCustom(RemoteFocusCustomOrder))
+                    {
+                        XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "customSequence", RemoteFocusCustomOrder.ToString());
+                    }
+                    else
+                    {
+                        XmlManager.SetAttribute(nodeList[0], ExperimentDoc, "customSequence", string.Empty);
+                    }
+
+                    CreateRemoteFocusPositionValuesTextFile();
+                }
+            }
 
             //If the Capture Sequence Steps > 1 and updateCaptureSequence is set to true
             //update the settings file to have all the wavelengths, channels set
@@ -6541,20 +6276,39 @@
                 if (0 < _sequenceStepsNum)
                 {
                     XmlNodeList sequenceStepNdList = ExperimentDoc.SelectNodes("/ThorImageExperiment/CaptureSequence/LightPathSequenceStep");
-                    long totalChan = 0;
+                    long totalChan = 0, camTotalChan = 0, val = 0;
                     List<string> wavelengthNameList = new List<string>();
                     List<int> wavelengthExpTimeList = new List<int>();
                     string nyquistExWavelengthNM = string.Empty;
                     string nyquistEmWavelengthNM = string.Empty;
+                    string str = string.Empty;
                     for (int i = 0; i < sequenceStepNdList.Count; i++)
                     {
-                        XmlNodeList lsmNdList = sequenceStepNdList[i].SelectNodes("LSM");
-                        if (sequenceStepNdList.Count <= 0) return false;
-                        string str = string.Empty;
-                        if (XmlManager.GetAttribute(lsmNdList[0], ExperimentDoc, "channel", ref str))
+                        //If camera is LSM use the LSM tag to read the channel number
+                        if (ResourceManagerCS.GetCameraType() == (int)ICamera.CameraType.LSM)
                         {
-                            int val = 0;
-                            if (int.TryParse(str, out val)) totalChan += val;
+                            XmlNodeList lsmNdList = sequenceStepNdList[i].SelectNodes("LSM");
+                            if (lsmNdList.Count <= 0) return false;
+                            if (XmlManager.GetAttribute(lsmNdList[0], ExperimentDoc, "channel", ref str))
+                            {
+                                if (long.TryParse(str, out val)) totalChan |= val;
+                            }
+                        }
+                        else
+                        {
+                            //If the imaging camera is a CCD or CMOS, we need to read the camera tag. If there is not camera tag it should set the channel number to 1
+                            XmlNodeList camNdList = sequenceStepNdList[i].SelectNodes("Camera");
+                            if (camNdList.Count > 0)
+                            {
+                                if (XmlManager.GetAttribute(camNdList[0], expDoc, "channel", ref str) && long.TryParse(str, out val))
+                                {
+                                    camTotalChan |= val;
+                                }
+                            }
+                            else
+                            {
+                                camTotalChan |= 1;
+                            }
                         }
 
                         XmlNodeList wavelengthsNdList = sequenceStepNdList[i].SelectNodes("Wavelengths");
@@ -6564,9 +6318,9 @@
                             XmlManager.GetAttribute(wavelengthNdList[j], ExperimentDoc, "name", ref str);
                             wavelengthNameList.Add(str);
                             XmlManager.GetAttribute(wavelengthNdList[j], ExperimentDoc, "exposureTimeMS", ref str);
-                            int val = 0;
-                            int.TryParse(str, out val);
-                            wavelengthExpTimeList.Add(val);
+                            int iVal = 0;
+                            int.TryParse(str, out iVal);
+                            wavelengthExpTimeList.Add(iVal);
                         }
                         XmlManager.GetAttribute(wavelengthNdList[wavelengthNdList.Count - 1], ExperimentDoc, "nyquistExWavelengthNM", ref str);
                         nyquistExWavelengthNM = str;
@@ -6578,6 +6332,12 @@
                     if (0 < ndList.Count)
                     {
                         XmlManager.SetAttribute(ndList[0], ExperimentDoc, "channel", totalChan.ToString());
+                    }
+
+                    ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/Camera");
+                    if (0 < ndList.Count)
+                    {
+                        XmlManager.SetAttribute(ndList[0], ExperimentDoc, "channel", camTotalChan.ToString());
                     }
 
                     ndList = this.ExperimentDoc.SelectNodes("/ThorImageExperiment/Wavelengths");
@@ -6595,17 +6355,13 @@
                         SortedDictionary<string, int> wavelengthsExposureTime = new SortedDictionary<string, int>();
                         for (int i = 0; i < wavelengthNameList.Count; i++)
                         {
-                            wavelengthsExposureTime.Add(wavelengthNameList[i], wavelengthExpTimeList[i]);
-                        }
-
-                        foreach (KeyValuePair<string, int> wavelengthExposureTime in wavelengthsExposureTime)
-                        {
-                            XmlElement newElement = CreateWavelengthTag(wavelengthExposureTime.Key, wavelengthExposureTime.Value);
+                            XmlElement newElement = CreateWavelengthTag(wavelengthNameList[i], wavelengthExpTimeList[i]);
                             ndList[0].AppendChild(newElement);
                         }
+
                         XmlElement newElement2 = this.ExperimentDoc.CreateElement("ChannelEnable");
                         XmlAttribute ChanAttribute = this.ExperimentDoc.CreateAttribute("Set");
-                        ChanAttribute.Value = totalChan.ToString();
+                        ChanAttribute.Value = (ResourceManagerCS.GetCameraType() == (int)ICamera.CameraType.LSM) ? totalChan.ToString() : camTotalChan.ToString();
                         newElement2.Attributes.Append(ChanAttribute);
                         ndList[0].AppendChild(newElement2);
                     }
@@ -6674,31 +6430,32 @@
         // normal images without tiles are regarded as images with tile of 1, whose width and height equals image width and height
         private void updateTiledBitmap(WriteableBitmap bm, byte[] data, int width, int height, int tileWidth, int tileHeight)
         {
-            // Define parameters used to create the BitmapSource.
-            int rawStride = (tileWidth * _bitmap.Format.BitsPerPixel + 7) / 8;
-            int tileSize = tileWidth * tileHeight * 3;
-            int tileIndex = 0;
+            //TODO:IV
+            //// Define parameters used to create the BitmapSource.
+            //int rawStride = (tileWidth * _bitmap.Format.BitsPerPixel + 7) / 8;
+            //int tileSize = tileWidth * tileHeight * 3;
+            //int tileIndex = 0;
 
-            try
-            {
-                if (data.Length == width * height * 3)
-                {
-                    for (int y = 0; y < height; y += tileHeight)
-                    {
-                        for (int x = 0; x < width; x += tileWidth)
-                        {
-                            int offset = tileIndex * tileSize;
-                            //ArraySegment<byte> tileData = new ArraySegment<byte>(data, offset, tileSize);
-                            bm.WritePixels(new Int32Rect(x, y, tileWidth, tileHeight), data, rawStride, offset);
-                            tileIndex++;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                string errMsg = ex.Message;
-            }
+            //try
+            //{
+            //    if (data.Length == width * height * 3)
+            //    {
+            //        for (int y = 0; y < height; y += tileHeight)
+            //        {
+            //            for (int x = 0; x < width; x += tileWidth)
+            //            {
+            //                int offset = tileIndex * tileSize;
+            //                //ArraySegment<byte> tileData = new ArraySegment<byte>(data, offset, tileSize);
+            //                bm.WritePixels(new Int32Rect(x, y, tileWidth, tileHeight), data, rawStride, offset);
+            //                tileIndex++;
+            //            }
+            //        }
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    string errMsg = ex.Message;
+            //}
         }
 
         #endregion Methods

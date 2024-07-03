@@ -293,7 +293,10 @@
             Dictionary<string, bool> isVisibleDictionary = new Dictionary<string, bool>();
             for (int i = 0; i < BinSeries?.Count; ++i)
             {
-                isVisibleDictionary.Add(BinSeries[i].DataSeries.SeriesName, BinSeries[i].IsVisible);
+                if (false == isVisibleDictionary.ContainsKey(BinSeries[i].DataSeries.SeriesName))
+                {
+                    isVisibleDictionary.Add(BinSeries[i].DataSeries.SeriesName, BinSeries[i].IsVisible);
+                }
             }
 
             foreach (var b in _binHistogramSeries)

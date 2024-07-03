@@ -2066,7 +2066,12 @@
 								   Content="[um/pixel]:" />
                             <Label Foreground="White"
 								   Content="{Binding Source={StaticResource expData},
-													 XPath=ThorImageExperiment/LSM/@pixelSizeUM}" />
+													 XPath=ThorImageExperiment/LSM/@pixelWidthUM}" />
+                            <Label Foreground="White"
+								   Content="x" />
+                            <Label Foreground="White"
+								   Content="{Binding Source={StaticResource expData},
+													 XPath=ThorImageExperiment/LSM/@pixelHeightUM}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal"
 								    Margin="1">
@@ -2502,7 +2507,7 @@
 								 SelectionMode="Single">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <UserControl Content="{Binding Path=LightPathSequenceStepPreview}"
+                                    <UserControl Content="{Binding Path=SequenceStepPreview}"
 											     Margin="1"
 											     HorizontalAlignment="Center">
                                     </UserControl>

@@ -27,6 +27,8 @@ public:
 	virtual long CallSaveTImage(long index);
 	virtual long CallSequenceStepCurrent(long index);
 
+	virtual long ZStreamExecute(long index, long subWell, ICamera* pCamera, long zstageSteps, long timePoints, long undefinedVar);
+
 	static HANDLE hEvent;
 	static HANDLE hEventFilter[3];
 	static HANDLE hEventShutter;

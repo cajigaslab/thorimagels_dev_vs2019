@@ -55,7 +55,7 @@
                 <TextBox Name="HostName"
                          Height="24"
                          Width="180"
-                         Text="{Binding Path=RemotePCHostName}">
+                         Text="{Binding Path=RemotePCHostName, UpdateSourceTrigger=PropertyChanged}">
                 </TextBox>
                 <Button Width="30"
                         Content="&#x2713;">
@@ -103,7 +103,7 @@
                 </Button>
             </StackPanel>
             <!-- below collapsed will be in effect for future multiple network connections... -->
-            <!--<StackPanel Orientation="Horizontal"
+            <StackPanel Orientation="Horizontal"
                         Visibility="Collapsed">
                 <Label Content="Quick Selection"
                        Width="140"
@@ -203,7 +203,7 @@
                                  BorderThickness="0.8"
                                  PreviewMouseDown="RemotePCHostName_PreviewMouseDown"/>
                 </ListBox>
-            </StackPanel>-->
+            </StackPanel>
             <StackPanel Orientation="Horizontal"
                         Margin="0,3,0,0"
                         Background="#FF4B4B4B">
@@ -240,8 +240,8 @@
                        Width="140"
                        HorizontalContentAlignment="Left"/>
                 <ListBox Name="IDModeListBox"
-                         SelectedIndex="{Binding Path=IDMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                    <!--SelectionChanged="IDMode_SelectionChanged">-->
+                         SelectedIndex="{Binding Path=IDMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                         SelectionChanged="IDMode_SelectionChanged">
                     <ListBox.Resources>
                         <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}">#FF595959</SolidColorBrush>
                         <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}">LimeGreen</SolidColorBrush>

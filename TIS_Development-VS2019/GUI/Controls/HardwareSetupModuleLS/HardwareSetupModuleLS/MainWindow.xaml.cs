@@ -21,6 +21,7 @@
         #region Fields
 
         private HardwareSetupViewModel viewModel;
+        private HardwareSetupModuleLS hsModuleLS;
 
         #endregion Fields
 
@@ -50,6 +51,8 @@
 
             this.DataContext = HardwareSetupModuleLS;
 
+            this.hsModuleLS = HardwareSetupModuleLS;
+
             ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Initialized");
         }
 
@@ -63,6 +66,12 @@
             Close();
         }
 
+        private void Exit_Click(object sender, EventArgs e)
+        {
+            hsModuleLS.RefereshCaptureSetup();
+        }
+
         #endregion Methods
+
     }
 }

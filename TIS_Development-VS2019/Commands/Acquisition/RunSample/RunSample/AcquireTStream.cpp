@@ -14,10 +14,9 @@ extern vector<ScanRegion> activeScanAreas;
 extern long viewMode;
 
 void GetLookUpTables(unsigned short * rlut, unsigned short * glut, unsigned short *blut,long red, long green, long blue, long bp, long wp, long bitdepth);
-long SaveTIFFWithoutOME(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height, unsigned short * rlut, unsigned short * glut,unsigned short * blut, double umPerPixel,int nc, int nt, int nz, double timeIncrement, int c, int t, int z,string *acquiredDate, double dt, long doCompression);
-long SaveTIFF(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height, unsigned short * rlut, unsigned short * glut,unsigned short * blut, double umPerPixel,int nc, int nt, int nz, double timeIncrement, int c, int t, int z,string *acquiredDate, double dt, string * omeTiffData, PhysicalSize physicaSize, long doCompression);
-long SaveTiledTiff(wchar_t *filePathAndName, char *pMemoryBuffer, long bufferSizeBytes, long imageWidth, long imageHeight, long tileWidth, long tileHeight, long totalChannels, long channelIndex, double umPerPixel, string imageDescription, bool compress=true);
-string CreateOMEMetadata(int width, int height,int nc, int nt, int nz, double timeIncrement, int c, int t, int z,string * acquiredDateTime, double deltaT, string * omeTiffData, PhysicalSize physicalSize);
+long SaveTIFF(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height, unsigned short * rlut, unsigned short * glut,unsigned short * blut, double umPerPixel,int nc, int nt, int nz, double timeIncrement, int c, int t, int z,string *acquiredDate, double dt, string * omeTiffDataOrNull, PhysicalSize physicalSize, long doCompression, bool isMultiChannel);
+string CreateOMEMetadata(int width, int height, int nc, int nt, int nz, double timeIncrement, int c, int t, int z, string* acquiredDateTime, double deltaT, string* omeTiffData, PhysicalSize physicalSize);
+long SaveTiledTiff(wchar_t *filePathAndName, char *pMemoryBuffer, long bufferSizeBytes, long imageWidth, long imageHeight, long tileWidth, long tileHeight, long bufferChannels, long writeChannels, long channelIndex, double umPerPixel, string imageDescription, bool compress=true, bool isMultiChannel = false);
 string ConvertWStringToString(wstring ws);
 long SetDeviceParameterValue(IDevice *pDevice,long paramID, double val,long bWait,HANDLE hEvent,long waitTime);
 static CRITICAL_SECTION saveAccess;
@@ -28,6 +27,7 @@ bool threadRawFileContainsDisabledChannels = false;
 //depending on the dflim type capture we will do a regular
 //intensity capture image extraction (0), or a dflim image extraction (1)
 long imageMethod = 0;
+static std::wstring allowedExtensions[] = { L".tmp",L".raw",L".tif", L".jpg", L".png"}; //List of allowed extensions to use for checking if file paths are valid
 
 AcquireTStream::AcquireTStream(IExperiment *exp,wstring path)
 {
@@ -326,16 +326,44 @@ long AcquireTStream::SetupZStage(int setupMode, ICamera* pCamera, ZRangeInfo* zR
 	double cameraType, lsmType, lsmFlybackLines, areaAngle, dwellTime, crsFrequencyHz = 0;
 	long threePhotonEnable = FALSE;
 	long numberOfPlanes = 1;
+	long selectedImagingGG = 0;
+	long selectedStimGG = 0;
+	double pixelAspectRatioYScale = 1;
+
 	long selectedPlane = 0;
+
 	long displayCumulativeAveragePreview = FALSE;
+
+	long rfSteps, rfStartPlane, rfStepSize, rfCaptureMode, rfIsRemoteFocus;
+	double zStageType;
+	string rfCustomSequence;
 
 	switch (setupMode)
 	{
-		case 0:
-		{
-			//get fast z params
-			_pExp->GetStreaming(streamEnable, streamFramesRead, rawData, triggerMode, displayImage, storageMode, zFastEnableGUI, zFastMode, flybackFrames, flybackLines, flybackTimeAdjustMS, volumeTimeAdjustMS, stepTimeAdjustMS, previewIndex, stimulusTriggering, dmaFrames, stimulusMaxFrames, useReferenceVoltageForFastZPockels, displayCumulativeAveragePreview);
+	case 0:
+	{
+		//get fast z params
+		_pExp->GetStreaming(streamEnable, streamFramesRead, rawData, triggerMode, displayImage, storageMode, zFastEnableGUI, zFastMode, flybackFrames, flybackLines, flybackTimeAdjustMS, volumeTimeAdjustMS, stepTimeAdjustMS, previewIndex, stimulusTriggering, dmaFrames, stimulusMaxFrames, useReferenceVoltageForFastZPockels, displayCumulativeAveragePreview);
 
+		pZStage->GetParam(IDevice::PARAM_Z_STAGE_TYPE, zStageType);
+		if (ZStageType::REMOTE_FOCUS == zStageType)
+		{
+			zFastMode = ZPiezoAnalogMode::ANALOG_MODE_STAIRCASE_WAVEFORM; // always make the analog mode stair case for Remote Focus
+			_pExp->GetRemoteFocus(rfSteps, rfStartPlane, rfStepSize, rfCaptureMode, rfCustomSequence, rfIsRemoteFocus);
+			zStartPos = rfStartPlane;
+			zstageSteps = rfSteps;
+			zStopPos = static_cast<double>(rfStartPlane) + rfStepSize * (rfSteps - 1);
+
+			if (zRange)
+			{
+				zRange->zFramesPerVolume = rfSteps;
+				zRange->zStartPosUM = rfStartPlane;
+				zRange->zStopPosUM = zStopPos;
+				zRange->zStepSizeUM = rfStepSize;
+			}
+		}
+		else
+		{
 			//get z positions
 			GetZPositions(_pExp, pZStage, zStartPos, zStopPos, zTiltPos, zStepSizeMM, zstageSteps, zStreamFrames, zStreamMode);
 			if (zRange)
@@ -345,109 +373,155 @@ long AcquireTStream::SetupZStage(int setupMode, ICamera* pCamera, ZRangeInfo* zR
 				zRange->zStopPosUM = zStopPos * Constants::UM_TO_MM;
 				zRange->zStepSizeUM = zStepSizeMM * Constants::UM_TO_MM;
 			}
+		}
 
-			//set z stage range
-			if ((TRUE == pZStage->GetParam(IDevice::PARAM_Z_FAST_START_POS, z_max)) && (FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_START_POS, zStartPos)))
+		//set z stage range
+		if ((TRUE == pZStage->GetParam(IDevice::PARAM_Z_FAST_START_POS, z_max)) && (FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_START_POS, zStartPos)))
+		{
+			//MessageBox(NULL,L"Invalid Z start position.",L"Z Stage Error",MB_OK | MB_SETFOREGROUND | MB_ICONERROR);	
+			//return FALSE;
+		}
+
+		long powerRampMode = ICamera::PowerRampMode::POWER_RAMP_MODE_CONTINUOUS;
+		pZStage->SetParam(IDevice::PARAM_Z_ANALOG_MODE, zFastMode);
+		switch (static_cast<ZPiezoAnalogMode>(zFastMode))
+		{
+		case ZPiezoAnalogMode::ANALOG_MODE_SINGLE_WAVEFORM:
+			break;
+		case ZPiezoAnalogMode::ANALOG_MODE_STAIRCASE_WAVEFORM:
+			//allow change flyback cycles in camera if in z staircase mode
+			if (FALSE == pCamera->SetParam(ICamera::Params::PARAM_LSM_MINIMIZE_FLYBACK_CYCLES, 0))
 			{
-				//MessageBox(NULL,L"Invalid Z start position.",L"Z Stage Error",MB_OK | MB_SETFOREGROUND | MB_ICONERROR);	
-				//return FALSE;
+				StringCbPrintfW(message, MSG_LENGTH, L"RunSample Execute Minimize Flyback Cycles not implemented for camera");
+				logDll->TLTraceEvent(ERROR_EVENT, 1, message);
 			}
-
-			long powerRampMode = ICamera::PowerRampMode::POWER_RAMP_MODE_CONTINUOUS;
-			pZStage->SetParam(IDevice::PARAM_Z_ANALOG_MODE, zFastMode);
-			switch (static_cast<ZPiezoAnalogMode>(zFastMode))
+			if (FALSE == pCamera->SetParam(ICamera::Params::PARAM_LSM_FLYBACK_CYCLE, flybackLines))
 			{
-				case ZPiezoAnalogMode::ANALOG_MODE_SINGLE_WAVEFORM:
-					break;
-				case ZPiezoAnalogMode::ANALOG_MODE_STAIRCASE_WAVEFORM:
-					//allow change flyback cycles in camera if in z staircase mode
-					if (FALSE == pCamera->SetParam(ICamera::Params::PARAM_LSM_MINIMIZE_FLYBACK_CYCLES, 0))
-					{
-						StringCbPrintfW(message, MSG_LENGTH, L"RunSample Execute Minimize Flyback Cycles not implemented for camera");
-						logDll->TLTraceEvent(ERROR_EVENT, 1, message);
-					}
-					if (FALSE == pCamera->SetParam(ICamera::Params::PARAM_LSM_FLYBACK_CYCLE, flybackLines))
-					{
-						StringCbPrintfW(message, MSG_LENGTH, L"RunSample Execute Flyback Cycle not implemented for camera");
-						logDll->TLTraceEvent(ERROR_EVENT, 1, message);
-					}
-					powerRampMode = ICamera::PowerRampMode::POWER_RAMP_MODE_STAIRCASE;
-					break;
+				StringCbPrintfW(message, MSG_LENGTH, L"RunSample Execute Flyback Cycle not implemented for camera");
+				logDll->TLTraceEvent(ERROR_EVENT, 1, message);
 			}
+			powerRampMode = ICamera::PowerRampMode::POWER_RAMP_MODE_STAIRCASE;
+			break;
+		}
 
-			//set z stage positions for staircase mode, allow future random z positions
-			//min steps of 2 for ramping reference voltage
-			zstageSteps = (1 >= zstageSteps) ? 2 : zstageSteps;
-			zPosBuffer = new double[zstageSteps];
+		//set z stage positions for staircase mode, allow future random z positions
+		//min steps of 2 for ramping reference voltage
+		zstageSteps = (1 >= zstageSteps) ? 2 : zstageSteps;
+		zPosBuffer = new double[zstageSteps];
+		if (ZStageType::REMOTE_FOCUS == zStageType)
+		{
+			if (rfCaptureMode == RemoteFocusCaptureModes::Custom)
+			{
+				long paramType, paramAvailable, paramReadOnly;
+				double paramMin, paramMax, paramDefault;
+				pZStage->GetParamInfo(IDevice::PARAM_Z_POS, paramType, paramAvailable, paramReadOnly, paramMin, paramMax, paramDefault);
+				//Initialize the buffer to the first plane
+				for (long z = 0; z < zstageSteps; z++)
+				{
+					zPosBuffer[z] = 1;
+				}
+				std::stringstream ss(rfCustomSequence);
+				std::string token;
+				int i = 0;
+				while (std::getline(ss, token, ':')) {
+					int value = std::stoi(token);
+					if (i < zstageSteps)
+					{
+						if (value >= paramMin && value <= paramMax) //Verify the values are within the Min and Max planes
+						{
+							zPosBuffer[i] = value;
+						}
+						else
+						{
+							StringCbPrintfW(message, MSG_LENGTH, L"RunSample AcquireTStream: one of the values from the custom sequence is out of bounds. Index: %d, Value: %d", i, value);
+							logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+						}
+						i++;
+					}
+				}
+			}
+			else
+			{
+				for (long z = 0; z < zstageSteps; z++)
+				{
+					zPosBuffer[z] = static_cast<double>(rfStartPlane) + z * rfStepSize;
+				}
+			}
+		}
+		else
+		{
 			for (long z = 0; z < zstageSteps; z++) //looping through all Z positions
 			{
 				zPosBuffer[z] = zStartPos + z * zStepSizeMM;
 			}
-			pZStage->SetParamBuffer(IDevice::PARAM_Z_FAST_STEP_BUFFER, (char*)zPosBuffer, zstageSteps);
-			long typePower, blankPercent;
-			double startPower, stopPower;
-			string pathPower;
-			_pExp->GetPockels(0, typePower, startPower, stopPower, pathPower, blankPercent);
-			//Only user reference voltage if pockels power type is custom power ramp
-			const long EXPONENTIAL_POWER_RAMP = 1;
-			if (EXPONENTIAL_POWER_RAMP == typePower)
-			{
-				//pass pockels response type from camera to zStage
-				double pockelsResType = 0.0;
-				if (TRUE == pCamera->GetParam(ICamera::PARAM_LSM_POCKELS_RESPONSE_TYPE_0, pockelsResType))
-				{
-					pZStage->SetParam(IDevice::PARAM_Z_OUTPUT_POCKELS_RESPONSE_TYPE, pockelsResType);
-				}
-				//set power ramp buffer
-				double* zPowerBuffer = new double[zstageSteps];
-				for (long z = 0; z < zstageSteps; z++) //looping through all Z positions
-				{
-					zPowerBuffer[z] = GetCustomPowerValue(zStartPos, zStopPos, zPosBuffer[z], pathPower);
-				}
-
-				long paramType, powerRampAvailable, paramReadOnly;
-				double paramMax, paramMin, paramDefault;
-				//if power ramp is available in the camera then allow the camera to control the pockels power ramp
-				if (TRUE == pCamera->GetParamInfo(ICamera::PARAM_LSM_POWER_RAMP_ENABLE, paramType, powerRampAvailable, paramReadOnly, paramMin, paramMax, paramDefault))
-				{
-					if (TRUE == powerRampAvailable)
-					{
-						pCamera->SetParam(ICamera::PARAM_LSM_POWER_RAMP_ENABLE, TRUE);
-						pCamera->SetParam(ICamera::PARAM_LSM_POWER_RAMP_NUM_FRAMES, zstageSteps);
-						pCamera->SetParam(ICamera::PARAM_LSM_POWER_RAMP_NUM_FLYBACK_FRAMES, flybackFrames);
-						pCamera->SetParam(ICamera::PARAM_LSM_POWER_RAMP_MODE, powerRampMode);
-						pCamera->SetParamBuffer(ICamera::PARAM_LSM_POWER_RAMP_PERCENTAGE_BUFFER, (char*)zPowerBuffer, zstageSteps);
-					}
-				}
-
-				if (FALSE == powerRampAvailable && TRUE == useReferenceVoltageForFastZPockels)
-				{
-					pZStage->SetParam(IDevice::PARAM_Z_OUTPUT_POCKELS_REFERENCE, useReferenceVoltageForFastZPockels);
-
-					pZStage->SetParamBuffer(IDevice::PARAM_POWER_RAMP_BUFFER, (char*)zPowerBuffer, zstageSteps);
-
-					double pockelsMin = 0.0;
-					if (TRUE == pCamera->GetParam(ICamera::PARAM_LSM_POCKELS_MIN_VOLTAGE_0, pockelsMin))
-					{
-						pZStage->SetParam(IDevice::PARAM_Z_POCKELS_MIN, pockelsMin);
-					}
-				}
-
-				delete[] zPowerBuffer;
-			}
-			else
-			{
-				pZStage->SetParam(IDevice::PARAM_Z_OUTPUT_POCKELS_REFERENCE, FALSE);
-			}
-
-			delete[] zPosBuffer;
 		}
-		break;
-		case 1:
-			//get fast z params
-			_pExp->GetStreaming(streamEnable, streamFramesRead, rawData, triggerMode, displayImage, storageMode, zFastEnableGUI, zFastMode, flybackFrames, flybackLines, flybackTimeAdjustMS, volumeTimeAdjustMS, stepTimeAdjustMS, previewIndex, stimulusTriggering, dmaFrames, stimulusMaxFrames, useReferenceVoltageForFastZPockels, displayCumulativeAveragePreview);
-			//get z positions
-			GetZPositions(_pExp, pZStage, zStartPos, zStopPos, zTiltPos, zStepSizeMM, zstageSteps, zStreamFrames, zStreamMode);
+		pZStage->SetParamBuffer(IDevice::PARAM_Z_FAST_STEP_BUFFER, (char*)zPosBuffer, zstageSteps);
+
+		long typePower, blankPercent;
+		double startPower, stopPower;
+		string pathPower;
+		_pExp->GetPockels(0, typePower, startPower, stopPower, pathPower, blankPercent);
+		//Only user reference voltage if pockels power type is custom power ramp
+		const long EXPONENTIAL_POWER_RAMP = 1;
+		if (EXPONENTIAL_POWER_RAMP == typePower)
+		{
+			//pass pockels response type from camera to zStage
+			double pockelsResType = 0.0;
+			if (TRUE == pCamera->GetParam(ICamera::PARAM_LSM_POCKELS_RESPONSE_TYPE_0, pockelsResType))
+			{
+				pZStage->SetParam(IDevice::PARAM_Z_OUTPUT_POCKELS_RESPONSE_TYPE, pockelsResType);
+			}
+			//set power ramp buffer
+			double* zPowerBuffer = new double[zstageSteps];
+			for (long z = 0; z < zstageSteps; z++) //looping through all Z positions
+			{
+				zPowerBuffer[z] = GetCustomPowerValue(zStartPos, zStopPos, zPosBuffer[z], pathPower);
+			}
+
+			long paramType, powerRampAvailable, paramReadOnly;
+			double paramMax, paramMin, paramDefault;
+			//if power ramp is available in the camera then allow the camera to control the pockels power ramp
+			if (TRUE == pCamera->GetParamInfo(ICamera::PARAM_LSM_POWER_RAMP_ENABLE, paramType, powerRampAvailable, paramReadOnly, paramMin, paramMax, paramDefault))
+			{
+				if (TRUE == powerRampAvailable)
+				{
+					pCamera->SetParam(ICamera::PARAM_LSM_POWER_RAMP_ENABLE, TRUE);
+					pCamera->SetParam(ICamera::PARAM_LSM_POWER_RAMP_NUM_FRAMES, zstageSteps);
+					pCamera->SetParam(ICamera::PARAM_LSM_POWER_RAMP_NUM_FLYBACK_FRAMES, flybackFrames);
+					pCamera->SetParam(ICamera::PARAM_LSM_POWER_RAMP_MODE, powerRampMode);
+					pCamera->SetParamBuffer(ICamera::PARAM_LSM_POWER_RAMP_PERCENTAGE_BUFFER, (char*)zPowerBuffer, zstageSteps);
+				}
+			}
+
+			if (FALSE == powerRampAvailable && TRUE == useReferenceVoltageForFastZPockels)
+			{
+				pZStage->SetParam(IDevice::PARAM_Z_OUTPUT_POCKELS_REFERENCE, useReferenceVoltageForFastZPockels);
+
+				pZStage->SetParamBuffer(IDevice::PARAM_POWER_RAMP_BUFFER, (char*)zPowerBuffer, zstageSteps);
+
+				double pockelsMin = 0.0;
+				if (TRUE == pCamera->GetParam(ICamera::PARAM_LSM_POCKELS_MIN_VOLTAGE_0, pockelsMin))
+				{
+					pZStage->SetParam(IDevice::PARAM_Z_POCKELS_MIN, pockelsMin);
+				}
+			}
+
+			delete[] zPowerBuffer;
+		}
+		else
+		{
+			pZStage->SetParam(IDevice::PARAM_Z_OUTPUT_POCKELS_REFERENCE, FALSE);
+		}
+
+		delete[] zPosBuffer;
+	}
+	break;
+	case 1:
+	{
+		//get fast z params
+		_pExp->GetStreaming(streamEnable, streamFramesRead, rawData, triggerMode, displayImage, storageMode, zFastEnableGUI, zFastMode, flybackFrames, flybackLines, flybackTimeAdjustMS, volumeTimeAdjustMS, stepTimeAdjustMS, previewIndex, stimulusTriggering, dmaFrames, stimulusMaxFrames, useReferenceVoltageForFastZPockels, displayCumulativeAveragePreview);
+		//get z positions
+		GetZPositions(_pExp, pZStage, zStartPos, zStopPos, zTiltPos, zStepSizeMM, zstageSteps, zStreamFrames, zStreamMode);
 
 			//set frame rate or others which is acurate only after preflight of camera
 			if (FALSE == pCamera->GetParam(ICamera::PARAM_FRAME_RATE, frameRate))
@@ -461,135 +535,136 @@ long AcquireTStream::SetupZStage(int setupMode, ICamera* pCamera, ZRangeInfo* zR
 				)
 			{
 				_pExp->GetLSM(areaMode, areaAngle, scanMode, interleave, pixelX, pixelY, chan, lsmFieldSize, offsetX, offsetY, averageMode, averageNum, clockSource, inputRange1, inputRange2,
-					twoWayAlignment, extClockRate, dwellTime, flybackCycles, inputRange3, inputRange4, minimizeFlybackCycles, polarity[0], polarity[1], polarity[2], polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timebasedLineScan, timebasedLineScanMS, threePhotonEnable, numberOfPlanes);
+					twoWayAlignment, extClockRate, dwellTime, flybackCycles, inputRange3, inputRange4, minimizeFlybackCycles, polarity[0], polarity[1], polarity[2], polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timebasedLineScan, timebasedLineScanMS, threePhotonEnable, numberOfPlanes, selectedImagingGG, selectedStimGG, pixelAspectRatioYScale);
 
-				//if its a timebased line scan then we want to get the pixel Y from the camera instead of assuming that it is what we set it as
-				if (timebasedLineScan)
-				{
-					pCamera->SetParam(ICamera::PARAM_LSM_TB_LINE_SCAN_TIME_MS, timebasedLineScanMS);
-					double lsmHeight;
-					pCamera->GetParam(ICamera::PARAM_LSM_PIXEL_Y, lsmHeight);
-					pixelY = static_cast<long>(lsmHeight);
-				}
-
-				if (pCamera->GetParam(ICamera::Params::PARAM_LSM_FLYBACK_CYCLE, lsmFlybackLines))
-				{
-					frameRate = (0 < crsFrequencyHz) ? (crsFrequencyHz / ((((long)ScanMode::TWO_WAY_SCAN == scanMode) ? (pixelY / 2) : pixelY) + lsmFlybackLines)) : frameRate;
-				}
+			//if its a timebased line scan then we want to get the pixel Y from the camera instead of assuming that it is what we set it as
+			if (timebasedLineScan)
+			{
+				pCamera->SetParam(ICamera::PARAM_LSM_TB_LINE_SCAN_TIME_MS, timebasedLineScanMS);
+				double lsmHeight;
+				pCamera->GetParam(ICamera::PARAM_LSM_PIXEL_Y, lsmHeight);
+				pixelY = static_cast<long>(lsmHeight);
 			}
-			StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream SetupZStage frame rate %d.%d", static_cast<long>(frameRate), static_cast<long>(1000 * (frameRate - static_cast<long>(frameRate))));
+
+			if (pCamera->GetParam(ICamera::Params::PARAM_LSM_FLYBACK_CYCLE, lsmFlybackLines))
+			{
+				frameRate = (0 < crsFrequencyHz) ? (crsFrequencyHz / ((((long)ScanMode::TWO_WAY_SCAN == scanMode) ? (pixelY / 2) : pixelY) + lsmFlybackLines)) : frameRate;
+			}
+		}
+		StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream SetupZStage frame rate %d.%d", static_cast<long>(frameRate), static_cast<long>(1000 * (frameRate - static_cast<long>(frameRate))));
+		logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
+
+		long paramType, paramAvailable, paramReadOnly, minZFrames, maxZFrames;
+		double paramMin, paramMax, paramDefault;
+		switch (static_cast<ZPiezoAnalogMode>(zFastMode))
+		{
+		case ZPiezoAnalogMode::ANALOG_MODE_SINGLE_WAVEFORM:
+		{
+			StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream SetupZStage volume frames %d flyback frames %d", zstageSteps, flybackFrames);
 			logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
 
-			long paramType, paramAvailable, paramReadOnly, minZFrames, maxZFrames;
-			double paramMin, paramMax, paramDefault;
-			switch (static_cast<ZPiezoAnalogMode>(zFastMode))
+			if (FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_VOLUME_TIME, zstageSteps / frameRate))
 			{
-				case ZPiezoAnalogMode::ANALOG_MODE_SINGLE_WAVEFORM:
+				pZStage->GetParamInfo(IDevice::PARAM_Z_FAST_VOLUME_TIME, paramType, paramAvailable, paramReadOnly, paramMin, paramMax, paramDefault);
+				if (FALSE == paramAvailable)
 				{
-					StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream SetupZStage volume frames %d flyback frames %d", zstageSteps, flybackFrames);
-					logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
-
-					if (FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_VOLUME_TIME, zstageSteps / frameRate))
-					{
-						pZStage->GetParamInfo(IDevice::PARAM_Z_FAST_VOLUME_TIME, paramType, paramAvailable, paramReadOnly, paramMin, paramMax, paramDefault);
-						if (FALSE == paramAvailable)
-						{
-							StringCbPrintfW(message, MSG_LENGTH, L"Invalid Z Stage.");
-						}
-						else
-						{
-							minZFrames = static_cast<long>(ceil(paramMin * frameRate));
-							maxZFrames = static_cast<long>(floor(paramMax * frameRate));
-							if (minZFrames > zstageSteps)
-							{
-								StringCbPrintfW(message, MSG_LENGTH, L"Invalid Number of Slices.\nAcceptable minimum under current configuraton: %d", minZFrames);
-							}
-							else if (maxZFrames < zstageSteps)
-							{
-								StringCbPrintfW(message, MSG_LENGTH, L"Invalid Number of Slices.\nAcceptable maximum under current configuraton: %d", maxZFrames);
-							}
-							else
-							{
-								StringCbPrintfW(message, MSG_LENGTH, L"Invalid Number of Slices.");
-							}
-						}
-						MessageBox(NULL, message, L"Capture Streaming FastZ Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
-						return FALSE;
-					}
-					//set volume time adjustment
-					pZStage->SetParam(IDevice::PARAM_Z_FAST_VOLUME_TIME_ADJUST_MS, volumeTimeAdjustMS);
-				}
-				break;
-				case ZPiezoAnalogMode::ANALOG_MODE_STAIRCASE_WAVEFORM:
-				{
-					if (FALSE == pCamera->GetParam(ICamera::Params::PARAM_LSM_FLYBACK_TIME, flybackTime))
-					{
-						StringCbPrintfW(message, MSG_LENGTH, L"RunSample Execute Flyback Time not implemented for camera");
-						logDll->TLTraceEvent(ERROR_EVENT, 1, message);
-					}
-					if (FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_INTRA_STEP_TIME, flybackTime))
-					{
-						StringCbPrintfW(message, MSG_LENGTH, L"RunSample Intra Step Time not implemented for z stage.");
-						logDll->TLTraceEvent(ERROR_EVENT, 1, message);
-					}
-					double frameTime = 1.0 / frameRate - flybackTime;
-					if (FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_STEP_TIME, frameTime))
-					{
-						StringCbPrintfW(message, MSG_LENGTH, L"Invalid Z Stage for Staircase mode.");
-						MessageBox(NULL, message, L"Capture Streaming FastZ Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
-						return FALSE;
-					}
-					//set frame time adjustment
-					pZStage->SetParam(IDevice::PARAM_Z_FAST_STEP_TIME_ADJUST_MS, stepTimeAdjustMS);
-				}
-				break;
-			}
-			//set fast z flyback time
-			if (FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_FLYBACK_TIME, flybackFrames / frameRate))
-			{
-				pZStage->GetParamInfo(IDevice::PARAM_Z_FAST_FLYBACK_TIME, paramType, paramAvailable, paramReadOnly, paramMin, paramMax, paramDefault);
-				pZStage->SetParamString(IDevice::PARAM_WAVEFORM_OUTPATH, (wchar_t*)GetDir(_pExp->GetPathAndName()).c_str());
-				minZFrames = static_cast<long>(ceil(paramMin * frameRate));
-				maxZFrames = static_cast<long>(floor(paramMax * frameRate));
-				if (minZFrames > flybackFrames)
-				{
-					StringCbPrintfW(message, MSG_LENGTH, L"Invalid Flyback Frames.\nAcceptable minimum under current configuraton: %d", minZFrames);
-				}
-				else if (maxZFrames < flybackFrames)
-				{
-					StringCbPrintfW(message, MSG_LENGTH, L"Invalid Flyback Frames.\nAcceptable maximum under current configuraton: %d", maxZFrames);
+					StringCbPrintfW(message, MSG_LENGTH, L"Invalid Z Stage.");
 				}
 				else
 				{
-					StringCbPrintfW(message, MSG_LENGTH, L"Invalid Flyback Frames.");
+					minZFrames = static_cast<long>(ceil(paramMin * frameRate));
+					maxZFrames = static_cast<long>(floor(paramMax * frameRate));
+					if (minZFrames > zstageSteps)
+					{
+						StringCbPrintfW(message, MSG_LENGTH, L"Invalid Number of Slices.\nAcceptable minimum under current configuraton: %d", minZFrames);
+					}
+					else if (maxZFrames < zstageSteps)
+					{
+						StringCbPrintfW(message, MSG_LENGTH, L"Invalid Number of Slices.\nAcceptable maximum under current configuraton: %d", maxZFrames);
+					}
+					else
+					{
+						StringCbPrintfW(message, MSG_LENGTH, L"Invalid Number of Slices.");
+					}
 				}
 				MessageBox(NULL, message, L"Capture Streaming FastZ Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
 				return FALSE;
 			}
-			pZStage->SetParam(IDevice::PARAM_Z_FAST_FLYBACK_TIME_ADJUST_MS, flybackTimeAdjustMS);
-			pZStage->PreflightPosition();
-			pZStage->SetupPosition();
-			if (FALSE == pZStage->StartPosition())
+			//set volume time adjustment
+			pZStage->SetParam(IDevice::PARAM_Z_FAST_VOLUME_TIME_ADJUST_MS, volumeTimeAdjustMS);
+		}
+		break;
+		case ZPiezoAnalogMode::ANALOG_MODE_STAIRCASE_WAVEFORM:
+		{
+			if (FALSE == pCamera->GetParam(ICamera::Params::PARAM_LSM_FLYBACK_TIME, flybackTime))
 			{
-				pZStage->GetLastErrorMsg(message, MSG_LENGTH);
+				StringCbPrintfW(message, MSG_LENGTH, L"RunSample Execute Flyback Time not implemented for camera");
+				logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+			}
+			if (FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_INTRA_STEP_TIME, flybackTime))
+			{
+				StringCbPrintfW(message, MSG_LENGTH, L"RunSample Intra Step Time not implemented for z stage.");
+				logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+			}
+			double frameTime = 1.0 / frameRate - flybackTime;
+			if (FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_STEP_TIME, frameTime))
+			{
+				StringCbPrintfW(message, MSG_LENGTH, L"Invalid Z Stage for Staircase mode.");
 				MessageBox(NULL, message, L"Capture Streaming FastZ Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
 				return FALSE;
 			}
+			//set frame time adjustment
+			pZStage->SetParam(IDevice::PARAM_Z_FAST_STEP_TIME_ADJUST_MS, stepTimeAdjustMS);
+		}
+		break;
+		}
 
-			StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream SetupZStage complete");
-			logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
+		//set fast z flyback time
+		if (FALSE == pZStage->SetParam(IDevice::PARAM_Z_FAST_FLYBACK_TIME, flybackFrames / frameRate))
+		{
+			pZStage->GetParamInfo(IDevice::PARAM_Z_FAST_FLYBACK_TIME, paramType, paramAvailable, paramReadOnly, paramMin, paramMax, paramDefault);
+			pZStage->SetParamString(IDevice::PARAM_WAVEFORM_OUTPATH, (wchar_t*)GetDir(_pExp->GetPathAndName()).c_str());
+			minZFrames = static_cast<long>(ceil(paramMin * frameRate));
+			maxZFrames = static_cast<long>(floor(paramMax * frameRate));
+			if (minZFrames > flybackFrames)
+			{
+				StringCbPrintfW(message, MSG_LENGTH, L"Invalid Flyback Frames.\nAcceptable minimum under current configuraton: %d", minZFrames);
+			}
+			else if (maxZFrames < flybackFrames)
+			{
+				StringCbPrintfW(message, MSG_LENGTH, L"Invalid Flyback Frames.\nAcceptable maximum under current configuraton: %d", maxZFrames);
+			}
+			else
+			{
+				StringCbPrintfW(message, MSG_LENGTH, L"Invalid Flyback Frames.");
+			}
+			MessageBox(NULL, message, L"Capture Streaming FastZ Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
+			return FALSE;
+		}
+		pZStage->SetParam(IDevice::PARAM_Z_FAST_FLYBACK_TIME_ADJUST_MS, flybackTimeAdjustMS);
+		pZStage->PreflightPosition();
+		pZStage->SetupPosition();
+		if (FALSE == pZStage->StartPosition())
+		{
+			pZStage->GetLastErrorMsg(message, MSG_LENGTH);
+			MessageBox(NULL, message, L"Capture Streaming FastZ Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
+			return FALSE;
+		}
 
-			break;
-		case 2:
-			//stop z stage:
-			pZStage->PostflightPosition();
-			pZStage->SetParam(IDevice::PARAM_Z_ANALOG_MODE, ZPiezoAnalogMode::ANALOG_MODE_SINGLE_POINT);
-			break;
+		StringCbPrintfW(message, MSG_LENGTH, L"AcquireTStream SetupZStage complete");
+		logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
+	}
+	break;
+	case 2:
+		//stop z stage:
+		pZStage->PostflightPosition();
+		pZStage->SetParam(IDevice::PARAM_Z_ANALOG_MODE, ZPiezoAnalogMode::ANALOG_MODE_SINGLE_POINT);
+		break;
 	}
 	return TRUE;
 }
 
-void AcquireTStream::SaveImagesPostCapture(long index, long subWell, long streamFrames, SaveParams *sp, bool rawContainsDisabledChannels, long subwell)
+void AcquireTStream::SaveImagesPostCapture(long index, long subWell, long streamFrames, SaveParams *sp, bool rawContainsDisabledChannels, long subwell, map<long, long> regionImageIDsMap)
 {
 	long captureMode;
 	_pExp->GetCaptureMode(captureMode);
@@ -605,13 +680,25 @@ void AcquireTStream::SaveImagesPostCapture(long index, long subWell, long stream
 		}
 		//#endif
 
-		HandleStimStreamRawFile(sp,RENAME_SINGLE_TIS, std::wstring(), std::wstring(), rawContainsDisabledChannels);
-
+		if (MesoScanTypes::Micro == viewMode)
+		{
+			for (map<long, ScanRegion>::iterator imageIt = sp->regionMap.begin(); imageIt != sp->regionMap.end(); imageIt++) //regionMap available for both meso and micro scans
+			{
+				HandleStimStreamRawFile(sp, RENAME_SINGLE_TIS, std::wstring(), std::wstring(), rawContainsDisabledChannels, regionImageIDsMap[imageIt->first], imageIt->second.RegionID);
+			}
+		}
+		else
+		{
+			HandleStimStreamRawFile(sp, RENAME_SINGLE_TIS, std::wstring(), std::wstring(), rawContainsDisabledChannels);
+		}
 		//clear the lists
 		_acquireSaveInfo->getInstance()->ClearTimingInfo();
 		_acquireSaveInfo->getInstance()->ClearTimestamps();
 
-
+		/*
+		* Was used in previous versions to ensure the progress bar showed the experiment was finished.
+		* No longer needed. Should remove entirely if future versions work without it
+		* 
 		//for loop is to update ui events. no logic consequence
 		for(long t=1;t<=streamFrames;t++)
 		{
@@ -638,7 +725,7 @@ void AcquireTStream::SaveImagesPostCapture(long index, long subWell, long stream
 				CallSaveImage(t, TRUE);
 			}
 		}
-
+		*/
 		if(sp->_pHeaderInfo != nullptr)
 		{
 			wchar_t hdrName[_MAX_FNAME];
@@ -702,7 +789,7 @@ void AcquireTStream::SaveImagesPostCapture(long index, long subWell, long stream
 	}
 }
 
-void AcquireTStream::SetupSaveParams(long index, long subWell, long streamFrames, double exposureTimeMS, long width, long height, long numberOfPlanes, double umPerPixel, long zFastEnableGUI, long zStageSteps, long zFlybackFrames,long bufferChannels, long lsmChannels, long storageMode, long hyperSpectralWavelengths, long rawData, long previewID, SaveParams* sp)
+void AcquireTStream::SetupSaveParams(long index, long subWell, long streamFrames, double exposureTimeMS, long width, long height, long numberOfPlanes, double umPerPixel, long zFastEnableGUI, long zStageSteps, long zFlybackFrames,long bufferChannels, long lsmChannels, long storageMode, long hyperSpectralWavelengths, long rawData, long previewID, bool isCombinedChannels, SaveParams* sp)
 {
 	ScanRegion sregionMap;
 	sregionMap.ScanID = 1;
@@ -745,7 +832,10 @@ void AcquireTStream::SetupSaveParams(long index, long subWell, long streamFrames
 	sp->imageMethod = imageMethod;
 	sp->photonsBufferTotalSize = 0;
 	sp->previewRegionID = previewID;
+	sp->isCombinedChannels = isCombinedChannels;
 
+	size_t largestSize = 0;
+	int largestIndex = 0;
 	//must have at least one region in regionMap either meso or micro view:
 	if (0 >= activeScanAreas.size())
 	{
@@ -753,13 +843,18 @@ void AcquireTStream::SetupSaveParams(long index, long subWell, long streamFrames
 		sp->bufferChannels.insert(make_pair(0, bufferChannels));
 	}
 	else
-	{
+	{ 
 		for (int i = 0; i < activeScanAreas.size(); i++)
 		{
 			//set Z & T locally instead of updating settings file due to no support on RGG's Z
 			activeScanAreas[i].SizeZ = (TRUE == zFastEnableGUI) ? zStageSteps : 1;
 			activeScanAreas[i].SizeT = streamFrames;
 			activeScanAreas[i].BufferSize = activeScanAreas[i].SizeX * activeScanAreas[i].SizeY * bufferChannels * sizeof(USHORT);
+			if (activeScanAreas[i].BufferSize > largestSize)
+			{
+				largestIndex = i;
+				largestSize = activeScanAreas[i].BufferSize;
+			}
 			sp->bufferChannels.insert(make_pair(activeScanAreas[i].RegionID, bufferChannels));
 			sp->regionMap.insert(make_pair(activeScanAreas[i].RegionID, activeScanAreas[i]));
 		}
@@ -767,10 +862,10 @@ void AcquireTStream::SetupSaveParams(long index, long subWell, long streamFrames
 	//create temporary largest buffer for multi-area:
 	SAFE_DELETE_MEMORY(sp->pMemoryBuffer);
 	sp->pMemoryBuffer = (MesoScanTypes::Micro == viewMode) ? 
-		(char*)realloc((void*)sp->pMemoryBuffer, sizeof(USHORT) * activeScanAreas[0].SizeX * activeScanAreas[0].SizeY * sp->bufferChannels[activeScanAreas[0].RegionID]) : NULL;
+		(char*)realloc((void*)sp->pMemoryBuffer, sizeof(USHORT) * activeScanAreas[largestIndex].SizeX * activeScanAreas[largestIndex].SizeY * sp->bufferChannels[activeScanAreas[largestIndex].RegionID]) : NULL;
 }
 
-long AcquireTStream::SetupImageData(wstring streamPath, ICamera *pCamera, long averageMode, SaveParams* sp, long zFastEnableGUI, long bufferChannels, double pixelDwellTime, long avgFrames, Dimensions &baseDimensions)
+long AcquireTStream::SetupImageData(wstring streamPath, ICamera *pCamera, long averageMode, SaveParams* sp, long zFastEnableGUI, long bufferChannels, double pixelDwellTime, long avgFrames, Dimensions &baseDimensions, long mROIEnabled)
 {
 	long tempImageID = 0;
 
@@ -810,7 +905,7 @@ long AcquireTStream::SetupImageData(wstring streamPath, ICamera *pCamera, long a
 	{	
 		//will create ome tiff when settings is configured, use name "Image.tif" for either finite or stimulus
 		StringCbPrintfW(rawPath,_MAX_PATH,L"%s%s%s",drive,dir,L"Image");
-		bigTiff->SetupImageStore(rawPath, _pExp, sp->doCompression);
+		bigTiff->SetupImageStore(rawPath, _pExp, mROIEnabled, sp->doCompression);
 
 		//create image with name of Image for a finite experiment:
 		if (STORAGE_FINITE == sp->storageMode)
@@ -827,9 +922,6 @@ long AcquireTStream::SetupImageData(wstring streamPath, ICamera *pCamera, long a
 
 				sp->imageIDsMap[BufferType::INTENSITY] = tempImageID;
 				sp->dimensionsMap[BufferType::INTENSITY] = ddflimIntensity;
-
-				//sp->imageIDsMap.insert(std::pair<long, long>(BufferType::INTENSITY, tempImageID));
-				//sp->dimensionsMap.insert(std::pair<long, Dimensions>(BufferType::INTENSITY, ddflimIntensity));					
 
 				const long DFLIM_HISTOGRAM_BINS = 256;
 				Dimensions ddflimHisto= baseDimensions;
@@ -882,11 +974,11 @@ long AcquireTStream::SetupImageData(wstring streamPath, ICamera *pCamera, long a
 				sp->imageIDsMap[BufferType::DFLIM_PHOTONS] = tempImageID;
 				sp->dimensionsMap[BufferType::DFLIM_PHOTONS] = ddflimPhotons;					
 			}
-			if (MesoScanTypes::Micro != viewMode)	//single area (meso) scan
+			else if (MesoScanTypes::Micro != viewMode)	//single area (meso) scan
 			{
-				if(FALSE == ImageManager::getInstance()->CreateImage(tempImageID,baseDimensions,L"Image",sp->index,sp->subWell))
+				if (FALSE == ImageManager::getInstance()->CreateImage(tempImageID, baseDimensions, L"Image", sp->index, sp->subWell))
 				{
-					logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create memory buffer, disc space may not be sufficient.");
+					logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"RunSample Execute could not create memory buffer, disc space may not be sufficient.");
 					return FALSE;
 				}
 				sp->imageIDsMap[BufferType::INTENSITY] = tempImageID;
@@ -921,9 +1013,11 @@ long AcquireTStream::SetupImageData(wstring streamPath, ICamera *pCamera, long a
 			std::wstring fname = (STORAGE_FINITE == sp->storageMode) ? L"Image" : L"Stream";
 			for (int i = 0; i < activeScanAreas.size(); i++)
 			{
-				baseDimensions.x = activeScanAreas[i].SizeX;
-				baseDimensions.y = activeScanAreas[i].SizeY;
-				if(FALSE == ImageManager::getInstance()->CreateImage(tempImageID,baseDimensions,fname))
+				Dimensions roiDimensions = baseDimensions;
+				roiDimensions.x = activeScanAreas[i].SizeX;
+				roiDimensions.y = activeScanAreas[i].SizeY;
+
+				if(FALSE == ImageManager::getInstance()->CreateImage(tempImageID, roiDimensions,fname))
 				{
 					logDll->TLTraceEvent(INFORMATION_EVENT,1,L"RunSample Execute could not create memory buffer, disc space may not be sufficient.");
 					return FALSE;
@@ -935,7 +1029,7 @@ long AcquireTStream::SetupImageData(wstring streamPath, ICamera *pCamera, long a
 				//	sp->dimensionsMap.insert(std::pair<long, Dimensions>(BufferType::INTENSITY, baseDimensions));
 				//}
 				sp->regionImageIDsMap.insert(std::pair<long, long>(activeScanAreas[i].RegionID, tempImageID));
-				sp->regionDimensionsMap.insert(std::pair<long, Dimensions>(activeScanAreas[i].RegionID, baseDimensions));
+				sp->regionDimensionsMap.insert(std::pair<long, Dimensions>(activeScanAreas[i].RegionID, roiDimensions));
 			}
 		}
 	}
@@ -1113,11 +1207,13 @@ long AcquireTStream::SetGetCameraSettings(ICamera* pCamera, long &channel, long 
 		long tapsIndex, tapsBalance;
 		long readoutSpeedIndex;
 		long camAverageMode, camAverageNum;
-		long camVericalFlip, camHorizontalFlip, imageAngle;
+		long camVericalFlip, camHorizontalFlip, imageAngle, camChannelBitmask;
+		long colorImageType, polarImageType;
+		long isContinuousWhiteBalance, continuousWhiteBalanceNumFrames;
+		double redGain, greenGain, blueGain;
 
 		//getting the values from the experiment setup XML files
-		_pExp->GetCamera(camName,camImageWidth,camImageHeight,camPixelSize,camExposureTimeMS,gain,blackLevel,lightMode,left,top,right,bottom,binningX,binningY,tapsIndex,tapsBalance,readoutSpeedIndex,camAverageMode,camAverageNum,camVericalFlip,camHorizontalFlip,imageAngle);
-
+		_pExp->GetCamera(camName, camImageWidth, camImageHeight, camPixelSize, camExposureTimeMS, gain, blackLevel, lightMode, left, top, right, bottom, binningX, binningY, tapsIndex, tapsBalance, readoutSpeedIndex, camAverageMode, camAverageNum, camVericalFlip, camHorizontalFlip, imageAngle, camChannelBitmask, colorImageType, polarImageType, isContinuousWhiteBalance, continuousWhiteBalanceNumFrames, redGain, greenGain, blueGain);
 
 		pCamera->SetParam(ICamera::PARAM_EXPOSURE_TIME_MS,camExposureTimeMS);
 		pCamera->SetParam(ICamera::PARAM_GAIN,gain);
@@ -1140,8 +1236,26 @@ long AcquireTStream::SetGetCameraSettings(ICamera* pCamera, long &channel, long 
 		//will average after acquisition is complete. Set to none at camera level
 		pCamera->SetParam(ICamera::PARAM_CAMERA_AVERAGEMODE,ICamera::AVG_MODE_NONE);
 
-		channel = 1;
-		bufferChannels = 1;
+		pCamera->SetParam(ICamera::PARAM_CAMERA_COLOR_IMAGE_TYPE, colorImageType);
+		pCamera->SetParam(ICamera::PARAM_CAMERA_POLAR_IMAGE_TYPE, polarImageType);
+		pCamera->SetParam(ICamera::PARAM_CAMERA_IS_CONTINUOUS_WHITE_BALANCE_ENABLED, isContinuousWhiteBalance);
+		pCamera->SetParam(ICamera::PARAM_CAMERA_CONTINUOUS_WHITE_BALANCE_NUM_FRAMES, continuousWhiteBalanceNumFrames);
+		pCamera->SetParam(ICamera::PARAM_CAMERA_RED_GAIN, redGain);
+		pCamera->SetParam(ICamera::PARAM_CAMERA_GREEN_GAIN, greenGain);
+		pCamera->SetParam(ICamera::PARAM_CAMERA_BLUE_GAIN, blueGain);
+
+		channel = camChannelBitmask; // channel is the bitmask
+		switch (camChannelBitmask)
+		{
+		case 0b0111:
+			bufferChannels = 4; // TODO: having an image buffer that is not 1 or 4 channels may crash
+			break;
+		case 0b0001:
+		default:
+			bufferChannels = 1;
+			break;
+		}
+		
 		width = camImageWidth;
 		height = camImageHeight;
 		avgMode = camAverageMode;
@@ -1156,11 +1270,15 @@ long AcquireTStream::SetGetCameraSettings(ICamera* pCamera, long &channel, long 
 		double areaAngle,dwellTime, crsFrequencyHz = 0;
 		long threePhotonEnable = FALSE;
 		long numberOfPlanes = 1;
+		long selectedImagingGG = 0;
+		long selectedStimGG = 0;
 		long selectedPlane = 0;
+		double pixelAspectRatioYScale = 1;
+
 		wstring pathAndName = _pExp->GetPathAndName();
 		//getting the values from the experiment setup XML files
 		_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,chan,lsmFieldSize,offsetX,offsetY,averageMode,averageNum,clockSource, inputRange1, inputRange2, 
-			twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timebasedLineScan, timebasedLineScanMS, threePhotonEnable, numberOfPlanes);
+			twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timebasedLineScan, timebasedLineScanMS, threePhotonEnable, numberOfPlanes, selectedImagingGG, selectedStimGG, pixelAspectRatioYScale);
 		switch (areaMode)
 		{
 		case 0: //Square
@@ -1229,6 +1347,7 @@ long AcquireTStream::SetGetCameraSettings(ICamera* pCamera, long &channel, long 
 		pCamera->SetParam(ICamera::PARAM_LSM_AVERAGEMODE,ICamera::AVG_MODE_NONE);
 		pCamera->SetParam(ICamera::PARAM_LSM_VERTICAL_SCAN_DIRECTION, verticalFlip);
 		pCamera->SetParam(ICamera::PARAM_LSM_HORIZONTAL_FLIP, horizontalFlip);
+		pCamera->SetParam(ICamera::PARAM_LSM_Y_AMPLITUDE_SCALER, (int)(pixelAspectRatioYScale * 100));
 		
 		pCamera->SetParam(ICamera::PARAM_LSM_3P_ENABLE, threePhotonEnable);
 		pCamera->SetParam(ICamera::PARAM_LSM_NUMBER_OF_PLANES, numberOfPlanes);
@@ -1521,7 +1640,7 @@ void AcquireTStream::DestroyImages(map<long, long>& idsMap)
 		}
 		it++;
 	}
-	idsMap.clear();	//clear map since no image available after destroy
+		idsMap.clear();	//clear map since no image available after destroy
 }
 
 void AcquireTStream::FailedAcquisition(ICamera* pCamera, SaveParams& sp, long zFastEnableGUI)
@@ -1548,7 +1667,7 @@ void AcquireTStream::FailedAcquisition(ICamera* pCamera, SaveParams& sp, long zF
 	pCamera->SetParam(ICamera::PARAM_LSM_POCKELS_OUTPUT_USE_REF,FALSE);
 }
 
-long AcquireTStream::BreakOutWaitCameraStatus(ICamera* pCamera, SaveParams& sp, long& status, double& droppedFrameCnt, long totalFrame, long zFastEnableGUI, long saveEnabledChannelsOnly, long captureMode)
+long AcquireTStream::BreakOutWaitCameraStatus(ICamera* pCamera, SaveParams& sp, long& status, double& droppedFrameCnt, long totalFrame, long zFastEnableGUI, long saveEnabledChannelsOnly, long captureMode, long alwaysSaveImagesOnStop)
 {
 	long doBreak = FALSE;
 	long stopStatus = 0;
@@ -1584,10 +1703,13 @@ long AcquireTStream::BreakOutWaitCameraStatus(ICamera* pCamera, SaveParams& sp, 
 				{
 					pCamera->PostflightAcquisition(NULL);
 					ScannerEnable(FALSE);
-					_messageID = MessageBox(NULL,L"Experiment stopped. Would you like to save the already acquired images?",L"Save Experiment Files",MB_YESNO | MB_SETFOREGROUND | MB_ICONWARNING | MB_SYSTEMMODAL);	
+					if (FALSE == alwaysSaveImagesOnStop)
+					{
+						_messageID = MessageBox(NULL, L"Experiment stopped. Would you like to save the already acquired images?", L"Save Experiment Files", MB_YESNO | MB_SETFOREGROUND | MB_ICONWARNING | MB_SYSTEMMODAL);
+					}
 				}			
 				//Allow save files based on user's decision:
-				if(IDYES == _messageID)			
+				if(TRUE == alwaysSaveImagesOnStop || IDYES == _messageID)
 				{							
 					break;
 				}
@@ -1690,10 +1812,11 @@ long AcquireTStream::Execute(long index, long subWell)
 		_pExp->GetScanRegions(viewMode, activeScanAreas);
 		//do meso scan if single scan area
 		if (MesoScanTypes::Micro == viewMode && 1 >= activeScanAreas.size())
+		{
 			viewMode = MesoScanTypes::Meso;
+		}
 	}
-	//keep preview index then update for all scan areas:
-	long previewScanAreaID = (ICamera::CameraType::LSM == cameraType && ICamera::LSMType::RESONANCE_GALVO_GALVO == lsmType && 0 < activeScanAreas.size()) ? activeScanAreas[0].RegionID : 0;
+
 
 	//only allow fastZ when in a streaming capture
 	//Other types of capture should not do fast z (i.e. Hyperspectral capture).
@@ -1707,8 +1830,24 @@ long AcquireTStream::Execute(long index, long subWell)
 		GetActiveScanAreaThenEnableAll(_pExp);
 		//update scan areas after all are enabled
 		if (ICamera::LSMType::RESONANCE_GALVO_GALVO == lsmType)
+		{
 			_pExp->GetScanRegions(viewMode, activeScanAreas);
+		}
 	}
+
+	long mROIEnabled = FALSE;
+
+	GetCameraParamLong(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_MROI_MODE_ENABLE, mROIEnabled);
+
+	//only use the scan Areas for FULL FOV or mROI if in RGG mode
+	if (ICamera::LSMType::RESONANCE_GALVO_GALVO != lsmType || FALSE == mROIEnabled)
+
+	{
+		activeScanAreas.clear();
+	}
+
+	//keep preview index then update for all scan areas:
+	long previewScanAreaID = (ICamera::CameraType::LSM == cameraType && ICamera::LSMType::RESONANCE_GALVO_GALVO == lsmType && 0 < activeScanAreas.size()) ? activeScanAreas[0].RegionID : 0;
 
 	long width, height, channel, bufferChannels, averageMode, averageNum, fieldSize;
 	double umPerPixel, dwelltime;
@@ -1799,14 +1938,26 @@ long AcquireTStream::Execute(long index, long subWell)
 	IDevice *pControlUnitDevice = NULL;
 	//notify the ECU of the zoom change also
 	pControlUnitDevice = GetDevice(SelectedHardware::SELECTED_CONTROLUNIT);
-	if(NULL != pControlUnitDevice && ICamera::CameraType::LSM == cameraType && ICamera::LSMType::RESONANCE_GALVO_GALVO != lsmType)
+	if(NULL != pControlUnitDevice && ICamera::CameraType::LSM == cameraType && (ICamera::LSMType::RESONANCE_GALVO_GALVO == lsmType || ICamera::LSMType::GALVO_RESONANCE == lsmType))
 	{
-		if(SetDeviceParameterValue(pControlUnitDevice,IDevice::PARAM_SCANNER_ZOOM_POS,fieldSize,FALSE,NULL,0))
+		int scannerFieldSize = fieldSize;
+		if (viewMode != 0)
+		{
+			if (activeScanAreas.size() > 0)
+			{
+				scannerFieldSize = activeScanAreas[0].StripeFieldSize;
+				pCamera->SetParam(ICamera::PARAM_LSM_FIELD_SIZE, scannerFieldSize);
+				double fieldSizeCalibration = 100.0;
+				pCamera->GetParam(ICamera::PARAM_LSM_FIELD_SIZE_CALIBRATION, fieldSizeCalibration);
+				umPerPixel = (scannerFieldSize * fieldSizeCalibration) / (activeScanAreas[0].SizeX * magnification);
+			}
+		}
+		if(SetDeviceParameterValue(pControlUnitDevice,IDevice::PARAM_SCANNER_ZOOM_POS, scannerFieldSize,FALSE,NULL,0))
 		{
 			//If the device is an ECU2, read the alignment value from the ECU and set it back to itself, same way as capture setup LSMFieldSize->Setter
 			long minFS,maxFS,fieldSizeDefault, alignment, zone, zoneECU;
 			GetDeviceParamRangeLong(SelectedHardware::SELECTED_CONTROLUNIT,IDevice::PARAM_SCANNER_ZOOM_POS,minFS,maxFS,fieldSizeDefault);
-			zone = maxFS - fieldSize;
+			zone = maxFS - scannerFieldSize;
 			zoneECU = IDevice::PARAM_ECU_TWO_WAY_ZONE_1 + zone;
 			if(GetDeviceParamLong(SelectedHardware::SELECTED_CONTROLUNIT, zoneECU, alignment))
 			{
@@ -1862,12 +2013,14 @@ long AcquireTStream::Execute(long index, long subWell)
 
 	sp._pHeaderInfo = pHeaderInfo;
 
-	wstring streamPath;	double previewRate = 4;
-	pHardware->GetStreaming(streamPath, previewRate);
+	wstring streamPath;	
+	double previewRate = 4; 
+	long alwaysSaveImagesOnStop = FALSE;
+	pHardware->GetStreaming(streamPath, previewRate, alwaysSaveImagesOnStop);
 
 	Dimensions d;
 	//do not average if the fast Z is enabled, RGG can do average in camera:
-	long avgFrames = ((ICamera::AVG_MODE_CUMULATIVE == averageMode && FALSE == zFastEnableGUI) && ICamera::LSMType::RESONANCE_GALVO_GALVO != lsmType) ? averageNum : 1;
+	long avgFrames = ((ICamera::AVG_MODE_CUMULATIVE == averageMode && FALSE == zFastEnableGUI)) ? averageNum : 1; //TODO: need to enable for mROI
 
 	//do not average if the fast Z is enabled, RGG can do average in camera, no cumulative preview for dflim 
 	//TODO: do the work for cumulative dflim, to bring this feature faster we will leave dflim for later
@@ -1879,11 +2032,13 @@ long AcquireTStream::Execute(long index, long subWell)
 
 	//keep the maximum size on top for buffer assignment safety, 
 	//activeScanAreas will be decedent order by frame size afterward:
-	std::sort(activeScanAreas.begin(),activeScanAreas.end(),[](const ScanRegion &lhs, const ScanRegion &rhs){ return lhs.SizeX * lhs.SizeY > rhs.SizeX * rhs.SizeY; });
+	// TODO: try not to have them ordered like this, instead we will preview all ROIs
+	//std::sort(activeScanAreas.begin(),activeScanAreas.end(),[](const ScanRegion &lhs, const ScanRegion &rhs){ return lhs.SizeX * lhs.SizeY > rhs.SizeX * rhs.SizeY; });
 
-	SetupSaveParams(index, subWell, setupFrames, exposureTimeMS, width, height, numberOfPlanes, umPerPixel, zFastEnableGUI, zstageSteps, flybackFrames, totalBufferChannels, channel, storageMode, hyperSpectralWavelengths, rawData, previewScanAreaID, &sp);
+	bool isCombinedChannels = ICamera::CCD == cameraType && channel != 0b0001;
+	SetupSaveParams(index, subWell, setupFrames, exposureTimeMS, width, height, numberOfPlanes, umPerPixel, zFastEnableGUI, zstageSteps, flybackFrames, bufferChannels, channel, storageMode, hyperSpectralWavelengths, rawData, previewScanAreaID, isCombinedChannels, &sp);
 
-	if(FALSE == SetupImageData(streamPath, pCamera, averageMode, &sp, zFastEnableGUI, bufferChannels, dwelltime, avgFrames ,d))
+	if(FALSE == SetupImageData(streamPath, pCamera, averageMode, &sp, zFastEnableGUI, bufferChannels, dwelltime, avgFrames ,d, mROIEnabled))
 	{
 		pCamera->SetParam(ICamera::PARAM_RAW_SAVE_ENABLED_CHANNELS_ONLY, false);
 		return FALSE;
@@ -1946,7 +2101,7 @@ long AcquireTStream::Execute(long index, long subWell)
 	// image preview buffer to fast z top, middle, bottom images
 	char * pTilesImagePreviewBuffer = NULL;
 	int tilesInPreview = 1;
-	long camBufSize = width * height * bufferChannels;
+	long camBufSize = width * height * bufferChannels * numberOfPlanes;
 	long tileBufferSizeBytes = width * height * totalBufferChannels * sizeof(USHORT);
 
 	// allocate fast z tiled preview image buffer
@@ -1960,7 +2115,7 @@ long AcquireTStream::Execute(long index, long subWell)
 	//1 datalength for single photon sum buffer (USHORT)
 	//2 datalength for arrival time sum buffer (UINT32)
 	//2 DFLIM_HISTOGRAM_BINS for dflim histogram (UINT32)	
-	const int intensityBufferSize = width * height * bufferChannels * sizeof(USHORT);		
+	const int intensityBufferSize = width * height * bufferChannels * numberOfPlanes * sizeof(USHORT);
 	const int DFLIM_HISTOGRAM_BINS = 256;
 	const int dflimHistrogramBufferSize = DFLIM_HISTOGRAM_BINS * bufferChannels * sizeof(UINT32);				
 	const int dflimArrivalTimeSumBufferSize = width * height * bufferChannels * sizeof(UINT32);
@@ -2212,8 +2367,9 @@ long AcquireTStream::Execute(long index, long subWell)
 			//=================================================			
 			DWORD frameStartTime = GetTickCount();
 
-			if (TRUE == BreakOutWaitCameraStatus(pCamera, sp, status, droppedFrameCnt, totalFrame, zFastEnableGUI, saveEnabledChannelsOnly, captureMode))
+			if (TRUE == BreakOutWaitCameraStatus(pCamera, sp, status, droppedFrameCnt, totalFrame, zFastEnableGUI, saveEnabledChannelsOnly, captureMode, alwaysSaveImagesOnStop))
 			{
+				logDll->TLTraceEvent(ERROR_EVENT, 1, L"Camera returned STATUS_ERROR during acquisition - stopping capture early.");
 				break;
 			}
 			//=================================================
@@ -2226,7 +2382,7 @@ long AcquireTStream::Execute(long index, long subWell)
 					//wait before copy next other than the first:
 					if (0 < i)
 					{
-						if (TRUE == BreakOutWaitCameraStatus(pCamera, sp, status, droppedFrameCnt, totalFrame, zFastEnableGUI, saveEnabledChannelsOnly, captureMode))
+						if (TRUE == BreakOutWaitCameraStatus(pCamera, sp, status, droppedFrameCnt, totalFrame, zFastEnableGUI, saveEnabledChannelsOnly, captureMode, alwaysSaveImagesOnStop))
 							break;
 					}
 					pCamera->CopyAcquisition(_pMemoryBuffer, &frameInfo);
@@ -2310,84 +2466,139 @@ long AcquireTStream::Execute(long index, long subWell)
 			//==============================================================================================================================
 			if((0 == _lastImageUpdateTime) || (GetTickCount() - _lastImageUpdateTime) > Constants::MS_TO_SEC*(1 / previewRate))
 			{
-				if((displayImage) && (dmaInUseLimit > static_cast<double>(droppedFrameCnt / dmaFrames)) && (dmaInUseLimit > static_cast<double>(dmaBufferAvailableFrames / dmaFrames)))	//no preview if camera is close to overflow limit
+				if ((displayImage) && (dmaInUseLimit > static_cast<double>(droppedFrameCnt / dmaFrames)) && (dmaInUseLimit > static_cast<double>(dmaBufferAvailableFrames / dmaFrames)))	//no preview if camera is close to overflow limit
 				{
 					//only preview on selected scan area by get-then-unlock
-					if (MesoScanTypes::Micro == viewMode && sp.regionImageIDsMap.find(sp.previewRegionID) != sp.regionImageIDsMap.end())
+					if (MesoScanTypes::Micro == viewMode && sp.regionImageIDsMap.size() > 0)
 					{
-						char* pTmpBuffer = ImageManager::getInstance()->GetImagePtr(sp.regionImageIDsMap[sp.previewRegionID], 0, 0, 0, totalFrame);
-						SAFE_MEMCPY(_pMemoryBuffer, sp.regionMap[sp.previewRegionID].BufferSize, pTmpBuffer);
-						ImageManager::getInstance()->UnlockImagePtr(sp.regionImageIDsMap[sp.previewRegionID], 0, 0, 0, totalFrame);
-					}
-					if(!zFastEnableGUI) 
-					{
-						if(avgFrames > 1 && rollingAvgPreviewFrames <= 1)
+						//TODO: make averaging work for mROI
+						//if (avgFrames > 1 && rollingAvgPreviewFrames <= 1)
+						//{
+
+						//}
+						//else if (rollingAvgPreviewFrames > 1)
+						//{
+		
+						//	SavePreviewImage(&sp, t, (char*)pSumMemoryBuffer, saveEnabledChannelsOnly);
+					
+
+						//	_lastImageUpdateTime = GetTickCount();
+
+						//	//only update the UI here when the real cumulative average frames > 1
+						//	if (avgFrames > 1)
+						//	{
+						//		CallSaveTImage(capturedImagesCtrStimulusGUI);
+						//	}
+
+						//}
+						//else
 						{
-							memcpy(pSumMemoryBuffer + ((previewAverageCount % avgFrames) * camBufSize * sizeof(USHORT)), _pMemoryBuffer, (camBufSize * sizeof(USHORT)));
-							if (1 == imageMethod) //if dflim acquisition
+							for (map<long, ScanRegion>::iterator imageIt = sp.regionMap.begin(); imageIt != sp.regionMap.end(); imageIt++)
 							{
-								//1 datalength for photon num buffer (intensity) (USHORT)
-								//1 datalength for single photon sum buffer (USHORT)
-								//2 datalength for arrival time sum buffer (UINT32)
-								//2 DFLIM_HISTOGRAM_BINS for dflim histogram (UINT32)
-								memcpy(pSumBufferDFLIMHisto + ((previewAverageCount % avgFrames) * dflimHistrogramBufferSize), pMemoryBufferDFLIMHisto, dflimHistrogramBufferSize);
-								memcpy(pSumBufferDFLIMArrivalTimeSum + ((previewAverageCount % avgFrames) * dflimArrivalTimeSumBufferSize), pMemoryBufferDFLIMArrivalTimeSum, dflimArrivalTimeSumBufferSize);
-								memcpy(pSumBufferDFLIMSinglePhoton + ((previewAverageCount % avgFrames) * dflimSinglePhotonSumBufferSize), pMemoryBufferDFLIMSinglePhoton, dflimSinglePhotonSumBufferSize);
+								ScanRegion roi = imageIt->second;
+								char* pTmpBuffer = ImageManager::getInstance()->GetImagePtr(sp.regionImageIDsMap[roi.RegionID], 0, 0, 0, totalFrame);
+								SAFE_MEMCPY(_pMemoryBuffer, roi.BufferSize, pTmpBuffer);
+								ImageManager::getInstance()->UnlockImagePtr(sp.regionImageIDsMap[roi.RegionID], 0, 0, 0, totalFrame);
+
+								SavePreviewImagemROI(&sp, t, _pMemoryBuffer, saveEnabledChannelsOnly, roi.RegionID);
 							}
-
-							if(previewAverageCount >= avgFrames - 1)
+						}
+						_lastImageUpdateTime = GetTickCount();
+					}
+					else
+					{
+						if (!zFastEnableGUI)
+						{
+							if (avgFrames > 1 && rollingAvgPreviewFrames <= 1)
 							{
-								USHORT* pSum = (USHORT*) pSumMemoryBuffer;
-								UINT32* pSumDFLIMHisto = (UINT32*) pSumBufferDFLIMHisto;
-								UINT32* pSumDFLIMArrivalTimeSum = (UINT32*) pSumBufferDFLIMArrivalTimeSum;
-								USHORT* pSumDFLIMSinglePhotonSum = (USHORT*) pSumBufferDFLIMSinglePhoton;
-								for(int n = 0; n < camBufSize; n++)
-								{
-									double averSum = 0.0;
-									UINT32 sumDFLIMArrivalTimeSum = 0;
-									USHORT sumDFLIMSinglePhotonSum = 0;
-									for(int m = 0; m < avgFrames; m++)
-									{
-										averSum += *(pSum + m * camBufSize + n);
-										if (1 == imageMethod) //if dflim acquisition
-										{
-											sumDFLIMArrivalTimeSum += *(pSumDFLIMArrivalTimeSum + m * camBufSize + n);
-											sumDFLIMSinglePhotonSum += *(pSumDFLIMSinglePhotonSum + m * camBufSize + n);
-										}
-									}
-
-									*(pSum + n) = (int)(averSum / avgFrames + 0.5);
-									if (1 == imageMethod) //if dflim acquisition
-									{
-										*(pSumDFLIMArrivalTimeSum + n) = sumDFLIMArrivalTimeSum;
-										*(pSumDFLIMSinglePhotonSum + n) = sumDFLIMSinglePhotonSum;
-									}
-								}
-
+								memcpy(pSumMemoryBuffer + ((previewAverageCount % avgFrames) * camBufSize * sizeof(USHORT)), _pMemoryBuffer, (camBufSize * sizeof(USHORT)));
 								if (1 == imageMethod) //if dflim acquisition
 								{
-									const int DFLIM_HISTOGRAM_BINS = 256;
-									for(int n = 0; n < DFLIM_HISTOGRAM_BINS; n++)
+									//1 datalength for photon num buffer (intensity) (USHORT)
+									//1 datalength for single photon sum buffer (USHORT)
+									//2 datalength for arrival time sum buffer (UINT32)
+									//2 DFLIM_HISTOGRAM_BINS for dflim histogram (UINT32)
+									memcpy(pSumBufferDFLIMHisto + ((previewAverageCount % avgFrames) * dflimHistrogramBufferSize), pMemoryBufferDFLIMHisto, dflimHistrogramBufferSize);
+									memcpy(pSumBufferDFLIMArrivalTimeSum + ((previewAverageCount % avgFrames) * dflimArrivalTimeSumBufferSize), pMemoryBufferDFLIMArrivalTimeSum, dflimArrivalTimeSumBufferSize);
+									memcpy(pSumBufferDFLIMSinglePhoton + ((previewAverageCount % avgFrames) * dflimSinglePhotonSumBufferSize), pMemoryBufferDFLIMSinglePhoton, dflimSinglePhotonSumBufferSize);
+								}
+
+								if (previewAverageCount >= avgFrames - 1)
+								{
+									USHORT* pSum = (USHORT*)pSumMemoryBuffer;
+									UINT32* pSumDFLIMHisto = (UINT32*)pSumBufferDFLIMHisto;
+									UINT32* pSumDFLIMArrivalTimeSum = (UINT32*)pSumBufferDFLIMArrivalTimeSum;
+									USHORT* pSumDFLIMSinglePhotonSum = (USHORT*)pSumBufferDFLIMSinglePhoton;
+									for (int n = 0; n < camBufSize; n++)
 									{
 										double averSum = 0.0;
-										UINT32 sumDFLIMHisto = 0;
-
-										for(int m = 0; m < avgFrames; m++)
+										UINT32 sumDFLIMArrivalTimeSum = 0;
+										USHORT sumDFLIMSinglePhotonSum = 0;
+										for (int m = 0; m < avgFrames; m++)
 										{
 											averSum += *(pSum + m * camBufSize + n);
 											if (1 == imageMethod) //if dflim acquisition
 											{
-												sumDFLIMHisto += *(pSumDFLIMHisto + m * DFLIM_HISTOGRAM_BINS + n);
+												sumDFLIMArrivalTimeSum += *(pSumDFLIMArrivalTimeSum + m * camBufSize + n);
+												sumDFLIMSinglePhotonSum += *(pSumDFLIMSinglePhotonSum + m * camBufSize + n);
 											}
 										}
 
-										*(pSumDFLIMHisto + n) = sumDFLIMHisto;
+										*(pSum + n) = (int)(averSum / avgFrames + 0.5);
+										if (1 == imageMethod) //if dflim acquisition
+										{
+											*(pSumDFLIMArrivalTimeSum + n) = sumDFLIMArrivalTimeSum;
+											*(pSumDFLIMSinglePhotonSum + n) = sumDFLIMSinglePhotonSum;
+										}
 									}
 
-									memcpy(pMemoryBufferDFLIMPreview, pSumDFLIMHisto, dflimHistrogramBufferSize);
-									memcpy(pMemoryBufferDFLIMPreview + dflimHistrogramBufferSize, pSum, intensityBufferSize);
-									memcpy(pMemoryBufferDFLIMPreview + dflimHistrogramBufferSize + intensityBufferSize, pSumDFLIMSinglePhotonSum, dflimSinglePhotonSumBufferSize);
-									memcpy(pMemoryBufferDFLIMPreview + dflimHistrogramBufferSize + intensityBufferSize + dflimSinglePhotonSumBufferSize, pSumDFLIMArrivalTimeSum, dflimArrivalTimeSumBufferSize);
+									if (1 == imageMethod) //if dflim acquisition
+									{
+										const int DFLIM_HISTOGRAM_BINS = 256;
+										for (int n = 0; n < DFLIM_HISTOGRAM_BINS; n++)
+										{
+											double averSum = 0.0;
+											UINT32 sumDFLIMHisto = 0;
+
+											for (int m = 0; m < avgFrames; m++)
+											{
+												averSum += *(pSum + m * camBufSize + n);
+												if (1 == imageMethod) //if dflim acquisition
+												{
+													sumDFLIMHisto += *(pSumDFLIMHisto + m * DFLIM_HISTOGRAM_BINS + n);
+												}
+											}
+
+											*(pSumDFLIMHisto + n) = sumDFLIMHisto;
+										}
+
+										memcpy(pMemoryBufferDFLIMPreview, pSumDFLIMHisto, dflimHistrogramBufferSize);
+										memcpy(pMemoryBufferDFLIMPreview + dflimHistrogramBufferSize, pSum, intensityBufferSize);
+										memcpy(pMemoryBufferDFLIMPreview + dflimHistrogramBufferSize + intensityBufferSize, pSumDFLIMSinglePhotonSum, dflimSinglePhotonSumBufferSize);
+										memcpy(pMemoryBufferDFLIMPreview + dflimHistrogramBufferSize + intensityBufferSize + dflimSinglePhotonSumBufferSize, pSumDFLIMArrivalTimeSum, dflimArrivalTimeSumBufferSize);
+										SavePreviewImage(&sp, t, pMemoryBufferDFLIMPreview, saveEnabledChannelsOnly);
+									}
+									else
+									{
+										SavePreviewImage(&sp, t, (char*)pSumMemoryBuffer, saveEnabledChannelsOnly);
+									}
+
+									previewAverageCount = 0;
+									_lastImageUpdateTime = GetTickCount();
+								}
+								else
+								{
+									previewAverageCount++;
+								}
+							}
+							else if (rollingAvgPreviewFrames > 1)
+							{
+								if (1 == imageMethod) //if dflim acquisition
+								{
+									memcpy(pMemoryBufferDFLIMPreview, pSumBufferDFLIMHisto, dflimHistrogramBufferSize);
+									memcpy(pMemoryBufferDFLIMPreview + dflimHistrogramBufferSize, pSumMemoryBuffer, intensityBufferSize);
+									memcpy(pMemoryBufferDFLIMPreview + dflimHistrogramBufferSize + intensityBufferSize, pSumBufferDFLIMSinglePhoton, dflimSinglePhotonSumBufferSize);
+									memcpy(pMemoryBufferDFLIMPreview + dflimHistrogramBufferSize + intensityBufferSize + dflimSinglePhotonSumBufferSize, pSumBufferDFLIMArrivalTimeSum, dflimArrivalTimeSumBufferSize);
 									SavePreviewImage(&sp, t, pMemoryBufferDFLIMPreview, saveEnabledChannelsOnly);
 								}
 								else
@@ -2395,117 +2606,95 @@ long AcquireTStream::Execute(long index, long subWell)
 									SavePreviewImage(&sp, t, (char*)pSumMemoryBuffer, saveEnabledChannelsOnly);
 								}
 
-								previewAverageCount = 0;
+								_lastImageUpdateTime = GetTickCount();
+
+								//only update the UI here when the real cumulative average frames > 1
+								if (avgFrames > 1)
+								{
+									CallSaveTImage(capturedImagesCtrStimulusGUI);
+								}
+
+							}
+							else
+							{
+								if (1 == imageMethod) //if dflim acquisition
+								{
+									memcpy(pMemoryBufferDFLIMPreview, pMemoryBufferDFLIMHisto, dflimHistrogramBufferSize);
+									memcpy(pMemoryBufferDFLIMPreview + dflimHistrogramBufferSize, _pMemoryBuffer, intensityBufferSize);
+									memcpy(pMemoryBufferDFLIMPreview + dflimHistrogramBufferSize + intensityBufferSize, pMemoryBufferDFLIMSinglePhoton, dflimSinglePhotonSumBufferSize);
+									memcpy(pMemoryBufferDFLIMPreview + dflimHistrogramBufferSize + intensityBufferSize + dflimSinglePhotonSumBufferSize, pMemoryBufferDFLIMArrivalTimeSum, dflimArrivalTimeSumBufferSize);
+									SavePreviewImage(&sp, t, pMemoryBufferDFLIMPreview, saveEnabledChannelsOnly);
+								}
+								else
+								{
+									SavePreviewImage(&sp, t, _pMemoryBuffer, saveEnabledChannelsOnly);
+								}
 								_lastImageUpdateTime = GetTickCount();
 							}
-							else
-							{
-								previewAverageCount++;
-							}
-						}
-						else if (rollingAvgPreviewFrames > 1)
-						{
-							if (1 == imageMethod) //if dflim acquisition
-							{
-								memcpy(pMemoryBufferDFLIMPreview, pSumBufferDFLIMHisto, dflimHistrogramBufferSize);
-								memcpy(pMemoryBufferDFLIMPreview + dflimHistrogramBufferSize, pSumMemoryBuffer, intensityBufferSize);
-								memcpy(pMemoryBufferDFLIMPreview + dflimHistrogramBufferSize + intensityBufferSize, pSumBufferDFLIMSinglePhoton, dflimSinglePhotonSumBufferSize);
-								memcpy(pMemoryBufferDFLIMPreview + dflimHistrogramBufferSize + intensityBufferSize + dflimSinglePhotonSumBufferSize, pSumBufferDFLIMArrivalTimeSum, dflimArrivalTimeSumBufferSize);
-								SavePreviewImage(&sp, t, pMemoryBufferDFLIMPreview, saveEnabledChannelsOnly);
-							}
-							else
-							{
-								SavePreviewImage(&sp, t, (char*)pSumMemoryBuffer, saveEnabledChannelsOnly);								
-							}
-
-							_lastImageUpdateTime = GetTickCount();
-
-							//only update the UI here when the real cumulative average frames > 1
-							if (avgFrames > 1)
-							{
-								CallSaveTImage(capturedImagesCtrStimulusGUI);
-							}
-
 						}
 						else
 						{
-							if (1 == imageMethod) //if dflim acquisition
+							if (tFastZStimulus == 1) // top	//zIndex
 							{
-								memcpy(pMemoryBufferDFLIMPreview, pMemoryBufferDFLIMHisto, dflimHistrogramBufferSize);
-								memcpy(pMemoryBufferDFLIMPreview + dflimHistrogramBufferSize, _pMemoryBuffer, intensityBufferSize);
-								memcpy(pMemoryBufferDFLIMPreview + dflimHistrogramBufferSize + intensityBufferSize, pMemoryBufferDFLIMSinglePhoton, dflimSinglePhotonSumBufferSize);
-								memcpy(pMemoryBufferDFLIMPreview + dflimHistrogramBufferSize + intensityBufferSize + dflimSinglePhotonSumBufferSize, pMemoryBufferDFLIMArrivalTimeSum, dflimArrivalTimeSumBufferSize);
-								SavePreviewImage(&sp, t, pMemoryBufferDFLIMPreview, saveEnabledChannelsOnly);
+								char* fullChannelImageBuffer = _pMemoryBuffer;
+								shared_ptr<InternallyStoredImage<unsigned short> > fullChannelImage;
+								if (saveEnabledChannelsOnly)
+								{
+									fullChannelImage = createFullChannelCopy(_pMemoryBuffer, sp);
+									fullChannelImageBuffer = (char*)fullChannelImage->getDirectPointerToData(0, 0, 0, 0, 0, 0);
+								}
+								memcpy(pTilesImagePreviewBuffer + zTop * tileBufferSizeBytes, fullChannelImageBuffer, tileBufferSizeBytes);
+								//TODO: Add fastZ functionality for DFLIM
+								SaveFastZPreviewImageWithoutOME(&sp, pTilesImagePreviewBuffer, tilesInPreview * tileBufferSizeBytes);
+								updateRestTiles = TRUE;
 							}
-							else
-							{
-								SavePreviewImage(&sp, t, _pMemoryBuffer, saveEnabledChannelsOnly);
-							}
-							_lastImageUpdateTime = GetTickCount();
-						}
-					}
-					else
-					{
-						if(tFastZStimulus == 1) // top	//zIndex
-						{
-							char* fullChannelImageBuffer = _pMemoryBuffer;
-							shared_ptr<InternallyStoredImage<unsigned short> > fullChannelImage;
-							if(saveEnabledChannelsOnly)
-							{
-								fullChannelImage = createFullChannelCopy(_pMemoryBuffer, sp);
-								fullChannelImageBuffer = (char*)fullChannelImage->getDirectPointerToData(0,0,0,0,0);
-							}
-							memcpy(pTilesImagePreviewBuffer + zTop*tileBufferSizeBytes, fullChannelImageBuffer, tileBufferSizeBytes);
-							//TODO: Add fastZ functionality for DFLIM
-							SaveFastZPreviewImageWithoutOME(&sp, pTilesImagePreviewBuffer, tilesInPreview * tileBufferSizeBytes);
-							updateRestTiles = TRUE;
-						}
-						//long zIndex = currentStreamCount % (zstageSteps+flybackFrames);	//zIndex is duplicate of tFastZStimulus
+							//long zIndex = currentStreamCount % (zstageSteps+flybackFrames);	//zIndex is duplicate of tFastZStimulus
 
-						if(tFastZStimulus == static_cast<long>(zstageSteps / 2.0 + 0.5) && updateRestTiles == TRUE) // middle	//zIndex
-						{
-							char* fullChannelImageBuffer = _pMemoryBuffer;
-							shared_ptr<InternallyStoredImage<unsigned short> > fullChannelImage;
-							if(saveEnabledChannelsOnly)
+							if (tFastZStimulus == static_cast<long>(zstageSteps / 2.0 + 0.5) && updateRestTiles == TRUE) // middle	//zIndex
 							{
-								fullChannelImage = createFullChannelCopy(_pMemoryBuffer, sp);
-								fullChannelImageBuffer = (char*)fullChannelImage->getDirectPointerToData(0,0,0,0,0);
+								char* fullChannelImageBuffer = _pMemoryBuffer;
+								shared_ptr<InternallyStoredImage<unsigned short> > fullChannelImage;
+								if (saveEnabledChannelsOnly)
+								{
+									fullChannelImage = createFullChannelCopy(_pMemoryBuffer, sp);
+									fullChannelImageBuffer = (char*)fullChannelImage->getDirectPointerToData(0, 0, 0, 0, 0, 0);
+								}
+								memcpy(pTilesImagePreviewBuffer + zMid * tileBufferSizeBytes, fullChannelImageBuffer, tileBufferSizeBytes);
+								//TODO: Add fastZ functionality for DFLIM
+								SaveFastZPreviewImageWithoutOME(&sp, pTilesImagePreviewBuffer, tilesInPreview * tileBufferSizeBytes);
 							}
-							memcpy(pTilesImagePreviewBuffer + zMid*tileBufferSizeBytes, fullChannelImageBuffer, tileBufferSizeBytes);
-							//TODO: Add fastZ functionality for DFLIM
-							SaveFastZPreviewImageWithoutOME(&sp, pTilesImagePreviewBuffer, tilesInPreview * tileBufferSizeBytes);
-						}
 
-						if(tFastZStimulus == previewIndex && updateRestTiles == TRUE) // user specify
-						{
-							char* fullChannelImageBuffer = _pMemoryBuffer;
-							shared_ptr<InternallyStoredImage<unsigned short> > fullChannelImage;
-							if(saveEnabledChannelsOnly)
+							if (tFastZStimulus == previewIndex && updateRestTiles == TRUE) // user specify
 							{
-								fullChannelImage = createFullChannelCopy(_pMemoryBuffer, sp);
-								fullChannelImageBuffer = (char*)fullChannelImage->getDirectPointerToData(0,0,0,0,0);
+								char* fullChannelImageBuffer = _pMemoryBuffer;
+								shared_ptr<InternallyStoredImage<unsigned short> > fullChannelImage;
+								if (saveEnabledChannelsOnly)
+								{
+									fullChannelImage = createFullChannelCopy(_pMemoryBuffer, sp);
+									fullChannelImageBuffer = (char*)fullChannelImage->getDirectPointerToData(0, 0, 0, 0, 0, 0);
+								}
+								memcpy(pTilesImagePreviewBuffer + zUsr * tileBufferSizeBytes, fullChannelImageBuffer, tileBufferSizeBytes);
+								//TODO: Add fastZ functionality for DFLIM
+								SaveFastZPreviewImageWithoutOME(&sp, pTilesImagePreviewBuffer, tilesInPreview * tileBufferSizeBytes);
 							}
-							memcpy(pTilesImagePreviewBuffer + zUsr * tileBufferSizeBytes, fullChannelImageBuffer, tileBufferSizeBytes);
-							//TODO: Add fastZ functionality for DFLIM
-							SaveFastZPreviewImageWithoutOME(&sp, pTilesImagePreviewBuffer, tilesInPreview * tileBufferSizeBytes);
-						}
 
-						if(tFastZStimulus == zstageSteps && updateRestTiles == TRUE) //bottom	//zIndex
-						{
-							char* fullChannelImageBuffer = _pMemoryBuffer;
-							shared_ptr<InternallyStoredImage<unsigned short> > fullChannelImage;
-							if(saveEnabledChannelsOnly)
+							if (tFastZStimulus == zstageSteps && updateRestTiles == TRUE) //bottom	//zIndex
 							{
-								fullChannelImage = createFullChannelCopy(_pMemoryBuffer, sp);
-								fullChannelImageBuffer = (char*)fullChannelImage->getDirectPointerToData(0,0,0,0,0);
+								char* fullChannelImageBuffer = _pMemoryBuffer;
+								shared_ptr<InternallyStoredImage<unsigned short> > fullChannelImage;
+								if (saveEnabledChannelsOnly)
+								{
+									fullChannelImage = createFullChannelCopy(_pMemoryBuffer, sp);
+									fullChannelImageBuffer = (char*)fullChannelImage->getDirectPointerToData(0, 0, 0, 0, 0, 0);
+								}
+								memcpy(pTilesImagePreviewBuffer + zBot * tileBufferSizeBytes, fullChannelImageBuffer, tileBufferSizeBytes);
+								//TODO: Add fastZ functionality for DFLIM
+								SaveFastZPreviewImageWithoutOME(&sp, pTilesImagePreviewBuffer, tilesInPreview * tileBufferSizeBytes);
+
+								_lastImageUpdateTime = GetTickCount();
+
+								updateRestTiles = FALSE;
 							}
-							memcpy(pTilesImagePreviewBuffer + zBot * tileBufferSizeBytes, fullChannelImageBuffer, tileBufferSizeBytes);
-							//TODO: Add fastZ functionality for DFLIM
-							SaveFastZPreviewImageWithoutOME(&sp, pTilesImagePreviewBuffer, tilesInPreview * tileBufferSizeBytes);
-
-							_lastImageUpdateTime = GetTickCount();
-
-							updateRestTiles = FALSE;
 						}
 					}
 				}
@@ -2935,13 +3124,13 @@ long AcquireTStream::Execute(long index, long subWell)
 			}
 			if(STORAGE_FINITE == storageMode)
 			{
-				if(0 == _messageID)
+				if (0 == _messageID && FALSE == alwaysSaveImagesOnStop)
 				{
-					_messageID = MessageBox(NULL,L"Experiment stopped. Would you like to save the already acquired images?",L"Save Experiment Files",MB_YESNO | MB_SETFOREGROUND | MB_ICONWARNING | MB_SYSTEMMODAL);	
-				}			
+					_messageID = MessageBox(NULL, L"Experiment stopped. Would you like to save the already acquired images?", L"Save Experiment Files", MB_YESNO | MB_SETFOREGROUND | MB_ICONWARNING | MB_SYSTEMMODAL);
+				}
 				//Allow save files based on user's decision:
-				if(IDYES == _messageID)			
-				{							
+				if (TRUE == alwaysSaveImagesOnStop || IDYES == _messageID)
+				{
 					break;
 				}
 				else if(IDNO == _messageID)
@@ -3057,12 +3246,17 @@ long AcquireTStream::Execute(long index, long subWell)
 	switch (storageMode)
 	{
 	case STORAGE_FINITE:
+	{
 		//#ifdef USE_VIRTUAL_ALLOC
-		if(useVirtualMemory)
-		{sp.pMemoryBuffer = pVirtualMemory;}
+		if (useVirtualMemory)
+		{
+			sp.pMemoryBuffer = pVirtualMemory;
+		}
 		//#else
 		else
-		{sp.pMemoryBuffer = _pMemoryBuffer;}
+		{
+			sp.pMemoryBuffer = _pMemoryBuffer;
+		}
 		//#endif
 
 		// Adjust T if OME-Tiff and stopped manually
@@ -3074,24 +3268,45 @@ long AcquireTStream::Execute(long index, long subWell)
 			}
 		}
 		DestroyImages(sp.imageIDsMap);
+
+		map<long, long> regionImageIDsMap;
+		for (map<long, long>::iterator imageIt = sp.regionImageIDsMap.begin(); imageIt != sp.regionImageIDsMap.end(); imageIt++)
+		{
+			regionImageIDsMap[imageIt->first] = imageIt->second;
+		}
 		DestroyImages(sp.regionImageIDsMap);
 		//no post process if Big tiff without compression or average
-		if ((1 < t)	&& ((CaptureFile::FILE_BIG_TIFF != (CaptureFile)sp.fileType) || (TRUE == sp.doCompression) || (1 < avgFrames)))
+		if ((1 < t) && ((CaptureFile::FILE_BIG_TIFF != (CaptureFile)sp.fileType) || (TRUE == sp.doCompression) || (1 < avgFrames)))
 		{
 			//images are acquired, otherwise could be due to camera HW timed out or error
-			sp.numFramesToSave = sp.regionMap.begin()->second.SizeT = t-1;		//No matter stopStatus, total frames will be equal to t-1.
-			HandleStimStreamRawFile(&sp,RESIZE_SINGLE_STIMULUS, std::wstring(), std::wstring(), !saveEnabledChannelsOnly);
-			SaveImagesPostCapture(index, subWell, t-1, &sp, !saveEnabledChannelsOnly, subWell);
+			sp.numFramesToSave = sp.regionMap.begin()->second.SizeT = t - 1;		//No matter stopStatus, total frames will be equal to t-1.
+
+			if (MesoScanTypes::Micro == viewMode)
+			{
+				for (map<long, ScanRegion>::iterator imageIt = sp.regionMap.begin(); imageIt != sp.regionMap.end(); imageIt++) //regionMap available for both meso and micro scans
+				{
+					HandleStimStreamRawFile(&sp, RESIZE_SINGLE_STIMULUS, std::wstring(), std::wstring(), !saveEnabledChannelsOnly, regionImageIDsMap[imageIt->first], imageIt->second.RegionID);
+				}
+			}
+			else
+			{
+
+				HandleStimStreamRawFile(&sp, RESIZE_SINGLE_STIMULUS, std::wstring(), std::wstring(), !saveEnabledChannelsOnly);
+			}
+
+			SaveImagesPostCapture(index, subWell, t - 1, &sp, !saveEnabledChannelsOnly, subWell, regionImageIDsMap);
 		}
-		if((1 >= t) || (CaptureFile::FILE_RAW != (CaptureFile)sp.fileType))
-			HandleStimStreamRawFile(&sp,DELETE_RAW, std::wstring(), std::wstring(), !saveEnabledChannelsOnly);
+		if ((1 >= t) || (CaptureFile::FILE_RAW != (CaptureFile)sp.fileType))
+			HandleStimStreamRawFile(&sp, DELETE_RAW, std::wstring(), std::wstring(), !saveEnabledChannelsOnly);
 		if (MesoScanTypes::Micro == viewMode)
 		{
 			//[ToDo] do compression of big tiff...
 			if (TRUE == sp.doCompression)
-			{}
+			{
+			}
 			//clear all temp files
-			HandleStimStreamRawFile(&sp,DELETE_ALL_TEMP);
+			HandleStimStreamRawFile(&sp, DELETE_ALL_TEMP);
+		}
 		}
 		bigTiff->ClearImageStore();
 		break;
@@ -3282,7 +3497,7 @@ void CalculateFileSize(DWORD highOrderIn,DWORD lowOrderIn,LARGE_INTEGER sizeLong
 	highOrderSize += static_cast<DWORD>(localSize.HighPart);
 	highOrderSize += highOrderIn;
 }
-long AcquireTStream::HandleStimStreamRawFile(SaveParams *sp,long jobID, std::wstring lhsFilename, std::wstring rhsFilename, bool rawContainsDisabledChannels)
+long AcquireTStream::HandleStimStreamRawFile(SaveParams *sp,long jobID, std::wstring lhsFilename, std::wstring rhsFilename, bool rawContainsDisabledChannels, long regionTempID, long regionID, bool keepAppendedFile)
 {
 	long ret = TRUE;
 	wchar_t drive[_MAX_DRIVE];
@@ -3312,32 +3527,37 @@ long AcquireTStream::HandleStimStreamRawFile(SaveParams *sp,long jobID, std::wst
 
 	long imgIndxDigiCnts = ResourceManager::getInstance()->GetSettingsParamLong((int)SettingsFileType::APPLICATION_SETTINGS,L"ImageNameFormat",L"indexDigitCounts", (int)Constants::DEFAULT_FILE_FORMAT_DIGITS);
 	std::wstringstream imgNameFormat;
+	std::wstringstream newRegionImageNameFormat;
 	if (MesoScanTypes::Micro == viewMode)
-		imgNameFormat << L"%s%s\\Image_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.raw";
+	{
+		imgNameFormat << L"%s%sImage_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.tmp";
+		newRegionImageNameFormat << L"%s%sImage_scan_%d_region_%d.raw";
+	}
 	else
-		imgNameFormat << L"%s%s\\Image_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.raw";
-
+	{
+		imgNameFormat << L"%s%sImage_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.raw";
+	}
 	std::wstringstream dflimImageNameFormat;	
-	dflimImageNameFormat << L"%s%s\\Image_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.dFLIM";
+	dflimImageNameFormat << L"%s%sImage_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.dFLIM";
 
 	std::wstringstream dflimHistoNameFormatOriginal;
-	dflimHistoNameFormatOriginal << L"%s%s\\Image_dFLIMHisto_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.raw";
+	dflimHistoNameFormatOriginal << L"%s%sImage_dFLIMHisto_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.raw";
 
 	std::wstringstream dflimSinglePhotonNameFormatOriginal;
-	dflimSinglePhotonNameFormatOriginal << L"%s%s\\Image_dFLIMSinglePhoton_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.raw";
+	dflimSinglePhotonNameFormatOriginal << L"%s%sImage_dFLIMSinglePhoton_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.raw";
 
 	std::wstringstream dflimArrivalTimeSumNameFormatOriginal;
-	dflimArrivalTimeSumNameFormatOriginal << L"%s%s\\Image_dFLIMArrivalTimeSum_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.raw";
+	dflimArrivalTimeSumNameFormatOriginal << L"%s%sImage_dFLIMArrivalTimeSum_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.raw";
 
 	std::wstringstream dflimPhotonsNameFormat;
-	dflimPhotonsNameFormat << L"%s%s\\Image_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.photons";		
+	dflimPhotonsNameFormat << L"%s%sImage_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.photons";		
 	std::wstringstream dflimPhotonsNameFormatOriginal;
-	dflimPhotonsNameFormatOriginal << L"%s%s\\Image_photons_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.raw";
+	dflimPhotonsNameFormatOriginal << L"%s%sImage_photons_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.raw";
 
 	std::wstringstream strmNameFormat;
-	strmNameFormat << L"%s%s\\Stream_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.tmp";
+	strmNameFormat << L"%s%s\Stream_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.tmp";
 	std::wstringstream tisNameFormat;
-	tisNameFormat << L"%s%s\\TIS_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.tmp";
+	tisNameFormat << L"%s%s\TIS_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.tmp";
 
 	switch (jobID)
 	{
@@ -3349,7 +3569,7 @@ long AcquireTStream::HandleStimStreamRawFile(SaveParams *sp,long jobID, std::wst
 			if(STORAGE_FINITE == sp->storageMode)
 			{
 				if (MesoScanTypes::Micro == viewMode)
-					StringCbPrintfW(rawName,_MAX_PATH,imgNameFormat.str().c_str(),drive,dir);
+					StringCbPrintfW(rawName,_MAX_PATH,imgNameFormat.str().c_str(),drive,dir, regionTempID);
 				else
 					StringCbPrintfW(rawName,_MAX_PATH,imgNameFormat.str().c_str(),drive,dir,sp->index,sp->subWell);
 				if (sp->imageMethod == 1)  //if dflim capture
@@ -3365,9 +3585,19 @@ long AcquireTStream::HandleStimStreamRawFile(SaveParams *sp,long jobID, std::wst
 				StringCbPrintfW(rawName,_MAX_PATH,strmNameFormat.str().c_str(),drive,dir,sp->imageIDsMap[BufferType::INTENSITY]);
 			}
 
+			ScanRegion scanRegion;
+			if (MesoScanTypes::Micro == viewMode)
+			{
+				scanRegion = sp->regionMap[regionID];
+			}
+			else
+			{
+				scanRegion = sp->regionMap.begin()->second;
+			}
+
 			//=== Open Raw File ===
-			int actualDepth = (sp->regionMap.begin()->second.SizeZ > 0) ? sp->regionMap.begin()->second.SizeZ + sp->fastFlybackFrames : 1;
-			RawFile<unsigned short> rawFile(wstring(rawName), sp->regionMap.begin()->second.SizeX, sp->regionMap.begin()->second.SizeY, actualDepth ,sp->bufferChannels.begin()->second,1, rawContainsDisabledChannels, getEnabledChannelIndices(*sp), GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
+			int actualDepth = (scanRegion.SizeZ > 0) ? scanRegion.SizeZ + sp->fastFlybackFrames : 1;
+			RawFile<unsigned short> rawFile(wstring(rawName), scanRegion.SizeX, scanRegion.SizeY, actualDepth ,sp->bufferChannels.begin()->second,1, rawContainsDisabledChannels, getEnabledChannelIndices(*sp), GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
 
 			//=== Resize the File ===
 			rawFile.shortenSeriesToTotalZSlices(sp->numFramesToSave * sp->avgFrames);
@@ -3385,9 +3615,9 @@ long AcquireTStream::HandleStimStreamRawFile(SaveParams *sp,long jobID, std::wst
 				long histoHeight = sp->dimensionsMap[BufferType::DFLIM_HISTOGRAM].y;
 				RawFile<UINT32> rawFileDFLIMHisto(wstring(rawdFLIMHistoName), histoWidth, histoHeight, actualDepth ,sp->bufferChannels.begin()->second,1, rawContainsDisabledChannels, getEnabledChannelIndices(*sp), GenericImage<UINT32>::CONTIGUOUS_CHANNEL_DFLIM_HISTO);
 
-				RawFile<unsigned short> rawFileDFLIMSinglePhoton(wstring(rawdFLIMSinglePhotonName), sp->regionMap.begin()->second.SizeX, sp->regionMap.begin()->second.SizeY, actualDepth ,sp->bufferChannels.begin()->second,1, rawContainsDisabledChannels, getEnabledChannelIndices(*sp), GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
+				RawFile<unsigned short> rawFileDFLIMSinglePhoton(wstring(rawdFLIMSinglePhotonName), scanRegion.SizeX, scanRegion.SizeY, actualDepth ,sp->bufferChannels.begin()->second,1, rawContainsDisabledChannels, getEnabledChannelIndices(*sp), GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
 
-				RawFile<UINT32> rawFileDFLIMArrivalTimeSum(wstring(rawdFLIMArrivalTimeSumName), sp->regionMap.begin()->second.SizeX, sp->regionMap.begin()->second.SizeY, actualDepth ,sp->bufferChannels.begin()->second,1, rawContainsDisabledChannels, getEnabledChannelIndices(*sp), GenericImage<UINT32>::CONTIGUOUS_CHANNEL);
+				RawFile<UINT32> rawFileDFLIMArrivalTimeSum(wstring(rawdFLIMArrivalTimeSumName), scanRegion.SizeX, scanRegion.SizeY, actualDepth ,sp->bufferChannels.begin()->second,1, rawContainsDisabledChannels, getEnabledChannelIndices(*sp), GenericImage<UINT32>::CONTIGUOUS_CHANNEL);
 
 				long photonListWidth = sp->dimensionsMap[BufferType::DFLIM_PHOTONS].x;
 				long photonListHeight = sp->dimensionsMap[BufferType::DFLIM_PHOTONS].y;
@@ -3436,7 +3666,7 @@ long AcquireTStream::HandleStimStreamRawFile(SaveParams *sp,long jobID, std::wst
 					if (sp->imageMethod == 1 && (1 == sp->firstFrameIndex || STORAGE_FINITE == sp->storageMode))
 					{
 						if (MesoScanTypes::Micro == viewMode)
-							StringCbPrintfW(rawName,_MAX_PATH,imgNameFormat.str().c_str(),drive,dir);
+							StringCbPrintfW(rawName,_MAX_PATH,imgNameFormat.str().c_str(),drive,dir, regionTempID);
 						else
 							StringCbPrintfW(newName,_MAX_PATH,imgNameFormat.str().c_str(),drive,dir,sp->index,sp->subWell);
 						StringCbPrintfW(newdFLIMImageName,_MAX_PATH,dflimImageNameFormat.str().c_str(),drive,dir,sp->index,sp->subWell);	
@@ -3452,7 +3682,10 @@ long AcquireTStream::HandleStimStreamRawFile(SaveParams *sp,long jobID, std::wst
 						FindClose(hFile);
 						hFile = NULL;	
 
-						HandleStimStreamRawFile(sp, COMBINE_TWO_STIMULUS, newdFLIMImageName, rawName, rawContainsDisabledChannels);
+						//we want keep a copy the raw file and to append the file to the dFLIMHistograms, dFLIMSinglePhoton, and dFLIMArrivalTimeSum
+						//.dFLIM file will be composed as follows: dFLIMHistograms|RAW Intensity(photon count)|dFLIMSinglePhoton|dFLIMArrivalTimeSum
+						HandleStimStreamRawFile(sp, COMBINE_TWO_STIMULUS, newdFLIMImageName, rawName, rawContainsDisabledChannels, -1, -1, true);						
+						
 						HandleStimStreamRawFile(sp, COMBINE_TWO_STIMULUS, newdFLIMImageName, rawdFLIMSinglePhotonName, rawContainsDisabledChannels);
 						HandleStimStreamRawFile(sp, COMBINE_TWO_STIMULUS, newdFLIMImageName, rawdFLIMArrivalTimeSumName, rawContainsDisabledChannels);
 
@@ -3467,7 +3700,9 @@ long AcquireTStream::HandleStimStreamRawFile(SaveParams *sp,long jobID, std::wst
 						if (1 == sp->firstFrameIndex || STORAGE_FINITE == sp->storageMode)
 						{
 							if (MesoScanTypes::Micro == viewMode)
-								StringCbPrintfW(rawName,_MAX_PATH,imgNameFormat.str().c_str(),drive,dir);
+								StringCbPrintfW(rawName, _MAX_PATH, imgNameFormat.str().c_str(), drive, dir, regionTempID);
+								//StringCbPrintfW(newName, _MAX_PATH, imgNameFormat.str().c_str(), drive, dir, sp->index, sp->subWell);
+								//StringCbPrintfW(rawName,_MAX_PATH,imgNameFormat.str().c_str(),drive,dir);
 							else
 								StringCbPrintfW(newName,_MAX_PATH,imgNameFormat.str().c_str(),drive,dir,sp->index,sp->subWell);
 						}
@@ -3477,13 +3712,19 @@ long AcquireTStream::HandleStimStreamRawFile(SaveParams *sp,long jobID, std::wst
 						}					
 
 						hFile = FindFirstFile(rawName, &FindFileData);
-						_wrename(rawName,newName);					
+						//check if newName contains any of the allowed extensions. If not, it is not a valid name and should not be used as a file name
+						if (std::any_of(std::begin(allowedExtensions),std::end(allowedExtensions), [newName](const std::wstring str) {return std::wstring(newName).find(str) != std::string::npos;}))
+						{
+							_wrename(rawName, newName);
+						}
 						FindClose(hFile);
 						hFile = NULL;
 					}
 				}
 				else
 				{
+					StringCbPrintfW(message, 1024, L"%s", L"RunSample: HandleStimStreamRawFile - Raw File Not Valid");
+					logDll->TLTraceEvent(ERROR_EVENT, 1, message);
 					SAFE_DELETE_HANDLE(hFile);
 					ret = FALSE;
 				}
@@ -3511,7 +3752,7 @@ long AcquireTStream::HandleStimStreamRawFile(SaveParams *sp,long jobID, std::wst
 									{
 										uint16_t i= static_cast<uint16_t>(it->first);
 										uint16_t channel=(sp->bufferChannels[imageIt->first] > 1 ? static_cast<uint16_t>(it->second) : 0);
-										char* bufferAtPos = (char*)img.getDirectPointerToData(0,0,z,channel,0);
+										char* bufferAtPos = (char*)img.getDirectPointerToData(0,0,0,z,channel,0);
 										//use headerInfo to determine if hyperspectral capture
 										if(nullptr == sp->_pHeaderInfo)
 										{
@@ -3622,7 +3863,10 @@ long AcquireTStream::HandleStimStreamRawFile(SaveParams *sp,long jobID, std::wst
 				SAFE_DELETE_HANDLE(hAppend);
 
 				//delete second file:
-				CFuncErrChk(L"DeleteFile", DeleteFile(newName), false);
+				if (!keepAppendedFile)
+				{
+					CFuncErrChk(L"DeleteFile", DeleteFile(newName), false);
+				}
 				hFile = FindFirstFile(rawName, &FindFileData);
 				FindClose(hFile);
 				hFile = NULL;
@@ -3664,7 +3908,10 @@ long AcquireTStream::HandleStimStreamRawFile(SaveParams *sp,long jobID, std::wst
 		try
 		{	
 			bool doRename = false;
-			StringCbPrintfW(rawName,_MAX_PATH,tisNameFormat.str().c_str(),drive,dir,sp->imageIDsMap[BufferType::INTENSITY]);
+			if (MesoScanTypes::Micro == viewMode)
+				StringCbPrintfW(rawName, _MAX_PATH, imgNameFormat.str().c_str(), drive, dir, regionTempID);
+			else
+				StringCbPrintfW(rawName,_MAX_PATH,tisNameFormat.str().c_str(),drive,dir,sp->imageIDsMap[BufferType::INTENSITY]);
 			hFile = FindFirstFile(rawName, &FindFileData);
 
 			if (hFile != INVALID_HANDLE_VALUE)
@@ -3686,8 +3933,15 @@ long AcquireTStream::HandleStimStreamRawFile(SaveParams *sp,long jobID, std::wst
 			}
 			if(doRename)
 			{
-				StringCbPrintfW(rawName,_MAX_PATH,L"%s%s\\%s",drive,dir,FindFileData.cFileName);
-				StringCbPrintfW(newName,_MAX_PATH,imgNameFormat.str().c_str(),drive,dir,sp->index,sp->subWell);
+				if (MesoScanTypes::Micro == viewMode)
+				{
+					StringCbPrintfW(newName, _MAX_PATH, newRegionImageNameFormat.str().c_str(), drive, dir, sp->index, regionID);
+				}
+				else
+				{
+					StringCbPrintfW(rawName, _MAX_PATH, L"%s%s\\%s", drive, dir, FindFileData.cFileName);
+					StringCbPrintfW(newName, _MAX_PATH, imgNameFormat.str().c_str(), drive, dir, sp->index, sp->subWell);
+				}
 				_wrename(rawName,newName);	
 			}
 			FindClose(hFile);
@@ -3858,29 +4112,51 @@ void AcquireTStream::SaveFastZPreviewImageWithoutOME(SaveParams *sp, char *buffe
 		frameInfo,
 		sp->lsmChannels,FALSE,TRUE,FALSE);
 
-	long channel = 0;
-	for(long i=0; i<sp->colorChannels; i++)
+	long numBufferChannels = 1;
+	if (!sp->bufferChannels.empty())
 	{
-		_wsplitpath_s(sp->path.c_str(),drive,_MAX_DRIVE,dir,_MAX_DIR,fname,_MAX_FNAME,ext,_MAX_EXT);
-		StringCbPrintfW(filePathAndName,_MAX_PATH,L"%s%s%S_Preview.tif",drive,dir,sp->wavelengthName[i].c_str());
+		numBufferChannels = sp->bufferChannels.begin()->second;
+	}
+	else
+	{
+		logDll->TLTraceEvent(ERROR_EVENT, 1, L"Number of Buffer Channels for FastZ Preview image was 0.");
+	}
 
-		logDll->TLTraceEvent(VERBOSE_EVENT,1,filePathAndName);
-
+	if (sp->isCombinedChannels)
+	{
+		_wsplitpath_s(sp->path.c_str(), drive, _MAX_DRIVE, dir, _MAX_DIR, fname, _MAX_FNAME, ext, _MAX_EXT);
+		StringCbPrintfW(filePathAndName, _MAX_PATH, L"%s%s%S_Preview.tif", drive, dir, sp->wavelengthName[0].c_str());
+		logDll->TLTraceEvent(VERBOSE_EVENT, 1, filePathAndName);
 		string imageDescription = "";
-
-		for (long ch=0;ch<sp->bufferChannels.begin()->second;ch++)
+		SaveTiledTiff(filePathAndName, buffer, bufferSizeBytes, 2 * sp->regionMap[sp->previewRegionID].SizeX, 2 * sp->regionMap[sp->previewRegionID].SizeY, sp->regionMap[sp->previewRegionID].SizeX, sp->regionMap[sp->previewRegionID].SizeY, numBufferChannels, sp->colorChannels, 0, sp->umPerPixel, imageDescription, false, true);
+	}
+	else
+	{
+		long channel = 0;
+		for (long i = 0; i < sp->colorChannels; i++)
 		{
-			if(0 == sp->wavelengthName[i].compare(AcquireFactory::bufferChannelName[ch]))
-			{	channel = ch;	}
-		}
+			_wsplitpath_s(sp->path.c_str(), drive, _MAX_DRIVE, dir, _MAX_DIR, fname, _MAX_FNAME, ext, _MAX_EXT);
+			StringCbPrintfW(filePathAndName, _MAX_PATH, L"%s%s%S_Preview.tif", drive, dir, sp->wavelengthName[i].c_str());
 
-		SaveTiledTiff(filePathAndName, buffer, bufferSizeBytes, 2 * sp->regionMap[sp->previewRegionID].SizeX, 2 * sp->regionMap[sp->previewRegionID].SizeY, sp->regionMap[sp->previewRegionID].SizeX, sp->regionMap[sp->previewRegionID].SizeY, sp->colorChannels, channel, sp->umPerPixel, imageDescription, false);
+			logDll->TLTraceEvent(VERBOSE_EVENT, 1, filePathAndName);
+
+			string imageDescription = "";
+
+			for (long ch = 0; ch < sp->bufferChannels.begin()->second; ch++)
+			{
+				if (0 == sp->wavelengthName[i].compare(AcquireFactory::bufferChannelName[ch]))
+				{
+					channel = ch;
+				}
+			}
+
+			SaveTiledTiff(filePathAndName, buffer, bufferSizeBytes, 2 * sp->regionMap[sp->previewRegionID].SizeX, 2 * sp->regionMap[sp->previewRegionID].SizeY, sp->regionMap[sp->previewRegionID].SizeX, sp->regionMap[sp->previewRegionID].SizeY, numBufferChannels, sp->colorChannels, channel, sp->umPerPixel, imageDescription, false, false);
+		}
 	}
 }
 
 void AcquireTStream::SavePreviewImage(SaveParams *sp, long tFrameOneBased, char * buffer, long saveEnabledChannelsOnly)
 {
-
 	wchar_t filePathAndName[_MAX_PATH];
 	const int COLOR_MAP_SIZE = 65536;
 	unsigned short rlut[COLOR_MAP_SIZE];
@@ -3951,47 +4227,172 @@ void AcquireTStream::SavePreviewImage(SaveParams *sp, long tFrameOneBased, char 
 			frameInfo,
 			sp->lsmChannels,FALSE,TRUE,saveEnabledChannelsOnly);
 
-
-		for(long i=0; i<sp->colorChannels; i++)
+		if (sp->isCombinedChannels)
 		{
-			GetLookUpTables(rlut, glut, blut, sp->red[i], sp->green[i], sp->blue[i], sp->bp[i], sp->wp[i],COLOR_MAP_BIT_DEPTH_TIFF);		
+			// combined each channel into a single TIFF (ignores LUT)
+			GetLookUpTables(rlut, glut, blut, 255, 255, 255, sp->bp[0], sp->wp[0], COLOR_MAP_BIT_DEPTH_TIFF);
 
-			//		StringCbPrintfW(filePathAndName,_MAX_PATH,L"%s%s%S_%04d_%04d_%04d_%04d.tif",drive,dir,sp->wavelengthName[i].c_str(),sp->index,sp->subWell,1,tFrameOneBased);
-			StringCbPrintfW(filePathAndName,_MAX_PATH,L"%s%s%S_Preview.tif",drive,dir,sp->wavelengthName[i].c_str());
+			StringCbPrintfW(filePathAndName, _MAX_PATH, L"%s%s%S_Preview.tif", drive, dir, sp->wavelengthName[0].c_str());
 			//determine channel:
-			for (long ch=0;ch<sp->bufferChannels[sp->previewRegionID];ch++)
+			for (long ch = 0; ch < sp->bufferChannels[sp->previewRegionID]; ch++)
 			{
-				if(0 == sp->wavelengthName[i].compare(AcquireFactory::bufferChannelName[ch]))
-				{	channel = ch;	}
+				if (0 == sp->wavelengthName[0].compare(AcquireFactory::bufferChannelName[ch]))
+				{
+					channel = ch;
+				}
 			}
-			logDll->TLTraceEvent(VERBOSE_EVENT,1,filePathAndName);
+			logDll->TLTraceEvent(VERBOSE_EVENT, 1, filePathAndName);
+			string timeStamp = "";
+			double dt = 0;
 
-			if(sp->wavelengthName[i].size() > 0)
+			SaveTIFF(filePathAndName, buffer, // file path
+				sp->regionMap[sp->previewRegionID].SizeX, sp->regionMap[sp->previewRegionID].SizeY, // width height
+				rlut, glut, blut, sp->umPerPixel, // rgb LUT and um per pixel
+				sp->colorChannels, size, 1, // nc nt nz
+				0, // time increment
+				0, tFrameOneBased - 1, 0, // c t z
+				&timeStamp, dt, // acquired data time, delta T
+				nullptr, // ome tiff metadata
+				physicalSize, // physical size
+				doCompression, // compression
+				true); // is multichannel
+		}
+		else
+		{
+
+			for (long i = 0; i < sp->colorChannels; i++)
 			{
-				long bufferOffset = (saveEnabledChannelsOnly) ? i*sp->regionMap[sp->previewRegionID].SizeX*sp->regionMap[sp->previewRegionID].SizeY*sizeof(USHORT) : channel*sp->regionMap[sp->previewRegionID].SizeX*sp->regionMap[sp->previewRegionID].SizeY*sizeof(USHORT);
+				GetLookUpTables(rlut, glut, blut, sp->red[i], sp->green[i], sp->blue[i], sp->bp[i], sp->wp[i], COLOR_MAP_BIT_DEPTH_TIFF);
 
-				string timeStamp = "";
-				double dt = 0;
+				//		StringCbPrintfW(filePathAndName,_MAX_PATH,L"%s%s%S_%04d_%04d_%04d_%04d.tif",drive,dir,sp->wavelengthName[i].c_str(),sp->index,sp->subWell,1,tFrameOneBased);
+				StringCbPrintfW(filePathAndName, _MAX_PATH, L"%s%s%S_Preview.tif", drive, dir, sp->wavelengthName[i].c_str());
+				//determine channel:
+				for (long ch = 0; ch < sp->bufferChannels[sp->previewRegionID]; ch++)
+				{
+					if (0 == sp->wavelengthName[i].compare(AcquireFactory::bufferChannelName[ch]))
+					{
+						channel = ch;
+					}
+				}
+				logDll->TLTraceEvent(VERBOSE_EVENT, 1, filePathAndName);
 
-				SaveTIFFWithoutOME(filePathAndName,
-					buffer+bufferOffset,
-					sp->regionMap[sp->previewRegionID].SizeX,
-					sp->regionMap[sp->previewRegionID].SizeY,
-					rlut,
-					glut,
-					blut, 
-					sp->umPerPixel,
-					sp->colorChannels, 
-					size, 
-					1, 
-					0, 
-					channel, 
-					tFrameOneBased-1, 
-					0, 
-					&timeStamp, 
-					dt,
-					doCompression);			
+				if (sp->wavelengthName[i].size() > 0)
+				{
+					long bufferOffset = (saveEnabledChannelsOnly) ? i * sp->regionMap[sp->previewRegionID].SizeX * sp->regionMap[sp->previewRegionID].SizeY * sizeof(USHORT) : channel * sp->regionMap[sp->previewRegionID].SizeX * sp->regionMap[sp->previewRegionID].SizeY * sizeof(USHORT);
+
+					string timeStamp = "";
+					double dt = 0;
+
+					SaveTIFF(filePathAndName,
+						buffer + bufferOffset,
+						sp->regionMap[sp->previewRegionID].SizeX,
+						sp->regionMap[sp->previewRegionID].SizeY,
+						rlut,
+						glut,
+						blut,
+						sp->umPerPixel,
+						sp->colorChannels,
+						size,
+						1,
+						0,
+						channel,
+						tFrameOneBased - 1,
+						0,
+						&timeStamp,
+						dt,
+						nullptr,
+						physicalSize,
+						doCompression,
+						false);
+				}
 			}
+		}
+	}
+}
+
+void AcquireTStream::SavePreviewImagemROI(SaveParams* sp, long tFrameOneBased, char* buffer, long saveEnabledChannelsOnly, long regionID)
+{
+	wchar_t filePathAndName[_MAX_PATH];
+	const int COLOR_MAP_SIZE = 65536;
+	unsigned short rlut[COLOR_MAP_SIZE];
+	unsigned short glut[COLOR_MAP_SIZE];
+	unsigned short blut[COLOR_MAP_SIZE];
+
+	const int COLOR_MAP_BIT_DEPTH_TIFF = 8;
+
+	wchar_t drive[_MAX_DRIVE];
+	wchar_t dir[_MAX_DIR];
+	wchar_t fname[_MAX_FNAME];
+	wchar_t ext[_MAX_EXT];
+
+	_wsplitpath_s(sp->path.c_str(), drive, _MAX_DRIVE, dir, _MAX_DIR, fname, _MAX_FNAME, ext, _MAX_EXT);
+
+
+	long size = sp->regionMap[regionID].SizeT;
+	long channel = 0;
+
+	PhysicalSize physicalSize;	// unit: um
+	double res = round(sp->umPerPixel * Constants::UM_TO_MM) / Constants::UM_TO_MM;	// keep 2 figures after decimal point, that is why 100 (10^2) is multiplied
+	physicalSize.x = res;
+	physicalSize.y = res;
+	physicalSize.z = _zstageStepSize;
+
+	long doOME = FALSE;//No OME for preview images
+	long doCompression = FALSE;//Never Compress Preview Images
+	FrameInfoStruct frameInfo;
+	frameInfo.bufferType = BufferType::INTENSITY;
+	frameInfo.imageWidth = sp->regionMap[regionID].SizeX;
+	frameInfo.imageHeight = sp->regionMap[regionID].SizeY;
+	//send buffer to statsManager for ROIStats calculation and storage
+	StatsManager::getInstance()->ComputeStats((unsigned short*)buffer,
+		frameInfo,
+		sp->lsmChannels, FALSE, TRUE, saveEnabledChannelsOnly);
+
+
+	for (long i = 0; i < sp->colorChannels; i++)
+	{
+		GetLookUpTables(rlut, glut, blut, sp->red[i], sp->green[i], sp->blue[i], sp->bp[i], sp->wp[i], COLOR_MAP_BIT_DEPTH_TIFF);
+
+		//		StringCbPrintfW(filePathAndName,_MAX_PATH,L"%s%s%S_%04d_%04d_%04d_%04d.tif",drive,dir,sp->wavelengthName[i].c_str(),sp->index,sp->subWell,1,tFrameOneBased);
+		StringCbPrintfW(filePathAndName, _MAX_PATH, L"%s%s%S_region_%d_Preview.tif", drive, dir, sp->wavelengthName[i].c_str(), regionID);
+		//determine channel:
+		for (long ch = 0; ch < sp->bufferChannels[sp->previewRegionID]; ch++)
+		{
+			if (0 == sp->wavelengthName[i].compare(AcquireFactory::bufferChannelName[ch]))
+			{
+				channel = ch;
+			}
+		}
+		logDll->TLTraceEvent(VERBOSE_EVENT, 1, filePathAndName);
+
+		if (sp->wavelengthName[i].size() > 0)
+		{
+			long bufferOffset = (saveEnabledChannelsOnly) ? i * sp->regionMap[regionID].SizeX * sp->regionMap[regionID].SizeY * sizeof(USHORT) : channel * sp->regionMap[regionID].SizeX * sp->regionMap[regionID].SizeY * sizeof(USHORT);
+
+			string timeStamp = "";
+			double dt = 0;
+
+			SaveTIFF(filePathAndName,
+				buffer + bufferOffset,
+				sp->regionMap[regionID].SizeX,
+				sp->regionMap[regionID].SizeY,
+				rlut,
+				glut,
+				blut,
+				sp->umPerPixel,
+				sp->colorChannels,
+				size,
+				1,
+				0,
+				channel,
+				tFrameOneBased - 1,
+				0,
+				&timeStamp,
+				dt,
+				nullptr,
+				physicalSize,
+				doCompression,
+				false);
 		}
 	}
 }
@@ -4126,7 +4527,7 @@ void AcquireTStream::SaveData( SaveParams *sp, long imageMode, bool stopCheckAll
 
 	long imgIndxDigiCnts = ResourceManager::getInstance()->GetSettingsParamLong((int)SettingsFileType::APPLICATION_SETTINGS,L"ImageNameFormat",L"indexDigitCounts", (int)Constants::DEFAULT_FILE_FORMAT_DIGITS);
 	std::wstringstream imgNameFormatR;
-	imgNameFormatR << L"%s%s\\Image_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.raw";
+	imgNameFormatR << L"%s%sImage_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.raw";
 
 	if(FALSE == imageMode)		//Not using imageManager
 	{
@@ -4179,61 +4580,91 @@ void AcquireTStream::SaveData( SaveParams *sp, long imageMode, bool stopCheckAll
 		{
 			try
 			{
-				for(auto it=activeChannels.begin(); it!=activeChannels.end(); ++it)
+				if (sp->isCombinedChannels && CaptureFile::FILE_TIFF == (CaptureFile)sp->fileType)
 				{
-					long i=it->first;
-					long channel=(sp->bufferChannels.begin()->second > 1 ? it->second : 0);
-
+					// handle image saving for combined-channel images (all channels saved to a single image) 
+					// NOTE: combined-channel images are currently only supported when all channels are enabled.
 					if (IExperiment::HYPERSPECTRAL == captureMode)
 					{
-						StringCbPrintfW(filePathAndName,_MAX_PATH,imgNameFormat.str().c_str(),drive,dir,sp->wavelengthName[i].c_str(),t + 1,sp->subWell,z+1,1);
+						StringCbPrintfW(filePathAndName, _MAX_PATH, imgNameFormat.str().c_str(), drive, dir, sp->wavelengthName[0].c_str(), t + 1, sp->subWell, z + 1, 1);
 					}
 					else
 					{
-						StringCbPrintfW(filePathAndName,_MAX_PATH,imgNameFormat.str().c_str(),drive,dir,sp->wavelengthName[i].c_str(),sp->index,sp->subWell,z+1,t+1);
+						StringCbPrintfW(filePathAndName, _MAX_PATH, imgNameFormat.str().c_str(), drive, dir, sp->wavelengthName[0].c_str(), sp->index, sp->subWell, z + 1, t + 1);
 					}
-					logDll->TLTraceEvent(VERBOSE_EVENT,1,filePathAndName);
+					logDll->TLTraceEvent(VERBOSE_EVENT, 1, filePathAndName);
 
-					//=== Save Tiff ===
-					if((sp->wavelengthName[i].size() > 0))
+					timeStamp = _acquireSaveInfo->getInstance()->RemoveTimestamp();
+					dt = _acquireSaveInfo->getInstance()->RemoveTimingInfo();
+					char* bufferAtPos = (char*)img.getDirectPointerToData(0, 0, 0, z, 0, 0);
+					const int numChannels = sp->colorChannels;
+					const int width = sp->regionMap[sp->previewRegionID].SizeX;
+					const int height = sp->regionMap[sp->previewRegionID].SizeY;
+
+					string* omeTiffData = doOME ? &strOme : nullptr;
+					SaveTIFF(filePathAndName, bufferAtPos, // file path
+						width, height, // width height
+						rlut, glut, blut, sp->umPerPixel, // rgb LUT and um per pixel
+						sp->colorChannels, totT, sp->regionMap.begin()->second.SizeZ, // nc nt nz
+						0, // time increment
+						0, t, z, // c t z
+						&timeStamp, dt, // acquired data time, delta T
+						omeTiffData, // ome tiff metadata
+						physicalSize,
+						doCompression, // compression
+						true); // is multichannel
+				}
+				else
+				{
+					for (auto it = activeChannels.begin(); it != activeChannels.end(); ++it)
 					{
-						if(i==0)
+						long i = it->first;
+						long channel = (sp->bufferChannels.begin()->second > 1 ? it->second : 0);
+
+						if (IExperiment::HYPERSPECTRAL == captureMode)
 						{
-							timeStamp = _acquireSaveInfo->getInstance()->RemoveTimestamp();
-							dt= _acquireSaveInfo->getInstance()->RemoveTimingInfo();
+							StringCbPrintfW(filePathAndName, _MAX_PATH, imgNameFormat.str().c_str(), drive, dir, sp->wavelengthName[i].c_str(), t + 1, sp->subWell, z + 1, 1);
 						}
-
-						//Call Save
-						char* bufferAtPos = (char*)img.getDirectPointerToData(0,0,z,channel,0);
-
-						switch ((CaptureFile)sp->fileType)
+						else
 						{
-						case CaptureFile::FILE_TIFF:
-							if (TRUE == doOME)
+							StringCbPrintfW(filePathAndName, _MAX_PATH, imgNameFormat.str().c_str(), drive, dir, sp->wavelengthName[i].c_str(), sp->index, sp->subWell, z + 1, t + 1);
+						}
+						logDll->TLTraceEvent(VERBOSE_EVENT, 1, filePathAndName);
+
+						//=== Save Tiff ===
+						if ((sp->wavelengthName[i].size() > 0))
+						{
+							if (i == 0)
 							{
-								SaveTIFF(filePathAndName, bufferAtPos, sp->regionMap.begin()->second.SizeX,sp->regionMap.begin()->second.SizeY,rlut,glut,blut, sp->umPerPixel,sp->colorChannels, totT, sp->regionMap.begin()->second.SizeZ, 0, channel, t, z, &timeStamp, dt, &strOme, physicalSize,doCompression);
+								timeStamp = _acquireSaveInfo->getInstance()->RemoveTimestamp();
+								dt = _acquireSaveInfo->getInstance()->RemoveTimingInfo();
 							}
-							else
+
+							//Call Save
+							char* bufferAtPos = (char*)img.getDirectPointerToData(0, 0, 0, z, channel, 0);
+							string* omeTiffData = doOME ? &strOme : nullptr;
+
+							switch ((CaptureFile)sp->fileType)
 							{
-								SaveTIFFWithoutOME(filePathAndName, bufferAtPos, sp->regionMap.begin()->second.SizeX,sp->regionMap.begin()->second.SizeY,rlut,glut,blut, sp->umPerPixel,sp->colorChannels, totT, sp->regionMap.begin()->second.SizeZ, 0, channel, t, z, &timeStamp, dt,doCompression);
+							case CaptureFile::FILE_TIFF:
+								SaveTIFF(filePathAndName, bufferAtPos, sp->regionMap.begin()->second.SizeX, sp->regionMap.begin()->second.SizeY, rlut, glut, blut, sp->umPerPixel, sp->colorChannels, totT, sp->regionMap.begin()->second.SizeZ, 0, channel, t, z, &timeStamp, dt, omeTiffData, physicalSize, doCompression, false);
+
+							case CaptureFile::FILE_BIG_TIFF:
+								if (IExperiment::HYPERSPECTRAL == captureMode)
+								{
+									bigTiff->SaveData(bufferAtPos, static_cast<uint16_t>(i), static_cast<uint32_t>(z + 1), 1, static_cast<uint32_t>(t + 1));
+								}
+								else
+								{
+									bigTiff->SaveData(bufferAtPos, static_cast<uint16_t>(i), static_cast<uint32_t>(z + 1), static_cast<uint32_t>(t + 1), 1);
+								}
+								break;
+							default:
+								break;
 							}
-							break;
-						case CaptureFile::FILE_BIG_TIFF:
-							if (IExperiment::HYPERSPECTRAL == captureMode)
-							{
-								bigTiff->SaveData(bufferAtPos, static_cast<uint16_t>(i), static_cast<uint32_t>(z+1), 1, static_cast<uint32_t>(t+1));
-							}
-							else
-							{
-								bigTiff->SaveData(bufferAtPos, static_cast<uint16_t>(i), static_cast<uint32_t>(z+1), static_cast<uint32_t>(t+1), 1);
-							}
-							break;
-						default:
-							break;
 						}
 					}
 				}
-
 				//=== Update Progress ===
 				if(z+t<(size-1))
 				{
@@ -4318,19 +4749,23 @@ vector<pair<long,long> > AcquireTStream::getActiveChannels(SaveParams& sp)
 shared_ptr<InternallyStoredImage <unsigned short> > AcquireTStream::createFullChannelCopy(char* bufferWithOnlyEnabledChannels, SaveParams& sp)
 {
 
-	InternallyStoredImage<unsigned short>* allChannelImage = new InternallyStoredImage<unsigned short>(sp.regionMap.begin()->second.SizeX, 
-		sp.regionMap.begin()->second.SizeY, 
-		1, 
-		sp.bufferChannels.begin()->second, 
-		1, 
+	InternallyStoredImage<unsigned short>* allChannelImage = new InternallyStoredImage<unsigned short>(
+		sp.regionMap.begin()->second.SizeX, // width
+		sp.regionMap.begin()->second.SizeY, // height
+		1, // numPlanes
+		1, // numZSlices
+		sp.bufferChannels.begin()->second, // numChannels
+		1, // M
 		GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
 	shared_ptr<InternallyStoredImage <unsigned short> > fullChannelCopy(allChannelImage);
 
-	GenericImage<unsigned short> existingImage(sp.regionMap.begin()->second.SizeX, 
-		sp.regionMap.begin()->second.SizeY, 
-		1, 
-		sp.bufferChannels.begin()->second, 
-		1, 
+	GenericImage<unsigned short> existingImage(
+		sp.regionMap.begin()->second.SizeX, // width
+		sp.regionMap.begin()->second.SizeY, // height
+		1, // numPlanes
+		1, // numZSlices
+		sp.bufferChannels.begin()->second, // numChannels
+		1, // M
 		GenericImage<unsigned short>::CONTIGUOUS_CHANNEL, 
 		(sp.bufferChannels.begin()->second==1? std::vector<int>() : getEnabledChannelIndices(sp)));
 	existingImage.setMemoryBuffer((unsigned short*) bufferWithOnlyEnabledChannels);
@@ -4548,5 +4983,10 @@ bool AcquireTStream::saveHeaderHdr(wstring filename, HeaderInfo& hinfo)
 	fout.close();
 
 	return true;
+}
+
+long AcquireTStream::ZStreamExecute(long index, long subWell, ICamera* pCamera, long zstageSteps, long timePoints, long undefinedVar)
+{
+	return FALSE;
 }
 

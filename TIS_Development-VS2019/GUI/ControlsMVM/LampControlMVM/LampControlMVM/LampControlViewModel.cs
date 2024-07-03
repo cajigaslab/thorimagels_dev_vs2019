@@ -42,8 +42,8 @@
         private double _lampPositionInterval = 5;
         private double _lampPositionTickFrequency = 25;
         private Dictionary<string, PropertyInfo> _properties = new Dictionary<string, PropertyInfo>();
-        private double _tempLampPosition;
         private bool _stopUpdate = false;
+        private double _tempLampPosition;
 
         #endregion Fields
 
@@ -152,7 +152,7 @@
         {
             get
             {
-                if (Lamp1Enable || Lamp2Enable)
+                if (Lamp1Enable || Lamp2Enable || IsPrelude)
                 {
                     _isLampEnable = true;
                 }
@@ -166,12 +166,20 @@
             }
         }
 
+        public bool IsPrelude
+        {
+            get
+            {
+                return (int)LampTypes.Prelude_LED == _LampControlModel.LampType;
+            }
+        }
+
         public bool Lamp1Enable
         {
             get
             {
 
-                _lamp1Enable=_LampControlModel.Lamp1Enable;
+                _lamp1Enable = _LampControlModel.Lamp1Enable;
                 if (_lamp1Enable == false)
                     _isLamp1 = false;
 

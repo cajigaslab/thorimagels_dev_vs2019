@@ -74,7 +74,7 @@ enum LineTypeNI
 	DIGITAL_IN = 1,
 	TERMINAL = 2,
 	ANALOG_OUT = 3,
-	COUNTER =4,
+	COUNTER = 4,
 	LAST_SIGNAL_TYPE
 };
 
@@ -94,7 +94,7 @@ static std::string GetDevIDName(std::string input)
 	std::string strSeperator = "/";
 	std::regex baseRegex((std::string::npos == input.rfind(strSeperator, 0) ? "" : strSeperator) + "(.*?)" + strSeperator);	//check if start with "/"
 	std::smatch baseMatch;
-	if(std::regex_search(input, baseMatch, baseRegex) && (2 == baseMatch.size()))
+	if (std::regex_search(input, baseMatch, baseRegex) && (2 == baseMatch.size()))
 	{
 		outString = baseMatch[1].str();
 	}
@@ -105,21 +105,21 @@ static std::string GetNIDeviceAttribute(std::string devName, int32 attribute)
 {
 	int buffersize;
 	char* input = NULL;
-	std::string str="";
+	std::string str = "";
 	try
 	{
-		buffersize = DAQmxGetDeviceAttribute(devName.c_str(),attribute,NULL);
-		if(buffersize > 0)	//-200604 DAQmxErrorNULLPtr
+		buffersize = DAQmxGetDeviceAttribute(devName.c_str(), attribute, NULL);
+		if (buffersize > 0)	//-200604 DAQmxErrorNULLPtr
 		{
 			input = (char*)malloc(buffersize);
-			DAQmxGetDeviceAttribute(devName.c_str(),attribute,input,buffersize);
+			DAQmxGetDeviceAttribute(devName.c_str(), attribute, input, buffersize);
 			str = input;
 		}
 	}
-	catch(...)
+	catch (...)
 	{
 	}
-	if(input)
+	if (input)
 	{
 		free(input);
 		input = NULL;
@@ -129,14 +129,14 @@ static std::string GetNIDeviceAttribute(std::string devName, int32 attribute)
 
 static std::string GetNIDeviceProductType(std::string devName)
 {
-	std::string str="";
+	std::string str = "";
 	char cardType[_MAX_PATH];
 	try
 	{
-		if( DAQmxSuccess == DAQmxGetDevProductType(devName.c_str(),cardType,_MAX_PATH))
+		if (DAQmxSuccess == DAQmxGetDevProductType(devName.c_str(), cardType, _MAX_PATH))
 			str = cardType;
 	}
-	catch(...)
+	catch (...)
 	{
 	}
 	return str;
@@ -144,21 +144,21 @@ static std::string GetNIDeviceProductType(std::string devName)
 
 static std::string GetNIDeviceCIPhysicalChans(std::string devName)
 {
-	std::string str="";
+	std::string str = "";
 	char ciChans[_MAX_PATH];
 	uInt32 bsize = _MAX_PATH;
 	try
 	{
-		if( DAQmxSuccess == DAQmxGetDevCIPhysicalChans(devName.c_str(), ciChans, bsize))
+		if (DAQmxSuccess == DAQmxGetDevCIPhysicalChans(devName.c_str(), ciChans, bsize))
 			str = ciChans;
 	}
-	catch(...)
+	catch (...)
 	{
 	}
 	return str;
 }
 
-static void LogMessage(wchar_t *message, long eventLevel)
+static void LogMessage(wchar_t* message, long eventLevel)
 {
 #ifdef LOGGING_ENABLED
 	logDll->TLTraceEvent(eventLevel, 1, message);
@@ -169,14 +169,14 @@ static void TerminateTask(TaskHandle& handle)
 {
 	try
 	{
-		if(NULL != handle)
+		if (NULL != handle)
 		{
 			DAQmxStopTask(handle);
 			DAQmxClearTask(handle);
 			handle = NULL;
 		}
 	}
-	catch(...)
+	catch (...)
 	{
 	}
 }
@@ -199,11 +199,11 @@ static long SetVoltageToAnalogLine(TaskHandle handle, std::string lineName, doub
 
 		TerminateTask(handle);
 	}
-	catch(...)
+	catch (...)
 	{
 		DAQmxFailed(error);
-		StringCbPrintfW(message,_MAX_PATH,L"%hs failed: (%d)",__FUNCTION__, error);
-		LogMessage(message,ERROR_EVENT);
+		StringCbPrintfW(message, _MAX_PATH, L"%hs failed: (%d)", __FUNCTION__, error);
+		LogMessage(message, ERROR_EVENT);
 	}
 	return (DAQmxSuccess == retVal) ? TRUE : FALSE;
 }
@@ -216,28 +216,28 @@ static long SetAnalogVoltage(TaskHandle handle, std::string lineName, long lineC
 	const int32 AO_CLOCK_LENGTH = 1000;
 	try
 	{
-		if(0 >= lineName.size() && 0 >= lineCount)
+		if (0 >= lineName.size() && 0 >= lineCount)
 			return FALSE;
 
 		TerminateTask(handle);
-		DAQmxErrChk(L"DAQmxCreateTask",retVal = DAQmxCreateTask("", &handle));
-		DAQmxErrChk(L"DAQmxCreateAOVoltageChan",retVal = DAQmxCreateAOVoltageChan(handle,lineName.c_str(), "", MIN_AO_VOLTAGE, MAX_AO_VOLTAGE, DAQmx_Val_Volts, NULL));
-		DAQmxErrChk(L"DAQmxCfgSampClkTiming",retVal = DAQmxCfgSampClkTiming(handle, "", 1000.0, DAQmx_Val_Rising, DAQmx_Val_FiniteSamps, 1000));
+		DAQmxErrChk(L"DAQmxCreateTask", retVal = DAQmxCreateTask("", &handle));
+		DAQmxErrChk(L"DAQmxCreateAOVoltageChan", retVal = DAQmxCreateAOVoltageChan(handle, lineName.c_str(), "", MIN_AO_VOLTAGE, MAX_AO_VOLTAGE, DAQmx_Val_Volts, NULL));
+		DAQmxErrChk(L"DAQmxCfgSampClkTiming", retVal = DAQmxCfgSampClkTiming(handle, "", 1000.0, DAQmx_Val_Rising, DAQmx_Val_FiniteSamps, 1000));
 		//DAQmxErrChk(L"DAQmxWriteAnalogScalarF64",retVal = DAQmxWriteAnalogScalarF64(handle, true, 10.0, *voltVal, NULL));
-		DAQmxErrChk(L"DAQmxWriteAnalogF64",retVal = DAQmxWriteAnalogF64(handle, 1, true, 10.0, DAQmx_Val_GroupByScanNumber, voltVal, &written, NULL));
+		DAQmxErrChk(L"DAQmxWriteAnalogF64", retVal = DAQmxWriteAnalogF64(handle, 1, true, 10.0, DAQmx_Val_GroupByScanNumber, voltVal, &written, NULL));
 		//error [-200802] if not auto start with (near)empty buffer, use idleMS to delay termination
 		//DAQmxErrChk(L"DAQmxStartTask",retVal = DAQmxStartTask(handle));
 		//DAQmxErrChk(L"DAQmxWaitUntilTaskDone",retVal = DAQmxWaitUntilTaskDone(handle, MAX_TASK_WAIT_TIME));
 
 		//idle time
-		if(0 < idleMS)
-			std::this_thread::sleep_for (std::chrono::milliseconds(idleMS)); 
+		if (0 < idleMS)
+			std::this_thread::sleep_for(std::chrono::milliseconds(idleMS));
 	}
-	catch(...)
+	catch (...)
 	{
 		DAQmxFailed(error);
-		StringCbPrintfW(message,_MAX_PATH,L"%hs failed: (%d)",__FUNCTION__, error);
-		LogMessage(message,ERROR_EVENT);
+		StringCbPrintfW(message, _MAX_PATH, L"%hs failed: (%d)", __FUNCTION__, error);
+		LogMessage(message, ERROR_EVENT);
 	}
 
 	//force tasks to be recreated:
@@ -253,9 +253,9 @@ static long TogglePulseToDigitalLine(TaskHandle handle, std::string lineName, lo
 	uInt8* outHigh = NULL;
 	uInt8* outLow = NULL;
 
-	if(0 < lineName.size() && 0 < lineCount)
+	if (0 < lineName.size() && 0 < lineCount)
 	{
-		if(handle)
+		if (handle)
 		{
 			retVal = DAQmxStopTask(handle);
 			retVal = DAQmxClearTask(handle);
@@ -270,23 +270,23 @@ static long TogglePulseToDigitalLine(TaskHandle handle, std::string lineName, lo
 		}
 		try
 		{
-			DAQmxErrChk (L"DAQmxCreateTask",retVal = DAQmxCreateTask("",&handle));
-			DAQmxErrChk (L"DAQmxCreateDOChan",retVal = DAQmxCreateDOChan(handle, lineName.c_str(),"",DAQmx_Val_ChanPerLine));
+			DAQmxErrChk(L"DAQmxCreateTask", retVal = DAQmxCreateTask("", &handle));
+			DAQmxErrChk(L"DAQmxCreateDOChan", retVal = DAQmxCreateDOChan(handle, lineName.c_str(), "", DAQmx_Val_ChanPerLine));
 			switch (tpMode)
 			{
 			case Pulse:
-				DAQmxErrChk (L"DAQmxWriteDigitalLines",retVal = DAQmxWriteDigitalLines(handle,1,TRUE,0,DAQmx_Val_GroupByChannel,outHigh,&written,NULL));
-				DAQmxErrChk (L"DAQmxWaitUntilTaskDone",retVal = DAQmxWaitUntilTaskDone(handle,MAX_TASK_WAIT_TIME));
-				DAQmxErrChk (L"DAQmxWriteDigitalLines",retVal = DAQmxWriteDigitalLines(handle,1,TRUE,0,DAQmx_Val_GroupByChannel,outLow,&written,NULL));
-				DAQmxErrChk (L"DAQmxWaitUntilTaskDone",retVal = DAQmxWaitUntilTaskDone(handle,MAX_TASK_WAIT_TIME));
+				DAQmxErrChk(L"DAQmxWriteDigitalLines", retVal = DAQmxWriteDigitalLines(handle, 1, TRUE, 0, DAQmx_Val_GroupByChannel, outHigh, &written, NULL));
+				DAQmxErrChk(L"DAQmxWaitUntilTaskDone", retVal = DAQmxWaitUntilTaskDone(handle, MAX_TASK_WAIT_TIME));
+				DAQmxErrChk(L"DAQmxWriteDigitalLines", retVal = DAQmxWriteDigitalLines(handle, 1, TRUE, 0, DAQmx_Val_GroupByChannel, outLow, &written, NULL));
+				DAQmxErrChk(L"DAQmxWaitUntilTaskDone", retVal = DAQmxWaitUntilTaskDone(handle, MAX_TASK_WAIT_TIME));
 				break;
 			case ToggleHigh:
-				DAQmxErrChk (L"DAQmxWriteDigitalLines",retVal = DAQmxWriteDigitalLines(handle,1,TRUE,0,DAQmx_Val_GroupByChannel,outHigh,&written,NULL));
-				DAQmxErrChk (L"DAQmxWaitUntilTaskDone",retVal = DAQmxWaitUntilTaskDone(handle,MAX_TASK_WAIT_TIME));
+				DAQmxErrChk(L"DAQmxWriteDigitalLines", retVal = DAQmxWriteDigitalLines(handle, 1, TRUE, 0, DAQmx_Val_GroupByChannel, outHigh, &written, NULL));
+				DAQmxErrChk(L"DAQmxWaitUntilTaskDone", retVal = DAQmxWaitUntilTaskDone(handle, MAX_TASK_WAIT_TIME));
 				break;
 			case ToggleLow:
-				DAQmxErrChk (L"DAQmxWriteDigitalLines",retVal = DAQmxWriteDigitalLines(handle,1,TRUE,0,DAQmx_Val_GroupByChannel,outLow,&written,NULL));
-				DAQmxErrChk (L"DAQmxWaitUntilTaskDone",retVal = DAQmxWaitUntilTaskDone(handle,MAX_TASK_WAIT_TIME));
+				DAQmxErrChk(L"DAQmxWriteDigitalLines", retVal = DAQmxWriteDigitalLines(handle, 1, TRUE, 0, DAQmx_Val_GroupByChannel, outLow, &written, NULL));
+				DAQmxErrChk(L"DAQmxWaitUntilTaskDone", retVal = DAQmxWaitUntilTaskDone(handle, MAX_TASK_WAIT_TIME));
 				break;
 			default:
 				break;
@@ -296,15 +296,15 @@ static long TogglePulseToDigitalLine(TaskHandle handle, std::string lineName, lo
 			handle = NULL;
 
 			//idle time
-			if(0 < idleMS)
-				std::this_thread::sleep_for (std::chrono::milliseconds(idleMS)); 
+			if (0 < idleMS)
+				std::this_thread::sleep_for(std::chrono::milliseconds(idleMS));
 
 		}
-		catch(...)
+		catch (...)
 		{
 			DAQmxFailed(error);
-			StringCbPrintfW(message,_MAX_PATH,L"%hs failed: (%d)",__FUNCTION__, error);
-			LogMessage(message,ERROR_EVENT);
+			StringCbPrintfW(message, _MAX_PATH, L"%hs failed: (%d)", __FUNCTION__, error);
+			LogMessage(message, ERROR_EVENT);
 		}
 		if (outHigh != NULL) { delete[] outHigh; outHigh = NULL; }
 		if (outLow != NULL) { delete[] outLow; outLow = NULL; }
@@ -319,10 +319,10 @@ private:///<Private members
 	static std::unique_ptr<BoardInfoNI> _single;
 	std::vector<BoardInfo> _boardVec;
 
-	BoardInfoNI(){};
+	BoardInfoNI() {};
 
 public:
-	~BoardInfoNI(){};
+	~BoardInfoNI() {};
 	static BoardInfoNI* getInstance();
 
 	void GetAllBoardsInfo();
@@ -341,10 +341,10 @@ private:///<Private members
 	std::vector<TaskHandle> _taskHandles;
 	std::mutex _lock;
 
-	AnalogReaderNI(){};
+	AnalogReaderNI() {};
 
 public:
-	~AnalogReaderNI(){};
+	~AnalogReaderNI() {};
 	static AnalogReaderNI* getInstance();
 
 	long AddLine(std::string lineName);

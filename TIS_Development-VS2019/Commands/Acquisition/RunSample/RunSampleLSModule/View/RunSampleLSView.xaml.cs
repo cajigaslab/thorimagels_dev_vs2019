@@ -1,6 +1,7 @@
 ﻿namespace RunSampleLSDll.View
 {
     using System;
+    using System.Collections.ObjectModel;
     using System.Diagnostics;
     using System.Globalization;
     using System.IO;
@@ -10,12 +11,15 @@
     using System.Text.RegularExpressions;
     using System.Windows;
     using System.Windows.Controls;
+    using System.Windows.Data;
     using System.Windows.Input;
     using System.Windows.Interop;
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
     using System.Windows.Threading;
     using System.Xml;
+
+    using Infragistics.Controls.Editors;
 
     using RunSampleLSDll.ViewModel;
 
@@ -32,6 +36,7 @@
 
         public bool[] channelEnable = new bool[4];
 
+        private double _lastRemovedThumb = -1;
         private int _numAvailableCameras = 0;
         private RunSampleLSViewModel _viewModel;
 
@@ -74,7 +79,272 @@
             }
         }
 
-        public void RunSampleLSView_Loaded(object sender, System.Windows.RoutedEventArgs e)
+        private void AddThumb(double offset)
+        {
+            if (null != _viewModel && false == _viewModel.RemoteFocusCustomSelectedPlanes.Contains(offset))
+            {
+                // Define New Thumb and Add to xamSlider's Thumbs Collection
+                XamSliderNumericThumb thumb = new XamSliderNumericThumb();
+                thumb.GotFocus += new RoutedEventHandler(thumb_GotFocus);
+
+                // Set the Thumb Style
+                thumb.Style = remoteFocusGrid.Resources["ThumbStyle"] as Style;
+
+                thumb.InteractionMode = SliderThumbInteractionMode.Lock;
+
+                _viewModel.RemoteFocusCustomSelectedPlanes.Add(offset);
+                _viewModel.UpdateNumberOfPlanes();
+
+                // Add to the Slider's Thumbs Collection
+                remoteFocusSlider.Thumbs.Add(thumb);
+
+                // Set the Thumb to be active
+                remoteFocusSlider.ActiveThumb = thumb;
+
+                // Define Gradient Stop and add to linearBrush's GradientStops Collection
+                GradientStop gs = new GradientStop();
+                gs.Offset = offset;
+
+                // Define Offset Binding and Apply to Thumb
+                Binding binding = new Binding() { Source = gs, Path = new PropertyPath("Offset"), Mode = BindingMode.TwoWay };
+                thumb.SetBinding(XamSliderThumb<double>.ValueProperty, binding);
+            }
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            RunSampleLSViewModel vm = (RunSampleLSViewModel)this.DataContext;
+            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+            dlg.Title = "Select a destination folder for the experiment";
+            dlg.InitialDirectory = vm.OutputPath;
+            dlg.FileName = "select.folder";
+            dlg.Filter = "All Files (*.*)|*.*";
+            try
+            {
+                if (false == dlg.ShowDialog())
+                {
+                    return;
+                }
+                else
+                {
+                    vm.OutputPath = System.IO.Path.GetDirectoryName(dlg.FileName);
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Hard drive doesn't exist. Please specify proper output path.");
+                Microsoft.Win32.SaveFileDialog defaultdlg = new Microsoft.Win32.SaveFileDialog();
+                defaultdlg.Title = "Select a destination folder for the experiment";
+                string myDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                defaultdlg.InitialDirectory = myDocumentsPath;
+                defaultdlg.FileName = "select.folder";
+                defaultdlg.Filter = "All Files (*.*)|*.*";
+                if (true == defaultdlg.ShowDialog())
+                {
+                    vm.OutputPath = System.IO.Path.GetDirectoryName(defaultdlg.FileName);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Prevent from user changing CaptureMode by key Up or Down.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void cbCaptureMode_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        /// <summary>
+        /// Prevent from user changing CaptureMode by mouse wheel.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void cbCaptureMode_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        private void cbCaptureMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if ((cbCaptureMode != null) && (_viewModel != null))
+            {
+                groupPanel.Children.Remove(streamGroup);
+                groupPanel.Children.Remove(zStackGroup);
+                groupPanel.Children.Remove(timeGroup);
+                groupPanel.Children.Remove(bleachingGroup);
+                groupPanel.Children.Remove(hyperspectralGroup);
+                switch (cbCaptureMode.SelectedIndex)
+                {
+                    case 0:
+                        {
+                            groupPanel.Children.Insert(0, zStackGroup);
+                            groupPanel.Children.Insert(1, timeGroup);
+
+                        }
+                        break;
+                    case 1:
+                        {
+                            groupPanel.Children.Insert(0, streamGroup);
+                        }
+                        break;
+                    case 3:
+                        {
+                            groupPanel.Children.Insert(0, bleachingGroup);
+                        }
+                        break;
+                    case 4:
+                        {
+                            groupPanel.Children.Insert(0, hyperspectralGroup);
+                        }
+                        break;
+                }
+
+                SetImageUpdaterVisibility(cbCaptureMode.SelectedIndex);
+
+            }
+        }
+
+        private void cbCustomRF_Checked(object sender, RoutedEventArgs e)
+        {
+            ClearCustomSelectionThumbs();
+        }
+
+        private void cbCustomRF_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (null != _viewModel)
+            {
+                double dVal = 0;
+                string[] valuesArray = _viewModel.RemoteFocusCustomOrder.Split(':');
+
+                foreach (string value in valuesArray)
+                {
+                    if (Double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal) && dVal <= _viewModel.ZMax && dVal >= _viewModel.ZMin)
+                    {
+                        AddThumb(dVal);
+                    }
+                }
+            }
+        }
+
+        private void cbSimultaneousBleachingAndImaging_Checked(object sender, RoutedEventArgs e)
+        {
+            //if the trigger mode is set to SWtrigger switch it to HWTriggerFirst
+            //when selecting the simultaneous acquisition and bleaching option
+            if (0 == _viewModel.BleachTrigger)
+            {
+                _viewModel.BleachTrigger = 1;
+            }
+        }
+
+        private void cbStorageModes_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (cbStorageModes.SelectedIndex.Equals(0))     //Finite
+            {
+                chbExtStimulusTrig.IsChecked = false;
+                chbExtStimulusTrig.GetBindingExpression(CheckBox.IsCheckedProperty).UpdateSource();
+                if (cbCaptureMode.SelectedIndex == 1)
+                {
+                    try
+                    {
+                        _viewModel.StreamFrames = Convert.ToInt32(tbStreamFrames.Text);
+                    }
+                    catch { }
+                }
+
+            }
+            else if (cbStorageModes.SelectedIndex.Equals(1)) //Stimulus
+            {
+                chbExtStimulusTrig.IsChecked = true;
+                chbExtStimulusTrig.GetBindingExpression(CheckBox.IsCheckedProperty).UpdateSource();
+                cbStreamTriggerModes.SelectedIndex = 1;
+                cbStreamTriggerModes.GetBindingExpression(ComboBox.SelectedIndexProperty).UpdateSource();
+            }
+        }
+
+        private void ClearCustomSelectionThumbs()
+        {
+            if (null != _viewModel)
+            {
+                ObservableCollection<XamSliderNumericThumb> thumbsToDelete = new ObservableCollection<XamSliderNumericThumb>();
+                foreach (XamSliderNumericThumb thumb in remoteFocusSlider.Thumbs)
+                {
+                    if ("rfThumbStart" != thumb.Name && "rfThumbStop" != thumb.Name)
+                    {
+                        thumbsToDelete.Add(thumb);
+                    }
+                }
+
+                foreach (var item in thumbsToDelete)
+                {
+                    remoteFocusSlider.Thumbs.Remove(item);
+                }
+                _viewModel.RemoteFocusCustomSelectedPlanes.Clear();
+                _viewModel.UpdateNumberOfPlanes();
+            }
+        }
+
+        private void GetMCLSChannelInfo(XmlDocument expDoc, XmlNodeList nodeList, string enableString, string powerString, ref Visibility vis, ref double power)
+        {
+            string strTemp = string.Empty;
+
+            if (XmlManager.GetAttribute(nodeList[0], expDoc, enableString, ref strTemp))
+            {
+                if (strTemp.Equals("1"))
+                {
+                    if (XmlManager.GetAttribute(nodeList[0], expDoc, powerString, ref strTemp))
+                    {
+                        vis = Visibility.Visible;
+                        power = Convert.ToDouble(strTemp);
+                    }
+                }
+                else
+                {
+                    vis = Visibility.Collapsed;
+                    power = 0;
+                }
+            }
+        }
+
+        private void OpenNewReviewer_Click(object sender, RoutedEventArgs e)
+        {
+            // Use ProcessStartInfo class
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.CreateNoWindow = false;
+            startInfo.UseShellExecute = true;
+            startInfo.FileName = ".\\ExperimentReview.exe";
+            try
+            {
+                Process.Start(startInfo);
+            }
+            catch (Exception ex)
+            {
+                ex.ToString();
+            }
+        }
+
+        private void RemoteFocusCB_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ComboBox comboBox = sender as ComboBox;
+            if (0 == comboBox.SelectedIndex)
+            {
+                ClearCustomSelectionThumbs();
+            }
+        }
+
+        private void remoteFocusSlider_TrackClick(object sender, Infragistics.Controls.Editors.TrackClickEventArgs<double> e)
+        {
+            double val = Math.Round(e.Value);
+            bool checkBox = (bool)cbCustomRF.IsChecked;
+            if (_lastRemovedThumb != val && !checkBox && cbCustomRF.IsVisible)
+            {
+                AddThumb(val);
+            }
+            _lastRemovedThumb = -1;
+        }
+
+        private void RunSampleLSView_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
             try
             {
@@ -328,9 +598,17 @@
                     vm.LSMAverageNum = Convert.ToInt32(nodeList[0].Attributes["averageNum"].Value);
                     vm.LSMScanMode = Convert.ToInt32(nodeList[0].Attributes["scanMode"].Value);
                     vm.LSMAreaMode = Convert.ToInt32(nodeList[0].Attributes["areaMode"].Value);
-                    if (XmlManager.GetAttribute(nodeList[0], expDoc, "pixelSizeUM", ref str))
+            /*                    if (XmlManager.GetAttribute(nodeList[0], expDoc, "pixelSizeUM", ref str))
                     {
                         vm.LSMUMPerPixel = Convert.ToDouble(str, CultureInfo.InvariantCulture);
+                    }*/
+                    if (XmlManager.GetAttribute(nodeList[0], expDoc, "pixelWidthUM", ref str))
+                    {
+                        vm.LSMUMPerPixel.PixelWidthUM = Convert.ToDouble(str, CultureInfo.InvariantCulture);
+                    }
+                    if (XmlManager.GetAttribute(nodeList[0], expDoc, "pixelHeightUM", ref str))
+                    {
+                        vm.LSMUMPerPixel.PixelHeightUM = Convert.ToDouble(str, CultureInfo.InvariantCulture);
                     }
 
                     if (XmlManager.GetAttribute(nodeList[0], expDoc, "timeBasedLineScan", ref str))
@@ -361,6 +639,15 @@
                     {
                         vm.NumberOfPlanes = 1;
                     }
+
+                    if (XmlManager.GetAttribute(nodeList[0], expDoc, "pixelAspectRatioYScale", ref str) && double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out double pixelAspectRatio))
+                    {
+                        vm.PixelAspectRatioYScale = pixelAspectRatio;
+                    }
+                    else
+                    {
+                        vm.PixelAspectRatioYScale = 1;
+                    }
                 }
 
                 nodeList = expDoc.SelectNodes("/ThorImageExperiment/Camera");
@@ -379,7 +666,7 @@
 
                     if (XmlManager.GetAttribute(nodeList[0], expDoc, "pixelSizeUM", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal))
                     {
-                        vm.CamPixelSizeUM = dVal;
+                        vm.CamPixelSizeUM = new PixelSizeUM(dVal, dVal);
                     }
 
                     if (XmlManager.GetAttribute(nodeList[0], expDoc, "binningX", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal))
@@ -535,8 +822,10 @@
                     {
                         vm.StimulusMaxFrames = iVal;
                     }
-
-                    vm.StreamVolumes = Convert.ToInt32(Math.Round(vm.StreamFrames / (double)(vm.ZNumSteps + vm.FlybackFrames)));
+                    if (0 != vm.ZNumSteps + vm.FlybackFrames)
+                    {
+                        vm.StreamVolumes = Convert.ToInt32(Math.Round(vm.StreamFrames / (double)(vm.ZNumSteps + vm.FlybackFrames)));
+                    }
 
                     if (XmlManager.GetAttribute(nodeList[0], expDoc, "useReferenceVoltageForFastZPockels", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal))
                     {
@@ -640,6 +929,11 @@
                         vm.SimultaneousBleachingAndImaging = iVal;
                     }
 
+                    if (XmlManager.GetAttribute(nodeList[0], expDoc, "powerShiftUS", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal))
+                    {
+                        vm.PowerShiftUS = dVal;
+                    }
+
                     if (vm.PreBleachStream != 0 && vm.PostBleachStream1 != 0 && vm.PostBleachStream2 != 0)
                     {
                         vm.ShowRawOption = Visibility.Visible;
@@ -686,6 +980,10 @@
                     if (XmlManager.GetAttribute(nodeList[0], expDoc, "advanceMode", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal))
                     {
                         vm.SLMSequenceOn = (1 == iVal);
+                    }
+                    if (XmlManager.GetAttribute(nodeList[0], expDoc, "randomEpochs", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal))
+                    {
+                        vm.SLMRandomEpochs = (1 == iVal);
                     }
                     if (XmlManager.GetAttribute(nodeList[0], expDoc, "holoGen3D", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal))
                     {
@@ -781,6 +1079,59 @@
                     }
                 }
 
+                nodeList = expDoc.SelectNodes("/ThorImageExperiment/RemoteFocus");
+
+                if (nodeList.Count > 0 && vm.IsRemoteFocus)
+                {
+                    int steps = 1;
+                    int stepSize = 1;
+                    if (XmlManager.GetAttribute(nodeList[0], expDoc, "startPlane", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal))
+                    {
+                        vm.RemoteFocusStartPosition = dVal;
+                    }
+                    if (XmlManager.GetAttribute(nodeList[0], expDoc, "steps", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal))
+                    {
+                        steps = iVal;
+                    }
+                    if (XmlManager.GetAttribute(nodeList[0], expDoc, "stepSize", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal))
+                    {
+                        stepSize = iVal;
+                    }
+                    if (XmlManager.GetAttribute(nodeList[0], expDoc, "captureMode", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal))
+                    {
+                        vm.RemoteFocusCaptureMode = iVal;
+                    }
+                    if (XmlManager.GetAttribute(nodeList[0], expDoc, "customSequence", ref str))
+                    {
+                        vm.RemoteFocusCustomOrder = str;
+                    }
+                    if (XmlManager.GetAttribute(nodeList[0], expDoc, "customSequenceEnabled", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iVal))
+                    {
+                        vm.RemoteFocusCustomChecked = 1 == iVal;
+                    }
+                    vm.RemoteFocusStepSize = Math.Abs(stepSize);
+                    vm.RemoteFocusStopPosition = vm.RemoteFocusStartPosition + stepSize * (steps - 1);
+
+                    vm.ZStartPosition = vm.RemoteFocusStartPosition / (double)Constants.UM_TO_MM;
+                    vm.ZStepSize = vm.RemoteFocusStepSize;
+                    vm.ZStopPosition = vm.RemoteFocusStopPosition / (double)Constants.UM_TO_MM;
+
+                    if ((int)RemoteFocusCaptureModes.Custom == vm.RemoteFocusCaptureMode && !vm.RemoteFocusCustomChecked)
+                    {
+                        string[] valuesArray = vm.RemoteFocusCustomOrder.Split(':');
+
+                        foreach (string value in valuesArray)
+                        {
+                            if (Double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal) && dVal <= vm.ZMax && dVal >= vm.ZMin)
+                            {
+                                AddThumb(dVal);
+                            }
+                        }
+                    }
+                }
+                vm.LoadOverlayManagerSettings();
+                vm.LoadMROISettings(expDoc);
+
                 //load selected MVMs
                 MVMManager.Instance.LoadMVMSettings(vm.MVMNames);
 
@@ -788,6 +1139,8 @@
                 MVMManager.Instance["DigitalOutputSwitchesViewModel", "ExperimentMode"] = 1;
 
                 SetDisplayOptions(expDoc);
+
+                vm.LoadRemoteFocusPositionValues();
 
                 vm.UpdateUIBindings();
 
@@ -811,6 +1164,7 @@
                     vm.RunSampleLSStartCommand.Execute(null);
                     vm.CaptureSetupStartAfterLoading.RemoveAt(0);
                 }
+
             }
             catch (NullReferenceException ex)
             {
@@ -843,195 +1197,8 @@
             _viewModel.LSMChannelEnable2 = channelEnable[2];
             _viewModel.LSMChannelEnable3 = channelEnable[3];
 
-            _viewModel.InitIPC();
-        }
-
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            RunSampleLSViewModel vm = (RunSampleLSViewModel)this.DataContext;
-            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
-            dlg.Title = "Select a destination folder for the experiment";
-            dlg.InitialDirectory = vm.OutputPath;
-            dlg.FileName = "select.folder";
-            dlg.Filter = "All Files (*.*)|*.*";
-            try
-            {
-                if (false == dlg.ShowDialog())
-                {
-                    return;
-                }
-                else
-                {
-                    vm.OutputPath = System.IO.Path.GetDirectoryName(dlg.FileName);
-                }
-            }
-            catch
-            {
-                MessageBox.Show("Hard drive doesn't exist. Please specify proper output path.");
-                Microsoft.Win32.SaveFileDialog defaultdlg = new Microsoft.Win32.SaveFileDialog();
-                defaultdlg.Title = "Select a destination folder for the experiment";
-                string myDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                defaultdlg.InitialDirectory = myDocumentsPath;
-                defaultdlg.FileName = "select.folder";
-                defaultdlg.Filter = "All Files (*.*)|*.*";
-                if (true == defaultdlg.ShowDialog())
-                {
-                    vm.OutputPath = System.IO.Path.GetDirectoryName(defaultdlg.FileName);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Prevent from user changing CaptureMode by key Up or Down.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void cbCaptureMode_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            e.Handled = true;
-        }
-
-        /// <summary>
-        /// Prevent from user changing CaptureMode by mouse wheel.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void cbCaptureMode_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
-        {
-            e.Handled = true;
-        }
-
-        private void cbCaptureMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if ((cbCaptureMode != null) && (_viewModel != null))
-            {
-                groupPanel.Children.Remove(streamGroup);
-                groupPanel.Children.Remove(zStackGroup);
-                groupPanel.Children.Remove(timeGroup);
-                groupPanel.Children.Remove(bleachingGroup);
-                groupPanel.Children.Remove(hyperspectralGroup);
-                switch (cbCaptureMode.SelectedIndex)
-                {
-                    case 0:
-                        {
-                            groupPanel.Children.Insert(0, zStackGroup);
-                            groupPanel.Children.Insert(1, timeGroup);
-
-                        }
-                        break;
-                    case 1:
-                        {
-                            groupPanel.Children.Insert(0, streamGroup);
-                        }
-                        break;
-                    case 3:
-                        {
-                            groupPanel.Children.Insert(0, bleachingGroup);
-                        }
-                        break;
-                    case 4:
-                        {
-                            groupPanel.Children.Insert(0, hyperspectralGroup);
-                        }
-                        break;
-                }
-
-                SetImageUpdaterVisibility(cbCaptureMode.SelectedIndex);
-
-            }
-        }
-
-        private void cbSimultaneousBleachingAndImaging_Checked(object sender, RoutedEventArgs e)
-        {
-            //if the trigger mode is set to SWtrigger switch it to HWTriggerFirst
-            //when selecting the simultaneous acquisition and bleaching option
-            if (0 == _viewModel.BleachTrigger)
-            {
-                _viewModel.BleachTrigger = 1;
-            }
-        }
-
-        private void cbStorageModes_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (cbStorageModes.SelectedIndex.Equals(0))     //Finite
-            {
-                chbExtStimulusTrig.IsChecked = false;
-                chbExtStimulusTrig.GetBindingExpression(CheckBox.IsCheckedProperty).UpdateSource();
-                if (cbCaptureMode.SelectedIndex == 1)
-                {
-                    try
-                    {
-                        _viewModel.StreamFrames = Convert.ToInt32(tbStreamFrames.Text);
-                    }
-                    catch { }
-                }
-
-            }
-            else if (cbStorageModes.SelectedIndex.Equals(1)) //Stimulus
-            {
-                chbExtStimulusTrig.IsChecked = true;
-                chbExtStimulusTrig.GetBindingExpression(CheckBox.IsCheckedProperty).UpdateSource();
-                cbStreamTriggerModes.SelectedIndex = 1;
-                cbStreamTriggerModes.GetBindingExpression(ComboBox.SelectedIndexProperty).UpdateSource();
-            }
-        }
-
-        private void ConnectionSettings_Click(object sender, RoutedEventArgs e)
-        {
-            RunSampleLSViewModel vm = (RunSampleLSViewModel)this.DataContext;
-
-            if (vm == null)
-            {
-                return;
-            }
-
-            vm.ConnectionSettingsOptions();
-        }
-
-        private void GetMCLSChannelInfo(XmlDocument expDoc, XmlNodeList nodeList, string enableString, string powerString, ref Visibility vis, ref double power)
-        {
-            string strTemp = string.Empty;
-
-            if (XmlManager.GetAttribute(nodeList[0], expDoc, enableString, ref strTemp))
-            {
-                if (strTemp.Equals("1"))
-                {
-                    if (XmlManager.GetAttribute(nodeList[0], expDoc, powerString, ref strTemp))
-                    {
-                        vis = Visibility.Visible;
-                        power = Convert.ToDouble(strTemp);
-                    }
-                }
-                else
-                {
-                    vis = Visibility.Collapsed;
-                    power = 0;
-                }
-            }
-        }
-
-        private void LoadColorImageSettings()
-        {
-            RunSampleLSViewModel vm = (RunSampleLSViewModel)this.DataContext;
-
-            vm.BuildChannelPalettes();
-        }
-
-        private void OpenNewReviewer_Click(object sender, RoutedEventArgs e)
-        {
-            // Use ProcessStartInfo class
-            ProcessStartInfo startInfo = new ProcessStartInfo();
-            startInfo.CreateNoWindow = false;
-            startInfo.UseShellExecute = true;
-            startInfo.FileName = ".\\ExperimentReview.exe";
-            try
-            {
-                Process.Start(startInfo);
-            }
-            catch (Exception ex)
-            {
-                ex.ToString();
-            }
+            //load all MVMs:
+            MVMManager.Instance.LoadMVMCaptureSettings();
         }
 
         void RunSampleLSView_Unloaded(object sender, RoutedEventArgs e)
@@ -1058,6 +1225,11 @@
                 SaveNormalization(vm);
             }
 
+            //:TODO: Need to figure out which MVMs need to be updated in RunSample, for now we will just update RemoteIPCControlViewModelBase because we are required to.
+            // also MVMNames is empty at this point because it gets set to an empty string array at MainWindow unloaded
+            string[] mvmsToUpdate = { "RemoteIPCControlViewModelBase" };
+            MVMManager.Instance.UpdateMVMXMLSettings(ref MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS], mvmsToUpdate);
+
             //Decrement the script start container when the unload occurs
             if (vm.StartAfterLoading.Count > 0)
             {
@@ -1070,51 +1242,53 @@
 
         private void SaveNormalization(RunSampleLSViewModel vm)
         {
-            XmlNodeList ndListHW = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS].SelectNodes("/HardwareSettings/Wavelength");
+            //TODO:IV
 
-            if (ndListHW.Count > 0)
-            {
-                for (int i = 0; i < ndListHW.Count; i++)
-                {
-                    double bp = 0;
-                    double wp = 255;
-                    string autoTog = string.Empty;
-                    string logTog = string.Empty;
+            //XmlNodeList ndListHW = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS].SelectNodes("/HardwareSettings/Wavelength");
 
-                    switch (i)
-                    {
-                        case 0:
-                            bp = vm.BlackPoint0;
-                            wp = vm.WhitePoint0;
-                            autoTog = (vm.AutoManualTog1Checked) ? "1" : "0";
-                            logTog = (vm.LogScaleEnabled0) ? "1" : "0";
-                            break;
-                        case 1:
-                            bp = vm.BlackPoint1;
-                            wp = vm.WhitePoint1;
-                            autoTog = (vm.AutoManualTog2Checked) ? "1" : "0";
-                            logTog = (vm.LogScaleEnabled1) ? "1" : "0";
-                            break;
-                        case 2:
-                            bp = vm.BlackPoint2;
-                            wp = vm.WhitePoint2;
-                            autoTog = (vm.AutoManualTog3Checked) ? "1" : "0";
-                            logTog = (vm.LogScaleEnabled2) ? "1" : "0";
-                            break;
-                        case 3:
-                            bp = vm.BlackPoint3;
-                            wp = vm.WhitePoint3;
-                            autoTog = (vm.AutoManualTog4Checked) ? "1" : "0";
-                            logTog = (vm.LogScaleEnabled3) ? "1" : "0";
-                            break;
-                    }
-                    XmlManager.SetAttribute(ndListHW[i], MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS], "bp", bp.ToString());
-                    XmlManager.SetAttribute(ndListHW[i], MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS], "wp", wp.ToString());
-                    XmlManager.SetAttribute(ndListHW[i], MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS], "AutoSta", autoTog);
-                    XmlManager.SetAttribute(ndListHW[i], MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS], "LogSta", logTog);
-                }
-                MVMManager.Instance.ReloadSettings(SettingsFileType.HARDWARE_SETTINGS, true);
-            }
+            //if (ndListHW.Count > 0)
+            //{
+            //    for (int i = 0; i < ndListHW.Count; i++)
+            //    {
+            //        double bp = 0;
+            //        double wp = 255;
+            //        string autoTog = string.Empty;
+            //        string logTog = string.Empty;
+
+            //        switch (i)
+            //        {
+            //            case 0:
+            //                bp = vm.BlackPoint0;
+            //                wp = vm.WhitePoint0;
+            //                autoTog = (vm.AutoManualTog1Checked) ? "1" : "0";
+            //                logTog = (vm.LogScaleEnabled0) ? "1" : "0";
+            //                break;
+            //            case 1:
+            //                bp = vm.BlackPoint1;
+            //                wp = vm.WhitePoint1;
+            //                autoTog = (vm.AutoManualTog2Checked) ? "1" : "0";
+            //                logTog = (vm.LogScaleEnabled1) ? "1" : "0";
+            //                break;
+            //            case 2:
+            //                bp = vm.BlackPoint2;
+            //                wp = vm.WhitePoint2;
+            //                autoTog = (vm.AutoManualTog3Checked) ? "1" : "0";
+            //                logTog = (vm.LogScaleEnabled2) ? "1" : "0";
+            //                break;
+            //            case 3:
+            //                bp = vm.BlackPoint3;
+            //                wp = vm.WhitePoint3;
+            //                autoTog = (vm.AutoManualTog4Checked) ? "1" : "0";
+            //                logTog = (vm.LogScaleEnabled3) ? "1" : "0";
+            //                break;
+            //        }
+            //        XmlManager.SetAttribute(ndListHW[i], MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS], "bp", bp.ToString());
+            //        XmlManager.SetAttribute(ndListHW[i], MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS], "wp", wp.ToString());
+            //        XmlManager.SetAttribute(ndListHW[i], MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS], "AutoSta", autoTog);
+            //        XmlManager.SetAttribute(ndListHW[i], MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS], "LogSta", logTog);
+            //    }
+            //    MVMManager.Instance.ReloadSettings(SettingsFileType.HARDWARE_SETTINGS, true);
+            //}
         }
 
         private void SetDisplayOptions(XmlDocument expDoc)
@@ -1182,15 +1356,8 @@
 
             //depending on values in ApplicationSettings.xml, TDI combobox item would be added or removed, accordingly
             str = string.Empty;
-            nodeList = appDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/TDIView");
-            if ((nodeList.Count > 0) && XmlManager.GetAttribute(nodeList[0], appDoc, "Visibility", ref str) && (str.Equals("Visible")))
-            {
-                vm.TDIOptionsVisibility = Visibility.Visible;
-            }
-            else //remove TDI option by default
-            {
-                vm.TDIOptionsVisibility = Visibility.Collapsed;
-            }
+
+            vm.TDIOptionsVisibility = Visibility.Collapsed;
 
             //hide Z stack group box according to ApplicationSettings.xml, visibility not changed if no attributes found
             //display string for Z and T is also changed according to visibility of Z stack group
@@ -1210,6 +1377,16 @@
                     vm.ZOptionsVisibility = Visibility.Collapsed;
 
                     cbiZAndT.Content = "Time Series";
+                }
+
+                if (XmlManager.GetAttribute(nodeList[0], appDoc, "InvertLimitsZ1", ref str) && Int32.TryParse(str, out iVal))
+                {
+                    vm.ZInvertLimits = 1 == iVal;
+                }
+
+                if (XmlManager.GetAttribute(nodeList[0], appDoc, "Invert", ref str) && Int32.TryParse(str, out iVal))
+                {
+                    vm.ZInvert = 1 == iVal;
                 }
             }
 
@@ -1238,6 +1415,60 @@
             else
             {
                 dflimBorder.Visibility = Visibility.Collapsed;
+            }
+
+            //Check if RGG and scan areas available to determine if mROI should show
+            Visibility mROIVisibility = Visibility.Collapsed;
+            nodeList = expDoc.SelectNodes("/ThorImageExperiment/LSM");
+            if ((nodeList.Count > 0) && XmlManager.GetAttribute(nodeList[0], expDoc, "name", ref str) && str.Equals("ThorDAQ RGG"))
+            {
+                //RGG enabled, now check if scan areas
+                try
+                {
+                    nodeList = expDoc.SelectNodes("/ThorImageExperiment/TemplateScans/ScanInfo");
+
+                    XmlNodeList scanAreaNodes;
+                    foreach (XmlNode node in nodeList)
+                    {
+                        if (XmlManager.GetAttribute(node, expDoc, "Name", ref str) && str.Equals("Micro"))
+                        {
+                            scanAreaNodes = node.SelectNodes("descendant::ScanAreas/ScanArea");
+                            foreach (XmlNode scanAreaNode in scanAreaNodes)
+                            {
+                                if (XmlManager.GetAttribute(scanAreaNodes[0], expDoc, "IsEnable", ref str) && str.Equals("true"))
+                                {
+                                    mROIVisibility = Visibility.Visible;
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    ThorLog.Instance.TraceEvent(TraceEventType.Error, 0, "ImageReview: Exception Thrown while checking mROI experiment doc");
+                    mROIVisibility = Visibility.Collapsed;
+                }
+            }
+            mROIDisplay.Visibility = mROIVisibility;
+            if (mROIVisibility == Visibility.Visible)
+            {
+                //Only allow streaming in mROI mode for now
+                cbCaptureMode.SelectedIndex = 1;
+                ((ComboBoxItem)cbCaptureMode.Items[0]).Visibility = Visibility.Collapsed;
+
+                //Only allow raw for now
+                cbStreamingCaptureDataType.SelectedIndex = 1;
+                ((ComboBoxItem)cbStreamingCaptureDataType.Items[0]).Visibility = Visibility.Collapsed;
+                ((ComboBoxItem)cbStreamingCaptureDataType.Items[2]).Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                ((ComboBoxItem)cbCaptureMode.Items[0]).Visibility = Visibility.Visible;
+
+                ((ComboBoxItem)cbStreamingCaptureDataType.Items[0]).Visibility = Visibility.Visible;
+                ((ComboBoxItem)cbStreamingCaptureDataType.Items[2]).Visibility = Visibility.Visible;
             }
 
             bool kuriosActive = false;
@@ -1427,83 +1658,65 @@
 
         private void SetNormalization(RunSampleLSViewModel vm)
         {
-            XmlNodeList wl = vm.HardwareDoc.SelectNodes("/HardwareSettings/Wavelength");
+            //TODO:IV
+            //XmlNodeList wl = vm.HardwareDoc.SelectNodes("/HardwareSettings/Wavelength");
 
-            if (wl.Count > 0)
-            {
-                for (int i = 0; i < wl.Count; i++)
-                {
-                    string bp = string.Empty;
-                    string wp = string.Empty;
-                    string autoTog = string.Empty;
-                    string logTog = string.Empty;
-                    XmlManager.GetAttribute(wl[i], vm.HardwareDoc, "bp", ref bp);
-                    XmlManager.GetAttribute(wl[i], vm.HardwareDoc, "wp", ref wp);
-                    XmlManager.GetAttribute(wl[i], vm.HardwareDoc, "AutoSta", ref autoTog);
-                    XmlManager.GetAttribute(wl[i], vm.HardwareDoc, "LogSta", ref logTog);
-                    switch (i)
-                    {
-                        case 0:
-                            vm.BlackPoint0 = Convert.ToDouble(bp);
-                            vm.WhitePoint0 = Convert.ToDouble(wp);
-                            vm.AutoManualTog1Checked = (string.Empty != autoTog && "1" == autoTog) ? true : false;
-                            vm.LogScaleEnabled0 = (string.Empty != logTog && "1" == logTog) ? true : false;
-                            break;
-                        case 1:
-                            vm.BlackPoint1 = Convert.ToDouble(bp);
-                            vm.WhitePoint1 = Convert.ToDouble(wp);
-                            vm.AutoManualTog2Checked = (string.Empty != autoTog && "1" == autoTog) ? true : false;
-                            vm.LogScaleEnabled1 = (string.Empty != logTog && "1" == logTog) ? true : false;
-                            break;
-                        case 2:
-                            vm.BlackPoint2 = Convert.ToDouble(bp);
-                            vm.WhitePoint2 = Convert.ToDouble(wp);
-                            vm.AutoManualTog3Checked = (string.Empty != autoTog && "1" == autoTog) ? true : false;
-                            vm.LogScaleEnabled2 = (string.Empty != logTog && "1" == logTog) ? true : false;
-                            break;
-                        case 3:
-                            vm.BlackPoint3 = Convert.ToDouble(bp);
-                            vm.WhitePoint3 = Convert.ToDouble(wp);
-                            vm.AutoManualTog4Checked = (string.Empty != autoTog && "1" == autoTog) ? true : false;
-                            vm.LogScaleEnabled3 = (string.Empty != logTog && "1" == logTog) ? true : false;
-                            break;
-                    }
-                    string str = string.Empty;
-                    XmlManager.GetAttribute(wl[i], vm.HardwareDoc, "name", ref str);
-                    vm.ChannelName[i].Value = str;
-                }
-            }
+            //if (wl.Count > 0)
+            //{
+            //    for (int i = 0; i < wl.Count; i++)
+            //    {
+            //        string bp = string.Empty;
+            //        string wp = string.Empty;
+            //        string autoTog = string.Empty;
+            //        string logTog = string.Empty;
+            //        XmlManager.GetAttribute(wl[i], vm.HardwareDoc, "bp", ref bp);
+            //        XmlManager.GetAttribute(wl[i], vm.HardwareDoc, "wp", ref wp);
+            //        XmlManager.GetAttribute(wl[i], vm.HardwareDoc, "AutoSta", ref autoTog);
+            //        XmlManager.GetAttribute(wl[i], vm.HardwareDoc, "LogSta", ref logTog);
+            //        switch (i)
+            //        {
+            //            case 0:
+            //                vm.BlackPoint0 = Convert.ToDouble(bp);
+            //                vm.WhitePoint0 = Convert.ToDouble(wp);
+            //                vm.AutoManualTog1Checked = (string.Empty != autoTog && "1" == autoTog) ? true : false;
+            //                vm.LogScaleEnabled0 = (string.Empty != logTog && "1" == logTog) ? true : false;
+            //                break;
+            //            case 1:
+            //                vm.BlackPoint1 = Convert.ToDouble(bp);
+            //                vm.WhitePoint1 = Convert.ToDouble(wp);
+            //                vm.AutoManualTog2Checked = (string.Empty != autoTog && "1" == autoTog) ? true : false;
+            //                vm.LogScaleEnabled1 = (string.Empty != logTog && "1" == logTog) ? true : false;
+            //                break;
+            //            case 2:
+            //                vm.BlackPoint2 = Convert.ToDouble(bp);
+            //                vm.WhitePoint2 = Convert.ToDouble(wp);
+            //                vm.AutoManualTog3Checked = (string.Empty != autoTog && "1" == autoTog) ? true : false;
+            //                vm.LogScaleEnabled2 = (string.Empty != logTog && "1" == logTog) ? true : false;
+            //                break;
+            //            case 3:
+            //                vm.BlackPoint3 = Convert.ToDouble(bp);
+            //                vm.WhitePoint3 = Convert.ToDouble(wp);
+            //                vm.AutoManualTog4Checked = (string.Empty != autoTog && "1" == autoTog) ? true : false;
+            //                vm.LogScaleEnabled3 = (string.Empty != logTog && "1" == logTog) ? true : false;
+            //                break;
+            //        }
+            //        string str = string.Empty;
+            //        XmlManager.GetAttribute(wl[i], vm.HardwareDoc, "name", ref str);
+            //        vm.ChannelName[i].Value = str;
+            //    }
+            //}
         }
 
-        void _timer_Tick(object sender, EventArgs e)
+        void thumb_GotFocus(object sender, RoutedEventArgs e)
         {
-            RunSampleLSViewModel vm = (RunSampleLSViewModel)this.DataContext;
-
-            if (vm == null)
+            XamSliderNumericThumb thumb = sender as XamSliderNumericThumb;
+            if (null != thumb && null != _viewModel && false == (bool)cbCustomRF.IsChecked)
             {
-                return;
-            }
-
-            if (vm.Bitmap != null)
-            {
-                const int THUMBNAIL_WIDTH = 64;
-                const int THUMBNAIL_HEIGHT = 64;
-
-                double scale = Math.Min(THUMBNAIL_WIDTH / vm.Bitmap.Width, THUMBNAIL_HEIGHT / vm.Bitmap.Height);
-
-                //TransformedBitmap tbmp = new TransformedBitmap(vm.Bitmap, new ScaleTransform(scale, scale));
-                //JpegBitmapEncoder encoder = new JpegBitmapEncoder();
-                //MemoryStream memoryStream = new MemoryStream();
-                //BitmapImage bImg = new BitmapImage();
-
-                //encoder.Frames.Add(BitmapFrame.Create(tbmp.Source));
-                //encoder.Save(memoryStream);
-
-                //bImg.BeginInit();
-                //bImg.StreamSource = new MemoryStream(memoryStream.ToArray());
-                //bImg.EndInit();
-
-                //memoryStream.Close();
+                thumb.IsActive = true;
+                _lastRemovedThumb = thumb.Value;
+                remoteFocusSlider.Thumbs.Remove(remoteFocusSlider.ActiveThumb);
+                _viewModel.RemoteFocusCustomSelectedPlanes.Remove(_lastRemovedThumb);
+                _viewModel.UpdateNumberOfPlanes();
             }
         }
 

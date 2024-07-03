@@ -41,6 +41,9 @@
     <Reference Include="AreaControl">
       <HintPath>..\..\..\Controls\AreaControl\AreaControl\bin\Debug\AreaControl.dll</HintPath>
     </Reference>
+    <Reference Include="GongSolutions.Wpf.DragDrop">
+      <HintPath>..\..\..\..\Tools\Gong\gong-wpf-dragdrop-master\GongSolutions.Wpf.DragDrop\bin\Debug\NET4\GongSolutions.Wpf.DragDrop.dll</HintPath>
+    </Reference>
     <Reference Include="OverlayManager">
       <HintPath>..\..\..\Controls\OverlayManager\OverlayManager\bin\Debug\OverlayManager.dll</HintPath>
     </Reference>

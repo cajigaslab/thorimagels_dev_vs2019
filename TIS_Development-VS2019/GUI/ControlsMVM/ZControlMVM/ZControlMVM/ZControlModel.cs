@@ -48,6 +48,16 @@
             get { return _enableRead; }
         }
 
+        public bool IsRemoteFocus
+        {
+            get
+            {
+                int zType = (int)ZStageType.PIEZO;
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_ZSTAGE, (int)IDevice.Params.PARAM_Z_STAGE_TYPE, ref zType);
+                return (int)ZStageType.REMOTE_FOCUS == zType;
+            }
+        }
+
         public bool IsZStackCapturing
         {
             get
@@ -65,6 +75,19 @@
         {
             get { return _lastUpdateTime; }
             set { _lastUpdateTime = value; }
+        }
+
+        public int RemoteFocusNumberOfPlanes
+        {
+            get
+            {
+                int numberOfPlanes = 0;
+                if (0 == ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_ZSTAGE, (int)IDevice.Params.PARAM_REMOTE_FOCUS_NUMBER_OF_PLANES, ref numberOfPlanes))
+                {
+                    ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, "ZControlModel can't get param PARAM_REMOTE_FOCUS_NUMBER_OF_PLANES");
+                }
+                return numberOfPlanes;
+            }
         }
 
         public double RMax

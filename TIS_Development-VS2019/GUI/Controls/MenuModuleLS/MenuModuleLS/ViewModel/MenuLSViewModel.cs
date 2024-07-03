@@ -50,6 +50,7 @@
         private bool _captureSetupButtonStatus = true;
         private ICommand _captureSetupCommand;
         private ICommand _checkForUpdatesCommand;
+        private ICommand _launchThorDAQCommand;
         private IUnityContainer _container;
         private bool _editMenuStatus = true;
         private IEventAggregator _eventAggregator;
@@ -85,7 +86,6 @@
         private SubscriptionToken _subscriptionTokenShowDialog;
         private ICommand _supportCommand;
         private ICommand _webUpdateCommand;
-        private int _changeModality;
         private bool _hardwareConnectionsOpened = false;
 
         #endregion Fields
@@ -196,6 +196,17 @@
                     this._checkForUpdatesCommand = new RelayCommand(() => CheckForUpdates());
 
                 return this._checkForUpdatesCommand;
+            }
+        }
+
+        public ICommand LaunchThorDAQCommand
+        {
+            get
+            {
+                if (this._launchThorDAQCommand == null)
+                    this._launchThorDAQCommand = new RelayCommand(() => LaunchThorDAQGUI());
+
+                return this._launchThorDAQCommand;
             }
         }
 
@@ -517,6 +528,7 @@
                     ResourceManagerCS.Instance.ActiveModality = ResourceManagerCS.GetModality();
                 }
                 _selectedMenuTab = value;
+                MVMManager.Instance["RemoteIPCControlViewModelBase", "SelectedTabIndex"] = value;
                 OnPropertyChanged("SelectedMenuTab");
             }
         }
@@ -554,12 +566,12 @@
             _hardwareConnectionsOpened = true;
             if (ResourceManagerCS.Instance.TabletModeEnabled)
             {
-                AboutDll.TabletSplashScreen splash = new AboutDll.TabletSplashScreen(String.Format("v{0}.{1}.{2}.{3}", version.Major, version.Minor, version.Build, version.Revision));
+                AboutDll.TabletSplashScreen splash = new AboutDll.TabletSplashScreen(String.Format("v{0}.{1}.{2}.{3}-beta", version.Major, version.Minor, version.Build, version.Revision));
                 splash.Show();
             }
             else
             {
-                AboutDll.SplashScreen splash = new AboutDll.SplashScreen(String.Format("v{0}.{1}.{2}.{3}", version.Major, version.Minor, version.Build, version.Revision), _hardwareConnectionsOpened);
+                AboutDll.SplashScreen splash = new AboutDll.SplashScreen(String.Format("v{0}.{1}.{2}.{3}-beta", version.Major, version.Minor, version.Build, version.Revision), _hardwareConnectionsOpened);
                 splash.Show();
             }
         }
@@ -871,6 +883,12 @@
                                     ResourceManagerCS.GetMyDocumentsThorImageFolderString());
                 client.DownloadDataCompleted += client_DownloadDataCompleted;
             }
+        }
+
+        private void LaunchThorDAQGUI()
+        {
+            var ThorDAQConfigToolWindow = new ThorDAQConfigControl.MainWindow();
+            ThorDAQConfigToolWindow.Show();
         }
 
         void client_DownloadDataCompleted(object sender, DownloadDataCompletedEventArgs e)

@@ -1,7 +1,0 @@
-SCICHART©® Release Notes
-
-Information about the latest releases of SciChart can be found at 
-
-http://www.scichart.com/category/releases/
-
-For historical release info prior to v4, please see http://www.scichart.com/Downloads/Releasenotes.txt  

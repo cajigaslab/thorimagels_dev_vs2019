@@ -32,6 +32,7 @@ private:
 	int ModeStrToEnum(char* str);
 	char* ModeEnumToStr(int mode);
 	long GetLastError();
+	static void LogMessage(wchar_t* logMsg, long eventLevel);
 private:
 	static bool _instanceFlag;
 	static std::auto_ptr<ThorDC2200> _single;

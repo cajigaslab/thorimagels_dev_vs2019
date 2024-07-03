@@ -1,18 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ImageReviewModule.Model
+﻿namespace ImageReviewModule.Model
 {
-    public enum Shape
-    {
-        SHAPE_UNDEFINED = -1,
-        SHAPE_RECTANGLE = 1,
-        SHAPE_ELLIPSE = 2,
-    }
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Runtime.InteropServices;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    #region Enumerations
 
     public enum DistanceUnit
     {
@@ -24,6 +19,15 @@ namespace ImageReviewModule.Model
         DISTANCE_NANOMETER = 5,
         DISTANCE_PICOMETER = 6,
     }
+
+    public enum Shape
+    {
+        SHAPE_UNDEFINED = -1,
+        SHAPE_RECTANGLE = 1,
+        SHAPE_ELLIPSE = 2,
+    }
+
+    #endregion Enumerations
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     public struct SampleInfo

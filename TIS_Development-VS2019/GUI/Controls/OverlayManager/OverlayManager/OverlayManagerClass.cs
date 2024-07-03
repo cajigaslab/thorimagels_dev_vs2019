@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using System.Collections.Specialized;
     using System.ComponentModel;
     using System.Diagnostics;
@@ -13,6 +14,7 @@
     using System.Security.Cryptography;
     using System.Text;
     using System.Text.RegularExpressions;
+    using System.Threading.Tasks;
     using System.Windows;
     using System.Windows.Controls;
     using System.Windows.Documents;
@@ -23,9 +25,14 @@
     using System.Windows.Threading;
     using System.Xml;
 
+    using MesoScan.Params;
+
     using ThorLogging;
 
     using ThorSharedTypes;
+
+    using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+    using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
     public class OverlayManagerClass
     {
@@ -52,6 +59,14 @@
         public static BitVector32.Section SecA = BitVector32.CreateSection(255, SecB);
         public static double TOLERANCE_ZUM = 0.5;
 
+        //new fields for handling zoom level changes
+        private const double _strokeThicknessMax = 10;
+        private const double _strokeThicknessMin = .1;
+        private double _roiStrokeThickness = 1;
+        private double _roiScaleLineStrokeThicknessMultiplier = 2;
+        private double _roiScaleNumberStrokeThicknessMultiplier = .4;
+
+
         private static BitVector32 _bitVec32;
         private static OverlayManagerClass _instance = null;
 
@@ -60,27 +75,34 @@
         private int _colorRGB = 0;
         private Mode _currentMode = Mode.STATSONLY;
         private string _expROIsPathAndName;
+        private double _fieldHeight;
         private double _fieldWidth;
+        private double _imageScaleX = 1.0;
+        private double _imageScaleY = 1.0;
         private bool _isObjectComplete;
         private bool _isObjectCreated;
-        private Canvas _lastCanvas = null;
+
+        // private Canvas _lastCanvas = null;
         private int _lastLineIndex;
         private short[] _mask;
         private ulong _maskIndex = 0;
         private bool _objectUpdated;
+        ObservableCollection<UIElement> _overlayItems = new ObservableCollection<UIElement>();
         private int _patternID = 0;
         private bool _patternSubIndexVisible = true;
         private int[] _pixelUnitSizeXY = new int[2] { (int)Constants.PIXEL_X_MIN, (int)Constants.PIXEL_X_MIN };
         private int _pixelX;
+        private int _pixelXAdjusted;
         private int _pixelY;
+        private int _pixelYAdjusted;
         private bool _reviewWindowOpened = false;
         private AdornerLayer _roiAdornerLayer;
         private int _roiCount;
         private List<Shape> _roiList;
         private List<Shape> _roiListBackup;
+        bool _roisLoaded = false;
         private List<Shape> _roiSpec;
         private bool _save = true;
-        int _savedSelectedIndex = 0;
         private bool _saveEveryChange;
         private bool _saveMaskEveryTime;
         private List<Shape> _scanAreaROIList;
@@ -89,9 +111,10 @@
         private bool _showPolylineLength = false;
         private bool _simulatorMode = false;
         private bool _skipRedrawCenter = false;
-        private double _umPerPixel;
+        private PixelSizeUM _umPerPixel;
         private bool _visible = true;
         private int _wavelengthNM = 0;
+        private double _zoomLevel = 1;
         private double _zRefMM = 0.0;
         private double _zUM = 0.0;
 
@@ -101,6 +124,7 @@
 
         private OverlayManagerClass()
         {
+            mROIsDisableMoveAndResize = false;
         }
 
         #endregion Constructors
@@ -111,7 +135,8 @@
         {
             GEOMETRY_ADORNER,
             ADJUST_ADORNER,
-            INDEX_ADORNER
+            INDEX_ADORNER,
+            DIVIDER_ADORNER
         }
 
         public enum Flag
@@ -153,17 +178,39 @@
 
         public event Action ClearedObjectEvent;
 
+        public event Action ClearedStatsROIsEvent;
+
         public event Action MaskChangedEvent;
 
         public event Action MaskWillChangeEvent;
 
+        public event Action<int> mROISelectedEvent;
+
+        public event Action mROIsUpdated;
+
+        public event Action mROIDeletedEvent;
+
+        public event Action<Shape> NeedOverlayItemsUpdateToActiveROIs;
+
         public event Action<double, double> ObjectSizeChangedEvent;
+
+        public event Action ParamsUpdatedEvent;
+
+        public event Action ROIListUpdated;
 
         public event Action<bool> UpdatingObjectEvent;
 
         #endregion Events
 
         #region Properties
+
+        public static double DefaultStrokeThickness
+        {
+            get
+            {
+                return 1.5;
+            }
+        }
 
         public static OverlayManagerClass Instance
         {
@@ -199,6 +246,26 @@
             {
                 return _fieldWidth;
             }
+        }
+
+        public double ImageXScale
+        {
+            get => _imageScaleX;
+        }
+
+        public double ImageYScale
+        {
+            get => _imageScaleY;
+        }
+
+        public bool mROIsDisableMoveAndResize
+        {
+            get; set;
+        }
+
+        public ObservableCollection<UIElement> OverlayItems
+        {
+            get => _overlayItems;
         }
 
         public int PatternID
@@ -253,6 +320,11 @@
             }
         }
 
+        public bool ROIsLoaded
+        {
+            get => _roisLoaded;
+        }
+
         public bool Save
         {
             get { return _save; }
@@ -282,7 +354,25 @@
             set { _skipRedrawCenter = value; }
         }
 
-        public double UmPerPixel
+        public int StatsROICount
+        {
+            get
+            {
+                int count = 0;
+                for (int i = 0; i < _roiList?.Count; ++i)
+                {
+                    Mode md = (Mode)(GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR));
+                    if (md == Mode.STATSONLY)
+                    {
+                        ++count;
+                    }
+                }
+
+                return count;
+            }
+        }
+
+        public PixelSizeUM UmPerPixel
         {
             get
             {
@@ -300,6 +390,51 @@
         {
             get { return _wavelengthNM; }
             set { _wavelengthNM = value; }
+        }
+
+        public double ZoomLevel
+        {
+            get
+            {
+                return _zoomLevel;
+            }
+            set
+            {
+                _zoomLevel = value;
+                double newStrokeThickness = DefaultStrokeThickness * 1.5 / _zoomLevel;
+
+                if (newStrokeThickness < _strokeThicknessMin)
+                {
+                    newStrokeThickness = _strokeThicknessMin;
+                }
+                if (newStrokeThickness > _strokeThicknessMax)
+                {
+                    newStrokeThickness = _strokeThicknessMax;
+                }
+
+                AdornerProvider.ZoomLevel = _zoomLevel;
+                _roiStrokeThickness = newStrokeThickness;
+
+                foreach (Shape roi in _roiList)
+                {
+                    if (null != roi)
+                    {
+                        if (roi is ScaleLines)
+                        {
+                            roi.StrokeThickness = _roiStrokeThickness * _roiScaleLineStrokeThicknessMultiplier;
+                        }
+                        else if (roi is ScaleNumbers)
+                        {
+                            roi.StrokeThickness = _roiStrokeThickness * _roiScaleNumberStrokeThicknessMultiplier;
+                        }
+                        else
+                        {
+                            roi.StrokeThickness = _roiStrokeThickness;
+                        }
+                    }
+                }
+                UpdateVisibleROIs();
+            }
         }
 
         public double ZRefMM
@@ -324,6 +459,21 @@
         #endregion Properties
 
         #region Methods
+
+        /// <summary>
+        /// use the XamlWriter and XamlReader to clone UIElement, may not foolproof
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source"></param>
+        /// <returns></returns>
+        public static T CloneUIElementByXamlWriter<T>(T source)
+        {
+            string cloneObj = System.Windows.Markup.XamlWriter.Save(source);
+            StringReader stringReader = new StringReader(cloneObj);
+            System.Xml.XmlReader xmlReader = System.Xml.XmlReader.Create(stringReader);
+            T target = (T)System.Windows.Markup.XamlReader.Load(xmlReader);
+            return target;
+        }
 
         public static byte GetTagByteSection(object tag, Tag tagID, BitVector32.Section section)
         {
@@ -367,7 +517,7 @@
         }
 
         //At the present only adds a corner to a Polygon ROI or Polyline ROI
-        public void AddPointToObject(ref Canvas canvas, Point pt)
+        public void AddPointToObject(Point pt)
         {
             if (false == _isObjectComplete && true == _isObjectCreated)
             {
@@ -377,14 +527,23 @@
                     {
                         _selectedPolygon.Points.Add(pt);
                         ((ROIPoly)_roiList[_roiList.Count - 1]).Points.Add(pt);
-                        canvas.Children.Add(GetCornerEllipse(pt));
+                        _overlayItems.Add(GetCornerEllipse(pt));
 
                     }
                 }
                 else if (_activeType == typeof(Polyline))
                 {
                     ((Polyline)_roiList[_roiList.Count - 1]).Points.Add(pt);
-                    canvas.Children.Add(GetCornerEllipse(pt));
+                    _overlayItems.Add(GetCornerEllipse(pt));
+                    if (true == _showPolylineLength)
+                    {
+                        UpdateGeometryAdorner(_roiList.Last());
+                    }
+                }
+                else if (_activeType == typeof(ROIPolyline))
+                {
+                    ((ROIPolyline)_roiList[_roiList.Count - 1]).Points.Add(pt);
+                    _overlayItems.Add(GetCornerEllipse(pt));
                     if (true == _showPolylineLength)
                     {
                         UpdateGeometryAdorner(_roiList.Last());
@@ -393,15 +552,52 @@
             }
         }
 
+        public void AdjustROIListAspectRatio(double xScale, double yScale, bool reset = false)
+        {
+            if (xScale <= 0 || yScale <= 0)
+            {
+                //invalid scale
+                return;
+            }
+
+            double toAdjustX = (double)(_pixelX * xScale) / ((double)_pixelXAdjusted);
+            double toAdjustY = (double)(_pixelY * yScale) / ((double)_pixelYAdjusted);
+
+            _pixelXAdjusted = (int)(_pixelX * xScale);
+            _pixelYAdjusted = (int)(_pixelY * yScale);
+            _imageScaleX = xScale;
+            _imageScaleY = yScale;
+            for (int i = 0; i < _roiList.Count; i++)
+            {
+                //if (true == GetTagBit(_roiList[i].Tag, Tag.FLAGS, Flag.DISPLAY))
+                {
+                    if (_roiList[i] is ScalableShape)
+                    {
+                        (_roiList[i] as ScalableShape).ApplyScaleUpdate(xScale, yScale);
+                    }
+
+                    UpdatePanningAdorner(_roiList[i]);
+                    UpdateGeometryAdorner(_roiList[i]);
+                    UpdateIndexAdorner(_roiList[i]);
+                    UpdateDividerAdorner(_roiList[i]);
+                }
+            }
+
+            ROIListUpdated?.Invoke();
+            if (_currentMode == Mode.MICRO_SCANAREA)
+            {
+                mROIsUpdated?.Invoke();
+            }
+        }
+
         /// <summary>
         ///  Append the Mode ROIs
         /// </summary>
-        /// <param name="canvas"></param>
         /// <param name="mode"></param>
         /// <param name="patternID"></param>
         /// <param name="rois"></param>
         /// <param name="waveLength"></param>
-        public void AppendModeROIs(ref Canvas canvas, Mode mode, int patternID, List<Shape> rois, int waveLength)
+        public void AppendModeROIs(Mode mode, int patternID, List<Shape> rois, int waveLength)
         {
             List<Shape> roiList = new List<Shape>();
 
@@ -443,11 +639,11 @@
                 newRoi.ToolTip = "ROI #" + newTag[(int)Tag.SUB_PATTERN_ID];
                 newRoi.MouseLeftButtonDown += ROI_MouseDown;
                 _roiList.Add(newRoi);
-                canvas.Children.Add(_roiList[_roiList.Count - 1]);
+                _overlayItems.Add(_roiList[_roiList.Count - 1]);
                 AddIndexToROI(_roiList[_roiList.Count - 1]);
             }
 
-            ValidateROIs(ref canvas);
+            ValidateROIs();
         }
 
         /// <summary>
@@ -466,7 +662,7 @@
                 //will be carried over when revoke:
                 if (typeof(ROIRect) == _roiList[i].GetType())
                 {
-                    ROIRect roiRect = new ROIRect(((ROIRect)_roiList[i]).StartPoint, ((ROIRect)_roiList[i]).EndPoint);
+                    ROIRect roiRect = new ROIRect(((ROIRect)_roiList[i]).StartPoint, ((ROIRect)_roiList[i]).EndPoint, ((ROIRect)_roiList[i]).ImageScaleX, ((ROIRect)_roiList[i]).ImageScaleY);
                     roiRect.Fill = ((ROIRect)_roiList[i]).Fill;
                     roiRect.Stroke = ((ROIRect)_roiList[i]).Stroke;
                     roiRect.StrokeThickness = ((ROIRect)_roiList[i]).StrokeThickness;
@@ -476,7 +672,7 @@
                 }
                 else if (typeof(ROIPoly) == _roiList[i].GetType())
                 {
-                    ROIPoly roiPoly = new ROIPoly(((ROIPoly)_roiList[i]).Points.Clone());
+                    ROIPoly roiPoly = new ROIPoly(((ROIPoly)_roiList[i]).Points.Clone(), _imageScaleX, _imageScaleY);
                     roiPoly.Closed = ((ROIPoly)_roiList[i]).Closed;
                     roiPoly.Fill = ((ROIPoly)_roiList[i]).Fill;
                     roiPoly.Stroke = ((ROIPoly)_roiList[i]).Stroke;
@@ -499,9 +695,23 @@
                     roiLine.Tag = tag.Clone();
                     _roiListBackup.Add(roiLine);
                 }
+                else if (typeof(ROILine) == _roiList[i].GetType())
+                {
+                    Line roiLine = new Line();
+                    roiLine.X1 = ((ROILine)_roiList[i]).StartPoint.X;
+                    roiLine.Y1 = ((ROILine)_roiList[i]).StartPoint.Y;
+                    roiLine.X2 = ((ROILine)_roiList[i]).EndPoint.X;
+                    roiLine.Y2 = ((ROILine)_roiList[i]).EndPoint.Y;
+                    roiLine.Fill = ((ROILine)_roiList[i]).Fill;
+                    roiLine.Stroke = ((ROILine)_roiList[i]).Stroke;
+                    roiLine.StrokeThickness = ((ROILine)_roiList[i]).StrokeThickness;
+                    roiLine.MouseLeftButtonDown += ROI_MouseDown;
+                    roiLine.Tag = tag.Clone();
+                    _roiListBackup.Add(roiLine);
+                }
                 else if (typeof(Reticle) == _roiList[i].GetType())
                 {
-                    Reticle roiReticle = new Reticle();
+                    Reticle roiReticle = new Reticle(_imageScaleX, _imageScaleY);
                     roiReticle.ImageHeight = ((Reticle)_roiList[i]).ImageHeight;
                     roiReticle.ImageWidth = ((Reticle)_roiList[i]).ImageWidth;
                     roiReticle.Fill = ((Reticle)_roiList[i]).Fill;
@@ -517,6 +727,8 @@
                     roiScaleL.ScaleFieldWidth = ((ScaleLines)_roiList[i]).ScaleFieldWidth;
                     roiScaleL.ImageHeight = ((ScaleLines)_roiList[i]).ImageHeight;
                     roiScaleL.ImageWidth = ((ScaleLines)_roiList[i]).ImageWidth;
+                    roiScaleL.ImageScaleX = ((ScaleLines)_roiList[i]).ImageScaleX;
+                    roiScaleL.ImageScaleY = ((ScaleLines)_roiList[i]).ImageScaleY;
                     roiScaleL.Fill = ((ScaleLines)_roiList[i]).Fill;
                     roiScaleL.Stroke = ((ScaleLines)_roiList[i]).Stroke;
                     roiScaleL.StrokeThickness = ((ScaleLines)_roiList[i]).StrokeThickness;
@@ -529,6 +741,8 @@
                     roiScale.ScaleFieldWidth = ((ScaleNumbers)_roiList[i]).ScaleFieldWidth;
                     roiScale.ImageHeight = ((ScaleNumbers)_roiList[i]).ImageHeight;
                     roiScale.ImageWidth = ((ScaleNumbers)_roiList[i]).ImageWidth;
+                    roiScale.ImageScaleX = ((ScaleLines)_roiList[i]).ImageScaleX;
+                    roiScale.ImageScaleY = ((ScaleLines)_roiList[i]).ImageScaleY;
                     roiScale.Fill = ((ScaleNumbers)_roiList[i]).Fill;
                     roiScale.Stroke = ((ScaleNumbers)_roiList[i]).Stroke;
                     roiScale.StrokeThickness = ((ScaleNumbers)_roiList[i]).StrokeThickness;
@@ -537,7 +751,7 @@
                 }
                 else if (typeof(ROICrosshair) == _roiList[i].GetType())
                 {
-                    ROICrosshair roiCrosshair = new ROICrosshair(((ROICrosshair)_roiList[i]).CenterPoint);
+                    ROICrosshair roiCrosshair = new ROICrosshair(((ROICrosshair)_roiList[i]).CenterPoint, _imageScaleX, _imageScaleY);
                     roiCrosshair.Fill = ((ROICrosshair)_roiList[i]).Fill;
                     roiCrosshair.Stroke = ((ROICrosshair)_roiList[i]).Stroke;
                     roiCrosshair.StrokeThickness = ((ROICrosshair)_roiList[i]).StrokeThickness;
@@ -556,9 +770,19 @@
                     roiPolyLine.Tag = tag.Clone();
                     _roiListBackup.Add(roiPolyLine);
                 }
+                else if (typeof(ROIPolyline) == _roiList[i].GetType())
+                {
+                    ROIPolyline roiPolyLine = new ROIPolyline(((ROIPolyline)_roiList[i]).Points.Clone(), _imageScaleX, _imageScaleY);
+                    roiPolyLine.Fill = ((ROIPolyline)_roiList[i]).Fill;
+                    roiPolyLine.Stroke = ((ROIPolyline)_roiList[i]).Stroke;
+                    roiPolyLine.StrokeThickness = ((ROIPolyline)_roiList[i]).StrokeThickness;
+                    roiPolyLine.MouseLeftButtonDown += ROI_MouseDown;
+                    roiPolyLine.Tag = tag.Clone();
+                    _roiListBackup.Add(roiPolyLine);
+                }
                 else if (typeof(ROIEllipse) == _roiList[i].GetType())
                 {
-                    ROIEllipse roiEllipse = new ROIEllipse(((ROIEllipse)_roiList[i]).StartPoint, ((ROIEllipse)_roiList[i]).EndPoint);
+                    ROIEllipse roiEllipse = new ROIEllipse(((ROIEllipse)_roiList[i]).StartPoint, ((ROIEllipse)_roiList[i]).EndPoint, _imageScaleX, _imageScaleY);
                     roiEllipse.Center = ((ROIEllipse)_roiList[i]).Center;
                     roiEllipse.Fill = ((ROIEllipse)_roiList[i]).Fill;
                     roiEllipse.Stroke = ((ROIEllipse)_roiList[i]).Stroke;
@@ -732,7 +956,7 @@
             }
         }
 
-        public void ClearAllObjects(ref Canvas canvas)
+        public void ClearAllObjects()
         {
             List<Shape> roiListKeep = new List<Shape>();
             for (int i = 0; i < _roiList.Count; i++)
@@ -768,7 +992,7 @@
             _isObjectComplete = false;
             _isObjectCreated = false;
             _activeType = null;
-            UpdateVisibleROIs(ref canvas);
+            UpdateVisibleROIs();
 
             _roiCount = _roiList.Count;
             _lastLineIndex = 0;
@@ -783,13 +1007,21 @@
             {
                 SaveROIs(_expROIsPathAndName);
             }
-            if (null != ClearedObjectEvent)
+
+            ClearedObjectEvent?.Invoke();
+
+            if (_currentMode == Mode.STATSONLY)
             {
-                ClearedObjectEvent();
+                ClearedStatsROIsEvent?.Invoke();
+            }
+
+            if (_currentMode == Mode.MICRO_SCANAREA)
+            {
+                mROIsUpdated?.Invoke();
             }
         }
 
-        public void ClearNonSaveROIs(ref Canvas canvas)
+        public void ClearNonSaveROIs()
         {
             List<Shape> roiKeep = new List<Shape>();
             for (int i = 0; i < _roiList.Count; i++)
@@ -807,25 +1039,15 @@
             }
             _roiList = roiKeep;
 
-            UpdateVisibleROIs(ref canvas);
+            UpdateVisibleROIs();
+
+            if (_currentMode == Mode.MICRO_SCANAREA)
+            {
+                mROIsUpdated?.Invoke();
+            }
         }
 
-        /// <summary>
-        /// use the XamlWriter and XamlReader to clone UIElement, may not foolproof
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="source"></param>
-        /// <returns></returns>
-        public T CloneUIElementByXamlWriter<T>(T source)
-        {
-            string cloneObj = System.Windows.Markup.XamlWriter.Save(source);
-            StringReader stringReader = new StringReader(cloneObj);
-            System.Xml.XmlReader xmlReader = System.Xml.XmlReader.Create(stringReader);
-            T target = (T)System.Windows.Markup.XamlReader.Load(xmlReader);
-            return target;
-        }
-
-        public void CloseObject(ref Canvas canvas, Point pt)
+        public void CloseObject(Point pt)
         {
             if (false == _isObjectComplete && true == _isObjectCreated)
             {
@@ -838,9 +1060,9 @@
                             int points = ((ROIPoly)_roiList[_roiList.Count - 1]).Points.Count;
                             for (int i = 0; i < points; i++)
                             {
-                                canvas.Children.RemoveAt(canvas.Children.Count - 1);
+                                _overlayItems.RemoveAt(_overlayItems.Count - 1);
                             }
-                            canvas.Children.Remove(_selectedPolygon);
+                            _overlayItems.Remove(_selectedPolygon);
 
                             ((ROIPoly)_roiList[_roiList.Count - 1]).Points.RemoveAt(points - 1);
 
@@ -853,7 +1075,7 @@
                             //add index adorner:
                             AddIndexToROI(_roiList[_roiList.Count - 1]);
 
-                            InitROIPoly(ref canvas);
+                            InitROIPoly();
                         }
                         catch (Exception e)
                         {
@@ -866,7 +1088,11 @@
                     int points = ((Polyline)_roiList[_roiList.Count - 1]).Points.Count;
                     for (int i = 0; i < points; i++)
                     {
-                        canvas.Children.RemoveAt(canvas.Children.Count - 1);
+                        if (_overlayItems.Count <= 0)
+                        {
+                            break;
+                        }
+                        _overlayItems.RemoveAt(_overlayItems.Count - 1);
                     }
 
                     ((Polyline)_roiList[_roiList.Count - 1]).Points.RemoveAt(points - 1);
@@ -879,12 +1105,38 @@
                     //add index adorner:
                     AddIndexToROI(_roiList[_roiList.Count - 1]);
 
-                    InitROIPolyline(ref canvas);
+                    InitROIPolyline();
                 }
+                else if (_activeType == typeof(ROIPolyline) && 2 < ((ROIPolyline)_roiList[_roiList.Count - 1]).Points.Count)
+                {
+                    int points = ((ROIPolyline)_roiList[_roiList.Count - 1]).Points.Count;
+                    for (int i = 0; i < points; i++)
+                    {
+                        if (_overlayItems.Count <= 0)
+                        {
+                            break;
+                        }
+                        _overlayItems.RemoveAt(_overlayItems.Count - 1);
+                    }
+
+                    ((ROIPolyline)_roiList[_roiList.Count - 1]).Points.RemoveAt(points - 1);
+
+                    ObjectComplete(_roiList.Count - 1);
+                    _roiCount++;
+
+                    if (null != UpdatingObjectEvent) UpdatingObjectEvent(false); //New objects can be created at this point
+
+                    //add index adorner:
+                    AddIndexToROI(_roiList[_roiList.Count - 1]);
+
+                    InitROIPolyline();
+                }
+
+                UpdateVisibleROIs();
             }
         }
 
-        public void CreateROICenter(ref Canvas canvas)
+        public void CreateROICenter()
         {
             //return if sub ID is zero-based
             if (SkipRedrawCenter)
@@ -937,7 +1189,7 @@
                     Stroke = (Mode.PATTERN_NOSTATS == _currentMode) ?
                         new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
                         GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8),
-                    StrokeThickness = 1,
+                    StrokeThickness = _roiStrokeThickness,
                     Fill = Brushes.Transparent
                 };
                 ellipse.MouseLeftButtonDown += ROI_MouseDown;
@@ -949,7 +1201,7 @@
             _roiList[_roiList.Count - 1].Tag = tag;
             _roiList[_roiList.Count - 1].Tag = SetTagRGB(_roiList[_roiList.Count - 1]);
 
-            if (!_simulatorMode) canvas.Children.Add(_roiList[_roiList.Count - 1]);
+            if (!_simulatorMode) _overlayItems.Add(_roiList[_roiList.Count - 1]);
             ObjectComplete(_roiList.Count - 1);
 
             //add index adorner:
@@ -963,16 +1215,16 @@
         /// <param name="shape"></param>
         /// <param name="startPt"></param>
         /// <param name="endPt"></param>
-        public void CreateROIShape(ref Canvas canvas, Type shape, Point startPt, Point endPt)
+        public void CreateROIShape(Type shape, Point startPt, Point endPt)
         {
             _isObjectComplete = false;
             _isObjectCreated = false;
             _activeType = shape;
-            CreateObject(ref canvas, startPt);
-            ResizeObject(ref canvas, endPt, false);
+            CreateObject(startPt);
+            ResizeObject(endPt, false);
 
             //user must close object later after adding points to object
-            if (typeof(ROIPoly) != shape && typeof(Polyline) != shape)
+            if (typeof(ROIPoly) != shape && typeof(ROIPolyline) != shape && typeof(Polyline) != shape)
                 ObjectComplete(_roiList.Count - 1);
         }
 
@@ -998,7 +1250,7 @@
             }
         }
 
-        public void DeletePatternROI(ref Canvas canvas, int patternID = -1, Mode pMode = Mode.PATTERN_NOSTATS)
+        public void DeletePatternROI(int patternID = -1, Mode pMode = Mode.PATTERN_NOSTATS)
         {
             //keep other patterns and stats:
             List<Shape> localListToKeep = new List<Shape>();
@@ -1022,13 +1274,11 @@
             }
             _roiList = localListToKeep;
 
-            UpdateVisibleROIs(ref canvas);
+            UpdateVisibleROIs();
         }
 
-        public void DeleteSelectedROIs(ref Canvas canvas)
+        public void DeleteSelectedROIs()
         {
-            _savedSelectedIndex = GetSelectedIndex(1);
-
             _lastLineIndex = 0;
             List<Shape> roiList = new List<Shape>();
 
@@ -1040,7 +1290,7 @@
                     if ((Mode.STATSONLY == (Mode)(GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR))) ||
                         (_patternID == ((int[])_roiList[i].Tag)[(int)Tag.PATTERN_ID]))
                     {
-                        canvas.Children.Remove(_roiList[i]);
+                        _overlayItems.Remove(_roiList[i]);
                         _roiList.RemoveAt(i);
                     }
                 }
@@ -1055,15 +1305,33 @@
             }
             ReorderROIs();
             CreateMask();
-            UpdateVisibleROIs(ref canvas);
+            UpdateVisibleROIs();
 
             if (true == _saveEveryChange)
             {
                 SaveROIs(_expROIsPathAndName);
             }
-            if (null != ClearedObjectEvent)
+            ClearedObjectEvent?.Invoke();
+
+            bool hasStatsROIs = false;
+            for (int i = 0; i < _roiList.Count; i++)
             {
-                ClearedObjectEvent();
+                Mode md = (Mode)(GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR));
+                if (md == Mode.STATSONLY)
+                {
+                    hasStatsROIs = true;
+                    break;
+                }
+            }
+
+            if (!hasStatsROIs)
+            {
+                ClearedStatsROIsEvent?.Invoke();
+            }
+
+            if (_currentMode == Mode.MICRO_SCANAREA)
+            {
+                mROIsUpdated?.Invoke();
             }
         }
 
@@ -1091,7 +1359,7 @@
         /// <param name="canvas"></param>
         /// <param name="wavelength"></param>
         /// <param name="attenuation"></param>
-        public void DimWavelengthROI(ref Canvas canvas)
+        public void DimWavelengthROI()
         {
             for (int i = 0; i < _roiList.Count; i++)
             {
@@ -1101,10 +1369,10 @@
                     ((SolidColorBrush)_roiList[i].Stroke).Color.G,
                     ((SolidColorBrush)_roiList[i].Stroke).Color.B));
             }
-            UpdateVisibleROIs(ref canvas);
+            UpdateVisibleROIs();
         }
 
-        public void DisplayModeROI(ref Canvas canvas, Mode[] mode, bool setVisible)
+        public void DisplayModeROI(Mode[] mode, bool setVisible)
         {
             for (int i = 0; i < _roiList.Count; i++)
             {
@@ -1117,10 +1385,10 @@
                 }
             }
 
-            UpdateVisibleROIs(ref canvas);
+            UpdateVisibleROIs();
         }
 
-        public void DisplayOnlyPatternROIs(ref Canvas canvas, Mode[] mode, int patternID, int[] wavelengthsNM)
+        public void DisplayOnlyPatternROIs(Mode[] mode, int patternID, int[] wavelengthsNM)
         {
             if (mode == null || wavelengthsNM == null) return;
 
@@ -1148,10 +1416,10 @@
                 }
             }
 
-            UpdateVisibleROIs(ref canvas);
+            UpdateVisibleROIs();
         }
 
-        public void DisplayPatternROI(ref Canvas canvas, int patternID, bool setVisible)
+        public void DisplayPatternROI(int patternID, bool setVisible)
         {
             for (int i = 0; i < _roiList.Count; i++)
             {
@@ -1161,10 +1429,10 @@
                 }
             }
 
-            UpdateVisibleROIs(ref canvas);
+            UpdateVisibleROIs();
         }
 
-        public void DuplicatePatternROIs(ref Canvas canvas, int patternID, Mode patternMode = Mode.PATTERN_NOSTATS)
+        public void DuplicatePatternROIs(int patternID, Mode patternMode = Mode.PATTERN_NOSTATS)
         {
             //keep other patterns and stats:
             List<Shape> listToDuplicate = new List<Shape>();
@@ -1207,11 +1475,11 @@
                 newRoi.ToolTip = "ROI #" + newTag[(int)Tag.SUB_PATTERN_ID];
                 newRoi.MouseLeftButtonDown += ROI_MouseDown;
                 _roiList.Add(newRoi);
-                canvas.Children.Add(_roiList[_roiList.Count - 1]);
+                _overlayItems.Add(_roiList[_roiList.Count - 1]);
                 AddIndexToROI(_roiList[_roiList.Count - 1]);
             }
 
-            ValidateROIs(ref canvas);
+            ValidateROIs();
         }
 
         /// <summary>
@@ -1221,6 +1489,85 @@
         public Shape GetCurrentROI()
         {
             return (0 < _roiList.Count) ? _roiList.Last() : null;
+        }
+
+        /// <summary>
+        /// get current shape length if ROILine or ROIPolyline. Otherwise return 0
+        /// </summary>
+        /// <returns>length of current ROI if ROILine or ROIPolyline otherwise 0</returns>
+        public double GetCurrentROILength()
+        {
+
+            if (GetCurrentROI() is ROILine)
+            {
+
+                ROILine r = (ROILine)GetCurrentROI();
+                PixelSizeUM pixelSizeUM = ((PixelSizeUM)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)null]);
+                double pixelWidthUM = pixelSizeUM.PixelWidthUM;
+                double pixelHeightUM = pixelSizeUM.PixelHeightUM;
+
+                return Math.Round(Math.Sqrt(Math.Pow(pixelWidthUM * (r.EndPoint.X - r.StartPoint.X) / OverlayManagerClass.Instance.ImageXScale, 2)
+                    + Math.Pow(pixelHeightUM * (r.EndPoint.Y - r.StartPoint.Y) / OverlayManagerClass.Instance.ImageYScale, 2))) + 1;
+
+            }
+            else if (GetCurrentROI() is ROIPolyline)
+            {
+                int polylineLength = 1;
+                Application.Current.Dispatcher.Invoke((Action)delegate
+                {
+
+                    ROIPolyline polyline = (ROIPolyline)GetCurrentROI();
+                    if (2 <= polyline.Points.Count)
+                    {
+
+                        int x1;
+                        int x2;
+                        int y1;
+                        int y2;
+
+                        for (int i = 1; i < polyline.Points.Count; i++)
+                        {
+                            x1 = (int)Math.Floor(polyline.Points[i - 1].X);
+                            x2 = (int)Math.Floor(polyline.Points[i].X);
+                            y1 = (int)Math.Floor(polyline.Points[i - 1].Y);
+                            y2 = (int)Math.Floor(polyline.Points[i].Y);
+                            polylineLength += (int)Math.Round(Math.Sqrt(Math.Pow(_umPerPixel.PixelWidthUM * (x2 - x1) / _imageScaleX, 2) + Math.Pow(_umPerPixel.PixelHeightUM * (y2 - y1) / _imageScaleY, 2)));
+                        }
+                    }
+                });
+                return polylineLength;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        public void GetDuplicatedROIList(ref ObservableCollection<UIElement> duplicatedROIs)
+        {
+            bool skipRedrawCenterBackup = _skipRedrawCenter;
+            _skipRedrawCenter = true;   //get duplicate no need to redraw
+            //ValidateROIs();
+            duplicatedROIs.Clear();
+
+            for (int i = 0; i < _roiList.Count; i++)
+            {
+                if (true == GetTagBit(_roiList[i].Tag, Tag.FLAGS, Flag.DISPLAY))
+                {
+                    var duplicatedROI = CloneUIElementByXamlWriter(_roiList[i]);
+                    duplicatedROI.MouseLeftButtonDown += ROI_MouseDown;
+
+                    RemoveAdornerFromROI(duplicatedROI, AdornerType.ADJUST_ADORNER);
+                    int[] tag = SetTagBit(duplicatedROI.Tag, Tag.FLAGS, Flag.ADJUST_ADONERS, false);
+                    duplicatedROI.Tag = tag;
+
+                    duplicatedROIs.Add(duplicatedROI);
+                    UpdateGeometryAdorner(duplicatedROI);
+                    UpdateIndexAdorner(duplicatedROI);
+                    UpdateDividerAdorner(duplicatedROI);
+                }
+            }
+            _skipRedrawCenter = skipRedrawCenterBackup;
         }
 
         /// <summary>
@@ -1247,6 +1594,37 @@
             return roiList;
         }
 
+        //Causing problems with UI bindings
+        /*private Shape GetScaledROI(Shape roi)
+        {
+            Shape tmp;
+            switch (roi.GetType().ToString())
+            {
+                case "OverlayManager.ROIEllipse":
+                    tmp = new ROIEllipse((roi as ROIEllipse).StatsStartPoint, (roi as ROIEllipse).StatsEndPoint, 1, 1);
+                    break;
+                case "OverlayManager.ROICrosshair":
+                    tmp = new ROICrosshair((roi as ROICrosshair).StatsCenterPoint, 1, 1);
+                    break;
+                case "OverlayManager.ROIRect":
+                    tmp = new ROIRect((roi as ROIRect).StatsStartPoint, (roi as ROIRect).StatsEndPoint, 1, 1);
+                    break;
+                case "OverlayManager.ROIPoly":
+                    tmp = new ROIPoly((roi as ROIPoly).StatsPoints, 1, 1);
+                    break;
+                case "OverlayManager.ROILine":
+                    tmp = new ROILine((roi as ROILine).StatsStartPoint, (roi as ROILine).StatsEndPoint, 1, 1);
+                    break;
+                case "OverlayManager.ROIPolyline":
+                    tmp = new ROIPolyline((roi as ROIPolyline).StatsPoints, 1, 1);
+                    break;
+                default:
+                    tmp = new ROIRect();
+                    break;
+            }
+            tmp.Tag = roi.Tag;
+            return tmp;
+        }*/
         /// <summary>
         /// return mode ROI sub pattern IDs.
         /// </summary>
@@ -1278,27 +1656,30 @@
                 switch (shapes[i].GetType().ToString())
                 {
                     case "OverlayManager.ROIEllipse":
-                        pt = (shapes[i] as ROIEllipse).Center;
+                        pt = (shapes[i] as ROIEllipse).StatsCenterPoint;
                         break;
                     case "OverlayManager.ROICrosshair":
-                        pt = (shapes[i] as ROICrosshair).CenterPoint;
+                        pt = (shapes[i] as ROICrosshair).StatsCenterPoint;
                         break;
                     case "OverlayManager.ROIRect":
-                        pt = new Point((((OverlayManager.ROIRect)shapes[i]).TopLeft.X + ((OverlayManager.ROIRect)shapes[i]).BottomRight.X) / 2,
-                            (((OverlayManager.ROIRect)shapes[i]).TopLeft.Y + ((OverlayManager.ROIRect)shapes[i]).BottomRight.Y) / 2);
+                        pt = new Point((((OverlayManager.ROIRect)shapes[i]).StatsTopLeft.X + ((OverlayManager.ROIRect)shapes[i]).StatsBottomRight.X) / 2,
+                            (((OverlayManager.ROIRect)shapes[i]).StatsTopLeft.Y + ((OverlayManager.ROIRect)shapes[i]).StatsBottomRight.Y) / 2);
                         break;
                     case "OverlayManager.ROIPoly":
-                        for (int j = 0; j < ((ROIPoly)shapes[i]).Points.Count; j++)
+                        for (int j = 0; j < ((ROIPoly)shapes[i]).StatsPoints.Count; j++)
                         {
-                            left = Math.Min(left, ((ROIPoly)shapes[i]).Points[j].X);
-                            right = Math.Max(right, ((ROIPoly)shapes[i]).Points[j].X);
-                            top = Math.Min(top, ((ROIPoly)shapes[i]).Points[j].Y);
-                            bottom = Math.Min(bottom, ((ROIPoly)shapes[i]).Points[j].Y);
+                            left = Math.Min(left, ((ROIPoly)shapes[i]).StatsPoints[j].X);
+                            right = Math.Max(right, ((ROIPoly)shapes[i]).StatsPoints[j].X);
+                            top = Math.Min(top, ((ROIPoly)shapes[i]).StatsPoints[j].Y);
+                            bottom = Math.Min(bottom, ((ROIPoly)shapes[i]).StatsPoints[j].Y);
                         }
                         pt = new Point((left + right) / 2, (top + bottom) / 2);
                         break;
                     case "Line":
                         pt = new Point((((Line)shapes[i]).X1 + ((Line)shapes[i]).X2) / 2, (((Line)shapes[i]).Y1 + ((Line)shapes[i]).Y2) / 2);
+                        break;
+                    case "OverlayManager.ROILine":
+                        pt = new Point((((ROILine)shapes[i]).StatsStartPoint.X + ((ROILine)shapes[i]).StatsEndPoint.X) / 2, (((ROILine)shapes[i]).StatsStartPoint.Y + ((ROILine)shapes[i]).StatsEndPoint.Y) / 2);
                         break;
                     case "Polyline":
                         for (int j = 0; j < ((Polyline)shapes[i]).Points.Count; j++)
@@ -1307,6 +1688,16 @@
                             right = Math.Max(right, ((Polyline)shapes[i]).Points[j].X);
                             top = Math.Min(top, ((Polyline)shapes[i]).Points[j].Y);
                             bottom = Math.Min(bottom, ((Polyline)shapes[i]).Points[j].Y);
+                        }
+                        pt = new Point((left + right) / 2, (top + bottom) / 2);
+                        break;
+                    case "OverlayManager.ROIPolyline":
+                        for (int j = 0; j < ((ROIPolyline)shapes[i]).Points.Count; j++)
+                        {
+                            left = Math.Min(left, ((ROIPolyline)shapes[i]).StatsPoints[j].X);
+                            right = Math.Max(right, ((ROIPolyline)shapes[i]).StatsPoints[j].X);
+                            top = Math.Min(top, ((ROIPolyline)shapes[i]).StatsPoints[j].Y);
+                            bottom = Math.Min(bottom, ((ROIPolyline)shapes[i]).StatsPoints[j].Y);
                         }
                         pt = new Point((left + right) / 2, (top + bottom) / 2);
                         break;
@@ -1335,24 +1726,24 @@
                     switch (_roiList[i].GetType().ToString())
                     {
                         case "OverlayManager.ROIEllipse":
-                            pt = (_roiList[i] as ROIEllipse).Center;
+                            pt = (_roiList[i] as ROIEllipse).StatsCenterPoint;
                             roiType = (string.IsNullOrEmpty(roiType) || 0 == roiType.CompareTo("Ellipse")) ? "Ellipse" : "mixed";
                             break;
                         case "OverlayManager.ROICrosshair":
-                            pt = (_roiList[i] as ROICrosshair).CenterPoint;
+                            pt = (_roiList[i] as ROICrosshair).StatsCenterPoint;
                             roiType = (string.IsNullOrEmpty(roiType) || 0 == roiType.CompareTo("Crosshair")) ? "Crosshair" : "mixed";
                             break;
                         case "OverlayManager.ROIRect":
-                            pt = new Point((((OverlayManager.ROIRect)_roiList[i]).TopLeft.X + ((OverlayManager.ROIRect)_roiList[i]).BottomRight.X) / 2, (((OverlayManager.ROIRect)_roiList[i]).TopLeft.Y + ((OverlayManager.ROIRect)_roiList[i]).BottomRight.Y) / 2);
+                            pt = new Point((((OverlayManager.ROIRect)_roiList[i]).StatsTopLeft.X + ((OverlayManager.ROIRect)_roiList[i]).StatsBottomRight.X) / 2, (((OverlayManager.ROIRect)_roiList[i]).StatsTopLeft.Y + ((OverlayManager.ROIRect)_roiList[i]).StatsBottomRight.Y) / 2);
                             roiType = (string.IsNullOrEmpty(roiType) || 0 == roiType.CompareTo("Rectangle")) ? "Rectangle" : "mixed";
                             break;
                         case "OverlayManager.ROIPoly":
-                            for (int j = 0; j < ((ROIPoly)_roiList[i]).Points.Count; j++)
+                            for (int j = 0; j < ((ROIPoly)_roiList[i]).StatsPoints.Count; j++)
                             {
-                                left = Math.Min(left, ((ROIPoly)_roiList[i]).Points[j].X);
-                                right = Math.Max(right, ((ROIPoly)_roiList[i]).Points[j].X);
-                                top = Math.Min(top, ((ROIPoly)_roiList[i]).Points[j].Y);
-                                bottom = Math.Min(bottom, ((ROIPoly)_roiList[i]).Points[j].Y);
+                                left = Math.Min(left, ((ROIPoly)_roiList[i]).StatsPoints[j].X);
+                                right = Math.Max(right, ((ROIPoly)_roiList[i]).StatsPoints[j].X);
+                                top = Math.Min(top, ((ROIPoly)_roiList[i]).StatsPoints[j].Y);
+                                bottom = Math.Min(bottom, ((ROIPoly)_roiList[i]).StatsPoints[j].Y);
                             }
                             pt = new Point((left + right) / 2, (top + bottom) / 2);
                             roiType = (string.IsNullOrEmpty(roiType) || 0 == roiType.CompareTo("Polygon")) ? "Polygon" : "mixed";
@@ -1368,6 +1759,21 @@
                                 right = Math.Max(right, ((Polyline)_roiList[i]).Points[j].X);
                                 top = Math.Min(top, ((Polyline)_roiList[i]).Points[j].Y);
                                 bottom = Math.Min(bottom, ((Polyline)_roiList[i]).Points[j].Y);
+                            }
+                            pt = new Point((left + right) / 2, (top + bottom) / 2);
+                            roiType = (string.IsNullOrEmpty(roiType) || 0 == roiType.CompareTo("Polyline")) ? "Polyline" : "mixed";
+                            break;
+                        case "OverlayManager.ROILine":
+                            pt = new Point((((ROILine)_roiList[i]).StatsStartPoint.X + ((ROILine)_roiList[i]).StatsEndPoint.X) / 2, (((ROILine)_roiList[i]).StatsStartPoint.Y + ((ROILine)_roiList[i]).StatsEndPoint.Y) / 2);
+                            roiType = (string.IsNullOrEmpty(roiType) || 0 == roiType.CompareTo("Line")) ? "Line" : "mixed";
+                            break;
+                        case "OverlayManager.ROIPolyline":
+                            for (int j = 0; j < ((ROIPolyline)_roiList[i]).Points.Count; j++)
+                            {
+                                left = Math.Min(left, ((ROIPolyline)_roiList[i]).StatsPoints[j].X);
+                                right = Math.Max(right, ((ROIPolyline)_roiList[i]).StatsPoints[j].X);
+                                top = Math.Min(top, ((ROIPolyline)_roiList[i]).StatsPoints[j].Y);
+                                bottom = Math.Min(bottom, ((ROIPolyline)_roiList[i]).StatsPoints[j].Y);
                             }
                             pt = new Point((left + right) / 2, (top + bottom) / 2);
                             roiType = (string.IsNullOrEmpty(roiType) || 0 == roiType.CompareTo("Polyline")) ? "Polyline" : "mixed";
@@ -1392,6 +1798,7 @@
             return centers;
         }
 
+        //TODO update this
         /// <summary>
         /// Get patterns with z[um] as key, all if any attribute is not specified
         /// </summary>
@@ -1444,11 +1851,15 @@
             return zShapes;
         }
 
-        public void InitOverlayManagerClass(int pixelX, int pixelY, double umPerPixel, bool saveMaskEverytime)
+        public void InitOverlayManagerClass(int pixelX, int pixelY, PixelSizeUM umPerPixel, bool saveMaskEverytime)
         {
             _pixelX = pixelX;
             _pixelY = pixelY;
-            _fieldWidth = Math.Round(pixelX * umPerPixel);
+            _pixelXAdjusted = pixelX;
+            _pixelYAdjusted = pixelY;
+            _umPerPixel = umPerPixel;
+            _fieldWidth = Math.Round(pixelX * umPerPixel.PixelWidthUM);
+            _fieldHeight = Math.Round(pixelY * umPerPixel.PixelHeightUM);
             //_umPerPixel = umPerPixel;
             _saveMaskEveryTime = saveMaskEverytime;
             _roiList = new List<Shape>();
@@ -1471,16 +1882,16 @@
         }
 
         //Turn On or Off Reticle
-        public void InitReticle(ref Canvas canvas, bool reticleOnOff)
+        public void InitReticle(bool reticleOnOff)
         {
-            InitROI(ref canvas);
+            InitROI();
 
             //Remove Any Reticle left in the canvas
             for (int i = 0; i < _roiList.Count; i++)
             {
                 if (_roiList[i] is Reticle)
                 {
-                    DeleteSingleObject(ref canvas, i);
+                    DeleteSingleObject(i);
                 }
             }
 
@@ -1492,14 +1903,15 @@
                 _isObjectComplete = false;
                 Point pt = new Point();
                 if (null != UpdatingObjectEvent) UpdatingObjectEvent(true);
-                CreateObject(ref canvas, pt);
+                CreateObject(pt);
             }
+            UpdateVisibleROIS();
         }
 
         //set up to create ROI Rectangle (will create the ROI when there is a left click on the canvas)
-        public void InitROICrosshair(ref Canvas canvas)
+        public void InitROICrosshair()
         {
-            InitROI(ref canvas);
+            InitROI();
             _activeType = typeof(ROICrosshair);
             _isObjectCreated = false;
             _isObjectComplete = false;
@@ -1508,9 +1920,9 @@
         }
 
         //set up to create ROI Ellipse (will create the ROI when there is a left click on the canvas)
-        public void InitROIEllipse(ref Canvas canvas)
+        public void InitROIEllipse()
         {
-            InitROI(ref canvas);
+            InitROI();
             _activeType = typeof(ROIEllipse);
             _isObjectCreated = false;
             _isObjectComplete = false;
@@ -1518,10 +1930,10 @@
         }
 
         //set up to create ROI Line (will create the ROI when there is a left click on the canvas)
-        public void InitROILine(ref Canvas canvas)
+        public void InitROILine()
         {
-            InitROI(ref canvas);
-            _activeType = typeof(Line);
+            InitROI();
+            _activeType = typeof(ROILine);
             _isObjectCreated = false;
             _isObjectComplete = false;
             if (null != UpdatingObjectEvent) UpdatingObjectEvent(true);
@@ -1529,24 +1941,24 @@
 
         //set up to create ROI Line (will create the ROI when there is a left click on the canvas)
         //Call this function when there is a double click
-        public void InitROILineWithOptions(ref Canvas canvas)
+        public void InitROILineWithOptions()
         {
             LineROIOptions roiOptions = new LineROIOptions();
             roiOptions.Title = "Line Options";
             roiOptions.ShowLength = _showLineLength;
             roiOptions.ShowDialog();
             _showLineLength = roiOptions.ShowLength;
-            InitROI(ref canvas);
-            _activeType = typeof(Line);
+            InitROI();
+            _activeType = typeof(ROILine);
             _isObjectCreated = false;
             _isObjectComplete = false;
             if (null != UpdatingObjectEvent) UpdatingObjectEvent(true);
         }
 
         //set up to create ROI Polygon (will create the ROI when there is a left click on the canvas)
-        public void InitROIPoly(ref Canvas canvas)
+        public void InitROIPoly()
         {
-            InitROI(ref canvas);
+            InitROI();
             _activeType = typeof(ROIPoly);
             _isObjectCreated = false;
             _isObjectComplete = false;
@@ -1554,34 +1966,34 @@
         }
 
         //set up to create ROI Polygon (will create the ROI when there is a left click on the canvas)
-        public void InitROIPolyline(ref Canvas canvas)
+        public void InitROIPolyline()
         {
-            InitROI(ref canvas);
-            _activeType = typeof(Polyline);
+            InitROI();
+            _activeType = typeof(ROIPolyline);
             _isObjectCreated = false;
             _isObjectComplete = false;
             if (null != UpdatingObjectEvent) UpdatingObjectEvent(true);
         }
 
         //set up to create ROI Polygon (will create the ROI when there is a left click on the canvas)
-        public void InitROIPolylineWithOptions(ref Canvas canvas)
+        public void InitROIPolylineWithOptions()
         {
             LineROIOptions roiOptions = new LineROIOptions();
             roiOptions.Title = "Polyline Options";
             roiOptions.ShowLength = _showPolylineLength;
             roiOptions.ShowDialog();
             _showPolylineLength = roiOptions.ShowLength;
-            InitROI(ref canvas);
-            _activeType = typeof(Polyline);
+            _activeType = typeof(ROIPolyline);
             _isObjectCreated = false;
             _isObjectComplete = false;
+            InitROI();
             if (null != UpdatingObjectEvent) UpdatingObjectEvent(true);
         }
 
         //set up to create ROI Rectangle (will create the ROI when there is a left click on the canvas)
-        public void InitROIRect(ref Canvas canvas)
+        public void InitROIRect()
         {
-            InitROI(ref canvas);
+            InitROI();
             _activeType = typeof(ROIRect);
             _isObjectCreated = false;
             _isObjectComplete = false;
@@ -1589,9 +2001,9 @@
         }
 
         //Turn On or Off Scale
-        public void InitScale(ref Canvas canvas, bool scaleOnOff)
+        public void InitScale(bool scaleOnOff)
         {
-            InitROI(ref canvas);
+            InitROI();
 
             //Remove Any Scale left in the canvas
             int j = -1, k = -1;
@@ -1605,8 +2017,8 @@
                         k = i;
                 }
             }
-            DeleteSingleObject(ref canvas, k);
-            DeleteSingleObject(ref canvas, j);
+            DeleteSingleObject(k);
+            DeleteSingleObject(j);
 
             //If reticle flag is on then create object
             if (scaleOnOff)
@@ -1616,18 +2028,42 @@
                 _isObjectComplete = false;
                 Point pt = new Point();
                 if (null != UpdatingObjectEvent) UpdatingObjectEvent(true);
-                CreateObject(ref canvas, pt);
+                CreateObject(pt);
             }
+            UpdateVisibleROIs();
         }
 
         //Allows for selection of multiple ROIs after it is called
-        public void InitSelectROI(ref Canvas canvas)
+        public void InitSelectROI()
         {
-            InitROI(ref canvas);
+            InitROI();
             _activeType = null;
             _isObjectCreated = false;
             _isObjectComplete = true;
             if (null != UpdatingObjectEvent) UpdatingObjectEvent(false);
+        }
+
+        public bool IsAdornerLayerValid()
+        {
+            //1 - If the overlay items collection is initialized before a reference to the CoumpoundImage is set in ImageView VM, the Visual Parent
+            //Will be null and prevent any adorners from being drawn. This checks if that parent is null.
+            //2 - If the overlay items are set in ImageView on image capture, the adorners might not be loaded because of the roi's being persisted on view load,
+            //This method also checks if the first roi has any adorners which it should if it is valid.
+            if (0 < _overlayItems?.Count)
+            {
+                DependencyObject parentVisual = VisualTreeHelper.GetParent(_overlayItems[0]);
+
+                bool hasAdorners = false;
+                _roiAdornerLayer = AdornerLayer.GetAdornerLayer(_overlayItems[0]);
+                if (null != _roiAdornerLayer)
+                {
+                    Adorner[] itemAdorners = _roiAdornerLayer.GetAdorners(_overlayItems[0]);
+                    hasAdorners = itemAdorners?.Length > 0;
+                }
+
+                return parentVisual != null && hasAdorners;
+            }
+            return false;
         }
 
         /// <summary>
@@ -1649,7 +2085,7 @@
             }
         }
 
-        public bool LoadOriginalFieldAndROIs(ref int areaMode, ref int scanMode, ref int fieldSize, ref int offsetX, ref int offsetY, ref int pixelX, ref int pixelY, ref double areaAngle, ref double dwellTime, ref int interleaveScan, ref Canvas canvas)
+        public bool LoadOriginalFieldAndROIs(ref int areaMode, ref int scanMode, ref int fieldSize, ref int offsetX, ref int offsetY, ref int pixelX, ref int pixelY, ref double areaAngle, ref double dwellTime, ref int interleaveScan)
         {
             ROICapsule roiCapsule = LoadXamlROIs();
             bool ret = false;
@@ -1658,11 +2094,9 @@
                 if (roiCapsule != null)
                 {
                     _roiList = new List<Shape>();
-                    if (null != canvas)
+                    if (null != _overlayItems)
                     {
-                        canvas.IsVisibleChanged -= canvas_IsVisibleChanged;
-                        canvas.IsVisibleChanged += canvas_IsVisibleChanged;
-                        canvas.Children.Clear();
+                        _overlayItems.Clear();
                     }
                     for (int i = 0; i < roiCapsule.ScanAreaROIs.Count(); i++)
                     {
@@ -1683,7 +2117,7 @@
                             {
                                 ROIPoly poly = new ROIPoly()
                                 {
-                                    StrokeThickness = 1,
+                                    StrokeThickness = _roiStrokeThickness,
                                     UseRoundnessPercentage = true,
                                     Fill = Brushes.Transparent
                                 };
@@ -1697,6 +2131,12 @@
                             }
                             else //if the ROI is NOT a polygon just add it to the List of ROIs
                             {
+                                if (roiCapsule.ScanAreaROIs[i] is ROIPolyline)
+                                    roiCapsule.ScanAreaROIs[i].Name = "Polyline" + (_roiList.Count + 1);
+                                else if (roiCapsule.ScanAreaROIs[i] is ROILine)
+                                    roiCapsule.ScanAreaROIs[i].Name = "Line" + (_roiList.Count + 1);
+                                else if (roiCapsule.ScanAreaROIs[i] is ROIPoly)
+                                    roiCapsule.ScanAreaROIs[i].Name = "Polygon" + (_roiList.Count + 1);
                                 _roiList.Add(roiCapsule.ScanAreaROIs[i]);
                             }
 
@@ -1714,12 +2154,12 @@
                                 _roiList[i].MouseLeftButtonDown += ROI_MouseDown;
                             }
 
-                            int[] newTag = DefaultTags(i + 1, null);
+                            int[] newTag = DefaultTags(i, null);
                             newTag[(int)Tag.SUB_PATTERN_ID] = i + 1;
                             //add to canvas before add geometry:
-                            if ((null != canvas) && (true == GetTagBit(newTag, Tag.FLAGS, Flag.DISPLAY)))
+                            if ((null != _overlayItems) && (true == GetTagBit(newTag, Tag.FLAGS, Flag.DISPLAY)))
                             {
-                                canvas.Children.Add(_roiList[i]);
+                                _overlayItems.Add(_roiList[i]);
                             }
 
                             //Add properties to the last added item
@@ -1729,11 +2169,11 @@
                             _roiList[i].Tag = SetTagRGB(_roiList[i]);
 
                             //Carry Geometry adorner selection for line and polyline
-                            if (_roiList[i] is Line || _roiList[i] is Polyline)
+                            if (_roiList[i] is Line || _roiList[i] is Polyline || _roiList[i] is ROILine || _roiList[i] is ROIPolyline)
                             {
                                 if (10 <= oldTag.Length)
                                 {
-                                    if ((_showLineLength == true) && (true == canvas.IsVisible))
+                                    if ((_showLineLength == true))
                                     {
                                         AddGeometryToROI(_roiList[i]);
                                     }
@@ -1741,7 +2181,7 @@
                             }
 
                             //Add index to ROI:
-                            if (((int)Tag.LAST_TAG <= ((int[])_roiList[i].Tag).Length) && (null != canvas) && (true == canvas.IsVisible))
+                            if (((int)Tag.LAST_TAG <= ((int[])_roiList[i].Tag).Length) && (null != _overlayItems))
                             {
                                 AddIndexToROI(_roiList[i]);
                             }
@@ -1749,6 +2189,10 @@
                     }
                     _roiCount = _roiList.Count;
                     CreateMask();
+
+                    ROIListUpdated?.Invoke();
+                    InitSelectROI();
+
                     ret = true;
                 }
             }
@@ -1762,20 +2206,22 @@
         }
 
         //Load ROIs from file
-        public void LoadROIs(string pathandFileName, ref Canvas canvas, ref bool reticleActive, ref bool scaleActive)
+        public void LoadROIs(string pathandFileName, ref bool reticleActive, ref bool scaleActive)
         {
             try
             {
+                double loadedScaleX = 1;
+                double loadedScaleY = 1;
+                _roiList = new List<Shape>();
+                _overlayItems = new ObservableCollection<UIElement>();
                 ROICapsule roiCapsule = LoadXamlROIs(pathandFileName);
 
                 _roiList = new List<Shape>();
                 if (roiCapsule != null)
                 {
-                    if (null != canvas)
+                    if (null != _overlayItems)
                     {
-                        canvas.IsVisibleChanged -= canvas_IsVisibleChanged;
-                        canvas.IsVisibleChanged += canvas_IsVisibleChanged;
-                        canvas.Children.Clear();
+                        _overlayItems.Clear();
                     }
 
                     if (null != roiCapsule.ROIspec)
@@ -1798,7 +2244,7 @@
                                 {
                                     ROIPoly poly = new ROIPoly()
                                     {
-                                        StrokeThickness = 1,
+                                        StrokeThickness = _roiStrokeThickness,
                                         UseRoundnessPercentage = true,
                                         Fill = Brushes.Transparent
                                     };
@@ -1834,16 +2280,16 @@
                                 }
                                 else
                                 {
-                                    //Only register to mouseDown event if ROI is not a Reticle
+                                    //Only register to mouseDown event if ROI is not a Reticle or scale
                                     _roiList[i].MouseLeftButtonDown += ROI_MouseDown;
                                 }
 
                                 //Carry all tags except ROI index:
                                 int[] tag = DefaultTags(i, _roiList[i].Tag);
                                 //add to canvas before add geometry:
-                                if ((null != canvas) && (true == GetTagBit(tag, Tag.FLAGS, Flag.DISPLAY)))
+                                if ((null != _overlayItems) && (true == GetTagBit(tag, Tag.FLAGS, Flag.DISPLAY)))
                                 {
-                                    canvas.Children.Add(_roiList[i]);
+                                    _overlayItems.Add(_roiList[i]);
                                 }
 
                                 if (_roiList[i] is Line)
@@ -1857,18 +2303,18 @@
                                 _roiList[i].Stroke = GetROIColor(i % 8, tag);
 
                                 //Carry Geometry adorner selection for line and polyline
-                                if (_roiList[i] is Line || _roiList[i] is Polyline)
+                                if (_roiList[i] is Line || _roiList[i] is Polyline || _roiList[i] is ROILine || _roiList[i] is ROIPolyline)
                                 {
                                     if (4 <= ((int[])_roiList[i].Tag).Length)
                                     {
-                                        if ((true == GetTagBit(tag, Tag.FLAGS, Flag.GEOMETRY_ADONERS)) && (true == canvas.IsVisible))
+                                        if ((true == GetTagBit(tag, Tag.FLAGS, Flag.GEOMETRY_ADONERS)))
                                         {
                                             AddGeometryToROI(_roiList[i]);
                                         }
                                     }
                                 }
                                 //Add index to ROI:
-                                if (((int)Tag.LAST_TAG <= ((int[])_roiList[i].Tag).Length) && (true == canvas.IsVisible))
+                                if (((int)Tag.LAST_TAG <= ((int[])_roiList[i].Tag).Length))
                                 {
                                     AddIndexToROI(_roiList[i]);
                                 }
@@ -1876,8 +2322,23 @@
                         }
                         _roiCount = _roiList.Count;
                     }
+                    foreach (Shape shape in _roiList)
+                    {
+                        if (shape is ScalableShape)
+                        {
+                            loadedScaleX = (shape as ScalableShape).ImageScaleX;
+                            loadedScaleY = (shape as ScalableShape).ImageScaleY;
+                            break;
+                        }
+                    }
+                    if (loadedScaleX != _imageScaleX || loadedScaleY != _imageScaleY)
+                    {
+                        AdjustROIListAspectRatio(_imageScaleX, _imageScaleY);
+                    }
                     _expROIsPathAndName = pathandFileName;
                     CreateMask();
+
+                    ROIListUpdated?.Invoke();
                 }
                 LoadSettings();
             }
@@ -1885,40 +2346,44 @@
             {
                 ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + "LoadROIs exception " + ex.Message);
             }
+            _isObjectComplete = true;
+            _roisLoaded = true;
         }
 
         //Collects the mouse events and calls the appropiate method
-        public void MouseEvent(int meIndex, ref Canvas canvas, Point point, bool shiftDown)
+        public void MouseEvent(int meIndex, Point point, bool shiftDown)
         {
             switch ((MouseEventEnum)meIndex)
             {
                 case MouseEventEnum.LEFTSINGLECLICK: // left single click
                     if (false == _isObjectCreated)
                     {
-                        CreateObject(ref canvas, point);
+                        CreateObject(point);
                     }
-                    else if (typeof(ROIPoly) == _activeType || typeof(Polyline) == _activeType)
+                    else if (typeof(ROIPoly) == _activeType || typeof(Polyline) == _activeType || typeof(ROIPolyline) == _activeType)
                     {
-                        AddPointToObject(ref canvas, point);
+                        AddPointToObject(point);
                     }
                     break;
                 case MouseEventEnum.RIGHTSINGLECLICK: // right single click
                     break;
                 case MouseEventEnum.LEFTDOUBLECLICK: // left double click
-                    if (typeof(ROIPoly) == _activeType || typeof(Polyline) == _activeType)
+                    if (typeof(ROIPoly) == _activeType || typeof(Polyline) == _activeType || typeof(ROIPolyline) == _activeType)
                     {
-                        CloseObject(ref canvas, point);
+                        CloseObject(point);
+                        UpdateVisibleROIs();
                     }
                     break;
                 case MouseEventEnum.RIGHTDOUBLECLICK: // right double click
                     break;
                 case MouseEventEnum.LEFTHOLDING: // left holding and moving
-                    ResizeObject(ref canvas, point, shiftDown);
+                    ResizeObject(point, shiftDown);
                     break;
                 case MouseEventEnum.RIGHTHOLDING: // right holding and moving
                     break;
                 case MouseEventEnum.LEFTMOUSEUP: // left up
-                    if ((typeof(Line) == _activeType || typeof(ROIRect) == _activeType || typeof(ROIEllipse) == _activeType) && true == _isObjectCreated && true == _objectUpdated)
+                    if ((typeof(ROILine) == _activeType || typeof(ROIRect) == _activeType || typeof(ROIEllipse) == _activeType || typeof(ROILine) == _activeType)
+                        && true == _isObjectCreated && true == _objectUpdated)
                     {
                         ObjectComplete(_roiList.Count - 1);
 
@@ -1929,20 +2394,30 @@
 
                         if (typeof(Line) == _activeType)
                         {
-                            InitROILine(ref canvas);
+                            InitROILine();
+                        }
+                        if (typeof(ROILine) == _activeType)
+                        {
+                            InitROILine();
                         }
                         else if (typeof(ROIRect) == _activeType)
                         {
-                            InitROIRect(ref canvas);
+                            InitROIRect();
                         }
                         else if (typeof(ROIEllipse) == _activeType)
                         {
-                            CreateROICenter(ref canvas);
-                            InitROIEllipse(ref canvas);
+                            CreateROICenter();
+                            InitROIEllipse();
                         }
                         _objectUpdated = false;
 
-                        ValidateROIs(ref canvas);
+                        ValidateROIs();
+                        UpdateVisibleROIs();
+
+                        if (_currentMode == Mode.MICRO_SCANAREA)
+                        {
+                            mROIsUpdated?.Invoke();
+                        }
                     }
                     break;
                 case MouseEventEnum.RIGHTMOUSEUP: // right up
@@ -1952,31 +2427,37 @@
             }
         }
 
-        public void NewFieldFromROI(int areaMode, int scanMode, int fieldSize, int offsetX, int offsetY, int pixelX, int pixelY, double areaAngle, double dwellTime, int interleaveScan, ref Canvas canvas)
+        public void NewFieldFromROI(int areaMode, int scanMode, int fieldSize, int offsetX, int offsetY, int pixelX, int pixelY, double areaAngle, double dwellTime, int interleaveScan)
         {
             if (0 < _roiList.Count)
             {
                 _scanAreaROIList = new List<Shape>();
+
+                _roiList[_roiList.Count - 1].Name = "ScanAreaROI";
                 _scanAreaROIList.Add(CloneUIElementByXamlWriter(_roiList[_roiList.Count - 1]));
                 int angle = (int)(areaAngle * 100); //multiply angle by 100 to keep 2 decimal places of the angle
                 int dtime = (int)(dwellTime * 10);
                 int[] tag = { areaMode, scanMode, fieldSize, offsetX, offsetY, pixelX, pixelY, angle, dtime, interleaveScan, ((int[])_roiList[_roiList.Count - 1].Tag)[(int)Tag.FLAGS] };
                 _scanAreaROIList[0].Tag = tag;
-                ClearAllObjects(ref canvas);
+                ClearAllObjects();
                 PersistSaveROIs();
             }
         }
 
-        public void PersistLoadROIs(ref Canvas canvas, ref bool reticleActive, ref bool scaleActive)
+        public void PersistLoadROIs(ref bool reticleActive, ref bool scaleActive)
         {
             string pathandName = Application.Current.Resources["TemplatesFolder"].ToString() + "\\ActiveROIs.xaml";
-            LoadROIs(pathandName, ref canvas, ref reticleActive, ref scaleActive);
+            LoadROIs(pathandName, ref reticleActive, ref scaleActive);
         }
 
-        public void PersistSaveROIs()
+        public void PersistSaveROIs(bool tabChange = false)
         {
             string pathandName = Application.Current.Resources["TemplatesFolder"].ToString() + "\\ActiveROIs.xaml";
             SaveROIs(pathandName);
+            if(tabChange)
+            { 
+                _roisLoaded = false; 
+            }
         }
 
         public bool QueryTheLastROIRange(ref List<Point> points, ref ROIType roiType)
@@ -1988,8 +2469,8 @@
                 if (_roiList[_roiList.Count - 1] is ROIRect)
                 {
                     ROIRect rect = _roiList[_roiList.Count - 1] as ROIRect;
-                    points.Add(rect.TopLeft);
-                    points.Add(rect.BottomRight);
+                    points.Add(rect.StatsTopLeft);
+                    points.Add(rect.StatsBottomRight);
                     roiType = ROIType.RECTANGLE;
                     return true;
                 }
@@ -2010,15 +2491,59 @@
                     roiType = ROIType.POLYLINE;
                     return true;
                 }
+                else if (_roiList[_roiList.Count - 1] is ROILine)
+                {
+                    ROILine line = _roiList[_roiList.Count - 1] as ROILine;
+                    Point p1 = new Point(line.StatsStartPoint.X, line.StatsStartPoint.Y);
+                    Point p2 = new Point(line.StatsEndPoint.X, line.StatsEndPoint.Y);
+                    points.Add(p1);
+                    points.Add(p2);
+                    roiType = ROIType.LINE;
+                    return true;
+                }
+                else if (_roiList[_roiList.Count - 1] is ROIPolyline)
+                {
+                    ROIPolyline polyLine = _roiList[_roiList.Count - 1] as ROIPolyline;
+                    points = polyLine.StatsPoints.ToList();
+                    roiType = ROIType.POLYLINE;
+                    return true;
+                }
             }
             return false;
+        }
+
+        public void ReloadPanningAdorners()
+        {
+            foreach (Shape overlayROI in _overlayItems)
+            {
+                UpdatePanningAdorner(overlayROI);
+            }
+        }
+
+        public void ReorderROIs(Dictionary<int, int> oldAndNewROIPos)
+        {
+            var roiList = _roiList;
+            _roiList = new List<Shape>();
+
+            for (int i = 0; i < oldAndNewROIPos.Count; ++i)
+            {
+                if (oldAndNewROIPos.ContainsKey(i))
+                {
+                    if (oldAndNewROIPos[i] < roiList.Count)
+                    {
+                        _roiList.Add(roiList[oldAndNewROIPos[i]]);
+                    }
+                }
+            }
+            ReorderROIs();
+            ValidateROIs();
         }
 
         /// <summary>
         /// replace current roi list with previous backup
         /// </summary>
         /// <param name="canvas"></param>
-        public void RevokeROIs(ref Canvas canvas)
+        public void RevokeROIs()
         {
             if (null != _roiListBackup)
             {
@@ -2028,7 +2553,7 @@
                     _roiList.Add(_roiListBackup[i]);
                 }
 
-                UpdateVisibleROIs(ref canvas);
+                UpdateVisibleROIs();
             }
         }
 
@@ -2115,11 +2640,14 @@
         /// </summary>
         /// <param name="pathandName"></param>
         /// <param name="scaleTo"></param>
-        public void ScaleROIs(string pathandName, int[] scaleTo)
+        public bool ScaleROIs(string pathandName, int[] scaleTo)
         {
-            ROICapsule roiCapsule = LoadXamlROIs(pathandName);
-            if (roiCapsule != null)
+            try
             {
+                ROICapsule roiCapsule = LoadXamlROIs(pathandName);
+                if (null == roiCapsule)
+                    return false;
+
                 if (null == roiCapsule.ROIspec || null == roiCapsule.ROIspec[0])
                 {
                     roiCapsule.ROIspec = new Shape[] { new Rectangle { Width = (int)Constants.DEFAULT_PIXEL_X, Height = (int)Constants.DEFAULT_PIXEL_X } };
@@ -2128,69 +2656,147 @@
                 {
                     scaleTo = new int[] { (int)((Rectangle)roiCapsule.ROIspec[0]).Width, (int)((Rectangle)roiCapsule.ROIspec[0]).Height };
                 }
-                if (null != roiCapsule.ROIs)
+                if (null == roiCapsule.ROIs)
+                    return false;
+
+                for (int i = 0; i < roiCapsule.ROIs.Length; i++)
                 {
-                    for (int i = 0; i < roiCapsule.ROIs.Length; i++)
+                    if (null == roiCapsule.ROIs[i])
+                        return false;
+
+                    switch (roiCapsule.ROIs[i].GetType().ToString())
                     {
-                        switch (roiCapsule.ROIs[i].GetType().ToString())
-                        {
-                            case "OverlayManager.ROIEllipse":
-                                ((OverlayManager.ROIEllipse)(roiCapsule.ROIs[i])).Center =
-                                    new Point((((OverlayManager.ROIEllipse)(roiCapsule.ROIs[i])).ROICenter.X - ((Rectangle)roiCapsule.ROIspec[0]).Width / 2) * scaleTo[0] / ((Rectangle)roiCapsule.ROIspec[0]).Width + (scaleTo[0] / 2),
-                                        (((OverlayManager.ROIEllipse)(roiCapsule.ROIs[i])).ROICenter.Y - ((Rectangle)roiCapsule.ROIspec[0]).Height / 2) * scaleTo[1] / ((Rectangle)roiCapsule.ROIspec[0]).Height + (scaleTo[1] / 2));
-                                break;
-                            case "OverlayManager.ROICrosshair":
-                                ((OverlayManager.ROICrosshair)(roiCapsule.ROIs[i])).CenterPoint =
-                                    new Point((((OverlayManager.ROICrosshair)(roiCapsule.ROIs[i])).CenterPoint.X - ((Rectangle)roiCapsule.ROIspec[0]).Width / 2) * scaleTo[0] / ((Rectangle)roiCapsule.ROIspec[0]).Width + (scaleTo[0] / 2),
-                                        (((OverlayManager.ROICrosshair)(roiCapsule.ROIs[i])).CenterPoint.Y - ((Rectangle)roiCapsule.ROIspec[0]).Height / 2) * scaleTo[1] / ((Rectangle)roiCapsule.ROIspec[0]).Height + (scaleTo[1] / 2));
-                                break;
-                        }
+                        case "OverlayManager.ROIEllipse":
+                            ((OverlayManager.ROIEllipse)(roiCapsule.ROIs[i])).Center =
+                                new Point((((OverlayManager.ROIEllipse)(roiCapsule.ROIs[i])).ROICenter.X - ((Rectangle)roiCapsule.ROIspec[0]).Width / 2) * scaleTo[0] / ((Rectangle)roiCapsule.ROIspec[0]).Width + (scaleTo[0] / 2),
+                                    (((OverlayManager.ROIEllipse)(roiCapsule.ROIs[i])).ROICenter.Y - ((Rectangle)roiCapsule.ROIspec[0]).Height / 2) * scaleTo[1] / ((Rectangle)roiCapsule.ROIspec[0]).Height + (scaleTo[1] / 2));
+                            break;
+                        case "OverlayManager.ROICrosshair":
+                            ((OverlayManager.ROICrosshair)(roiCapsule.ROIs[i])).CenterPoint =
+                                new Point((((OverlayManager.ROICrosshair)(roiCapsule.ROIs[i])).CenterPoint.X - ((Rectangle)roiCapsule.ROIspec[0]).Width / 2) * scaleTo[0] / ((Rectangle)roiCapsule.ROIspec[0]).Width + (scaleTo[0] / 2),
+                                    (((OverlayManager.ROICrosshair)(roiCapsule.ROIs[i])).CenterPoint.Y - ((Rectangle)roiCapsule.ROIspec[0]).Height / 2) * scaleTo[1] / ((Rectangle)roiCapsule.ROIspec[0]).Height + (scaleTo[1] / 2));
+                            break;
                     }
-                    roiCapsule.ROIspec[0] = new Rectangle { Width = scaleTo[0], Height = scaleTo[1] };
                 }
+                roiCapsule.ROIspec[0] = new Rectangle { Width = scaleTo[0], Height = scaleTo[1] };
+
                 SaveROIs(pathandName, roiCapsule);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ThorLogging.ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "ScaleROIs: " + ex.Message);
+                return false;
             }
         }
 
         /// <summary>
-        /// Scale ROIs from center of images by ratio in X and Y
+        /// Scale ROIs from center of images by ratio in X and Y for given file
         /// </summary>
         /// <param name="pathandName"></param>
         /// <param name="scaleTo"></param>
-        public void ScaleROIsByRatio(string pathandName, double[] scaleRatio)
+        public bool ScaleROIsByRatio(string pathandName, double[] scaleRatio)
         {
             if (null == scaleRatio || (1.0 == scaleRatio[0] && 1.0 == scaleRatio[1]))
-                return;
-
-            ROICapsule roiCapsule = LoadXamlROIs(pathandName);
-            if (roiCapsule != null)
+                return true;
+            try
             {
+                ROICapsule roiCapsule = LoadXamlROIs(pathandName);
+                if (null == roiCapsule)
+                    return false;
+
                 if (null == roiCapsule.ROIspec || null == roiCapsule.ROIspec[0])
                 {
                     roiCapsule.ROIspec = new Shape[] { new Rectangle { Width = (int)Constants.DEFAULT_PIXEL_X, Height = (int)Constants.DEFAULT_PIXEL_X } };
                 }
                 Point imgCenter = new Point(((Rectangle)roiCapsule.ROIspec[0]).Width / 2, ((Rectangle)roiCapsule.ROIspec[0]).Height / 2);
-                if (null != roiCapsule.ROIs)
+                for (int i = 0; i < roiCapsule.ROIs.Length; i++)
                 {
-                    for (int i = 0; i < roiCapsule.ROIs.Length; i++)
+                    if (null == roiCapsule.ROIs[i])
+                        return false;
+
+                    PivotScaleROI(roiCapsule.ROIs[i], imgCenter, scaleRatio);
+                }
+
+                SaveROIs(pathandName, roiCapsule);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ThorLogging.ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "ScaleROIsByRatio: " + ex.Message);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Scale ROIs from point of interest (center of image) by ratio in X and Y
+        /// </summary>
+        /// <param name="pathandName"></param>
+        /// <param name="scaleTo"></param>
+        public bool PivotScaleROI(Shape roi, Point pivot, double[] scaleRatio, Mode[] patternMode = null)
+        {
+            if (null == scaleRatio || (1.0 == scaleRatio[0] && 1.0 == scaleRatio[1]))
+                return true;
+            try
+            {
+                //apply to all modes if null
+                patternMode = (null == patternMode) ? Enum.GetValues(typeof(Mode)).Cast<Mode>().ToArray() : patternMode;
+
+                if (null != roi && patternMode.Contains((Mode)(GetTagByteSection(roi.Tag, Tag.MODE, SecR))))
+                {
+                    //New (Px,Py) = (Px*Rx+Cx*(1-Rx), Py*Ry+Cy*(1-Ry))
+                    switch (roi.GetType().ToString())
                     {
-                        //New (Px,Py) = (Px*Rx+Cx*(1-Rx), Py*Ry+Cy*(1-Ry))
-                        switch (roiCapsule.ROIs[i].GetType().ToString())
-                        {
-                            case "OverlayManager.ROIEllipse":
-                                ((OverlayManager.ROIEllipse)(roiCapsule.ROIs[i])).Center =
-                                    new Point((((OverlayManager.ROIEllipse)(roiCapsule.ROIs[i])).ROICenter.X * scaleRatio[0] + imgCenter.X * (1.0 - scaleRatio[0])),
-                                        ((OverlayManager.ROIEllipse)(roiCapsule.ROIs[i])).ROICenter.Y * scaleRatio[1] + imgCenter.Y * (1.0 - scaleRatio[1]));
-                                break;
-                            case "OverlayManager.ROICrosshair":
-                                ((OverlayManager.ROICrosshair)(roiCapsule.ROIs[i])).CenterPoint =
-                                    new Point((((OverlayManager.ROICrosshair)(roiCapsule.ROIs[i])).CenterPoint.X * scaleRatio[0] + imgCenter.X * (1.0 - scaleRatio[0])),
-                                        ((OverlayManager.ROICrosshair)(roiCapsule.ROIs[i])).CenterPoint.Y * scaleRatio[1] + imgCenter.Y * (1.0 - scaleRatio[1]));
-                                break;
-                        }
+                        case "OverlayManager.ROIEllipse":
+                            ((OverlayManager.ROIEllipse)(roi)).Center =
+                                new Point((((OverlayManager.ROIEllipse)(roi)).ROICenter.X * scaleRatio[0] + pivot.X * (1.0 - scaleRatio[0])),
+                                    ((OverlayManager.ROIEllipse)(roi)).ROICenter.Y * scaleRatio[1] + pivot.Y * (1.0 - scaleRatio[1]));
+                            ((OverlayManager.ROIEllipse)(roi)).ROIWidth *= scaleRatio[0];
+                            ((OverlayManager.ROIEllipse)(roi)).ROIHeight *= scaleRatio[1];
+                            break;
+                        case "OverlayManager.ROICrosshair":
+                            ((OverlayManager.ROICrosshair)(roi)).CenterPoint =
+                                new Point((((OverlayManager.ROICrosshair)(roi)).CenterPoint.X * scaleRatio[0] + pivot.X * (1.0 - scaleRatio[0])),
+                                    ((OverlayManager.ROICrosshair)(roi)).CenterPoint.Y * scaleRatio[1] + pivot.Y * (1.0 - scaleRatio[1]));
+                            break;
+                        case "OverlayManager.ROIRect":
+                            ((OverlayManager.ROIRect)(roi)).StartPoint =
+                                new Point((((OverlayManager.ROIRect)(roi)).StartPoint.X * scaleRatio[0] + pivot.X * (1.0 - scaleRatio[0])),
+                                    ((OverlayManager.ROIRect)(roi)).StartPoint.Y * scaleRatio[1] + pivot.Y * (1.0 - scaleRatio[1]));
+                            ((OverlayManager.ROIRect)(roi)).EndPoint =
+                               new Point((((OverlayManager.ROIRect)(roi)).EndPoint.X * scaleRatio[0] + pivot.X * (1.0 - scaleRatio[0])),
+                                   ((OverlayManager.ROIRect)(roi)).EndPoint.Y * scaleRatio[1] + pivot.Y * (1.0 - scaleRatio[1]));
+                            break;
+                        case "OverlayManager.ROIPoly":
+                            for (int i = 0; i < ((OverlayManager.ROIPoly)(roi)).Points.Count; i++)
+                            {
+                                ((OverlayManager.ROIPoly)(roi)).Points[i] = new Point((((OverlayManager.ROIPoly)(roi)).Points[i].X * scaleRatio[0] + pivot.X * (1.0 - scaleRatio[0])),
+                                    (((OverlayManager.ROIPoly)(roi)).Points[i].Y * scaleRatio[1] + pivot.Y * (1.0 - scaleRatio[1])));
+                            }
+                            break;
+                        case "OverlayManager.ROILine":
+                            ((OverlayManager.ROILine)(roi)).StartPoint =
+                                new Point((((OverlayManager.ROILine)(roi)).StartPoint.X * scaleRatio[0] + pivot.X * (1.0 - scaleRatio[0])),
+                                ((OverlayManager.ROILine)(roi)).StartPoint.Y * scaleRatio[1] + pivot.Y * (1.0 - scaleRatio[1]));
+                            ((OverlayManager.ROILine)(roi)).EndPoint =
+                                new Point((((OverlayManager.ROILine)(roi)).EndPoint.X * scaleRatio[0] + pivot.X * (1.0 - scaleRatio[0])),
+                                ((OverlayManager.ROILine)(roi)).EndPoint.Y * scaleRatio[1] + pivot.Y * (1.0 - scaleRatio[1]));
+                            break;
+                        case "OverlayManager.ROIPolyline":
+                            for (int i = 0; i < ((OverlayManager.ROIPolyline)(roi)).Points.Count; i++)
+                            {
+                                ((OverlayManager.ROIPolyline)(roi)).Points[i] = new Point((((OverlayManager.ROIPolyline)(roi)).Points[i].X * scaleRatio[0] + pivot.X * (1.0 - scaleRatio[0])),
+                                    (((OverlayManager.ROIPolyline)(roi)).Points[i].Y * scaleRatio[1] + pivot.Y * (1.0 - scaleRatio[1])));
+                            }
+                            break;
                     }
                 }
-                SaveROIs(pathandName, roiCapsule);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ThorLogging.ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "ScaleROIsByRatio: " + ex.Message);
+                return false;
             }
         }
 
@@ -2243,7 +2849,113 @@
             SelectROIIndexWithErrorChecking(nextIndex);
         }
 
-        public void SetPatternToSaveROI(int patternID = -1, Mode pMode = Mode.PATTERN_NOSTATS)
+        public void SelectSingleROI(Shape roi)
+        {
+            if (null == roi)
+            {
+                return;
+            }
+            DeselectAllROIs();
+            if (true == _isObjectComplete)
+            {
+                if (false == (roi is Reticle) || false == (roi is Scale))
+                {
+                    //continue to next ROI if this ROI is already selected
+                    if (true == GetTagBit(roi.Tag, Tag.FLAGS, Flag.ADJUST_ADONERS))
+                    {
+                        return;
+                    }
+                    if (!IsROISelected(roi))
+                    {
+                        AddPanningAdorners(roi); // add adorner to selected ROIs
+                        int[] tag = SetTagBit(roi.Tag, Tag.FLAGS, Flag.ADJUST_ADONERS, true); //mark as selected
+                        roi.Tag = tag;
+                    }
+                }
+            }
+        }
+
+        public void SetOverlayItems(ObservableCollection<UIElement> overlayItems, bool duplicateROIList)
+        {
+            bool doExcecute = false;
+            if (_overlayItems != overlayItems)
+            {
+                doExcecute = true;
+            }
+            else
+            {
+                doExcecute = true;
+                for (int i = 0; i < _overlayItems.Count; i++)
+                {
+                    if (_overlayItems[i] is Shape shape)
+                    {
+                        for (int j = 0; j < _roiList.Count; j++)
+                        {
+                            if (_roiList[j] == shape)
+                            {
+                                doExcecute = false;
+                            }
+                        }
+                    }
+                }
+            }
+            if (doExcecute)
+            {
+                if (_overlayItems?.Count > 0 && _roiList?.Count > 0)
+                {
+                    if (duplicateROIList)
+                    {
+                        //find selected ROIs and keep a list to redraw the panning adorners
+                        List<int> selectedROIs = new List<int>();
+                        for (int i = 0; i < _roiList.Count; ++i)
+                        {
+                            if (IsROISelected(_roiList[i]))
+                            {
+                                selectedROIs.Add(i);
+                            }
+                        }
+
+                        _roiList.Clear();
+
+                        //add the ROIs from the
+                        for (int i = 0; i < overlayItems.Count; i++)
+                        {
+                            //add Shape overlat items into ROILists
+                            if (overlayItems[i] is Shape shape)
+                            {
+                                _roiList.Add(shape);
+                            }
+                        }
+
+                        //make the old list reference have duplicated items off of the currently selected list
+                        GetDuplicatedROIList(ref _overlayItems);
+
+                        _overlayItems = overlayItems;
+                    }
+                    else
+                    {
+                        _overlayItems = overlayItems;
+                        _roiList.Clear();
+
+                        for (int i = 0; i < _overlayItems.Count; i++)
+                        {
+                            if (_overlayItems[i] is Shape shape)
+                            {
+                                _roiList.Add(shape);
+                                UpdatePanningAdorner(shape);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    _overlayItems = overlayItems;
+
+                }
+            }
+        }
+
+        public void SetPatternToSaveROI(int patternID, Mode pMode = Mode.PATTERN_NOSTATS)
         {
             for (int i = 0; i < _roiList.Count; i++)
             {
@@ -2256,18 +2968,45 @@
             }
         }
 
-        public void UpdateParams(int pixelX, int pixelY, double umPerPixel)
+        public void UpdateAdorners(Shape roi)
+        {
+            UpdateGeometryAdorner(roi);
+            UpdateIndexAdorner(roi);
+        }
+
+        public void UpdateAspectRatio(double xScale, double yScale)
+        {
+            if (_pixelXAdjusted == (int)(_pixelX * xScale) && _pixelYAdjusted == (int)(_pixelY * yScale))
+            {
+                //no change in scale so no need to adjust ROI's
+                return;
+            }
+            _imageScaleX = xScale;
+            _imageScaleY = yScale;
+
+            AdornerProvider.ImageScaleX = xScale;
+            AdornerProvider.ImageScaleY = yScale;
+            GeometryAdornerProvider.ImageScaleX = xScale;
+            GeometryAdornerProvider.ImageScaleY = yScale;
+            AdjustROIListAspectRatio(xScale, yScale);
+            CreateMask();
+        }
+
+        public void UpdateParams(int pixelX, int pixelY, PixelSizeUM umPerPixel)
         {
             AdornerProvider.ImageWidth = pixelX;
             AdornerProvider.ImageHeight = pixelY;
+            AdornerProvider.ZoomLevel = _zoomLevel;
+            _umPerPixel = umPerPixel;
             GeometryAdornerProvider.ImageWidth = pixelX;
             GeometryAdornerProvider.ImageHeight = pixelY;
-            if (GeometryAdornerProvider.UMPerPixel != umPerPixel || _pixelX != pixelX || _pixelY != pixelY)
+            if (!GeometryAdornerProvider.UMPerPixel.Compare(umPerPixel) || _pixelX != pixelX || _pixelY != pixelY)
             {
-                if (GeometryAdornerProvider.UMPerPixel != umPerPixel)
+                if (!GeometryAdornerProvider.UMPerPixel.Compare(umPerPixel))
                 {
                     _umPerPixel = umPerPixel;
-                    _fieldWidth = Math.Round(pixelX * umPerPixel);
+                    _fieldWidth = Math.Round(pixelX * umPerPixel.PixelWidthUM);
+                    _fieldHeight = Math.Round(pixelY * umPerPixel.PixelHeightUM);
                     GeometryAdornerProvider.UMPerPixel = umPerPixel;
                     UpdateGeometryAdorners();
                 }
@@ -2276,21 +3015,23 @@
                 {
                     _pixelX = pixelX;
                     _pixelY = pixelY;
-                    _fieldWidth = Math.Round(pixelX * umPerPixel);
+                    _fieldWidth = Math.Round(pixelX * umPerPixel.PixelWidthUM);
+                    _fieldHeight = Math.Round(pixelY * umPerPixel.PixelHeightUM);
                     if (0 < _pixelX && 0 < _pixelY && 0 < _roiList.Count)
                     {
                         _pixelX = pixelX;
                         _pixelY = pixelY;
-                        _fieldWidth = Math.Round(pixelX * umPerPixel);
+                        _fieldWidth = Math.Round(pixelX * umPerPixel.PixelWidthUM);
+                        _fieldHeight = Math.Round(pixelY * umPerPixel.PixelHeightUM);
                         CreateMask();
                     }
 
                 }
-
+                ParamsUpdatedEvent?.Invoke();
             }
         }
 
-        public void UpdatePatternROIColor(ref Canvas canvas, Mode pMode = Mode.PATTERN_NOSTATS)
+        public void UpdatePatternROIColor(Mode pMode = Mode.PATTERN_NOSTATS)
         {
             for (int i = 0; i < _roiList.Count; i++)
             {
@@ -2308,10 +3049,10 @@
                 }
             }
 
-            UpdateVisibleROIs(ref canvas);
+            UpdateVisibleROIs();
         }
 
-        public void UpdatePatternROISize(ref Canvas canvas, double widthPx, double heightPx)
+        public void UpdatePatternROISize(double widthPx, double heightPx)
         {
             List<Shape> roiList = new List<Shape>();
 
@@ -2331,7 +3072,7 @@
 
                     //replace with new ellipse,
                     //since modifying size won't work in shiftdown case:
-                    ROIEllipse roiReplace = new ROIEllipse(new Point(startX, startY), new Point(endX, endY));
+                    ROIEllipse roiReplace = new ROIEllipse(new Point(startX, startY), new Point(endX, endY), _imageScaleX, _imageScaleY);
                     roiReplace.Center = ((ROIEllipse)_roiList[i]).Center;
                     roiReplace.Fill = ((ROIEllipse)_roiList[i]).Fill;
                     roiReplace.Stroke = ((ROIEllipse)_roiList[i]).Stroke;
@@ -2347,25 +3088,31 @@
             }
             _roiList.Clear();
             _roiList = roiList;
-            UpdateVisibleROIs(ref canvas);
+            UpdateVisibleROIs();
         }
 
-        public void UserLoadROIs(string pathAndName, ref Canvas canvas)
+        public void UpdateVisibleROIS()
+        {
+            ROIListUpdated?.Invoke();
+        }
+
+        public void UserLoadROIs(string pathAndName)
         {
             bool reticleActive = false;
             bool scaleActive = false;
-            LoadROIs(pathAndName, ref canvas, ref reticleActive, ref scaleActive);
+            LoadROIs(pathAndName, ref reticleActive, ref scaleActive);
         }
 
         /// <summary>
         /// Validate drawn ROI
         /// </summary>
         /// <param name="roi"></param>
-        public void ValidateROIs(ref Canvas canvas)
+        public void ValidateROIs()
         {
             List<Shape> roiList = new List<Shape>();        //all final rois
             double top = Int32.MaxValue, left = Int32.MaxValue;
             double bottom = 0, right = 0;
+            bool triggerMessageToUser = false;
 
             for (int i = 0; i < _roiList.Count; i++)
             {
@@ -2375,19 +3122,83 @@
                         if (typeof(ROIRect) == _roiList[i].GetType())
                         {
                             //replace with new rectangle
-                            double width = (_pixelUnitSizeXY[0] >= ((ROIRect)_roiList[i]).ROIWidth) ?
-                                _pixelUnitSizeXY[0] : ((ROIRect)_roiList[i]).ROIWidth - (((ROIRect)_roiList[i]).ROIWidth % _pixelUnitSizeXY[0]);
+                            double width = 0;
+                            if (_pixelUnitSizeXY[0] >= ((ROIRect)_roiList[i]).ROIWidth)
+                            {
+                                width = _pixelUnitSizeXY[0];
+                            }
+                            else
+                            {
+                                int multiPlier = (int)Math.Round(((ROIRect)_roiList[i]).ROIWidth / _pixelUnitSizeXY[0]);
+                                width = multiPlier * _pixelUnitSizeXY[0];
+                            }
 
-                            double height = (_pixelUnitSizeXY[1] >= ((ROIRect)_roiList[i]).ROIHeight) ?
-                                _pixelUnitSizeXY[1] : ((ROIRect)_roiList[i]).ROIHeight - (((ROIRect)_roiList[i]).ROIHeight % _pixelUnitSizeXY[1]);
+                            double height = 0;
 
-                            ROIRect roiReplace = new ROIRect(new Point(((ROIRect)_roiList[i]).StartPoint.X, ((ROIRect)_roiList[i]).StartPoint.Y), new Point(((ROIRect)_roiList[i]).StartPoint.X + width, ((ROIRect)_roiList[i]).StartPoint.Y + height));
-                            roiReplace.Fill = ((ROIRect)_roiList[i]).Fill;
-                            roiReplace.Stroke = ((ROIRect)_roiList[i]).Stroke;
-                            roiReplace.StrokeThickness = ((ROIRect)_roiList[i]).StrokeThickness;
-                            roiReplace.MouseLeftButtonDown += ROI_MouseDown;
-                            roiReplace.Tag = SetTagRGB(_roiList[i]);
-                            roiList.Add(roiReplace);
+                            if (_pixelUnitSizeXY[1] >= ((ROIRect)_roiList[i]).ROIHeight)
+                            {
+                                height = _pixelUnitSizeXY[1];
+                            }
+                            else
+                            {
+                                int multiPlier = (int)Math.Round(((ROIRect)_roiList[i]).ROIHeight / _pixelUnitSizeXY[1]);
+                                height = multiPlier * _pixelUnitSizeXY[1];
+                            }
+
+                            bool safeToAddReplacement = true;
+                            double replaceStartX = ((ROIRect)_roiList[i]).StartPoint.X;
+                            double replaceStartY = ((ROIRect)_roiList[i]).StartPoint.Y;
+                            int numStripes = (int)Math.Round(((ROIRect)_roiList[i]).ROIWidth / _pixelUnitSizeXY[0]);
+
+                            if (width > _pixelX || height > _pixelY)
+                            {
+                                if (numStripes > 1 && _pixelUnitSizeXY[0] < _pixelX)
+                                {
+                                    //Try to reduce the number of stripes
+                                    double newWidth = width;
+                                    int numToDecrease = 0;
+                                    while (newWidth > _pixelX)
+                                    {
+                                        numToDecrease++;
+                                        newWidth = _pixelUnitSizeXY[0] * (numStripes - numToDecrease);
+                                    }
+                                    numStripes = numStripes - numToDecrease;
+                                    width = newWidth;
+                                    if (width <= 0)
+                                    {
+                                        safeToAddReplacement = false;
+                                    }
+                                }
+                                else
+                                {
+                                    safeToAddReplacement = false;
+                                    //don't add this roi back to the list. Alert user
+                                }
+                            }
+                            else if (replaceStartX + width > _pixelX || replaceStartY + height > _pixelY)
+                            {
+                                double xShift = replaceStartX + width - _pixelX;
+                                double yShift = replaceStartY + height - _pixelY;
+                                xShift = xShift > 0 ? xShift : 0;
+                                yShift = yShift > 0 ? yShift : 0;
+
+                                replaceStartX = replaceStartX - xShift;
+                                replaceStartY = replaceStartY - yShift;
+                            }
+                            if (safeToAddReplacement)
+                            {
+                                ROIRect roiReplace = new ROIRect(new Point(replaceStartX, replaceStartY), new Point(replaceStartX + width, replaceStartY + height), ((ROIRect)_roiList[i]).ImageScaleX, ((ROIRect)_roiList[i]).ImageScaleY);
+                                roiReplace.Fill = ((ROIRect)_roiList[i]).Fill;
+                                roiReplace.Stroke = ((ROIRect)_roiList[i]).Stroke;
+                                roiReplace.StrokeThickness = ((ROIRect)_roiList[i]).StrokeThickness;
+                                roiReplace.MouseLeftButtonDown += ROI_MouseDown;
+                                roiReplace.Tag = SetTagRGB(_roiList[i]);
+                                roiReplace.Tag = SetTagStripeCount(_roiList[i], numStripes);
+                                roiList.Add(roiReplace);
+                            }
+                            else {
+                                triggerMessageToUser = true;
+                            }
                         }
                         else
                         {
@@ -2439,6 +3250,10 @@
                         break;
                 }
             }
+            if (triggerMessageToUser)
+            {
+                mROIDeletedEvent?.Invoke();
+            }
             //replace center shape when necessary
             if (top < Int32.MaxValue && !SkipRedrawCenter)
             {
@@ -2461,7 +3276,7 @@
                             Point newCenter = new Point((left + right) / 2, (top + bottom) / 2);
                             if (typeof(ROICrosshair) == _roiList[i].GetType())
                             {
-                                Shape roiReplace = new ROICrosshair(newCenter);
+                                Shape roiReplace = new ROICrosshair(newCenter, _imageScaleX, _imageScaleY);
                                 roiReplace.Fill = ((ROICrosshair)_roiList[i]).Fill;
                                 roiReplace.Stroke = ((ROICrosshair)_roiList[i]).Stroke;
                                 roiReplace.StrokeThickness = ((ROICrosshair)_roiList[i]).StrokeThickness;
@@ -2474,7 +3289,7 @@
                             {
                                 Shape roiReplace = new ROIEllipse(
                                     new Point(newCenter.X - (roiRef as ROIEllipse).ROIWidth / 2, newCenter.Y - (roiRef as ROIEllipse).ROIHeight / 2),
-                                    new Point(newCenter.X + (roiRef as ROIEllipse).ROIWidth / 2, newCenter.Y + (roiRef as ROIEllipse).ROIHeight / 2));
+                                    new Point(newCenter.X + (roiRef as ROIEllipse).ROIWidth / 2, newCenter.Y + (roiRef as ROIEllipse).ROIHeight / 2), _imageScaleX, _imageScaleY);
                                 roiReplace.Fill = ((ROIEllipse)_roiList[i]).Fill;
                                 roiReplace.Stroke = ((ROIEllipse)_roiList[i]).Stroke;
                                 roiReplace.StrokeThickness = ((ROIEllipse)_roiList[i]).StrokeThickness;
@@ -2489,14 +3304,13 @@
             }
             _roiList.Clear();
             _roiList = roiList;
-            UpdateVisibleROIs(ref canvas);
         }
 
         [DllImport("StatsManager.dll", EntryPoint = "SetLineProfileLine")]
-        private static extern int SetLineProfileLine(int p1X, int p1Y, int p2X, int p2Y, int lineIsActive);
+        private static extern int SetLineProfileLine(int[] px, int[] py, int numberOfPoints, int lineIsActive);
 
         [DllImport("StatsManager.dll", EntryPoint = "SetStatsMask")]
-        private static extern int SetStatsMask(IntPtr mask, int imgWidth, int imgHeight);
+        private static extern int SetStatsMask(short[] mask, int imgWidth, int imgHeight);
 
         /// <summary>
         /// Wraps an index to fit within an array bounds. If equal or above length, will wrap to 0, and if below 0, will wrap to length - 1
@@ -2518,14 +3332,34 @@
             return index;
         }
 
+        private void AddDividerAdorner(Shape roi)
+        {
+            try
+            {
+                if (roi is ROIRect)
+                {
+                    _roiAdornerLayer = AdornerLayer.GetAdornerLayer(roi);
+                    if (_roiAdornerLayer != null)
+                    {
+                        DividerAdornerProvider dividerAdornerProvider = new DividerAdornerProvider(roi, roi.Stroke, _pixelX, _pixelY);
+                        _roiAdornerLayer.Add(dividerAdornerProvider);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "OverlayManagerClass.cs AddDividerAdorner failed, exception: " + ex.Message);
+            }
+        }
+
         private void AddGeometryToROI(Shape roi)
         {
             try
             {
-                if (roi is Line || roi is Polyline)
+                if (roi is Line || roi is Polyline || roi is ROILine || roi is ROIPolyline)
                 {
                     _roiAdornerLayer = AdornerLayer.GetAdornerLayer(roi);
-                    GeometryAdornerProvider LabelAdornerProvider = new GeometryAdornerProvider(roi, roi.Stroke, _pixelX, _pixelY);
+                    GeometryAdornerProvider LabelAdornerProvider = new GeometryAdornerProvider(roi, roi.Stroke, _pixelX, _pixelY, _umPerPixel);
                     _roiAdornerLayer.Add(LabelAdornerProvider);
                     int[] tag = SetTagBit(roi.Tag, Tag.FLAGS, Flag.GEOMETRY_ADONERS, true);
                     roi.Tag = tag;
@@ -2564,12 +3398,20 @@
                 if (typeof(Line) == roi.GetType() || typeof(ROIRect) == roi.GetType() ||
                     typeof(ROIPoly) == roi.GetType() || typeof(ROICrosshair) == roi.GetType() ||
                     typeof(Reticle) == roi.GetType() || typeof(Polyline) == roi.GetType() ||
-                    typeof(ROIEllipse) == roi.GetType())
+                    typeof(ROIEllipse) == roi.GetType() || typeof(ROILine) == roi.GetType()
+                    || typeof(ROIPolyline) == roi.GetType())
                 {
                     _roiAdornerLayer = AdornerLayer.GetAdornerLayer(roi);
+
                     _adornerProvider = new AdornerProvider(roi, _pixelX, _pixelY);
+                    if (_adornerProvider == null || _roiAdornerLayer == null)
+                    {
+                        return;
+                    }
                     _adornerProvider.UpdateLinePosition += _adornerProvider_UpdateLinePosition;
                     _adornerProvider.UpdateNow += _adornerProvider_UpdateNow;
+                    _adornerProvider.RectangleAdornerPositionUpdatedEvent += AdornerProvider_RectangleMoved;
+                    _adornerProvider.DisableDrag = (Mode.MICRO_SCANAREA == _currentMode) && mROIsDisableMoveAndResize;
                     _roiAdornerLayer.Add(_adornerProvider);
                 }
             }
@@ -2614,56 +3456,6 @@
             }
             xreader.Close();
             doc.Save(pathandname);
-        }
-
-        void canvas_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
-        {
-            if (true == (sender as Canvas).IsVisible)
-            {
-                foreach (Shape roi in _roiList)
-                {
-                    if (roi is Line || roi is Polyline)
-                    {
-                        if (4 <= ((int[])roi.Tag).Length)
-                        {
-                            if (true == GetTagBit(roi.Tag, Tag.FLAGS, Flag.GEOMETRY_ADONERS))
-                            {
-                                AddGeometryToROI(roi);
-                            }
-                        }
-                    }
-                    if ((int)Tag.LAST_TAG <= ((int[])roi.Tag).Length)
-                    {
-                        if (true == GetTagBit(roi.Tag, Tag.FLAGS, Flag.SUB_PATTERN_INDEX_ADONERS))
-                        {
-                            AddIndexToROI(roi);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                foreach (Shape roi in _roiList)
-                {
-                    if (roi is Line || roi is Polyline)
-                    {
-                        if (4 <= ((int[])roi.Tag).Length)
-                        {
-                            if (true == GetTagBit(roi.Tag, Tag.FLAGS, Flag.GEOMETRY_ADONERS))
-                            {
-                                RemoveAdornerFromROI(roi, AdornerType.GEOMETRY_ADORNER);
-                            }
-                        }
-                    }
-                    if ((int)Tag.LAST_TAG <= ((int[])roi.Tag).Length)
-                    {
-                        if (true == GetTagBit(roi.Tag, Tag.FLAGS, Flag.SUB_PATTERN_INDEX_ADONERS))
-                        {
-                            RemoveAdornerFromROI(roi, AdornerType.INDEX_ADORNER);
-                        }
-                    }
-                }
-            }
         }
 
         /// <summary>
@@ -2755,9 +3547,17 @@
                             {
                                 LineToMask(ref mask, width, height, wkrIndex, roiList[i] as Line);
                             }
+                            else if (roiList[i] is ROILine)
+                            {
+                                ROILineToMask(ref mask, width, height, wkrIndex, roiList[i] as ROILine);
+                            }
                             else if (roiList[i] is Polyline)
                             {
                                 PolylineToMask(ref mask, width, height, wkrIndex, roiList[i] as Polyline);
+                            }
+                            else if (roiList[i] is ROIPolyline)
+                            {
+                                ROIPolylineToMask(ref mask, width, height, wkrIndex, roiList[i] as ROIPolyline);
                             }
                             else if (roiList[i] is ROIEllipse)
                             {
@@ -2765,19 +3565,18 @@
                             }
                         }
                     }
-                    IntPtr maskPtr = IntPtr.Zero;
+
                     try
                     {
                         ea.Result = mask;
-                        maskPtr = Marshal.AllocHGlobal(2 * mask.Length);
-                        Marshal.Copy(mask, 0, maskPtr, mask.Length);
+
                         if (wkrIndex < _maskIndex)
                         {
                             ea.Cancel = true;
                             return;
                         }
 
-                        SetStatsMask(maskPtr, width, height);
+                        SetStatsMask(mask, width, height);
                         if (true == _saveMaskEveryTime)
                         {
                             SaveMask(mask);
@@ -2785,43 +3584,83 @@
 
                         if (_lastLineIndex < _roiList.Count)
                         {
-                            if (_roiList[_lastLineIndex] is Line)
+                            if (_roiList[_lastLineIndex] is Line line)
                             {
-                                Line line = _roiList[_lastLineIndex] as Line;
-                                int x1 = 0, y1 = 0, x2 = 0, y2 = 0;
-
+                                int[] x = new int[2];
+                                int[] y = new int[2];
                                 line.Dispatcher.Invoke((Action)(() =>
                                 {
-                                    x1 = Convert.ToInt32(Math.Floor((line).X1));
-                                    y1 = Convert.ToInt32(Math.Floor((line).Y1));
-                                    x2 = Convert.ToInt32(Math.Floor((line).X2));
-                                    y2 = Convert.ToInt32(Math.Floor((line).Y2));
+                                    x[0] = Convert.ToInt32(Math.Floor((line).X1));
+                                    y[0] = Convert.ToInt32(Math.Floor((line).Y1));
+                                    x[1] = Convert.ToInt32(Math.Floor((line).X2));
+                                    y[1] = Convert.ToInt32(Math.Floor((line).Y2));
                                 }));
 
-                                SetLineProfileLine(x1, y1, x2, y2, 1);
+                                SetLineProfileLine(x, y, 2, 1);
+                            }
+                            else if (_roiList[_lastLineIndex] is ROILine roiLine)
+                            {
+                                int[] x = new int[2];
+                                int[] y = new int[2];
+                                roiLine.Dispatcher.Invoke((Action)(() =>
+                                {
+                                    x[0] = Convert.ToInt32(Math.Floor((roiLine).StatsStartPoint.X));
+                                    y[0] = Convert.ToInt32(Math.Floor((roiLine).StatsStartPoint.Y));
+                                    x[1] = Convert.ToInt32(Math.Floor((roiLine).StatsEndPoint.X));
+                                    y[1] = Convert.ToInt32(Math.Floor((roiLine).StatsEndPoint.Y));
+                                }));
+
+                                SetLineProfileLine(x, y, 2, 1);
+                            }
+                            else if (_roiList[_lastLineIndex] is Polyline polyline)
+                            {
+                                int[] x = null;
+                                int[] y = null;
+                                polyline.Dispatcher.Invoke((Action)(() =>
+                                {
+                                    x = new int[polyline.Points.Count];
+                                    y = new int[polyline.Points.Count];
+                                    for (int p = 0; p < polyline.Points.Count; p++)
+                                    {
+                                        x[p] = Convert.ToInt32(Math.Floor(polyline.Points[p].X));
+                                        y[p] = Convert.ToInt32(Math.Floor(polyline.Points[p].Y));
+                                    }
+                                }));
+                                SetLineProfileLine(x, y, x.Length, 1);
+                            }
+                            else if (_roiList[_lastLineIndex] is ROIPolyline roiPolyline)
+                            {
+                                int[] x = null;
+                                int[] y = null;
+                                roiPolyline.Dispatcher.Invoke((Action)(() =>
+                                {
+                                    x = new int[roiPolyline.StatsPoints.Count];
+                                    y = new int[roiPolyline.StatsPoints.Count];
+                                    for (int p = 0; p < roiPolyline.StatsPoints.Count; p++)
+                                    {
+                                        x[p] = Convert.ToInt32(Math.Floor(roiPolyline.StatsPoints[p].X));
+                                        y[p] = Convert.ToInt32(Math.Floor(roiPolyline.StatsPoints[p].Y));
+                                    }
+                                }));
+                                SetLineProfileLine(x, y, x.Length, 1);
                             }
                             else
                             {
-                                SetLineProfileLine(0, 0, 0, 0, 0);
+                                int[] x = new int[0];
+                                int[] y = new int[0];
+                                SetLineProfileLine(x, y, 0, 0);
                             }
                         }
                         else
                         {
-                            SetLineProfileLine(0, 0, 0, 0, 0);
+                            int[] x = new int[0];
+                            int[] y = new int[0];
+                            SetLineProfileLine(x, y, 0, 0);
                         }
-
                     }
                     catch (Exception e)
                     {
                         e.ToString();
-                    }
-                    finally
-                    {
-                        if (IntPtr.Zero != maskPtr)
-                        {
-                            Marshal.FreeHGlobal(maskPtr);
-                            maskPtr = IntPtr.Zero;
-                        }
                     }
                 }
             };
@@ -2847,47 +3686,51 @@
         }
 
         //calls the appropiate method to create the desired Object
-        private void CreateObject(ref Canvas canvas, Point pt)
+        private void CreateObject(Point pt)
         {
             if (false == _isObjectComplete)
             {
                 if (typeof(ROIRect) == _activeType)
                 {
-                    CreateROIRect(ref canvas, pt);
+                    CreateROIRect(pt);
                 }
                 else if (typeof(ROIPoly) == _activeType)
                 {
-                    CreateROIPoly(ref canvas, pt);
+                    CreateROIPoly(pt);
                 }
                 else if (typeof(Line) == _activeType)
                 {
-                    CreateROILine(ref canvas, pt);
+                    CreateROILine(pt);
+                }
+                else if (typeof(ROILine) == _activeType)
+                {
+                    CreateROILineUpdated(pt);
                 }
                 else if (typeof(Reticle) == _activeType)
                 {
-                    CreateReticle(ref canvas);
+                    CreateReticle();
                 }
                 else if (typeof(ROICrosshair) == _activeType)
                 {
-                    CreateROICrosshair(ref canvas, pt);
+                    CreateROICrosshair(pt);
                 }
-                else if (typeof(Polyline) == _activeType)
+                else if (typeof(ROIPolyline) == _activeType)
                 {
-                    CreateROIPolyLine(ref canvas, pt);
+                    CreateROIPolyLineUpdated(pt);
                 }
                 else if (typeof(ROIEllipse) == _activeType)
                 {
-                    CreateROIEllipse(ref canvas, pt);
+                    CreateROIEllipse(pt);
                 }
                 else if (typeof(Scale) == _activeType)
                 {
-                    CreateScale(ref canvas);
+                    CreateScale();
                 }
             }
         }
 
         //create a Reticle
-        private void CreateReticle(ref Canvas canvas)
+        private void CreateReticle()
         {
             int imgWidth = _pixelX;
             int imgHeight = _pixelY;
@@ -2896,12 +3739,12 @@
             Shape roi = new Reticle();
             tag[(int)Tag.SUB_PATTERN_ID] = GetCurrentSubPatternCount(ref roi) + 1;
             _bitVec32 = new BitVector32(tag[(int)Tag.RGB]);
-            Reticle reticle = new Reticle()
+            Reticle reticle = new Reticle(_imageScaleX, _imageScaleY)
             {
                 Stroke = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ?
                     new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
                     GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8),
-                StrokeThickness = 1
+                StrokeThickness = _roiStrokeThickness
             };
             reticle.Fill = new SolidColorBrush(Colors.Transparent);
             reticle.ImageWidth = imgWidth;
@@ -2913,14 +3756,15 @@
             _roiCount++;
             _roiList[_roiList.Count - 1].Tag = tag;
             _roiList[_roiList.Count - 1].ToolTip = "ROI #" + tag[(int)Tag.SUB_PATTERN_ID];
-            if (!_simulatorMode) canvas.Children.Add(_roiList[_roiList.Count - 1]);
+            if (!_simulatorMode) _overlayItems.Add(_roiList[_roiList.Count - 1]);
 
             ObjectComplete(_roiList.Count - 1);
             if (null != UpdatingObjectEvent) UpdatingObjectEvent(false);
             _isObjectCreated = true;
+            UpdateVisibleROIs();
         }
 
-        private void CreateROICrosshair(ref Canvas canvas, Point pt)
+        private void CreateROICrosshair(Point pt)
         {
             _selectedPolygon = null;
             int[] tag = DefaultTags(_roiCount);
@@ -2937,8 +3781,10 @@
                 Stroke = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ?
                     new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
                     GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8),
-                StrokeThickness = 1,
-                Fill = Brushes.Transparent
+                StrokeThickness = _roiStrokeThickness,
+                Fill = Brushes.Transparent,
+                ImageWidth = _pixelX,
+                ImageHeight = _pixelY
             };
             crosshair.CenterPoint = pt;
             crosshair.MouseLeftButtonDown += ROI_MouseDown;
@@ -2949,22 +3795,23 @@
             _roiList[_roiList.Count - 1].Tag = tag;
             _roiList[_roiList.Count - 1].Tag = SetTagRGB(_roiList[_roiList.Count - 1]);
 
-            if (!_simulatorMode) canvas.Children.Add(_roiList[_roiList.Count - 1]);
+            if (!_simulatorMode) _overlayItems.Add(_roiList[_roiList.Count - 1]);
             ObjectComplete(_roiList.Count - 1);
 
             //add index adorner:
             AddIndexToROI(_roiList[_roiList.Count - 1]);
 
-            CreateROICenter(ref canvas);
+            CreateROICenter();
 
             if (null != UpdatingObjectEvent) UpdatingObjectEvent(false);
             _isObjectCreated = true;
-            InitROICrosshair(ref canvas);
-            ValidateROIs(ref canvas);
+            InitROICrosshair();
+            ValidateROIs();
+            UpdateVisibleROIs();
         }
 
         //create an ROI Ellipse
-        private void CreateROIEllipse(ref Canvas canvas, Point pt)
+        private void CreateROIEllipse(Point pt)
         {
             _selectedPolygon = null;
             Shape roi = new ROIEllipse();
@@ -2987,6 +3834,8 @@
             else
             {
                 ellipse.StartPoint = pt;
+                ellipse.EndPoint = pt;
+                ellipse.Center = pt;
             }
 
             ellipse.Fill = new SolidColorBrush(Colors.Transparent);
@@ -2994,7 +3843,7 @@
             ellipse.Stroke = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ?
                 new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
                 GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8);
-            ellipse.StrokeThickness = 1;
+            ellipse.StrokeThickness = _roiStrokeThickness;
 
             ellipse.MouseLeftButtonDown += ROI_MouseDown;
             _roiList.Add(ellipse);
@@ -3003,18 +3852,18 @@
             _roiList[_roiList.Count - 1].Tag = tag;
             _roiList[_roiList.Count - 1].Tag = SetTagRGB(_roiList[_roiList.Count - 1]);
 
-            if (!_simulatorMode) canvas.Children.Add(_roiList[_roiList.Count - 1]);
+            if (!_simulatorMode) _overlayItems.Add(_roiList[_roiList.Count - 1]);
             _isObjectCreated = true;
 
             //complete if ready:
             if ((Mode.PATTERN_NOSTATS == _currentMode) && ((SkipRedrawCenter ? 0 : 1) < tag[(int)Tag.SUB_PATTERN_ID]))
             {
-                MouseEvent((int)MouseEventEnum.LEFTMOUSEUP, ref canvas, pt, false);
+                MouseEvent((int)MouseEventEnum.LEFTMOUSEUP, pt, false);
             }
         }
 
         //create an ROI Line
-        private void CreateROILine(ref Canvas canvas, Point pt)
+        private void CreateROILine(Point pt)
         {
             _selectedPolygon = null;
             int[] tag = DefaultTags(_roiCount);
@@ -3026,7 +3875,7 @@
                 Stroke = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ?
                     new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
                     GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8),
-                StrokeThickness = 1,
+                StrokeThickness = _roiStrokeThickness,
                 Name = "Line" + _roiList.Count + 1,
                 X1 = pt.X,
                 Y1 = pt.Y,
@@ -3041,7 +3890,44 @@
             _roiList[_roiList.Count - 1].Tag = tag;
             _roiList[_roiList.Count - 1].Tag = SetTagRGB(_roiList[_roiList.Count - 1]);
 
-            if (!_simulatorMode) canvas.Children.Add(_roiList[_roiList.Count - 1]);
+            if (!_simulatorMode) _overlayItems.Add(_roiList[_roiList.Count - 1]);
+            _isObjectCreated = true;
+            _lastLineIndex = _roiList.Count - 1;
+
+            if (true == _showLineLength)
+            {
+                AddGeometryToROI(_roiList[_roiList.Count - 1]);
+            }
+        }
+
+        private void CreateROILineUpdated(Point pt)
+        {
+            _selectedPolygon = null;
+            int[] tag = DefaultTags(_roiCount);
+            Shape roi = new ROILine();
+            tag[(int)Tag.SUB_PATTERN_ID] = GetCurrentSubPatternCount(ref roi) + 1;
+            _bitVec32 = new BitVector32(tag[(int)Tag.RGB]);
+            ROILine line = new ROILine
+            {
+                Stroke = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ?
+                    new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
+                    GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8),
+                StrokeThickness = _roiStrokeThickness,
+                Name = "Line" + _roiList.Count + 1,
+                StartPoint = pt,
+                EndPoint = new Point(pt.X + 1, pt.Y + 1),
+                ImageScaleX = _imageScaleX,
+                ImageScaleY = _imageScaleY
+            };
+            line.MouseLeftButtonDown += ROI_MouseDown;
+            _roiList.Add(line);
+
+            _roiCount++;
+            _roiList[_roiList.Count - 1].ToolTip = "ROI #" + tag[(int)Tag.SUB_PATTERN_ID];
+            _roiList[_roiList.Count - 1].Tag = tag;
+            _roiList[_roiList.Count - 1].Tag = SetTagRGB(_roiList[_roiList.Count - 1]);
+
+            if (!_simulatorMode) _overlayItems.Add(_roiList[_roiList.Count - 1]);
             _isObjectCreated = true;
             _lastLineIndex = _roiList.Count - 1;
 
@@ -3052,7 +3938,7 @@
         }
 
         //create an ROI Polygon
-        private void CreateROIPoly(ref Canvas canvas, Point pt)
+        private void CreateROIPoly(Point pt)
         {
             _selectedPolygon = new Polygon { Stroke = Brushes.Goldenrod, StrokeThickness = 1, StrokeDashArray = new DoubleCollection { 3, 3 } };
             _selectedPolygon.Name = "Polygon";
@@ -3065,7 +3951,7 @@
                 Stroke = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ?
                     new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
                     GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8),
-                StrokeThickness = 1,
+                StrokeThickness = _roiStrokeThickness,
                 UseRoundnessPercentage = true,
                 Fill = Brushes.Transparent
             };
@@ -3074,14 +3960,14 @@
 
             if (!_simulatorMode)
             {
-                canvas.Children.Add(_selectedPolygon);
-                canvas.Children.Add(_roiList[_roiList.Count - 1]);
+                _overlayItems.Add(_selectedPolygon);
+                _overlayItems.Add(_roiList[_roiList.Count - 1]);
             }
             _roiList[_roiList.Count - 1].ToolTip = "ROI #" + tag[(int)Tag.SUB_PATTERN_ID];
             _roiList[_roiList.Count - 1].Tag = tag;
             _roiList[_roiList.Count - 1].Tag = SetTagRGB(_roiList[_roiList.Count - 1]);
 
-            if (!_simulatorMode) canvas.Children.Add(GetCornerEllipse(pt));
+            if (!_simulatorMode) _overlayItems.Add(GetCornerEllipse(pt));
 
             ((ROIPoly)_roiList[_roiList.Count - 1]).Points.Add(pt);
 
@@ -3092,7 +3978,7 @@
         }
 
         //create an ROI Polyline
-        private void CreateROIPolyLine(ref Canvas canvas, Point pt)
+        private void CreateROIPolyLine(Point pt)
         {
             int[] tag = DefaultTags(_roiCount);
             Shape roi = new Polyline();
@@ -3103,19 +3989,19 @@
                 Stroke = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ?
                     new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
                     GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8),
-                StrokeThickness = 1
+                StrokeThickness = _roiStrokeThickness
             };
             polyLine.Name = "Polyline" + _roiList.Count + 1;
             polyLine.MouseLeftButtonDown += ROI_MouseDown;
             polyLine.Points.Add(pt);
             _roiList.Add(polyLine);
-            canvas.Children.Add(_roiList[_roiList.Count - 1]);
+            _overlayItems.Add(_roiList.Last());
 
-            _roiList[_roiList.Count - 1].ToolTip = "ROI #" + tag[(int)Tag.SUB_PATTERN_ID];
-            _roiList[_roiList.Count - 1].Tag = tag;
-            _roiList[_roiList.Count - 1].Tag = SetTagRGB(_roiList[_roiList.Count - 1]);
+            _roiList.Last().ToolTip = "ROI #" + tag[(int)Tag.SUB_PATTERN_ID];
+            _roiList.Last().Tag = tag;
+            _roiList.Last().Tag = SetTagRGB(_roiList.Last());
 
-            if (!_simulatorMode) canvas.Children.Add(GetCornerEllipse(pt));
+            if (!_simulatorMode) _overlayItems.Add(GetCornerEllipse(pt));
 
             _activeType = typeof(Polyline);
             _isObjectCreated = true;
@@ -3126,8 +4012,43 @@
             }
         }
 
+        private void CreateROIPolyLineUpdated(Point pt)
+        {
+            int[] tag = DefaultTags(_roiCount);
+            Shape roi = new ROIPolyline();
+            tag[(int)Tag.SUB_PATTERN_ID] = GetCurrentSubPatternCount(ref roi) + 1;
+            _bitVec32 = new BitVector32(tag[(int)Tag.RGB]);
+            ROIPolyline polyLine = new ROIPolyline
+            {
+                Stroke = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ?
+                    new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
+                    GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8),
+                StrokeThickness = _roiStrokeThickness
+            };
+            polyLine.Name = "Polyline" + _roiList.Count + 1;
+            polyLine.MouseLeftButtonDown += ROI_MouseDown;
+            polyLine.Points.Add(pt);
+            _roiList.Add(polyLine);
+            _overlayItems.Add(_roiList.Last());
+
+            _roiList.Last().ToolTip = "ROI #" + tag[(int)Tag.SUB_PATTERN_ID];
+            _roiList.Last().Tag = tag;
+            _roiList.Last().Tag = SetTagRGB(_roiList.Last());
+
+            if (!_simulatorMode) _overlayItems.Add(GetCornerEllipse(pt));
+
+            _activeType = typeof(ROIPolyline);
+            _isObjectCreated = true;
+            _lastLineIndex = _roiList.Count - 1;
+
+            if (true == _showPolylineLength)
+            {
+                AddGeometryToROI(_roiList[_roiList.Count - 1]);
+            }
+        }
+
         //create an ROI Rectangle
-        private void CreateROIRect(ref Canvas canvas, Point pt)
+        private void CreateROIRect(Point pt)
         {
             _selectedPolygon = null;
             int[] tag = DefaultTags(_roiCount);
@@ -3135,15 +4056,19 @@
             Shape roi = new ROIRect();
             tag[(int)Tag.SUB_PATTERN_ID] = GetCurrentSubPatternCount(ref roi) + 1;
             _bitVec32 = new BitVector32(tag[(int)Tag.RGB]);
-            ROIRect rectangle = new ROIRect
+            ROIRect rectangle = new ROIRect(pt, pt, _imageScaleX, _imageScaleY)
             {
                 Stroke = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ?
                    new SolidColorBrush(Color.FromArgb(Byte.MaxValue, Convert.ToByte(_bitVec32[SecR]), Convert.ToByte(_bitVec32[SecG]), Convert.ToByte(_bitVec32[SecB]))) :
                    GetROIColor((tag[(int)Tag.SUB_PATTERN_ID] - 1) % 8),
-                StrokeThickness = 1,
+                StrokeThickness = _roiStrokeThickness,
                 StartPoint = pt,
                 Fill = new SolidColorBrush(Colors.Transparent)
             };
+            /*rectangle.ScaleX = _imageXScale;
+            rectangle.ScaleY = _imageYScale;
+            rectangle.StartPoint = pt;
+            rectangle.EndPoint = pt;*/
             rectangle.MouseLeftButtonDown += ROI_MouseDown;
             _roiList.Add(rectangle);
 
@@ -3152,12 +4077,12 @@
             _roiList[_roiList.Count - 1].Tag = tag;
             _roiList[_roiList.Count - 1].Tag = SetTagRGB(_roiList[_roiList.Count - 1]);
 
-            if (!_simulatorMode) canvas.Children.Add(_roiList[_roiList.Count - 1]);
+            if (!_simulatorMode) _overlayItems.Add(_roiList[_roiList.Count - 1]);
             _isObjectCreated = true;
         }
 
         //create a Scale
-        private void CreateScale(ref Canvas canvas)
+        private void CreateScale()
         {
             _selectedPolygon = null;
             int[] tag = DefaultTags(_roiCount);
@@ -3175,22 +4100,28 @@
             ScaleLines scaleL = new ScaleLines()
             {
                 Stroke = scaleStroke,
-                StrokeThickness = 4
+                StrokeThickness = _roiStrokeThickness * _roiScaleLineStrokeThicknessMultiplier
             };
+            scaleL.ImageScaleX = _imageScaleX;
+            scaleL.ImageScaleY = _imageScaleY;
             scaleL.ImageWidth = _pixelX;
             scaleL.ImageHeight = _pixelY;
             scaleL.ScaleFieldWidth = _fieldWidth;
+            scaleL.ScaleFieldHeight = _fieldHeight;
             _roiList.Add(scaleL);
 
             ScaleNumbers scaleN = new ScaleNumbers()
             {
                 Stroke = scaleStroke,
-                StrokeThickness = 1,
+                StrokeThickness = _roiStrokeThickness * _roiScaleNumberStrokeThicknessMultiplier,
                 Fill = scaleStroke
             };
             scaleN.ImageWidth = _pixelX;
             scaleN.ImageHeight = _pixelY;
+            scaleN.ImageScaleX = _imageScaleX;
+            scaleN.ImageScaleY = _imageScaleY;
             scaleN.ScaleFieldWidth = _fieldWidth;
+            scaleN.ScaleFieldHeight = _fieldHeight;
             _roiList.Add(scaleN);
 
             _activeType = typeof(Scale);
@@ -3198,15 +4129,16 @@
             _roiCount += 2;
             _roiList[_roiList.Count - 1].Tag = tag2;
             _roiList[_roiList.Count - 1].ToolTip = "ROI #" + tag2[(int)Tag.SUB_PATTERN_ID];
-            canvas.Children.Add(_roiList[_roiList.Count - 1]);
+            _overlayItems.Add(_roiList[_roiList.Count - 1]);
 
             _roiList[_roiList.Count - 2].Tag = tag;
             _roiList[_roiList.Count - 2].ToolTip = "ROI #" + tag[(int)Tag.SUB_PATTERN_ID];
-            canvas.Children.Add(_roiList[_roiList.Count - 2]);
+            _overlayItems.Add(_roiList[_roiList.Count - 2]);
 
             ObjectComplete(_roiList.Count - 1);
             if (null != UpdatingObjectEvent) UpdatingObjectEvent(false);
             _isObjectCreated = true;
+            UpdateVisibleROIs();
         }
 
         private void CrossHairToMask(ref short[] mask, int imgWidth, int imgHeight, ROICrosshair roi)
@@ -3219,8 +4151,8 @@
 
                 roi.Dispatcher.Invoke((Action)(() =>
                 {
-                    ptX = Convert.ToInt32(Math.Floor(roi.CenterPoint.X));
-                    ptY = Convert.ToInt32(Math.Floor(roi.CenterPoint.Y));
+                    ptX = Convert.ToInt32(Math.Floor(roi.StatsCenterPoint.X));
+                    ptY = Convert.ToInt32(Math.Floor(roi.StatsCenterPoint.Y));
                     tag = (int[])((int[])(roi.Tag)).Clone();
                 }));
 
@@ -3301,6 +4233,7 @@
                     newTag[(int)Tag.WAVELENGTH_NM] = 0;                                                 // Wavelength of light in [nm]
                     newTag[(int)Tag.Z_UM_INT] = 0;                                                      // z integer value in [um]
                     newTag[(int)Tag.Z_UM_DEC] = 0;                                                      // z decimal value in [um]
+                    newTag[(int)Tag.MROI_STRIPE_COUNT] = -1;                                            // number of field stripes. -1 if not used
                     return newTag;
                 }
             }
@@ -3325,16 +4258,17 @@
             newTag[(int)Tag.WAVELENGTH_NM] = _wavelengthNM;                                             // Wavelength of light in [nm]
             newTag[(int)Tag.Z_UM_INT] = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ? int.Parse(zUMsplit[0]) : 0;    // z integer value in [um]
             newTag[(int)Tag.Z_UM_DEC] = (Mode.PATTERN_NOSTATS == _currentMode || Mode.PATTERN_WIDEFIELD == _currentMode) ? int.Parse(zUMsplit[1]) : 0;    // z decimal value in [um]
+            newTag[(int)Tag.MROI_STRIPE_COUNT] = -1;                                            // number of field stripes. -1 if not used
             return newTag;
         }
 
-        private void DeleteSingleObject(ref Canvas canvas, int roiIndex)
+        private void DeleteSingleObject(int roiIndex)
         {
             if (_roiList.Count > 0)
             {
                 try
                 {
-                    canvas.Children.Remove(_roiList[roiIndex]);
+                    _overlayItems.Remove(_roiList[roiIndex]);
                     _roiList.RemoveAt(roiIndex);
                     if (_roiList.Count > 0 && roiIndex != _roiList.Count && _lastLineIndex == _roiList.Count)
                         _lastLineIndex--;
@@ -3388,7 +4322,7 @@
 
                 roi.Dispatcher.Invoke((Action)(() =>
                 {
-                    boundingRect = roi.Bounds;
+                    boundingRect = roi.StatsBounds;
                     tag = (int[])((int[])(roi.Tag)).Clone();
                 }));
 
@@ -3688,8 +4622,21 @@
             return false;
         }
 
+        int GetTagValue(object tag, Tag tagID)
+        {
+            int[] localTag = (int[])tag;
+            if (null != localTag)
+            {
+                if ((0 <= tagID) && ((int)tagID < localTag.Length))
+                {
+                    return localTag[(int)tagID];
+                }
+            }
+            return -1;
+        }
+
         //Initializes the Canvas making sure no ROI Polygon was left half complete and clears the canvas if there was a reticle, redrawing the previous ROIs
-        private void InitROI(ref Canvas canvas)
+        private void InitROI()
         {
             try
             {   //clean canvas if polygon or polyline was not completed
@@ -3700,10 +4647,10 @@
 
                         for (int i = ((ROIPoly)_roiList[_roiList.Count - 1]).Points.Count; i >= 0 + 1; i--)
                         {
-                            canvas.Children.RemoveAt(canvas.Children.Count - i);
+                            _overlayItems.RemoveAt(_overlayItems.Count - i);
                         }
-                        canvas.Children.Remove(_roiList[_roiList.Count - 1]);
-                        canvas.Children.Remove(_selectedPolygon);
+                        _overlayItems.Remove(_roiList[_roiList.Count - 1]);
+                        _overlayItems.Remove(_selectedPolygon);
                         _roiList.RemoveAt(_roiList.Count - 1);
                     }
                 }
@@ -3714,12 +4661,24 @@
 
                         for (int i = ((Polyline)_roiList[_roiList.Count - 1]).Points.Count; i >= 0 + 1; i--)
                         {
-                            canvas.Children.RemoveAt(canvas.Children.Count - i);
+                            _overlayItems.RemoveAt(_overlayItems.Count - i);
                         }
-                        canvas.Children.Remove(_roiList[_roiList.Count - 1]);
+                        _overlayItems.Remove(_roiList[_roiList.Count - 1]);
                         _roiList.RemoveAt(_roiList.Count - 1);
                     }
+                }
+                else if (_activeType == typeof(ROIPolyline))
+                {
+                    if (false == _isObjectComplete && true == _isObjectCreated)
+                    {
 
+                        for (int i = ((ROIPolyline)_roiList[_roiList.Count - 1]).Points.Count; i >= 0 + 1; i--)
+                        {
+                            _overlayItems.RemoveAt(_overlayItems.Count - i);
+                        }
+                        _overlayItems.Remove(_roiList[_roiList.Count - 1]);
+                        _roiList.RemoveAt(_roiList.Count - 1);
+                    }
                 }
 
                 //clear adorners if a new roi is being initiated
@@ -3918,7 +4877,7 @@
                 int nVertices = 0;
                 roi.Dispatcher.Invoke((Action)(() =>
                 {
-                    nVertices = roi.Points.Count;
+                    nVertices = roi.StatsPoints.Count;
 
                 }));
 
@@ -3932,10 +4891,10 @@
                 {
                     for (int i = 0; i < nVertices; i++)
                     {
-                        verticesX[i] = Convert.ToInt32(Math.Floor(roi.Points[i].X));
-                        verticesY[i] = Convert.ToInt32(Math.Floor(roi.Points[i].Y));
+                        verticesX[i] = Convert.ToInt32(Math.Floor(roi.StatsPoints[i].X));
+                        verticesY[i] = Convert.ToInt32(Math.Floor(roi.StatsPoints[i].Y));
                     }
-                    boundingRect = roi.Bounds;
+                    boundingRect = roi.StatsBounds;
                     tag = (int[])((int[])(roi.Tag)).Clone();
                 }));
 
@@ -4022,10 +4981,10 @@
             {
                 roi.Dispatcher.Invoke((Action)(() =>
                 {
-                    roiTop = Convert.ToInt32(Math.Floor(roi.TopLeft.Y));
-                    roiLeft = Convert.ToInt32(Math.Floor(roi.TopLeft.X));
-                    roiRight = Convert.ToInt32(Math.Floor(roi.BottomRight.X));
-                    roiBottom = Convert.ToInt32(Math.Floor(roi.BottomRight.Y));
+                    roiTop = Convert.ToInt32(Math.Floor(roi.StatsTopLeft.Y));
+                    roiLeft = Convert.ToInt32(Math.Floor(roi.StatsTopLeft.X));
+                    roiRight = Convert.ToInt32(Math.Floor(roi.StatsBottomRight.X));
+                    roiBottom = Convert.ToInt32(Math.Floor(roi.StatsBottomRight.Y));
                     tag = (int[])((int[])(roi.Tag)).Clone();
                 }));
 
@@ -4088,6 +5047,13 @@
                                     removed = true;
                                 }
                                 break;
+                            case AdornerType.DIVIDER_ADORNER:
+                                if (adorner is DividerAdornerProvider)
+                                {
+                                    _roiAdornerLayer.Remove(adorner);
+                                    removed = true;
+                                }
+                                break;
                             default:
                                 break;
                         }
@@ -4141,63 +5107,76 @@
             }
         }
 
-        private void ResizeObject(ref Canvas canvas, Point currentPoint, bool shiftDown)
+        private void ResizeObject(Point currentPoint, bool shiftDown)
         {
-            if (_activeType == typeof(ROIRect))
+            if (_roiList?.Count > 0)
             {
-                ((ROIRect)_roiList[_roiList.Count - 1]).ShiftDown = shiftDown;
-                ((ROIRect)_roiList[_roiList.Count - 1]).EndPoint = currentPoint;
-            }
-            else if (typeof(ROIPoly) == _activeType)
-            {
-            }
-            else if (typeof(Line) == _activeType)
-            {
-                if (true == _isObjectComplete)
+                if (_activeType == typeof(ROIRect))
                 {
-                    return;
+                    ((ROIRect)_roiList[_roiList.Count - 1]).ShiftDown = shiftDown;
+                    ((ROIRect)_roiList[_roiList.Count - 1]).EndPoint = currentPoint;
                 }
-                if (false == shiftDown)
+                else if (typeof(ROIPoly) == _activeType)
                 {
-                    ((Line)_roiList[_roiList.Count - 1]).X2 = currentPoint.X;
-                    ((Line)_roiList[_roiList.Count - 1]).Y2 = currentPoint.Y;
                 }
-                else
+                else if (typeof(ROILine) == _activeType)
                 {
-                    double x1 = ((Line)_roiList[_roiList.Count - 1]).X1;
-                    double y1 = ((Line)_roiList[_roiList.Count - 1]).Y1;
-                    if (Math.Abs(x1 - currentPoint.X) >= Math.Abs(y1 - currentPoint.Y))
+                    if (true == _isObjectComplete)
+                    {
+                        return;
+                    }
+                    (_roiList[_roiList.Count - 1] as ROILine).ShiftDown = shiftDown;
+                    (_roiList[_roiList.Count - 1] as ROILine).EndPoint = currentPoint;
+                    UpdateGeometryAdorner(_roiList.Last());
+                }
+                else if (typeof(Line) == _activeType)
+                {
+                    if (true == _isObjectComplete)
+                    {
+                        return;
+                    }
+                    if (false == shiftDown)
                     {
                         ((Line)_roiList[_roiList.Count - 1]).X2 = currentPoint.X;
-                        ((Line)_roiList[_roiList.Count - 1]).Y2 = ((Line)_roiList[_roiList.Count - 1]).Y1;
+                        ((Line)_roiList[_roiList.Count - 1]).Y2 = currentPoint.Y;
                     }
                     else
                     {
-                        ((Line)_roiList[_roiList.Count - 1]).X2 = ((Line)_roiList[_roiList.Count - 1]).X1;
-                        ((Line)_roiList[_roiList.Count - 1]).Y2 = currentPoint.Y; ;
+                        double x1 = ((Line)_roiList[_roiList.Count - 1]).X1;
+                        double y1 = ((Line)_roiList[_roiList.Count - 1]).Y1;
+                        if (Math.Abs(x1 - currentPoint.X) >= Math.Abs(y1 - currentPoint.Y))
+                        {
+                            ((Line)_roiList[_roiList.Count - 1]).X2 = currentPoint.X;
+                            ((Line)_roiList[_roiList.Count - 1]).Y2 = ((Line)_roiList[_roiList.Count - 1]).Y1;
+                        }
+                        else
+                        {
+                            ((Line)_roiList[_roiList.Count - 1]).X2 = ((Line)_roiList[_roiList.Count - 1]).X1;
+                            ((Line)_roiList[_roiList.Count - 1]).Y2 = currentPoint.Y; ;
+                        }
                     }
+                    UpdateGeometryAdorner(_roiList.Last());
                 }
-                UpdateGeometryAdorner(_roiList.Last());
-            }
-            else if ((typeof(ROIEllipse) == _activeType) && (typeof(ROIEllipse) == _roiList[_roiList.Count - 1].GetType()))
-            {
-                ((ROIEllipse)_roiList[_roiList.Count - 1]).ShiftDown = shiftDown;
-
-                //allow add roi by left click only in Pattern_NoStats mode:
-                Shape tmp = new ROIEllipse();
-                if (((Mode.PATTERN_NOSTATS != _currentMode)) || (1 >= GetCurrentSubPatternCount(ref tmp)))
+                else if ((typeof(ROIEllipse) == _activeType) && (typeof(ROIEllipse) == _roiList[_roiList.Count - 1].GetType()))
                 {
-                    ((ROIEllipse)_roiList[_roiList.Count - 1]).EndPoint = currentPoint;
+                    ((ROIEllipse)_roiList[_roiList.Count - 1]).ShiftDown = shiftDown;
 
-                    if (null != ObjectSizeChangedEvent && (SkipRedrawCenter ? 2 : 1) <= _roiList.Count)
+                    //allow add roi by left click only in Pattern_NoStats mode:
+                    Shape tmp = new ROIEllipse();
+                    if (((Mode.PATTERN_NOSTATS != _currentMode)) || (1 >= GetCurrentSubPatternCount(ref tmp)))
                     {
-                        ObjectSizeChangedEvent(((ROIEllipse)_roiList[_roiList.Count - (SkipRedrawCenter ? 2 : 1)]).ROIWidth,
-                            ((ROIEllipse)_roiList[_roiList.Count - (SkipRedrawCenter ? 2 : 1)]).ROIHeight);
+                        ((ROIEllipse)_roiList[_roiList.Count - 1]).EndPoint = currentPoint;
+
+                        if (null != ObjectSizeChangedEvent && (SkipRedrawCenter ? 2 : 1) <= _roiList.Count)
+                        {
+                            ObjectSizeChangedEvent(((ROIEllipse)_roiList[_roiList.Count - (SkipRedrawCenter ? 2 : 1)]).ROIWidth,
+                                ((ROIEllipse)_roiList[_roiList.Count - (SkipRedrawCenter ? 2 : 1)]).ROIHeight);
+                        }
                     }
+                    UpdateIndexAdorner(_roiList.Last());
                 }
-                UpdateIndexAdorner(_roiList.Last());
+                _objectUpdated = true;
             }
-            _objectUpdated = true;
         }
 
         private void ReticleToMask(ref short[] mask, int imgWidth, int imgHeight, Reticle roi)
@@ -4222,7 +5201,74 @@
             }
         }
 
-        private void ROI_MouseDown(object sender, MouseButtonEventArgs e)
+        private void ROILineToMask(ref short[] mask, int imgWidth, int imgHeight, ulong wkrIndex, ROILine roi)
+        {
+            try
+            {
+                int x1 = 0;
+                int x2 = 0;
+                int y1 = 0;
+                int y2 = 0;
+                int[] tag = null;
+
+                roi.Dispatcher.Invoke((Action)(() =>
+                {
+                    x1 = Convert.ToInt32(Math.Floor(roi.StatsStartPoint.X));
+                    x2 = Convert.ToInt32(Math.Floor(roi.StatsEndPoint.X));
+
+                    y1 = Convert.ToInt32(Math.Floor(roi.StatsStartPoint.Y));
+                    y2 = Convert.ToInt32(Math.Floor(roi.StatsEndPoint.Y));
+
+                    tag = (int[])((int[])(roi.Tag)).Clone();
+                }));
+                SingleLineToMask(ref mask, imgWidth, imgHeight, tag, x1, x2, y1, y2, wkrIndex);
+            }
+            catch (Exception ex)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + "LineToMask exception " + ex.Message);
+            }
+        }
+
+        private void ROIPolylineToMask(ref short[] mask, int imgWidth, int imgHeight, ulong wkrIndex, ROIPolyline roi)
+        {
+            try
+            {
+                int nVertices = 0;
+                roi.Dispatcher.Invoke((Action)(() =>
+                {
+                    nVertices = roi.StatsPoints.Count;
+                }));
+
+                int[] verticesX = new int[nVertices];
+                int[] verticesY = new int[nVertices];
+
+                int[] tag = null;
+
+                roi.Dispatcher.Invoke((Action)(() =>
+                {
+                    for (int i = 0; i < nVertices; i++)
+                    {
+                        verticesX[i] = Convert.ToInt32(Math.Floor(roi.StatsPoints[i].X));
+                        verticesY[i] = Convert.ToInt32(Math.Floor(roi.StatsPoints[i].Y));
+                    }
+                    tag = (int[])((int[])(roi.Tag)).Clone();
+                }));
+                for (int i = 1; i < nVertices; i++)
+                {
+                    if (wkrIndex < _maskIndex)
+                    {
+                        return;
+                    }
+                    SingleLineToMask(ref mask, imgWidth, imgHeight, tag, verticesX[i - 1], verticesX[i], verticesY[i - 1], verticesY[i], wkrIndex);
+                }
+            }
+            catch (Exception ex)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + "PolylineToMask exception " + ex.Message);
+            }
+        }
+
+        void ROI_MouseDown(object sender, MouseButtonEventArgs e)
         {
             //limit user select roi:
             if ((Mode.STATSONLY == _currentMode || Mode.MICRO_SCANAREA == _currentMode) && (0 != ((int[])(sender as Shape).Tag)[(int)Tag.PATTERN_ID]) ||
@@ -4238,12 +5284,34 @@
                         int[] tag = SetTagBit((sender as Shape).Tag, Tag.FLAGS, Flag.ADJUST_ADONERS, false);
                         (sender as Shape).Tag = tag;
                     }
+
+                    if (Mode.MICRO_SCANAREA == _currentMode)
+                    {
+                        mROISelectedEvent?.Invoke(0);
+                    }
                 }
                 else
                 {
+                    if (Mode.MICRO_SCANAREA == _currentMode)
+                    {
+                        DeselectAllROIs();
+                    }
+
                     AddPanningAdorners((sender as Shape));
                     int[] tag = SetTagBit((sender as Shape).Tag, Tag.FLAGS, Flag.ADJUST_ADONERS, true);
                     (sender as Shape).Tag = tag;
+
+                    if (Mode.MICRO_SCANAREA == _currentMode)
+                    {
+                        int id = tag[(int)Tag.SUB_PATTERN_ID];
+                        mROISelectedEvent?.Invoke(id);
+                    }
+                }
+
+                int tagVal = GetTagValue((sender as Shape).Tag, Tag.ROI_ID);
+                if (_roiList.Count <= tagVal || _roiList[tagVal] != sender)
+                {
+                    NeedOverlayItemsUpdateToActiveROIs?.Invoke(sender as Shape);
                 }
             }
         }
@@ -4281,7 +5349,6 @@
                 AddPanningAdorners(roi);
                 int[] tag = SetTagBit(roi.Tag, Tag.FLAGS, Flag.ADJUST_ADONERS, true);
                 roi.Tag = tag;
-                _savedSelectedIndex = _roiList.IndexOf(roi);
             }
         }
 
@@ -4322,6 +5389,13 @@
             _bitVec32[SecG] = cBrush.Color.G;
             _bitVec32[SecB] = cBrush.Color.B;
             tag[(int)Tag.RGB] = _bitVec32.Data;
+            return tag;
+        }
+
+        private int[] SetTagStripeCount(Shape roi, int val)
+        {
+            int[] tag = (int[])roi.Tag;
+            tag[(int)Tag.MROI_STRIPE_COUNT] = val;
             return tag;
         }
 
@@ -4430,9 +5504,18 @@
             }
         }
 
+        void UpdateDividerAdorner(Shape roi)
+        {
+            if (roi is ROIRect && ((int[])roi.Tag)[(int)Tag.MROI_STRIPE_COUNT] > -1)
+            {
+                RemoveAdornerFromROI(roi, AdornerType.DIVIDER_ADORNER);
+                AddDividerAdorner(roi);
+            }
+        }
+
         void UpdateGeometryAdorner(Shape roi)
         {
-            if ((roi is Line || roi is Polyline) && (true == GetTagBit(roi.Tag, Tag.FLAGS, Flag.GEOMETRY_ADONERS)))
+            if ((roi is Line || roi is Polyline || roi is ROIPolyline || roi is ROILine) && (true == GetTagBit(roi.Tag, Tag.FLAGS, Flag.GEOMETRY_ADONERS)))
             {
                 RemoveAdornerFromROI(roi, AdornerType.GEOMETRY_ADORNER);
                 AddGeometryToROI(roi);
@@ -4492,27 +5575,29 @@
         /// update rois by visibility tags, and set stroke by color tags
         /// </summary>
         /// <param name="canvas"></param>
-        private void UpdateVisibleROIs(ref Canvas canvas)
+        private void UpdateVisibleROIs(bool fireUpdatedEvent = true)
         {
-            if (null != canvas && !_simulatorMode)
-            {
-                canvas.IsVisibleChanged -= canvas_IsVisibleChanged;
-                canvas.IsVisibleChanged += canvas_IsVisibleChanged;
-                canvas.Children.Clear();
+            _overlayItems.Clear();
 
-                for (int i = 0; i < _roiList.Count; i++)
+            for (int i = 0; i < _roiList.Count; i++)
+            {
+                if (true == GetTagBit(_roiList[i].Tag, Tag.FLAGS, Flag.DISPLAY))
                 {
-                    if (true == GetTagBit(_roiList[i].Tag, Tag.FLAGS, Flag.DISPLAY))
+                    _overlayItems.Add(_roiList[i]);
+                    UpdateGeometryAdorner(_roiList[i]);
+                    UpdateIndexAdorner(_roiList[i]);
+                    UpdatePanningAdorner(_roiList[i]);
+                    UpdateToolTip(_roiList[i]);
+                    if ((Mode)(GetTagByteSection(_roiList[i].Tag, Tag.MODE, SecR)) == Mode.MICRO_SCANAREA && typeof(ROIRect) == _roiList[i].GetType())
                     {
-                        canvas.Children.Add(_roiList[i]);
-                        UpdateGeometryAdorner(_roiList[i]);
-                        UpdateIndexAdorner(_roiList[i]);
-                        UpdatePanningAdorner(_roiList[i]);
-                        UpdateToolTip(_roiList[i]);
+                        UpdateDividerAdorner(_roiList[i]);
                     }
                 }
-                //keep for adoner reference
-                _lastCanvas = canvas;
+            }
+
+            if (fireUpdatedEvent)
+            {
+                ROIListUpdated?.Invoke();
             }
         }
 
@@ -4520,20 +5605,71 @@
         {
             if (_lastLineIndex < _roiList.Count)
             {
-                if (_roiList[_lastLineIndex] is Line)
+                if (_roiList[_lastLineIndex] is Line line)
                 {
-                    Line line = _roiList[_lastLineIndex] as Line;
-                    int x1 = 0, y1 = 0, x2 = 0, y2 = 0;
-                    x1 = Convert.ToInt32(Math.Floor(((Line)line).X1));
-                    y1 = Convert.ToInt32(Math.Floor(((Line)line).Y1));
-                    x2 = Convert.ToInt32(Math.Floor(((Line)line).X2));
-                    y2 = Convert.ToInt32(Math.Floor(((Line)line).Y2));
+                    int[] x = new int[2];
+                    int[] y = new int[2];
+                    line.Dispatcher.Invoke((Action)(() =>
+                    {
+                        x[0] = Convert.ToInt32(Math.Floor((line).X1));
+                        y[0] = Convert.ToInt32(Math.Floor((line).Y1));
+                        x[1] = Convert.ToInt32(Math.Floor((line).X2));
+                        y[1] = Convert.ToInt32(Math.Floor((line).Y2));
+                    }));
 
-                    SetLineProfileLine(x1, y1, x2, y2, 1);
+                    SetLineProfileLine(x, y, 2, 1);
+                }
+                else if (_roiList[_lastLineIndex] is Polyline polyline)
+                {
+                    int[] x = null;
+                    int[] y = null;
+                    polyline.Dispatcher.Invoke((Action)(() =>
+                    {
+                        x = new int[polyline.Points.Count];
+                        y = new int[polyline.Points.Count];
+                        for (int p = 0; p < polyline.Points.Count; p++)
+                        {
+                            x[p] = Convert.ToInt32(Math.Floor(polyline.Points[p].X));
+                            y[p] = Convert.ToInt32(Math.Floor(polyline.Points[p].Y));
+                        }
+                    }));
+                    SetLineProfileLine(x, y, x.Length, 1);
+                }
+                if (_roiList[_lastLineIndex] is ROILine roiLine)
+                {
+                    int[] x = new int[2];
+                    int[] y = new int[2];
+                    roiLine.Dispatcher.Invoke((Action)(() =>
+                    {
+                        x[0] = Convert.ToInt32(Math.Floor((roiLine).StatsStartPoint.X));
+                        y[0] = Convert.ToInt32(Math.Floor((roiLine).StatsStartPoint.Y));
+                        x[1] = Convert.ToInt32(Math.Floor((roiLine).StatsEndPoint.X));
+                        y[1] = Convert.ToInt32(Math.Floor((roiLine).StatsEndPoint.Y));
+                    }));
+
+                    SetLineProfileLine(x, y, 2, 1);
+                }
+                else if (_roiList[_lastLineIndex] is ROIPolyline roiPolyline)
+                {
+                    int[] x = null;
+                    int[] y = null;
+                    roiPolyline.Dispatcher.Invoke((Action)(() =>
+                    {
+                        x = new int[roiPolyline.StatsPoints.Count];
+                        y = new int[roiPolyline.StatsPoints.Count];
+                        for (int p = 0; p < roiPolyline.StatsPoints.Count; p++)
+                        {
+                            x[p] = Convert.ToInt32(Math.Floor(roiPolyline.StatsPoints[p].X));
+                            y[p] = Convert.ToInt32(Math.Floor(roiPolyline.StatsPoints[p].Y));
+                        }
+                    }));
+                    SetLineProfileLine(x, y, x.Length, 1);
                 }
                 else
                 {
-                    SetLineProfileLine(0, 0, 0, 0, 0);
+                    int[] x = new int[0];
+                    int[] y = new int[0];
+                    SetLineProfileLine(x, y, 0, 0);
                 }
             }
         }
@@ -4553,7 +5689,30 @@
             //only update with non-center movement
             if (Mode.PATTERN_NOSTATS == _currentMode && _patternID == ((int[])roi.Tag)[(int)Tag.PATTERN_ID] && 0 != ((int[])roi.Tag)[(int)Tag.SUB_PATTERN_ID])
             {
-                ValidateROIs(ref _lastCanvas);
+                ValidateROIs();
+            }
+
+            UpdateVisibleROIs();
+
+            if (_currentMode == Mode.MICRO_SCANAREA)
+            {
+                mROIsUpdated?.Invoke();
+            }
+        }
+
+        void AdornerProvider_RectangleMoved(Shape roi)
+        {
+            Adorner[] adorners = AdornerLayer.GetAdornerLayer(roi)?.GetAdorners(roi);
+            if (adorners == null)
+            {
+                return;
+            }
+            foreach (Adorner adorner in adorners)
+            {
+                if (adorner is DividerAdornerProvider)
+                {
+                    adorner.InvalidateArrange();
+                }
             }
         }
 

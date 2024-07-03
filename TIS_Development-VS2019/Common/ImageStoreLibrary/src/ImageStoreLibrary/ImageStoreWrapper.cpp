@@ -96,7 +96,8 @@ long ImageStoreWrapper::AddScan(double zStartPosUM, double zStopPosUM, double zS
 		//determine enabled channels, consider CaptureSequence
 		vector<int> enabledChannel;
 		long captureSequenceEnable = 0;
-		if(_exp->GetCaptureSequence(captureSequenceEnable) && 1 == captureSequenceEnable)
+		long sequentialType = 0;
+		if(_exp->GetCaptureSequence(captureSequenceEnable, sequentialType) && 1 == captureSequenceEnable)
 		{
 			vector<IExperiment::SequenceStep> captureSequence;
 			_exp->GetSequenceSteps(captureSequence);
@@ -151,7 +152,7 @@ long ImageStoreWrapper::AddScan(double zStartPosUM, double zStopPosUM, double zS
 		long scanAreaPixelX = 0, scanAreaPixelY = 0;
 		double tileWidth = 0, tileHeight = 0;
 		double pixelSizeUM = 1;
-		_exp->GetImageArea(_cameraType, _lsmType, scanAreaPixelX, scanAreaPixelY, pixelSizeUM);
+		_exp->GetImageArea(_cameraType, _lsmType, _mROIEnabled, scanAreaPixelX, scanAreaPixelY, pixelSizeUM);
 		_exp->GetScanAttribute(viewMode, "TileWidth", tileWidth);
 		_exp->GetScanAttribute(viewMode, "TileHeight", tileHeight);
 
@@ -427,7 +428,7 @@ long ImageStoreWrapper::ReadChannelData(char* buf, long channelCount, long width
 	return ret;
 }
 
-long ImageStoreWrapper::SetupImageStore(wchar_t * path, void* exp, long doCompression) 
+long ImageStoreWrapper::SetupImageStore(wchar_t * path, void* exp, long mROIEnabled, long doCompression)
 {
 	try
 	{
@@ -439,6 +440,7 @@ long ImageStoreWrapper::SetupImageStore(wchar_t * path, void* exp, long doCompre
 		_cameraType = ICamera::CameraType::LAST_CAMERA_TYPE;
 		_lsmType = ICamera::LSMType::LSMTYPE_LAST;
 		_exp->GetModality(_cameraType, str, _lsmType);
+		_mROIEnabled = mROIEnabled;
 
 		//reset file
 		ClearImageStore();
@@ -479,8 +481,8 @@ long ImageStoreWrapper::SetupImageStore(wchar_t * path, void* exp, long doCompre
 		}
 
 		_exp->GetSampleInfo(name, width, height, row, column, diameter, centerToCenterX, centerToCenterY, topLeftCenterOffsetX, topLeftCenterOffsetY, WellShape, WellWidth, WellHeight, initialStageLocationX, initialStageLocationY);
-		_exp->GetSubImages(SubImages,_cameraType,_lsmType);
-		_exp->GetImageArea(_cameraType, _lsmType, scanAreaPixelX, scanAreaPixelY, pixelSizeUM);
+		_exp->GetSubImages(SubImages,_cameraType,_lsmType, _mROIEnabled);
+		_exp->GetImageArea(_cameraType, _lsmType, _mROIEnabled, scanAreaPixelX, scanAreaPixelY, pixelSizeUM);
 		_exp->GetSampleRegions(viewMode, activeScanAreas);
 		//keep dummy for non template
 		if (0 >= activeScanAreas.size())

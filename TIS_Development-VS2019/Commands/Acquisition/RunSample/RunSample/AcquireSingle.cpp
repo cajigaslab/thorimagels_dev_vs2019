@@ -23,7 +23,7 @@ AcquireSingle::AcquireSingle(IExperiment *pExperiment, wstring path)
 
 	_sp.doOME = ResourceManager::getInstance()->GetSettingsParamLong((int)SettingsFileType::APPLICATION_SETTINGS,L"OMETIFFTag",L"value", FALSE);
 	_sp.doCompression = ResourceManager::getInstance()->GetSettingsParamLong((int)SettingsFileType::APPLICATION_SETTINGS,L"TIFFCompressionEnable",L"value", FALSE);
-	_sp.doJPEG = ResourceManager::getInstance()->GetSettingsParamLong((int)SettingsFileType::APPLICATION_SETTINGS,L"JPEGEnable",L"value", FALSE);	
+	_sp.doJPEG = ResourceManager::getInstance()->GetSettingsParamLong((int)SettingsFileType::APPLICATION_SETTINGS,L"JPEGEnable",L"value", FALSE);		
 }
 
 UINT StatusThreadProc( LPVOID pParam )
@@ -167,8 +167,7 @@ int Call_TiffVSetField(TIFF* out, uint32 ttag_t, ...)
 	return retv;
 }
 
-string CreateOMEMetadata(int width, int height,int nc, int nt, int nz, double timeIncrement, int c, int t, int z,string * acquiredDateTime, double deltaT, 
-						 string * omeTiffData, PhysicalSize physicalSize)
+string CreateOMEMetadata(int width, int height,int nc, int nt, int nz, double timeIncrement, int c, int t, int z,string * acquiredDateTime, double deltaT, string * omeTiffData, PhysicalSize physicalSize)
 {
 	string tagData = "<?xml version=\"1.0\"?><OME xmlns=\"http://www.openmicroscopy.org/Schemas/OME/2010-06\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.openmicroscopy.org/Schemas/OME/2010-06 http://www.openmicroscopy.org/Schemas/OME/2010-06/ome.xsd\">";
 
@@ -365,12 +364,34 @@ string CreateOMEMetadata(int width, int height,int nc, int nt, int nz, double ti
 //            return tagData;
 //}
 
-long SaveTiledTiff(wchar_t *filePathAndName, char *pMemoryBuffer, long bufferSizeBytes, long imageWidth, long imageHeight, long tileWidth, long tileHeight, long totalChannels, long channelIndex, double umPerPixel, string imageDescription, bool compress = true)
+/// <summary>
+/// Saves a tiled TIFF of the data. 
+/// </summary>
+/// <param name="filePathAndName"></param>
+/// <param name="pMemoryBuffer"></param>
+/// <param name="bufferSizeBytes"></param>
+/// <param name="imageWidth"></param>
+/// <param name="imageHeight"></param>
+/// <param name="tileWidth"></param>
+/// <param name="tileHeight"></param>
+/// <param name="bufferChannels"> This is the number of channels that comprise the image in the memory buffer</param>
+/// <param name="writeChannels"> This is the number of channels that will comprise the image being written to (only used in multichannel)</param>
+/// <param name="channelIndex"> This is the channel to write to the output file (only used when NOT using multichannel)</param>
+/// <param name="umPerPixel"></param>
+/// <param name="imageDescription"></param>
+/// <param name="compress"></param>
+/// <param name="isMultiChannel"> If true, write all channels to a single tiled image. Otherwise only write the channel given by the channel index</param>
+/// <returns></returns>
+long SaveTiledTiff(wchar_t *filePathAndName, char *pMemoryBuffer, long bufferSizeBytes, long imageWidth, long imageHeight, long tileWidth, long tileHeight, long bufferChannels, long writeChannels, long channelIndex, double umPerPixel, string imageDescription, bool compress = true, bool isMultiChannel = false)
 {
 	TIFF *out= tiffDll->TIFFOpenW(filePathAndName, "w"); 
 
-	//XML-READ
-	int sampleperpixel = 1;    // or 3 if there is no alpha channel, you should get a understanding of alpha in class soon. 
+	/* NOTE FOR MULTICHANNEL COLOR IMAGES:
+	    Typically writeChannels will be 3, to represent RGB, while bufferChannels will be 4 for legacy reasons.
+		Make certain to always account for this when iterating the channels of the input buffer and output image.
+	*/
+
+	int sampleperpixel =  isMultiChannel ? writeChannels : 1;
 
 	//The length of a tile in a tiled image has to be a multiple of 16
 	//When imaging lines, these can have as little as 1 or two pixels in height
@@ -410,10 +431,17 @@ long SaveTiledTiff(wchar_t *filePathAndName, char *pMemoryBuffer, long bufferSiz
 		tiffDll->TIFFSetField(out, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
 	}
 
-	tiffDll->TIFFSetField(out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-
-	tiffDll->TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK); 
-
+	if (isMultiChannel)
+	{
+		tiffDll->TIFFSetField(out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_SEPARATE);
+		tiffDll->TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+	}
+	else
+	{
+		tiffDll->TIFFSetField(out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+		tiffDll->TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+	}
+	
 	//units are pixels per inch
 	const int RESOLUTION_UNIT = 2;
 	tiffDll->TIFFSetField(out, TIFFTAG_RESOLUTIONUNIT, RESOLUTION_UNIT); 
@@ -426,49 +454,79 @@ long SaveTiledTiff(wchar_t *filePathAndName, char *pMemoryBuffer, long bufferSiz
 
 	Call_TiffVSetField(out, TIFFTAG_IMAGEDESCRIPTION, imageDescription.c_str());
 
-	// We set the strip size of the file to be size of one row of pixels
-	unsigned int stripSize = tiffDll->TIFFDefaultStripSize(out, imageWidth*sampleperpixel);
-	tiffDll->TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, stripSize);
-
-	long tileBytes =  tiffDll->TIFFTileSize(out);
-
-	//if the tiles are padded with zeros, tilesBytes and originalTileBytes are not equal
-	long originalTileBytes = tileWidth * tileHeight * 2;
-
-	// allocate buffer for the tile to be written to image
-	unsigned char * buf = (unsigned char *) tiffDll->_TIFFmalloc(tileBytes);
-
-	long x, y, tileIndex = 0;
-
-	// number of tiles contained in the buffer data
-	int chs = (totalChannels == 1)? 1 : 4;
-	long tiles = bufferSizeBytes / (originalTileBytes * chs);
-
-	for (y = 0; y < newImageHeight; y += newTileHeight)
+	if (isMultiChannel)
 	{
-		for (x = 0; x < imageWidth; x += tileWidth)
+		// NOTE: any buffer channels over the writeChannels amount will not be written
+
+		long tileBytes = tiffDll->TIFFTileSize(out); // includes padding
+		//if the tiles are padded with zeros, tilesBytes and originalTileBytes are not equal
+		long originalTileBytes = tileWidth * tileHeight * 2; // the bytes of the original image
+		// allocate buffer for the tile to be written to image
+		unsigned char* tempBuffer = (unsigned char*)tiffDll->_TIFFmalloc(tileBytes);
+
+		for (int c = 0; c < writeChannels; ++c)
 		{
-			long offset = (chs == 1) ? (tileIndex * chs) * originalTileBytes : (channelIndex + tileIndex * chs) * originalTileBytes;
+			int channelOffsetInMemBuffer = c * (originalTileBytes);
 
-			if(tileIndex < tiles) 
+			for (int y = 0, tileIndex = 0; y < newImageHeight; y += newTileHeight)
 			{
-				memset(buf, 0, tileBytes);
-				memcpy(buf, pMemoryBuffer + offset, originalTileBytes);
+				for (int x = 0; x < imageWidth; x += tileWidth, ++tileIndex)
+				{
+					int offset = (tileIndex * originalTileBytes * bufferChannels) + channelOffsetInMemBuffer;
+					memset(tempBuffer, 0, tileBytes);
+					memcpy(tempBuffer, pMemoryBuffer + offset, originalTileBytes);
+					int result = tiffDll->TIFFWriteTile(out, tempBuffer, x, y, 0, c);
+					int debug = result;
+				}
 			}
-			else 
-			{
-				// write out blank tile for the last tile
-				memset(buf, 0, tileBytes);
-			}
-
-			tiffDll->TIFFWriteTile(out, buf, x, y, 0, 0); 
-
-			tileIndex += 1;
 		}
 	}
+	else
+	{
+		// We set the strip size of the file to be size of one row of pixels
+		unsigned int stripSize = tiffDll->TIFFDefaultStripSize(out, imageWidth * sampleperpixel);
+		tiffDll->TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, stripSize);
 
-	if (buf)
-		tiffDll->_TIFFfree(buf);
+		long tileBytes = tiffDll->TIFFTileSize(out);
+
+		//if the tiles are padded with zeros, tilesBytes and originalTileBytes are not equal
+		long originalTileBytes = tileWidth * tileHeight * 2;
+
+		// allocate buffer for the tile to be written to image
+		unsigned char* buf = (unsigned char*)tiffDll->_TIFFmalloc(tileBytes);
+
+		long x, y, tileIndex = 0;
+
+		// number of tiles contained in the buffer data
+		int chs = (bufferChannels == 1) ? 1 : 4;
+		long tiles = bufferSizeBytes / (originalTileBytes * chs);
+
+		for (y = 0; y < newImageHeight; y += newTileHeight)
+		{
+			for (x = 0; x < imageWidth; x += tileWidth)
+			{
+				long offset = (chs == 1) ? (tileIndex * chs) * originalTileBytes : (channelIndex + tileIndex * chs) * originalTileBytes;
+
+				if (tileIndex < tiles)
+				{
+					memset(buf, 0, tileBytes);
+					memcpy(buf, pMemoryBuffer + offset, originalTileBytes);
+				}
+				else
+				{
+					// write out blank tile for the last tile
+					memset(buf, 0, tileBytes);
+				}
+
+				tiffDll->TIFFWriteTile(out, buf, x, y, 0, 0);
+
+				tileIndex += 1;
+			}
+		}
+
+		if (buf)
+			tiffDll->_TIFFfree(buf);
+	}
 
 	//Finally we close the output file, and destroy the buffer 
 	tiffDll->TIFFClose(out); 
@@ -541,96 +599,29 @@ long GetOMETIFFTagEnableFlagAS()
 	return ret;	
 }
 
-
-//long SaveTIFFWithoutOME(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height, unsigned short * rlut, unsigned short * glut,unsigned short * blut,double umPerPixel,int nc, int nt, int nz, double timeIncrement, int c, int t, int z,string * acquiredDateTime,double deltaT, string * omeTiffData)
-long SaveTIFFWithoutOME(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height, unsigned short * rlut, unsigned short * glut,unsigned short * blut,double umPerPixel,int nc, int nt, int nz, double timeIncrement, int c, int t, int z,string * acquiredDateTime,double deltaT,long doCompression)
-
-{
-	TIFF *out= tiffDll->TIFFOpenW(filePathAndName, "w"); 
-
-	//XML-READ
-	int sampleperpixel = 1;    // or 3 if there is no alpha channel, you should get a understanding of alpha in class soon. 
-
-	tiffDll->TIFFSetField(out, TIFFTAG_IMAGEWIDTH, width);  // set the width of the image
-	tiffDll->TIFFSetField(out, TIFFTAG_IMAGELENGTH, height);    // set the height of the image
-	tiffDll->TIFFSetField(out, TIFFTAG_SAMPLESPERPIXEL, sampleperpixel);   // set number of channels per pixel
-	//XML-READ
-	tiffDll->TIFFSetField(out, TIFFTAG_BITSPERSAMPLE, 16);    // set the size of the channels
-	tiffDll->TIFFSetField(out, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);    // set the origin of the image.
-
-	//  Some other essential fields to set that you do not have to understand for now.
-	if (TRUE == doCompression)
-	{
-		tiffDll->TIFFSetField(out, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
-	}else
-	{
-		tiffDll->TIFFSetField(out, TIFFTAG_COMPRESSION, COMPRESSION_NONE);	
-	}
-
-	tiffDll->TIFFSetField(out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-
-	tiffDll->TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK); 
-
-	//units are pixels per inch
-	const int RESOLUTION_UNIT = 2;
-	tiffDll->TIFFSetField(out, TIFFTAG_RESOLUTIONUNIT, RESOLUTION_UNIT); 
-
-	const double UM_PER_INCH_CONVERSION = 25399.99999997256800000002962656;
-
-	float pixelsPerInch = static_cast<float>(UM_PER_INCH_CONVERSION/umPerPixel);	
-	Call_TiffVSetField(out, TIFFTAG_XRESOLUTION, pixelsPerInch);
-	Call_TiffVSetField(out, TIFFTAG_YRESOLUTION, pixelsPerInch);
-
-	// Color Palette is not working with the OME TIFF. /*TODO*/ determine the issue and reinsert at a later date
-	//	tiffDll->TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE);
-	//	Call_TiffVSetField(out, TIFFTAG_COLORMAP, rlut, glut, blut);
-
-	tsize_t linebytes = sampleperpixel * width * 2;     // length in memory of one row of pixel in the image. 
-
-	unsigned char *buf = NULL;        // buffer used to store the row of pixel information for writing to file
-
-	// Allocating memory to store the pixels of current row
-	if (tiffDll->TIFFScanlineSize(out)==linebytes)
-		buf =(unsigned char *)tiffDll->_TIFFmalloc(linebytes);
-	else
-		buf = (unsigned char *)tiffDll->_TIFFmalloc(tiffDll->TIFFScanlineSize(out));
-
-	// We set the strip size of the file to be size of one row of pixels
-	tiffDll->TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, tiffDll->TIFFDefaultStripSize(out, width*sampleperpixel));
-
-
-	//Now writing image to the file one strip at a time
-	for (uint32 row = 0; row < static_cast<uint32>(height); row++)
-	{
-		memcpy(buf, &pMemoryBuffer[row*linebytes], linebytes);    // check the index here, and figure out why not using h*linebytes
-		if (tiffDll->TIFFWriteScanline(out, buf, row, 0) < 0)
-			break;
-	}
-
-	if (buf)
-		tiffDll->_TIFFfree(buf);
-
-	//Finally we close the output file, and destroy the buffer 
-	tiffDll->TIFFClose(out); 
-
-	return TRUE;
-}
-
 long SaveTIFF(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height, unsigned short * rlut, unsigned short * glut,unsigned short * blut,
-			  double umPerPixel,int nc, int nt, int nz, double timeIncrement, int c, int t, int z,string * acquiredDateTime,double deltaT, 
-			  string * omeTiffData, PhysicalSize physicalSize,long doCompression)
+			  double umPerPixel,int numChannels, int nt, int nz, double timeIncrement, int c, int t, int z,string * acquiredDateTime,double deltaT, 
+			  string * omeTiffDataOrNull, PhysicalSize physicalSize, long doCompression, bool isMultiChannel)
 {
 	TIFF *out= tiffDll->TIFFOpenW(filePathAndName, "w"); 
-
-	//XML-READ
-	int sampleperpixel = 1;    // or 3 if there is no alpha channel, you should get a understanding of alpha in class soon. 
+	int sampleperpixel = isMultiChannel ? numChannels : 1;    // or 3 if there is no alpha channel, you should get a understanding of alpha in class soon. 
 
 	tiffDll->TIFFSetField(out, TIFFTAG_IMAGEWIDTH, width);  // set the width of the image
 	tiffDll->TIFFSetField(out, TIFFTAG_IMAGELENGTH, height);    // set the height of the image
 	tiffDll->TIFFSetField(out, TIFFTAG_SAMPLESPERPIXEL, sampleperpixel);   // set number of channels per pixel
-	//XML-READ
 	tiffDll->TIFFSetField(out, TIFFTAG_BITSPERSAMPLE, 16);    // set the size of the channels
 	tiffDll->TIFFSetField(out, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);    // set the origin of the image.
+
+	if (isMultiChannel)
+	{
+		tiffDll->TIFFSetField(out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_SEPARATE);
+		tiffDll->TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+	}
+	else
+	{
+		tiffDll->TIFFSetField(out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+		tiffDll->TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+	}
 
 	//  Some other essential fields to set that you do not have to understand for now.
 	if (TRUE == doCompression)
@@ -640,10 +631,7 @@ long SaveTIFF(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long h
 	{
 		tiffDll->TIFFSetField(out, TIFFTAG_COMPRESSION, COMPRESSION_NONE);	
 	}
-	tiffDll->TIFFSetField(out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-
-	tiffDll->TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK); 
-
+	
 	//units are pixels per inch
 	const int RESOLUTION_UNIT = 2;
 	tiffDll->TIFFSetField(out, TIFFTAG_RESOLUTIONUNIT, RESOLUTION_UNIT); 
@@ -658,30 +646,51 @@ long SaveTIFF(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long h
 	//	tiffDll->TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE);
 	//	Call_TiffVSetField(out, TIFFTAG_COLORMAP, rlut, glut, blut);
 
-	string str = CreateOMEMetadata(width, height,nc, nt, nz, timeIncrement, c, t, z,acquiredDateTime, deltaT, omeTiffData,physicalSize);
+	if (omeTiffDataOrNull != nullptr)
+	{
+		string omeTiffMetadata = CreateOMEMetadata(width, height, numChannels, nt, nz, timeIncrement, c, t, z, acquiredDateTime, deltaT, omeTiffDataOrNull, physicalSize);
+		Call_TiffVSetField(out, TIFFTAG_IMAGEDESCRIPTION, omeTiffMetadata.c_str());
+	}
+	
 
-	Call_TiffVSetField(out, TIFFTAG_IMAGEDESCRIPTION, str.c_str());
-
-	tsize_t linebytes = sampleperpixel * width * 2;     // length in memory of one row of pixel in the image. 
-
+	tsize_t linebytes = width * 2;     // length in memory of one row of pixel in the image. 
 	unsigned char *buf = NULL;        // buffer used to store the row of pixel information for writing to file
-
 	// Allocating memory to store the pixels of current row
 	if (tiffDll->TIFFScanlineSize(out)==linebytes)
 		buf =(unsigned char *)tiffDll->_TIFFmalloc(linebytes);
 	else
 		buf = (unsigned char *)tiffDll->_TIFFmalloc(tiffDll->TIFFScanlineSize(out));
 
-	// We set the strip size of the file to be size of one row of pixels
-	tiffDll->TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, tiffDll->TIFFDefaultStripSize(out, width*sampleperpixel));
-
-
-	//Now writing image to the file one strip at a time
-	for (uint32 row = 0; row < static_cast<uint32>(height); row++)
+	if (isMultiChannel)
 	{
-		memcpy(buf, &pMemoryBuffer[row*linebytes], linebytes);    // check the index here, and figure out why not using h*linebytes
-		if (tiffDll->TIFFWriteScanline(out, buf, row, 0) < 0)
-			break;
+		// We set the strip size of the file to be size of one row of pixels
+		tiffDll->TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, 1);
+		//Now writing image to the file one strip at a time
+		unsigned short* memoryBufferPtr = reinterpret_cast<unsigned short*>(pMemoryBuffer);
+		const int pixelsPerChannel = width * height;
+		for (int channel = 0; channel < numChannels; ++channel)
+		{
+			const int planarOffset = pixelsPerChannel * channel;
+			for (uint32 row = 0; row < static_cast<uint32>(height); row++)
+			{
+				unsigned short* offsetPtr = memoryBufferPtr + planarOffset + (row * width);
+				memcpy(buf, offsetPtr, linebytes);
+				if (tiffDll->TIFFWriteScanline(out, buf, row, channel) < 0)
+					break;
+			}
+		}
+	}
+	else
+	{
+		// We set the strip size of the file to be size of one row of pixels
+		tiffDll->TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, tiffDll->TIFFDefaultStripSize(out, width * sampleperpixel));
+		//Now writing image to the file one strip at a time
+		for (uint32 row = 0; row < static_cast<uint32>(height); row++)
+		{
+			memcpy(buf, &pMemoryBuffer[row * linebytes], linebytes);    // check the index here, and figure out why not using h*linebytes
+			if (tiffDll->TIFFWriteScanline(out, buf, row, 0) < 0)
+				break;
+		}
 	}
 
 	if (buf)
@@ -920,7 +929,7 @@ long SaveTIFF8WithoutOME(wchar_t *filePathAndName, char * pMemoryBuffer, long wi
 	return TRUE;
 }
 
-long SaveJPEG(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height, unsigned short * rlut, unsigned short * glut,unsigned short * blut,long bitDepth)
+long SaveJPEG(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height, unsigned short * rlut, unsigned short * glut,unsigned short * blut,long bitDepth, bool isBufferRGB)
 {
 	int bytes_per_pixel = 3;   /* or 1 for GRACYSCALE images */
 	int color_space = JCS_RGB;		/* red/green/blue */
@@ -968,9 +977,6 @@ long SaveJPEG(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long h
 	jpeg_start_compress( &cinfo, TRUE );
 
 	unsigned char * rowBuffer = new unsigned char[cinfo.image_width*cinfo.input_components];
-	unsigned short *p1;
-	unsigned char *p2;
-
 	long shiftValue = 0;
 
 	// SaveJPEG is called from Execute, if a new camera with a different bitDepth is added, this switch statement should change
@@ -981,29 +987,59 @@ long SaveJPEG(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long h
 	case 14:shiftValue=2;break;
 	case 16:shiftValue=0;break;
 	}
-	while( cinfo.next_scanline < cinfo.image_height )
+
+	if (isBufferRGB)
 	{
-		p1 = (unsigned short*)pMemoryBuffer;
-		p1 += cinfo.next_scanline * cinfo.image_width;
-		p2 = rowBuffer;
+		const int channelLength = cinfo.image_width * cinfo.image_height;
+		unsigned short* memoryBufferAsShort = reinterpret_cast<unsigned short*>(pMemoryBuffer);
+		for (unsigned int y = 0; y < cinfo.image_height; ++y){
+			// assuming buffer is RRR...GGG...BBB...
+			unsigned short* redRow = memoryBufferAsShort + (y * cinfo.image_width);
+			unsigned short* greenRow = memoryBufferAsShort + channelLength + (y * cinfo.image_width);
+			unsigned short* blueRow = memoryBufferAsShort + (channelLength * 2) + (y * cinfo.image_width);
 
-		for(unsigned int i = 0; i<cinfo.image_width; i++)
-		{
-			//lookup table is scalled to the full 65536 unsigned short range. Scale the raw data (shfitValue) to fill out the lookup table
-			const long COLOR_MAP_SIZE =65536;
-			long lookUpVal = min(COLOR_MAP_SIZE-1,(*p1)<<shiftValue);
+			for (unsigned int x = 0; x < cinfo.image_width; ++x)
+			{
+				//lookup table is scaled to the full 65536 unsigned short range. Scale the raw data (shfitValue) to fill out the lookup table
+				const long COLOR_MAP_SIZE = 65536;
 
-			*p2 = rlut[lookUpVal]>>8;								
-			p2++;
-			*p2 = glut[lookUpVal]>>8;								
-			p2++;
-			*p2 = blut[lookUpVal]>>8;								
-			p2++;
-			p1++;
+				const unsigned short rLookup = min(COLOR_MAP_SIZE - 1, redRow[x] << shiftValue);
+				rowBuffer[(x * 3 + 0)] = rlut[rLookup] >> 8;
+				const unsigned short gLookup = min(COLOR_MAP_SIZE - 1, greenRow[x] << shiftValue);
+				rowBuffer[(x * 3 + 1)] = glut[gLookup] >> 8;
+				const unsigned short bLookup = min(COLOR_MAP_SIZE - 1, blueRow[x] << shiftValue);
+				rowBuffer[(x * 3 + 2)] = blut[bLookup] >> 8;
+			}
+
+			buffer = (JSAMPARRAY)&rowBuffer;
+			jpeg_write_scanlines(&cinfo, buffer, 1);
 		}
+	}
+	else
+	{
+		unsigned short* p1;
+		unsigned char* p2;
+		while (cinfo.next_scanline < cinfo.image_height)
+		{
+			p1 = ((unsigned short*)pMemoryBuffer) + (cinfo.next_scanline * cinfo.image_width);
+			p2 = rowBuffer;
 
-		buffer = (JSAMPARRAY)&rowBuffer;
-		jpeg_write_scanlines( &cinfo, buffer, 1 );
+			for (unsigned int i = 0; i < cinfo.image_width; i++)
+			{
+				//lookup table is scalled to the full 65536 unsigned short range. Scale the raw data (shfitValue) to fill out the lookup table
+				const long COLOR_MAP_SIZE = 65536;
+				const long lookUpVal = min(COLOR_MAP_SIZE - 1, (*p1) << shiftValue);
+
+				p2[(i * 3) + 0] = rlut[lookUpVal] >> 8;
+				p2[(i * 3) + 1] = glut[lookUpVal] >> 8;
+				p2[(i * 3) + 2] = blut[lookUpVal] >> 8;
+
+				++p1;
+			}
+
+			buffer = (JSAMPARRAY)&rowBuffer;
+			jpeg_write_scanlines(&cinfo, buffer, 1);
+		}
 	}
 
 	delete[] rowBuffer;
@@ -1119,8 +1155,9 @@ string AcquireSingle::uUIDSetup(auto_ptr<HardwareSetupXML> &pHardware, long time
 	//If it is a sequential capture, with more than one step the wavelenth
 	//information for the steps in the sequence needs to be retrieved to
 	//have the corrent information in the OME.
-	long captureSequenceEnable = FALSE;
-	_pExp->GetCaptureSequence(captureSequenceEnable);
+	//SequentialTypes: 0 - between stacks, 1 - between frames
+	long captureSequenceEnable = FALSE, sequentialTypes = 0;
+	_pExp->GetCaptureSequence(captureSequenceEnable, sequentialTypes);
 	vector<IExperiment::SequenceStep> captureSequence;
 	_pExp->GetSequenceSteps(captureSequence);
 	if (TRUE == captureSequenceEnable && captureSequence.size() > 1)
@@ -1132,9 +1169,6 @@ string AcquireSingle::uUIDSetup(auto_ptr<HardwareSetupXML> &pHardware, long time
 				wavelengthNames.push_back(captureSequence[i].Wavelength[j].name);
 			}
 		}
-		//Because the wavelengths might be out of order in the sequence
-		//Sort them, so the channels are in alphabetical order
-		sort(wavelengthNames.begin(), wavelengthNames.end());
 	}
 	else
 	{
@@ -1228,18 +1262,31 @@ long SetupDimensions(ICamera *pCamera,IExperiment *pExperiment,double fieldSizeC
 			long tapsIndex, tapsBalance;
 			long readoutSpeedIndex;
 			long camAverageMode, camAverageNum;
-			long camVericalFlip, camHorizontalFlip, imageAngle;
+			long camVericalFlip, camHorizontalFlip, imageAngle, camChannelBitmask = 0;
+			long colorImageType, polarImageType;
+			long isContinuousWhiteBalance, continuousWhiteBalanceNumFrames;
+			double redGain, greenGain, blueGain;
 
 			//getting the values from the experiment setup XML files
-			pExperiment->GetCamera(camName,camImageWidth,camImageHeight,camPixelSize,camExposureTimeMS,gain,blackLevel,lightMode,left,top,right,bottom,binningX,binningY,tapsIndex,tapsBalance,readoutSpeedIndex,camAverageMode,camAverageNum,camVericalFlip,camHorizontalFlip,imageAngle);
+			pExperiment->GetCamera(camName, camImageWidth, camImageHeight, camPixelSize, camExposureTimeMS, gain, blackLevel, lightMode, left, top, right, bottom, binningX, binningY, tapsIndex, tapsBalance, readoutSpeedIndex, camAverageMode, camAverageNum, camVericalFlip, camHorizontalFlip, imageAngle, camChannelBitmask, colorImageType, polarImageType, isContinuousWhiteBalance, continuousWhiteBalanceNumFrames, redGain, greenGain, blueGain);
 			width = camImageWidth;
 			height = camImageHeight;
-			_lsmChannel = bufferChannels = 1;	//StatsManager computeStats is requesting bitwise _lsmChannel
+			_lsmChannel = (0 == camChannelBitmask) ? 1 : camChannelBitmask;	//StatsManager computeStats is requesting bitwise _lsmChannel
+			switch (static_cast<int>(camChannelBitmask))
+			{
+			case 0b0111:
+				bufferChannels = 4; // TODO: having an image buffer that is not 1 or 4 channels may crash
+				break;
+			case 0b0001:
+			default:
+				bufferChannels = 1;
+				break;
+			}
 
 			d.c = bufferChannels;
 			d.dType = INT_16BIT;
 			d.m = 1;
-			d.mType = DETACHED_CHANNEL;
+			d.mType = bufferChannels > 1 ? CONTIGUOUS_CHANNEL : DETACHED_CHANNEL;
 			d.t = 1;
 			d.x = width;
 			d.y = height;
@@ -1255,40 +1302,6 @@ long SetupDimensions(ICamera *pCamera,IExperiment *pExperiment,double fieldSizeC
 			numPlanes = 1;
 		}
 		break;		
-	case ICamera::CCD_MOSAIC:
-		{
-			string camName;
-			long camImageWidth;
-			long camImageHeight;
-			double camPixelSize;
-			double camExposureTimeMS;		
-			long gain, blackLevel, lightMode;				
-			long left,top,right,bottom;
-			long binningX, binningY;
-			long tapsIndex, tapsBalance;
-			long readoutSpeedIndex;
-			long camAverageMode, camAverageNum;
-			long camVericalFlip, camHorizontalFlip, imageAngle;
-
-			//getting the values from the experiment setup XML files
-			pExperiment->GetCamera(camName,camImageWidth,camImageHeight,camPixelSize,camExposureTimeMS,gain,blackLevel,lightMode,left,top,right,bottom,binningX,binningY,tapsIndex,tapsBalance,readoutSpeedIndex,camAverageMode,camAverageNum,camVericalFlip,camHorizontalFlip,imageAngle);
-			width = static_cast<long>((right - left)/binningX);
-			height = static_cast<long>((bottom - top)/binningY);
-			bufferChannels = 3;
-			_lsmChannel = 1;	//StatsManager computeStats is requesting bitwise _lsmChannel
-
-			d.c = bufferChannels;
-			d.dType = INT_16BIT;
-			d.m = 1;
-			d.mType = CONTIGUOUS_CHANNEL;
-			d.t = 1;
-			d.x = width;
-			d.y = height;
-			d.z = 1;
-			d.imageBufferType = 0;
-			numPlanes = 1;
-		}
-		break;
 	case ICamera::LSM:
 		{
 			long areaMode;
@@ -1321,7 +1334,11 @@ long SetupDimensions(ICamera *pCamera,IExperiment *pExperiment,double fieldSizeC
 			long timeBasedLineScanMS = 0;
 			long threePhotonEnable = FALSE;
 			long numberOfPlanes = 1;
-			pExperiment->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,lsmChannel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes);
+			long selectedImagingGG = 0;
+			long selectedStimGG = 0;
+			double pixelAspectRatioYScale = 1;
+
+			pExperiment->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,lsmChannel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes, selectedImagingGG, selectedStimGG, pixelAspectRatioYScale);
 			
 			pCamera->SetParam(ICamera::PARAM_LSM_VERTICAL_SCAN_DIRECTION, verticalFlip);
 			pCamera->SetParam(ICamera::PARAM_LSM_HORIZONTAL_FLIP, horizontalFlip);
@@ -1330,6 +1347,7 @@ long SetupDimensions(ICamera *pCamera,IExperiment *pExperiment,double fieldSizeC
 			pCamera->SetParam(ICamera::PARAM_LSM_PIXEL_Y, pixelY);
 			pCamera->SetParam(ICamera::PARAM_LSM_FIELD_SIZE, fieldSize);
 			pCamera->SetParam(ICamera::PARAM_RAW_SAVE_ENABLED_CHANNELS_ONLY, FALSE);
+			pCamera->SetParam(ICamera::PARAM_LSM_SELECTED_IMAGING_GG, selectedImagingGG);
 
 			//if its a timebased line scan then we want to get the pixel Y from the camera instead of assuming that it is what we set it as
 			if (pCamera->SetParam(ICamera::PARAM_LSM_TIME_BASED_LINE_SCAN, timeBasedLineScan) && TRUE == timeBasedLineScan)
@@ -1454,8 +1472,10 @@ long AcquireSingle::Execute(long index, long subWell)
 	long numberOfPlanes = 1;
 	SetupDimensions(pCamera, _pExp, fieldSizeCalibration, magnification, baseDimensions, avgFrames, bufferChannels, avgMode, umPerPixel, numberOfPlanes);
 	//Set temp path to streaming temp path:
-	wstring tempPath; double previewRate;
-	pHardware->GetStreaming(tempPath, previewRate);
+	wstring tempPath; 
+	double previewRate;
+	long alwaysSaveImagesOnStop;
+	pHardware->GetStreaming(tempPath, previewRate, alwaysSaveImagesOnStop);
 	if (NULL != tempPath.c_str())
 	{
 		ImageManager::getInstance()->SetMemMapPath((tempPath + L"\\").c_str());
@@ -1566,7 +1586,7 @@ long AcquireSingle::Execute(long index, long subWell)
 
 	const int MAX_TIME_LENGTH = 30;
 	long wavelengthIndex = 0, zstageSteps, timePoints, triggerModeTimelapse, zEnable;
-	string wavelengthName, zstageName;
+	string wavelengthName, zstageName, hardwareSettingsWavelengthName;
 	double exposureTimeMS, zstageStepSize, zStartPos, intervalSec;
 	long zStreamFrames, zStreamMode;
 	_pExp->GetWavelength(wavelengthIndex, wavelengthName, exposureTimeMS);
@@ -2013,23 +2033,6 @@ long AcquireSingle::Execute(long index, long subWell)
 		_acquireSaveInfo->getInstance()->ClearTimestamps();
 	}
 
-	long red;
-	long green;
-	long blue;
-	long bp;
-	long wp;
-
-	GetColorInfo(pHardware.get(), wavelengthName, red, green, blue, bp, wp);
-
-	const int COLOR_MAP_SIZE = 65536;
-	unsigned short rlut[COLOR_MAP_SIZE];
-	unsigned short glut[COLOR_MAP_SIZE];
-	unsigned short blut[COLOR_MAP_SIZE];
-
-	const int COLOR_MAP_BIT_DEPTH_TIFF = 8;
-
-	GetLookUpTables(rlut, glut, blut, red, green, blue, bp, wp, COLOR_MAP_BIT_DEPTH_TIFF);
-
 	wchar_t filePathAndName[_MAX_PATH];
 
 	string redChan, greenChan, blueChan, cyanChan, magentaChan, yellowChan, grayChan;
@@ -2044,20 +2047,18 @@ long AcquireSingle::Execute(long index, long subWell)
 	physicalSize.z = zstageStepSize;
 
 	long totalExperimentWavelengths = 0;
+	//Get the Capture Sequence Settings.
+	long captureSequenceEnable = FALSE, sequentialTypes = 0;
+	vector<IExperiment::SequenceStep> captureSequence;
+	_pExp->GetCaptureSequence(captureSequenceEnable, sequentialTypes);
+	_pExp->GetSequenceSteps(captureSequence);
 	if (TRUE == _sp.doOME)
 	{
-		long captureSequenceEnable = FALSE;
-		_pExp->GetCaptureSequence(captureSequenceEnable);
-
-		//Get the Capture Sequence Settings.
 		//If it is a sequential capture, with more than one step the wavelenth
 		//information for the steps in the sequence needs to be retrieved to
 		//have the corrent information in the OME.
-		vector<IExperiment::SequenceStep> captureSequence;
-		_pExp->GetSequenceSteps(captureSequence);
 		if (TRUE == captureSequenceEnable && captureSequence.size() > 1)
 		{
-
 			for (long i = 0; i < captureSequence.size(); i++)
 			{
 				totalExperimentWavelengths += static_cast<long>(captureSequence[i].Wavelength.size());
@@ -2160,12 +2161,12 @@ long AcquireSingle::Execute(long index, long subWell)
 			_lsmChannel, FALSE, TRUE, TRUE);
 
 		std::wstringstream dFLIMImgNameFormat;
-		dFLIMImgNameFormat << L"%s%s\\Image_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+		dFLIMImgNameFormat << L"%s%sImage_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
 			<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
 			<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
 			<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.dFLIM";
 		std::wstringstream photonsImgNameFormat;
-		photonsImgNameFormat << L"%s%s\\Image_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+		photonsImgNameFormat << L"%s%sImage_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
 			<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
 			<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
 			<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.photons";
@@ -2235,7 +2236,6 @@ long AcquireSingle::Execute(long index, long subWell)
 	switch (cameraType)
 	{
 	case ICamera::CCD:
-	case ICamera::CCD_MOSAIC:
 	{
 		double bitsPerPixel = 12;
 		pCamera->GetParam(ICamera::PARAM_BITS_PER_PIXEL, bitsPerPixel);
@@ -2254,7 +2254,7 @@ long AcquireSingle::Execute(long index, long subWell)
 	if (imageMethod == 1)
 	{
 		std::wstringstream rawImgNameFormat;
-		rawImgNameFormat << L"%s%s\\Image_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
+		rawImgNameFormat << L"%s%sImage_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
 			<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
 			<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
 			<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.raw";
@@ -2295,19 +2295,75 @@ long AcquireSingle::Execute(long index, long subWell)
 		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%"
 		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.jpg";
 
-	for (long i = 0; i < bufferChannels; i++)
+	long red;
+	long green;
+	long blue;
+	long bp;
+	long wp;
+	vector<long> channelsEnabled;
+	const int COLOR_MAP_SIZE = 65536;
+	unsigned short rlut[COLOR_MAP_SIZE];
+	unsigned short glut[COLOR_MAP_SIZE];
+	unsigned short blut[COLOR_MAP_SIZE];
+
+	const int COLOR_MAP_BIT_DEPTH_TIFF = 8;
+
+	for (int k = 0; k < MAX_CHANNEL_COUNT; k++)
 	{
-		if (i < _pExp->GetNumberOfWavelengths())
+		long bitValue = (long)pow(2, k);
+		if (bitValue == (bitValue & _lsmChannel))
 		{
-			_pExp->GetWavelength(i, wavelengthName, exposureTimeMS);
+			channelsEnabled.push_back(k);
+		}
+	}
+
+	if (ICamera::CCD == cameraType && channelsEnabled.size() == 3)
+	{
+		// RGB color camera special case 
+		pHardware->GetWavelengthName(0, hardwareSettingsWavelengthName);
+		GetColorInfo(pHardware.get(), hardwareSettingsWavelengthName, red, green, blue, bp, wp); // must get a value for bp and wp
+
+		GetLookUpTables(rlut, glut, blut, 255, 255, 255, bp, wp, COLOR_MAP_BIT_DEPTH_TIFF);
+
+		StringCbPrintfW(filePathAndName, _MAX_PATH, imgNameFormat.str().c_str(), drive, dir, wavelengthName.c_str(), index, subWell, _zFrame, _tFrame);
+
+		logDll->TLTraceEvent(INFORMATION_EVENT, 1, filePathAndName);
+
+		string acquiredDate = acquiredDateTime;
+
+		string* omeTiffData = _sp.doOME ? &strOME : nullptr;
+		SaveTIFF(filePathAndName, pMemoryBuffer, d.x, d.y, rlut, glut, blut, umPerPixel, _pExp->GetNumberOfWavelengths(), timePoints, zstageSteps, intervalSec, 0, _tFrame - 1, _zFrame - 1, &acquiredDate, deltaT, omeTiffData, physicalSize, _sp.doCompression, true);
+
+		CallNotifySavedFileIPC(filePathAndName);
+
+		if (_sp.doJPEG)
+		{
+			const int COLOR_MAP_BIT_DEPTH_JPEG = 16;
+
+			GetLookUpTables(rlut, glut, blut, 255, 255, 255, bp, wp, COLOR_MAP_BIT_DEPTH_JPEG);
+
+			StringCbPrintfW(filePathAndName, _MAX_PATH, jpgNameFormat.str().c_str(), drive, dir, wavelengthName.c_str(), index, subWell, _zFrame, _tFrame);
+
+			SaveJPEG(filePathAndName, pMemoryBuffer, d.x, d.y, rlut, glut, blut, bitDepth, true);
+			CallNotifySavedFileIPC(filePathAndName);
+		}
+	}
+	else
+	{
+		long wavelengthsIndex = 0;
+		for each (long channelIndex in channelsEnabled)
+		{
+			_pExp->GetWavelength(wavelengthsIndex++, wavelengthName, exposureTimeMS);
+
+			pHardware->GetWavelengthName(channelIndex, hardwareSettingsWavelengthName);
 
 			//A single buffer is used for one channel capture so no offset is needed for that case
 			if (bufferChannels > 1)
 			{
-				pHardware->GetWavelengthIndex(wavelengthName, bufferOffsetIndex);
+				bufferOffsetIndex = channelIndex;
 			}
 
-			GetColorInfo(pHardware.get(), wavelengthName, red, green, blue, bp, wp);
+			GetColorInfo(pHardware.get(), hardwareSettingsWavelengthName, red, green, blue, bp, wp);
 			GetLookUpTables(rlut, glut, blut, red, green, blue, bp, wp, COLOR_MAP_BIT_DEPTH_TIFF);
 
 			StringCbPrintfW(filePathAndName, _MAX_PATH, imgNameFormat.str().c_str(), drive, dir, wavelengthName.c_str(), index, subWell, _zFrame, _tFrame);
@@ -2315,17 +2371,12 @@ long AcquireSingle::Execute(long index, long subWell)
 			logDll->TLTraceEvent(INFORMATION_EVENT, 1, filePathAndName);
 
 			string acquiredDate = acquiredDateTime;
+			
+			string* omeTiffData = _sp.doOME ? &strOME : nullptr;
+			SaveTIFF(filePathAndName, pMemoryBuffer + (bufferOffsetIndex * d.x * d.y * 2), d.x, d.y, rlut, glut, blut,
+				umPerPixel, totalExperimentWavelengths, timePoints, zstageSteps, intervalSec, channelIndex, _tFrame - 1, _zFrame - 1, &acquiredDate, deltaT,
+				omeTiffData, physicalSize, _sp.doCompression, false);
 
-			if (TRUE == _sp.doOME)
-			{
-				SaveTIFF(filePathAndName, pMemoryBuffer + (bufferOffsetIndex * d.x * d.y * 2), d.x, d.y, rlut, glut, blut,
-					umPerPixel, totalExperimentWavelengths, timePoints, zstageSteps, intervalSec, i, _tFrame - 1, _zFrame - 1, &acquiredDate, deltaT,
-					&strOME, physicalSize, _sp.doCompression);
-			}
-			else
-			{
-				SaveTIFFWithoutOME(filePathAndName, pMemoryBuffer + (bufferOffsetIndex * d.x * d.y * 2), d.x, d.y, rlut, glut, blut, umPerPixel, _pExp->GetNumberOfWavelengths(), timePoints, zstageSteps, intervalSec, i, _tFrame - 1, _zFrame - 1, &acquiredDate, deltaT, _sp.doCompression);
-			}
 			CallNotifySavedFileIPC(filePathAndName);
 
 			if (_sp.doJPEG)
@@ -2336,13 +2387,12 @@ long AcquireSingle::Execute(long index, long subWell)
 
 				StringCbPrintfW(filePathAndName, _MAX_PATH, jpgNameFormat.str().c_str(), drive, dir, wavelengthName.c_str(), index, subWell, _zFrame, _tFrame);
 
-				SaveJPEG(filePathAndName, pMemoryBuffer + (bufferOffsetIndex * d.x * d.y * 2), d.x, d.y, rlut, glut, blut, bitDepth);
+				SaveJPEG(filePathAndName, pMemoryBuffer + (bufferOffsetIndex * d.x * d.y * 2), d.x, d.y, rlut, glut, blut, bitDepth, false);
 				CallNotifySavedFileIPC(filePathAndName);
 			}
 		}
 	}
-
-
+	
 	std::map<long, long>::iterator it = avgImageIDs.begin();
 	while (it != avgImageIDs.end())
 	{
@@ -2382,4 +2432,9 @@ long AcquireSingle::Execute(long index, long subWell)
 		}
 	}
 	return TRUE;
+}
+
+long AcquireSingle::ZStreamExecute(long index, long subWell, ICamera* pCamera, long zstageSteps, long timePoints, long undefinedVar)
+{
+	return FALSE;
 }

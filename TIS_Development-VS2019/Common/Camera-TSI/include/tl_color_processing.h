@@ -465,27 +465,33 @@ For full license details, see the accompanying LICENSE file.
 *         }
 *
 *         // configure sRGB output color space
-*         float chromatic_adaptation_matrix[9] = { 1.0f, 0.0f, 0.0f, 0.0f, 1.37f, 0.0f, 0.0f, 0.0f, 2.79f };
-*         float merged_camera_correction_sRGB_matrix[9] = { 1.25477f, -0.15359f, -0.10118f, -0.07011f, 1.13723f, -0.06713f, 0.0f, -0.26641f, 1.26641f };
+*         // The matrix values used here are hard coded for illustrative purposes.
+*         // The user should obtain the camera specific matrix values directly from the camera itself via API calls in the camera SDK.
+*         // Please consult the camera SDK documentation for details.
+*         float white_balance_matrix [9] = { 1.0f, 0.0f, 0.0f, 0.0f, 1.37f, 0.0f, 0.0f, 0.0f, 2.79f };
+*         float color_correction_matrix [9] = { 1.25477f, -0.15359f, -0.10118f, -0.07011f, 1.13723f, -0.06713f, 0.0f, -0.26641f, 1.26641f };
 *
-*         tl_color_append_matrix (color_processor_inst, chromatic_adaptation_matrix);
-*         tl_color_append_matrix (color_processor_inst, merged_camera_correction_sRGB_matrix);
+*         tl_color_append_matrix (color_processor_inst, white_balance_matrix);
+*         tl_color_append_matrix (color_processor_inst, color_correction_matrix);
 *
 *         // Use the output LUTs to configure the sRGB nonlinear (companding) function.
 *         sRGB_companding_LUT(14, tl_color_get_blue_output_LUT(color_processor_inst));
 *         sRGB_companding_LUT(14, tl_color_get_green_output_LUT(color_processor_inst));
 *         sRGB_companding_LUT(14, tl_color_get_red_output_LUT(color_processor_inst));
 *
+*         // Enable the sRGB nonlinear LUTs.
+*         tl_color_enable_output_LUTs (color_processor_inst, 1, 1, 1);
+*
 *         // Color process the demosaic color frame.
 *         if (tl_color_transform_48_to_48(color_processor_inst
 *             , demosaic_color_buffer // input buffer
 *             , TL_COLOR_FORMAT_BGR_PLANAR          // input buffer format
 *             , 0                     // blue minimum clamp value
-*             , 1 << 14               // blue maximum clamp value (14 bit pixel data)
+*             , (1 << 14) - 1         // blue maximum clamp value (14 bit pixel data)
 *             , 0                     // green minimum clamp value
-*             , 1 << 14               // green maximum clamp value
+*             , (1 << 14) - 1         // green maximum clamp value
 *             , 0                     // red minimum clamp value
-*             , 1 << 14               // red maximum clamp value
+*             , (1 << 14) - 1         // red maximum clamp value
 *             , 0                     // blue shift distance
 *             , 0                     // green shift distance
 *             , 0                     // red shift distance
@@ -769,6 +775,47 @@ typedef int (*TL_COLOR_TRANSFORM_48_TO_48) (void* handle
 
 /*! This function performs the color transform computation on the input data and writes
 *   the resulting data to the specified output buffer.
+*
+*   This function expects 16-bit input data and produces 16-bit output data with a 0 (zero) padding word for each color 3-tuple.
+*
+*   The specified input and output buffers must be separate and equal in size.
+*
+*   \param[in] handle The color processing instance handle.
+*   \param[in] input_buffer A pointer to the input buffer.
+*   \param[in] input_buffer_format The format (::TL_COLOR_FORMAT) that must be assumed to correctly interpret the input data.
+*   \param[in] blue_output_min_value The minimum blue pixel intensity value to allow.  Used by the clamp unit to ensure that all blue pixel values are greater than or equal to to this value.
+*   \param[in] blue_output_max_value The maximum blue pixel intensity value to allow.  Used by the clamp unit to ensure that all blue pixel values are less than or equal to this value.
+*   \param[in] green_output_min_value The minimum green pixel intensity value to allow.  Used by the clamp unit to ensure that all green pixel values are greater than or equal to to this value.
+*   \param[in] green_output_max_value The maximum green pixel intensity value to allow.  Used by the clamp unit to ensure that all green pixel values are less than or equal to this value.
+*   \param[in] red_output_min_value The minimum red pixel intensity value to allow.  Used by the clamp unit to ensure that all red pixel values are greater than or equal to to this value.
+*   \param[in] red_output_max_value The maximum red pixel intensity value to allow.  Used by the clamp unit to ensure that all red pixel values are less than or equal to this value.
+*   \param[in] output_blue_shift_distance The distance to shift all blue pixel values by.  A positive (+) value specifes a left shift, a 0 specifies no shift, and a negative (-) value specifies a right shift.
+*   \param[in] output_green_shift_distance The distance to shift all blue pixel values by.  A positive (+) value specifes a left shift, a 0 specifies no shift, and a negative (-) value specifies a right shift.
+*   \param[in] output_red_shift_distance The distance to shift all blue pixel values by.  A positive (+) value specifes a left shift, a 0 specifies no shift, and a negative (-) value specifies a right shift.
+*   \param[out] output_buffer A pointer to the output buffer.
+*   \param[in] output_buffer_format The format (::TL_COLOR_FORMAT) that must be used when writing the output data to the output buffer.
+*   \param[in] number_of_bgr_tuples The number BGR 3-tuple quantities in the input and output buffers.
+*   \returns A ::TL_COLOR_ERROR value to indicate success or failure (::TL_COLOR_NO_ERROR indicates success).
+*/
+
+typedef int(*TL_COLOR_TRANSFORM_48_TO_64) (void* handle
+                                         , unsigned short* input_buffer
+                                         , enum TL_COLOR_FORMAT input_buffer_format
+                                         , unsigned short blue_output_min_value
+                                         , unsigned short blue_output_max_value
+                                         , unsigned short green_output_min_value
+                                         , unsigned short green_output_max_value
+                                         , unsigned short red_output_min_value
+                                         , unsigned short red_output_max_value
+                                         , int output_blue_shift_distance
+                                         , int output_green_shift_distance
+                                         , int output_red_shift_distance
+                                         , unsigned short* output_buffer
+                                         , enum TL_COLOR_FORMAT output_buffer_format
+                                         , int number_of_bgr_tuples);
+
+/*! This function performs the color transform computation on the input data and writes
+*   the resulting data to the specified output buffer.
 *  
 *   This function expects 16-bit input data and produces 8-bit output data.
 *  
@@ -857,7 +904,7 @@ typedef int (*TL_COLOR_TRANSFORM_48_TO_32) (void* handle
 typedef int (*TL_COLOR_DESTROY_COLOR_PROCESSOR)(void* handle);
 
 /*! This function gracefully terminates the color processing module.  It must be called prior to unloading the
-*   demosaic shared library to ensure proper cleanup of platform resources.
+*   color processing shared library to ensure proper cleanup of platform resources.
 *  
 *   \returns A ::TL_COLOR_ERROR value to indicate success or failure (::TL_COLOR_NO_ERROR indicates success).
 */

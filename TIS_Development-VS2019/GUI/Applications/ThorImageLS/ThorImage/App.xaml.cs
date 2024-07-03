@@ -49,6 +49,8 @@ namespace ThorImage
     {
         #region Fields
 
+        string docFolder = "";
+
         /// <summary>
         /// The application start time
         /// </summary>
@@ -111,8 +113,36 @@ namespace ThorImage
             //Search alternate paths for dependency files
             SetDependenciesPath();
 
-            //assign the documents folder
-            string docFolder = LocateDocumentsFolder();
+            //Check if files should be restored after crash
+            if ("0" != ResourceManagerCS.GetStartupFlag())
+            {
+                //ThorImage did not close properly on last run. Restore Files.
+                MessageBox.Show("ThorImageLS encountered a problem during the previous shutdown. Restoring files to previous saved version.", "Improper Shutdown detected");
+
+                //In the event that the resource manager XML is corrupted, the doc folder will not be able to be found.
+                //If the user has changed the location of the docs folder, the default directory will not have a backup and will fail to restore
+                //Restore the root folder and reload the ResourceManager directories to ensure that a docs folder can be found
+                int numRootErrors = ResourceManagerCS.RestoreDirectory(Directory.GetCurrentDirectory() + "\\");
+                if (!ResourceManagerCS.ReloadDirectories())
+                {
+                    //If the root backup did not work and the resourcemanager could not locate the docs folder
+                    MessageBox.Show("ThorImageLS was unable to reload the documents folder after restore. Shutting Down.", "Error Loading Resources");
+                    Application.Current.Shutdown();
+                    return;
+                }
+
+                //assign the documents folder using the new location
+                docFolder = LocateDocumentsFolder();
+                int numDocumentsErrors = ResourceManagerCS.RestoreDirectory(docFolder); // Restore the documents folder
+
+                ThorLog.Instance.TraceEvent(TraceEventType.Information, 1, this.GetType().Name + " Restoration of Root folder finished with " + numRootErrors + " Errors");
+                ThorLog.Instance.TraceEvent(TraceEventType.Information, 1, this.GetType().Name + " Restoration of Documents folder finished with " + numDocumentsErrors + " Errors");
+            }
+            else
+            {
+                //assign the documents folder normally if no issues detected
+                docFolder = LocateDocumentsFolder();
+            }
 
             if (string.IsNullOrEmpty(docFolder))
             {
@@ -120,16 +150,18 @@ namespace ThorImage
                 return;
             }
 
+            ResourceManagerCS.SetStartupFlag("1");
+
             //assign other Resource strings
-            string hwSettingsFile = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString() + "\\" + docFolder + "\\Application Settings\\HardwareSettings.xml";
-            string appSettingsFile = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString() + "\\" + docFolder + "\\Application Settings\\ApplicationSettings.xml";
-            string appSettingsFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString() + "\\" + docFolder + "\\Application Settings";
-            string templatesFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString() + "\\" + docFolder + "\\Capture Templates";
-            string thorDatabase = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString() + "\\" + docFolder + "\\Application Settings\\ThorDatabase.db";
-            string zStackCacheFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString() + "\\" + docFolder + "\\ZStackCache";
-            string tilesCacheFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString() + "\\" + docFolder + "\\TilesCache";
-            string appRootFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString() + "\\" + docFolder;
-            string imageProcessSettingsFile = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString() + "\\" + docFolder + "\\Application Settings\\ImageProcessSettings.xml";
+            string hwSettingsFile = docFolder + "Application Settings\\HardwareSettings.xml";
+            string appSettingsFile = docFolder + "Application Settings\\ApplicationSettings.xml";
+            string appSettingsFolder = docFolder + "Application Settings";
+            string templatesFolder = docFolder + "Capture Templates";
+            string thorDatabase = docFolder + "Application Settings\\ThorDatabase.db";
+            string zStackCacheFolder = docFolder + "ZStackCache";
+            string tilesCacheFolder = docFolder + "TilesCache";
+            string appRootFolder = docFolder;
+            string imageProcessSettingsFile = docFolder + "Application Settings\\ImageProcessSettings.xml";
             string LightPathsFolder = templatesFolder + "\\LightPaths";
             Application.Current.Resources.Add("HardwareSettingsFile", hwSettingsFile);
             Application.Current.Resources.Add("ApplicationSettingsFile", appSettingsFile);
@@ -197,7 +229,7 @@ namespace ThorImage
             Application.Current.Exit += new ExitEventHandler(Current_Exit);
             if (ResourceManagerCS.Instance.TabletModeEnabled)
             {
-                AboutDll.TabletSplashScreen splash = new AboutDll.TabletSplashScreen(String.Format("v{0}.{1}.{2}.{3}", version.Major, version.Minor, version.Build, version.Revision));
+                AboutDll.TabletSplashScreen splash = new AboutDll.TabletSplashScreen(String.Format("v{0}.{1}.{2}.{3}-beta", version.Major, version.Minor, version.Build, version.Revision));
 
                 splash.Hides = true;
 
@@ -242,7 +274,7 @@ namespace ThorImage
             else
             {
                 _hardwareConnectionsOpened = false;
-                AboutDll.SplashScreen splash = new AboutDll.SplashScreen(String.Format("v{0}.{1}.{2}.{3}", version.Major, version.Minor, version.Build, version.Revision), _hardwareConnectionsOpened);
+                AboutDll.SplashScreen splash = new AboutDll.SplashScreen(String.Format("v{0}.{1}.{2}.{3}-beta", version.Major, version.Minor, version.Build, version.Revision), _hardwareConnectionsOpened);
 
                 splash.Hides = true;
 
@@ -277,7 +309,7 @@ namespace ThorImage
 
                     splash.Close();
                     _hardwareConnectionsOpened = true;
-                    AboutDll.SplashScreen splashNew = new AboutDll.SplashScreen(String.Format("v{0}.{1}.{2}.{3}", version.Major, version.Minor, version.Build, version.Revision), _hardwareConnectionsOpened);
+                    AboutDll.SplashScreen splashNew = new AboutDll.SplashScreen(String.Format("v{0}.{1}.{2}.{3}-beta", version.Major, version.Minor, version.Build, version.Revision), _hardwareConnectionsOpened);
                     splashNew.Hides = true;
                     try
                     {
@@ -305,7 +337,7 @@ namespace ThorImage
             Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
             //Re-Register to Exit Event to do a harware teardown when exiting the app
 
-            if (_bootstrapper  == null)
+            if (_bootstrapper == null)
             {
                 _bootstrapper = new Bootstrapper();
             }
@@ -458,12 +490,12 @@ namespace ThorImage
                 if (Directory.Exists(appPath))
                     SetDllDirectory(appPath + "\\Lib");
 
-               String oldPath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Process);
+                String oldPath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Process);
 
-               if (false == oldPath.Contains(appPath + "\\Modules_Native"))
-               {
-                   Environment.SetEnvironmentVariable("PATH", oldPath + ";" + appPath + "\\Modules_Native", EnvironmentVariableTarget.Process);
-               }
+                if (false == oldPath.Contains(appPath + "\\Modules_Native"))
+                {
+                    Environment.SetEnvironmentVariable("PATH", oldPath + ";" + appPath + "\\Modules_Native", EnvironmentVariableTarget.Process);
+                }
 
             }
             catch (Exception ex)
@@ -501,29 +533,29 @@ namespace ThorImage
 
             if (true == File.Exists(rmPath))
             {
-                rmDoc.Load(rmPath);
-
-                XmlNode node = rmDoc.SelectSingleNode("/ResourceManager/DocumentsFolder");
-
-                if (null != node && null != node.Attributes.GetNamedItem("value"))
+                string documentsFolderPathString = ResourceManagerCS.GetMyDocumentsThorImageFolderString();
+                if (false == Directory.Exists(documentsFolderPathString))
                 {
-                    docFolder = node.Attributes["value"].Value;
-                    if (false == Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString() + "\\" + docFolder))
-                    {
-                        MessageBox.Show(String.Format("Application failed to locate the Documents Folder {0}. Application exiting.", docFolder), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                        docFolder = string.Empty;
-                    }
+                    MessageBox.Show(String.Format("Application failed to locate the Documents Folder {0}. Application exiting.", docFolder), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    docFolder = string.Empty;
                 }
-                node = rmDoc.SelectSingleNode("/ResourceManager/TabletMode");
-                if (null != node && null != node.Attributes.GetNamedItem("value"))
+                else
                 {
-                    int tabletMode = 0;
-                    if (Int32.TryParse(node.Attributes["value"].Value, out tabletMode))
-                    {
-                        ResourceManagerCS.Instance.TabletModeEnabled = (1 == tabletMode);
-                    }
+                    docFolder = documentsFolderPathString;
                 }
             }
+
+            rmDoc.Load(rmPath);
+            XmlNode node = rmDoc.SelectSingleNode("/ResourceManager/TabletMode");
+            if (null != node && null != node.Attributes.GetNamedItem("value"))
+            {
+                int tabletMode = 0;
+                if (Int32.TryParse(node.Attributes["value"].Value, out tabletMode))
+                {
+                    ResourceManagerCS.Instance.TabletModeEnabled = (1 == tabletMode);
+                }
+            }
+
             return docFolder;
         }
 
@@ -746,8 +778,17 @@ namespace ThorImage
             {
                 MessageBox.Show("Could not disconnect all the hardware system properly.");
             }
-
+            if (null != MVMManager.Instance.MVMCollection)
+            {
+                MVMManager.Instance["RemoteIPCControlViewModelBase", "TearDownIPC"] = string.Empty;
+            }
             SetRuntimeEndStatistics();
+            ResourceManagerCS.SetStartupFlag("0");
+
+            int numErrors = ResourceManagerCS.BackupDirectory(docFolder); // backup the documents folder
+            ThorLog.Instance.TraceEvent(TraceEventType.Information, 1, this.GetType().Name + " Backup of Documents folder finished with " + numErrors + " Errors");
+            numErrors = ResourceManagerCS.BackupDirectory(Directory.GetCurrentDirectory() + "\\"); // backup the root folder
+            ThorLog.Instance.TraceEvent(TraceEventType.Information, 1, this.GetType().Name + " Backup of Root folder finished with " + numErrors + " Errors");
 
             ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Exiting");
         }
@@ -792,7 +833,7 @@ namespace ThorImage
                     File.Delete(pleoraDmp);
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 ex.ToString();
             }
@@ -800,7 +841,7 @@ namespace ThorImage
             try
             {
                 string appPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-                string thordaqLog = appPath +  "\\ThorLog.log";
+                string thordaqLog = appPath + "\\ThorLog.log";
                 const long MAX_LOG_FILE_SIZE = 536870912; //512MB
                 if (File.Exists(thordaqLog))
                 {
@@ -932,13 +973,13 @@ namespace ThorImage
             {
                 string str = string.Empty;
 
-                if(GetAttribute(ndList[0],appDoc, "start", ref str))
+                if (GetAttribute(ndList[0], appDoc, "start", ref str))
                 {
                     int start = Convert.ToInt32(str);
 
                     start++;
 
-                    SetAttribute(ndList[0],appDoc, "start", start.ToString());
+                    SetAttribute(ndList[0], appDoc, "start", start.ToString());
 
                     string appSettPath = GetApplicationSettingsFileString();
                     appDoc.Save(appSettPath);
@@ -1003,7 +1044,7 @@ namespace ThorImage
 
             string appSettPath = GetApplicationSettingsFileString();
 
-            if(false == File.Exists(appSettPath))
+            if (false == File.Exists(appSettPath))
             {
                 return;
             }

@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ThorMesoScanSettings>
+  <NISetting>
+    <Clock DefExtClk="2000000"/>
+  </NISetting>
+  <Waveforms P1_GY_GX1_P2_AO_CHANNEL="Dev1/ao0:2" POCKEL_AO_CHANNEL="Dev1/ao0" PDA_AI_CHANNEL="Dev3/ai6" GX2_AO_CHANNEL="Dev2/ao1" VOICECOIL_AO_CHANNEL="Dev3/ao0" FRAMETRIGGEROUT_DO_CHANNEL="Dev1/port0/line7" TRIGGER_IN_CHANNEL="/Dev1/PFI1" ResonanceFrequency="7931.47208" SamplesPerLine="270">
+    <GalvoXWaveform MinPos="0.000000" MaxPos="5000.000000" MinPosVoltage="9.35" MaxPosVoltage="-9.35" DelayTimeGx1="0" DelayTimeGx2="0" GForX2="-1.0" HForX2="0.0" ExtendTimeStart="0.000100" ExtendTimeEnd="0.000100" MaxVelocity="2000.000000" MaxOvershoot="2.000000"/>
+    <GalvoYWaveform MinPos="0.000000" MaxPos="5000.000000" MinPosVoltage="9.35" MaxPosVoltage="-9.35" DelayTime="0" ExtendTimeStart="0.000000" ExtendTimeEnd="0.000000" MaxVelocity="2000.000000" MaxOvershoot="2.000000"/>
+    <PokelsCellWaveform DelayTime="0.001500" PockelDutyCycle="0.850000" PockelAllowMin="-2.000000" PockelAllowMax="2.000000" PockelMinPercent="2.517402" PockelInMax="1.00000" PockelInMin="0.000000"/>
+    <VoiceCoilWaveform MinPos="0.000000" MaxPos="1000.000000" MinPosVoltage="2.740000" MaxPosVoltage="6.340000" DelayTime="0.001512" ExtendTimeStart="0.001400" ExtendTimeEnd="0.001400" SkipLines="54" MaxVelocity="2000.000000" MaxOvershoot="2.000000" CenterShiftX="0.000000" CenterShiftY="0.000000" CurveParamA="0.000000" CurveParamB="0.000000"/>
+  </Waveforms>
+  <Resonance RESONANT_AO_CHANNEL="Dev2/ao0" RESONANT_CTR="Dev2/ctr0">
+    <ZoomCalibration>
+      <Point Amplitude="0.000000" Voltage="0.000000"/>
+      <Point Amplitude="800.000000" Voltage="5.326667"/>
+    </ZoomCalibration>
+    <TowWayAlignment>
+      <Point Amplitude="0.000000" ShiftPoints="0"/>
+      <Point Amplitude="1200.000000" ShiftPoints="0"/>
+    </TowWayAlignment>
+  </Resonance>
+  <FeedBack GY_VOICECOIL_FEEDBACK_CHANNEL="Dev1/ai15,Dev1/ai16" GX1_GX2_FEEDBACK_CHANNEL="Dev1/ai14,Dev1/ai17" GYFeedbackRatio="0.377000" GX1FeedbackRatio="0.375000" GX2FeedbackRatio="0.500000" VCFeedbackRatio="0.408800" GYFeedbackOffset="0.000000" GX1FeedbackOffset="0.000000" GX2FeedbackOffset="0.000000" VCFeedbackOffset="0.003400"/>
+  <Alazar IsDataSkippingAveraging="true" RecordPerBuffer="512" TriggerLevel="140" InputRange="2.0"/>
+  <Configuration DMACount="64" TriggerWaitTimeOutSec="30"/>
+</ThorMesoScanSettings>

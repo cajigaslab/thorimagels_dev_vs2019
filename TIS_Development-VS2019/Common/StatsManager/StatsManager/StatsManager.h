@@ -20,7 +20,7 @@
 #pragma warning( disable : 4251 )
 
 typedef void (_cdecl *pushImageProcessDataCallBack)(unsigned short* buffer, unsigned short* rawBuffer, long &width, long &height, long &channels, long &numOfROIs);
-typedef void (_cdecl *pushLineProfileCallBack)(double* resultBuffer, long length, long channelEnableBinary, long numChannel);
+typedef void (_cdecl *pushLineProfileCallBack)(double* resultBuffer, long length, long realLength, long channelEnableBinary, long numChannel);
 typedef void (_cdecl *pushDFLIMROIHistogramsCallBack)(UINT32* roiHistograms, UINT32 length, UINT32 rois, UINT32 tNum, long channelEnableBinary, UINT32 numChannel);
 
 typedef struct
@@ -158,10 +158,8 @@ public:
 	static unsigned short * _pDataForLine;
 	static UINT32 ** _dFLIMXYT;
 
-	static long _lineP1X;
-	static long _lineP1Y;
-	static long _lineP2X;
-	static long _lineP2Y;
+	static vector<long> _polylinePX;
+	static vector<long> _polylinePY;
 	static long _lineProfileImgWidth;
 	static long _lineProfileImgHeight;
 	static long _lineProfileLineWidth;
@@ -206,7 +204,7 @@ public:
 	long ComputeContours(unsigned short *data, long width, long height, long channelEnable, long channelSelected);
 	long CopyStatsImageDataToLineImageData();
 	long SetStatsMask(unsigned short *mask, long width, long height);
-	long SetLineProfileLine(long p1X, long p1Y, long p2X, long p2Y, long activeLine);
+	long SetLineProfileLine(long* pX, long* pY, long numberOfPoints, long activeLine);
 	long SetLineProfileLineWidth(long lineWidth);
 	long SetTZero(double tZero, long channelIndex);
 	long IsStatsComplete();
@@ -218,7 +216,7 @@ public:
 	static void StatsManager::BuildStatsNameList(long channelIdx, long numROI, long listOffset, vector<long> activeROIIdx, BufferType bufferType);
 	static void StatsManager::BuildStatsList(long listOffset, long channelIdx, long numROI, long numChannel, BufferType bufferType, double *min, double *max, double *mean, double *stddev, double *tbar);
 	static long StatsManager::GetActiveChannelIdx(long channelIdx);
-	static long StatsManager::GetLineProfileData(double* &resultBuffer, long &length, long &channelEnableBinary, long &nChannel);
+	static long StatsManager::GetLineProfileData(double* &resultBuffer, long &length, long& realLineLength, long &channelEnableBinary, long &nChannel);
 	void SetupBuffer(long width, long height);
 
 	static long MergeStats(const long num_ovly, const long num_cntr);

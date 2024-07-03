@@ -52,6 +52,7 @@ ThorCam::ThorCam()
 	_ImgPty_SetSettings.horizontalFlip = FALSE;
 	_ImgPty_SetSettings.imageAngle = 0;
 	_ImgPty_SetSettings.bitsPerPixel = DEFAULT_BITS_PERPIXEL;
+	_ImgPty_SetSettings.isNirBoostEnabled = 0;
 
 	_pDetectorName = nullptr;
 	_pSerialNumber = nullptr;
@@ -274,6 +275,7 @@ long ThorCam::PreflightAcquisition(char* pData)
 	_ImgPty.verticalFlip = _ImgPty_SetSettings.verticalFlip;
 	_ImgPty.horizontalFlip = _ImgPty_SetSettings.horizontalFlip;
 	_ImgPty.imageAngle = _ImgPty_SetSettings.imageAngle;
+	_ImgPty.isNirBoostEnabled = _ImgPty_SetSettings.isNirBoostEnabled;
 
 	//set the the camera settings and allocate the DMA buffer
 	if (TRUE == SetBdDMA(&_ImgPty))
@@ -300,6 +302,7 @@ long ThorCam::PreflightAcquisition(char* pData)
 		_ImgPty_Pre.verticalFlip = _ImgPty.verticalFlip;
 		_ImgPty_Pre.horizontalFlip = _ImgPty.horizontalFlip;
 		_ImgPty_Pre.imageAngle = _ImgPty.imageAngle;
+		_ImgPty_Pre.isNirBoostEnabled = _ImgPty.isNirBoostEnabled;
 	}
 	else
 	{
@@ -366,6 +369,7 @@ long ThorCam::SetupAcquisition(char* pData)
 		(_ImgPty_Pre.verticalFlip != _ImgPty_SetSettings.verticalFlip) ||
 		(_ImgPty_Pre.horizontalFlip != _ImgPty_SetSettings.horizontalFlip) ||
 		(_ImgPty_Pre.imageAngle != _ImgPty_SetSettings.imageAngle) ||
+		(_ImgPty_Pre.isNirBoostEnabled != _ImgPty_SetSettings.isNirBoostEnabled) ||
 		(TRUE == _forceSettingsUpdate)
 		)
 	{
@@ -387,6 +391,7 @@ long ThorCam::SetupAcquisition(char* pData)
 		_ImgPty.verticalFlip = _ImgPty_SetSettings.verticalFlip;
 		_ImgPty.horizontalFlip = _ImgPty_SetSettings.horizontalFlip;
 		_ImgPty.imageAngle = _ImgPty_SetSettings.imageAngle;
+		_ImgPty.isNirBoostEnabled = _ImgPty_SetSettings.isNirBoostEnabled;
 
 		//set the the camera settings and allocate the DMA buffer
 		if (TRUE == SetBdDMA(&_ImgPty))
@@ -409,6 +414,7 @@ long ThorCam::SetupAcquisition(char* pData)
 			_ImgPty_Pre.verticalFlip = _ImgPty.verticalFlip;
 			_ImgPty_Pre.horizontalFlip = _ImgPty.horizontalFlip;
 			_ImgPty_Pre.imageAngle = _ImgPty.imageAngle;
+			_ImgPty_Pre.isNirBoostEnabled = _ImgPty.isNirBoostEnabled;
 
 			//allow the camera/sdk enough time to allocate buffers when the settings have changed
 			Sleep(600);
@@ -664,6 +670,8 @@ long ThorCam::CopyAcquisition(char * pDataBuffer, void* frameInfo)
 		intermediateBuffer =  _pFrmDllBuffer[currentDMAIndex];
 	}
 
+	int width = imageProperties.width;
+	int height = imageProperties.height;
 	switch (_imgPtyDll.imageAngle)
 	{
 	case 0:
@@ -688,6 +696,8 @@ long ThorCam::CopyAcquisition(char * pDataBuffer, void* frameInfo)
 			int xOffset = 0;
 			int yOffset = static_cast<int>(imageProperties.width) - 1;
 			ippiDll->ippiRotate_16u_C1R(intermediateBuffer, size, stepSrc, roiSrc, dst, stepDst, roiDst, angle, xOffset, yOffset, IPPI_INTER_LINEAR);
+			width = imageProperties.height;
+			height = imageProperties.width;
 		}
 		break;
 	case 180:
@@ -718,6 +728,8 @@ long ThorCam::CopyAcquisition(char * pDataBuffer, void* frameInfo)
 			int xOffset = static_cast<int>(imageProperties.height) - 1;
 			int yOffset = 0;
 			ippiDll->ippiRotate_16u_C1R(intermediateBuffer, size, stepSrc, roiSrc, dst, stepDst, roiDst, angle, xOffset, yOffset, IPPI_INTER_LINEAR);
+			width = imageProperties.height;
+			height = imageProperties.width;
 		}
 		break;
 	default:
@@ -741,6 +753,25 @@ long ThorCam::CopyAcquisition(char * pDataBuffer, void* frameInfo)
 	_previousLastImage = _lastImage;
 	_lastImage = imageProperties.frameNumber;
 	_availableFramesCnt = _imagePropertiesQueue.size();
+
+	FrameInfoStruct* frameInfoStruct = static_cast<FrameInfoStruct*>(frameInfo);
+	frameInfoStruct->imageWidth = width;
+	frameInfoStruct->imageHeight = height;
+	frameInfoStruct->fullFrame = imageProperties.sizeInBytes;
+	frameInfoStruct->copySize = imageProperties.sizeInBytes;
+	frameInfoStruct->numberOfPlanes = 1;
+	frameInfoStruct->isNewMROIFrame = 1;
+	frameInfoStruct->totalScanAreas = 1;
+	frameInfoStruct->scanAreaIndex = 0;
+	frameInfoStruct->scanAreaID = 0;
+	frameInfoStruct->isMROI = FALSE;
+	frameInfoStruct->fullImageWidth = width;
+	frameInfoStruct->fullImageHeight = height;
+	frameInfoStruct->topInFullImage = 0;
+	frameInfoStruct->leftInFullImage = 0;
+	frameInfoStruct->mROIStripeFieldSize = 0;
+	frameInfoStruct->channels = 1; // #TODO: color scientific cameras not supported
+
 	return TRUE;
 
 }
@@ -920,6 +951,13 @@ long ThorCam::SetBdDMA(ImgPty *pImgPty)
 		StringCbPrintfW(_errMsg,MSG_SIZE,L"Error setting TSI_PARAM_NUM_IMAGE_BUFFERS:(%d) in SetBdDMA for ThorTSI", _imgPtyDll.numImagesToBuffer);
 		LogMessage(_errMsg,ERROR_EVENT);
 	}	
+
+	if (!_camera[_selectedCam]->SetParameter(TSI_PARAM_QX_OPTION_MODE, (int)_imgPtyDll.isNirBoostEnabled))
+	{
+		StringCbPrintfW(_errMsg, MSG_SIZE, L"Error setting TSI_PARAM_QX_OPTION_MODE:(%d) in SetBdDMA for ThorTSI", _imgPtyDll.isNirBoostEnabled);
+		LogMessage(_errMsg, ERROR_EVENT);
+	}
+
 	//////****End Set Camera Parameters****//////
 
 	//In the future use chan for multi-channel cameras

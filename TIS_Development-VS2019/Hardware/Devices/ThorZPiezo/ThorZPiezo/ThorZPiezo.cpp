@@ -23,7 +23,7 @@ ThorZPiezo::ThorZPiezo()
 	_zPos_max = 0;
 
 	_z_fast_start_pos = _z_fast_stop_pos = 0;
-	_piezoSampleRate = 5000;							//default 5KHz (single waveform), 50KHz (staircase waveform)
+	_piezoSampleRate = 50000;							//default 5KHz (single waveform), 50KHz (staircase waveform)
 	_z_fast_volume_time_min = .001;
 	_z_fast_volume_time_max = 425000;					//[sec], limit from NI card buffer size LONG_MAX(2147483647)/_piezoSampleRate - _z_fast_flyback_time_max
 	_z_fast_volume_time = _z_fast_volume_time_min;
@@ -54,7 +54,7 @@ ThorZPiezo::ThorZPiezo()
 	_preLoadCount = 8;
 	_staircaseDelayPercentage = 15;
 	_zPockelsPowerBuffer = _zPositionBuffer = NULL;
-	_piezoVolumePoints = _piezoStepPoints = _piezoFlybackPoints = 0;
+	_piezoVolumePoints = _piezoStepPoints = _piezoFlybackPoints = _pockelsRefVolumePoints = _piezoRefStepPoints = 0;
 }
 
 /// <summary>
@@ -482,7 +482,7 @@ long ThorZPiezo::SetParam(const long paramID, const double param)
 					break;
 				default:
 					_z_fast_flyback_time_min = .001;
-					_piezoSampleRate = 5000;		//5KHz
+					_piezoSampleRate = 50000;		//50KHz
 					break;
 				}
 				ret = TRUE;
@@ -994,7 +994,7 @@ double* ThorZPiezo::BuildPockelsReferenceWaveform()
 	{
 	case ZPiezoAnalogMode::ANALOG_MODE_SINGLE_WAVEFORM:
 		{
-			const long nStepsPerImage = static_cast<long>((double)_piezoVolumePoints / (double)(_zPockelsPowerBufferSize -1));
+			const long nStepsPerImage = static_cast<long>((double)_pockelsRefVolumePoints / (double)(_zPockelsPowerBufferSize -1));
 			for (long k = 0; k < _zPockelsPowerBufferSize - 1; k++)
 			{
 				//If for any reason _pockelsMin is less than 0 and the threshold is 0 don't apply it because it most likely means the threshold was never changed from default
@@ -1021,7 +1021,7 @@ double* ThorZPiezo::BuildPockelsReferenceWaveform()
 			//match the power waveform to the piezo _pWaveform
 			//hold the last power until the end of the last image before the flyback
 			double lastPower = pRefWaveform[i-1];
-			for(;i <= _piezoVolumePoints; i++)
+			for(;i <= _pockelsRefVolumePoints; i++)
 			{
 				pRefWaveform[i] = max(MIN_AO_VOLTAGE, min(lastPower,MAX_AO_VOLTAGE));
 			}
@@ -1046,7 +1046,7 @@ double* ThorZPiezo::BuildPockelsReferenceWaveform()
 			{
 				double power = voltageOutBuffer[k];	
 				//build step power
-				for (long j = 0; j < _piezoStepPoints; j++)
+				for (long j = 0; j < _piezoRefStepPoints; j++)
 				{
 					pRefWaveform[i++]= max(MIN_AO_VOLTAGE, min(power,MAX_AO_VOLTAGE));
 				}
@@ -1210,6 +1210,7 @@ long ThorZPiezo::BuildWaveforms()
 		{
 			//create a waveform that covers the forward sweep and flyback for the sawtooth
 			_piezoVolumePoints = static_cast<long>(_piezoSampleRate * (_z_fast_volume_time + _volumeTimeAdjustMS / Constants::MS_TO_SEC));
+			_pockelsRefVolumePoints = static_cast<long>(_piezoSampleRate * _z_fast_volume_time);
 			_piezoFlybackPoints = static_cast<long>(_piezoSampleRate * (_z_fast_flyback_time + _flybackTimeAdjustMS / Constants::MS_TO_SEC));
 			_totalPoints = _piezoVolumePoints + _piezoFlybackPoints;
 			zWaveform = BuildSingleWaveform();
@@ -1222,6 +1223,7 @@ long ThorZPiezo::BuildWaveforms()
 				return FALSE;
 
 			_piezoStepPoints = static_cast<long>(_piezoSampleRate * (_zStepTime + (_stepTimeAdjustMS / Constants::MS_TO_SEC)));	//points per step
+			_piezoRefStepPoints = static_cast<long>(_piezoSampleRate * _zStepTime);
 			_piezoIntraStepPoints = static_cast<long>(_piezoSampleRate * _zIntraStepTime);											//points per intra step
 			_piezoFlybackPoints = static_cast<long>(_piezoSampleRate * (_zIntraStepTime + _z_fast_flyback_time + _flybackTimeAdjustMS / Constants::MS_TO_SEC));
 			_piezoVolumePoints = _piezoStepPoints*_zPositionBufferSize + _piezoIntraStepPoints*(_zPositionBufferSize - 1);

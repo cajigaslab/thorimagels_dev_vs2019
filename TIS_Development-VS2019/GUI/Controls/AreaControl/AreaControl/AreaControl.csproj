@@ -40,6 +40,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="GongSolutions.Wpf.DragDrop">
+      <HintPath>..\..\..\..\Tools\Gong\gong-wpf-dragdrop-master\GongSolutions.Wpf.DragDrop\bin\Debug\NET4\GongSolutions.Wpf.DragDrop.dll</HintPath>
+    </Reference>
     <Reference Include="ROIUserControl">
       <HintPath>..\..\ROIUserControl\bin\Debug\ROIUserControl.dll</HintPath>
     </Reference>
@@ -68,6 +71,12 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FullFOVView.xaml.cs">
+      <DependentUpon>FullFOVView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="mROIView.xaml.cs">
+      <DependentUpon>mROIView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Overview.xaml.cs">
       <DependentUpon>Overview.xaml</DependentUpon>
     </Compile>
@@ -79,6 +88,14 @@
       <DependentUpon>AreaControl.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="FullFOVView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="mROIView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="NyquistCalculator.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

@@ -138,7 +138,7 @@
             new FrameworkPropertyMetadata(new PropertyChangedCallback(onPockelsBlankingPhaseShiftPercentVisibilityChanged)));
         public static DependencyProperty PockelsBlankPercentageProperty = 
         DependencyProperty.RegisterAttached("PockelsBlankPercentage",
-        typeof(int),
+        typeof(double),
         typeof(PowerControlUC),
         new FrameworkPropertyMetadata(new PropertyChangedCallback(onPockelsBlankPercentageChanged)));
         public static DependencyProperty PockelsCalibrationVisibilityProperty = 

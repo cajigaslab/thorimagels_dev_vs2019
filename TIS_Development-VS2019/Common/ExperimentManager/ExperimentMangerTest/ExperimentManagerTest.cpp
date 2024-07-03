@@ -112,10 +112,10 @@ BEGIN_TESTF(CreateExperimentTest,ConfigurationTestFixture)
 	long tapsIndex, tapsBalance;
 	long readoutSpeedIndex;
 	long camAverageMode, camAverageNum;
-	long camVericalFlip, camHorizontalFlip, imageAngle;
+	long camVericalFlip, camHorizontalFlip, imageAngle, camChannel;
 
 	//getting the values from the experiment setup XML files
-	WIN_ASSERT_TRUE(experiment->GetCamera(camName,camImageWidth,camImageHeight,camPixelSize,camExposureTimeMS,gain,blackLevel,lightMode,left,top,right,bottom,binningX,binningY,tapsIndex,tapsBalance,readoutSpeedIndex,camAverageMode,camAverageNum,camVericalFlip,camHorizontalFlip,imageAngle) == TRUE);
+	WIN_ASSERT_TRUE(experiment->GetCamera(camName,camImageWidth,camImageHeight,camPixelSize,camExposureTimeMS,gain,blackLevel,lightMode,left,top,right,bottom,binningX,binningY,tapsIndex,tapsBalance,readoutSpeedIndex,camAverageMode,camAverageNum,camVericalFlip,camHorizontalFlip,imageAngle, camChannel) == TRUE);
 	WIN_ASSERT_STRING_EQUAL("Basler",str.c_str());
 	WIN_ASSERT_EQUAL(camImageWidth,1280);
 	WIN_ASSERT_EQUAL(camImageHeight,1024);
@@ -124,7 +124,7 @@ BEGIN_TESTF(CreateExperimentTest,ConfigurationTestFixture)
 	WIN_ASSERT_EQUAL(lightMode,0);
 
 	WIN_ASSERT_TRUE(experiment->SetCamera("Hamamatsu",640,480,12.5,4,2,1) == TRUE);
-	WIN_ASSERT_TRUE(experiment->GetCamera(camName,camImageWidth,camImageHeight,camPixelSize,camExposureTimeMS,gain,blackLevel,lightMode,left,top,right,bottom,binningX,binningY,tapsIndex,tapsBalance,readoutSpeedIndex,camAverageMode,camAverageNum,camVericalFlip,camHorizontalFlip,imageAngle) == TRUE);
+	WIN_ASSERT_TRUE(experiment->GetCamera(camName,camImageWidth,camImageHeight,camPixelSize,camExposureTimeMS,gain,blackLevel,lightMode,left,top,right,bottom,binningX,binningY,tapsIndex,tapsBalance,readoutSpeedIndex,camAverageMode,camAverageNum,camVericalFlip,camHorizontalFlip,imageAngle, camChannel) == TRUE);
 	WIN_ASSERT_STRING_EQUAL("Hamamatsu",str.c_str());
 	WIN_ASSERT_EQUAL(camImageWidth,640);
 	WIN_ASSERT_EQUAL(camImageHeight,480);

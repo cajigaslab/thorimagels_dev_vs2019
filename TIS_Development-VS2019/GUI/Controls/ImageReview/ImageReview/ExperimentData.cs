@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using System.Globalization;
     using System.IO;
     using System.Linq;
@@ -12,6 +13,8 @@
 
     using ImageReviewDll.Model;
     using ImageReviewDll.ViewModel;
+
+    using MesoScan.Params;
 
     using ThorSharedTypes;
 
@@ -34,6 +37,7 @@
         public int timePoints;
         public int zSteps;
         public int zStreamFrames;
+
         #endregion Fields
     }
 
@@ -47,20 +51,32 @@
         private static int _binY;
         private static int _bitsPerPixel;
         private static int _cameraType = 1;
-        private static int _lsmType = 0;
         private static CaptureModes _captureMode;
         private static int _channels = 0;
         private static int _fieldSize;
         private static int _fieldSizeX;
         private static int _fieldSizeY;
         private static ImgInfo _imageInfo;
+        private static bool _ismROICapture = false;
+        private static bool _isRemoteFocus;
         private static int _LSMChannel;
+        private static int _lsmType = 0;
+        private static double _magnification;
         private static double _mmPerPixel;
-        private static double _pixelSizeUM;
+        private static FULLFOVMetadata _mROIFullFOVMetadata = new FULLFOVMetadata();
+        private static double _mROIPixelSizeXUM = 1;
+        private static double _mROIPixelSizeYUM = 1;
+        private static ObservableCollection<ScanArea> _mROIs;
+        private static double _mROIStripLength = 1;
+        private static int _numberOfPlanes = 1;
+        private static PixelSizeUM _pixelSizeUM = new PixelSizeUM(1.0, 1.0);
+        private static double _pixelAspectRatioYScale = 1;
+        private static ObservableCollection<int> _planeSequence = new ObservableCollection<int>();
         private static int _spEnd;
         private static int _spmax;
         private static int _spPace;
         private static int _spStart;
+        private static int _threePhotonEnable = 0;
         private static int _tmax;
         private static MesoScanTypes _viewMode = MesoScanTypes.Meso;
         private static string[] _waveLengthNames;
@@ -68,8 +84,10 @@
         private static double _zStepSizeUM;
         private static int _zStreamMax;
         private static int _zStreamMode;
-        private static int _numberOfPlanes = 1;
-        private static int _threePhotonEnable = 0;
+        private static int _onlyEnabledChannels;
+        private static int _averageMode;
+        private static int _imgPerAvg;
+
         #endregion Fields
 
         #region Properties
@@ -108,14 +126,24 @@
             get { return _imageInfo; }
         }
 
+        public static bool IsmROICapture
+        {
+            get => _ismROICapture;
+        }
+
+        public static bool IsRemoteFocus
+        {
+            get { return _isRemoteFocus; }
+        }
+
         public static int LSMChannel
         {
             get { return _LSMChannel; }
         }
 
-        public static double LSMUMPerPixel
+        public static double Magnification
         {
-            get { return _pixelSizeUM; }
+            get { return _magnification; }
         }
 
         public static double MMPerPixel
@@ -123,9 +151,54 @@
             get { return _mmPerPixel; }
         }
 
+        public static FULLFOVMetadata mROIFullFOVMetadata
+        {
+            get => _mROIFullFOVMetadata;
+        }
+
+        public static double mROIPixelSizeXUM
+        {
+            get => _mROIPixelSizeXUM;
+        }
+
+        public static double mROIPixelSizeYUM
+        {
+            get => _mROIPixelSizeYUM;
+        }
+
+        public static ObservableCollection<ScanArea> mROIs
+        {
+            get => _mROIs;
+        }
+
+        public static double mROIStripLength
+        {
+            get => _mROIStripLength;
+        }
+
         public static int NumberOfChannels
         {
             get { return _channels; }
+        }
+
+        public static int NumberOfPlanes
+        {
+            get => _numberOfPlanes;
+        }
+
+        public static PixelSizeUM PixelSizeUM
+        {
+            get { return _pixelSizeUM; }
+        }
+
+        public static double PixelAspectRatioYScale
+        {
+            get { return _pixelAspectRatioYScale; }
+        }
+
+        public static ObservableCollection<int> PlaneSequence
+        {
+            get { return _planeSequence; }
         }
 
         public static int SpEnd
@@ -178,11 +251,15 @@
             get { return _zStreamMax; }
         }
 
-        public static int NumberOfPlanes
+        public static int ImgPerAvg
         {
-            get => _numberOfPlanes;
+            get { return _imgPerAvg; }
         }
 
+        public static bool AverageMode
+        {
+            get { return _averageMode == 1; }
+        }
         /// <summary>
         /// ZStreamMode: 0 - Z Streaming is turned off
         ///              1 - Z Streaming is turned on
@@ -192,6 +269,10 @@
             get { return _zStreamMode; }
         }
 
+        public static int OnlyEnabledChannels
+        {
+            get { return _onlyEnabledChannels; }
+        }
         #endregion Properties
 
         #region Methods
@@ -258,6 +339,35 @@
 
             _zStepSizeUM = XmlManager.ReadAttribute<Double>(doc, "/ThorImageExperiment/ZStage", "stepSizeUM");
             _zStreamMode = XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/ZStage", "zStreamMode");
+            _onlyEnabledChannels = XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/RawData", "onlyEnabledChannels");
+            _isRemoteFocus = 1 == XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/RemoteFocus", "IsRemoteFocus");
+            if (_isRemoteFocus)
+            {
+                _planeSequence.Clear();
+                string customSequence = XmlManager.ReadAttribute<string>(doc, "/ThorImageExperiment/RemoteFocus", "customSequence");
+                if (string.Empty == customSequence)
+                {
+                    int steps = XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/RemoteFocus", "steps");
+                    int startPlane = XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/RemoteFocus", "startPlane");
+                    int stepSize = XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/RemoteFocus", "stepSize");
+                    for (int i = 0; i < steps; i++)
+                    {
+                        _planeSequence.Add(startPlane + stepSize * i);
+                    }
+                }
+                else
+                {
+                    string[] values = customSequence.Split(':');
+                    foreach (string val in values)
+                    {
+                        int tmp;
+                        if (Int32.TryParse(val, out tmp))
+                        {
+                            _planeSequence.Add(tmp);
+                        }
+                    }
+                }
+            }
             _zStreamMax = 1;
             if (CaptureModes.T_AND_Z == _captureMode && _zStreamMode > 0)
             {
@@ -279,10 +389,12 @@
                     _fieldSizeX = Math.Abs(right - left);
                     _fieldSizeY = Math.Abs(bottom - top);
                     _bitsPerPixel = XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/Camera", "bitsPerPixel");
-                    _pixelSizeUM = XmlManager.ReadAttribute<Double>(doc, "/ThorImageExperiment/Camera", "pixelSizeUM");
+                    _pixelSizeUM.PixelHeightUM = _pixelSizeUM.PixelWidthUM = XmlManager.ReadAttribute<Double>(doc, "/ThorImageExperiment/Camera", "pixelSizeUM");
                     _binX = XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/Camera", "binningX");
                     _binY = XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/Camera", "binningY");
-
+                    _averageMode = XmlManager.ReadAttribute<Int32>(doc, "ThorImageExperiment/Camera", "averageMode");
+                    _imgPerAvg = XmlManager.ReadAttribute<Int32>(doc, "ThorImageExperiment/Camera", "averageNum");
+                    _pixelAspectRatioYScale = 1;
                     break;
                 case ICamera.CameraType.LSM:
                     _LSMChannel = XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/LSM", "channel");
@@ -290,17 +402,21 @@
                     _fieldSizeY = XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/LSM", "pixelY");
                     _fieldSize = XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/LSM", "fieldSize");
                     _bitsPerPixel = BITS_PER_PIXEL_LSM;
-                    _pixelSizeUM = XmlManager.ReadAttribute<Double>(doc, "/ThorImageExperiment/LSM", "pixelSizeUM");
+                    _pixelSizeUM.PixelWidthUM = XmlManager.ReadAttribute<Double>(doc, "/ThorImageExperiment/LSM", "pixelWidthUM");
+                    _pixelSizeUM.PixelHeightUM = XmlManager.ReadAttribute<Double>(doc, "/ThorImageExperiment/LSM", "pixelHeightUM");
+                    _pixelAspectRatioYScale = XmlManager.ReadAttribute<Double>(doc, "/ThorImageExperiment/LSM", "pixelAspectRatioYScale");
                     _threePhotonEnable = XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/LSM", "ThreePhotonEnable");
                     _numberOfPlanes = _threePhotonEnable == 1 ? XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/LSM", "NumberOfPlanes") : 1;
+                    _imgPerAvg = XmlManager.ReadAttribute<Int32>(doc, "ThorImageExperiment/LSM", "averageNum");
+                    _averageMode = XmlManager.ReadAttribute<Int32>(doc, "ThorImageExperiment/LSM", "averageMode");
                     break;
             }
 
             _waveLengthNames = ReadStringAttributesMultipleNodes(doc, "/ThorImageExperiment/Wavelengths/Wavelength", "name").ToArray();
             _channels = _waveLengthNames.Count();
 
-            double mag = XmlManager.ReadAttribute<Double>(doc, "/ThorImageExperiment/Magnification", "mag", 1.0, 0);
-            if ((_fieldSizeX != 0) && (mag != 0))
+            _magnification = XmlManager.ReadAttribute<Double>(doc, "/ThorImageExperiment/Magnification", "mag", 1.0, 0);
+            if ((_fieldSizeX != 0) && (_magnification != 0))
             {
                 if (1 == _cameraType)    // LSM only
                 {
@@ -308,11 +424,13 @@
                 }
                 else if (0 == _cameraType)    //Camera only
                 {
-                    _mmPerPixel = _pixelSizeUM / (mag * 1000);
+                    _mmPerPixel = _pixelSizeUM.PixelWidthUM / (_magnification * 1000);
                 }
             }
-
+            
             QueryImageInfo(doc);
+            
+            
         }
 
         /// <summary>
@@ -371,7 +489,6 @@
                 switch ((ICamera.CameraType)_cameraType)
                 {
                     case ICamera.CameraType.CCD:
-                    case ICamera.CameraType.CCD_MOSAIC:
                         _imageInfo.pixelX = XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/Camera", "width");
                         _imageInfo.pixelY = XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/Camera", "height");
                         break;
@@ -390,7 +507,7 @@
                                 _imageInfo.scanAreaIDList.Add(sRegion);
                             }
                         }
-                        _imageInfo.scanAreaIDList.Sort(delegate(ScanRegionStruct s1, ScanRegionStruct s2) { return s1.RegionID.CompareTo(s2.RegionID); });
+                        _imageInfo.scanAreaIDList.Sort(delegate (ScanRegionStruct s1, ScanRegionStruct s2) { return s1.RegionID.CompareTo(s2.RegionID); });
                         _imageInfo.pixelX = XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/LSM", "pixelX");
                         _imageInfo.pixelY = XmlManager.ReadAttribute<Int32>(doc, "/ThorImageExperiment/LSM", "pixelY");
                         break;
@@ -398,6 +515,8 @@
                     default:
                         break;
                 }
+
+                _ismROICapture = mROIXMLMapper.MapXml2mROIParams(doc, (ICamera.LSMType)_lsmType, out _mROIs, out _mROIPixelSizeXUM, out _mROIPixelSizeYUM, out _mROIStripLength, out _mROIFullFOVMetadata);
 
                 _imageInfo.frameSize = _imageInfo.pixelX * _imageInfo.pixelY * _numberOfPlanes * 2;
 

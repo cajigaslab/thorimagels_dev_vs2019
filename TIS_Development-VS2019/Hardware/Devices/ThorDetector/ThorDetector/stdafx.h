@@ -16,6 +16,10 @@
 #include <regex>
 #include <TCHAR.H>
 #include <map>
+#include <string>
+#include <math.h>
+#include "Strsafe.h"
+#include <chrono>
 
 using namespace std;
 

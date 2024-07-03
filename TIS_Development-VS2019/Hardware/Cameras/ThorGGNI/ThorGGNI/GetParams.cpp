@@ -524,7 +524,7 @@ long ThorLSMCam::GetParam(const long paramID, double &param)
 		break;
 	case ICamera::PARAM_LSM_CALCULATED_MIN_DWELL:
 		{
-			double val = CalculateMinimumDwellTime(_fieldSize, _pixelX, 2*static_cast<long>(_galvoRetraceTime), _field2Theta, static_cast<long>(_maxGalvoOpticalAngle)); 
+			double val = CalculateMinimumDwellTime(_fieldSize, _fineFieldSizeScaleX, _pixelX, 2*static_cast<long>(_galvoRetraceTime), _field2Theta, static_cast<long>(_maxGalvoOpticalAngle), _maxAngularVelocityRadPerSec, _maxAngularAccelerationRadPerSecSq, _minDwellTime, MAX_DWELL_TIME, DWELL_TIME_STEP);
 			param = val;
 		}
 		break;

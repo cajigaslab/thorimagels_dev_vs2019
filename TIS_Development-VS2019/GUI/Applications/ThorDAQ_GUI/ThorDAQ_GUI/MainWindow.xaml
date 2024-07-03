@@ -1,0 +1,100 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:System="clr-namespace:System;assembly=mscorlib"
+        xmlns:ni="http://schemas.ni.com/controls/2009/xaml/presentation" x:Class="thordaqGUI.MainWindow"
+        Title="ThorDAQ"
+        Height="820" 
+        Width="1836.358">
+    <Window.Resources>
+        <ResourceDictionary>
+            <BooleanToVisibilityConverter x:Key="VisibilityOfBool" />
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <Grid.Background>
+            <ImageBrush ImageSource="background.jpg" Opacity="0.6"/>
+        </Grid.Background>
+        <StackPanel Orientation="Horizontal" Margin="38,10,-208,-10">
+            <StackPanel Width="852">
+                <Border Background="Transparent" BorderBrush="DarkSalmon" Width="1038" Height="820" BorderThickness="1">
+                    <StackPanel Margin="0,-1,9,0">
+                        <ScrollViewer x:Name="Scroller" Margin="0,0,180,0" Height="700" Background="Transparent">
+                            <ItemsControl ItemsSource="{Binding ConsoleOutput, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Width="839">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding .}" Foreground="Black" FontFamily="Consolas" FontSize="13"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                        <StackPanel Orientation="Horizontal" Height="Auto">
+                            <TextBlock Background="Transparent" Foreground="Black" Width="35" Text="&gt;&gt;&gt;" FontSize="12"/>
+                            <TextBox VerticalScrollBarVisibility="Visible" Background="Transparent" Foreground="Black" FontFamily="Consolas" x:Name="InputBlock" BorderBrush="Transparent" SelectionBrush="LightBlue" Height="80" FontSize="13" Width="821" TextWrapping="Wrap" AcceptsReturn="True"/>
+                            <TextBox Height="23" TextWrapping="Wrap" Text="FrameCount" Width="120"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+            <StackPanel x:Name="AcqSetup_stackPanel" Height="717" Margin="0,10,0,0" VerticalAlignment="Top" Width="141" Orientation="Vertical">
+                <StackPanel x:Name="ScanMode_stackPanel" Orientation="Vertical" Height="56" >
+                    <RadioButton x:Name="Galvo_Galvo_radiobutton" Content="Galvo-Galvo" Checked="Galvo_Galvo_radiobutton_Checked" IsChecked="True"/>
+                    <RadioButton x:Name="Res_Galvo_radiobutton" Content="Res-Galvo" Checked="Res_Galvo_radiobutton_Checked"/>
+                    <RadioButton x:Name="Res_Galvo_Galvo" Content="Res-Galvo-Galvo" Checked="Res_Galvo_Galvo_Checked"/>
+                </StackPanel>
+                <GroupBox x:Name="Resolution_groupBox" Header="Resolution" HorizontalAlignment="Left" Height="122" Width="122">
+                    <Grid x:Name="Res_grid" HorizontalAlignment="Left" Height="122" VerticalAlignment="Top" Width="102">
+                        <RadioButton x:Name="Res32x32" Content="32x32" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="Res32x32_Checked"/>
+                        <RadioButton x:Name="Res256x256" Content="256x256" HorizontalAlignment="Right" Margin="0,20,39,0" VerticalAlignment="Top" Checked="Res256x256_Checked"/>
+                        <RadioButton x:Name="Res512x512" Content="512x512" HorizontalAlignment="Right" Margin="0,40,39,0" VerticalAlignment="Top" RenderTransformOrigin="0.2,0.333" IsChecked="True" Checked="Res512x512_Checked"/>
+                        <RadioButton x:Name="Res2048x2048" Content="2048x2048" HorizontalAlignment="Left" Margin="0,60,0,0" VerticalAlignment="Top" Checked="Res2048x2048_Checked"/>
+                        <RadioButton x:Name="Res4096x4096" Content="4096x4096" HorizontalAlignment="Left" Margin="0,80,0,0" VerticalAlignment="Top" Checked="Res4096x4096_Checked"/>
+                    </Grid>
+                </GroupBox>
+                <GroupBox x:Name="triggerMode_groupBox" Header="Trigger Mode" HorizontalAlignment="Left" Height="64" Width="122">
+                    <Grid x:Name="Trigger_grid" HorizontalAlignment="Left" Height="122" VerticalAlignment="Top" Width="102">
+                        <RadioButton x:Name="triggerMode_Live" Content="Live (Progressive)" HorizontalAlignment="Left" VerticalAlignment="Top" RenderTransformOrigin="0.2,0.333" IsChecked="True" Checked="triggerMode_Live_Checked" Margin="0,0,-9,0" Width="111"/>
+                        <RadioButton x:Name="triggerMode_Capture" Content="Capture" HorizontalAlignment="Right" Margin="0,20,41,0" VerticalAlignment="Top"  Checked="triggerMode_Capture_Checked"/>
+                    </Grid>
+                </GroupBox>
+
+
+
+
+                <CheckBox x:Name="LSMChannelSelectA" Content="A" HorizontalAlignment="Left" Height="17" Margin="26,0,0,0" Width="40" Click="LSMChannelSelect0" Background="Green"/>
+                <CheckBox x:Name="LSMChannelSelectB" Content="B" HorizontalAlignment="Left" Height="17" Margin="26,0,0,0" Width="40" Background="Red" Click="LSMChannelSelect1"/>
+                <CheckBox x:Name="LSMChannelSelectC" Content="C" HorizontalAlignment="Left" Height="17" Margin="26,0,0,0" Width="40" Background="Blue" Click="LSMChannelSelect2"/>
+                <CheckBox x:Name="LSMChannelSelectD" Content="D" HorizontalAlignment="Left" Height="17" Margin="26,0,0,0" Width="40" Background="#FFDAE2DA" Click="LSMChannelSelect3"/>
+                <Button x:Name="StartStopACQ" Content="Start" Click="StartStopACQ_Click"/>
+                <Label x:Name="UsrIntCount" Content="UsrIntCount" HorizontalAlignment="Center" Height="24" Width="104" />
+                <Label Content="Input Range (ADC gain)" HorizontalAlignment="Center" Height="24" Width="104" FontSize="9"/>
+                <Slider HorizontalAlignment="Center" Height="11" Margin="22,0,12,0" Width="80"/>
+
+
+            </StackPanel>
+            <StackPanel Width="944">
+                <Border Width="500" Height="500">
+                    <Canvas x:Name="imageCanvas"
+            			RenderOptions.BitmapScalingMode="NearestNeighbor"
+            			RenderOptions.EdgeMode="Aliased" Margin="-20,0,-223,0">
+                        <!--<Image Name="PlayButton" Source="Pause.png" Visibility="Collapsed" Width="50" Opacity="0.5"  Panel.ZIndex="2" PreviewMouseDown="PlayButton_PreviewMouseDown"/>-->
+                        <Canvas.Background>
+                            <ImageBrush x:Name="image2D"
+            					AlignmentX="Left"
+            					AlignmentY="Top"
+            					ImageSource="{Binding Bitmap, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+            					Stretch="None" />
+                        </Canvas.Background>
+                        <Canvas.ContextMenu>
+                            <ContextMenu x:Name="ImageCanvasContextMenu">
+                                <MenuItem x:Name="saveAs"
+            						Click="saveAs_Click"
+            						Header="Save As" />
+                            </ContextMenu>
+                        </Canvas.ContextMenu>
+                    </Canvas>
+                </Border>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

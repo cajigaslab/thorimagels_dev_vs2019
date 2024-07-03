@@ -45,7 +45,7 @@
     {
         #region Fields
 
-        const int DISPLAY_PANELS = 22;
+        const int DISPLAY_PANELS = 23;
         const int NUM_CHANNELS = 4;
 
         private bool zExpander_MouseGotFocus = false;
@@ -53,6 +53,7 @@
         //object _dataContextliveImageVM = null;
         private string _imageProcessSettingsFile;
         CaptureSetupViewModel _liveVM = null;
+        bool _loaded = false;
         string[,] _panelInfo = new string[DISPLAY_PANELS, 3] {
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/ScannerView","Scanner Control","scanBorder"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/AreaView","Area Control","areaBorder"},
@@ -75,7 +76,8 @@
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/LightEngineView","LightEngineControlView","LightEngineControlBorder"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/EpiturretControlView","EpiturretControlView","EpiturretControlBorder"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/AutoFocusControlView","AutoFocusControlView","AutoFocusControlBorder"},
-                {"/ApplicationSettings/DisplayOptions/CaptureSetup/MiniCircuitsSwitchControlView","MiniCircuitsSwitchControlView","MiniCircuitsSwitchControlBorder"}
+                {"/ApplicationSettings/DisplayOptions/CaptureSetup/MiniCircuitsSwitchControlView","MiniCircuitsSwitchControlView","MiniCircuitsSwitchControlBorder"},
+                {"/ApplicationSettings/DisplayOptions/CaptureSetup/SequentialControlView","Sequential Control","sequentialControlBorder"}
             };
         Dictionary<int, string> _powerTabVisibility = new Dictionary<int, string>
          {
@@ -159,6 +161,8 @@
             _liveVM.ReleaseHandlers();
 
             _liveVM.ReleaseBleachWaveform();
+
+            _loaded = false;
         }
 
         public void OnLoadExperiment(object sender, RoutedEventArgs e)
@@ -405,7 +409,7 @@
                 if (1 == ((int)MVMManager.Instance["CaptureOptionsControlViewModel", "CaptureMode", (object)0.0]) || 3 == ((int)MVMManager.Instance["CaptureOptionsControlViewModel", "CaptureMode", (object)0.0]))
                 {
                     //=== Streaming and bleaching Captures are not compatible with Capture Sequence Mode ===
-                    if (1 == _liveVM.EnableSequentialCapture && 1 < _liveVM.CollectionCaptureSequence.Count)
+                    if (1 == (int)MVMManager.Instance["SequentialControlViewModel", "EnableSequentialCapture", (object)0])//&& 1 < _liveVM.CollectionCaptureSequence.Count)
                     {
                         MessageBox.Show("\"Sequential Capture Mode\" is incompatible with Streaming and Bleaching capture modes. Please clear your channel sequence options or change the experiment type and try again.");
                         return;
@@ -664,6 +668,24 @@
                     multiLaserExpander.IsExpanded = false;
                 }
             }
+            if (sender != AutoFocusControlExpander)
+            {
+                if (AutoFocusControlExpander != null)
+                {
+                    AutoFocusControlExpander.IsExpanded = false;
+                }
+            }
+
+            if (sender != MiniCircuitsSwitchControlExpander)
+            {
+                if (MiniCircuitsSwitchControlExpander != null)
+                {
+                    MiniCircuitsSwitchControlExpander.IsExpanded = false;
+                }
+            }
+            if (sender != sequentialControlExpander)
+                if (sequentialControlExpander != null)
+                    sequentialControlExpander.IsExpanded = false;
         }
 
         private void Exposure_Update(double exposureTime)
@@ -771,147 +793,12 @@
             return validPanels;
         }
 
-        private void LoadChannelSelection()
-        {
-            try
-            {
-                XmlNodeList ChannelEnable = _liveVM.ExperimentDoc.GetElementsByTagName("ChannelEnable");
-                if (ChannelEnable.Count > 0)
-                {
-                    _liveVM.LSMChannelEnable0 = false;
-                    _liveVM.LSMChannelEnable1 = false;
-                    _liveVM.LSMChannelEnable2 = false;
-                    _liveVM.LSMChannelEnable3 = false;
-
-                    string ChanEnableSet = string.Empty;
-                    XmlManager.GetAttribute(ChannelEnable[0], _liveVM.ExperimentDoc, "Set", ref ChanEnableSet);
-                    //iterate through binary string to check channels:
-                    int tmp = 0;
-                    if (Int32.TryParse(ChanEnableSet, out tmp))
-                    {
-                        int maxChannels = _liveVM.MaxChannels;
-                        string binaryString = Convert.ToString(tmp, 2).PadLeft(maxChannels, '0');
-
-                        for (int i = 0; i < _liveVM.MaxChannels; i++)
-                        {
-                            if ((i == 0) && (binaryString[maxChannels - 1 - i] == '1'))
-                            {
-                                _liveVM.LSMChannelEnable0 = true;
-                            }
-                            else if ((i == 1) && (binaryString[maxChannels - 1 - i] == '1'))
-                            {
-                                _liveVM.LSMChannelEnable1 = true;
-                            }
-                            else if ((i == 2) && (binaryString[maxChannels - 1 - i] == '1'))
-                            {
-                                _liveVM.LSMChannelEnable2 = true;
-                            }
-                            else if ((i == 3) && (binaryString[maxChannels - 1 - i] == '1'))
-                            {
-                                _liveVM.LSMChannelEnable3 = true;
-                            }
-                        }
-                    }
-                }
-
-                //Set the non-visible channels to disabled
-                XmlDocument hwDoc = (XmlDocument)MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS];
-                XmlNodeList ndWLList = hwDoc.SelectNodes("/HardwareSettings/Wavelength");
-
-                for (int i = 0; i < NUM_CHANNELS; i++)
-                {
-                    if (i < ndWLList.Count && i < _liveVM.MaxChannels)
-                    {
-                    }
-                    else
-                    {
-                        switch (i)
-                        {
-                            case 0: _liveVM.LSMChannelEnable0 = false; break;
-                            case 1: _liveVM.LSMChannelEnable1 = false; break;
-                            case 2: _liveVM.LSMChannelEnable2 = false; break;
-                            case 3: _liveVM.LSMChannelEnable3 = false; break;
-                        }
-                    }
-                }
-
-            }
-            catch (Exception ex)
-            {
-                ex.ToString();
-                ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + ex.Message);
-
-            }
-        }
-
-        void LoadImageProcess()
-        {
-            XmlNodeList ndList = this._liveVM.ImageProcessDoc.SelectNodes("/ImageProcessSettings/General");
-            if (ndList.Count > 0)
-            {
-                string str = string.Empty;
-
-                if (XmlManager.GetAttribute(ndList[0], this._liveVM.ImageProcessDoc, "MaxRoiNum", ref str))
-                {
-                    int tmp = 0;
-                    if (Int32.TryParse(str, out tmp))
-                    {
-                        _liveVM.MaxRoiNum = tmp;
-                    }
-                }
-
-                if (XmlManager.GetAttribute(ndList[0], this._liveVM.ImageProcessDoc, "MinSnr", ref str))
-                {
-                    int tmp = 0;
-                    if (Int32.TryParse(str, out tmp))
-                    {
-                        _liveVM.MinSnr = tmp;
-                    }
-                }
-            }
-
-            ndList = this._liveVM.ImageProcessDoc.SelectNodes("/ImageProcessSettings/Filter/MinArea");
-            if (ndList.Count > 0)
-            {
-                string str = string.Empty;
-
-                if (XmlManager.GetAttribute(ndList[0], this._liveVM.ImageProcessDoc, "active", ref str))
-                {
-                    int tmp = 0;
-                    if (Int32.TryParse(str, out tmp))
-                    {
-                        _liveVM.MinAreaActive = Convert.ToBoolean(tmp & 0x1);
-                    }
-                }
-
-                if (XmlManager.GetAttribute(ndList[0], this._liveVM.ImageProcessDoc, "value", ref str))
-                {
-                    int tmp = 0;
-                    if (Int32.TryParse(str, out tmp))
-                    {
-                        _liveVM.MinAreaValue = tmp;
-                    }
-                }
-            }
-        }
-
         void LoadLSMHardwareSettings()
         {
             string str = string.Empty;
             XmlDocument hardwareDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS];
 
-            //set visibility of controls based on number of wavelengths available to the system
-            XmlNodeList ndList = hardwareDoc.SelectNodes("/HardwareSettings/Wavelength");
-
-            _liveVM.NumChannelsAvailableForDisplay = ndList.Count;
-
-            for (int i = 0; i < ndList.Count; i++)
-            {
-                if (XmlManager.GetAttribute(ndList[i], hardwareDoc, "name", ref str))
-                    _liveVM.ChannelName[i].Value = str;
-            }
-
-            ndList = hardwareDoc.SelectNodes("/HardwareSettings/ImageDetectors/LSM");
+            XmlNodeList ndList = hardwareDoc.SelectNodes("/HardwareSettings/ImageDetectors/LSM");
 
             //if a LSM and Camera are not in the list of available image detectors
             //disable the panel
@@ -955,10 +842,17 @@
 
         void MasterView_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_loaded)
+            {
+                return;
+            }
             try
             {
                 //setting initial position and size of the positionRectangle of the canvas.
                 _liveVM = (CaptureSetupViewModel)this.DataContext;
+
+                //Once Capture Setup loads, the switchbox is allowed to start changing
+                ResourceManagerCS.Instance.AllowSwitchBoxToWork = true;
 
                 string imageProcessSettings = Application.Current.Resources["ImageProcessSettingsFile"].ToString();
                 _imageProcessSettingsFile = imageProcessSettings;
@@ -989,9 +883,6 @@
 
                 _liveVM.ExperimentDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS];
 
-                //Verify there is only one channel per color selected
-                VerifyChannelColorSelection();
-
                 //load hardware settings from file
                 LoadLSMHardwareSettings();
 
@@ -1000,56 +891,39 @@
 
                 dataProvider.Document = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS];
 
-                ////loading the color channel selection before loading MVM settings:
-                LoadChannelSelection();
-
                 //load all MVMs:
                 MVMManager.Instance.LoadMVMSettings();
 
-                //loading the default color image settings
-                _liveVM.LoadColorImageSettings();
-
                 _liveVM.ConnectHandlers();
 
+                //hide SLM patterns if SLM panel is not in use
+                if (!_liveVM.SLMPanelInUse)
+                    _liveVM.SLMPatternsVisible = false;
+                ResourceManagerCS.BackupDirectory(ResourceManagerCS.GetMyDocumentsThorImageFolderString());
+                //reloading of the ROIs will result in a stats recalculation
+                //if the modality changes and the stats are run on the size of the previous
+                //image detector there is a possiblity of a buffer overrun. To ensure the buffers
+                //are the correct size call the SetupCaptureBuffers to reallocate according to the active image detector
+                CaptureSetupViewModel.SetupCaptureBuffers();
                 _liveVM.ModalitySpinnerWindowShowing = false;
 
-                //Load Image Process Settings
-                LoadImageProcess();
             }
             catch (Exception ex)
             {
                 _liveVM.ModalitySpinnerWindowShowing = false;
-                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "CaptureSetup MasterView load error: " + ex.Message);
-                MessageBox.Show("There was an error at loading Capture Setup. Some of your properties may not have been updated.");
+                ThorLogging.ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Error, 1, "CaptureSetup MasterView load error: " + ex.Message);
+                MessageBox.Show("There was an error loading Capture Setup. Some of your properties may not have been updated.");
             }
-        }
 
-        private void selectChannelUsingConverter(int val)
-        {
-            switch (_liveVM.DigitizerBoardName)
-            {
-                case Model.CaptureSetup.DigitizerBoardNames.ATS9440:
-                    {
-                        _liveVM.LSMChannelEnable0 = Convert.ToBoolean(val & 0x1);
-                        _liveVM.LSMChannelEnable1 = Convert.ToBoolean(val & 0x2);
-                        _liveVM.LSMChannelEnable2 = Convert.ToBoolean(val & 0x4);
-                        _liveVM.LSMChannelEnable3 = Convert.ToBoolean(val & 0x8);
-                    }
-                    break;
-                case Model.CaptureSetup.DigitizerBoardNames.ATS460:
-                    {
-                        _liveVM.LSMChannelEnable0 = Convert.ToBoolean(val & 0x1);
-                        _liveVM.LSMChannelEnable1 = Convert.ToBoolean(val & 0x2);
-                        _liveVM.LSMChannelEnable2 = false;
-                    }
-                    break;
-            }
+            _loaded = true;
         }
 
         private void SetDisplayOptions()
         {
             try
             {
+                string str = string.Empty;
+                double dVal = 0.0;
                 //Load and adjust visible items from application settings
                 XmlNodeList ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/ScannerView");
 
@@ -1076,7 +950,6 @@
                     bool lsmActive = false;
                     for (int i = 0; i < ndList.Count; i++)
                     {
-                        string str = string.Empty;
                         if (XmlManager.GetAttribute(ndList[i], _liveVM.HardwareDoc, "active", ref str))
                         {
                             if ("1" == str)
@@ -1121,7 +994,6 @@
                 {
                     for (int i = 0; i < ndList.Count; i++)
                     {
-                        string str = string.Empty;
                         if (XmlManager.GetAttribute(ndList[i], _liveVM.HardwareDoc, "active", ref str))
                         {
                             if ("1" == str)
@@ -1134,29 +1006,33 @@
                     if (true == ccdActive && Visibility.Visible == cameraControlBorder.Visibility)
                     {
                         cameraControlExpander.Visibility = cameraControlBorder.Visibility = Visibility.Visible;
-                        _liveVM.IsChannelVisible1 = Visibility.Collapsed;
-                        _liveVM.IsChannelVisible2 = Visibility.Collapsed;
-                        _liveVM.IsChannelVisible3 = Visibility.Collapsed;
+                        MVMManager.Instance["ImageViewCaptureSetupVM", "IsChannelVisible1"] = Visibility.Collapsed;
+                        MVMManager.Instance["ImageViewCaptureSetupVM", "IsChannelVisible2"] = Visibility.Collapsed;
+                        MVMManager.Instance["ImageViewCaptureSetupVM", "IsChannelVisible3"] = Visibility.Collapsed;
+
                         if (ResourceManagerCS.Instance.TabletModeEnabled)
                         {
                             //When in camera mode with the tablet reduce the size of the panels to 87%
                             //so the camera control fits in the screen
                             _liveVM.PanelsScale = 0.87;
-                            _liveVM.IsTileDisplayButtonVisible = Visibility.Collapsed;
+                            MVMManager.Instance["ImageViewCaptureSetupVM", "IsTileDisplayButtonVisible"] = Visibility.Collapsed;
                         }
                     }
                     else
                     {
                         cameraControlExpander.Visibility = cameraControlBorder.Visibility = Visibility.Collapsed;
-                        _liveVM.IsChannelVisible1 = Visibility.Visible;
-                        _liveVM.IsChannelVisible2 = Visibility.Visible;
-                        _liveVM.IsChannelVisible3 = Visibility.Visible;
+
+                        MVMManager.Instance["ImageViewCaptureSetupVM", "IsChannelVisible1"] = Visibility.Visible;
+                        MVMManager.Instance["ImageViewCaptureSetupVM", "IsChannelVisible2"] = Visibility.Visible;
+                        MVMManager.Instance["ImageViewCaptureSetupVM", "IsChannelVisible3"] = Visibility.Visible;
+
                         if (ResourceManagerCS.Instance.TabletModeEnabled)
                         {
                             //When switching to joystick modality change the panels scale to 100%, each
                             // panel has it's own scaling
                             _liveVM.PanelsScale = 1;
-                            _liveVM.IsTileDisplayButtonVisible = Visibility.Visible;
+
+                            MVMManager.Instance["ImageViewCaptureSetupVM", "IsTileDisplayButtonVisible"] = Visibility.Visible;
                         }
                     }
                 }
@@ -1172,29 +1048,27 @@
                     LightPathBorder.Visibility = ndList[0].Attributes["Visibility"].Value.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
                 }
 
+                int selectControlView = 0;  //[0]: BleachControlView, [1]: SLMControlView
                 ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView");
-
                 if (ndList.Count > 0)
                 {
                     if ((int)ICamera.LSMType.LSMTYPE_LAST != ResourceManagerCS.GetBleacherType())
                     {
                         BleachBorder.Visibility = ndList[0].Attributes["Visibility"].Value.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
-                        if (ndList[0].Attributes["Visibility"].Value.Equals("Visible"))
-                        {
-                            MVMManager.Instance["CaptureOptionsControlViewModel", "BleachControlActive"] = true;
-                        }
-                        else
-                        {
-                            MVMManager.Instance["CaptureOptionsControlViewModel", "BleachControlActive"] = false;
-                        }
+                        MVMManager.Instance["CaptureOptionsControlViewModel", "BleachControlActive"] = ndList[0].Attributes["Visibility"].Value.Equals("Visible");
                     }
                     else
                     {
                         BleachBorder.Visibility = System.Windows.Visibility.Collapsed;
                         MVMManager.Instance["CaptureOptionsControlViewModel", "BleachControlActive"] = false;
                     }
-                    //Turn bleach panel GUI response On or OFF:
-                    _liveVM.BleachBorderEnabled = (BleachBorder.Visibility == Visibility.Visible) ? true : false;
+                    if (!XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "SelectControlView", ref str))
+                    {
+                        XmlManager.SetAttribute(ndList[0], _liveVM.ApplicationDoc, "SelectControlView", "0");
+                        MVMManager.Instance.SaveSettings(SettingsFileType.APPLICATION_SETTINGS);
+                    }
+                    else
+                        Int32.TryParse(str, out selectControlView);
                 }
 
                 ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/RunSample/FastZView");
@@ -1204,21 +1078,20 @@
                     MVMManager.Instance["CaptureOptionsControlViewModel", "FastZActive"] = ndList[0].Attributes["Visibility"].Value.Equals("Visible");
                 }
 
-                //set visibility of bleach controls based on SLM device:
+                //set visibility of bleach controls based on SLM device or settings:
                 ndList = _liveVM.HardwareDoc.SelectNodes("/HardwareSettings/Devices/SLM");
                 BleachPanel.Children.Clear();
                 _liveVM.BleachExpandHeader = string.Empty;
-                string slmStr = string.Empty;
                 _liveVM.SLMPanelInUse = false;
                 for (int i = 0; i < ndList.Count; i++)
                 {
-                    if ((XmlManager.GetAttribute(ndList[i], _liveVM.HardwareDoc, "dllName", ref slmStr)) && (slmStr.Contains("ThorSLM")))
+                    if (XmlManager.GetAttribute(ndList[i], _liveVM.HardwareDoc, "dllName", ref str) && str.Contains("ThorSLM"))
                     {
-                        _liveVM.SLMPanelInUse = (XmlManager.GetAttribute(ndList[i], _liveVM.HardwareDoc, "active", ref slmStr)) && (0 == slmStr.CompareTo("1"));
+                        _liveVM.SLMPanelInUse = XmlManager.GetAttribute(ndList[i], _liveVM.HardwareDoc, "active", ref str) && 0 == str.CompareTo("1");
                     }
                 }
-                if (0 == ndList.Count)
-                { _liveVM.SLMPanelInUse = false; }
+                if (1 == selectControlView)
+                { _liveVM.SLMPanelInUse = true; }
                 if (_liveVM.SLMPanelInUse)
                 {
                     BleachPanel.Children.Add(new SLMControlView(_liveVM));
@@ -1235,8 +1108,7 @@
                 ndList = _liveVM.HardwareDoc.SelectNodes("/HardwareSettings/ImageDetectors/LSM");
                 for (int i = 0; i < ndList.Count; i++)
                 {
-                    string str = string.Empty;
-                    if ((XmlManager.GetAttribute(ndList[i], _liveVM.HardwareDoc, "cameraName", ref slmStr)) && ((0 == slmStr.CompareTo("GGNI")) || (0 == slmStr.CompareTo("ResonanceGalvoSim")))
+                    if ((XmlManager.GetAttribute(ndList[i], _liveVM.HardwareDoc, "cameraName", ref str)) && ((0 == str.CompareTo("GGNI")) || (0 == str.CompareTo("ResonanceGalvoSim")))
                         && ((XmlManager.GetAttribute(ndList[i], _liveVM.HardwareDoc, "activation", ref str)) && (0 == str.CompareTo("1"))))
                     {
                         ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView/OTMView");
@@ -1265,7 +1137,6 @@
                 ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/ZView");
                 if (ndList.Count > 0)
                 {
-                    string str = string.Empty;
                     if (XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "Visibility", ref str))
                     {
                         zBorder.Visibility = str.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
@@ -1321,8 +1192,6 @@
                     {
                         MVMManager.Instance["MultiphotonControlViewModel", "IsCollapsed"] = false;
                     }
-
-                    string str = string.Empty;
 
                     if (XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "mpFastSeqVisibility", ref str))
                     {
@@ -1439,8 +1308,6 @@
 
                 if (ndList.Count > 0)
                 {
-                    string str = string.Empty;
-
                     if (XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "Visibility", ref str))
                     {
                         tilesControlBorder.Visibility = str.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
@@ -1480,61 +1347,50 @@
                     captureOptionsBorder.Visibility = ndList[0].Attributes["Visibility"].Value.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
                 }
 
+                ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/ScannerView/TwoWayAlignmentPanel");
+
+                if (ndList.Count > 0)
+                {
+                    if (XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "Visibility", ref str))
+                    {
+                        MVMManager.Instance["ScanControlViewModel", "TwoWayAlignmentPanelVisibility"] = (str.Equals("Visible")) ? Visibility.Visible : Visibility.Collapsed;
+                    }
+                }
+
                 ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/ScannerView/CoarsePanel");
 
                 if (ndList.Count > 0)
                 {
-                    string str = string.Empty;
-
                     if (XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "Visibility", ref str))
                     {
-                        MVMManager.Instance["ScanControlViewModel", "CoarsePanelVisibility"] = (str.Equals("Visible") && ((int)ICamera.LSMType.GALVO_RESONANCE == ResourceManagerCS.GetLSMType())) ? Visibility.Visible : Visibility.Collapsed;
+                        MVMManager.Instance["ScanControlViewModel", "CoarsePanelVisibility"] = (str.Equals("Visible") && ((int)ICamera.LSMType.GALVO_RESONANCE == ResourceManagerCS.GetLSMType() || (int)ICamera.LSMType.RESONANCE_GALVO_GALVO == ResourceManagerCS.GetLSMType())) ? Visibility.Visible : Visibility.Collapsed;
                     }
                 }
 
-                //added
                 ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/ScannerView/FieldSizePanel");
 
                 if (ndList.Count > 0)
                 {
-                    string str = string.Empty;
-
                     if (XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "Visibility", ref str))
                     {
                         MVMManager.Instance["AreaControlViewModel", "FieldSizeVisible"] = (str.Equals("Visible")) ? Visibility.Visible : Visibility.Collapsed;
                     }
                 }
 
-                //
                 ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/TwoWayCalibration");
 
                 if (ndList.Count > 0)
                 {
-                    string str = string.Empty;
-
                     if (XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "Visibility", ref str))
                     {
                         MVMManager.Instance["ScanControlViewModel", "TwoWayCalibrationVisibility"] = (str.Equals("Visible")) ? Visibility.Visible : Visibility.Collapsed;
                     }
                 }
 
-                ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/General/GrayscaleForSingleChannel");
-
-                if (ndList.Count > 0)
-                {
-                    string str = string.Empty;
-
-                    if (XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "value", ref str))
-                    {
-                        _liveVM.GrayscaleForSingleChannel = ("1" == str || Boolean.TrueString == str) ? true : false;
-                    }
-                }
                 ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/ROIStatsWindow");
 
                 if (ndList.Count > 0)
                 {
-                    string str = string.Empty;
-
                     if (XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "display", ref str))
                     {
                         _liveVM.ROIStatsTableActive = ("1" == str || Boolean.TrueString == str) ? true : false;
@@ -1545,8 +1401,6 @@
 
                 if (ndList.Count > 0)
                 {
-                    string str = string.Empty;
-
                     if (XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "display", ref str))
                     {
                         _liveVM.ROIStatsChartActive = ("1" == str || Boolean.TrueString == str) ? true : false;
@@ -1557,8 +1411,6 @@
 
                 if (ndList.Count > 0)
                 {
-                    string str = string.Empty;
-
                     if (XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "display", ref str))
                     {
                         _liveVM.LineProfileActive = ("1" == str || Boolean.TrueString == str) ? true : false;
@@ -1569,7 +1421,6 @@
 
                 if (0 < ndList.Count)
                 {
-                    string str = string.Empty;
                     XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "Visibility", ref str);
 
                     MVMManager.Instance["ScanControlViewModel", "DigOffsetVisibility"] = (str.Equals("Visible")) ? Visibility.Visible : Visibility.Collapsed;
@@ -1582,7 +1433,6 @@
 
                     for (int i = 0; i < ((ObservableCollection<StringPC>)MVMManager.Instance["DigitalOutputSwitchesViewModel", "SwitchName"]).Count; i++)
                     {
-                        string str = string.Empty;
                         if (XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, string.Format("switchName{0}", i + 1), ref str))
                         {
                             ((ObservableCollection<StringPC>)MVMManager.Instance["DigitalOutputSwitchesViewModel", "SwitchName"])[i].Value = str;
@@ -1631,12 +1481,15 @@
                 {
                     MultiLaserControlBorder.Visibility = ndList[0].Attributes["Visibility"].Value.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
                 }
+                ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/SequentialControlView");
+                if (ndList.Count > 0)
+                {
+                    sequentialControlBorder.Visibility = ndList[0].Attributes["Visibility"].Value.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
+                }
 
                 ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/TwoColumnDisplay");
                 if (ndList.Count > 0)
                 {
-                    string str = string.Empty;
-
                     XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "enable", ref str);
 
                     if (str == "0")
@@ -1667,7 +1520,6 @@
                 ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/Pockels1");
                 if (ndList.Count > 0)
                 {
-                    string str = string.Empty;
                     if (XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "Visibility", ref str))
                     {
                         if (str.Equals("Visible"))
@@ -1703,7 +1555,6 @@
                 ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/Pockels2");
                 if (ndList.Count > 0)
                 {
-                    string str = string.Empty;
                     if (XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "Visibility", ref str))
                     {
                         showTab = true;
@@ -1727,7 +1578,6 @@
                 ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/Pockels3");
                 if (ndList.Count > 0)
                 {
-                    string str = string.Empty;
                     if (XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "Visibility", ref str))
                     {
                         showTab = true;
@@ -1751,7 +1601,6 @@
                 ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/Pockels4");
                 if (ndList.Count > 0)
                 {
-                    string str = string.Empty;
                     if (XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "Visibility", ref str))
                     {
                         showTab = true;
@@ -1775,7 +1624,6 @@
                 ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/PowerReg");
                 if (ndList.Count > 0)
                 {
-                    string str = string.Empty;
                     if (XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "Visibility", ref str))
                     {
                         showTab = true;
@@ -1807,7 +1655,6 @@
                 ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/PowerReg2");
                 if (ndList.Count > 0)
                 {
-                    string str = string.Empty;
                     if (XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "Visibility", ref str))
                     {
                         showTab = true;
@@ -1848,7 +1695,6 @@
                 int sel = 0;
                 if (0 < ndList.Count)
                 {
-                    string str = string.Empty;
                     if (XmlManager.GetAttribute(ndList[0], _liveVM.ApplicationDoc, "selected", ref str))
                     {
                         Int32.TryParse(str, out sel);
@@ -1893,37 +1739,35 @@
                     ndList = _liveVM.HardwareDoc.SelectNodes("/HardwareSettings/PowerReg");
                     if (ndList.Count > 0)
                     {
-                        string str = string.Empty;
-                        XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName1", ref str);
-                        MVMManager.Instance["PowerControlViewModel", "PowerRegCal1Name"] = str;
-                        XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName2", ref str);
-                        MVMManager.Instance["PowerControlViewModel", "PowerRegCal2Name"] = str;
-                        XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName3", ref str);
-                        MVMManager.Instance["PowerControlViewModel", "PowerRegCal3Name"] = str;
-                        XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName4", ref str);
-                        MVMManager.Instance["PowerControlViewModel", "PowerRegCal4Name"] = str;
-                        XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName5", ref str);
-                        MVMManager.Instance["PowerControlViewModel", "PowerRegCal5Name"] = str;
-                        XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName6", ref str);
-                        MVMManager.Instance["PowerControlViewModel", "PowerRegCal6Name"] = str;
+                        if (XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName1", ref str))
+                            MVMManager.Instance["PowerControlViewModel", "PowerRegCal1Name"] = str;
+                        if (XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName2", ref str))
+                            MVMManager.Instance["PowerControlViewModel", "PowerRegCal2Name"] = str;
+                        if (XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName3", ref str))
+                            MVMManager.Instance["PowerControlViewModel", "PowerRegCal3Name"] = str;
+                        if (XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName4", ref str))
+                            MVMManager.Instance["PowerControlViewModel", "PowerRegCal4Name"] = str;
+                        if (XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName5", ref str))
+                            MVMManager.Instance["PowerControlViewModel", "PowerRegCal5Name"] = str;
+                        if (XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName6", ref str))
+                            MVMManager.Instance["PowerControlViewModel", "PowerRegCal6Name"] = str;
                     }
 
                     ndList = _liveVM.HardwareDoc.SelectNodes("/HardwareSettings/PowerReg2");
                     if (ndList.Count > 0)
                     {
-                        string str = string.Empty;
-                        XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName1", ref str);
-                        MVMManager.Instance["PowerControlViewModel", "PowerReg2CalName1"] = str;
-                        XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName2", ref str);
-                        MVMManager.Instance["PowerControlViewModel", "PowerReg2CalName2"] = str;
-                        XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName3", ref str);
-                        MVMManager.Instance["PowerControlViewModel", "PowerReg2CalName3"] = str;
-                        XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName4", ref str);
-                        MVMManager.Instance["PowerControlViewModel", "PowerReg2CalName4"] = str;
-                        XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName5", ref str);
-                        MVMManager.Instance["PowerControlViewModel", "PowerReg2CalName5"] = str;
-                        XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName6", ref str);
-                        MVMManager.Instance["PowerControlViewModel", "PowerReg2CalName6"] = str;
+                        if (XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName1", ref str))
+                            MVMManager.Instance["PowerControlViewModel", "PowerReg2CalName1"] = str;
+                        if (XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName2", ref str))
+                            MVMManager.Instance["PowerControlViewModel", "PowerReg2CalName2"] = str;
+                        if (XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName3", ref str))
+                            MVMManager.Instance["PowerControlViewModel", "PowerReg2CalName3"] = str;
+                        if (XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName4", ref str))
+                            MVMManager.Instance["PowerControlViewModel", "PowerReg2CalName4"] = str;
+                        if (XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName5", ref str))
+                            MVMManager.Instance["PowerControlViewModel", "PowerReg2CalName5"] = str;
+                        if (XmlManager.GetAttribute(ndList[0], _liveVM.HardwareDoc, "calibName6", ref str))
+                            MVMManager.Instance["PowerControlViewModel", "PowerReg2CalName6"] = str;
                     }
 
                     ndList = _liveVM.HardwareDoc.SelectNodes("/HardwareSettings/PowerControllers/PowerControl");
@@ -1931,18 +1775,14 @@
                     {
                         if (ndList.Count >= ((ObservableCollection<StringPC>)MVMManager.Instance["PowerControlViewModel", "PowerControlName"]).Count)
                         {
-                            string str = string.Empty;
-
                             for (int i = 0; i < ((ObservableCollection<StringPC>)MVMManager.Instance["PowerControlViewModel", "PowerControlName"]).Count; i++)
                             {
                                 if (XmlManager.GetAttribute(ndList[i], _liveVM.HardwareDoc, "name", ref str))
                                 {
                                     ((ObservableCollection<StringPC>)MVMManager.Instance["PowerControlViewModel", "PowerControlName"])[i].Value = string.Format("{0}", str);
                                 }
-                                if (XmlManager.GetAttribute(ndList[i], _liveVM.HardwareDoc, "threshold", ref str))
+                                if (XmlManager.GetAttribute(ndList[i], _liveVM.HardwareDoc, "threshold", ref str) && Double.TryParse(str, out dVal))
                                 {
-                                    double dVal = 0;
-                                    Double.TryParse(str, out dVal);
                                     //the gui is inverted from the true threshold value
                                     //use 1 - val
                                     ((ObservableCollection<DoublePC>)MVMManager.Instance["PowerControlViewModel", "PockelsPowerThreshold"])[i].Value = 1.0 - dVal;
@@ -2078,72 +1918,20 @@
             _liveVM.BleachNowKey = key;
             ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/KeyboardOptions/GGLightPath");
             GetKeyboardProperty(ndList, ref mod, ref key);
-            _liveVM.GGLightPathModifier = mod;
-            _liveVM.GGLightPathKey = key;
+            MVMManager.Instance["LightPathControlViewModel", "GGLightPathModifier"] = mod;
+            MVMManager.Instance["LightPathControlViewModel", "GGLightPathKey"] = key;
             ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/KeyboardOptions/GRLightPath");
             GetKeyboardProperty(ndList, ref mod, ref key);
-            _liveVM.GRLightPathModifier = mod;
-            _liveVM.GRLightPathKey = key;
+            MVMManager.Instance["LightPathControlViewModel", "GRLightPathModifier"] = mod;
+            MVMManager.Instance["LightPathControlViewModel", "GRLightPathKey"] = key;
             ndList = _liveVM.ApplicationDoc.SelectNodes("/ApplicationSettings/KeyboardOptions/CamLightPath");
             GetKeyboardProperty(ndList, ref mod, ref key);
-            _liveVM.CamLightPathModifier = mod;
-            _liveVM.CamLightPathKey = key;
+            MVMManager.Instance["LightPathControlViewModel", "CamLightPathModifier"] = mod;
+            MVMManager.Instance["LightPathControlViewModel", "CamLightPathKey"] = key;
         }
 
         private void Shutter_Click(object sender, RoutedEventArgs e)
         {
-        }
-
-        private void VerifyChannelColorSelection()
-        {
-            bool chanA = false;
-            bool chanB = false;
-            bool chanC = false;
-            bool chanD = false;
-            XmlNodeList ndList = _liveVM.HardwareDoc.SelectNodes("/HardwareSettings/ColorChannels/*");
-            string str = string.Empty;
-            for (int i = 0; i < ndList.Count; i++)
-            {
-                if (XmlManager.GetAttribute(ndList[i], _liveVM.HardwareDoc, "name", ref str))
-                {
-                    if (str.Contains("ChanA"))
-                    {
-                        if (true == chanA)
-                        {
-                            XmlManager.SetAttribute(ndList[i], _liveVM.HardwareDoc, "name", "None");
-                        }
-                        chanA = true;
-                    }
-                    else if (str.Contains("ChanB"))
-                    {
-                        if (true == chanB)
-                        {
-                            XmlManager.SetAttribute(ndList[i], _liveVM.HardwareDoc, "name", "None");
-                        }
-                        chanB = true;
-
-                    }
-                    else if (str.Contains("ChanC"))
-                    {
-                        if (true == chanC)
-                        {
-                            XmlManager.SetAttribute(ndList[i], _liveVM.HardwareDoc, "name", "None");
-                        }
-                        chanC = true;
-
-                    }
-                    else if (str.Contains("ChanD"))
-                    {
-                        if (true == chanD)
-                        {
-                            XmlManager.SetAttribute(ndList[i], _liveVM.HardwareDoc, "name", "None");
-                        }
-                        chanD = true;
-                    }
-                }
-            }
-
-            MVMManager.Instance.SaveSettings(SettingsFileType.HARDWARE_SETTINGS);
         }
 
         private void zExpander_GotFocus(object sender, MouseButtonEventArgs e)

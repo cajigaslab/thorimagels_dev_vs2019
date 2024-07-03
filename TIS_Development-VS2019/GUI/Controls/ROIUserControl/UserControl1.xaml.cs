@@ -103,6 +103,13 @@
                                      new FrameworkPropertyMetadata(
                                             new PropertyChangedCallback(onWidthValueChanged)));
 
+        public static DependencyProperty numberOfFieldStripsProperty = 
+                                    DependencyProperty.RegisterAttached("NumberOfFieldStrips", 
+                                    typeof(int), 
+                                    typeof(UserControl1), 
+                                    new FrameworkPropertyMetadata(
+                                         new PropertyChangedCallback(onNumberOfStripsValueChanged)));
+
         static bool _allowDragDraw;
         static double _innerRectAngle = 0;
         static Brush _innerRectColor;
@@ -117,6 +124,7 @@
         static bool _isInnerRectWidthChanged = false;
         static bool _isOuterLeftChanged;
         static bool _isOuterTopChanged;
+        static bool _isNumberFieldStripsChanged;
         static int _oldOuterRectLeft;
         static int _oldOuterRectTop;
         static Brush _outerRectColor;
@@ -124,10 +132,11 @@
         static int _outerRectLeft;
         static int _outerRectTop;
         static int _outerRectWidth;
-
+        static int _numberFieldStrips;
         Point _center, _topRight, _bottomLeft;
         int _diameter = 0;
-        List<Point> _innerRectDimention = null;
+        List<Point> _innerRectDimension = null;
+        List<Line> fieldDivisionLines;
         double _mouseHorizontalPosition;
         Point _mouseLeftDownPoint;
         double _mouseVerticalPosition;
@@ -140,6 +149,7 @@
         public UserControl1()
         {
             InitializeComponent();
+            fieldDivisionLines = new List<Line>();
         }
 
         #endregion Constructors
@@ -190,7 +200,7 @@
             }
             set
             {
-                { SetValue(innerRectLeftProperty, value); }
+                { SetValue(innerRectLeftProperty, value);}
             }
         }
 
@@ -334,6 +344,18 @@
             set
             {
                 { SetValue(innerRectPanningState, value); }
+            }
+        }
+
+        public int NumberOfFieldStrips
+        {
+            get
+            {
+                { return (int)GetValue(numberOfFieldStripsProperty); }
+            }
+            set
+            {
+                { SetValue(numberOfFieldStripsProperty, value); }
             }
         }
 
@@ -524,8 +546,123 @@
             }
         }
 
+        public static void onNumberOfStripsValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            try
+            {
+                _isNumberFieldStripsChanged = true;
+                _numberFieldStrips = Convert.ToInt32(e.NewValue);
+                (d as UserControl1).drawInnerRect();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error");
+            }
+        }
+
+        private void drawDivisionLines()
+        {
+            //Number of divisions changed, clear array and add new children to canvas
+            //Only need to draw lines if number of divisions is greater than 1. 
+            if (_isNumberFieldStripsChanged)
+            {
+                //Check if any lines are presently drawn. If so, remove them
+                if (0 != fieldDivisionLines.Count)
+                {
+                    for (int i = 0; i < fieldDivisionLines.Count; i++)
+                    {
+                        imageCanvas.Children.Remove(fieldDivisionLines[i]);
+                    }
+                }
+                fieldDivisionLines = new List<Line>();
+
+                //Fill the list of lines with _numberFieldStrips-1 items. 
+                for (int i = 1; i < _numberFieldStrips; i++)
+                {
+                    fieldDivisionLines.Add(new Line()
+                    {
+                        X1 = 0,
+                        X2 = 0,
+                        Y1 = 0,
+                        Y2 = 0,
+                        StrokeThickness = 1,
+                        Visibility = Visibility.Visible,
+                        Stroke = Brushes.Black,
+                        StrokeDashArray = new DoubleCollection(new Double[] { 3, 3 })
+                    });
+                }
+                _isNumberFieldStripsChanged = false;
+            }
+            try
+            {
+                //positions for drawing in pixel coordinates
+                double innerRectCenterX = _innerRectLeft + _innerRectWidth / 2;
+                double innerRectCenterY = _innerRectTop + _innerRectHeight / 2;
+                double nonRotatedLineCenterX;
+                double nonRotatedLineCenterY;
+                double rotatedLineCenterX;
+                double rotatedLineCenterY;
+
+                // magnitude in pixels
+                double lineDistanceFromCenterInnerRect;
+
+                //top and bottom positions for each line
+                double lineTopX;
+                double lineTopY;
+                double lineBottomX;
+                double lineBottomY;
+
+                for (int i = 0; i < fieldDivisionLines.Count; i++)
+                {
+                    nonRotatedLineCenterX = _innerRectLeft + (_innerRectWidth / _numberFieldStrips) * (i + 1);
+                    nonRotatedLineCenterY = innerRectCenterY;
+
+                    //Distance formula. Center of the line to the center of the rectangle. This should be constant for all rotation angles for each line
+                    lineDistanceFromCenterInnerRect =
+                        Math.Sqrt(Math.Pow(nonRotatedLineCenterX - innerRectCenterX, 2) + Math.Pow(nonRotatedLineCenterY - innerRectCenterY, 2));
+
+                    //Change in X and Y position of the center of a line rotating around a point given by: 
+                    // deltaX = distanceFromCenter - distanceFromCenter*cos(angle)
+                    // deltaY = distanceFromCenter*sin(angle)
+                    //Sign functions used to denote where the line center is relative to rectangle center
+                    rotatedLineCenterX = nonRotatedLineCenterX +
+                        (lineDistanceFromCenterInnerRect - lineDistanceFromCenterInnerRect * Math.Cos(_innerRectAngle * Math.PI / 180)) *
+                        Math.Sign(innerRectCenterX - nonRotatedLineCenterX);
+                    rotatedLineCenterY = nonRotatedLineCenterY -
+                        lineDistanceFromCenterInnerRect * Math.Sin(_innerRectAngle * Math.PI / 180) * Math.Sign(innerRectCenterX - nonRotatedLineCenterX);
+
+                    lineTopX = rotatedLineCenterX;
+                    lineBottomX = rotatedLineCenterX;
+                    lineTopY = rotatedLineCenterY + _innerRectHeight / 2;
+                    lineBottomY = rotatedLineCenterY - _innerRectHeight / 2;
+
+                    if (!imageCanvas.Children.Contains(fieldDivisionLines[i]))
+                    {
+                        imageCanvas.Children.Add(fieldDivisionLines[i]);
+                    }
+                    fieldDivisionLines[i].X1 = lineTopX;
+                    fieldDivisionLines[i].X2 = lineBottomX;
+                    fieldDivisionLines[i].Y1 = lineTopY;
+                    fieldDivisionLines[i].Y2 = lineBottomY;
+
+                    //render transform rotates line around calculated center point. makes the code cleaner with much fewer calculations
+                    fieldDivisionLines[i].RenderTransform = new RotateTransform(_innerRectAngle, rotatedLineCenterX, rotatedLineCenterY);                    
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error");
+            }
+        }
+
+        private Double Distance(double x1, double x2, double y1, double y2)
+        {
+            return Math.Sqrt(Math.Pow(x2- x1, 2) + Math.Pow(y2 - y1, 2));
+        }
+
         private void drawInnerRect()
         {
+            //_isCircleVisible = false;
             try
             {
                 if (_isCircleVisible)
@@ -533,18 +670,18 @@
                     if (_innerRectHeight == 0 && _innerRectWidth == 0) return;
 
                     validateInnerRectDimensionWhenShapeIsCircle();
-                    _innerRectDimention = getInnerRectDimensions(_innerRectLeft, _innerRectTop, _innerRectWidth, _innerRectHeight);
-                    bool isDimentionValid = ValidateRectDimension(_innerRectDimention);
+                    _innerRectDimension = getInnerRectDimensions(_innerRectLeft, _innerRectTop, _innerRectWidth, _innerRectHeight);
+                    bool isDimensionValid = ValidateRectDimension(_innerRectDimension);
                     int count = 0;
 
-                    while ((count < 20) && (!isDimentionValid))
+                    while ((count < 20) && (!isDimensionValid))
                     {
-                        _innerRectDimention = getInnerRectDimensions(_innerRectLeft, _innerRectTop, _innerRectWidth, _innerRectHeight);
-                        isDimentionValid = ValidateRectDimension(_innerRectDimention);
-                        SetInnerRectDimentionsForCircle();
+                        _innerRectDimension = getInnerRectDimensions(_innerRectLeft, _innerRectTop, _innerRectWidth, _innerRectHeight);
+                        isDimensionValid = ValidateRectDimension(_innerRectDimension);
+                        SetInnerRectDimensionsForCircle();
                         count++;
                     }
-                    if (isDimentionValid == false)
+                    if (isDimensionValid == false)
                         makeFinalAdjustment();
                 }
                 else
@@ -559,6 +696,7 @@
                 innerRect.Height = _innerRectHeight;
 
                 innerRect.RenderTransform = new RotateTransform(_innerRectAngle, _innerRectWidth / 2, _innerRectHeight / 2);
+                drawDivisionLines();
             }
             catch (Exception ex)
             {
@@ -612,16 +750,17 @@
             }
         }
 
+
         private List<Point> getInnerRectDimensions(int Left, int Top, int Width, int Height)
         {
             try
             {
                 List<Point> innerRectPoint = new List<Point>
                 {
-                    new Point(Left,Top),
-                    new Point(Left+Width,Top),
-                    new Point(Left, Top+Height),
-                    new Point(Left+Width,Top+Height)
+                    RotatePointAroundInnerRectCenter(new Point(Left,Top)),
+                    RotatePointAroundInnerRectCenter(new Point(Left+Width,Top)),
+                    RotatePointAroundInnerRectCenter(new Point(Left, Top+Height)),
+                    RotatePointAroundInnerRectCenter(new Point(Left+Width,Top+Height))
                 };
                 return innerRectPoint;
             }
@@ -632,11 +771,28 @@
             }
         }
 
+        private Point RotatePointAroundInnerRectCenter(Point nonRotatedPoint)
+        {
+            //https://www.euclideanspace.com/maths/geometry/affine/aroundPoint/matrix2d/index.htm
+            Point rotatedPoint = new Point(nonRotatedPoint.X,nonRotatedPoint.Y);
+            double rotationAngle = _innerRectAngle * Math.PI / 180; //convert to radians
+            double innerRectCenterX = _innerRectLeft + _innerRectWidth / 2;
+            double innerRectCenterY = _innerRectTop + _innerRectHeight / 2;
+
+            rotatedPoint.X = nonRotatedPoint.X * Math.Cos(rotationAngle) + -1 * nonRotatedPoint.Y * Math.Sin(rotationAngle) + innerRectCenterX -
+                innerRectCenterX * Math.Cos(rotationAngle) - -1 * innerRectCenterY * Math.Sin(rotationAngle);
+
+            rotatedPoint.Y = nonRotatedPoint.X*Math.Sin(rotationAngle) + nonRotatedPoint.Y * Math.Cos(rotationAngle) + innerRectCenterY -
+                innerRectCenterX * Math.Sin(rotationAngle) - innerRectCenterY * Math.Cos(rotationAngle); 
+
+            return rotatedPoint;
+        }
+
         private double getMaximumDistanceFromCenter()
         {
             double maxDistance = 0;
 
-            foreach (Point tempPoint in _innerRectDimention)
+            foreach (Point tempPoint in _innerRectDimension)
             {
                 double distance = ((tempPoint.X - _center.X) * (tempPoint.X - _center.X)) + ((tempPoint.Y - _center.Y) * (tempPoint.Y - _center.Y));
                 double actualDistance = Math.Sqrt(distance);
@@ -726,7 +882,6 @@
 
         private void innerRect_MouseMove(object sender, MouseEventArgs e)
         {
-            List<Point> validPoints;
             if (!innerRect.IsMouseCaptured) return;
             try
             {
@@ -735,46 +890,110 @@
                 int deltaH = Convert.ToInt32(e.GetPosition(null).X - _mouseHorizontalPosition);
                 int deltaV = Convert.ToInt32(e.GetPosition(null).Y - _mouseVerticalPosition);
 
-                int newTop = Convert.ToInt32(deltaV + (double)innerRect.GetValue(Canvas.TopProperty));
-                int newLeft = Convert.ToInt32(deltaH + (double)innerRect.GetValue(Canvas.LeftProperty));
+                Point actualMoveAmount = NudgeDeltaValuesForInnerRectMove(deltaH, deltaV);
 
-                bool isPointsValid = false;
+                int newTop = Convert.ToInt32(actualMoveAmount.Y + (double)innerRect.GetValue(Canvas.TopProperty));
+                int newLeft = Convert.ToInt32(actualMoveAmount.X + (double)innerRect.GetValue(Canvas.LeftProperty));
 
-                int Width = Convert.ToInt32(_innerRectWidth - _outerRectLeft);
-                int Height = Convert.ToInt32(_innerRectHeight - _outerRectTop);
+                Canvas.SetTop(innerRect, newTop);
+                _innerRectTop = newTop;
 
-                if (_isCircleVisible)
+                if (!LsmTypeName.Contains("Resonance"))
                 {
-                    validPoints = getInnerRectDimensions(newLeft, newTop, Width + _outerRectLeft, Height + _outerRectTop);
+                    Canvas.SetLeft(innerRect, newLeft);
+                    _innerRectLeft = newLeft;
                 }
-                else
-                {
-                    validPoints = getInnerRectDimensions(newLeft, newTop, _innerRectWidth, _innerRectHeight);
-                }
-                isPointsValid = ValidateRectDimension(validPoints);
 
-                if (isPointsValid == true)
-                {
-                    Canvas.SetTop(innerRect, newTop);
-                    _innerRectTop = newTop;
-                    if (!LsmTypeName.Contains("Resonance"))
-                    {
-                        Canvas.SetLeft(innerRect, newLeft);
-                        _innerRectLeft = newLeft;
-                    }
-                    //Reflect two way binding values - Start
-                    InnerRectTop = _innerRectTop;
-                    InnerRectLeft = _innerRectLeft;
-                    //Reflect two way binding values - End
+                //Reflect two way binding values - Start
+                InnerRectTop = _innerRectTop;
+                InnerRectLeft = _innerRectLeft;
+                //Reflect two way binding values - End
 
-                    _mouseVerticalPosition = e.GetPosition(null).Y;
-                    _mouseHorizontalPosition = e.GetPosition(null).X;
-                }
+                _mouseVerticalPosition = e.GetPosition(null).Y;
+                _mouseHorizontalPosition = e.GetPosition(null).X;
+
+                UpdateLinePositionsWhenDragged();
             }
-            catch (Exception ex)
+            catch (Exception)
+            {}
+        }
+
+        //adjust the requested change in position for innerRect so that the new position will be valid
+        //delta values represent the amount the inner rect is requested to move
+        private Point NudgeDeltaValuesForInnerRectMove(int deltaH, int deltaV)
+        {
+            //Corner furthest from the center at requested position
+            Point innerRectCornerAtMaxDistance = GetPointFurthestFromCenter(deltaH, deltaV);
+
+            Point adjustedDistances = new Point(deltaH,deltaV);
+            if (_isCircleVisible)
             {
-                MessageBox.Show(ex.Message, "Error");
+                double cornerDistanceFromCenter = Math.Sqrt(Math.Pow(innerRectCornerAtMaxDistance.X - _center.X, 2) + Math.Pow(innerRectCornerAtMaxDistance.Y - _center.Y, 2));
+                double polarAngleToCorner;
+
+                if (cornerDistanceFromCenter > innerCircle.Width / 2)
+                {
+                    //corner at the requested position of innerRect is outside of the circle.
+                    //project the requested point to the edge of the closest point on the circle. This will always be on the line
+                    //drawn from center of circle to the point. 
+                    //polar coordinate angle to the point inverseTan(yDistanceFromCenter/xDistanceFromCenter)
+                    polarAngleToCorner = Math.Atan((innerRectCornerAtMaxDistance.Y - _center.Y) / (innerRectCornerAtMaxDistance.X - _center.X));
+
+                    //point on circle closest to requested point
+                    double projectionPointX = _center.X + Math.Sign(innerRectCornerAtMaxDistance.X - _center.X) * (innerCircle.Width / 2) * Math.Cos(polarAngleToCorner);
+                    double projectionPointY = _center.Y + Math.Sign(innerRectCornerAtMaxDistance.X - _center.X) * (innerCircle.Width / 2) * Math.Sin(polarAngleToCorner);
+
+                    //Move overlapped corner to the edge of the circle
+                    adjustedDistances.X = deltaH + (innerRectCornerAtMaxDistance.X - projectionPointX) * -1;
+                    adjustedDistances.Y = deltaV + (innerRectCornerAtMaxDistance.Y - projectionPointY) * -1;
+                }
             }
+            else
+            {
+                //Circle is not visible containing box is a square
+                //corner is out of bounds in the x
+                if (innerRectCornerAtMaxDistance.X < _outerRectLeft)
+                {
+                    adjustedDistances.X = deltaH + _outerRectLeft - innerRectCornerAtMaxDistance.X;
+                }
+                else if (innerRectCornerAtMaxDistance.X > _outerRectLeft + _outerRectWidth)
+                {
+                    adjustedDistances.X = deltaH - innerRectCornerAtMaxDistance.X + _outerRectLeft + _outerRectWidth;
+                }
+
+                //corner is out of bounds in the y
+                if (innerRectCornerAtMaxDistance.Y < _outerRectTop)
+                {
+                    adjustedDistances.Y = deltaV + _outerRectTop - innerRectCornerAtMaxDistance.Y;
+                }
+                else if (innerRectCornerAtMaxDistance.Y > _outerRectTop + _outerRectHeight)
+                {
+                    adjustedDistances.Y = deltaV - innerRectCornerAtMaxDistance.Y + _outerRectTop + _outerRectHeight;
+                }
+            }
+            return adjustedDistances;
+        }
+
+        //Gets the corner of inner rect that is furthest from the center of the view area. 
+        //DeltaH and DeltaV can be used to get the corner from a requested position
+        private Point GetPointFurthestFromCenter(int deltaH, int deltaV)
+        {
+            List<Point> innerRectPoints = getInnerRectDimensions((int)((double)innerRect.GetValue(Canvas.LeftProperty) + deltaH), (int)((double)innerRect.GetValue(Canvas.TopProperty) + deltaV), _innerRectWidth, _innerRectHeight);
+            Point furthestPoint = new Point();
+            double currentFurthestDistance = 0;
+
+            foreach (Point corner in innerRectPoints)
+            {
+                double pointDistanceFromCenter =
+                    Math.Sqrt(Math.Pow(corner.X - _center.X, 2) + Math.Pow(corner.Y - _center.Y, 2));
+                if (pointDistanceFromCenter > currentFurthestDistance)
+                {
+                    currentFurthestDistance = pointDistanceFromCenter;
+                    furthestPoint = corner;
+                }
+            }
+
+            return furthestPoint;
         }
 
         private void innerRect_MouseUp(object sender, MouseButtonEventArgs e)
@@ -796,7 +1015,7 @@
 
         private void makeFinalAdjustment()
         {
-            _innerRectDimention = getInnerRectDimensions(_innerRectLeft, _innerRectTop, _innerRectWidth, _innerRectHeight);
+            _innerRectDimension = getInnerRectDimensions(_innerRectLeft, _innerRectTop, _innerRectWidth, _innerRectHeight);
             double maximumDistanceFromCenter = getMaximumDistanceFromCenter();
             double adjustmentDistance = maximumDistanceFromCenter - (_diameter / 2);
             adjustmentDistance = Math.Sqrt((adjustmentDistance * adjustmentDistance) / 2);
@@ -903,7 +1122,7 @@
             }
         }
 
-        private void SetInnerRectDimentionsForCircle()
+        private void SetInnerRectDimensionsForCircle()
         {
             double maximumDistanceFromCenter = getMaximumDistanceFromCenter();
             double adjustmentDistance = Math.Abs(maximumDistanceFromCenter - (_diameter / 2));
@@ -1078,6 +1297,59 @@
             }
         }
 
+        private void UpdateLinePositionsWhenDragged()
+        {
+            /**The DrawDivisionLines method is not always called during a drag event leading to the position of the lines not always
+            matching the position of the inner rectangle. This is caused by the different ways the canvas is handling the children. 
+            The main shapes are declared in xaml with positions bound to the cs, while the lines are declared and positions set in the cs. 
+            When the binding values change in the innerRectDrag method, the positions for the xaml shapes will automatically change while the lines
+            stay in the current position until the draw method is called. This method updates the lines while a drag is happening
+            and is just the draw-logic portion of the DrawDivisionLines method. **/
+
+            try
+            {
+                double innerRectCenterX = _innerRectLeft + _innerRectWidth / 2;
+                double innerRectCenterY = _innerRectTop + _innerRectHeight / 2;
+                double nonRotatedLineCenterX;
+                double nonRotatedLineCenterY;
+                double rotatedLineCenterX;
+                double rotatedLineCenterY;
+
+                double lineDistanceFromCenterInnerRect;
+
+                double lineTopX;
+                double lineTopY;
+                double lineBottomX;
+                double lineBottomY;
+
+                for (int i = 0; i < fieldDivisionLines.Count; i++)
+                {
+                    nonRotatedLineCenterX = _innerRectLeft + (_innerRectWidth / _numberFieldStrips) * (i + 1);
+                    nonRotatedLineCenterY = innerRectCenterY;
+
+                    lineDistanceFromCenterInnerRect =
+                        Math.Sqrt(Math.Pow(nonRotatedLineCenterX - innerRectCenterX, 2) + Math.Pow(nonRotatedLineCenterY - innerRectCenterY, 2));
+                    rotatedLineCenterX = nonRotatedLineCenterX +
+                        (lineDistanceFromCenterInnerRect - lineDistanceFromCenterInnerRect * Math.Cos(_innerRectAngle * Math.PI / 180)) *
+                        Math.Sign(innerRectCenterX - nonRotatedLineCenterX);
+                    rotatedLineCenterY = nonRotatedLineCenterY -
+                        lineDistanceFromCenterInnerRect * Math.Sin(_innerRectAngle * Math.PI / 180) * Math.Sign(innerRectCenterX - nonRotatedLineCenterX);
+
+                    lineTopX = rotatedLineCenterX;
+                    lineBottomX = rotatedLineCenterX;
+                    lineTopY = rotatedLineCenterY + _innerRectHeight / 2;
+                    lineBottomY = rotatedLineCenterY - _innerRectHeight / 2;
+
+                    fieldDivisionLines[i].X1 = lineTopX;
+                    fieldDivisionLines[i].X2 = lineBottomX;
+                    fieldDivisionLines[i].Y1 = lineTopY;
+                    fieldDivisionLines[i].Y2 = lineBottomY;
+                    fieldDivisionLines[i].RenderTransform = new RotateTransform(_innerRectAngle, rotatedLineCenterX, rotatedLineCenterY);
+                }
+            }
+            catch (Exception)
+            {}
+        }
         #endregion Methods
     }
 }

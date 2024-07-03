@@ -109,6 +109,8 @@ ThorLSMCam::ThorLSMCam():
 	_pockelsPower2 = 0;
 	_pockelsPower3 = 0;
 
+	_numberOfPlanes = 1;
+
 	_indexOfLastFrame = -1;
 
 	_flybackCycle=0;
@@ -241,8 +243,8 @@ long ThorLSMCam::SelectCamera(const long camera)
 			while(TRUE == FindNextFile(hFind,&FindFileData));
 
 
-			long c=1;
-			ReadImageInfo((wchar_t*)wsResult.c_str(),_fileWidth,_fileHeight,c);
+			long c=1, b = 0;
+			ReadImageInfo((wchar_t*)wsResult.c_str(),_fileWidth,_fileHeight,c,b);
 
 			if(_pMemoryBuffer)
 			{
@@ -1366,6 +1368,16 @@ long ThorLSMCam::GetParamInfo(const long paramID, long &paramType, long &paramAv
 		paramReadOnly = FALSE;
 	}
 	break;
+	case ICamera::PARAM_LSM_NUMBER_OF_PLANES:
+	{
+		paramType = ICamera::TYPE_LONG;
+		paramAvailable = TRUE;
+		paramMax = MAX_NUMBER_OF_PLANES;
+		paramMin = MIN_NUMBER_OF_PLANES;
+		paramDefault = MIN_NUMBER_OF_PLANES;
+		paramReadOnly = FALSE;
+	}
+	break;
 	default:
 		{
 			ret = TRUE;
@@ -2311,6 +2323,15 @@ long ThorLSMCam::SetParam(const long paramID, const double param)
 		}
 	}
 	break;
+	case ICamera::PARAM_LSM_NUMBER_OF_PLANES:
+	{
+		if (MIN_NUMBER_OF_PLANES <= param && MAX_NUMBER_OF_PLANES >= param)
+		{
+			_numberOfPlanes = static_cast<long>(param);
+			ret = TRUE;
+		}
+	}
+	break;
 	}	
 	return ret;
 }
@@ -3147,6 +3168,11 @@ long ThorLSMCam::GetParam(const long paramID, double &param)
 		param = _channelPolarity[3];
 	}
 	break;
+	case ICamera::PARAM_LSM_NUMBER_OF_PLANES:
+	{
+		param = _numberOfPlanes;
+	}
+	break;
 	default:
 		{
 			ret = FALSE;
@@ -3547,10 +3573,10 @@ long ThorLSMCam::CopyAcquisition(char *pDataBuffer, void* frameInfo)
 	//===========================
 	//   Create Image
 	//===========================
-	GenericImage<unsigned short> image(imageWidth, imageHeight, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
+	GenericImage<unsigned short> image(imageWidth, imageHeight, 1, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
 	if(_rawSaveEnabledChannelsOnly)
 	{
-		image = GenericImage<unsigned short>(imageWidth, imageHeight, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL,ChannelManipulator<unsigned short>::getEnabledChannels(_channel_C));
+		image = GenericImage<unsigned short>(imageWidth, imageHeight, 1, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL,ChannelManipulator<unsigned short>::getEnabledChannels(_channel_C));
 	}
 	image.setMemoryBuffer((unsigned short*)pDataBuffer);
 
@@ -3560,9 +3586,9 @@ long ThorLSMCam::CopyAcquisition(char *pDataBuffer, void* frameInfo)
 		//   Fill Image With Experienment Data
 		//=====================================
 		static bool doOnce = true;
-		static InternallyStoredImage<unsigned short> gradientImage(imageWidth, imageHeight, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
+		static InternallyStoredImage<unsigned short> gradientImage(imageWidth, imageHeight, 1, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
 
-		gradientImage = InternallyStoredImage<unsigned short>(imageWidth, imageHeight, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
+		gradientImage = InternallyStoredImage<unsigned short>(imageWidth, imageHeight, 1, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
 		FillImageWithData(gradientImage, channelIndex);
 
 		image.copyFrom(gradientImage);
@@ -3573,10 +3599,10 @@ long ThorLSMCam::CopyAcquisition(char *pDataBuffer, void* frameInfo)
 		//   Fill Image With Simulated Data
 		//=====================================
 		static bool doOnce = true;
-		static InternallyStoredImage<unsigned short> gradientImage(imageWidth, imageHeight, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
+		static InternallyStoredImage<unsigned short> gradientImage(imageWidth, imageHeight, 1, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
 		if(gradientImage.getWidth() != imageWidth || gradientImage.getHeight() != imageHeight || gradientImage.getNumChannels() != numChannels || doOnce)
 		{
-			gradientImage = InternallyStoredImage<unsigned short>(imageWidth, imageHeight, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
+			gradientImage = InternallyStoredImage<unsigned short>(imageWidth, imageHeight, 1, 1, numChannels, 1, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
 			FillImageWithGradient(gradientImage);
 			doOnce = false;
 		}
@@ -3599,6 +3625,27 @@ long ThorLSMCam::CopyAcquisition(char *pDataBuffer, void* frameInfo)
 		ManipulateImage(&image, imageWidth, imageHeight, (ICamera::LSMGRRotationAngle)_rotationAngle);
 	}
 
+	FrameInfoStruct* frameInfoStruct = static_cast<FrameInfoStruct*>(frameInfo);
+	if (frameInfoStruct)
+	{
+		frameInfoStruct->imageWidth = imageWidth;
+		frameInfoStruct->imageHeight = imageHeight;
+		frameInfoStruct->fullImageWidth = imageWidth;
+		frameInfoStruct->fullImageHeight = imageHeight;
+		frameInfoStruct->channels = numChannels;
+		frameInfoStruct->numberOfPlanes = 1;
+		frameInfoStruct->copySize = numChannels * imageWidth * imageHeight * sizeof(USHORT);
+		frameInfoStruct->numberOfPlanes = 1;
+		frameInfoStruct->isNewMROIFrame = 1;
+		frameInfoStruct->totalScanAreas = 1;
+		frameInfoStruct->scanAreaIndex = 0;
+		frameInfoStruct->scanAreaID = 0;
+		frameInfoStruct->isMROI = FALSE;
+		frameInfoStruct->topInFullImage = 0;
+		frameInfoStruct->leftInFullImage = 0;
+		frameInfoStruct->mROIStripeFieldSize = 0;
+	}
+
 	_frameIndex++;
 
 	return 1;
@@ -3612,7 +3659,7 @@ long ThorLSMCam::ManipulateImage(GenericImage<unsigned short>  * image, long wid
 	{
 		if(image->isChannelEnabled(chan))
 		{
-			unsigned short* pData = image->getDirectPointerToData(0,0,0, chan,0);
+			unsigned short* pData = image->getDirectPointerToData(0,0,0,0, chan,0);
 
 			memcpy(intermediateBuffer, pData, width * height * sizeof(unsigned short));
 
@@ -3674,7 +3721,7 @@ long ThorLSMCam::ManipulateImage(GenericImage<unsigned short>  * image, long wid
 
 void ThorLSMCam::PrintMessage(GenericImage<unsigned short>& image, double printTime)
 {
-	char* imageBuffer = (char*)(image.getDirectPointerToData(0,0,0,0,0));
+	char* imageBuffer = (char*)(image.getDirectPointerToData(0,0,0,0,0,0));
 
 	for(int chan=0; chan<image.getNumEnabledChannels(); ++chan)
 	{

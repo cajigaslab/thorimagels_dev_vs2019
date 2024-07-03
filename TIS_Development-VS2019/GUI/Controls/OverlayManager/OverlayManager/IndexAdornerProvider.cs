@@ -82,7 +82,7 @@
             {
                 ROIEllipse ellipse = (this.AdornedElement as ROIEllipse);
                 Point pt = new Point(ellipse.Center.X - (ellipse.ROIWidth / 2 / Math.Sqrt(2)), ellipse.Center.Y - (ellipse.ROIHeight / 2 / Math.Sqrt(2)));
-                Rect segmentBounds = new Rect(Math.Max(pt.X - squareSize, 0), Math.Max(pt.Y - squareSize, 0), squareSize/2, squareSize/2);
+                Rect segmentBounds = new Rect(Math.Max(pt.X - squareSize, 0), Math.Max(pt.Y - squareSize, 0), squareSize / 2, squareSize / 2);
                 _text = new FormattedText(
                             Index.ToString(), System.Threading.Thread.CurrentThread.CurrentCulture,
                             System.Windows.FlowDirection.LeftToRight,
@@ -90,6 +90,54 @@
                             VisualTreeHelper.GetDpi(this).PixelsPerDip);
 
                 drawingContext.DrawText(_text, segmentBounds.TopLeft);
+            }
+            else if (_adornedElementType.Name.Equals("ROILine"))
+            {
+                ROILine line = (this.AdornedElement as ROILine);
+
+                int x1 = (int)Math.Floor(line.StartPoint.X);
+                int x2 = (int)Math.Floor(line.EndPoint.X);
+                int y1 = (int)Math.Floor(line.StartPoint.Y);
+                int y2 = (int)Math.Floor(line.EndPoint.Y);
+
+                int maxX = (x1 > x2) ? x1 : x2;
+                int maxY = (y1 > y2) ? y1 : y2;
+                int minX = (x1 < x2) ? x1 : x1;
+                int minY = (y1 < y2) ? y1 : y2;
+
+                Rect segmentBounds;
+                if (y1 == y2)
+                {
+                    segmentBounds = new Rect(minX + (maxX - minX) / 2.0 - ImageWidth / 60.0, minY - (maxY - minY) - ImageWidth / 100.0, 2, 2);
+                }
+                else if (x1 == x2)
+                {
+                    double py = minY + (maxY - minY) / 2.0;
+                    segmentBounds = new Rect(x1 - 1 - ImageWidth / 80.0, py, 2, 2);
+                }
+                else
+                {
+                    double m = (double)(y1 - y2) / ((double)(x1 - x2));
+                    double b = y1 - m * x1;
+                    double py = minY + (maxY - minY) / 2.0;
+                    double px = (py - b) / m;
+                    if (m < 0)
+                    {
+                        segmentBounds = new Rect(px - 1 - ImageWidth / 80.0, py + ImageWidth / 80.0, 2, 2);
+                    }
+                    else
+                    {
+                        segmentBounds = new Rect(px - 1 - ImageWidth / 80.0, py - ImageWidth / 80.0, 2, 2);
+                    }
+                }
+
+                _text = new FormattedText(
+                    Index.ToString(), System.Threading.Thread.CurrentThread.CurrentCulture,
+                    System.Windows.FlowDirection.LeftToRight,
+                    new Typeface("Arial"), FontSize, _foreground,
+                    VisualTreeHelper.GetDpi(this).PixelsPerDip);
+
+                drawingContext.DrawText(_text, segmentBounds.BottomRight);
             }
             else if (_adornedElementType.Name.Equals("Line"))
             {
@@ -142,6 +190,57 @@
             else if (_adornedElementType.Name.Equals("Polyline"))
             {
                 Polyline polyline = (this.AdornedElement as Polyline);
+                if (2 > polyline.Points.Count)
+                {
+                    return;
+                }
+                int x1 = (int)Math.Floor(polyline.Points[0].X);
+                int x2 = (int)Math.Floor(polyline.Points[1].X);
+                int y1 = (int)Math.Floor(polyline.Points[0].Y);
+                int y2 = (int)Math.Floor(polyline.Points[1].Y);
+
+                int maxX = (x1 > x2) ? x1 : x2;
+                int maxY = (y1 > y2) ? y1 : y2;
+                int minX = (x1 < x2) ? x1 : x1;
+                int minY = (y1 < y2) ? y1 : y2;
+
+                Rect segmentBounds;
+                if (y1 == y2)
+                {
+                    segmentBounds = new Rect(minX + (maxX - minX) / 2.0 - ImageWidth / 60.0, minY - (maxY - minY) - ImageWidth / 80.0, 2, 2);
+                }
+                else if (x1 == x2)
+                {
+                    double py = minY + (maxY - minY) / 2.0;
+                    segmentBounds = new Rect(x1 - 1 - ImageWidth / 80.0, py, 2, 2);
+                }
+                else
+                {
+                    double py = minY + (maxY - minY) / 2.0;
+                    double m = (double)(y1 - y2) / ((double)(x1 - x2));
+                    double b = y1 - m * x1;
+                    double px = (py - b) / m;
+                    if (m < 0)
+                    {
+                        segmentBounds = new Rect(px - 1 - ImageWidth / 80.0, py + ImageWidth / 80.0, 2, 2);
+                    }
+                    else
+                    {
+                        segmentBounds = new Rect(px - 1 - ImageWidth / 80.0, py - ImageWidth / 80.0, 2, 2);
+                    }
+                }
+
+                _text = new FormattedText(
+                    Index.ToString(), System.Threading.Thread.CurrentThread.CurrentCulture,
+                    System.Windows.FlowDirection.LeftToRight,
+                    new Typeface("Arial"), FontSize, _foreground,
+                    VisualTreeHelper.GetDpi(this).PixelsPerDip);
+
+                drawingContext.DrawText(_text, segmentBounds.BottomRight);
+            }
+            else if (_adornedElementType.Name.Equals("ROIPolyline"))
+            {
+                ROIPolyline polyline = (this.AdornedElement as ROIPolyline);
                 if (2 > polyline.Points.Count)
                 {
                     return;

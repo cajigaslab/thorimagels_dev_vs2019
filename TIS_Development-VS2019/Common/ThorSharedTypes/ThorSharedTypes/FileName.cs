@@ -33,48 +33,84 @@
         /// Constructs a new FileName object
         /// </summary>
         /// <param name="name"> The file name </param>
-        public FileName(string name)
+        public FileName(string name, bool hasExtension = true)
         {
             GetDigitCounts();
+
+            if (false == hasExtension)
+            {
+                NameWithoutExtension = name;
+                return;
+            }
+
             FullName = name;
-            if (name.LastIndexOf('.') >= 0)
+            if (name.LastIndexOf('.') >= 0 && hasExtension)
             {
                 FileExtension = name.Substring(name.LastIndexOf('.'), name.Length - name.LastIndexOf('.'));
             }
-            if (null != FileExtension)
+            if (null != FileExtension && hasExtension)
             {
                 NameWithoutNumber = (name.Contains(INDEX_SEPARATOR) && !string.IsNullOrEmpty(NameNumber)) ?
                         name.Substring(0, name.Length - FileExtension.Length - NumDigits - INDEX_SEPARATOR.Length) :
                         name.Substring(0, name.Length - FileExtension.Length);
             }
+
+            
         }
 
         /// <summary>
         /// Constructs a new FileName object with provided index separator
         /// </summary>
         /// <param name="name"> The file name </param>
-        public FileName(string name, char separator)
+        public FileName(string name, char separator, bool hasExtension = true)
         {
-            GetDigitCounts();
-            NameWithoutNumber = (name.LastIndexOf(separator) > 0) ? name.Substring(0, name.LastIndexOf(separator)) : name;
 
-            if (name.LastIndexOf('.') >= 0)
+            if (true == hasExtension)
             {
-                FileExtension = name.Substring(name.LastIndexOf('.'), name.Length - name.LastIndexOf('.'));
-                if (name.LastIndexOf(separator) < name.LastIndexOf('.') - 1)
+                GetDigitCounts();
+                NameWithoutNumber = (name.LastIndexOf(separator) > 0) ? name.Substring(0, name.LastIndexOf(separator)) : name;
+
+                if (name.LastIndexOf('.') >= 0)
                 {
-                    NameNumber = (0 < name.LastIndexOf(separator)) ?
-                        name.Substring(name.LastIndexOf(separator) + 1, name.Length - name.LastIndexOf('.')) : "000";
+                    FileExtension = name.Substring(name.LastIndexOf('.'), name.Length - name.LastIndexOf('.'));
+                    if (name.LastIndexOf(separator) < name.LastIndexOf('.') - 1)
+                    {
+                        NameNumber = (0 < name.LastIndexOf(separator)) ?
+                            name.Substring(name.LastIndexOf(separator) + 1, name.Length - name.LastIndexOf('.')) : "000";
+                    }
                 }
-            }
-            else if ((0 < name.LastIndexOf(separator)) && (name.LastIndexOf(separator) < (name.Length - 1)))
-            {
-                NameNumber = name.Substring(name.LastIndexOf(separator) + 1, name.Length - name.LastIndexOf(separator) - 1);
+                else if ((0 < name.LastIndexOf(separator)) && (name.LastIndexOf(separator) < (name.Length - 1)))
+                {
+                    NameNumber = name.Substring(name.LastIndexOf(separator) + 1, name.Length - name.LastIndexOf(separator) - 1);
+                }
+                else
+                {
+                    NameNumber = "000";
+                }
             }
             else
             {
-                NameNumber = "000";
+                GetDigitCounts();
+                NameWithoutNumber = (name.LastIndexOf(separator) > 0) ? name.Substring(0, name.LastIndexOf(separator)) : name;
+
+                if (name.LastIndexOf('.') >= 0)
+                {
+                    if (name.LastIndexOf(separator) < name.LastIndexOf('.') - 1)
+                    {
+                        NameNumber = (0 < name.LastIndexOf(separator)) ?
+                            name.Substring(name.LastIndexOf(separator) + 1, name.Length - name.LastIndexOf('.')) : "000";
+                    }
+                }
+                else if ((0 < name.LastIndexOf(separator)) && (name.LastIndexOf(separator) < (name.Length - 1)))
+                {
+                    NameNumber = name.Substring(name.LastIndexOf(separator) + 1, name.Length - name.LastIndexOf(separator) - 1);
+                }
+                else
+                {
+                    NameNumber = "000";
+                }
             }
+            
         }
 
         /// <summary>
@@ -231,6 +267,13 @@
 
         public static int GetDigitCounts()
         {
+            string exeName = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+            string exeFileName = System.IO.Path.GetFileName(exeName);
+            if (exeFileName == "ThorSync.exe")
+            {
+                NumDigits = 3;
+                return NumDigits;
+            }
             string str = string.Empty;
             int imgIndxDigiCnts = NumDigits = (int)Constants.DEFAULT_FILE_FORMAT_DIGITS;
             try

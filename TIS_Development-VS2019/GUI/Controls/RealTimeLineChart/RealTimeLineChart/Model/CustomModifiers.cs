@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
+    using System.ComponentModel;
     using System.Diagnostics;
     using System.Linq;
     using System.Runtime.InteropServices;
@@ -14,7 +15,7 @@
     using System.Windows.Input;
     using System.Windows.Media;
     using System.Windows.Shapes;
-
+    using RealTimeLineChart.Model;
     using RealTimeLineChart.ViewModel;
 
     using SciChart;
@@ -40,7 +41,10 @@
     /// </summary>
     public class ChartCanvasModifier : ChartModifierBase
     {
+
+
         #region Fields
+        
 
         public static readonly DependencyProperty CursorBottomProperty = DependencyProperty.Register("CursorBottom",
             typeof(double),
@@ -70,6 +74,19 @@
             new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, new PropertyChangedCallback(OnMeasureCursorVisibleChanged)));
         public static readonly DependencyProperty TextForegroundProperty = DependencyProperty.Register("TextForeground", typeof(Brush), typeof(ChartCanvasModifier), new PropertyMetadata(new SolidColorBrush(Colors.White)));
 
+        public static readonly DependencyProperty FrameCursorXProperty = DependencyProperty.Register("FrameCursorX",
+            typeof(double),
+            typeof(ChartCanvasModifier),
+            new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, new PropertyChangedCallback(OnFrameCursorChanged)));
+        public static readonly DependencyProperty FrameCursorVisibleProperty = DependencyProperty.Register("FrameCursorVisible",
+            typeof(bool),
+            typeof(ChartCanvasModifier),
+            new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, new PropertyChangedCallback(OnFrameCursorVisibleChanged)));
+        public static readonly DependencyProperty FrameTextForegroundProperty = DependencyProperty.Register("FrameTextForeground", typeof(Brush), typeof(ChartCanvasModifier), new PropertyMetadata(new SolidColorBrush(Colors.White)));
+        
+        public static readonly DependencyProperty FrameBorderVisibleProperty = DependencyProperty.Register("FrameBorderVisible", typeof(bool), typeof(ChartCanvasModifier), new PropertyMetadata(true));
+        public static readonly DependencyProperty FrameCursorProperty = DependencyProperty.Register("FrameCursor", typeof(string), typeof(ChartCanvasModifier), new PropertyMetadata("FRAME_CURSOR"));
+
         public static Dictionary<string, MeasureCursorType> MeasureCursorTypeDictionary = new Dictionary<string, MeasureCursorType>()
         {
         {"MEASURECURSOR_ALL", MeasureCursorType.All},
@@ -79,11 +96,29 @@
         public static Action<int, double> UpdateCursorTBLR;
         public static Action<bool> UpdateMeasureCursor;
 
+        public static Action<int> UpdateFrameCursorXAction;
+
+        public static Action<double> UpdateFrameCursorX;
+        public static Action<bool> UpdateFrameCursor;
+
         private string[] cursorBorder = new string[4] { "cursorBorder_top", "cursorBorder_bottom", "cursorBorder_left", "cursorBorder_right" };
         private string[] _cursorName = new string[4] { "cursor_top", "cursor_bottom", "cursor_left", "cursor_right" };
+        
         private Line _line;
         private Border[] _measurementBorders = new Border[4];
         private Line[] _measurementCursors = null;
+
+        private string FrameBorder = "Frame";
+        private string _frameName =  "Frame_Name" ;
+
+        private bool _currentlyDragging = false;
+
+        private static int _averaging;
+        private Line _frameLine;
+        private Border _frameBorders = new Border();// = new Border();
+
+        private int currentFrameNumber = -1;
+
 
         #endregion Fields
 
@@ -97,6 +132,13 @@
             this._line = new Line() { Stroke = this.LineBrush, StrokeThickness = 4, IsHitTestVisible = false, Tag = typeof(ChartCanvasModifier) };
             UpdateMeasureCursor += UpdateMeasureCursorStatus;
             UpdateCursorTBLR += RedrawCursorTBLR;
+
+            UpdateFrameCursor += UpdateFrameCursorStatus;
+            UpdateFrameCursorX += RedrawFrameCursor;
+            //UPdate Frame Cursor
+            UpdateFrameCursorXAction += DisplayFrameLine;
+
+            _averaging = 1;
         }
 
         #endregion Constructors
@@ -113,6 +155,36 @@
         #endregion Enumerations
 
         #region Properties
+
+        public static int Average
+        {
+            get
+            {
+                return _averaging;
+            }
+            set
+            {
+                _averaging = value; //OnPropertyChanged("Averaging");
+            }
+        }
+
+        public int CurrentFrameNum
+        {
+            get
+            {
+                return currentFrameNumber;
+            }
+            set
+            {
+                currentFrameNumber = value;
+            }
+        }
+
+        public double CursorFrameX
+        {
+            get { return (double)GetValue(FrameCursorXProperty); }
+            set { SetValue(FrameCursorXProperty, value); }
+        }
 
         public double CursorBottom
         {
@@ -171,7 +243,9 @@
         public bool MeasureBorderVisible
         {
             get { return (bool)GetValue(MeasureBorderVisibleProperty); }
-            set { SetValue(MeasureBorderVisibleProperty, value); }
+            set { SetValue(MeasureBorderVisibleProperty, value);
+                SetValue(FrameBorderVisibleProperty, value);
+            }
         }
 
         public string MeasureCursor
@@ -183,7 +257,37 @@
         public bool MeasureCursorVisible
         {
             get { return (bool)GetValue(MeasureCursorVisibleProperty); }
-            set { SetValue(MeasureCursorVisibleProperty, value); }
+            set {
+                SetValue(MeasureCursorVisibleProperty, value);
+                SetValue(FrameCursorVisibleProperty, value);
+            }
+        }
+        /// <summary>
+        /// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// </summary>
+        /// 
+        public bool FrameBorderVisible
+        {
+            get { return (bool)GetValue(FrameBorderVisibleProperty); }
+            set { SetValue(FrameBorderVisibleProperty, value); }
+        }
+
+        public string FrameCursor
+        {
+            get { return (string)GetValue(FrameCursorProperty); }
+            set { SetValue(FrameCursorProperty, value); }
+        }
+
+        public bool FrameCursorVisible
+        {
+            get { return (bool)GetValue(FrameCursorVisibleProperty); }
+            set { SetValue(FrameCursorVisibleProperty, value); }
+        }
+
+        public double FrameCursorX
+        {
+            get { return (double)GetValue(FrameCursorXProperty); }
+            set { SetValue(FrameCursorXProperty, value); }
         }
 
         /// <summary>
@@ -197,11 +301,9 @@
             get { return (Brush)GetValue(TextForegroundProperty); }
             set { SetValue(TextForegroundProperty, value); }
         }
-
         #endregion Properties
 
         #region Methods
-
         /// <summary>
         /// Adds the axislabel.
         /// </summary>
@@ -309,6 +411,139 @@
             }
         }
 
+        /// <summary>
+        /// Displays the cursor line.
+        /// </summary>
+        public void DisplayFrameLine()
+        {
+            
+            if (!AddFrameCursor() || null == this.XAxis || null == this.YAxis || false == FrameCursorVisible)
+                return;
+
+            this.XAxis.VisibleRangeChanged += XAxis_VisibleRangeChanged;
+            this.YAxis.VisibleRangeChanged += YAxis_VisibleRangeChanged;
+
+            
+            //left line
+            _frameLine.X1 = _frameLine.X2 = this.ModifierSurface.ActualWidth / 4 - (this.ModifierSurface.ActualWidth / 10);
+            _frameLine.Y1 = 0;
+            _frameLine.Y2 = this.ModifierSurface.ActualHeight;
+            var xCalc = this.XAxis.GetCurrentCoordinateCalculator();
+            var yCalc = this.YAxis.GetCurrentCoordinateCalculator();
+
+
+
+            //_measCursors
+            _frameLine.Visibility =  Visibility.Visible;
+
+            _frameBorders.Visibility = (FrameBorderVisible) ? Visibility.Visible : Visibility.Collapsed;
+
+            //if (Visibility.Visible != _frameBorders.Visibility)
+            // return;
+
+            //A
+            List<double> times = RealTimeDataCapture.Instance.FrameTimes;
+            TextBlock tmp = (TextBlock)_frameBorders.Child;
+
+
+            if (null == times) //if times is null but the cursos should be displayed
+            {
+                tmp.Text = "" + FrameCursorX.ToString("0.###");
+                
+
+            }
+            else
+            {
+                int c = 0;
+                for (int x = 0; x < times.Count; x++)
+                {
+                    if (times[x] > FrameCursorX)
+                        break;
+
+                    c = c + 1;
+                }
+
+                tmp.Text = "" + c;
+                //currentFrameNumber = c;
+            }
+
+            this.ModifierSurface.Children.Remove(this._frameLine);
+            this.ModifierSurface.Children.Add(this._frameLine);
+
+            int len = tmp.Text.Length;
+
+            AxisCanvas.SetLeft(this._frameBorders, this._frameLine.X1 - (9 + (4 * (len - 1))));  //No  longer hardcoded could be better
+            AxisCanvas.SetTop(this._frameBorders, -2);
+
+            currentFrameNumber = -1000;
+            CursorFrameX = xCalc.GetDataValue(_frameLine.X1);
+        }
+
+        public void DisplayFrameLine(int frame)
+        { //!AddFrameCursor() 
+
+            if (null == this._frameLine || null == this.YAxis || null == this.XAxis || true == _currentlyDragging )//|| true == IsDragToScale )//|| false == FrameCursorVisible)
+                return;
+            List<double> times = RealTimeDataCapture.Instance.FrameTimes;
+            if (times == null || frame > times.Count)
+                return;
+
+            currentFrameNumber = frame;
+
+            TextBlock tmp = (TextBlock)_frameBorders.Child;
+            // Position the rollover line
+            var yCalc = this.YAxis.GetCurrentCoordinateCalculator();
+            var xCalc = this.XAxis.GetCurrentCoordinateCalculator();
+
+            //if(frame - 1 < 0 || frame > times.Count())
+            //{
+            //    return;
+            //} 
+            
+            this._frameLine.X1 = xCalc.GetCoordinate(times[(frame - 1) * _averaging]); //indexs start at zero, frames start counting with one
+            this._frameLine.X2 = this._frameLine.X1;
+            this._frameLine.Y1 = 0;
+            this._frameLine.Y2 = ModifierSurface.ActualHeight;
+
+
+            tmp.Text = "" + frame;
+
+
+            this.ModifierSurface.Children.Remove(this._frameLine);
+            this.ModifierSurface.Children.Add(this._frameLine);
+
+            if (Visibility.Visible != this._frameLine.Visibility)
+                return;
+
+            int len = tmp.Text.Length;
+
+            AxisCanvas.SetLeft(this._frameBorders, this._frameLine.X1 - (9 + (4 * (len - 1))));  //This is hardcoded for and the else is hardcoded for 2 digits
+            AxisCanvas.SetTop(this._frameBorders, -2);
+
+            FrameCursorX = this._frameLine.X1;
+            
+        }
+        /// <summary>
+        /// Hides the cursor line.
+        /// </summary>
+        public void HideFrameLine()
+        {
+            if (!AddFrameCursor())
+                return;
+
+            if (null != this.XAxis)
+                this.XAxis.VisibleRangeChanged -= XAxis_VisibleRangeChanged;
+            if (null != this.YAxis)
+                this.YAxis.VisibleRangeChanged -= YAxis_VisibleRangeChanged;
+
+            
+                _frameLine.Visibility = Visibility.Collapsed;
+                _frameBorders.Visibility = Visibility.Collapsed;
+            
+
+            CursorFrameX = 0;
+            
+        }
         /// <summary>
         /// Hides the cursor line.
         /// </summary>
@@ -478,8 +713,13 @@
                             CursorRight = this.XAxis.GetCurrentCoordinateCalculator().GetDataValue(pt.X);
                             break;
                         default:
+                            if (pt.X < modifierSurfaceBounds.Left || pt.X > modifierSurfaceBounds.Right)
+                                return;
+
+                            FrameCursorX = this.XAxis.GetCurrentCoordinateCalculator().GetDataValue(pt.X);
                             break;
                     }
+                    
                 }
             }
             catch (Exception ex)
@@ -522,6 +762,8 @@
                 (this.ParentSurface.ModifierSurface.Children[3] as Line).Y2 = this.ModifierSurface.ActualHeight;
                 (this.ParentSurface.ModifierSurface.Children[3] as Line).X1 = (this.ParentSurface.ModifierSurface.Children[3] as Line).X2 = xCalc.GetCoordinate(CursorRight);
 
+                //TODO resize frame cursor
+
                 for (int i = 0; i < _cursorName.Length; i++)
                 {
                     AddAxislabel(i);
@@ -554,6 +796,11 @@
             UpdateCursorTBLR(0, (double)e.NewValue);
         }
 
+        public static void OnFrameCursorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            UpdateFrameCursorX((double)e.NewValue);
+        }
+
         /// <summary>
         /// Called when [line brush changed].
         /// </summary>
@@ -568,7 +815,15 @@
         private static void OnMeasureCursorVisibleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             UpdateMeasureCursor((bool)e.NewValue);
+   
         }
+
+        private static void OnFrameCursorVisibleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            UpdateFrameCursor((bool)e.NewValue);
+        }
+
+        
 
         /// <summary>
         /// Add the measurement cursors once.
@@ -599,16 +854,89 @@
         }
 
         /// <summary>
+        /// Add the measurement cursors once.
+        /// </summary>
+        private bool AddFrameCursor()
+        {
+            if (null == this.ModifierSurface || null == this.ParentSurface)
+                return false;
+
+            if (null == _frameLine)
+            {
+                InitFrameCursor();
+
+                ParentSurface.ModifierSurface.Children.Add(_frameLine);
+
+
+
+                ParentSurface.XAxis.ModifierAxisCanvas.Children.Add( _frameBorders);
+                    
+                
+            }
+            return true;
+        }
+
+
+        /// <summary>
+        /// Initializes the mesurement cursors.
+        /// </summary>
+        private void InitFrameCursor()
+        {
+            if (null == _frameLine)
+            {
+
+                    this._frameLine = new Line()
+                    {
+                        Name = _frameName,
+                        Stroke = Brushes.Orange,
+                        StrokeThickness = 4,
+                        IsHitTestVisible = true,
+                        Visibility = Visibility.Collapsed,
+                    };
+
+                    this._frameBorders = new Border()
+                    {
+                        Name = FrameBorder,
+                        BorderBrush = Brushes.OrangeRed,
+                        BorderThickness = new Thickness(2),
+                        Background = Brushes.Orange,
+                        CornerRadius = new CornerRadius(2, 2, 2, 2),
+                        Child = new TextBlock()
+                        {
+                            Text = "NA",
+                            FontSize = 12,
+                            Margin = new Thickness(3),
+                            Foreground = TextForeground,
+                        },
+                        Visibility = Visibility.Collapsed,
+                    };
+                    this._frameBorders.MouseDown += ChartBordersModifier_MouseDown;
+                    this._frameBorders.MouseEnter += ChartBordersModifier_MouseEnter;
+                    this._frameBorders.MouseLeave += ChartBordersModifier_MouseLeave;
+            }
+        }
+
+        /// <summary>
         /// Handles the MouseDown event of the ChartBordersModifier control.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseButtonEventArgs"/> instance containing the event data.</param>
         private void ChartBordersModifier_MouseDown(object sender, MouseButtonEventArgs e)
         {
+            _currentlyDragging = true;
             var border = sender as Border;
-            CursorSelectedIndex = Array.IndexOf(cursorBorder, border.Name);
+
+            string[] allCursors = new string[cursorBorder.Length + 1];
+
+            System.Array.Copy(cursorBorder, allCursors, cursorBorder.Length);
+
+            allCursors[allCursors.Length - 1] = FrameBorder;
+
+            CursorSelectedIndex = Array.IndexOf(allCursors, border.Name);
             IsDragToScale = false;
             e.Handled = true;
+
+
         }
 
         /// <summary>
@@ -632,10 +960,17 @@
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
         private void ChartBordersModifier_MouseLeave(object sender, MouseEventArgs e)
         {
+            _currentlyDragging = false;
             if (this.Cursor != Cursors.Wait)
             {
                 Mouse.OverrideCursor = Cursors.Arrow;
             }
+            
+            if ( RealTimeLineChartViewModel._instance.ThorImageLSConnectionStats) // ThorImageLSConnectionStats
+            {
+                RealTimeLineChartViewModel._instance.SendToClient("SyncFrame", currentFrameNumber + "");
+            }
+            
             e.Handled = true;
         }
 
@@ -747,6 +1082,127 @@
             AddAxislabel(index);
         }
 
+
+        public void RedrawFrameCursor(double obj)
+        {
+            if (null == _frameLine|| null == this.YAxis || null == this.XAxis || true == IsDragToScale || false == FrameCursorVisible)
+                return;
+
+            // Position the rollover line
+            var yCalc = this.YAxis.GetCurrentCoordinateCalculator();
+            var xCalc = this.XAxis.GetCurrentCoordinateCalculator();
+
+            if(xCalc.GetCoordinate(FrameCursorX) > this.XAxis.Width ) //Math.Abs(this.XAxis.Width - _frameLine.X1) > 25
+            {
+                return;
+            }
+
+            List<double> times = RealTimeDataCapture.Instance.FrameTimes;
+            TextBlock tmp = (TextBlock)_frameBorders.Child;
+
+            int frameCounter = 0;
+            if (times == null) //if times is null but the cursos should be displayed
+            {
+                try
+                {
+                    RealTimeLineChartViewModel._instance.RefreshFrameTimes = false;
+                    for (int x = 0; x < times.Count; x++)
+                    {
+                        if (times[x] > FrameCursorX)
+                            break;
+
+                        frameCounter = frameCounter + 1;
+                    }
+                }
+                catch
+                {
+                    tmp.Text = "" + FrameCursorX.ToString("0.###");
+                    RealTimeDataCapture.Instance.FrameTimes = null;
+                }
+            }
+            
+            else
+            {
+
+                for (int x = 0; x < times.Count; x++)
+                {
+                    if (times[x] > FrameCursorX)
+                        break;
+
+                    frameCounter = frameCounter + 1;
+                }
+            }
+            
+            if (Math.Abs(currentFrameNumber - frameCounter) > (.99) * times.Count && currentFrameNumber != -1000)
+            {
+                return;
+            }
+
+            //frameNumber to thorimage ipc
+            if ((currentFrameNumber != frameCounter && currentFrameNumber != -1) || currentFrameNumber == -1000)
+            {
+                if(times != null)
+                {
+                    if(frameCounter <= times.Count && RealTimeLineChartViewModel._instance.ThorImageLSConnectionStats) // ThorImageLSConnectionStats
+                    {
+                        if (_averaging > 1)
+                        {
+                            RealTimeLineChartViewModel._instance.SendToClient("SyncFrame", Math.Ceiling((frameCounter / (double)_averaging)) + "");
+                        }
+                        else
+                        {
+                            RealTimeLineChartViewModel._instance.SendToClient("SyncFrame", (frameCounter) + "");
+                        }
+                    }
+
+                    if (frameCounter > times.Count ) // ThorImageLSConnectionStats
+                    {
+                        return;
+                    }
+                }
+                
+            }
+
+            _frameLine.X1 = xCalc.GetCoordinate(FrameCursorX);
+            _frameLine.X2 = _frameLine.X1;
+            _frameLine.Y1 = 0;
+            _frameLine.Y2 = ModifierSurface.ActualHeight;
+
+            if(_averaging > 1)
+            {
+                currentFrameNumber = ((frameCounter / _averaging) + 1);
+            }
+            else
+            {
+                currentFrameNumber = frameCounter;
+            }
+            
+            
+            this.ModifierSurface.Children.Remove(this._frameLine);
+            this.ModifierSurface.Children.Add(this._frameLine);
+
+            if (Visibility.Visible != _frameLine.Visibility)
+                return;
+
+            if (_averaging > 1)
+            {
+                tmp.Text = "" + Math.Ceiling((frameCounter / (double)_averaging));
+            }
+            else
+            {
+                tmp.Text = "" + frameCounter;
+            }
+            
+            int len = tmp.Text.Length;
+
+
+            AxisCanvas.SetLeft(this._frameBorders, this._frameLine.X1 - (9 + (4 * (len - 1))));  //This is hardcoded for and the else is hardcoded for 2 digits
+            AxisCanvas.SetTop(this._frameBorders, -2);
+
+
+        }
+
+
         /// <summary>
         /// Display or hide measure cursors
         /// </summary>
@@ -763,6 +1219,23 @@
             }
         }
 
+        /// <summary>
+        /// Display or hide measure cursors
+        /// </summary>
+        /// <param name="obj"></param>
+        private void UpdateFrameCursorStatus(bool obj)
+        {
+            if (obj)
+            {
+                DisplayFrameLine();
+            }
+            else
+            {
+                HideFrameLine();
+            }
+        }
+
+
         private void XAxis_VisibleRangeChanged(object sender, VisibleRangeChangedEventArgs e)
         {
             if (MeasureCursorVisible)
@@ -774,6 +1247,16 @@
                 CursorLeft = xCalc.GetDataValue(_measurementCursors[2].X1);
                 CursorRight = xCalc.GetDataValue(_measurementCursors[3].X1);
             }
+
+            if(FrameCursorVisible)
+            {
+                if ((Visibility.Visible != _frameLine.Visibility)) //If frame line is not visible
+                    return;
+
+                var xCalc = this.XAxis.GetCurrentCoordinateCalculator();
+                CursorFrameX = xCalc.GetDataValue(_frameLine.X1);
+            }
+
         }
 
         private void YAxis_VisibleRangeChanged(object sender, VisibleRangeChangedEventArgs e)

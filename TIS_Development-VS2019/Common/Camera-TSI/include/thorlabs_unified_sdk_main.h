@@ -20,11 +20,11 @@
 
 #pragma once
 
-/*! This function obtains the unified SDK version.
-*
-*   \returns A character string value indicating the unified SDK version.
-*/
-typedef char* (*TL_MODULE_GET_VERSION)(); /* tl_module_get_version */
+///*! This function obtains the unified SDK version.
+//*
+//*   \returns A character string value indicating the unified SDK version.
+//*/
+//typedef char * (*TL_MODULE_GET_VERSION)(); /* tl_module_get_version */
 
 /*! This function opens the unified SDK and initializes its internal state.
 *   This function must be called prior to calling any other API function (except tl_module_get_version).
@@ -33,7 +33,7 @@ typedef char* (*TL_MODULE_GET_VERSION)(); /* tl_module_get_version */
 */
 typedef int (*TL_OPEN_SDK)(); /* tl_open_sdk */
 
-/*! This function close the unified SDK and cleans up any internal state.  After this function has been called, 
+/*! This function close the unified SDK and cleans up any internal state.  After this function has been called,
 *   it is an error to subsequently call any other API function.
 *   Any attempt to do so could result in undefined and unpredictable behavior.
 *
@@ -49,7 +49,7 @@ typedef int (*TL_CLOSE_SDK)(); /* tl_close_sdk */
 *
 *   \returns A ::tl_error_codes value to indicate success or failure (::TL_NO_ERROR indicates success).
 */
-typedef int (*TL_GET_DEVICE_IDS) (char*, int); /* tl_get_device_ids */
+typedef int (*TL_GET_DEVICE_IDS)(char *, int); /* tl_get_device_ids */
 
 /*! This function opens the device specified by the combination of the device module ID and device ID.
 *
@@ -59,7 +59,7 @@ typedef int (*TL_GET_DEVICE_IDS) (char*, int); /* tl_get_device_ids */
 *
 *   \returns A ::tl_error_codes value to indicate success or failure (::TL_NO_ERROR indicates success).
 */
-typedef int (*TL_OPEN_DEVICE) (char*, char*, void**); /* tl_open_device */
+typedef int (*TL_OPEN_DEVICE)(char *, char *, void **); /* tl_open_device */
 
 /*! This function closes the device corresponding to the specified device ID.
 *
@@ -67,30 +67,37 @@ typedef int (*TL_OPEN_DEVICE) (char*, char*, void**); /* tl_open_device */
 *
 *   \returns A ::tl_error_codes value to indicate success or failure (::TL_NO_ERROR indicates success).
 */
-typedef int (*TL_CLOSE_DEVICE) (void*); /* tl_close_device */
+typedef int (*TL_CLOSE_DEVICE)(void *); /* tl_close_device */
 
 /*! This function gets the data associated with the specified parameter for the specified device.
 *
 *   \param[in] The handle to the device.
-*   \param[in] The parameter corresponding to the data to get.
-*   \param[out] The returned data.
-*   \param[in] The size of the memory block to received the returned data.
+*   \param[in] Command string to send to the device.
+*   \param[in] The command size (in bytes) including any null terminator.
+*   \param[out] Buffer to write binary data to. Some commands may not return any data. Ignored if pointer is null.
+*   \param[in] The size of the buffer in bytes.
+*   \param[out] Buffer to write the string response to. 
+*   \param[in] The max size of the response string buffer in bytes.
 *   \param[in] Specifies that this invocation should be non-blocking (it will immediately return after being invoked).
 *
 *   \returns A ::tl_error_codes value to indicate success or failure (::TL_NO_ERROR indicates success).
 */
-typedef int (*TL_GET_DATA) (void*, const char*, void*, int, int); /* tl_get_data */
+// TODO: Just a note that the non-blocking parameter is not used by the C camera interface, it always wants to block. Perhaps the parameter should be removed and assume blocking? - JTF 1/15/21
+typedef int (*TL_GET_DATA)(void *, const char *, const size_t, void *, const size_t, char *, const size_t, int); /* tl_get_data */
 
-/*! This function sets the data associated with the specified parameter for the specified device.
+/*! This function gets the data associated with the specified parameter for the specified device.
 *
 *   \param[in] The handle to the device.
-*   \param[in] The parameter corresponding to the data to set.
-*   \param[in] The data to set the parameter value to.
-*   \param[in] The size of the memory block of the data to set.
+*   \param[in] Command string to send to the device.
+*   \param[in] The command size (in bytes) including any null terminator.
+*   \param[in] Buffer to read binary data from. Some commands may not use this data. Ignored if pointer is null.
+*   \param[in] The size of the buffer in bytes.
+*   \param[out] Buffer to write the string response to.
+*   \param[in] The max size of the response string buffer in bytes.
 *
 *   \returns A ::tl_error_codes value to indicate success or failure (::TL_NO_ERROR indicates success).
 */
-typedef int (*TL_SET_DATA) (void*, const char*, void*, int); /* tl_set_data */
+typedef int (*TL_SET_DATA)(void *, const char *, const size_t, void *, const size_t, char *, const size_t); /* tl_set_data */
 
 /*! This function gets all the module IDs that are supported by the current unified SDK instance.
 *
@@ -99,7 +106,7 @@ typedef int (*TL_SET_DATA) (void*, const char*, void*, int); /* tl_set_data */
 *
 *   \returns A ::tl_error_codes value to indicate success or failure (::TL_NO_ERROR indicates success).
 */
-typedef int (*TL_GET_DEVICE_MODULE_IDS) (char*, int); /* tl_get_device_module_ids */
+typedef int (*TL_GET_DEVICE_MODULE_IDS)(char *, int); /* tl_get_device_module_ids */
 
 /*! This function gets the data associated with the specified parameter for the specified module ID.
 *
@@ -110,7 +117,7 @@ typedef int (*TL_GET_DEVICE_MODULE_IDS) (char*, int); /* tl_get_device_module_id
 *
 *   \returns A ::tl_error_codes value to indicate success or failure (::TL_NO_ERROR indicates success).
 */
-typedef int (*TL_DEVICE_MODULE_GET_DATA) (const char*, const char*, void*, int); /* tl_device_module_get_data */
+typedef int (*TL_DEVICE_MODULE_GET_DATA)(const char *, const char *, void *, int); /* tl_device_module_get_data */
 
 /*! This function sets the data associated with the specified parameter for the specified module ID.
 *
@@ -121,4 +128,4 @@ typedef int (*TL_DEVICE_MODULE_GET_DATA) (const char*, const char*, void*, int);
 *
 *   \returns A ::tl_error_codes value to indicate success or failure (::TL_NO_ERROR indicates success).
 */
-typedef int (*TL_DEVICE_MODULE_SET_DATA) (const char*, const char*, void*, int); /* tl_device_module_set_data */
+typedef int (*TL_DEVICE_MODULE_SET_DATA)(const char *, const char *, void *, int); /* tl_device_module_set_data */

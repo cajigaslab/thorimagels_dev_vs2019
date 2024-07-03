@@ -101,9 +101,9 @@ long SetupImageCorrectionBuffers(IExperiment *pExp,long w, long h)
 
 		std::copy(pathBackgroundSubtraction.begin(), pathBackgroundSubtraction.end(), ws.begin());
 
-		long width,height,colorChannels;
+		long width,height,colorChannels,bitsPerPixel;
 
-		if(FALSE == ReadImageInfo((wchar_t*)ws.c_str(), width, height, colorChannels))
+		if(FALSE == ReadImageInfo((wchar_t*)ws.c_str(), width, height, colorChannels, bitsPerPixel))
 		{
 			return FALSE;
 		}
@@ -122,9 +122,9 @@ long SetupImageCorrectionBuffers(IExperiment *pExp,long w, long h)
 
 		std::copy(pathFlatField.begin(), pathFlatField.end(), ws.begin());
 
-		long width,height,colorChannels;
+		long width,height,colorChannels,bitsPerPixel;
 
-		if(FALSE == ReadImageInfo((wchar_t*)ws.c_str(), width, height, colorChannels))
+		if(FALSE == ReadImageInfo((wchar_t*)ws.c_str(), width, height, colorChannels, bitsPerPixel))
 		{
 			return FALSE;
 		}

@@ -80,9 +80,9 @@ DllExport_IMGWFBUILDER long GetGGalvoWaveformParamsWithStatus(SignalType sType, 
 	return ImageWaveformBuilder::getInstance(_boardID)->GetGGalvoWaveformParams(sType, params, preCaptureStatus, indexNow);
 }
 
-DllExport_IMGWFBUILDER long GetThorDAQGGWaveformParamsAndBufferWithStatus(SignalType sType, void* params, long preCaptureStatus, uint64_t& indexNow)
+DllExport_IMGWFBUILDER long GetThorDAQGGWaveformParamsAndBufferWithStatus(SignalType sType, void* params, long preCaptureStatus, uint64_t& indexNow, bool resetParams)
 {
-	return ImageWaveformBuilder::getInstance(_boardID)->GetThorDAQGGWaveformParams(sType, params, preCaptureStatus, indexNow);
+	return ImageWaveformBuilder::getInstance(_boardID)->GetThorDAQGGWaveformParams(sType, params, preCaptureStatus, indexNow, resetParams);
 }
 
 DllExport_IMGWFBUILDER long GetThorDAQGGWaveformParams(const wchar_t* waveformFileName, void* params)

@@ -11,7 +11,7 @@ ThorElectroPhys::ThorElectroPhys()
 {
 	_deviceDetected = FALSE;
 	_numDevices = 0;
-	_targetCount = 0;
+	_targetCount[0] = _targetCount[1] = 0;
 
 	_taskHandleDI0 = NULL;
 	for (long i = 0; i < MAX_DIG_PORT_OUTPUT; i++)
@@ -54,7 +54,7 @@ TaskHandle ThorElectroPhys::_taskTriggerHandle[2] = { NULL, NULL };	//[0:DO,1:AO
 TaskHandle ThorElectroPhys::_taskTriggerCO[2] = { NULL, NULL };		//[0:DO,1:AO]
 TaskHandle ThorElectroPhys::_taskTriggerCI = NULL;
 std::string ThorElectroPhys::_analogCounterInternalOutput = "";
-unsigned long long ThorElectroPhys::_targetCount = 0;
+unsigned long long ThorElectroPhys::_targetCount[2] = { 0 };
 unsigned long long ThorElectroPhys::_outputCount = 0;
 AnalogTaskType ThorElectroPhys::_analogTaskType = AnalogTaskType::LAST_ANALOG_TASK_TYPE;
 double* ThorElectroPhys::_freqMeasure = NULL;
@@ -64,7 +64,7 @@ HANDLE ThorElectroPhys::_freqThreadStopped = CreateEvent(NULL, TRUE, TRUE, NULL)
 HANDLE ThorElectroPhys::_freqThread = NULL;
 const uInt8 TASKDO = 0;
 const uInt8 TASKAO = 1;
-const uInt32 MULTIPLE_RATIO = 4;	//multiple of buffer sizes set to on-board memory
+HighPerfTimer _timer;
 
 
 ThorElectroPhys* ThorElectroPhys::getInstance()
@@ -121,63 +121,55 @@ TERM_TASK:
 int32 CVICALLBACK ThorElectroPhys::AnalogCycleDoneCallback(TaskHandle taskHandle, int32 signalID, void* callbackData)
 {
 	int32 error = 0;
+	::EnterCriticalSection(&_analogCritSection);
 	try
 	{
 		//finished 1 repeat
 		_analogRepeatCount++;
 
-		//[special case]: retriggerable by every triggers if 1 start 0 gaps 0 repeats configured
-		if ((0 == _triggerStruct->stepEdge[0]) && (0 > _triggerStruct->stepEdge[1]))
+		if (!_triggerStruct->enable ||
+			((0 < _triggerStruct->iterations) && (0 < _targetCount[TASKAO] && _analogRepeatCount >= _targetCount[TASKAO])))
 		{
-			if ((1 == _triggerStruct->startEdge) && (0 == _triggerStruct->repeats))
-			{
-				//do restart without checking condition
-			}
+			goto TERMINATE_TRIGGER;
 		}
-		else if ((0 < _triggerStruct->iterations) && (_analogRepeatCount >= _triggerStruct->repeats))
-		{
-			_analogRestarted = 0;
-			return 0;	//return if already done
-		}
-		//callback is invoked earlier than the task finishes
-		Sleep(12);
 
 		//try to restart tasks
 		if (AnalogTaskType::FINITE_LIMITED == _analogTaskType)
 		{
-			::EnterCriticalSection(&_analogCritSection);
+			//callback is invoked earlier than the task finishes
+			Sleep((DWORD)Constants::REARM_TIME_MS);
+
 			DAQmxStopTask(_taskTriggerHandle[TASKAO]);
-			//DAQmxStopTask(_taskTriggerCO[TASKAO]);
-			error &= DAQmxStartTask(_taskTriggerHandle[TASKAO]);
-			//error &= DAQmxStartTask(_taskTriggerCO[TASKAO]);
-			_analogRestarted = (DAQmxSuccess == error) ? TRUE : FALSE;
-			::LeaveCriticalSection(&_analogCritSection);
+			DAQmxStopTask(_taskTriggerCO[TASKAO]);
+			DAQmxErrChk(L"DAQmxStartTask", error = DAQmxStartTask(_taskTriggerHandle[TASKAO]));
+			DAQmxErrChk(L"DAQmxStartTask", error = DAQmxStartTask(_taskTriggerCO[TASKAO]));
 		}
 		else if (AnalogTaskType::CONTINUOUS_LIMITED == _analogTaskType || AnalogTaskType::CONTINUOUS_UNLIMITED == _analogTaskType)
 		{
-			if (SetAnalogTriggerTask())
+			if (SetAnalogTriggerTask(TRUE))
 			{
-				//DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerCO[TASKAO], GetTriggerInputLine().c_str(), DAQmx_Val_Rising));
-				//DAQmxErrChk(L"DAQmxSetStartTrigRetriggerable", error = DAQmxSetStartTrigRetriggerable(_taskTriggerCO[TASKAO], true));
-
-				DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerHandle[TASKAO], GetTriggerInputLine().c_str(), DAQmx_Val_Rising));
-
 				DAQmxErrChk(L"DAQmxTaskControl", error = DAQmxTaskControl(_taskTriggerHandle[TASKAO], DAQmx_Val_Task_Reserve));
 				DAQmxErrChk(L"DAQmxStartTask", error = DAQmxStartTask(_taskTriggerHandle[TASKAO]));
 
 				DAQmxErrChk(L"DAQmxTaskControl", error = DAQmxTaskControl(_taskTriggerCO[TASKAO], DAQmx_Val_Task_Reserve));
 				DAQmxErrChk(L"DAQmxStartTask", error = DAQmxStartTask(_taskTriggerCO[TASKAO]));	//actual start of AO
-				_analogRestarted = TRUE;
 			}
 		}
+		_analogRestarted = TRUE;
+		::LeaveCriticalSection(&_analogCritSection);
 	}
 	catch (...)
 	{
-		_analogRestarted = FALSE;
 		StringCbPrintfW(message, _MAX_PATH, L"ThorElectroPhys break at AnalogCycleDoneCallback due to error(%d).", error);
-		LogMessage(message, VERBOSE_EVENT);
-		CloseTriggerTasks();
+		LogMessage(message, ERROR_EVENT);
+		goto TERMINATE_TRIGGER;
 	}
+	return 0;
+
+TERMINATE_TRIGGER:
+	_analogRestarted = FALSE;
+	::LeaveCriticalSection(&_analogCritSection);
+	CloseTriggerTasks();
 	return 0;
 }
 
@@ -733,7 +725,12 @@ long ThorElectroPhys::SetParamBuffer(const long paramID, char* pBuffer, long siz
 			_triggerStruct = new EPhysTriggerStruct();
 		}
 		memcpy_s(_triggerStruct, size, pBuffer, size);
-		SetTriggerTasks();
+
+		//no auto-restart for analog since it depends on cycle done callback
+		if (_analogRestarted)
+			CloseTriggerTasks();
+		else
+			SetTriggerTasks();
 		break;
 	case PARAM_EPHYS_GOTO_BUFFER:
 		CloseTriggerTasks();
@@ -875,17 +872,21 @@ long ThorElectroPhys::StatusPosition(long& status)
 				}
 				if ((NULL != _taskTriggerCO[TASKAO]) && ((int)EPhysOutputType::ANALOG_ONLY == _triggerStruct->outputType || (int)EPhysOutputType::BOTH == _triggerStruct->outputType))
 				{
-					//[NOTE]not throw error to close all
+					//[NOTE] not throwing errors to close all
 					//DAQmxErrChk(L"DAQmxIsTaskDone", error = DAQmxIsTaskDone(_taskTriggerCO[TASKAO], &isDone));
 					error = DAQmxIsTaskDone(_taskTriggerHandle[TASKAO], &isDone);
 					status &= (DAQmxSuccess != error) ? !_analogRestarted : (_analogRestarted ? 0 : isDone);
+
+					//StringCbPrintfW(message, _MAX_PATH, L"StatusPosition error(%d), isDone(%d), _analogRestarted(%d), status(%d).", error, isDone, _analogRestarted, status);
+					//LogMessage(message, INFORMATION_EVENT);
+
 				}
 				if ((EPhysTriggerMode::MANUAL == (EPhysTriggerMode)_triggerStruct->mode) ||
 					((1 == _triggerStruct->startEdge) && (0 == _triggerStruct->stepEdge[0]) && (0 > _triggerStruct->stepEdge[1])) && (0 == _triggerStruct->repeats))
 				{
 					//manual or special case [1,0,0] should keep CO task status
 				}
-				else if ((0 != _triggerStruct->iterations) && (_outputCount >= _targetCount))
+				else if ((0 != _triggerStruct->iterations) && (_outputCount >= _targetCount[TASKDO]))
 				{
 					status = IDevice::STATUS_READY;
 				}
@@ -945,6 +946,7 @@ void ThorElectroPhys::CloseTriggerTasks(long bringDownLines)
 		TerminateTask(_taskTriggerHandle[TASKAO]);
 		TerminateTask(_taskTriggerCO[TASKDO]);
 		TerminateTask(_taskTriggerCO[TASKAO]);
+		_analogRestarted = FALSE;
 		::LeaveCriticalSection(&_analogCritSection);
 	}
 
@@ -1050,12 +1052,9 @@ long ThorElectroPhys::SetDigitalTriggerTask()
 		}
 
 		//[special case]: retriggerable by every triggers if 1 start 0 gaps 0 repeats configured
-		if ((0 == _triggerStruct->stepEdge[0]) && (0 > _triggerStruct->stepEdge[1]))
+		if ((1 == _triggerStruct->startEdge) && (0 == _triggerStruct->stepEdge[0]) && (0 > _triggerStruct->stepEdge[1]) && (0 == _triggerStruct->repeats))
 		{
-			if ((1 == _triggerStruct->startEdge) && (0 == _triggerStruct->repeats))
-			{
-				return TRUE;	//start later
-			}
+			return TRUE;	//start later
 		}
 
 		if (EPhysTriggerMode::CUSTOM == (EPhysTriggerMode)_triggerStruct->mode && EPhysModeConfig::CUSTOM_CONFIG != _triggerStruct->configured)
@@ -1081,7 +1080,7 @@ TERMINATE_TRIGGER:
 	return FALSE;
 }
 
-long ThorElectroPhys::SetAnalogTriggerTask()
+long ThorElectroPhys::SetAnalogTriggerTask(long doSleep)
 {
 	int32 error = DAQmxSuccess;
 	uInt32 bufferSize = 0;		//max possible total buffer count be written per callback
@@ -1095,6 +1094,7 @@ long ThorElectroPhys::SetAnalogTriggerTask()
 		///******	  	  configure timing with specified durations,            	  	      ******///
 		///******	  	  build analog waveform and wait for it to be initialized	  	      ******///
 		///*****************************************************************************************///
+		_timer.Start();
 		_triggerStruct->minIdleMS = 0; // allow no idle in one period, instead of one clock time: (Constants::MS_TO_SEC / _triggerStruct->clockRateHz)
 		_triggerStruct->idleMS = std::max(_triggerStruct->minIdleMS, _triggerStruct->idleMS);
 
@@ -1120,6 +1120,11 @@ long ThorElectroPhys::SetAnalogTriggerTask()
 			LogMessage(message, ERROR_EVENT);
 			goto TERMINATE_TRIGGER;
 		}
+		_timer.Stop();
+
+		//callback is invoked earlier than the task finishes, consider waveform gen time
+		if (doSleep && (double)Constants::REARM_TIME_MS > _timer.ElapsedMilliseconds())
+			Sleep((DWORD)((double)Constants::REARM_TIME_MS - _timer.ElapsedMilliseconds()));
 
 		TerminateTask(_taskTriggerHandle[TASKAO]);
 		TerminateTask(_taskTriggerCO[TASKAO]);
@@ -1128,11 +1133,14 @@ long ThorElectroPhys::SetAnalogTriggerTask()
 		///******	set counter output for analog output task clock timing,											******///
 		///******	leave clock finite retriggerable and set finite allow-regen analog output in edge monitor mode	******///
 		///***************************************************************************************************************///
+		TerminateTask(_taskTriggerHandle[TASKAO]);
+		TerminateTask(_taskTriggerCO[TASKAO]);
+
 		DAQmxErrChk(L"DAQmxCreateTask", error = DAQmxCreateTask("", &_taskTriggerCO[TASKAO]));
 
 		DAQmxErrChk(L"DAQmxCreateCOPulseChanFreq", error = DAQmxCreateCOPulseChanFreq(_taskTriggerCO[TASKAO], _triggerConfig[ANALOG_COUNTER].c_str(), "", DAQmx_Val_Hz, DAQmx_Val_Low, 0.0, _triggerStruct->clockRateHz, 0.5));
 
-		//DAQmxErrChk(L"DAQmxCfgImplicitTiming", error = DAQmxCfgImplicitTiming(_taskTriggerCO[TASKAO], (0 < _triggerStruct->iterations) ? DAQmx_Val_FiniteSamps : DAQmx_Val_ContSamps, totalSize));
+		//[NOTE] leave continuous clock to avoid missing of first triggers
 		DAQmxErrChk(L"DAQmxCfgImplicitTiming", error = DAQmxCfgImplicitTiming(_taskTriggerCO[TASKAO], DAQmx_Val_ContSamps, totalSize));
 
 		///****************************************		configure Task AO		****************************************///
@@ -1150,8 +1158,6 @@ long ThorElectroPhys::SetAnalogTriggerTask()
 		DAQmxErrChk(L"DAQmxCfgOutputBuffer", error = DAQmxCfgOutputBuffer(_taskTriggerHandle[TASKAO], MULTIPLE_RATIO * bufferSize));
 
 		DAQmxErrChk(L"DAQmxRegisterDoneEvent", error = DAQmxRegisterDoneEvent(_taskTriggerHandle[TASKAO], 0, ThorElectroPhys::AnalogCycleDoneCallback, NULL));
-
-		//DAQmxErrChk(L"DAQmxSetWriteAttribute", error = DAQmxSetWriteAttribute(_taskTriggerHandle[TASKAO], DAQmx_Write_RegenMode, DAQmx_Val_DoNotAllowRegen));
 
 		//determine analog task type after waveform gen
 		_analogTaskType = (bufferSize < totalSize) ? AnalogTaskType::CONTINUOUS_LIMITED : AnalogTaskType::FINITE_LIMITED;
@@ -1195,15 +1201,6 @@ long ThorElectroPhys::SetAnalogTriggerTask()
 			return TRUE;		//start later
 		}
 
-		////[special case]: retriggerable by every triggers if 1 start 0 gaps 0 repeats configured
-		//if ((0 == _triggerStruct->stepEdge[0]) && (0 > _triggerStruct->stepEdge[1]))
-		//{
-		//	if ((1 == _triggerStruct->startEdge) && (0 == _triggerStruct->repeats))
-		//	{
-		//		return TRUE;	//start later
-		//	}
-		//}
-
 		if (EPhysTriggerMode::CUSTOM == (EPhysTriggerMode)_triggerStruct->mode && EPhysModeConfig::CUSTOM_CONFIG != _triggerStruct->configured)
 		{
 			StringCbPrintfW(message, _MAX_PATH, L"ThorElectroPhys not configured for custom input line.");
@@ -1211,20 +1208,12 @@ long ThorElectroPhys::SetAnalogTriggerTask()
 			goto TERMINATE_TRIGGER;
 		}
 
-		//DAQmxErrChk(L"DAQmxSetDigEdgeArmStartTrigSrc", error = DAQmxSetDigEdgeArmStartTrigSrc(_taskTriggerCO[TASKAO], GetTriggerInputLine().c_str()));
-
-		//DAQmxErrChk(L"DAQmxSetArmStartTrigType", error = DAQmxSetArmStartTrigType(_taskTriggerCO[TASKAO], DAQmx_Val_DigEdge));
-		//DAQmxErrChk(L"DAQmxSetDigEdgeArmStartTrigEdge", error = DAQmxSetDigEdgeArmStartTrigEdge(_taskTriggerCO[TASKAO], DAQmx_Val_Rising));
-
-		//DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerCO[TASKAO], _triggerConfig[EPhysTriggerLines::EDGE_OUTPUT].c_str(), DAQmx_Val_Rising));
-		//DAQmxErrChk(L"DAQmxSetStartTrigRetriggerable", error = DAQmxSetStartTrigRetriggerable(_taskTriggerCO[TASKAO], true));
-
-		////only need one task registered
-		//if (EPhysOutputType::ANALOG_ONLY == (EPhysOutputType)_triggerStruct->outputType)
-		//	DAQmxErrChk(L"DAQmxRegisterSignalEvent", error = DAQmxRegisterSignalEvent(_taskTriggerCO[TASKAO], DAQmx_Val_CounterOutputEvent, 0, TriggerCOCallback, NULL));
-
 		//AO cannot be armStarted
-		DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerHandle[TASKAO], _triggerConfig[EPhysTriggerLines::EDGE_OUTPUT].c_str(), DAQmx_Val_Rising));
+		//[special case]: retriggerable by every triggers if 1 start 0 gaps 0 repeats configured [1-0-0]
+		DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerHandle[TASKAO],
+			((1 == _triggerStruct->startEdge) && (0 == _triggerStruct->stepEdge[0]) && (0 > _triggerStruct->stepEdge[1])) ?
+			GetTriggerInputLine().c_str() : _triggerConfig[EPhysTriggerLines::EDGE_OUTPUT].c_str(),
+			DAQmx_Val_Rising));
 
 		//AO cannot be retriggerable in DAQmx_Val_ContSamps 
 		if (AnalogTaskType::FINITE_UNLIMITED == _analogTaskType)
@@ -1336,9 +1325,6 @@ long ThorElectroPhys::StartTriggerTasks()
 			}
 			if (NULL != _taskTriggerCO[TASKAO] && NULL != _taskTriggerHandle[TASKAO] && (EPhysOutputType::ANALOG_ONLY == (EPhysOutputType)_triggerStruct->outputType || EPhysOutputType::BOTH == (EPhysOutputType)_triggerStruct->outputType))
 			{
-				DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerCO[TASKAO], GetTriggerInputLine().c_str(), DAQmx_Val_Rising));
-				DAQmxErrChk(L"DAQmxSetStartTrigRetriggerable", error = DAQmxSetStartTrigRetriggerable(_taskTriggerCO[TASKAO], true));
-
 				DAQmxErrChk(L"DAQmxCfgDigEdgeStartTrig", error = DAQmxCfgDigEdgeStartTrig(_taskTriggerHandle[TASKAO], GetTriggerInputLine().c_str(), DAQmx_Val_Rising));
 				if (AnalogTaskType::FINITE_UNLIMITED == _analogTaskType)
 					DAQmxErrChk(L"DAQmxSetStartTrigRetriggerable", error = DAQmxSetStartTrigRetriggerable(_taskTriggerHandle[TASKAO], true));
@@ -1348,6 +1334,7 @@ long ThorElectroPhys::StartTriggerTasks()
 
 				DAQmxErrChk(L"DAQmxTaskControl", error = DAQmxTaskControl(_taskTriggerCO[TASKAO], DAQmx_Val_Task_Reserve));
 				DAQmxErrChk(L"DAQmxStartTask", error = DAQmxStartTask(_taskTriggerCO[TASKAO]));	//actual start of AO
+				_analogRestarted = TRUE;
 			}
 			return TRUE;
 		}
@@ -1379,6 +1366,7 @@ START_TRIGGERS:
 
 		DAQmxErrChk(L"DAQmxTaskControl", error = DAQmxTaskControl(_taskTriggerCO[TASKAO], DAQmx_Val_Task_Reserve));
 		DAQmxErrChk(L"DAQmxStartTask", error = DAQmxStartTask(_taskTriggerCO[TASKAO]));	//actual start of AO
+		_analogRestarted = TRUE;
 	}
 	return TRUE;
 
@@ -1412,22 +1400,28 @@ long ThorElectroPhys::SetTriggerTasks()
 			///******	register & count counter output event to estimate end of retriggerable CO task,	******///
 			///******	find out number of non-zero gaps												******///
 			///***********************************************************************************************///
-			_targetCount = _outputCount = _analogRepeatCount = _analogRestarted = 0;
+			_targetCount[TASKDO] = _outputCount = _analogRepeatCount = _analogRestarted = 0;
 			for (int i = 0; i < _MAX_PATH; i++)
 			{
 				if (0 > _triggerStruct->stepEdge[i])
 					break;
 				else if (0 < _triggerStruct->stepEdge[i])
-					_targetCount++;
+					_targetCount[TASKDO]++;
 			}
-			//determine # of rising edges based on non-zero gaps, then x 2 x iterations for # of CO event
+			_targetCount[TASKAO] = _targetCount[TASKDO];
+
+			//[NOTE]:
+			// For digital edge, determine # of rising edges based on non-zero gaps, then x 2 x iterations for # of CO event
+			// For analog, it's depending on # of cycle done callbacks
 			if (0 == _triggerStruct->stepEdge[0])
 			{
-				_targetCount = (0 == _triggerStruct->iterations) ? (-1) : (1 + _targetCount) * _triggerStruct->repeats * 2 * _triggerStruct->iterations;
+				_targetCount[TASKDO] = (0 == _triggerStruct->iterations) ? (-1) : (1 + _targetCount[TASKDO]) * _triggerStruct->repeats * 2 * _triggerStruct->iterations;
+				_targetCount[TASKAO] = (0 == _triggerStruct->repeats) ? (-1) : (1 + _targetCount[TASKAO]) * _triggerStruct->repeats;
 			}
 			else
 			{
-				_targetCount = (0 == _triggerStruct->iterations) ? (-1) : (1 + _targetCount * _triggerStruct->repeats) * 2 * _triggerStruct->iterations;
+				_targetCount[TASKDO] = (0 == _triggerStruct->iterations) ? (-1) : (1 + _targetCount[TASKDO] * _triggerStruct->repeats) * 2 * _triggerStruct->iterations;
+				_targetCount[TASKAO] = (0 == _triggerStruct->repeats) ? (-1) : (1 + _targetCount[TASKAO] * _triggerStruct->repeats);
 			}
 
 			// set up all tasks and start at once

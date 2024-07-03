@@ -10,15 +10,19 @@
   <ZipInformation workingdirectory="" filename=""/>
   <SchedulerInformation username="" password="" />
   <ZStage queryreference="0" />
+  <mROIMode enable="0" />
   <DisplayOptions>
     <General>
       <CenterScannersButton Visibility="Visible" />
       <GrayscaleForSingleChannel value="1" />
-      <ChannelTileViewSettings TilingEnableOption="False"  VerticalTiling="1"/>
-      <HistogramSettings ReducedBinValue="255" saturationCountVisibility="Collapsed"/>   
+      <DebugSettings showViewportUpdateRate="False" />
+	  <OnlyShowTrueSaturation value="1" />
+      <ChannelTileViewSettings TilingEnableOption="False" VerticalTiling="1"/>
+      <HistogramSettings ReducedBinValue="255" EnableMergedHistogram="False" EnableLineChart="False" NumberOfGridLines="0"/>   
     </General>
     <CaptureSetup saveSnapshots="0" snapshotExperimentName="Snapshot" snapshotBaseName="Snapshot" saveExperimentInfo="0" savePath="">
       <ScannerView Visibility="Visible" location="0">
+        <TwoWayAlignmentPanel Visibility="Visible" />
         <CoarsePanel Visibility="Collapsed"/>
         <FieldSizePanel Visibility="Collapsed" />
         <DigitalOffset Visibility="Collapsed" />
@@ -26,6 +30,11 @@
         <PixelDwellTime Visibility="Visible" />
         <TurnAroundAlteration Visibility="Collapsed" />
 		<FastOneWayImaging Visibility="Collapsed" />		
+		<SaturationCount Visibility="Collapsed" />
+		<PreImagingCalibrationCycles Visibility="Collapsed" />
+		<ImagingRampExtensionCycles Visibility="Collapsed" />
+		<ImageOnFlyback Visibility="Collapsed" />
+		<ImageDistortionCorrectionControl Visibility="Collapsed"/>
       </ScannerView>
       <AreaView Visibility="Visible" location="1">
         <ResolutionPresets>
@@ -63,8 +72,7 @@
             <Resolution width="1024" height="32" />
             <Resolution width="2048" height="32" />
           </KymographResolutionPresets>
-        </ResolutionPresets>
-        <ImageCorrectionControl Visibility="Collapsed"/>
+        </ResolutionPresets>        
         <GGSuperUser value="0" />
         <FieldFromROIZoom value="0" />
         <TimeBasedScan Visibility="Collapsed"/>
@@ -77,13 +85,13 @@
 	  <InvertedLightPathView LeftNameChange="Left" CenterNameChange="Center" RightNameChange="Right" NddNameChange="NDD"/>
       <BleachView Visibility="Collapsed" location="5" SLMPatternUnshifted="0" PowerEntryPreferred="1" AllowSavePattern="0" PatternMinMS="8">
         <OTMView Visibility="Collapsed" Exclusive="1"/>
-        <BleachCalibrationTool Visibility="Collapsed" CalibPatternScaleX="1" CalibPatternScaleY="1" CalibByBurning="1"/>
+        <BleachCalibrationTool Visibility="Collapsed" CalibPatternScaleX="1" CalibPatternScaleY="1" CalibByBurning="1" PowerDistributionVisibility="Collapsed"/>
       </BleachView>
       <ZView Visibility="Visible" Invert="0" Invert2="0" location="2" zZeroVisibility="Visible" z2ZeroVisibility="Visible" InvertVisibility="Visible" InvertLimitsZ1="0" InvertLimitsZ2="0" Z1InvertPlusMinusButton="0" Z2InvertPlusMinusButton="0" enableContinuousZStackPreview="0" />
       <PowerView Visibility="Collapsed" location="3"/>
 	  <MultiLaserControlView Visibility="Collapsed" location="6" />
       <PinholeView Visibility="Visible" SwitchSizeWithADU="0" location="8"/>
-      <XYView Visibility="Visible" SubColumnsMax="55" SubRowsMax="55" location="9" xZeroVisibility="Collapsed" yZeroVisibility="Collapsed" showInUM="1" showTileGrid="1" />
+      <XYView Visibility="Hidden" SubColumnsMax="55" SubRowsMax="55" location="9" xZeroVisibility="Collapsed" yZeroVisibility="Collapsed" showInUM="1" showTileGrid="1" />
       <CaptureOptionsView Visibility="Visible" location="10" />
       <ROIStatsWindow left="0" top="0" width="480" height="120" reset="0" display="0" />
       <LineProfileWindow left="100" top="100" width="300" height="300" reset="0" display="0" lineWidth="1" Autoscale="True" ConversionToUm="False" YMin="0" YMax="17000" />
@@ -129,23 +137,34 @@
       <CameraView Visibility="Collapsed" location="12" >
         <ResolutionPresets>
           <Resolution name="1501M/C 512x512 centered" top="264" left="440" bottom="776" right="952" />
+          <Resolution name="1501M/C 1024x1024 centered" top="8" left="184" bottom="1032" right="1208" />
           <Resolution name="sCMOS CS2100M/C 515x515 centered" top="284" left="704" bottom="796" right="1216" />
+          <Resolution name="sCMOS CS2100M/C 1024x1024 centered" top="28" left="448" bottom="1052" right="1472" />
           <Resolution name="CMOS CS505M/C 512x512 centered" top="768" left="968" bottom="1280" right="1480" />
+          <Resolution name="CMOS CS505M/C 1024x1024 centered" top="512" left="712" bottom="1536" right="1736" />
           <Resolution name="CMOS CS895M/C 512x512 centered" top="824" left="1792" bottom="1336" right="2304" />
+          <Resolution name="CMOS CS895M/C 1024x1024 centered" top="568" left="1536" bottom="1592" right="2560" />
           <Resolution name="4070M/C 512x512 centered" top="768" left="768" bottom="1280" right="1280" />
+          <Resolution name="4070M/C 1024x1024 centered" top="512" left="512" bottom="1536" right="1536" />
           <Resolution name="8050M/C 512x512 centered" top="980" left="1392" bottom="1492" right="1904" />
+          <Resolution name="8050M/C 1024x1024 centered" top="724" left="1136" bottom="1748" right="2160" />
+          <Resolution name="ORCA Fusion 512x512 centered" top="896" left="896" bottom="1408" right="1408" />
+          <Resolution name="ORCA Fusion 1024x1024 centered" top="640" left="640" bottom="1664" right="1664" />
+          <Resolution name="ORCA Flash 512x512 centered" top="768" left="768" bottom="1280" right="1280" />
+          <Resolution name="ORCA Flash 1024x1024 centered" top="512" left="512" bottom="1536" right="1536" />
         </ResolutionPresets>
       </CameraView>
       <DigitalSwitchesView Visibility="Visible" location="13" switchName1="1" switchName2="2" switchName3="3" switchName4="4" switchName5="5" switchName6="6" switchName7="7" switchName8="8" SwitchView="Visible" TriggerView="Collapsed" />
       <QuickTemplate Visibility="Collapsed" location="14"/>
       <LampView Visibility="Collapsed" location="15" />
-      <ThreePhotonView Visibility="Collapsed" location="16" PhaseCoarseVisibility="Collapsed" FIRSettingsVisibility="Collapsed" MultiplaneVisibility="Collapsed" AcquireDuringGalvoTurnAroundVisibility="Collapsed" DownsamplingRateVisibility="Collapsed" />
+      <ThreePhotonView Visibility="Collapsed" location="16" PhaseCoarseVisibility="Collapsed" FIRSettingsVisibility="Collapsed" MultiplaneVisibility="Collapsed" AcquireDuringGalvoTurnAroundVisibility="Collapsed" DownsamplingRateVisibility="Collapsed" PhaseFineVisibility="Collapsed"/>
 	    <EpiTurretView Visibility="Visible" EpiTurretPosName1="1" EpiTurretPosName2="2" EpiTurretPosName3="3" EpiTurretPosName4="4" EpiTurretPosName5="5" EpiTurretPosName6="6" />
       <LightEngineView Visibility="Collapsed" location="17" MainControlVisibility="Collapsed" />
 	    <DFLIMView Visibility="Collapsed" location="18" />
       <EpiturretControlView Visibility="Collapsed" location="19" />
       <AutoFocusControlView Visibility="Collapsed" location="20" />
       <MiniCircuitsSwitchControlView Visibility="Collapsed" location="21" A1LeftName="PMT GR" A1RightName="PMT GG" B1LeftName="PMT GR" B1RightName="PMT GG" C1LeftName="PMT GR" C1RightName="PMT GG" D1LeftName="PMT GR" D1RightName="PMT GG" A2LeftName="" A2RightName="" B2LeftName="" B2RightName="" C2LeftName="" C2RightName="" D2LeftName="" D2RightName="" />
+      <SequentialControlView Visibility="Collapsed" location="22" />
 	</CaptureSetup>
     <RunSample>
       <BleachingView Visibility="Collapsed"/>
@@ -157,6 +176,7 @@
     <Review>
       <DeepZoomView Visibility="Collapsed"/>
       <OpenInThorAnalysisButton Visibility="Collapsed"/>
+      <PreviewDisplay MaxFrameRate="120" />
     </Review>
     <OverlayManager showLineLength="0" showPolylineLength="0" />
     <HardwareSetup ImageDetector="Visible" BleachingScanner="Collapsed" ControlUnit="Visible" PMT1="Visible" PMT2="Visible" PMT3="Visible" PMT4="Visible" Shutter="Collapsed" ZStage="Visible" SecondaryZStage="Collapsed" PowerRegulator="Collapsed" BeamExpander="Collapsed" LaserSource="Visible" PinholeWheel="Visible" LightPath="Collapsed" XYStage="Visible" SpectrumFilter="Collapsed" ObjectiveTurret="Collapsed" BleachingSLM="Collapsed" BeamStabilizer="Collapsed" PowerRegulator2="Collapsed" EpiTurret="Collapsed" LAMP="Collapsed"/>
@@ -190,5 +210,6 @@
     <CamLightPath ctrl="0" alt="1" shift="0" key="c" />
   </KeyboardOptions>
   <RawFileOptions saveEnabledChannelsOnly="1" />
-  <ExperimentSaving generateUniqueNameWithoutAsking="0" saveWaveformRawH5Csv="" />
+  <ExperimentSaving generateUniqueNameWithoutAsking="0" saveWaveformRawH5Csv="" generateOutputFolderWithoutAsking="0"/>
+  <MsgBoxChk FijiDontShowAgain="0" />
 </ApplicationSettings>

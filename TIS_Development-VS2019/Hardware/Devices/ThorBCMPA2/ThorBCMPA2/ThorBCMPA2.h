@@ -5,6 +5,9 @@
 #include "ParamInfo.h"
 #include<list>
 
+
+const string THORLABS_VID = "1313";
+const string THORLABS_BCMPA3_PID = "2019";
 //singleton device class
 class ThorBCMPA2 : IDevice
 {
@@ -58,6 +61,7 @@ private:
 	long _timeOutTime;
 	string _settingsSerialNumber[DEVICE_NUM];
 	long _useShutter[DEVICE_NUM];
+	BOOL _foundByPID;
 
 	static CritSect critSec;
 	
@@ -70,7 +74,6 @@ private:
 	long ExecuteCmd(long paramID, std::vector<unsigned char> cmd, double &readBackValue);
 	void LogMessage(wchar_t *message);
 	double Round(double number, int decimals);
-	long WaitForRotationComplete(long deviceIndex);
 	long GetDeviceSerialNumber(long deviceIndx, string &deviceSerialNumber);
 	long VerifySerialNumbers(long portID[]);
 };

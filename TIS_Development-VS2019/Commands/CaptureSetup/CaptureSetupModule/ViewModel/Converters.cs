@@ -228,6 +228,7 @@
         #endregion Methods
     }
 
+    //TODO: Remove
     public class BoolToOpacityConverter : IValueConverter
     {
         #region Methods
@@ -458,6 +459,41 @@
         #endregion Methods
     }
 
+    //TODO: remove
+    public class HistogramAutoManualToTextConverter : IValueConverter
+    {
+        #region Methods
+
+        object IValueConverter.Convert(object value, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            if (targetType == typeof(object))
+            {
+                if (value.GetType().Equals(typeof(bool)))
+                {
+                    bool val = (bool)value;
+
+                    return (true == val) ? "Auto" : "Manual";
+                }
+            }
+            else
+            {
+                throw new InvalidOperationException("The target must be an object");
+            }
+
+            return "Manual";
+        }
+
+        object IValueConverter.ConvertBack(object value, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            return null;
+        }
+
+        #endregion Methods
+    }
+
+    //TODO: remove
     public class HistogramConverter : IValueConverter
     {
         #region Methods
@@ -502,6 +538,7 @@
         #endregion Methods
     }
 
+    //TODO: remove
     public class HistogramLinLogToTextConverter : IValueConverter
     {
         #region Methods
@@ -524,39 +561,6 @@
             }
 
             return "Lin";
-        }
-
-        object IValueConverter.ConvertBack(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            return null;
-        }
-
-        #endregion Methods
-    }
-
-    public class HistogramAutoManualToTextConverter : IValueConverter
-    {
-        #region Methods
-
-        object IValueConverter.Convert(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            if (targetType == typeof(object))
-            {
-                if (value.GetType().Equals(typeof(bool)))
-                {
-                    bool val = (bool)value;
-
-                    return (true == val) ? "Auto" : "Manual";
-                }
-            }
-            else
-            {
-                throw new InvalidOperationException("The target must be an object");
-            }
-
-            return "Manual";
         }
 
         object IValueConverter.ConvertBack(object value, Type targetType, object parameter,
@@ -765,6 +769,7 @@
         #endregion Methods
     }
 
+    //TODO:remove
     public class PercentStringConverter : IValueConverter
     {
         #region Methods

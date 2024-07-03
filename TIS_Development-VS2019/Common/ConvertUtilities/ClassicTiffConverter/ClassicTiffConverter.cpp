@@ -47,7 +47,7 @@ long TC_CreateOMETiff(char* file_name)
 	return OMETiffWritter::Create(file_name);
 }
 
-long TC_ConfigOMEHeader(long handle, SampleInfo sample, int regionPixelX, int regionPixelY, float regionW, float regionH, unsigned short zCount, unsigned short tCount,
+long TC_ConfigOMEHeader(long handle, SampleInfo sample, int regionPixelX, int regionPixelY, float regionW, float regionH, unsigned short zCount, unsigned int tCount,
 	int regionPositionPixelX, int regionPositionPixelY, int bitsPerPixel, float regionPixelSizeUM, double zStepSizeUM, double intervalSec, int channelNumber, const char* channels)
 {
 	return OMETiffWritter::ConfigOMEHeader(handle, sample, regionPixelX, regionPixelY, regionW, regionH, zCount, tCount,

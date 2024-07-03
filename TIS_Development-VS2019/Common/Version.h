@@ -7,6 +7,6 @@
 #define VERSION_STRING STR(VERSION_MAJOR) "." STR(VERSION_MINOR) "." \
                                  STR(VERSION_YEAR) "." STR(VERSION_BUILD)
 #define VERSION_COMPANY ""
-#define VERSION_COPYRIGHT "(C) Thorlabs 2020"
+#define VERSION_COPYRIGHT "(C) Thorlabs " STR(VERSION_YEAR)
 #define VERSION_TRADEMARK ""
 

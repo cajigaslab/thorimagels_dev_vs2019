@@ -6,6 +6,7 @@
 #include "strsafe.h"
 #include <iostream>
 #include <string>
+using namespace std;
 
 #define THREAD_WAIT			5000		//[mSec]
 #define MIN_THREAD_CNT		4
@@ -59,6 +60,9 @@ std::string AcquireNIData::triggerChannel;
 std::string AcquireNIData::_primaryChanType; 
 std::string AcquireNIData::_pmtShutter;
 unsigned long AcquireNIData::gCtrOverflowCnt = 0;
+unsigned long AcquireNIData::lastCountValue = 0;
+std::wstring AcquireNIData::ciLogFile = L"";
+unsigned int AcquireNIData::ciLogSuffix = 0;
 int32 error = 0;
 bool switchCounterTask = false;
 bool initializedGCtr = false;
@@ -79,6 +83,8 @@ HANDLE AcquireNIData::_hAsyncEventFinished = CreateEvent(NULL, FALSE, false, NUL
 HANDLE AcquireNIData::_hAsyncCallbackInvoked = CreateEvent(NULL, FALSE, false, NULL);	//reset option is false (AUTO RESET)
 TaskHandle AcquireNIData::asyncHWTrigTask = NULL;
 wchar_t _localfile[_MAX_PATH];
+uInt64 AcquireNIData::elapsedTimeUS = 0;
+bool usingUSB6363 = false;
 
 ///******	End static members	******///
 
@@ -162,12 +168,32 @@ UINT SaveFileThreadProc(LPVOID pParam)
 	//get hdf5 path and filename (which user has defined):
 	std::wstring tmpStr = ChannelCenter::getInstance()-> GetEpisodeName();
 
+	//get frame timing log in same folder
+	if (AcquireNIData::ciLogSuffix == 0)
+		AcquireNIData::ciLogFile = tmpStr.substr(0, tmpStr.find_last_of('\\') + 1) + L"FrameTiming.txt";
+	else
+		AcquireNIData::ciLogFile = tmpStr.substr(0, tmpStr.find_last_of('\\') + 1) + L"FrameTiming_" + to_wstring(AcquireNIData::ciLogSuffix) + L".txt";
+
+	// Judge whether excceeds the file size limitation
+	ifstream ifs(AcquireNIData::ciLogFile, ios::in);
+	if (ifs.is_open())
+	{
+		ifs.seekg(0, ios::end);
+		if (ifs.tellg() >= 10 * 1024 * 1024)
+		{
+			AcquireNIData::ciLogSuffix++;
+			AcquireNIData::ciLogFile = tmpStr.substr(0, tmpStr.find_last_of('\\') + 1) + L"FrameTiming_" + to_wstring(AcquireNIData::ciLogSuffix) + L".txt";
+		}
+		ifs.close();
+	}
+	ofstream cistream;
+
 	//try write to file if user wants to:
 	if((TRUE == cdTemp->GetSaving()) && (tmpStr.size()>0))
 	{
 		CompoundData* cdDataForSave = new CompoundData(cdTemp,AcquireNIData::stimulusParams);
-
 		std::vector<Channels> niChannel = ChannelCenter::getInstance()->_dataChannel;
+		size_t nNumber = cdDataForSave->GetgcLengthComValue(); // N
 		if((TRUE == h5io->OpenFileIO(tmpStr.c_str(),H5FileType::READWRITE)) && (cdDataForSave->GetgcLengthComValue() > 0))
 		{
 			for(int i=0;i<niChannel.size();i++)
@@ -215,7 +241,31 @@ UINT SaveFileThreadProc(LPVOID pParam)
 				{
 					if(cdDataForSave->GetciLengthValue() > 0)
 					{
-						if(FALSE == h5io->ExtendData(niChannel.at(i).type.c_str(),("/" + niChannel.at(i).alias).c_str(),cdDataForSave->GetStrucData()->ciDataPtr+idx_ci*cdDataForSave->GetgcLengthComValue(),H5DataType::DATA_UINT32,extendBuf,static_cast<unsigned long>(cdDataForSave->GetgcLengthComValue())))
+						if (ChannelCenter::getInstance()->_dataChannel.at(i).saveTiming == 1) {
+							
+							unsigned long* startCounter = cdDataForSave->GetStrucData()->ciDataPtr + idx_ci * cdDataForSave->GetgcLengthComValue(); // This is the start position of the array
+							unsigned long* endCounter = startCounter + nNumber - 1; // End position of the array
+
+							if (*endCounter > AcquireNIData::lastCountValue) // lastCountValue is 0 in the beginning
+							{
+								cistream.open(AcquireNIData::ciLogFile, ofstream::app);
+								// calculate for each time count increasing 1
+								for (uInt64 i = 0; i < nNumber; i++) // Check the value of the array one by one
+								{
+									if (*startCounter > AcquireNIData::lastCountValue) { // if number increased
+										string str = AcquireNIData::CalcTimeString((1000000UL) * ((i) / ChannelCenter::getInstance()->_mode.sampleRate)); // add the time by i/freq (unit us) 
+										// write to file
+										AcquireNIData::lastCountValue = *startCounter;
+										cistream << str << " " << *startCounter << endl;
+									}
+									startCounter++; // Move the pointer to next
+								}
+								cistream.close();
+							}
+							AcquireNIData::elapsedTimeUS += (1000000UL) * ((nNumber) / ChannelCenter::getInstance()->_mode.sampleRate); //time "elapses for every sample"
+						}
+
+						if(FALSE == h5io->ExtendData(niChannel.at(i).type.c_str(),("/" + niChannel.at(i).alias).c_str(), cdDataForSave->GetStrucData()->ciDataPtr + idx_ci * cdDataForSave->GetgcLengthComValue(),H5DataType::DATA_UINT32,extendBuf,static_cast<unsigned long>(cdDataForSave->GetgcLengthComValue())))
 						{
 							StringCbPrintfW(message,MSG_LENGTH,L"Error writing HDF5 file counter channel at thread (%d)",AcquireNIData::_saveThreadCnt);
 							LogMessage(message,ERROR_EVENT);
@@ -288,9 +338,9 @@ UINT SaveFileThreadProc(LPVOID pParam)
 	AcquireNIData::_hSaveThreads.erase(AcquireNIData::_hSaveThreads.begin());
 	AcquireNIData::_saveThreadFinishedCnt++;
 
-	StringCbPrintfW(message,MSG_LENGTH,L"AcquireNIData save file thread done (%d),save Thread Count (%d), save successful (%d)",AcquireNIData::_saveThreadFinishedCnt,AcquireNIData::_saveThreadCnt,ret);
+	StringCbPrintfW(message,MSG_LENGTH,L"AcquireNIData save file thread done (%d),save Thread Count (%d), save successful (%d)",(int)AcquireNIData::_saveThreadFinishedCnt,(int)AcquireNIData::_saveThreadCnt,ret);
 	LogMessage(message,INFORMATION_EVENT);
-	printf("AcquireNIData save file thread done (%d),save Thread Count (%d), finished sucessful (%d)\n",AcquireNIData::_saveThreadFinishedCnt,AcquireNIData::_saveThreadCnt,ret);
+	printf("AcquireNIData save file thread done (%d),save Thread Count (%d), finished sucessful (%d)\n",(int)AcquireNIData::_saveThreadFinishedCnt,(int)AcquireNIData::_saveThreadCnt,ret);
 
 	AcquireNIData::_inSaveThread = FALSE;	
 	LeaveCriticalSection(&saveFileAccess);
@@ -417,7 +467,13 @@ int32 CVICALLBACK AcquireNIData::EveryNCallback(TaskHandle taskHandle, int32 eve
 	CompoundData* callbackCompData = NULL;
 	int ciCtrIdx = (DAQmx_Val_FiniteSamps == AcquireNIData::sampleMode) ? 2 : 1;	//CI counter task index
 
+	bool noAvailableSamples = false;
+
 	BoardInfo* niboard = &ChannelCenter::getInstance()->_board;
+
+	if (niboard->name == "NI6363-USB") {
+		usingUSB6363 = true;
+	}
 
 	//terminate task if done:
 	if((0 < AcquireNIData::_totalNumThreads) && (AcquireNIData::_totalNumThreads <= AcquireNIData::_saveThreadCnt))
@@ -467,6 +523,7 @@ int32 CVICALLBACK AcquireNIData::EveryNCallback(TaskHandle taskHandle, int32 eve
 			//[USB] 1st gCtr callback not available 
 			//with sample rate lower than 100 KHz, fill with 0 for SaveFileThread:
 			memset(callbackCompData->GetgCtr(), 0x0, sizeof(unsigned long)*localCtrPerCallback);
+			noAvailableSamples = true;
 		}
 
 		DWORD testTimeLocal = GetTickCount() - testTime;
@@ -502,10 +559,15 @@ int32 CVICALLBACK AcquireNIData::EveryNCallback(TaskHandle taskHandle, int32 eve
 			}
 			else
 			{
-				//[USB] 1st CI callback not available
-				//with sample rate lower than 100 KHz:
-				StringCbPrintfW(message,MSG_LENGTH,L"Unable to read counter in current sampling rate.\nPlease disable Counter 01 or use higher sampling rate.");
-				goto STOP_W_ERROR;
+				if (true == noAvailableSamples && true == usingUSB6363) {
+					//[USB] 1st CI callback not available
+					//with sample rate lower than 100 KHz:
+					//So not an error and keep going
+				}
+				else {
+					StringCbPrintfW(message, MSG_LENGTH, L"Unable to read counter in current sampling rate.\nPlease disable Counter 01 or use higher sampling rate.");
+					goto STOP_W_ERROR;
+				}
 			}
 		}
 	}
@@ -1041,6 +1103,11 @@ void AcquireNIData::ResetTimingParams()
 	skipOverflowCheck = FALSE;
 	deltaGCtr = 0;
 	triggerTime = 0;
+	AcquireNIData::lastCountValue = 0;
+	AcquireNIData::ciLogFile = L"";
+	AcquireNIData::ciLogSuffix = 0;
+	AcquireNIData::lastCountValue = 0;
+	AcquireNIData::elapsedTimeUS = 0;
 }
 
 long AcquireNIData::SetSaving(long toSave)
@@ -2064,6 +2131,37 @@ UINT AcquireNIData::createWriteDigitalOutputThread()
 	AcquireNIData::_hAsyncThread = hThread;
 
 	return 0;
+}
+
+// Calculate baseTimeMS+deltaTimeMS and return a time format string
+std::string AcquireNIData::CalcTimeString(uInt64 deltaTimeUS)
+{
+	uInt64 timeUS = AcquireNIData::elapsedTimeUS + deltaTimeUS;
+
+	uInt64 cvrt = 60 * 1000000ULL;//64 bit integer not large enough TODO check for warning here
+	cvrt *= 60;
+
+	/*int hour = timeUS / cvrt;
+	int minute = timeUS % cvrt / (60 * 1000000);
+	int second = timeUS % (60 * 1000000) / 1000000;
+	int mSecond = timeUS % 1000000 / 1000;
+	int uSecond = timeUS % 1000000 % 1000;*/
+	uInt64 hour = timeUS / ((uInt64) (3600ULL * 1000000ULL));
+	uInt64 minute = (timeUS % ((3600ULL * 1000000ULL))) / (60000000ULL);
+	uInt64 second = ((timeUS % ((3600ULL * 1000000ULL))) % (60000000ULL)) / 1000000ULL;
+	uInt64 mSecond = (((timeUS % ((3600ULL * 1000000ULL))) % (60000000ULL)) % 1000000ULL) / 1000ULL;
+	uInt64 uSecond = ((((timeUS % ((3600ULL * 1000000ULL))) % (60000000ULL)) % 1000000ULL) % 1000ULL);
+
+	string hourStr = hour < 10 ? "0" + to_string(hour) : to_string(hour);
+	string minuteStr = minute < 10 ? "0" + to_string(minute) : to_string(minute);
+	string secondStr = second < 10 ? "0" + to_string(second) : to_string(second);
+	string mSecondStr = mSecond < 10 ? "00" + to_string(mSecond) : mSecond < 100 ? "0" + to_string(mSecond) : to_string(mSecond);
+	string uSecondStr = uSecond < 10 ? "00" + to_string(uSecond) : uSecond < 100 ? "0" + to_string(uSecond) : to_string(uSecond);
+
+	stringstream str(stringstream::out | stringstream::binary);
+	str << hourStr << ":" << minuteStr << ":" << secondStr << ":" << mSecondStr << ":" << uSecondStr;
+
+	return str.str();
 }
 
 AsyncParams* AcquireNIData::AllocAsyncParams()

@@ -52,14 +52,14 @@ public:
 
 
 
-	long AllocateMem(MemoryType memType, DataType dType, long x, long y, long c,long z,long m,long t, long bufferType, wstring memMapPath);
+	long AllocateMem(MemoryType memType, DataType dType, long x, long y, long c,long z,long m,long t, long bufferType, std::wstring memMapPath);
 	char *GetMemPtr(long c, long m, long z, long t);
 	char *GetMemPtr(long c, long m, long z, long, UINT64 offset);
 	void UnlockMemPtr(long c, long m, long z, long t);
 	long GetDataTypeSizeInBytes(DataType d,long &size);
 	MemoryType GetMemoryType();
-	long setTempFileName(wstring tFileName);
-	wstring GetImageMemoryPath();
+	long setTempFileName(std::wstring tFileName);
+	std::wstring GetImageMemoryPath();
 private:
 	char ** ptr;
 	char * ptrContiguous;
@@ -67,9 +67,9 @@ private:
 	HANDLE *hFileArray;
 	HANDLE *hFileMapArray;
 
-	vector<wstring> fileNames;
-	wstring _memMapPath;
-	wstring _tempFileName;
+	std::vector<std::wstring> fileNames;
+	std::wstring _memMapPath;
+	std::wstring _tempFileName;
 	LONGLONG offsetC;
 	LONGLONG offsetM;
 	LONGLONG offsetZ;

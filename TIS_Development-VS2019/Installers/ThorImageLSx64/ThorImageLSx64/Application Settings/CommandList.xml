@@ -16,7 +16,7 @@
   <Command name="Run ImageJ Macro" guid="C1391459-132F-45ea-AE72-D7BEB2BD8086" panel=".\Modules\FijiLauncherPanel.dll" description="">
     <Macro value="" />
     <DataFolder value="" />
-    <FijiExe value="C:\Users\user\Documents\Fiji.app\fiji-win64.exe" />
+    <FijiExe value="C:\Fiji.app\fiji-win64.exe" />
     <Headless value="1" />
   </Command>
   <Command name="Run Matlab Script" guid="b3f2f8a4-cf8f-4fce-a195-b163a3c20c75" panel=".\Modules\ScriptMatlab.dll" description="">

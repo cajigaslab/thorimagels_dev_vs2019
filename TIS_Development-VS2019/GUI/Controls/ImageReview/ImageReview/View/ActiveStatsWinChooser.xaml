@@ -1,0 +1,39 @@
+﻿<Window x:Class="ImageReviewDll.ViewModel.ActiveStatsWinChooser"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="SingleBorderWindow"
+        Height="115"
+        Width="280"
+        Title="ROI Stats Settings"
+        ResizeMode="NoResize"
+        Background="#FF333333"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid Margin="3">
+        <StackPanel VerticalAlignment="Top">
+
+            <CheckBox Margin="5"
+                      Content="Display Line Profile"
+                      Foreground="White"
+                      IsChecked="{Binding Path=LineProfileActive}" />
+        </StackPanel>
+        <StackPanel Grid.Row="1"
+                    Orientation="Horizontal"
+                    VerticalAlignment="Bottom"
+                    HorizontalAlignment="Right">
+            <Button Content="OK"
+                    Name="btnOK"
+                    Width="65"
+                    Height="35"
+                    HorizontalAlignment="Right"
+                    Margin="3"
+                    Click="btnOK_Click"></Button>
+        </StackPanel>
+    </Grid>
+</Window>

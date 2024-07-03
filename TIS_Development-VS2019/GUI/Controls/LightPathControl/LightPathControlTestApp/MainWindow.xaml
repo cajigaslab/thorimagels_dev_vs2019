@@ -1,0 +1,9 @@
+﻿<Window x:Class="LightPathControlTestApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:lp="clr-namespace:LightPathControl;assembly=LightPathControl"
+        Title="MainWindow" Height="Auto" Width="385">
+    <Grid>
+        <lp:LightPathControlUC />        
+    </Grid>
+</Window>

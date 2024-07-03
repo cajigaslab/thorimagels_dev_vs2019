@@ -248,7 +248,7 @@
                     var histrogram = DFLIMHistogramDictionary;
                     if (null != histrogram)
                     {
-                        dflimHistogram.Plot(histrogram);
+                            dflimHistogram.Plot(histrogram);
                     }
                 }
             }

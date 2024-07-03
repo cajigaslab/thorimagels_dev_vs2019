@@ -72,7 +72,7 @@
                 int _terminal = 0;
                 ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP1_CONNECTION, ref _terminal);
 
-                _isLamp1Enable = (_terminal>0)?true:false;
+                _isLamp1Enable = (_terminal > 0) ? true : false;
 
                 return _isLamp1Enable;
             }
@@ -137,7 +137,7 @@
         {
             get
             {
-                int _terminal=0;
+                int _terminal = 0;
                 ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP_TERMINAL, ref _terminal);
                 _lampTerminal = (long)_terminal;
 
@@ -147,6 +147,17 @@
             {
                 _lampTerminal = value;
                 ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP_TERMINAL, (int)_lampTerminal, (int)IDevice.DeviceSetParamType.EXECUTION_NO_WAIT);
+            }
+        }
+
+        public long LampType
+        {
+            get
+            {
+                int type = (int)LampTypes.DC2200;
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP_TYPE, ref type);
+
+                return type;
             }
         }
 

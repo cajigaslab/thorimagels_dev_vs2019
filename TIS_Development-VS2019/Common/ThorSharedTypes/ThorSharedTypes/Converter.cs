@@ -25,6 +25,54 @@
 
     #endregion Enumerations
 
+    public class BooleanLogicalAndConverter : IMultiValueConverter
+    {
+        #region Methods
+
+        object IMultiValueConverter.Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            foreach (object value in values)
+            {
+                if (value is bool && (bool)value == false)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        object[] IMultiValueConverter.ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        {
+            throw new NotSupportedException("BooleanLogicalAndConverter is a OneWay converter.");
+        }
+
+        #endregion Methods
+    }
+
+    public class BooleanLogicalOrConverter : IMultiValueConverter
+    {
+        #region Methods
+
+        object IMultiValueConverter.Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            foreach (object value in values)
+            {
+                if (value is bool && (bool)value == true)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        object[] IMultiValueConverter.ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        {
+            throw new NotSupportedException("BooleanLogicalOrConverter is a OneWay converter.");
+        }
+
+        #endregion Methods
+    }
+
     public sealed class BooleanToVisibilityConverter : IValueConverter
     {
         #region Methods
@@ -336,6 +384,7 @@
         {
             try
             {
+                if (value == null) return null;
                 double scaleFactor = Double.Parse(parameter.ToString());
 
                 if (targetType == typeof(string) || targetType == typeof(object))
@@ -474,6 +523,38 @@
         #endregion Methods
     }
 
+    [ValueConversion(typeof(bool?), typeof(bool))]
+    public class EnumToBooleanConverter : IValueConverter
+    {
+        #region Methods
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            string ParameterString = parameter as string;
+
+            if (ParameterString == null)
+                return DependencyProperty.UnsetValue;
+
+            if (Enum.IsDefined(value.GetType(), value) == false)
+                return DependencyProperty.UnsetValue;
+
+            object paramvalue = Enum.Parse(value.GetType(), ParameterString);
+
+            return paramvalue.Equals(value);
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            string ParameterString = parameter as string;
+            if (ParameterString == null)
+                return DependencyProperty.UnsetValue;
+
+            return Enum.Parse(targetType, ParameterString);
+        }
+
+        #endregion Methods
+    }
+
     [ValueConversion(typeof(int), typeof(bool))]
     public class InverseBooleanConverter : IValueConverter
     {
@@ -497,6 +578,230 @@
                 ret = (direction == Parameters.Inverted) ? !ret : ret;
             }
             return ret;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return null;
+        }
+
+        #endregion Methods
+    }
+
+    public sealed class InverseVisibilityConverter : IValueConverter
+    {
+        #region Methods
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            var flag = false;
+            var outVal = (Visibility)value;
+            if (parameter != null)
+            {
+                Parameters directionParam = Parameters.Normal;
+                bool directionBool = false;
+                if (bool.TryParse((string)parameter, out directionBool))
+                {
+                    flag = directionBool ? !flag : flag;
+                }
+                else if (Enum.TryParse((string)parameter, out directionParam))
+                {
+                    flag = (directionParam == Parameters.Inverted) ? !flag : flag;
+                }
+            }
+            return (flag) ? (Visibility.Visible == outVal ? Visibility.Collapsed : Visibility.Visible) : outVal;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            var isVisible = ((value is Visibility) && (((Visibility)value) == Visibility.Visible));
+            if (parameter != null)
+            {
+                Parameters directionParam = Parameters.Normal;
+                bool directionBool = false;
+                if (bool.TryParse((string)parameter, out directionBool))
+                {
+                    isVisible = directionBool ? !isVisible : isVisible;
+                }
+                else if (Enum.TryParse((string)parameter, out directionParam))
+                {
+                    isVisible = (directionParam == Parameters.Inverted) ? !isVisible : isVisible;
+                }
+            }
+            return isVisible ? value : Visibility.Collapsed;
+        }
+
+        #endregion Methods
+    }
+
+    public class NullToBooleanConverter : IValueConverter
+    {
+        #region Methods
+
+        public object Convert(object value, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            if (targetType != typeof(bool))
+                throw new InvalidOperationException("The target must be a boolean");
+
+            if (null == value)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+
+        #endregion Methods
+    }
+
+    public class NullToOpacityConverter : IValueConverter
+    {
+        #region Methods
+
+        public object Convert(object value, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            if (targetType != typeof(double))
+                throw new InvalidOperationException("The target must be a double");
+
+            if (null == value)
+            {
+                return 0.5;
+            }
+            else
+            {
+                return 1;
+            }
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+
+        #endregion Methods
+    }
+
+    public class NullToVisibilityConverter : IValueConverter
+    {
+        #region Methods
+
+        public object Convert(object value, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            if (targetType != typeof(Visibility))
+                throw new InvalidOperationException("The target must be a Visibility");
+
+            if (null == value)
+            {
+                return Visibility.Hidden;
+            }
+            else
+            {
+                return Visibility.Visible;
+            }
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+
+        #endregion Methods
+    }
+
+    public class PercentStringConverter : IValueConverter
+    {
+        #region Methods
+
+        object IValueConverter.Convert(object value, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            try
+            {
+                if (targetType == typeof(string))
+                {
+                    double percentValue = Convert.ToDouble(value);
+                    string formatedPercentValue = String.Format("{0:P0}", percentValue).Replace(" ", "").Replace(CultureInfo.CurrentCulture.NumberFormat.CurrencyGroupSeparator, "");
+                    return formatedPercentValue;
+                }
+                else
+                {
+                    throw new InvalidOperationException("The target must be a string");
+                }
+            }
+            catch (FormatException ex)
+            {
+                ex.ToString();
+                return null;
+            }
+            catch (InvalidCastException ex)
+            {
+                ex.ToString();
+                return null;
+            }
+        }
+
+        object IValueConverter.ConvertBack(object value, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            try
+            {
+                if (targetType == typeof(double))
+                {
+                    string valueString = value.ToString();
+                    valueString = valueString.Replace(System.Globalization.CultureInfo.CurrentCulture.NumberFormat.PercentSymbol, "");
+                    valueString = valueString.Replace(" ", "");
+                    double percentValue = double.Parse(valueString) / 100d;
+                    return percentValue;
+                }
+                else
+                {
+                    throw new InvalidOperationException("The target must be a string");
+                }
+            }
+            catch (FormatException ex)
+            {
+                ex.ToString();
+                return null;
+            }
+            catch (InvalidCastException ex)
+            {
+                ex.ToString();
+                return null;
+            }
+        }
+
+        #endregion Methods
+    }
+
+    public class StringToOrientationConverter : IValueConverter
+    {
+        #region Methods
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (!string.IsNullOrEmpty((string)value))
+            {
+                string orientation = value as string;
+
+                if (orientation == "Horizontal")
+                {
+                    return System.Windows.Controls.Orientation.Horizontal;
+                }
+            }
+            return System.Windows.Controls.Orientation.Vertical;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

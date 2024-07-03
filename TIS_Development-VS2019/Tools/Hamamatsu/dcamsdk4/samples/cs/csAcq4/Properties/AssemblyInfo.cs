@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Hamamatsu Photonics K.K.")]
 [assembly: AssemblyProduct("csAcq4")]
-[assembly: AssemblyCopyright("Copyright © 2018-2019, Hamamatsu Photonics K.K.")]
+[assembly: AssemblyCopyright("Copyright © 2018-2022, Hamamatsu Photonics K.K.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("21.6.0.0")]
-[assembly: AssemblyFileVersion("21.6.204.6291")]
+[assembly: AssemblyVersion("22.12.0.0")]
+[assembly: AssemblyFileVersion("22.12.204.6552")]

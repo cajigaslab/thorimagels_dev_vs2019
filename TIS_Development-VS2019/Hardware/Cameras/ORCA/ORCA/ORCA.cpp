@@ -124,7 +124,6 @@ unsigned long ORCA::_lastCopiedImageSize = 0;
 unsigned long long ORCA::_frameCountOffset = 0;
 unsigned long long ORCA::_copiedFrameNumber = 0;
 long ORCA::_1stSet_Frame = 0;
-ThreadSafeQueue<ImageProperties> ORCA::_imagePropertiesQueue;
 std::string ORCA::_camSerial[MAX_CAM_NUM] = { "" };
 std::string ORCA::_camName[MAX_CAM_NUM] = { "" };
 std::string ORCA::_cameraInterfaceType[MAX_CAM_NUM] = { "" };
@@ -338,10 +337,17 @@ void ORCA::FindAllCameras()
 
 			apiinit.guid = &guid;
 #endif
-			//This is the minimum best time that works in Yoav's system
-			Sleep(350);
-
-			OrcaErrChk(L"dcamapi_init", err = dcamapi_init(&apiinit));
+			//If the DCAM API fails to initialize we need to retry it during 5 seconds. Because of motherboard timing the API initialization sometimes fails
+			std::chrono::seconds duration(5);
+			auto startTime = std::chrono::steady_clock::now();
+			auto currentTime = std::chrono::steady_clock::now();
+			do
+			{
+				Sleep(20);
+				OrcaErrChk(L"dcamapi_init", err = dcamapi_init(&apiinit));
+				currentTime = std::chrono::steady_clock::now();
+			}
+			while (failed(err) && currentTime - startTime < duration);
 
 			if (failed(err))
 			{
@@ -361,10 +367,33 @@ void ORCA::FindAllCameras()
 					devopen.size = sizeof(devopen);
 					devopen.index = i;
 
-					OrcaErrChk(L"dcamdev_open", err = dcamdev_open(&devopen));
+					//If the camera fails to open we need to retry it during 5 seconds. Because of motherboard timing the open command can return an error
+					startTime = std::chrono::steady_clock::now();
+					currentTime = std::chrono::steady_clock::now();
+					do
+					{
+						Sleep(20);
+						OrcaErrChk(L"dcamdev_open", err = dcamdev_open(&devopen));
+						currentTime = std::chrono::steady_clock::now();
+					} 
+					while (failed(err) && currentTime - startTime < duration);
+
 					if (failed(err))
 					{
 						MessageBox(NULL, L"Failed to open Hamamatsu camera. Make sure there is no other software using the camera.", L"DCAM SDK Init error", MB_OK);
+						char errtext[256];
+						DCAMDEV_STRING	param;
+						memset(&param, 0, sizeof(param));
+						param.size = sizeof(param);
+						param.text = errtext;
+						param.textbytes = sizeof(errtext);
+						param.iString = err;
+
+						dcamdev_getstring(_hdcam[i], &param);
+
+						wstring ws(&errtext[0], &errtext[255]);
+						StringCbPrintfW(_errMsg, MSG_SIZE, L"FAILED: (DCAMERR)0x%08X %s @ %s", err, ws.c_str(), L"dcamdev_open");
+						LogMessage(_errMsg, ERROR_EVENT);
 					}
 					else
 					{
@@ -465,6 +494,11 @@ void ORCA::InitialParamInfo(void)
 	{
 		_readOutSpeedRange[0] = (int32)speedAttr.valuemin;
 		_readOutSpeedRange[1] = (int32)speedAttr.valuemax;
+		_hasReadoutSpeed[_camID] = true;
+	}
+	else
+	{
+		_hasReadoutSpeed[_camID] = false;
 	}
 
 	//Get Exposure range
@@ -517,6 +551,10 @@ void ORCA::InitialParamInfo(void)
 	//Set default external trigger output configuration, positive polarity and the kind to Programable
 	OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_POLARITY, DCAMPROP_OUTPUTTRIGGER_POLARITY__POSITIVE));
 	OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_KIND, DCAMPROP_OUTPUTTRIGGER_KIND__PROGRAMABLE));
+
+	double coolingMode = DCAMPROP_SENSORCOOLER__OFF;
+	OrcaErrChk(L"dcamprop_getvalue", dcamprop_getvalue(_hdcam[_camID], DCAM_IDPROP_SENSORCOOLER, &coolingMode));
+	_hasCooling[_camID] = (FALSE == (failed(err)));
 }
 
 bool ORCA::IsOpen(const long cameraIndex)
@@ -576,11 +614,10 @@ long ORCA::SetBdDMA(ImgPty* pImgPty)
 		//Stop the camera, clear any errors, set the image callback function to null, and clear any pending images
 		StopCamera(_camID);
 
-		while (NULL != _hFrameAcqThread || TRUE == _threadRunning)
-		{
-			Sleep(10);
-		}
-
+	while (NULL != _hFrameAcqThread || TRUE == _threadRunning || _cameraRunning[_camID]);
+	{
+		Sleep(10);
+	}
 		//In case the pixel size changed while we were waiting for the frame acquisition thread to finish, set the roi size again
 		_ImgPty.roiBottom = _ImgPty_SetSettings.roiBottom;
 		_ImgPty.roiLeft = _ImgPty_SetSettings.roiLeft;
@@ -591,7 +628,6 @@ long ORCA::SetBdDMA(ImgPty* pImgPty)
 
 		//reset available frame count, no more copy frames for last session
 		_availableFramesCnt = _bufferImageIndex = 0;
-		_imagePropertiesQueue.clear();
 
 		//reset the indexes of the last image and the previous last image.
 		//these are used to ensure there are no dropped frames
@@ -604,16 +640,22 @@ long ORCA::SetBdDMA(ImgPty* pImgPty)
 		//Set new Cam parameters
 		_imgPtyDll = *pImgPty;
 
-		//Need to set the speed to default first
-		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_READOUTSPEED, 0));
+		if (_hasReadoutSpeed[_camID])
+		{
+			//Need to set the speed to default first
+			OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_READOUTSPEED, DCAMPROP_READOUTSPEED__SLOWEST));
+		}
 
 		//Need to set the binning to 1 before setting the image area size. Because the camera max area size changes internally with the binning
-		OrcaErrChk(L"dcamprop_getvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_BINNING, DCAMPROP_BINNING__1));
+		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_BINNING, DCAMPROP_BINNING__1));
 
 		//////****Set/Get Camera Parameters****//////
 		//send the parameters to the camera, check if they were set successfuly, log if there was an error
-		//Set the speed of the camera
-		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_READOUTSPEED, _imgPtyDll.readOutSpeedIndex));
+		if (_hasReadoutSpeed[_camID])
+		{
+			//Set the speed of the camera
+			OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_READOUTSPEED, _imgPtyDll.readOutSpeedIndex));
+		}
 
 		//Set the trigger polarity to positive and set the trigger mode to start, which is equivalent to External Start trigger mode in HCImageLive
 		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_TRIGGERPOLARITY, _imgPtyDll.triggerPolarity));
@@ -769,13 +811,11 @@ long ORCA::SetBdDMA(ImgPty* pImgPty)
 
 		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_POLARITY, DCAMPROP_OUTPUTTRIGGER_POLARITY__POSITIVE));
 		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_KIND, DCAMPROP_OUTPUTTRIGGER_KIND__EXPOSURE));
-		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_SOURCE, DCAMPROP_OUTPUTTRIGGER_SOURCE__EXPOSURE));
 
 		//We need to program frame trigger out because the camera doesn't have a default digital line like that
 		//To program the output frame trigger, set the kind to programable, and the source to readout end
 		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_POLARITY + DCAM_IDPROP__OUTPUTTRIGGER, DCAMPROP_OUTPUTTRIGGER_POLARITY__POSITIVE));
 		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_KIND + DCAM_IDPROP__OUTPUTTRIGGER, DCAMPROP_OUTPUTTRIGGER_KIND__PROGRAMABLE));
-		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + DCAM_IDPROP__OUTPUTTRIGGER, DCAMPROP_OUTPUTTRIGGER_SOURCE__EXPOSURE));
 		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_PROGRAMABLESTART + DCAM_IDPROP__OUTPUTTRIGGER, DCAMPROP_OUTPUTTRIGGER_PROGRAMABLESTART__FIRSTREADOUT));
 		OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + DCAM_IDPROP__OUTPUTTRIGGER, ((double)_ImgPty_SetSettings.exposureTime_us / (double)US_TO_SEC)));
 
@@ -1009,50 +1049,50 @@ long ORCA::PreflightAcquisition(char* pData)
 	_ImgPty.masterPulseEnabled = _ImgPty_SetSettings.masterPulseEnabled;
 	_ImgPty.staticFrameRateVal = _ImgPty_SetSettings.staticFrameRateVal;
 
-	//set the the camera settings and allocate the DMA buffer
-	if (TRUE == SetBdDMA(&_ImgPty))
-	{
-		//if the camera parameters are set and the DMA buffer is allocated successfully,
-		//copy the new settings to compare later on.
-		_ImgPty_Pre.exposureTime_us = _ImgPty.exposureTime_us;
-		_ImgPty_Pre.roiBinX = _ImgPty.roiBinX;
-		_ImgPty_Pre.roiBinY = _ImgPty.roiBinY;
-		_ImgPty_Pre.roiBottom = _ImgPty.roiBottom;
-		_ImgPty_Pre.roiLeft = _ImgPty.roiLeft;
-		_ImgPty_Pre.roiRight = _ImgPty.roiRight;
-		_ImgPty_Pre.roiTop = _ImgPty.roiTop;
-		_ImgPty_Pre.widthPx = _ImgPty.widthPx;
-		_ImgPty_Pre.heightPx = _ImgPty.heightPx;
-		_ImgPty_Pre.triggerMode = _ImgPty.triggerMode;
-		_ImgPty_Pre.triggerPolarity = _ImgPty.triggerPolarity;
-		_ImgPty_Pre.bitPerPixel = _ImgPty.bitPerPixel;
-		_ImgPty_Pre.pixelSizeXUM = _ImgPty.pixelSizeXUM;
-		_ImgPty_Pre.pixelSizeYUM = _ImgPty.pixelSizeYUM;
-		_ImgPty_Pre.numImagesToBuffer = _ImgPty.numImagesToBuffer;
-		_ImgPty_Pre.readOutSpeedIndex = _ImgPty.readOutSpeedIndex;
-		_ImgPty_Pre.channel = _ImgPty.channel;
-		_ImgPty_Pre.averageMode = _ImgPty.averageMode;
-		_ImgPty_Pre.averageNum = _ImgPty.averageNum;
-		_ImgPty_Pre.numFrame = _ImgPty.numFrame;
-		_ImgPty_Pre.dmaBufferCount = _ImgPty.dmaBufferCount;
-		_ImgPty_Pre.verticalFlip = _ImgPty.verticalFlip;
-		_ImgPty_Pre.horizontalFlip = _ImgPty.horizontalFlip;
-		_ImgPty_Pre.imageAngle = _ImgPty.imageAngle;
-		_ImgPty_Pre.hotPixelEnabled = _ImgPty.hotPixelEnabled;
-		_ImgPty_Pre.hotPixelThreshold = _ImgPty.hotPixelThreshold;
-		_ImgPty_Pre.gain = _ImgPty.gain;
-		_ImgPty_Pre.blackLevel = _ImgPty.blackLevel;
-		_ImgPty_Pre.binIndex = _ImgPty.binIndex;
-		_ImgPty_Pre.hotPixelLevelIndex = _ImgPty.hotPixelLevelIndex;
-		_ImgPty_Pre.masterPulseEnabled = _ImgPty.masterPulseEnabled;
-		_ImgPty_Pre.staticFrameRateVal = _ImgPty.staticFrameRateVal;
-	}
-	else
-	{
-		StringCbPrintfW(_errMsg, MSG_SIZE, L"SetBdDMA failed");
-		LogMessage(_errMsg, ERROR_EVENT);
-		ret = FALSE;
-	}
+		//set the the camera settings and allocate the DMA buffer
+		if (TRUE == SetBdDMA(&_ImgPty))
+		{
+			//if the camera parameters are set and the DMA buffer is allocated successfully,
+			//copy the new settings to compare later on.
+			_ImgPty_Pre.exposureTime_us = _ImgPty.exposureTime_us;
+			_ImgPty_Pre.roiBinX = _ImgPty.roiBinX;
+			_ImgPty_Pre.roiBinY = _ImgPty.roiBinY;
+			_ImgPty_Pre.roiBottom = _ImgPty.roiBottom;
+			_ImgPty_Pre.roiLeft = _ImgPty.roiLeft;
+			_ImgPty_Pre.roiRight = _ImgPty.roiRight;
+			_ImgPty_Pre.roiTop = _ImgPty.roiTop;
+			_ImgPty_Pre.widthPx = _ImgPty.widthPx;
+			_ImgPty_Pre.heightPx = _ImgPty.heightPx;
+			_ImgPty_Pre.triggerMode = _ImgPty.triggerMode;
+			_ImgPty_Pre.triggerPolarity = _ImgPty.triggerPolarity;
+			_ImgPty_Pre.bitPerPixel = _ImgPty.bitPerPixel;
+			_ImgPty_Pre.pixelSizeXUM = _ImgPty.pixelSizeXUM;
+			_ImgPty_Pre.pixelSizeYUM = _ImgPty.pixelSizeYUM;
+			_ImgPty_Pre.numImagesToBuffer = _ImgPty.numImagesToBuffer;
+			_ImgPty_Pre.readOutSpeedIndex = _ImgPty.readOutSpeedIndex;
+			_ImgPty_Pre.channel = _ImgPty.channel;
+			_ImgPty_Pre.averageMode = _ImgPty.averageMode;
+			_ImgPty_Pre.averageNum = _ImgPty.averageNum;
+			_ImgPty_Pre.numFrame = _ImgPty.numFrame;
+			_ImgPty_Pre.dmaBufferCount = _ImgPty.dmaBufferCount;
+			_ImgPty_Pre.verticalFlip = _ImgPty.verticalFlip;
+			_ImgPty_Pre.horizontalFlip = _ImgPty.horizontalFlip;
+			_ImgPty_Pre.imageAngle = _ImgPty.imageAngle;
+			_ImgPty_Pre.hotPixelEnabled = _ImgPty.hotPixelEnabled;
+			_ImgPty_Pre.hotPixelThreshold = _ImgPty.hotPixelThreshold;
+			_ImgPty_Pre.gain = _ImgPty.gain;
+			_ImgPty_Pre.blackLevel = _ImgPty.blackLevel;
+			_ImgPty_Pre.binIndex = _ImgPty.binIndex;
+			_ImgPty_Pre.hotPixelLevelIndex = _ImgPty.hotPixelLevelIndex;
+			_ImgPty_Pre.masterPulseEnabled = _ImgPty.masterPulseEnabled;
+			_ImgPty_Pre.staticFrameRateVal = _ImgPty.staticFrameRateVal;
+		}
+		else
+		{
+			StringCbPrintfW(_errMsg, MSG_SIZE, L"SetBdDMA failed");
+			LogMessage(_errMsg, ERROR_EVENT);
+			ret = FALSE;
+		}
 
 	return ret;
 }
@@ -1533,6 +1573,8 @@ long ORCA::CopyAcquisition(char* pDataBuffer, void* frameInfo)
 		SAFE_MEMCPY(dst, imageProperties.sizeInBytes, pLocal);
 	}
 
+	int width = size.width;
+	int height = size.height;
 	//rotate
 	switch (_imgPtyDll.imageAngle)
 	{
@@ -1546,6 +1588,8 @@ long ORCA::CopyAcquisition(char* pDataBuffer, void* frameInfo)
 		long yOffset = imageProperties.width - 1;
 		ippiDll->ippiRotate_16u_C1R(dst, size, stepSrc, roiSrc, pLocal, stepDst, roiDst, angle, xOffset, yOffset, IPPI_INTER_LINEAR);
 		SAFE_MEMCPY(dst, imageProperties.sizeInBytes, pLocal);	//update after rotated
+		width = size.height;
+		height = size.width;
 	}
 	break;
 	case 180:
@@ -1570,14 +1614,35 @@ long ORCA::CopyAcquisition(char* pDataBuffer, void* frameInfo)
 		long yOffset = 0;
 		ippiDll->ippiRotate_16u_C1R(dst, size, stepSrc, roiSrc, pLocal, stepDst, roiDst, angle, xOffset, yOffset, IPPI_INTER_LINEAR);
 		SAFE_MEMCPY(dst, imageProperties.sizeInBytes, pLocal);	//update after rotated
+		width = size.height;
+		height = size.width;
 	}
 	break;
 	}
 
+	FrameInfo frameInfoStruct;
+	memcpy(&frameInfoStruct, frameInfo, sizeof(FrameInfo));
+	frameInfoStruct.fullFrame = TRUE;
+	frameInfoStruct.channels = 1;
+	frameInfoStruct.copySize = imageProperties.sizeInBytes;
+	frameInfoStruct.numberOfPlanes = 1;
+	frameInfoStruct.isNewMROIFrame = 1;
+	frameInfoStruct.totalScanAreas = 1;
+	frameInfoStruct.scanAreaIndex = 0;
+	frameInfoStruct.scanAreaID = 0;
+	frameInfoStruct.imageWidth = width;
+	frameInfoStruct.imageHeight = height;
+	frameInfoStruct.isMROI = FALSE;
+	frameInfoStruct.fullImageWidth = width;
+	frameInfoStruct.fullImageHeight = height;
+	frameInfoStruct.topInFullImage = 0;
+	frameInfoStruct.leftInFullImage = 0;
+	frameInfoStruct.mROIStripeFieldSize = 0;
+	memcpy(frameInfo, &frameInfoStruct, sizeof(FrameInfo));
+
 	//keep track of the frame number, and the previous frame number
 	_previousLastImage = _lastImage;
 	_lastImage = _copiedFrameNumber;
-	//_availableFramesCnt = _imagePropertiesQueue.size();
 	return TRUE;
 }
 

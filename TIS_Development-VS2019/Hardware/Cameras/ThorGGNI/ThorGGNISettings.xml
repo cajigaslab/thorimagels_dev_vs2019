@@ -2,22 +2,28 @@
 <ThorGGNISettings>
 
   <!--analogXYmode1:[0]Normal,[1]swap XY,[2]Normal & center X,[3]swap XY & center X / RGG analogCh1FeedbackRatio="0.378" analogCh2FeedbackRatio="0.377" -->
-  <Configuration field2Theta="0.0901639344" pockelsParkAtMinimum="0" galvoParkAtStart="0" fieldSizeMin="5" fieldSizeMax="255" pockelsTurnAroundBlank="1" analogCh1="/Dev2/ao0" analogCh2="/Dev2/ao1" analogCh1FeedbackRatio="1.0" analogCh2FeedbackRatio="1.0" analogXYmode1="0" minGalvoFreqHz1="1000" analogCh3="/Dev2/ao2" analogCh4="/Dev2/ao3"/>
+  <Configuration field2Theta="0.0901639344" pockelsParkAtMinimum="0" galvoParkAtStart="0" fieldSizeMin="5" fieldSizeMax="255" pockelsTurnAroundBlank="1" pockelsFlybackBlank="1" analogCh1="/Dev2/ao0" analogCh2="/Dev2/ao1" analogCh1FeedbackRatio="1.0" analogCh2FeedbackRatio="1.0" analogXYmode1="0" minGalvoFreqHz1="1000" analogCh3="/Dev2/ao2" analogCh4="/Dev2/ao3" maxAngularVelocityRadPerSec="300" maxAngularAccelerationRadPerSecSq="3e6"/>
   <Dma bufferCount="32" activeLoadCount="100" imageActiveLoadMS="100" imageActiveLoadCount="8"/>
   <Trigger waitTime="30" bufferReadyLine="" captureActiveLine="" captureActiveInvert="0" stimulationShutter="" shutterPreIdleMS="0" shutterPostIdleMS="0" />
   <!--
   <Trigger waitTime="30" bufferReadyLine="/Dev3/PFI8" captureActiveLine="/Dev3/PFI9" captureActiveInvert="0" stimulationShutter="/Dev3/PFI10"/>
   -->
   <!--
-  <IO  pockelsCounterInternal="/Dev1/Ctr0InternalOutput" pockelsCounterOutput="/Dev1/ctr0" pockelsTriggerIn="/Dev1/PFI4" pockelsVoltageSlopeThreshold="0.01" pockelsLine="/Dev1/ao0" pockelsPowerInputLine="/Dev3/ai1" pockelsScanVoltageStart="-1.0" pockelsScanVoltageStop="1.3" pockelsMinVoltage="" pockelsMaxVoltage="" pockelsLine1="" pockelsPowerInputLine1="" pockelsScanVoltageStart1="-1.0" pockelsScanVoltageStop1="1.3" pockelsLine2="" pockelsPowerInputLine2="" pockelsScanVoltageStart2="-1.0" pockelsScanVoltageStop2="1.3" pockelsLine3="" pockelsPowerInputLine3="" pockelsScanVoltageStart3="-1.0" pockelsScanVoltageStop3="1.3" pockelsReferenceLine="/Dev1/APFI1" pockelsResponseType="0" pockelsResponseType1="0" pockelsResponseType2="0" pockelsResponseType3="0"/>
+  <IO  pockelsCounterInternal="/Dev1/Ctr0InternalOutput" pockelsCounterOutput="/Dev1/ctr0" pockelsTriggerIn="/Dev1/PFI4" pockelsVoltageSlopeThreshold="0.01" pockelsLine="/Dev1/ao0" pockelsPowerInputLine="/Dev3/ai1" pockelsScanVoltageStart="-1.0" pockelsScanVoltageStop="1.3" pockelsLine1="" pockelsPowerInputLine1="" pockelsScanVoltageStart1="-1.0" pockelsScanVoltageStop1="1.3" pockelsLine2="" pockelsPowerInputLine2="" pockelsScanVoltageStart2="-1.0" pockelsScanVoltageStop2="1.3" pockelsLine3="" pockelsPowerInputLine3="" pockelsScanVoltageStart3="-1.0" pockelsScanVoltageStop3="1.3" pockelsReferenceLine="/Dev1/APFI1" pockelsResponseType="0" pockelsResponseType1="0" pockelsResponseType2="0" pockelsResponseType3="0" pockelsMinVoltage="" pockelsMaxVoltage="" pockelsMinVoltage1="" pockelsMaxVoltage1="" pockelsMinVoltage2="" pockelsMaxVoltage2="" pockelsMinVoltage3="" pockelsMaxVoltage3=""/>
  -->
-  <IO  pockelsCounterInternal="" pockelsCounterOutput="" pockelsTriggerIn="" pockelsVoltageSlopeThreshold="0.01" pockelsLine="" pockelsPowerInputLine="" pockelsScanVoltageStart="-1.0" pockelsScanVoltageStop="1.3" pockelsMinVoltage="" pockelsMaxVoltage="" pockelsLine1="" pockelsPowerInputLine1="" pockelsScanVoltageStart1="-1.0" pockelsScanVoltageStop1="1.3" pockelsLine2="" pockelsPowerInputLine2="" pockelsScanVoltageStart2="-1.0" pockelsScanVoltageStop2="1.3" pockelsLine3="" pockelsPowerInputLine3="" pockelsScanVoltageStart3="-1.0" pockelsScanVoltageStop3="1.3" pockelsReferenceLine="" pockelsResponseType="0" pockelsResponseType1="0" pockelsResponseType2="0" pockelsResponseType3="0"/>
+  <IO  pockelsCounterInternal="" pockelsCounterOutput="" pockelsTriggerIn="" pockelsVoltageSlopeThreshold="0.01" 
+	   pockelsLine="" pockelsPowerInputLine="" pockelsScanVoltageStart="-1.0" pockelsScanVoltageStop="1.3"
+	   pockelsLine1="" pockelsPowerInputLine1="" pockelsScanVoltageStart1="-1.0" pockelsScanVoltageStop1="1.3" 
+	   pockelsLine2="" pockelsPowerInputLine2="" pockelsScanVoltageStart2="-1.0" pockelsScanVoltageStop2="1.3" 
+	   pockelsLine3="" pockelsPowerInputLine3="" pockelsScanVoltageStart3="-1.0" pockelsScanVoltageStop3="1.3" 
+	   pockelsReferenceLine="" pockelsResponseType="0" pockelsResponseType1="0" pockelsResponseType2="0" pockelsResponseType3="0"
+	   pockelsMinVoltage="" pockelsMaxVoltage="" pockelsMinVoltage1="" pockelsMaxVoltage1="" pockelsMinVoltage2="" pockelsMaxVoltage2="" pockelsMinVoltage3="" pockelsMaxVoltage3=""/>
 
   <Calibration fieldSizeCalibration="160" flipVerticalScan="0" fineOffsetX="0" fineOffsetY="0" fineScaleX="1" fineScaleY="1" oneXFieldSize="90" maxGalvoOpticalAngle="20" minSignalInputVoltage="-5" maxSignalInputVoltage="5" galvoRetraceTimeUS="200" pockelsPhaseAdjustUS="78.1"/>
   <Polarity chanAPol="0" chanBPol="0" chanCPol="0" chanDPol="0" />
   <!-- 
    <Waveform pockelDigOutput="/Dev2/port0/line8" completeOutput="/Dev2/port0/line9" cycleOutput="/Dev2/port0/line10" iterationOutput="/Dev2/port0/line11" patternOutput="/Dev2/port0/line12" patternComplete="/Dev2/port0/line13" activeOutput="/Dev2/port0/line14" epochOutput="/Dev2/port0/line15" cycleInverse="/Dev2/port0/line16"/>
     -->
-  <Waveform pockelDigOutput="" completeOutput="" cycleOutput="" iterationOutput="" patternOutput="" patternComplete="" activeOutput="" epochOutput="" cycleInverse=""/>
+  <Waveform pockelDigOutput="" completeOutput="" cycleOutput="" iterationOutput="" patternOutput="" patternComplete="" activeOutput="" epochOutput="" cycleInverse="" pockelDigOutput2="" pockelDigOutput3="" pockelDigOutput4=""/>
 
 </ThorGGNISettings>

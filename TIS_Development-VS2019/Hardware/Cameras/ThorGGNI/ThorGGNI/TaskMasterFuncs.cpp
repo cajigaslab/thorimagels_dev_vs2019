@@ -14,7 +14,7 @@ long ThorLSMCam::_precaptureStatus = PreCaptureStatus::PRECAPTURE_BLEACHER_IDLE;
 long ThorLSMCam::_activeLoadCount = 1;
 long ThorLSMCam::_dLengthPerAOCallback[SignalType::SIGNALTYPE_LAST] = {Constants::ACTIVE_LOAD_UNIT_SIZE};
 uint64_t ThorLSMCam::_totalLength[SignalType::SIGNALTYPE_LAST] = {0};
-string ThorLSMCam::_pockelDigOut;
+string ThorLSMCam::_pockelDigOut[MAX_GG_POCKELS_CELL_COUNT];
 string ThorLSMCam::_waveformCompleteOut;
 string ThorLSMCam::_bleachCycleOut;
 string ThorLSMCam::_bleachIterationOut;
@@ -207,9 +207,9 @@ long ThorLSMCam::BuildTaskMasterDigital(void)
 	_digiBleachSelect = 0x1;
 
 	//no memory copy in active loading, only set bitwise line selections:
-	if(_pockelDigOut.size() > 0)
+	if (_pockelDigOut[0].size() > 0)
 	{
-		_digitalTriggerLines += "," + _pockelDigOut;
+		_digitalTriggerLines += "," + _pockelDigOut[0];
 		_digiBleachSelect |= (0x1 << (int)BLEACHSCAN_DIGITAL_LINENAME::POCKEL_DIG);
 	}
 	if(_bleachActiveOut.size() > 0)
@@ -251,6 +251,21 @@ long ThorLSMCam::BuildTaskMasterDigital(void)
 	{
 		_digitalTriggerLines += "," + _bleachCycleInverse;
 		_digiBleachSelect |= (0x1 << (int)BLEACHSCAN_DIGITAL_LINENAME::CYCLE_COMPLEMENTARY);
+	}
+	if (_pockelDigOut[1].size() > 0)
+	{
+		_digitalTriggerLines += "," + _pockelDigOut[1];
+		_digiBleachSelect |= (0x1 << (int)BLEACHSCAN_DIGITAL_LINENAME::POCKEL_DIG_1);
+	}
+	if (_pockelDigOut[2].size() > 0)
+	{
+		_digitalTriggerLines += "," + _pockelDigOut[2];
+		_digiBleachSelect |= (0x1 << (int)BLEACHSCAN_DIGITAL_LINENAME::POCKEL_DIG_2);
+	}
+	if (_pockelDigOut[3].size() > 0)
+	{
+		_digitalTriggerLines += "," + _pockelDigOut[3];
+		_digiBleachSelect |= (0x1 << (int)BLEACHSCAN_DIGITAL_LINENAME::POCKEL_DIG_3);
 	}
 	return TRUE;
 }

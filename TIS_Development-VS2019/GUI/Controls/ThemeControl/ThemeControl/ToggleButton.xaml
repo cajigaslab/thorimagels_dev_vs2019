@@ -1,5 +1,7 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:ThemeControl">
+                   
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source=".\Shared.xaml" />
@@ -141,4 +143,153 @@
             </Trigger>
         </Style.Triggers>
     </Style>
+
+    <Style TargetType="ToggleButton"
+           x:Key="CircularToggleButtonStyle">
+        <Setter Property="SnapsToDevicePixels"
+                Value="true" />
+        <Setter Property="OverridesDefaultStyle"
+                Value="true" />
+        <Setter Property="FocusVisualStyle"
+                Value="{StaticResource ButtonFocusVisual}" />
+        <Setter Property="MinHeight"
+                Value="15" />
+        <Setter Property="MinWidth"
+                Value="20" />
+        <Setter Property="Foreground"
+                Value="{StaticResource TextForegroundBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="Border"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            BorderThickness="1"
+                            Padding="0"
+                            CornerRadius="{Binding Path=ActualHeight, ElementName=Border}"
+                            Width="{Binding Path=ActualHeight, ElementName=Border}"
+                            Background="{StaticResource NormalBrush}"
+                            BorderBrush="{StaticResource NormalBorderBrush}">
+                        <Grid>
+                            <Ellipse StrokeThickness="0"
+                                     Stroke="Transparent">
+                            </Ellipse>
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              Margin="1"
+                                              VerticalAlignment="Center" />
+                        </Grid>
+                        <!--<ContentPresenter Margin="1"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          RecognizesAccessKey="True" />-->
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused"
+                                 Value="true">
+                            <Setter TargetName="Border"
+                                    Property="BorderBrush"
+                                    Value="{StaticResource DefaultedBorderBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver"
+                                 Value="true">
+                            <Setter TargetName="Border"
+                                    Property="Background"
+                                    Value="{StaticResource DarkBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed"
+                                 Value="true">
+                            <Setter TargetName="Border"
+                                    Property="Background"
+                                    Value="{StaticResource PressedBrush}" />
+                            <Setter TargetName="Border"
+                                    Property="BorderBrush"
+                                    Value="{StaticResource PressedBorderBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled"
+                                 Value="false">
+                            <Setter TargetName="Border"
+                                    Property="Background"
+                                    Value="{StaticResource DisabledBackgroundBrush}" />
+                            <Setter TargetName="Border"
+                                    Property="BorderBrush"
+                                    Value="{StaticResource DisabledBorderBrush}" />
+                            <Setter Property="Foreground"
+                                    Value="{StaticResource DisabledForegroundBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked"
+                                 Value="true">
+                            <Setter TargetName="Border"
+                                    Property="Background"
+                                    Value="{StaticResource SelectedToggleButtonBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--Toggle button created from ChatGPT, asked: "I need a slider toggle switch button in wpf xaml" edited border and size-->
+    <Style TargetType="ToggleButton" x:Key="SliderToggleSwitchStyle" >
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Grid>
+                        <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="Black" BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="10" Width="44" Height="20" >
+                            <Grid>
+                                
+                                <Ellipse x:Name="Slider" 
+                                             HorizontalAlignment="Left" Width="11" Height="11"
+                                              Margin="1" RenderTransformOrigin="2,49" >
+                                    <Ellipse.RenderTransform>
+                                        <TranslateTransform X="2"/>
+                                    </Ellipse.RenderTransform>
+
+                                </Ellipse>
+                                
+                            
+                            </Grid>       
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        
+
+
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Slider" Property="RenderTransform">
+                                <Setter.Value>
+                                    <TranslateTransform X="28"/>
+                                </Setter.Value>
+                            </Setter>
+
+                            
+                            <Setter TargetName="Slider" Property="Fill" Value="White">
+                            </Setter>
+                            <Setter Property="BorderThickness" Value="0"  >
+                                
+                            
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="False">
+                            <Setter TargetName="Slider" Property="RenderTransform">
+                                <Setter.Value>
+                                    <TranslateTransform X="2"/>
+                                </Setter.Value>
+                            </Setter>
+
+                            <Setter TargetName="Slider" Property="Fill" Value="Black">
+                            </Setter>
+                            <Setter Property="BorderThickness" Value="2"  >
+                            </Setter>
+
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
 </ResourceDictionary>
+    
+    

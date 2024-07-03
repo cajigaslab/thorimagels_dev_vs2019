@@ -96,7 +96,7 @@
   <body>
     <div>
       <div class="fileinformation">
-		<div>v21.6.6291</div>
+		<div>v22.12.6552</div>
 	</div>
     </div>
     <div><a class="go-top" href="#Chapter_appendix_detail"></a></div>
@@ -548,11 +548,10 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>0 to 255
+                      <td>0 to n
         , step 1
         , default 0</td>
-                      <td colspan="6">
-                      </td>
+                      <td colspan="6">@ DCAM_IDPROP_TESTPATTERN_KIND, <br>DCAMPROP_TESTPATTERN_KIND__FLAT(IFLAT), n = 255 <br>DCAMPROP_TESTPATTERN_KIND__HORZGRADATION(IHORZGRADATION), n = 9 <br>DCAMPROP_TESTPATTERN_KIND__VERTGRADATION(IVERTGRADATION), n = 9 </td>
                     </tr>
                     <tr>
                       <td width="100%" colspan="8">
@@ -876,9 +875,9 @@
                     <tr>
                       <td width="5%" class="prop_indent"></td>
                       <td>0 to n-4
-        , step 1
+        , step 4
         , default 0</td>
-                      <td colspan="6">n is the value of DCAM_IDPROP_IMAGE_WIDTH</td>
+                      <td colspan="6">@ DCAM_IDPROP_IMAGE_WIDTH, n is the horizontal pixels with camera.</td>
                     </tr>
                     <tr>
                       <td width="55%" colspan="2">
@@ -908,7 +907,7 @@
                       <td>4 to n
         , step 4
         , default n</td>
-                      <td colspan="6">n is the value of DCAM_IDPROP_IMAGE_WIDTH</td>
+                      <td colspan="6">@ DCAM_IDPROP_IMAGE_WIDTH, n is the horizontal pixels with camera.</td>
                     </tr>
                     <tr>
                       <td width="55%" colspan="2">
@@ -1227,31 +1226,7 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>DCAMPROP_REALTIMEGAINCORRECT_LEVEL__1 (default)</td>
-                      <td colspan="6">
-                      </td>
-                    </tr>
-                    <tr>
-                      <td width="5%" class="prop_indent"></td>
-                      <td>DCAMPROP_REALTIMEGAINCORRECT_LEVEL__2</td>
-                      <td colspan="6">
-                      </td>
-                    </tr>
-                    <tr>
-                      <td width="5%" class="prop_indent"></td>
-                      <td>DCAMPROP_REALTIMEGAINCORRECT_LEVEL__3</td>
-                      <td colspan="6">
-                      </td>
-                    </tr>
-                    <tr>
-                      <td width="5%" class="prop_indent"></td>
-                      <td>DCAMPROP_REALTIMEGAINCORRECT_LEVEL__4</td>
-                      <td colspan="6">
-                      </td>
-                    </tr>
-                    <tr>
-                      <td width="5%" class="prop_indent"></td>
-                      <td>DCAMPROP_REALTIMEGAINCORRECT_LEVEL__5</td>
+                      <td>1,2,3,4,5</td>
                       <td colspan="6">
                       </td>
                     </tr>
@@ -1280,25 +1255,7 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>600 (default)</td>
-                      <td colspan="6">
-                      </td>
-                    </tr>
-                    <tr>
-                      <td width="5%" class="prop_indent"></td>
-                      <td>1800</td>
-                      <td colspan="6">
-                      </td>
-                    </tr>
-                    <tr>
-                      <td width="5%" class="prop_indent"></td>
-                      <td>3000</td>
-                      <td colspan="6">
-                      </td>
-                    </tr>
-                    <tr>
-                      <td width="5%" class="prop_indent"></td>
-                      <td>6000</td>
+                      <td>600,1800,3000,6000</td>
                       <td colspan="6">
                       </td>
                     </tr>
@@ -1328,6 +1285,7 @@
                     <tr>
                       <td width="5%" class="prop_indent"></td>
                       <td>1 to 4
+        , step 1
         , default 1</td>
                       <td colspan="6">
                       </td>
@@ -1357,11 +1315,10 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>0 to 636
+                      <td>0 to n-4
         , step 4
         , default 0</td>
-                      <td colspan="6">
-                      </td>
+                      <td colspan="6">@ DCAM_IDPROP_IMAGE_WIDTH, n is the horizontal pixels with camera.</td>
                     </tr>
                     <tr>
                       <td width="55%" colspan="2">
@@ -1388,11 +1345,10 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>4 to 640
+                      <td>4 to n
         , step 4
-        , default 640</td>
-                      <td colspan="6">
-                      </td>
+        , default n</td>
+                      <td colspan="6">@ DCAM_IDPROP_IMAGE_WIDTH, n is the horizontal pixels with camera.</td>
                     </tr>
                     <tr>
                       <td width="100%" colspan="8">
@@ -1435,6 +1391,11 @@
                       </td>
                     </tr>
                     <tr>
+                      <td width="5%" class="prop_indent"></td>
+                      <td>DCAMPROP_CAPTUREMODE__SHADINGCALIB</td>
+                      <td colspan="6">@ DCAM_IDPROP_SUBTRACT, DCAMPROP_MODE__ON <br>To use after dark correction.</td>
+                    </tr>
+                    <tr>
                       <td width="55%" colspan="2">
                         <div class="prop_id">DCAM_IDPROP_LINEAVERAGING</div>
                       </td>
@@ -1459,19 +1420,7 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>1 (default)</td>
-                      <td colspan="6">
-                      </td>
-                    </tr>
-                    <tr>
-                      <td width="5%" class="prop_indent"></td>
-                      <td>2</td>
-                      <td colspan="6">
-                      </td>
-                    </tr>
-                    <tr>
-                      <td width="5%" class="prop_indent"></td>
-                      <td>4</td>
+                      <td>1,2,4</td>
                       <td colspan="6">
                       </td>
                     </tr>
@@ -1486,10 +1435,10 @@
                         <div class="prop_id">R</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">W</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">W</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">-</div>
@@ -1791,7 +1740,7 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>1 (default)</td>
+                      <td>1</td>
                       <td colspan="6">
                       </td>
                     </tr>
@@ -1886,25 +1835,9 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>1 (default)</td>
-                      <td colspan="6">
-                      </td>
-                    </tr>
-                    <tr>
-                      <td width="5%" class="prop_indent"></td>
-                      <td>2</td>
-                      <td colspan="6">
-                      </td>
-                    </tr>
-                    <tr>
-                      <td width="5%" class="prop_indent"></td>
-                      <td>3</td>
-                      <td colspan="6">
-                      </td>
-                    </tr>
-                    <tr>
-                      <td width="5%" class="prop_indent"></td>
-                      <td>4</td>
+                      <td>1 to 4
+        , step 1
+        , default 1</td>
                       <td colspan="6">
                       </td>
                     </tr>

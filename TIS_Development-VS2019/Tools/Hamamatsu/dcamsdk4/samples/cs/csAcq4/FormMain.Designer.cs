@@ -15,6 +15,9 @@
         {
             if (disposing && (components != null))
             {
+                if (m_bitmap != null)
+                    m_bitmap.Dispose();
+
                 components.Dispose();
             }
             base.Dispose(disposing);
@@ -28,6 +31,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.LabelStatus = new System.Windows.Forms.Label();
             this.LabelLutMin = new System.Windows.Forms.Label();
             this.LabelLutMax = new System.Windows.Forms.Label();
@@ -48,6 +52,7 @@
             this.PushBufRelease = new System.Windows.Forms.Button();
             this.PushClose = new System.Windows.Forms.Button();
             this.PushUninit = new System.Windows.Forms.Button();
+            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.PicDisplay)).BeginInit();
             this.SuspendLayout();
             // 
@@ -60,47 +65,8 @@
             this.LabelStatus.Location = new System.Drawing.Point(14, 14);
             this.LabelStatus.Name = "LabelStatus";
             this.LabelStatus.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.LabelStatus.Size = new System.Drawing.Size(517, 17);
+            this.LabelStatus.Size = new System.Drawing.Size(521, 17);
             this.LabelStatus.TabIndex = 0;
-            // 
-            // LabelLutMax
-            // 
-            this.LabelLutMax.BackColor = System.Drawing.SystemColors.Control;
-            this.LabelLutMax.Cursor = System.Windows.Forms.Cursors.Default;
-            this.LabelLutMax.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.LabelLutMax.Location = new System.Drawing.Point(14, 38);
-            this.LabelLutMax.Name = "LabelLutMax";
-            this.LabelLutMax.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.LabelLutMax.Size = new System.Drawing.Size(52, 17);
-            this.LabelLutMax.TabIndex = 1;
-            this.LabelLutMax.Text = "LUT Max";
-            // 
-            // EditLutMax
-            // 
-            this.EditLutMax.AcceptsReturn = true;
-            this.EditLutMax.BackColor = System.Drawing.SystemColors.Window;
-            this.EditLutMax.Cursor = System.Windows.Forms.Cursors.IBeam;
-            this.EditLutMax.ForeColor = System.Drawing.SystemColors.WindowText;
-            this.EditLutMax.Location = new System.Drawing.Point(67, 38);
-            this.EditLutMax.MaxLength = 0;
-            this.EditLutMax.Name = "EditLutMax";
-            this.EditLutMax.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.EditLutMax.Size = new System.Drawing.Size(50, 20);
-            this.EditLutMax.TabIndex = 2;
-            this.EditLutMax.TextChanged += new System.EventHandler(this.EditLutMax_TextChanged);
-            // 
-            // HScrollLutMax
-            // 
-            this.HScrollLutMax.Cursor = System.Windows.Forms.Cursors.Default;
-            this.HScrollLutMax.LargeChange = 1;
-            this.HScrollLutMax.Location = new System.Drawing.Point(122, 38);
-            this.HScrollLutMax.Maximum = 32767;
-            this.HScrollLutMax.Name = "HScrollLutMax";
-            this.HScrollLutMax.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.HScrollLutMax.Size = new System.Drawing.Size(354, 17);
-            this.HScrollLutMax.TabIndex = 3;
-            this.HScrollLutMax.TabStop = true;
-            this.HScrollLutMax.ValueChanged += new System.EventHandler(this.HScrollLutMax_ValueChanged);
             // 
             // LabelLutMin
             // 
@@ -113,6 +79,18 @@
             this.LabelLutMin.Size = new System.Drawing.Size(52, 17);
             this.LabelLutMin.TabIndex = 4;
             this.LabelLutMin.Text = "LUT Min";
+            // 
+            // LabelLutMax
+            // 
+            this.LabelLutMax.BackColor = System.Drawing.SystemColors.Control;
+            this.LabelLutMax.Cursor = System.Windows.Forms.Cursors.Default;
+            this.LabelLutMax.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.LabelLutMax.Location = new System.Drawing.Point(14, 38);
+            this.LabelLutMax.Name = "LabelLutMax";
+            this.LabelLutMax.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.LabelLutMax.Size = new System.Drawing.Size(52, 17);
+            this.LabelLutMax.TabIndex = 1;
+            this.LabelLutMax.Text = "LUT Max";
             // 
             // EditLutMin
             // 
@@ -128,6 +106,35 @@
             this.EditLutMin.TabIndex = 5;
             this.EditLutMin.TextChanged += new System.EventHandler(this.EditLutMin_TextChanged);
             // 
+            // EditLutMax
+            // 
+            this.EditLutMax.AcceptsReturn = true;
+            this.EditLutMax.BackColor = System.Drawing.SystemColors.Window;
+            this.EditLutMax.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.EditLutMax.ForeColor = System.Drawing.SystemColors.WindowText;
+            this.EditLutMax.Location = new System.Drawing.Point(67, 38);
+            this.EditLutMax.MaxLength = 0;
+            this.EditLutMax.Name = "EditLutMax";
+            this.EditLutMax.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.EditLutMax.Size = new System.Drawing.Size(50, 20);
+            this.EditLutMax.TabIndex = 2;
+            this.EditLutMax.TextChanged += new System.EventHandler(this.EditLutMax_TextChanged);
+            // 
+            // PushAsterisk
+            // 
+            this.PushAsterisk.BackColor = System.Drawing.SystemColors.Control;
+            this.PushAsterisk.Cursor = System.Windows.Forms.Cursors.Default;
+            this.PushAsterisk.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.PushAsterisk.Location = new System.Drawing.Point(484, 40);
+            this.PushAsterisk.Name = "PushAsterisk";
+            this.PushAsterisk.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.PushAsterisk.Size = new System.Drawing.Size(34, 34);
+            this.PushAsterisk.TabIndex = 7;
+            this.PushAsterisk.Text = "*";
+            this.toolTip1.SetToolTip(this.PushAsterisk, "Auto LUT");
+            this.PushAsterisk.UseVisualStyleBackColor = false;
+            this.PushAsterisk.Click += new System.EventHandler(this.PushAsterisk_Click);
+            // 
             // HScrollLutMin
             // 
             this.HScrollLutMin.Cursor = System.Windows.Forms.Cursors.Default;
@@ -141,18 +148,18 @@
             this.HScrollLutMin.TabStop = true;
             this.HScrollLutMin.ValueChanged += new System.EventHandler(this.HScrollLutMin_ValueChanged);
             // 
-            // PushAsterisk
+            // HScrollLutMax
             // 
-            this.PushAsterisk.BackColor = System.Drawing.SystemColors.Control;
-            this.PushAsterisk.Cursor = System.Windows.Forms.Cursors.Default;
-            this.PushAsterisk.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.PushAsterisk.Location = new System.Drawing.Point(484, 40);
-            this.PushAsterisk.Name = "PushAsterisk";
-            this.PushAsterisk.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.PushAsterisk.Size = new System.Drawing.Size(34, 34);
-            this.PushAsterisk.TabIndex = 7;
-            this.PushAsterisk.Text = "*";
-            this.PushAsterisk.UseVisualStyleBackColor = false;
+            this.HScrollLutMax.Cursor = System.Windows.Forms.Cursors.Default;
+            this.HScrollLutMax.LargeChange = 1;
+            this.HScrollLutMax.Location = new System.Drawing.Point(122, 38);
+            this.HScrollLutMax.Maximum = 32767;
+            this.HScrollLutMax.Name = "HScrollLutMax";
+            this.HScrollLutMax.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.HScrollLutMax.Size = new System.Drawing.Size(354, 17);
+            this.HScrollLutMax.TabIndex = 3;
+            this.HScrollLutMax.TabStop = true;
+            this.HScrollLutMax.ValueChanged += new System.EventHandler(this.HScrollLutMax_ValueChanged);
             // 
             // PicDisplay
             // 
@@ -251,20 +258,6 @@
             this.PushLive.UseVisualStyleBackColor = false;
             this.PushLive.Click += new System.EventHandler(this.PushLive_Click);
             // 
-            // PushFireTrigger
-            // 
-            this.PushFireTrigger.BackColor = System.Drawing.SystemColors.Control;
-            this.PushFireTrigger.Cursor = System.Windows.Forms.Cursors.Default;
-            this.PushFireTrigger.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.PushFireTrigger.Location = new System.Drawing.Point(14, 350);
-            this.PushFireTrigger.Name = "PushFireTrigger";
-            this.PushFireTrigger.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.PushFireTrigger.Size = new System.Drawing.Size(113, 33);
-            this.PushFireTrigger.TabIndex = 14;
-            this.PushFireTrigger.Text = "Fire Trigger";
-            this.PushFireTrigger.UseVisualStyleBackColor = false;
-            this.PushFireTrigger.Click += new System.EventHandler(this.PushFireTrigger_Click);
-            // 
             // PushIdle
             // 
             this.PushIdle.BackColor = System.Drawing.SystemColors.Control;
@@ -278,6 +271,20 @@
             this.PushIdle.Text = "Idle";
             this.PushIdle.UseVisualStyleBackColor = false;
             this.PushIdle.Click += new System.EventHandler(this.PushIdle_Click);
+            // 
+            // PushFireTrigger
+            // 
+            this.PushFireTrigger.BackColor = System.Drawing.SystemColors.Control;
+            this.PushFireTrigger.Cursor = System.Windows.Forms.Cursors.Default;
+            this.PushFireTrigger.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.PushFireTrigger.Location = new System.Drawing.Point(14, 350);
+            this.PushFireTrigger.Name = "PushFireTrigger";
+            this.PushFireTrigger.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.PushFireTrigger.Size = new System.Drawing.Size(113, 33);
+            this.PushFireTrigger.TabIndex = 14;
+            this.PushFireTrigger.Text = "Fire Trigger";
+            this.PushFireTrigger.UseVisualStyleBackColor = false;
+            this.PushFireTrigger.Click += new System.EventHandler(this.PushFireTrigger_Click);
             // 
             // PushBufRelease
             // 
@@ -348,8 +355,8 @@
             this.Controls.Add(this.PushUninit);
             this.Name = "FormMain";
             this.Text = "csAcq4";
-            this.Load += new System.EventHandler(this.FormMain_Load);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormMain_FormClosing);
+            this.Load += new System.EventHandler(this.FormMain_Load);
             ((System.ComponentModel.ISupportInitialize)(this.PicDisplay)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -378,6 +385,6 @@
         public System.Windows.Forms.Button PushBufRelease;
         public System.Windows.Forms.Button PushClose;
         public System.Windows.Forms.Button PushUninit;
-
+        private System.Windows.Forms.ToolTip toolTip1;
     }
 }

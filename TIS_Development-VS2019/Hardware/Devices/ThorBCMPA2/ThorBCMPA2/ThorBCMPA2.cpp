@@ -99,6 +99,7 @@ long ThorBCMPA2::FindDevices(long &deviceCount)
 	double zero=0;
 	deviceCount=0;
 	long ret = FALSE;
+	vector<vector<string>> serialNum;
 	for (int i = 0; i <= DEVICE_NUM; i++)
 	{
 		_deviceDetected[i] = FALSE;
@@ -128,6 +129,34 @@ long ThorBCMPA2::FindDevices(long &deviceCount)
 			ret = _deviceDetected[DEVICE_NUM] = _deviceDetected[i] = TRUE;
 			deviceCount++;
 		}
+	}
+	serialNum.push_back(FindSerialNumbersInRegistry(THORLABS_VID, THORLABS_BCMPA3_PID));
+
+	if (!_deviceDetected[DEVICE_NUM] && serialNum[0].size() > 0)
+	{
+		wstring comPortInReg = FindCOMPortInRegistry(THORLABS_VID, THORLABS_BCMPA3_PID, serialNum[0][0]);
+
+		size_t pos = comPortInReg.find_first_of(L"0123456789");
+		std::wstring numericPart = comPortInReg.substr(pos);
+		int sNoPortID;
+		std::wistringstream(numericPart) >> sNoPortID;
+		
+		//_deviceDetected[DEVICE_NUM] works as a flag to indicate some device has been found.
+		if (TRUE == _serialPort[0].Open(sNoPortID, 460800))
+		{
+			ret = _deviceDetected[DEVICE_NUM] = _deviceDetected[0] = TRUE;
+			deviceCount++;
+			_serialPort[0].Close();
+			_foundByPID = TRUE;
+			auto_ptr<ThorBCMPA2XML> pSetup(new ThorBCMPA2XML());
+			pSetup->GetConnection(_deviceSignature[0], portID[0], baudRate, _settingsSerialNumber[0], _useShutter[0]);
+			return ret; /*Since DEVICE_NUM = 1*/
+		}
+		else
+		{
+			_foundByPID = FALSE;
+		}
+		
 	}
 
 	//If any device was detected, determine if the serial number in the 
@@ -175,34 +204,81 @@ long ThorBCMPA2::SelectDevice(const long device)
 	{
 		_deviceDetected[i] = FALSE;
 	}
-
-	for(int i=0; i<DEVICE_NUM; i++)
+	vector<vector<string>> serialNum;
+	_foundByPID = FALSE;
+	for (int i = 0; i < DEVICE_NUM; i++)
 	{
 		try
-		{				
+		{
 			auto_ptr<ThorBCMPA2XML> pSetup(new ThorBCMPA2XML());
 			//Get portID, etc from  ThorBCMPASettings.xml
-			pSetup->GetConnection(_deviceSignature[i], portID,baudRate,_settingsSerialNumber[i],_useShutter[i]);
+			pSetup->GetConnection(_deviceSignature[i], portID, baudRate, _settingsSerialNumber[i], _useShutter[i]);
 
-			if(FALSE == _serialPort[i].Open(portID, baudRate))
+			if (FALSE == _serialPort[i].Open(portID, baudRate))
 			{
-				StringCbPrintfW(message,MSG_SIZE,L"ThorBCMPA SelectDevice could not open serial port");
+				StringCbPrintfW(message, MSG_SIZE, L"ThorBCMPA SelectDevice could not open serial port");
 				LogMessage(message);
-				StringCbPrintfW(_errMsg,MSG_SIZE,L"ThorBCMPA SelectDevice could not open serial port or configuration file is not avaible.");
+				StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorBCMPA SelectDevice could not open serial port or configuration file is not avaible.");
 			}
-			else 
-			{	
-				_deviceDetected[DEVICE_NUM] = _deviceDetected[i] = TRUE;			
+			else
+			{
+				_deviceDetected[DEVICE_NUM] = _deviceDetected[i] = TRUE;
 				ret = TRUE;
 			}
 		}
-		catch(...)
+		catch (...)
 		{
-			StringCbPrintfW(_errMsg,MSG_SIZE,L"Unable to locate ThorBCMPASettings.xml file");
+			StringCbPrintfW(_errMsg, MSG_SIZE, L"Unable to locate ThorBCMPASettings.xml file");
 			return ret;
 		}
 	}
+	serialNum.push_back(FindSerialNumbersInRegistry(THORLABS_VID, THORLABS_BCMPA3_PID));
+	if (!_deviceDetected[0] && serialNum[0].size() > 0)
+	{
+		wstring comPortInReg = FindCOMPortInRegistry(THORLABS_VID, THORLABS_BCMPA3_PID, serialNum[0][0]);
 
+		size_t pos = comPortInReg.find_first_of(L"0123456789");
+		std::wstring numericPart = comPortInReg.substr(pos);
+		int sNoPortID;
+		std::wistringstream(numericPart) >> sNoPortID;
+		if (_serialPort[0].Open(sNoPortID, 460800))
+		{
+			//_deviceDetected[DEVICE_NUM] works as a flag to indicate some device has been found.
+			ret = _deviceDetected[DEVICE_NUM] = _deviceDetected[0] = TRUE;
+			_foundByPID = TRUE;		
+		}
+		else
+		{
+			_foundByPID = FALSE;
+			for (int i = 0; i < DEVICE_NUM; i++)
+			{
+				try
+				{
+					auto_ptr<ThorBCMPA2XML> pSetup(new ThorBCMPA2XML());
+					//Get portID, etc from  ThorBCMPASettings.xml
+					pSetup->GetConnection(_deviceSignature[i], portID, baudRate, _settingsSerialNumber[i], _useShutter[i]);
+
+					if (FALSE == _serialPort[i].Open(portID, baudRate))
+					{
+						StringCbPrintfW(message, MSG_SIZE, L"ThorBCMPA SelectDevice could not open serial port");
+						LogMessage(message);
+						StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorBCMPA SelectDevice could not open serial port or configuration file is not avaible.");
+					}
+					else
+					{
+						_deviceDetected[DEVICE_NUM] = _deviceDetected[i] = TRUE;
+						ret = TRUE;
+					}
+				}
+				catch (...)
+				{
+					StringCbPrintfW(_errMsg, MSG_SIZE, L"Unable to locate ThorBCMPASettings.xml file");
+					return ret;
+				}
+			}
+		}
+	}
+	
 	try
 	{		
 		auto_ptr<ThorBCMPA2XML> pSetup(new ThorBCMPA2XML());
@@ -548,6 +624,7 @@ long ThorBCMPA2::GetParam(const long paramID, double &param)
 						if(itmap != _tableParams.end())
 						{		
 							std::vector<unsigned char> cmd = _tableParams[paramID]->GetCmdBytes();
+							if (_foundByPID) cmd = { 0x0a, 0x04, 0x00, 0x00, 0x50, 0x01 };
 
 							if(TRUE == ExecuteCmd(paramID, cmd, ret)) //execute and parse the current position from read back
 							{
@@ -600,7 +677,9 @@ long ThorBCMPA2::GetParam(const long paramID, double &param)
 
 						if(itmap != _tableParams.end())
 						{		
+
 							std::vector<unsigned char> cmd = _tableParams[paramID]->GetCmdBytes();
+							if (_foundByPID) cmd = { 0x0a, 0x04, 0x00, 0x00, 0x50, 0x01 };
 
 							if(TRUE == ExecuteCmd(paramID, cmd, ret)) //execute and parse the current position from read back
 							{
@@ -661,7 +740,9 @@ long ThorBCMPA2::GetParam(const long paramID, double &param)
 				case PARAM_POWER2_ENCODER_POS:
 					{
 						//Retrieve the current position from the device
-						return ExecuteCmd(paramID, _tableParams[paramID]->GetCmdBytes(), param);
+						vector<unsigned char> cmd = _tableParams[paramID]->GetCmdBytes();
+						if (_foundByPID) cmd = { 0x0a, 0x04, 0x00, 0x00, 0x50, 0x01 };
+						return ExecuteCmd(paramID, cmd, param);
 					}
 					break;
 				default:
@@ -868,37 +949,44 @@ long ThorBCMPA2::ExecuteCmd(ParamInfo* pParamInfo)
 }
 
 /// <summary>
-/// Waits for rotation complete.
+/// Waits for rotation complete. DEPRECATED
+/// now uses StatusPosition
 /// </summary>
 /// <param name="deviceIndex">Index of the device.</param>
 /// <returns>long.</returns>
-long ThorBCMPA2::WaitForRotationComplete(long deviceIndex)
-{
-	char moving = 0;
-	char buf[100];
-	const unsigned long MAX_WAIT_FOR_COMPLETION_MS =  static_cast<unsigned long>(_timeOutTime);
-	DWORD startTime = GetTickCount();
-	do
-	{
-		unsigned char commandBytesStatus[] = { 0x80, 0x04, 0x02, 0x00, 0x11, 0x01}; 
-
-		_serialPort[deviceIndex].SendData(commandBytesStatus,  sizeof(commandBytesStatus)/sizeof(commandBytesStatus[0]));
-
-		Sleep(WAIT_TIME_BETWEEN_SEND_COMMANDS);
-
-		memset(buf, 0, sizeof(buf));
-
-		if(_serialPort[0].ReadData(buf, 100))
-		{
-			//if any of the moving status bits are enabled
-			//set the state to moving
-			moving = ((unsigned char)buf[16]  & 0xF0);
-		}
-	}
-	while((moving != 0)&&((GetTickCount() - startTime) < MAX_WAIT_FOR_COMPLETION_MS));
-
-	return TRUE;
-}
+//long ThorBCMPA2::WaitForRotationComplete(long deviceIndex)
+//{
+//	char moving = 0;
+//	char buf[100];
+//	const unsigned long MAX_WAIT_FOR_COMPLETION_MS =  static_cast<unsigned long>(_timeOutTime);
+//	DWORD startTime = GetTickCount();
+//	do
+//	{
+//		unsigned char commandBytesStatus[] = { 0x80, 0x04, 0x02, 0x00, 0x11, 0x01}; 
+//		if (_foundByPID)
+//		{
+//			commandBytesStatus[2] = 0x00;
+//			commandBytesStatus[3] = 0x00;
+//			commandBytesStatus[4] = 0x50;
+//
+//		}
+//		_serialPort[deviceIndex].SendData(commandBytesStatus,  sizeof(commandBytesStatus)/sizeof(commandBytesStatus[0]));
+//
+//		Sleep(WAIT_TIME_BETWEEN_SEND_COMMANDS);
+//
+//		memset(buf, 0, sizeof(buf));
+//
+//		if(_serialPort[0].ReadData(buf, 100))
+//		{
+//			//if any of the moving status bits are enabled
+//			//set the state to moving
+//			moving = ((unsigned char)buf[16]  & 0xF0);
+//		}
+//	}
+//	while((moving != 0)&&((GetTickCount() - startTime) < MAX_WAIT_FOR_COMPLETION_MS));
+//
+//	return TRUE;
+//}
 
 /// <summary>
 /// Executes the command.
@@ -922,17 +1010,31 @@ long ThorBCMPA2::ExecuteCmd(long paramID, std::vector<unsigned char> cmd, double
 	{
 	case PARAM_POWER_POS:
 		{	
+			if (_foundByPID)
+			{
+				cmd[4] = 0xd0;
+				cmd[6] = 0x00;
+				cmd[7] = 0x00;
+				cmdStr = string(cmd.begin(), cmd.end());
+			}
 			_serialPort[0].SendData((const unsigned char*)(cmdStr.c_str()), (int)cmdStr.size());
 			Sleep(WAIT_TIME_BETWEEN_SEND_COMMANDS); //Determined by testing... Shorter sleep time may cause bad communications
-			WaitForRotationComplete(0);
+			/*WaitForRotationComplete(0);*/
 
 		}
 		break;
 	case PARAM_POWER2_POS:
 		{
+			if (_foundByPID)
+			{
+				cmd[4] = 0xd0;
+				cmd[6] = 0x00;
+				cmd[7] = 0x00;
+				cmdStr = string(cmd.begin(), cmd.end());
+			}
 			_serialPort[0].SendData((const unsigned char*)(cmdStr.c_str()), (int)cmdStr.size());
 			Sleep(WAIT_TIME_BETWEEN_SEND_COMMANDS);
-			WaitForRotationComplete(1);
+			/*WaitForRotationComplete(1);*/
 
 		}
 		break;
@@ -940,7 +1042,7 @@ long ThorBCMPA2::ExecuteCmd(long paramID, std::vector<unsigned char> cmd, double
 		{
 			_serialPort[0].SendData((const unsigned char*)(cmdStr.c_str()), (int)cmdStr.size());
 			Sleep(WAIT_TIME_BETWEEN_SEND_COMMANDS); //Determined by testing... Shorter sleep time may cause bad communications
-			WaitForRotationComplete(2);
+			/*WaitForRotationComplete(2);*/
 
 		}
 		break;
@@ -987,6 +1089,12 @@ long ThorBCMPA2::ExecuteCmd(long paramID, std::vector<unsigned char> cmd, double
 		{
 			if(TRUE == _useShutter[0])
 			{
+				if (_foundByPID)
+				{
+					cmd[4] = 0x50;
+					cmd[5] = 0x01;
+					cmdStr = string(cmd.begin(), cmd.end());
+				}
 				const long SHUTTER_FULL_OPEN_TIME_MS = 500;
 				_serialPort[0].SendData((const unsigned char*)(cmdStr.c_str()), (int)cmdStr.size());
 				Sleep(SHUTTER_FULL_OPEN_TIME_MS); //Determined by testing... Shorter sleep time may cause bad communications
@@ -997,6 +1105,12 @@ long ThorBCMPA2::ExecuteCmd(long paramID, std::vector<unsigned char> cmd, double
 		{
 			if(TRUE == _useShutter[0])
 			{
+				if (_foundByPID)
+				{
+					cmd[4] = 0x50;
+					cmd[5] = 0x01;
+					cmdStr = string(cmd.begin(), cmd.end());
+				}
 				const long SHUTTER_FULL_OPEN_TIME_MS = 500;
 				_serialPort[0].SendData((const unsigned char*)(cmdStr.c_str()), (int)cmdStr.size());
 				Sleep(SHUTTER_FULL_OPEN_TIME_MS); //Determined by testing... Shorter sleep time may cause bad communications
@@ -1543,11 +1657,40 @@ long ThorBCMPA2::GetLastErrorMsg(wchar_t *msg, long size)
 /// </summary>
 /// <param name="status">The status.</param>
 /// <returns>long.</returns>
-long ThorBCMPA2::StatusPosition(long &status)
+long ThorBCMPA2::StatusPosition(long& status)
 {
-	status = IDevice::STATUS_READY;
+	char moving = 0;
+	char buf[100];
+	status = IDevice::STATUS_BUSY;
+	const unsigned long MAX_WAIT_FOR_COMPLETION_MS = static_cast<unsigned long>(_timeOutTime);
+	unsigned char commandBytesStatus[] = { 0x80, 0x04, 0x02, 0x00, 0x11, 0x01 };
+	DWORD startTime = GetTickCount();
+	if (_foundByPID)
+	{
+		commandBytesStatus[2] = 0x00;
+		commandBytesStatus[3] = 0x00;
+		commandBytesStatus[4] = 0x50;
+
+	}
+	_serialPort[0].SendData(commandBytesStatus, sizeof(commandBytesStatus) / sizeof(commandBytesStatus[0]));
+
+	Sleep(WAIT_TIME_BETWEEN_SEND_COMMANDS);
+	do
+	{
+		memset(buf, 0, sizeof(buf));
+
+		if (_serialPort[0].ReadData(buf, 100))
+		{
+			//if any of the moving status bits are enabled
+			//set the state to moving
+			moving = ((unsigned char)buf[16] & 0xF0);
+			status = moving == 0 ? IDevice::STATUS_READY : IDevice::STATUS_BUSY;
+		}
+	} while ((moving != 0) && ((GetTickCount() - startTime) < MAX_WAIT_FOR_COMPLETION_MS));
+
 	return TRUE;
 }
+
 
 /// <summary>
 /// Reads the position.

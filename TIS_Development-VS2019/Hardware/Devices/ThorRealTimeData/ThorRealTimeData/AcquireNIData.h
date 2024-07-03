@@ -69,6 +69,10 @@ public:		//members
 	static HANDLE _hStopAsyncEvent;			///<event to stop Async
 	static HANDLE _hAsyncEventFinished;		///<event to signal Async finished
 	static HANDLE _hAsyncCallbackInvoked;   ///<event to signal Async callback is invoked
+	static unsigned long lastCountValue; // to check increment when writing frame timing file
+	static std::wstring ciLogFile; // file name for writing frame timing
+	static unsigned int ciLogSuffix; // suffix of file name
+	static uInt64 elapsedTimeUS; // for recording frame timing
 
 public:		//functions:
 	AcquireNIData();
@@ -95,6 +99,7 @@ public:		//functions:
 	static long VerifyNILine(Channels* channel, int customType, std::string targetName);
 	static long StaticStop();
 	static long EndTasks();
+	static std::string CalcTimeString(uInt64 deltaTimeUS);
 
 	//virtual functions' implementation:
 	virtual long Enter();

@@ -186,6 +186,7 @@
                     case "/CI":
                         {   //Counter line:
                             _realVM.IsCounterLinePlotEnabled.Add((true == ((CheckBox)((StackPanel)lbLines.Items[i]).Children[4]).IsChecked) ? true : false);
+                            RealTimeLineChartViewModel.SetAttribute(channelList[i], Settings, "savetiming", ((true == ((CheckBox)(((StackPanel)lbLines.Items[i]).Children[5])).IsChecked) ? "1" : "0"));
                         }
                         break;
                 }
@@ -379,7 +380,7 @@
                 spanel.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
 
                 //overall width: (account for all lateral items' width)
-                spanel.Width = 370;
+                spanel.Width = 440;
                 //int col2Width = 100;
                 CheckBox box = new CheckBox();
                 box.IsChecked = (1 == Convert.ToInt32(node.Attributes["enable"].Value.ToString())) ? true : false;
@@ -462,7 +463,7 @@
                         spanel.Children.Add(lb2);
                     }*/
                     RadioButton rb3 = new RadioButton();
-                    rb3.Width = 70;
+                    rb3.Width = 140;
                     rb3.HorizontalContentAlignment = System.Windows.HorizontalAlignment.Center;
                     rb3.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
                     rb3.VerticalAlignment = System.Windows.VerticalAlignment.Center;
@@ -486,20 +487,24 @@
                     //spanel.Children.Add(lb2);
 
                     CheckBox box2 = new CheckBox();
+                    box2.Content = "Plot";
                     box2.IsChecked = ((n_ci - 1) <= _realVM.IsCounterLinePlotEnabled.Count) ? _realVM.IsCounterLinePlotEnabled[(n_ci - 2)] : false;    //n_ci: 1-based and be incremented before
-                    box2.Width = 20;
+                    box2.Width = 50;
                     box2.HorizontalContentAlignment = System.Windows.HorizontalAlignment.Center;
                     box2.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
                     box2.VerticalAlignment = System.Windows.VerticalAlignment.Center;
-                    //box2.Margin = new Thickness() { Left = 3, Right = 3, Top = 3, Bottom = 3 };
                     spanel.Children.Add(box2);
-                    Label lbl3 = new Label();
-                    lbl3.Width = 50;
-                    lbl3.HorizontalContentAlignment = System.Windows.HorizontalAlignment.Left;
-                    lbl3.VerticalAlignment = System.Windows.VerticalAlignment.Center;
-                    //lbl3.Margin = new Thickness() { Left = 3, Right = 3, Top = 3, Bottom = 3 };
-                    lbl3.Content = "Plot";
-                    spanel.Children.Add(lbl3);
+
+                    // checkbox for saving frame timing text file
+                    CheckBox box3 = new CheckBox();
+                    box3.Content = "Save Timing";
+                    box3.ToolTip = "Save frame timing text file";
+                    box3.IsChecked = (1 == Convert.ToInt32(node.Attributes["savetiming"].Value.ToString())) ? true : false;
+                    box3.Width = 90;
+                    box3.HorizontalContentAlignment = System.Windows.HorizontalAlignment.Center;
+                    box3.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
+                    box3.VerticalAlignment = System.Windows.VerticalAlignment.Center;
+                    spanel.Children.Add(box3);
                 }
 
                 //Color Configuration:

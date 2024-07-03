@@ -65,12 +65,17 @@ public:		//members
 	static HANDLE _hProcessSaveThread;
 	static BOOL _inSaveThread;
 	static unsigned long gCtrOverflowCnt;
+	static unsigned long lastCountValue; // to check increment when writing frame timing file
+	static std::wstring ciLogFile; // file name for writing frame timing
+	static unsigned int ciLogSuffix; // suffix of file name
+	static unsigned long elapsedTimeUS; // for recording frame timing
 
 public:		//functions:
 	AcquireSim();
 	~AcquireSim();
 	static void TimerCallback(HWND hwnd, UINT uMsg, UINT timerId, DWORD dwTime);
 	static long StaticStop();
+	static std::string CalcTimeString(unsigned int deltaTimeMS);
 
 	//virtual functions' implementation:
 	virtual long Enter();

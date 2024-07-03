@@ -1319,6 +1319,18 @@ DllExportFunc PreflightCamera(long cameraSelection)
 	return camera->PreflightAcquisition(NULL);
 }
 
+DllExportFunc SetupCamera(long cameraSelection)
+{
+	ICamera* camera = HardwareCom::getInstance()->GetCamera(cameraSelection);
+
+	if (NULL == camera)
+	{
+		return FALSE;
+	}
+
+	return camera->SetupAcquisition(NULL);
+}
+
 DllExportFunc PostflightCamera(long cameraSelection)
 {
 	ICamera* camera = HardwareCom::getInstance()->GetCamera(cameraSelection);

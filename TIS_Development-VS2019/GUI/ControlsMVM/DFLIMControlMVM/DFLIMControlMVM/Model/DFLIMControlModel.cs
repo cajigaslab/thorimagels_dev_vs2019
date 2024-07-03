@@ -38,6 +38,17 @@
             }
         }
 
+        public bool DFLIMAvailable
+        {
+            get
+            {
+                int temp = 0;
+
+                return (1 == ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_DFLIM_ACQUISITION_MODE, ref temp));
+
+            }
+        }
+
         public int DFLIMCoarseShift1
         {
             get

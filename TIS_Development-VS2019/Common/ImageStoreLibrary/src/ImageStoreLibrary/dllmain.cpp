@@ -43,9 +43,9 @@ IMAGESTORELIBRARY_API long ReadImageStoreData(char* buf, long channelCount, long
 	return ImageStoreWrapper::getInstance()->ReadChannelData(buf, channelCount, width, height, zSliceID, timeID, specID, regionID);
 }
 
-IMAGESTORELIBRARY_API long SetupImageStore(wchar_t * path, void* exp, long doCompression)
+IMAGESTORELIBRARY_API long SetupImageStore(wchar_t * path, void* exp, long mROIEnabled, long doCompression)
 {
-	return ImageStoreWrapper::getInstance()->SetupImageStore(path, exp, doCompression);
+	return ImageStoreWrapper::getInstance()->SetupImageStore(path, exp, mROIEnabled, doCompression);
 }
 
 IMAGESTORELIBRARY_API long SetScan(long scanID)

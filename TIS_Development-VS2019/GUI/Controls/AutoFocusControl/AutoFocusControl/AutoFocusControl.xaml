@@ -278,7 +278,6 @@
                         <RowDefinition Height="35" />
                         <RowDefinition Height="35" />
                         <RowDefinition Height="35" />
-                        <RowDefinition Height="35" />
                     </Grid.RowDefinitions>
                     <StackPanel Margin="1"
                                 Grid.Row="0"
@@ -354,11 +353,13 @@
                         </Button>
                         <Label Content="Relative Stop [um]"/>
                     </StackPanel>
+                    <!--Hide the frames box, we don't use it at the moment-->
                     <StackPanel Margin="1"
                             Grid.Row="3"
                             Grid.Column="0"
                             Orientation="Horizontal"
-                            ToolTip="Number of Frames until AutoFocus repeats in Time Series Capture">
+                            ToolTip="Number of Frames until AutoFocus repeats in Time Series Capture"
+                                Visibility="Collapsed">
                         <TextBox Name="txtRepeats" 
                          Text="{Binding Path=Repeats}" 
                          Width="50"
@@ -384,7 +385,7 @@
                         <Label Content="Frame Repeat #"/>
                     </StackPanel>
                     <StackPanel Margin="1"
-                            Grid.Row="4"
+                            Grid.Row="3"
                             Grid.Column="0"
                             Orientation="Horizontal">
                         <TextBox Name="txtStepSize" 
@@ -412,7 +413,7 @@
                         <Label Content="Step size [um]"/>
                     </StackPanel>
                     <StackPanel Margin="1"
-                                Grid.Row="5"
+                                Grid.Row="4"
                                 Orientation="Horizontal">
                         <Button MinWidth="40"
                                 Margin="50,0,0,0"

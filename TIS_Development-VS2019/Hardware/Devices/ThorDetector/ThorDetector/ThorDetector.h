@@ -38,6 +38,7 @@ const string THORLABS_HPD1000_PID = "2E06";
 const string THORLABS_SIPM100_PID = "2E07";
 const string THORLABS_PMT2110_PID = "2E08";
 const string THORLABS_PMT3100_PID = "2E09";
+const string THORLABS_PMT5100_PID = "2E0A";
 
 const USHORT MGMSG_HW_REQ_INFO = 0x0005;
 const USHORT MGMSG_HW_GET_INFO = 0x0006;
@@ -148,6 +149,10 @@ private:
 	long _gainSliderMax[DEVICE_NUM];
 	double _offsetMinVolts[DEVICE_NUM];
 	double _offsetMaxVolts[DEVICE_NUM];
+	long _gainAvailable[DEVICE_NUM];
+	long _bandwidthAvailable[DEVICE_NUM];
+	long _offsetAvailable[DEVICE_NUM];
+	long _hpdGainAvailable[DEVICE_NUM];
 
 	list<long> _allBandwidths = { BW_250kHz, BW_1MHz, BW_2_5MHz, BW_15MHz, BW_30MHz, BW_80MHz, BW_200MHz, BW_300MHz };
 

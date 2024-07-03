@@ -1,0 +1,51 @@
+TARGETNAME=DMADriver
+TARGETTYPE=DRIVER
+
+!INCLUDE "..\..\Include\version.inc"
+
+#KMDF_VERSION=1
+KMDF_VERSION_MAJOR=1
+
+INF_NAME=DMADriver
+
+MISCFILES=$(OBJ_PATH)\$(O)\$(INF_NAME).inf
+
+MINWIN_SDK_LIB_PATH=$(SDK_LIB_PATH)
+
+NTTARGETFILES=
+
+TARGETLIBS=$(TARGETLIBS) \
+			$(DDK_LIB_PATH)\ntstrsafe.lib
+
+MSC_WARNING_LEVEL=/WX /W4
+
+PRECOMPILED_INCLUDE=precomp.h
+PRECOMPILED_PCH=precomp.pch
+PRECOMPILED_OBJ=precomp.obj
+
+#C_DEFINES = $(C_DEFINES)
+
+SOURCES= DMADriver.c \
+		 DMADriver.rc \
+		 Init.c \
+		 IoctlHandling.c \
+		 IrqHandling.c \
+		 ReadWriteHandling.c \
+		 BoardConfigHandling.c \
+		 PacketInit.c \
+         PacketIoCtl.c \
+         PacketDMA.c \
+		 WatchdogTimerHandling.c
+		 
+#
+#if TRACE_ENABLED
+# Generate WPP trace code
+# (SOURCES)   -- run preprocessor on sources
+# -km         -- kernel mode
+# -func       -- function to use for trace
+#RUN_WPP= $(SOURCES)                             \
+#         -km                                    \
+#         -func:DEBUGP(LEVEL,FLAGS,MSG,...) \
+#         -func:Hexdump((LEVEL,FLAGS,MSG,...))   \
+#         -gen:{km-WdfDefault.tpl}*.tmh
+#endif TRACE_ENABLED

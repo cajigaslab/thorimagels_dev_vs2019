@@ -1,6 +1,7 @@
 #include "tl_mono_to_color_processing_load.h"
 #include "tl_mono_to_color_enum.h"
 #include <stdbool.h>
+#include <stdio.h>
 
 #ifndef THORLABS_TSI_BUILD_DLL
 
@@ -123,7 +124,14 @@ int tl_mono_to_color_processing_initialize(void)
 #endif
 
 #ifdef __linux__
-    mono_to_color_processing_obj = dlopen (mono_to_color_processing_module_name, RTLD_LAZY);
+	// First look in the current folder for the .so entry dll, then in the path (/usr/local/lib most likely).
+	char local_path_to_library[2048];
+	sprintf(local_path_to_library, "./%s", mono_to_color_processing_module_name);
+    mono_to_color_processing_obj = dlopen (local_path_to_library, RTLD_LAZY);
+	if (!mono_to_color_processing_obj)
+	{
+		mono_to_color_processing_obj = dlopen(mono_to_color_processing_module_name, RTLD_LAZY);
+	}
 #endif
 	if (!mono_to_color_processing_obj)
 	{

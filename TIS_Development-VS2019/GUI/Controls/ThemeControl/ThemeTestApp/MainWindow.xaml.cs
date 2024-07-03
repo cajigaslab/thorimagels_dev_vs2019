@@ -24,5 +24,15 @@ namespace ThemeTestApp
         {
             InitializeComponent();
         }
+
+        private void ToggleButton_Checked(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void ToggleButton_Checked_1(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

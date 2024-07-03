@@ -14,6 +14,7 @@
     using System.Text;
     using System.Windows;
     using System.Windows.Controls;
+    using System.Windows.Controls.Primitives;
     using System.Windows.Data;
     using System.Windows.Input;
     using System.Windows.Media;
@@ -54,22 +55,14 @@
     {
         #region Fields
 
-        public static Canvas OverlayCanvas;
-        public static Canvas PresentationCanvas;
-
         private readonly CaptureSetup _captureSetup;
 
-        private ICommand _autoContourDisplayCommand;
-        private AutoContourWin _autoContourWin = null;
-        private bool _autoCoutourWinInit;
-        private bool _bleachBorderEnabled;
         private BackgroundWorker _bleachWorker;
-        private ICommand _browseForReferenceImageCommand;
         private BackgroundWorker _bw;
         private BackgroundWorker _bwHardware = null;
         private Double _captureSetupControlPanelWidth = 0;
         private int _captureSetupModalitySwap = 0;
-        private ICommand _clearAllObjectsCommand;
+        private ICommand _closeProgressWindowCommand;
         private Visibility _collapsedPockels0Visibility = Visibility.Collapsed;
         private Visibility _collapsedPockels1Visibility = Visibility.Collapsed;
         private Visibility _collapsedPockels2Visibility = Visibility.Collapsed;
@@ -88,8 +81,6 @@
         private Visibility _imagerViewVis = Visibility.Visible;
         private bool _isHandlerConnected = false;
         private bool _isProgressWindowOff = true;
-        private double _ivHeight;
-        private double _iVScrollBarHeight;
         private LineProfile _lineProfile = null;
         private bool _lineProfileActive;
         private SpinnerProgress.SpinnerProgressControl _modalitySpinner;
@@ -105,7 +96,6 @@
         private ROIStatsChartWin _roiStatsChart = null;
         private bool _roiStatsChartActive;
         private bool _roiStatsTableActive;
-        private Thickness _roiToolbarMargin = new Thickness(0, 0, 0, 0);
         private RelayCommand _saveStatChartCommand;
         private bool _showingPMTSafetyMessage;
         private BackgroundWorker _slmBleachWorker;
@@ -162,29 +152,10 @@
             this._captureSetup.CaptureSetupViewModel = this;
             _isLive = false;
 
-            _autoCoutourWinInit = false;
-
             //_SpotScanIsEnabled = false;
             _bROIByteArray = null;
 
             _OutputExperiment = "Untitled001";
-
-            const int LUT_SIZE = 256;
-
-            CaptureSetup.ChannelLuts = new Color[CaptureSetup.MAX_CHANNELS][];
-
-            ChannelName = new ObservableCollection<StringPC>();
-
-            for (int i = 0; i < CaptureSetup.MAX_CHANNELS; i++)
-            {
-                CaptureSetup.ChannelLuts[i] = new Color[LUT_SIZE];
-                ChannelName.Add(new StringPC());
-            }
-
-            for (int i = 0; i < CaptureSetup.MAX_CHANNELS; i++)
-            {
-                _currentChannelsLutFiles.Add(string.Empty);
-            }
 
             CaptureSetupViewModel vm = this;
 
@@ -192,8 +163,6 @@
 
             var startLiveImageEvent = _eventAggregator.GetEvent<StartLiveImageEvent>();
             startLiveImageEvent.Subscribe(LiveCapture);
-
-            this._captureSetup.UpdateImage += new Action<bool>(LiveImage_Update);
 
             //create a background worker that will update at 30fps to udpate the bitmap image
             _bw = new BackgroundWorker();
@@ -214,7 +183,7 @@
 
             this._captureSetup.PropertyChanged += new PropertyChangedEventHandler(LiveImage_PropertyChanged);
 
-            OverlayManagerClass.Instance.InitOverlayManagerClass(512, 512, 1.0, true);
+            OverlayManagerClass.Instance.InitOverlayManagerClass(512, 512, new PixelSizeUM(1.0, 1.0), true);
 
             _roiStatsChartActive = false;
             _roiStatsTableActive = false;
@@ -261,16 +230,6 @@
 
         #endregion Delegates
 
-        #region Events
-
-        public event Action ActiveSettingsReplaced;
-
-        public event Action DrawLineForLineScanEvent;
-
-        public event Action AcquireButtonPressed; //handle any view logic corresponding to one of the capture buttons being pressed
-
-        #endregion Events
-
         #region Properties
 
         public XmlDocument ApplicationDoc
@@ -285,67 +244,9 @@
             }
         }
 
-        public ICommand AutoContourDisplayCommand
-        {
-            get
-            {
-                if (this._autoContourDisplayCommand == null)
-                    this._autoContourDisplayCommand = new RelayCommand(() => AutoContourDisplay());
-
-                return this._autoContourDisplayCommand;
-            }
-        }
-
-        public bool AutoCoutourWinInit
-        {
-            get
-            {
-                return _autoCoutourWinInit;
-            }
-            set
-            {
-                _autoCoutourWinInit = value;
-            }
-        }
-
-        public int AutoROIDisplayChannel
-        {
-            get
-            {
-                return this._captureSetup.AutoROIDisplayChannel;
-            }
-            set
-            {
-                this._captureSetup.AutoROIDisplayChannel = value;
-                if (value == 0)
-                {
-                    PresentationCanvas.Visibility = Visibility.Collapsed;
-                }
-            }
-        }
-
-        public bool BleachBorderEnabled
-        {
-            get
-            {
-                return this._bleachBorderEnabled;
-            }
-            set
-            {
-                this._bleachBorderEnabled = value;
-            }
-        }
-
         public ICommand BrowseForReferenceImageCommand
         {
-            get
-            {
-                if (_browseForReferenceImageCommand == null)
-                {
-                    _browseForReferenceImageCommand = new RelayCommand(() => BrowseForReferenceImage());
-                }
-                return _browseForReferenceImageCommand;
-            }
+            get;
         }
 
         public bool BWHardware
@@ -392,6 +293,14 @@
             }
         }
 
+        public Visibility CameraLightPathVisibility
+        {
+            get
+            {
+                return (Visibility)MVMManager.Instance["LightPathControlViewModel", "CameraLightPathVisibility", (object)Visibility.Collapsed];
+            }
+        }
+
         public Double CaptureSetupControlPanelWidth
         {
             get
@@ -416,17 +325,6 @@
             {
                 _captureSetupModalitySwap = value;
                 OnPropertyChanged("CaptureSetupModalitySwap");
-            }
-        }
-
-        public ICommand ClearAllObjectsCommand
-        {
-            get
-            {
-                if (this._clearAllObjectsCommand == null)
-                    this._clearAllObjectsCommand = new RelayCommand(() => OverlayManagerClass.Instance.ClearAllObjects(ref OverlayCanvas));
-
-                return this._clearAllObjectsCommand;
             }
         }
 
@@ -455,6 +353,11 @@
                     Directory.CreateDirectory(value + "/jpeg");
                 }
             }
+        }
+
+        public ICommand CloseProgressWindowCommand
+        {
+            get => _closeProgressWindowCommand ?? (_closeProgressWindowCommand = new RelayCommand(() => CloseProgressWindow()));
         }
 
         public double CollapsedConverRatio
@@ -494,6 +397,14 @@
             get
             {
                 return (string)MVMManager.Instance["MultiLaserControlViewModel", "EnableLaser4Content", (object)string.Empty];
+            }
+        }
+
+        public double CollapsedExposureTime
+        {
+            get
+            {
+                return (double)MVMManager.Instance["CameraControlViewModel", "ExposureTimeCam", (object)0.0];
             }
         }
 
@@ -883,19 +794,6 @@
             get { return this._captureSetup.CommandGuid; }
         }
 
-        public CaptureSetup.DigitizerBoardNames DigitizerBoardName
-        {
-            get
-            {
-                return this._captureSetup.DigitizerBoardName;
-            }
-            set
-            {
-                this._captureSetup.DigitizerBoardName = value;
-                OnPropertyChanged("DigitizerBoardName");
-            }
-        }
-
         public ICommand DisplayROIStatsOptionsCommand
         {
             get
@@ -915,10 +813,7 @@
             }
             set
             {
-                if (null != DrawLineForLineScanEvent)
-                {
-                    DrawLineForLineScanEvent();
-                }
+                DrawLineForLineScanEvent();
             }
         }
 
@@ -988,6 +883,22 @@
                 {
                     return (double)MVMManager.Instance["CameraControlViewModel", "CamPixelSizeUM", (object)1.0] * ((int)MVMManager.Instance["CameraControlViewModel", "Right", (object)1] - (int)MVMManager.Instance["CameraControlViewModel", "Left", (object)0]);
                 }
+            }
+        }
+
+        public Visibility GGLightPathVisibility
+        {
+            get
+            {
+                return (Visibility)MVMManager.Instance["LightPathControlViewModel", "GGLightPathVisibility", (object)Visibility.Collapsed];
+            }
+        }
+
+        public Visibility GRLightPathVisibility
+        {
+            get
+            {
+                return (Visibility)MVMManager.Instance["LightPathControlViewModel", "GRLightPathVisibility", (object)Visibility.Collapsed];
             }
         }
 
@@ -1073,48 +984,27 @@
             }
         }
 
-        //Save the current height of the image display space
-        public double IVHeight
+        public int LightPathCamEnable
         {
             get
             {
-                return _ivHeight;
-            }
-            set
-            {
-                _ivHeight = value;
-                IVScrollBarHeight = _ivHeight;
+                return (int)MVMManager.Instance["LightPathControlViewModel", "LightPathCamEnable", (object)0];
             }
         }
 
-        public double IVScrollBarHeight
+        public int LightPathGGEnable
         {
             get
             {
-                return _iVScrollBarHeight;
-            }
-            set
-            {
-                //Compare the height of the display space with the height of the image
-                // if the image height is bigger, make the scrollbar visible and set it's height
-                // Leave a small gap of 10 pixels below the image to see the end of it easier
-                _iVScrollBarHeight = ((value + 10) > (IVHeight + 11)) ? (value + 10) : IVHeight;
-                IncreaseViewArea(true);
-                OnPropertyChanged("IVScrollBarHeight");
-                OnPropertyChanged("IVScrollbarVisibility");
+                return (int)MVMManager.Instance["LightPathControlViewModel", "LightPathGGEnable", (object)0];
             }
         }
 
-        public ScrollBarVisibility IVScrollbarVisibility
+        public int LightPathGREnable
         {
             get
             {
-                if (IVScrollBarHeight > IVHeight)
-                {
-                    return ScrollBarVisibility.Visible;
-                }
-
-                return ScrollBarVisibility.Hidden;
+                return (int)MVMManager.Instance["LightPathControlViewModel", "LightPathGREnable", (object)0];
             }
         }
 
@@ -1147,6 +1037,18 @@
                         _lineProfile.Hide();
                     }
                 }
+            }
+        }
+
+        public Color[] LineProfileColorAssignment
+        {
+            set
+            {
+                if (null == _lineProfile)
+                {
+                    return;
+                }
+                _lineProfile.ColorAssigment = value;
             }
         }
 
@@ -1310,10 +1212,12 @@
             }
         }
 
-        public System.Windows.Controls.Primitives.ToggleButton ReticleBotton
+        public XmlDocument RegistrationDoc
         {
-            get;
-            set;
+            get
+            {
+                return _captureSetup.RegistrationDoc;
+            }
         }
 
         public ROIStatsChartWin ROIStatsChart
@@ -1374,19 +1278,6 @@
             }
         }
 
-        public Thickness ROItoolbarMargin
-        {
-            get
-            {
-                return _roiToolbarMargin;
-            }
-            set
-            {
-                _roiToolbarMargin = value;
-                OnPropertyChanged("ROItoolbarMargin");
-            }
-        }
-
         public double ROIToolsScale
         {
             get
@@ -1406,12 +1297,6 @@
 
                 return _saveStatChartCommand;
             }
-        }
-
-        public System.Windows.Controls.Primitives.ToggleButton ScaleBotton
-        {
-            get;
-            set;
         }
 
         public bool UnloadWholeLineProfile
@@ -1569,38 +1454,6 @@
 
         #region Methods
 
-        public static string GetValueString(string xPath, string attrName)
-        {
-            XmlDocument appSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
-            string tmp = string.Empty;
-            XmlNodeList ndList = appSettings.SelectNodes(xPath);
-            if (ndList.Count > 0)
-            {
-                if (null != ndList[0].Attributes.GetNamedItem(attrName))
-                {
-                    tmp = ndList[0].Attributes[attrName].Value;
-                }
-            }
-            return tmp;
-        }
-
-        public static Visibility GetVisibility(string xPath, string attrName)
-        {
-            XmlDocument appSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
-
-            XmlNodeList ndList = appSettings.SelectNodes(xPath);
-            if (ndList.Count > 0)
-            {
-                string tmp = string.Empty;
-                if (null != ndList[0].Attributes.GetNamedItem(attrName))
-                {
-                    tmp = ndList[0].Attributes[attrName].Value;
-                    return tmp.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
-                }
-            }
-            return Visibility.Collapsed;
-        }
-
         public static void RemoveApplicationAttribute(string nodeName, string attrName)
         {
             string strTmp = string.Empty;
@@ -1621,12 +1474,6 @@
 
         public void BrowseForReferenceImage()
         {
-            if (_captureSetup.BrowseForReferenceImage())
-            {
-                OnPropertyChange("ReferenceChannelImageName");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["CameraControlViewModel"]).OnPropertyChange("ReferenceChannelImageName");
-                ((ThorSharedTypes.IMVM)MVMManager.Instance["AreaControlViewModel"]).OnPropertyChange("ReferenceChannelImageName");
-            }
         }
 
         public void CloseFloatingWindows()
@@ -1651,11 +1498,6 @@
 
             MVMManager.Instance["PowerControlViewModel", "ClosePropertyWindows"] = true;
             MVMManager.Instance["DFLIMControlViewModel", "ClosePropertyWindows"] = true;
-
-            if (null != _autoContourWin)
-            {
-                _autoContourWin.Close();
-            }
 
             if (null != _lineProfile)
             {
@@ -1704,6 +1546,7 @@
             _slmBleachWorker.DoWork += new DoWorkEventHandler(slmBleachWorker_DoWork);
             _slmBleachWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(slmBleachWorker_RunWorkerCompleted);
 
+            OverlayManagerClass.Instance.ClearedStatsROIsEvent += Instance_ClearedStatsROIsEvent;
             _pmtSafetyTimer.Tick += new EventHandler(_pmtSafetyTimer_Tick);
             _pmtSafetyTimer.Start();
 
@@ -1727,6 +1570,8 @@
             }
 
             OverlayManagerClass.Instance.MaskChangedEvent += _overlayManager_MaskChangedEvent;
+            _turretPosHandler = MVMManager.Instance["ObjectiveControlViewModel"]?.AddDynamicEventHandler("TurretPositionChangedEvent", nameof(OnTurretPositionChanged), this);
+            _registrationHandler = MVMManager.Instance["AreaControlViewModel"]?.AddDynamicEventHandler("RegistrationChangedEvent", nameof(OnRegistrationChanged), this);
 
             this._captureSetup.ConnectHandlers();
 
@@ -1800,25 +1645,6 @@
             return true;
         }
 
-        public Color GetColorAssignment(int index)
-        {
-            Color colorAssignment = new Color();
-            const int LUT_SIZE = 256;
-
-            colorAssignment = CaptureSetup.ChannelLuts[index][LUT_SIZE - 1];
-
-            double luminance = (0.2126 * colorAssignment.R + 0.7152 * colorAssignment.G + 0.0722 * colorAssignment.B);
-
-            //if the color is too bright it will not
-            //display on a white background
-            //substitute gray if the color is too bright
-            if (luminance > 240)
-            {
-                colorAssignment = Colors.Gray;
-            }
-            return colorAssignment;
-        }
-
         public string GetExperimentSavingPath()
         {
             return _captureSetup.SnapshotSavingPath;
@@ -1841,45 +1667,7 @@
         void IDropTarget.DragOver(IDropInfo dropInfo)
         {
             DragDrop.DefaultDropHandler.DragOver(dropInfo);
-            if (dropInfo.DragInfo.SourceCollection.Equals(_captureSequence) &&
-                dropInfo.TargetCollection.Equals(_captureSequence))
-            {
-                dropInfo.Effects = DragDropEffects.Move;
-                if (false == _isDraggingLightPathSequenceStep)
-                {
-                    //Persist the dragged script item
-                    LightPathSequenceStep data = (LightPathSequenceStep)dropInfo.Data;
-                    _previousCaptureSequenceSelectedLine = data.SequenceLineNumber - 1;
-                    if (null != _captureSequence[_previousCaptureSequenceSelectedLine])
-                    {
-                        _draggedLightPathSequenceStep = _captureSequence[_previousCaptureSequenceSelectedLine];
-                        _isDraggingLightPathSequenceStep = true;
-                    }
-                }
-            }
-            else if (dropInfo.DragInfo.SourceCollection.Equals(_lightPaths) &&
-                dropInfo.TargetCollection.Equals(_lightPaths))
-            {
-                dropInfo.Effects = DragDropEffects.Move;
-                if (false == _isDraggingLightPathSequenceStep)
-                {
-                    //Persist the dragged script item
-                    LightPathSequenceStep data = (LightPathSequenceStep)dropInfo.Data;
-                    _previousCaptureLightPathSelectedLine = data.LightPathLineNumber - 1;
-                    if (null != _lightPaths[_previousCaptureLightPathSelectedLine])
-                    {
-                        _draggedLightPathSequenceStep = _lightPaths[_previousCaptureLightPathSelectedLine];
-                        _isDraggingLightPathSequenceStep = true;
-                    }
-                }
-            }
-            else if (dropInfo.DragInfo.SourceCollection.Equals(_captureSequence) &&
-                dropInfo.TargetCollection.Equals(_lightPaths))
-            {
-                dropInfo.Effects = DragDropEffects.None;
-                _isDraggingLightPathSequenceStep = false;
-            }
-            else if (dropInfo.DragInfo.SourceCollection.Equals(SLMBleachWaveParams) &&
+            if (dropInfo.DragInfo.SourceCollection.Equals(SLMBleachWaveParams) &&
                dropInfo.TargetCollection.Equals(SLMBleachWaveParams))
             {
                 dropInfo.Effects = DragDropEffects.Move;
@@ -1890,70 +1678,7 @@
         {
             try
             {
-                _isDraggingLightPathSequenceStep = false;
-                if (dropInfo.DragInfo.SourceCollection.Equals(_captureSequence) &&
-                    dropInfo.TargetCollection.Equals(_captureSequence))
-                {
-                    if (_draggedLightPathSequenceStep != null)
-                    {
-                        //Persist the dragged script item
-                        _captureSequence[_previousCaptureSequenceSelectedLine] = _draggedLightPathSequenceStep;
-                    }
-                    //moving an existing item in the list
-                    DragDrop.DefaultDropHandler.Drop(dropInfo);
-                    ReassignCaptureSequenceLineNumbers();
-                }
-                else if (dropInfo.DragInfo.SourceCollection.Equals(_lightPaths) &&
-                    dropInfo.TargetCollection.Equals(_captureSequence))
-                {
-                    //adding a new item from the command list
-                    if (_captureSequence.Count == MAX_CHANNEL_STEP_COUNT)
-                    {
-                        MessageBox.Show("The maximum number of Channel Steps is 4.");
-                        return;
-                    }
-                    LightPathSequenceStep data = (LightPathSequenceStep)dropInfo.Data;
-                    bool dChanEnable0 = false, dChanEnable1 = false, dChanEnable2 = false, dChanEnable3 = false;
-                    data.GetLightPathSequenceStepLSMChannel(ref dChanEnable0, ref dChanEnable1, ref dChanEnable2, ref dChanEnable3);
-                    int chanASum = (dChanEnable0) ? 1 : 0;
-                    int chanBSum = (dChanEnable1) ? 1 : 0;
-                    int chanCSum = (dChanEnable2) ? 1 : 0;
-                    int chanDSum = (dChanEnable3) ? 1 : 0;
-                    for (int j = 0; j < _captureSequence.Count; j++)
-                    {
-                        bool chanEnable0 = false, chanEnable1 = false, chanEnable2 = false, chanEnable3 = false;
-                        _captureSequence[j].GetLightPathSequenceStepLSMChannel(ref chanEnable0, ref chanEnable1, ref chanEnable2, ref chanEnable3);
-                        chanASum += (true == chanEnable0) ? 1 : 0;
-                        chanBSum += (true == chanEnable1) ? 1 : 0;
-                        chanCSum += (true == chanEnable2) ? 1 : 0;
-                        chanDSum += (true == chanEnable3) ? 1 : 0;
-                    }
-
-                    //If a channel is repeated display a message to the user and return
-                    if (1 < chanASum || 1 < chanBSum || 1 < chanCSum || 1 < chanDSum)
-                    {
-                        MessageBox.Show("Each channel is allowed only once per Capture Sequence. Make sure none of the selected channels for this channel step is selected in a different channel step.");
-                        return;
-                    }
-
-                    LightPathSequenceStep si = new LightPathSequenceStep(data.Name, data.LightPathSequenceStepNode, dropInfo.InsertIndex, this.DigitizerBoardName);
-
-                    _captureSequence.Insert(dropInfo.InsertIndex, si);
-                    ReassignCaptureSequenceLineNumbers();
-                }
-                else if (dropInfo.DragInfo.SourceCollection.Equals(_lightPaths) &&
-                    dropInfo.TargetCollection.Equals(_lightPaths))
-                {
-                    if (_draggedLightPathSequenceStep != null)
-                    {
-                        //Persist the dragged script item
-                        _lightPaths[_previousCaptureLightPathSelectedLine] = _draggedLightPathSequenceStep;
-                    }
-                    //moving an existing item in the list
-                    DragDrop.DefaultDropHandler.Drop(dropInfo);
-                    ReassignLightPathListLineNumbers();
-                }
-                else if (dropInfo.DragInfo.SourceCollection.Equals(SLMBleachWaveParams) &&
+                if (dropInfo.DragInfo.SourceCollection.Equals(SLMBleachWaveParams) &&
                     dropInfo.TargetCollection.Equals(SLMBleachWaveParams))
                 {
                     //moving an existing item in the list
@@ -1972,6 +1697,15 @@
 
         public void LoadXMLSettings()
         {
+            //Load ROI's before other settings so overlay manager updated
+            bool isReticleChecked = false;
+            bool isScaleButtonChecked = false;
+
+            OverlayManagerClass.Instance.InitSelectROI();
+            OverlayManagerClass.Instance.PersistLoadROIs(ref isReticleChecked, ref isScaleButtonChecked);
+            MVMManager.Instance["ImageViewCaptureSetupVM", "IsReticleChecked"] = isReticleChecked;
+            MVMManager.Instance["ImageViewCaptureSetupVM", "IsScaleButtonChecked"] = isScaleButtonChecked;
+
             string str = string.Empty, str1 = string.Empty;
             double dTmp = 0.0, dTmp1 = 0.0;
             int iTmp = 0;
@@ -2026,19 +1760,22 @@
                 {
                     BleachQuery = iTmp;
                 }
-
                 if (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "pixelSizeUM", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
                 {
                     BleachLSMUMPerPixel = dTmp;
                 }
+                if (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "powerShiftUS", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
+                {
+                    PowerShiftUS = dTmp;
+                }
             }
 
             //SLM Patterns:
-            SLMBleachWaveParams.Clear();  //test
+            SLMControl.ZDefocusPlotWin.LoadZCalibration();  //reload Z Calibration [X, Y] = [ZPositionUM, ZDefocusUM]
+            SLMBleachWaveParams.Clear();
             ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/SLM/Pattern");
             if ((ndList.Count > 0) && SLMPanelInUse)
             {
-
                 for (int i = 0; i < ndList.Count; i++)
                 {
                     GeometryUtilities.SLMParams sparam = new GeometryUtilities.SLMParams();
@@ -2136,7 +1873,6 @@
                     sparam.BleachWaveParams.shapeType = String.IsNullOrWhiteSpace(str) ? ((0 < sparam.BleachWaveParams.ROIWidthUM) ? "Ellipse" : "Crosshair") : str;
                     SLMBleachWaveParams.Add(sparam);
                 }
-
                 //verify with bitmaps, empty table if not equivalent
                 List<string> slmPatternsInFolder = Directory.EnumerateFiles(SLMWaveformFolder[0], "*.bmp ", SearchOption.TopDirectoryOnly).ToList();
                 if (ndList.Count != slmPatternsInFolder.Count)
@@ -2151,26 +1887,34 @@
                         break;
                     }
                 }
-
                 //update params for future comparison:
                 UpdateSLMCompParams();
             }
             //SLM Sequences: load before epoch count for building waveforms
+            bool skipSafeBlank = _slmPanelInUse && !_slmBuildOnce;
             EpochSequence.Clear();
-            ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/SLM/SequenceEpoch");
-            if ((ndList.Count > 0) && SLMPanelInUse)
+            if (0 == SLMBleachWaveParams.Count)
             {
-                for (int i = 0; i < ndList.Count; i++)
+                EditSLMParam("SLM_PATTERN_DELETEALL");  //clear ROIs if no SLM params
+            }
+            else
+            {
+                //populate sequences only when there are params
+                ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/SLM/SequenceEpoch");
+                if ((ndList.Count > 0) && SLMPanelInUse)
                 {
-                    if (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "sequence", ref str) &&
-                        (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "sequenceEpochCount", ref str1) && Int32.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out iTmp))
-                        )
+                    for (int i = 0; i < ndList.Count; i++)
                     {
-                        EpochSequence.Add(new SLMEpochSequence(str, iTmp, SLMBleachWaveParams.Count));
+                        if (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "sequence", ref str) &&
+                            (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "sequenceEpochCount", ref str1) && Int32.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out iTmp))
+                            )
+                        {
+                            EpochSequence.Add(new SLMEpochSequence(str, iTmp, SLMBleachWaveParams.Count));
+                        }
                     }
                 }
             }
-            //SLM:
+            //SLM: general specs
             ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/SLM");
             if ((ndList.Count > 0) && SLMPanelInUse)
             {
@@ -2192,7 +1936,11 @@
                 }
                 if (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "advanceMode", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iTmp))
                 {
-                    SLMSequenceOn = (1 == iTmp);
+                    skipSafeBlank |= SLMSequenceOn = (1 == iTmp);
+                }
+                if (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "randomEpochs", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iTmp))
+                {
+                    SLMRandomEpochs = (1 == iTmp);
                 }
                 if (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "holoGen3D", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iTmp))
                 {
@@ -2209,6 +1957,7 @@
                 //update epochCount will trigger waveform rebuild
                 if (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "epochCount", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iTmp))
                 {
+                    skipSafeBlank |= (EpochCount != iTmp);
                     EpochCount = iTmp;
                 }
                 //update calibrated z offset will trigger rebuild all
@@ -2218,90 +1967,15 @@
                     {
                         DefocusSavedUM = DefocusUM = dTmp;
                         if (SLMBleachWaveParams.Count < PatternImportLimit)
+                        {
+                            skipSafeBlank = true;
                             EditSLMParam("SLM_REBUILDALL");
+                        }
                     }
                 }
-            }
-
-            ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/LightPath");
-
-            if (ndList.Count > 0)
-            {
-
-                if (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "GalvoGalvo", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iTmp))
-                {
-                    LightPathGGEnable = iTmp;
-                }
-                if (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "GalvoResonance", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iTmp))
-                {
-                    LightPathGREnable = iTmp;
-                }
-                if (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "Camera", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iTmp))
-                {
-                    LightPathCamEnable = iTmp;
-                }
-                if (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "InvertedLightPathPos", ref str) && "-1" != str)
-                {
-                    switch (str)
-                    {
-                        case "0":
-                            InvertedLpLeftEnable = true;
-                            break;
-                        case "1":
-                            InvertedLpCenterEnable = true;
-                            break;
-                        case "2":
-                            InvertedLpRightEnable = true;
-                            break;
-                    }
-                }
-                if (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "NDD", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iTmp))
-                {
-                    PositionNDD = iTmp;
-                }
-            }
-
-            ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/CaptureSequence");
-            if (ndList.Count > 0)
-            {
-                EnableSequentialCapture = 0;
-                if (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "enable", ref str) && Int32.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out iTmp))
-                {
-                    EnableSequentialCapture = (1 == iTmp) ? 1 : 0;
-                }
-            }
-
-            ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/CaptureSequence/LightPathSequenceStep");
-            CollectionCaptureSequence = new ObservableCollection<LightPathSequenceStep>();
-            for (int i = 0; i < ndList.Count; i++)
-            {
-                if (XmlManager.GetAttribute(ndList[i], ExperimentDoc, "name", ref str))
-                {
-                    //We want the channel step line numbers to start at 1
-                    LightPathSequenceStep si = new LightPathSequenceStep(str, ndList[i], i + 1, DigitizerBoardName);
-                    CollectionCaptureSequence.Add(si);
-                }
-            }
-
-            string lightPathListFolder = Application.Current.Resources["LightPathListFolder"].ToString();
-            string lightPathListFile = lightPathListFolder + "\\LightPathList.xml";
-
-            if (true == Directory.Exists(lightPathListFolder))
-            {
-                XmlDocument lightPathListDoc = new XmlDocument();
-                lightPathListDoc.Load(lightPathListFile);
-                ndList = lightPathListDoc.SelectNodes("/ThorImageLightPathList/LightPathSequenceStep");
-                CollectionLightPaths = new ObservableCollection<LightPathSequenceStep>();
-
-                for (int i = 0; i < ndList.Count; i++)
-                {
-                    if (XmlManager.GetAttribute(ndList[i], lightPathListDoc, "name", ref str))
-                    {
-                        //we want the channel step line number to start at 1
-                        LightPathSequenceStep si = new LightPathSequenceStep(str, ndList[i], i + 1, DigitizerBoardName);
-                        CollectionLightPaths.Add(si);
-                    }
-                }
+                //keep safe blank if not rebuild (all)
+                if (!skipSafeBlank)
+                    OnTurretPositionChanged(null, null);
             }
         }
 
@@ -2339,16 +2013,6 @@
             _roiStatsChart = null;
         }
 
-        public Decimal Power2PercentConvertion(double value, double Max, double Min)
-        {
-            if (Max != Min)
-            {
-                Decimal dec = new Decimal((value - Min) * 100 / (Max - Min));
-                return dec = Decimal.Round(dec, 2);
-            }
-            else return new Decimal(value);
-        }
-
         public void PublishChangeEvent()
         {
             ChangeEvent changeEvent = new ChangeEvent();
@@ -2366,7 +2030,6 @@
 
         public void ReleaseHandlers()
         {
-            this._captureSetup.UpdateImage -= new Action<bool>(LiveImage_Update);
             this._captureSetup.ReleaseHandlers();
             _bw.DoWork -= new DoWorkEventHandler(bw_DoWork);
             _bw.ProgressChanged -= new ProgressChangedEventHandler(bw_ProgressChanged);
@@ -2375,12 +2038,15 @@
             _slmBleachWorker.DoWork -= new DoWorkEventHandler(slmBleachWorker_DoWork);
             _slmBleachWorker.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(slmBleachWorker_RunWorkerCompleted);
 
+            OverlayManagerClass.Instance.ClearedStatsROIsEvent -= Instance_ClearedStatsROIsEvent;
             _pmtSafetyTimer.Stop();
             _pmtSafetyTimer.Tick -= new EventHandler(_pmtSafetyTimer_Tick);
             if (_bwHardware != null)
                 _bwHardware.CancelAsync();
 
             OverlayManagerClass.Instance.MaskChangedEvent -= _overlayManager_MaskChangedEvent;
+            MVMManager.Instance["ObjectiveControlViewModel"]?.RemoveDynamicEventHandler("TurretPositionChangedEvent", _turretPosHandler);
+            MVMManager.Instance["AreaControlViewModel"]?.RemoveDynamicEventHandler("RegistrationChangedEvent", _registrationHandler);
             //close any floating panels or windows
             CloseFloatingWindows();
             //allow handlers to be connected later
@@ -2472,10 +2138,7 @@
                 //update with the new experiment document
                 MVMManager.Instance.LoadSettings(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
 
-                if (null != ActiveSettingsReplaced)
-                {
-                    ActiveSettingsReplaced();
-                }
+                ActiveSettingsReplaced();
             }
             catch (Exception ex)
             {
@@ -2519,40 +2182,6 @@
             }
         }
 
-        public void UpdateOverlayManager()
-        {
-            try
-            {
-                double umPerPixel = (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0];
-                if ((int)ICamera.CameraType.LSM != ResourceManagerCS.GetCameraType())
-                {
-                    umPerPixel = ((double)MVMManager.Instance["CameraControlViewModel", "CamPixelSizeUM", (object)1.0] * Math.Max(1, Math.Max((int)MVMManager.Instance["CameraControlViewModel", "BinY", (object)1], (int)MVMManager.Instance["CameraControlViewModel", "BinX", (object)1])));
-                }
-                if (OverlayManagerClass.Instance.UmPerPixel != umPerPixel || OverlayManagerClass.Instance.PixelX != this.DataWidth || OverlayManagerClass.Instance.PixelY != this.DataHeight)
-                {
-                    OverlayManagerClass.Instance.UpdateParams(this.DataWidth, this.DataHeight, umPerPixel);
-
-                    if (null == Bitmap)
-                    {
-                        return;
-                    }
-                    if (true == ReticleBotton.IsChecked)
-                    {
-                        OverlayManagerClass.Instance.InitReticle(ref OverlayCanvas, true);
-                    }
-                    if (true == ScaleBotton.IsChecked)
-                    {
-                        OverlayManagerClass.Instance.InitScale(ref OverlayCanvas, true);
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                ThorLogging.ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "UpdateOverlayManager failed. Exception Message:\n" + e.Message);
-                return;
-            }
-        }
-
         protected virtual bool IsFileLocked(FileInfo file)
         {
             FileStream stream = null;
@@ -2591,14 +2220,15 @@
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "UpdateStats")]
         private static extern void UpdateStats();
 
-        private void AutoContourDisplay()
+        void ActiveSettingsReplaced()
         {
-            if (_autoCoutourWinInit == false)
-            {
-                _autoContourWin = new AutoContourWin();
-                _autoContourWin.DataContext = this;
-                _autoContourWin.Show();
-            }
+            bool recticleChecked = false;
+            bool scaleActive = false;
+            OverlayManagerClass.Instance.PersistLoadROIs(ref recticleChecked, ref scaleActive);
+            MVMManager.Instance["ImageViewCaptureSetupVM", "IsReticleChecked"] = recticleChecked;
+            MVMManager.Instance["ImageViewCaptureSetupVM", "IsScaleButtonChecked"] = scaleActive;
+            MVMManager.Instance["ImageViewCaptureSetupVM", "ROIDrawingToolsSelectedIndex"] = 0;
+            OverlayManagerClass.Instance.InitSelectROI();
         }
 
         private void bw_DoWork(object sender, DoWorkEventArgs e)
@@ -2614,9 +2244,8 @@
                 }
                 else
                 {
-                    // Perform a time consuming operation and report progress.
-                    //TODO: changed from 30ms to 10ms, should be tested well.
-                    System.Threading.Thread.Sleep(10);
+                    // report progress.
+                    System.Threading.Thread.Sleep(200);
                     worker.ReportProgress(0);
                 }
             };
@@ -2624,15 +2253,11 @@
 
         private void bw_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
-            if (CaptureSetup.IsPixelDataReady())
+            if (CaptureSetup.ImageDataUpdated)
             {
-                OnPropertyChanged("Bitmap");
-                //AutoROI is not currently enabled. Comment property changed for now
-                // TODO: Uncomment when features are implemented
-                //OnPropertyChanged("BitmapPresentation");
                 ((IMVM)MVMManager.Instance["ObjectiveControlViewModel", this]).OnPropertyChange("FramesPerSecondText");
                 ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("FramesPerSecondAverage");
-                UpdateOverlayManager();
+
                 RequestROIData();
             }
         }
@@ -2657,27 +2282,16 @@
             MVMManager.Instance["ZControlViewModel", "Z2StageLock", (object)0.0] = false;
         }
 
-        private int ConvertBoolAry2Int(bool[] boolArray, int nDigit)
-        {
-            int setter = 1, output = 0;
-            for (int i = 0; i < nDigit; i++, setter <<= 1)
-            {
-                if (boolArray[i] == true)
-                { output |= setter; }
-            }
-            return output;
-        }
-
         private void CreateLineProfileWindow()
         {
-            if ((null == _lineProfile && true == _lineProfileActive) && false == IgnoreLineProfileGeneration)
+            if (null == _lineProfile && true == _lineProfileActive && false == IgnoreLineProfileGeneration)
             {
                 if (GetNumROI() <= 0)
                 {
                     return;
                 }
 
-                _lineProfile = new LineProfileWindow.LineProfile(GetColorAssignments(), CaptureSetup.MAX_CHANNELS);
+                _lineProfile = new LineProfileWindow.LineProfile((Color[])MVMManager.Instance["ImageViewCaptureSetupVM", "DefaultChannelColors"], CaptureSetup.MAX_CHANNELS);
                 _lineProfile.LineWidthMax = ((int)ICamera.CameraType.LSM == ResourceManagerCS.GetCameraType()) ? (int)MVMManager.Instance["AreaControlViewModel", "LSMPixelY", (object)32] : (int)MVMManager.Instance["CameraControlViewModel", "CamImageHeight", (object)1];
                 //_lineProfile.Closed += _lineProfile_Closed;
                 _lineProfile.Closing += new System.ComponentModel.CancelEventHandler(_lineProfile_Closing);
@@ -2901,29 +2515,6 @@
             return true;
         }
 
-        private XmlElement CreateWavelengthTag(string name, XmlDocument doc)
-        {
-            //create a new XML tag for the wavelength settings
-            XmlElement newElement = doc.CreateElement("Wavelength");
-
-            XmlAttribute nameAttribute = doc.CreateAttribute("name");
-            XmlAttribute expAttribute = doc.CreateAttribute("exposureTimeMS");
-
-            nameAttribute.Value = name;
-            expAttribute.Value = "0".ToString();
-
-            newElement.Attributes.Append(nameAttribute);
-            newElement.Attributes.Append(expAttribute);
-
-            return newElement;
-        }
-
-        private void CreateXmlNode(XmlDocument doc, string nodeName)
-        {
-            XmlNode node = doc.CreateNode(XmlNodeType.Element, nodeName, null);
-            doc.DocumentElement.AppendChild(node);
-        }
-
         void Current_Exit(object sender, ExitEventArgs e)
         {
             PersistROIStatsChartWindowSettings();
@@ -2976,6 +2567,24 @@
             Dispatcher.PushFrame(frame);
         }
 
+        void DrawLineForLineScanEvent()
+        {
+            bool lineProfileActive = LineProfileActive;
+            OverlayManagerClass.Instance.ClearAllObjects();
+            MVMManager.Instance["ImageViewCaptureSetupVM", "IsReticleChecked"] = false;
+            MVMManager.Instance["ImageViewCaptureSetupVM", "IsScaleButtonChecked"] = false;
+            MVMManager.Instance["ImageViewCaptureSetupVM", "ROIDrawingToolsSelectedIndex"] = 0;
+            OverlayManagerClass.Instance.InitSelectROI();
+            if (null != LineProfile && lineProfileActive)
+            {
+                LineProfile.Show();
+            }
+            //The second point must be less than pixel x, because otherwise an extra pixel would be included
+            //since the canvas is zero based, and pixelX and pixelY are one based
+            OverlayManagerClass.Instance.CreateROIShape(typeof(Line), new Point(0, 0.5), new Point((int)MVMManager.Instance["AreaControlViewModel", "LSMPixelX", (object)512] - 0.01, 0.5));
+            OverlayManagerClass.Instance.InitSelectROI();
+        }
+
         private void FileCopyWithAccessCheck(string src, string dst, bool overwrite)
         {
             if (File.Exists(dst))
@@ -3006,122 +2615,46 @@
             }
         }
 
-        private Color[] GetColorAssignments()
+        private void Instance_ClearedStatsROIsEvent()
         {
-            Color[] colorAssignments = new Color[CaptureSetup.MAX_CHANNELS];
-
-            for (int i = 0; i < CaptureSetup.MAX_CHANNELS; i++)
+            if (null != MultiROIStats)
             {
-                switch (i)
+                if (ROIStatsTableActive)
                 {
-                    case 0:
-                        {
-                            if (null != LSMChannelColor0)
-                                colorAssignments[i] = ((SolidColorBrush)LSMChannelColor0).Color;
-                            break;
-                        }
-                    case 1:
-                        {
-                            if (null != LSMChannelColor1)
-                                colorAssignments[i] = ((SolidColorBrush)LSMChannelColor1).Color;
-                            break;
-                        }
-                    case 2:
-                        {
-                            if (null != LSMChannelColor2)
-                                colorAssignments[i] = ((SolidColorBrush)LSMChannelColor2).Color;
-                            break;
-                        }
-                    case 3:
-                        {
-                            if (null != LSMChannelColor3)
-                                colorAssignments[i] = ((SolidColorBrush)LSMChannelColor3).Color;
-                            break;
-                        }
+                    MultiROIStats.Hide();
+                }
+                else
+                {
+                    MultiROIStats.Close();
                 }
             }
 
-            return colorAssignments;
-        }
-
-        //Handle any tasks needed when a capture button is pressed (Snapsot, live, etc...)
-        public void HandleAcquireButtonPressed()
-        {
-            AcquireButtonPressed?.Invoke();
-        }
-
-        int _zScanNumStepsInCache = 0; //pulled from control MVM
-        int _zPreviewImageWidth = 0; //pixelX or width
-        int _zPreviewImageHeight = 0; //pixelY or height
-        double _zPreviewPixelSize = 0; //pixelSizeUM
-        double _zPreviewScanStepSize = 0; //stepSizeUM
-        public void LoadZPreviewParameters()
-        {
-            //Reset settings to 0 before reading from file
-            _zPreviewImageWidth = 0;
-            _zPreviewImageHeight = 0;
-            _zPreviewPixelSize = 0;
-            _zPreviewScanStepSize = 0;
-
-            bool isLsmCameraType = (int)ICamera.CameraType.LSM == ResourceManagerCS.GetCameraType();
-            string zStackCacheDirectory = string.Empty;
-            zStackCacheDirectory = (string)MVMManager.Instance["ZControlViewModel", "ZStackCacheDirectory", string.Empty];
-
-            XmlNodeList ndList;
-            string attr = string.Empty;
-            XmlDocument doc = new XmlDocument();
-            if (File.Exists(zStackCacheDirectory + "\\Experiment.xml"))
+            if (null != ROIStatsChart)
             {
-                doc.Load(zStackCacheDirectory + "\\Experiment.xml");
-                ndList = isLsmCameraType ? doc.SelectNodes("/ThorImageExperiment/LSM") : doc.SelectNodes("/ThorImageExperiment/Camera");
-
-                if (0 < ndList.Count)
+                if (ROIStatsChartActive)
                 {
-                    if (XmlManager.GetAttribute(ndList[0], doc, isLsmCameraType ? "pixelX" : "width", ref attr))
-                    {
-                        int temp;
-                        if (int.TryParse(attr, out temp))
-                        {
-                            _zPreviewImageWidth = temp;
-                        }
-                    }
-                    if (XmlManager.GetAttribute(ndList[0], doc, isLsmCameraType ? "pixelY" : "height", ref attr))
-                    {
-                        int temp;
-                        if (int.TryParse(attr, out temp))
-                        {
-                            _zPreviewImageHeight = temp;
-                        }
-                    }
-                    if (XmlManager.GetAttribute(ndList[0], doc, "pixelSizeUM", ref attr))
-                    {
-                        double temp;
-                        if (double.TryParse(attr, out temp))
-                        {
-                            _zPreviewPixelSize = temp;
-                        }
-                    }
+                    ROIStatsChart.Hide();
                 }
-
-                ndList = doc.SelectNodes("/ThorImageExperiment/ZStage");
-                if (0 < ndList.Count)
+                else
                 {
-                    if (XmlManager.GetAttribute(ndList[0], doc, "stepSizeUM", ref attr))
-                    {
-                        double temp;
-                        if (double.TryParse(attr, out temp))
-                        {
-                            _zPreviewScanStepSize = temp;
-                        }
-                    }
+                    ROIStatsChart.Close();
+                    //In CaptureSetup _roiStatsChart is not closed (only hidden)
+                    //force the persistance of the window settings
+                    PersistROIStatsChartWindowSettings();
                 }
-                _zScanNumStepsInCache = (int)MVMManager.Instance["ZControlViewModel", "ZScanNumStepsInCache", (object)1];
             }
-        }
 
-        public bool IsZPreviewSettingsValid()
-        {
-            return _zPreviewImageHeight == DataHeight && _zPreviewImageWidth == DataWidth && _zPreviewPixelSize != 0 && _zPreviewScanStepSize != 0;
+            if (null != LineProfile)
+            {
+                if (LineProfileActive)
+                {
+                    LineProfile.Hide();
+                }
+                else
+                {
+                    LineProfile.Close();
+                }
+            }
         }
 
         void LiveImage_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -3148,10 +2681,6 @@
                 _bleachWorker.CancelAsync();
                 _slmBleachWorker.CancelAsync();
             }
-        }
-
-        void LiveImage_Update(bool val)
-        {
         }
 
         void LiveImage_UpdateMenuBarButton(bool status)
@@ -3310,6 +2839,8 @@
                         }
                         ((ThorSharedTypes.IMVM)MVMManager.Instance["ZControlViewModel", this]).OnPropertyChange("ZPosition");
                         ((ThorSharedTypes.IMVM)MVMManager.Instance["ZControlViewModel", this]).OnPropertyChange("ZPositionBar");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["AutoFocusControlViewModel", this]).OnPropertyChange("CurrentZPosition");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("ZPosition");
                     }
 
                     if ((bool)MVMManager.Instance["ZControlViewModel", "EnableRead", 1, (object)false])
@@ -3382,10 +2913,13 @@
                     {
                         //update PMT safety status
                         MVMManager.Instance["ScanControlViewModel", "PMTSafetyStatus"] = GetPMTSafetyStatus();
-                        OnPropertyChanged("PMT1Saturations");
-                        OnPropertyChanged("PMT2Saturations");
-                        OnPropertyChanged("PMT3Saturations");
-                        OnPropertyChanged("PMT4Saturations");
+
+                        //TODO:IV remove from ImageView, put into PMT control
+                        ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("PMT1Saturations");
+                        ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("PMT2Saturations");
+                        ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("PMT3Saturations");
+                        ((IMVM)MVMManager.Instance["ScanControlViewModel", this]).OnPropertyChange("PMT4Saturations");
+
                         lastS = DateTime.Now;
                         // Check for collision, if the device returns true on the collision flag, change
                         // the background of the Objective label to flashing red.
@@ -3400,13 +2934,13 @@
                         OnPropertyChanged("CollapsedLaserShutterPos");
                         OnPropertyChanged("CollapsedLaserShutter2Pos");
                         OnPropertyChanged("CollapsedLaser1Position");
-                        OnPropertyChanged("LightPathGGDisplayOn");
-                        OnPropertyChanged("LightPathGGDisplayOff");
-                        OnPropertyChanged("LightPathGRDisplayOn");
-                        OnPropertyChanged("LightPathGRDisplayOff");
-                        OnPropertyChanged("LightPathCamDisplayOn");
-                        OnPropertyChanged("LightPathCamDisplayOff");
-                        if (IsNDDAvailable)
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightPathControlViewModel", this]).OnPropertyChange("LightPathGGDisplayOn");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightPathControlViewModel", this]).OnPropertyChange("LightPathGGDisplayOff");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightPathControlViewModel", this]).OnPropertyChange("LightPathGRDisplayOn");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightPathControlViewModel", this]).OnPropertyChange("LightPathGRDisplayOff");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightPathControlViewModel", this]).OnPropertyChange("LightPathCamDisplayOn");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightPathControlViewModel", this]).OnPropertyChange("LightPathCamDisplayOff");
+                        if ((bool)MVMManager.Instance["LightPathControlViewModel", "IsNDDAvailable", (object)false])
                         {
                             OnPropertyChanged("DisplayOnNDD");
                             OnPropertyChanged("DisplayOffNDD");
@@ -3421,6 +2955,13 @@
                             ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED5Temperature");
                             ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED6Temperature");
                         }
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("ExternalMode1");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("ExternalMode2");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("ExternalMode3");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("ExternalMode4");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("ExternalMode5");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("ExternalMode6");
+
                     }
 
                     //update beam stablizer from device
@@ -3457,11 +2998,6 @@
                         OnPropertyChanged("CollapsedXPosOutOfBounds");
                         OnPropertyChanged("CollapsedYPosition");
                         OnPropertyChanged("CollapsedYPosOutOfBounds");
-                        //The pixel bit depth might change when changing the taps index.
-                        //The update doesn't happen until the next image after the settings have
-                        //been pushed to the camera. Use onpropertyChanged at this location to
-                        //ensure the pixel bit depth (which has a direct effect on the PixelBitShiftValue)
-                        OnPropertyChanged("PixelBitShiftValue");
 
                         //Only update view when reading from BeamStabilizer is enabled
                         if (true == (bool)MVMManager.Instance["MultiphotonControlViewModel", "BeamStabilizerEnableReadData", (object)false])
@@ -3485,9 +3021,9 @@
                         ((ThorSharedTypes.IMVM)MVMManager.Instance["EpiTurretControlViewModel", this]).OnPropertyChange("EpiPosition4");
                         ((ThorSharedTypes.IMVM)MVMManager.Instance["EpiTurretControlViewModel", this]).OnPropertyChange("EpiPosition5");
                         ((ThorSharedTypes.IMVM)MVMManager.Instance["EpiTurretControlViewModel", this]).OnPropertyChange("EpiPosition6");
-                        OnPropertyChanged("InvertedLpLeftDisplay");
-                        OnPropertyChanged("InvertedLpCenterDisplay");
-                        OnPropertyChanged("InvertedLpRightDisplay");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightPathControlViewModel", this]).OnPropertyChange("InvertedLpLeftDisplay");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightPathControlViewModel", this]).OnPropertyChange("InvertedLpCenterDisplay");
+                        ((ThorSharedTypes.IMVM)MVMManager.Instance["LightPathControlViewModel", this]).OnPropertyChange("InvertedLpRightDisplay");
                         ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("EnableDisableLEDs");
                         ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("MasterBrightness");
                         ((ThorSharedTypes.IMVM)MVMManager.Instance["LightEngineControlViewModel", this]).OnPropertyChange("LED1Power");
@@ -3553,7 +3089,7 @@
                 new Action(
                     delegate ()
                     {
-                        if (OverlayCanvas.Children.Count == 0) return;
+                        if (OverlayManagerClass.Instance.StatsROICount <= 0) return;
                         if (ROIStatsChartActive && _roiStatsChart != null)
                         {
                             try
@@ -3658,11 +3194,6 @@
             //{
             //    BleachROICheck();
             //}
-        }
-
-        void _overlayManager_SavingROIStats()
-        {
-            this.SaveNow();
         }
 
         void _pmtSafetyTimer_Tick(object sender, EventArgs e)

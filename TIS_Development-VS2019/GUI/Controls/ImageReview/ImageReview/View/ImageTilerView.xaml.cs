@@ -21,6 +21,7 @@
 
     using ImageReviewDll.ViewModel;
 
+
     /// <summary>
     /// Interaction logic for ImageTilerView.xaml
     /// </summary>
@@ -109,6 +110,7 @@
         //:TODO: Check if this one is called from the standalone window
         private void btnShowMostRecent_Click(object sender, RoutedEventArgs e)
         {
+
             _viewModel = (ImageReviewViewModel)this.DataContext;
 
             if (_viewModel == null)

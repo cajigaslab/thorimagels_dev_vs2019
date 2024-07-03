@@ -27,14 +27,14 @@ public:
 	/// <summary> MemoryType enum describing the arrangement of memory in an image </summary>
 	enum MemoryType
 	{
-		CONTIGUOUS_CHANNEL, // In order, x y c m z
-		INTERLACED_CHANNEL,  // In order, x c y m z
-		CONTIGUOUS_CHANNEL_DFLIM_HISTO //dflim Image buffer In order, x y c m z
+		CONTIGUOUS_CHANNEL, // In order, x y p c m z
+		INTERLACED_CHANNEL,  // In order, x p c y m z TODO
+		CONTIGUOUS_CHANNEL_DFLIM_HISTO //dflim Image buffer In order, x y p c m z
 	};
 
 
 	//Image setup functions
-	GenericImage(int width, int height, int numZSlices, int numChannels, int numM, MemoryType memModelType, const std::vector<int>& enabledChannels = std::vector<int>(), T* buf = NULL);
+	GenericImage(int width, int height, int numPlanes, int numZSlices, int numChannels, int numM, MemoryType memModelType, const std::vector<int>& enabledChannels = std::vector<int>(), T* buf = NULL);
 	virtual ~GenericImage();
 	GenericImage(const GenericImage<T>& copyFrom);
 	GenericImage<T>& operator = (const GenericImage<T>& assignFrom);
@@ -54,7 +54,7 @@ public:
 
 
 	//Image manipulation functions
-	void setVal(int x, int y, int z, int channel, int m, T val);
+	void setVal(int x, int y, int p, int z, int channel, int m, T val);
 	void averageWith(std::vector<GenericImage<T>*> otherImages);
 	void averageWith(std::vector<GenericImage<T>*> otherImages, GenericImage& averagedImage);
 	void sumWith(std::vector<GenericImage<T>*> otherImages);
@@ -64,9 +64,10 @@ public:
 
 
 	//Image Information Getter Functions
-	T getVal(int x, int y, int z, int channel, int m) const;
+	T getVal(int x, int y, int p, int z, int channel, int m) const;
 	int getWidth() const;
 	int getHeight() const;
+	int getNumPlanes() const;
 	int getNumChannels() const;
 	int getNumEnabledChannels() const;
 	int getNumM() const;
@@ -76,7 +77,7 @@ public:
 
 
 	//Low Level Image Data Access Function
-	T* getDirectPointerToData(int x, int y, int z, int channel, int m);
+	T* getDirectPointerToData(int x, int y, int p, int z, int channel, int m);
 	typedef ImageIterator<T> iterator;
 	typedef const ImageIterator<T> const_iterator;
 	iterator begin();
@@ -98,6 +99,7 @@ protected:
 	//Image Dimensions
 	int width;
 	int height;
+	int numPlanes;
 	int numChannels;
 	int numM;
 	int numZSlices;
@@ -115,8 +117,8 @@ protected:
 
 
 	//Memory Safety Checks
-	bool valuesWithinBounds(int x, int y, int z, int channel, int m) const;
-	std::string getOutOfBoundsErrorMessage(int x, int y, int z, int channel, int m) const;
+	bool valuesWithinBounds(int x, int y, int p, int z, int channel, int m) const;
+	std::string getOutOfBoundsErrorMessage(int x, int y, int p, int z, int channel, int m) const;
 
 
 	//Optimization
@@ -155,20 +157,22 @@ private:
 #include "InternallyStoredImage.h"
 
 
-///<summary> Constructs a 5 dimensional image class. The dimensions are width, height, depth, channel, and M </summary>
+///<summary> Constructs a 6 dimensional image class. The dimensions are width, height, planes, depth, channel, and M </summary>
 ///<param name="width"> The width in pixels for this image </param>
 ///<param name="height"> The width in pixels for this image </param>
+///<param name="numPlanes"> The number of planes for this image </param>
 ///<param name="numZSlices"> The depth in pixels of this image </param>
 ///<param name="numChannels"> The number of channels for this image </param>
 ///<param name="numM"> the length of the 'm' dimension in pixels for this image </param>
 ///<param name="enabledChannels"> Optional vector containing the enabled channels in this image. If a value is given, the total channel parameters will remain the same, but only the enabled channels will be stored in memory </param>
-template <typename T> GenericImage<T>::GenericImage(int width, int height, int numZSlices, int numChannels, int numM, MemoryType memModelType, const std::vector<int>& enabledChannels, T* buf)
+template <typename T> GenericImage<T>::GenericImage(int width, int height, int numPlanes, int numZSlices, int numChannels, int numM, MemoryType memModelType, const std::vector<int>& enabledChannels, T* buf)
 
 {
 
 	//Basic parameters
 	this->width = width;
 	this->height = height;
+	this->numPlanes = numPlanes;
 	this->numChannels = numChannels;
 	this->numM = numM;
 	this->numZSlices = numZSlices;
@@ -201,7 +205,7 @@ template <typename T> GenericImage<T>::~GenericImage()
 /// <param name="channel"> Channel of pixel</param>
 /// <param name="m"> M of pixel</param>
 /// <returns> Value at the specified pixel </returns>
-template <typename T> T GenericImage<T>::getVal(int x, int y, int z, int channel, int m) const
+template <typename T> T GenericImage<T>::getVal(int x, int y, int p, int z, int channel, int m) const
 {
 
 	if(!isChannelEnabled(channel))
@@ -210,14 +214,14 @@ template <typename T> T GenericImage<T>::getVal(int x, int y, int z, int channel
 		channel = ChannelManipulator<T>::getSequentialMemoryChannel(channel,enabledChannels);
 
 
-	if(valuesWithinBounds(x,y,z,channel,m))
+	if(valuesWithinBounds(x,y,p,z,channel,m))
 	{
 		T val = memoryModel->getVal(x,y,z,channel,m); 
 		return val;
 	}
 	else
 	{
-		throw std::out_of_range(getOutOfBoundsErrorMessage(x,y,z,channel,m));
+		throw std::out_of_range(getOutOfBoundsErrorMessage(x,y,p,z,channel,m));
 	}
 
 }
@@ -230,20 +234,20 @@ template <typename T> T GenericImage<T>::getVal(int x, int y, int z, int channel
 /// <param name="channel"> Channel of pixel</param>
 /// <param name="m"> M of pixel</param>
 /// <param name="val"> The new value of the pixel </param>
-template <typename T> void GenericImage<T>::setVal(int x, int y, int z, int channel, int m, T val)
+template <typename T> void GenericImage<T>::setVal(int x, int y, int p, int z, int channel, int m, T val)
 {
 	if(!isChannelEnabled(channel))
 		return;
 	if(hasDisabledChannels())
 		channel = ChannelManipulator<T>::getSequentialMemoryChannel(channel,enabledChannels);
 
-	if(valuesWithinBounds(x,y,z,channel,m))
+	if(valuesWithinBounds(x,y,p,z,channel,m))
 	{
-		memoryModel->setVal(x,y,z,channel,m,val);
+		memoryModel->setVal(x,y,p,z,channel,m,val);
 	}
 	else
 	{
-		throw std::out_of_range(getOutOfBoundsErrorMessage(x,y,z,channel,m));
+		throw std::out_of_range(getOutOfBoundsErrorMessage(x,y,p,z,channel,m));
 	}
 }
 
@@ -255,12 +259,12 @@ template <typename T> void GenericImage<T>::setVal(int x, int y, int z, int chan
 /// <param name="channel"> Channel to be accessed </param>
 /// <param name="m"> M to be accessed </param>
 /// <returns> Pointer to the data at the specified coordinates </returns>
-template <typename T> T* GenericImage<T>::getDirectPointerToData(int x, int y, int z, int channel, int m)
+template <typename T> T* GenericImage<T>::getDirectPointerToData(int x, int y, int p, int z, int channel, int m)
 {
 	if(hasDisabledChannels())
 		channel = ChannelManipulator<T>::getSequentialMemoryChannel(channel,enabledChannels);
 
-	return memoryModel->getPointerForCoordinates(x,y,z,channel,m);
+	return memoryModel->getPointerForCoordinates(x,y,p,channel,m,z);
 }
 
 /// <summary> Returns a smart pointer to a MemoryModel object that can be used to interpret the data stored in the buffer </summary>
@@ -326,6 +330,13 @@ template <typename T> int GenericImage<T>::getHeight() const
 }
 
 
+/// <returns> The number of planes in this image </returns>
+template <typename T> int GenericImage<T>::getNumPlanes() const
+{
+	return numPlanes;
+}
+
+
 /// <returns> The number of channels, both enabled and disabled, in this image </returns>
 template <typename T> int GenericImage<T>::getNumChannels() const
 {
@@ -363,7 +374,7 @@ template <typename T> int GenericImage<T>::getNumZSlices() const
 /// <param name="channel"> Channel trying to be accessed </param>
 /// <param name="m"> M trying to be accessed </param>
 /// <returns> True if the coordinates are within the image, False otherwise </returns>
-template <typename T> bool GenericImage<T>::valuesWithinBounds(int x, int y, int z, int channel, int m) const
+template <typename T> bool GenericImage<T>::valuesWithinBounds(int x, int y, int p, int z, int channel, int m) const
 {
 
 	if(x < 0 || x > getWidth()-1)
@@ -371,6 +382,10 @@ template <typename T> bool GenericImage<T>::valuesWithinBounds(int x, int y, int
 		return false;
 	}
 	else if(y < 0 || y > getHeight()-1)
+	{
+		return false;
+	}
+	else if (p < 0 || p > getNumPlanes() - 1)
 	{
 		return false;
 	}
@@ -398,7 +413,7 @@ template <typename T> bool GenericImage<T>::valuesWithinBounds(int x, int y, int
 /// <param name="channel"> Channel trying to be accessed </param>
 /// <param name="m"> M trying to be accessed </param>
 /// <returns> String describing the reasons for an out of bounds condition </returns>
-template <typename T> std::string GenericImage<T>::getOutOfBoundsErrorMessage(int x, int y, int z, int channel, int m) const
+template <typename T> std::string GenericImage<T>::getOutOfBoundsErrorMessage(int x, int y, int p, int z, int channel, int m) const
 {
 
 	std::stringstream errorMessage;
@@ -412,6 +427,10 @@ template <typename T> std::string GenericImage<T>::getOutOfBoundsErrorMessage(in
 		errorMessage << " ... y < 0";
 	if(y > getHeight()-1)
 		errorMessage << " ... y > height:" << getHeight()-1;
+	if (p < 0)
+		errorMessage << " ... planes < 0";
+	if (p > getNumPlanes() - 1)
+		errorMessage << " ...  > max planes:" << getNumPlanes() - 1;
 	if(z < 0)
 		errorMessage << " ... z < 0";
 	if(z > getNumZSlices()-1)
@@ -437,7 +456,7 @@ template <typename T> std::string GenericImage<T>::getOutOfBoundsErrorMessage(in
 template <typename T> void GenericImage<T>::copyFromUsingBuffer(const GenericImage<T>& fromImage)
 {
 
-	InternallyStoredImage<T> buffer(getWidth(), getHeight(), getNumZSlices(), getNumChannels(), getNumM(), memoryModelType, enabledChannels);
+	InternallyStoredImage<T> buffer(getWidth(), getHeight(), getNumPlanes(), getNumZSlices(), getNumChannels(), getNumM(), memoryModelType, enabledChannels);
 
 	buffer.copyFrom(fromImage);
 
@@ -905,7 +924,7 @@ template <typename T> void GenericImage<T>::optimizedCopyChannelFrom_TCON_FCON(c
 	{
 			auto fromBegin = const_cast<GenericImage<T>&>(fromImage).channelBegin(fromChannel,m,fromZ);
 			auto toBegin = channelBegin(toChannel,m,toZ);
-			int length = width * height;
+			int length = width * height * numPlanes;
 			memcpy_s(&(*toBegin), length*sizeof(T), &(*fromBegin), length*sizeof(T));
 	}
 
@@ -922,7 +941,7 @@ template <typename T> void GenericImage<T>::optimizedCopyChannelFrom_TCON_FCON(c
 template <typename T> void GenericImage<T>::optimizedCopyChannelFrom_TCON_FINT(const GenericImage<T>& fromImage, int fromChannel, int fromZ, int toChannel, int toZ)
 {
 
-	// Copy all channels
+	// Copy all channels // TODO
 	for(int m=0; m<numM; m++)
 	{
 		auto fromBegin = const_cast<GenericImage<T>&>(fromImage).channelBegin(fromChannel,m,fromZ);
@@ -951,7 +970,7 @@ template <typename T> void GenericImage<T>::optimizedCopyChannelFrom_TCON_FINT(c
 template <typename T> void GenericImage<T>::optimizedCopyChannelFrom_TINT_FCON(const GenericImage<T>& fromImage, int fromChannel, int fromZ, int toChannel, int toZ)
 {
 	
-	// Copy all channels
+	// Copy all channels // TODO
 	for(int m=0; m<numM; m++)
 	{
 		auto fromBegin = const_cast<GenericImage<T>&>(fromImage).channelBegin(fromChannel,m,fromZ);
@@ -979,7 +998,7 @@ template <typename T> void GenericImage<T>::optimizedCopyChannelFrom_TINT_FCON(c
 template <typename T> void GenericImage<T>::optimizedCopyChannelFrom_TINT_FINT(const GenericImage<T>& fromImage, int fromChannel, int fromZ, int toChannel, int toZ)
 {
 
-	// Copy all channels
+	// Copy all channels // TODO
 	for(int m=0; m<numM; m++)
 	{
 		auto fromBegin = const_cast<GenericImage<T>&>(fromImage).channelBegin(fromChannel,m,fromZ);
@@ -1035,6 +1054,7 @@ template <typename T> GenericImage<T>::GenericImage(const GenericImage<T>& copyF
 	//Basic parameters
 	width = copyFrom.width;
 	height = copyFrom.height;
+	numPlanes = copyFrom.numPlanes;
 	numChannels = copyFrom.numChannels;
 	numM = copyFrom.numM;
 	numZSlices = copyFrom.numZSlices;
@@ -1076,6 +1096,7 @@ template <typename T> void GenericImage<T>::swap(GenericImage<T>& withImage)
 
 	std::swap(width, withImage.width);
 	std::swap(height, withImage.height);
+	std::swap(numPlanes, withImage.numPlanes);
 	std::swap(numChannels, withImage.numChannels);
 	std::swap(numM, withImage.numM);
 	std::swap(numZSlices, withImage.numZSlices);
@@ -1096,6 +1117,7 @@ template <typename T> bool GenericImage<T>::sameDimensions(const GenericImage<T>
 	bool different = 
 		imageToCompare.getWidth() != getWidth() ||
 		imageToCompare.getHeight() != getHeight() ||
+		imageToCompare.getNumPlanes() != getNumPlanes() ||
 		imageToCompare.getNumChannels() != getNumChannels() ||
 		imageToCompare.getNumZSlices() != getNumZSlices() ||
 		imageToCompare.getNumM() != getNumM() ||
@@ -1185,13 +1207,16 @@ template <typename T> void GenericImage<T>::printImage(T min, T max)
 	image << "=========================================================================\n";
 	for(int m=0; m<getNumM(); m++) {
 		for(int z=0; z<getNumZSlices(); z++) {
-			for(int y=0; y<getHeight(); y++) {
-				for(int c=0; c<getNumChannels(); c++) {
-					for(int x=0; x<getWidth(); x++) {
-						T val = getVal(x,y,z,c,m);
-						image << getValChar(val, min, max);
+			for (int p = 0; p < getNumPlanes(); p++) {
+				for (int y = 0; y < getHeight(); y++) {
+					for (int c = 0; c < getNumChannels(); c++) {
+						for (int x = 0; x < getWidth(); x++) {
+							T val = getVal(x, y, p, z, c, m);
+							image << getValChar(val, min, max);
+						}
+						image << "   ";
 					}
-					image << "   ";
+					image << "\n";
 				}
 				image << "\n";
 			}

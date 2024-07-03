@@ -4,7 +4,7 @@
         WindowStyle="ToolWindow"
         Height="120"
         Width="210"
-        Title="Switch Position Name"
+        Title="Modify Position Name"
         Topmost="True"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
@@ -16,7 +16,8 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
-    <Grid Margin="3">
+    <Grid Margin="3"
+          VerticalAlignment="Center">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="59*" />
             <ColumnDefinition Width="37*" />

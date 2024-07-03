@@ -24,7 +24,7 @@ wchar_t message[256];
 auto_ptr<TiffLibDll> tiffDll(new TiffLibDll(L".\\libtiff3.dll"));
 
 
-DllExport_ThorDiskIO ReadImageInfo(wchar_t * selectedFileName, long &width, long &height, long &colorChannels)
+DllExport_ThorDiskIO ReadImageInfo(wchar_t * selectedFileName, long &width, long &height, long &colorChannels, long &bitsPerChannel)
 {
 	TIFF* image;
 	wchar_t * path = selectedFileName;
@@ -36,20 +36,23 @@ DllExport_ThorDiskIO ReadImageInfo(wchar_t * selectedFileName, long &width, long
 		return FALSE;
 	}
 
-	int w,h,c;
+	int w,h,c,b;
 
 	w = 0;
 	h = 0;
 	c = 0;
+	b = 0;
 
 	// getting the image parameters
 	tiffDll->TIFFGetField(image, TIFFTAG_IMAGEWIDTH, &w);
 	tiffDll->TIFFGetField(image, TIFFTAG_IMAGELENGTH, &h);
 	tiffDll->TIFFGetField(image, TIFFTAG_SAMPLESPERPIXEL, &c);  
+	tiffDll->TIFFGetField(image, TIFFTAG_BITSPERSAMPLE, &b);
 
 	width = w;
 	height = h;
 	colorChannels = c;
+	bitsPerChannel = b;
 
 	int orientation=0;
 	tiffDll->TIFFGetField(image, TIFFTAG_ORIENTATION,&orientation);
@@ -368,6 +371,7 @@ DllExport_ThorDiskIO ReadChannelImages(char **fileNames, long numChannels, char*
 		// Open the TIFF image
 		if((image = tiffDll->TIFFOpenW(path, "r")) == NULL)
 		{
+			continue;
 		}
 
 		// Read in the possibly multiple strips
@@ -379,7 +383,7 @@ DllExport_ThorDiskIO ReadChannelImages(char **fileNames, long numChannels, char*
 
 		for (stripCount = 0; stripCount < stripMax; stripCount++)
 		{
-			result = tiffDll->TIFFReadEncodedStrip (image, stripCount, buf + imageOffset, stripSize);
+			result = tiffDll->TIFFReadEncodedStrip (image, stripCount, buf + imageOffset, -1);
 			if(result == -1)
 			{
 				//logDll->TLTraceEvent(VERBOSE_EVENT,1,L"Read error on input strip number");
@@ -403,6 +407,115 @@ DllExport_ThorDiskIO ReadChannelImages(char **fileNames, long numChannels, char*
 	}	
 	return status;  
 }
+
+DllExport_ThorDiskIO ReadMultiChannelImage(char* fileName, long numChannels, char*& outputBuffer, long cameraWidth, long cameraHeight)
+{
+	TIFF* image;
+	tsize_t stripSize;
+	unsigned long imageOffset, result = 0;
+	int stripMax, stripCount;
+	unsigned long bufferSize;
+	bool status;
+
+	long width = cameraWidth;
+	long height = cameraHeight;
+
+	pChan[0] = outputBuffer;
+	char* buf = pChan[0];
+
+	wchar_t* path = (wchar_t*)fileName;
+	// Open the TIFF image
+	if ((image = tiffDll->TIFFOpenW(path, "r")) == NULL)
+	{
+		return FALSE; // ERROR
+	}
+
+	// Read in the possibly multiple strips
+	stripSize = tiffDll->TIFFStripSize(image);
+	stripMax = tiffDll->TIFFNumberOfStrips(image);
+	imageOffset = 0;
+
+	bufferSize = tiffDll->TIFFNumberOfStrips(image) * stripSize;
+
+	for (stripCount = 0; stripCount < stripMax; stripCount++)
+	{
+		result = tiffDll->TIFFReadEncodedStrip(image, stripCount, buf + imageOffset, -1);
+		if (result == -1)
+		{
+			//logDll->TLTraceEvent(VERBOSE_EVENT,1,L"Read error on input strip number");
+		}
+		imageOffset += result;
+	}
+
+	// Close the TIFF image
+	tiffDll->TIFFClose(image);
+
+	if (outputBuffer > 0)
+	{
+		//logDll->TLTraceEvent(VERBOSE_EVENT,1,L"inside output buffer: TRUE");
+		status = TRUE;
+	}
+	else
+	{
+		//logDll->TLTraceEvent(VERBOSE_EVENT,1,L"inside output buffer: FALSE");
+		status = FALSE;
+	}
+	return status;
+}
+
+/// the data read is in the following format
+/// [ChanA: Tile1, Tile 2, Tile3, Tile 4][ChanB: Tile 1, Tile 2, Tile3, Tile 4]
+DllExport_ThorDiskIO ReadMultiChannelTiledImage(char* fileName, long numChannels, char*& outputBuffer)
+{
+	wchar_t* path = (wchar_t*)fileName;
+
+	// Open the TIFF image
+	TIFF* image = tiffDll->TIFFOpenW(path, "r");
+
+	if (!image)
+	{
+		return FALSE;
+	}
+
+	int imageWidth = 0, imageHeight = 0;
+	int tileWidth = 0, tileHeight = 0;
+	long x, y, c;
+	int tileIndex = 0;
+	int samplesPerPixel = 0;
+
+	long tileBytes = tiffDll->TIFFTileSize(image); // tilebytes is the size of tile (image width * height), not including channel
+	long numOfTiles = tiffDll->TIFFNumberOfTiles(image);
+
+	tiffDll->TIFFGetField(image, TIFFTAG_IMAGEWIDTH, &imageWidth);
+	tiffDll->TIFFGetField(image, TIFFTAG_IMAGELENGTH, &imageHeight);
+	tiffDll->TIFFGetField(image, TIFFTAG_TILEWIDTH, &tileWidth);
+	tiffDll->TIFFGetField(image, TIFFTAG_TILELENGTH, &tileHeight);
+	tiffDll->TIFFGetField(image, TIFFTAG_SAMPLESPERPIXEL, &samplesPerPixel);
+
+	char* buf = outputBuffer;
+	memset(buf, 0, imageWidth * imageHeight * samplesPerPixel * 2); // TODO: possibly duplicated work
+
+	long tilesPerChannel = numOfTiles / samplesPerPixel;
+
+	for (c = 0; c < numChannels; ++c)
+	{
+		long channelOffset = c * tilesPerChannel * tileBytes;
+
+		for (y = 0, tileIndex = 0; y < imageHeight; y += tileHeight)
+		{
+			for (x = 0; x < imageWidth; x += tileWidth, ++tileIndex)
+			{
+				long bufferOffset = (tileIndex * tileBytes) + channelOffset;
+				tiffDll->TIFFReadTile(image, buf + bufferOffset, x, y, 0, (tsample_t)c);
+			}
+		}
+	}
+
+	// Close the TIFF image
+	tiffDll->TIFFClose(image);
+	return TRUE;
+}
+
 
 DllExport_ThorDiskIO ReadChannelRawImages(char **fileNames, long numChannels, char* &outputBuffer, long cameraWidth, long cameraHeight)
 {
@@ -493,7 +606,7 @@ DllExport_ThorDiskIO ReadChannelImageRawSliceToChannel(char* outputBuffer, int c
 	//=== Open Files and Buffers as Image Objects ===
 	RawFile<unsigned short> rawFileStream(fileNameWideString,width,height,zDepth,channels,1,containsDisabledChannels, enabledChannels, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
 	GenericImage<unsigned short>& sourceImage = rawFileStream.getImageAtIndex(time);
-	GenericImage<unsigned short> destinationImage(width,height,1,channelInOutputBuffer+1,1,GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
+	GenericImage<unsigned short> destinationImage(width,height,1,1,channelInOutputBuffer+1,1,GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
 	destinationImage.setMemoryBuffer((unsigned short*)outputBuffer);
 
 
@@ -523,7 +636,7 @@ DllExport_ThorDiskIO ReadChannelImageRawSlice(char* outputBuffer, char* fileName
 	//=== Open Files and Buffers as Image Objects ===
 	RawFile<unsigned short> rawFileStream(fileNameWideString,width,height,zDepth,channels,1,containsDisabledChannels, enabledChannels, GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
 	GenericImage<unsigned short>& sourceImage = rawFileStream.getImageAtIndex(time);
-	GenericImage<unsigned short> destinationImage(width,height,1,channels,1,GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
+	GenericImage<unsigned short> destinationImage(width,height,1,1,channels,1,GenericImage<unsigned short>::CONTIGUOUS_CHANNEL);
 	destinationImage.setMemoryBuffer((unsigned short*)outputBuffer);
 
 

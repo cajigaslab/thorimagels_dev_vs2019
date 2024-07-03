@@ -1,0 +1,87 @@
+;
+; TDWin10dFLIMdrv.inf
+;
+
+[Version]
+PnpLockdown=1
+Signature="$WINDOWS NT$"
+Class=Multifunction ; 
+ClassGuid={4d36e971-e325-11ce-bfc1-08002be10318} ; 
+Provider=%ManufacturerName%
+CatalogFile=TDWin10dFLIMdrv.cat
+DriverVer= ; TODO: set DriverVer in stampinf property pages
+
+[DestinationDirs]
+DefaultDestDir = 12
+TDWin10dFLIMdrv_Device_CoInstaller_CopyFiles = 11
+
+; ================= Class section =====================
+
+;[ClassInstall32]
+;Addreg=SampleClassReg
+
+[SampleClassReg]
+HKR,,,0,%ClassName%
+HKR,,Icon,,-5
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+TDWin10dFLIMdrv.sys  = 1,,
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with SourceDisksNames
+
+;*****************************************
+; Install Section
+;*****************************************
+
+[Manufacturer]
+%ManufacturerName%=Standard,NT$ARCH$
+
+[Standard.NT$ARCH$]
+%TDWin10dFLIMdrv.DeviceDesc%=TDWin10dFLIMdrv_Device, Root\TDWin10dFLIMdrv ; TODO: edit hw-id
+
+[TDWin10dFLIMdrv_Device.NT]
+CopyFiles=Drivers_Dir
+
+[Drivers_Dir]
+TDWin10dFLIMdrv.sys
+
+;-------------- Service installation
+[TDWin10dFLIMdrv_Device.NT.Services]
+AddService = TDWin10dFLIMdrv,%SPSVCINST_ASSOCSERVICE%, TDWin10dFLIMdrv_Service_Inst
+
+; -------------- TDWin10dFLIMdrv driver install sections
+[TDWin10dFLIMdrv_Service_Inst]
+DisplayName    = %TDWin10dFLIMdrv.SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\TDWin10dFLIMdrv.sys
+
+;
+;--- TDWin10dFLIMdrv_Device Coinstaller installation ------
+;
+
+[TDWin10dFLIMdrv_Device.NT.CoInstallers]
+AddReg=TDWin10dFLIMdrv_Device_CoInstaller_AddReg
+CopyFiles=TDWin10dFLIMdrv_Device_CoInstaller_CopyFiles
+
+[TDWin10dFLIMdrv_Device_CoInstaller_AddReg]
+HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"
+
+[TDWin10dFLIMdrv_Device_CoInstaller_CopyFiles]
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
+
+[TDWin10dFLIMdrv_Device.NT.Wdf]
+KmdfService =  TDWin10dFLIMdrv, TDWin10dFLIMdrv_wdfsect
+[TDWin10dFLIMdrv_wdfsect]
+KmdfLibraryVersion = $KMDFVERSION$
+
+[Strings]
+SPSVCINST_ASSOCSERVICE= 0x00000002
+ManufacturerName="<Your manufacturer name>" ;TODO: Replace with your manufacturer name
+ClassName="PCI Express DMA Driver" ; TODO: edit ClassName
+DiskName = "TDWin10dFLIMdrv Installation Disk"
+TDWin10dFLIMdrv.DeviceDesc = "TDWin10dFLIMdrv Device"
+TDWin10dFLIMdrv.SVCDESC = "TDWin10dFLIMdrv Service"

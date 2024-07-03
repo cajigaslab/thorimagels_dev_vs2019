@@ -24,6 +24,8 @@
 
     using ThorLogging;
 
+    using ThorSharedTypes;
+
     /// <summary>
     /// Interaction logic for DisplayOptions.xaml
     /// </summary>
@@ -31,14 +33,12 @@
     {
         #region Fields
 
-        const int DISPLAY_PANELS = 22;
+        const int DISPLAY_PANELS = 23;
         private const int WINDOW_HEIGHT = 400;
         private const int WINDOW_LEFT = 0;
         private const int WINDOW_TOP = 0;
         private const int WINDOW_WIDTH = 400;
 
-        private string _appSettings;
-        private XmlDocument _doc;
         string[,] _panelInfo = new string[DISPLAY_PANELS, 2] {
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/ScannerView","Scanner Control"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/AreaView","Area Control"},
@@ -62,6 +62,7 @@
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/EpiturretControlView","Epiturret Control"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/AutoFocusControlView","AutoFocus Control"},
                 {"/ApplicationSettings/DisplayOptions/CaptureSetup/MiniCircuitsSwitchControlView","MiniCircuits Switch Control"},
+                {"/ApplicationSettings/DisplayOptions/CaptureSetup/SequentialControlView","Sequential Control"},
             };
 
         #endregion Fields
@@ -145,15 +146,9 @@
 
         void DisplayOptions_Loaded(object sender, RoutedEventArgs e)
         {
-            object obj = GetApplicationSettingsFileString();
-
-            if (obj != null)
+            XmlDocument _doc =  MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+            if (_doc != null)
             {
-                _appSettings = obj.ToString();
-
-                _doc = new XmlDocument();
-
-                _doc.Load(_appSettings);
 
                 XmlNodeList ndList;
 
@@ -220,15 +215,12 @@
 
         void DisplayOptions_Unloaded(object sender, RoutedEventArgs e)
         {
-            object obj = GetApplicationSettingsFileString();
 
-            if (obj != null)
+            XmlDocument _doc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+            if (_doc != null)
             {
-                _appSettings = obj.ToString();
 
-                _doc = new XmlDocument();
 
-                _doc.Load(_appSettings);
 
                 XmlNodeList ndList;
 
@@ -271,8 +263,8 @@
                     ndList[0].Attributes["enable"].Value = cbTwoColumnDisplay.IsChecked.Value ? "1" : "0";
                 }
             }
-
-            _doc.Save(_appSettings);
+            MVMManager.Instance.SaveSettings(SettingsFileType.APPLICATION_SETTINGS, true);
+            //_doc.Save(_appSettings);
         }
 
         private bool GetAttribute(XmlNode node, XmlDocument doc, string attrName, ref string attrValue)
@@ -297,11 +289,13 @@
             try
             {
 
-                string AppSetPath = GetApplicationSettingsFileString();
+                /*string AppSetPath = GetApplicationSettingsFileString();
 
-                XmlNodeList ndList;
                 XmlDocument appSettingsDoc = new XmlDocument();
-                appSettingsDoc.Load(AppSetPath);
+                appSettingsDoc.Load(AppSetPath);*/
+                XmlNodeList ndList;
+                XmlDocument appSettingsDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+
                 ndList = appSettingsDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/" + nodeName);
                 if (ndList.Count > 0)
                 {
@@ -311,7 +305,7 @@
                     SetAttribute(ndList[0], appSettingsDoc, "reset", "1");
                 }
                 //save the information:
-                appSettingsDoc.Save(AppSetPath);
+                //appSettingsDoc.Save(AppSetPath);
 
             }
             catch (Exception ex)
@@ -328,7 +322,9 @@
                 string AppSetPath = GetApplicationSettingsFileString();
 
                 XmlNodeList ndList;
-                XmlDocument appSettingsDoc = new XmlDocument();
+                //XmlDocument appSettingsDoc = new XmlDocument();
+                XmlDocument appSettingsDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+
                 appSettingsDoc.Load(AppSetPath);
                 ndList = appSettingsDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/" + nodeName);
                 if (ndList.Count > 0)

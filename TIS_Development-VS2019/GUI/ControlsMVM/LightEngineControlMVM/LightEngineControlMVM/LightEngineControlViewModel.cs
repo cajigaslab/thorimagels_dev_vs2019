@@ -62,6 +62,7 @@
         private ICommand _masterPowerMinusCommand;
         private ICommand _masterPowerPlusCommand;
         private Boolean _showTemperatures = false;
+        private Thickness _externalModeMargin = new Thickness(0, 0, 0, 0);
         private String _temperatureUnit = "ºC";
 
         #endregion Fields
@@ -707,6 +708,110 @@
                 OnPropertyChanged("LED5LightColor");
             }
         }
+        
+        public Boolean ExternalMode1
+        {
+            get
+            {
+                return this._lightEngineControlModel.ExternalMode1;
+            }
+            set
+            {
+                /*_led5PowerState = value;
+                if (!this._lightEngineControlModel.LED5PowerState.Equals(_led5PowerState))
+                {
+                    this._lightEngineControlModel.LED5PowerState = _led5PowerState;
+                }*/
+                this._lightEngineControlModel.ExternalMode1 = value;
+                OnPropertyChanged("ExternalMode1");
+            }
+        }
+        public Boolean ExternalMode2
+        {
+            get
+            {
+                return this._lightEngineControlModel.ExternalMode2;
+            }
+            set
+            {
+                /*_led5PowerState = value;
+                if (!this._lightEngineControlModel.LED5PowerState.Equals(_led5PowerState))
+                {
+                    this._lightEngineControlModel.LED5PowerState = _led5PowerState;
+                }*/
+                this._lightEngineControlModel.ExternalMode2 = value;
+                OnPropertyChanged("ExternalMode2");
+            }
+        }
+        public Boolean ExternalMode3
+        {
+            get
+            {
+                return this._lightEngineControlModel.ExternalMode3;
+            }
+            set
+            {
+                /*_led5PowerState = value;
+                if (!this._lightEngineControlModel.LED5PowerState.Equals(_led5PowerState))
+                {
+                    this._lightEngineControlModel.LED5PowerState = _led5PowerState;
+                }*/
+                this._lightEngineControlModel.ExternalMode3 = value;
+                OnPropertyChanged("ExternalMode3");
+            }
+        }
+        public Boolean ExternalMode4
+        {
+            get
+            {
+                return this._lightEngineControlModel.ExternalMode4;
+            }
+            set
+            {
+                /*_led5PowerState = value;
+                if (!this._lightEngineControlModel.LED5PowerState.Equals(_led5PowerState))
+                {
+                    this._lightEngineControlModel.LED5PowerState = _led5PowerState;
+                }*/
+                this._lightEngineControlModel.ExternalMode4 = value;
+                OnPropertyChanged("ExternalMode4");
+            }
+        }
+        public Boolean ExternalMode5
+        {
+            get
+            {
+                return this._lightEngineControlModel.ExternalMode5;
+            }
+            set
+            {
+                /*_led5PowerState = value;
+                if (!this._lightEngineControlModel.LED5PowerState.Equals(_led5PowerState))
+                {
+                    this._lightEngineControlModel.LED5PowerState = _led5PowerState;
+                }*/
+                this._lightEngineControlModel.ExternalMode5 = value;
+                OnPropertyChanged("ExternalMode5");
+            }
+        }
+        
+        public Boolean ExternalMode6
+        {
+            get
+            {
+                return this._lightEngineControlModel.ExternalMode6;
+            }
+            set
+            {
+                /*_led5PowerState = value;
+                if (!this._lightEngineControlModel.LED5PowerState.Equals(_led5PowerState))
+                {
+                    this._lightEngineControlModel.LED5PowerState = _led5PowerState;
+                }*/
+                this._lightEngineControlModel.ExternalMode6 = value;
+                OnPropertyChanged("ExternalMode6");
+            }
+        }
 
         public Int32 LED5SockelID
         {
@@ -970,6 +1075,24 @@
                 if (!this._showTemperatures.Equals(value))
                 {
                     this._showTemperatures = value;
+                    this.OnPropertyChange();
+                }
+                if (value) ExternalModeMargin = new Thickness(0, 0, 33, 0);
+                else ExternalModeMargin = new Thickness(0, 0, 0, 0);
+            }
+        }
+        
+        public Thickness ExternalModeMargin
+        {
+            get
+            {
+                return this._externalModeMargin;
+            }
+            set
+            {
+                if (!this._externalModeMargin.Equals(value))
+                {
+                    this._externalModeMargin = value;
                     this.OnPropertyChange();
                 }
             }

@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:RSlider="clr-namespace:RangeSliderWPF;assembly=RangeSliderWPF"
+             xmlns:ts="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
              xmlns:roi="clr-namespace:ROIUserControl;assembly=ROIUserControl"
              xmlns:local="clr-namespace:LampControl"
              xmlns:sharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
@@ -12,6 +13,7 @@
              Width="385">
     <UserControl.Resources>
         <ResourceDictionary>
+            <ts:BooleanToVisibilityConverter x:Key="boolToVis" />
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
             </ResourceDictionary.MergedDictionaries>
@@ -126,7 +128,8 @@
             		                      Delay="500"
             		                      Interval="100" />
                         </StackPanel>
-                        <StackPanel Grid.Column="1">
+                        <StackPanel Grid.Column="1"
+                                    Visibility="{Binding IsPrelude, Converter={StaticResource boolToVis}, ConverterParameter=true}">
                             <RadioButton                 
                                   Content="Lamp 1"
                                   Foreground="White"
@@ -145,7 +148,8 @@
                               Content="External TTL Trigger"
                               ToolTip="Switch from brightness mode to TTL modulation mode"
             	              IsChecked="{Binding IsExternalTrigger}" 
-                              Margin="0,20,0,0"/>
+                              Margin="0,20,0,0"
+                              Visibility="{Binding IsPrelude, Converter={StaticResource boolToVis}, ConverterParameter=true}"/>
                     <CheckBox HorizontalAlignment="left" 
                               Content="Lamp ON"
                               ToolTip="Enable the selected lamp outside of acquistion"

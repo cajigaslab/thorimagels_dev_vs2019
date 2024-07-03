@@ -38,11 +38,17 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AutoExposureModule">
+      <HintPath>..\..\..\..\Common\AutoExposureModule\AutoExposureModule\bin\Debug\AutoExposureModule.dll</HintPath>
+    </Reference>
     <Reference Include="OverlayManager">
       <HintPath>..\..\..\Controls\OverlayManager\OverlayManager\bin\Debug\OverlayManager.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="SpinnerProgress">
+      <HintPath>..\..\..\Controls\SpinnerProgress\SpinnerProgress\bin\Debug\SpinnerProgress.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />

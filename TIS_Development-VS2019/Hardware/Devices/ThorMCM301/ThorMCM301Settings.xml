@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<MCM301Settings>
+	<DeviceInfo baudRate="115200" portId="63"/>
+	<SlotSerialNo slot1="" slot2="" slot3=""/>
+	<SlotLayout slot1="x" slot2="y" slot3="z"/>
+	<XRangeConfig minMM="-10" maxMM="10" threshold="2" invert="0" moveByThresholduM="-1"/>
+	<YRangeConfig minMM="-10" maxMM="10" threshold="2" invert="0" moveByThresholduM="-1"/>
+	<ZRangeConfig minMM="-3" maxMM="3" threshold="1" invert="0" moveByThresholduM="-1"/>
+	<RRangeConfig min="-10" max="10" threshold="2" invert="0" moveByThresholduM="-1"/>
+	<CondenserRangeConfig minMM="-3" maxMM="3" threshold="1" invert="0" moveByThresholduM="-1"/>
+</MCM301Settings>

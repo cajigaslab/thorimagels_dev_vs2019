@@ -8,6 +8,7 @@
     using System.Globalization;
     using System.IO;
     using System.Linq;
+    using System.Reflection;
     using System.Windows;
     using System.Windows.Controls;
     using System.Windows.Data;
@@ -18,9 +19,13 @@
 
     using CaptureSetupDll.ViewModel;
 
+    using CurveFitting;
+
     using GeometryUtilities;
 
     using OverlayManager;
+
+    using SLMControl;
 
     using ThorSharedTypes;
 
@@ -203,7 +208,9 @@
         {"SLM_Z_REF",SLMPatternType.ZRef},
         {"SLM_SAVEZOFFSET",SLMPatternType.SaveZOffset},
         {"SLM_REBUILDALL",SLMPatternType.RebuildAll},
-        {"SLM_PATTERN_DELETEALL",SLMPatternType.DeleteAll}
+        {"SLM_PATTERN_DELETEALL",SLMPatternType.DeleteAll},
+        {"SLM_ZCALIBRATION", SLMPatternType.ZCalibration},
+        {"SLM_UPDATE_POWER_DISTRIBUTION", SLMPatternType.UpdatePowerDistribution}
         };
 
         private BackgroundWorker slmBuildAllWorker;
@@ -219,6 +226,7 @@
         private CaptureSetupViewModel _vm;
         private bool _waveParamsUpdated = true; //prevent changes without clicking OK
         private List<float> _zOffsetUMs = new List<float>();
+        private Delegate _zPosHandler = null;
 
         #endregion Fields
 
@@ -265,7 +273,9 @@
             ZRef,
             SaveZOffset,
             RebuildAll,
-            DeleteAll
+            DeleteAll,
+            ZCalibration,
+            UpdatePowerDistribution
         }
 
         #endregion Enumerations
@@ -307,7 +317,7 @@
                         stpRGB.Visibility = System.Windows.Visibility.Visible;
                         stpSLMStatus.Visibility = System.Windows.Visibility.Visible;
                         stpSLMLabel.Visibility = System.Windows.Visibility.Visible;
-                        stpPreview.Visibility = (_vm.IsStimulator) ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+                        stpPreview.Visibility = System.Windows.Visibility.Visible;
                         SLMPreviewPanel slmPreview = new SLMPreviewPanel("PREVIEW", "CANCEL");
                         stpPreview.DataContext = slmPreview;
                         stpSLMButton.Visibility = System.Windows.Visibility.Visible;
@@ -323,6 +333,7 @@
                         stpRGB.Visibility = System.Windows.Visibility.Collapsed;
                         stpSLMStatus.Visibility = System.Windows.Visibility.Collapsed;
                         stpSLMLabel.Visibility = System.Windows.Visibility.Collapsed;
+                        stpPreview.Visibility = System.Windows.Visibility.Collapsed;
                         stpSLMButton.Visibility = System.Windows.Visibility.Collapsed;
                         stpSLMSpin.Visibility = System.Windows.Visibility.Collapsed;
                         stpCalib.Visibility = System.Windows.Visibility.Visible;
@@ -337,6 +348,7 @@
                         stpRGB.Visibility = System.Windows.Visibility.Collapsed;
                         stpSLMStatus.Visibility = System.Windows.Visibility.Visible;
                         stpSLMLabel.Visibility = System.Windows.Visibility.Collapsed;
+                        stpPreview.Visibility = System.Windows.Visibility.Collapsed;
                         stpSLMButton.Visibility = System.Windows.Visibility.Collapsed;
                         stpSLMSpin.Visibility = System.Windows.Visibility.Collapsed;
                         stpCalib.Visibility = System.Windows.Visibility.Collapsed;
@@ -350,6 +362,7 @@
                         stpRGB.Visibility = System.Windows.Visibility.Collapsed;
                         stpSLMStatus.Visibility = System.Windows.Visibility.Collapsed;
                         stpSLMLabel.Visibility = System.Windows.Visibility.Collapsed;
+                        stpPreview.Visibility = System.Windows.Visibility.Collapsed;
                         stpSLMButton.Visibility = System.Windows.Visibility.Collapsed;
                         stpSLMSpin.Visibility = System.Windows.Visibility.Visible;
                         stpCalib.Visibility = System.Windows.Visibility.Collapsed;
@@ -364,6 +377,7 @@
                         stpRGB.Visibility = System.Windows.Visibility.Collapsed;
                         stpSLMStatus.Visibility = System.Windows.Visibility.Collapsed;
                         stpSLMLabel.Visibility = System.Windows.Visibility.Collapsed;
+                        stpPreview.Visibility = System.Windows.Visibility.Collapsed;
                         stpSLMButton.Visibility = System.Windows.Visibility.Visible;
                         stpSLMSpin.Visibility = System.Windows.Visibility.Collapsed;
                         stpCalib.Visibility = System.Windows.Visibility.Collapsed;
@@ -500,6 +514,9 @@
                     {
                         stpSLMStatus.Visibility = (string.Empty == value) ? System.Windows.Visibility.Collapsed : System.Windows.Visibility.Visible;
                         lblSLMPatternStatus.Content = value;
+                        lblSLMPatternStatus.Foreground = value.ToLower().Contains("error") ?
+                        new SolidColorBrush(Color.FromArgb(0xff, 0xff, 0x00, 0x00)) :   //Red
+                        new SolidColorBrush(Color.FromArgb(0xff, 0xff, 0xff, 0x00));    //Yellow
                     });
                 }
                 catch (Exception ex)
@@ -555,22 +572,10 @@
 
             if (!slmBuilder.IsBusy)
             {
-                if (!_vm.IsStimulator)
+                if (!_vm.IsStimulator && !VerifyGGCalibration())
                 {
-                    //check calibration has been done or valid:
-                    if (null == _vm.BleachCalibrateFineScaleXY)
-                    {
-                        SLMPatternStatus = String.Format("Galvo calibration has not been done.\n");
-                        SLMGenResult = false;
-                        return false;
-                    }
-                    else if ((0 == _vm.BleachCalibrateFineScaleXY[0]) || (0 == _vm.BleachCalibrateFineScaleXY[1]) ||
-                        (0 == _vm.BleachCalibrateFieldSize) || (null == _vm.BleachCalibratePixelXY))
-                    {
-                        SLMPatternStatus = String.Format("Galvo calibration is not valid.\n");
-                        SLMGenResult = false;
-                        return false;
-                    }
+                    SLMGenResult = false;
+                    return false;
                 }
                 if (_vm.SLMSequenceOn && 0 == SLMEpochSequences.Count)
                 {
@@ -629,7 +634,7 @@
             }
             else
             {
-                OverlayManagerClass.Instance.RevokeROIs(ref CaptureSetupViewModel.OverlayCanvas);
+                OverlayManagerClass.Instance.RevokeROIs();
                 _vm.DisplayROI();
                 OverlayManagerClass.Instance.CurrentMode = _vm.IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS;
 
@@ -672,13 +677,33 @@
             if (0 < rois.Count)
             {
                 System.Drawing.Bitmap bmp = ProcessBitmap.CreateBinaryBitmap(new int[2] { _vm.ImageWidth, _vm.ImageHeight }, rois);
-                CalculateSLMPowerDensity(ProcessBitmap.BinaryBitmapNonZeroCount(bmp) * Math.Pow((double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0], 2));
+                CalculateSLMPowerDensity(ProcessBitmap.BinaryBitmapNonZeroCount(bmp) * Math.Pow(((PixelSizeUM)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0]).PixelWidthUM, 2));
             }
             else if (!_slmParamsCurrent.PowerEntryPreferred)
                 CalculateSLMPowerDensity(0.0);
 
             if (null != _slmParamsCurrent)
                 _slmParamsCurrent.SLMPowerAlert = false;
+        }
+
+        /// <summary>
+        /// Verify GG calibration has been done and valid
+        /// </summary>
+        /// <returns></returns>
+        public bool VerifyGGCalibration()
+        {
+            if (null == _vm.BleachCalibrateFineScaleXY)
+            {
+                SLMPatternStatus = String.Format("Galvo calibration has not been done.\n");
+                return false;
+            }
+            else if ((0 == _vm.BleachCalibrateFineScaleXY[0]) || (0 == _vm.BleachCalibrateFineScaleXY[1]) ||
+                (0 == _vm.BleachCalibrateFieldSize) || (null == _vm.BleachCalibratePixelXY))
+            {
+                SLMPatternStatus = String.Format("Galvo calibration is not valid.\n");
+                return false;
+            }
+            return true;
         }
 
         /// <summary>Determines if the path contains invalid characters.</summary>
@@ -942,7 +967,11 @@
                     }
                     break;
                 case "CANCEL":
+                    if (!_vm.IsStimulator)
+                        ResourceManagerCS.PostflightCamera((int)SelectedHardware.SELECTED_BLEACHINGSCANNER);
+
                     _vm.IdleSLM();
+                    SLMPatternStatus = string.Empty;
                     break;
                 default:
                     break;
@@ -969,15 +998,9 @@
             double[] powerVal;
             if (!_vm.IsStimulator)
             {
-                if (null == _vm.BleachCalibrateFineScaleXY)
-                {
-                    return "Galvo calibration has not been done.\n";
-                }
-                else if ((0 == _vm.BleachCalibrateFineScaleXY[0]) || (0 == _vm.BleachCalibrateFineScaleXY[1]) ||
-                    (0 == _vm.BleachCalibrateFieldSize) || (null == _vm.BleachCalibratePixelXY))
-                {
-                    return "Invalid Galvo calibration.\n";
-                }
+                if (!VerifyGGCalibration())
+                    return SLMPatternStatus;
+
                 sWaveParams.BleachWaveParams.ClockRate = WaveformBuilder.ClkRate = (int)(_vm.BleachLSMPixelXY[0] * WaveformBuilder.MS_TO_S);  //[Hz], keep PixelSpacing as 1
                 sWaveParams.BleachWaveParams.Power = _vm.SLMCalibPower;                       //[%]
                 powerVal = new double[1] { WaveformBuilder.GetPockelsPowerValue(sWaveParams.BleachWaveParams.Power, _vm.BleachCalibratePockelsVoltageMin0[0], _vm.BleachCalibratePockelsVoltageMax0[0], (PockelsResponseType)MVMManager.Instance["PowerControlViewModel", "BleacherPowerResponse0", 0]) };
@@ -998,7 +1021,7 @@
                 (_vm.SLMCalibDwell * (int)WaveformBuilder.MS_TO_S) : (WaveformBuilder.MinDwellTime * (int)WaveformBuilder.MS_TO_S);
             sWaveParams.BleachWaveParams.PostPatIdleTime = sWaveParams.BleachWaveParams.PostIdleTime = 0;       //[ms]
             sWaveParams.BleachWaveParams.shapeType = "Crosshair";
-            sWaveParams.BleachWaveParams.UMPerPixel = (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0];
+            sWaveParams.BleachWaveParams.UMPerPixel = ((PixelSizeUM)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0]).PixelWidthUM;
             sWaveParams.BleachWaveParams.UMPerPixelRatio = _vm.BleachPixelSizeUMRatio;
             sWaveParams.BleachWaveParams.Center = new Point(Math.Floor((double)_vm.BleachLSMPixelXY[0] / 2), Math.Floor((double)(_vm.BleachLSMPixelXY[1] / 2)));
             sWaveParams.BleachWaveParams.Iterations = 1;
@@ -1023,8 +1046,21 @@
             //pattern pre-idle:
             WaveformBuilder.BuildPrePatIdle(sWaveParams.BleachWaveParams, true, true);
 
-            //dwell crosshair:
-            WaveformBuilder.BuildSpot(sWaveParams.BleachWaveParams, powerVal);
+            //dwell crosshair, break up in chunk (100ms) for better user experience:
+            const double DWELL_LAPSE_US = 100000;
+            double remainDwellTime = sWaveParams.BleachWaveParams.DwellTime;
+            while (remainDwellTime > 0)
+            {
+                sWaveParams.BleachWaveParams.DwellTime = Math.Min(DWELL_LAPSE_US, remainDwellTime);
+                SLMPatternStatus = String.Format("Creating Calibration Waveform: {0}%\n", (int)(sWaveParams.BleachWaveParams.DwellTime / remainDwellTime * 100.0));
+                remainDwellTime -= sWaveParams.BleachWaveParams.DwellTime;
+                WaveformBuilder.BuildSpot(sWaveParams.BleachWaveParams, powerVal);
+                //break if user request stop:
+                if (true == slmCalibrator.CancellationPending)
+                {
+                    return "Build Calibration Waveform Failed.\n";
+                }
+            }
 
             //pattern post-idle:
             WaveformBuilder.BuildPostPatIdle(sWaveParams.BleachWaveParams, true, true);
@@ -1114,7 +1150,7 @@
                     if (slmCalibrator.IsBusy)
                     { return; }
 
-                    OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, true);
+                    OverlayManagerClass.Instance.DisplayPatternROI(OverlayManagerClass.Instance.PatternID - 1, true);
                     slmCalibrator.DoWork += new DoWorkEventHandler(SLMCalibrator_DoWork);
                     slmCalibrator.RunWorkerCompleted += new RunWorkerCompletedEventHandler(SLMCalibrator_RunWorkerCompleted);
                     slmCalibrator.RunWorkerAsync(_vm.SLMCalibROIFilePath);
@@ -1122,7 +1158,7 @@
                 case "REDO":
                     //reset affine values if not matched:
                     _slmCalibIsReset = _vm.ResetSLMCalibration();
-                    OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, true);
+                    OverlayManagerClass.Instance.DisplayPatternROI(OverlayManagerClass.Instance.PatternID - 1, true);
 
                     slmCalib = _vm.SLM3D ?
                         new SLMCalibPanel("", "SELECT", "DONE", "New Calibration", "Keep Z at reference and use Cross Hair\nROI tool to mark the single imaging bead\nthen Press Yes to continue calibration, \nPress No to cancel.") :
@@ -1173,9 +1209,9 @@
                         if (0 < _vm.SLMCalibByBurning)
                             _vm.SLMSetBlank((int)IDevice.Params.PARAM_SLM_BLANK_SAFE);
 
-                        OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID);
-                        OverlayManagerClass.Instance.ClearNonSaveROIs(ref CaptureSetupViewModel.OverlayCanvas);
-                        OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, false);
+                        OverlayManagerClass.Instance.DeletePatternROI(OverlayManagerClass.Instance.PatternID);
+                        OverlayManagerClass.Instance.ClearNonSaveROIs();
+                        OverlayManagerClass.Instance.DisplayPatternROI(OverlayManagerClass.Instance.PatternID - 1, false);
                         strBody = "Error: Only one spot should be selected.\n\nKeep Z at reference and use Cross Hair\nROI tool to mark the single imaging bead\nthen Press Yes to continue calibration,\nPress No to cancel.";
                         slmCalib = new SLMCalibPanel("Next", "SPOT_SELECT", "DONE", "New Calibration", strBody);
                     }
@@ -1189,9 +1225,9 @@
                     pts = OverlayManagerClass.Instance.GetPatternROICenters(OverlayManagerClass.Instance.PatternID, ref roiType, ref offCenter);
                     if (0 >= pts.Count || 0 != (pts.Count % CalibratePointCount) || Math.Abs((int)(pts.Count / CalibratePointCount) - _zOffsetUMs.Count) > 1)
                     {
-                        OverlayManagerClass.Instance.ClearNonSaveROIs(ref CaptureSetupViewModel.OverlayCanvas);
-                        OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, false);
-                        OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID, true);
+                        OverlayManagerClass.Instance.ClearNonSaveROIs();
+                        OverlayManagerClass.Instance.DisplayPatternROI(OverlayManagerClass.Instance.PatternID - 1, false);
+                        OverlayManagerClass.Instance.DisplayPatternROI(OverlayManagerClass.Instance.PatternID, true);
                         strBody = "Error: Number of your selections: (" + pts.Count + ") is invalid.\n\n" + strBody;
                         slmCalib = new SLMCalibPanel("Next", "SPOT_SELECT", "DONE", "New Calibration", strBody);
                     }
@@ -1213,7 +1249,7 @@
                                 _zOffsetUMs[_zOffsetUMs.Count - 1] = tmpkz;
                             }
 
-                            OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, -1, false);
+                            OverlayManagerClass.Instance.DisplayPatternROI(-1, false);
                             strBody = "Info: Spot selections (total count: " + pts.Count + ") and\nz info are updated.\n\n" + strBody;
                             slmCalib = new SLMCalibPanel("Next", "TRY_CALIBRATE", "DONE", "New Calibration", strBody);
                         }
@@ -1245,9 +1281,9 @@
                     slmCalibrator.RunWorkerAsync(_zOffsetUMs);
                     break;
                 case "SELECT":
-                    OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID);
-                    OverlayManagerClass.Instance.ClearNonSaveROIs(ref CaptureSetupViewModel.OverlayCanvas);
-                    OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, false);
+                    OverlayManagerClass.Instance.DeletePatternROI(OverlayManagerClass.Instance.PatternID);
+                    OverlayManagerClass.Instance.ClearNonSaveROIs();
+                    OverlayManagerClass.Instance.DisplayPatternROI(OverlayManagerClass.Instance.PatternID - 1, false);
 
                     strBody = "Using Cross Hair ROI tool, mark the \ncenter points of the burned calibration \nspots on the image. Press YES when\ncomplete, and press No to break.\n\n\n\tx4\tx5\tx6\n\n\tx3\n\t\t\t\tx7\n\n\tx2\n\n\t\t\t     x8\n\n\tx1\t\t\tx9\n ";
                     slmCalib = new SLMCalibPanel("", "FINISH_SELECT", "DONE", "New Calibration", strBody);
@@ -1259,8 +1295,8 @@
                     pts = OverlayManagerClass.Instance.GetPatternROICenters(OverlayManagerClass.Instance.PatternID, ref roiType, ref offCenter);
                     if (CalibratePointCount != pts.Count)
                     {
-                        OverlayManagerClass.Instance.ClearNonSaveROIs(ref CaptureSetupViewModel.OverlayCanvas);
-                        OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, false);
+                        OverlayManagerClass.Instance.ClearNonSaveROIs();
+                        OverlayManagerClass.Instance.DisplayPatternROI(OverlayManagerClass.Instance.PatternID - 1, false);
                         strBody = "Error: Number of your selections is invalid.\n\nUsing Cross Hair ROI tool, mark the \ncenter points of the burned calibration \nspots on the image. Press YES when\ncomplete, and press No to break.\n\n\n\tx4\tx5\tx6\n\n\tx3\n\t\t\t\tx7\n\n\tx2\n\t\t     x8\n\n\n\tx1\t\t\tx9\n ";
                         slmCalib = new SLMCalibPanel("", "FINISH_SELECT", "DONE", "New Calibration", strBody);
                         this.DataContext = slmCalib;
@@ -1361,7 +1397,7 @@
                 bitVec32[OverlayManager.OverlayManagerClass.SecG] = Convert.ToByte(SLMParamsCurrent.Green);
                 bitVec32[OverlayManager.OverlayManagerClass.SecB] = Convert.ToByte(SLMParamsCurrent.Blue);
                 OverlayManagerClass.Instance.ColorRGB = bitVec32.Data;
-                OverlayManagerClass.Instance.UpdatePatternROIColor(ref CaptureSetupViewModel.OverlayCanvas,
+                OverlayManagerClass.Instance.UpdatePatternROIColor(
                     (_vm.IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS));
             }
         }
@@ -1387,7 +1423,7 @@
                 bitVec32[OverlayManager.OverlayManagerClass.SecG] = Convert.ToByte(SLMParamsCurrent.Green);
                 bitVec32[OverlayManager.OverlayManagerClass.SecB] = Convert.ToByte(SLMParamsCurrent.Blue);
                 OverlayManagerClass.Instance.ColorRGB = bitVec32.Data;
-                OverlayManagerClass.Instance.UpdatePatternROIColor(ref CaptureSetupViewModel.OverlayCanvas,
+                OverlayManagerClass.Instance.UpdatePatternROIColor(
                     (_vm.IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS));
             }
         }
@@ -1409,16 +1445,16 @@
             _vm.SLMSelectWavelengthProp = !backup;
 
             //append rois:
-            OverlayManagerClass.Instance.AppendModeROIs(ref CaptureSetupViewModel.OverlayCanvas, Mode.PATTERN_WIDEFIELD, OverlayManagerClass.Instance.PatternID, rois, _vm.SLMWavelengthNM);
+            OverlayManagerClass.Instance.AppendModeROIs(Mode.PATTERN_WIDEFIELD, OverlayManagerClass.Instance.PatternID, rois, _vm.SLMWavelengthNM);
 
             _vm.SLMSelectWavelengthProp = backup;
 
-            OverlayManagerClass.Instance.DimWavelengthROI(ref CaptureSetupViewModel.OverlayCanvas);
+            OverlayManagerClass.Instance.DimWavelengthROI();
         }
 
         private void GenSLMPattern()
         {
-            if ((null == _vm.Bitmap) || (null == _vm.BleachLSMFieldScaleXYFine && !_vm.IsStimulator))
+            if ((null == MVMManager.Instance["ImageViewCaptureSetupVM", "Bitmap"]) || (null == _vm.BleachLSMFieldScaleXYFine && !_vm.IsStimulator))
             {
                 SLMPatternStatus = String.Format("Unable to start SLM Generation...\n");
                 return;
@@ -1440,16 +1476,9 @@
 
         private int GetDwellCount(int clockRateHz)
         {
-            if (!_vm.IsStimulator)
+            if (!_vm.IsStimulator && !VerifyGGCalibration())
             {
-                //check calibration has been done or valid:
-                if (null == _vm.BleachCalibrateFineScaleXY)
-                { return 0; }
-                else if ((0 == _vm.BleachCalibrateFineScaleXY[0]) || (0 == _vm.BleachCalibrateFineScaleXY[1]))
-                { return 0; }
-
-                if ((0 == _vm.BleachCalibrateFieldSize) || (null == _vm.BleachCalibratePixelXY))
-                { return 0; }
+                return 0;
             }
             double[] powerVal = new double[1] { WaveformBuilder.GetPockelsPowerValue(SLMParamsCurrent.BleachWaveParams.Power, _vm.BleachCalibratePockelsVoltageMin0[0], _vm.BleachCalibratePockelsVoltageMax0[0], (PockelsResponseType)MVMManager.Instance["PowerControlViewModel", "BleacherPowerResponse0", (object)0]) };
 
@@ -1533,6 +1562,34 @@
             }
         }
 
+        /// <summary>
+        /// Update Z defocus automatically when user changes Z Position in SLM 3D mode
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnZPositionChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                if ((_vm.SLM3DBackup && SLMPanelMode.Calibration == PanelMode) || (_vm.SLM3D && SLMPanelMode.ParamEdit == PanelMode))
+                {
+                    //[NOTE] although the z pos set value is available by: ((DoublePropertyArgs)e).DoubleValue * (double)Constants.UM_TO_MM,
+                    //get the value again considering stage stability
+                    double[] zPositionUM = new double[] { (double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0] * (double)Constants.UM_TO_MM * ZDefocusPlotWin.ZInvert };
+                    double[] zDefocusUM = CubicSpline.Compute(ZDefocusPlotWin.DataX?.ToArray(), ZDefocusPlotWin.DataY?.ToArray(), zPositionUM);
+                    if (null != zDefocusUM && 0 < zDefocusUM?.Count())
+                    {
+                        _vm.DefocusUM = zDefocusUM[0] * ZDefocusPlotWin.ZInvert;
+                        SLMPatternStatus = String.Format("Z offset: " + _vm.DefocusUM.ToString("F1") + " [um]\n");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ThorLogging.ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, "OnZPositionChanged: " + ex.Message);
+            }
+        }
+
         void OverlayManager_ClearedObjectEvent()
         {
             UpdateSLMParamEdit();
@@ -1563,16 +1620,69 @@
                 {
                     case "PREVIEW":
                     default:
-                        //try save pattern bmp
-                        if (SaveSLMPatternImage(_vm.SLMPreviewFileName))
+                        if (!_vm.IsStimulator && VerifyGGCalibration())
                         {
-                            //push pattern to SLM device
-                            _vm.LoadSLMPatternName(0, 0, _vm.SLMPreviewFileName, true, _vm.IsStimulator, _vm.SLM3D ? 1 : 0);
+                            WaveformBuilder.ClkRate = (int)(_vm.BleachLSMPixelXY[0] * WaveformBuilder.MS_TO_S / SLMParamsCurrent.PixelSpacing);   //[Hz]
+                            _vm.InitializeWaveformBuilder(WaveformBuilder.ClkRate);
+                            WaveformBuilder.ResetWaveform();
 
-                            //update power at bleach scanner
-                            UpdateSLMParamPower();
-                            MVMManager.Instance["PowerControlViewModel", "BleacherPower0"] = Math.Max(0.0, SLMParamsCurrent.BleachWaveParams.Power);
-                            MVMManager.Instance["PowerControlViewModel", "BleacherPower1"] = Math.Max(0.0, SLMParamsCurrent.BleachWaveParams.Power1);
+                            WaveformBuilder.BuildTravel(SLMParamsCurrent.BleachWaveParams.Center, 0, 0, 0);
+
+                            //NI limit data length per channel or stop request
+                            if ((WaveformBuilder.GetWaveform().Count > Int32.MaxValue) || (true == slmCalibrator.CancellationPending))
+                            {
+                                ResourceManagerCS.DeleteFile(_vm.SLMPreviewFileName[1]);
+                                SLMPatternStatus = "Invalid waveform size or cancel request.\n";
+                            }
+
+                            //save to file
+                            WaveformBuilder.SaveWaveform(_vm.SLMPreviewFileName[1], true, new bool[(int)SignalType.SIGNALTYPE_LAST] { true, true, true, false });
+                            while (!WaveformBuilder.CheckSaveState())
+                            {
+                                System.Threading.Thread.Sleep(50);
+
+                                if (true == slmCalibrator.CancellationPending)
+                                {
+                                    WaveformBuilder.StopSave();
+                                }
+                            }
+                            if (!WaveformBuilder.GetSaveResult())
+                            {
+                                ResourceManagerCS.DeleteFile(_vm.SLMPreviewFileName[1]);
+                                SLMPatternStatus = "Save Preview Waveform Failed.\n";
+                            }
+
+                            //stop Live Capture if GALVO_GALVO:
+                            if ((int)ICamera.LSMType.GALVO_GALVO == ResourceManagerCS.GetLSMType())
+                                _vm.StopLiveCapture();
+
+                            //set bleach scanner
+                            ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_MULTI_FRAME_COUNT, 1);
+                            ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_SCANMODE, (double)ICamera.ScanMode.BLEACH_SCAN);
+                            ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_TRIGGER_MODE, (double)ICamera.TriggerMode.HW_MULTI_FRAME_TRIGGER_FIRST);
+                            ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_WAVEFORM_PRECAPTURESTATUS, (double)PreCaptureStatus.PRECAPTURE_BLEACHER_IDLE);
+                            ResourceManagerCS.SetCameraParamString((int)SelectedHardware.SELECTED_BLEACHINGSCANNER, (int)ICamera.Params.PARAM_LSM_WAVEFORM_PATH_NAME, _vm.SLMPreviewFileName[1]);
+                            ResourceManagerCS.PreflightCamera((int)SelectedHardware.SELECTED_BLEACHINGSCANNER);
+                            ResourceManagerCS.SetupCamera((int)SelectedHardware.SELECTED_BLEACHINGSCANNER);
+                        }
+                        try
+                        {
+                            //try save pattern bmp
+                            if (SaveSLMPatternImage(_vm.SLMPreviewFileName[0]))
+                            {
+                                //push pattern to SLM device
+                                _vm.LoadSLMPatternName(0, 0, _vm.SLMPreviewFileName[0], true, _vm.IsStimulator, _vm.SLM3DBackup ? 1 : 0);
+
+                                //update power at bleach scanner
+                                UpdateSLMParamPower();
+                                MVMManager.Instance["PowerControlViewModel", "BleacherPower0"] = Math.Max(0.0, SLMParamsCurrent.BleachWaveParams.Power);
+                                MVMManager.Instance["PowerControlViewModel", "BleacherPower1"] = Math.Max(0.0, SLMParamsCurrent.BleachWaveParams.Power1);
+                            }
+                        }
+                        catch (FileNotFoundException ex)
+                        {
+                            ThorLogging.ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "SaveSLMPatternImage: " + ex.Message);
+                            SLMPatternStatus = String.Format("Error: Could not load file or assembly.\n");
                         }
                         break;
                 }
@@ -1581,7 +1691,15 @@
 
         private void PreviewWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            ResourceManagerCS.DeleteFile(_vm.SLMPreviewFileName);
+            //clean files
+            foreach (string sFile in _vm.SLMPreviewFileName)
+                ResourceManagerCS.DeleteFile(sFile);
+
+            string[] fileList = System.IO.Directory.GetFiles(System.IO.Path.GetDirectoryName(_vm.SLMPreviewFileName[0]) + _vm.SLMbmpSubFolders[(_vm.SLM3DBackup ? 2 : 1)],
+                System.IO.Path.GetFileNameWithoutExtension(_vm.SLMPreviewFileName[0]) + "*" + System.IO.Path.GetExtension(_vm.SLMPreviewFileName[0]));
+            foreach (string file in fileList)
+                ResourceManagerCS.DeleteFile(file);
+
             SLMSpinProgressVisible = false;
             slmPreviewWorker.DoWork -= new DoWorkEventHandler(PreviewWorker_DoWork);
             slmPreviewWorker.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(PreviewWorker_RunWorkerCompleted);
@@ -1771,7 +1889,17 @@
                 return false;
             }
 
-            return SaveSLMPatternImage((null == WaveFileNameAndPathCurrent[2]) ? WaveFileNameAndPathCurrent[3] : _vm.SLMWaveformFolder[0] + "\\" + WaveFileNameAndPathCurrent[2] + ".bmp");
+            try
+            {
+                return SaveSLMPatternImage((null == WaveFileNameAndPathCurrent[2]) ? WaveFileNameAndPathCurrent[3] : _vm.SLMWaveformFolder[0] + "\\" + WaveFileNameAndPathCurrent[2] + ".bmp");
+            }
+            catch (FileNotFoundException ex)
+            {
+                ThorLogging.ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "SaveSLMPatternImage: " + ex.Message);
+                SLMPatternStatus = String.Format("Error: Could not load file or assembly.\n");
+                SLMGenResult = false;
+                return false;
+            }
         }
 
         /// <summary>
@@ -1783,7 +1911,15 @@
             {
                 string strTmp = string.Empty;
                 System.Drawing.Bitmap bmp;
-                float dpi = (float)((double)Constants.UM_PER_INCH / (double)MVMManager.Instance["ObjectiveControlViewModel", "TurretMagnification", (object)1.0] / (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0]);
+                float dpi = (float)((double)Constants.UM_PER_INCH / (double)MVMManager.Instance["ObjectiveControlViewModel", "TurretMagnification", (object)1.0] / ((PixelSizeUM)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0]).PixelWidthUM);
+
+                //scale patterns based on field size ratio:
+                Point pivot = new Point(_vm.ImageWidth / 2, _vm.ImageHeight / 2);
+                double refFieldSize = XmlManager.ReadAttribute<int>(_vm.RegistrationDoc, "/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "'][@CameraType='1']/LUT[@Active='1']", "RefFieldSize", 0, 0);
+                //[NOTE] only consider LSM (field size) for scaled SLM stimulation, may include camera (zoom) next
+                double scaleVal = ((int)ICamera.CameraType.LSM == ResourceManagerCS.GetCameraType() && 0 < refFieldSize) ?
+                    refFieldSize / (int)MVMManager.Instance["AreaControlViewModel", "LSMFieldSize", (object)5] : (double)1.0;
+                double[] scaleXY = new double[2] { scaleVal, scaleVal };
 
                 //get pattern offset & shapes:
                 Point offCenter = new Point(-1, -1);
@@ -1792,6 +1928,11 @@
                 {
                     patternPoints = OverlayManagerClass.Instance.GetPatternROICenters(OverlayManagerClass.Instance.PatternID, ref strTmp, ref offCenter);
                 });
+                //xy scale based on image center before duplicate for unshifted
+                for (int i = 0; i < patternPoints.Count; i++)
+                {
+                    patternPoints[i] = new Point(patternPoints[i].X * scaleXY[0] + pivot.X * (1.0 - scaleXY[0]), patternPoints[i].Y * scaleXY[1] + pivot.Y * (1.0 - scaleXY[1]));
+                }
                 patternPointsUnshifted = patternPoints;
                 SLMParamsCurrent.BleachWaveParams.shapeType = strTmp;
 
@@ -1816,7 +1957,7 @@
                 }
 
                 //create the subfolder if not exist
-                string workingDir = System.IO.Path.GetDirectoryName(bmpPath) + _vm.SLMbmpSubFolders[(_vm.SLM3D ? 2 : 1)];
+                string workingDir = System.IO.Path.GetDirectoryName(bmpPath) + _vm.SLMbmpSubFolders[(_vm.SLM3DBackup ? 2 : 1)];
                 ResourceManagerCS.SafeCreateDirectory(workingDir);
                 string zbmpPath = bmpPath;
 
@@ -1840,6 +1981,10 @@
                             bmpPathLamdaUnshifted[i] = workingDir + "\\" + (String.IsNullOrEmpty(System.IO.Path.GetFileNameWithoutExtension(bmpPath)) ? "" : System.IO.Path.GetFileNameWithoutExtension(bmpPath) + "_") + _vm.SLMWavelengthNM + "nm.bmp";
                             bmpPathLamda[i] = workingDir + "\\" + (String.IsNullOrEmpty(System.IO.Path.GetFileNameWithoutExtension(bmpPath)) ? "" : System.IO.Path.GetFileNameWithoutExtension(bmpPath) + "_preview") + _vm.SLMWavelengthNM + "nm.bmp";
                             rois[i] = OverlayManagerClass.Instance.GetModeROIs(Mode.PATTERN_WIDEFIELD, OverlayManagerClass.Instance.PatternID, _vm.SLMWavelengthNM);
+                            foreach (var roi in rois[i])
+                            {
+                                OverlayManagerClass.Instance.PivotScaleROI(roi, pivot, scaleXY, new Mode[1] { Mode.PATTERN_WIDEFIELD });
+                            }
                         }
                     });
                     //separate create bmp to allow spinner wheel
@@ -1868,7 +2013,7 @@
                     }
                     _vm.SLMSelectWavelengthProp = backupWavelength;
                 }
-                else
+                else    //GG-SLM
                 {
                     Point centerOffset = _vm.GetSLMPatternBoundROICenter(ref patternPoints, offCenter);
                     SLMParamsCurrent.BleachWaveParams.Center = new Point(Math.Round((_vm.BleachLSMPixelXY[0] / 2) - centerOffset.X, 3), Math.Round((_vm.BleachLSMPixelXY[1] / 2) - centerOffset.Y, 3));
@@ -1893,22 +2038,33 @@
                                     patternPoints = OverlayManagerClass.Instance.GetPatternROICenters(entry.Value);
                                 });
 
-                                //xy offset z pattern points based on 0th center
+                                //xy scale based on image center first then offset z pattern points based on 0th center
                                 for (int i = 0; i < patternPoints.Count; i++)
-                                    patternPoints[i] = new Point(patternPoints[i].X + centerOffset.X, patternPoints[i].Y + centerOffset.Y);
-
-                                //save as intermediate z bitmaps to be parsed by hologram gen
-                                zbmpPath = workingDir + "\\" + (String.IsNullOrEmpty(System.IO.Path.GetFileNameWithoutExtension(bmpPath)) ? "" : System.IO.Path.GetFileNameWithoutExtension(bmpPath) + "_Z[") + entry.Key.ToString("F3") + "]um.bmp";
-                                bmp = ProcessBitmap.CreateBinaryBitmap(_vm.BleachLSMPixelXY[0], _vm.BleachLSMPixelXY[1], patternPoints);                    //after offset
-                                bmp.SetResolution(dpi, dpi);                    //dots per inch
-                                bmp.Save(zbmpPath, System.Drawing.Imaging.ImageFormat.Bmp);
+                                {
+                                    patternPoints[i] = new Point(patternPoints[i].X * scaleXY[0] + pivot.X * (1.0 - scaleXY[0]) + centerOffset.X, patternPoints[i].Y * scaleXY[1] + pivot.Y * (1.0 - scaleXY[1]) + centerOffset.Y);
+                                }
+                                //save as intermediate z bitmaps to be parsed by hologram gen with calibrated z defocus values
+                                double[] zDefocusUM = CubicSpline.Compute(ZDefocusPlotWin.DataX?.ToArray(), ZDefocusPlotWin.DataY.ToArray(), new double[] { entry.Key * ZDefocusPlotWin.ZInvert });
+                                if (null != zDefocusUM)
+                                {
+                                    zbmpPath = workingDir + "\\" + (String.IsNullOrEmpty(System.IO.Path.GetFileNameWithoutExtension(bmpPath)) ? "" : System.IO.Path.GetFileNameWithoutExtension(bmpPath) + "_Z[") + ((double)(zDefocusUM?[0] * ZDefocusPlotWin.ZInvert)).ToString("F3") + "]um.bmp";
+                                    bmp = ProcessBitmap.CreateBinaryBitmap(_vm.BleachLSMPixelXY[0], _vm.BleachLSMPixelXY[1], patternPoints);                    //after offset
+                                    bmp.SetResolution(dpi, dpi);                    //dots per inch
+                                    bmp.Save(zbmpPath, System.Drawing.Imaging.ImageFormat.Bmp);
+                                }
+                                else
+                                {
+                                    SLMPatternStatus = String.Format("Z position {0}um is beyond calibrated range\nfrom {1}um to {2}um\n", entry.Key.ToString("F1"), ZDefocusPlotWin.DataX?.Min().ToString("F1"), ZDefocusPlotWin.DataX?.Max().ToString("F1"));
+                                    SLMGenResult = false;
+                                    return false;
+                                }
                             }
 
                             //request SLM to generate 3D mask using the file name
                             _vm.SaveSLMPatternName(zbmpPath);
                         }
                     }
-                    else
+                    else    //GG-SLM, 2D
                     {
                         //save bitmap of pattern centers:
                         bmp = ProcessBitmap.CreateBinaryBitmap(_vm.BleachLSMPixelXY[0], _vm.BleachLSMPixelXY[1], patternPoints);                        //after offset
@@ -1958,7 +2114,7 @@
                 this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
                 {
                     //clear ROIs:
-                    OverlayManagerClass.Instance.ClearNonSaveROIs(ref CaptureSetupViewModel.OverlayCanvas);
+                    OverlayManagerClass.Instance.ClearNonSaveROIs();
                 });
             }
         }
@@ -1985,7 +2141,7 @@
                 for (SLMParamID = 0; SLMParamID < _vm.SLMBleachWaveParams.Count; SLMParamID++)              //index in waveform param list [0-based]
                 {
                     SLMParamsCurrent = new SLMParams(_vm.SLMBleachWaveParams[SLMParamID]);
-                    SLMParamsCurrent.BleachWaveParams.UMPerPixel = (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0];
+                    SLMParamsCurrent.BleachWaveParams.UMPerPixel = ((PixelSizeUM)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0]).PixelWidthUM;
                     SLMParamsCurrent.BleachWaveParams.UMPerPixelRatio = _vm.BleachPixelSizeUMRatio;
                     OverlayManagerClass.Instance.PatternID = (int)SLMParamsCurrent.BleachWaveParams.ID;     //pattern ID: 1 based
 
@@ -2387,9 +2543,9 @@
                         if (!kzTo.Contains(tmpkz))
                             kzTo.Add(tmpkz);
 
-                        //source patterns use z offset value, rather than z stage value
-                        if (zCounts < kzFrom.Count)
-                            tmpkz = kzFrom[zCounts];
+                        //[NOTE] source patterns use z stage value as well since z calibration is introduced
+                        //if (zCounts < kzFrom.Count)
+                        //    tmpkz = kzFrom[zCounts];
 
                         zCounts += entry.Value.Count / CalibratePointCount;
                         foreach (Shape slist in entry.Value)
@@ -2458,10 +2614,10 @@
         private void SLMCalibrator3D_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             //clear user-selected points:
-            OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID);
+            OverlayManagerClass.Instance.DeletePatternROI(OverlayManagerClass.Instance.PatternID);
             OverlayManagerClass.Instance.SaveROIs(_vm.SLMCalibROIFilePath);
             _vm.DisplayROI(_vm.SLMCalibROIFilePath);
-            OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, true);
+            OverlayManagerClass.Instance.DisplayPatternROI(OverlayManagerClass.Instance.PatternID - 1, true);
 
             // check error, cancel, then result:
             if (e.Error != null)
@@ -2605,7 +2761,7 @@
             //execute calibration:
             if (0 == e.Result.ToString().CompareTo("0"))
             {
-                SLMPatternStatus = String.Format("Loading SLM Calibration Waveform, \nplease wait until done ... \n");
+                SLMPatternStatus = String.Format("Loading SLM Calibration Waveform and Pattern,\nplease wait until done ... \n");
                 e.Result = (_vm.SLMCalibration(bmpPath, ptsFrom, ptsTo, ptsTo.Length)) ? "0" : "Calibration Failed\n";
             }
         }
@@ -2614,10 +2770,10 @@
         {
             SLMCalibPanel slmCalib;
             //clear user-selected points:
-            OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID);
+            OverlayManagerClass.Instance.DeletePatternROI(OverlayManagerClass.Instance.PatternID);
             OverlayManagerClass.Instance.SaveROIs(_vm.SLMCalibROIFilePath);
             _vm.DisplayROI(_vm.SLMCalibROIFilePath);
-            OverlayManagerClass.Instance.DisplayPatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID - 1, true);
+            OverlayManagerClass.Instance.DisplayPatternROI(OverlayManagerClass.Instance.PatternID - 1, true);
 
             // check error, cancel, then result:
             if (e.Error != null)
@@ -2666,14 +2822,14 @@
                 CancelSLMBackgroundWorker(slmBuildAllWorker);
                 CancelSLMBackgroundWorker(slmImportWorker);
 
-                //stop calibrator, need to clear user selected from SLMCalibROIs.xaml
+                //stop calibrator, need to clear user selected in 2D calibration only
                 if (slmCalibrator.IsBusy)
                 {
                     CancelCalibrator();
                 }
-                else if (SLMPanelMode.Calibration == PanelMode)
+                else if (SLMPanelMode.Calibration == PanelMode && !_vm.SLM3DBackup)
                 {
-                    OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, OverlayManagerClass.Instance.PatternID);
+                    OverlayManagerClass.Instance.DeletePatternROI(OverlayManagerClass.Instance.PatternID);
                     OverlayManagerClass.Instance.SaveROIs(_vm.SLMCalibROIFilePath);
                 }
 
@@ -2685,7 +2841,7 @@
                 _vm.SLM3D = _vm.SLM3DBackup;
 
                 //OverlayManagerClass.Instance.ClearNonSaveROIs(ref _vm.OverlayCanvas);
-                OverlayManagerClass.Instance.RevokeROIs(ref CaptureSetupViewModel.OverlayCanvas);
+                OverlayManagerClass.Instance.RevokeROIs();
                 OverlayManagerClass.Instance.CurrentMode = ThorSharedTypes.Mode.STATSONLY;
                 OverlayManagerClass.Instance.SkipRedrawCenter = false;    //reset sub ID to regular one-based (zero-based for 3D calibration)
 
@@ -2703,10 +2859,6 @@
                         }
                         break;
                     case SLMPanelMode.Calibration:
-                        //clear intermediate files created in calibration
-                        if (!String.Equals(_vm.SLMCalibFile, CaptureSetupViewModel.DEFAULT_SLMCALIB_XAML, StringComparison.OrdinalIgnoreCase))
-                            ResourceManagerCS.DeleteFile(_vm.SLMCalibROIFilePath);
-                        ResourceManagerCS.DeleteFile(System.IO.Path.ChangeExtension(_vm.SLMCalibROIFilePath, ".bmp"));
                         //display ActiveROIs
                         _vm.DisplayROI();
                         break;
@@ -2763,6 +2915,7 @@
             OverlayManagerClass.Instance.ObjectSizeChangedEvent += OverlayManager_ObjectSizeChangedEvent;
             OverlayManagerClass.Instance.UpdatingObjectEvent += OverlayManager_UpdatingObjectEvent;
             OverlayManagerClass.Instance.ClearedObjectEvent += OverlayManager_ClearedObjectEvent;
+            _zPosHandler = MVMManager.Instance["ZControlViewModel"]?.AddDynamicEventHandler("ZPositionChangedEvent", nameof(OnZPositionChanged), this);
         }
 
         void SLMParamEditWin_Unloaded(object sender, RoutedEventArgs e)
@@ -2771,12 +2924,13 @@
             OverlayManagerClass.Instance.ObjectSizeChangedEvent -= OverlayManager_ObjectSizeChangedEvent;
             OverlayManagerClass.Instance.UpdatingObjectEvent -= OverlayManager_UpdatingObjectEvent;
             OverlayManagerClass.Instance.ClearedObjectEvent -= OverlayManager_ClearedObjectEvent;
+            MVMManager.Instance["ZControlViewModel"]?.RemoveDynamicEventHandler("ZPositionChangedEvent", _zPosHandler);
         }
 
         void SLMParamsCurrent_BleachParamsChangedEvent()
         {
             //update size of all ROIs under current pattern ID
-            OverlayManagerClass.Instance.UpdatePatternROISize(ref CaptureSetupViewModel.OverlayCanvas, _slmParamsCurrent.BleachWaveParams.ROIWidth, _slmParamsCurrent.BleachWaveParams.ROIHeight);
+            OverlayManagerClass.Instance.UpdatePatternROISize(_slmParamsCurrent.BleachWaveParams.ROIWidth, _slmParamsCurrent.BleachWaveParams.ROIHeight);
             UpdateSLMParamEdit();
         }
 
@@ -3150,7 +3304,7 @@
 
                     //start to draw
                     OverlayManagerClass.Instance.BackupROIs();
-                    OverlayManagerClass.Instance.InitSelectROI(ref CaptureSetupViewModel.OverlayCanvas);
+                    OverlayManagerClass.Instance.InitSelectROI();
                 });
 
                 //through pattern nodes
@@ -3208,7 +3362,7 @@
                     }
 
                     sparam.BleachWaveParams.UMPerPixel = (XmlManager.GetAttribute(xNode, xmlSLMImportDoc, "pixelSizeUM", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
-                        dVal1 : (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0];
+                        dVal1 : ((PixelSizeUM)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0]).PixelWidthUM;
 
                     sparam.BleachWaveParams.UMPerPixelRatio = (0 < _vm.BleachLSMUMPerPixel) ? sparam.BleachWaveParams.UMPerPixel / _vm.BleachLSMUMPerPixel : 1.0;
 
@@ -3326,8 +3480,7 @@
                                     {
                                         this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
                                         {
-                                            OverlayManagerClass.Instance.CreateROIShape(ref CaptureSetupViewModel.OverlayCanvas,
-                                                stype,
+                                            OverlayManagerClass.Instance.CreateROIShape(stype,
                                                 new Point(dVal3, dVal4),
                                                 new Point(dVal3 + dVal1 / 2, dVal4 + dVal2 / 2));
                                         });
@@ -3356,8 +3509,7 @@
                                                             }
                                                             this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
                                                             {
-                                                                OverlayManagerClass.Instance.CreateROIShape(ref CaptureSetupViewModel.OverlayCanvas,
-                                                                stype,
+                                                                OverlayManagerClass.Instance.CreateROIShape(stype,
                                                                 new Point(dVal3, dVal4),
                                                                 new Point(dVal3 + dVal1 / 2, dVal4 + dVal2 / 2));
                                                             });
@@ -3368,13 +3520,12 @@
                                                             {
                                                                 if (typeof(Line) == stype)
                                                                 {
-                                                                    OverlayManagerClass.Instance.CreateROIShape(ref CaptureSetupViewModel.OverlayCanvas,
-                                                                      stype,
+                                                                    OverlayManagerClass.Instance.CreateROIShape(stype,
                                                                       new Point(dVal1, dVal2),
                                                                       new Point(dVal3, dVal4));
                                                                 }
                                                                 else
-                                                                    OverlayManagerClass.Instance.AddPointToObject(ref CaptureSetupViewModel.OverlayCanvas, new Point(dVal3, dVal4));
+                                                                    OverlayManagerClass.Instance.AddPointToObject(new Point(dVal3, dVal4));
                                                             });
                                                         }
                                                     }
@@ -3383,8 +3534,8 @@
                                             //add a dummy then close for ROIPoly
                                             this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
                                             {
-                                                OverlayManagerClass.Instance.AddPointToObject(ref CaptureSetupViewModel.OverlayCanvas, new Point(0, 0));
-                                                OverlayManagerClass.Instance.CloseObject(ref CaptureSetupViewModel.OverlayCanvas, new Point(0, 0));
+                                                OverlayManagerClass.Instance.AddPointToObject(new Point(0, 0));
+                                                OverlayManagerClass.Instance.CloseObject(new Point(0, 0));
                                             });
                                         }
                                     }
@@ -3393,15 +3544,14 @@
                                 {
                                     this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
                                     {
-                                        OverlayManagerClass.Instance.CreateROIShape(ref CaptureSetupViewModel.OverlayCanvas,
-                                        stype,
+                                        OverlayManagerClass.Instance.CreateROIShape(stype,
                                         firstDraw ? new Point(dVal3 - dVal1 / 2, dVal4 - dVal2 / 2) : new Point(dVal3, dVal4),
                                         new Point(dVal3 + dVal1 / 2, dVal4 + dVal2 / 2));
                                     });
                                 }
                                 this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
                                 {
-                                    OverlayManagerClass.Instance.InitSelectROI(ref CaptureSetupViewModel.OverlayCanvas);
+                                    OverlayManagerClass.Instance.InitSelectROI();
                                 });
                                 firstDraw = (ICamera.LSMType.GALVO_GALVO == bType) ? false : true;
 
@@ -3425,8 +3575,8 @@
                             {
                                 this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
                                 {
-                                    OverlayManagerClass.Instance.CreateROIShape(ref CaptureSetupViewModel.OverlayCanvas, typeof(ROICrosshair), new Point(dVal3, dVal4), new Point(dVal3, dVal4));
-                                    OverlayManagerClass.Instance.InitSelectROI(ref CaptureSetupViewModel.OverlayCanvas);
+                                    OverlayManagerClass.Instance.CreateROIShape(typeof(ROICrosshair), new Point(dVal3, dVal4), new Point(dVal3, dVal4));
+                                    OverlayManagerClass.Instance.InitSelectROI();
                                 });
                                 sparam.BleachWaveParams.Center = new Point(dVal3, dVal4);
                             }
@@ -3442,8 +3592,8 @@
                             Point offCenter = new Point(-1, -1);
                             this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
                             {
-                                OverlayManagerClass.Instance.CreateROICenter(ref CaptureSetupViewModel.OverlayCanvas);
-                                OverlayManagerClass.Instance.ValidateROIs(ref CaptureSetupViewModel.OverlayCanvas);
+                                OverlayManagerClass.Instance.CreateROICenter();
+                                OverlayManagerClass.Instance.ValidateROIs();
                                 OverlayManagerClass.Instance.GetPatternROICenters(OverlayManagerClass.Instance.PatternID, ref str1, ref offCenter);
                             });
                             if ((0 > offCenter.X) || (0 > offCenter.Y))
@@ -3497,7 +3647,7 @@
                     {
                         this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
                         {
-                            OverlayManagerClass.Instance.RevokeROIs(ref CaptureSetupViewModel.OverlayCanvas);
+                            OverlayManagerClass.Instance.RevokeROIs();
                         });
                     }
                     this.Dispatcher.Invoke((SLMWorkerSetGUI)delegate
@@ -3506,8 +3656,8 @@
 
                         //turn off SimulatorMode and update ROIs here, rather than at closed to avoid GUI delay
                         OverlayManagerClass.Instance.SimulatorMode = false;
-                        OverlayManagerClass.Instance.DisplayModeROI(ref CaptureSetupViewModel.OverlayCanvas, new ThorSharedTypes.Mode[2] { ThorSharedTypes.Mode.PATTERN_NOSTATS, ThorSharedTypes.Mode.PATTERN_WIDEFIELD }, _vm.SLMPatternsVisible);
-                        OverlayManagerClass.Instance.DisplayModeROI(ref CaptureSetupViewModel.OverlayCanvas, new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.STATSONLY }, true);
+                        OverlayManagerClass.Instance.DisplayModeROI(new ThorSharedTypes.Mode[2] { ThorSharedTypes.Mode.PATTERN_NOSTATS, ThorSharedTypes.Mode.PATTERN_WIDEFIELD }, _vm.SLMPatternsVisible);
+                        OverlayManagerClass.Instance.DisplayModeROI(new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.STATSONLY }, true);
                         OverlayManagerClass.Instance.SimulatorMode = true;
                     });
                 }
@@ -3588,7 +3738,7 @@
                 sparam.Name = str1;
 
                 sparam.BleachWaveParams.UMPerPixel = (XmlManager.GetAttribute(ndList[i], xmlSLMImportDoc, "pixelSizeUM", ref str1) && Double.TryParse(str1, NumberStyles.Any, CultureInfo.InvariantCulture, out dVal1)) ?
-                   dVal1 : (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0];
+                   dVal1 : ((PixelSizeUM)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0]).PixelWidthUM;
 
                 sparam.BleachWaveParams.UMPerPixelRatio = (0 < _vm.BleachLSMUMPerPixel) ? sparam.BleachWaveParams.UMPerPixel / _vm.BleachLSMUMPerPixel : 1.0;
 

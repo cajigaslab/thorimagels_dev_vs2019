@@ -62,7 +62,14 @@ long ImageWaveformBuilder::BuildTravelToStart(double* powerIdle, double * srcDst
 			{
 				for (int p = 0; p < _gWaveXY[_scanAreaId].pockelsCount; p++)
 				{
-					_gWaveXY[_scanAreaId].GalvoWaveformPockel[id + (p * outCount)] = powerIdle[p];
+					if (TRUE == _wParams.pockelsFlybackBlank)
+					{
+						_gWaveXY[_scanAreaId].GalvoWaveformPockel[id + (p * outCount)] = powerIdle[p];
+					}
+					else
+					{
+						_gWaveXY[_scanAreaId].GalvoWaveformPockel[id + (p * outCount)] = _wParams.pockelsMaxPower[p];
+					}
 				}
 			}
 		}
@@ -76,7 +83,14 @@ long ImageWaveformBuilder::BuildTravelToStart(double* powerIdle, double * srcDst
 		{
 			for (int p = 0; p < _gWaveXY[_scanAreaId].pockelsCount; p++)
 			{
-				_gWaveXY[_scanAreaId].GalvoWaveformPockel[Nd + (p * outCount)] = powerIdle[p];
+				if (TRUE == _wParams.pockelsFlybackBlank)
+				{
+					_gWaveXY[_scanAreaId].GalvoWaveformPockel[Nd + (p * outCount)] = powerIdle[p];
+				}
+				else
+				{				
+					_gWaveXY[_scanAreaId].GalvoWaveformPockel[Nd + (p * outCount)] = _wParams.pockelsMaxPower[p];
+				}
 			}
 		}
 	}
@@ -135,7 +149,14 @@ long ImageWaveformBuilder::BuildTravelToStartImagePos(long sAreaId, double stepV
 				{
 					for (int i = 0; i < _gWaveXY[sAreaId].unitSize[SignalType::ANALOG_POCKEL]; i++)
 					{
-						_gWaveXY[sAreaId].GalvoWaveformPockel[i + pockelsCount * _gWaveXY[sAreaId].unitSize[SignalType::ANALOG_POCKEL]] = _wParams.pockelsIdlePower[k];
+						if (TRUE == _wParams.pockelsFlybackBlank)
+						{
+							_gWaveXY[sAreaId].GalvoWaveformPockel[i + pockelsCount * _gWaveXY[sAreaId].unitSize[SignalType::ANALOG_POCKEL]] = _wParams.pockelsIdlePower[k];
+						}
+						else
+						{
+							_gWaveXY[sAreaId].GalvoWaveformPockel[i + pockelsCount * _gWaveXY[sAreaId].unitSize[SignalType::ANALOG_POCKEL]] = _wParams.pockelsMaxPower[k];
+						}
 					}
 					pockelsCount++;
 				}
@@ -318,19 +339,19 @@ long ImageWaveformBuilder::BuildPolyLine()
 		//trace:
 		for(unsigned long j=0;j < static_cast<unsigned long>(_galvoFwdSamplesPerLine);j++)
 		{
-			//left-to-right: (line-frame-pockelDig)
+			//left-to-right: (line-frame-pockelDigs)
 			_gParams[_scanAreaId].DigBufWaveform[k++] = wFwdLineTrig[j];
 			_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
-			if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
-				_gParams[_scanAreaId].DigBufWaveform[k++] = wFwdLineTrig[j];				
+			for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
+				_gParams[_scanAreaId].DigBufWaveform[k++] = wFwdLineTrig[j];
 		}
 		//retrace:
 		for(unsigned long j=0;j < static_cast<unsigned long>(_galvoBwdSamplesPerLine);j++)
 		{
-			//right-to-left: (line-frame-pockelDig)
+			//right-to-left: (line-frame-pockelDigs)
 			_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 			_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
-			if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+			for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 		}
 	}	//backward scan are all DIGITAL_LINE_LOW.
@@ -686,7 +707,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 			{
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);			//line buffer
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);			//frame buffer
-				if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+				for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);		//Pockels Dig buffer
 			}
 			//forward of the line, up to blank
@@ -694,7 +715,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 			{
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
-				if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+				for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 			}
 
@@ -703,7 +724,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 			{
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
-				if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+				for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
 			}
 
@@ -712,7 +733,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 			{
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
-				if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+				for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 			}
 
@@ -721,7 +742,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 			{
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
-				if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+				for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 			}
 			//backward of the line, up to blank
@@ -729,7 +750,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 			{
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
-				if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+				for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 			}
 			//backward of the line
@@ -737,7 +758,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 			{
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
-				if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+				for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
 			}
 			//backward of the line, another side of blank
@@ -745,7 +766,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 			{
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
-				if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+				for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 			}
 			//end padding
@@ -753,7 +774,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 			{
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
-				if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+				for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 			}
 		}
@@ -771,7 +792,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 			{
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
-				if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+				for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 			}
 		}
@@ -785,7 +806,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 				{
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
-					if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+					for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 						_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 				}
 
@@ -794,7 +815,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 				{
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
-					if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+					for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 						_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 				}
 
@@ -803,7 +824,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 				{
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
-					if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+					for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 						_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 				}
 				//backward of the line
@@ -811,7 +832,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 				{
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
-					if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+					for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 						_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 				}
 
@@ -820,7 +841,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 				{
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
-					if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+					for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 						_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 				}
 			}
@@ -836,7 +857,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 			{
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
-				if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+				for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 			}
 			//forward of the line, up to blank
@@ -844,7 +865,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 			{
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
-				if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+				for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 			}
 			//forward of the line
@@ -852,7 +873,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 			{
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
-				if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+				for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
 			}
 			//forward of the line, another side of blank
@@ -860,7 +881,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 			{
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
-				if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+				for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 			}
 			//turn around padding
@@ -868,7 +889,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 			{
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
-				if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+				for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 			}
 			//backward of the line
@@ -876,7 +897,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 			{
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
-				if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+				for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 			}
 
@@ -885,7 +906,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 			{
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_HIGH);
-				if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+				for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 			}
 		}
@@ -903,7 +924,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 			{
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 				_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
-				if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+				for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 			}
 		}
@@ -918,7 +939,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 				{
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
-					if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+					for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 						_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 				}
 
@@ -927,7 +948,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 				{
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
-					if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+					for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 						_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 				}
 
@@ -936,7 +957,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 				{
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
-					if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+					for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 						_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 				}
 				//backward of the line
@@ -944,7 +965,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 				{
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
-					if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+					for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 						_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 				}
 				//end padding
@@ -952,7 +973,7 @@ long ImageWaveformBuilder::BuildGGFrameDigiLines()
 				{
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 					_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
-					if(Constants::MAX_IMG_DIG_LINE_COUNT == _wParams.digLineSelect)
+					for (long p = Constants::BASE_DIGI_LINE_COUNT; p < _wParams.digLineSelect; p++)
 						_gParams[_scanAreaId].DigBufWaveform[k++] = static_cast<unsigned char>(DIGITAL_LINE_LOW);
 				}
 			}

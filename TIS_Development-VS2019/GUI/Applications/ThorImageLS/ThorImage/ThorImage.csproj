@@ -226,7 +226,6 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <None Include="app.config" />
-    <None Include="CopyDependenciesx64-Release.bat" />
     <None Include="CopyDependenciesx64.bat" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -291,12 +290,7 @@
     </PostBuildEvent>
     <PreBuildEvent>if $(SolutionName) == ThorImage (
 cd ..\..\
-if $(ConfigurationName) == Debug (
-CopyDependenciesx64.bat
-)
-if $(ConfigurationName) == Release (
-CopyDependenciesx64-Release.bat
-)
+CopyDependenciesx64.bat $(ConfigurationName)
 )</PreBuildEvent>
   </PropertyGroup>
 </Project>

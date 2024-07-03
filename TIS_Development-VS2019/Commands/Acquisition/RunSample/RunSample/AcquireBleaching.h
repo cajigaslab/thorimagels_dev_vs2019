@@ -34,6 +34,7 @@ public:
 		long totFrames;
 		long displayImage;
 		double previewRate;
+		bool isCombinedChannels; // if true, save all channels to a single TIFF
 	};
 
 	struct CaptureParams
@@ -74,6 +75,8 @@ public:
 	virtual long CallInformMessage(wchar_t* message);
 	virtual long CallNotifySavedFileIPC(wchar_t* message);
 	virtual long CallAutoFocusStatus(long isRunning, long bestScore, double bestZPos, double nextZPos, long currRepeat);
+
+	virtual long ZStreamExecute(long index, long subWell, ICamera* pCamera, long zstageSteps, long timePoints, long undefinedVar);
 
 	//wrappers:
 	static long CaptureWrap(void* pObj, ICamera * pCamera, long currentT, long streaming, long numFrames, double timeInterval, Dimensions d, SaveParams *sp, long simultaneous)

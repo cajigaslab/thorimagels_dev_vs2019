@@ -346,7 +346,7 @@ long AutoFocusHWandImage::Execute(long index, IDevice * pAutoFocus, BOOL &afFoun
 
 	_currentZIndex = -1;
 	_autoFocusStatus = AutoFocusStatusTypes::COARSE_AUTOFOCUS;
-	_zSteps = abs((stop - start) / step) + 1;
+	_zSteps = (long)(abs((stop - start) / step) + 1);
 
 	if(step > 0) //currently step is always > 0
 	{

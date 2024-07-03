@@ -38,4 +38,8 @@ public:
 	virtual long CopyAcquisition(long)=0;
 	virtual long GetImageDimensions(long&, long&)=0;
 	virtual long StartAutoFocus(double, long, BOOL&) = 0;
+	virtual long StartAutoExposure() = 0;
+	virtual long StopAutoExposure() = 0;
+	virtual long CaptureSequentialPreview() = 0;
+	virtual long StopSequentialPreview() = 0;
 };

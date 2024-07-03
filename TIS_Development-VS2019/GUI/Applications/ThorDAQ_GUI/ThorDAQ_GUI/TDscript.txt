@@ -1,0 +1,4 @@
+100 readeeprom
+3500 livecapture
+18000 stopcapture
+20000 exit

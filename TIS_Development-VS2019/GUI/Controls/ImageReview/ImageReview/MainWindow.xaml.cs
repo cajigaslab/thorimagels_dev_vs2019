@@ -61,7 +61,7 @@
         private const string JPEG_DIR = "/jpeg";
         private const int MAX_IMAGES_OPEN = 1;
         private const int OFFSET_FOR_RESIZE_HSCROLL = 30;
-        private const int OFFSET_FOR_RESIZE_VSCROLL = 110;
+        private const int OFFSET_FOR_RESIZE_VSCROLL = 115;
         private const int PATH_LENGTH = 261;
 
         private static int Count = 0;
@@ -74,7 +74,6 @@
         private DeepZoom _dz;
         private IntPtr _imageData;
         private List<string> _images = new List<string>();
-        private double _imgWidth;
         private bool _isBorderMouseDown = false;
         private string _selectedFolder;
         private List<string> _selectedImages = new List<string>();
@@ -91,23 +90,21 @@
             this.KeyDown += new KeyEventHandler(MainWindow_KeyDown);
             this.KeyUp += new KeyEventHandler(MainWindow_KeyUp);
             this.MasterView.PreviewMouseDown += new MouseButtonEventHandler(MasterView_PreviewMouseDown);
-
             ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Initialized");
         }
 
         public MainWindow(ImageReviewViewModel imageReviewViewModel)
         {
             InitializeComponent();
+            MVMManager.Instance.AddMVM("ImageReviewViewModel", imageReviewViewModel);
             _viewModel = imageReviewViewModel;
 
             this.MasterView.DataContext = imageReviewViewModel;
             this.MasterView.DataContextliveImageVM = imageReviewViewModel;
 
-            this.ImageView.DataContext = imageReviewViewModel;
             this.toolBarView.DataContext = imageReviewViewModel;
             this.DataContext = imageReviewViewModel;
             this.volumeView.DataContext = imageReviewViewModel;
-            this.roiMasterView.DataContext = imageReviewViewModel;
 
             this.Loaded += new RoutedEventHandler(MainWindow_Loaded);
             this.Unloaded += new RoutedEventHandler(MainWindow_Unloaded);
@@ -115,7 +112,9 @@
             this.KeyUp += new KeyEventHandler(MainWindow_KeyUp);
             this.MasterView.PreviewMouseDown += new MouseButtonEventHandler(MasterView_PreviewMouseDown);
             imageReviewViewModel.IncreaseViewArea += new Action<bool>(AdjustImageViewSize);
-
+            ((bool[])MVMManager.Instance["ImageViewReviewVM", "ROIToolVisible"])[14] = true;
+            ((bool[])MVMManager.Instance["ImageViewReviewVM", "ROIToolVisible"])[15] = true;
+            this.imageView.DataContext = MVMManager.Instance["ImageViewReviewVM"];
             ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Initialized");
         }
 
@@ -128,17 +127,17 @@
             set
             {
                 this._viewModel = value;
-
+                MVMManager.Instance.AddMVM("ImageReviewViewModel", value);
                 this.MasterView.DataContext = value;
                 this.MasterView.DataContextliveImageVM = value;
-
-                this.ImageView.DataContext = value;
                 this.toolBarView.DataContext = value;
                 this.DataContext = value;
                 this.volumeView.DataContext = value;
-                this.roiMasterView.DataContext = value;
-
+                //this.roiMasterView.DataContext = value;
                 _viewModel.LoadViewModelSettingsDoc();
+                this.imageView.DataContext = MVMManager.Instance["ImageViewReviewVM"];
+                ((bool[])MVMManager.Instance["ImageViewReviewVM", "ROIToolVisible"])[14] = true;
+                ((bool[])MVMManager.Instance["ImageViewReviewVM", "ROIToolVisible"])[15] = true;
             }
         }
 
@@ -157,7 +156,7 @@
                 {
                     return;
                 }
-                this.ImageView.Height = Math.Max(vm.IVScrollBarHeight, Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_VSCROLL);
+                this.imageView.Height = Math.Max(vm.IVScrollBarHeight, Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_VSCROLL);
             }
         }
 
@@ -174,28 +173,23 @@
         private static extern int GetActiveExperimentPathAndName(StringBuilder path, int length);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadImage")]
-        private static extern int ReadImage([MarshalAs(UnmanagedType.LPWStr)]string path, ref IntPtr outputBuffer);
+        private static extern int ReadImage([MarshalAs(UnmanagedType.LPWStr)] string path, ref IntPtr outputBuffer);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadImageInfo")]
-        private static extern int ReadImageInfo([MarshalAs(UnmanagedType.LPWStr)]string path, ref int width, ref int height, ref int colorChannels);
+        private static extern int ReadImageInfo([MarshalAs(UnmanagedType.LPWStr)] string path, ref int width, ref int height, ref int colorChannels);
 
         void AdjustViewSizes()
         {
             this.scrollView.Height = Math.Max(1, Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_VSCROLL);
             this.scrollViewImage.Height = Math.Max(1, Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_VSCROLL);
-            this.ImageView.Height = Math.Max(1, Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_VSCROLL);
+            this.imageView.Height = Math.Max(1, Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_VSCROLL);
             this.volumeView.Height = Math.Max(1, Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_VSCROLL);
             this.volumeView.Width = Math.Max(1, Application.Current.MainWindow.ActualWidth - this.MasterView.Width - this.toolBarView.Width - OFFSET_FOR_RESIZE_HSCROLL);
 
-            const int OFFSET_FOR_TOOLBAR_RESIZE_VSCROLL = 161;
-            this.toolBarView.Height = Math.Max(1, Application.Current.MainWindow.ActualHeight - OFFSET_FOR_TOOLBAR_RESIZE_VSCROLL);
+            //const int OFFSET_FOR_TOOLBAR_RESIZE_VSCROLL = 161;
+            this.toolBarView.Height = Math.Max(1, Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_VSCROLL);
 
-            ImageReviewViewModel vm = ((ImageReviewViewModel)this.DataContext);
-            if (null == vm)
-            {
-                return;
-            }
-            vm.IVHeight = this.ImageView.Height;
+            MVMManager.Instance["ImageViewReviewVM", "IVHeight"] = this.imageView.Height;
         }
 
         void border_MouseDown(object sender, MouseButtonEventArgs e)
@@ -634,9 +628,13 @@
             }
             //update the controls with the active experiment information
 
-            XmlDocument expDoc = new XmlDocument();
+            XmlDocument origDoc = new XmlDocument();
+            origDoc.Load(baseDirectory + "/Experiment.xml");
 
-            expDoc.Load(baseDirectory + "/Experiment.xml");
+            // Create a clone of the original document to make sure we don't modify Experiment.xml
+            XmlDocument expDoc = new XmlDocument();
+            expDoc.LoadXml(origDoc.OuterXml);
+            origDoc = null;
 
             XmlNodeList nodeList = expDoc.SelectNodes("/ThorImageExperiment/Sample");
 
@@ -783,12 +781,12 @@
 
         void MainWindow_KeyDown(object sender, KeyEventArgs e)
         {
-            this.ImageView.ImageView_KeyDown(sender, e);
+            this.imageView.ImageView_KeyDown(sender, e);
         }
 
         void MainWindow_KeyUp(object sender, KeyEventArgs e)
         {
-            this.ImageView.ImageView_KeyUp(sender, e);
+            this.imageView.ImageView_KeyUp(sender, e);
         }
 
         void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -811,7 +809,10 @@
 
             _selectedFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToString();
 
+            MVMManager.Instance["ImageViewReviewVM", "IVHeight"] = this.imageView.Height;
+
             _viewModel.SetDisplayOptions();
+            MVMManager.Instance.LoadMVMReviewSettings();
         }
 
         void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -830,46 +831,44 @@
 
         void MasterView_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
-            this.ImageView.SetSelectROI();
+            this.imageView.SetSelectROI();
         }
 
         private void PlaceImageInGrid(string str)
         {
             try
             {
-                int width = 0, height = 0, colorChannels = 0;
-                ReadImageInfo(str, ref width, ref height, ref colorChannels);
+                //TODO:IV
+                //int width = 0, height = 0, colorChannels = 0;
+                //ReadImageInfo(str, ref width, ref height, ref colorChannels);
 
-                BitmapImage image = new BitmapImage();
-                _imgWidth = width;
-                _dynamicGrid.Width += _imgWidth;
+                //BitmapImage image = new BitmapImage();
+                //_imgWidth = width;
+                //_dynamicGrid.Width += _imgWidth;
 
-                ColumnDefinition gridCol1 = new ColumnDefinition();
-                _dynamicGrid.ColumnDefinitions.Add(gridCol1);
+                //ColumnDefinition gridCol1 = new ColumnDefinition();
+                //_dynamicGrid.ColumnDefinitions.Add(gridCol1);
 
-                Grid headerPanel = createHeader(str);
+                //Grid headerPanel = createHeader(str);
 
-                ImageView iv = new ImageView();
-                ImageReview model = new ImageReview();
-                ImageReviewViewModel irvm = new ImageReviewViewModel(null, null, null, model);
-                irvm.FileFormatMode = ImageReview.FormatMode.CUSTOM;
-                irvm.ChannelEnableA = true;
-                irvm.ChannelEnableB = irvm.ChannelEnableC = irvm.ChannelEnableD = false;
-                iv.DataContext = irvm;
-                irvm.ImagePathandName = str;
-                irvm.BuildChannelPalettes();
+                //ImageView iv = new ImageView();
+                //ImageReview model = new ImageReview();
+                //ImageReviewViewModel irvm = new ImageReviewViewModel(null, null, null, model);
+                //irvm.FileFormatMode = ImageReview.FormatMode.CUSTOM;
+                //iv.DataContext = irvm;
+                //irvm.ImagePathandName = str;
 
-                //setting image in header pannel grid
-                headerPanel.Children.Add(iv);
-                Grid.SetRow(iv, 1);
-                Grid.SetColumnSpan(iv, 2);
+                ////setting image in header pannel grid
+                //headerPanel.Children.Add(iv);
+                //Grid.SetRow(iv, 1);
+                //Grid.SetColumnSpan(iv, 2);
 
-                //seeting header panel in dynamic grid
-                _dynamicGrid.Children.Add(headerPanel);
-                Grid.SetRow(headerPanel, 0);
-                Grid.SetColumn(headerPanel, Count);
-                CreateGridSplitter(Count);
-                Count++;
+                ////seeting header panel in dynamic grid
+                //_dynamicGrid.Children.Add(headerPanel);
+                //Grid.SetRow(headerPanel, 0);
+                //Grid.SetColumn(headerPanel, Count);
+                //CreateGridSplitter(Count);
+                //Count++;
             }
             catch (Exception ex)
             {

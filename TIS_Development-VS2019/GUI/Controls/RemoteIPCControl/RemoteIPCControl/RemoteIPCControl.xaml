@@ -22,8 +22,8 @@
             <CheckBox Name="chkRemoteConnection"
                       HorizontalAlignment="Left"
                       Foreground="#FFFFFFFF"
-                      VerticalAlignment="Bottom"
-                      VerticalContentAlignment="Bottom"
+                      VerticalAlignment="Center"
+                      VerticalContentAlignment="Center"
                       IsChecked="{Binding Path=RemoteConnection,
                                           Mode=TwoWay,
                                           UpdateSourceTrigger=PropertyChanged}"
@@ -32,7 +32,7 @@
             </CheckBox>
             <Button Content="Setup"
                     MinWidth="45"
-                    Margin="1,0,0,0"
+                    Margin="5,0,0,0"
                     VerticalAlignment="Bottom"
                     VerticalContentAlignment="Bottom"
                      Click="ConnectionSettings_Click">

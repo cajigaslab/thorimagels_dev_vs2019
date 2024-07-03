@@ -96,7 +96,7 @@
   <body>
     <div>
       <div class="fileinformation">
-		<div>v21.6.6291</div>
+		<div>v22.12.6552</div>
 	</div>
     </div>
     <div><a class="go-top" href="#Chapter_appendix_detail"></a></div>
@@ -347,13 +347,13 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>DCAMPROP_SENSORMODE__AREA (default)</td>
+                      <td>DCAMPROP_SENSORMODE__AREA</td>
                       <td colspan="6">
                       </td>
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>DCAMPROP_SENSORMODE__TDI</td>
+                      <td>DCAMPROP_SENSORMODE__TDI (default)</td>
                       <td colspan="6">
                       </td>
                     </tr>
@@ -531,11 +531,10 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>0 to 255
+                      <td>0 to n
         , step 1
         , default 0</td>
-                      <td colspan="6">
-                      </td>
+                      <td colspan="6">@ DCAM_IDPROP_TESTPATTERN_KIND, <br>DCAMPROP_TESTPATTERN_KIND__FLAT(IFLAT), n = 255 <br>DCAMPROP_TESTPATTERN_KIND__HORZGRADATION(IHORZGRADATION), n = 9 <br>DCAMPROP_TESTPATTERN_KIND__VERTGRADATION(IVERTGRADATION), n = 9 <br>DCAMPROP_TESTPATTERN_KIND__LINE(ILINE), n = 8</td>
                     </tr>
                     <tr>
                       <td width="100%" colspan="8">
@@ -1065,21 +1064,21 @@
                       <td>0.01375 to 0.11
         , step 0.00011
         , default 0.01375</td>
-                      <td colspan="6">@ DCAMPROP_SENSORMODE__TDI<br>@ DCAMPROP_BINNING__1</td>
+                      <td colspan="6">@ DCAM_IDPROP_BINNING, DCAMPROP_BINNING__1</td>
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
                       <td>0.008635 to 0.055
         , step 0.000055
         , default 0.008635</td>
-                      <td colspan="6">@ DCAMPROP_SENSORMODE__TDI<br>@ DCAMPROP_BINNING__2</td>
+                      <td colspan="6">@ DCAM_IDPROP_BINNING, DCAMPROP_BINNING__2</td>
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
                       <td>0.064 to 16.32
         , step 0.064
         , default 0.064</td>
-                      <td colspan="6">@ DCAMPROP_SENSORMODE__AREA</td>
+                      <td colspan="6">@ DCAM_IDPROP_SENSORMODE, DCAMPROP_SENSORMODE__AREA</td>
                     </tr>
                     <tr>
                       <td width="100%" colspan="8">
@@ -1250,7 +1249,7 @@
                     <tr>
                       <td width="5%" class="prop_indent"></td>
                       <td>DCAMPROP_CAPTUREMODE__SHADINGCALIB</td>
-                      <td colspan="6">@ DCAM_IDPROP_SUBTRACT, DCAMPROP_MODE__ON<br>To use after dark correction</td>
+                      <td colspan="6">@ DCAM_IDPROP_SUBTRACT, DCAMPROP_MODE__ON <br>To use after dark correction</td>
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
@@ -1790,7 +1789,7 @@
                         <div class="prop_id">-</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">R</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">W</div>
@@ -1970,14 +1969,14 @@
                       <td>1000.0 to 8000.0
         , step 0.001
         , default 8000.0</td>
-                      <td colspan="6">@ DCAMPROP_BINNING__1</td>
+                      <td colspan="6">@ DCAM_IDPROP_BINNING, DCAMPROP_BINNING__1</td>
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
                       <td>1000.0 to 6400.0
         , step 0.001
         , default 6400.0</td>
-                      <td colspan="6">@ DCAMPROP_BINNING__2</td>
+                      <td colspan="6">@ DCAM_IDPROP_BINNING, DCAMPROP_BINNING__2</td>
                     </tr>
                     <tr>
                       <td width="55%" colspan="2">
@@ -2009,14 +2008,14 @@
                       <td>0.048 to 0.384
         , step 0.000017
         , default 0.384</td>
-                      <td colspan="6">@ DCAMPROP_BINNING__1</td>
+                      <td colspan="6">@ DCAM_IDPROP_BINNING, DCAMPROP_BINNING__1</td>
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
                       <td>0.096 to 0.6144
         , step 0.000017
         , default 0.6144</td>
-                      <td colspan="6">@ DCAMPROP_BINNING__2</td>
+                      <td colspan="6">@ DCAM_IDPROP_BINNING, DCAMPROP_BINNING__2</td>
                     </tr>
                     <tr>
                       <td width="100%" colspan="8">
@@ -2260,7 +2259,7 @@
                         <div class="prop_id">DCAM_IDPROP_BUFFER_ROWBYTES</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2289,7 +2288,7 @@
                         <div class="prop_id">DCAM_IDPROP_BUFFER_FRAMEBYTES</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2318,7 +2317,7 @@
                         <div class="prop_id">DCAM_IDPROP_BUFFER_TOPOFFSETBYTES</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2347,7 +2346,7 @@
                         <div class="prop_id">DCAM_IDPROP_BUFFER_PIXELTYPE</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2376,7 +2375,7 @@
                         <div class="prop_id">DCAM_IDPROP_RECORDFIXEDBYTES_PERFILE</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2405,7 +2404,7 @@
                         <div class="prop_id">DCAM_IDPROP_RECORDFIXEDBYTES_PERSESSION</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2434,7 +2433,7 @@
                         <div class="prop_id">DCAM_IDPROP_RECORDFIXEDBYTES_PERFRAME</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2498,7 +2497,7 @@
                         <div class="prop_id">DCAM_IDPROP_IMAGEDETECTOR_PIXELWIDTH</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2529,7 +2528,7 @@
                         <div class="prop_id">DCAM_IDPROP_IMAGEDETECTOR_PIXELHEIGHT</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2560,7 +2559,7 @@
                         <div class="prop_id">DCAM_IDPROP_TIMESTAMP_PRODUCER</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2589,7 +2588,7 @@
                         <div class="prop_id">DCAM_IDPROP_FRAMESTAMP_PRODUCER</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>

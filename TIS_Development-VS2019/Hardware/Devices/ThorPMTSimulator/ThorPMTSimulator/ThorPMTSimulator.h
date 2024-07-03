@@ -76,6 +76,7 @@ private:
 	long _pmt3Gain;
 	long _pmt4Gain;
 	long _crsEnable;
+	long _alignPos;
 	
 	long _pmt1Enable_C;
 	long _pmt2Enable_C;

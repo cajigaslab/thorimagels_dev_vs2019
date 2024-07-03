@@ -161,6 +161,9 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="ExperimentReviewSettings.xml" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>if $(ConfigurationName) == Debug  copy $(TargetPath) $(TargetDir)..\..\..\..\ThorImageLS\ThorImage\bin\Debug</PostBuildEvent>

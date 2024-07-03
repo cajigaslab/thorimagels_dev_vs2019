@@ -12,7 +12,7 @@
 
     using Microsoft.Win32;
 
-    public class ROIPoly : Shape
+    public class ROIPoly : ScalableShape
     {
         #region Fields
 
@@ -20,10 +20,16 @@
 
         private double _arcRoundness;
         private Rect _bounds;
+        private Rect _statsBounds;
         private bool _closed;
         private PointCollection _points;
         private bool _useRoundnessPercentage;
 
+        private PointCollection _statsPoints = new PointCollection();
+        private double _imageScaleX;
+        private double _imageScaleY;
+        private double _toAdjustX;
+        private double _toAdjustY;
         #endregion Fields
 
         #region Constructors
@@ -35,18 +41,32 @@
             geometry.Figures.Add(new PathFigure());
             _path = new Path { Data = geometry };
             _bounds = new Rect();
+            _statsBounds = new Rect();
             Points = new PointCollection();
+            _statsPoints = new PointCollection();
             Points.Changed += Points_Changed;
+
+            _imageScaleX = 1.0;
+            _imageScaleY = 1.0;
+            _toAdjustX = 1.0;
+            _toAdjustY = 1.0;
         }
 
-        public ROIPoly(PointCollection pts)
+        public ROIPoly(PointCollection pts, double xScale, double yScale)
         {
             var geometry = new PathGeometry();
             geometry.Figures.Add(new PathFigure());
+            _statsPoints = new PointCollection();
             _path = new Path { Data = geometry };
             _bounds = new Rect();
+            _statsBounds = new Rect();
             Points = pts;
             Points.Changed += Points_Changed;
+
+            _imageScaleX = xScale;
+            _imageScaleY = yScale;
+            _toAdjustX = 1.0 / xScale;
+            _toAdjustY = 1.0 / yScale;
         }
 
         #endregion Constructors
@@ -114,6 +134,40 @@
             }
         }
 
+        public Rect StatsBounds
+        {
+            get => _statsBounds;
+        }
+
+        public PointCollection StatsPoints
+        {
+            get { return _statsPoints; }
+        }
+
+        public override double ImageScaleX
+        {
+            get
+            {
+                return _imageScaleX;
+            }
+            set
+            {
+                _imageScaleX = value > 0 ? value : 1.0;
+            }
+        }
+
+        public override double ImageScaleY
+        {
+            get
+            {
+                return _imageScaleY;
+            }
+            set
+            {
+                _imageScaleY = value > 0 ? value : 1.0;
+            }
+        }
+
         /// <summary>
         /// Gets or sets a value that specifies if the ArcRoundness property value will be used as a percentage of the connecting segment or not.
         /// </summary>
@@ -141,6 +195,27 @@
         #endregion Properties
 
         #region Methods
+
+        public override void ApplyScaleUpdate(double xScale, double yScale)
+        {
+            _toAdjustX = xScale / _imageScaleX;
+            _toAdjustY = yScale / _imageScaleY;
+
+            _imageScaleX = xScale;
+            _imageScaleY = yScale;
+
+            double updatedX;
+            double updatedY;
+
+            for(int i = 0; i < _points.Count; i++)
+            {
+                updatedX = _points[i].X * _toAdjustX;
+                updatedY = _points[i].Y * _toAdjustY;
+                _points[i] = new Point(updatedX, updatedY);
+            }
+
+            RedrawShape();
+        }
 
         /// <summary>
         /// Method used to connect 2 segments with a common point, defined by 3 points and aplying an arc segment between them
@@ -291,7 +366,12 @@
             }
             Point p1 = new Point(ROIminX, ROIminY);
             Point p2 = new Point(ROImaxX, ROImaxY);
+
+            Point sp1 = new Point(ROIminX/_imageScaleX, ROIminY/_imageScaleY);
+            Point sp2 = new Point(ROImaxX/_imageScaleX, ROImaxY/_imageScaleY);
+
             _bounds = new Rect(p1, p2);
+            _statsBounds = new Rect(sp1, sp2);
         }
 
         private void Points_Changed(object sender, EventArgs e)
@@ -310,6 +390,7 @@
             var pathFigure = pathGeometry.Figures[0];
 
             pathFigure.Segments.Clear();
+            _statsPoints.Clear();
 
             for (int counter = 0; counter < Points.Count; counter++)
             {
@@ -329,6 +410,15 @@
 
             if (_closed)
                 CloseFigure(pathFigure);
+
+            foreach (Point p in Points)
+            {
+                _statsPoints.Add(new Point()
+                {
+                    X = p.X / _imageScaleX, 
+                    Y = p.Y / _imageScaleY
+                });
+            }
         }
 
         #endregion Methods

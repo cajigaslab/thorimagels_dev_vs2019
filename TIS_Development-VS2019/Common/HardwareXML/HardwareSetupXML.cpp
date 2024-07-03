@@ -613,8 +613,8 @@ long HardwareSetupXML::OpenConfigFile(string path)
 }
 
 const char * const HardwareSetupXML::STREAMING = "Streaming";
-const char * const HardwareSetupXML::STREAMING_ATTR[NUM_STREAMING_ATTRIBUTES] = {"path", "previewRate"};
-long HardwareSetupXML::GetStreaming(wstring &path, double &previewRate)
+const char * const HardwareSetupXML::STREAMING_ATTR[NUM_STREAMING_ATTRIBUTES] = {"path", "previewRate", "alwaysSaveImagesOnStop"};
+long HardwareSetupXML::GetStreaming(wstring &path, double &previewRate, long & alwaysSaveImagesWhenStopped)
 {
 	if(FALSE == GetCurrentPath())
 	{
@@ -642,19 +642,21 @@ long HardwareSetupXML::GetStreaming(wstring &path, double &previewRate)
 		{
 			str.clear();
 			GetAttribute(child, STREAMING, STREAMING_ATTR[attCount], str);	
+			stringstream ss(str);
 
 			switch(attCount)
 			{
 			case 0:
 				str2 = wstring(str.length(), L' '); // Make room for characters
-
 				// Copy string to wstring.
 				std::copy(str.begin(), str.end(), str2.begin());
 				path = str2;	
 				break;
 			case 1:
-				stringstream ss(str);
 				ss>>previewRate;
+				break;
+			case 2:
+				ss >> alwaysSaveImagesWhenStopped;
 				break;
 			}
 		}
@@ -1071,15 +1073,12 @@ long HardwareSetupXML::PersistHardwareSetup(multimap<long, vector<wstring>>& dev
 		case ICamera::CCD:
 			{
 				childTag = CAMERA_TAG;
-
 			}
 			break;
 		case ICamera::LSM:
 			{
 				childTag = LSM_TAG;
 			}
-			break;
-		case ICamera::CCD_MOSAIC:
 			break;
 		}
 

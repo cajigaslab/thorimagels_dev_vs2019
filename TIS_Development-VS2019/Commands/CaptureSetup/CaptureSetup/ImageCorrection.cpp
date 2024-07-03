@@ -129,9 +129,9 @@ DllExportLiveImage SetBackgroundSubtractionFile(char *selectedFileName)
 
 	wstring ws((wchar_t*)selectedFileName);
 
-	long width,height,colorChannels;
+	long width,height,colorChannels, bitsPerChannel;
 
-	if(FALSE == ReadImageInfo((wchar_t*)ws.c_str(), width, height, colorChannels))
+	if(FALSE == ReadImageInfo((wchar_t*)ws.c_str(), width, height, colorChannels, bitsPerChannel))
 	{
 		return FALSE;
 	}
@@ -145,9 +145,9 @@ DllExportLiveImage SetFlatFieldFile(char *selectedFileName)
 {
 	wstring ws((wchar_t*)selectedFileName);
 
-	long width,height,colorChannels;
+	long width,height,colorChannels, bitsPerChannel;
 
-	if(FALSE == ReadImageInfo((wchar_t*)ws.c_str(), width, height, colorChannels))
+	if(FALSE == ReadImageInfo((wchar_t*)ws.c_str(), width, height, colorChannels, bitsPerChannel))
 	{
 		return FALSE;
 	}

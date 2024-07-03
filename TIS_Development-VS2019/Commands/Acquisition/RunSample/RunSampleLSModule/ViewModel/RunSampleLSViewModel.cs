@@ -25,7 +25,11 @@
     using System.Windows.Threading;
     using System.Xml;
 
+    using CustomMessageBox;
+
     using GeometryUtilities;
+
+    using MesoScan.Params;
 
     using Microsoft.Practices.Composite.Events;
     using Microsoft.Practices.Composite.Regions;
@@ -54,75 +58,46 @@
         public List<bool> StartAfterLoading = new List<bool>(); //used to determine in Script mode: count > 0
         public XYTileControl.XYTileDisplay _xyTileControl;
 
-        const int MAX_HISTOGRAM_HEIGHT = 250;
-        const int MAX_HISTOGRAM_WIDTH = 444;
-        const double MAX_ZOOM = 1000; // In  1000x
-        const int MIN_HISTOGRAM_HEIGHT = 108;
-        const int MIN_HISTOGRAM_WIDTH = 192;
-        const double MIN_ZOOM = .01; // Out 100x
-
         // wrapped RunSampleLS object
         private readonly RunSampleLS _RunSampleLS;
 
         private string _aFStatusMessage = string.Empty;
         private Visibility _aFStatusVisibility = Visibility.Collapsed;
-        private bool _allHistogramsExpanded = false;
-        private bool[] _autoManualTogChecked = { false, false, false, false };
-        private WriteableBitmap _bitmap;
-        private bool _bitmapReady = false;
-        private DispatcherTimer _bitmapRefreshTimer; // refresh bitmap
         private Visibility _bleachOptionsVisibility;
         string _carrierType = string.Empty;
-        private IUnityContainer _container;
         private int _currentSubImageCol;
         private int _currentSubImageRow;
+        private bool _displayAspectRatio = false;
         private ICommand _displayROIStatsOptionsCommand;
         private IEventAggregator _eventAggregator;
         private double _fieldSizeCalibration = 100.0;
-        private int _histogramHeight1 = MIN_HISTOGRAM_HEIGHT;
-        private int _histogramHeight2 = MIN_HISTOGRAM_HEIGHT;
-        private int _histogramHeight3 = MIN_HISTOGRAM_HEIGHT;
-        private int _histogramHeight4 = MIN_HISTOGRAM_HEIGHT;
-        private int _histogramSpacing = 10;
-        private int _histogramWidth1 = MIN_HISTOGRAM_WIDTH;
-        private int _histogramWidth2 = MIN_HISTOGRAM_WIDTH;
-        private int _histogramWidth3 = MIN_HISTOGRAM_WIDTH;
-        private int _histogramWidth4 = MIN_HISTOGRAM_WIDTH;
-        private bool _isTileButtonEnabled = true;
-        private double _ivHeight;
-        private double _iVScrollBarHeight;
-        private bool _largeHistogram1 = false;
-        private bool _largeHistogram2 = false;
-        private bool _largeHistogram3 = false;
-        private bool _largeHistogram4 = false;
+        ScrollBarVisibility _ivScrollbarVisibility = ScrollBarVisibility.Hidden;
         private DateTime _lastUpdate = DateTime.Now;
-        private bool _logScaleEnabled0 = false;
-        private bool _logScaleEnabled1 = false;
-        private bool _logScaleEnabled2 = false;
-        private bool _logScaleEnabled3 = false;
         private int _lSMFieldSize = 0;
         private string _mCLS1Name;
         private string _mCLS2Name;
         private string _mCLS3Name;
         private string _mCLS4Name;
+        bool _mROIShowOverlays = false;
+        bool _mROISpatialDisplaybleEnable = true;
         private bool _newExperiment;
         private int _nPixelBitShiftValueUpdates = 0;
-        private bool _paletteChanged;
         Visibility _power0Visibility = Visibility.Collapsed;
         Visibility _power1Visibility = Visibility.Collapsed;
         Visibility _power2Visibility = Visibility.Collapsed;
         Visibility _power3Visibility = Visibility.Collapsed;
         Visibility _power4Visibility = Visibility.Collapsed;
         Visibility _power5Visibility = Visibility.Collapsed;
-        private bool _rebuildBitmap = false;
         private IRegionManager _regionManager;
         private double _reqDiskSize;
+        private DispatcherTimer _roiDataUpdateTimer; // refresh bitmap
         private ROIStatsChartWin _roiStatsChart = null;
         private bool _roiStatsChartActive;
         private Thickness _roiToolbarMargin = new Thickness(0, 0, 0, 0);
         private ICommand _RunSampleLSStartCommand;
         private ICommand _RunSampleLSStopCommand;
         string _scanAreaWellLocation = string.Empty;
+        private int _selectedScanArea = 0;
         private SubscriptionToken _subscriptionToken;
         double _subSpacingXPercent = 0.0;
         double _subSpacingYPercent = 0.0;
@@ -137,7 +112,7 @@
         double _xYHomeOffsetX = 0;
         double _xYHomeOffsetY = 0;
         private ObservableCollection<XYPosition> _xYtableData = new ObservableCollection<XYPosition>();
-        double _zoomLevel = 1;
+        private bool _zInvertLimits = false;
         private Visibility _zOptionsVisibility;
         private bool _zStopPositionNotValid = false;
 
@@ -154,7 +129,6 @@
             UnloadWhole = false;
             this._eventAggregator = eventAggregator;
             this._regionManager = regionManager;
-            this._container = container;
 
             if (RunSampleLS != null)
             {
@@ -175,23 +149,15 @@
                 this._RunSampleLS = RunSampleLS;
             }
 
-            _bitmapRefreshTimer = new DispatcherTimer(DispatcherPriority.Render);
-            _bitmapRefreshTimer.Interval = new TimeSpan(0, 0, 0, 0, 30);
-            _bitmapRefreshTimer.Tick += RefreshBitmap;
+            _roiDataUpdateTimer = new DispatcherTimer(DispatcherPriority.Render);
+            _roiDataUpdateTimer.Interval = new TimeSpan(0, 0, 0, 0, 30);
+            _roiDataUpdateTimer.Tick += RoiDataUpdate;
 
             SubscribeToCommandEvent();
 
-            _paletteChanged = true;
             _reqDiskSize = 0;
 
             OverlayManagerClass.Instance.InitOverlayManagerClass(this.SettingsImageWidth, this.SettingsImageHeight, this.PixelSizeUM, false);
-
-            ChannelName = new ObservableCollection<StringPC>();
-
-            for (int i = 0; i < RunSampleLS.GetMaxChannels(); i++)
-            {
-                ChannelName.Add(new StringPC());
-            }
 
             PowerControlNames = new ObservableCollection<StringPC>();
 
@@ -202,8 +168,6 @@
 
             _newExperiment = false; //flag to know if a new experiment has occurred
             this._RunSampleLS.ROIStatsChanged += _RunSampleLS_ROIStatsChanged;
-            this.RunSampleLS.UpdateRemoteConnection += RunSampleLS_UpdateRemoteConnection;
-            this._RunSampleLS.UpdataFilePath += _RunSampleLS_UpdataFilePath;
 
             MVMManager.CollectMVM();
             _roiStatsChartActive = false;
@@ -211,20 +175,6 @@
         }
 
         #endregion Constructors
-
-        #region Events
-
-        public event Action<bool> HistogramPanelUpdate;
-
-        //notify listeners (Ex. histogram) that the image has changed
-        public event Action<bool> ImageDataChanged;
-
-        //Increase the view area if the image extends out of bonds for the vertical scroll bar
-        public event Action<bool> IncreaseViewArea;
-
-        public event Action<bool> PaletteChanged;
-
-        #endregion Events
 
         #region Properties
 
@@ -238,6 +188,15 @@
             {
                 this._RunSampleLS.ActiveExperimentPath = value;
                 OnPropertyChanged("ActiveExperimentPath");
+            }
+        }
+
+        public Visibility AdvancedImageControlPanelVisibility
+        {
+            get
+            {
+                //Should be updated when more controls get added to the expander. Visibility here is based on visibility of aspect ratio option
+                return DisplayAspectRatioOptionVisibility;
             }
         }
 
@@ -264,91 +223,6 @@
             {
                 _aFStatusVisibility = value;
                 OnPropertyChanged("AFStatusVisibility");
-            }
-        }
-
-        public bool AllHistogramsExpanded
-        {
-            get
-            {
-                return _allHistogramsExpanded;
-            }
-            set
-            {
-                _allHistogramsExpanded = value;
-                if (_allHistogramsExpanded)
-                {
-                    LargeHistogram1 = false;
-                    LargeHistogram2 = false;
-                    LargeHistogram3 = false;
-                    LargeHistogram4 = false;
-                    ExpandAllHistograms();
-                }
-                else
-                {
-                    ShrinkAllHistograms();
-                }
-                OnPropertyChanged("AllHistogramsExpanded");
-            }
-        }
-
-        public bool AutoManualTog1Checked
-        {
-            get
-            {
-                return _autoManualTogChecked[0];
-            }
-            set
-            {
-                _autoManualTogChecked[0] = value;
-                if (value && null != ImageDataChanged)
-                    ImageDataChanged(true);
-                OnPropertyChanged("AutoManualTog1Checked");
-            }
-        }
-
-        public bool AutoManualTog2Checked
-        {
-            get
-            {
-                return _autoManualTogChecked[1];
-            }
-            set
-            {
-                _autoManualTogChecked[1] = value;
-                if (value && null != ImageDataChanged)
-                    ImageDataChanged(true);
-                OnPropertyChanged("AutoManualTog2Checked");
-            }
-        }
-
-        public bool AutoManualTog3Checked
-        {
-            get
-            {
-                return _autoManualTogChecked[2];
-            }
-            set
-            {
-                _autoManualTogChecked[2] = value;
-                if (value && null != ImageDataChanged)
-                    ImageDataChanged(true);
-                OnPropertyChanged("AutoManualTog3Checked");
-            }
-        }
-
-        public bool AutoManualTog4Checked
-        {
-            get
-            {
-                return _autoManualTogChecked[3];
-            }
-            set
-            {
-                _autoManualTogChecked[3] = value;
-                if (value && null != ImageDataChanged)
-                    ImageDataChanged(true);
-                OnPropertyChanged("AutoManualTog4Checked");
             }
         }
 
@@ -388,110 +262,6 @@
             set
             {
                 _RunSampleLS.BinY = value;
-            }
-        }
-
-        public WriteableBitmap Bitmap
-        {
-            get
-            {
-                CreateBitmap();
-                if (null != ImageDataChanged) ImageDataChanged(true);
-                return this._bitmap;
-            }
-        }
-
-        public bool BitmapReady
-        {
-            get { return _bitmapReady; }
-            set
-            {
-                _bitmapReady = value;
-                OnPropertyChanged("BitmapReady");
-            }
-        }
-
-        public double BlackPoint0
-        {
-            get
-            {
-                return this._RunSampleLS.BlackPoint0;
-            }
-            set
-            {
-                if (_RunSampleLS.BlackPoint0 == value) return;
-                this._RunSampleLS.BlackPoint0 = value;
-                _paletteChanged = true;
-                OnPropertyChanged("BlackPoint0");
-                OnPropertyChanged("Bitmap");
-            }
-        }
-
-        public double BlackPoint1
-        {
-            get
-            {
-                return this._RunSampleLS.BlackPoint1;
-            }
-            set
-            {
-                if (_RunSampleLS.BlackPoint1 == value) return;
-                this._RunSampleLS.BlackPoint1 = value;
-                _paletteChanged = true;
-                OnPropertyChanged("BlackPoint1");
-                OnPropertyChanged("Bitmap");
-            }
-        }
-
-        public double BlackPoint2
-        {
-            get
-            {
-                double result = 0.0;
-                try
-                {
-                    result = this._RunSampleLS.BlackPoint2;
-                }
-                catch (IndexOutOfRangeException ex)
-                {
-                    string str = ex.Message;
-                    result = 0.0;
-                }
-                return result;
-            }
-            set
-            {
-                if (_RunSampleLS.BlackPoint2 == value) return;
-                this._RunSampleLS.BlackPoint2 = value;
-                _paletteChanged = true;
-                OnPropertyChanged("BlackPoint2");
-                OnPropertyChanged("Bitmap");
-            }
-        }
-
-        public double BlackPoint3
-        {
-            get
-            {
-                double result = 0.0;
-                try
-                {
-                    result = this._RunSampleLS.BlackPoint3;
-                }
-                catch (IndexOutOfRangeException ex)
-                {
-                    string str = ex.Message;
-                    result = 0.0;
-                }
-                return result;
-            }
-            set
-            {
-                if (_RunSampleLS.BlackPoint3 == value) return;
-                this._RunSampleLS.BlackPoint3 = value;
-                _paletteChanged = true;
-                OnPropertyChanged("BlackPoint3");
-                OnPropertyChanged("Bitmap");
             }
         }
 
@@ -579,7 +349,7 @@
             }
         }
 
-        public double CamPixelSizeUM
+        public PixelSizeUM CamPixelSizeUM
         {
             get
             {
@@ -604,11 +374,19 @@
             {
                 this._RunSampleLS.CaptureMode = value;
                 //RawCapture Only when in Streaming Mode
-                if (1 != value) RawDataCapture = 0;
+                if (1 != value)
+                {
+                    RawDataCaptureStreamingValue = RawDataCapture;
+                    RawDataCapture = 0;
+                }
+                else
+                {
+                    RawDataCapture = RawDataCaptureStreamingValue;
+                }
+
                 OnPropertyChanged("CaptureMode");
                 OnPropertyChanged("DriveSpace");
                 OnPropertyChanged("StimulusStreamVis");
-                OnPropertyChanged("IsTileButtonEnabled");
                 OnPropertyChanged("ZEnable");
                 OnPropertyChanged("ZFastEnable");
             }
@@ -636,12 +414,6 @@
             {
                 _carrierType = value;
             }
-        }
-
-        public ObservableCollection<StringPC> ChannelName
-        {
-            get;
-            set;
         }
 
         public int ChannelSelection
@@ -767,6 +539,24 @@
             }
         }
 
+        public bool DisplayAspectRatio
+        {
+            get => _displayAspectRatio;
+            set
+            {
+                _displayAspectRatio = value;
+                MVMManager.Instance["ImageViewCaptureVM", "DisplayPixelAspectRatio"] = value;
+            }
+        }
+
+        public Visibility DisplayAspectRatioOptionVisibility
+        {
+            get
+            {
+                return PixelAspectRatioYScale > 1 ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
         public bool DisplayImage
         {
             get
@@ -779,11 +569,11 @@
 
                 if ((this._RunSampleLS.DisplayImage == true) && (this.ImageUpdaterVisibility == Visibility.Visible))
                 {
-                    _bitmapRefreshTimer.Start();
+                    _roiDataUpdateTimer.Start();
                 }
                 else
                 {
-                    _bitmapRefreshTimer.Stop();
+                    _roiDataUpdateTimer.Stop();
                 }
 
                 OnPropertyChanged("DisplayImage");
@@ -835,6 +625,53 @@
                 this._RunSampleLS.DMAFramesVisibility = value;
                 OnPropertyChanged("DMAFramesVisibility");
                 //   OnPropertyChanged("StimulusStreamVis");
+            }
+        }
+
+        public bool DontAskUniqueOutputPath
+        {
+            get
+            {
+                XmlDocument appSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+
+                if (null != appSettings)
+                {
+                    XmlNode node = appSettings.SelectSingleNode("/ApplicationSettings/ExperimentSaving");
+
+                    if (node != null)
+                    {
+                        string dontAskXmlValue = string.Empty;
+                        XmlManager.GetAttribute(node, appSettings, "generateOutputFolderWithoutAsking", ref dontAskXmlValue);
+                        return dontAskXmlValue == "1";
+                    }
+                }
+                return false;
+            }
+            set
+            {
+                XmlDocument appSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+
+                if (null != appSettings)
+                {
+                    string valueString = (value) ? "1" : "0";
+                    XmlNode node = appSettings.SelectSingleNode("/ApplicationSettings/ExperimentSaving");
+
+                    if (node != null)
+                    {
+                        XmlManager.SetAttribute(node, appSettings, "generateOutputFolderWithoutAsking", valueString);
+                        MVMManager.Instance.SaveSettings(SettingsFileType.APPLICATION_SETTINGS, true);
+                    }
+                    else
+                    {
+                        XmlManager.CreateXmlNode(appSettings, "ExperimentSaving");
+                        node = appSettings.SelectSingleNode("/ApplicationSettings/ExperimentSaving");
+                        if (node != null)
+                        {
+                            XmlManager.SetAttribute(node, appSettings, "generateOutputFolderWithoutAsking", valueString);
+                            MVMManager.Instance.SaveSettings(SettingsFileType.APPLICATION_SETTINGS, true);
+                        }
+                    }
+                }
             }
         }
 
@@ -1052,6 +889,19 @@
             }
         }
 
+        public ObservableCollection<string> DynamicLabels
+        {
+            get
+            {
+                return _RunSampleLS.DynamicLabels;
+            }
+            set
+            {
+                _RunSampleLS.DynamicLabels = value;
+                OnPropertyChanged("DynamicLabels");
+            }
+        }
+
         public string ExperimentFolderPath
         {
             get
@@ -1087,7 +937,10 @@
             {
                 if (0 == Regex.Matches(value, ExperimentNameNumberPattern).Count)
                 {
-                    this._RunSampleLS.ExperimentName.NameWithoutNumber = value;
+                    FileName inputName = new FileName(value, false);
+
+                    this._RunSampleLS.ExperimentName.NameWithoutNumber = inputName.NameWithoutNumber;
+
                     OnPropertyChanged("ExperimentName");
                     ExperimentIndex = "";
                     OnPropertyChanged("ExperimentIndex");
@@ -1168,7 +1021,7 @@
                 }
                 else
                 {
-                    return this.CamPixelSizeUM * (this.CamImageHeight);
+                    return this.CamPixelSizeUM.PixelHeightUM * (this.CamImageHeight);
                 }
             }
         }
@@ -1184,7 +1037,7 @@
                 }
                 else
                 {
-                    return this.CamPixelSizeUM * (this.CamImageWidth);
+                    return this.CamPixelSizeUM.PixelWidthUM * (this.CamImageWidth);
                 }
             }
         }
@@ -1269,170 +1122,6 @@
             }
         }
 
-        public int[] HistogramData0
-        {
-            get
-            {
-                return this._RunSampleLS.HistogramData0;
-            }
-        }
-
-        public int[] HistogramData1
-        {
-            get
-            {
-                return this._RunSampleLS.HistogramData1;
-            }
-        }
-
-        public int[] HistogramData2
-        {
-            get
-            {
-                return this._RunSampleLS.HistogramData2;
-            }
-        }
-
-        public int[] HistogramData3
-        {
-            get
-            {
-                return this._RunSampleLS.HistogramData3;
-            }
-        }
-
-        public int HistogramHeight1
-        {
-            get
-            {
-                return _histogramHeight1;
-            }
-            set
-            {
-                _histogramHeight1 = value;
-                OnPropertyChanged("HistogramHeight1");
-            }
-        }
-
-        public int HistogramHeight2
-        {
-            get
-            {
-                return _histogramHeight2;
-            }
-            set
-            {
-                _histogramHeight2 = value;
-                OnPropertyChanged("HistogramHeight2");
-            }
-        }
-
-        public int HistogramHeight3
-        {
-            get
-            {
-                return _histogramHeight3;
-            }
-            set
-            {
-                _histogramHeight3 = value;
-                OnPropertyChanged("HistogramHeight3");
-            }
-        }
-
-        public int HistogramHeight4
-        {
-            get
-            {
-                return _histogramHeight4;
-            }
-            set
-            {
-                _histogramHeight4 = value;
-                OnPropertyChanged("HistogramHeight4");
-            }
-        }
-
-        public int HistogramSpacing
-        {
-            get
-            {
-                return 10;
-                //return _histogramSpacing;
-            }
-            set
-            {
-                _histogramSpacing = value;
-                OnPropertyChanged("HistogramSpacing");
-            }
-        }
-
-        public int HistogramWidth1
-        {
-            get
-            {
-                return _histogramWidth1;
-            }
-            set
-            {
-                _histogramWidth1 = value;
-                OnPropertyChanged("HistogramWidth1");
-            }
-        }
-
-        public int HistogramWidth2
-        {
-            get
-            {
-                return _histogramWidth2;
-            }
-            set
-            {
-                _histogramWidth2 = value;
-                OnPropertyChanged("HistogramWidth2");
-            }
-        }
-
-        public int HistogramWidth3
-        {
-            get
-            {
-                return _histogramWidth3;
-            }
-            set
-            {
-                _histogramWidth3 = value;
-                OnPropertyChanged("HistogramWidth3");
-            }
-        }
-
-        public int HistogramWidth4
-        {
-            get
-            {
-                return _histogramWidth4;
-            }
-            set
-            {
-                _histogramWidth4 = value;
-                OnPropertyChanged("HistogramWidth4");
-            }
-        }
-
-        public int IDMode
-        {
-            get
-            {
-                return this.RunSampleLS.IDMode;
-            }
-            set
-            {
-                this.RunSampleLS.IDMode = value;
-                OnPropertyChanged("IDMode");
-                OnPropertyChanged("RemotePCHostName");
-            }
-        }
-
         public int ImageColorChannels
         {
             get
@@ -1464,6 +1153,14 @@
             set;
         }
 
+        public bool IsRemoteFocus
+        {
+            get
+            {
+                return _RunSampleLS.IsRemoteFocus;
+            }
+        }
+
         public bool IsStimulationIntervalVisible
         {
             get
@@ -1486,177 +1183,13 @@
             }
         }
 
-        public bool IsTileButtonEnabled
-        {
-            get
-            {
-                if ((int)CaptureModes.STREAMING == this.CaptureMode && true == ZFastEnable)
-                {
-                    _isTileButtonEnabled = false;
-                    //Disable TileDisplay
-                    TileDisplay = false;
-                }
-                else
-                {
-                    _isTileButtonEnabled = true;
-                }
-                return _isTileButtonEnabled;
-            }
-            set
-            {
-                _isTileButtonEnabled = value;
-            }
-        }
-
-        //Save the current height of the image display space
-        public double IVHeight
-        {
-            get
-            {
-                return _ivHeight;
-            }
-            set
-            {
-                _ivHeight = value;
-                IVScrollBarHeight = _ivHeight;
-            }
-        }
-
-        public double IVScrollBarHeight
-        {
-            get
-            {
-                return _iVScrollBarHeight;
-            }
-            set
-            {
-                //Compare the height of the display space with the height of the image
-                // if the image height is bigger, make the scrollbar visible and set it's height
-                // Leave a small gap of 10 pixels below the image to see the end of it easier
-                _iVScrollBarHeight = ((value + 10) > (IVHeight + 11)) ? (value + 10) : IVHeight;
-                IncreaseViewArea(true);
-                OnPropertyChanged("IVScrollBarHeight");
-                OnPropertyChanged("IVScrollbarVisibility");
-            }
-        }
-
         public ScrollBarVisibility IVScrollbarVisibility
         {
-            get
-            {
-                if (IVScrollBarHeight > IVHeight)
-                {
-                    return ScrollBarVisibility.Visible;
-                }
-                return ScrollBarVisibility.Hidden;
-            }
-        }
-
-        public bool LargeHistogram1
-        {
-            get
-            {
-                return _largeHistogram1;
-            }
+            get => _ivScrollbarVisibility;
             set
             {
-                _largeHistogram1 = value;
-                if (_largeHistogram1)
-                {
-                    LargeHistogram2 = false;
-                    LargeHistogram3 = false;
-                    LargeHistogram4 = false;
-                    AllHistogramsExpanded = false;
-                    HistogramHeight1 = MAX_HISTOGRAM_HEIGHT;
-                    HistogramWidth1 = MAX_HISTOGRAM_WIDTH;
-                }
-                else
-                {
-                    HistogramHeight1 = MIN_HISTOGRAM_HEIGHT;
-                    HistogramWidth1 = MIN_HISTOGRAM_WIDTH;
-                }
-                OnPropertyChanged("LargeHistogram1");
-            }
-        }
-
-        public bool LargeHistogram2
-        {
-            get
-            {
-                return _largeHistogram2;
-            }
-            set
-            {
-                _largeHistogram2 = value;
-                if (_largeHistogram2)
-                {
-                    LargeHistogram1 = false;
-                    LargeHistogram3 = false;
-                    LargeHistogram4 = false;
-                    AllHistogramsExpanded = false;
-                    HistogramHeight2 = MAX_HISTOGRAM_HEIGHT;
-                    HistogramWidth2 = MAX_HISTOGRAM_WIDTH;
-                }
-                else
-                {
-                    HistogramHeight2 = MIN_HISTOGRAM_HEIGHT;
-                    HistogramWidth2 = MIN_HISTOGRAM_WIDTH;
-                }
-                OnPropertyChanged("LargeHistogram2");
-            }
-        }
-
-        public bool LargeHistogram3
-        {
-            get
-            {
-                return _largeHistogram3;
-            }
-            set
-            {
-                _largeHistogram3 = value;
-                if (_largeHistogram3)
-                {
-                    LargeHistogram1 = false;
-                    LargeHistogram2 = false;
-                    LargeHistogram4 = false;
-                    AllHistogramsExpanded = false;
-                    HistogramHeight3 = MAX_HISTOGRAM_HEIGHT;
-                    HistogramWidth3 = MAX_HISTOGRAM_WIDTH;
-                }
-                else
-                {
-                    HistogramHeight3 = MIN_HISTOGRAM_HEIGHT;
-                    HistogramWidth3 = MIN_HISTOGRAM_WIDTH;
-                }
-                OnPropertyChanged("LargeHistogram3");
-            }
-        }
-
-        public bool LargeHistogram4
-        {
-            get
-            {
-                return _largeHistogram4;
-            }
-            set
-            {
-                _largeHistogram4 = value;
-                if (_largeHistogram4)
-                {
-                    LargeHistogram1 = false;
-                    LargeHistogram2 = false;
-                    LargeHistogram3 = false;
-                    AllHistogramsExpanded = false;
-                    HistogramHeight4 = MAX_HISTOGRAM_HEIGHT;
-                    HistogramWidth4 = MAX_HISTOGRAM_WIDTH;
-                }
-                else
-                {
-                    HistogramHeight4 = MIN_HISTOGRAM_HEIGHT;
-                    HistogramWidth4 = MIN_HISTOGRAM_WIDTH;
-                }
-                OnPropertyChanged("LargeHistogram4");
+                _ivScrollbarVisibility = value;
+                OnPropertyChanged("IVScrollbarVisibility");
             }
         }
 
@@ -1670,74 +1203,6 @@
             {
                 this._RunSampleLS.LeftLabelCount = value;
                 OnPropertyChanged("LeftLabelCount");
-            }
-        }
-
-        public string LocalPCHostName
-        {
-            get
-            {
-                return System.Environment.MachineName;
-            }
-        }
-
-        public string LocalPCIPv4
-        {
-            get
-            {
-                return this.RunSampleLS.LocalPCIPv4;
-            }
-        }
-
-        public bool LogScaleEnabled0
-        {
-            get
-            {
-                return _logScaleEnabled0;
-            }
-            set
-            {
-                _logScaleEnabled0 = value;
-                OnPropertyChanged("LogScaleEnabled0");
-            }
-        }
-
-        public bool LogScaleEnabled1
-        {
-            get
-            {
-                return _logScaleEnabled1;
-            }
-            set
-            {
-                _logScaleEnabled1 = value;
-                OnPropertyChanged("LogScaleEnabled1");
-            }
-        }
-
-        public bool LogScaleEnabled2
-        {
-            get
-            {
-                return _logScaleEnabled2;
-            }
-            set
-            {
-                _logScaleEnabled2 = value;
-                OnPropertyChanged("LogScaleEnabled2");
-            }
-        }
-
-        public bool LogScaleEnabled3
-        {
-            get
-            {
-                return _logScaleEnabled3;
-            }
-            set
-            {
-                _logScaleEnabled3 = value;
-                OnPropertyChanged("LogScaleEnabled3");
             }
         }
 
@@ -1789,19 +1254,6 @@
             set
             {
                 this._RunSampleLS.LSMChannel = value;
-            }
-        }
-
-        public Brush[] LSMChannelColor
-        {
-            get
-            {
-                return this._RunSampleLS.LSMChannelColor;
-            }
-            set
-            {
-                this._RunSampleLS.LSMChannelColor = value;
-                OnPropertyChanged("LSMChannelColor");
             }
         }
 
@@ -1989,7 +1441,7 @@
             }
         }
 
-        public double LSMUMPerPixel
+        public PixelSizeUM LSMUMPerPixel
         {
             get
             {
@@ -2167,7 +1619,7 @@
                 }
                 else
                 {
-                    return (LSMFieldSize * LSMFieldSizeCalibration) / (LSMPixelX * TurretMagnification * 1000.0);
+                    return (LSMFieldSize * LSMFieldSizeCalibration) / (LSMPixelX * TurretMagnification * (double)Constants.UM_TO_MM);
                 }
             }
         }
@@ -2195,6 +1647,113 @@
             {
                 this._RunSampleLS.MosaicRowCount = value;
                 OnPropertyChanged("MosaicRowCount");
+            }
+        }
+
+        public ObservableCollection<ScanArea> mROIList
+        {
+            get => _RunSampleLS.mROIList;
+        }
+
+        public bool mROIShowOverlays
+        {
+            get
+            {
+                return _mROIShowOverlays;
+            }
+            set
+            {
+                if (_mROIShowOverlays != value)
+                {
+                    _mROIShowOverlays = value;
+                    OnPropertyChanged("mROIShowOverlays");
+
+                    if (_mROIShowOverlays)
+                    {
+                        mROISpatialDisplaybleEnableCapture = true;
+                    }
+
+                    MVMManager.Instance["ImageViewCaptureVM", "ROIToolVisible"] = _mROIShowOverlays ?
+                        new bool[14] { false, false, false, false, false, false, false, false, false, false, false, false, false, false } :
+                        new bool[14] { true, true, true, true, true, true, true, true, true, true, true, true, true, true };
+
+                    if (_mROIShowOverlays)
+                    {
+                        OverlayManagerClass.Instance.PixelUnitSizeXY = new int[2] { mROIStripePixels, 1 };
+                        OverlayManagerClass.Instance.ValidateROIs();
+
+                        var ROIs = OverlayManagerClass.Instance.GetModeROIs(Mode.MICRO_SCANAREA);
+                        if (ROIs.Count > SelectedmROIIndex && SelectedmROIIndex >= 0)
+                        {
+                            MVMManager.Instance["ImageViewCaptureVM", "mROIPriorityIndex"] = SelectedmROIIndex;
+                            OverlayManagerClass.Instance.SelectSingleROI(ROIs[SelectedmROIIndex]);
+                        }
+                        else
+                        {
+                            OverlayManagerClass.Instance.DeselectAllROIs();
+                        }
+                    }
+
+                    OverlayManagerClass.Instance.InitSelectROI();
+                    OverlayManagerClass.Instance.DisplayModeROI(_mROIShowOverlays ? new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.STATSONLY } : new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.MICRO_SCANAREA }, false);
+                    OverlayManagerClass.Instance.DisplayModeROI(_mROIShowOverlays ? new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.MICRO_SCANAREA } : new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.STATSONLY }, true);
+                    OverlayManagerClass.Instance.CurrentMode = _mROIShowOverlays ? ThorSharedTypes.Mode.MICRO_SCANAREA : ThorSharedTypes.Mode.STATSONLY;
+                    OverlayManagerClass.Instance.mROIsDisableMoveAndResize = true;
+                    if (_mROIShowOverlays)
+                    {
+                        MVMManager.Instance["ImageViewCaptureVM", "mROIPriorityIndex"] = SelectedmROIIndex;
+                        var ROIs = OverlayManagerClass.Instance.GetModeROIs(Mode.MICRO_SCANAREA);
+                        if (ROIs.Count > SelectedmROIIndex && SelectedmROIIndex >= 0)
+                        {
+                            OverlayManagerClass.Instance.SelectSingleROI(ROIs[SelectedmROIIndex]);
+                        }
+                        else
+                        {
+                            OverlayManagerClass.Instance.DeselectAllROIs();
+                        }
+                    }
+                }
+            }
+        }
+
+        public bool mROISpatialDisplaybleEnableCapture
+        {
+            get => _mROISpatialDisplaybleEnable;
+            set
+            {
+                _mROISpatialDisplaybleEnable = value;
+                if (!value)
+                {
+                    mROIShowOverlays = false;
+                }
+                OnPropertyChanged("mROISpatialDisplaybleEnableCapture");
+                MVMManager.Instance["ImageViewCaptureVM", "mROISpatialDisplaybleEnable"] = value;
+            }
+        }
+
+        public double mROIStripePhysicalFieldSizeUM
+        {
+            get
+            {
+                if (_RunSampleLS.IsmROICapture && _RunSampleLS.mROIList?.Count > 0 && _RunSampleLS.mROIList[0] != null)
+                {
+                    return Math.Round(_RunSampleLS.mROIList[0].PhysicalSizeXUM / _RunSampleLS.mROIList[0].Stripes, 2);
+                }
+
+                return 0;
+            }
+        }
+
+        public int mROIStripePixels
+        {
+            get
+            {
+                if (_RunSampleLS.IsmROICapture && _RunSampleLS.mROIList?.Count > 0 && _RunSampleLS.mROIList[0] != null)
+                {
+                    return _RunSampleLS.mROIList[0].SizeXPixels / _RunSampleLS.mROIList[0].Stripes;
+                }
+
+                return 0;
             }
         }
 
@@ -2368,15 +1927,22 @@
             }
         }
 
-        public int PixelBitShiftValue
+        public double PixelAspectRatioYScale
         {
             get
             {
-                return _RunSampleLS.PixelBitShiftValue;
+                return _RunSampleLS.PixelAspectRatioYScale;
+            }
+            set
+            {
+                RunSampleLS.PixelAspectRatioYScale = value;
+                OnPropertyChanged("PixelAspectRatioYScale");
+                OnPropertyChanged("DisplayAspectRatioOptionVisibility");
+                OnPropertyChanged("AdvancedImageControlPanelVisibility");
             }
         }
 
-        public double PixelSizeUM
+        public PixelSizeUM PixelSizeUM
         {
             get
             {
@@ -2682,6 +2248,19 @@
             set;
         }
 
+        public double PowerShiftUS
+        {
+            get
+            {
+                return this._RunSampleLS.PowerShiftUS;
+            }
+            set
+            {
+                this._RunSampleLS.PowerShiftUS = value;
+                OnPropertyChanged("PowerShiftUS");
+            }
+        }
+
         public int PreBleachFrames
         {
             get
@@ -2763,6 +2342,18 @@
             }
         }
 
+        public int RawDataCaptureStreamingValue
+        {
+            get
+            {
+                return this._RunSampleLS.RawDataCaptureStreamingValue;
+            }
+            set
+            {
+                this._RunSampleLS.RawDataCaptureStreamingValue = value;
+            }
+        }
+
         public int RawOption
         {
             get
@@ -2778,65 +2369,137 @@
             }
         }
 
-        public bool RebuildBitmap
+        public int RemoteFocusCaptureMode
         {
             get
             {
-                return _rebuildBitmap;
+                return _RunSampleLS.RemoteFocusCaptureMode;
             }
             set
             {
-                _rebuildBitmap = value;
-                if (true == value)
-                {
-                    _paletteChanged = value;
-                }
+                _RunSampleLS.RemoteFocusCaptureMode = value;
+                OnPropertyChanged("RemoteFocusCaptureMode");
+                OnPropertyChanged("ZNumSteps");
+                OnPropertyChanged("DriveSpace");
             }
         }
 
-        public string RemoteAppName
+        public bool RemoteFocusCustomChecked
         {
             get
             {
-                return this.RunSampleLS.RemoteAppName;
+                return _RunSampleLS.RemoteFocusCustomChecked;
             }
             set
             {
-                if ("" == value)
-                {
-                    return;
-                }
-                this.RunSampleLS.RemoteAppName = value;
-                OnPropertyChanged("RemoteAppName");
+                _RunSampleLS.RemoteFocusCustomChecked = value;
+                OnPropertyChanged("RemoteFocusCustomChecked");
+                OnPropertyChanged("ZNumSteps");
             }
         }
 
-        public bool RemoteConnection
+        public string RemoteFocusCustomOrder
         {
             get
             {
-                return this.RunSampleLS.RemoteConnection;
+                return _RunSampleLS.RemoteFocusCustomOrder;
             }
             set
             {
-                this.RunSampleLS.RemoteConnection = value;
+                _RunSampleLS.RemoteFocusCustomOrder = value;
+                OnPropertyChanged("RemoteFocusCustomOrder");
+                OnPropertyChanged("ZNumSteps");
+                OnPropertyChanged("DriveSpace");
             }
         }
 
-        public string RemotePCHostName
+        public ObservableCollection<double> RemoteFocusCustomSelectedPlanes
         {
             get
             {
-                return this.RunSampleLS.RemotePCHostName;
+                return _RunSampleLS.RemoteFocusCustomSelectedPlanes;
             }
             set
             {
-                if ("" == value)
+                _RunSampleLS.RemoteFocusCustomSelectedPlanes = value;
+            }
+        }
+
+        public int RemoteFocusNumberOfTicks
+        {
+            get
+            {
+                return _RunSampleLS.RemoteFocusNumberOfPlanes - 2;
+            }
+        }
+
+        public double RemoteFocusStartPosition
+        {
+            get
+            {
+                return _RunSampleLS.RemoteFocusStartPosition;
+            }
+            set
+            {
+                if (value < _RunSampleLS.ZMin)
                 {
-                    return;
+                    _RunSampleLS.RemoteFocusStartPosition = _RunSampleLS.ZMin;
                 }
-                this.RunSampleLS.RemotePCHostName = value;
-                OnPropertyChanged("RemotePCHostName");
+                else if (value > _RunSampleLS.ZMax)
+                {
+                    _RunSampleLS.RemoteFocusStartPosition = _RunSampleLS.ZMax;
+                }
+                else
+                {
+                    _RunSampleLS.RemoteFocusStartPosition = value;
+                }
+                EnsureValidRemoteFocusScanStop();
+                OnPropertyChanged("RemoteFocusStartPosition");
+                OnPropertyChanged("ZNumSteps");
+                OnPropertyChanged("DriveSpace");
+            }
+        }
+
+        public int RemoteFocusStepSize
+        {
+            get
+            {
+                return _RunSampleLS.RemoteFocusStepSize;
+            }
+            set
+            {
+                _RunSampleLS.RemoteFocusStepSize = value;
+                EnsureValidRemoteFocusScanStop();
+                OnPropertyChanged("RemoteFocusStepSize");
+                OnPropertyChanged("ZNumSteps");
+                OnPropertyChanged("DriveSpace");
+            }
+        }
+
+        public double RemoteFocusStopPosition
+        {
+            get
+            {
+                return _RunSampleLS.RemoteFocusStopPosition;
+            }
+            set
+            {
+                if (value < _RunSampleLS.ZMin)
+                {
+                    _RunSampleLS.RemoteFocusStopPosition = _RunSampleLS.ZMin;
+                }
+                else if (value > _RunSampleLS.ZMax)
+                {
+                    _RunSampleLS.RemoteFocusStopPosition = _RunSampleLS.ZMax;
+                }
+                else
+                {
+                    _RunSampleLS.RemoteFocusStopPosition = value;
+                }
+                EnsureValidRemoteFocusScanStop();
+                OnPropertyChanged("RemoteFocusStopPosition");
+                OnPropertyChanged("ZNumSteps");
+                OnPropertyChanged("DriveSpace");
             }
         }
 
@@ -2866,7 +2529,7 @@
                 {
                     if (null != _roiStatsChart)
                     {
-                        _roiStatsChart.Close();
+                        _roiStatsChart.Hide();
                     }
                 }
             }
@@ -2882,62 +2545,6 @@
             {
                 _roiToolbarMargin = value;
                 OnPropertyChanged("ROItoolbarMargin");
-            }
-        }
-
-        public int RollOverPointIntensity0
-        {
-            get
-            {
-                return this._RunSampleLS.RollOverPointIntensity0;
-            }
-        }
-
-        public int RollOverPointIntensity1
-        {
-            get
-            {
-                return this._RunSampleLS.RollOverPointIntensity1;
-            }
-        }
-
-        public int RollOverPointIntensity2
-        {
-            get
-            {
-                return this._RunSampleLS.RollOverPointIntensity2;
-            }
-        }
-
-        public int RollOverPointIntensity3
-        {
-            get
-            {
-                return this._RunSampleLS.RollOverPointIntensity3;
-            }
-        }
-
-        public int RollOverPointX
-        {
-            get
-            {
-                return this._RunSampleLS.RollOverPointX;
-            }
-            set
-            {
-                this._RunSampleLS.RollOverPointX = value;
-            }
-        }
-
-        public int RollOverPointY
-        {
-            get
-            {
-                return this._RunSampleLS.RollOverPointY;
-            }
-            set
-            {
-                this._RunSampleLS.RollOverPointY = value;
             }
         }
 
@@ -2957,7 +2564,10 @@
             get
             {
                 if (this._RunSampleLSStartCommand == null)
-                    this._RunSampleLSStartCommand = new RelayCommand(() => RunSampleLSStart());
+                    this._RunSampleLSStartCommand = new RelayCommand(() => Application.Current?.Dispatcher.BeginInvoke((Action)(() =>
+                    {
+                        RunSampleLSStart();
+                    }), DispatcherPriority.Normal));
 
                 return this._RunSampleLSStartCommand;
             }
@@ -2967,8 +2577,13 @@
         {
             get
             {
+                
+
                 if (this._RunSampleLSStopCommand == null)
-                    this._RunSampleLSStopCommand = new RelayCommand(() => RunSampleLSStop());
+                    this._RunSampleLSStopCommand = new RelayCommand(() => Application.Current?.Dispatcher.BeginInvoke((Action)(() =>
+                    {
+                        RunSampleLSStop();
+                    }), DispatcherPriority.Normal));
 
                 return this._RunSampleLSStopCommand;
             }
@@ -3009,16 +2624,54 @@
             }
         }
 
-        public int SelectedRemotePCNameIndex
+        public int SelectedmROIIndex
         {
             get
             {
-                return this.RunSampleLS.SelectedRemotePCNameIndex;
+                return SelectedScanArea - 1;
             }
             set
             {
-                this.RunSampleLS.SelectedRemotePCNameIndex = value;
-                OnPropertyChanged("SelectedRemotePCNameIndex");
+                SelectedScanArea = value + 1;
+
+            }
+        }
+
+        public int SelectedScanArea
+        {
+            get
+            {
+                return _selectedScanArea;
+            }
+            set
+            {
+                _selectedScanArea = value;
+                OnPropertyChanged("SelectedScanArea");
+                OnPropertyChanged("SelectedmROIIndex");
+
+                MVMManager.Instance["ImageViewCaptureVM", "mROIPriorityIndex"] = value - 1;
+
+                if (SelectedmROIIndex >= 0)
+                {
+                    if (_mROIShowOverlays)
+                    {
+                        var ROIs = OverlayManagerClass.Instance.GetModeROIs(Mode.MICRO_SCANAREA);
+                        if (ROIs?.Count > SelectedmROIIndex)
+                        {
+
+                            ROIs = OverlayManagerClass.Instance.GetModeROIs(Mode.MICRO_SCANAREA);
+                            OverlayManagerClass.Instance.SelectSingleROI(ROIs[SelectedmROIIndex]);
+                        }
+                        else
+                        {
+                            OverlayManagerClass.Instance.DeselectAllROIs();
+                        }
+                    }
+                }
+                else if (_mROIShowOverlays)
+                {
+                    OverlayManagerClass.Instance.DeselectAllROIs();
+                }
             }
         }
 
@@ -3156,6 +2809,19 @@
             {
                 this._RunSampleLS.SLMBleachWaveParams = value;
                 OnPropertyChanged("SLMBleachWaveParams");
+            }
+        }
+
+        public bool SLMRandomEpochs
+        {
+            get
+            {
+                return this._RunSampleLS.SLMRandomEpochs;
+            }
+            set
+            {
+                this._RunSampleLS.SLMRandomEpochs = value;
+                OnPropertyChanged("SLMRandomEpochs");
             }
         }
 
@@ -3525,24 +3191,6 @@
             }
         }
 
-        public bool TileDisplay
-        {
-            get
-            {
-                return _RunSampleLS.DisplayTile;
-            }
-            set
-            {
-                if (_RunSampleLS.DisplayTile != value)
-                {
-                    _RunSampleLS.DisplayTile = value;
-                    _RunSampleLS.IsDisplayImageReady = true;
-                    OnPropertyChanged("TileDisplay");
-                    OnPropertyChanged("Bitmap");
-                }
-            }
-        }
-
         public int TimeBasedLineScan
         {
             get
@@ -3805,90 +3453,6 @@
             }
         }
 
-        public double WhitePoint0
-        {
-            get
-            {
-                return this._RunSampleLS.WhitePoint0;
-            }
-            set
-            {
-                if (_RunSampleLS.WhitePoint0 == value) return;
-                this._RunSampleLS.WhitePoint0 = value;
-                _paletteChanged = true;
-                OnPropertyChanged("WhitePoint0");
-                OnPropertyChanged("Bitmap");
-            }
-        }
-
-        public double WhitePoint1
-        {
-            get
-            {
-                return this._RunSampleLS.WhitePoint1;
-            }
-            set
-            {
-                if (_RunSampleLS.WhitePoint1 == value) return;
-                this._RunSampleLS.WhitePoint1 = value;
-                _paletteChanged = true;
-                OnPropertyChanged("WhitePoint1");
-                OnPropertyChanged("Bitmap");
-            }
-        }
-
-        public double WhitePoint2
-        {
-            get
-            {
-                double result = 0.0;
-                try
-                {
-                    result = this._RunSampleLS.WhitePoint2;
-                }
-                catch (IndexOutOfRangeException ex)
-                {
-                    string str = ex.Message;
-                    result = 0.0;
-                }
-                return result;
-            }
-            set
-            {
-                if (_RunSampleLS.WhitePoint2 == value) return;
-                this._RunSampleLS.WhitePoint2 = value;
-                _paletteChanged = true;
-                OnPropertyChanged("WhitePoint2");
-                OnPropertyChanged("Bitmap");
-            }
-        }
-
-        public double WhitePoint3
-        {
-            get
-            {
-                double result = 0.0;
-                try
-                {
-                    result = this._RunSampleLS.WhitePoint3;
-                }
-                catch (IndexOutOfRangeException ex)
-                {
-                    string str = ex.Message;
-                    result = 0.0;
-                }
-                return result;
-            }
-            set
-            {
-                if (_RunSampleLS.WhitePoint3 == value) return;
-                this._RunSampleLS.WhitePoint3 = value;
-                _paletteChanged = true;
-                OnPropertyChanged("WhitePoint3");
-                OnPropertyChanged("Bitmap");
-            }
-        }
-
         public double XPosition
         {
             get
@@ -3976,23 +3540,11 @@
             {
                 this._RunSampleLS.ZFastEnable = value;
 
-                //Do not display the tile view if fastZ is enabled
-                if (_RunSampleLS.ZFastEnable)
-                {
-                    TileDisplay = false;
-                    IsTileButtonEnabled = false;
-                }
-                else
-                {
-                    IsTileButtonEnabled = true;
-                }
-
                 OnPropertyChanged("ZFastEnable");
                 OnPropertyChanged("StreamFrames");
                 OnPropertyChanged("StreamVolumes");
                 OnPropertyChanged("DriveSpace");
                 OnPropertyChanged("StreamFramesTime");
-                OnPropertyChanged("IsTileButtonEnabled");
             }
         }
 
@@ -4031,36 +3583,55 @@
             set;
         }
 
+        public bool ZInvert
+        {
+            get
+            {
+                return _RunSampleLS.ZInvert;
+            }
+            set
+            {
+                _RunSampleLS.ZInvert = value;
+                OnPropertyChanged("ZInvert");
+                OnPropertyChanged("ZInvertLimits");
+                OnPropertyChanged("DynamicLabels");
+            }
+        }
+
+        public bool ZInvertLimits
+        {
+            get
+            {
+                if (_zInvertLimits && ZInvert)
+                {
+                    return false;
+                }
+                else
+                {
+                    return _zInvertLimits || ZInvert;
+                }
+            }
+            set
+            {
+                _zInvertLimits = value;
+            }
+        }
+
+        public double ZMax
+        {
+            get => _RunSampleLS.ZMax;
+        }
+
+        public double ZMin
+        {
+            get => _RunSampleLS.ZMin;
+        }
+
         public int ZNumSteps
         {
             get
             {
                 return this._RunSampleLS.ZNumSteps;
-            }
-        }
-
-        public double ZoomLevel
-        {
-            get
-            {
-                return _zoomLevel;
-            }
-            set
-            {
-                if (value > MAX_ZOOM)
-                {
-                    _zoomLevel = MAX_ZOOM;
-                }
-                else if (value < MIN_ZOOM)
-                {
-                    _zoomLevel = MIN_ZOOM;
-                }
-                else
-                {
-                    _zoomLevel = value;
-                }
-
-                OnPropertyChanged("ZoomLevel");
             }
         }
 
@@ -4082,13 +3653,22 @@
         {
             get
             {
-                Decimal dec;
+                if (IsRemoteFocus && _RunSampleLS.DynamicLabels.Count > 0 && _RunSampleLS.ZPosition >= ZMin && _RunSampleLS.ZPosition <= ZMax)
+                {
+                    double pos;
+                    Double.TryParse(_RunSampleLS.DynamicLabels[(int)_RunSampleLS.ZPosition - 1], NumberStyles.Any, CultureInfo.InvariantCulture, out pos);
+                    return pos;
+                }
+                else
+                {
+                    Decimal dec;
 
-                dec = new Decimal(this._RunSampleLS.ZPosition);
+                    dec = new Decimal(_RunSampleLS.ZPosition);
 
-                dec = Decimal.Round(dec, 4);
+                    dec = Decimal.Round(dec, 4);
 
-                return Convert.ToDouble(dec);
+                    return Convert.ToDouble(dec);
+                }
             }
             set
             {
@@ -4104,13 +3684,15 @@
             }
             set
             {
-                if (value <= _RunSampleLS.ZMin)
+                double min = IsRemoteFocus ? _RunSampleLS.ZMin / (double)Constants.UM_TO_MM : _RunSampleLS.ZMin;
+                double max = IsRemoteFocus ? _RunSampleLS.ZMax / (double)Constants.UM_TO_MM : _RunSampleLS.ZMax;
+                if (value <= min)
                 {
-                    _RunSampleLS.ZStartPosition = _RunSampleLS.ZMin;
+                    _RunSampleLS.ZStartPosition = min;
                 }
-                else if (value >= _RunSampleLS.ZMax)
+                else if (value >= max)
                 {
-                    _RunSampleLS.ZStartPosition = _RunSampleLS.ZMax;
+                    _RunSampleLS.ZStartPosition = max;
                 }
                 else
                 {
@@ -4130,6 +3712,14 @@
             }
         }
 
+        public string ZStartPositionLabel
+        {
+            get
+            {
+                return IsRemoteFocus ? "Start Plane" : "Start Position";
+            }
+        }
+
         public double ZStepSize
         {
             get
@@ -4138,10 +3728,10 @@
             }
             set
             {
-                double rounded = Math.Round(value, 1);
+                double rounded = IsRemoteFocus ? Math.Round(value) : Math.Round(value, 1);
                 if (rounded <= .1)
                 {
-                    rounded = .1;
+                    rounded = IsRemoteFocus ? 1 : .1;
                 }
 
                 this._RunSampleLS.ZStepSize = rounded;
@@ -4167,13 +3757,15 @@
             }
             set
             {
-                if (value <= _RunSampleLS.ZMin)
+                double min = IsRemoteFocus ? _RunSampleLS.ZMin / (double)Constants.UM_TO_MM : _RunSampleLS.ZMin;
+                double max = IsRemoteFocus ? _RunSampleLS.ZMax / (double)Constants.UM_TO_MM : _RunSampleLS.ZMax;
+                if (value <= min)
                 {
-                    _RunSampleLS.ZStopPosition = _RunSampleLS.ZMin;
+                    _RunSampleLS.ZStopPosition = min;
                 }
-                else if (value >= _RunSampleLS.ZMax)
+                else if (value >= max)
                 {
-                    _RunSampleLS.ZStopPosition = _RunSampleLS.ZMax;
+                    _RunSampleLS.ZStopPosition = max;
                 }
                 else
                 {
@@ -4190,6 +3782,14 @@
                 OnPropertyChanged("StreamVolumes");
                 OnPropertyChanged("PreviewIndex");
                 OnPropertyChanged("StreamFramesTime");
+            }
+        }
+
+        public string ZStopPositionLabel
+        {
+            get
+            {
+                return IsRemoteFocus ? "Stop Plane" : "Stop Position";
             }
         }
 
@@ -4249,11 +3849,6 @@
 
         #region Methods
 
-        public bool BuildChannelPalettes()
-        {
-            return _RunSampleLS.BuildChannelPalettes();
-        }
-
         public void CleanupOnQuit()
         {
             // make sure z file read button is off
@@ -4275,18 +3870,10 @@
             this._RunSampleLS.ConnectCallbacks();
         }
 
-        public void ConnectionSettingsOptions()
-        {
-            EditPipeDialog editPipeDialog = new EditPipeDialog();
-            editPipeDialog.DataContext = this;
-            editPipeDialog.ShowDialog();
-        }
-
         public void EnableHandlers()
         {
             this._RunSampleLS.Update += new Action<string>(RunSampleLS_Update);
             this._RunSampleLS.UpdateBitmapTimer += new Action<bool>(_RunSampleLS_UpdateBitmapTimer);
-            this._RunSampleLS.UpdateImage += new Action<string>(RunSampleLS_UpdateImage);
             this._RunSampleLS.UpdateImageName += new Action<string>(RunSampleLS_UpdateImageName);
             this._RunSampleLS.UpdateStart += new Action<string>(RunSampleLS_UpdateStart);
             this._RunSampleLS.UpdateStartSubWell += new Action<string>(RunSampleLS_UpdateStartSubWell);
@@ -4296,13 +3883,11 @@
             this._RunSampleLS.UpdateMenuBarButton += new Action<bool>(RunSampleLS_UpdateMenuBarButton);
             this._RunSampleLS.UpdateScript += new Action<string>(RunSampleLS_UpdateScript);
             this._RunSampleLS.ExperimentStarted += new Action(RunSampleLS_ExperimentStarted);
+            this._RunSampleLS.CaptureComplete += new Action(RunSampleLS_CaptureComplete);
             this._RunSampleLS.UpdateSequenceStepDisplaySettings += new Action(_RunSampleLS_UpdateSequenceStepDisplaySettings);
+            OverlayManagerClass.Instance.mROISelectedEvent += Instance_OverlaymROISelectedEvent;
+            OverlayManagerClass.Instance.mROIsDisableMoveAndResize = true;
             this._RunSampleLS.EnableHandlers();
-        }
-
-        public Color GetColorAssignment(int index)
-        {
-            return RunSampleLS.GetColorAssignment(index);
         }
 
         public bool GetLSMFieldSizeCalibration(ref double calibration)
@@ -4310,54 +3895,100 @@
             return this._RunSampleLS.LIGetFieldSizeCalibration(ref calibration);
         }
 
-        public void InitIPC()
-        {
-            this.RunSampleLS.LoadRemotePCHostNameFromXML();
-            if (SelectedRemotePCNameIndex >= 0)
-            {
-                if (IDMode == 0)
-                {
-                    if (this.RunSampleLS._selectRemotePCName[SelectedRemotePCNameIndex] != "")
-                    {
-                        //only reconnect if the host name is different
-                        if (false == this.RunSampleLS._selectRemotePCName[SelectedRemotePCNameIndex].Equals(RemotePCHostName))
-                        {
-                            RemotePCHostName = this.RunSampleLS._selectRemotePCName[SelectedRemotePCNameIndex];
-                        }
-                    }
-                    else
-                    {
-                        RemotePCHostName = LocalPCHostName;
-                    }
-
-                }
-                else if (IDMode == 1)
-                {
-                    if (this.RunSampleLS._selectRemodePCIPAddr[SelectedRemotePCNameIndex] != "")
-                    {
-                        //only reconnect if the host id is different
-                        if (false == this.RunSampleLS._selectRemodePCIPAddr[SelectedRemotePCNameIndex].Equals(RemotePCHostName))
-                        {
-                            RemotePCHostName = this.RunSampleLS._selectRemodePCIPAddr[SelectedRemotePCNameIndex];
-                        }
-                    }
-                    else
-                    {
-                        RemotePCHostName = this.RunSampleLS.GetLocalIP();
-                    }
-
-                }
-            }
-        }
-
         public bool IsCamera()
         {
             return this._RunSampleLS.ActiveCameraType == 0; // 0 for CCD
         }
 
+        public void LoadMROISettings(XmlDocument expDoc)
+        {
+            _RunSampleLS.LoadmROISettings(expDoc);
+            OnPropertyChanged("SelectedScanArea");
+            OnPropertyChanged("SelectedmROIIndex");
+            OnPropertyChanged("mROIList");
+            OnPropertyChanged("mROIShowOverlays");
+            OnPropertyChanged("mROIStripePixels");
+            OnPropertyChanged("mROIStripePhysicalFieldSizeUM");
+        }
+
+        public void LoadOverlayManagerSettings()
+        {
+            bool isReticleChecked = false;
+            bool isScaleButtonChecked = false;
+
+            OverlayManagerClass.Instance.InitSelectROI();
+            OverlayManagerClass.Instance.PersistLoadROIs(ref isReticleChecked, ref isScaleButtonChecked);
+            MVMManager.Instance["ImageViewCaptureVM", "IsReticleChecked"] = isReticleChecked;
+            MVMManager.Instance["ImageViewCaptureVM", "IsScaleButtonChecked"] = isScaleButtonChecked;
+        }
+
+        public void LoadRemoteFocusPositionValues()
+        {
+            //Load Dynamic Labels for Remote Focus
+            if (IsRemoteFocus)
+            {
+                string posFile = Application.Current.Resources["ApplicationSettingsFolder"].ToString() + @"\RemoteFocusPositionValues.xml";
+
+                if (File.Exists(posFile))
+                {
+                    ObservableCollection<string> dynamicLabels = new ObservableCollection<string>();
+                    ObservableCollection<string> originalLabels = new ObservableCollection<string>();
+                    double remoteFocusCalibrationMagnification = 1;
+                    try
+                    {
+                        XmlDocument remoteFocusPositionValues = new XmlDocument();
+                        remoteFocusPositionValues.Load(posFile);
+                        XmlNodeList ndList = remoteFocusPositionValues.SelectNodes("/RemoteFocusPositionSettings/MeasurementObjective");
+                        string mg = ndList[0].Attributes["magnification"].Value;
+                        double tmp = 0;
+                        if (Double.TryParse(mg, NumberStyles.Any, CultureInfo.InvariantCulture, out tmp))
+                        {
+                            remoteFocusCalibrationMagnification = tmp;
+                        }
+
+                        ndList = remoteFocusPositionValues.SelectNodes("/RemoteFocusPositionSettings/MeasuredPlaneDistance");
+                        if (ndList.Count > 0)
+                        {
+                            foreach (XmlAttribute attr in ndList[0].Attributes)
+                            {
+                                dynamicLabels.Add(attr.Value);
+                                originalLabels.Add(attr.Value);
+                            }
+                        }
+                    }
+                    catch (System.IO.IOException e)
+                    {
+                        ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + " error loading RemoteFocusPositionValues.xml. Exception: " + e.Message);
+                    }
+
+                    if (dynamicLabels.Count != _RunSampleLS.RemoteFocusNumberOfPlanes)
+                    {
+                        MessageBox.Show("Number of planes don't match the number of measured distance inputs in RemoteFocusPositionValues.xml.");
+                    }
+
+                    // From Joe Ma. The axial (z) amplification goes by the square of the objective power. Formula is (16X mag / objective mag)^2
+                    double mag = (double)MVMManager.Instance["ObjectiveControlViewModel", "TurretMagnification", (object)1.0];
+                    double ratio = Math.Pow(remoteFocusCalibrationMagnification / mag, 2);
+                    for (int k = 0; k < dynamicLabels.Count; k++)
+                    {
+                        double val = 0;
+                        if (double.TryParse(originalLabels[k], out val))
+                        {
+                            int index = ZInvertLimits ? dynamicLabels.Count - 1 - k : k; //If Z limits are inverted, flip the order of the plane values
+                            val *= ratio;
+                            dynamicLabels[index] = Math.Round(val, 1).ToString();
+                        }
+                    }
+
+                    DynamicLabels = dynamicLabels;
+                }
+            }
+        }
+
         public void LoadXMLSettings()
         {
             //here to conform to the ThorSharedTypes.IMVM interface
+            ((IMVM)MVMManager.Instance["RemoteIPCControlViewModelBase", this]).OnPropertyChange("RemoteConnection");
         }
 
         // refresh CaptureSetup UI
@@ -4397,7 +4028,6 @@
         {
             this._RunSampleLS.Update -= new Action<string>(RunSampleLS_Update);
             this._RunSampleLS.UpdateBitmapTimer -= new Action<bool>(_RunSampleLS_UpdateBitmapTimer);
-            this._RunSampleLS.UpdateImage -= new Action<string>(RunSampleLS_UpdateImage);
             this._RunSampleLS.UpdateImageName -= new Action<string>(RunSampleLS_UpdateImageName);
             this._RunSampleLS.UpdateStart -= new Action<string>(RunSampleLS_UpdateStart);
             this._RunSampleLS.UpdateStartSubWell -= new Action<string>(RunSampleLS_UpdateStartSubWell);
@@ -4407,8 +4037,10 @@
             this._RunSampleLS.UpdateMenuBarButton -= new Action<bool>(RunSampleLS_UpdateMenuBarButton);
             this._RunSampleLS.UpdateScript -= new Action<string>(RunSampleLS_UpdateScript);
             this._RunSampleLS.ExperimentStarted -= new Action(RunSampleLS_ExperimentStarted);
+            this._RunSampleLS.CaptureComplete -= new Action(RunSampleLS_CaptureComplete);
             this._RunSampleLS.UpdateSequenceStepDisplaySettings -= new Action(_RunSampleLS_UpdateSequenceStepDisplaySettings);
 
+            OverlayManagerClass.Instance.mROISelectedEvent -= Instance_OverlaymROISelectedEvent;
             //calling the release handlers present in the model
             _RunSampleLS.ReleaseHandlers();
 
@@ -4417,13 +4049,14 @@
             {
                 _roiStatsChart.Close();
             }
+            OverlayManagerClass.Instance.mROIsDisableMoveAndResize = false;
+
+            mROIShowOverlays = false;
         }
 
         public void ResetImage()
         {
-            this._RunSampleLS.ResetImage();
-            this._bitmap = null;
-            OnPropertyChanged("Bitmap");
+            //TODO:IV
         }
 
         public void RunSampleLSView_UpdateStageLocation()
@@ -4508,6 +4141,12 @@
             //here to conform to the ThorSharedTypes.IMVM interface
         }
 
+        public void UpdateNumberOfPlanes()
+        {
+            OnPropertyChanged("ZNumSteps");
+            OnPropertyChanged("DriveSpace");
+        }
+
         public void UpdateUIBindings()
         {
             this.OnPropertyChanged("");
@@ -4527,25 +4166,18 @@
         [DllImport(".\\ROIDataStore.dll", EntryPoint = "RequestROIData")]
         private static extern void RequestROIData();
 
-        private void BitmapTimer_Tick(object sender, EventArgs e)
+        private bool ConfirmDirectoryIsReadOnly()
         {
-            OnPropertyChanged("Bitmap");
-            RequestROIData();
-        }
-
-        private void CreateBitmap()
-        {
-            if ((false == this._RunSampleLS.IsDisplayImageReady) && (false == _paletteChanged))
+            DirectoryInfo di = new DirectoryInfo(OutputPath);
+            if ((di.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
             {
-                return;
+                MessageBox.Show("Invalid OutputPath: The output path is read only.");
             }
-
-            _bitmap = this._RunSampleLS.CreateBitmap();
-            _paletteChanged = false;
-
-            this._RunSampleLS.IsDisplayImageReady = false;
-
-            ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " " + "Bitmap Udpated");
+            else
+            {
+                return true;
+            }
+            return false;
         }
 
         private bool CreateStatsChartWindow()
@@ -4671,11 +4303,64 @@
         }
 
         //Check and fit to the size of the ZStep
+        private void EnsureValidRemoteFocusScanStop()
+        {
+            if (RemoteFocusStopPosition != RemoteFocusStartPosition)
+            {
+                double rem = Math.Round(Math.Abs(RemoteFocusStopPosition - RemoteFocusStartPosition) % RemoteFocusStepSize);
+                if (0 != rem)
+                {
+                    int zDirection = 0;
+                    if (RemoteFocusStopPosition > RemoteFocusStartPosition)
+                    {
+                        zDirection = 1;
+                    }
+                    else
+                    {
+                        zDirection = -1;
+                    }
+
+                    double newZScanStop = Math.Round(RemoteFocusStopPosition + zDirection * (RemoteFocusStepSize - rem));
+                    if (newZScanStop < _RunSampleLS.ZMin)
+                    {
+                        _RunSampleLS.RemoteFocusStopPosition = _RunSampleLS.ZMin;
+                    }
+                    else if (newZScanStop > _RunSampleLS.ZMax)
+                    {
+                        _RunSampleLS.RemoteFocusStopPosition = _RunSampleLS.ZMax;
+                    }
+                    else
+                    {
+                        _RunSampleLS.RemoteFocusStopPosition = newZScanStop;
+                    }
+
+                    OnPropertyChanged("RemoteFocusStopPosition");
+
+                    if (newZScanStop != RemoteFocusStopPosition)
+                    {
+                        ZStopPositionNotValid = true;
+                    }
+                    else
+                    {
+                        ZStopPositionNotValid = false;
+                    }
+                }
+                else
+                {
+                    ZStopPositionNotValid = false;
+                }
+            }
+        }
+
+        //Check and fit to the size of the ZStep
         private void EnsureValidZScanStop()
         {
             if (ZStopPosition != ZStartPosition)
             {
-                double rem = Math.Round(Math.Abs((ZStopPosition - ZStartPosition)) % (ZStepSize / 1000), 4);
+                double stepFactor = (double)Constants.UM_TO_MM; //IsRemoteFocus ? 1 : (double)Constants.UM_TO_MM;
+                double rem = Math.Round(Math.Abs(ZStopPosition - ZStartPosition) % (ZStepSize / stepFactor), 4);
+                double min = IsRemoteFocus ? _RunSampleLS.ZMin / (double)Constants.UM_TO_MM : _RunSampleLS.ZMin;
+                double max = IsRemoteFocus ? _RunSampleLS.ZMax / (double)Constants.UM_TO_MM : _RunSampleLS.ZMax;
                 if (0 != rem)
                 {
                     int zDirection = 0;
@@ -4687,14 +4372,14 @@
                     {
                         zDirection = -1;
                     }
-                    double newZScanStop = Math.Round(ZStopPosition + zDirection * (ZStepSize / 1000 - Math.Abs((ZStopPosition - ZStartPosition)) % (ZStepSize / 1000)), 4);
-                    if (newZScanStop <= this._RunSampleLS.ZMin)
+                    double newZScanStop = Math.Round(ZStopPosition + zDirection * (ZStepSize / stepFactor - Math.Abs(ZStopPosition - ZStartPosition) % (ZStepSize / stepFactor)), 4);
+                    if (newZScanStop <= min)
                     {
-                        _RunSampleLS.ZStopPosition = this._RunSampleLS.ZMin;
+                        _RunSampleLS.ZStopPosition = min;
                     }
-                    else if (newZScanStop >= this._RunSampleLS.ZMax)
+                    else if (newZScanStop >= max)
                     {
-                        _RunSampleLS.ZStopPosition = this._RunSampleLS.ZMax;
+                        _RunSampleLS.ZStopPosition = max;
                     }
                     else
                     {
@@ -4717,21 +4402,6 @@
                     ZStopPositionNotValid = false;
                 }
             }
-        }
-
-        /// <summary>
-        /// Expands all histograms to their maximum size
-        /// </summary>
-        void ExpandAllHistograms()
-        {
-            HistogramHeight1 = MAX_HISTOGRAM_HEIGHT;
-            HistogramWidth1 = MAX_HISTOGRAM_WIDTH;
-            HistogramHeight2 = MAX_HISTOGRAM_HEIGHT;
-            HistogramWidth2 = MAX_HISTOGRAM_WIDTH;
-            HistogramHeight3 = MAX_HISTOGRAM_HEIGHT;
-            HistogramWidth3 = MAX_HISTOGRAM_WIDTH;
-            HistogramHeight4 = MAX_HISTOGRAM_HEIGHT;
-            HistogramWidth4 = MAX_HISTOGRAM_WIDTH;
         }
 
         /// <summary>
@@ -4793,29 +4463,66 @@
             return tag;
         }
 
+        private void Instance_OverlaymROISelectedEvent(int obj)
+        {
+            if (_mROIShowOverlays)
+            {
+                _selectedScanArea = obj;
+                OnPropertyChanged("SelectedScanArea");
+                OnPropertyChanged("SelectedmROIIndex");
+
+                MVMManager.Instance["ImageViewCaptureVM", "mROIPriorityIndex"] = obj - 1;
+            }
+        }
+
         private bool IsOutputPathValid()
         {
             bool ret = false;
             if (Directory.Exists(OutputPath))
             {
-                DirectoryInfo di = new DirectoryInfo(OutputPath);
-                if ((di.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
-                {
-                    MessageBox.Show("Invalid OutputPath: The output path is read only.");
-                }
-                else
-                {
-                    ret = true;
-                }
+                ret = ConfirmDirectoryIsReadOnly();
             }
             else
             {
-                MessageBox.Show("Invalid OutputPath: The output path doesn't exist.");
+                //Confirm that user wants to create a new folder in the output path
+                if (!DontAskUniqueOutputPath)
+                {
+                    CustomMessageBox messageBox = new CustomMessageBox("The output path doesn't exist. Would you like to create a folder with the \npath: " + OutputPath + "?", "Output Folder Doesn't Exist", "Don't ask again", "Yes", "No");
+                    if (!messageBox.ShowDialog().GetValueOrDefault(false))
+                    {
+                        return ret;
+                    }
+                    else
+                    {
+                        DontAskUniqueOutputPath = messageBox.CheckBoxChecked;
+                    }
+                }
+                try
+                {
+                    Directory.CreateDirectory(OutputPath);
+                    ret = ConfirmDirectoryIsReadOnly();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Could not create a new folder with the path: " + OutputPath + "\nException thrown: " + ex.Message, "Error creating Output Path folder");
+                    return ret;
+                }
             }
 
             //validate experiment name without tailing space
             char[] charsToTrim = { ' ', '\t' };
-            this._RunSampleLS.ExperimentName.FullName = this._RunSampleLS.ExperimentName.FullName.Trim(charsToTrim);
+
+            this._RunSampleLS.ExperimentName.NameWithoutNumber = this._RunSampleLS.ExperimentName.NameWithoutNumber.Trim(charsToTrim);
+
+            //Remove "." from the last character because file system doesn't allow for names ending in "." similar to the trim, file system doesn't allow whitespace at beginng and end
+
+            //Always append shouldn't need this
+            if (this._RunSampleLS.ExperimentName.NameWithoutNumber.EndsWith(".") && 1 < this._RunSampleLS.ExperimentName.NameWithoutNumber.Length)
+            {
+                // Remove the last character
+                this._RunSampleLS.ExperimentName.NameWithoutNumber = this._RunSampleLS.ExperimentName.NameWithoutNumber.Remove(this._RunSampleLS.ExperimentName.NameWithoutNumber.Length - 1);
+            }
+
             return ret;
         }
 
@@ -4864,11 +4571,11 @@
                             {
                                 if (XmlManager.GetAttribute(ndList[0], expDoc, "pixelSizeUM", ref str) && (Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out bleachLSMUMPerPixel)))
                                 {
-                                    _RunSampleLS.BleachWParams = WaveformBuilder.LoadBleachWaveParams(bROISource, roiCapsule, this.PixelSizeUM, this.PixelSizeUM / bleachLSMUMPerPixel, this.BinX, this.BinY);
+                                    _RunSampleLS.BleachWParams = WaveformBuilder.LoadBleachWaveParams(bROISource, roiCapsule, this.PixelSizeUM.PixelWidthUM, this.PixelSizeUM.PixelWidthUM / bleachLSMUMPerPixel, this.BinX, this.BinY);
                                 }
                                 else
                                 {
-                                    _RunSampleLS.BleachWParams = WaveformBuilder.LoadBleachWaveParams(bROISource, roiCapsule, this.PixelSizeUM, 1.0, this.BinX, this.BinY);
+                                    _RunSampleLS.BleachWParams = WaveformBuilder.LoadBleachWaveParams(bROISource, roiCapsule, this.PixelSizeUM.PixelWidthUM, 1.0, this.BinX, this.BinY);
                                 }
                             }
                         }
@@ -4923,10 +4630,8 @@
         /// <summary>
         /// Refreshes the bitmap and ROI data
         /// </summary>
-        private void RefreshBitmap(object sender, EventArgs e)
+        private void RoiDataUpdate(object sender, EventArgs e)
         {
-            OnPropertyChanged("Bitmap");
-            if (null != HistogramPanelUpdate) HistogramPanelUpdate(true);
             RequestROIData();
         }
 
@@ -5011,29 +4716,50 @@
                 }
             }
 
+            OverlayManagerClass.Instance.UpdateParams(_RunSampleLS.SettingsImageWidth, _RunSampleLS.SettingsImageHeight, _RunSampleLS.PixelSizeUM);
             //[Note] Active.xml is copied to experiment after _RunSampleLS.Start
             if (!_RunSampleLS.Start())
             {
                 RunSampleLS_UpdateScript("Error");
             }
-            if (null != PaletteChanged) PaletteChanged(true);
 
+            MVMManager.Instance["ImageViewCaptureVM", "ResetBitmap"] = true;
+
+            //TODO:IV _nPixelBitShiftValueUpdates?
             //allow the shiftvalue to be updated after start is called by resetting the counter
             _nPixelBitShiftValueUpdates = 0;
+
+            OnPropertyChanged("SelectedScanArea");
+            OnPropertyChanged("SelectedmROIIndex");
+            OnPropertyChanged("mROIList");
+            OnPropertyChanged("mROIShowOverlays");
+            OnPropertyChanged("mROIStripePixels");
+            OnPropertyChanged("mROIStripePhysicalFieldSizeUM");
         }
 
         private void RunSampleLSStop()
         {
             this._RunSampleLS.Stop();
-            _bitmapRefreshTimer.Stop();
+            _roiDataUpdateTimer.Stop();
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                OverlayManagerClass.Instance.SaveROIs(_RunSampleLS.ExperimentFolderPath + "ROIs.xaml");
+                OverlayManagerClass.Instance.SaveMaskToPath(_RunSampleLS.ExperimentFolderPath + "ROIMask.raw");
+            });
+        }
+
+        void RunSampleLS_CaptureComplete()
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                OverlayManagerClass.Instance.SaveROIs(_RunSampleLS.ExperimentFolderPath + "ROIs.xaml");
+                OverlayManagerClass.Instance.SaveMaskToPath(_RunSampleLS.ExperimentFolderPath + "ROIMask.raw");
+            });
         }
 
         void RunSampleLS_ExperimentStarted()
         {
-            OverlayManagerClass.Instance.SaveROIs(_RunSampleLS.ExperimentFolderPath + "ROIs.xaml");
-            OverlayManagerClass.Instance.SaveMaskToPath(_RunSampleLS.ExperimentFolderPath + "ROIMask.raw");
             _newExperiment = true;
-            BitmapReady = true;
             // The experiment index does not get updated here, it gets updated in the Start() function.
             OnPropertyChanged("ExperimentName");
             OnPropertyChanged("ExperimentIndex");
@@ -5080,7 +4806,6 @@
             if (2 > _nPixelBitShiftValueUpdates)
             {
                 _RunSampleLS.UpdateCamBitsPerPixel();
-                OnPropertyChanged("PixelBitShiftValue");
                 _nPixelBitShiftValueUpdates++;
             }
         }
@@ -5094,11 +4819,6 @@
         void RunSampleLS_UpdateEndSubWell(string statusMessage)
         {
             OnPropertyChanged("CurrentSubImageCount");
-        }
-
-        void RunSampleLS_UpdateImage(string image)
-        {
-            OnPropertyChanged("Bitmap");
         }
 
         void RunSampleLS_UpdateImageName(string wellImageName)
@@ -5129,11 +4849,6 @@
         void RunSampleLS_UpdatePanels(bool status)
         {
             OnPropertyChanged("PanelsEnable");
-        }
-
-        void RunSampleLS_UpdateRemoteConnection(bool obj)
-        {
-            OnPropertyChanged("RemoteConnection");
         }
 
         void RunSampleLS_UpdateScript(string obj)
@@ -5182,21 +4897,6 @@
             ScanAreaWellLocation = GetWellsTagByPoint(new Point(XPosition, YPosition));
         }
 
-        /// <summary>
-        /// Shrinks all histograms to their minimum size
-        /// </summary>
-        void ShrinkAllHistograms()
-        {
-            HistogramHeight1 = MIN_HISTOGRAM_HEIGHT;
-            HistogramWidth1 = MIN_HISTOGRAM_WIDTH;
-            HistogramHeight2 = MIN_HISTOGRAM_HEIGHT;
-            HistogramWidth2 = MIN_HISTOGRAM_WIDTH;
-            HistogramHeight3 = MIN_HISTOGRAM_HEIGHT;
-            HistogramWidth3 = MIN_HISTOGRAM_WIDTH;
-            HistogramHeight4 = MIN_HISTOGRAM_HEIGHT;
-            HistogramWidth4 = MIN_HISTOGRAM_WIDTH;
-        }
-
         private void StimulusSave()
         {
             //Change the state of Saving:
@@ -5232,41 +4932,6 @@
         private void tileControl_TilesLoaded(object sender, RoutedEventArgs e)
         {
             OnPropertyChanged("DriveSpace");
-        }
-
-        void _bitmapWorker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            BackgroundWorker worker = sender as BackgroundWorker;
-
-            while (true)
-            {
-                if ((worker.CancellationPending == true))
-                {
-                    e.Cancel = true;
-                    break;
-                }
-                else
-                {
-                    // Perform a time consuming operation and report progress.
-                    System.Threading.Thread.Sleep(30);
-                    worker.ReportProgress(0);
-                }
-            };
-        }
-
-        void _bitmapWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            if ((e.Cancelled == true))
-            {
-            }
-
-            else if (!(e.Error == null))
-            {
-            }
-
-            else
-            {
-            }
         }
 
         void _rOIStatsChart_Closed(object sender, EventArgs e)
@@ -5305,21 +4970,15 @@
             }
         }
 
-        void _RunSampleLS_UpdataFilePath()
-        {
-            OnPropertyChanged("OutputPath");
-            OnPropertyChanged("ExperimentName");
-        }
-
         void _RunSampleLS_UpdateBitmapTimer(bool timer)
         {
             if ((timer) && (this.ImageUpdaterVisibility == Visibility.Visible))
             {
-                _bitmapRefreshTimer.Start();
+                _roiDataUpdateTimer.Start();
             }
             else
             {
-                _bitmapRefreshTimer.Stop();
+                _roiDataUpdateTimer.Stop();
             }
         }
 
@@ -5334,16 +4993,6 @@
             OnPropertyChanged("MCLS4Power");
             OnPropertyChanged("MCLS4Visibility");
             OnPropertyChanged("PinholePosition");
-        }
-
-        void _RunSampleLS_UpdateTImage(string obj)
-        {
-            OnPropertyChanged("Bitmap");
-        }
-
-        void _RunSampleLS_UpdateZImage(string obj)
-        {
-            OnPropertyChanged("Bitmap");
         }
 
         #endregion Methods
@@ -5377,7 +5026,8 @@
 
         #region Other
 
-        //private double _whitePoint;
+        ////notify listeners (Ex. histogram) that the image has changed
+        //public event Action<bool> ImageDataChanged;
 
         #endregion Other
     }

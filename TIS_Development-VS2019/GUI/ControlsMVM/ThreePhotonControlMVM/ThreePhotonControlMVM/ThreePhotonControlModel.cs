@@ -248,19 +248,67 @@
             }
         }
 
-        public int ThreePhotonPhaseCoarse
+        public int ThreePhotonPhaseCoarse0
         {
             get
             {
                 int temp = 0;
 
-                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_ALIGN_COARSE, ref temp);
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_ALIGN_COARSE_0, ref temp);
 
                 return temp;
             }
             set
             {
-                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_ALIGN_COARSE, value);
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_ALIGN_COARSE_0, value);
+            }
+        }
+
+        public int ThreePhotonPhaseCoarse1
+        {
+            get
+            {
+                int temp = 0;
+
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_ALIGN_COARSE_1, ref temp);
+
+                return temp;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_ALIGN_COARSE_1, value);
+            }
+        }
+
+        public int ThreePhotonPhaseCoarse2
+        {
+            get
+            {
+                int temp = 0;
+
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_ALIGN_COARSE_2, ref temp);
+
+                return temp;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_ALIGN_COARSE_2, value);
+            }
+        }
+
+        public int ThreePhotonPhaseCoarse3
+        {
+            get
+            {
+                int temp = 0;
+
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_ALIGN_COARSE_3, ref temp);
+
+                return temp;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_3P_ALIGN_COARSE_3, value);
             }
         }
 

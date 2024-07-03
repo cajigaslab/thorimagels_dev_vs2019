@@ -1,6 +1,5 @@
 
 #include "stdafx.h"
-#include "SlmManager.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -34,9 +33,11 @@ extern "C"
 		static HANDLE _hThread;
 		static HANDLE _hStopThread; ///<event to stop SLM thread
 		static HANDLE _hThreadStopped; ///<Signals if the SLM thread has stopped
+		static HANDLE _hThreadPause; ///<Signal SLM thread to be paused
 
 		std::unique_ptr<SlmManager> _slmManager;
 		long _fileSettingsLoaded; ///<Flag set when the settings from the settings file have been read
+		long _stopRequested; ///<Flag set by user to stop calibration
 		static std::string _pSlmName;///<slm device name
 		double* _fitCoeff[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT]; ///<fitting coefficients for two wavelengths in order of [0][0],[0][1],[0][2],[1][0],[1][1],[1][2],[2[0],[2][1]
 		double* _fitCoeff3D[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT]; ///<3D fitting coefficients for two wavelengths in order of [0][0],[0][1],[0][2],[0][3],[1][0],[1][1],[1][2],[1][3],[2[0],[2][1],[2][2],[2][3],[3][0],[3][1],[3][2]
@@ -46,8 +47,6 @@ extern "C"
 		static long _overDrive; ///<overdrive mode for meadowlark slm
 		unsigned int _transientFrames; ///<transient frame counts in overdrive mode for meadowlark slm
 		double _pixelPitchUM; ///<SLM pixel pitch size in [um]
-		double _flatDiagRatio; ///<flatness correction range, compared with image's diagnal length
-		double _flatPowerRange[2]; ///<power range for flatness correction, [min, max]
 		std::string _lutFile; ///<look up table file for phase correction
 		std::string _overDrivelutFile; ///<look up table file for overdrive SLM
 		std::string _wavefrontFile; ///<wavefront file for wavefront correction
@@ -71,6 +70,7 @@ extern "C"
 		long _offsetPixels[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT][2]; ///<preset offset in pixels before pattern generation
 		static long _bufferCount; ///<total count of pattern buffers in circulation
 		static long _slmRuntimeCalculate; ///<runtime calculation of transient frames
+		static long _slmSetArmTrigger; ///<configure arm triggers using NI callback
 
 		//Get,Set:
 		double _wavelength[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT]; ///<incident wavelengths [nm], could be two for left-right halves
@@ -80,8 +80,8 @@ extern "C"
 		long _loadPhaseDirectly; ///<load or save phase mask directly (TRUE) or default load-then-convert (FALSE)
 		long _dmdMode; ///<use SLM in DMD mode if TRUE
 		bool _doHologram; ///<phase image applied by hologram & transform if TRUE
-		bool _inSave; ///<if TRUE in save hologram mode, otherwise in load hologram
 		double _defocusParam[Constants::MAX_WIDEFIELD_WAVELENGTH_COUNT][4]; ///<defocus applied on all holograms, [0]:z defocus in [um], [1]:refractive index, [2]:effective focal length in [mm], [3]: saved defocus value [um]
+		double _powerParam[3]; ///<power distribution, [0]:<flatness correction range, a ratio compared with image's diagnal length, [1][2]:power range for flatness correction, [min%, max%]
 		long _skipFitting; ///<skip fitting when loading of SLM mask
 
 		//NI:
@@ -98,8 +98,8 @@ extern "C"
 	public:
 		static ThorSLM* getInstance();
 
-		long FindDevices(long& deviceCount); ///<Search system to find meadowlark or other slms
-		long SelectDevice(const long device);///<select a particular slm
+		long FindDevices(long& deviceCount); ///<Search system to find meadowlark slm
+		long SelectDevice(const long device);///<
 		long TeardownDevice(); ///<close handles
 		long GetParamInfo(const long paramID, long& paramType, long& paramAvailable, long& paramReadOnly, double& paramMin, double& paramMax, double& paramDefault); ///<get the information for each parameter
 		long SetParam(const long paramID, const double param);///<set parameter value
@@ -124,9 +124,10 @@ extern "C"
 		ThorSLM();
 		static int32 CVICALLBACK ThorSLM::HWTriggerCallback(TaskHandle taskHandle, int32 signalID, void* callbackData);
 		static int32 ThorSLM::SLMAsync(void* data);
+		static long CreateSLMAsync(void);
 		static void CloseSLMAsync(void);
 		static BOOL IsOverdrive();
-		void BlankSLM(ISLM::SLMBlank bmode);
+		void BlankSLM(int bmode);
 		void CloseNITasks();
 		long CoordinatesRotate(float* ptArrays, long size, double angle);
 		long CoordinatesVerticalFlip(float* ptArrays, long size);
@@ -146,6 +147,7 @@ extern "C"
 		void SetDefault();
 		long ResetSequence(wchar_t* filename = L"");
 		long SetupHWTriggerIn();
+		long StopHoloGen();
 		unsigned char* MapImageHologram(const wchar_t* pathAndFilename, PBITMAPINFO pbmi);
 		unsigned char* MapCalibrateHologram(const wchar_t* pathAndFilename, MemoryStruct<float>* pbuf);
 		unsigned char* CropHologramBMP(unsigned char* pImg, float* pS, BITMAPINFO& bmi);

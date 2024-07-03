@@ -17,6 +17,7 @@
 #include "..\..\..\Common\Log.h"
 #include "..\..\..\Common\Device.h"
 #include "..\..\Experiment.h"
+#include "..\..\..\Common\Camera.h"
 
 #ifdef _DEBUG
 #define _CRTDBG_MAP_ALLOC

@@ -40,6 +40,15 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="InfragisticsWPF">
+      <HintPath>..\..\..\..\Tools\Infragistics\Infragistics.WPF.16.2.20162.2141\lib\InfragisticsWPF.dll</HintPath>
+    </Reference>
+    <Reference Include="InfragisticsWPF.Controls.Editors.XamMaskedInput">
+      <HintPath>..\..\..\..\Tools\Infragistics\Infragistics.WPF.Controls.Editors.XamMaskedInput.16.2.20162.2141\lib\InfragisticsWPF.Controls.Editors.XamMaskedInput.dll</HintPath>
+    </Reference>
+    <Reference Include="InfragisticsWPF.Controls.Editors.XamSlider">
+      <HintPath>..\..\..\..\Tools\Infragistics\Infragistics.WPF.Controls.Editors.XamSlider.16.2.20162.2141\lib\InfragisticsWPF.Controls.Editors.XamSlider.dll</HintPath>
+    </Reference>
     <Reference Include="RangeSliderWPF">
       <HintPath>..\..\RangeSliderWPF\bin\Debug\RangeSliderWPF.dll</HintPath>
     </Reference>

@@ -34,168 +34,168 @@
         public const int MAX_16BIT = 65535;
         public const int MAX_8BIT = 255;
 
-        public static DependencyProperty ApplicationSettingsDirectoryProperty =
+        public static DependencyProperty ApplicationSettingsDirectoryProperty = 
                      DependencyProperty.RegisterAttached("ApplicationSettingsDirectory",
                      typeof(string),
                      typeof(VolumeRenderer));
-        public static DependencyProperty DataExtentXProperty =
+        public static DependencyProperty DataExtentXProperty = 
                           DependencyProperty.RegisterAttached("DataExtentX",
                           typeof(int),
                           typeof(VolumeRenderer));
-        public static DependencyProperty DataExtentYProperty =
+        public static DependencyProperty DataExtentYProperty = 
                           DependencyProperty.RegisterAttached("DataExtentY",
                           typeof(int),
                           typeof(VolumeRenderer));
-        public static DependencyProperty DataExtentZProperty =
+        public static DependencyProperty DataExtentZProperty = 
                           DependencyProperty.RegisterAttached("DataExtentZ",
                           typeof(int),
                           typeof(VolumeRenderer));
-        public static DependencyProperty DataSpacingZMultiplierProperty =
+        public static DependencyProperty DataSpacingZMultiplierProperty = 
                 DependencyProperty.RegisterAttached("DataSpacingZMultiplier",
                 typeof(double),
                 typeof(VolumeRenderer),
                 new FrameworkPropertyMetadata(1.0, new PropertyChangedCallback(onDataSpacingZMultiplierChanged)));
-        public static DependencyProperty DataSpacingZProperty =
+        public static DependencyProperty DataSpacingZProperty = 
                         DependencyProperty.RegisterAttached("DataSpacingZ",
                         typeof(double),
                         typeof(VolumeRenderer),
                         new FrameworkPropertyMetadata(1.0, new PropertyChangedCallback(onDataSpacingZChanged)));
-        public static DependencyProperty FolderDirectoryProperty =
+        public static DependencyProperty FolderDirectoryProperty = 
                      DependencyProperty.RegisterAttached("FolderDirectory",
                      typeof(string),
                      typeof(VolumeRenderer),
                      new FrameworkPropertyMetadata(null, new PropertyChangedCallback(OnFolderDirectoryChanged)));
-        public static DependencyProperty HardwareSettingsFileProperty =
+        public static DependencyProperty HardwareSettingsFileProperty = 
                     DependencyProperty.RegisterAttached("HardwareSettingsFile",
                     typeof(string),
                     typeof(VolumeRenderer));
-        public static DependencyProperty IndexOfZStreamProperty =
+        public static DependencyProperty IndexOfZStreamProperty = 
                    DependencyProperty.RegisterAttached("IndexOfZStream",
                    typeof(int),
                    typeof(VolumeRenderer), new FrameworkPropertyMetadata(1));
-        public static DependencyProperty IsChanASelectedProperty =
+        public static DependencyProperty IsChanASelectedProperty = 
              DependencyProperty.RegisterAttached("IsChanASelected",
              typeof(bool),
              typeof(VolumeRenderer),
              new FrameworkPropertyMetadata(true, new PropertyChangedCallback(OnIsChanASelectedChanged)));
-        public static DependencyProperty IsChanBSelectedProperty =
+        public static DependencyProperty IsChanBSelectedProperty = 
              DependencyProperty.RegisterAttached("IsChanBSelected",
              typeof(bool),
              typeof(VolumeRenderer),
              new FrameworkPropertyMetadata(true, new PropertyChangedCallback(OnIsChanBSelectedChanged)));
-        public static DependencyProperty IsChanCSelectedProperty =
+        public static DependencyProperty IsChanCSelectedProperty = 
              DependencyProperty.RegisterAttached("IsChanCSelected",
              typeof(bool),
              typeof(VolumeRenderer),
              new FrameworkPropertyMetadata(true, new PropertyChangedCallback(OnIsChanCSelectedChanged)));
-        public static DependencyProperty IsChanDSelectedProperty =
+        public static DependencyProperty IsChanDSelectedProperty = 
              DependencyProperty.RegisterAttached("IsChanDSelected",
              typeof(bool),
              typeof(VolumeRenderer),
              new FrameworkPropertyMetadata(true, new PropertyChangedCallback(OnIsChanDSelectedChanged)));
-        public static DependencyProperty LowerThresholdChanAProperty =
+        public static DependencyProperty LowerThresholdChanAProperty = 
                       DependencyProperty.RegisterAttached("LowerThresholdChanA",
                       typeof(int),
                       typeof(VolumeRenderer),
                       new FrameworkPropertyMetadata(0, new PropertyChangedCallback(onLowerThresholdChanAChanged)));
-        public static DependencyProperty LowerThresholdChanBProperty =
+        public static DependencyProperty LowerThresholdChanBProperty = 
                       DependencyProperty.RegisterAttached("LowerThresholdChanB",
                       typeof(int),
                       typeof(VolumeRenderer),
                       new FrameworkPropertyMetadata(0, new PropertyChangedCallback(onLowerThresholdChanBChanged)));
-        public static DependencyProperty LowerThresholdChanCProperty =
+        public static DependencyProperty LowerThresholdChanCProperty = 
                       DependencyProperty.RegisterAttached("LowerThresholdChanC",
                       typeof(int),
                       typeof(VolumeRenderer),
                       new FrameworkPropertyMetadata(0, new PropertyChangedCallback(onLowerThresholdChanCChanged)));
-        public static DependencyProperty LowerThresholdChanDProperty =
+        public static DependencyProperty LowerThresholdChanDProperty = 
                       DependencyProperty.RegisterAttached("LowerThresholdChanD",
                       typeof(int),
                       typeof(VolumeRenderer),
                       new FrameworkPropertyMetadata(0, new PropertyChangedCallback(onLowerThresholdChanDChanged)));
-        public static DependencyProperty NumberOfComponentsProperty =
+        public static DependencyProperty NumberOfComponentsProperty = 
                      DependencyProperty.RegisterAttached("NumberOfComponents",
                      typeof(int),
                      typeof(VolumeRenderer), new FrameworkPropertyMetadata(2));
-        public static DependencyProperty NumberOfZStreamProperty =
+        public static DependencyProperty NumberOfZStreamProperty = 
                     DependencyProperty.RegisterAttached("NumberOfZStream",
                     typeof(int),
                     typeof(VolumeRenderer), new FrameworkPropertyMetadata(1));
-        public static DependencyProperty RenderedVolumeXMaxProperty =
+        public static DependencyProperty RenderedVolumeXMaxProperty = 
                           DependencyProperty.RegisterAttached("RenderedVolumeXMax",
                           typeof(int),
                           typeof(VolumeRenderer));
-        public static DependencyProperty RenderedVolumeXMinProperty =
+        public static DependencyProperty RenderedVolumeXMinProperty = 
                            DependencyProperty.RegisterAttached("RenderedVolumeXMin",
                            typeof(int),
                            typeof(VolumeRenderer));
-        public static DependencyProperty RenderedVolumeYMaxProperty =
+        public static DependencyProperty RenderedVolumeYMaxProperty = 
                           DependencyProperty.RegisterAttached("RenderedVolumeYMax",
                           typeof(int),
                           typeof(VolumeRenderer));
-        public static DependencyProperty RenderedVolumeYMinProperty =
+        public static DependencyProperty RenderedVolumeYMinProperty = 
                           DependencyProperty.RegisterAttached("RenderedVolumeYMin",
                           typeof(int),
                           typeof(VolumeRenderer));
-        public static DependencyProperty RenderedVolumeZMaxProperty =
+        public static DependencyProperty RenderedVolumeZMaxProperty = 
                           DependencyProperty.RegisterAttached("RenderedVolumeZMax",
                           typeof(int),
                           typeof(VolumeRenderer));
-        public static DependencyProperty RenderedVolumeZMinProperty =
+        public static DependencyProperty RenderedVolumeZMinProperty = 
                           DependencyProperty.RegisterAttached("RenderedVolumeZMin",
                           typeof(int),
                           typeof(VolumeRenderer));
-        public static DependencyProperty TileIndexProperty =
+        public static DependencyProperty TileIndexProperty = 
                       DependencyProperty.RegisterAttached("TileIndex",
                       typeof(int),
                       typeof(VolumeRenderer), new FrameworkPropertyMetadata(1, new PropertyChangedCallback(OnTileIndexChanged)));
-        public static DependencyProperty TimePointIndexProperty =
+        public static DependencyProperty TimePointIndexProperty = 
                      DependencyProperty.RegisterAttached("TimePointIndex",
                      typeof(int),
                      typeof(VolumeRenderer), new FrameworkPropertyMetadata(1, new PropertyChangedCallback(OnTimePointIndexChanged)));
-        public static DependencyProperty ZStreamIndexProperty =
-             DependencyProperty.RegisterAttached("ZStreamIndex",
-             typeof(int),
-             typeof(VolumeRenderer), new FrameworkPropertyMetadata(1, new PropertyChangedCallback(OnZStreamIndexChanged)));
-        public static DependencyProperty TimepointsProperty =
+        public static DependencyProperty TimepointsProperty = 
                      DependencyProperty.RegisterAttached("Timepoints",
                      typeof(int),
                      typeof(VolumeRenderer), new FrameworkPropertyMetadata(1));
-        public static DependencyProperty TotalSystemChannelsProperty =
+        public static DependencyProperty TotalSystemChannelsProperty = 
                     DependencyProperty.RegisterAttached("TotalSystemChannels",
                     typeof(int),
                     typeof(VolumeRenderer), new FrameworkPropertyMetadata(4));
-        public static DependencyProperty UpperThresholdChanAProperty =
+        public static DependencyProperty UpperThresholdChanAProperty = 
                       DependencyProperty.RegisterAttached("UpperThresholdChanA",
                       typeof(int),
                       typeof(VolumeRenderer),
                       new FrameworkPropertyMetadata(MaxGrayScaleLevel, new PropertyChangedCallback(onUpperThresholdChanAChanged)));
-        public static DependencyProperty UpperThresholdChanBProperty =
+        public static DependencyProperty UpperThresholdChanBProperty = 
                       DependencyProperty.RegisterAttached("UpperThresholdChanB",
                       typeof(int),
                       typeof(VolumeRenderer),
                       new FrameworkPropertyMetadata(MaxGrayScaleLevel, new PropertyChangedCallback(onUpperThresholdChanBChanged)));
-        public static DependencyProperty UpperThresholdChanCProperty =
+        public static DependencyProperty UpperThresholdChanCProperty = 
                       DependencyProperty.RegisterAttached("UpperThresholdChanC",
                       typeof(int),
                       typeof(VolumeRenderer),
                       new FrameworkPropertyMetadata(MaxGrayScaleLevel, new PropertyChangedCallback(onUpperThresholdChanCChanged)));
-        public static DependencyProperty UpperThresholdChanDProperty =
+        public static DependencyProperty UpperThresholdChanDProperty = 
                       DependencyProperty.RegisterAttached("UpperThresholdChanD",
                       typeof(int),
                       typeof(VolumeRenderer),
                       new FrameworkPropertyMetadata(MaxGrayScaleLevel, new PropertyChangedCallback(onUpperThresholdChanDChanged)));
-        public static DependencyProperty WellIndexProperty =
+        public static DependencyProperty WellIndexProperty = 
                       DependencyProperty.RegisterAttached("WellIndex",
                       typeof(int),
                       typeof(VolumeRenderer), new FrameworkPropertyMetadata(1, new PropertyChangedCallback(OnWellIndexChanged)));
-        public static DependencyProperty ZStreamModeProperty =
+        public static DependencyProperty ZStreamIndexProperty = 
+             DependencyProperty.RegisterAttached("ZStreamIndex",
+             typeof(int),
+             typeof(VolumeRenderer), new FrameworkPropertyMetadata(1, new PropertyChangedCallback(OnZStreamIndexChanged)));
+        public static DependencyProperty ZStreamModeProperty = 
                     DependencyProperty.RegisterAttached("ZStreamMode",
                     typeof(int),
                     typeof(VolumeRenderer), new FrameworkPropertyMetadata(0));
 
         private static int[] _componentIndexForChannel = { -1, -1, -1, -1 }; // -1 for empty channel
-        private static bool _experimenDataChanged = false;
+
 
         double angle;
         private vtkAxesActor axes;
@@ -281,38 +281,6 @@
         #endregion Constructors
 
         #region Properties
-
-        public string ImageNameFormat
-        {
-            get
-            {
-                int imgIndxDigiCnts = (int)Constants.DEFAULT_FILE_FORMAT_DIGITS;
-                if (FolderDirectory == null)
-                {
-                    XmlDocument AppDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
-                    XmlNode node = AppDoc.SelectSingleNode("/ApplicationSettings/ImageNameFormat");
-                    string value = String.Empty;
-                    XmlManager.GetAttribute(node, AppDoc, "indexDigitCounts", ref value);
-
-                    Int32.TryParse(value, out imgIndxDigiCnts);
-                }
-                else
-                {
-                    foreach (string fn in Directory.GetFiles(FolderDirectory, "*_*_*", SearchOption.TopDirectoryOnly))
-                    {
-                        string n = fn.Substring(fn.LastIndexOf('\\') + 1);
-                        string str = (n.Split('_'))[1];
-                        int num;
-                        if (Int32.TryParse(str, out num))
-                        {
-                            imgIndxDigiCnts = str.Length;
-                            break;
-                        }
-                    }
-                }
-                return ("D" + imgIndxDigiCnts.ToString());
-            }
-        }
 
         public static int MaxGrayScaleLevel
         {
@@ -445,6 +413,38 @@
             set
             {
                 SetValue(HardwareSettingsFileProperty, value);
+            }
+        }
+
+        public string ImageNameFormat
+        {
+            get
+            {
+                int imgIndxDigiCnts = (int)Constants.DEFAULT_FILE_FORMAT_DIGITS;
+                if (FolderDirectory == null)
+                {
+                    XmlDocument AppDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+                    XmlNode node = AppDoc.SelectSingleNode("/ApplicationSettings/ImageNameFormat");
+                    string value = String.Empty;
+                    XmlManager.GetAttribute(node, AppDoc, "indexDigitCounts", ref value);
+
+                    Int32.TryParse(value, out imgIndxDigiCnts);
+                }
+                else
+                {
+                    foreach (string fn in Directory.GetFiles(FolderDirectory, "*_*_*", SearchOption.TopDirectoryOnly))
+                    {
+                        string n = fn.Substring(fn.LastIndexOf('\\') + 1);
+                        string str = (n.Split('_'))[1];
+                        int num;
+                        if (Int32.TryParse(str, out num))
+                        {
+                            imgIndxDigiCnts = str.Length;
+                            break;
+                        }
+                    }
+                }
+                return ("D" + imgIndxDigiCnts.ToString());
             }
         }
 
@@ -706,18 +706,6 @@
             }
         }
 
-        public int ZStreamIndex
-        {
-            get
-            {
-                return (int)GetValue(ZStreamIndexProperty);
-            }
-            set
-            {
-                SetValue(ZStreamIndexProperty, value);
-            }
-        }
-
         public int Timepoints
         {
             get
@@ -838,6 +826,18 @@
             }
         }
 
+        public int ZStreamIndex
+        {
+            get
+            {
+                return (int)GetValue(ZStreamIndexProperty);
+            }
+            set
+            {
+                SetValue(ZStreamIndexProperty, value);
+            }
+        }
+
         public int ZStreamMode
         {
             get
@@ -899,7 +899,7 @@
 
         public static void OnFolderDirectoryChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            _experimenDataChanged = true;
+
             (d as VolumeRenderer).VolumeRenderReset();  // reset some of the parameters from previous experiment if new data are loaded
             (d as VolumeRenderer).RenderVolume();
         }
@@ -954,19 +954,13 @@
 
         public static void OnTileIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            _experimenDataChanged = true;
+
             (d as VolumeRenderer).RenderVolume();
         }
 
         public static void OnTimePointIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            _experimenDataChanged = true;
-            (d as VolumeRenderer).RenderVolume();
-        }
 
-        public static void OnZStreamIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            _experimenDataChanged = true;
             (d as VolumeRenderer).RenderVolume();
         }
 
@@ -996,7 +990,13 @@
 
         public static void OnWellIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            _experimenDataChanged = true;
+
+            (d as VolumeRenderer).RenderVolume();
+        }
+
+        public static void OnZStreamIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+
             (d as VolumeRenderer).RenderVolume();
         }
 
@@ -1235,8 +1235,8 @@
                     int tempInt;
                     ReadAttribute(xmlDoc, "/ThorImageExperiment/Streaming", "zFastEnable", out tempInt);
                     if (tempInt != 0)
-                    { 
-                        ReadAttribute(xmlDoc, "/ThorImageExperiment/Streaming", "flybackFrames", out tempInt);                        
+                    {
+                        ReadAttribute(xmlDoc, "/ThorImageExperiment/Streaming", "flybackFrames", out tempInt);
                     }
                     FlybackFrames = tempInt;
                 }
@@ -1546,6 +1546,10 @@
 
                 string expXML = FolderDirectory.ToString() + "\\Experiment.xml";
 
+                //Reset volume mapper, otherwise it will crash when enabling more channels. Happens with vtk 9.0
+                volumeMapper.Dispose();
+                volumeMapper = vtkFixedPointVolumeRayCastMapper.New();
+
                 if (_resetView)
                 {
                     DataExtentX = -1;   // reset width, height and thickness, so to load from xml
@@ -1577,7 +1581,7 @@
                 ForceWindowToRender();
 
                 //Reset flag after changes have been rendered
-                _experimenDataChanged = false;
+
             }
             catch (Exception ex)
             {
@@ -1690,7 +1694,7 @@
             if ((-1 < component) && (4 > component))
             {
                 _isChannelSelected[component] = Convert.ToInt32(b);
-                _experimenDataChanged = true;
+
             }
         }
 
@@ -1862,7 +1866,7 @@
             ForceWindowToRender();
 
             //Reset flag after changes have been rendered
-            _experimenDataChanged = false;
+
         }
 
         public void viewAllChannels()
@@ -2388,7 +2392,7 @@
                 //MessageBox.Show("Bad Index - setLowerThreshold(int, int)");
                 return;
             }
-            _experimenDataChanged = true;
+
             updateColorMapping(component, value * MaxGrayScaleLevel / NumberOfColorBins, upperThreshold[ch]);
             lowerThreshold[ch] = value * MaxGrayScaleLevel / NumberOfColorBins;
         }
@@ -2400,7 +2404,7 @@
                 //MessageBox.Show("Bad Index - setUpperThreshold(int, int)");
                 return;
             }
-            _experimenDataChanged = true;
+
             updateColorMapping(component, lowerThreshold[ch], value * MaxGrayScaleLevel / NumberOfColorBins);
             upperThreshold[ch] = value * MaxGrayScaleLevel / NumberOfColorBins;
         }
@@ -2465,7 +2469,7 @@
             ForceWindowToRender();
 
             //Reset flag after changes have been rendered
-            _experimenDataChanged = false;
+
         }
 
         void VolumeRenderer_Loaded(object sender, RoutedEventArgs e)

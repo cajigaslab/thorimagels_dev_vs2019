@@ -80,17 +80,18 @@ namespace ThorSharedTypes
         AREA_UNDER_CURVE = 2,
         GALVO_DATA_POINT_MULTIPLIER = 2,
         MAX_WIDEFIELD_WAVELENGTH_COUNT = 2,
-        MAX_IMG_DIG_LINE_COUNT = 3,
+        BASE_DIGI_LINE_COUNT = 2,               //first 2 digital lines: line and frame triggers
         MAX_GG_POCKELS_CELL_COUNT = 4,
         DEFAULT_FILE_FORMAT_DIGITS = 4,
         MAX_FILE_FORMAT_DIGITS = 6,
         BITS_PER_BYTE = 8,
         ACTIVE_LOAD_BLKSIZE_DEFAULT = 8,
         MAX_MULTI_AREA_SCAN_COUNT = 10,
-        SLM_PATTERN_TIME_MIN_MS = 12,
-        PIXEL_X_MIN = 32,
+        REARM_TIME_MS = 12,
+        PIXEL_X_MIN = 4,
         ACTIVE_LOAD_UNIT_SIZE = 100,
         HUNDRED_PERCENT = 100,
+        DEFAULT_SLM_PATTERN_IMPORT_CNT = 100,
         GALVO_MIN_RETRACE_TIME = 200,
         TURRET_FOCALLENGTH_MAGNIFICATION_RATIO = 200,
         EPHYS_ARRAY_SIZE = 260,
@@ -104,7 +105,8 @@ namespace ThorSharedTypes
         UM_PER_INCH = 25400,
         MHZ = 1000000,
         US_TO_SEC = 1000000,
-        M_TO_UM = 1000000
+        M_TO_UM = 1000000,
+        MAX_SWITCHES = 8,
     };
 
     public enum GlobalExpAttribute
@@ -127,7 +129,8 @@ namespace ThorSharedTypes
     public enum ZStageType
     {
         STEPPER = 0,
-        PIEZO
+        PIEZO,
+        REMOTE_FOCUS
     };
 
     public enum BufferType
@@ -156,6 +159,7 @@ namespace ThorSharedTypes
         ACTIVE_EXPERIMENT_SETTINGS = 0,
         APPLICATION_SETTINGS = 1,
         HARDWARE_SETTINGS = 2,
+        REGISTRATION_SETTINGS = 3,
         SETTINGS_FILE_LAST
     };
 
@@ -252,7 +256,7 @@ namespace ThorSharedTypes
         Establish,
         TearDown,
         AcquireInformation,
-        UpdataInformation,
+        UpdateInformation,
         FilePath,
         StartAcquiring,
         StopAcquiring,
@@ -261,17 +265,36 @@ namespace ThorSharedTypes
         Receive,
         Error,
         ChangeRemotePC,
-        ChangeRemoteApp
+        ChangeRemoteApp,
+        LoadExperimentFile,
+        MoveX,
+        MoveY,
+        MoveZ,
+        MoveSecondaryZ,
+        NotifySavedFile,
+        ReportPositionX,
+        ReportPositionY,
+        ReportPositionZ,
+        ReportPositionSecondaryZ,
+        PositionReportX,
+        PositionReportY,
+        PositionReportZ,
+        PositionReportSecondaryZ,
+
+        ShowMostRecent,
+        SyncFrame,
+        IsSaving
     };
 
     public enum ThorPipeStatus
     {
         ThorPipeStsNoError = 0,
         ThorPipeStsBusy = 1,
-
+        ThorPipeStsBlankCommandError = 2,
+        ThorPipeStreamNotSupportedError = 3,
         ThorPipeFormatError = 10,
         ThorPipeFormatRoutingError = 11,
-
+        ThorpipeIOError = 20,
         ThorPipeError = 99,
     };
 
@@ -284,7 +307,8 @@ namespace ThorSharedTypes
     public enum ScopeType
     {
         UPRIGHT = 0,
-        INVERTED = 1
+        INVERTED = 1,
+        PRELUDE = 2
     };
 
     public enum WaveformDriverType
@@ -376,47 +400,53 @@ namespace ThorSharedTypes
     // controlled by or critical to FPGA/System operation at GlobalScan start time.
     // Other DIO imply "slow" DIO configured and controlled by CPLD (via I2C),
     // NOT dependent on GlobalScan status
+    // DEPRECATED - replaced by "thordaqcmd.h" defines
     public enum TD_DIO_MUXedSLAVE_PORTS : int
     {
-        iResonant_scanner_line_trigger = 0x00,
-        iExtern_line_trigger = 0x01,
-        iExtern_pixel_clock = 0x02,
-        oScan_direction = 0x03,
-        oHorizontal_line_pulse = 0x04,
-        oPixel_integration = 0x05,
-        oStart_of_frame = 0x06,
-        iFrame_hardware_trigger = 0x07,
-        iExternal_SOF = 0x08,
-        oPixel_clock_pulse = 0x09,
+ 
+        DI_ResonantScanner_Line_Feedback    = 0x00,
+        DI_External_Line_Trigger            = 0x01,                
+        DI_External_Pixel_Clock             = 0x02,
+        DO_ScanLine_Direction			    = 0x03,
+        DO_Horizontal_Line_Trigger_Pulse	= 0x04,
+        DO_Pixel_Integration_Interval		= 0x05,
+        DO_Internal_SOF_Trigger				= 0x06,  //pulse at start of frame (10us) - deprecated, replaced by 0x20-23 (?)
+        DI_External_Frame_Retrigger         = 0x07,
+        DI_External_SOF_Trigger             = 0x08,
+        DO_Pixel_Clock                      = 0x09,
         // "Digital_Waveform" (13th channel) programmed to coordinate with Galvo DAC waveforms, asserted when "GlobalScan" is set
-        oDigital_Waveform_0 = 0x0A,
-        oDigital_Waveform_1 = 0x0B,
-        oDigital_Waveform_2 = 0x0C,
-        oDigital_Waveform_3 = 0x0D,
-        oDigital_Waveform_4 = 0x0E,
-        oDigital_Waveform_5 = 0x0F,
-        oDigital_Waveform_6 = 0x10,
-        oDigital_Waveform_7 = 0x11,
-        // "Digital_Waveform" (14th channel) (note hardware limitations of only 8 high speed DOs total, only 6 in practice)
-        oDigital_Waveform_8 = 0x12,
-        oDigital_Waveform_9 = 0x13,
-        oDigital_Waveform_10 = 0x14,
-        oDigital_Waveform_11 = 0x15,
-        oDigital_Waveform_12 = 0x16,
-        oDigital_Waveform_13 = 0x17,
-        oDigital_Waveform_14 = 0x18,
-        oDigital_Waveform_15 = 0x19,
-        oCapture_Active = 0x1A, // 26d
-        // FPGA "indexes" 0-15 can by MUXed by the BOB CPLD; indexes 0-7 are the hi-speed hardware lines to FPGA's digital MUX
-        // FPGA indexes 8-15 are registers accessible via I2C command (i.e. "slow") and can also be MUXed
-        // Indexes 16-31 are NOT MUXed and are CPLD wired 1:1
-        Aux_GPIO_0 = 0x1B,   // General Purpose NOT related to "GlobalScan"-enable status, separate REGISTER for DIR
-        Aux_GPIO_1 = 0x1C,
-        Aux_GPIO_2 = 0x1D, // 29d
-        Aux_GPIO_3 = 0x1E,
-        Aux_GPIO_4 = 0x1F,
-        BOB3U_GPIO = 0x30  // 48d "slow" general purpose GPIO D16-D31 on 3U Panel, DIR configured and I/O value through CPLD via I2C (not MUXed by BOB's CPLD)
-    };
+        DO_0_WaveMUX						= 0x0A,	//DO_0
+        DO_1_WaveMUX		                = 0x0B,	//DO_1
+        DO_2_WaveMUX					    = 0x0C,	//DO_2
+        DO_3_WaveMUX					    = 0x0D,	//DO_3
+        DO_4_WaveMUX						= 0x0E,
+        DO_5_WaveMUX                        = 0x0F,
+        DO_6_WaveMUX                        = 0x10,
+        DO_7_WaveMUX                        = 0x11,
+        DO_8_WaveMUX                        = 0x12,
+        DO_9_WaveMUX                        = 0x13,
+        DO_10_WaveMUX                       = 0x14,
+        DO_11_WaveMUX                       = 0x15,
+        DO_12_WaveMUX                       = 0x16,
+        DO_13_WaveMUX                       = 0x17,
+        DO_14_WaveMUX                       = 0x18,
+        DO_15_WaveMUX                       = 0x19,
+// Capture_Active should not be considered a "high speed" signal
+        DO_Capture_Active				    = 0x1A,
+// unlike MUXes above which are exclusively read and written by FPGA, AUX_GPIOs are under software control
+//        DO_Buffer_Ready						= 0x1B,  //d27, Aux_GPIO MUX 0, I/O direction configured separately
+        Aux_GPIO_0							= 0x1B,  // (Copy for general API)
+        Aux_GPIO_1							= 0x1C,  // these appear in Config XML as "DO_Aux_GPIOn" or "DI_ ", indicating DIR to config
+        Aux_GPIO_2							= 0x1D,
+        Aux_GPIO_3							= 0x1E,
+        Aux_GPIO_4							= 0x1F,  //d31
+        DI_HW_Trigger_1						= 0x20,
+        DI_HW_Trigger_2						= 0x21,
+        DI_HW_Trigger_3						= 0x22,
+        DI_HW_Trigger_4						= 0x23,
+        BOB3U_GPIO							= 0x30  // 48d "slow" general purpose GPIO D16-D31 on 3U Panel, DIR configured and I/O value through CPLD via I2C
+
+    }; 
 
     public enum BleachMode
     {
@@ -626,9 +656,10 @@ namespace ThorSharedTypes
         SIPM100 = 7,
         PMT2110 = 8,    //Higher BW version of PMT2100. Higher speed with 180MHz
         PMT3100 = 9,    //GaAsP 3P
-        GAASP_TRIP = 10,//not used yet, but should be setup if wee need software trip at any point
-        PMT_TYPE_NOT_SET = 11,
-        DIF_TYPE_OF_PMT = 12,
+        PMT5100 = 10,
+        GAASP_TRIP = 11,//not used yet, but should be setup if wee need software trip at any point
+        PMT_TYPE_NOT_SET = 12,
+        DIF_TYPE_OF_PMT = 13,
         LAST_TYPE
     };
 
@@ -642,6 +673,26 @@ namespace ThorSharedTypes
         BW_80MHz    = 80000000,
         BW_200MHz   = 200000000,
         BW_300MHz   = 300000000,
+    };
+
+    public enum ThorSyncMode
+    {
+        FreeRun,
+        HardwareTriggerSingle,
+        HardwareTriggerRetriggerable,
+        HardwareSynchronizable
+    };
+
+    public enum LampTypes
+    {
+        DC2200,
+        Prelude_LED
+    };
+
+    public enum RemoteFocusCaptureModes
+    {
+        Linear,
+        Custom
     };
 
 #if __LINE__

@@ -69,9 +69,17 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\Common\HelpProvider\HelpProvider\bin\Debug\HelpProvider.dll</HintPath>
     </Reference>
-    <Reference Include="HistogramControl, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\HistogramControl\HistogramControl\bin\Debug\HistogramControl.dll</HintPath>
+    <Reference Include="ImageViewControl">
+      <HintPath>..\..\..\..\GUI\Controls\ImageViewControl\ImageViewControl\bin\Debug\ImageViewControl.dll</HintPath>
+    </Reference>
+    <Reference Include="InfragisticsWPF">
+      <HintPath>..\..\..\..\Tools\Infragistics\Infragistics.WPF.16.2.20162.2141\lib\InfragisticsWPF.dll</HintPath>
+    </Reference>
+    <Reference Include="InfragisticsWPF.Controls.Editors.XamMaskedInput">
+      <HintPath>..\..\..\..\Tools\Infragistics\Infragistics.WPF.Controls.Editors.XamMaskedInput.16.2.20162.2141\lib\InfragisticsWPF.Controls.Editors.XamMaskedInput.dll</HintPath>
+    </Reference>
+    <Reference Include="InfragisticsWPF.Controls.Editors.XamSlider">
+      <HintPath>..\..\..\..\Tools\Infragistics\Infragistics.WPF.Controls.Editors.XamSlider.16.2.20162.2141\lib\InfragisticsWPF.Controls.Editors.XamSlider.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Practices.Composite, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -102,40 +110,15 @@
     <Reference Include="PresentationFramework">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
+    <Reference Include="RemoteIPCControl">
+      <HintPath>..\..\..\..\GUI\Controls\RemoteIPCControl\RemoteIPCControl\bin\Debug\RemoteIPCControl.dll</HintPath>
+    </Reference>
     <Reference Include="ROIStatsChart">
       <HintPath>..\..\..\..\GUI\Controls\ROIStatsChart\ROIStatsChart\bin\Debug\ROIStatsChart.dll</HintPath>
     </Reference>
     <Reference Include="SampleRegionSelection, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\GUI\Controls\SampleRegionSelection\SampleRegionSelection\bin\Debug\SampleRegionSelection.dll</HintPath>
-    </Reference>
-    <Reference Include="SciChart.Charting, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting.dll</HintPath>
-    </Reference>
-    <Reference Include="SciChart.Charting.DrawingTools, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting.DrawingTools.dll</HintPath>
-    </Reference>
-    <Reference Include="SciChart.Charting3D, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting3D.dll</HintPath>
-    </Reference>
-    <Reference Include="SciChart.Core, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="SciChart.Data, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Data.dll</HintPath>
-    </Reference>
-    <Reference Include="SciChart.Drawing, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Drawing.dll</HintPath>
-    </Reference>
-    <Reference Include="SciChart.Drawing.DirectX, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Drawing.DirectX.dll</HintPath>
     </Reference>
     <Reference Include="SpinnerProgress">
       <HintPath>..\..\..\..\GUI\Controls\SpinnerProgress\SpinnerProgress\bin\Debug\SpinnerProgress.dll</HintPath>
@@ -191,7 +174,6 @@
     <Compile Include="CustomMessageBox.xaml.cs">
       <DependentUpon>CustomMessageBox.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Model\RunSampleIPC.cs" />
     <Compile Include="Model\RunSampleLS.cs" />
     <Compile Include="RunSampleLSModule.cs" />
     <Compile Include="MainWindow.xaml.cs">
@@ -204,10 +186,6 @@
     <Compile Include="ViewModel\ViewModelBase.cs" />
     <Compile Include="View\ActiveStatsWinChooser.xaml.cs">
       <DependentUpon>ActiveStatsWinChooser.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\EditPipeDialog.xaml.cs" />
-    <Compile Include="View\ImageView.xaml.cs">
-      <DependentUpon>ImageView.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\ROIStatsChartWin.xaml.cs">
       <DependentUpon>ROIStatsChartWin.xaml</DependentUpon>
@@ -239,16 +217,6 @@
     <Page Include="View\ActiveStatsWinChooser.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\EditPipeDialog.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="View\ImageView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
     </Page>
     <Page Include="View\ROIStatsChartWin.xaml">
       <Generator>MSBuild:Compile</Generator>

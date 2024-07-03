@@ -242,7 +242,6 @@
     <ClInclude Include="ExCapDoc.h" />
     <ClInclude Include="ExCapFiretrigger.h" />
     <ClInclude Include="ExCapFramerate.h" />
-    <ClInclude Include="ExCapUI.h" />
     <ClInclude Include="ExCapView.h" />
     <ClInclude Include="image.h" />
     <ClInclude Include="imagedcam.h" />

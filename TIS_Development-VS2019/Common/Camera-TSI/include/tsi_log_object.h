@@ -12,6 +12,7 @@
 #include "tsi_log.h"
 
 #define __FILENAME__ (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
+#define DEFAULT_CONFIG_FILE_NAME_ "thorlabs_tsi_logger.cfg"
 
 class Tsi_log_object
 {
@@ -23,6 +24,7 @@ public:
                                                       , m_status (false)
                                                       , m_moduleID (moduleID)
                                                       , m_groupID ("")
+                                                      , m_configFileName(DEFAULT_CONFIG_FILE_NAME_)
    {
       init();
    }
@@ -37,8 +39,24 @@ public:
                                                                       , m_status (false)
                                                                       , m_moduleID (moduleID)
                                                                       , m_groupID (groupID)
+                                                                      , m_configFileName(DEFAULT_CONFIG_FILE_NAME_)
    {
       init();
+   }
+   catch (...)
+   {
+   }
+
+   Tsi_log_object(const char* const moduleID, const char* const groupID, const char* const configFileName) try
+       : m_handle(0)
+       , m_logger(nullptr)
+       , m_log(nullptr)
+       , m_status(false)
+       , m_moduleID(moduleID)
+       , m_groupID(groupID)
+       , m_configFileName(configFileName)
+   {
+       init();
    }
    catch (...)
    {
@@ -52,7 +70,7 @@ public:
          {
             // Clean up the logger.
 #ifdef _WIN32
-            if (TSI_FREE_LOG tsiFreeLog = (TSI_FREE_LOG) ::GetProcAddress (m_handle, "tsi_free_log"))
+            if (const TSI_FREE_LOG tsiFreeLog = (TSI_FREE_LOG) ::GetProcAddress (m_handle, "tsi_free_log"))
 #endif // _WIN32
 #ifdef __linux__
             if (TSI_FREE_LOG tsiFreeLog = (TSI_FREE_LOG) dlsym (m_handle, "tsi_free_log"))
@@ -100,7 +118,7 @@ public:
        va_copy(args2, args);
 
        // Compute the length of all the arguments in aggregate.
-       int length = vsnprintf(NULL, 0, msg, args);
+       const int length = vsnprintf(NULL, 0, msg, args);
        if (length < 0)
        {
            va_end(args);
@@ -115,6 +133,11 @@ public:
        return (!m_log (m_logger, priority, file_name, file_line, function_name, msg_buffer.c_str()));
    }
 
+   bool is_valid() const
+   {
+       return m_log != nullptr;
+   }
+
 private:
 #ifdef _WIN32
    HMODULE m_handle;
@@ -127,6 +150,7 @@ private:
    bool m_status;
    const std::string m_moduleID;
    const std::string m_groupID;
+   const std::string m_configFileName;
 
    void init()
    {
@@ -141,13 +165,13 @@ private:
 
       // Get a handle to a logger;
 #ifdef _WIN32
-      if (TSI_GET_LOG tsiGetLog = reinterpret_cast <TSI_GET_LOG> (::GetProcAddress (m_handle, "tsi_get_log")))
+      if (const TSI_GET_LOG tsiGetLog = reinterpret_cast <TSI_GET_LOG> (::GetProcAddress (m_handle, "tsi_get_log")))
 #endif // _WIN32
 #ifdef __linux
       if (TSI_GET_LOG tsiGetLog = reinterpret_cast <TSI_GET_LOG> (dlsym (m_handle, "tsi_get_log")))
 #endif // __linux
       {
-         m_logger = tsiGetLog (m_moduleID.c_str(), m_groupID.c_str());
+         m_logger = tsiGetLog (m_moduleID.c_str(), m_groupID.c_str(), m_configFileName.c_str());
          if (!m_logger) return;
       }
       else return;

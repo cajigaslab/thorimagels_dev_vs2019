@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ThorDFLIMGalvoGalvoSettings>
+
+  <Configuration field2Theta="0.0901639344" pockelsParkAtMinimum="0" pockelsDelayUS="7" acquisitionMode="1" maxAngularVelocityRadPerSec="300" maxAngularAccelerationRadPerSecSq="3e6"/>
+  <!--
+  0: DFLIM
+  1: Diagnostic
+  -->
+  <FrontEndTuning syncIDelay="9" resyncDelay="5" forceSyncEveryLine="0" />
+  
+  <Ch0Settings coarseShiftA="3" fineShiftA="-24" enableIntAdj="1" threshold="22" baselineTolerance="13" maxLevel0="60" maxLevel1="134" coarseShiftB="3" fineShiftB="-24" />
+  <Ch1Settings coarseShiftA="3" fineShiftA="-24" enableIntAdj="1" threshold="22" baselineTolerance="13" maxLevel0="60" maxLevel1="134" coarseShiftB="3" fineShiftB="-24" />
+  <Ch2Settings coarseShiftA="3" fineShiftA="-24" enableIntAdj="1" threshold="22" baselineTolerance="13" maxLevel0="60" maxLevel1="134" coarseShiftB="3" fineShiftB="-24" />
+  <Ch3Settings coarseShiftA="3" fineShiftA="-24" enableIntAdj="1" threshold="22" baselineTolerance="13" maxLevel0="60" maxLevel1="134" coarseShiftB="3" fineShiftB="-24" />
+  
+  
+  <Trigger waitTime="30" />
+  
+  <Calibration fieldSizeCalibration="90.0"  flipVerticalScan="0" fineOffsetX="0.0" fineOffsetY="0.0" fineScaleX="1.0" fineScaleY="1.0" oneXFieldSize="160"/>
+
+  <IO pockelsVoltageSlopeThreshold="0.01" pockelsLine="1" pockelsPowerInputLine="/Dev1/ai1" pockelsScanVoltageStart="-1.0" pockelsScanVoltageStop="1.3" pockelsLine1="1" pockelsPowerInputLine1="/Dev1/ai2" pockelsScanVoltageStart1="-1.0" pockelsScanVoltageStop1="1.3" pockelsLine2="1" pockelsPowerInputLine2="/Dev1/ai3" pockelsScanVoltageStart2="-1.0" pockelsScanVoltageStop2="1.3" pockelsLine3="1" pockelsPowerInputLine3="/Dev1/ai4" pockelsScanVoltageStart3="-1.0" pockelsScanVoltageStop3="1.3" pockelsReferenceLine="/Dev1/APFI1" pockelsResponseType="0" pockelsResponseType1="0" pockelsResponseType2="0" pockelsResponseType3="0"/>  
+
+  <Stream DCOffset1="0" DCOffset2="0"/>
+  
+  <CoherentSampling PhaseMode="0" PhaseLimit="5"/>
+  <!--
+  0: Disabled
+  1: Increment Phase Mode
+  2: Fixed Static Phase Offset
+  -->  
+
+</ThorDFLIMGalvoGalvoSettings>

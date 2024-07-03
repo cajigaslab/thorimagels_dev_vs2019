@@ -18,6 +18,8 @@
 #define INFINITE_COUNT						0x7FFFFFFF
 #define MAX_ANALOG_CHAN_COUNT				4
 #define LINE_POST_COUNT						16
+#define DEFAULT_MAX_GALVO_VELOCITY			300 // rad/sec^2
+#define DEFAULT_MAX_GALVO_ACCELERATION		3e6 // rad/sec^2
 
 
 extern std::unique_ptr<ImageWaveformBuilderDLL> ImageWaveformBuilder;
@@ -213,7 +215,8 @@ extern "C"
 		long _lineFlybackLength;
 		static double _pockelsPhaseDelayUS;
 		long _useReferenceForPockelsOutput;///<when pockels is enabled, if the max pockels voltage should be use to build the waveform instead of the set pockels power
-		long _pockelsTurnAroundBlank;///<blank pockels at turn around of galvo
+		long _pockelsTurnAroundBlank;///<TRUE to blank pockels at turn around region
+		long _pockelsFlybackBlank; ///<TRUE to enable pockels blanking on the flyback to the start of the image
 		long _interleaveScan; ///<interleave scan of Galvo Galvo for Two-Way or Forward mode
 		static string _analogChannels[MAX_ANALOG_CHAN_COUNT]; ///<analog channels for galvo mirror pairs or other applications
 		long _analogXYmode[2][2]; ///<indicator for X, Y channels are in ascending[1] or decending[-1] order, first index: path, second index: X[0], Y[1]
@@ -221,6 +224,8 @@ extern "C"
 		static string _devID; ///<NI device ID, default as Dev2
 		double _ggSuperUserMode; ///<Flag to enable or disable Superuser mode, it disables all the safety checks for Dwell time and Field Size
 		double _timebasedLSTimeMS; ///<Number of miliseconds used for time based line scan
+		double _maxAngularVelocityRadPerSec; ///<Maximum allowed angular velocity for the galvos in Rad/Sec
+		double _maxAngularAccelerationRadPerSecSq; ///<Maximum allowed angular acceleration for the galvos in Rad/Sec^2
 
 		///<daq members
 		static double _avgCount;
@@ -346,7 +351,7 @@ extern "C"
 		static long _precaptureStatus; ///<pre-capture status for waveform active load
 		static WaveformGenParams _waveGenParams;
 		static GGalvoWaveformParams _gGalvoWaveParams;
-		static string _pockelDigOut; ///<digital output line of pockels cell
+		static string _pockelDigOut[MAX_GG_POCKELS_CELL_COUNT]; ///<digital output line of pockels cell
 		static string _waveformCompleteOut; ///<digital output line of waveform complete signal
 		static string _bleachCycleOut; ///<digital output line of waveform cycle envelope
 		static string _bleachIterationOut; ///<digital output line of waveform iteration envelope

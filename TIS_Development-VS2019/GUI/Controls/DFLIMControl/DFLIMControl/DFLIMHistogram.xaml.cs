@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.Collections.Specialized;
+    using System.Diagnostics;
     using System.Globalization;
     using System.Linq;
     using System.Text;
@@ -17,11 +18,7 @@
     using System.Windows.Media.Imaging;
     using System.Windows.Navigation;
     using System.Windows.Shapes;
-
-    using Microsoft.Research.DynamicDataDisplay;
-    using Microsoft.Research.DynamicDataDisplay.Charts;
-    using Microsoft.Research.DynamicDataDisplay.DataSources;
-    using Microsoft.Research.DynamicDataDisplay.PointMarkers;
+    using System.Windows.Threading;
 
     using ROIStatsChart.Model;
 
@@ -43,6 +40,8 @@
     using SciChart.Drawing.HighSpeedRasterizer;
     using SciChart.Drawing.Utility;
     using SciChart.Drawing.VisualXcceleratorRasterizer;
+
+    using ThorLogging;
 
     using ThorSharedTypes;
 
@@ -71,7 +70,7 @@
                 ObservableCollection<IRenderableSeries> chartSeries = new ObservableCollection<IRenderableSeries>();
                 foreach (var dataSet in data)
                 {
-                    IXyDataSeries<double, double> ds0;
+                    IXyDataSeries<double, double> ds0 = null;
                     if (dataSet.Value[254] == 0)
                     {
                         continue;
@@ -104,6 +103,7 @@
             }
             catch (Exception ex)
             {
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + " Plot " + ex.ToString());
                 ex.ToString();
             }
         }
@@ -120,14 +120,8 @@
 
         private Color GetLineColor(int channel)
         {
-            switch (channel)
-            {
-                case 0: return ((SolidColorBrush)(Brush)MVMManager.Instance["CaptureSetupViewModel", "LSMChannelColor0"]).Color;
-                case 1: return ((SolidColorBrush)(Brush)MVMManager.Instance["CaptureSetupViewModel", "LSMChannelColor1"]).Color;
-                case 2: return ((SolidColorBrush)(Brush)MVMManager.Instance["CaptureSetupViewModel", "LSMChannelColor2"]).Color;
-                case 3: return ((SolidColorBrush)(Brush)MVMManager.Instance["CaptureSetupViewModel", "LSMChannelColor3"]).Color;
-            }
-            return Colors.DarkOrange;
+            Color[] chanColors = (Color[])MVMManager.Instance["ImageViewCaptureSetupVM", "DefaultChannelColors"];
+            return chanColors[channel];
         }
 
         #endregion Methods

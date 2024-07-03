@@ -19,6 +19,7 @@
     using ThorLogging;
 
     using ThorSharedTypes;
+    using static ThorSharedTypes.ICamera;
 
     public class CameraControlModel
     {
@@ -27,6 +28,7 @@
         private string _activeCameraName = string.Empty;
         private int _binIndex;
         private bool _cameraCSType = false;
+        private int _colorImageTypeIndex;
         private int _coolingModeIndex;
         private double _exposureTimeMax;
         private double _exposureTimeMin;
@@ -35,6 +37,7 @@
         private double _hotPixelMin;
         private int _lightModeMax;
         private int _lightModeMin;
+        private int _polarImageTypeIndex;
         private int _readoutSpeedIndex;
 
         #endregion Fields
@@ -141,6 +144,20 @@
             }
         }
 
+        public double BlueGain
+        {
+            get
+            {
+                double val = 0.0;
+                ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_BLUE_GAIN, ref val);
+                return val;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_BLUE_GAIN, value);
+            }
+        }
+
         public int Bottom
         {
             get
@@ -240,6 +257,27 @@
             }
         }
 
+        public int CamColorImageTypeIndex
+        {
+            get
+            {
+                // TODO: this value doesn't need to be saved. you can pull it from TSI cams quickly  b\c it is a host-side param
+                if (-1 != _colorImageTypeIndex)
+                {
+                    ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_COLOR_IMAGE_TYPE, ref _colorImageTypeIndex);
+                }
+                return _colorImageTypeIndex;
+            }
+            set
+            {
+                if (-1 != value)
+                {
+                    ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_COLOR_IMAGE_TYPE, value);
+                }
+                _colorImageTypeIndex = value;
+            }
+        }
+
         public bool CameraCSType
         {
             get
@@ -249,6 +287,16 @@
             set
             {
                 _cameraCSType = value;
+            }
+        }
+
+        public GainType CameraGainType
+        {
+            get
+            {
+                int gainType = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_GAIN_TYPE, ref gainType);
+                return  (GainType)gainType;
             }
         }
 
@@ -264,6 +312,16 @@
             set
             {
                 ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_IMAGE_ANGLE, value);
+            }
+        }
+
+        public ICamera.CameraSensorType CameraSensorType
+        {
+            get
+            {
+                int cameraSensorType = 0;
+                _ = ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_SENSOR_TYPE, ref cameraSensorType);
+                return (ICamera.CameraSensorType)cameraSensorType;
             }
         }
 
@@ -345,6 +403,27 @@
             }
         }
 
+        public int CamPolarImageTypeIndex
+        {
+            get
+            {
+                // TODO: this value doesn't need to be saved. you can pull it from TSI cams quickly  b\c it is a host-side param
+                if (-1 != _polarImageTypeIndex)
+                {
+                    ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_POLAR_IMAGE_TYPE, ref _polarImageTypeIndex);
+                }
+                return _polarImageTypeIndex;
+            }
+            set
+            {
+                if (-1 != value)
+                {
+                    ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_POLAR_IMAGE_TYPE, value);
+                }
+                _polarImageTypeIndex = value;
+            }
+        }
+
         public int CamReadoutSpeedIndex
         {
             get
@@ -362,6 +441,26 @@
                     ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_READOUT_SPEED_INDEX, value);
                 }
                 _readoutSpeedIndex = value;
+            }
+        }
+
+        public int CamReadoutSpeedMax
+        {
+            get
+            {
+                int readoutMax = 0, readoutMin = 0, readoutDefault = 0;
+                ResourceManagerCS.GetCameraParamRangeInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_READOUT_SPEED_INDEX,ref readoutMin, ref readoutMax, ref readoutDefault);
+                return readoutMax;
+            }
+        }
+
+        public int CamReadoutSpeedMin
+        {
+            get
+            {
+                int readoutMax = 0, readoutMin = 0, readoutDefault = 0;
+                ResourceManagerCS.GetCameraParamRangeInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_READOUT_SPEED_INDEX, ref readoutMin, ref readoutMax, ref readoutDefault);
+                return readoutMin;
             }
         }
 
@@ -449,6 +548,31 @@
             }
         }
 
+        public int ChannelNum
+        {
+            get
+            {
+                int val = 1;
+
+                return (1 == ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_CHANNEL, ref val)) ? val : 0;
+            }
+        }
+
+        public int ContinuousWhiteBalanceNumFrames
+        {
+            get
+            {
+                int continuousWhiteBalanceNumFrames = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_CONTINUOUS_WHITE_BALANCE_NUM_FRAMES, ref continuousWhiteBalanceNumFrames);
+                return continuousWhiteBalanceNumFrames;
+            }
+
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_CONTINUOUS_WHITE_BALANCE_NUM_FRAMES, value);
+            }
+        }
+
         public bool CoolingModeAvailable
         {
             get
@@ -483,6 +607,31 @@
         {
             get;
             set;
+        }
+
+        public EqualExposurePulseStatusType EqualExposurePulseStatus
+        {
+            get
+            {
+                int eepStatus = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_EEP_STATUS, ref eepStatus);
+                return (EqualExposurePulseStatusType)eepStatus;
+            }
+        }
+
+        public double EqualExposurePulseWidth
+        {
+            get
+            {
+                double pulseWidth = 0;
+                ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_EEP_WIDTH, ref pulseWidth);
+                return pulseWidth;
+            }
+
+            set
+            {
+                ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_EEP_WIDTH, value);
+            }
         }
 
         public double ExposureTimeCam
@@ -648,6 +797,35 @@
             }
         }
 
+        public double GainDecibels
+        {
+            get
+            {
+                double val = 0.0;
+                ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_GAIN_DECIBELS, ref val);
+                return val;
+            }
+            set
+            {
+                // NOTE: this changes 'Gain' property as well (but they are meant to be mutually exclusive)
+                ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_GAIN_DECIBELS, value);
+            }
+        }
+
+        public double GreenGain
+        {
+            get
+            {
+                double val = 0.0;
+                ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_GREEN_GAIN, ref val);
+                return val;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_GREEN_GAIN, value);
+            }
+        }
+
         public bool HotPixelAvailable
         {
             get
@@ -766,6 +944,95 @@
             }
         }
 
+        public bool IsAutoExposureSupported
+        {
+            get
+            {
+                if(1 == ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_IS_AUTOEXPOSURE_SUPPORTED))
+                {
+                    int value = 0;
+                    ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_IS_AUTOEXPOSURE_SUPPORTED, ref value);
+                    return value != 0;
+                }
+                return false;
+            }
+        }
+
+        public bool IsColorGainsSupported
+        {
+            get
+            {
+                bool isR = 0 != ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_RED_GAIN);
+                bool isG = 0 != ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_GREEN_GAIN);
+                bool isB = 0 != ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_BLUE_GAIN);
+                return isR & isG & isB;
+            }
+        }
+
+        public bool IsContinuousWhiteBalanceEnabled
+        {
+            get
+            {
+                int isContinuousWhiteBalanceEnabled = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_IS_CONTINUOUS_WHITE_BALANCE_ENABLED, ref isContinuousWhiteBalanceEnabled);
+                return isContinuousWhiteBalanceEnabled > 0;
+            }
+
+            set
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_IS_CONTINUOUS_WHITE_BALANCE_ENABLED, value ? 1 : 0);
+            }
+        }
+
+        public bool IsEqualExposurePulseEnabled
+        {
+            get
+            {
+                int isEnabled = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_EEP_ENABLE, ref isEnabled);
+                return 0 != isEnabled;
+            }
+
+            set
+            {
+                int intValue = value ? 1 : 0;
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_EEP_ENABLE, intValue);
+            }
+        }
+
+        public bool IsEqualExposurePulseSupported
+        {
+            get
+            {
+                bool isSupported = 0 != ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_EEP_ENABLE);
+                return isSupported;
+            }
+        }
+
+        public bool IsNirBoostEnabled
+        {
+            get
+            {
+                int val = 0;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_NIR_BOOST, ref val);
+                return val != 0;
+            }
+
+            set
+            {
+                int intValue = value ? 1 : 0;
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_NIR_BOOST, intValue);
+            }
+        }
+
+        public bool IsNirBoostSupported
+        {
+            get
+            {
+                return 0 != ResourceManagerCS.GetCameraParamAvailable((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_NIR_BOOST);
+            }
+        }
+
         public int Left
         {
             get
@@ -876,6 +1143,20 @@
             set
             {
                 ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_STATIC_FPS_ENABLE, value ? 1 : 0);
+            }
+        }
+
+        public double RedGain
+        {
+            get
+            {
+                double val = 0.0;
+                ResourceManagerCS.GetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_RED_GAIN, ref val);
+                return val;
+            }
+            set
+            {
+                ResourceManagerCS.SetCameraParamDouble((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_RED_GAIN, value);
             }
         }
 
@@ -1011,28 +1292,45 @@
                         preset += string.Format("R: {0}", right);
                     }
 
-                    if ("284" == top && "704" == left && "796" == bottom && "1216" == right)
+                    if (("284" == top && "704" == left && "796" == bottom && "1216" == right) || ("28" == top && "448" == left && "1052" == bottom && "1472" == right))
                     {
                         if (ActiveCameraName.Contains("CS2100"))
                         {
                             presets.Add(preset);
                         }
                     }
-                    else if ("768" == top && "968" == left && "1280" == bottom && "1480" == right)
+                    else if (("768" == top && "968" == left && "1280" == bottom && "1480" == right) || ("512" == top && "712" == left && "1536" == bottom && "1736" == right))
                     {
                         if (ActiveCameraName.Contains("CS505"))
                         {
                             presets.Add(preset);
                         }
                     }
-                    else if ("824" == top && "1792" == left && "1336" == bottom && "2304" == right)
+                    else if (("824" == top && "1792" == left && "1336" == bottom && "2304" == right) || ("568" == top && "1536" == left && "1592" == bottom && "2560" == right))
                     {
                         if (ActiveCameraName.Contains("CS895"))
                         {
                             presets.Add(preset);
                         }
                     }
-                    else if (("264" == top && "440" == left && "776" == bottom && "952" == right) || ("768" == top && "768" == left && "1280" == bottom && "1280" == right) || ("980" == top && "1392" == left && "1492" == bottom && "1904" == right))
+                    else if (("896" == top && "896" == left && "1408" == bottom && "1408" == right) || ("640" == top && "640" == left && "1664" == bottom && "1664" == right))
+                    {
+                        //Orca Fusion. 2304x2304 sensor
+                        if (ActiveCameraName.Contains("C14440"))
+                        {
+                            presets.Add(preset);
+                        }
+                    }
+                    else if (("768" == top && "768" == left && "1280" == bottom && "1280" == right) || ("512" == top && "512" == left && "1536" == bottom && "1536" == right))
+                    {
+                        //Orca Flash. 2048x2048 sensor
+                        if (ActiveCameraName.Contains("C13440"))
+                        {
+                            presets.Add(preset);
+                        }
+                    }
+                    else if (("264" == top && "440" == left && "776" == bottom && "952" == right) || ("768" == top && "768" == left && "1280" == bottom && "1280" == right) || ("980" == top && "1392" == left && "1492" == bottom && "1904" == right)
+                        || ("8" == top && "184" == left && "1032" == bottom && "1208" == right) || ("512" == top && "512" == left && "1536" == bottom && "1536" == right) || ("724" == top && "1136" == left && "1748" == bottom && "2160" == right))
                     {
                         if (!CameraCSType)
                         {
@@ -1053,6 +1351,72 @@
             presets.Sort((a, b) => a.CompareTo(b));
             return presets;
         }
+
+        public List<string> GetGainDiscreteOptions()
+        {
+            List<string> options = new List<string>();
+            int gainType = 0;
+            ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_GAIN_TYPE, ref gainType);
+            if (gainType == (int)GainType.DISCRETE_DECIBELS)
+            {
+                int minVal = 0;
+                int maxVal = 0;
+                int defaultVal = 0;
+                ResourceManagerCS.GetCameraParamRangeInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_GAIN, ref minVal, ref maxVal, ref defaultVal);
+                int range = maxVal - minVal + 1; // include maxVal
+                double[] discreteValues = new double[range];
+                // TODO: !!!WARNING!!! This function always sends the buffer as a native char* pointer. "len" here is only meaningful to the native callee if it knows to associate this param ID with this template type.
+                ResourceManagerCS.GetCameraParamBuffer<double>((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_GAIN_DISCRETE_DECIBELS_VALUES, discreteValues, range);
+                foreach(double discreteValue in discreteValues)
+                {
+                    options.Add(discreteValue.ToString());
+                }
+            }
+            return options;
+        }
+
+        public bool IsAutoExposureRunning()
+        {
+            return IsAutoExposureRunning_native();
+        }
+
+        public void PerformOneShotWhiteBalance()
+        {
+            _ = ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_ONE_SHOT_WHITE_BALANCE_FLAG, 1);
+        }
+
+        public void SetDefaultColorGains()
+        {
+            double minVal = 0.0;
+            double maxVal = 0.0;
+            double defaultVal = 0.0;
+            int[] gainParams = {(int)ICamera.Params.PARAM_CAMERA_RED_GAIN, (int)ICamera.Params.PARAM_CAMERA_GREEN_GAIN , (int)ICamera.Params.PARAM_CAMERA_BLUE_GAIN };
+            int selectedCam = (int)SelectedHardware.SELECTED_CAMERA1;
+            foreach (int gainParam in gainParams)
+            {
+                ResourceManagerCS.GetCameraParamRangeDouble(selectedCam, gainParam, ref minVal, ref maxVal, ref defaultVal);
+                ResourceManagerCS.SetCameraParamDouble(selectedCam, gainParam, defaultVal);
+            }
+        }
+
+        public void StartAutoExposure()
+        {
+            StartAutoExposure_native();
+        }
+
+        public void StopAutoExposure()
+        {
+            StopAutoExposure_native();
+        }
+
+        [DllImport(".\\Modules_Native\\AutoExposure.dll", EntryPoint = "IsAutoExposureRunning")]
+        private static extern bool IsAutoExposureRunning_native();
+
+        [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "CallStartAutoExposure")]
+        private static extern void StartAutoExposure_native();
+
+        [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "CallStopAutoExposure")]
+        private static extern void StopAutoExposure_native();
 
         #endregion Methods
     }

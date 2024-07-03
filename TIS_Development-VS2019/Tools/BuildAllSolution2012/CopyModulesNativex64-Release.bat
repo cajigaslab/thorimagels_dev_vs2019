@@ -90,6 +90,10 @@ mkdir "..\..\Common\AutoFocusModule\x64\Release"
 copy .\x64\Release\AutoFocus.dll ..\..\Common\AutoFocusModule\x64\Release
 copy .\x64\Release\AutoFocus.lib ..\..\Common\AutoFocusModule\x64\Release
 copy .\x64\Release\AutoFocus.pdb ..\..\Common\AutoFocusModule\x64\Release
+mkdir "..\..\Common\AutoExposureModule\x64\Release"
+copy .\x64\Release\AutoExposure.dll ..\..\Common\AutoExposureModule\x64\Release
+copy .\x64\Release\AutoExposure.lib ..\..\Common\AutoExposureModule\x64\Release
+copy .\x64\Release\AutoExposure.pdb ..\..\Common\AutoExposureModule\x64\Release
 mkdir "..\..\Commands\General\SelectHardware\x64\Release"
 copy .\x64\Release\SelectHardware.dll ..\..\Commands\General\SelectHardware\x64\Release
 copy .\x64\Release\SelectHardware.lib ..\..\Commands\General\SelectHardware\x64\Release
@@ -148,6 +152,12 @@ mkdir "..\..\Hardware\Cameras\ThordaqDFLIM\x64\Release"
 copy .\x64\Release\ThordaqDFLIM.dll ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Release
 copy .\x64\Release\ThordaqDFLIM.lib ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Release
 copy .\x64\Release\ThordaqDFLIM.pdb ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Release
+copy .\x64\Release\dFLIM_4002.dll ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Release
+copy .\x64\Release\dFLIM_4002.lib ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Release
+copy .\x64\Release\dFLIM_4002.pdb ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Release
+copy .\x64\Release\dFLIMGG.dll ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Release
+copy .\x64\Release\dFLIMGG.lib ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Release
+copy .\x64\Release\dFLIMGG.pdb ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Release
 copy .\x64\Release\ThorDFLIMGalvoGalvo.dll ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Release
 copy .\x64\Release\ThorDFLIMGalvoGalvo.lib ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Release
 copy .\x64\Release\ThorDFLIMGalvoGalvo.pdb ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Release
@@ -229,6 +239,10 @@ mkdir "..\..\Hardware\Devices\ThorMCM6000_Aux\x64\Release"
 copy .\x64\Release\ThorMCM6000_Aux.dll ..\..\Hardware\Devices\ThorMCM6000_Aux\x64\Release
 copy .\x64\Release\ThorMCM6000_Aux.lib ..\..\Hardware\Devices\ThorMCM6000_Aux\x64\Release
 copy .\x64\Release\ThorMCM6000_Aux.pdb ..\..\Hardware\Devices\ThorMCM6000_Aux\x64\Release
+mkdir "..\..\Hardware\Devices\ThorMCM301\x64\Release"
+copy .\x64\Release\ThorMCM301.dll ..\..\Hardware\Devices\ThorMCM301\x64\Release
+copy .\x64\Release\ThorMCM301.lib ..\..\Hardware\Devices\ThorMCM301\x64\Release
+copy .\x64\Release\ThorMCM301.pdb ..\..\Hardware\Devices\ThorMCM301\x64\Release
 mkdir "..\..\Hardware\Devices\ThorBCMPA\x64\Release"
 copy .\x64\Release\ThorBCMPA.dll ..\..\Hardware\Devices\ThorBCMPA\x64\Release
 copy .\x64\Release\ThorBCMPA.lib ..\..\Hardware\Devices\ThorBCMPA\x64\Release
@@ -289,6 +303,10 @@ mkdir "..\..\Hardware\Devices\ThorPowerControl\x64\Release"
 copy .\x64\Release\ThorPowerControl.dll ..\..\Hardware\Devices\ThorPowerControl\x64\Release
 copy .\x64\Release\ThorPowerControl.lib ..\..\Hardware\Devices\ThorPowerControl\x64\Release
 copy .\x64\Release\ThorPowerControl.pdb ..\..\Hardware\Devices\ThorPowerControl\x64\Release
+mkdir "..\..\Hardware\Devices\ThorPrelude\x64\Release"
+copy .\x64\Release\ThorPrelude.dll ..\..\Hardware\Devices\ThorPrelude\x64\Release
+copy .\x64\Release\ThorPrelude.lib ..\..\Hardware\Devices\ThorPrelude\x64\Release
+copy .\x64\Release\ThorPrelude.pdb ..\..\Hardware\Devices\ThorPrelude\x64\Release
 mkdir "..\..\Hardware\Devices\ThorShutterDigital\x64\Release"
 copy .\x64\Release\ThorShutterDig.dll ..\..\Hardware\Devices\ThorShutterDigital\x64\Release
 copy .\x64\Release\ThorShutterDig.lib ..\..\Hardware\Devices\ThorShutterDigital\x64\Release
@@ -328,6 +346,10 @@ mkdir "..\..\Hardware\Devices\ThorZPiezo\x64\Release"
 copy .\x64\Release\ThorZPiezo.dll ..\..\Hardware\Devices\ThorZPiezo\x64\Release
 copy .\x64\Release\ThorZPiezo.lib ..\..\Hardware\Devices\ThorZPiezo\x64\Release
 copy .\x64\Release\ThorZPiezo.pdb ..\..\Hardware\Devices\ThorZPiezo\x64\Release
+mkdir "..\..\Hardware\Devices\ThorDAQZ\x64\Release"
+copy .\x64\Release\ThorDAQZ.dll ..\..\Hardware\Devices\ThorDAQZ\x64\Release
+copy .\x64\Release\ThorDAQZ.lib ..\..\Hardware\Devices\ThorDAQZ\x64\Release
+copy .\x64\Release\ThorDAQZ.pdb ..\..\Hardware\Devices\ThorDAQZ\x64\Release
 mkdir "..\..\Hardware\Devices\ThorZStepper\x64\Release"
 copy .\x64\Release\ThorZStepper.dll ..\..\Hardware\Devices\ThorZStepper\x64\Release
 copy .\x64\Release\ThorZStepper.lib ..\..\Hardware\Devices\ThorZStepper\x64\Release
@@ -400,3 +422,15 @@ mkdir "..\..\Common\ConvertUtilities\x64\Release"
 copy .\x64\Release\ClassicTiffConverter.dll ..\..\Common\ConvertUtilities\x64\Release
 copy .\x64\Release\ClassicTiffConverter.lib ..\..\Common\ConvertUtilities\x64\Release
 copy .\x64\Release\ClassicTiffConverter.pdb ..\..\Common\ConvertUtilities\x64\Release
+mkdir "..\..\Hardware\Devices\ThorElectroPhys\x64\Release"
+copy .\x64\Release\ThorElectroPhys.dll ..\..\Hardware\Devices\ThorElectroPhys\x64\Release
+copy .\x64\Release\ThorElectroPhys.lib ..\..\Hardware\Devices\ThorElectroPhys\x64\Release
+copy .\x64\Release\ThorElectroPhys.pdb ..\..\Hardware\Devices\ThorElectroPhys\x64\Release
+mkdir "..\..\Hardware\Devices\ThorRemoteFocusNI\x64\Release"
+copy .\x64\Release\ThorRemoteFocusNI.dll ..\..\Hardware\Devices\ThorRemoteFocusNI\x64\Release
+copy .\x64\Release\ThorRemoteFocusNI.lib ..\..\Hardware\Devices\ThorRemoteFocusNI\x64\Release
+copy .\x64\Release\ThorRemoteFocusNI.pdb ..\..\Hardware\Devices\ThorRemoteFocusNI\x64\Release
+mkdir "..\..\Hardware\Devices\ThorDAQRemoteFocus\x64\Release"
+copy .\x64\Release\ThorDAQRemoteFocus.dll ..\..\Hardware\Devices\ThorDAQRemoteFocus\x64\Release
+copy .\x64\Release\ThorDAQRemoteFocus.lib ..\..\Hardware\Devices\ThorDAQRemoteFocus\x64\Release
+copy .\x64\Release\ThorDAQRemoteFocus.pdb ..\..\Hardware\Devices\ThorDAQRemoteFocus\x64\Release

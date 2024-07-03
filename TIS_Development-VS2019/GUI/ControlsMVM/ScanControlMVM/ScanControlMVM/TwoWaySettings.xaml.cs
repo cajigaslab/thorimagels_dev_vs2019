@@ -3,6 +3,7 @@
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using System.ComponentModel;
     using System.Diagnostics;
     using System.Globalization;
@@ -21,7 +22,24 @@
     using System.Windows.Shapes;
     using System.Xml;
 
-    using ChartPlotterControl;
+    using SciChart;
+    using SciChart.Charting;
+    using SciChart.Charting.ChartModifiers;
+    using SciChart.Charting.Common.Extensions;
+    using SciChart.Charting.Model.DataSeries;
+    using SciChart.Charting.Themes;
+    using SciChart.Charting.Visuals;
+    using SciChart.Charting.Visuals.Annotations;
+    using SciChart.Charting.Visuals.Axes;
+    using SciChart.Charting.Visuals.Axes.LabelProviders;
+    using SciChart.Charting.Visuals.Events;
+    using SciChart.Charting.Visuals.PointMarkers;
+    using SciChart.Charting.Visuals.RenderableSeries;
+    using SciChart.Core;
+    using SciChart.Data.Model;
+    using SciChart.Drawing.HighSpeedRasterizer;
+    using SciChart.Drawing.Utility;
+    using SciChart.Drawing.VisualXcceleratorRasterizer;
 
     using ThorLogging;
 
@@ -75,7 +93,7 @@
         private const string GALVO_FILE_BASE = "AlignDataGalvo";
         private const string GALVO_FILE_NAME = ".\\AlignDataGalvo.txt";
         private const double MAX_ALIGN_VALUE = 128;
-        private const double MAX_ALIGN_VALUE_COARSE = 255;
+        private const double MAX_ALIGN_VALUE_COARSE = 18000;
         private const double MAX_ALIGN_VALUE_GALVO = 5000;
         private const double MIN_ALIGN_VALUE = -128;
         private const double MIN_ALIGN_VALUE_COARSE = 0;
@@ -255,6 +273,29 @@
             Close();
         }
 
+        void PlotData()
+        {
+            if((_xAxis != null) && (_yAxis != null))
+            {
+                if (_xAxis.Length == _yAxis.Length)
+                {
+                    sciChartSurface.RenderableSeries = new ObservableCollection<IRenderableSeries>();
+                    XyDataSeries<double, double> series = new XyDataSeries<double, double> { FifoCapacity = null, AcceptsUnsortedData = false };
+                    series.Append(_xAxis, _yAxis);
+                    var l = new FastLineRenderableSeries
+                    {
+                        StrokeThickness = 2,
+                        Stroke = Colors.GreenYellow,
+                        IsVisible = true,
+                        ResamplingMode = SciChart.Data.Numerics.ResamplingMode.Auto,
+                        AntiAliasing = false,
+                        DataSeries = series,
+                    };
+                    sciChartSurface.RenderableSeries.Add(l);
+                }
+            }
+        }
+
         void TwoWaySettings_Closed(object sender, EventArgs e)
         {
             //disable imaging before tearing down to avoid errors
@@ -352,15 +393,13 @@
                 _yAxis[i] = 0;
             }
 
-            plot.XCoordinates = _xAxis;
-            plot.YCoordinates = _yAxis;
-            plot.YTitle = "Offset";
+            PlotData();
 
             switch (AlignMode)
             {
                 case 0:
                     {
-                        plot.XTitle = "Field Size";
+                        XNumericAxis.AxisTitle = "Field Size";
                         _alignFileName = string.Empty;
                         _alignFileBase = string.Empty;
                         _alignFileFineName = FINE_FILE_NAME;
@@ -371,7 +410,7 @@
                     break;
                 case 1:
                     {
-                        plot.XTitle = "Field Size";
+                        XNumericAxis.AxisTitle = "Field Size";
                         _alignFileName = COARSE_FILE_NAME;
                         _alignFileBase = COARSE_FILE_BASE;
                         _alignFileFineName = string.Empty;
@@ -382,7 +421,7 @@
                     break;
                 case 2:
                     {
-                        plot.XTitle = "Dwell Time";
+                        XNumericAxis.AxisTitle = "Dwell Time";
                         _alignFileName = GALVO_FILE_NAME;
                         _alignFileBase = GALVO_FILE_BASE;
                         _alignFileFineName = string.Empty;
@@ -418,23 +457,14 @@
 
             //enable imaging after setup went through
             if (null != EnableImaging) EnableImaging(true);
-
-            plot.AnchorEnable = false;
-            plot.SelectedAnchorIndex = 0;
-            plot.YCoordinateMin = _minAlignValue;
-            plot.YCoordinateMax = _maxAlignValue;
-            plot.drawGraph();
         }
 
         private void UpdateGraph()
         {
             if (lstRecPoints.Items.Count < 2)
             {
-                plot.drawGraph();
                 return;
             }
-
-            plot.AnchorEnable = false;
 
             //List<string> array = lstRecPoints.Items.OfType<string>().ToList();
 
@@ -497,7 +527,7 @@
                 }
 
             }
-            plot.drawGraph();
+            PlotData();
         }
 
         #endregion Methods

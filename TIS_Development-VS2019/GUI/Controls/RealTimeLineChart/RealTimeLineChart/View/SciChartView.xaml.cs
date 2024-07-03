@@ -368,6 +368,7 @@
             Dispatcher.Invoke(new Action(() =>
             {
                 RealTimeLineChartViewModel vm = (RealTimeLineChartViewModel)this.DataContext;
+
                 if (vm == null)
                 {
                     return;
@@ -424,6 +425,7 @@
                                     slice.AnnotationLabels[0].MouseDown -= new MouseButtonEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
                                 }
                                 vm.DeleteVerticalMarker(deleteIndex);
+                                sliceModifier.VerticalLines.Remove(slice);
                             }
                         }
                         break;
@@ -441,6 +443,9 @@
                                     slice.AnnotationLabels[0].MouseUp -= new MouseButtonEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
                                     slice.AnnotationLabels[0].MouseDown -= new MouseButtonEventHandler((sender, e) => RedirectToVerticalLineAnnotation(sender, e, slice));
                                 }
+                                sliceModifier.VerticalLines.Remove(slice);
+
+
                             }
                             vm._verticalmarker.Clear();
                             _index = 0;

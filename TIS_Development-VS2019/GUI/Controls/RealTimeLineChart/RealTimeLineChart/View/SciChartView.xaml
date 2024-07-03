@@ -138,7 +138,13 @@
                                                              MeasureBorderVisible="True"
                                                              MeasureCursorVisible="{Binding IsMeasureCursorVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                                              IsDragToScale="{Binding IsDragToScaleEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                             IsRollOver="{Binding IsRollOverEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                             IsRollOver="{Binding IsRollOverEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                             
+                                                             FrameCursor="FRAME_CURSOR"
+                                                             FrameCursorVisible= "{Binding IsFrameCursorVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                             FrameCursorX ="{Binding FrameCursorX, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                             FrameBorderVisible="True"
+                                                             />
                         <sci:VerticalSliceModifier Name="sliceModifier"
                                                    ReceiveHandledEvents="True" />
                     </sci:ModifierGroup>

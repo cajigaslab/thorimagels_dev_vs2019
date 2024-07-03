@@ -91,7 +91,8 @@ double GetTiltAdjustZValue(double fPt1X,double fPt1Y,double fPt1Z,double fPt2X,d
 void GetZPositions(IExperiment* exp, IDevice* pZStage, double &zStartPos, double &zStopPos, double &zTiltPos, double &zStepSizeMM, long &zstageSteps, long &zStreamFrames, long &zStreamMode);
 void SetPower(IExperiment* exp, ICamera* camera, double zPos, double &power0, double &power1, double &power2, double &power3, double &power4, double &power5);
 void SetLEDs(IExperiment* exp, ICamera* camera, double zPos, double &ledPower1, double &ledPower2, double &ledPower3, double &ledPower4, double &ledPower5, double &ledPower6);
-void PreCaptureProtocol(IExperiment *exp);
+void PreCaptureProtocol(IExperiment *exp, long zCount);
 UINT SafetyInterlockStatusCheck();
 void InitiateSafetyInterlockStatusCheck();
+void SetCameraParameters(IExperiment* exp, ICamera* camera);
 long GetTotalNumOfTiles();

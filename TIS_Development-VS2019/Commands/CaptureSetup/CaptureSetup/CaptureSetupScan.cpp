@@ -228,11 +228,12 @@ DllExportLiveImage SetPMTScannerEnable(long enable)
 		switch ((ICamera::LSMType)lsmType)
 		{
 		case ICamera::LSMType::GALVO_RESONANCE:
+		case ICamera::LSMType::RESONANCE_GALVO_GALVO:
 			//scanner only needs to be started if the lsm is a resonance/galvo
 			//Set the scanner state to the set up control unit, this might defer from the current modality when in the process of switching
 			GetDevice(SelectedHardware::SELECTED_CONTROLUNIT)->GetParam(IDevice::PARAM_SCANNER_INIT_MODE, rsInitMode);
 
-			//only turn off the scanner when it is not on the always on mode
+			//only turn on the scanner when it is not on the always on mode
 			if (FALSE == ((int)rsInitMode))
 			{
 				GetDevice(SelectedHardware::SELECTED_CONTROLUNIT)->SetParam(IDevice::PARAM_SCANNER_ENABLE, enable);
@@ -242,14 +243,16 @@ DllExportLiveImage SetPMTScannerEnable(long enable)
 				GetDevice(SelectedHardware::SELECTED_CONTROLUNIT)->PostflightPosition();
 			}
 			break;
-		case ICamera::LSMType::RESONANCE_GALVO_GALVO:
-			//scanner needs to be analog controlled in RGG mode
-			GetDevice(SelectedHardware::SELECTED_CONTROLUNIT)->SetParam(IDevice::PARAM_SCANNER_ENABLE_ANALOG, enable);
-			GetDevice(SelectedHardware::SELECTED_CONTROLUNIT)->PreflightPosition();
-			GetDevice(SelectedHardware::SELECTED_CONTROLUNIT)->SetupPosition();
-			GetDevice(SelectedHardware::SELECTED_CONTROLUNIT)->StartPosition();
-			GetDevice(SelectedHardware::SELECTED_CONTROLUNIT)->PostflightPosition();
-			break;
+
+			//TODO: remove once mROI is fully working
+		//case ICamera::LSMType::RESONANCE_GALVO_GALVO:
+		//	//scanner needs to be analog controlled in RGG mode
+		//	GetDevice(SelectedHardware::SELECTED_CONTROLUNIT)->SetParam(IDevice::PARAM_SCANNER_ENABLE_ANALOG, enable);
+		//	GetDevice(SelectedHardware::SELECTED_CONTROLUNIT)->PreflightPosition();
+		//	GetDevice(SelectedHardware::SELECTED_CONTROLUNIT)->SetupPosition();
+		//	GetDevice(SelectedHardware::SELECTED_CONTROLUNIT)->StartPosition();
+		//	GetDevice(SelectedHardware::SELECTED_CONTROLUNIT)->PostflightPosition();
+		//	break;
 		default:
 			break;
 		}

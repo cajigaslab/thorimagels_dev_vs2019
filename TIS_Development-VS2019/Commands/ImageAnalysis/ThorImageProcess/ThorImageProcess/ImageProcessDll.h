@@ -65,4 +65,18 @@ class ImageProcessDll: public PDLL
 	DECLARE_FUNCTION6(LONG, Moments, USHORT*, USHORT, USHORT,int, MOMENT_TYPE, double* )
 	DECLARE_FUNCTION8(LONG, FilterImage, USHORT*, USHORT, USHORT, int&, FILTER_TYPE, long, int, long*)
 	DECLARE_FUNCTION6(LONG, GetArea,USHORT*, USHORT, USHORT,int, long*, int)
+	
+};
+
+class ImageDistortionCorrectionDll : public PDLL
+{
+#pragma warning(push)
+#pragma warning(disable:26495)
+#pragma warning(disable:26444)
+	//call the macro and pass your class name
+	DECLARE_CLASS(ImageDistortionCorrectionDll);
+	//use DECLARE_FUNCTION4 since this function has 4 parameters
+#pragma warning(pop)
+	DECLARE_FUNCTION6(LONG, SetImageDistortionCorrectionParameters, int, int, double, double, double, double);
+	DECLARE_FUNCTION4(LONG, CorrectPreludeImageDistortion, const USHORT*, USHORT*, int, int);
 };

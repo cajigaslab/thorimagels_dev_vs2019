@@ -22,8 +22,6 @@
 #include "Strsafe.h"
 #include <queue>
 #include <map>
-#include <atomic>
-
 
 #include "..\..\..\..\Common\Camera.h"
 #include "..\..\..\..\Common\StringCPP.h"

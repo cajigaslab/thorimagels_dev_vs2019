@@ -1,0 +1,86 @@
+;
+; TD_DFLIMwin10LegacyDrv.inf
+;
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=Sample ; TODO: edit Class
+ClassGuid={78A1C341-4539-11d3-B88D-00C04FAD5171} ; TODO: edit ClassGuid
+Provider=%ManufacturerName%
+CatalogFile=TD_DFLIMwin10LegacyDrv.cat
+DriverVer= ; TODO: set DriverVer in stampinf property pages
+
+[DestinationDirs]
+DefaultDestDir = 12
+TD_DFLIMwin10LegacyDrv_Device_CoInstaller_CopyFiles = 11
+
+; ================= Class section =====================
+
+[ClassInstall32]
+Addreg=SampleClassReg
+
+[SampleClassReg]
+HKR,,,0,%ClassName%
+HKR,,Icon,,-5
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+TD_DFLIMwin10LegacyDrv.sys  = 1,,
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with SourceDisksNames
+
+;*****************************************
+; Install Section
+;*****************************************
+
+[Manufacturer]
+%ManufacturerName%=Standard,NT$ARCH$
+
+[Standard.NT$ARCH$]
+%TD_DFLIMwin10LegacyDrv.DeviceDesc%=TD_DFLIMwin10LegacyDrv_Device, Root\TD_DFLIMwin10LegacyDrv ; TODO: edit hw-id
+
+[TD_DFLIMwin10LegacyDrv_Device.NT]
+CopyFiles=Drivers_Dir
+
+[Drivers_Dir]
+TD_DFLIMwin10LegacyDrv.sys
+
+;-------------- Service installation
+[TD_DFLIMwin10LegacyDrv_Device.NT.Services]
+AddService = TD_DFLIMwin10LegacyDrv,%SPSVCINST_ASSOCSERVICE%, TD_DFLIMwin10LegacyDrv_Service_Inst
+
+; -------------- TD_DFLIMwin10LegacyDrv driver install sections
+[TD_DFLIMwin10LegacyDrv_Service_Inst]
+DisplayName    = %TD_DFLIMwin10LegacyDrv.SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\TD_DFLIMwin10LegacyDrv.sys
+
+;
+;--- TD_DFLIMwin10LegacyDrv_Device Coinstaller installation ------
+;
+
+[TD_DFLIMwin10LegacyDrv_Device.NT.CoInstallers]
+AddReg=TD_DFLIMwin10LegacyDrv_Device_CoInstaller_AddReg
+CopyFiles=TD_DFLIMwin10LegacyDrv_Device_CoInstaller_CopyFiles
+
+[TD_DFLIMwin10LegacyDrv_Device_CoInstaller_AddReg]
+HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"
+
+[TD_DFLIMwin10LegacyDrv_Device_CoInstaller_CopyFiles]
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
+
+[TD_DFLIMwin10LegacyDrv_Device.NT.Wdf]
+KmdfService =  TD_DFLIMwin10LegacyDrv, TD_DFLIMwin10LegacyDrv_wdfsect
+[TD_DFLIMwin10LegacyDrv_wdfsect]
+KmdfLibraryVersion = $KMDFVERSION$
+
+[Strings]
+SPSVCINST_ASSOCSERVICE= 0x00000002
+ManufacturerName="<Your manufacturer name>" ;TODO: Replace with your manufacturer name
+ClassName="Samples" ; TODO: edit ClassName
+DiskName = "TD_DFLIMwin10LegacyDrv Installation Disk"
+TD_DFLIMwin10LegacyDrv.DeviceDesc = "TD_DFLIMwin10LegacyDrv Device"
+TD_DFLIMwin10LegacyDrv.SVCDESC = "TD_DFLIMwin10LegacyDrv Service"

@@ -28,6 +28,7 @@ private:
 	int _imageID;						//global image ID, start from 1 if able to add scan
 	long _cameraType;					//camera type, either camera or LSM
 	long _lsmType;						//lsm type, can be GR, GG, RGG, ...
+	long _mROIEnabled;
 	long _captureFile;					//file mode to be acquired, only save in FILE_BIG_TIFF(2)
 
 	//get time frame counts and interval in second, frame count == -1 will bypass saving
@@ -54,7 +55,7 @@ public:
 	long ReadChannelData(char* buf, long channelCount, long width, long height, long zSliceID, long timeID, long specID, long regionID = 0);
 
 	//initialize ome tif, last image must be closed before this function
-	long SetupImageStore(wchar_t * path, void* exp, long doCompression = FALSE);
+	long SetupImageStore(wchar_t * path, void* exp, long mROIEnabled, long doCompression = FALSE);
 
 	//set active scan and region id
 	long SetScan(long scanID);

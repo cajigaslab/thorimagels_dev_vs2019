@@ -14,10 +14,10 @@ extern "C" long __declspec(dllimport) GetZ2Range(double& zMin, double& zMax, dou
 
 
 int Call_TiffVSetField(TIFF* out, uint32 ttag_t, ...);
-long SaveTIFF(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height, unsigned short * rlut, unsigned short * glut,unsigned short * blut, double umPerPixel,int nc, int nt, int nz, double timeIncrement, int c, int t, int z,string *acquiredDate,double dt, string * omeTiffData, PhysicalSize physicalSize, long doCompression);
-long SaveTIFFWithoutOME(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height, unsigned short * rlut, unsigned short * glut,unsigned short * blut, double umPerPixel,int nc, int nt, int nz, double timeIncrement, int c, int t, int z,string *acquiredDate,double dt, long doCompression);
+long SaveTIFF(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height, unsigned short * rlut, unsigned short * glut,unsigned short * blut, double umPerPixel,int nc, int nt, int nz, double timeIncrement, int c, int t, int z,string *acquiredDate,double dt, string * omeTiffDataOrNull, PhysicalSize physicalSize, long doCompression, bool isMultiChannel);
+string CreateOMEMetadata(int width, int height, int nc, int nt, int nz, double timeIncrement, int c, int t, int z, string* acquiredDateTime, double deltaT, string* omeTiffData, PhysicalSize physicalSize);
 
-long SaveJPEG(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height,unsigned short * rlut, unsigned short * glut, unsigned short * blut,long bitDepth);
+long SaveJPEG(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height,unsigned short * rlut, unsigned short * glut, unsigned short * blut,long bitDepth, bool isBufferRGB);
 void GetColorInfo(HardwareSetupXML *pHardware,string wavelengthName, long &red, long &green, long &blue,long &bp, long &wp);
 void GetLookUpTables(unsigned short * rlut, unsigned short * glut, unsigned short *blut,long red, long green, long blue, long bp, long wp, long bitdepth);
 long SetupDimensions(ICamera *pCamera,IExperiment *pExperiment,double fieldSizeCalibration, double magnification, Dimensions &d, long &avgFrames, long &bufferChannels, long &avgMode, double &umPerPixel, long& numOfPlanes);
@@ -210,8 +210,6 @@ long AcquireTSeries::PreCaptureAutoFocus(long index, long subWell)
 	_pExp->GetAutoFocus(aftype, repeat, expTimeMS, stepSizeUM, startPosMM, stopPosMM);
 
 	double zStartPos, zStopPos, zTiltPos, zStepSizeMM;
-	double zMin, zMax, zDefault;
-	double z2Min, z2Max, z2Default;
 	double z2ScaleFactor = 0.0;
 	long zstageSteps, zStreamFrames, zStreamMode;
 	GetZPositions(_pExp, NULL, zStartPos, zStopPos, zTiltPos, zStepSizeMM, zstageSteps, zStreamFrames, zStreamMode);
@@ -372,7 +370,7 @@ long AcquireTSeries::Execute(long index, long subWell)
 
 	AcquireFactory factory;	
 
-	auto_ptr<IAcquire> acqZFrame(NULL);
+	auto_ptr<IAcquire> acqType(NULL);
 
 	ICamera::CameraType cameraType;
 	ICamera::LSMType lsmType;
@@ -381,35 +379,29 @@ long AcquireTSeries::Execute(long index, long subWell)
 	cameraType = (ICamera::CameraType)static_cast<long> (val);
 	_pCamera->GetParam(ICamera::PARAM_LSM_TYPE,val);
 	lsmType = (ICamera::LSMType)static_cast<long> (val);
-	switch(cameraType)
-	{
-	case ICamera::CCD:
-		{				
-			if(_pExp->GetNumberOfWavelengths() > 1)
-			{
-				acqZFrame.reset(factory.getAcquireInstance(AcquireFactory::ACQ_MULTI_WAVELENGTH,NULL,_pExp,_path));
-			}
-			else
-			{
-				acqZFrame.reset(factory.getAcquireInstance(AcquireFactory::ACQ_SINGLE,NULL,_pExp,_path));
-			}
 
+	long sequentialEnabled = FALSE, sequentialType = 0;
+	_pExp->GetCaptureSequence(sequentialEnabled, sequentialType);
+	if (TRUE == sequentialEnabled && 1 == sequentialType)
+	{
+		acqType.reset(factory.getAcquireInstance(AcquireFactory::ACQ_SEQUENCE, NULL, _pExp, _path));
+	}
+	else
+	{
+		switch (cameraType)
+		{
+		case ICamera::CCD:
+		{
+			acqType.reset(factory.getAcquireInstance(AcquireFactory::ACQ_SINGLE, NULL, _pExp, _path));
 		}
 		break;
-	case ICamera::LSM:
-		{			
-			//if (zStreamFrames <= 1)
-			//{
-			//	
-			//}
-			//else
-			//{
-			//	// do nothing leave acqZFrame as NULL
-			//}
-			acqZFrame.reset(factory.getAcquireInstance(AcquireFactory::ACQ_SINGLE,NULL,_pExp,_path));
+		case ICamera::LSM:
+		{
+			acqType.reset(factory.getAcquireInstance(AcquireFactory::ACQ_SINGLE, NULL, _pExp, _path));
 		}
-		break;		
-	}	
+		break;
+		}
+	}
 
 	if (ICamera::CCD == cameraType)
 	{
@@ -424,10 +416,13 @@ long AcquireTSeries::Execute(long index, long subWell)
 		long tapsIndex, tapsBalance;
 		long readoutSpeedIndex;
 		long camAverageMode, camAverageNum;
-		long camVericalFlip, camHorizontalFlip, imageAngle;
+		long camVericalFlip, camHorizontalFlip, imageAngle, camChannel;
+		long colorImageType, polarImageType;
+		long isContinuousWhiteBalance, continuousWhiteBalanceNumFrames;
+		double redGain, greenGain, blueGain;
 
 		//getting the values from the experiment setup XML files
-		_pExp->GetCamera(camName,camImageWidth,camImageHeight,camPixelSize,camExposureTimeMS,gain,blackLevel,lightMode,left,top,right,bottom,binningX,binningY,tapsIndex,tapsBalance,readoutSpeedIndex,camAverageMode,camAverageNum,camVericalFlip,camHorizontalFlip,imageAngle);
+		_pExp->GetCamera(camName, camImageWidth, camImageHeight, camPixelSize, camExposureTimeMS, gain, blackLevel, lightMode, left, top, right, bottom, binningX, binningY, tapsIndex, tapsBalance, readoutSpeedIndex, camAverageMode, camAverageNum, camVericalFlip, camHorizontalFlip, imageAngle, camChannel, colorImageType, polarImageType, isContinuousWhiteBalance, continuousWhiteBalanceNumFrames, redGain, greenGain, blueGain);
 
 		camAverageMode = (1 == camAverageMode) ? camAverageNum : 1;
 		_pCamera->SetParam(ICamera::PARAM_EXPOSURE_TIME_MS,camExposureTimeMS);
@@ -451,6 +446,14 @@ long AcquireTSeries::Execute(long index, long subWell)
 		//will average after acquisition is complete. Set to none at camera level
 		_pCamera->SetParam(ICamera::PARAM_CAMERA_AVERAGEMODE,ICamera::AVG_MODE_NONE);
 
+		_pCamera->SetParam(ICamera::PARAM_CAMERA_COLOR_IMAGE_TYPE, colorImageType);
+		_pCamera->SetParam(ICamera::PARAM_CAMERA_POLAR_IMAGE_TYPE, polarImageType);
+		_pCamera->SetParam(ICamera::PARAM_CAMERA_IS_CONTINUOUS_WHITE_BALANCE_ENABLED, isContinuousWhiteBalance);
+		_pCamera->SetParam(ICamera::PARAM_CAMERA_CONTINUOUS_WHITE_BALANCE_NUM_FRAMES, continuousWhiteBalanceNumFrames);
+		_pCamera->SetParam(ICamera::PARAM_CAMERA_RED_GAIN, redGain);
+		_pCamera->SetParam(ICamera::PARAM_CAMERA_GREEN_GAIN, greenGain);
+		_pCamera->SetParam(ICamera::PARAM_CAMERA_BLUE_GAIN, blueGain);
+
 		_lsmChannel = 1;
 	}
 	else
@@ -465,9 +468,13 @@ long AcquireTSeries::Execute(long index, long subWell)
 		long timeBasedLineScanMS = 0;
 		long threePhotonEnable = FALSE;
 		long numberOfPlanes = 1;
+		long selectedImagingGG = 0;
+		long selectedStimGG = 0;
+		double pixelAspectRatioYScale = 1;
+
 		//getting the values from the experiment setup XML files
 		_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,chan,lsmFieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,
-			flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes);
+			flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes, selectedImagingGG, selectedStimGG, pixelAspectRatioYScale);
 		_lsmChannel = chan;
 		switch (areaMode)
 		{
@@ -544,6 +551,8 @@ long AcquireTSeries::Execute(long index, long subWell)
 
 		_pCamera->SetParam(ICamera::PARAM_LSM_3P_ENABLE, threePhotonEnable);
 		_pCamera->SetParam(ICamera::PARAM_LSM_NUMBER_OF_PLANES, numberOfPlanes);
+		_pCamera->SetParam(ICamera::PARAM_LSM_Y_AMPLITUDE_SCALER, (int)(pixelAspectRatioYScale * 100));
+
 		
 		//notify the ECU of the zoom change also
 		IDevice *pControlUnitDevice = NULL;
@@ -568,10 +577,10 @@ long AcquireTSeries::Execute(long index, long subWell)
 		ScannerEnable(TRUE);
 	}
 
-	return CaptureTSeries(index, subWell,  acqZFrame, _pCamera);
+	return CaptureTSeries(index, subWell, acqType, _pCamera);
 }
 
-long AcquireTSeries::CaptureTSeries(long index, long subWell, auto_ptr<IAcquire> &acqZFrame, ICamera *pCamera)
+long AcquireTSeries::CaptureTSeries(long index, long subWell, auto_ptr<IAcquire> &acquisionType, ICamera *pCamera)
 {
 	//Reset _stopTCapture flag each time experiment starts 
 	_stopTCapture = FALSE;
@@ -703,6 +712,11 @@ long AcquireTSeries::CaptureTSeries(long index, long subWell, auto_ptr<IAcquire>
 	//Here we only capture one time point at a time
 	long tOffset = 0;	
 	_pExp->GetTimelapseTOffset(tOffset);
+	long sequentialEnabled = FALSE, sequentialType = 0;
+	_pExp->GetCaptureSequence(sequentialEnabled, sequentialType);
+	// Sequential between frames means the Z stage needs to be moved first before going through all the sequence steps
+	bool notSequentialBetweenFrames = (FALSE == sequentialEnabled || 0 == sequentialType);
+
 	for(long t=1;t<=1;t++)
 	{
 		pCamera->PreflightAcquisition(NULL);
@@ -778,11 +792,11 @@ long AcquireTSeries::CaptureTSeries(long index, long subWell, auto_ptr<IAcquire>
 
 				if (zStreamMode == 0)	// if z stream is not enabled, call Execute() (old logic) anyway 
 				{
-					if (FALSE == acqZFrame->Execute(index,subWell,z,t+tOffset))
+					if (FALSE == acquisionType->Execute(index, subWell, z, t + tOffset))
 					{
 						CloseShutter();
-						StringCbPrintfW(message,MSG_LENGTH,L"AcquireTSeries Execute acqZFrame z = %d t = %d failed",(int)z,(int)t);
-						logDll->TLTraceEvent(INFORMATION_EVENT,1,message);
+						StringCbPrintfW(message, MSG_LENGTH, L"AcquireTSeries Execute acquisionType z = %d t = %d failed", (int)z, (int)t);
+						logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
 						//Ensure all tasks are stopped in the camera before returning
 						pCamera->PostflightAcquisition(NULL);
 						return FALSE;
@@ -790,13 +804,15 @@ long AcquireTSeries::CaptureTSeries(long index, long subWell, auto_ptr<IAcquire>
 				}
 				else
 				{
-					if (zStreamFrames > 1)	// if z stream is enable and number of z stream frames > 1, use zStreamExecute() the new logic 
+					// Do not call ZStreamExecute if sequential mode is enabled and sequential type is 'between frames' 
+					// for that mode it needs to go through the sequence acquisition type first
+					if (zStreamMode == 1 && zStreamFrames > 1 && notSequentialBetweenFrames)
 					{
-						if (FALSE == ZStreamExecute(index, subWell, pCamera, z,t+tOffset, 1))
+						if (FALSE == ZStreamExecute(index, subWell, pCamera, z, t + tOffset, 1))
 						{
 							CloseShutter();
-							StringCbPrintfW(message,MSG_LENGTH,L"AcquireTSeries ZStreamExecute z = %d t = %d failed",(int)z,(int)t);
-							logDll->TLTraceEvent(INFORMATION_EVENT,1,message);
+							StringCbPrintfW(message, MSG_LENGTH, L"AcquireTSeries ZStreamExecute z = %d t = %d failed", (int)z, (int)t);
+							logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
 							//Ensure all tasks are stopped in the camera before returning
 							pCamera->PostflightAcquisition(NULL);
 							return FALSE;
@@ -804,11 +820,11 @@ long AcquireTSeries::CaptureTSeries(long index, long subWell, auto_ptr<IAcquire>
 					}
 					else	// if z stream is enabled, but number of the z stream frame = 1, use old logic
 					{
-						if(FALSE == acqZFrame->Execute(index,subWell,z,t+tOffset))
+						if (FALSE == acquisionType->Execute(index, subWell, z, t + tOffset))
 						{
 							CloseShutter();
-							StringCbPrintfW(message,MSG_LENGTH,L"AcquireTSeries Execute acqZFrame z = %d t = %d failed",(int)z,(int)t);
-							logDll->TLTraceEvent(INFORMATION_EVENT,1,message);
+							StringCbPrintfW(message, MSG_LENGTH, L"AcquireTSeries Execute acquisionType z = %d t = %d failed", (int)z, (int)t);
+							logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
 							//Ensure all tasks are stopped in the camera before returning
 							pCamera->PostflightAcquisition(NULL);
 							return FALSE;
@@ -821,8 +837,11 @@ long AcquireTSeries::CaptureTSeries(long index, long subWell, auto_ptr<IAcquire>
 					pos += zStepSizeMM;
 				}
 
-				//update progress to observer.
-				CallSaveImage(updateIndex, TRUE);			
+				if (notSequentialBetweenFrames)
+				{
+					//update progress to observer.
+					CallSaveImage(updateIndex, TRUE);
+				}
 
 				//update progress T to observer.
 				CallSaveTImage(t+tOffset);
@@ -906,13 +925,15 @@ long AcquireTSeries::CaptureTSeries(long index, long subWell, auto_ptr<IAcquire>
 			SetLEDs(_pExp, pCamera, zStartPos, ledPower1, ledPower2, ledPower3, ledPower4, ledPower5, ledPower6);
 
 			//don't move the z axis
-			if ( (zStreamMode == 1) && (zStreamFrames > 1) )
+			// Do not call ZStreamExecute if sequential mode is enabled and sequential type is 'between frames' 
+			// for that mode it needs to go through the sequence acquisition type first
+			if (zStreamMode == 1 && zStreamFrames > 1 && notSequentialBetweenFrames)
 			{
-				if(FALSE == ZStreamExecute(index, subWell, pCamera, z, t+tOffset, 1))
+				if (FALSE == ZStreamExecute(index, subWell, pCamera, z, t + tOffset, 1))
 				{
 					CloseShutter();
-					StringCbPrintfW(message,MSG_LENGTH,L"AcquireTSeries ZStreamExecute z = %d t = %d failed",(int)z,(int)t);
-					logDll->TLTraceEvent(INFORMATION_EVENT,1,message);
+					StringCbPrintfW(message, MSG_LENGTH, L"AcquireTSeries ZStreamExecute z = %d t = %d failed", (int)z, (int)t);
+					logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
 					//Ensure all tasks are stopped in the camera before returning
 					pCamera->PostflightAcquisition(NULL);
 					return FALSE;
@@ -920,11 +941,11 @@ long AcquireTSeries::CaptureTSeries(long index, long subWell, auto_ptr<IAcquire>
 			}
 			else
 			{
-				if(FALSE == acqZFrame->Execute(index,subWell,1,t+tOffset))
+				if (FALSE == acquisionType->Execute(index, subWell, 1, t + tOffset))
 				{
 					CloseShutter();
-					StringCbPrintfW(message,MSG_LENGTH,L"AcquireTSeries Execute acqZFrame z = %d t = %d failed",(int)1,(int)t);
-					logDll->TLTraceEvent(INFORMATION_EVENT,1,message);
+					StringCbPrintfW(message, MSG_LENGTH, L"AcquireTSeries Execute acquisionType z = %d t = %d failed", (int)1, (int)t);
+					logDll->TLTraceEvent(INFORMATION_EVENT, 1, message);
 					//Ensure all tasks are stopped in the camera before returning
 					pCamera->PostflightAcquisition(NULL);
 					return FALSE;
@@ -936,8 +957,11 @@ long AcquireTSeries::CaptureTSeries(long index, long subWell, auto_ptr<IAcquire>
 
 			CloseShutter();
 
-			//update progress to observer.
-			CallSaveImage(updateIndex, TRUE);
+			if (notSequentialBetweenFrames)
+			{
+				//update progress to observer.
+				CallSaveImage(updateIndex, TRUE);
+			}
 		}
 
 		pCamera->PostflightAcquisition(NULL);
@@ -1046,8 +1070,18 @@ long AcquireTSeries::SetZPosition(double pos,BOOL bWait, BOOL bPostflight)
 		return FALSE;
 	}
 
-	//Need to round pos to 0.1um. Otherwise Z&T won't reach the max Z position if we are going the full range e.g. Piezo 0-450um
-	pos = (ceil(pos * 10000 - 0.5f)) / 10000;
+	double zStageType = ZStageType::STEPPER;
+	pZStage->GetParam(IDevice::PARAM_Z_STAGE_TYPE, zStageType);
+
+	if (ZStageType::REMOTE_FOCUS == zStageType)
+	{
+		pos = round(pos * 1000);
+	}
+	else
+	{
+		//Need to round pos to 0.1um. Otherwise Z&T won't reach the max Z position if we are going the full range e.g. Piezo 0-450um
+		pos = (ceil(pos * 10000 - 0.5f)) / 10000;
+	}
 	pZStage->SetParam(IDevice::PARAM_Z_POS, pos);
 
 	pZStage->PreflightPosition();
@@ -1240,8 +1274,9 @@ string AcquireTSeries::uUIDSetup(auto_ptr<HardwareSetupXML> &pHardware, long tim
 	//If it is a sequential capture, with more than one step the wavelenth
 	//information for the steps in the sequence needs to be retrieved to
 	//have the the corrent information in the OME.
-	long captureSequenceEnable = FALSE;
-	_pExp->GetCaptureSequence(captureSequenceEnable);
+	//SequentialTypes: 0 - between stacks, 1 - between frames
+	long captureSequenceEnable = FALSE, sequentialTypes = 0;
+	_pExp->GetCaptureSequence(captureSequenceEnable, sequentialTypes);
 	vector<IExperiment::SequenceStep> captureSequence;
 	_pExp->GetSequenceSteps(captureSequence);
 	if (TRUE == captureSequenceEnable && captureSequence.size() > 1)
@@ -1388,6 +1423,32 @@ long AcquireTSeries::ZStreamExecute(long index, long subWell)
 	_pExp->GetZStage(zstageName,zEnable,zstageSteps,zstageStepSize,zStartPos,zStreamFrames,zStreamMode);
 	_pExp->GetTimelapse(timePoints,intervalSec,triggerModeTimelapse);
 
+	ICamera::CameraType cameraType;
+	double val;
+	_pCamera->GetParam(ICamera::PARAM_CAMERA_TYPE, val);
+	cameraType = (ICamera::CameraType)static_cast<long> (val);
+	if (ICamera::CCD == cameraType)
+	{
+		_lsmChannel = 1;
+	}
+	else
+	{
+		long areaMode, scanMode, interleave, pixelX, pixelY, chan, lsmFieldSize, offsetX, offsetY, averageMode, averageNum, clockSource, inputRange1, inputRange2, twoWayAlignment, extClockRate, flybackCycles, inputRange3, inputRange4, minimizeFlybackCycles, polarity[4], verticalFlip, horizontalFlip;
+		double areaAngle, dwellTime, crsFrequencyHz = 0;
+		long timeBasedLineScan = FALSE;
+		long timeBasedLineScanMS = 0;
+		long threePhotonEnable = FALSE;
+		long numberOfPlanes = 1;
+		long selectedImagingGG = 0;
+		long selectedStimGG = 0;
+		double pixelAspectRatioYScale = 1;
+
+		//getting the values from the experiment setup XML files
+		_pExp->GetLSM(areaMode, areaAngle, scanMode, interleave, pixelX, pixelY, chan, lsmFieldSize, offsetX, offsetY, averageMode, averageNum, clockSource, inputRange1, inputRange2, twoWayAlignment, extClockRate, dwellTime,
+			flybackCycles, inputRange3, inputRange4, minimizeFlybackCycles, polarity[0], polarity[1], polarity[2], polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes, selectedImagingGG, selectedStimGG, pixelAspectRatioYScale);
+		_lsmChannel = chan;
+	}
+
 	Dimensions d;
 	long avgFrames=1;
 	long bufferChannels = 4;
@@ -1405,8 +1466,10 @@ long AcquireTSeries::ZStreamExecute(long index, long subWell)
 	}
 
 	//Set temp path to streaming temp path:
-	wstring tempPath; double previewRate;
-	pHardware->GetStreaming(tempPath, previewRate);
+	wstring tempPath; 
+	double previewRate;
+	long alwaysSaveImagesOnStop;
+	pHardware->GetStreaming(tempPath, previewRate, alwaysSaveImagesOnStop);
 	if(NULL != tempPath.c_str())
 	{
 		ImageManager::getInstance()->SetMemMapPath(tempPath.c_str());
@@ -1431,11 +1494,6 @@ long AcquireTSeries::ZStreamExecute(long index, long subWell)
 	}
 
 	long maxFrameWaitTime = 30000;
-	double typeVal;
-
-	pCamera->GetParam(ICamera::PARAM_CAMERA_TYPE,typeVal);
-
-	long cameraType = static_cast<long>(typeVal);
 	avgMode = ICamera::AVG_MODE_NONE;
 
 	long currentTriggerMode;
@@ -1632,24 +1690,6 @@ long AcquireTSeries::ZStreamExecute(long index, long subWell)
 			_acquireSaveInfo->getInstance()->ClearTimestamps();
 		}
 
-
-		long red;
-		long green;
-		long blue;
-		long bp;
-		long wp;
-
-		GetColorInfo(pHardware.get(),wavelengthName,red,green,blue,bp,wp);
-
-		const int COLOR_MAP_SIZE = 65536;
-		unsigned short rlut[COLOR_MAP_SIZE];
-		unsigned short glut[COLOR_MAP_SIZE];
-		unsigned short blut[COLOR_MAP_SIZE];
-
-		const int COLOR_MAP_BIT_DEPTH_TIFF = 8;
-
-		GetLookUpTables(rlut, glut, blut,red, green, blue, bp, wp,COLOR_MAP_BIT_DEPTH_TIFF);
-
 		wchar_t filePathAndName[_MAX_PATH];
 
 		string redChan,greenChan,blueChan,cyanChan,magentaChan,yellowChan,grayChan;
@@ -1662,8 +1702,9 @@ long AcquireTSeries::ZStreamExecute(long index, long subWell)
 			//If it is a sequential capture, with more than one step the wavelenth
 			//information for the steps in the sequence needs to be retrieved to
 			//have the corrent information in the OME.
-			long captureSequenceEnable = FALSE;
-			_pExp->GetCaptureSequence(captureSequenceEnable);
+			//SequentialTypes: 0 - between stacks, 1 - between frames
+			long captureSequenceEnable = FALSE, sequentialType = 0;
+			_pExp->GetCaptureSequence(captureSequenceEnable, sequentialType);
 
 			//Get the Capture Sequence Settings
 			vector<IExperiment::SequenceStep> captureSequence;
@@ -1684,13 +1725,10 @@ long AcquireTSeries::ZStreamExecute(long index, long subWell)
 
 		long bufferOffsetIndex =0;
 
-		pCamera->GetParam(ICamera::PARAM_CAMERA_TYPE,typeVal);
-		long cameraType = static_cast<long>(typeVal);
 		long bitDepth=14;
 		switch(cameraType)
 		{
 		case ICamera::CCD:
-		case ICamera::CCD_MOSAIC:
 			{
 				double bitsPerPixel = 12;
 				pCamera->GetParam(ICamera::PARAM_BITS_PER_PIXEL,bitsPerPixel);
@@ -1704,62 +1742,112 @@ long AcquireTSeries::ZStreamExecute(long index, long subWell)
 			break;
 		}
 
-		for(long i=0; i<bufferChannels; i++)
+		long red;
+		long green;
+		long blue;
+		long bp;
+		long wp;
+		vector<long> channelsEnabled;
+		const int COLOR_MAP_SIZE = 65536;
+		unsigned short rlut[COLOR_MAP_SIZE];
+		unsigned short glut[COLOR_MAP_SIZE];
+		unsigned short blut[COLOR_MAP_SIZE];
+
+		const int COLOR_MAP_BIT_DEPTH_TIFF = 8;
+
+		for (int k = 0; k < MAX_CHANNEL_COUNT; k++)
 		{
-			if(i < _pExp->GetNumberOfWavelengths())
-			{			
-				_pExp->GetWavelength(i,wavelengthName,exposureTimeMS);
-
-				//A single buffer is used for one channel capture so no offset is needed for that case
-				if(bufferChannels > 1)
-				{
-					pHardware->GetWavelengthIndex(wavelengthName,bufferOffsetIndex);
-				}
-
-				GetColorInfo(pHardware.get(),wavelengthName,red,green,blue,bp,wp);
-				GetLookUpTables(rlut, glut, blut,red, green, blue, bp, wp,COLOR_MAP_BIT_DEPTH_TIFF);
-
-				_tzsFrame = (_tFrame - 1) * zstageSteps * zStreamFrames + (_zFrame - 1) * zStreamFrames + (_zsFrame + 1);	// get the absolite time index which does not duplicate
-				StringCbPrintfW(filePathAndName,_MAX_PATH,imgNameFormat.str().c_str(),drive,dir,wavelengthName.c_str(),index,subWell,_zFrame,_tzsFrame);
-
-				logDll->TLTraceEvent(INFORMATION_EVENT,1,filePathAndName);				
-
-				string acquiredDate = acquiredDateTime;	// save image buffer as TIFF
-
-
-				if (TRUE == doOME)
-				{
-					SaveTIFF(filePathAndName,(char*)pZStream + (bufferOffsetIndex * d.x * d.y * 2),d.x,d.y,rlut,glut,blut,umPerPixel,totalExperimentWavelengths, timePoints, zstageSteps, intervalSec, i, _tFrame-1, _zFrame-1,&acquiredDate,deltaT,&strOME, physicalSize, doCompression);
-				}
-				else				
-				{
-					SaveTIFFWithoutOME(filePathAndName,(char*)pZStream + (bufferOffsetIndex * d.x * d.y * 2),d.x,d.y,rlut,glut,blut,umPerPixel,_pExp->GetNumberOfWavelengths(), timePoints, zstageSteps, intervalSec, i, _tFrame-1, _zFrame-1,&acquiredDate,deltaT,doCompression);
-				}
-				//SaveTIFF(filePathAndName,(char*)pZStream + (bufferOffsetIndex * d.x * d.y * 2),d.x,d.y,rlut,glut,blut,umPerPixel,_pExp->GetNumberOfWavelengths(), timePoints, zstageSteps, intervalSec, i, _tFrame-1, _zFrame-1,&acquiredDate,deltaT,&strOME);
-
-				//if its the first frame of the ZStream save a preview image without OME
-				if(0 == _zsFrame)
-				{
-					StringCbPrintfW(filePathAndName,_MAX_PATH,L"%s%s%S_Preview.tif",drive,dir,wavelengthName.c_str());
-
-					SaveTIFFWithoutOME(filePathAndName,(char*)pZStream + (bufferOffsetIndex * d.x * d.y * 2),d.x,d.y,rlut,glut,blut,umPerPixel,_pExp->GetNumberOfWavelengths(), timePoints, zstageSteps, intervalSec, i, _tFrame-1, _zFrame-1,&acquiredDate,deltaT,FALSE);
-				}
-
-				const int COLOR_MAP_BIT_DEPTH_JPEG = 16;	// save image buffer as JPEG
-				GetLookUpTables(rlut, glut, blut,red, green, blue, bp, wp,COLOR_MAP_BIT_DEPTH_JPEG);
-				StringCbPrintfW(filePathAndName,_MAX_PATH,jpgNameFormat.str().c_str(),drive,dir,wavelengthName.c_str(),index,subWell,_zFrame,_tzsFrame);
-				SaveJPEG(filePathAndName,(char*)pZStream + (bufferOffsetIndex * d.x * d.y * 2),d.x,d.y,rlut,glut,blut,bitDepth);
+			long bitValue = (long)pow(2, k);
+			if (bitValue == (bitValue & _lsmChannel))
+			{
+				channelsEnabled.push_back(k);
 			}
 		}
 
-		ImageManager::getInstance()->UnlockImagePtr(zsImageID,0,0,0,_zsFrame);
+		long wavelengthsIndex = 0;
+		string hardwareSettingsWavelengthName;
+
+		bool isCombinedChannel = ICamera::CCD == cameraType && channelsEnabled.size() > 1;
+
+		if (isCombinedChannel)
+		{
+			// Special case for RGB cameras
+			pHardware->GetWavelengthName(0, hardwareSettingsWavelengthName);
+			GetColorInfo(pHardware.get(), hardwareSettingsWavelengthName, red, green, blue, bp, wp); // must get a value for bp and wp
+
+			GetLookUpTables(rlut, glut, blut, 255, 255, 255, bp, wp, COLOR_MAP_BIT_DEPTH_TIFF);
+
+			_tzsFrame = (_tFrame - 1) * zstageSteps * zStreamFrames + (_zFrame - 1) * zStreamFrames + (_zsFrame + 1);	// get the absolite time index which does not duplicate
+			StringCbPrintfW(filePathAndName, _MAX_PATH, imgNameFormat.str().c_str(), drive, dir, wavelengthName.c_str(), index, subWell, _zFrame, _tzsFrame);
+
+			logDll->TLTraceEvent(INFORMATION_EVENT, 1, filePathAndName);
+
+			string acquiredDate = acquiredDateTime;	// save image buffer as TIFF
+
+			string* omeTiffData = doOME ? &strOME : nullptr;
+			SaveTIFF(filePathAndName, (char*)pZStream, d.x, d.y, rlut, glut, blut, umPerPixel, totalExperimentWavelengths, timePoints, zstageSteps, intervalSec, 0, _tFrame - 1, _zFrame - 1, &acquiredDate, deltaT, omeTiffData, physicalSize, doCompression, true);
+
+			//if its the first frame of the ZStream save a preview image without OME
+			if (0 == _zsFrame)
+			{
+				StringCbPrintfW(filePathAndName, _MAX_PATH, L"%s%s%S_Preview.tif", drive, dir, wavelengthName.c_str());
+				SaveTIFF(filePathAndName, (char*)pZStream, d.x, d.y, rlut, glut, blut, umPerPixel, _pExp->GetNumberOfWavelengths(), timePoints, zstageSteps, intervalSec, 0, _tFrame - 1, _zFrame - 1, &acquiredDate, deltaT, nullptr, physicalSize, FALSE, true);
+			}
+
+			const int COLOR_MAP_BIT_DEPTH_JPEG = 16;	// save image buffer as JPEG
+			GetLookUpTables(rlut, glut, blut, 255, 255, 255, bp, wp, COLOR_MAP_BIT_DEPTH_JPEG);
+			StringCbPrintfW(filePathAndName, _MAX_PATH, jpgNameFormat.str().c_str(), drive, dir, wavelengthName.c_str(), index, subWell, _zFrame, _tzsFrame);
+			SaveJPEG(filePathAndName, (char*)pZStream, d.x, d.y, rlut, glut, blut, bitDepth, true);
+		}
+		else
+		{
+			for each (long channelIndex in channelsEnabled)
+			{
+				_pExp->GetWavelength(wavelengthsIndex++, wavelengthName, exposureTimeMS);
+
+				pHardware->GetWavelengthName(channelIndex, hardwareSettingsWavelengthName);
+
+				//A single buffer is used for one channel capture so no offset is needed for that case
+				if (bufferChannels > 1)
+				{
+					bufferOffsetIndex = channelIndex;
+				}
+
+				GetColorInfo(pHardware.get(), hardwareSettingsWavelengthName, red, green, blue, bp, wp);
+				GetLookUpTables(rlut, glut, blut, red, green, blue, bp, wp, COLOR_MAP_BIT_DEPTH_TIFF);
+
+				_tzsFrame = (_tFrame - 1) * zstageSteps * zStreamFrames + (_zFrame - 1) * zStreamFrames + (_zsFrame + 1);	// get the absolite time index which does not duplicate
+				StringCbPrintfW(filePathAndName, _MAX_PATH, imgNameFormat.str().c_str(), drive, dir, wavelengthName.c_str(), index, subWell, _zFrame, _tzsFrame);
+
+				logDll->TLTraceEvent(INFORMATION_EVENT, 1, filePathAndName);
+
+				string acquiredDate = acquiredDateTime;	// save image buffer as TIFF
+
+				string* omeTiffData = doOME ? &strOME : nullptr;
+				SaveTIFF(filePathAndName, (char*)pZStream + (bufferOffsetIndex * d.x * d.y * 2), d.x, d.y, rlut, glut, blut, umPerPixel, totalExperimentWavelengths, timePoints, zstageSteps, intervalSec, channelIndex, _tFrame - 1, _zFrame - 1, &acquiredDate, deltaT, omeTiffData, physicalSize, doCompression, false);
+
+				//if its the first frame of the ZStream save a preview image without OME
+				if (0 == _zsFrame)
+				{
+					StringCbPrintfW(filePathAndName, _MAX_PATH, L"%s%s%S_Preview.tif", drive, dir, wavelengthName.c_str());
+					SaveTIFF(filePathAndName, (char*)pZStream + (bufferOffsetIndex * d.x * d.y * 2), d.x, d.y, rlut, glut, blut, umPerPixel, _pExp->GetNumberOfWavelengths(), timePoints, zstageSteps, intervalSec, channelIndex, _tFrame - 1, _zFrame - 1, &acquiredDate, deltaT, nullptr, physicalSize, FALSE, false);
+				}
+
+				const int COLOR_MAP_BIT_DEPTH_JPEG = 16;	// save image buffer as JPEG
+				GetLookUpTables(rlut, glut, blut, red, green, blue, bp, wp, COLOR_MAP_BIT_DEPTH_JPEG);
+				StringCbPrintfW(filePathAndName, _MAX_PATH, jpgNameFormat.str().c_str(), drive, dir, wavelengthName.c_str(), index, subWell, _zFrame, _tzsFrame);
+				SaveJPEG(filePathAndName, (char*)pZStream + (bufferOffsetIndex * d.x * d.y * 2), d.x, d.y, rlut, glut, blut, bitDepth, false);
+			}
+		}
+
+		ImageManager::getInstance()->UnlockImagePtr(zsImageID, 0, 0, 0, _zsFrame);
 	}
 
 	//reset the trigger mode in the event it was changed for averaging
-	pCamera->SetParam(ICamera::PARAM_TRIGGER_MODE,currentTriggerMode);
+	pCamera->SetParam(ICamera::PARAM_TRIGGER_MODE, currentTriggerMode);
 
 	//restore the average mode since it was switched to AVG_MODE_NONE
-	pCamera->SetParam(ICamera::PARAM_LSM_AVERAGEMODE,avgMode);	
+	pCamera->SetParam(ICamera::PARAM_LSM_AVERAGEMODE, avgMode);
 
 	ImageManager::getInstance()->DestroyImage(zsImageID);
 

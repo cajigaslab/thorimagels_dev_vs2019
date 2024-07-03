@@ -21,7 +21,6 @@ void ThorLSMCam::SetAreaMode()
 		}
 		break;
 	case ICamera::LSMAreaMode::POLYLINE:
-		_scanMode = ScanMode::FORWARD_SCAN;
 		SetParam(ICamera::PARAM_LSM_INTERLEAVE_SCAN, 0.0);
 		break;
 	case ICamera::LSMAreaMode::LINE:
@@ -81,6 +80,10 @@ long ThorLSMCam::SetParam(const long paramID, const double param)
 				if (static_cast<long>(param) % 16 == 0)
 				{
 					_pixelX = static_cast<long>(param);
+					//min dwell time is partly dependent on pixel X, after updating pixel X,
+					//make sure the current dwell time is still acceptable, otherwise it will get increased
+					//to an acceptable number
+					SetParam(ICamera::PARAM_LSM_DWELL_TIME, _dwellTime);
 					SetAreaMode();
 					CloseThread();
 					ret = TRUE;
@@ -141,25 +144,39 @@ long ThorLSMCam::SetParam(const long paramID, const double param)
 		{
 			if ((param >= _fieldSizeMin) && (param <= _fieldSizeMax))
 			{
+				long originalFieldSize = _fieldSize;
+				double originalDwell = _dwellTime;
+				resetFreeRun = CheckNewValue<long>(_fieldSize, static_cast<long>(param));
 				double fieldSizeParam = param;
-				long minFieldSize = CalculateMinimumFieldSize(_dwellTime, _pixelX, 2*static_cast<long>(_galvoRetraceTime), _field2Theta, static_cast<long>(_maxGalvoOpticalAngle));
-				if(param > minFieldSize && FALSE == _ggSuperUserMode)
+				SetParam(ICamera::PARAM_LSM_DWELL_TIME, _dwellTime);
+
+				double paddedAmplitude = fieldSizeParam * _galvoRetraceTime * 4 / (_pixelX * _dwellTime * 2 * PI);
+				double fieldX_angle = (fieldSizeParam + paddedAmplitude * 2) * _field2Theta;
+
+				double paddedAmplitudeY = fieldSizeParam * _galvoRetraceTime * 4 / (_pixelY * _dwellTime * 2 * PI);
+				double fieldY_angle = (fieldSizeParam + paddedAmplitudeY * 2) * _field2Theta;
+
+				StringCbPrintfW(_errMsg, _MAX_PATH, L"fieldX angle %d.%d", static_cast<long> (fieldX_angle), static_cast<long>(1000 * (fieldX_angle - static_cast<long> (fieldX_angle))));
+				LogMessage(_errMsg, VERBOSE_EVENT);
+
+				double theta = (double)fieldSizeParam * _field2Theta;
+				double offsetX = abs(((double)_offsetX * _field2Theta) * _theta2Volts + _fineOffset[0]); //horizontal galvo offset
+				double maxVoltsX = offsetX + fieldX_angle / 2.0;
+
+				double amplitudeY = theta * _theta2Volts * (double)_pixelY / (double)_pixelX;
+				amplitudeY = (_yAmplitudeScaler / 100.0) * amplitudeY * _fineFieldSizeScaleY; // Vertical galvo amplitude
+				double offsetY = ((double)_verticalScanDirection * _offsetY * _field2Theta) * _theta2Volts + _fineOffset[1];// Vertical galvo offset
+				double maxVoltsY = offsetY + amplitudeY / 2.0;
+				if ((maxVoltsX <= (MAX_AO_VOLTAGE) && maxVoltsY <= (MAX_AO_VOLTAGE)) || TRUE == _ggSuperUserMode)
 				{
-					//Calculate the minimum field size allowed at this pixel density and dwell time, if the passed value is bigger than the allowed min, 
-					//set the current field size to the minimum allowed value
-					fieldSizeParam = minFieldSize;
-					StringCbPrintfW(_errMsg,_MAX_PATH,L"PARAM_LSM_FIELD_SIZE results in a voltage that is out of range. Moving to minimum safe value.");
-					LogMessage(_errMsg,ERROR_EVENT);
+					ret = TRUE;
 				}
-
-				double paddedAmplitude = fieldSizeParam * _galvoRetraceTime * 4 / ( _pixelX * _dwellTime * 2 * PI);
-				double fieldX_angle = (fieldSizeParam +paddedAmplitude *2) * _field2Theta;
-
-				StringCbPrintfW(_errMsg,_MAX_PATH,L"fieldX angle %d.%d",static_cast<long> (fieldX_angle), static_cast<long>(1000 * (fieldX_angle - static_cast<long> (fieldX_angle))));
-				LogMessage(_errMsg,VERBOSE_EVENT);
-
-				resetFreeRun = CheckNewValue<long>(_fieldSize, static_cast<long>(fieldSizeParam));
-				ret = TRUE;
+				else
+				{
+					CheckNewValue<long>(_fieldSize, static_cast<long>(originalFieldSize));
+					
+					SetParam(ICamera::PARAM_LSM_DWELL_TIME, originalDwell);
+				}
 			}
 			else
 			{
@@ -441,7 +458,7 @@ long ThorLSMCam::SetParam(const long paramID, const double param)
 
 	case ICamera::PARAM_LSM_DWELL_TIME:
 		{
-			double dwellTimeActualMin = CalculateMinimumDwellTime(_fieldSize, _pixelX, 2*static_cast<long>(_galvoRetraceTime), _field2Theta, static_cast<long>(_maxGalvoOpticalAngle));
+			double dwellTimeActualMin = CalculateMinimumDwellTime(_fieldSize, _fineFieldSizeScaleX, _pixelX, 2*static_cast<long>(_galvoRetraceTime), _field2Theta, static_cast<long>(_maxGalvoOpticalAngle), _maxAngularVelocityRadPerSec, _maxAngularAccelerationRadPerSecSq, _minDwellTime, MAX_DWELL_TIME, DWELL_TIME_STEP);
 			if ((param >= _minDwellTime) && (param <= MAX_DWELL_TIME))
 			{
 				double dwellParam = param;

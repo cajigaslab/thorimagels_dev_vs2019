@@ -66,8 +66,7 @@
         public enum CameraType
         {
             CCD = 0,
-            LSM = 1,
-            CCD_MOSAIC = 2
+            LSM = 1
         }
 
         #endregion Enumerations
@@ -799,6 +798,8 @@
             {
                 MVMManager.Instance.LoadSettings(SettingsFileType.HARDWARE_SETTINGS);
                 _hwSettingsDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS];
+                ResourceManagerCS.BackupDirectory(ResourceManagerCS.GetMyDocumentsThorImageFolderString());
+
             }
             catch
             {
@@ -820,6 +821,7 @@
                 }
                 i++;
             }
+
             ndList = _hwSettingsDoc.SelectNodes("/HardwareSettings/ImageDetectors/LSM[not(@cameraName='ResonanceGalvo\') and not(@cameraName='ResonanceGalvoGalvo\')  and not(@cameraName='ThorDAQResonantGalvo\')  ]");
             for (i = 0; i < ndList.Count; i++)
             {
@@ -857,7 +859,6 @@
                 }
                 i++;
             }
-
             ndList = _hwSettingsDoc.SelectNodes("/HardwareSettings/Devices/PMT2");
             i = 0;
             foreach (XmlNode node in ndList)
@@ -942,6 +943,7 @@
                 i++;
             }
 
+
             ndList = _hwSettingsDoc.SelectNodes("/HardwareSettings/Devices/BeamExpander");
             i = 0;
             foreach (XmlNode node in ndList)
@@ -966,6 +968,7 @@
                 i++;
             }
 
+
             ndList = _hwSettingsDoc.SelectNodes("/HardwareSettings/Devices/PinholeWheel");
             i = 0;
             foreach (XmlNode node in ndList)
@@ -977,6 +980,7 @@
                 }
                 i++;
             }
+
 
             ndList = _hwSettingsDoc.SelectNodes("/HardwareSettings/Devices/XYStage");
             i = 0;
@@ -1034,6 +1038,7 @@
                 i++;
             }
 
+
             ndList = _hwSettingsDoc.SelectNodes("/HardwareSettings/Devices/EpiTurret");
             i = 0;
             foreach (XmlNode node in ndList)
@@ -1045,6 +1050,7 @@
                 }
                 i++;
             }
+
 
             ndList = _hwSettingsDoc.SelectNodes("/HardwareSettings/Devices/Turret");
             i = 0;
@@ -1082,6 +1088,7 @@
                 i++;
             }
 
+
             ndList = _hwSettingsDoc.SelectNodes("/HardwareSettings/Devices/LAMP");
             i = 0;
             foreach (XmlNode node in ndList)
@@ -1093,6 +1100,7 @@
                 }
                 i++;
             }
+
             ndList = _hwSettingsDoc.SelectNodes("/HardwareSettings/Objectives/Objective");
             foreach (XmlNode n in ndList)
             {
@@ -1204,13 +1212,14 @@
             };
 
             _refreshHardwareWorker.RunWorkerAsync();
+            ResourceManagerCS.BackupDirectory(ResourceManagerCS.GetMyDocumentsThorImageFolderString());
         }
 
         private void SetDataProvider()
         {
             //retrieve the hardware settings complete path and file name
-            _hardwareSettingsFile = ResourceManagerCS.GetHardwareSettingsFileString();
-            _applicationSettingsFile = ResourceManagerCS.GetApplicationSettingsFileString();
+            _hardwareSettingsFile = ResourceManagerCS.GetModalityHardwareSettingsFileString(ResourceManagerCS.GetModality());
+            _applicationSettingsFile = ResourceManagerCS.GetModalityApplicationSettingsFileString(ResourceManagerCS.GetModality());
 
             var provider = (XmlDataProvider)this.Resources["dataProvider"];
             provider.IsAsynchronous = false; //perform node collection creation in the active context in stead of a worker thread

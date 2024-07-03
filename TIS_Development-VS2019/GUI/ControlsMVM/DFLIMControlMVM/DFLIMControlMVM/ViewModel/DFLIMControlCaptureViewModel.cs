@@ -25,7 +25,7 @@
 
     using ThorSharedTypes;
 
-    public class DFLIMControlCaptureViewModel : DFLIMControlViewModelBase
+    public class DFLIMControlCaptureViewModel : DFLIMControlViewModelBase, IMVMCapture, IViewModelActions
     {
         #region Fields
 
@@ -40,11 +40,10 @@
             : base()
         {
             _mainViewModelName = "RunSampleLSViewModel";
+            _imageViewMVMName = "ImageViewCaptureVM";
             DFLIMAcquisitionMode = 0;
             System.Windows.Application.Current.Exit += Current_Exit;
-
-            _histogramThread = new Thread(DFLIMDataUpdate);
-            _histogramThread.Start();
+            
         }
 
         #endregion Constructors
@@ -55,6 +54,33 @@
         {
             get;
             set;
+        }
+        public bool DFLIMAvailable
+        {
+            get
+            {
+                int temp = 0;
+
+                return (1 == ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_DFLIM_ACQUISITION_MODE, ref temp));
+
+            }
+        }
+
+        public void HandleViewLoaded()
+        {
+            if (DFLIMAvailable)
+            {
+                if (_histogramThread == null) _histogramThread = new Thread(DFLIMDataUpdate);
+
+                if(!_histogramThread.IsAlive) _histogramThread.Start();
+
+            }
+        }
+
+        public void HandleViewUnloaded()
+        {
+            _histogramThread?.Abort();
+            _histogramThread = null;
         }
 
         #endregion Properties
@@ -83,6 +109,7 @@
                 }
                 catch (Exception ex)
                 {
+                    ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + " DFLIMDataUpdate " + ex.Message);
                     ex.ToString();
                 }
                 Thread.Sleep(100);

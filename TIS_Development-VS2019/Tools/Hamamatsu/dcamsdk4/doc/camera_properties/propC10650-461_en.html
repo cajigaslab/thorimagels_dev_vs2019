@@ -96,7 +96,7 @@
   <body>
     <div>
       <div class="fileinformation">
-		<div>v21.6.6291</div>
+		<div>v22.12.6552</div>
 	</div>
     </div>
     <div><a class="go-top" href="#Chapter_appendix_detail"></a></div>
@@ -347,13 +347,13 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>DCAMPROP_SENSORMODE__AREA (default)</td>
+                      <td>DCAMPROP_SENSORMODE__AREA</td>
                       <td colspan="6">
                       </td>
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>DCAMPROP_SENSORMODE__TDI</td>
+                      <td>DCAMPROP_SENSORMODE__TDI (default)</td>
                       <td colspan="6">
                       </td>
                     </tr>
@@ -531,11 +531,10 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>0 to 255
+                      <td>0 to n
         , step 1
         , default 0</td>
-                      <td colspan="6">
-                      </td>
+                      <td colspan="6">@ DCAM_IDPROP_TESTPATTERN_KIND, <br>DCAMPROP_TESTPATTERN_KIND__FLAT(IFLAT), n = 255 <br>DCAMPROP_TESTPATTERN_KIND__HORZGRADATION(IHORZGRADATION), n = 9 <br>DCAMPROP_TESTPATTERN_KIND__VERTGRADATION(IVERTGRADATION), n = 9 <br>DCAMPROP_TESTPATTERN_KIND__LINE(ILINE), n = 8</td>
                     </tr>
                     <tr>
                       <td width="100%" colspan="8">
@@ -553,13 +552,13 @@
                         <div class="prop_id">R</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">W</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">W</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">W</div>
                       </td>
                       <td width="20%">
                         <div class="prop_id">MODE</div>
@@ -567,9 +566,14 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>DCAMPROP_TRIGGERSOURCE__INTERNAL</td>
+                      <td>DCAMPROP_TRIGGERSOURCE__INTERNAL (default)</td>
                       <td colspan="6">
                       </td>
+                    </tr>
+                    <tr>
+                      <td width="5%" class="prop_indent"></td>
+                      <td>DCAMPROP_TRIGGERSOURCE__EXTERNAL</td>
+                      <td colspan="6">@ DCAM_IDPROP_OUTPUTDATA_OPERATION, DCAMPROP_OUTPUTDATAOPERATION__RAW</td>
                     </tr>
                     <tr>
                       <td width="55%" colspan="2">
@@ -611,13 +615,13 @@
                         <div class="prop_id">R</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">W</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">W</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">W</div>
                       </td>
                       <td width="20%">
                         <div class="prop_id">MODE</div>
@@ -625,9 +629,14 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>DCAMPROP_TRIGGERACTIVE__EDGE</td>
+                      <td>DCAMPROP_TRIGGERACTIVE__EDGE (default)</td>
                       <td colspan="6">
                       </td>
+                    </tr>
+                    <tr>
+                      <td width="5%" class="prop_indent"></td>
+                      <td>DCAMPROP_TRIGGERACTIVE__SYNCREADOUT</td>
+                      <td colspan="6">@ DCAM_IDPROP_OUTPUTDATA_OPERATION, DCAMPROP_OUTPUTDATAOPERATION__RAW</td>
                     </tr>
                     <tr>
                       <td width="55%" colspan="2">
@@ -669,13 +678,13 @@
                         <div class="prop_id">R</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">W</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">W</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">W</div>
                       </td>
                       <td width="20%">
                         <div class="prop_id">MODE</div>
@@ -683,9 +692,14 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>DCAMPROP_TRIGGERENABLE_ACTIVE__ALWAYS</td>
+                      <td>DCAMPROP_TRIGGERENABLE_ACTIVE__ALWAYS (default)</td>
                       <td colspan="6">
                       </td>
+                    </tr>
+                    <tr>
+                      <td width="5%" class="prop_indent"></td>
+                      <td>DCAMPROP_TRIGGERENABLE_ACTIVE__START</td>
+                      <td colspan="6">@ DCAM_IDPROP_OUTPUTDATA_OPERATION, DCAMPROP_OUTPUTDATAOPERATION__RAW</td>
                     </tr>
                     <tr>
                       <td width="55%" colspan="2">
@@ -732,7 +746,7 @@
                         <div class="prop_id">R</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">W</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">-</div>
@@ -746,9 +760,14 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>DCAMPROP_BINNING__1</td>
+                      <td>DCAMPROP_BINNING__1 (default)</td>
                       <td colspan="6">
                       </td>
+                    </tr>
+                    <tr>
+                      <td width="5%" class="prop_indent"></td>
+                      <td>DCAMPROP_BINNING__2</td>
+                      <td colspan="6">@ DCAM_IDPROP_OUTPUTDATA_OPERATION, DCAMPROP_OUTPUTDATAOPERATION__RAW</td>
                     </tr>
                     <tr>
                       <td width="55%" colspan="2">
@@ -761,7 +780,7 @@
                         <div class="prop_id">R</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">W</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">-</div>
@@ -775,9 +794,10 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>return 0</td>
-                      <td colspan="6">
-                      </td>
+                      <td>0 to 6144
+        , step 2
+        , default 0</td>
+                      <td colspan="6">@ DCAM_IDPROP_OUTPUTDATA_OPERATION, DCAMPROP_OUTPUTDATAOPERATION__RAW</td>
                     </tr>
                     <tr>
                       <td width="55%" colspan="2">
@@ -790,7 +810,7 @@
                         <div class="prop_id">R</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">W</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">-</div>
@@ -804,9 +824,10 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>return 6104</td>
-                      <td colspan="6">
-                      </td>
+                      <td>2 to 4608
+        , step 2
+        , default 4608</td>
+                      <td colspan="6">@ DCAM_IDPROP_OUTPUTDATA_OPERATION, DCAMPROP_OUTPUTDATAOPERATION__RAW</td>
                     </tr>
                     <tr>
                       <td width="55%" colspan="2">
@@ -819,7 +840,7 @@
                         <div class="prop_id">R</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">W</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">-</div>
@@ -833,9 +854,10 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>return 0</td>
-                      <td colspan="6">
-                      </td>
+                      <td>0 to 127
+        , step 1
+        , default 0</td>
+                      <td colspan="6">@ DCAM_IDPROP_OUTPUTDATA_OPERATION, DCAMPROP_OUTPUTDATAOPERATION__RAW</td>
                     </tr>
                     <tr>
                       <td width="55%" colspan="2">
@@ -848,7 +870,7 @@
                         <div class="prop_id">R</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">W</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">-</div>
@@ -862,9 +884,10 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>return 327</td>
-                      <td colspan="6">
-                      </td>
+                      <td>1 to 128
+        , step 1
+        , default 128</td>
+                      <td colspan="6">@ DCAM_IDPROP_OUTPUTDATA_OPERATION, DCAMPROP_OUTPUTDATAOPERATION__RAW</td>
                     </tr>
                     <tr>
                       <td width="55%" colspan="2">
@@ -877,7 +900,7 @@
                         <div class="prop_id">R</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">W</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">-</div>
@@ -891,9 +914,14 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>DCAMPROP_MODE__OFF</td>
+                      <td>DCAMPROP_MODE__OFF (default)</td>
                       <td colspan="6">
                       </td>
+                    </tr>
+                    <tr>
+                      <td width="5%" class="prop_indent"></td>
+                      <td>DCAMPROP_MODE__ON</td>
+                      <td colspan="6">@ DCAM_IDPROP_OUTPUTDATA_OPERATION, DCAMPROP_OUTPUTDATAOPERATION__RAW</td>
                     </tr>
                     <tr>
                       <td width="55%" colspan="2">
@@ -906,7 +934,7 @@
                         <div class="prop_id">R</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">W</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">-</div>
@@ -920,9 +948,14 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>DCAMPROP_MODE__OFF</td>
+                      <td>DCAMPROP_MODE__OFF (default)</td>
                       <td colspan="6">
                       </td>
+                    </tr>
+                    <tr>
+                      <td width="5%" class="prop_indent"></td>
+                      <td>DCAMPROP_MODE__ON</td>
+                      <td colspan="6">@ DCAM_IDPROP_OUTPUTDATA_OPERATION, DCAMPROP_OUTPUTDATAOPERATION__RAW</td>
                     </tr>
                     <tr>
                       <td width="55%" colspan="2">
@@ -935,7 +968,7 @@
                         <div class="prop_id">R</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">W</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">-</div>
@@ -949,9 +982,10 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>return 1</td>
-                      <td colspan="6">
-                      </td>
+                      <td>1 to 2
+        , step 1
+        , default 1</td>
+                      <td colspan="6">@ DCAM_IDPROP_OUTPUTDATA_OPERATION, DCAMPROP_OUTPUTDATAOPERATION__RAW</td>
                     </tr>
                     <tr>
                       <td width="55%" colspan="2">
@@ -964,7 +998,7 @@
                         <div class="prop_id">R</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">W</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">-</div>
@@ -978,9 +1012,10 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>return 1</td>
-                      <td colspan="6">
-                      </td>
+                      <td>1 to 2
+        , step 1
+        , default 1</td>
+                      <td colspan="6">@ DCAM_IDPROP_OUTPUTDATA_OPERATION, DCAMPROP_OUTPUTDATAOPERATION__RAW</td>
                     </tr>
                     <tr>
                       <td width="100%" colspan="8">
@@ -1017,14 +1052,21 @@
                       <td>0.060672 to 2.064512
         , step 0.000128
         , default 0.060672</td>
-                      <td colspan="6">@ DCAMPROP_BINNING__1</td>
+                      <td colspan="6">@ DCAM_IDPROP_BINNING, DCAMPROP_BINNING__1</td>
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
                       <td>0.034432 to 1.03226
         , step 0.000102
         , default 0.034432</td>
-                      <td colspan="6">@ DCAMPROP_BINNING__2</td>
+                      <td colspan="6">@ DCAM_IDPROP_BINNING, DCAMPROP_BINNING__2</td>
+                    </tr>
+                    <tr>
+                      <td width="5%" class="prop_indent"></td>
+                      <td>0.064 to 16.32
+        , step 0.064
+        , default 0.064</td>
+                      <td colspan="6">@ DCAM_IDPROP_SENSORMODE, DCAMPROP_SENSORMODE__AREA</td>
                     </tr>
                     <tr>
                       <td width="100%" colspan="8">
@@ -1069,7 +1111,7 @@
                     <tr>
                       <td width="5%" class="prop_indent"></td>
                       <td>DCAMPROP_CAPTUREMODE__SHADINGCALIB</td>
-                      <td colspan="6">@ DCAM_IDPROP_SUBTRACT, DCAMPROP_MODE__ON<br>To use after dark correction</td>
+                      <td colspan="6">@ DCAM_IDPROP_SUBTRACT, DCAMPROP_MODE__ON <br>To use after dark correction</td>
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
@@ -1609,7 +1651,7 @@
                         <div class="prop_id">-</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">R</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">W</div>
@@ -1824,14 +1866,14 @@
                       <td>62.0 to 2109.0
         , step 0.001
         , default 2109.0</td>
-                      <td colspan="6">@ DCAMPROP_BINNING__1</td>
+                      <td colspan="6">@ DCAM_IDPROP_BINNING, DCAMPROP_BINNING__1</td>
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
                       <td>62.0 to 1858.0
         , step 0.001
         , default 1858.0</td>
-                      <td colspan="6">@ DCAMPROP_BINNING__2</td>
+                      <td colspan="6">@ DCAM_IDPROP_BINNING, DCAMPROP_BINNING__2</td>
                     </tr>
                     <tr>
                       <td width="55%" colspan="2">
@@ -1863,14 +1905,14 @@
                       <td>0.002967 to 0.101217
         , step 0.000017
         , default 0.101217</td>
-                      <td colspan="6">@ DCAMPROP_BINNING__1</td>
+                      <td colspan="6">@ DCAM_IDPROP_BINNING, DCAMPROP_BINNING__1</td>
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
                       <td>0.005952 to 0.178368
         , step 0.000017
         , default 0.178368</td>
-                      <td colspan="6">@ DCAMPROP_BINNING__2</td>
+                      <td colspan="6">@ DCAM_IDPROP_BINNING, DCAMPROP_BINNING__2</td>
                     </tr>
                     <tr>
                       <td width="100%" colspan="8">
@@ -2114,7 +2156,7 @@
                         <div class="prop_id">DCAM_IDPROP_BUFFER_ROWBYTES</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2143,7 +2185,7 @@
                         <div class="prop_id">DCAM_IDPROP_BUFFER_FRAMEBYTES</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2172,7 +2214,7 @@
                         <div class="prop_id">DCAM_IDPROP_BUFFER_TOPOFFSETBYTES</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2201,7 +2243,7 @@
                         <div class="prop_id">DCAM_IDPROP_BUFFER_PIXELTYPE</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2352,7 +2394,7 @@
                         <div class="prop_id">DCAM_IDPROP_IMAGEDETECTOR_PIXELWIDTH</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2383,7 +2425,7 @@
                         <div class="prop_id">DCAM_IDPROP_IMAGEDETECTOR_PIXELHEIGHT</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2443,7 +2485,7 @@
                         <div class="prop_id">DCAM_IDPROP_FRAMESTAMP_PRODUCER</div>
                       </td>
                       <td width="5%" align="center">
-                        <div class="prop_id">-</div>
+                        <div class="prop_id">4.0</div>
                       </td>
                       <td width="5%" align="center">
                         <div class="prop_id">R</div>
@@ -2705,11 +2747,10 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>0 to 6102
+                      <td>0 to 6142
         , step 2
         , default 0</td>
-                      <td colspan="6">
-                      </td>
+                      <td colspan="6">@ DCAM_IDPROP_OUTPUTDATA_OPERATION, DCAMPROP_OUTPUTDATAOPERATION__RAW</td>
                     </tr>
                     <tr>
                       <td width="55%" colspan="2">
@@ -2736,11 +2777,10 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>0 to 6104
+                      <td>0 to 6144
         , step 2
         , default 0</td>
-                      <td colspan="6">
-                      </td>
+                      <td colspan="6">@ DCAM_IDPROP_OUTPUTDATA_OPERATION, DCAMPROP_OUTPUTDATAOPERATION__RAW</td>
                     </tr>
                     <tr>
                       <td width="55%" colspan="2">
@@ -2833,11 +2873,10 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>0 to 6102
+                      <td>0 to 6142
         , step 2
         , default 0</td>
-                      <td colspan="6">
-                      </td>
+                      <td colspan="6">@ DCAM_IDPROP_OUTPUTDATA_OPERATION, DCAMPROP_OUTPUTDATAOPERATION__RAW</td>
                     </tr>
                     <tr>
                       <td width="55%" colspan="2">
@@ -2864,11 +2903,10 @@
                     </tr>
                     <tr>
                       <td width="5%" class="prop_indent"></td>
-                      <td>0 to 6104
+                      <td>0 to 6144
         , step 2
         , default 0</td>
-                      <td colspan="6">
-                      </td>
+                      <td colspan="6">@ DCAM_IDPROP_OUTPUTDATA_OPERATION, DCAMPROP_OUTPUTDATAOPERATION__RAW</td>
                     </tr>
                   </table>
 

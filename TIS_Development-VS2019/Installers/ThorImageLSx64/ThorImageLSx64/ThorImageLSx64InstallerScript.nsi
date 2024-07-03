@@ -96,7 +96,6 @@ Section "" CORE_FILES
   File ".\InputRelease\CameraManager.dll"
   File ".\InputRelease\ColorPicker.dll"
   File ".\InputRelease\DeviceManager.dll"
-  File ".\InputRelease\DynamicDataDisplay.dll"
   File ".\InputRelease\ExperimentManager.dll"
   File ".\InputRelease\FlatField.dll"
   File ".\InputRelease\hdf5.dll"
@@ -126,6 +125,8 @@ Section "" CORE_FILES
   File ".\InputRelease\Microsoft.Practices.Composite.Wpf.dll"
   File ".\InputRelease\Microsoft.Practices.ObjectBuilder2.dll"
   File ".\InputRelease\Microsoft.Practices.Unity.dll"
+  File ".\InputRelease\Microsoft.Xaml.Behaviors.dll"
+  File ".\InputRelease\Microsoft.Xaml.Behaviors.xml"
   File ".\InputRelease\Newtonsoft.Json.Net20.dll"
   File ".\InputRelease\PincushionCorrection.dll"
   File ".\InputRelease\ResourceManager.dll"
@@ -137,7 +138,20 @@ Section "" CORE_FILES
   File ".\InputRelease\SciChart.Data.dll"
   File ".\InputRelease\SciChart.Drawing.dll"
   File ".\InputRelease\SciChart.Drawing.DirectX.dll"
+  File ".\InputRelease\Telerik.Windows.Controls.dll"
+  File ".\InputRelease\Telerik.Windows.Controls.xml"
+  File ".\InputRelease\Telerik.Windows.Controls.Chart.dll"
+  File ".\InputRelease\Telerik.Windows.Controls.Chart.xml"
+  File ".\InputRelease\Telerik.Windows.Controls.Input.dll"
+  File ".\InputRelease\Telerik.Windows.Controls.Input.xml"
+  File ".\InputRelease\Telerik.Windows.Controls.Navigation.dll"
+  File ".\InputRelease\Telerik.Windows.Controls.Navigation.xml"
+  File ".\InputRelease\Telerik.Windows.Data.dll"
+  File ".\InputRelease\Telerik.Windows.Data.xml"
+  File ".\InputRelease\Telerik.Windows.Themes.Fluent.dll"
+  File ".\InputRelease\TIDP.SAA2.dll"
   File ".\InputRelease\SQLite.Interop.dll"
+  File ".\InputRelease\System.Windows.Interactivity.dll"
   File ".\InputRelease\StatsManager.dll"
   File ".\InputRelease\ThorDiskIO.dll"
   File ".\InputRelease\ThorImageProcess.dll"
@@ -145,68 +159,18 @@ Section "" CORE_FILES
   File ".\InputRelease\ThorSharedTypes.dll"
   File ".\InputRelease\WPFToolkit.dll"
   File ".\InputRelease\BitMiracle.LibTiff.NET40.XML"
-  File ".\InputRelease\DynamicDataDisplay.xml"
   File ".\InputRelease\ResourceManager.xml"
   File ".\InputRelease\ThorDetectorSwitchSettings.xml"
   File ".\InputRelease\ThorElectroPhysSettings.xml"
   File ".\InputRelease\ThorLogging.xml"
-  File ".\InputRelease\Microsoft.Xaml.Behaviors.dll"
-  File ".\InputRelease\Microsoft.Xaml.Behaviors.xml"
+  File ".\InputRelease\ExperimentReviewSettings.xml"
 
   SetOutPath "$INSTDIR\en-US"
   File /r ".\InputRelease\en-US\*"
   
   SetOutPath "$INSTDIR\Lib"
-  File ".\InputRelease\Lib\Cosmo.dll"
-  File ".\InputRelease\Lib\Kitware.mummy.Runtime.Unmanaged.dll"
-  File ".\InputRelease\Lib\Kitware.VTK.vtkCharts.Unmanaged.dll"
-  File ".\InputRelease\Lib\Kitware.VTK.vtkCommon.Unmanaged.dll"
-  File ".\InputRelease\Lib\Kitware.VTK.vtkFiltering.Unmanaged.dll"
-  File ".\InputRelease\Lib\Kitware.VTK.vtkGenericFiltering.Unmanaged.dll"
-  File ".\InputRelease\Lib\Kitware.VTK.vtkGeovis.Unmanaged.dll"
-  File ".\InputRelease\Lib\Kitware.VTK.vtkGraphics.Unmanaged.dll"
-  File ".\InputRelease\Lib\Kitware.VTK.vtkHybrid.Unmanaged.dll"
-  File ".\InputRelease\Lib\Kitware.VTK.vtkImaging.Unmanaged.dll"
-  File ".\InputRelease\Lib\Kitware.VTK.vtkInfovis.Unmanaged.dll"
-  File ".\InputRelease\Lib\Kitware.VTK.vtkIO.Unmanaged.dll"
-  File ".\InputRelease\Lib\Kitware.VTK.vtkParallel.Unmanaged.dll"
-  File ".\InputRelease\Lib\Kitware.VTK.vtkRendering.Unmanaged.dll"
-  File ".\InputRelease\Lib\Kitware.VTK.vtkViews.Unmanaged.dll"
-  File ".\InputRelease\Lib\Kitware.VTK.vtkVolumeRendering.Unmanaged.dll"
-  File ".\InputRelease\Lib\Kitware.VTK.vtkWidgets.Unmanaged.dll"
-  File ".\InputRelease\Lib\VPIC.dll"
-  File ".\InputRelease\Lib\vtkalglib.dll"
-  File ".\InputRelease\Lib\vtkCharts.dll"
-  File ".\InputRelease\Lib\vtkCommon.dll"
-  File ".\InputRelease\Lib\vtkDICOMParser.dll"
-  File ".\InputRelease\Lib\vtkexoIIc.dll"
-  File ".\InputRelease\Lib\vtkexpat.dll"
-  File ".\InputRelease\Lib\vtkFiltering.dll"
-  File ".\InputRelease\Lib\vtkfreetype.dll"
-  File ".\InputRelease\Lib\vtkftgl.dll"
-  File ".\InputRelease\Lib\vtkGenericFiltering.dll"
-  File ".\InputRelease\Lib\vtkGeovis.dll"
-  File ".\InputRelease\Lib\vtkGraphics.dll"
-  File ".\InputRelease\Lib\vtkHybrid.dll"
-  File ".\InputRelease\Lib\vtkImaging.dll"
-  File ".\InputRelease\Lib\vtkInfovis.dll"
-  File ".\InputRelease\Lib\vtkIO.dll"
-  File ".\InputRelease\Lib\vtkjpeg.dll"
-  File ".\InputRelease\Lib\vtklibxml2.dll"
-  File ".\InputRelease\Lib\vtkmetaio.dll"
-  File ".\InputRelease\Lib\vtkNetCDF.dll"
-  File ".\InputRelease\Lib\vtkNetCDF_cxx.dll"
-  File ".\InputRelease\Lib\vtkParallel.dll"
-  File ".\InputRelease\Lib\vtkpng.dll"
-  File ".\InputRelease\Lib\vtkproj4.dll"
-  File ".\InputRelease\Lib\vtkRendering.dll"
-  File ".\InputRelease\Lib\vtksys.dll"
-  File ".\InputRelease\Lib\vtktiff.dll"
-  File ".\InputRelease\Lib\vtkverdict.dll"
-  File ".\InputRelease\Lib\vtkViews.dll"
-  File ".\InputRelease\Lib\vtkVolumeRendering.dll"
-  File ".\InputRelease\Lib\vtkWidgets.dll"
-  File ".\InputRelease\Lib\vtkzlib.dll"
+  File ".\InputRelease\Lib\K*.dll"
+  File ".\InputRelease\Lib\V*.dll"
 
   SetOutPath "$INSTDIR\Modules"
   File /r ".\InputRelease\Modules\*"
@@ -216,6 +180,7 @@ Section "" CORE_FILES
 
   SetOutPath "$INSTDIR\Modules_Native"
   File ".\InputRelease\Modules_Native\AutoFocus.dll"
+  File ".\InputRelease\Modules_Native\AutoExposure.dll"
   File ".\InputRelease\Modules_Native\CaptureSetup.dll"
   File ".\InputRelease\Modules_Native\Disconnected.dll"
   File ".\InputRelease\Modules_Native\GeometryUtilitiesCPP.dll"
@@ -233,9 +198,6 @@ Section "" CORE_FILES
   File ".\InputRelease\Modules_Native\libjpeg_x64.dll"
   File ".\InputRelease\Modules_Native\ome_tiff_library.dll"
 
-  SetOutPath "$INSTDIR\ru-ru"
-  File /r ".\InputRelease\ru-ru\*"
-  
   SetOutPath "$INSTDIR\SettingsUpdater"
   File /r ".\InputRelease\SettingsUpdater\*"
   
@@ -328,9 +290,13 @@ SectionEnd
 Section /o "TSI CMOS" SEC_TSI_CMOS
   SetOutPath "$INSTDIR\Lib"
   File ".\InputRelease\Lib\thorlabs_tsi_camera_sdk.dll"
-  File ".\InputRelease\Lib\thorlabs_tsi_camera_sdk1_cli.dll"
   File ".\InputRelease\Lib\thorlabs_tsi_usb_hotplug_monitor.dll"
   File ".\InputRelease\Lib\thorlabs_tsi_zelux_camera_device.dll"
+  File ".\InputRelease\Lib\thorlabs_tsi_color_processing.dll"
+  File ".\InputRelease\Lib\thorlabs_tsi_demosaic.dll"
+  File ".\InputRelease\Lib\thorlabs_tsi_mono_to_color_processing.dll"
+  File ".\InputRelease\Lib\thorlabs_tsi_polarization_processor.dll"
+  File ".\InputRelease\Lib\thorlabs_tsi_polarization_processor_vector_avx2.dll"
   SetOutPath "$INSTDIR\Modules_Native"
   File ".\InputRelease\Modules_Native\ThorTSI_CS.dll"
   SetOutPath "$DOCUMENTS\${PRODUCT_NAME}\Modalities\Camera\Application Settings"
@@ -365,6 +331,12 @@ Section /o "LSKGR" SEC_LSKGR
   File ".\InputRelease\ThorLSKGRSettings.xml"
   SetOutPath "$INSTDIR\Modules_Native"
   File ".\InputRelease\Modules_Native\ThorLSKGR.dll"
+SectionEnd
+Section /o "Prelude" SEC_PRELUDE
+  SetOutPath "$INSTDIR"
+  File ".\InputRelease\ThorPreludeSettings.xml"
+  SetOutPath "$INSTDIR\Modules_Native"
+  File ".\InputRelease\Modules_Native\ThorPrelude.dll"
 SectionEnd
 SectionGroupEnd
 
@@ -514,6 +486,16 @@ Section /o "PMT2100/1000" SEC_PMT2100
 SectionEnd
 SectionGroupEnd
 
+SectionGroup /e "!Remote Focus Modules"
+SetOverwrite off
+Section /o "NI Remote Focus" SEC_REMOTE_FOCUS_NI
+  SetOutPath "$INSTDIR"
+  File ".\InputRelease\ThorRemoteFocusNISettings.xml"
+  SetOutPath "$INSTDIR\Modules_Native"
+  File ".\InputRelease\Modules_Native\ThorRemoteFocusNI.dll"
+SectionEnd
+SectionGroupEnd
+
 SectionGroup /e "!Scripting Modules"
 SetOverwrite off
 Section /o "Matlab" SEC_MATLAB
@@ -559,7 +541,10 @@ Section /o "ThorDAQ GR" SEC_GR_THORDAQ
   File ".\InputRelease\ThordaqResonantGalvoSettings.xml"
   File ".\InputRelease\ThorDAQIOSettings.xml"
   File ".\InputRelease\ThorDAQSettings.xml"
+  File ".\InputRelease\ThorDAQZSettings.xml"
   SetOutPath "$INSTDIR\Modules_Native"
+  File ".\InputRelease\Modules_Native\ThorDAQZ.dll"
+  File ".\InputRelease\Modules_Native\ThorDAQRemoteFocus.dll"
   File ".\InputRelease\Modules_Native\thordaq.dll"
   File ".\InputRelease\Modules_Native\ThorDAQResonantGalvo.dll"
 SectionEnd
@@ -568,17 +553,23 @@ Section /o "ThorDAQ GG" SEC_GG_THORDAQ
   File ".\InputRelease\ThorDAQGalvoGalvoSettings.xml"
   File ".\InputRelease\ThorDAQIOSettings.xml"
   File ".\InputRelease\ThorDAQSettings.xml"
+  File ".\InputRelease\ThorDAQZSettings.xml"
   SetOutPath "$INSTDIR\Modules_Native"
+  File ".\InputRelease\Modules_Native\ThorDAQZ.dll"
+  File ".\InputRelease\Modules_Native\ThorDAQRemoteFocus.dll"
   File ".\InputRelease\Modules_Native\thordaq.dll"
   File ".\InputRelease\Modules_Native\ThorDAQGalvoGalvo.dll"
 SectionEnd
-Section /o "Meso Scan" SEC_MESO
-  SetOutPath "$INSTDIR"
-  File ".\InputRelease\ThorMesoScanSettings.xml"
-  SetOutPath "$INSTDIR\Modules_Native"
-  File ".\InputRelease\Modules_Native\ThorMesoScan.dll"
-SectionEnd
 Section /o "DFLIM ThorDAQ GG" SEC_GG_DFLIM_THORDAQ
+  SetOutPath "$INSTDIR\Lib"
+  File ".\InputRelease\Lib\FLIMFitLibrary.dll"
+  SetOutPath "$INSTDIR"
+  File ".\InputRelease\ThorDFLIMGalvoGalvoSettings.xml"
+  SetOutPath "$INSTDIR\Modules_Native"
+  File ".\InputRelease\Modules_Native\dFLIM_4002.dll"
+  File ".\InputRelease\Modules_Native\dFLIMGG.dll"
+SectionEnd
+Section /o "Legacy DFLIM ThorDAQ GG" SEC_LEGACY_GG_DFLIM_THORDAQ
   SetOutPath "$INSTDIR\Lib"
   File ".\InputRelease\Lib\FLIMFitLibrary.dll"
   SetOutPath "$INSTDIR"
@@ -666,6 +657,17 @@ Section /o "Z Stepper Simulator" SEC_Z_STEPPER_SIM
   SetOutPath "$INSTDIR\Modules_Native"
   File ".\InputRelease\Modules_Native\ThorZStepperSimulator.dll"
 SectionEnd
+Section /o "SLM Simulator" SEC_SLM_SIM
+  SetOutPath "$INSTDIR\Lib"
+  File ".\InputRelease\Lib\Blink_SDK.dll"
+  File ".\InputRelease\Lib\wdapi1230.dll"
+  SetOutPath "$INSTDIR"
+  File ".\InputRelease\ThorSLMSettings.xml"
+  SetOutPath "$INSTDIR\Modules_Native"
+  File ".\InputRelease\Modules_Native\HologramGenerator.dll"
+  File ".\InputRelease\Modules_Native\ThorSLM.dll"
+  File ".\InputRelease\Modules_Native\WinDVI.dll"
+SectionEnd
 SectionGroupEnd
 
 SectionGroup "!Shutters"
@@ -708,9 +710,9 @@ Section /o "Digital Shutter 6" SEC_SHUTTER_DIG6
 SectionEnd
 SectionGroupEnd
 
-SectionGroup "!SLM" SEC_GROUP_SLM
+SectionGroup /e "!SLM" 
 SetOverwrite off
-Section /o "Blink Windows 7" SEC_SLM_BLINK_WIN_7
+Section /o "Blink 512 Windows 7" SEC_SLM_BLINK_WIN_7
 SetOutPath "$INSTDIR\Lib"
   File /oname=Blink_SDK.dll ".\InputRelease\Lib\Blink_SDKWin7.dll"
   File ".\InputRelease\Lib\wdapi1021.dll"
@@ -722,7 +724,7 @@ SetOutPath "$INSTDIR\Lib"
   File ".\InputRelease\Modules_Native\ThorSLMPDM512.dll"
   File ".\InputRelease\Modules_Native\WinDVI.dll"
 SectionEnd
-Section /o "Blink Windows 10" SEC_SLM_BLINK_WIN_10
+Section /o "Blink 512 Windows 10" SEC_SLM_BLINK_WIN_10
   SetOutPath "$INSTDIR\Lib"
   File ".\InputRelease\Lib\Blink_SDK.dll"
   File ".\InputRelease\Lib\wdapi1230.dll"
@@ -734,21 +736,25 @@ Section /o "Blink Windows 10" SEC_SLM_BLINK_WIN_10
   File ".\InputRelease\Modules_Native\ThorSLMPDM512.dll"
   File ".\InputRelease\Modules_Native\WinDVI.dll"
 SectionEnd
-Section /o "Exulus Windows 7" SEC_SLM_EXULUS_WIN_7
-SetOutPath "$INSTDIR\Lib"
-  File ".\InputRelease\Lib\Blink_SDK.dll"
-  File ".\InputRelease\Lib\wdapi1021.dll"
+Section /o "Blink 1024 Windows 10" SEC_SLM_BLINK_1024
+  SetOutPath "$INSTDIR\Lib"
+  File /oname=Blink_SDK.dll ".\InputRelease\Lib\Blink_SDK1024.dll"
+  File ".\InputRelease\Lib\wdapi1470.dll"
+  File ".\InputRelease\Lib\Blink_C_wrapper.dll"
+  File ".\InputRelease\Lib\ImageGen.dll"
+  File ".\InputRelease\Lib\python3.dll"
+  File ".\InputRelease\Lib\python38.dll"
+  File ".\InputRelease\Lib\vcruntime140.dll"
   SetOutPath "$INSTDIR"
   File ".\InputRelease\ThorSLMSettings.xml"
   SetOutPath "$INSTDIR\Modules_Native"
   File ".\InputRelease\Modules_Native\HologramGenerator.dll"
   File ".\InputRelease\Modules_Native\ThorSLM.dll"
+  File ".\InputRelease\Modules_Native\ThorSLMPDM1024.dll"
   File ".\InputRelease\Modules_Native\WinDVI.dll"
 SectionEnd
-Section /o "Exulus Windows 10" SEC_SLM_EXULUS_WIN_10
+Section /o "Exulus" SEC_SLM_EXULUS_WIN_10
   SetOutPath "$INSTDIR\Lib"
-  File ".\InputRelease\Lib\Blink_SDK.dll"
-  File ".\InputRelease\Lib\wdapi1230.dll"
   SetOutPath "$INSTDIR"
   File ".\InputRelease\ThorSLMSettings.xml"
   SetOutPath "$INSTDIR\Modules_Native"
@@ -771,6 +777,12 @@ Section /o "MCM3000 Aux" SEC_MCM3000_AUX
   File ".\InputRelease\ThorMCM3000AuxSettings.xml"
   SetOutPath "$INSTDIR\Modules_Native"
   File ".\InputRelease\Modules_Native\ThorMCM3000Aux.dll"
+SectionEnd
+Section /o "MCM301" SEC_MCM301
+  SetOutPath "$INSTDIR"
+  File ".\InputRelease\ThorMCM301Settings.xml"
+  SetOutPath "$INSTDIR\Modules_Native"
+  File ".\InputRelease\Modules_Native\ThorMCM301.dll"
 SectionEnd
 Section /o "MCM5000 Bscope" SEC_BSCOPE
   SetOutPath "$INSTDIR"
@@ -1021,6 +1033,7 @@ ${AndIf} $_upgradeMode == "0"
   !insertmacro UnselectSection ${SEC_PMT}
   !insertmacro UnselectSection ${SEC_ECU}
   !insertmacro UnselectSection ${SEC_LSKGR}
+  !insertmacro UnselectSection ${SEC_PRELUDE}
   !insertmacro UnselectSection ${SEC_EPI_TURRET}
   !insertmacro UnselectSection ${SEC_KURIOS}
   !insertmacro UnselectSection ${SEC_CHAMELEON}
@@ -1048,8 +1061,8 @@ ${AndIf} $_upgradeMode == "0"
   !insertmacro UnselectSection ${SEC_GGNI2}
   !insertmacro UnselectSection ${SEC_GR_THORDAQ}
   !insertmacro UnselectSection ${SEC_GG_THORDAQ}
-  !insertmacro UnselectSection ${SEC_MESO}
   !insertmacro UnselectSection ${SEC_GG_DFLIM_THORDAQ}
+  !insertmacro UnselectSection ${SEC_LEGACY_GG_DFLIM_THORDAQ}
   !insertmacro UnselectSection ${SEC_THORSTIM}
   !insertmacro UnselectSection ${SEC_GR_SIM}
   !insertmacro UnselectSection ${SEC_GG_SIM}
@@ -1064,6 +1077,8 @@ ${AndIf} $_upgradeMode == "0"
   !insertmacro UnselectSection ${SEC_SHUTTER_SIM}
   !insertmacro UnselectSection ${SEC_XY_SIM}
   !insertmacro UnselectSection ${SEC_Z_STEPPER_SIM}
+  !insertmacro UnselectSection ${SEC_SLM_SIM}
+  !insertmacro UnselectSection ${SEC_REMOTE_FOCUS_NI}
   !insertmacro UnselectSection ${SEC_SHUTTER_DIG1}
   !insertmacro UnselectSection ${SEC_SHUTTER_DIG2}
   !insertmacro UnselectSection ${SEC_SHUTTER_DIG3}
@@ -1072,10 +1087,11 @@ ${AndIf} $_upgradeMode == "0"
   !insertmacro UnselectSection ${SEC_SHUTTER_DIG6}
   !insertmacro UnselectSection ${SEC_SLM_BLINK_WIN_7}
   !insertmacro UnselectSection ${SEC_SLM_BLINK_WIN_10}
-  !insertmacro UnselectSection ${SEC_SLM_EXULUS_WIN_7}
+  !insertmacro UnselectSection ${SEC_SLM_BLINK_1024}
   !insertmacro UnselectSection ${SEC_SLM_EXULUS_WIN_10}
   !insertmacro UnselectSection ${SEC_MCM3000}
   !insertmacro UnselectSection ${SEC_MCM3000_AUX}
+  !insertmacro UnselectSection ${SEC_MCM301}
   !insertmacro UnselectSection ${SEC_BSCOPE}
   !insertmacro UnselectSection ${SEC_MCM6000}
   !insertmacro UnselectSection ${SEC_MCM6000_CONDERSER}

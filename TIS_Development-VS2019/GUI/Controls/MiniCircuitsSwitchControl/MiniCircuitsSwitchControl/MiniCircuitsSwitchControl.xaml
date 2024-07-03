@@ -3,13 +3,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:loc="clr-namespace:MiniCircuitsSwitchControl"
+             xmlns:sharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
              mc:Ignorable="d"
              Height="Auto"
              Width="385">
     <UserControl.Resources>
         <ResourceDictionary>
-            <loc:BooleanToVisibilityConverter x:Key="VisibilityOfBool" />
+            <sharedTypes:BooleanToVisibilityConverter x:Key="VisibilityOfBool" />
             <Style 
                 TargetType="{x:Type ListBox}">
                 <Setter Property="ListBox.ItemTemplate">

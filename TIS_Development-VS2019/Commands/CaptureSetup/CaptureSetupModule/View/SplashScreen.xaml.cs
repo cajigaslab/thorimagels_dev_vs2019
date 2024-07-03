@@ -17,6 +17,7 @@ namespace CaptureSetupDll.View
     /// <summary>
     /// Interaction logic for SplashScreen.xaml
     /// </summary>
+    /// TODO:Remove from this project
     public partial class SplashScreen : Window
     {
         private string _displayText;

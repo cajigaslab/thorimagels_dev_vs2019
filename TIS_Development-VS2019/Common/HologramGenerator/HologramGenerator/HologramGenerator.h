@@ -26,6 +26,10 @@ private:
 	double _refractiveN;
 	double _NAeff;
 	long _fftSize;
+	long _stopRequest;
+	long _isStopped;
+	int _powerWeightRadiusPx;
+	double _powerPercent[2];	//[0]:minPercent, [1]:maxPercent
 
 public:
 	static HologramGen* getInstance();
@@ -43,13 +47,16 @@ public:
 	long SetAlgorithm(int algorithmID);
 	long CombineHologramFiles(const wchar_t* pathAndFilename1, const wchar_t* pathAndFilename2, long shiftPx);
 	long SetCoeffs(long algorithm, double* affCoeffs);
+	long SetPowerWeight(int weightRadiusPx, double minPercent, double maxPercent);
 	long VerticalFlip(float* pImgDst);
 	long RotateForAngle(float* pImgDst, double angle);
 	long ScaleByFactor(float* pImgDst, double scaleX, double scaleY);
 	long OffsetByPixels(float* pImgDst, long offsetX, long offsetY);
-	long GenerateHologram(float* pImgDst, int iteCount, int weightRadiusPx, double minPercent, double maxPercent, float z);
+	long GenerateHologram(float* pImgDst, int iteCount, float z);
 	long Generate3DHologram(void* pMemStruct, int zCount);
 	long DefocusHologram(float* pImgDst, double kz);
+	long StopGeneration() { _stopRequest = TRUE; return TRUE; }
+	long GetStatus(long& status) { status = _isStopped; return TRUE; }
 
 private:
 	HologramGen();
@@ -68,7 +75,7 @@ private:
 	void LogMessage(long eventLevel);
 	long PhaseGenByGS(float* pImgIn, float* pPhaseDst, int iterateCount);
 	long PhaseGenBy3DGS(float* pImg, float* pPolPhase, int iterateCount, double z);
-	long WeightByDistance(float* pImgDst, int weightRadiusPx, double minPercent = 25, double maxPercent = 75);
+	long WeightByDistance(float* pImgDst);
 	long SinglePassFilter(float* pImgDst);
 	long GenerateZHologram(float* pImgInt, float* pImgPhase, void* pImgCx, float* pTarget, float kz);
 

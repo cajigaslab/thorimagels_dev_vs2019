@@ -13,6 +13,7 @@
     using Microsoft.Practices.Unity;
 
     using ThorImageInfastructure;
+    using ThorSharedTypes;
 
     using ThorLogging;
 
@@ -49,7 +50,7 @@ public MainWindow(MenuLSViewModel MenuLSViewModel, IEventAggregator eventAggrega
             // create the ViewModel object and setup the DataContext to it
             this.MenuLSView.DataContext = MenuLSViewModel;
 
-
+            this.MenuLSView.RemoteIPC.DataContext = MVMManager.Instance["RemoteIPCControlViewModelBase"];
             SubscribeToCommandEvent();
             SubscribeToFinishedScriptEvent();
             ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Initialized");

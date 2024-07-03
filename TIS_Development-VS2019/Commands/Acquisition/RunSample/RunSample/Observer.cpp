@@ -7,7 +7,7 @@ extern void (*myFunctionPointerEndSubImage)(long * index);
 extern void (*myFunctionPointerSaveZImage)(long* index, double* power0, double* power1, double* power2, double* power3, double *power4, double *power5);
 extern void (*myFunctionPointerSaveTImage)(long * index);
 //extern void (*myFunctionPointerCaptureComplete)(long * index);
-extern void (*myFunctionPointer)(long * index,long * completed,long * total, long * timeElapsed, long * timeRemaining, long * captureComplete);
+extern void (*updateProgressBarCallback)(long * index,long * completed,long * total, long * timeElapsed, long * timeRemaining, long * captureComplete);
 extern void (*myFunctionPointerPreCapture)(long * status);
 extern void (*myFunctionPointerSequenceStepCurrent)(long* index);
 extern void (*myFunctionPointerInformMessage)(wchar_t* message);
@@ -33,7 +33,7 @@ void Observer::OnCaptureComplete(long captureComplete)
 	if (TRUE == captureComplete)
 	{
 		_captureComplete = TRUE;
-		myFunctionPointer(&_i,&_totalImageCount, &_totalImageCount, &_et, &_rt, &_captureComplete);
+		updateProgressBarCallback(&_i,&_totalImageCount, &_totalImageCount, &_et, &_rt, &_captureComplete);
 	}
 	else
 	{
@@ -131,7 +131,7 @@ void Observer::OnSaveImage(long index, BOOL isImageUpdate)
 	long i = updateIndex;
 	_i = i;
 	_captureComplete = FALSE;
-	myFunctionPointer(&i,&count, &_totalImageCount, &et, &rt, &_captureComplete);
+	updateProgressBarCallback(&i,&count, &_totalImageCount, &et, &rt, &_captureComplete);
 }
 
 void Observer::OnCaptureSubImage(long index)

@@ -694,6 +694,85 @@
             }
         }
 
+        public Boolean ExternalMode1
+        {
+            get
+            {
+                int mode = 0;
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP_MODE_1, ref mode);
+                return mode != 0;
+            }
+            set
+            {
+                ResourceManagerCS.SetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP_MODE_1, value ? 1 : 0, (int)IDevice.DeviceSetParamType.EXECUTION_NO_WAIT);
+            }
+        }
+        public Boolean ExternalMode2
+        {
+            get
+            {
+                int mode = 0;
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP_MODE_2, ref mode);
+                return mode != 0;
+            }
+            set
+            {
+                ResourceManagerCS.SetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP_MODE_2, value ? 1 : 0, (int)IDevice.DeviceSetParamType.EXECUTION_NO_WAIT);
+            }
+        }
+        public Boolean ExternalMode3
+        {
+            get
+            {
+                int mode = 0;
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP_MODE_3, ref mode);
+                return mode != 0;
+            }
+            set
+            {
+                ResourceManagerCS.SetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP_MODE_3, value ? 1 : 0, (int)IDevice.DeviceSetParamType.EXECUTION_NO_WAIT);
+            }
+        }
+        public Boolean ExternalMode4
+        {
+            get
+            {
+                int mode = 0;
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP_MODE_4, ref mode);
+                return mode != 0;
+            }
+            set
+            {
+                ResourceManagerCS.SetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP_MODE_4, value ? 1 : 0, (int)IDevice.DeviceSetParamType.EXECUTION_NO_WAIT);
+            }
+        }
+        public Boolean ExternalMode5
+        {
+            get
+            {
+                int mode = 0;
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP_MODE_5, ref mode);
+                return mode != 0;
+            }
+            set
+            {
+                ResourceManagerCS.SetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP_MODE_5, value ? 1 : 0, (int)IDevice.DeviceSetParamType.EXECUTION_NO_WAIT);
+            }
+        }
+        public Boolean ExternalMode6
+        {
+            get
+            {
+                int mode = 0;
+                ResourceManagerCS.GetDeviceParamInt((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP_MODE_6, ref mode);
+                return mode != 0;
+            }
+            set
+            {
+                ResourceManagerCS.SetDeviceParamDouble((int)SelectedHardware.SELECTED_BFLAMP, (int)IDevice.Params.PARAM_LAMP_MODE_6, value ? 1 : 0, (int)IDevice.DeviceSetParamType.EXECUTION_NO_WAIT);
+            }
+        }
+
         public int LED6SockelID
         {
             get

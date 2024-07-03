@@ -58,8 +58,8 @@
 
             SwitchState = new ObservableCollection<IntPC>();
             SwitchName = new ObservableCollection<StringPC>();
-            const int MAX_SWITCHES = 8;
-            for (int i = 0; i < MAX_SWITCHES; i++)
+
+            for (int i = 0; i < (int)Constants.MAX_SWITCHES; i++)
             {
                 SwitchState.Add(new IntPC());
                 SwitchName.Add(new StringPC());
@@ -904,7 +904,6 @@
                             switch ((ICamera.CameraType)ResourceManagerCS.GetCameraType())
                             {
                                 case ICamera.CameraType.CCD:
-                                case ICamera.CameraType.CCD_MOSAIC:
                                     if (1 == (int)MVMManager.Instance["CameraControlViewModel", "CamAverageMode", (object)0])
                                         _triggerStruct.framePerZSlice = (int)MVMManager.Instance["CameraControlViewModel", "CamAverageNum", (object)1];
                                     break;

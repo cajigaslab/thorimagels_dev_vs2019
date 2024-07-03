@@ -242,3 +242,8 @@ long AcquireHyperspectral::Execute(long index, long subWell)
 	return TRUE;
 }
 
+long AcquireHyperspectral::ZStreamExecute(long index, long subWell, ICamera* pCamera, long zstageSteps, long timePoints, long undefinedVar)
+{
+	return FALSE;
+}
+

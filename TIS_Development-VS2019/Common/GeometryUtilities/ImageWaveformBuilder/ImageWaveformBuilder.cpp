@@ -563,7 +563,7 @@ long ImageWaveformBuilder::GetGGalvoWaveformParams(SignalType sType, void* param
 ///	***************************************** <summary> File Mapping Functions </summary>	********************************************** ///
 
 // retrieve galvo waveform params from memory map file initlaized by RebuildWaveformFromFile with travel to start
-long ImageWaveformBuilder::GetThorDAQGGWaveformParams(SignalType sType, void* params, long preCaptureStatus, uint64_t& indexNow)
+long ImageWaveformBuilder::GetThorDAQGGWaveformParams(SignalType sType, void* params, long preCaptureStatus, uint64_t& indexNow, bool resetParams)
 {
 	if (NULL != _gThorDAQParams[_scanAreaId].bufferHandle)
 	{
@@ -571,21 +571,26 @@ long ImageWaveformBuilder::GetThorDAQGGWaveformParams(SignalType sType, void* pa
 			return FALSE;
 	}
 	long unitSize[3] = { static_cast<long>(_countPerCallback[sType]), static_cast<long>(_countPerCallback[sType]), static_cast<long>(_countPerCallback[sType]) };
-	if (FALSE == ResetThorDAQGGWaveformParam(&_gThorDAQParams[_scanAreaId], unitSize, 1, _gThorDAQWaveXY[_scanAreaId].digitalLineCnt))	//count to be copied before return is _countPerCallback
+	if (resetParams)
 	{
-		ReleaseMutex(_gThorDAQParams[_scanAreaId].bufferHandle);
-		return FALSE;
+		if (FALSE == ResetThorDAQGGWaveformParam(&_gThorDAQParams[_scanAreaId], unitSize, 1, _gThorDAQWaveXY[_scanAreaId].digitalLineCnt))	//count to be copied before return is _countPerCallback
+		{
+			ReleaseMutex(_gThorDAQParams[_scanAreaId].bufferHandle);
+			return FALSE;
+		}
+
+		//update reset params:
+		_gThorDAQParams[_scanAreaId].ClockRate = _gThorDAQWaveXY[_scanAreaId].ClockRate;
+		_gThorDAQParams[_scanAreaId].stepVolt = _gThorDAQWaveXY[_scanAreaId].stepVolt;
+		_gThorDAQParams[_scanAreaId].Scanmode = ScanMode::BLEACH_SCAN;
+		_gThorDAQParams[_scanAreaId].PreCapStatus = preCaptureStatus;
+		_gThorDAQParams[_scanAreaId].pockelsCount = _gThorDAQWaveXY[_scanAreaId].pockelsCount;
+		_gThorDAQParams[_scanAreaId].GalvoWaveformXOffset = _gThorDAQWaveXY[_scanAreaId].GalvoWaveformXOffset;
+		_gThorDAQParams[_scanAreaId].GalvoWaveformYOffset = _gThorDAQWaveXY[_scanAreaId].GalvoWaveformYOffset;
+		_gThorDAQParams[_scanAreaId].GalvoWaveformPoceklsOffset = _gThorDAQWaveXY[_scanAreaId].GalvoWaveformPoceklsOffset;
 	}
 	unsigned long currentIdx = 0;										//index within _countPerCallback
 	unsigned long countToCopy[SignalType::SIGNALTYPE_LAST] = { 0 };		//count to be copied per if/else section
-
-	//update reset params:
-	_gThorDAQParams[_scanAreaId].ClockRate = _gThorDAQWaveXY[_scanAreaId].ClockRate;
-	_gThorDAQParams[_scanAreaId].stepVolt = _gThorDAQWaveXY[_scanAreaId].stepVolt;
-	_gThorDAQParams[_scanAreaId].Scanmode = ScanMode::BLEACH_SCAN;
-	_gThorDAQParams[_scanAreaId].PreCapStatus = preCaptureStatus;
-	_gThorDAQParams[_scanAreaId].pockelsCount = _gThorDAQWaveXY[_scanAreaId].pockelsCount;
-
 	//do not continue if user did not reset global index:
 	if ((_countTotal[_scanAreaId][sType][0] + _countTotal[_scanAreaId][sType][1] + _countTotal[_scanAreaId][sType][2]) <= _countIndex[_scanAreaId][sType])
 	{
@@ -741,7 +746,7 @@ long ImageWaveformBuilder::GetThorDAQGGWaveformParams(SignalType sType, void* pa
 
 	ThorDAQGGWaveformParams* param = (ThorDAQGGWaveformParams*)params;
 	*param = _gThorDAQParams[_scanAreaId];
-	LogPerformance(L"ImageWaveformBuilder active load callback MSec");
+	//LogPerformance(L"ImageWaveformBuilder active load callback MSec");
 	return TRUE;
 }
 
@@ -1191,7 +1196,7 @@ long ImageWaveformBuilder::ResetGGalvoWaveformParam(GGalvoWaveformParams * param
 }
 
 //reset GGalvoWaveformParam to null or with certain unit size
-long ImageWaveformBuilder::ResetThorDAQGGWaveformParam(ThorDAQGGWaveformParams * params, long* unitSize, long numPockels, long digitalLineCnt)
+inline long ImageWaveformBuilder::ResetThorDAQGGWaveformParam(ThorDAQGGWaveformParams * params, long* unitSize, long numPockels, long digitalLineCnt)
 {
 	params->ClockRate = params->CycleNum = params->Triggermode = 0;
 	params->PreCapStatus = PreCaptureStatus::PRECAPTURE_BLEACHER_IDLE;

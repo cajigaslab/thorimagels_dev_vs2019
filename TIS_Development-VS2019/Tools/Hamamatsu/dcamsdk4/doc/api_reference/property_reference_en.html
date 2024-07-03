@@ -96,7 +96,7 @@
   <body>
     <div>
       <div class="fileinformation">
-		<div>v21.6.6291</div>
+		<div>v22.12.6552</div>
 	</div>
     </div>
     <div><a class="go-top" href="#Chapter_appendix_detail"></a></div>
@@ -1041,7 +1041,7 @@
 				</div></txtind1>
 				<p></p>
 				<txtind1><div>
-					If you access Property with a BASE ID, the target is all chennel.					If you set a value, you set the same value for all channels, and if you get a value, you check the value of all channels.					When it comes to retrieving values, you cannot return values unless the values of all channels are the same, so if the values are different DCAMERR_CHANNELDEPENDENTVALUE returns a different error.
+					If you access Property with a BASE ID, the target is all channels.					If you set a value, you set the same value for all channels, and if you get a value, you check the value of all channels.					When it comes to retrieving values, you cannot return values unless the values of all channels are the same, so if the values are different DCAMERR_CHANNELDEPENDENTVALUE returns a different error.
 				</div></txtind1>
 				<txtind1><div>
 					Color cameras have a set of image formats, but dual energy cameras and confocal microscopes do not have a set image format, and data is output by element.					The angle of view information returned by DCAM shows the entire image data, and some angle of view-related properties also have a channel function so that you can access the data for each element.					Typically, GENERAL IDs and CHANNEL IDs do not change property attributes, but they are different and are flagged as DCAMPROP_ATTR2_CHANNELSEPARATEDDATA special channel properties.					Also, for some cameras, you can control the on/off of the output for each element's data, so properties that would not normally be 0, such as DCAM_IDPROP_IMAGE_WIDTH, may return 0 for channel IDs.					Here is an example with a confocal microscope to explain how to return a value. The figure below shows the image of four sub-units when the output of the second sub-unit is turned off.
@@ -4032,7 +4032,7 @@
 							<table width="90%">
                             <tr>
                               <td width="5%"></td>
-                              <td>This property tells the byte size of a frame buffer that should be allocated when you use dcambuf_attach() function. Please refer to “dcambuf_attach_en.html”.</td>
+                              <td>This property tells the byte size of a frame buffer that should be allocated when you use dcambuf_attach() function.</td>
                             </tr>
                           </table>
 						</div>
@@ -4081,7 +4081,7 @@
 							<table width="90%">
                             <tr>
                               <td width="5%"></td>
-                              <td>This property tells the pixel data type of user attached buffer. This property does not have meaning before calling dcambuf_attach() function because the pixel data format is fixed in dcambuf_attach() function. Please refer to “dcambuf_attach_en.html”.</td>
+                              <td>This property tells the pixel data type of user attached buffer. This property does not have meaning before calling dcambuf_attach() function because the pixel data format is fixed in dcambuf_attach() function.</td>
                             </tr>
                           </table>
 							<div class="section"><a name="propidvalue_"></a></div>
@@ -4192,7 +4192,7 @@
 							<table width="90%">
                             <tr>
                               <td width="5%"></td>
-                              <td>This property tells the row byte size of user attached buffer. This property does not have meaning before calling dcambuf_attach() function because the row byte size is fixed in dcambuf_attach() function. Please refer to "dcambuf_attach_en.html".</td>
+                              <td>This property tells the row byte size of user attached buffer. This property does not have meaning before calling dcambuf_attach() function because the row byte size is fixed in dcambuf_attach() function.</td>
                             </tr>
                           </table>
 						</div>
@@ -4241,7 +4241,7 @@
 							<table width="90%">
                             <tr>
                               <td width="5%"></td>
-                              <td>AS using dcambuf_attach() function, there may be “unnecessary data” in front of the actual image data. It is possible know how many bytes is not necessary with this property. Please refer to “dcambuf_attach_en.html”.</td>
+                              <td>AS using dcambuf_attach() function, there may be “unnecessary data” in front of the actual image data. It is possible know how many bytes is not necessary with this property.</td>
                             </tr>
                           </table>
 						</div>
@@ -7722,7 +7722,7 @@
 							<table width="90%">
                             <tr>
                               <td width="5%"></td>
-                              <td>This property specify INTENSITY lut condition.</td>
+                              <td>This property specify INTENSITY LUT condition.</td>
                             </tr>
                           </table>
 							<div class="section"><a name="propidvalue_"></a></div>
@@ -10053,6 +10053,27 @@
                                 <td width="25%">"BY TRIGGER"</td>
                                 <td width="75%">External trigger can change direction. This function is supported by a few cameras. Please see camera manual.</td>
                               </tr>
+                              <tr>
+                                <td colspan="2">DCAMPROP_READOUT_DIRECTION__DIVERGE</td>
+                              </tr>
+                              <tr>
+                                <td width="25%">"DIVERGE"</td>
+                                <td width="75%">Readout direction spreads up and down from center line.</td>
+                              </tr>
+                              <tr>
+                                <td colspan="2">DCAMPROP_READOUT_DIRECTION__FORWARDBIDIRECTION</td>
+                              </tr>
+                              <tr>
+                                <td width="25%">"FORWARD BIDIRECTION"</td>
+                                <td width="75%">Initial Readout direction is FORWARD. After that, readout direction switches between BACKWARD and FORWARD for each frame.</td>
+                              </tr>
+                              <tr>
+                                <td colspan="2">DCAMPROP_READOUT_DIRECTION__REVERSEBIDIRECTION</td>
+                              </tr>
+                              <tr>
+                                <td width="25%">"REVERSE BIDIRECTION"</td>
+                                <td width="75%">Initial Readout direction is BACKWARD. After that, readout direction switches between FORWARD and BACKWARD for each frame.</td>
+                              </tr>
                             </tr>
                           </table>
 						</div>
@@ -10835,6 +10856,13 @@
                               <tr>
                                 <td width="25%">"PROGRESSIVE"</td>
                                 <td width="75%">The camera will output line image from top to bottom, or bottom to top with line speed control.</td>
+                              </tr>
+                              <tr>
+                                <td colspan="2">DCAMPROP_SENSORMODE__PHOTONNUMBERRESOLVING</td>
+                              </tr>
+                              <tr>
+                                <td width="25%">"PHOTON NUMBER RESOLVING"</td>
+                                <td width="75%">The camera will output the digital data as photon number (one digital number per one photoelectron) by quantifying the output digital data from AD converter to photon number with read time image processing.</td>
                               </tr>
                             </tr>
                           </table>
@@ -12343,7 +12371,7 @@
                               </tr>
                               <tr>
                                 <td width="25%">"ERROR"</td>
-                                <td width="75%">The system is online, but there is a hardware trobule.</td>
+                                <td width="75%">The system is online, but there is a hardware trouble.</td>
                               </tr>
                             </tr>
                           </table>

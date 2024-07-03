@@ -54,7 +54,7 @@ extern "C"
 	DLLAPI int TC_CloseRawImage(int image_handle);
 
 	DLLAPI long TC_CreateOMETiff(char* file_name);
-	DLLAPI long TC_ConfigOMEHeader(long handle, SampleInfo sample, int regionPixelX, int regionPixelY, float regionW, float regionH, unsigned short zCount, unsigned short tCount,
+	DLLAPI long TC_ConfigOMEHeader(long handle, SampleInfo sample, int regionPixelX, int regionPixelY, float regionW, float regionH, unsigned short zCount, unsigned int tCount,
 		int regionPositionPixelX, int regionPositionPixelY, int bitsPerPixel, float regionPixelSizeUM, double zStepSizeUM, double intervalSec, int channelNumber, const char* channels);
 	DLLAPI long TC_SaveOMEData(long handle, int channelID, int zIndex, int tIndex, unsigned short* data);
 	DLLAPI long TC_SaveAdditionalData(long handle, const char* data, int size);

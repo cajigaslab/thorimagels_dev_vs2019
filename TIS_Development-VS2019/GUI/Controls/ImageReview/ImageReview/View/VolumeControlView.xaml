@@ -22,18 +22,6 @@
                                             Width="Auto"
                                             Height="Auto"
                                             Margin="1"
-                                            BlackPoint0="{Binding Path=BlackPoint0,
-                                                                  Mode=TwoWay,
-                                                                  UpdateSourceTrigger=PropertyChanged}"
-                                            BlackPoint1="{Binding Path=BlackPoint1,
-                                                                  Mode=TwoWay,
-                                                                  UpdateSourceTrigger=PropertyChanged}"
-                                            BlackPoint2="{Binding Path=BlackPoint2,
-                                                                  Mode=TwoWay,
-                                                                  UpdateSourceTrigger=PropertyChanged}"
-                                            BlackPoint3="{Binding Path=BlackPoint3,
-                                                                  Mode=TwoWay,
-                                                                  UpdateSourceTrigger=PropertyChanged}"
                                             DataSpacingZ="{Binding Path=ZVolumeSpacing,
                                                                    Mode=TwoWay,
                                                                    UpdateSourceTrigger=PropertyChanged}"
@@ -55,18 +43,6 @@
                                             WellIndex="{Binding Path=SampleSiteIndex,
                                                                 Mode=OneWay,
                                                                 UpdateSourceTrigger=PropertyChanged}"
-                                            WhitePoint0="{Binding Path=WhitePoint0,
-                                                                  Mode=TwoWay,
-                                                                  UpdateSourceTrigger=PropertyChanged}"
-                                            WhitePoint1="{Binding Path=WhitePoint1,
-                                                                  Mode=TwoWay,
-                                                                  UpdateSourceTrigger=PropertyChanged}"
-                                            WhitePoint2="{Binding Path=WhitePoint2,
-                                                                  Mode=TwoWay,
-                                                                  UpdateSourceTrigger=PropertyChanged}"
-                                            WhitePoint3="{Binding Path=WhitePoint3,
-                                                                  Mode=TwoWay,
-                                                                  UpdateSourceTrigger=PropertyChanged}"
                                             ZStackCacheDirectory="{Binding Path=ExperimentFolderPath,
                                                                            Mode=OneWay,
                                                                            UpdateSourceTrigger=PropertyChanged}" />

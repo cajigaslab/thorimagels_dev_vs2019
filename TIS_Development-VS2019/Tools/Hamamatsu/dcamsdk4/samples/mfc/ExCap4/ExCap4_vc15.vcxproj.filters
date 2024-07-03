@@ -32,9 +32,6 @@
     <None Include="res\ExCapDoc.ico">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="res\ToolbarHPK.bmp">
-      <Filter>Resource Files</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ExCap4.h">
@@ -101,12 +98,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ExCapFramerate.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ExCapUI.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="excapuidll.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="image.h">
@@ -187,9 +178,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ExCapFramerate.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="excapuidll.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="image.cpp">

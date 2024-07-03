@@ -8,19 +8,23 @@
              xmlns:sharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
              xmlns:Valid="clr-namespace:Validations;assembly=Validations"
              xmlns:System="clr-namespace:System;assembly=mscorlib"
+             xmlns:SuffixedTextBoxControl="clr-namespace:SuffixedTextBoxControl;assembly=SuffixedTextBoxControl"
+             xmlns:TextBoxWithFocusButton="clr-namespace:TextBoxWithFocusButtonControl;assembly=TextBoxWithFocusButtonControl"
+             xmlns:UpDownButtonsControl="clr-namespace:UpDownButtonsControl;assembly=UpDownButtonsControl"
              mc:Ignorable="d"
              Height="Auto"
              Width="Auto">
     <UserControl.Resources>
         <ResourceDictionary>
             <sharedTypes:BooleanToVisibilityConverter x:Key="VisibilityOfBool"/>
+            <sharedTypes:BooleanLogicalAndConverter x:Key="BooleanLogicalOrConverter"/>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
     <Grid>
-        <StackPanel>
+        <StackPanel IsEnabled="{Binding Path=IsCameraControlEnabled}">
             <StackPanel Orientation="Horizontal"
                         ToolTip="Set the max allowed frame rate in frames per second"
                         Visibility="{Binding Path=IsFrameRateVisible, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
@@ -29,19 +33,76 @@
                           Content="Master Pulse"
                           VerticalAlignment="Center"/>
             </StackPanel>
-            <StackPanel Margin="1"
-                        Orientation="Horizontal"
-                        MinHeight="40">
-                <StackPanel Orientation="Horizontal">
-                    <Label VerticalAlignment="Center"
-                       Content="Exposure [ms]"
-                       MinWidth="85" />
-                    <TextBox Name="txtExposureTime"
-                         Height="25"
-                         MinWidth="40"
-                         VerticalAlignment="Center"
-                         Text="{Binding Path=ExposureTimeCam}"
-                         Visibility="{Binding Path=OrcaFrameRateEnabled, ConverterParameter=true, Converter={StaticResource VisibilityOfBool}}"/>
+            <StackPanel Orientation="Horizontal">
+                <Label VerticalAlignment="Center"
+                           Content="Exposure [ms]"
+                           MinWidth="85" />
+                <TextBox Name="txtExposureTime"
+                             Height="25"
+                             MinWidth="40"
+                             VerticalAlignment="Center"
+                             Text="{Binding Path=ExposureTimeCam}"
+                             IsEnabled="{Binding Path=IsExposureSettingEnabled}"
+                             Visibility="{Binding Path=OrcaFrameRateEnabled, ConverterParameter=true, Converter={StaticResource VisibilityOfBool}}"/>
+                <Button Width="25"
+                            Height="25"
+                            Content="✓">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=IsFocused,
+                                                                   ElementName=txtExposureTime}"
+                                                 Value="True">
+                                    <Setter Property="Visibility"
+                                                Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <StackPanel VerticalAlignment="Center"
+                                    Visibility="{Binding Path=OrcaFrameRateEnabled, ConverterParameter=true, Converter={StaticResource VisibilityOfBool}}">
+                    <RepeatButton Width="25"
+                                      Height="20"
+                                      Command="{Binding Path=CamExposureTimePlusCommand}"
+                                      IsEnabled="{Binding Path=IsExposureSettingEnabled}"
+                                      Content="+"
+                                      Delay="500"
+                                      Interval="100" />
+                    <RepeatButton Width="25"
+                                      Height="20"
+                                      Command="{Binding Path=CamExposureTimeMinusCommand}"
+                                      IsEnabled="{Binding Path=IsExposureSettingEnabled}"   
+                                      Content="-"
+                                      Delay="500"
+                                      Interval="100" />
+                </StackPanel>
+                <Label Name="lblExposureTime"
+                             Height="25"
+                             MinWidth="40"
+                             VerticalAlignment="Center"
+                             Content="{Binding Path=ExposureTimeCam}" 
+                             Visibility="{Binding Path=OrcaFrameRateEnabled, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}"/>
+                <StackPanel Orientation="Horizontal"
+                            Margin="10"
+                            IsEnabled="{Binding ImageStartStatusCamera}"
+                            Visibility="{Binding Path=IsAutoExposureSupported, ConverterParameter=true, Converter={StaticResource VisibilityOfBool}}">
+                    <Button Margin="1"
+                            IsEnabled="{Binding IsAutoExposureSettingEnabled}"
+                            Command="{Binding Path=RunAutoExposureCommand}"
+                            Content="Autoexposure"
+                            MinWidth="80"
+                            MinHeight="25"
+                            VerticalAlignment="Center" />
+                    <SuffixedTextBoxControl:SuffixedTextBox x:Name="txtAutoExposurePercent"
+                                                        Height="25"
+                                                        MinWidth="40"
+                                                        IsEnabled="{Binding IsAutoExposureSettingEnabled}"
+                                                        Text="{Binding Path=AutoExposurePercent}"
+                                                        Suffix="%"
+                                                        ToolTip="Percent of the full dynamic range for Autoexposure adjustment"/>
                     <Button Width="25"
                         Height="25"
                         Content="✓">
@@ -50,8 +111,8 @@
                                 <Setter Property="Visibility"
                                     Value="Collapsed" />
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Path=IsFocused,
-                                                               ElementName=txtExposureTime}"
+                                    <DataTrigger Binding="{Binding Path=IsKeyboardFocusWithin,
+                                                               ElementName=txtAutoExposurePercent}"
                                              Value="True">
                                         <Setter Property="Visibility"
                                             Value="Visible" />
@@ -60,65 +121,73 @@
                             </Style>
                         </Button.Style>
                     </Button>
-                    <StackPanel VerticalAlignment="Center"
-                                Visibility="{Binding Path=OrcaFrameRateEnabled, ConverterParameter=true, Converter={StaticResource VisibilityOfBool}}">
-                        <RepeatButton Width="25"
-                                  Height="20"
-                                  Command="{Binding Path=CamExposureTimePlusCommand}"
-                                  Content="+"
-                                  Delay="500"
-                                  Interval="100" />
-                        <RepeatButton Width="25"
-                                  Height="20"
-                                  Command="{Binding Path=CamExposureTimeMinusCommand}"
-                                  Content="-"
-                                  Delay="500"
-                                  Interval="100" />
-                    </StackPanel>
-                    <Label Name="lblExposureTime"
-                         Height="25"
-                         MinWidth="40"
-                         VerticalAlignment="Center"
-                         Content="{Binding Path=ExposureTimeCam}" 
-                         Visibility="{Binding Path=OrcaFrameRateEnabled, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}"/>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" 
-                            Visibility="{Binding Path=IsGainVisible, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        Visibility="{Binding Path=IsEqualExposurePulseVisible, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
+                <CheckBox Name="equalExposurePulseEnabledChkbox" 
+                          Margin="4,0,4,0"
+                          VerticalAlignment="Center"
+                          Content="EEP Enabled"
+                          IsChecked="{Binding Path=IsEqualExposurePulseEnabled}" />
+                <Label VerticalAlignment="Center"
+                           Content="Pulse Width [ms]"
+                           MinWidth="85" />
+                <TextBoxWithFocusButton:TextBoxWithFocusButton Name="txtPulseWidth"
+                             Height="25"
+                             MinWidth="40"
+                             VerticalAlignment="Center"
+                             Text="{Binding Path=EqualExposurePulseWidth}"
+                             IsEnabled="{Binding IsChecked, ElementName=equalExposurePulseEnabledChkbox}"/>
+                <UpDownButtonsControl:UpDownButtonsControl Name="nudPulseWidth"
+                                                           IsEnabled="{Binding IsChecked, ElementName=equalExposurePulseEnabledChkbox}"
+                                                           UpCommand="{Binding Path=PulseWidthPlusCommand, Mode=OneWay}"
+                                                           DownCommand="{Binding Path=PulseWidthMinusCommand, Mode=OneWay}"/>
+            </StackPanel>
+            <StackPanel Height="Auto" 
+                        Orientation="Horizontal">
+                <StackPanel Name="GainPanel" 
+                        Margin="1"
+                        Orientation="Horizontal"
+                        MinHeight="40"
+                        Visibility="{Binding Path=IsGainVisible, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
                     <Label VerticalAlignment="Center"
                            Content="Gain"
                            Margin="4,0,0,0"
-                           MinWidth="35" />
-                    <TextBox Name="txtGain"
-                             Height="25"
-                             MinWidth="40"
-                             Text="{Binding Path=Gain}" />
-                    <Button Width="25"
-                        Height="25"
-                        Content="✓">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Visibility"
-                                    Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Path=IsFocused,
-                                                               ElementName=txtGain}"
-                                             Value="True">
-                                        <Setter Property="Visibility"
-                                            Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
+                           MinWidth="35" 
+                           Visibility="{Binding Path=IsGainInDecibels, ConverterParameter=true, Converter={StaticResource VisibilityOfBool}}"/>
+                    <Label VerticalAlignment="Center"
+                           Content="Gain [dB]"
+                           Margin="4,0,0,0"
+                           MinWidth="35"
+                           Visibility="{Binding Path=IsGainInDecibels, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}"/>
                     <StackPanel Orientation="Horizontal"
-                                Visibility="{Binding Path=IsBlackLevelVisible, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
-                        <Label Margin="4,0,0,0"
-                       VerticalAlignment="Center"
-                       Content="Black LVL" />
-                        <TextBox Name="txtBlackLevel"
-                         Height="25"
-                         MinWidth="40"
-                         Text="{Binding Path=CamBlackLevel}" />
+                            Visibility="{Binding Path=IsGainContiguous, ConverterParameter=true, Converter={StaticResource VisibilityOfBool}}">
+                        <ComboBox Name="cbGainDiscrete"
+                              Height="25"
+                              MinWidth="75"
+                              IsEditable="true"
+                              IsReadOnly="true"
+                              ItemsSource="{Binding GainDiscreteOptions}"
+                              SelectionChanged="GainDiscreteOptions_SelectionChanged"
+                              SelectedIndex="{Binding Gain}">
+
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal"
+                                Visibility="{Binding Path=IsGainContiguous, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
+                        <TextBox Name="txtGain"
+                                Height="25"
+                                MinWidth="40"
+                                Text="{Binding Path=Gain}"
+                                Visibility="{Binding Path=IsGainInDecibels, ConverterParameter=true, Converter={StaticResource VisibilityOfBool}}"/>
+                        <TextBox Name="txtGainDb"
+                                Height="25"
+                                MinWidth="40"
+                                Text="{Binding Path=GainDecibels, Mode=TwoWay, StringFormat={}{0:0.0}}"
+                                Valid:Validation.ValidationType="{x:Type System:Double}"
+                                Valid:Validation.NoEmptyValue="True"
+                                Visibility="{Binding Path=IsGainInDecibels, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}"/>
                         <Button Width="25"
                         Height="25"
                         Content="✓">
@@ -127,11 +196,13 @@
                                     <Setter Property="Visibility"
                                     Value="Collapsed" />
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Path=IsFocused,
-                                                               ElementName=txtBlackLevel}"
-                                             Value="True">
-                                            <Setter Property="Visibility"
-                                            Value="Visible" />
+                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txtGain}" Value="True">
+                                            <Setter Property="Visibility" 
+                                            Value="Visible"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txtGainDb}" Value="True">
+                                            <Setter Property="Visibility" 
+                                            Value="Visible"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -139,7 +210,37 @@
                         </Button>
                     </StackPanel>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal"
+                <StackPanel Name="BlackLvlPanel"
+                            Orientation="Horizontal"
+                            Visibility="{Binding Path=IsBlackLevelVisible, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
+                    <Label Margin="4,0,0,0"
+                       VerticalAlignment="Center"
+                       Content="Black LVL" />
+                    <TextBox Name="txtBlackLevel"
+                         Height="25"
+                         MinWidth="40"
+                         Text="{Binding Path=CamBlackLevel}" />
+                    <Button Width="25"
+                        Height="25"
+                        Content="✓">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused,
+                                                               ElementName=txtBlackLevel}"
+                                             Value="True">
+                                        <Setter Property="Visibility"
+                                            Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+                <StackPanel Name="OrcaFrameRatePanel"
+                            Orientation="Horizontal"
                             Margin="4,0"
                             Visibility="{Binding Path=OrcaFrameRateEnabled, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
                     <Label VerticalAlignment="Center"
@@ -174,6 +275,7 @@
                         <Button Margin="3"
                                  Command="{Binding Path=CamFullFrameCommand}"
                                  Content="Full Frame"
+                                 IsEnabled="{Binding Path=IsRegionOfInterestEnabled}"
                                  MinWidth="100"
                                  MinHeight="35"
                                  VerticalAlignment="Center" />
@@ -388,138 +490,7 @@
                     </StackPanel>
                 </StackPanel>
             </Border>
-            <StackPanel Margin="1"
-                        Orientation="Horizontal"
-                        MinHeight="40">
-                <StackPanel Orientation="Horizontal"
-                            Visibility="{Binding Path=BinningOrcaType, ConverterParameter=true, Converter={StaticResource VisibilityOfBool}}">
-                    <Label VerticalAlignment="Center"
-                           Content="Bin Y"
-                           MinWidth="50" />
-                    <TextBox Name="txtBinY"
-                             Height="25"
-                             MinWidth="40"
-                             VerticalAlignment="Center"
-                             Text="{Binding Path=BinY}" />
-                    <Button Width="25"
-                            Height="25"
-                            Content="✓">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Visibility"
-                                        Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Path=IsFocused,
-                                                                   ElementName=txtBinY}"
-                                                 Value="True">
-                                        <Setter Property="Visibility"
-                                                Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                    <StackPanel VerticalAlignment="Center">
-                        <RepeatButton Width="25"
-                                      Height="20"
-                                      Command="{Binding Path=BinYPlusCommand}"
-                                      Content="+"
-                                      Delay="500"
-                                      Interval="100" />
-                        <RepeatButton Width="25"
-                                      Height="20"
-                                      Command="{Binding Path=BinYMinusCommand}"
-                                      Content="-"
-                                      Delay="500"
-                                      Interval="100" />
-                    </StackPanel>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal"
-                            Visibility="{Binding Path=BinningOrcaType, ConverterParameter=true, Converter={StaticResource VisibilityOfBool}}">
-                    <Label  Margin="8,0,0,0"
-                            VerticalAlignment="Center"
-                            Content="Bin X"
-                            MinWidth="50" />
-                    <TextBox Name="txtBinX"
-                             Height="25"
-                             MinWidth="40"
-                             VerticalAlignment="Center"
-                             Text="{Binding Path=BinX}" />
-                    <Button Width="25"
-                            Height="25"
-                            Content="✓">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Visibility"
-                                        Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Path=IsFocused,
-                                                                   ElementName=txtBinX}"
-                                                 Value="True">
-                                        <Setter Property="Visibility"
-                                                Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                    <StackPanel VerticalAlignment="Center">
-                        <RepeatButton Width="25"
-                                      Height="20"
-                                      Command="{Binding Path=BinXPlusCommand}"
-                                      Content="+"
-                                      Delay="500"
-                                      Interval="100" />
-                        <RepeatButton Width="25"
-                                      Height="20"
-                                      Command="{Binding Path=BinXMinusCommand}"
-                                      Content="-"
-                                      Delay="500"
-                                      Interval="100" />
-                    </StackPanel>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal"
-                            Visibility="{Binding Path=BinningOrcaType, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
-                    <Label VerticalAlignment="Center"
-                           Content="Binning"
-                           MinWidth="95" />
-                    <ComboBox Name="dbBin"
-                             Height="25"
-                             MinWidth="60"
-                             VerticalAlignment="Center"
-                             ItemsSource="{Binding Path=BinList}"
-                             SelectedIndex="{Binding Path=BinIndex}"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal"
-                            HorizontalAlignment="Right"
-                            Margin="8,0,0,0">
-                    <Label Content="{Binding Path=PixelSizeUM, UpdateSourceTrigger=PropertyChanged}"
-                               MinWidth="35"
-                               VerticalAlignment="Center"/>
-                    <Label Content="[um/pixel]"
-                               VerticalAlignment="Center"/>
-                </StackPanel>
-            </StackPanel>
-            <StackPanel Margin="1"
-                        Orientation="Horizontal"
-                        MinHeight="40" Visibility="{Binding Path=IsTapsVisible, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}" >
-                <Label Content="Taps"
-                       VerticalAlignment="Center"
-                       HorizontalAlignment="Left"
-                       MinWidth="100" />
-                <ComboBox Name="cbCamTaps"
-                          Height="25"
-                          MinWidth="75"
-                          SelectedIndex="{Binding Path=CamTapIndex}">
-                    <ComboBoxItem Content="1" />
-                    <ComboBoxItem Content="2" />
-                    <ComboBoxItem Content="4" />
-                </ComboBox>
-                <CheckBox Margin="10,0,0,0"
-                          VerticalAlignment="Center"
-                          Content="Tap Balance"
-                          IsChecked="{Binding Path=CamTapBalance}" />
-            </StackPanel>
+
             <StackPanel MinHeight="20"
                         Visibility="{Binding Path=FrameRateControlVisibility, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
                 <CheckBox Name="framRateCtrlEnabledChkbox" 
@@ -586,20 +557,6 @@
             </StackPanel>
             <StackPanel Margin="1"
                         Orientation="Horizontal"
-                        MinHeight="40"
-                        Visibility="{Binding Path=IsReadoutVisible, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
-                <Label Content="Readout Speed"
-                       VerticalAlignment="Center"
-                       HorizontalAlignment="Left"
-                       MinWidth="100" />
-                <ComboBox ItemsSource="{Binding Path=CamReadoutSpeedList}"
-                          SelectedIndex="{Binding Path=CamReadoutSpeedIndex}"
-                          Height="25"
-                          MinWidth="125" >
-                </ComboBox>
-            </StackPanel>
-            <StackPanel Margin="1"
-                        Orientation="Horizontal"
                         MinHeight="40">
                 <Label VerticalAlignment="Center"
                        HorizontalAlignment="Left"
@@ -654,23 +611,239 @@
                        Content="[Frames]"
                        Foreground="White" />
             </StackPanel>
-            <StackPanel MinHeight="20"
-                        Visibility="{Binding Path=HotPixelVis, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
-                <CheckBox Name="hotPixelChkbox" 
-                          Margin="13,5,0,0"
+
+            <StackPanel Orientation="Horizontal" />
+            <StackPanel Name="ColorImageTypeStackPanel" Orientation="Horizontal"
+                        Visibility="{Binding Path=IsCameraColorImageTypeVisible, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
+                <Label Content="Color Image Type" VerticalAlignment="Center" MinWidth="115"/>
+                <ComboBox ItemsSource="{Binding Path=CameraColorImageTypeList}"
+                          SelectedIndex="{Binding Path=CameraColorImageTypeIndex}"/>
+
+            </StackPanel>
+            <StackPanel Name="PolarImageTypeStackPanel" Orientation="Horizontal"
+                        Visibility="{Binding Path=IsCameraPolarImageTypeVisible, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
+                <Label Content="Polar Image Type" VerticalAlignment="Center" MinWidth="115" />
+                <ComboBox ItemsSource="{Binding Path=CameraPolarImageTypeList}"
+                          SelectedIndex="{Binding Path=CameraPolarImageTypeIndex}" />
+            </StackPanel>
+            <StackPanel>
+                <Border>
+                    <Expander Name="SecondaryCameraControlsExpander">
+                        <Expander.Header>
+                            <Label Name="BorderTitle"
+                                       HorizontalAlignment="Left"
+                                       Content="Secondary Camera Controls:"
+                                       Foreground="White" />
+                        </Expander.Header>
+                        <StackPanel>
+                            <StackPanel Margin="1"
+                        Orientation="Horizontal"
+                        MinHeight="40">
+                                <StackPanel Orientation="Horizontal"
+                                        Visibility="{Binding Path=BinningOrcaType, ConverterParameter=true, Converter={StaticResource VisibilityOfBool}}">
+                                    <Label VerticalAlignment="Center"
+                           Content="Bin Y"
+                           MinWidth="50" />
+                                    <TextBox Name="txtBinY"
+                             Height="25"
+                             MinWidth="40"
+                             VerticalAlignment="Center"
+                             Text="{Binding Path=BinY}"
+                             IsEnabled="{Binding Path=IsBinningAvailable}"/>
+                                    <Button Width="25"
+                            Height="25"
+                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused,
+                                                                   ElementName=txtBinY}"
+                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <RepeatButton Width="25"
+                                      Height="20"
+                                      Command="{Binding Path=BinYPlusCommand}"
+                                      Content="+"
+                                      Delay="500"
+                                      Interval="100"
+                                      IsEnabled="{Binding Path=IsBinningAvailable}"/>
+                                        <RepeatButton Width="25"
+                                      Height="20"
+                                      Command="{Binding Path=BinYMinusCommand}"
+                                      Content="-"
+                                      Delay="500"
+                                      Interval="100"
+                                      IsEnabled="{Binding Path=IsBinningAvailable}"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal"
+                                        Visibility="{Binding Path=BinningOrcaType, ConverterParameter=true, Converter={StaticResource VisibilityOfBool}}">
+                                    <Label  Margin="8,0,0,0"
+                            VerticalAlignment="Center"
+                            Content="Bin X"
+                            MinWidth="50" />
+                                    <TextBox Name="txtBinX"
+                             Height="25"
+                             MinWidth="40"
+                             VerticalAlignment="Center"
+                             Text="{Binding Path=BinX}"
+                             IsEnabled="{Binding Path=IsBinningAvailable}" />
+                                    <Button Width="25"
+                            Height="25"
+                            Content="✓">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused,
+                                                                   ElementName=txtBinX}"
+                                                 Value="True">
+                                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <RepeatButton Width="25"
+                                      Height="20"
+                                      Command="{Binding Path=BinXPlusCommand}"
+                                      Content="+"
+                                      Delay="500"
+                                      Interval="100"
+                                      IsEnabled="{Binding Path=IsBinningAvailable}" />
+                                        <RepeatButton Width="25"
+                                      Height="20"
+                                      Command="{Binding Path=BinXMinusCommand}"
+                                      Content="-"
+                                      Delay="500"
+                                      Interval="100"
+                                      IsEnabled="{Binding Path=IsBinningAvailable}" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal"
+                                        Visibility="{Binding Path=BinningOrcaType, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
+                                <Label VerticalAlignment="Center"
+                           Content="Binning"
+                           MinWidth="95" />
+                                    <ComboBox Name="dbBin"
+                             Height="25"
+                             MinWidth="60"
+                             VerticalAlignment="Center"
+                             ItemsSource="{Binding Path=BinList}"
+                             SelectedIndex="{Binding Path=BinIndex}"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Margin="8,0,0,0">
+                                    <Label Content="{Binding Path=PixelSizeUM, UpdateSourceTrigger=PropertyChanged}"
+                               MinWidth="35"
+                               VerticalAlignment="Center"/>
+                                    <Label Content="[um/pixel]"
+                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Margin="1"
+                        Orientation="Horizontal"
+                        MinHeight="40" Visibility="{Binding Path=IsTapsVisible, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}" >
+                                <Label Content="Taps"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Left"
+                       MinWidth="100" />
+                                <ComboBox Name="cbCamTaps"
+                          Height="25"
+                          MinWidth="75"
+                          SelectedIndex="{Binding Path=CamTapIndex}">
+                                    <ComboBoxItem Content="1" />
+                                    <ComboBoxItem Content="2" />
+                                    <ComboBoxItem Content="4" />
+                                </ComboBox>
+                                <CheckBox Margin="10,0,0,0"
                           VerticalAlignment="Center"
-                          Content="Hot Pixel Correction"
-                          IsChecked="{Binding Path=HotPixelEnabled}" 
-                          IsEnabled="{Binding ImageStartStatusCamera}"/>
-                <StackPanel Orientation="Horizontal"
+                          Content="Tap Balance"
+                          IsChecked="{Binding Path=CamTapBalance}" />
+                            </StackPanel>
+                            <StackPanel Margin="1"
+                        Orientation="Horizontal"
+                        MinHeight="40"
+                        Visibility="{Binding Path=IsReadoutVisible, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
+                                <Label Content="Readout Speed"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Left"
+                       MinWidth="100" />
+                                <ComboBox ItemsSource="{Binding Path=CamReadoutSpeedList}"
+                          SelectedIndex="{Binding Path=CamReadoutSpeedIndex}"
+                          Height="25"
+                          MinWidth="125" >
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Margin="13,1,1,1"
+                                        Orientation="Horizontal"
+                                        HorizontalAlignment="Left"
+                                        MinHeight="40">
+                                <CheckBox VerticalAlignment="Center"
+                          Content="Vertical Flip"
+                          IsChecked="{Binding Path=CamVerticalFlip}" />
+                                <CheckBox Margin="10,0,0, 0"
+                          VerticalAlignment="Center"
+                          Content="Horizontal Flip"
+                          IsChecked="{Binding Path=CamHorizontalFlip}" />
+                                <Label Margin="10,0,0,0"
+                       VerticalAlignment="Center"
+                       Content="Image Angle [deg]" />
+                                <Label MinWidth="30"
+                       VerticalAlignment="Center"
+                       Content="{Binding Path=CameraImageAngle}" />
+                                <StackPanel VerticalAlignment="Center">
+                                    <RepeatButton Width="25"
+                                  Height="20"
+                                  Command="{Binding Path=CameraImageAnglePlusCommand}"
+                                  Content="+"
+                                  Delay="500"
+                                  Interval="100"
+                                  IsEnabled="{Binding ImageStartStatusCamera}" />
+                                    <RepeatButton Width="25"
+                                  Height="20"
+                                  Command="{Binding Path=CameraImageAngleMinusCommand}"
+                                  Content="-"
+                                  Delay="500"
+                                  Interval="100"
+                                  IsEnabled="{Binding ImageStartStatusCamera}" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel MinHeight="20"
+                                    Visibility="{Binding Path=HotPixelVis, ConverterParameter=false, Converter={StaticResource VisibilityOfBool}}">
+                            <CheckBox Name="hotPixelChkbox" 
+                                      Margin="13,1,0,1"
+                                      VerticalAlignment="Center"
+                                      Content="Hot Pixel Correction"
+                                      IsChecked="{Binding Path=HotPixelEnabled}">
+                                <CheckBox.IsEnabled>
+                                    <MultiBinding Converter="{StaticResource BooleanLogicalOrConverter}">
+                                            <Binding Path="ImageStartStatusCamera"/>
+                                        </MultiBinding>
+                                </CheckBox.IsEnabled>
+                            </CheckBox>
+                            <StackPanel Orientation="Horizontal"
                         Margin="1"
                         ToolTip="Hot Pixel Correction Settings"
                         Visibility="{Binding IsChecked,ElementName=hotPixelChkbox,Converter={StaticResource VisibilityOfBool}}">
-                    <Label Content="None"
+                                    <Label Content="None"
                        Foreground="White"
                        Width="40"
                        VerticalAlignment="Center" />
-                    <Slider x:Name="hpSlider"
+                                    <Slider x:Name="hpSlider"
                         Width="180"
                         Value="{Binding Path=HotPixelVal, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         Minimum="0.00"
@@ -679,11 +852,11 @@
                         MouseWheel="FormattedSlider_MouseWheel"
                         Thumb.DragCompleted="FormattedSlider_DragCompleted"
                         Thumb.DragStarted="FormattedSlider_DragStarted"/>
-                    <Label Content="Aggressive"
+                                    <Label Content="Aggressive"
                        Foreground="White"
                        Width="70"
                        VerticalAlignment="Center" />
-                    <TextBox Width="50"
+                                    <TextBox Width="50"
                          Name="tbHotPixel"
                          Height="25"
                          Text="{Binding Path=HotPixelVal, Mode=TwoWay, StringFormat={}{0:0.00}}" 
@@ -691,100 +864,187 @@
                          Valid:Validation.NoEmptyValue="True"
                          Valid:Validation.MinValue="0.00"
                          Valid:Validation.MaxValue="100.00" />
-                    <Button Width="30"
+                                    <Button Width="30"
                         Height="25"
                         Content="✓">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Visibility"
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility"
                                     Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbHotPixel}"
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbHotPixel}"
                                              Value="True">
-                                        <Setter Property="Visibility"
+                                                        <Setter Property="Visibility"
                                             Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                    <StackPanel>
-                        <RepeatButton Content="+"
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <StackPanel>
+                                        <RepeatButton Content="+"
                                   Width="30"
                                   Height="20"
                                   Command="{Binding Path=HotPixelPlusCommand}"
                                   CommandParameter="3"
                                   Delay="500"
                                   Interval="100" />
-                        <RepeatButton Content="-"
+                                        <RepeatButton Content="-"
                                   Width="30"
                                   Height="20"
                                   Command="{Binding Path=HotPixelMinusCommand}"
                                   CommandParameter="3"
                                   Delay="500"
                                   Interval="100" />
-                    </StackPanel>
-                </StackPanel>
-            </StackPanel>
-            <StackPanel Margin="1"
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Margin="1"
                         Orientation="Horizontal"
                         MinHeight="40"
                         Visibility="{Binding Path=HotPixelCBVisibility}">
-                <Label Content="Hot Pixel Correct Level"
+                                <Label Content="Hot Pixel Correct Level"
                        VerticalAlignment="Center"
                        MinWidth="95" />
-                <ComboBox ItemsSource="{Binding Path=HotPixelLevelList}"
+                                <ComboBox ItemsSource="{Binding Path=HotPixelLevelList}"
                           SelectedIndex="{Binding Path=HotPixelLevelIndex}"
                           Height="25"
                           MinWidth="125" >
-                </ComboBox>
-            </StackPanel>
-            <StackPanel Margin="1"
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Margin="1"
                         Orientation="Horizontal"
                         MinHeight="40"
                         Visibility="{Binding Path=CoolingVisibility}">
-                <Label Content="Cooling Mode"
+                                <Label Content="Cooling Mode"
                        VerticalAlignment="Center"
                        MinWidth="95" />
-                <ComboBox ItemsSource="{Binding Path=CoolingModeList}"
+                                <ComboBox ItemsSource="{Binding Path=CoolingModeList}"
                           SelectedIndex="{Binding Path=CoolingModeIndex}"
                           Height="25"
                           MinWidth="80" >
-                </ComboBox>
-            </StackPanel>
-            <StackPanel Margin="1"
-                        Orientation="Horizontal"
-                        HorizontalAlignment="Center"
-                        MinHeight="40">
-                <CheckBox VerticalAlignment="Center"
-                          Content="Vertical Flip"
-                          IsChecked="{Binding Path=CamVerticalFlip}" />
-                <CheckBox Margin="10,0,0, 0"
-                          VerticalAlignment="Center"
-                          Content="Horizontal Flip"
-                          IsChecked="{Binding Path=CamHorizontalFlip}" />
-                <Label Margin="10,0,0,0"
-                       VerticalAlignment="Center"
-                       Content="Image Angle [deg]" />
-                <Label MinWidth="30"
-                       VerticalAlignment="Center"
-                       Content="{Binding Path=CameraImageAngle}" />
-                <StackPanel VerticalAlignment="Center">
-                    <RepeatButton Width="25"
-                                  Height="20"
-                                  Command="{Binding Path=CameraImageAnglePlusCommand}"
-                                  Content="+"
-                                  Delay="500"
-                                  Interval="100"
-                                  IsEnabled="{Binding ImageStartStatusCamera}" />
-                    <RepeatButton Width="25"
-                                  Height="20"
-                                  Command="{Binding Path=CameraImageAngleMinusCommand}"
-                                  Content="-"
-                                  Delay="500"
-                                  Interval="100"
-                                  IsEnabled="{Binding ImageStartStatusCamera}" />
-                </StackPanel>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                    MinHeight="20"
+                                    Visibility="{Binding Path=IsNirBoostVisible, Converter={StaticResource VisibilityOfBool}}">
+                                <CheckBox Name="NirBoostEnableCheckBox" 
+                                      Margin="11,5,0,0"
+                                      VerticalAlignment="Center"
+                                      Content="NIR Boost"
+                                      IsChecked="{Binding Path=IsNirBoostEnabled}"/>
+                        </StackPanel>
+                        <Border 
+                            Margin="6"
+                            Visibility="{Binding Path=IsColorGainsVisible, Converter={StaticResource VisibilityOfBool}}">
+                            <StackPanel 
+                                Margin="3"
+                                Orientation="Vertical"
+                                MinHeight="40">
+                                <StackPanel
+                                    Name="LeftSide"
+                                    Orientation="Vertical">
+
+                                    <StackPanel Orientation="Horizontal"
+                                            Margin="1">
+                                        <Label 
+                                        Content="Red Gain"
+                                        VerticalAlignment="Center"
+                                        MinWidth="95" />
+                                        <TextBoxWithFocusButton:TextBoxWithFocusButton
+                                        Name="txtRedGain"
+                                        Height="25"
+                                        MinWidth="40"
+                                        VerticalAlignment="Center"
+                                        Text="{Binding Path=RedGain, Mode=TwoWay, StringFormat={}{0:0.00}}"/>
+                                    </StackPanel>
+                                    <StackPanel 
+                                    Orientation="Horizontal"
+                                    Margin="1">
+                                        <Label 
+                                        Content="Green Gain"
+                                        VerticalAlignment="Center"
+                                        MinWidth="95" />
+                                        <TextBoxWithFocusButton:TextBoxWithFocusButton 
+                                        Name="txtGreenGain"
+                                        Height="25"
+                                        MinWidth="40"
+                                        VerticalAlignment="Center"
+                                        Text="{Binding Path=GreenGain, Mode=TwoWay, StringFormat={}{0:0.00}}"/>
+                                    </StackPanel>
+                                    <StackPanel 
+                                    Orientation="Horizontal"
+                                    Margin="1">
+                                        <Label 
+                                        Content="Blue Gain"
+                                        VerticalAlignment="Center"
+                                        MinWidth="95" />
+                                        <TextBoxWithFocusButton:TextBoxWithFocusButton 
+                                        Name="txtBlueGain"
+                                        Height="25"
+                                        MinWidth="40"
+                                        VerticalAlignment="Center"
+                                        Text="{Binding Path=BlueGain, Mode=TwoWay, StringFormat={}{0:0.00}}"/>
+                                    </StackPanel>
+
+                                </StackPanel>
+                                <StackPanel
+                                    Orientation="Horizontal"
+                                    Margin="3">
+                                        <Button
+                                        Command="{Binding Path=PerformAutoWhiteBalanceCommand}"
+                                        Margin="1"
+                                        Content="Perform Auto White Balance"
+                                        MinWidth="170"
+                                        MinHeight="25"
+                                        VerticalAlignment="Center"/>
+                                        
+                                </StackPanel>
+                                <StackPanel
+                                    Orientation="Horizontal"
+                                    Margin="3"
+                                    VerticalAlignment="Center">
+                                        <CheckBox
+                                            Name="ContinuousWhiteBalanceCheckBox"
+                                            VerticalAlignment="Center"
+                                            VerticalContentAlignment="Center"
+                                            Margin="0,0,0,0"
+                                            IsChecked="{Binding Path=IsContinuousWhiteBalanceEnabled}"/>
+                                        <Label 
+                                            Content="Continuous Auto White Balance Every "
+                                            VerticalContentAlignment="Center"/>
+                                        <TextBoxWithFocusButton:TextBoxWithFocusButton Name="txtAutoWhiteBalanceFrames"
+                                            Height="25"
+                                            MinWidth="40"
+                                            VerticalAlignment="Center"
+                                            Text="{Binding Path=ContinuousWhiteBalanceNumFrames}"
+                                            IsEnabled="{Binding IsChecked, ElementName=ContinuousWhiteBalanceCheckBox}"/>
+                                        <UpDownButtonsControl:UpDownButtonsControl
+                                            UpCommand="{Binding Path=ContinuousWhiteBalanceNumFramesIncrementCommand}"
+                                            DownCommand="{Binding Path=ContinuousWhiteBalanceNumFramesDecrementCommand}"
+                                            IsEnabled="{Binding IsChecked, ElementName=ContinuousWhiteBalanceCheckBox}"
+                                            />
+                                        <Label 
+                                            Content="Frames"
+                                            VerticalContentAlignment="Center"/>
+                                    </StackPanel>
+                                    <StackPanel
+                                    Orientation="Horizontal"
+                                    Margin="3">
+                                        <Button 
+                                        Margin="1"
+                                        Command="{Binding Path=SetDefaultColorGainsCommand}"
+                                        Content="Use Default Gains"
+                                        MinWidth="170"
+                                        MinHeight="25"
+                                        VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    </Expander>
+                </Border>
             </StackPanel>
             <Border>
                 <Expander Foreground="White"

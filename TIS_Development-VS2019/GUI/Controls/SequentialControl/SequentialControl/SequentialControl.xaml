@@ -1,0 +1,358 @@
+﻿<UserControl x:Class="SequentialControl.SequentialControlUC"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:dd="clr-namespace:GongSolutions.Wpf.DragDrop;assembly=GongSolutions.Wpf.DragDrop"
+             xmlns:sharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+             mc:Ignorable="d"
+             Height="Auto"
+             Width="400">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <sharedTypes:BooleanToVisibilityConverter x:Key="VisibilityOfBool" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel>
+            <StackPanel Visibility="{Binding IsTabletModeEnabled}"
+                        HorizontalAlignment="Center"
+                        Orientation="Horizontal">
+                <StackPanel>
+                    <Label HorizontalAlignment="Center"
+                           HorizontalContentAlignment="Center"
+                           Content="Step Templates" />
+                    <StackPanel Visibility="{Binding ElementName=cbSequentialCapture, Path=IsChecked, ConverterParameter=False, Converter={StaticResource VisibilityOfBool}}">
+                        <ListBox Name="lvSequenceStepTemplateList"
+                                 Width="197"
+                                 Height="168"
+                                 Margin="0,0,1,1"
+                                 VerticalAlignment="Top"
+                                 ItemsSource="{Binding CollectionSequences}"
+                                 SelectionMode="Single"
+                                 ScrollViewer.CanContentScroll="False"
+                                 dd:DragDrop.DropHandler="{Binding}"
+                                 dd:DragDrop.IsDragSource="True"
+                                 dd:DragDrop.IsDropTarget="True">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Focusable"
+                                            Value="False" />
+                                    <Setter Property="Visibility"
+                                            Value="{Binding Path=SequenceStepVisibility}"/>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="2,2,0,2"
+                                          Width="{Binding Path=StepTemplateWidth}">
+                                        <TextBlock HorizontalAlignment="Stretch"
+                                                   Margin="0"
+                                                   Text="{Binding Path=Name,
+                                                                  Mode=OneWay}"
+                                                   ToolTip="{Binding Path=SequenceStepPreview}"
+                                                   ToolTipService.ShowDuration="60000">
+                                            <TextBlock.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Command="{Binding Path=ChangeSequenceNameCommand}"
+                                                              Header="Modify Name"/>
+                                                </ContextMenu>
+                                            </TextBlock.ContextMenu>
+                                        </TextBlock>
+                                        <StackPanel Margin="0"
+                                                    Orientation="Horizontal"
+                                                    HorizontalAlignment="Right">
+                                            <Button Height="20"
+                                                    Margin="0"
+                                                    HorizontalContentAlignment="Center"
+                                                    VerticalContentAlignment="Center"
+                                                    Command="{Binding Path=ApplyStepTemplateCommand}"
+                                                    Content="Apply"
+                                                    ToolTip="Apply these settings" />
+                                            <Button Height="20"
+                                                    Margin="0"
+                                                    HorizontalContentAlignment="Center"
+                                                    VerticalContentAlignment="Center"
+                                                    Command="{Binding Path=UpdateStepTemplateCommand}"
+                                                    ToolTip="Use the current settings to update this sequence step template">
+                                                <Image Source=".\Save.png" />
+                                            </Button>
+                                            <Button Width="21"
+                                                    Height="20"
+                                                    Margin="0"
+                                                    Command="{Binding Path=DeleteStepTemplateCommand}"
+                                                    ToolTip="Delete this sequence step and its settings">
+                                                <StackPanel Margin="1"
+                                                            HorizontalAlignment="Right"
+                                                            Style="{x:Null}">
+                                                    <Path x:Name="ButtonPath"
+                                                            HorizontalAlignment="Center"
+                                                            VerticalAlignment="Center"
+                                                            Stretch="Uniform"
+                                                            Stroke="{StaticResource DeleteBrush}"
+                                                            StrokeEndLineCap="Square"
+                                                            StrokeStartLineCap="Square"
+                                                            StrokeThickness="4">
+                                                        <Path.Data>
+                                                            <PathGeometry>
+                                                                <PathGeometry.Figures>
+                                                                    <PathFigure StartPoint="0,0">
+                                                                        <LineSegment Point="25,25" />
+                                                                    </PathFigure>
+                                                                    <PathFigure StartPoint="0,25">
+                                                                        <LineSegment Point="25,0" />
+                                                                    </PathFigure>
+                                                                </PathGeometry.Figures>
+                                                            </PathGeometry>
+                                                        </Path.Data>
+                                                    </Path>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+                    <StackPanel Visibility="{Binding ElementName=cbSequentialCapture, Path=IsChecked, ConverterParameter=True, Converter={StaticResource VisibilityOfBool}}">
+                        <ListBox x:Name="lvSequenceStepTemplateListWide"
+                                 Width="395"
+                                 Height="168"
+                                 Margin="0,0,0,1"
+                                 VerticalAlignment="Top"
+                                 HorizontalAlignment="Center"
+                                 ItemsSource="{Binding CollectionSequences}"
+                                 SelectionMode="Single"
+                                 ScrollViewer.CanContentScroll="False"
+                                 dd:DragDrop.DropHandler="{Binding}"
+                                 dd:DragDrop.IsDragSource="True"
+                                 dd:DragDrop.IsDropTarget="True">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Focusable"
+                                            Value="False" />
+                                    <Setter Property="Visibility"
+                                            Value="{Binding Path=SequenceStepVisibility}"/>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="2,2,0,2"
+                                          Width="{Binding Path=StepTemplateWidth}">
+                                        <TextBlock HorizontalAlignment="Stretch"
+                                                   Text="{Binding Path=Name,
+                                                                  Mode=OneWay}"
+                                                   ToolTip="{Binding Path=SequenceStepPreview}" 
+                                                   ToolTipService.ShowDuration="60000">
+                                            <TextBlock.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Command="{Binding Path=ChangeSequenceNameCommand}"
+                                                              Header="Modify Name"/>
+                                                </ContextMenu>
+                                            </TextBlock.ContextMenu>
+                                        </TextBlock>
+                                        <StackPanel Orientation="Horizontal"
+                                                    HorizontalAlignment="Right">
+                                            <Button Height="20"
+                                                    Margin="0"
+                                                    HorizontalAlignment="Right"
+                                                    HorizontalContentAlignment="Center"
+                                                    VerticalContentAlignment="Center"
+                                                    Command="{Binding Path=ApplyStepTemplateCommand}"
+                                                    Content="Apply"
+                                                    ToolTip="Apply these settings" />
+                                            <Button Height="20"
+                                                    Margin="0"
+                                                    HorizontalAlignment="Right"
+                                                    HorizontalContentAlignment="Center"
+                                                    VerticalContentAlignment="Center"
+                                                    Command="{Binding Path=UpdateStepTemplateCommand}"
+                                                    ToolTip="Use the current settings to update this sequence step template">
+                                                <Image Source=".\Save.png" />
+                                            </Button>
+                                            <Button Width="21"
+                                                    Height="20"
+                                                    Margin="0"
+                                                    HorizontalAlignment="Right"
+                                                    Command="{Binding Path=DeleteStepTemplateCommand}"
+                                                    ToolTip="Delete this sequence step and its settings">
+                                                <StackPanel Margin="1"
+                                                            Style="{x:Null}">
+                                                    <Path x:Name="ButtonPath"
+                                                          HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center"
+                                                          Stretch="Uniform"
+                                                          Stroke="{StaticResource DeleteBrush}"
+                                                          StrokeEndLineCap="Square"
+                                                          StrokeStartLineCap="Square"
+                                                          StrokeThickness="4">
+                                                        <Path.Data>
+                                                            <PathGeometry>
+                                                                <PathGeometry.Figures>
+                                                                    <PathFigure StartPoint="0,0">
+                                                                        <LineSegment Point="25,25" />
+                                                                    </PathFigure>
+                                                                    <PathFigure StartPoint="0,25">
+                                                                        <LineSegment Point="25,0" />
+                                                                    </PathFigure>
+                                                                </PathGeometry.Figures>
+                                                            </PathGeometry>
+                                                        </Path.Data>
+                                                    </Path>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+                    <StackPanel HorizontalAlignment="Left"
+                                    Orientation="Horizontal">
+                        <Button Name="btnAddCurrent"
+                                    Width="65"
+                                    Margin="0"
+                                    HorizontalAlignment="Left"
+                                    Command="{Binding Path=TemplateListAddCommand}"
+                                    Content="Add"
+                                    ToolTip="Add new a sequence step template to the sequence steps list with the current settings" />
+                        <CheckBox Name="cbSequentialCapture"
+                                      Margin="5,0,0,0"
+                                      HorizontalAlignment="Left"
+                                      VerticalAlignment="Center"
+                                      VerticalContentAlignment="Center"
+                                      Content="Sequential Capture"
+                                      IsChecked="{Binding Path=EnableSequentialCapture}" />
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel Visibility="{Binding ElementName=cbSequentialCapture, Path=IsChecked, ConverterParameter=False, Converter={StaticResource VisibilityOfBool}}">
+                    <Label HorizontalAlignment="Center"
+                           HorizontalContentAlignment="Center"
+                           Content="Capture Sequence" />
+                    <ListBox x:Name="lvCaptureSequence"
+                              Height="168"
+                              Width="197"
+                              Margin="0,0,0,1"
+                              VerticalAlignment="Top"
+                              ItemsSource="{Binding CollectionCaptureSequence}"
+                              ScrollViewer.CanContentScroll="False"
+                              SelectionMode="Single"
+                              dd:DragDrop.DropHandler="{Binding}"
+                              dd:DragDrop.IsDragSource="True"
+                              dd:DragDrop.IsDropTarget="True">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Focusable"
+                                        Value="False" />
+                                <Setter Property="Visibility"
+                                        Value="{Binding Path=SequenceStepVisibility}"/>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="2,2,0,2"
+                                      Width="{Binding Path=CaptureSequenceWidth}">
+                                    <TextBlock Text="{Binding Path=SequenceLineNumber,
+                                                              Mode=OneWay}"
+                                               ToolTip="{Binding Path=SequenceStepPreview}"
+                                               ToolTipService.ShowDuration="60000"/>
+                                    <TextBlock Margin="10,0,0,0"
+                                               Text="{Binding Path=Name,
+                                                              Mode=OneWay}"
+                                               ToolTip="{Binding Path=SequenceStepPreview}"
+                                               ToolTipService.ShowDuration="60000">
+                                        <TextBlock.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Command="{Binding Path=ChangeSequenceNameCommand}"
+                                                          Header="Modify Name"/>
+                                            </ContextMenu>
+                                        </TextBlock.ContextMenu>
+                                    </TextBlock>
+                                    <StackPanel Margin="0"
+                                                HorizontalAlignment="Right"
+                                                Orientation="Horizontal">
+                                        <Button Height="20"
+                                                Margin="0"
+                                                HorizontalContentAlignment="Center"
+                                                VerticalContentAlignment="Center"
+                                                Command="{Binding Path=ApplyStepTemplateCommand}"
+                                                Content="Apply"
+                                                ToolTip="Apply these settings" />
+                                        <Button Width="21"
+                                                Height="20"
+                                                Margin="0"
+                                                Command="{Binding Path=DeleteStepSequenceCommand}"
+                                                ToolTip="Delete this sequence step">
+                                            <StackPanel Margin="1"
+                                                        Style="{x:Null}">
+                                                <Path x:Name="ButtonPath"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        Stretch="Uniform"
+                                                        Stroke="{StaticResource DeleteBrush}"
+                                                        StrokeEndLineCap="Square"
+                                                        StrokeStartLineCap="Square"
+                                                        StrokeThickness="4">
+                                                    <Path.Data>
+                                                        <PathGeometry>
+                                                            <PathGeometry.Figures>
+                                                                <PathFigure StartPoint="0,0">
+                                                                    <LineSegment Point="25,25" />
+                                                                </PathFigure>
+                                                                <PathFigure StartPoint="0,25">
+                                                                    <LineSegment Point="25,0" />
+                                                                </PathFigure>
+                                                            </PathGeometry.Figures>
+                                                        </PathGeometry>
+                                                    </Path.Data>
+                                                </Path>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <Button Name="btnSequentialPreview"
+                                Width="55"
+                                Margin="0,0,1,0"
+                                Background="LimeGreen"
+                                Command="{Binding Path=PreviewSequentialCommand}"
+                                Content="Preview"
+                                Foreground="White"
+                                HorizontalAlignment="Right"
+                                BorderBrush="White"
+                                Style="{x:Null}"/>
+                </StackPanel>
+            </StackPanel>
+            <Border Margin="5,5,5,0"
+                    Visibility="{Binding ElementName=cbSequentialCapture, Path=IsChecked, ConverterParameter=False, Converter={StaticResource VisibilityOfBool}}">
+                <Expander Foreground="White"
+                                  Header="Capture Type"
+                                  IsExpanded="False">
+                    <StackPanel>
+                        <RadioButton Margin="2.5"
+                                     Content="Between Z Stacks"
+                                     GroupName="SequentialType"
+                                     IsChecked="{Binding BetweenStacks}"
+                                     VerticalContentAlignment="Center"
+                                     VerticalAlignment="Center"
+                                     Foreground="White"
+                                     ToolTip="Performs a volume capture then switches to the next sequence"/>
+                        <RadioButton Margin="2.5"
+                                     Content="Between Z Planes"
+                                     GroupName="SequentialType"
+                                     IsChecked="{Binding BetweenFrames}"
+                                     VerticalContentAlignment="Center"
+                                     VerticalAlignment="Center"
+                                     Foreground="White"
+                                     ToolTip="Performs a capture at a Z plane, goes through all the sequences before switching planes"/>
+                    </StackPanel>
+                </Expander>
+            </Border>
+        </StackPanel>
+    </Grid>
+</UserControl>

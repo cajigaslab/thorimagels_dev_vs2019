@@ -7,6 +7,7 @@
         ResizeMode="NoResize"
         Title="Settings"
         WindowStartupLocation="CenterScreen"
+        Closing="Exit_Click"
         Background="#FF333333">
     <Window.Resources>
         <ResourceDictionary>

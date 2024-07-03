@@ -336,19 +336,19 @@
         {
             int bitmask = 0;
 
-            if (LSMChannelEnable0)
+            if ((bool)MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable0"])
             {
                 bitmask += 1;
             }
-            if (LSMChannelEnable1)
+            if ((bool)MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable1"])
             {
                 bitmask += 2;
             }
-            if (LSMChannelEnable2)
+            if ((bool)MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable2"])
             {
                 bitmask += 4;
             }
-            if (LSMChannelEnable3)
+            if ((bool)MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable3"])
             {
                 bitmask += 8;
             }
@@ -422,8 +422,8 @@
         public void Snapshot()
         {
             //ensure the buffer is copied after the capture
-            _pixelDataReady = false;
-
+            ImageDataUpdated = false;
+            EnableCopyToExternalBuffer();
             MVMManager.Instance["ScanControlViewModel", "EnablePMTGains"] = false;
             MVMManager.Instance["ScanControlViewModel", "EnablePMTGains"] = true;
             MVMManager.Instance["ScanControlViewModel", "LsmClkPnlEnabled"] = false;
@@ -456,12 +456,12 @@
             {
                 LiveStartButtonStatus = false;
 
-                // event trigerred to the view model to change the status of the menu bar buttons
+                // event triggered to the view model to change the status of the menu bar buttons
                 UpdateMenuBarButton(false);
 
                 //ensure the buffer is copied after the capture
-                _pixelDataReady = false;
-
+                ImageDataUpdated = false;
+                EnableCopyToExternalBuffer();
                 MVMManager.Instance["ScanControlViewModel", "EnablePMTGains"] = false;
                 MVMManager.Instance["ScanControlViewModel", "EnablePMTGains"] = true;
 
@@ -478,11 +478,10 @@
             try
             {
                 LiveStartButtonStatus = true;
-                // event trigerred to the view model to change the status of the menu bar buttons
+                // event triggered to the view model to change the status of the menu bar buttons
                 UpdateMenuBarButton(true);
-                MVMManager.Instance["ScanControlViewModel", "EnablePMTGains"] = false;
                 StopLiveCapture();
-                _prevTickCount = 0;
+                MVMManager.Instance["ScanControlViewModel", "EnablePMTGains"] = false;
                 _framesPerSecond = 0;
             }
             catch (System.DllNotFoundException)
@@ -497,6 +496,11 @@
         /// <param name="status"></param>
         public void UpdateMVMControlsStatus(bool enable)
         {
+            if (!enable && (bool)MVMManager.Instance["ImageViewCaptureSetupVM", "IsInSequentialMode"]) //whenever start to image
+            {
+                MVMManager.Instance["ImageViewCaptureSetupVM", "EnableHistogramUpdate"] = false;
+                MVMManager.Instance["ImageViewCaptureSetupVM", "IsInSequentialMode"] = false;
+            }
             MVMManager.Instance["AreaControlViewModel", "ImageStartStatusArea"] = enable;
             MVMManager.Instance["CameraControlViewModel", "ImageStartStatusCamera"] = enable;
             MVMManager.Instance["ScanControlViewModel", "LsmClkPnlEnabled"] = enable;
@@ -525,29 +529,6 @@
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "SnapshotAndSave", CharSet = CharSet.Unicode)]
         private static extern bool LiveSnapshot(string destinationPathAndName, int enabledChannelMask, int saveMultiPage);
-
-        private static void SetChannelFromEnable()
-        {
-            //update the channel value also
-            int chan = (Convert.ToInt32(_lsmChannelEnable[0]) | (Convert.ToInt32(_lsmChannelEnable[1]) << 1) | (Convert.ToInt32(_lsmChannelEnable[2]) << 2) | (Convert.ToInt32(_lsmChannelEnable[3]) << 3));
-
-            int val = 1;
-            switch (chan)
-            {
-                case 1: val = 1; break;
-                case 2: val = 2; break;
-                case 4: val = 4; break;
-                case 8: val = 8; break;
-                default:
-                    {
-                        val = 0xf;
-                    }
-                    break;
-            }
-
-            SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_CHANNEL, val);
-            SetDisplayChannels(chan);
-        }
 
         [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "SetDisplayChannels")]
         private static extern bool SetDisplayChannels(int chan);

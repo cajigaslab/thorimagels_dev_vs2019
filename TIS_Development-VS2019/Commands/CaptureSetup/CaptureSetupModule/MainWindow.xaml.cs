@@ -45,7 +45,7 @@
     {
         #region Fields
 
-        int OFFSET_FOR_RESIZE_SCROLL = 110;
+        int offsetForResizeScroll = 110;
 
         #endregion Fields
 
@@ -56,7 +56,7 @@
             if (ResourceManagerCS.Instance.TabletModeEnabled)
             {
                 // When hidding the multiple tab selection in Menu Module there is a gap in the bottom of CS
-                OFFSET_FOR_RESIZE_SCROLL = 76;
+                offsetForResizeScroll = 76;
             }
             InitializeComponent();
         }
@@ -116,9 +116,13 @@
 
             this.MasterView.MultiLaserControlView.DataContext = MVMManager.Instance["MultiLaserControlViewModel", captureSetupViewModel];
 
+            this.MasterView.LightPathControlView.DataContext = MVMManager.Instance["LightPathControlViewModel", captureSetupViewModel];
+
+            this.MasterView.sequentialControlView.DataContext = MVMManager.Instance["SequentialControlViewModel", captureSetupViewModel];
+
             this.volumeView.DataContext = captureSetupViewModel;
 
-            this.imageView.DataContext = captureSetupViewModel;
+            this.imageView.DataContext = MVMManager.Instance["ImageViewCaptureSetupVM", captureSetupViewModel];
 
             this.toolBarView.DataContext = captureSetupViewModel;
 
@@ -126,8 +130,8 @@
             captureSetupViewModel.ZStackCapturing += new Action<bool>(ChangeTo2DViewType);
             captureSetupViewModel.ZStackCaptureFinished += new Action<bool>(ChangeTo3DViewType);
             captureSetupViewModel.BleachFinished += new Action<bool>(ChangeTo2DViewType);
-            captureSetupViewModel.IncreaseViewArea += new Action<bool>(AdjustImageViewSize);
-            // liveViewModel.ImageDataChanged += new Action<bool>(ChangeTo2DViewType);
+
+            MVMManager.Instance["ImageViewCaptureSetupVM", "IncreaseViewAreaAction"] = new Action<bool>(AdjustImageViewSize);
 
             //force the path setting from the viewmodel into the view
             string path = ((CaptureSetupViewModel)this.DataContext).ExpPath;
@@ -141,6 +145,7 @@
             ((CaptureSetupViewModel)this.DataContext).ExpPath = path;
 
             //force the update menu message to be published
+
             this.MasterView.SetPath(path);
 
             this.Loaded += new RoutedEventHandler(MainWindow_Loaded);
@@ -203,27 +208,33 @@
         {
             if (true == obj)
             {
-                CaptureSetupViewModel vm = ((CaptureSetupViewModel)this.DataContext);
-                if (null == vm)
-                {
-                    return;
-                }
-                this.imageView.Height = Math.Max(vm.IVScrollBarHeight, Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_SCROLL);
+                double scrollBareight = (double)MVMManager.Instance["ImageViewCaptureSetupVM", "IVScrollBarHeight"];
+                imageView.Height = Math.Max(scrollBareight, Application.Current.MainWindow.ActualHeight - offsetForResizeScroll);
             }
         }
 
         private void AdjustViewSizes()
         {
-            this.MasterView.Height = Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_SCROLL;
-            this.imageView.Height = Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_SCROLL;
-            this.volumeView.Height = Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_SCROLL;
-            this.volumeView.Width = Application.Current.MainWindow.ActualWidth - this.MasterView.Width - OFFSET_FOR_RESIZE_SCROLL;
+            double newHeight = Application.Current.MainWindow.ActualHeight - offsetForResizeScroll;
+            if (newHeight <= 0)
+            {
+                newHeight = 1;
+            }
+
+            this.MasterView.Height = newHeight;
+            this.imageView.Height = newHeight;
+            this.volumeView.Height = newHeight;
+
+            double newWidth = Application.Current.MainWindow.ActualWidth - this.MasterView.Width - offsetForResizeScroll;
+            this.volumeView.Width = newWidth <= 0? 1 : newWidth;
+
             CaptureSetupViewModel vm = ((CaptureSetupViewModel)this.DataContext);
             if (null == vm)
             {
                 return;
             }
-            vm.IVHeight = this.imageView.Height;
+
+            MVMManager.Instance["ImageViewCaptureSetupVM", "IVScrollBarHeightIVHeight"] = this.imageView.Height;
         }
 
         void ChangeTo2DViewType(bool obj)
@@ -278,12 +289,12 @@
 
         void Current_Exit(object sender, ExitEventArgs e)
         {
-            ((CaptureSetupViewModel)this.imageView.DataContext).ClearBleachFiles();
-            ((CaptureSetupViewModel)this.imageView.DataContext).ReleaseHandlers();
+            ((CaptureSetupViewModel)this.DataContext).ClearBleachFiles();
+            ((CaptureSetupViewModel)this.DataContext).ReleaseHandlers();
 
             if (this.IsLoaded)
             {
-                ((CaptureSetupViewModel)this.imageView.DataContext).LiveCapture(false);
+                ((CaptureSetupViewModel)this.DataContext).LiveCapture(false);
                 ResourceManagerCS.Instance.ActiveModality = ResourceManagerCS.GetModality();
             }
         }
@@ -330,7 +341,7 @@
             {
                 return;
             }
-            vm.ROItoolbarMargin = new Thickness(0, scrollViewImage.ContentVerticalOffset, 0, 0);
+            MVMManager.Instance["ImageViewCaptureSetupVM", "VerticalToolbarOffset"] = scrollViewImage.ContentVerticalOffset;
         }
 
         #endregion Methods

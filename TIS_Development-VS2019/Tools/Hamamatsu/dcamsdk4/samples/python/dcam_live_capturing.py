@@ -28,7 +28,7 @@ def dcamtest_show_framedata(data, windowtitle, iShown):
         <0  already closed
         >0  already openend
     """
-    if iShown > 0 and cv2.getWindowProperty(windowtitle, 0) < 0:
+    if iShown > 0 and cv2.getWindowProperty(windowtitle, cv2.WND_PROP_VISIBLE) == 0:
         return -1  # Window has been closed.
     if iShown < 0:
         return -1  # Window is already closed.

@@ -1,29 +1,25 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RemoteIPCControlMVM", "RemoteIPCControlMVM\RemoteIPCControlMVM.csproj", "{C066308E-C7DF-4D16-9AE6-5A546DEFF4B9}"
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.32106.194
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RemoteIPCControlMVM", "RemoteIPCControlMVM\RemoteIPCControlMVM.csproj", "{A00B9F2A-B108-4932-A636-C8978DE0FB46}"
 EndProject
 Global
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 2
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://stl-tfs1:8080/tfs/thorimagels
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = RemoteIPCControlMVM\\RemoteIPCControlMVM.csproj
-		SccProjectName1 = RemoteIPCControlMVM
-		SccLocalPath1 = RemoteIPCControlMVM
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C066308E-C7DF-4D16-9AE6-5A546DEFF4B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C066308E-C7DF-4D16-9AE6-5A546DEFF4B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C066308E-C7DF-4D16-9AE6-5A546DEFF4B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C066308E-C7DF-4D16-9AE6-5A546DEFF4B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A00B9F2A-B108-4932-A636-C8978DE0FB46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A00B9F2A-B108-4932-A636-C8978DE0FB46}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A00B9F2A-B108-4932-A636-C8978DE0FB46}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A00B9F2A-B108-4932-A636-C8978DE0FB46}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {31DA741A-8ED3-4A98-9CC9-971BAAEDCF62}
 	EndGlobalSection
 EndGlobal

@@ -27,10 +27,6 @@
     {
     }
 
-    public class IPCModuleChangeEvent : CompositeWpfEvent<ChangeEvent>
-    {
-    }
-
     public class MenuModuleChangeEvent : CompositeWpfEvent<ChangeEvent>
     {
     }

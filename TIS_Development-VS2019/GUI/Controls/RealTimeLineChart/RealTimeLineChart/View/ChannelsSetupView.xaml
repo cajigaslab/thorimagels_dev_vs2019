@@ -171,6 +171,7 @@
                                        Foreground="White"/>
                         </StackPanel>
                     </Button>
+                    
                     <Button Margin="1"
                             Width="65"
                             Height="65"
@@ -212,6 +213,7 @@
                                        Foreground="White"/>
                         </StackPanel>
                     </Button>
+                    
                     <StackPanel Margin="1" Visibility="{Binding Path=IsSaving, ConverterParameter=Normal,Converter={StaticResource boolVisibilityConverter}}">
                         <Button Name="AddMarker"
                                     Command="{Binding Path=MarkerRelayCommand}"  
@@ -293,7 +295,7 @@
                                            HorizontalAlignment="Center" />
                         </StackPanel>
                     </Button>
-                    <Button Grid.Column="0"
+                    <!--<Button Grid.Column="0"
                             Margin="1"
                             Width="65"
                             Height="65"
@@ -332,14 +334,14 @@
                     		HorizontalAlignment="Center"
                     		Foreground="White" />
                         </StackPanel>
-                    </Button>
+                    </Button>-->
                 </StackPanel>
             </StackPanel>
             <Rectangle VerticalAlignment="Stretch"
                        Width="2"
                        Margin="0,2,0,2"
                        Fill="#FF474747"  />
-            <StackPanel>
+            <StackPanel Visibility = "{Binding IPCEnabled}">
                 <StackPanel Orientation="Vertical"
                             Width="140"
                             VerticalAlignment="Top">

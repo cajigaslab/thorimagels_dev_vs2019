@@ -1,0 +1,215 @@
+﻿<Window x:Class="CSN210_Control.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:tc="clr-namespace:ThemeControl;assembly=ThemeControl"
+        mc:Ignorable="d"
+        Name="CSN210ControlApp"
+        Title="CSN210 Control" 
+		ResizeMode="NoResize"
+		SizeToContent="WidthAndHeight"
+		WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <StackPanel>
+            <StackPanel Margin="5,5,5,0" 
+                        Orientation="Horizontal">
+                <Menu Width="50"
+                      Background="#FF333333"
+                      Foreground="#FFFFFFFF">
+                    <MenuItem Name="btnFile"
+                              Header="File"
+                              IsEnabled="{Binding Path=FileButtonEnabled, UpdateSourceTrigger=PropertyChanged}"
+                              Background="#FF333333"
+                              Foreground="#FFFFFFFF">
+                        <MenuItem Name="btnRefreshConnection"
+                                  Click="refresh_Click"
+                                  Header="Refresh Connection"
+                                  Background="#FF333333"
+                                  Foreground="#FFFFFFFF"
+                                  OpacityMask="{x:Null}"
+                                  BorderBrush="{x:Null}" />
+                        <MenuItem Name="btnUpdateFirmware"
+                                  Click="btnUpdateFirmware_Click"
+                                  Header="Update Firmware" 
+                                  Background="#FF333333"
+                                  Foreground="#FFFFFFFF"
+                                  OpacityMask="{x:Null}"
+                                  BorderBrush="{x:Null}"/>
+                        <MenuItem Name="btnExit"
+                                  Click="btnExit_Click"
+                                  Header="Exit" 
+                                  Background="#FF333333"
+                                  Foreground="#FFFFFFFF"
+                                  OpacityMask="{x:Null}"
+                                  BorderBrush="{x:Null}"/>
+                    </MenuItem>
+                </Menu>
+                <Label Width="200" />
+                <Image Width="140" 
+                       Source=".\Thorlabs.png" />
+            </StackPanel>
+            <StackPanel Margin="5,0,0,0" 
+                        Orientation="Horizontal"
+                        Visibility="{Binding Path=ControlsVisibility,
+                                         ElementName=CSN210ControlApp}">
+                <Label VerticalAlignment="Center"
+                               HorizontalAlignment="Left"
+                               Content="Serial No.:" />
+                <Label MinWidth="130"
+                               VerticalAlignment="Center"
+                               HorizontalContentAlignment="Left"
+                               Content="{Binding Path=SerialNum,
+										         UpdateSourceTrigger=PropertyChanged,
+                                                 ElementName=CSN210ControlApp}" />
+                <Label Margin="50,0,0,0"
+                               HorizontalAlignment="Right"
+                               VerticalAlignment="Center" 
+                               Content="Firmware Version:" />
+                <Label Width="30"
+                               VerticalAlignment="Center"
+                               HorizontalContentAlignment="Left"
+                               Content="{Binding Path=FirmwareVersion, 
+      										     UpdateSourceTrigger=PropertyChanged, 
+                                                 ElementName=CSN210ControlApp}" />
+            </StackPanel>
+
+            <Border Name="brdMain"
+                    Width="380"
+                    Margin="5"
+                    BorderBrush="White"
+                    BorderThickness="2"
+                    Visibility="{Binding Path=ControlsVisibility,
+                                         ElementName=CSN210ControlApp}">
+                <StackPanel>
+                    <StackPanel Margin="3"
+                                HorizontalAlignment="Center"
+                                Orientation="Horizontal"
+                                ToolTip="Objective Changer's current position">
+                        <Label HorizontalAlignment="Center"
+                               Content="Status:   "
+                               Foreground="White" />
+                        <Label Focusable="True"
+                               HorizontalAlignment="Center"
+                               Content="{Binding Path=Status, 
+											     UpdateSourceTrigger=PropertyChanged}"
+                               Foreground="White" 
+                               tc:Extensions.OutOfRange="{Binding Path=StatusColor, UpdateSourceTrigger=PropertyChanged}"
+                               Style="{StaticResource LabelOutOfRangeStyle}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center">
+                        <TextBox Name="pos1Rename"
+                                 Text="{Binding Pos1ButtonName}"
+                                 MinWidth="70"
+                                 Height="30"
+                                 LostFocus="pos1Rename_LostFocus"
+                                 Visibility="{Binding Path=RenameButton1Visibility, UpdateSourceTrigger=PropertyChanged, ElementName=CSN210ControlApp}"/>
+                        <Button Width="30"
+                                Height="25"
+                                Content="✓">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=pos1Rename}"
+                                                     Value="True">
+                                            <Setter Property="Visibility"
+                                                    Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Button x:Name="btnPosition1"
+                                MinWidth="70"
+                                Height="30"
+                                IsEnabled="{Binding Path=Position1ButtonEnabled, UpdateSourceTrigger=PropertyChanged}"
+                                Click="btnPos1_Click"
+                                Content="{Binding Path=Button1PosName, UpdateSourceTrigger=PropertyChanged}"
+                                Visibility="{Binding Path=Button1Visibility, UpdateSourceTrigger=PropertyChanged, ElementName=CSN210ControlApp}"
+                                ToolTip="Move to this position">
+                            <Button.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Name="changeNamePos1"
+                                              Header="Rename Position"
+                                              Click="renameButton1_Click"/>
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                        </Button>
+                        <Label Margin="0,0,70,0"/>
+                        <TextBox Name="pos2Rename"
+                                 Text="{Binding Pos2ButtonName}"
+                                 MinWidth="70"
+                                 Height="30"
+                                 LostFocus="pos2Rename_LostFocus"
+                                 Visibility="{Binding Path=RenameButton2Visibility, UpdateSourceTrigger=PropertyChanged, ElementName=CSN210ControlApp}"/>
+                        <Button Width="30"
+                                Height="25"
+                                Content="✓">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=pos2Rename}"
+                                                     Value="True">
+                                            <Setter Property="Visibility"
+                                                    Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Button x:Name="btnPosition2"
+                                MinWidth="70"
+                                Height="30"
+                                IsEnabled="{Binding Path=Position2ButtonEnabled, UpdateSourceTrigger=PropertyChanged}"
+                                Click="btnPos2_Click"
+                                Content="{Binding Path=Button2PosName, UpdateSourceTrigger=PropertyChanged}"
+                                Visibility="{Binding Path=Button2Visibility, UpdateSourceTrigger=PropertyChanged, ElementName=CSN210ControlApp}"
+                                ToolTip="Move to this position">
+                            <Button.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Name="changeNamePos2"
+                                              Header="RenamePosition"
+                                              Click ="renameButton2_Click"/>
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                        </Button>
+                    </StackPanel>
+                    <StackPanel Margin="0,5,0,0">
+                        <Button Name="btnStop"
+                            Width="60"
+                            Height="40"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Background="Red"
+                            Click="btnStop_Click"
+                            IsEnabled="{Binding Path=StopButtonEnabled, UpdateSourceTrigger=PropertyChanged}"
+                            Content="Stop"
+                            Foreground="White"
+                            Style="{x:Null}"
+                            ToolTip="Command to stop the objective changer while it is moving from one position to another" />
+                        <Button x:Name="btnHome"
+                                Width="50"
+                                Height="30"
+                                Margin="5"
+                                IsEnabled="{Binding Path=HomeButtonEnabled, UpdateSourceTrigger=PropertyChanged}"
+                                Click="btnHome_Click"
+                                Content="Home"
+                                ToolTip="Start the homing sequence"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Grid>
+</Window>

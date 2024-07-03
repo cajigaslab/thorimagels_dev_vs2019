@@ -16,6 +16,7 @@
     using System.Windows.Navigation;
     using System.Windows.Shapes;
     using System.Xml;
+    using System.IO;
 
     using ImageReviewDll.Model;
     using ImageReviewDll.ViewModel;
@@ -38,6 +39,8 @@
         public MainWindow()
         {
             InitializeComponent();
+            MVMManager.CollectSingleMVM("ImageViewMVM.dll");
+            MVMManager.Instance.LoadSettings();
             ImageReview imageReview = new ImageReview();
             imageReview.ExperimentReviewOpened = true;
             _vm = new ImageReviewViewModel(null, null, null, imageReview);
@@ -56,26 +59,25 @@
         {
             try
             {
-                XmlDocument appSettingsFile = _vm.ApplicationDoc;
-                if (null == appSettingsFile)
-                    return;
+                XmlDocument erSettingsDoc = new XmlDocument();
 
-                XmlNodeList ndList = appSettingsFile.SelectNodes("/ApplicationSettings/DisplayOptions/ExperimentReview");
-                if (ndList.Count <= 0)
+                string experimentReviewSettingsPath = ".\\ExperimentReviewSettings.xml";
+
+                if (File.Exists(experimentReviewSettingsPath))
                 {
-                    ndList = appSettingsFile.SelectNodes("/ApplicationSettings/DisplayOptions");
-                    CreateXmlNodeWithinNode(appSettingsFile, ndList[0], "ExperimentReview");
-                    ndList = appSettingsFile.SelectNodes("/ApplicationSettings/DisplayOptions/ExperimentReview");
-                }
+                    erSettingsDoc.Load(experimentReviewSettingsPath);
+                    XmlNode ndList = erSettingsDoc.SelectSingleNode("/ExperimentReview/PersistedViewSize");
+                    if (null != ndList)
+                    {
+                        XmlManager.SetAttribute(ndList, erSettingsDoc, "left", ((int)Math.Round(this.Left)).ToString());
+                        XmlManager.SetAttribute(ndList, erSettingsDoc, "top", ((int)Math.Round(this.Top)).ToString());
+                        XmlManager.SetAttribute(ndList, erSettingsDoc, "width", ((int)Math.Round(this.Width)).ToString());
+                        XmlManager.SetAttribute(ndList, erSettingsDoc, "height", ((int)Math.Round(this.Height)).ToString());
 
-                if (ndList[0] != null)
-                {
-                    XmlManager.SetAttribute(ndList[0], appSettingsFile, "left", ((int)Math.Round(this.Left)).ToString());
-                    XmlManager.SetAttribute(ndList[0], appSettingsFile, "top", ((int)Math.Round(this.Top)).ToString());
-                    XmlManager.SetAttribute(ndList[0], appSettingsFile, "width", ((int)Math.Round(this.Width)).ToString());
-                    XmlManager.SetAttribute(ndList[0], appSettingsFile, "height", ((int)Math.Round(this.Height)).ToString());
-
-                    appSettingsFile.Save(_vm.ApplicationSettingPath);
+                        erSettingsDoc.Save(experimentReviewSettingsPath);
+                    }
+                    else
+                    { }
                 }
             }
             catch (Exception ex)
@@ -92,59 +94,58 @@
 
         private bool LoadWindowSettings()
         {
-            try
+            XmlDocument erSettingsDoc = new XmlDocument();
+            string experimentReviewSettingsPath = ".\\ExperimentReviewSettings.xml";
+
+
+            if (File.Exists(experimentReviewSettingsPath))
             {
-                XmlDocument appSettingsFile = _vm.ApplicationDoc;
-                if (null == appSettingsFile)
-                    return false;
-
-                XmlNode node = appSettingsFile.SelectSingleNode("/ApplicationSettings/DisplayOptions/ExperimentReview");
-
-                if (node != null)
+                erSettingsDoc.Load(experimentReviewSettingsPath);
+                XmlNode node = erSettingsDoc.SelectSingleNode("/ExperimentReview/PersistedViewSize");
+                if (null != node)
                 {
-                    string str = string.Empty;
-                    double val = 0;
-                    XmlManager.GetAttribute(node, appSettingsFile, "left", ref str);
-                    if (double.TryParse(str, out val))
+                    if (node != null)
                     {
-                        this.Left = (int)val;
-                    }
-                    else
-                    {
-                        this.Left = 0;
-                    }
-                    XmlManager.GetAttribute(node, appSettingsFile, "top", ref str);
-                    if (double.TryParse(str, out val))
-                    {
-                        this.Top = (int)val;
-                    }
-                    else
-                    {
-                        this.Top = 0;
-                    }
-                    XmlManager.GetAttribute(node, appSettingsFile, "width", ref str);
-                    if (double.TryParse(str, out val))
-                    {
-                        this.Width = (int)val;
-                    }
-                    else
-                    {
-                        this.Width = 400;
-                    }
-                    XmlManager.GetAttribute(node, appSettingsFile, "height", ref str);
-                    if (double.TryParse(str, out val))
-                    {
-                        this.Height = (int)val;
-                    }
-                    else
-                    {
-                        this.Height = 400;
+                        string str = string.Empty;
+                        double val = 0;
+                        XmlManager.GetAttribute(node, erSettingsDoc, "left", ref str);
+                        if (double.TryParse(str, out val))
+                        {
+                            this.Left = (int)val;
+                        }
+                        else
+                        {
+                            this.Left = 0;
+                        }
+                        XmlManager.GetAttribute(node, erSettingsDoc, "top", ref str);
+                        if (double.TryParse(str, out val))
+                        {
+                            this.Top = (int)val;
+                        }
+                        else
+                        {
+                            this.Top = 0;
+                        }
+                        XmlManager.GetAttribute(node, erSettingsDoc, "width", ref str);
+                        if (double.TryParse(str, out val))
+                        {
+                            this.Width = (int)val;
+                        }
+                        else
+                        {
+                            this.Width = 600;
+                        }
+                        XmlManager.GetAttribute(node, erSettingsDoc, "height", ref str);
+                        if (double.TryParse(str, out val))
+                        {
+                            this.Height = (int)val;
+                        }
+                        else
+                        {
+                            this.Height = 600;
+                        }
                     }
                 }
-            }
-            catch (Exception e)
-            {
-                e.ToString();
             }
             return true;
         }

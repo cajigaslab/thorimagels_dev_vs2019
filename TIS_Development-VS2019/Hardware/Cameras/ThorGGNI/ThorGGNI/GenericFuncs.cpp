@@ -447,7 +447,7 @@ long ThorLSMCam::CopyProtocol(char *pDataBuffer)
 			{
 #if defined (LOGGING_ENABLED) //&& defined (_DEBUG)
 				//current frame (_bufCompleteID) is in acquire
-				StringCbPrintfW(_errMsg,_MAX_PATH,L"ThorConfocalGalvo:%hs@%u: copying partial dma frame of %d", __FILE__, __LINE__, _bufCompleteID);
+				StringCbPrintfW(_errMsg,_MAX_PATH,L"ThorGGNI:%hs@%u: copying partial dma frame of %d", __FILE__, __LINE__, _bufCompleteID);
 				LogMessage(_errMsg,ERROR_EVENT);
 #endif
 				//move the source to current acquiring dma buffer
@@ -593,9 +593,9 @@ long ThorLSMCam::FindCameras(long &cameraCount)
 		//catch each independetly so that as many tags as possible can be read
 		long swapXY[2] = {0};
 		_analogFeedbackRatio[0][0] = _analogFeedbackRatio[0][1] = _analogFeedbackRatio[1][0] = _analogFeedbackRatio[1][1] = 1.0;
-		if(FALSE == pSetup->GetConfiguration(_field2Theta,_pockelsParkAtMinimum,_galvoParkAtStart,_fieldSizeMin,_fieldSizeMax, _pockelsTurnAroundBlank, _analogChannels[0], _analogChannels[1], _analogFeedbackRatio[0][0], _analogFeedbackRatio[0][1], swapXY[0], _minGalvoFreqHz[0], _analogChannels[2], _analogChannels[3]))
+		if(FALSE == pSetup->GetConfiguration(_field2Theta,_pockelsParkAtMinimum,_galvoParkAtStart,_fieldSizeMin,_fieldSizeMax, _pockelsTurnAroundBlank, _pockelsFlybackBlank, _analogChannels[0], _analogChannels[1], _analogFeedbackRatio[0][0], _analogFeedbackRatio[0][1], swapXY[0], _minGalvoFreqHz[0], _analogChannels[2], _analogChannels[3], _maxAngularVelocityRadPerSec, _maxAngularAccelerationRadPerSecSq))
 		{
-			StringCbPrintfW(_errMsg,_MAX_PATH,L"GetConfiguration from ThorConfocalSettings failed");
+			StringCbPrintfW(_errMsg,_MAX_PATH,L"GetConfiguration from ThorGGNISettings failed");
 			LogMessage(_errMsg,ERROR_EVENT);
 		}
 		_minGalvoFreqHz[0] = max(1.0, _minGalvoFreqHz[0]);
@@ -685,7 +685,8 @@ long ThorLSMCam::SelectCamera(const long camera)
 			try
 			{
 				if(FALSE == pSetup->GetIO(_controllerInternalOutput2,_controllerOutputLine2,_pockelsTriggerIn,_pockelsVoltageSlopeThreshold,
-					_pockelsLine[0],_pockelsPowerInputLine[0],_pockelsScanVoltageStart[0],_pockelsScanVoltageStop[0],_pockelsMinVoltage[0],_pockelsMaxVoltage[0],
+					_pockelsLine[0],_pockelsPowerInputLine[0],_pockelsScanVoltageStart[0],_pockelsScanVoltageStop[0],
+					_pockelsMinVoltage, _pockelsMaxVoltage,
 					_pockelsLine[1],_pockelsPowerInputLine[1],_pockelsScanVoltageStart[1],_pockelsScanVoltageStop[1],
 					_pockelsLine[2],_pockelsPowerInputLine[2],_pockelsScanVoltageStart[2],_pockelsScanVoltageStop[2],
 					_pockelsLine[3],_pockelsPowerInputLine[3],_pockelsScanVoltageStart[3],_pockelsScanVoltageStop[3],_pockelsReferenceLine,
@@ -765,7 +766,7 @@ long ThorLSMCam::SelectCamera(const long camera)
 					StringCbPrintfW(_errMsg,_MAX_PATH,L"GetPolarity from ThorGGNISettings failed");
 					LogMessage(_errMsg,ERROR_EVENT);
 				}
-				if(FALSE == pSetup->GetWaveform(_pockelDigOut,_waveformCompleteOut, _bleachCycleOut, _bleachIterationOut, _bleachPatternOut, _bleachPatternCompleteOut, _bleachActiveOut, _bleachEpochOut, _bleachCycleInverse))
+				if (FALSE == pSetup->GetWaveform(_pockelDigOut[0], _waveformCompleteOut, _bleachCycleOut, _bleachIterationOut, _bleachPatternOut, _bleachPatternCompleteOut, _bleachActiveOut, _bleachEpochOut, _bleachCycleInverse, _pockelDigOut[1], _pockelDigOut[2], _pockelDigOut[3]))
 				{
 					StringCbPrintfW(_errMsg,_MAX_PATH,L"GetBleach from ThorGGNISettings failed");
 					LogMessage(_errMsg,ERROR_EVENT);
@@ -776,20 +777,26 @@ long ThorLSMCam::SelectCamera(const long camera)
 					LogMessage(_errMsg,ERROR_EVENT);
 				}
 				_dMABufferCount = (MAX_DMABUFNUM < _dMABufferCount) ? MAX_DMABUFNUM : _dMABufferCount;
-				_activeLoadCount = max(1, _activeLoadCount);				
+				_activeLoadCount = max(1, _activeLoadCount);
 				_imageActiveLoadMS = max(1, _imageActiveLoadMS);
 				_imageActiveLoadCount = max(1, _imageActiveLoadCount);
-				if(FALSE == pSetup->GetTrigger(_triggerWaitTimeout, _frameBufferReadyOutput,_captureActiveOutput,_captureActiveOutputInvert,_bleachShutterLine,_bleachShutterIdle[0],_bleachShutterIdle[1]))
+
+				//pockels digi lines should be aligned with pockels analog lines, 
+				//keep analog as primary:
+				for (long i = 0; i < MAX_GG_POCKELS_CELL_COUNT; i++)
+					_pockelDigOut[i] = _pockelsEnable[i] ? _pockelDigOut[i] : "";
+
+				if (FALSE == pSetup->GetTrigger(_triggerWaitTimeout, _frameBufferReadyOutput, _captureActiveOutput, _captureActiveOutputInvert, _bleachShutterLine, _bleachShutterIdle[0], _bleachShutterIdle[1]))
 				{
-					StringCbPrintfW(_errMsg,_MAX_PATH,L"GetTrigger from ThorGGNISettings failed");
-					LogMessage(_errMsg,ERROR_EVENT);
+					StringCbPrintfW(_errMsg, _MAX_PATH, L"GetTrigger from ThorGGNISettings failed");
+					LogMessage(_errMsg, ERROR_EVENT);
 				}
 			}
-			catch(...)
+			catch (...)
 			{
 			}
 		}
-		catch(...)
+		catch (...)
 		{
 		}
 		_fileSettingsLoaded = TRUE;
@@ -841,7 +848,7 @@ long ThorLSMCam::TeardownCamera()
 			LogMessage(_errMsg,ERROR_EVENT);
 		}
 
-		if(FALSE == pSetup->SetIO(_pockelsMinVoltage[0],_pockelsMaxVoltage[0]))
+		if(FALSE == pSetup->SetIO(_pockelsMinVoltage, _pockelsMaxVoltage))
 		{
 			StringCbPrintfW(_errMsg,_MAX_PATH,L"SetIO from ThorGGNISettings failed");
 			LogMessage(_errMsg,ERROR_EVENT);
@@ -951,10 +958,49 @@ long ThorLSMCam::StatusAcquisitionEx(long &status,long &indexOfLastCompletedFram
 	return ret;
 }
 
+int CountChannelBits(long channelSet)
+{
+	int count = 0;
+	while (channelSet)
+	{
+		channelSet &= (channelSet - 1);
+		count++;
+	}
+	return count;
+}
+
 long ThorLSMCam::CopyAcquisition(char *pDataBuffer, void* frameInfo)
 {
 	if(_behaviorPtr)
 	{
+		FrameInfo frameInfoStruct;
+		memcpy(&frameInfoStruct, frameInfo, sizeof(FrameInfo));
+
+		size_t copyFrameSizeByte = (size_t)_imgPtyDll.pixelX * _imgPtyDll.pixelY * sizeof(unsigned short);
+		frameInfoStruct.fullFrame = TRUE;
+		int selectedChannelCount = CountChannelBits(_imgPtyDll.channel);
+		frameInfoStruct.channels = selectedChannelCount;
+		if (selectedChannelCount > 0)
+		{
+			frameInfoStruct.copySize = copyFrameSizeByte * selectedChannelCount;
+		}
+		frameInfoStruct.numberOfPlanes = 1;
+
+		frameInfoStruct.isNewMROIFrame = 1;
+		frameInfoStruct.totalScanAreas = 1;
+		frameInfoStruct.scanAreaIndex = 0;
+		frameInfoStruct.scanAreaID = 0;
+		frameInfoStruct.imageWidth = _imgPtyDll.pixelX;
+		frameInfoStruct.imageHeight = _imgPtyDll.pixelY;
+		frameInfoStruct.isMROI = FALSE;
+		frameInfoStruct.fullImageWidth = _imgPtyDll.pixelX;
+		frameInfoStruct.fullImageHeight = _imgPtyDll.pixelY;
+		frameInfoStruct.topInFullImage = 0;
+		frameInfoStruct.leftInFullImage = 0;
+		frameInfoStruct.mROIStripeFieldSize = _imgPtyDll.fieldSize;
+
+		memcpy(frameInfo, &frameInfoStruct, sizeof(FrameInfo));
+
 		return _behaviorPtr->CopyAcquisition(pDataBuffer, frameInfo);
 	}
 	return FALSE;

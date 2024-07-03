@@ -31,7 +31,6 @@
         #region Fields
 
         private IEventAggregator _eventAggregator;
-        private SubscriptionToken _subscriptionIPCToken;
         private SubscriptionToken _subscriptionToken;
 
         #endregion Fields
@@ -46,8 +45,6 @@
 
             this.MainWindowView = Container.Resolve<MainWindow>();
             this.SettingsRegion = regionManager.Regions["SettingsRegion"];
-
-            ((RunSampleLSViewModel)(this.MainWindowView).RunSampleLSView.DataContext).RunSampleLS._eventAggregator = _eventAggregator;
         }
 
         #endregion Constructors
@@ -103,6 +100,7 @@
 
             this.SettingsRegion.Add(this.MainWindowView, "RunSample", true);
             this.SettingsRegion.Activate(this.MainWindowView);
+            ResourceManagerCS.BackupDirectory(ResourceManagerCS.GetMyDocumentsThorImageFolderString());
 
             try
             {
@@ -239,7 +237,6 @@
         public void Initialize()
         {
             SubscribeToCommandEvent();
-            SubscribeToIPCCommandEvent();
             ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Initialized");
         }
 
@@ -256,30 +253,6 @@
             }
 
             _subscriptionToken = commandEvent.Subscribe(CommandEventHandler, ThreadOption.UIThread, true);
-        }
-
-        /// <summary>
-        /// Capture events for InterProcess Communication 
-        /// </summary>
-        public void SubscribeToIPCCommandEvent()
-        {
-            CommandIPCEvent commandIPC = _eventAggregator.GetEvent<CommandIPCEvent>();
-
-            if (_subscriptionIPCToken != null)
-            {
-                commandIPC.Unsubscribe(_subscriptionIPCToken);
-            }
-
-            _subscriptionIPCToken = commandIPC.Subscribe(CommandIPCEventHandler, ThreadOption.UIThread, true);
-        }
-
-        private void CommandIPCEventHandler(IPCCommand command)
-        {
-            if (command.Destination != "RUN_SAMPLE")
-            {
-                return;
-            }
-            this.MainWindowView.RunSampleLSIPC(command.CommandType, command.Data);
         }
 
         #endregion Methods

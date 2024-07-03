@@ -1,6 +1,6 @@
-# dcamapi4.py : Jun 18, 2021
+# dcamapi4.py : Dec 16, 2022
 #
-# Copyright (C) 2021 Hamamatsu Photonics K.K.. All right reserved.
+# Copyright (C) 2021-2022 Hamamatsu Photonics K.K.. All right reserved.
 
 
 import platform
@@ -339,6 +339,7 @@ class DCAM_IDPROP(IntEnum):
     DARKCALIB_TARGET = 3671008  # 0x003803E0, R/W, long,    "DARKCALIB TARGET"
     CAPTUREMODE = 3671056  # 0x00380410, R/W, mode, "CAPTURE MODE"
     LINEAVERAGING = 3671120  # 0x00380450, R/W, long,   "LINE AVERAGING"
+    IMAGEFILTER = 3671136  # 0x00380460, R/W, mode, "IMAGE FILTER"
     INTENSITYLUT_MODE = 3671312  # 0x00380510, R/W, mode,   "INTENSITY LUT MODE"
     INTENSITYLUT_PAGE = 3671328  # 0x00380520, R/W, long,   "INTENSITY LUT PAGE"
     INTENSITYLUT_WHITECLIP = 3671344  # 0x00380530, R/W, long,  "INTENSITY LUT WHITE CLIP"
@@ -371,6 +372,9 @@ class DCAM_IDPROP(IntEnum):
     CCDMODE = 4195088  # 0x00400310, R/W, mode, "CCD MODE"
     EMCCD_CALIBRATIONMODE = 4195104  # 0x00400320, R/W, mode,   "EM CCD CALIBRATION MODE"
     CMOSMODE = 4195152  # 0x00400350, R/W, mode,    "CMOS MODE"
+    MULTILINESENSOR_READOUTMODE = 4195200  # 0x00400380, R/W, mode, "MULTI LINE SENSOR READOUT MODE"
+    MULTILINESENSOR_TOP = 4195216  # 0x00400390, R/W, long, "MULTI LINE SENSOR TOP"
+    MULTILINESENSOR_HEIGHT = 4195232  # 0x004003A0, R/W, long,  "MULTI LINE SENSOR HEIGHT"
     # output mode
     OUTPUT_INTENSITY = 4195344  # 0x00400410, R/W, mode,    "OUTPUT INTENSITY"
     OUTPUTDATA_OPERATION = 4195392  # 0x00400440, R/W, mode,    "OUTPUT DATA OPERATION"
@@ -548,9 +552,9 @@ class DCAMDEV_STRING(Structure):
         self.size = sizeof(DCAMDEV_STRING)
 
     def alloctext(self, maxlen):
-        textbuf = create_string_buffer(maxlen)
-        self.text = addressof(textbuf)
-        self.textbytes = sizeof(textbuf)
+        self._textbuf = create_string_buffer(maxlen)
+        self.text = addressof(self._textbuf)
+        self.textbytes = sizeof(self._textbuf)
 
 
 class DCAM_PROP:
@@ -640,6 +644,7 @@ class DCAMPROP:
         SPLITVIEW = 14
         DUALLIGHTSHEET = 16
         PHOTONNUMBERRESOLVING = 18
+        WHOLELINES = 19
 
     class SHUTTER_MODE(IntEnum):
         GLOBAL = 1
@@ -654,6 +659,8 @@ class DCAMPROP:
         BACKWARD = 2
         BYTRIGGER = 3
         DIVERGE = 5
+        FORWARDBIDIRECTION = 6
+        REVERSEBIDIRECTION = 7
 
     class READOUT_UNIT(IntEnum):
         FRAME = 2
@@ -667,6 +674,10 @@ class DCAMPROP:
     class CMOSMODE(IntEnum):
         NORMAL = 1
         NONDESTRUCTIVE = 2
+
+    class MULTILINESENSOR_READOUTMODE(IntEnum):
+        SYNCACCUMULATE = 1
+        SYNCAVERAGE = 2
 
     class OUTPUT_INTENSITY(IntEnum):
         NORMAL = 1
@@ -891,6 +902,10 @@ class DCAMPROP:
         TAPGAINCALIB = 4
         BACKFOCUSCALIB = 5
 
+    class IMAGEFILTER(IntEnum):
+        THROUGH = 0
+        PATTERN_1 = 1
+
     class INTERFRAMEALU_ENABLE(IntEnum):
         OFF = 1
         TRIGGERSOURCE_ALL = 2
@@ -948,6 +963,7 @@ class DCAMPROP:
     class DEFECTCORRECT_METHOD(IntEnum):
         CEILING = 3
         PREVIOUS = 4
+        NEXT = 5
 
     class HOTPIXELCORRECT_LEVEL(IntEnum):
         STANDARD = 1
@@ -1109,9 +1125,9 @@ class DCAMPROP_VALUETEXT(Structure):
         self.cbSize = sizeof(DCAMPROP_VALUETEXT)
 
     def alloctext(self, maxlen):
-        textbuf = create_string_buffer(maxlen)
-        self.text = addressof(textbuf)
-        self.textbytes = sizeof(textbuf)
+        self._textbuf = create_string_buffer(maxlen)
+        self.text = addressof(self._textbuf)
+        self.textbytes = sizeof(self._textbuf)
 
 
 class DCAM_TIMESTAMP(Structure):

@@ -17,7 +17,7 @@
 #define ORCA_FUSION_CLOCK_US	4.867647 
 #define ORCA_FUSION_CONSTANT_US	3.029411
 
-#define OrcaErrChk(fnName,fnCall) if (failed(err=(fnCall))) { StringCbPrintfW(_errMsg,MSG_SIZE,L"%s ORCA failed ,(%d). ",fnName,__LINE__); ORCA::getInstance()->LogMessage(_errMsg,ERROR_EVENT);}
+#define OrcaErrChk(fnName,fnCall) if (failed(err=(fnCall))) { Sleep(10); if (failed(err=(fnCall))) {  StringCbPrintfW(_errMsg,MSG_SIZE,L"%s ORCA failed ,(%d). ",fnName,__LINE__); ORCA::getInstance()->LogMessage(_errMsg,ERROR_EVENT);}} //if the function call failed, sleep 10ms and try calling it again to avoid any camera set issues
 
 #ifdef __cplusplus
 
@@ -120,6 +120,8 @@ extern "C"
 		static std::atomic<long> _frameReady;
 		static long _statusError;
 		static long _threadRunning;
+		bool _hasCooling[MAX_CAM_NUM];
+		bool _hasReadoutSpeed[MAX_CAM_NUM];
 		void**	_pFrames;
 
 		USHORT* _intermediateBuffer;

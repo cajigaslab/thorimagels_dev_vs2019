@@ -16,7 +16,8 @@ namespace ImageReviewDll.OME
 
         string path = "";
         int dataType; // 0: Tiff, 1: Raw, 2: OME Tiff
-        ushort zCount = 0, tCount = 0;
+        ushort zCount = 0;
+        int tCount = 0;
         string channelArray;
         int onlySaveEnabledChannels = 1; // 1:true, 0:false // for raw
         bool[] enabledChannelsFlag; // for raw
@@ -76,7 +77,7 @@ namespace ImageReviewDll.OME
                 ret = -1;
             }
             value = XMLProcess.Read(experimentFileFullName, "ThorImageExperiment/Streaming", "frames");
-            if (!ushort.TryParse(value, out tCount))
+            if (!int.TryParse(value, out tCount))
             {
                 MessageBox.Show("Cannot read Stream frames");
                 ret = -1;
@@ -482,8 +483,12 @@ $@"<?xml version=""1.0"" encoding=""utf-16""?>
             if (ret == 0)
             {
                 // change path and rawData, save Experiment.xml
+                XmlDocument origDoc = new XmlDocument();
+                origDoc.Load(experimentFileFullName);
+                // Create a clone of the original document to make sure we don't modify Experiment.xml
                 XmlDocument doc = new XmlDocument();
-                doc.Load(experimentFileFullName);
+                doc.LoadXml(origDoc.OuterXml);
+                origDoc = null;
                 XmlNode xn = doc.SelectSingleNode("/ThorImageExperiment/Name");
                 var attr = xn.Attributes.GetNamedItem("path");
                 if (attr != null)
@@ -601,7 +606,7 @@ $@"<?xml version=""1.0"" encoding=""utf-16""?>
             return result;
         }
 
-        long ConfigureOMETiff(long handle, SampleInfo sample, int regionPixelX, int regionPixelY, float regionW, float regionH, ushort zCount, ushort tCount,
+        long ConfigureOMETiff(long handle, SampleInfo sample, int regionPixelX, int regionPixelY, float regionW, float regionH, ushort zCount, int tCount,
     int regionPositionPixelX, int regionPositionPixelY, int bitsPerPixel, float regionPixelSizeUM, double zStepSizeUM, double intervalSec, int channelNumber, string channels)
         {
             int result = ClassicTiffConverterWrapper.ConfigOMEHeader(handle, sample, regionPixelX, regionPixelY, regionW, regionH, zCount, tCount,

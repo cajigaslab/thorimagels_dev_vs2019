@@ -148,9 +148,9 @@ long ThorSLMXML::SetPostTransform(int id, long verticalFlip, double rotateAngle,
 const char* const ThorSLMXML::CALIBRATION = "Calibration";
 const char* const ThorSLMXML::CALIBRATION2 = "Calibration2";
 
-const char* const ThorSLMXML::CALIBRATION_ATTR[NUM_CALIBRATION_ATTRIBUTES] = { "wavelengthNM","phaseMax","coeff1","coeff2","coeff3","coeff4","coeff5","coeff6", "coeff7", "coeff8" };
+const char* const ThorSLMXML::CALIBRATION_ATTR[NUM_CALIBRATION_ATTRIBUTES] = { "wavelengthNM","phaseMax","offsetZum","coeff1","coeff2","coeff3","coeff4","coeff5","coeff6", "coeff7", "coeff8" };
 
-long ThorSLMXML::GetCalibration(int id, double& wavelengthNM, long& phaseMax, double& coeff1, double& coeff2, double& coeff3, double& coeff4, double& coeff5, double& coeff6, double& coeff7, double& coeff8)
+long ThorSLMXML::GetCalibration(int id, double& wavelengthNM, long& phaseMax, double& offsetZum, double& coeff1, double& coeff2, double& coeff3, double& coeff4, double& coeff5, double& coeff6, double& coeff7, double& coeff8)
 {
 	try
 	{
@@ -167,10 +167,6 @@ long ThorSLMXML::GetCalibration(int id, double& wavelengthNM, long& phaseMax, do
 			bool resetNode = false;
 			for (long attCount = 0; attCount < NUM_CALIBRATION_ATTRIBUTES; attCount++)
 			{
-				if (child->HasAttribute("offsetZum"))
-				{
-					resetNode = true;
-				}
 				if (!child->HasAttribute(CALIBRATION_ATTR[attCount]))
 				{
 					resetNode = true;
@@ -188,27 +184,30 @@ long ThorSLMXML::GetCalibration(int id, double& wavelengthNM, long& phaseMax, do
 					ss >> phaseMax;
 					break;
 				case 2:
-					ss >> coeff1;
+					ss >> offsetZum;
 					break;
 				case 3:
-					ss >> coeff2;
+					ss >> coeff1;
 					break;
 				case 4:
-					ss >> coeff3;
+					ss >> coeff2;
 					break;
 				case 5:
-					ss >> coeff4;
+					ss >> coeff3;
 					break;
 				case 6:
-					ss >> coeff5;
+					ss >> coeff4;
 					break;
 				case 7:
-					ss >> coeff6;
+					ss >> coeff5;
 					break;
 				case 8:
-					ss >> coeff7;
+					ss >> coeff6;
 					break;
 				case 9:
+					ss >> coeff7;
+					break;
+				case 10:
 					ss >> coeff8;
 					break;
 				}
@@ -216,7 +215,7 @@ long ThorSLMXML::GetCalibration(int id, double& wavelengthNM, long& phaseMax, do
 			//reconstruct node with preferred attribute order
 			if (resetNode)
 			{
-				UpdateNode(child, CALIBRATION_ATTR, std::vector<std::string> { std::to_string(wavelengthNM), std::to_string(phaseMax), std::to_string(coeff1), std::to_string(coeff2),
+				UpdateNode(child, CALIBRATION_ATTR, std::vector<std::string> { std::to_string(wavelengthNM), std::to_string(phaseMax), std::to_string(offsetZum), std::to_string(coeff1), std::to_string(coeff2),
 					std::to_string(coeff3), std::to_string(coeff4), std::to_string(coeff5), std::to_string(coeff6), std::to_string(coeff7), std::to_string(coeff8) });
 
 				SaveConfigFile();
@@ -246,12 +245,13 @@ long ThorSLMXML::SetCalibration(int id, double coeff1, double coeff2, double coe
 		std::vector<std::string> attr = { std::to_string(coeff1), std::to_string(coeff2), std::to_string(coeff3), std::to_string(coeff4),
 			std::to_string(coeff5), std::to_string(coeff6), std::to_string(coeff7), std::to_string(coeff8) };
 
-		for (int index = CALIBRATION_OFFSET_INDEX; index < NUM_CALIBRATION_ATTRIBUTES; index++)
+		const int START_INDEX = 3;
+		for (int index = START_INDEX; index < NUM_CALIBRATION_ATTRIBUTES; index++)
 		{
 			// iterate over to get the particular tag element specified as a parameter(tagName)
 			ticpp::Iterator<ticpp::Element> child(configObj->FirstChildElement(1 == id ? CALIBRATION : CALIBRATION2), 1 == id ? CALIBRATION : CALIBRATION2);
 			//get the attribute value for the specified attribute name
-			child->SetAttribute(CALIBRATION_ATTR[index], attr[index - (int)CALIBRATION_OFFSET_INDEX]);
+			child->SetAttribute(CALIBRATION_ATTR[index], attr[index - (int)START_INDEX]);
 		}
 
 		return SaveConfigFile();
@@ -266,9 +266,9 @@ long ThorSLMXML::SetCalibration(int id, double coeff1, double coeff2, double coe
 const char* const ThorSLMXML::CALIBRATION3D = "Calibration3D";
 const char* const ThorSLMXML::CALIBRATION3D2 = "Calibration3D2";
 
-const char* const ThorSLMXML::CALIBRATION3D_ATTR[NUM_CALIBRATION3D_ATTRIBUTES] = { "wavelengthNM","phaseMax","coeff1","coeff2","coeff3","coeff4","coeff5","coeff6", "coeff7", "coeff8","coeff9", "coeff10", "coeff11", "coeff12", "coeff13", "coeff14", "coeff15", "coeff16" };
+const char* const ThorSLMXML::CALIBRATION3D_ATTR[NUM_CALIBRATION3D_ATTRIBUTES] = { "wavelengthNM","phaseMax","offsetZum","coeff1","coeff2","coeff3","coeff4","coeff5","coeff6", "coeff7", "coeff8","coeff9", "coeff10", "coeff11", "coeff12", "coeff13", "coeff14", "coeff15", "coeff16" };
 
-long ThorSLMXML::GetCalibration3D(int id, double& wavelengthNM, long& phaseMax, double* affineCoeffs, long size)
+long ThorSLMXML::GetCalibration3D(int id, double& wavelengthNM, long& phaseMax, double& offsetZum, double* affineCoeffs, long size)
 {
 	try
 	{
@@ -300,10 +300,6 @@ long ThorSLMXML::GetCalibration3D(int id, double& wavelengthNM, long& phaseMax, 
 			double* pSrc = affineCoeffs;
 			for (long attCount = 0; attCount < NUM_CALIBRATION3D_ATTRIBUTES; attCount++)
 			{
-				if (child->HasAttribute("offsetZum"))
-				{
-					resetNode = true;
-				}
 				if (!child->HasAttribute(CALIBRATION3D_ATTR[attCount]))
 				{
 					resetNode = true;
@@ -321,6 +317,8 @@ long ThorSLMXML::GetCalibration3D(int id, double& wavelengthNM, long& phaseMax, 
 					ss >> phaseMax;
 					break;
 				case 2:
+					ss >> offsetZum;
+					break;
 				case 3:
 				case 4:
 				case 5:
@@ -336,6 +334,7 @@ long ThorSLMXML::GetCalibration3D(int id, double& wavelengthNM, long& phaseMax, 
 				case 15:
 				case 16:
 				case 17:
+				case 18:
 					ss >> *pSrc;
 					pSrc++;
 					break;
@@ -348,7 +347,7 @@ long ThorSLMXML::GetCalibration3D(int id, double& wavelengthNM, long& phaseMax, 
 		return TRUE;
 
 	DEFAULT_NODE:
-		UpdateNode(child, CALIBRATION3D_ATTR, std::vector<std::string> { std::to_string(wavelengthNM), std::to_string(phaseMax), std::to_string(*affineCoeffs), std::to_string(*(affineCoeffs + 1)), std::to_string(*(affineCoeffs + 2)),
+		UpdateNode(child, CALIBRATION3D_ATTR, std::vector<std::string> { std::to_string(wavelengthNM), std::to_string(phaseMax), std::to_string(offsetZum), std::to_string(*affineCoeffs), std::to_string(*(affineCoeffs + 1)), std::to_string(*(affineCoeffs + 2)),
 			std::to_string(*(affineCoeffs + 3)), std::to_string(*(affineCoeffs + 4)), std::to_string(*(affineCoeffs + 5)), std::to_string(*(affineCoeffs + 6)), std::to_string(*(affineCoeffs + 7)), std::to_string(*(affineCoeffs + 8)),
 			std::to_string(*(affineCoeffs + 9)), std::to_string(*(affineCoeffs + 10)), std::to_string(*(affineCoeffs + 11)), std::to_string(*(affineCoeffs + 12)), std::to_string(*(affineCoeffs + 13)), std::to_string(*(affineCoeffs + 14)), std::to_string(*(affineCoeffs + 15))});
 
@@ -430,6 +429,12 @@ long ThorSLMXML::SetCalibrationAttribute(int mode, int lamdaID, int attrID, doub
 		StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorSLMXML SetCalibrationAttribute failed: %s", StringToWString(ex.what()).c_str());
 		return FALSE;
 	}
+}
+
+long ThorSLMXML::SetDefocus(int id, double offsetZum)
+{
+	SetCalibrationAttribute(0, id, 2, offsetZum);
+	return SetCalibrationAttribute(1, id, 2, offsetZum);
 }
 
 const char* const ThorSLMXML::SPEC = "Spec";

@@ -70,12 +70,18 @@
         const double MAX_Z_STEP_SIZE = 1;
         const double MIN_Z_STEP_SIZE = .0001;
 
+        ObservableCollection<string> _dynamicLabels = new ObservableCollection<string>();
         private bool _enableContinuousZStackPreview = false;
         private bool _isZCaptureStopped = false;
         private double _lastZPositionVal = 0.0;
         private CustomCollection<DateTime> _lastZSetTime = new CustomCollection<DateTime>(new DateTime[3] { DateTime.Now, DateTime.Now, DateTime.Now }); //Z, Z2, R
+        ObservableCollection<string> _originalLabels = new ObservableCollection<string>();
         private ICommand _previewZStackCommand;
         private Dictionary<string, PropertyInfo> _properties = new Dictionary<string, PropertyInfo>();
+        private double _remoteFocusCalibrationMagnification = 1;
+        private double _remoteFocusStartPosition = 1;
+        private int _remoteFocusStepSize = 1;
+        private double _remoteFocusStopPosition = 16;
         private bool _z2Invert = false;
         private bool _z2InvertLimits = false;
         private string _z2PosMinusKey;
@@ -165,7 +171,40 @@
 
         #endregion Enumerations
 
+        #region Events
+
+        public event EventHandler<DoublePropertyArgs> ZPositionChangedEvent;
+
+        #endregion Events
+
         #region Properties
+
+        public ObservableCollection<string> DynamicLabels
+        {
+            get
+            {
+                // From Joe Ma. The axial (z) amplification goes by the square of the objective power. Formula is (16X mag / objective mag)^2
+                double mag = (double)MVMManager.Instance["ObjectiveControlViewModel", "TurretMagnification", (object)1.0];
+                double ratio = Math.Pow(_remoteFocusCalibrationMagnification / mag, 2);
+                for (int i = 0; i < _dynamicLabels.Count; i++)
+                {
+                    double val = 0;
+                    if (double.TryParse(_originalLabels[i], out val))
+                    {
+                        int index = ZInvertLimits ? _dynamicLabels.Count - 1 - i : i; //If Z limits are inverted, flip the order of the plane values
+                        val *= ratio;
+                        _dynamicLabels[index] = Math.Round(val, 1).ToString();
+                    }
+
+                }
+                return _dynamicLabels;
+            }
+            set
+            {
+                _dynamicLabels = value;
+                OnPropertyChanged("DynamicLabels");
+            }
+        }
 
         public bool EnableContinuousZStackPreview
         {
@@ -185,6 +224,14 @@
             get { return _zControlModel.EnableRead; }
         }
 
+        public bool IsRemoteFocus
+        {
+            get
+            {
+                return _zControlModel.IsRemoteFocus;
+            }
+        }
+
         public bool IsZCaptureStopped
         {
             get { return _isZCaptureStopped; }
@@ -200,6 +247,7 @@
             set
             {
                 _zControlModel.IsZStackCapturing = value;
+                MVMManager.Instance["ScanControlViewModel", "LSMChannelDisableAll"] = !value;
                 OnPropertyChanged("IsZStackCapturing");
             }
         }
@@ -233,6 +281,103 @@
                     this._previewZStackCommand = new RelayCommand(() => StartZStackPreview());
 
                 return this._previewZStackCommand;
+            }
+        }
+
+        public int RemoteFocusNumberOfTicks
+        {
+            get
+            {
+                return _zControlModel.RemoteFocusNumberOfPlanes - 2;
+            }
+        }
+
+        public int RemoteFocusNumSteps
+        {
+            get
+            {
+                return Math.Max(1, (int)Math.Round(Math.Abs((RemoteFocusStopPosition - RemoteFocusStartPosition) / _remoteFocusStepSize) + 1));
+            }
+        }
+
+        public double RemoteFocusPosition
+        {
+            get
+            {
+                return _zControlModel.ZPosition;
+            }
+            set
+            {
+                _zControlModel.ZPosition = Math.Round(value);
+                OnPropertyChanged("RemoteFocusPosition");
+            }
+        }
+
+        public double RemoteFocusStartPosition
+        {
+            get
+            {
+                return _remoteFocusStartPosition;
+            }
+            set
+            {
+                if (value < ZMin)
+                {
+                    _remoteFocusStartPosition = ZMin;
+                }
+                else if (value > ZMax)
+                {
+                    _remoteFocusStartPosition = ZMax;
+                }
+                else
+                {
+                    _remoteFocusStartPosition = value;
+                }
+                EnsureValidRemoteFocusScanStop();
+                OnPropertyChanged("RemoteFocusStartPosition");
+                OnPropertyChanged("RemoteFocusNumSteps");
+            }
+        }
+
+        //Only use the absolute value of the stepSize to display the step size
+        public int RemoteFocusStepSize
+        {
+            get
+            {
+                return Math.Abs(_remoteFocusStepSize);
+            }
+            set
+            {
+                _remoteFocusStepSize = value;
+                EnsureValidRemoteFocusScanStop();
+                OnPropertyChanged("RemoteFocusStepSize");
+                OnPropertyChanged("RemoteFocusNumSteps");
+            }
+        }
+
+        public double RemoteFocusStopPosition
+        {
+            get
+            {
+                return _remoteFocusStopPosition;
+            }
+            set
+            {
+                if (value < ZMin)
+                {
+                    _remoteFocusStopPosition = ZMin;
+                }
+                else if (value > ZMax)
+                {
+                    _remoteFocusStopPosition = ZMax;
+                }
+                else
+                {
+                    _remoteFocusStopPosition = value;
+                }
+                EnsureValidRemoteFocusScanStop();
+                OnPropertyChanged("RemoteFocusStopPosition");
+                OnPropertyChanged("RemoteFocusNumSteps");
             }
         }
 
@@ -278,6 +423,8 @@
             set
             {
                 _zControlModel.UpdatePositions = value;
+                if ("Z" == value)
+                    ZPositionChangedEvent?.Invoke(this, new DoublePropertyArgs(ZPosition));
             }
         }
 
@@ -612,6 +759,7 @@
                 OnPropertyChanged("ZInvertLimits");
                 OnPropertyChanged("ZPosition");
                 ((IMVM)MVMManager.Instance["AutoFocusControlViewModel", this]).OnPropertyChange("InvertZ");
+                OnPropertyChanged("DynamicLabels");
                 PersistZInvert();
             }
         }
@@ -1351,16 +1499,61 @@
             return myPropInfo;
         }
 
+        public void LoadRemoteFocusPositionValues()
+        {
+            //Load Dynamic Labels for Remote Focus
+            if (IsRemoteFocus)
+            {
+                string posFile = Application.Current.Resources["ApplicationSettingsFolder"].ToString() + @"\RemoteFocusPositionValues.xml";
+
+                if (File.Exists(posFile))
+                {
+                    try
+                    {
+                        XmlDocument remoteFocusPositionValues = new XmlDocument();
+                        remoteFocusPositionValues.Load(posFile);
+                        XmlNodeList ndList = remoteFocusPositionValues.SelectNodes("/RemoteFocusPositionSettings/MeasurementObjective");
+                        string mag = ndList[0].Attributes["magnification"].Value;
+                        double tmp = 0;
+                        if (Double.TryParse(mag, NumberStyles.Any, CultureInfo.InvariantCulture, out tmp))
+                        {
+                            _remoteFocusCalibrationMagnification = tmp;
+                        }
+                        _dynamicLabels.Clear();
+                        _originalLabels.Clear();
+                        ndList = remoteFocusPositionValues.SelectNodes("/RemoteFocusPositionSettings/MeasuredPlaneDistance");
+                        if (ndList.Count > 0)
+                        {
+                            foreach (XmlAttribute attr in ndList[0].Attributes)
+                            {
+                                _dynamicLabels.Add(attr.Value);
+                                _originalLabels.Add(attr.Value);
+                            }
+                        }
+                    }
+                    catch (System.IO.IOException e)
+                    {
+                        ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + " error loading RemoteFocusPositionValues.xml. Exception: " + e.Message);
+                    }
+                    OnPropertyChanged("DynamicLabels");
+                    if (_dynamicLabels.Count != _zControlModel.RemoteFocusNumberOfPlanes)
+                    {
+                        MessageBox.Show("Number of planes don't match the number of measured distance inputs in RemoteFocusPositionValues.xml.");
+                    }
+                }
+            }
+        }
+
         public void LoadXMLSettings()
         {
             XmlDocument experimentDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS];
 
             XmlNodeList ndList = experimentDoc.SelectNodes("/ThorImageExperiment/ZStage");
-            double dTmp = 0.0;
-            int iTmp = 0;
+            double dTmp;
+            int iTmp;
+            string str = string.Empty;
             if (ndList.Count > 0)
             {
-                string str = string.Empty;
                 double scanStep = 0;
                 int numSteps = 0;
                 if (XmlManager.GetAttribute(ndList[0], experimentDoc, "startPos", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp))
@@ -1398,11 +1591,38 @@
                 }
             }
 
+            XmlDocument doc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS];
+
+            ndList = doc.SelectNodes("/ThorImageExperiment/RemoteFocus");
+            str = string.Empty;
+            if (ndList.Count > 0)
+            {
+                if (XmlManager.GetAttribute(ndList[0], doc, "position", ref str) && Double.TryParse(str, out dTmp))
+                {
+                    RemoteFocusPosition = dTmp;
+                }
+                if (XmlManager.GetAttribute(ndList[0], doc, "startPlane", ref str) && Double.TryParse(str, out dTmp))
+                {
+                    RemoteFocusStartPosition = dTmp;
+                }
+                if (XmlManager.GetAttribute(ndList[0], doc, "stepSize", ref str) && Int32.TryParse(str, out iTmp))
+                {
+                    RemoteFocusStepSize = iTmp;
+                }
+                if (XmlManager.GetAttribute(ndList[0], doc, "steps", ref str) && Double.TryParse(str, out dTmp))
+                {
+                    RemoteFocusStopPosition = RemoteFocusStartPosition + _remoteFocusStepSize * (dTmp - 1);
+                }
+
+            }
+
             // Set an OnPropertyChanged event for all properties
             OnPropertyChange("");
 
             OnPropertyChange("ZPosition");
             ZStackCacheDirectory = Application.Current.Resources["ZStackCacheFolder"].ToString();
+
+            LoadRemoteFocusPositionValues();
         }
 
         public void OnPropertyChange(string propertyName)
@@ -1412,6 +1632,136 @@
 
         public void UpdateExpXMLSettings(ref XmlDocument xmlDoc)
         {
+            XmlNodeList ndList = xmlDoc.SelectNodes("/ThorImageExperiment/ZStage");
+
+            if (ndList.Count > 0 && !IsRemoteFocus)
+            {
+                double stepSize = ZScanStep;
+
+                //ensure the sign of the step is correct
+                if (ZScanStart > ZScanStop)
+                {
+                    stepSize *= -1;
+                }
+
+                XmlManager.SetAttribute(ndList[0], xmlDoc, "steps", ZScanNumSteps.ToString());
+                XmlManager.SetAttribute(ndList[0], xmlDoc, "stepSizeUM", stepSize.ToString());
+                XmlManager.SetAttribute(ndList[0], xmlDoc, "setupPositionMM", ZPosition.ToString());
+                XmlManager.SetAttribute(ndList[0], xmlDoc, "startPos", ZScanStart.ToString());
+            }
+
+            XmlDocument hwDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS];
+            XmlNodeList ndListHW = hwDoc.SelectNodes("/HardwareSettings/Devices/ZStage");
+
+            //persist the active ZStage name:
+            if (ndListHW.Count > 0)
+            {
+                string str = string.Empty;
+                for (int i = 0; i < ndListHW.Count; i++)
+                {
+                    XmlManager.GetAttribute(ndListHW[i], hwDoc, "active", ref str);
+                    if (1 == Convert.ToInt32(str))
+                    {
+                        XmlManager.GetAttribute(ndListHW[i], hwDoc, "dllName", ref str);
+                        if (str != string.Empty)
+                        {
+                            XmlManager.SetAttribute(ndList[0], xmlDoc, "name", str);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Persist RStage Position
+            ndList = xmlDoc.SelectNodes("/ThorImageExperiment/RStage");
+
+            if (ndList.Count <= 0)
+            {
+                XmlManager.CreateXmlNode(xmlDoc, "RStage");
+                ndList = xmlDoc.SelectNodes("/ThorImageExperiment/RStage");
+            }
+            if (ndList.Count > 0)
+            {
+                XmlManager.SetAttribute(ndList[0], xmlDoc, "pos", RPosition.ToString());
+            }
+
+            // Persist Secondary Z Position
+            ndList = xmlDoc.SelectNodes("/ThorImageExperiment/ZStage2");
+
+            if (0 >= ndList.Count)
+            {
+                XmlManager.CreateXmlNode(xmlDoc, "ZStage2");
+                ndList = xmlDoc.SelectNodes("/ThorImageExperiment/ZStage2");
+            }
+            if (0 < ndList.Count)
+            {
+                XmlManager.SetAttribute(ndList[0], xmlDoc, "pos", Z2Position.ToString());
+            }
+
+            // Persist Remote Focus Position
+            ndList = xmlDoc.SelectNodes("/ThorImageExperiment/RemoteFocus");
+
+            if (ndList.Count <= 0)
+            {
+                XmlManager.CreateXmlNode(xmlDoc, "RemoteFocus");
+                ndList = xmlDoc.SelectNodes("/ThorImageExperiment/RemoteFocus");
+            }
+            if (0 < ndList.Count)
+            {
+                XmlManager.SetAttribute(ndList[0], xmlDoc, "steps", RemoteFocusNumSteps.ToString());
+                XmlManager.SetAttribute(ndList[0], xmlDoc, "startPlane", RemoteFocusStartPosition.ToString());
+                XmlManager.SetAttribute(ndList[0], xmlDoc, "stepSize", _remoteFocusStepSize.ToString());
+            }
+        }
+
+        //Check and fit to the size of the ZStep
+        private void EnsureValidRemoteFocusScanStop()
+        {
+            if (_remoteFocusStopPosition != _remoteFocusStartPosition)
+            {
+                double rem = Math.Round(Math.Abs(_remoteFocusStopPosition - _remoteFocusStartPosition) % _remoteFocusStepSize);
+                if (0 != rem)
+                {
+                    int zDirection = 0;
+                    if (_remoteFocusStopPosition > _remoteFocusStartPosition)
+                    {
+                        zDirection = 1;
+                    }
+                    else
+                    {
+                        zDirection = -1;
+                    }
+
+                    double newZScanStop = Math.Round(_remoteFocusStopPosition + zDirection * (_remoteFocusStepSize - rem));
+                    if (newZScanStop < ZMin)
+                    {
+                        _remoteFocusStopPosition = ZMin;
+                    }
+                    else if (newZScanStop > ZMax)
+                    {
+                        _remoteFocusStopPosition = ZMax;
+                    }
+                    else
+                    {
+                        _remoteFocusStopPosition = newZScanStop;
+                    }
+
+                    OnPropertyChanged("RemoteFocusStopPosition");
+
+                    if (newZScanStop != _remoteFocusStopPosition)
+                    {
+                        ZScanStopNotValid = true;
+                    }
+                    else
+                    {
+                        ZScanStopNotValid = false;
+                    }
+                }
+                else
+                {
+                    ZScanStopNotValid = false;
+                }
+            }
         }
 
         //Check and fit to the size of the ZStep
@@ -1630,7 +1980,14 @@
                 MVMManager.Instance["ScanControlViewModel", "EnablePMTGains"] = false;
                 MVMManager.Instance["ScanControlViewModel", "EnablePMTGains"] = true;
 
-                _zControlModel.StartZStackPreview(ZScanStart, ZScanStop, ZScanStep, ZScanNumSteps);
+                if (IsRemoteFocus)
+                {
+                    _zControlModel.StartZStackPreview(RemoteFocusStartPosition, RemoteFocusStopPosition, RemoteFocusStepSize, RemoteFocusNumSteps);
+                }
+                else
+                {
+                    _zControlModel.StartZStackPreview(ZScanStart, ZScanStop, ZScanStep, ZScanNumSteps);
+                }
 
                 //restart the background hardware updates
                 MVMManager.Instance["CaptureSetupViewModel", "BWHardware"] = true;

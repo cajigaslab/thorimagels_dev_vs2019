@@ -6,6 +6,7 @@
              xmlns:ts="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
              xmlns:validator="clr-namespace:Validations;assembly=Validations"
              xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:ig="http://schemas.infragistics.com/xaml"
              Width="Auto"
              Height="Auto"
              >
@@ -17,6 +18,7 @@
             <ts:BooleanToVisibilityConverter3 x:Key="boolToVisCust3" />
             <ts:DoubleCultureConverter x:Key="doubleCulture" />
             <ts:DoubleScaledCultureConverter x:Key="doubleCultureUnitConverter" />
+            <ts:BoolToOppositeBoolConverter x:Key="boolToOppositeBoolConverter" />
             <zc:FontFamilyConverter x:Key="FontConverter" />
             <zc:UpDownButtonContentConverter x:Key="ButtonContentConverter" />
             <zc:CommandParameterConverter x:Key="CommandParamConverter" />
@@ -29,7 +31,7 @@
     </UserControl.Resources>
     <Grid>
         <StackPanel>
-            <StackPanel  Visibility="{Binding Source={StaticResource ResourceManagerCS}, Path=TabletModeEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVis}, ConverterParameter=true}">
+            <StackPanel  Visibility="{Binding Path=IsRemoteFocus, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVis}, ConverterParameter=true}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="50" />
@@ -303,14 +305,14 @@
                                 </StackPanel>
                                 <StackPanel Margin="1"
                                         Orientation="Horizontal">
-
                                     <StackPanel Orientation="Horizontal">
                                         <Label MinWidth="50"
                                            Content="Stop"
                                            Foreground="White" />
                                         <TextBox Name="tbZStopPos"
-                                             MinWidth="70"
-                                             Text="{Binding Path=ZScanStop,
+                                                 MinWidth="70"
+                                                 Foreground="White"
+                                                 Text="{Binding Path=ZScanStop,
                                                             Mode=TwoWay,
                                                             ConverterParameter=1000,
                                                             Converter={StaticResource doubleCultureUnitConverter}}"
@@ -339,6 +341,11 @@
                                                             <DataTrigger.ExitActions>
                                                                 <StopStoryboard BeginStoryboardName="flashing" />
                                                             </DataTrigger.ExitActions>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Path=ZScanStopNotValid, UpdateSourceTrigger=PropertyChanged}"
+                                                                     Value="False">
+                                                            <Setter Property="Background"
+                                                                    Value="Transparent" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -659,6 +666,421 @@
                                                   UpdateSourceTrigger=PropertyChanged}"                              
                               Visibility="{Binding Path=ZInvertVisibility}" />
                     </StackPanel>
+                </Grid>
+            </StackPanel>
+            <StackPanel  Visibility="{Binding Path=IsRemoteFocus, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVis}, ConverterParameter=False}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="180"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.Resources>
+                        <!--Template for the tick marks, every clickable position-->
+                        <DataTemplate x:Key="VerticalTick">
+                            <Border Width="55" 
+                                    Height="13" 
+                                    CornerRadius="10" 
+                                    BorderThickness="2,0,0,2" 
+                                    BorderBrush="White">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" 
+                                                         EndPoint="0,1">
+                                        <GradientStop Offset="0" 
+                                                      Color="DarkGray"/>
+                                        <GradientStop Offset="1" 
+                                                      Color="Gray"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Border.Effect>
+                                    <DropShadowEffect ShadowDepth="10" 
+                                                      Color="Black"
+                                                      Opacity="1" 
+                                                      BlurRadius="5"/>
+                                </Border.Effect>
+                                <Border.RenderTransform>
+                                    <TransformGroup>
+                                        <ScaleTransform ScaleX="1" 
+                                                        ScaleY="1"/>
+                                        <SkewTransform AngleX="0" 
+                                                       AngleY="20"/>
+                                        <RotateTransform Angle="-20"/>
+                                    </TransformGroup>
+                                </Border.RenderTransform>
+                                <TextBlock Text="{Binding}" 
+                                           TextWrapping="Wrap"
+                                           Background="Transparent"
+                                           Foreground="White" 
+                                           VerticalAlignment="Center" 
+                                           HorizontalAlignment="Center"
+                                           FontSize="12" 
+                                           FontWeight="Bold"/>
+                            </Border>
+                        </DataTemplate>
+                        <!--Style for the slider track and base-->
+                        <Style x:Key="SliderBase" 
+                               TargetType="ig:XamSliderBase">
+                            <Setter Property="Orientation" 
+                                    Value="Vertical"/>
+                            <Setter Property="IsMouseWheelEnabled" 
+                                    Value="False"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ig:XamSliderBase">
+                                        <Grid x:Name="RootElement" 
+                                              Background="{TemplateBinding Background}">
+                                            <VisualStateManager.VisualStateGroups>
+                                                <VisualStateGroup x:Name="OrientationStates">
+                                                    <VisualState x:Name="Vertical"/>
+                                                </VisualStateGroup>
+                                            </VisualStateManager.VisualStateGroups>
+                                            <Grid x:Name="VerticalSlider">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <!--Stackpanel for both up and down buttons-->
+                                                <StackPanel Grid.Column="1" 
+                                                            VerticalAlignment="Center" 
+                                                            Margin="10,0,0,0"
+                                                            Panel.ZIndex="4">
+                                                    <RepeatButton x:Name="VerticalIncrease" 
+                                                                  Height="20" 
+                                                                  Width="30" 
+                                                                  Visibility="{TemplateBinding IncreaseButtonVisibility}" 
+                                                                  Content="&#xE96D;"
+                                                                  FontSize="20">
+                                                        <RepeatButton.FontFamily>
+                                                            <FontFamily>Segoe MDL2 Assets</FontFamily>
+                                                        </RepeatButton.FontFamily>
+                                                        <ig:Commanding.Command>
+                                                            <ig:XamSliderBaseCommandSource EventName="Click" 
+                                                                                           CommandType="SmallIncrease"/>
+                                                        </ig:Commanding.Command>
+                                                    </RepeatButton>
+                                                    <RepeatButton x:Name="VerticalDecrease" 
+                                                                  Height="20" 
+                                                                  Width="30" 
+                                                                  Visibility="{TemplateBinding DecreaseButtonVisibility}" 
+                                                                  Content="&#xE96E;"
+                                                                  FontSize="20">
+                                                        <RepeatButton.FontFamily>
+                                                            <FontFamily>Segoe MDL2 Assets</FontFamily>
+                                                        </RepeatButton.FontFamily>
+                                                        <ig:Commanding.Command>
+                                                            <ig:XamSliderBaseCommandSource EventName="Click" 
+                                                                                           CommandType="SmallDecrease"/>
+                                                        </ig:Commanding.Command>
+                                                    </RepeatButton>
+                                                </StackPanel>
+                                                <Grid x:Name="VerticalSlidersGrid" 
+                                                      Margin="20,0,0,0" 
+                                                      Grid.Column="0" 
+                                                      HorizontalAlignment="Right">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                </Grid>
+                                                <Grid x:Name="VerticalTickMarks" 
+                                                      Background="Transparent">
+                                                    <Border Width="43" 
+                                                            Background="SteelBlue" 
+                                                            Margin="2,0,0,0" 
+                                                            Opacity="0.4" 
+                                                            BorderBrush="Transparent"/>
+                                                </Grid>
+                                                <Grid x:Name="VerticalTrack" 
+                                                      Width="65" 
+                                                      Background="Transparent" 
+                                                      Margin="10,0,0,0">
+                                                    <Canvas x:Name="VerticalTrackFills"/>
+                                                    <Canvas x:Name="VerticalThumbs"/>
+                                                </Grid>
+                                            </Grid>
+                                        </Grid>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                        <Style x:Key="XamNumericRangeSliderStyle" 
+                               BasedOn="{StaticResource SliderBase}" 
+                               TargetType="ig:XamNumericRangeSlider">
+                            <Setter Property="TrackClickAction" 
+                                    Value="None"/>
+                            <Setter Property="SmallChange" 
+                                    Value="1"/>
+                            <Setter Property="LargeChange" 
+                                    Value="10"/>
+                        </Style>
+                        <!--Style for the slider thumbs-->
+                        <Style x:Key="ThumbStyle"
+                               TargetType="ig:XamSliderNumericThumb">
+                            <Setter Property="IsSnapToTickEnabled" 
+                                    Value="true" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ig:XamSliderNumericThumb">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Border Width="56" 
+                                                    Height="13" 
+                                                    CornerRadius="10" 
+                                                    BorderBrush="Lime" 
+                                                    BorderThickness="2,0,0,2" >
+                                                <Border.Background>
+                                                    <LinearGradientBrush StartPoint="0,0" 
+                                                                         EndPoint="0,1">
+                                                        <GradientStop Offset="0" 
+                                                                      Color="LimeGreen"/>
+                                                        <GradientStop Offset="1" 
+                                                                      Color="DarkGreen"/>
+                                                    </LinearGradientBrush>
+                                                </Border.Background>
+                                                <Border.Effect>
+                                                    <DropShadowEffect ShadowDepth="10" 
+                                                                      Color="Black"
+                                                                      Opacity="1" 
+                                                                      BlurRadius="5"/>
+                                                </Border.Effect>
+                                                <Border.RenderTransform>
+                                                    <TransformGroup>
+                                                        <ScaleTransform ScaleX="1" 
+                                                                        ScaleY="1"/>
+                                                        <SkewTransform AngleX="0" 
+                                                                       AngleY="20"/>
+                                                        <RotateTransform Angle="-20"/>
+                                                    </TransformGroup>
+                                                </Border.RenderTransform>
+                                                <TextBlock Text="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}" 
+                                                           TextWrapping="Wrap" 
+                                                           Foreground="White" 
+                                                           VerticalAlignment="Center" 
+                                                           HorizontalAlignment="Center"
+                                                           FontSize="12" 
+                                                           FontWeight="Bold"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Grid.Resources>
+                    <StackPanel Grid.Column="0">
+                        <Grid Height="330"
+                              Margin="0,-10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0"
+                                        HorizontalAlignment="Right">
+                                <ItemsControl ItemsSource="{Binding DynamicLabels}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding StringFormat={}{0:F1} [um]}"  
+                                                       Foreground="White" 
+                                                       Margin="0,4,0,0"
+                                                       TextAlignment="Right"
+                                                       Background="Transparent"
+                                                       Width="70"
+                                                       HorizontalAlignment="Left" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                            <ig:XamNumericRangeSlider x:Name="remoteFocusSlider"
+                                                      Grid.Column="1"
+                                                      Height="300"
+                                                      MinValue="1"
+                                                      MaxValue="16"
+                                                      IsEnabled="True"
+                                                      Margin="-30,0,0,0"
+                                                      Orientation="Vertical"
+                                                      TrackFillBrush="Transparent"
+                                                      Style="{StaticResource XamNumericRangeSliderStyle}"
+                                                      TrackClickAction="MoveToPoint"
+                                                      IsDirectionReversed="{Binding Path=ZInvert, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToOppositeBoolConverter}}"
+                                                      HorizontalAlignment="Right"
+                                                      VerticalAlignment="Center">
+                                <ig:XamNumericRangeSlider.TickMarks>
+                                    <ig:SliderTickMarks x:Name="rfTickMarks"
+                                                        IncludeSliderEnds="True" 
+                                                        UseFrequency="False"
+                                                        VerticalTickMarksTemplate="{StaticResource VerticalTick}"
+                                                        NumberOfTickMarks="{Binding RelativeSource={RelativeSource Self}, Path=Owner.DataContext.RemoteFocusNumberOfTicks}" />
+                                </ig:XamNumericRangeSlider.TickMarks>
+                                <ig:XamSliderNumericThumb x:Name="rfThumb"
+                                                          InteractionMode="Free" 
+                                                          IsActive="True" 
+                                                          IsDragEnabled="True" 
+                                                          Margin="0,-7,0,0"
+                                                          IsManipulationEnabled="True" 
+                                                          IsSnapToTickEnabled="True" 
+                                                          IsTrackFillVisible="True"
+                                                          ToolTipVisibility="Visible"
+                                                          Style="{StaticResource ThumbStyle}"
+                                                          Value="{Binding Path=RemoteFocusPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            </ig:XamNumericRangeSlider>
+                        </Grid>
+                        <CheckBox Content="Invert"
+                                  Margin="10,-5,0,0"
+                                  Foreground="White"
+                                  IsChecked="{Binding Path=ZInvert, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"                              
+                                  Visibility="{Binding Path=ZInvertVisibility}" />
+                    </StackPanel>
+                    <Grid Grid.Column="1"
+                          VerticalAlignment="Center">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0"
+                                    Margin="1"
+                                    Orientation="Horizontal"
+                                    ToolTip="Z Stack Start Plane">
+                            <Label Width="120"
+                                   Content="Start Plane"
+                                   VerticalContentAlignment="Center"/>
+                            <TextBox Name="tbZStartPlane"
+                                     Width="50"
+                                     Text="{Binding Path=RemoteFocusStartPosition, Mode=TwoWay}" />
+                            <Button Width="30"
+                                    Content="✓">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbZStartPlane}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                        <StackPanel Grid.Row="1"
+                                    Margin="1"
+                                    Orientation="Horizontal"
+                                    ToolTip="Z Stack Stop Plane">
+                            <Label Width="120"
+                                   Content="Stop Plane"
+                                   VerticalContentAlignment="Center"/>
+                            <TextBox Name="tbZStopPlane"
+                                     Width="50"
+                                     Foreground="White"
+                                     Text="{Binding Path=RemoteFocusStopPosition, Mode=TwoWay}" >
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox">
+                                        <Style.Resources>
+                                            <Storyboard x:Key="flashingAnimation">
+                                                <DoubleAnimation AutoReverse="True"
+                                                                 Duration="0:0:0.5"
+                                                                 From="1"
+                                                                 RepeatBehavior="Forever"
+                                                                 Storyboard.TargetProperty="(Background).(Opacity)"
+                                                                 To="0.5" />
+                                            </Storyboard>
+                                        </Style.Resources>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=ZScanStopNotValid, UpdateSourceTrigger=PropertyChanged}"
+                                                         Value="True">
+                                                <Setter Property="Background"
+                                                        Value="Red" />
+                                                <DataTrigger.EnterActions>
+                                                    <BeginStoryboard Name="flashing"
+                                                                     Storyboard="{StaticResource flashingAnimation}" />
+                                                </DataTrigger.EnterActions>
+                                                <DataTrigger.ExitActions>
+                                                    <StopStoryboard BeginStoryboardName="flashing" />
+                                                </DataTrigger.ExitActions>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Path=ZScanStopNotValid, UpdateSourceTrigger=PropertyChanged}"
+                                                         Value="False">
+                                                <Setter Property="Background"
+                                                        Value="Transparent" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                            <Button Width="30"
+                                    Content="✓">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbZStopPlane}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                        <StackPanel Grid.Row="2"
+                                    Margin="1"
+                                    Orientation="Horizontal"
+                                    ToolTip="Z Slice Spacing">
+                            <Label Width="120"
+                                   Content="Step Size"
+                                   VerticalContentAlignment="Center"/>
+                            <TextBox Name="tbRFStepSize"
+                                     Width="50"
+                                     Text="{Binding Path=RemoteFocusStepSize, Mode=TwoWay}" />
+                            <Button Width="30"
+                                    Content="✓">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbRFStepSize}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                        <StackPanel Grid.Row="3"
+                                    Margin="1"
+                                    Orientation="Horizontal"
+                                    ToolTip="Total Number of Z Slices">
+                            <Label Width="120"
+                                   Content="Number of Slices" />
+                            <Label Width="50"
+                                   Content="{Binding Path=RemoteFocusNumSteps, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="4"
+                                    Margin="5,0,0,0"
+                                    HorizontalAlignment="Center">
+                            <Button Name="btnRFStackPreview"
+                                    Width="55"
+                                    Height="50"
+                                    Background="LimeGreen"
+                                    Command="{Binding Path=PreviewZStackCommand}"
+                                    Content="Preview"
+                                    Foreground="White"
+                                    HorizontalAlignment="Center"
+                                    Style="{x:Null}"
+                                    IsEnabled="{Binding Path=PreviewButtonEnabled, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" />
+                            <CheckBox Content="Continuous"
+                                      Margin="0,1"
+                                      ToolTip="Select for continuous Z Stack preview"
+                                      IsChecked="{Binding Path=EnableContinuousZStackPreview}"/>
+                        </StackPanel>
+                    </Grid>
                 </Grid>
             </StackPanel>
             <StackPanel>

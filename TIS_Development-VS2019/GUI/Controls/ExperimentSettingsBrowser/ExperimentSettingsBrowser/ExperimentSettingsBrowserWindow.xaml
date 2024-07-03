@@ -4,6 +4,8 @@
         xmlns:esv="clr-namespace:ExperimentSettingsViewer;assembly=ExperimentSettingsViewer"
         xmlns:src="clr-namespace:ExperimentSettingsBrowser"
         xmlns:spin="clr-namespace:SpinnerProgress;assembly=SpinnerProgress"
+        xmlns:validator="clr-namespace:Validations;assembly=Validations"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
         WindowStartupLocation="CenterScreen"
         Height="768"
         Width="Auto"
@@ -212,9 +214,9 @@
                             </ListBox.GroupStyle>
                         </ListBox>
                         <StackPanel Orientation="Horizontal"
-                                    Margin="20,0,0,0">
+                                    Margin="5,0,0,0">
 
-                            <RadioButton GroupName="Order"
+                            <!--<RadioButton GroupName="Order"
                                          Margin="1"
                                          IsChecked="True"
                                          Checked="DescendingOrder"
@@ -226,11 +228,94 @@
                                          Checked="AscendingOrder"
                                          IsEnabled="{Binding Path=ChooseFromDatabaseBool, UpdateSourceTrigger=PropertyChanged}">
                                 <Label Content="Ascending" />
-                            </RadioButton>
+                            </RadioButton>-->
+                            <Label Content="Page:"  Margin="0, 0 , 0 ,0"/>
+                            <TextBox
+                                Height="24"
+                                Width="40"
+                                x:Name="PageTextBox"
+                                         IsEnabled="{Binding Path=ChooseFromDatabaseBool, UpdateSourceTrigger=PropertyChanged}"
+                                         Text="{Binding Path=JumpToPosition, Mode=TwoWay, NotifyOnValidationError=True,ValidatesOnDataErrors=True}"
+                                         validator:Validation.ValidationType="{x:Type system:Int32}"
+                                         validator:Validation.NoEmptyValue="True"
+                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed = "TextBox.Text"
+                                         ToolTip="Location in Database" 
+                                          />
+                            <!--     Validation.MaxValue="{Binding Path=MaxPages, UpdateSourceTrigger=PropertyChanged}"   !-->
+                            <Label Content="{Binding Path=MaxPagesStr, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"  Margin="3, 0 , 0 ,0"/>
+                            <Button Name="Left"
+                            Width="25"
+                            Height="25"
+                            Margin="275
+                                    , 2,3, 0"
+                            HorizontalAlignment="Right"
+                            Click="btnLeft_Click"
+                            VerticalAlignment="Top" >
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button" x:Name="LeftTemplate">
+                                    <Grid>
+                                            <Rectangle x:Name="BackgroundRectLeft" Fill="Gray" Width="25" Height="25" RadiusX="5" RadiusY="5"/>
+                                            <Path  Fill="White" HorizontalAlignment="Center" VerticalAlignment="Center"
+                      Data="M2,9.5 L17,2 L17,17 Z"/>
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsPressed" Value="True">
+                                                <Setter TargetName="BackgroundRectLeft" Property="Fill" Value="DodgerBlue"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+
+
+                            <Button 
+                                HorizontalAlignment="Right"
+                                Name="RightButton"
+                                    Width="25"
+                            Height="25"
+                            Margin="0, 2,0, 0"
+                           
+                            Click="btnRight_Click"
+                            VerticalAlignment="Top">
+                                <Button.Template>
+
+                                    <ControlTemplate TargetType="Button" x:Name="RightTemplate">
+                                            <Grid>
+                                                <Rectangle x:Name="BackgroundRectRight" Fill="Gray" Width="25" Height="25" RadiusX="5" RadiusY="5"/>
+                                                
+                                            <Path Fill="White" HorizontalAlignment="Center" VerticalAlignment="Center"
+                      Data="M19,9.5 L4,2 L4,17 Z"/>
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter TargetName="BackgroundRectRight" Property="Fill" Value="DodgerBlue"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+
+                            <Label HorizontalAlignment="Right" Content="Count:"  Margin="3, 0 , 0 ,0"/>
+                            <TextBox
+                                HorizontalAlignment="Right"
+                                Height="24"
+                                Width="40"
+                                         IsEnabled="{Binding Path=ChooseFromDatabaseBool, UpdateSourceTrigger=PropertyChanged}"
+                                         Text="{Binding Path=ExpAmount, Mode=TwoWay, NotifyOnValidationError=True,ValidatesOnDataErrors=True}"
+                                         validator:Validation.ValidationType="{x:Type system:Int32}"
+                                         validator:Validation.NoEmptyValue="False"
+                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed = "TextBox.Text"
+                                         validator:Validation.MinValue="1"
+                                         
+                                         ToolTip="Amount of Experiments displayed. Values over 100 will be slow" />
                         </StackPanel>
                     </StackPanel>
                 </GroupBox>
-                <StackPanel Orientation="Horizontal"
+            
+            <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right">
                     <Button Name="btnOK"
                             Content="OK"
@@ -265,7 +350,7 @@
                 </Expander>
             </Border>
         </StackPanel>
-        <StackPanel Visibility="{Binding Path=SpinVisible,Mode=OneWay}">
+        <StackPanel Visibility="{Binding Path=SpinVisible,Mode=OneWay}" Margin="0,-11,0,10">
             <Canvas Width="105"
                     Margin="5 210 5 5"
                     Height="105"

@@ -95,7 +95,7 @@ public:
 	long GetPockelsSamplesEffective(){ return _pockelsSamplesEffective; }
 	long GetGGalvoWaveformParams(void* params);
 	long GetGGalvoWaveformParams(SignalType sType, void* params, long preCaptureStatus, uint64_t& indexNow);
-	long GetThorDAQGGWaveformParams(SignalType sType, void* params, long preCaptureStatus, uint64_t& indexNow);
+	long GetThorDAQGGWaveformParams(SignalType sType, void* params, long preCaptureStatus, uint64_t& indexNow, bool resetParams);
 	long GetThorDAQGGWaveformParams(const wchar_t* waveformFileName, void* params);
 	long GetGGalvoWaveformStartLoc(const wchar_t* waveformFileName, double* startXY, long& clockRate);
 	long GetThorDAQGGWaveformStartLoc(const wchar_t* waveformFileName, unsigned short* startXY, long& clockRate);

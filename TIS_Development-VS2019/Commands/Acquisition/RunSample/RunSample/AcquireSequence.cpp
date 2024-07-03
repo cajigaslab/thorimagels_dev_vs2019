@@ -106,8 +106,8 @@ long AcquireSequence::Execute(long index, long subWell, long zFrame, long tFrame
 
 long AcquireSequence::Execute(long index, long subWell)
 {	
-	long channelOrderEnable = FALSE;
-	_pExp->GetCaptureSequence(channelOrderEnable);
+	long channelOrderEnable = FALSE, sequentialType = 0;
+	_pExp->GetCaptureSequence(channelOrderEnable, sequentialType);
 
 	//Get the Capture Sequence Settings
 	vector<IExperiment::SequenceStep> channelOrder;
@@ -120,7 +120,11 @@ long AcquireSequence::Execute(long index, long subWell)
 	long timeBasedLineScanMS = 0;
 	long threePhotonEnable = FALSE;
 	long numberOfPlanes = 1;
-	_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,channel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes);
+	long selectedImagingGG = 0;
+	long selectedStimGG = 0;
+	double pixelAspectRatioYScale = 1;
+
+	_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,channel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes, selectedImagingGG, selectedStimGG, pixelAspectRatioYScale);
 
 	//Get all the PMT Settings
 	long enableA,bandwidthA,enableB,bandwidthB,enableC,bandwidthC,enableD,bandwidthD;
@@ -129,8 +133,21 @@ long AcquireSequence::Execute(long index, long subWell)
 
 	//Get all the Multiphoton Settings
 	long multiphotonEnable,multiphotonPos,multiphotonSeqEnable,multiphotonSeqPos1,multiphotonSeqPos2;
-
 	_pExp->GetMultiPhotonLaser(multiphotonEnable,multiphotonPos,multiphotonSeqEnable,multiphotonSeqPos1,multiphotonSeqPos2);
+
+	//Get all the Canera Settings
+	string name;
+	long width, height, gain, blackLevel, lightMode, left, top, right, bottom, binningX, binningY, tapsIndex, tapsBalance, readOutSpeedIndex, camAverageMode, camAverageNum, camVerticalFlip, camHorizontalFlip, imageAngle, camChannel;
+	double camPixelSizeUM, exposureTimeMS;
+	long colorImageType, polarImageType;
+	long isContinuousWhiteBalance, continuousWhiteBalanceNumFrames;
+	double redGain, greenGain, blueGain;
+	_pExp->GetCamera(name, width, height, camPixelSizeUM, exposureTimeMS, gain, blackLevel, lightMode, left, top, right, bottom, binningX, binningY, tapsIndex, tapsBalance, readOutSpeedIndex, camAverageMode, camAverageNum, camVerticalFlip, camHorizontalFlip, imageAngle, camChannel, colorImageType, polarImageType, isContinuousWhiteBalance, continuousWhiteBalanceNumFrames, redGain, greenGain, blueGain);
+
+	//Get all EpiTurret Settings
+	string epiPosName;
+	long epiPos;
+	_pExp->GetEpiTurret(epiPos, epiPosName);
 
 	auto_ptr<IAcquire> acq(NULL);
 
@@ -147,9 +164,11 @@ long AcquireSequence::Execute(long index, long subWell)
 	_pExp->GetTimelapse(timePoints,intervalSec,triggerModeTimelapse);
 
 	double activeCamera;
-
 	GetCameraParamDouble(SelectedHardware::SELECTED_CAMERA1,ICamera::PARAM_CAMERA_TYPE,activeCamera);
 
+	long updateIndex = index + (_zFrame - 1) + (zstageSteps) * (_tFrame - 1);
+
+	//Go though all the sequence steps if sequential is enabled and there is at least one sequence step
 	if (0 < channelOrder.size() && TRUE == channelOrderEnable)
 	{	
 		for (long i = 0; i < channelOrder.size(); i++)
@@ -162,6 +181,8 @@ long AcquireSequence::Execute(long index, long subWell)
 			_pExp->SetMultiPhotonLaser(multiphotonEnable,channelOrder[i].MultiphotonPos,multiphotonSeqEnable,multiphotonSeqPos1,multiphotonSeqPos2);
 			_pExp->SetPinholeWheel(channelOrder[i].PinholePos);
 			_pExp->SetLightPath(channelOrder[i].LightPathGGEnable, channelOrder[i].LightPathGREnable, channelOrder[i].LightPathCamEnable, channelOrder[i].InvertedLightPathPosition, channelOrder[i].LightPathNDDPosition);
+			_pExp->SetCamera(name, width, height, camPixelSizeUM, channelOrder[i].Exposure, gain, blackLevel, lightMode, left, top, right, bottom, binningX, binningY, tapsIndex, tapsBalance, readOutSpeedIndex, camAverageMode, camAverageNum, camVerticalFlip, camHorizontalFlip, imageAngle, camChannel, colorImageType, polarImageType, isContinuousWhiteBalance, continuousWhiteBalanceNumFrames, redGain, greenGain, blueGain);
+			_pExp->SetEpiTurret(channelOrder[i].EpiTurretPosition, channelOrder[i].EpiTurretPositionName);
 
 			//continue in software mode after trigger first:
 			if((1 == triggerModeTimelapse) && (0 < i))
@@ -194,17 +215,65 @@ long AcquireSequence::Execute(long index, long subWell)
 			SetAcquire(captureMode, timePoints, zStreamMode, zstageSteps, static_cast<long>(activeCamera), static_cast<long>(channelOrder[i].Wavelength.size()), acq);
 
 			//perform pre capture protocols
-			PreCaptureProtocol(_pExp);
+			PreCaptureProtocol(_pExp, _zFrame);
 
 			//Let the observer know the current index channel Step
 			CallSequenceStepCurrent(i);
 
-			//Execute the Acquisition
-			if(acq->Execute(index,subWell,_zFrame,_tFrame) != TRUE)
+			//Between frames sequential mode
+			if (1 == sequentialType)
 			{
-				logDll->TLTraceEvent(INFORMATION_EVENT,1,L"AcquireSequence Acquire execute failed");
-				return FALSE;
-			}	
+				AcquireFactory factory;
+				acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_SINGLE, NULL, _pExp, _path));
+
+				ICamera* pCamera = NULL;
+				pCamera = GetCamera(SelectedHardware::SELECTED_CAMERA1);
+				SetCameraParameters(_pExp, pCamera);
+
+				//if this is a ZStream Capture we need to call ZStreamExecute from T Series
+				if ((zStreamMode == 1) && (zStreamFrames > 1))
+				{
+					AcquireFactory factory;
+					acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_T_SERIES, NULL, _pExp, _path));
+
+					//update progress to observer, need to reset the progress once a ZStream is completed
+					CallSaveImage(updateIndex - 1, FALSE);
+
+					if (FALSE == acq->ZStreamExecute(index, subWell, pCamera, _zFrame, _tFrame, 1))
+					{
+						CloseShutter();
+						StringCbPrintfW(message, MSG_LENGTH, L"AcquireSequence ZStreamExecute z = %d t = %d failed", (int)_zFrame, (int)_tFrame);
+						logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+						//Ensure all tasks are stopped in the camera before returning
+						pCamera->PostflightAcquisition(NULL);
+						return FALSE;
+					}
+				}
+				else
+				{
+					//Execute the Acquisition
+					if (FALSE == acq->Execute(index, subWell, _zFrame, _tFrame))
+					{
+						logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"AcquireSequence Acquire execute failed");
+						return FALSE;
+					}
+				}
+
+				//update progress to observer.
+				CallSaveImage(updateIndex, TRUE);
+
+				//update progress T to observer.
+				CallSaveTImage(_tFrame);
+			}
+			else
+			{
+				//Execute the Acquisition
+				if (FALSE == acq->Execute(index, subWell, _zFrame, _tFrame))
+				{
+					logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"AcquireSequence Acquire execute failed");
+					return FALSE;
+				}
+			}
 		}
 	}
 	else
@@ -212,7 +281,7 @@ long AcquireSequence::Execute(long index, long subWell)
 		long wavelengths = _pExp->GetNumberOfWavelengths();	
 		SetAcquire(captureMode, timePoints, zStreamMode, zstageSteps, static_cast<long>(activeCamera), wavelengths, acq);
 		//perform pre capture protocols
-		PreCaptureProtocol(_pExp);
+		PreCaptureProtocol(_pExp, _zFrame);
 
 		//Execute the Acquisition
 		if(acq->Execute(index,subWell,_zFrame,_tFrame) != TRUE)
@@ -260,14 +329,7 @@ void AcquireSequence::SetAcquire(long captureMode, size_t timePoints, long zStre
 			}
 			else if(nWavelengths > 1)
 			{
-				if(ICamera::CCD == activeCamera)
-				{
-					acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_MULTI_WAVELENGTH,NULL,_pExp,_path));
-				}
-				else
-				{
-					acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_T_SERIES,NULL,_pExp,_path));
-				}
+				acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_T_SERIES,NULL,_pExp,_path));
 			}
 			else
 			{		
@@ -276,4 +338,9 @@ void AcquireSequence::SetAcquire(long captureMode, size_t timePoints, long zStre
 		}
 		break;
 	}
+}
+
+long AcquireSequence::ZStreamExecute(long index, long subWell, ICamera* pCamera, long zstageSteps, long timePoints, long undefinedVar)
+{
+	return FALSE;
 }

@@ -58,7 +58,7 @@
 
             //Use the visibitlity settings in application settings to setup the visibility on the controls
             //Bleach scanner control can be hidden
-            stpBleacherControl.Visibility = CaptureSetupViewModel.GetVisibility("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView/BleachCalibrationTool", "Visibility");
+            stpBleacherControl.Visibility = ResourceManagerCS.GetVisibility("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView/BleachCalibrationTool", "Visibility");
 
             stkBleachPockel.DataContext = MVMManager.Instance["PowerControlViewModel", _vm];
             lblCalibrationDate.DataContext = MVMManager.Instance["AreaControlViewModel", _vm];

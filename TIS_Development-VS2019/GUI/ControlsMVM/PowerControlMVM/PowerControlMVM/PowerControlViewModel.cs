@@ -29,8 +29,10 @@
         private readonly PowerControlModel _powerControlModel;
 
         private ObservableCollection<int> _bleacherPockelsList = new ObservableCollection<int>();
+        bool _isMROI = false;
         private DateTime _lastPowerReg2UpdateTime;
         private DateTime _lastPowerUpdateTime = DateTime.Now;
+        double _mROIPower0 = 0.0;
         private Visibility _pockels0Visibility = Visibility.Collapsed;
         private Visibility _pockels1Visibility = Visibility.Collapsed;
         private Visibility _pockels2Visibility = Visibility.Collapsed;
@@ -167,6 +169,12 @@
             {
                 return this._powerControlModel.BleachPockelsVoltageMax0;
             }
+            set
+            {
+                this._powerControlModel.BleachPockelsVoltageMax0 = value;
+
+                OnPropertyChanged("BleachPockelsVoltageMax0");
+            }
         }
 
         public double BleachPockelsVoltageMin0
@@ -174,6 +182,12 @@
             get
             {
                 return this._powerControlModel.BleachPockelsVoltageMin0;
+            }
+            set
+            {
+                this._powerControlModel.BleachPockelsVoltageMin0 = value;
+
+                OnPropertyChanged("BleachPockelsVoltageMin0");
             }
         }
 
@@ -222,6 +236,19 @@
                 this._powerControlModel.EnablePockelsMask = value;
                 OnPropertyChanged("EnablePockelsMask");
                 OnPropertyChanged("PockelsMaskOptionsAvailable");
+            }
+        }
+
+        public bool IsMROI
+        {
+            set
+            {
+                _isMROI = value;
+
+                if (!_isMROI)
+                {
+                    Power0 = _mROIPower0;
+                }
             }
         }
 
@@ -346,7 +373,7 @@
             }
         }
 
-        public int PockelsBlankPercentage0
+        public double PockelsBlankPercentage0
         {
             get
             {
@@ -359,7 +386,7 @@
             }
         }
 
-        public int PockelsBlankPercentage1
+        public double PockelsBlankPercentage1
         {
             get
             {
@@ -372,7 +399,7 @@
             }
         }
 
-        public int PockelsBlankPercentage2
+        public double PockelsBlankPercentage2
         {
             get
             {
@@ -385,7 +412,7 @@
             }
         }
 
-        public int PockelsBlankPercentage3
+        public double PockelsBlankPercentage3
         {
             get
             {
@@ -714,13 +741,22 @@
         {
             get
             {
+                if (_isMROI)
+                {
+                    return _mROIPower0;
+                }
                 return this._powerControlModel.Power0;
             }
             set
             {
-                this._powerControlModel.Power0 = value;
+                if (!_isMROI)
+                {
+                    this._powerControlModel.Power0 = value;
+                }
+                _mROIPower0 = value;
                 OnPropertyChanged("Power0");
                 OnPropertyChanged("PowerPositionActive");
+                ((ThorSharedTypes.IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("Power0");
             }
         }
 
@@ -735,6 +771,7 @@
                 this._powerControlModel.Power1 = value;
                 OnPropertyChanged("Power1");
                 OnPropertyChanged("PowerPositionActive");
+                ((ThorSharedTypes.IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("Power1");
             }
         }
 
@@ -749,6 +786,7 @@
                 this._powerControlModel.Power2 = value;
                 OnPropertyChanged("Power2");
                 OnPropertyChanged("PowerPositionActive");
+                ((ThorSharedTypes.IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("Power2");
             }
         }
 
@@ -792,6 +830,7 @@
                 this._powerControlModel.Power3 = value;
                 OnPropertyChanged("Power3");
                 OnPropertyChanged("PowerPositionActive");
+                ((ThorSharedTypes.IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("Power3");
             }
         }
 
@@ -2139,6 +2178,23 @@
                 }
             }
 
+            //set the bleaching pockels settings first, so they don't take precedence when the imager is the bleacher
+            ndList = experimentDoc.SelectNodes("/ThorImageExperiment/Photobleaching");
+
+            if (0 < ndList.Count)
+            {
+                string str = string.Empty;
+                XmlManager.GetAttribute(ndList[0], experimentDoc, "powerMax", ref str);
+                double.TryParse(str, out double maxPower);
+
+                BleachPockelsVoltageMax0 = maxPower;
+
+                XmlManager.GetAttribute(ndList[0], experimentDoc, "powerMin", ref str);
+                double.TryParse(str, out double powerMin);
+
+                BleachPockelsVoltageMin0 = powerMin;
+            }
+
             ndList = experimentDoc.SelectNodes("/ThorImageExperiment/Pockels");
 
             for (int i = 0; i < ndList.Count; i++)
@@ -2341,7 +2397,8 @@
                         }
                         break;
                 }
-            }
+            }           
+
             OnPropertyChanged("PowerMax");
             OnPropertyChanged("PowerMin");
             OnPropertyChanged("Power2Max");
@@ -2353,6 +2410,14 @@
             OnPropertyChanged("PockelsDelayVisibility1");
             OnPropertyChanged("PockelsDelayVisibility2");
             OnPropertyChanged("PockelsDelayVisibility3");
+
+            OnPropertyChanged("PockelsDelayUS0");
+            OnPropertyChanged("PockelsDelayUS1");
+            OnPropertyChanged("PockelsDelayUS2");
+            OnPropertyChanged("PockelsDelayUS3");
+
+            OnPropertyChanged("PockelsBlankingPhaseShiftPercent");
+
             ResetBleacherPockelsList();
         }
 
@@ -2556,12 +2621,16 @@
                 _pockelsPlot.CurrentPockelsIndex = index;
                 _pockelsPlot.Title = string.Format("{0} Plot", PowerControlName[index].Value);
                 PockelsActiveIndex = index;
+                _pockelsPlot.PockelsActiveVoltageMin = PockelsActiveVoltageMin;
+                _pockelsPlot.PockelsActiveVoltageMax = PockelsActiveVoltageMax;
                 _pockelsPlot.SetData(this._powerControlModel.GetPockelsPlotX(_pockelsPlot.CurrentPockelsIndex), this._powerControlModel.GetPockelsPlotY(_pockelsPlot.CurrentPockelsIndex), 1, 0, true);
                 _pockelsPlot.Show();
             }
             else
             {
                 //the plot is already created. update the data
+                _pockelsPlot.PockelsActiveVoltageMin = PockelsActiveVoltageMin;
+                _pockelsPlot.PockelsActiveVoltageMax = PockelsActiveVoltageMax;
                 _pockelsPlot.SetData(this._powerControlModel.GetPockelsPlotX(_pockelsPlot.CurrentPockelsIndex), this._powerControlModel.GetPockelsPlotY(_pockelsPlot.CurrentPockelsIndex), 1, 0, true);
             }
         }
@@ -2851,6 +2920,8 @@
             {             //the plot is already created. update the data
                 _powerPlot.SetData(PowerRampPlotX, PowerRampPlotY, true);
             }
+            PowerPlotZPosition = (double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0.0];
+            OnPropertyChanged("PowerPlotZPosition");
         }
 
         private void PowerRampEditChanged(int index)
@@ -2868,12 +2939,17 @@
                     _powerPlot.SetData(PowerRampPlotX, PowerRampPlotY, true);
                 }
             }
+            PowerPlotZPosition = (double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0.0];
+            OnPropertyChanged("PowerPlotZPosition");
         }
 
         private void PowerRecordPlot()
         {
             double zScanStart = (double)MVMManager.Instance["ZControlViewModel", "ZScanStart", (object)0.0];
             double zScanStop = (double)MVMManager.Instance["ZControlViewModel", "ZScanStop", (object)0.0];
+            double zMin = Math.Min(zScanStop, zScanStart);
+            double zMax = Math.Max(zScanStop, zScanStart);
+
 
             double step = (zScanStop - zScanStart) / MAX_POWER_RAMP_DATA_POINTS;
 
@@ -2889,6 +2965,12 @@
             Decimal zRangePercentage = new Decimal(Math.Abs((powerRampPosition - zScanStart) / step));
 
             int loc = Math.Min(Convert.ToInt32(Decimal.Round(zRangePercentage)), MAX_POWER_RAMP_DATA_POINTS);
+
+            if (currentZPosition < zMin || currentZPosition > zMax)
+            {
+                MessageBox.Show($"Current Z position {currentZPosition} is outside of Z stack range", $"Out of Z Stack range {zScanStart}-{zScanStop}", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
 
             if (SelectedRamp >= 0)
             {

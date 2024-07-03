@@ -10,9 +10,8 @@ wchar_t messageWave[256];
 
 
 int Call_TiffVSetField(TIFF* out, uint32 ttag_t, ...);
-long SaveTIFF(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height, unsigned short * rlut, unsigned short * glut,unsigned short * blut, double umPerPixel,int nc, int nt, int nz, double timeIncrement, int c, int t, int z,string *acquiredDate,double dt, string * omeTiffData, PhysicalSize physicalSize, long doCompression);
-long SaveTIFFWithoutOME(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height, unsigned short * rlut, unsigned short * glut,unsigned short * blut, double umPerPixel,int nc, int nt, int nz, double timeIncrement, int c, int t, int z,string *acquiredDate,double dt, long doCompression);
-long SaveJPEG(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height,unsigned short * rlut, unsigned short * glut, unsigned short * blut,long bitDepth);
+long SaveTIFF(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height, unsigned short * rlut, unsigned short * glut,unsigned short * blut, double umPerPixel,int nc, int nt, int nz, double timeIncrement, int c, int t, int z,string *acquiredDate,double dt, string * omeTiffDataOrNull, PhysicalSize physicalSize, long doCompression, bool isMultiChannel);
+long SaveJPEG(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height,unsigned short * rlut, unsigned short * glut, unsigned short * blut,long bitDepth, bool isBufferRGB);
 void GetColorInfo(HardwareSetupXML *pHardware,string wavelengthName, long &red, long &green, long &blue,long &bp, long &wp);
 void GetLookUpTables(unsigned short * rlut, unsigned short * glut, unsigned short *blut,long red, long green, long blue, long bp, long wp, long bitdepth);
 long SetupDimensions(ICamera *pCamera,IExperiment *pExperiment,double fieldSizeCalibration, double magnification, Dimensions &d, long &avgFrames, long &bufferChannels, long &avgMode, double &umPerPixe, long &numOfPlanes);
@@ -460,10 +459,13 @@ long AcquireMultiWavelength::Execute(long index, long subWell)
 	long tapsIndex, tapsBalance;
 	long readoutSpeedIndex;
 	long camAverageMode, camAverageNum;
-	long camVericalFlip, camHorizontalFlip, imageAngle;
+	long camVericalFlip, camHorizontalFlip, imageAngle, camChannel;
+	long colorImageType, polarImageType;
+	long isContinuousWhiteBalance, continuousWhiteBalanceNumFrames;
+	double redGain, greenGain, blueGain;
 
 	//getting the values from the experiment setup XML files
-	_pExp->GetCamera(camName,camImageWidth,camImageHeight,camPixelSize,camExposureTimeMS,gain,blackLevel,lightMode,left,top,right,bottom,binningX,binningY,tapsIndex,tapsBalance,readoutSpeedIndex,camAverageMode,camAverageNum,camVericalFlip,camHorizontalFlip,imageAngle);
+	_pExp->GetCamera(camName, camImageWidth, camImageHeight, camPixelSize, camExposureTimeMS, gain, blackLevel, lightMode, left, top, right, bottom, binningX, binningY, tapsIndex, tapsBalance, readoutSpeedIndex, camAverageMode, camAverageNum, camVericalFlip, camHorizontalFlip, imageAngle, camChannel, colorImageType, polarImageType, isContinuousWhiteBalance, continuousWhiteBalanceNumFrames, redGain, greenGain, blueGain);
 
 	long areaMode;
 	double areaAngle;
@@ -495,7 +497,11 @@ long AcquireMultiWavelength::Execute(long index, long subWell)
 	long timeBasedLineScanMS = 0;
 	long threePhotonEnable = FALSE;
 	long numberOfPlanes = 1;
-	_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,lsmChannel, fieldSize, offsetX, offsetY,averageMode, averageNum, clockSource,inputRange1, inputRange2, twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes);
+	long selectedImagingGG = 0;
+	long selectedStimGG = 0;
+	double pixelAspectRatioYScale = 1;
+
+	_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,lsmChannel, fieldSize, offsetX, offsetY,averageMode, averageNum, clockSource,inputRange1, inputRange2, twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes, selectedImagingGG, selectedStimGG, pixelAspectRatioYScale);
 	pCamera->SetParam(ICamera::PARAM_LSM_VERTICAL_SCAN_DIRECTION, verticalFlip);
 	pCamera->SetParam(ICamera::PARAM_LSM_HORIZONTAL_FLIP, horizontalFlip);
 	long width = 0;
@@ -561,7 +567,6 @@ long AcquireMultiWavelength::Execute(long index, long subWell)
 	switch(cameraType)
 	{
 	case ICamera::CCD:
-	case ICamera::CCD_MOSAIC:
 		{
 			double bitsPerPixel = 12;
 			pCamera->GetParam(ICamera::PARAM_BITS_PER_PIXEL,bitsPerPixel);
@@ -666,24 +671,17 @@ long AcquireMultiWavelength::Execute(long index, long subWell)
 
 		logDll->TLTraceEvent(INFORMATION_EVENT,1,filePathAndName);
 
-		if (TRUE == doOME)
-		{
-			SaveTIFF(filePathAndName, pMemoryBuffer, width, height,rlut,glut,blut, umPerPixel,wavelengths,timePoints,zstageSteps,intervalSec,i,_tFrame,_zFrame,NULL,0,NULL, physicalSize, doCompression);
-		}
-		else
-		{
-			SaveTIFFWithoutOME(filePathAndName, pMemoryBuffer, width, height,rlut,glut,blut, umPerPixel,wavelengths,timePoints,zstageSteps,intervalSec,i,_tFrame,_zFrame,NULL,0, doCompression);
-		}
-
-		//SaveTIFF(filePathAndName, pMemoryBuffer, width, height,rlut,glut,blut, umPerPixel,wavelengths,timePoints,zstageSteps,intervalSec,i,_tFrame,_zFrame,NULL,0,NULL);
-
+		string emptyOME;
+		string* omeTiffData = doOME ? &emptyOME : nullptr;
+		SaveTIFF(filePathAndName, pMemoryBuffer, width, height, rlut, glut, blut, umPerPixel, wavelengths, timePoints, zstageSteps, intervalSec, i, _tFrame, _zFrame, NULL, 0, omeTiffData, physicalSize, doCompression, false);
+		
 		const int COLOR_MAP_BIT_DEPTH_JPEG = 16;
 
 		GetLookUpTables(rlut, glut, blut,red, green, blue, bp, wp,COLOR_MAP_BIT_DEPTH_JPEG);
 
 		StringCbPrintfW(filePathAndName,_MAX_PATH,jpgNameFormat.str().c_str(),drive,dir,wavelengthName.c_str(),index,subWell,zstageSteps,timePoints);
 
-		SaveJPEG(filePathAndName, pMemoryBuffer, width, height,rlut,glut ,blut,bitDepth);
+		SaveJPEG(filePathAndName, pMemoryBuffer, width, height,rlut,glut ,blut,bitDepth, false);
 	}
 
 	pCamera->PostflightAcquisition(NULL);		
@@ -892,4 +890,9 @@ void AcquireMultiWavelength::OpenShutter(IDevice *pShutter)
 void AcquireMultiWavelength::CloseShutter(IDevice *pShutter)
 {
 	//pShutter->PostflightPosition();
+}
+
+long AcquireMultiWavelength::ZStreamExecute(long index, long subWell, ICamera* pCamera, long zstageSteps, long timePoints, long undefinedVar)
+{
+	return FALSE;
 }

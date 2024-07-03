@@ -70,8 +70,10 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <!-- Single LED Controls -->
+            <TextBlock Text="External" Name="ExternalText" HorizontalAlignment="Right" FontSize="12" Margin="{Binding ExternalModeMargin, Mode=OneWay}"/>
+            <TextBlock Text="Mode " Name="ModeText" HorizontalAlignment="Right" FontSize="12" Grid.Row="1" Margin="{Binding ExternalModeMargin, Mode=OneWay}"/>
             <ctrl:LEDSlider x:Name="LED_CTRL_1"
-                            Grid.Row="1"
+                            Grid.Row="2"
                             Margin="0 2 0 2"
                             TabIndex="1"
                             ID="{Binding LED1SockelID, Mode=OneWay}"
@@ -85,6 +87,7 @@
                             ShowTemperature="{Binding ShowTemperatures, Mode=OneWay}"
                             LampPowerPlusCommand="{Binding LED1PowerPlusCommand}"
                             LampPowerMinusCommand="{Binding LED1PowerMinusCommand}"
+                            ExternalMode="{Binding ExternalMode1}"
                             PeakWavelengthToolTip="{Binding LED1PeakToolTip, Mode=OneWay}" />
             <ctrl:LEDSlider x:Name="LED_CTRL_2"
                             Grid.Row="2"
@@ -101,6 +104,7 @@
                             ShowTemperature="{Binding ShowTemperatures, Mode=OneWay}"
                             LampPowerPlusCommand="{Binding LED2PowerPlusCommand}"
                             LampPowerMinusCommand="{Binding LED2PowerMinusCommand}"
+                            ExternalMode="{Binding ExternalMode2}"
                             PeakWavelengthToolTip="{Binding LED2PeakToolTip, Mode=OneWay}" />
             <ctrl:LEDSlider x:Name="LED_CTRL_3"
                             Grid.Row="3"
@@ -117,6 +121,7 @@
                             ShowTemperature="{Binding ShowTemperatures, Mode=OneWay}"
                             LampPowerPlusCommand="{Binding LED3PowerPlusCommand}"
                             LampPowerMinusCommand="{Binding LED3PowerMinusCommand}"
+                            ExternalMode="{Binding ExternalMode3}"
                             PeakWavelengthToolTip="{Binding LED3PeakToolTip, Mode=OneWay}" />
             <ctrl:LEDSlider x:Name="LED_CTRL_4"
                             Grid.Row="4"
@@ -133,6 +138,7 @@
                             ShowTemperature="{Binding ShowTemperatures, Mode=OneWay}"
                             LampPowerPlusCommand="{Binding LED4PowerPlusCommand}"
                             LampPowerMinusCommand="{Binding LED4PowerMinusCommand}"
+                            ExternalMode="{Binding ExternalMode4}"
                             PeakWavelengthToolTip="{Binding LED4PeakToolTip, Mode=OneWay}" />
             <ctrl:LEDSlider x:Name="LED_CTRL_5"
                             Grid.Row="5"
@@ -149,6 +155,7 @@
                             ShowTemperature="{Binding ShowTemperatures, Mode=OneWay}"
                             LampPowerPlusCommand="{Binding LED5PowerPlusCommand}"
                             LampPowerMinusCommand="{Binding LED5PowerMinusCommand}"
+                            ExternalMode="{Binding ExternalMode5}"
                             PeakWavelengthToolTip="{Binding LED5PeakToolTip, Mode=OneWay}" />
             <ctrl:LEDSlider x:Name="LED_CTRL_6"
                             Grid.Row="6"
@@ -165,6 +172,7 @@
                             ShowTemperature="{Binding ShowTemperatures, Mode=OneWay}"
                             LampPowerPlusCommand="{Binding LED6PowerPlusCommand}"
                             LampPowerMinusCommand="{Binding LED6PowerMinusCommand}"
+                            ExternalMode="{Binding ExternalMode6}"
                             PeakWavelengthToolTip="{Binding LED6PeakToolTip, Mode=OneWay}" />
         </Grid>
         <!-- Style="{DynamicResource Thorlabs.MahControls.ToggleSwitch}" -->

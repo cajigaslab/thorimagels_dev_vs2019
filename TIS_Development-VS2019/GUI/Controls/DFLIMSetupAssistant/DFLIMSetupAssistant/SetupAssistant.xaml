@@ -551,24 +551,6 @@
                               IsEnabled="{Binding DFLIMEnableControlsThatNeedAcquistionOff}"
                               IsChecked="{Binding DFLIMSaveImagesOnLiveMode}"
                               Padding="2" />-->
-                    <StackPanel Orientation="Horizontal"
-                                HorizontalAlignment="Center"
-                                Margin="5">
-                        <Button Content="Revert"
-                                Height="29"
-                                Margin="5"
-                                MinWidth="50"
-                                HorizontalAlignment="Center"
-                                IsEnabled="{Binding DFLIMEnableControlsThatNeedAcquistionOff}"
-                                Command="{Binding DFLIMRevertSetupAssistantSettingChangesCommand}" />
-                        <Button Content="Save"
-                                Height="29"
-                                Margin="5"
-                                MinWidth="50"
-                                HorizontalAlignment="Center"
-                                IsEnabled="{Binding DFLIMEnableControlsThatNeedAcquistionOff}"
-                                Command="{Binding DFLIMSaveSettingsCommand}" />
-                    </StackPanel>
                 </StackPanel>
             </GroupBox>
             <StackPanel>
@@ -788,8 +770,38 @@
                             </Button>
                         </StackPanel>
                     </StackPanel>
+
                 </GroupBox>
+
             </StackPanel>
+            <GroupBox Header="Save"
+          
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Stretch">
+
+                <StackPanel Orientation="Vertical"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Bottom"
+                    Margin="15"
+                    Visibility="Visible">
+                    <Button Content="Revert"
+                            ToolTip="Revert Control and Shift values"
+                            Height="29"
+                            Margin="0"
+                            MinWidth="50"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Bottom"
+                            IsEnabled="{Binding DFLIMEnableControlsThatNeedAcquistionOff}"
+                            Command="{Binding DFLIMRevertSetupAssistantSettingChangesCommand}" />
+                    <Button Content="Save"
+                            Height="29"
+                            Margin=" 10"
+                            HorizontalAlignment="Center"
+                            IsEnabled="{Binding DFLIMEnableControlsThatNeedAcquistionOff}"
+                            Command="{Binding DFLIMSaveSettingsCommand}"
+                            ToolTip="Save Control and Shift values"/>
+                </StackPanel>
+        </GroupBox>
             <StackPanel Visibility="Collapsed">
                 <GroupBox Header="Registers"
                           MinHeight="160"

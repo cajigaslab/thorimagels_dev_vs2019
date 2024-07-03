@@ -7,6 +7,9 @@
 #define	DSTYPE_HDF5  2
 #define MAX_BLEACH_PARAMS_CNT 1
 
+typedef void(_cdecl* captureNotificationCallback)(CaptureNotificationStruct& captureNotification);
+extern void (*captureNotificiationFuncPtr) (CaptureNotificationStruct& captureNotification);
+
 struct LongParam
 {
 	long val;
@@ -139,9 +142,12 @@ public:
 	void SetFrameRate(double val);
 	bool GetSetupFlagState();
 	long SetDisplayChannels(int channelEnable);
+	long GetDisplayChannels();
 	long ImgProGenConf(int maxRoiNum, int minSnr);
 	long EnableMinAreaFilter(bool minAreaActive, int minAreaValue);
 	void ClearBleachParams(int id){if(bleachParams[id] != NULL){if(bleachParams[id]->analogPockelSize > 0){free(bleachParams[id]->GalvoWaveformPockel);}if(bleachParams[id]->analogXYSize > 0){free(bleachParams[id]->GalvoWaveformXY);}if(bleachParams[id]->digitalSize > 0){free(bleachParams[id]->DigBufWaveform);}}}
+
+	long SetCaptureNotificationCallback(captureNotificationCallback callback);
 
 	GGalvoWaveformParams* bleachParams[MAX_BLEACH_PARAMS_CNT];
 
@@ -259,8 +265,14 @@ extern DWORD _dwAutoFocusCaptureThreadId;
 extern HANDLE _hAutoFocusCaptureThread;
 extern DWORD _dwAutoFocusStatusThreadId;
 extern HANDLE _hAutoFocusStatusThread;
+extern DWORD _dwAutoExposureCaptureThreadId;
+extern HANDLE _hAutoExposureCaptureThread;
+extern DWORD _dwAutoExposureStatusThreadId;
+extern HANDLE _hAutoExposureStatusThread;
 extern DWORD _dwSafetyInterLockCheckThreadId;
 extern HANDLE _hSafetyInterLockCheckThread;
+extern DWORD _dwSequentialPreviewCaptureThreadId;
+extern HANDLE _hSequentialPreviewCaptureThread;
 extern HANDLE hStatusEvent[3];
 extern HANDLE hCaptureActive;
 extern BOOL stopCapture;

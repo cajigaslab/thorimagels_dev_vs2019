@@ -50,6 +50,11 @@ DllExportHoloGen SetCoeffs(long fittingAlgorithm, double* affCoeffs)
 	return HologramGen::getInstance()->SetCoeffs(fittingAlgorithm, affCoeffs);
 }
 
+DllExportHoloGen SetPowerWeight(int weightRadiusPx, double minPercent, double maxPercent)
+{
+	return HologramGen::getInstance()->SetPowerWeight(weightRadiusPx, minPercent, maxPercent);
+}
+
 DllExportHoloGen FittingTransform(float* pImgDst)
 {
 	return HologramGen::getInstance()->FittingTransform(pImgDst);
@@ -60,9 +65,9 @@ DllExportHoloGen CalculateCoeffs(const float* pSrcPoints, const float* pTgtPoint
 	return HologramGen::getInstance()->CalculateCoeffs(pSrcPoints, pTgtPoints, size, fittingAlg, affCoeffs);
 }
 
-DllExportHoloGen GenerateHologram(float* pImgDst, int iteCount, int weightRadiusPx, double minPercent, double maxPercent, float z)
+DllExportHoloGen GenerateHologram(float* pImgDst, int iteCount, float z)
 {
-	return HologramGen::getInstance()->GenerateHologram(pImgDst, iteCount, weightRadiusPx, minPercent, maxPercent, z);
+	return HologramGen::getInstance()->GenerateHologram(pImgDst, iteCount, z);
 }
 
 DllExportHoloGen Generate3DHologram(void* pMemStruct, int zCount)
@@ -98,4 +103,14 @@ DllExportHoloGen OffsetByPixels(float* pImgDst, long offsetX, long offsetY)
 DllExportHoloGen NormalizePhase(float* pImgDst)
 {
 	return HologramGen::getInstance()->NormalizePhase(pImgDst);
+}
+
+DllExportHoloGen StopGeneration()
+{
+	return HologramGen::getInstance()->StopGeneration();
+}
+
+DllExportHoloGen GetStatus(long& status)
+{
+	return HologramGen::getInstance()->GetStatus(status);
 }

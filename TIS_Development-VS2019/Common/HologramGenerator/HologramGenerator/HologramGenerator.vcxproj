@@ -109,7 +109,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>REM  copy $(TargetPath) $(SolutionDir)..\..\GUI\Applications\ThorImageLS\ThorImage\bin\Debug\Modules_Native</Command>
+      <Command> if $(Configuration) == Debug  copy $(TargetPath) $(SolutionDir)..\..\GUI\Applications\ThorImageLS\ThorImage\bin\Debug\Modules_Native</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

@@ -1,6 +1,10 @@
 #include "stdafx.h"
 #include "ThorDC2200.h"
 
+#ifdef LOGGING_ENABLED
+auto_ptr<LogDll> logDll(new LogDll(L".\\Modules_Native\\ThorLoggingUnmanaged.dll"));
+#endif
+
 ThorDC2200::ThorDC2200()
 {
 	_maxCurrent1 = 1.0;
@@ -43,6 +47,17 @@ ThorDC2200* ThorDC2200::getInstance()
 	{
 		return _single.get();
 	}
+}
+
+/// <summary>
+/// Logs the message.
+/// </summary>
+/// <param name="message">The message.</param>
+void ThorDC2200::LogMessage(wchar_t* logMsg, long eventLevel)
+{
+#ifdef LOGGING_ENABLED
+	logDll->TLTraceEvent(eventLevel, 1, logMsg);
+#endif
 }
 
 long ThorDC2200::FindDevices(long& deviceCount)

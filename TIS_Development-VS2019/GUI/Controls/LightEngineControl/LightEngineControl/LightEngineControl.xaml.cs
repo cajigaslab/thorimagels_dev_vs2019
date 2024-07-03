@@ -297,6 +297,36 @@
         typeof(Boolean),
         typeof(LightEngineControlUC),
         new FrameworkPropertyMetadata(false, new PropertyChangedCallback(onLED5PowerStateChanged)));
+        public static DependencyProperty ExternalMode1Property =
+        DependencyProperty.RegisterAttached("ExternalMode1",
+        typeof(Boolean),
+        typeof(LightEngineControlUC),
+        new FrameworkPropertyMetadata(false, new PropertyChangedCallback(onExternalMode1Changed)));
+        public static DependencyProperty ExternalMode2Property =
+        DependencyProperty.RegisterAttached("ExternalMode2",
+        typeof(Boolean),
+        typeof(LightEngineControlUC),
+        new FrameworkPropertyMetadata(false, new PropertyChangedCallback(onExternalMode2Changed)));
+        public static DependencyProperty ExternalMode3Property =
+        DependencyProperty.RegisterAttached("ExternalMode3",
+        typeof(Boolean),
+        typeof(LightEngineControlUC),
+        new FrameworkPropertyMetadata(false, new PropertyChangedCallback(onExternalMode3Changed)));
+        public static DependencyProperty ExternalMode4Property =
+        DependencyProperty.RegisterAttached("ExternalMode4",
+        typeof(Boolean),
+        typeof(LightEngineControlUC),
+        new FrameworkPropertyMetadata(false, new PropertyChangedCallback(onExternalMode4Changed)));
+        public static DependencyProperty ExternalMode5Property =
+        DependencyProperty.RegisterAttached("ExternalMode5",
+        typeof(Boolean),
+        typeof(LightEngineControlUC),
+        new FrameworkPropertyMetadata(false, new PropertyChangedCallback(onExternalMode5Changed)));
+        public static DependencyProperty ExternalMode6Property =
+        DependencyProperty.RegisterAttached("ExternalMode6",
+        typeof(Boolean),
+        typeof(LightEngineControlUC),
+        new FrameworkPropertyMetadata(false, new PropertyChangedCallback(onExternalMode6Changed)));
         public static DependencyProperty LED5SockelIDProperty = 
         DependencyProperty.RegisterAttached("LED5SockelID",
         typeof(Int32),
@@ -378,6 +408,11 @@
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure,
                 new PropertyChangedCallback(onShowTemperatureChanged)));
+        public static DependencyProperty ExternalModeMarginProperty = DependencyProperty.RegisterAttached(
+            "ExternalModeMargin",
+            typeof(Thickness),
+            typeof(LightEngineControlUC),
+            new FrameworkPropertyMetadata(new Thickness(0,0,0,0) , new PropertyChangedCallback(onExternalModeMarginChanged)));
 
         #endregion Fields
 
@@ -386,7 +421,6 @@
         public LightEngineControlUC()
         {
             this.InitializeComponent();
-
             //Grid.SetIsSharedSizeScope(this.ControlRootLayout, true);
         }
 
@@ -994,6 +1028,112 @@
             }
         }
 
+        
+        public Boolean ExternalMode1
+        {
+            get
+            {
+                return (Boolean)this.GetValue(ExternalMode1Property);
+            }
+            set
+            {
+                if (!this.GetValue(ExternalMode1Property).Equals(value))
+                {
+                    this.SetValue(ExternalMode1Property, value);
+                }
+            }
+        }
+        
+        public Boolean ExternalMode2
+        {
+            get
+            {
+                return (Boolean)this.GetValue(ExternalMode2Property);
+            }
+            set
+            {
+                if (!this.GetValue(ExternalMode2Property).Equals(value))
+                {
+                    this.SetValue(ExternalMode2Property, value);
+                }
+            }
+        }
+        
+        public Boolean ExternalMode3
+        {
+            get
+            {
+                return (Boolean)this.GetValue(ExternalMode3Property);
+            }
+            set
+            {
+                if (!this.GetValue(ExternalMode3Property).Equals(value))
+                {
+                    this.SetValue(ExternalMode3Property, value);
+                }
+            }
+        }
+        
+        public Boolean ExternalMode4
+        {
+            get
+            {
+                return (Boolean)this.GetValue(ExternalMode4Property);
+            }
+            set
+            {
+                if (!this.GetValue(ExternalMode4Property).Equals(value))
+                {
+                    this.SetValue(ExternalMode4Property, value);
+                }
+            }
+        }
+        
+        public Boolean ExternalMode5
+        {
+            get
+            {
+                return (Boolean)this.GetValue(ExternalMode5Property);
+            }
+            set
+            {
+                if (!this.GetValue(ExternalMode5Property).Equals(value))
+                {
+                    this.SetValue(ExternalMode5Property, value);
+                }
+            }
+        }
+        
+        public Boolean ExternalMode6
+        {
+            get
+            {
+                return (Boolean)this.GetValue(ExternalMode6Property);
+            }
+            set
+            {
+                if (!this.GetValue(ExternalMode6Property).Equals(value))
+                {
+                    this.SetValue(ExternalMode6Property, value);
+                }
+            }
+        }
+
+        public Thickness ExternalModeMargin
+        {
+            get
+            {
+                return (Thickness)this.GetValue(ExternalModeMarginProperty);
+            }
+            set
+            {
+                if (!this.GetValue(ExternalModeMarginProperty).Equals(value))
+                {
+                    this.SetValue(ExternalModeMarginProperty, value);
+                }
+            }
+        }
+
         public String LED6ControlName
         {
             get
@@ -1324,6 +1464,24 @@
         public static void onLED5PowerStateChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
         }
+         public static void onExternalMode1Changed(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+        }
+        public static void onExternalMode2Changed(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+        }
+        public static void onExternalMode3Changed(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+        }
+        public static void onExternalMode4Changed(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+        }
+        public static void onExternalMode5Changed(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+        }
+        public static void onExternalMode6Changed(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+        }
 
         public static void onLED5SockelIDChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
@@ -1371,6 +1529,10 @@
         }
 
         public static void onShowTemperatureChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+        }
+
+        public static void onExternalModeMarginChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
         }
 

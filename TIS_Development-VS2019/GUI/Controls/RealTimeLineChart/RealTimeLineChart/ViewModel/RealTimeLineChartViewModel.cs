@@ -1,6 +1,7 @@
 ﻿namespace RealTimeLineChart.ViewModel
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.Collections.Specialized;
@@ -16,16 +17,14 @@
     using System.Threading.Tasks;
     using System.Timers;
     using System.Windows;
+    using System.Windows.Controls;
     using System.Windows.Data;
     using System.Windows.Input;
     using System.Windows.Media;
     using System.Windows.Threading;
     using System.Xml;
-
-    using DatabaseInterface;
-
     using FolderDialogControl;
-
+    using DatabaseInterface;
     using global::RealTimeLineChart.Model;
     using global::RealTimeLineChart.View;
 
@@ -144,6 +143,8 @@
         private int _triggerMode = 0;
         IRange _yDataRange = new DoubleRange(-5, 5);
 
+        public static RealTimeLineChartViewModel _instance;
+
         #endregion Fields
 
         #region Constructors
@@ -153,6 +154,8 @@
         /// </summary>
         public RealTimeLineChartViewModel()
         {
+            _instance = this;
+
             _chartSeries = new ObservableCollection<IRenderableSeries>();
 
             _chartSeriesMetadata = new List<SeriesMetadata>();
@@ -244,6 +247,19 @@
 
         #region Properties
 
+        public int Average
+        {
+            get
+            {
+                return CustomModifiers.ChartCanvasModifier.Average;
+            }
+            set
+            {
+                CustomModifiers.ChartCanvasModifier.Average = value;
+                OnPropertyChanged("Average");
+            }
+        }
+
         public DoubleRange AxisVisibleRange
         {
             get
@@ -270,6 +286,7 @@
             }
         }
 
+        
         /// <summary>
         /// Gets the capturing icon.
         /// </summary>
@@ -571,6 +588,18 @@
             }
         }
 
+        public RealTimeLineChartViewModel Instance
+        {
+            get
+            {
+                return _instance;
+            }
+            set
+            {
+                
+            }
+        }
+
         /// <summary>
         /// Gets or sets a value indicating whether this instance is ai trigger enabled.
         /// </summary>
@@ -769,6 +798,44 @@
             {
                 _progressPercentage = value;
                 OnPropertyChanged("ProgressPercentage");
+            }
+        }
+
+        public bool RefreshFrameTimes
+        {
+            get
+            {
+ 
+                return false;
+            }
+            set
+            {
+                List<double> frameTimes = new List<double>();
+
+                RealTimeDataCapture.Instance.LoadDataFromFile();
+                for (int j = 0; j < _chartSeriesMetadata.Count; j++)
+                {
+                    if (_channelViewModels[j].ChannelName.Equals("Line1") || _channelViewModels[j].ChannelName.Equals("FrameOut"))
+                    {
+                        int count = _channelViewModels[j].ChannelSeries.XValues.Count;
+
+                        for (int x = 0; x < count - 1; x++)
+                        {
+                            byte digYLeft = (byte)_channelViewModels[j].ChannelSeries.YValues[x];
+                            byte digYRight = (byte)_channelViewModels[j].ChannelSeries.YValues[x + 1];
+
+                            double X = (double)_channelViewModels[j].ChannelSeries.XValues[x];
+
+                            if (digYLeft < digYRight)
+                            {
+                                frameTimes.Add(X);
+
+                            }
+                            
+                        }
+                        RealTimeDataCapture.Instance.FrameTimes = frameTimes;
+                    }
+                }
             }
         }
 
@@ -2405,6 +2472,8 @@
         {
             if (_bw.IsBusy)
                 return;
+            if (ThorImageLSConnectionStats)
+                SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.IsSaving), IsSaving ? "1" : "0");
 
             H5CSWrapper tmpH5 = new H5CSWrapper();
             string str = SaveName;
@@ -2506,6 +2575,11 @@
                 _lastGlobalCounter = 0;
                 _bw.RunWorkerAsync();
             }
+
+            //_thorImageLSConnectionStats = false;
+            if (IsSaving && _thorImageLSConnectionStats == true)
+                SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.FilePath), SavePath + "\\" + SaveName + "\\" + strFileName);
+
             ImageCounterNumber = 0;
             OnPropertyChanged("CapturingIcon");
             OnPropertyChanged("IsCapturingStopped");
@@ -2532,7 +2606,7 @@
         /// <summary>
         /// Stops the capturing.
         /// </summary>
-        public void StopCapturing(bool forceSave = false)
+        public void StopCapturing(bool forceSave = false, bool sendIPCStop = true)
         {
             if (true == IsCapturing)
             {
@@ -2576,7 +2650,7 @@
                         {
                             ChangeVerticalMarkersMode(MarkerType.Save);
                         }
-                        if (ThorImageLSConnectionStats == true)
+                        if ((ThorImageLSConnectionStats == true) && sendIPCStop)
                         {
                             StopAquiring();
                         }
@@ -2790,7 +2864,7 @@
         /// <returns></returns>
         private string CreateUniqueFilename(string currentPath, string currentFilename)
         {
-            ThorSharedTypes.FileName name = new ThorSharedTypes.FileName(currentFilename);
+            ThorSharedTypes.FileName name = new ThorSharedTypes.FileName(currentFilename, false);
 
             name.MakeUnique(currentPath);
 
@@ -3052,6 +3126,8 @@
             }
         }
 
+
+
         /// <summary>
         /// Parse given NodePath to create node in doc xml.
         /// </summary>
@@ -3220,14 +3296,44 @@
         /// <param name="e">The <see cref="DoWorkEventArgs"/> instance containing the event data.</param>
         private void _bwLoader_DoWork(object sender, DoWorkEventArgs e)
         {
-            Thread.CurrentThread.Priority = ThreadPriority.AboveNormal;
+            List<double> frameTimes = new List<double>();
 
+            Thread.CurrentThread.Priority = ThreadPriority.AboveNormal;
+           // IRange tmp = (IRange) new Object();
             RealTimeDataCapture.Instance.LoadDataFromFile();
             for (int j = 0; j < _chartSeriesMetadata.Count; j++)
             {
+               
+                if (_channelViewModels[j].ChannelName.Equals("Line1") || _channelViewModels[j].ChannelName.Equals("FrameOut")) //better to look in the xml here for the ADC port#
+                {
+                    int count = _channelViewModels[j].ChannelSeries.XValues.Count;
+                    
+                    for (int x = 0; x < count - 1; x++)
+                    {
+                        byte digYLeft = (byte)_channelViewModels[j].ChannelSeries.YValues[x];
+                        byte digYRight = (byte)_channelViewModels[j].ChannelSeries.YValues[x + 1];
+
+                        double X = (double)_channelViewModels[j].ChannelSeries.XValues[x];
+                        
+                        if(digYLeft < digYRight)
+                        {
+                            frameTimes.Add(X);
+                            
+                        }
+
+                    }
+                    RealTimeDataCapture.Instance.FrameTimes = frameTimes;
+                    //MessageBox.Show();
+                }
+
+
+
                 bool done = false;
                 Application.Current.Dispatcher.Invoke(new Action(() =>
                 {
+                    
+                    
+
                     if (IsStackedDisplay)
                     {
                         Application.Current.Dispatcher.Invoke(new Action(() =>
@@ -3260,17 +3366,19 @@
             }
             ChangeVerticalMarkersMode(MarkerType.Load);
             IsVerticalMarkerVisible = true;
-
+            
             ZoomExtendChartSeries();
             UpdateGUI();
+            OnPropertyChanged("FrameButtonVisible");
+            //make Buttons visible
         }
 
-        /// <summary>
-        /// Handles the RunWorkerCompleted event of the _bwLoader control.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="RunWorkerCompletedEventArgs"/> instance containing the event data.</param>
-        private void _bwLoader_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+    /// <summary>
+    /// Handles the RunWorkerCompleted event of the _bwLoader control.
+    /// </summary>
+    /// <param name="sender">The source of the event.</param>
+    /// <param name="e">The <see cref="RunWorkerCompletedEventArgs"/> instance containing the event data.</param>
+    private void _bwLoader_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             if (_chartMode == ChartModes.REVIEW)
             {

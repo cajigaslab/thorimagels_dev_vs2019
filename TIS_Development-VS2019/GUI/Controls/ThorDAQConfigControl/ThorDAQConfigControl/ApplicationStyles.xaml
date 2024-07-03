@@ -1,0 +1,331 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:telerik="http://schemas.telerik.com/2008/xaml/presentation"
+                    xmlns:telerik1="clr-namespace:Telerik.Windows.Controls;assembly=Telerik.Windows.Controls"                
+                    xmlns:mat="clr-namespace:Telerik.Windows.Controls.MaterialControls;assembly=Telerik.Windows.Controls">    
+    <!-- Customized styles for WPF control here -->
+    <Style TargetType="{x:Type TextElement }">
+        <Setter Property="FontFamily" Value="Segoe UI, Microsoft YaHei"/>
+    </Style>
+
+    <Style TargetType="{x:Type TextBlock }">
+        <Setter Property="FontFamily" Value="Segoe UI, Microsoft YaHei"/>
+    </Style>
+
+    <Style x:Key="{x:Type Label}" TargetType="{x:Type Label}">
+        <Setter Property="Foreground" Value="{telerik:FluentResource ResourceKey=MarkerBrush}" />
+    </Style>
+
+    <Style x:Key="{x:Type Border}" TargetType="{x:Type Border}">
+        <Setter Property="BorderBrush" Value="{telerik:FluentResource ResourceKey=BasicBrush}"/>
+    </Style>
+
+    <Style x:Key="ThorlabsLine" TargetType="{x:Type Line}">
+        <Setter Property="Stroke" Value="{telerik:MaterialResource ResourceKey=DividerBrush}"/>
+    </Style>
+
+    <Style TargetType="{x:Type DataGrid}">
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Background" Value="{telerik:FluentResource ResourceKey=AlternativeBrush}" />
+        <Setter Property="Foreground" Value="{telerik:FluentResource ResourceKey=MarkerBrush}" />
+        <Setter Property="BorderBrush" Value="{telerik:FluentResource ResourceKey=BasicBrush}"/>
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="HorizontalGridLinesBrush" Value="{telerik:FluentResource ResourceKey=BasicBrush}"/>
+        <Setter Property="VerticalGridLinesBrush" Value="{telerik:FluentResource ResourceKey=BasicBrush}"/>
+    </Style>
+
+    <Style TargetType="{x:Type DataGridColumnHeader}">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Background" Value="{telerik:FluentResource ResourceKey=AlternativeBrush}" />
+        <Setter Property="Foreground" Value="{telerik:FluentResource ResourceKey=MarkerBrush}" />
+        <Setter Property="BorderBrush" Value="{telerik:FluentResource ResourceKey=BasicBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGridColumnHeader">
+                    <Border BorderBrush="{telerik:FluentResource ResourceKey=BasicBrush}" BorderThickness="0,0,0,1" SnapsToDevicePixels="True" UseLayoutRounding="True">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type DataGridRow}">
+        <Setter Property="Background" Value="{telerik:FluentResource ResourceKey=AlternativeBrush}" />
+        <Setter Property="BorderBrush" Value="{telerik:FluentResource ResourceKey=BasicBrush}"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{telerik:FluentResource ResourceKey=PrimaryBackgroundBrush}" />
+                <Setter Property="Foreground" Value="{telerik:FluentResource ResourceKey=MarkerBrush}" />
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{telerik:FluentResource ResourceKey=AccentBrush}" />
+                <Setter Property="Foreground" Value="{telerik:FluentResource ResourceKey=PrimaryBrush}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    
+    <!-- Customized styles for Telerik control in Fluent theme below -->
+
+    <!-- RadButton -->
+    <Style x:Key="{x:Type telerik:RadButton}"  TargetType="{x:Type telerik:RadButton}" BasedOn="{StaticResource RadButtonStyle}">
+        <Setter Property="Background" Value="{telerik:FluentResource ResourceKey=AlternativeBrush}" />
+    </Style>
+
+    <!-- RadWindow -->
+    <ControlTemplate x:Key="ThorlabsRadWindowTemplate" TargetType="telerik:RadWindow">
+        <Grid x:Name="LayoutRoot">
+            <Border x:Name="WindowOuterBorder"
+                Grid.RowSpan="2"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                Background="{TemplateBinding Background}">
+                <Grid>
+                    <AdornerDecorator>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition x:Name="WindowHeaderRow" Height="Auto" MinHeight="36"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Border x:Name="Header">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid Grid.Column="0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <ContentPresenter x:Name="IconContent"
+                              Grid.Column="0"
+                              HorizontalAlignment="Left"
+                              VerticalAlignment="Center"
+                              Margin="5,0,0,0"
+                              Content="{TemplateBinding Icon}"
+                              ContentTemplate="{TemplateBinding IconTemplate}"/>
+                                        <ContentControl x:Name="HeaderContent"
+                              Grid.Column="1"
+                              Foreground="{TemplateBinding Foreground}"
+                              Margin="10 0"
+                              IsTabStop="False"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Center"
+                              HorizontalContentAlignment="Stretch"
+                              Content="{TemplateBinding Header}"
+                              ContentTemplate="{TemplateBinding HeaderTemplate}"
+                              SnapsToDevicePixels="True"
+                              ContentTemplateSelector="{TemplateBinding HeaderTemplateSelector}"
+                              FontSize="{TemplateBinding FontSize}"
+                              FontFamily="{TemplateBinding FontFamily}"/>
+                                    </Grid>
+                                    <Border x:Name="PART_HeaderButtonsBorder" Grid.Column="1">
+                                        <StackPanel x:Name="HeaderButtons" Orientation="Horizontal">
+                                            <telerik:RadButton x:Name="PART_MinimizeButton"
+                                Command="{x:Static telerik:WindowCommands.Minimize}"
+                                Style="{StaticResource WindowButtonStyle}"
+                                Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <ToolTipService.ToolTip>
+                                                    <ToolTip telerik:LocalizationManager.ResourceKey="Minimize" telerik:StyleManager.Theme="Fluent"/>
+                                                </ToolTipService.ToolTip>
+                                                <telerik:RadGlyph
+                                  FontSize="16"
+                                  Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type telerik:RadButton}}}"
+                                  VerticalAlignment="Center"
+                                  HorizontalAlignment="Center"
+                                  Glyph="{StaticResource GlyphMinimize}"/>
+                                            </telerik:RadButton>
+                                            <telerik:RadButton x:Name="PART_RestoreButton"
+                                Command="{x:Static telerik:WindowCommands.Restore}"
+                                Style="{StaticResource WindowButtonStyle}"
+                                Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <ToolTipService.ToolTip>
+                                                    <ToolTip telerik:LocalizationManager.ResourceKey="Restore" telerik:StyleManager.Theme="Fluent"/>
+                                                </ToolTipService.ToolTip>
+                                                <telerik:RadGlyph
+                                  FontSize="16"
+                                  Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type telerik:RadButton}}}"
+                                  VerticalAlignment="Center"
+                                  HorizontalAlignment="Center"
+                                  Glyph="{StaticResource GlyphWindowCollapse}"/>
+                                            </telerik:RadButton>
+                                            <telerik:RadButton x:Name="PART_MaximizeButton"
+                                Command="{x:Static telerik:WindowCommands.Maximize}"
+                                Style="{StaticResource WindowButtonStyle}"
+                                Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <ToolTipService.ToolTip>
+                                                    <ToolTip telerik:LocalizationManager.ResourceKey="Maximize" telerik:StyleManager.Theme="Fluent"/>
+                                                </ToolTipService.ToolTip>
+                                                <telerik:RadGlyph
+                                  FontSize="16"
+                                  Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type telerik:RadButton}}}"
+                                  VerticalAlignment="Center"
+                                  HorizontalAlignment="Center"
+                                  Glyph="{StaticResource GlyphWindow}"/>
+                                            </telerik:RadButton>
+                                            <telerik:RadButton x:Name="PART_CloseButton"
+                                Command="{x:Static telerik:WindowCommands.Close}"
+                                Style="{StaticResource WindowCloseButtonStyle}"
+                                Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <ToolTipService.ToolTip>
+                                                    <ToolTip telerik:LocalizationManager.ResourceKey="Close" telerik:StyleManager.Theme="Fluent"/>
+                                                </ToolTipService.ToolTip>
+                                                <telerik:RadGlyph
+                                  FontSize="16"
+                                  Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type telerik:RadButton}}}"
+                                  VerticalAlignment="Center"
+                                  HorizontalAlignment="Center"
+                                  Glyph="{StaticResource GlyphClose}"/>
+                                            </telerik:RadButton>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                            <ContentPresenter x:Name="ContentElement" Grid.Row="1" Margin="{TemplateBinding Padding}" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"/>
+                        </Grid>
+                    </AdornerDecorator>
+                    <ResizeGrip x:Name="WindowResizeGrip" HorizontalAlignment="Right" VerticalAlignment="Bottom" Visibility="Collapsed" IsTabStop="False"/>
+                </Grid>
+            </Border>
+        </Grid>
+        <ControlTemplate.Triggers>
+            <Trigger Property="WindowState" Value="Maximized">
+                <Setter TargetName="WindowOuterBorder" Property="BorderThickness" Value="0"/>
+            </Trigger>
+            <Trigger Property="WindowState" Value="Minimized">
+                <Setter Property="MinHeight" Value="28"/>
+                <Setter TargetName="WindowHeaderRow" Property="MinHeight" Value="28"/>
+                <Setter TargetName="HeaderContent" Property="Margin" Value="5 0"/>
+                <Setter TargetName="LayoutRoot" Property="HorizontalAlignment" Value="Left"/>
+                <Setter TargetName="LayoutRoot" Property="VerticalAlignment" Value="Top"/>
+            </Trigger>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="Content" SourceName="IconContent" Value="{x:Null}"/>
+                    <Condition Property="ContentTemplate" SourceName="IconContent" Value="{x:Null}"/>
+                </MultiTrigger.Conditions>
+                <Setter TargetName="IconContent" Property="Visibility" Value="Collapsed"/>
+            </MultiTrigger>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsActiveWindow" Value="True"/>
+                    <Condition Property="mat:ThemeEffectsHelper.IsAcrylic" Value="True"/>
+                </MultiTrigger.Conditions>
+                <Setter Property="Background" TargetName="WindowOuterBorder" Value="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=BorderBackground}"/>
+            </MultiTrigger>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="ResizeMode" Value="CanResizeWithGrip"/>
+                    <Condition Property="WindowState" Value="Normal"/>
+                </MultiTrigger.Conditions>
+                <Setter Property="MinHeight" Value="54"/>
+                <Setter TargetName="WindowResizeGrip" Property="Visibility" Value="Visible"/>
+            </MultiTrigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <Style x:Key="RadWindowStyle" TargetType="{x:Type telerik:RadWindow}" BasedOn="{StaticResource RadWindowStyle}">
+        <Setter Property="Template" Value="{StaticResource ThorlabsRadWindowTemplate}"/>
+    </Style>
+
+    <!-- RadMenu -->
+    <Style TargetType="telerik:RadMenu" BasedOn="{StaticResource RadMenuStyle}">
+        <Setter Property="Visibility" Value="Visible" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="telerik:WindowHost.HitTestable" Value="true" />
+        <Setter Property="IsMainMenu" Value="true" />
+    </Style>
+
+    <!-- RadSlider -->
+    <Style x:Key="ThumbStyle" TargetType="Thumb" BasedOn="{StaticResource ThumbStyle}">
+        <Setter Property="Width" Value="12" />
+    </Style>
+    <Style x:Key="SelectionMiddleThumbStyle" TargetType="Thumb" BasedOn="{StaticResource SelectionMiddleThumbStyle}">
+        <Setter Property="Height" Value="10" />
+    </Style>
+
+    <!-- RadExpander -->
+    <ControlTemplate x:Key="ThorDAQExpanderHeaderButtonTemplate" TargetType="telerik1:RadToggleButton">
+        <Grid x:Name="HeaderPanel" Background="Transparent" Margin="{TemplateBinding Padding}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid>
+                <Ellipse x:Name="BorderVisual"
+                                    Fill="{TemplateBinding Background}"
+                                    Stroke="{TemplateBinding BorderBrush}"
+                                    StrokeThickness="1"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Width="16"
+                                    Height="16"/>
+                <mat:FluentControl
+                                    VerticalContentAlignment="Stretch"
+                                    HorizontalContentAlignment="Stretch"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Center"
+                                    Width="16"
+                                    Height="16"
+                                    CornerRadius="8"
+                                    IsSmartClipped="True">
+                    <telerik1:RadGlyph x:Name="chevron"
+                                        RenderTransformOrigin="0.5 0.5"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Glyph="{StaticResource GlyphArrowChevronDown}"
+                                        Foreground="{telerik1:FluentResource ResourceKey=IconBrush}">
+                        <telerik1:RadGlyph.RenderTransform>
+                            <RotateTransform Angle="{Binding ExpandDirection, RelativeSource={RelativeSource AncestorType=telerik1:RadExpander}, Converter={StaticResource ExpandDirectionToRotationAngleConverter}}"/>
+                        </telerik1:RadGlyph.RenderTransform>
+                    </telerik1:RadGlyph>
+                </mat:FluentControl>
+            </Grid>
+            <ContentPresenter x:Name="HeaderContent"
+                                Grid.Column="1"
+                                Margin="5 0"
+                                Content="{TemplateBinding Content}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                ContentTemplateSelector="{TemplateBinding ContentTemplateSelector}"
+                                ContentStringFormat="{TemplateBinding ContentStringFormat}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+        </Grid>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsFocused" Value="True">
+                <Setter Property="Fill" TargetName="BorderVisual" Value="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=(mat:MaterialAssist.FocusBrush), Mode=OneWay}"/>
+                <Setter Property="Stroke" TargetName="BorderVisual" Value="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=(mat:MaterialAssist.FocusBrush), Mode=OneWay}"/>
+                <Setter Property="Foreground" TargetName="chevron" Value="{telerik1:FluentResource ResourceKey=MarkerInvertedBrush}"/>
+            </Trigger>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" TargetName="chevron" Value="{telerik1:FluentResource ResourceKey=IconBrush}"/>
+                <Setter Property="Fill" TargetName="BorderVisual" Value="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=(mat:MaterialAssist.MouseOverBrush), Mode=OneWay}"/>
+                <Setter Property="Stroke" TargetName="BorderVisual" Value="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=(mat:MaterialAssist.MouseOverBrush), Mode=OneWay}"/>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Foreground" TargetName="chevron" Value="{telerik1:FluentResource ResourceKey=IconBrush}"/>
+                <Setter Property="Fill" TargetName="BorderVisual" Value="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=(mat:MaterialAssist.PressedBrush), Mode=OneWay}"/>
+                <Setter Property="Stroke" TargetName="BorderVisual" Value="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=(mat:MaterialAssist.PressedBrush), Mode=OneWay}"/>
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="chevron" Property="Glyph" Value="{StaticResource GlyphArrowChevronUp}"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="chevron" Property="Opacity" Value="{telerik1:FluentResource ResourceKey=DisabledOpacity}"/>
+                <Setter Property="Background" Value="{telerik1:FluentResource ResourceKey=AlternativeBrush}"/>
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <Style x:Key="ThorDAQExpanderHeaderButtonStyle" TargetType="telerik1:RadToggleButton" BasedOn="{StaticResource ExpanderHeaderButtonStyle}">
+        <Setter Property="Template" Value="{StaticResource ThorDAQExpanderHeaderButtonTemplate}"/>
+    </Style>
+
+    <Style x:Key="RadExpanderStyle" TargetType="telerik1:RadExpander" BasedOn="{StaticResource RadExpanderStyle}">
+        <Setter Property="HeaderButtonStyle" Value="{StaticResource ThorDAQExpanderHeaderButtonStyle}"/>
+    </Style>
+    
+</ResourceDictionary>

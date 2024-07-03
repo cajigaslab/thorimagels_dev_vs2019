@@ -273,6 +273,7 @@ ThorLSMCam::ThorLSMCam() :
 	_fileSettingsLoaded = FALSE;
 	_centerWithOffsets = FALSE;
 	_pockelsTurnAroundBlank = TRUE;
+	_pockelsFlybackBlank = TRUE;
 	_interleaveScan = 0;
 	_imageActiveLoadMS = 100;
 	_imageActiveLoadCount = Constants::ACTIVE_LOAD_BLKSIZE_DEFAULT;
@@ -280,6 +281,8 @@ ThorLSMCam::ThorLSMCam() :
 	_lastDMABufferCount = 0;
 	_analogXYmode[0][0] = _analogXYmode[0][1] = _analogXYmode[1][1] = _analogXYmode[1][1] = 1;
 	_waveformOutPath = L"";
+	_maxAngularVelocityRadPerSec = DEFAULT_MAX_GALVO_VELOCITY;
+	_maxAngularAccelerationRadPerSecSq = DEFAULT_MAX_GALVO_ACCELERATION;
 }
 
 ///Initialize Static Members
@@ -604,10 +607,13 @@ long ThorLSMCam::SetWaveform(VCMImgPty *pImgPty)
 	//setup digital lines:
 	_digiLineSelect = 2;
 	_frameTriggerLineInOut = "/" + _devID + "/port0/line6" + ",/" + _devID + "/port0/line7";
-	if(_pockelDigOut.size() > 0)
+	for (size_t i = 0; i < MAX_GG_POCKELS_CELL_COUNT; i++)
 	{
-		_frameTriggerLineInOut += "," + _pockelDigOut;
-		_digiLineSelect = 3;
+		if (_pockelDigOut[i].size() > 0)
+		{
+			_frameTriggerLineInOut += "," + _pockelDigOut[i];
+			_digiLineSelect += 1;
+		}
 	}
 
 	//keep digital lines low before start
@@ -879,6 +885,7 @@ void ThorLSMCam::UpdateWaveformGenParams()
 	_waveGenParams.field2Volts = _field2Theta;
 	_waveGenParams.digLineSelect = _digiLineSelect;
 	_waveGenParams.pockelsTurnAroundBlank = _pockelsTurnAroundBlank;
+	_waveGenParams.pockelsFlybackBlank = _pockelsFlybackBlank;
 	_waveGenParams.scanMode = _imgPtyDll.scanMode;
 	_waveGenParams.yAmplitudeScaler = _imgPtyDll.yAmplitudeScaler;
 	_waveGenParams.galvoEnable = _imgPtyDll.galvoEnable;

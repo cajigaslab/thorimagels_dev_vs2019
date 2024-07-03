@@ -39,6 +39,7 @@
         private bool _isBleaching = false;
         private bool _isBleachStopped = true;
         private bool _isPreBleachBuilding = false;
+        private double _powerShiftUS = 0.0;
 
         //private double _preBleachPower;
         private int _preBleachWavelength = 0;
@@ -61,18 +62,11 @@
         {
             get
             {
-                if (null == ExperimentDoc)
-                { return 0; }
-
-                XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/Photobleaching");
                 double dVal = 0;
-                if (0 < ndList.Count)
-                {
-                    string str = string.Empty;
-                    GetAttribute(ndList[0], ExperimentDoc, "areaAngle", ref str);
-                    Double.TryParse(str, out dVal);
-                }
-                return dVal;
+                if (XmlManager.ReadAttribute<double>(out dVal, RegistrationDoc, "/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "']/LUT[@Active='1']", "areaAngle", 0, 0))
+                    return dVal;
+
+                return XmlManager.ReadAttribute<double>(ExperimentDoc, "/ThorImageExperiment/Photobleaching", "areaAngle", 0, 0);
             }
         }
 
@@ -80,20 +74,11 @@
         {
             get
             {
-                if (null == ExperimentDoc)
-                { return 0; }
+                int iVal = 0;
+                if (XmlManager.ReadAttribute<int>(out iVal, RegistrationDoc, "/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "']/LUT[@Active='1']", "fieldSize", 0, 0))
+                    return iVal;
 
-                XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/Photobleaching");
-                if (0 >= ndList.Count)
-                { return 0; }
-
-                int dVal = 0;
-                string str = string.Empty;
-                if (!(GetAttribute(ndList[0], ExperimentDoc, "fieldSize", ref str)) || (!Int32.TryParse(str, out dVal)))
-                {
-                    return 0;
-                }
-                return dVal;
+                return XmlManager.ReadAttribute<int>(ExperimentDoc, "/ThorImageExperiment/Photobleaching", "fieldSize", 0, 0);
             }
         }
 
@@ -101,24 +86,18 @@
         {
             get
             {
-                if (null == ExperimentDoc)
-                { return null; }
-
-                XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/Photobleaching");
-                if (0 >= ndList.Count)
-                { return null; }
-
-                double[] dVal = { 0, 0 };
-                string str = string.Empty;
-                if (!(GetAttribute(ndList[0], ExperimentDoc, "fineOffsetX", ref str)) || (!Double.TryParse(str, out dVal[0])))
+                double[] dVal = new double[2] { 0, 0 };
+                if (XmlManager.ReadAttribute<double>(out dVal[0], RegistrationDoc, "/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "']/LUT[@Active='1']", "fineOffsetX", 0, 0) &&
+                    XmlManager.ReadAttribute<double>(out dVal[1], RegistrationDoc, "/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "']/LUT[@Active='1']", "fineOffsetY", 0, 0))
                 {
-                    return null;
+                    return dVal;
                 }
-                if (!(GetAttribute(ndList[0], ExperimentDoc, "fineOffsetY", ref str)) || (!Double.TryParse(str, out dVal[1])))
+                else if (XmlManager.ReadAttribute<double>(out dVal[0], ExperimentDoc, "/ThorImageExperiment/Photobleaching", "fineOffsetX", 0, 0) &&
+                    XmlManager.ReadAttribute<double>(out dVal[1], ExperimentDoc, "/ThorImageExperiment/Photobleaching", "fineOffsetY", 0, 0))
                 {
-                    return null;
+                    return dVal;
                 }
-                return dVal;
+                return null;
             }
         }
 
@@ -126,24 +105,18 @@
         {
             get
             {
-                if (null == ExperimentDoc)
-                { return null; }
-
-                XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/Photobleaching");
-                if (0 >= ndList.Count)
-                { return null; }
-
-                double[] dVal = { 0, 0 };
-                string str = string.Empty;
-                if (!(GetAttribute(ndList[0], ExperimentDoc, "fineScaleX", ref str)) || (!Double.TryParse(str, out dVal[0])))
+                double[] dVal = new double[2] { 0, 0 };
+                if (XmlManager.ReadAttribute<double>(out dVal[0], RegistrationDoc, "/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "']/LUT[@Active='1']", "fineScaleX", 1, 0) &&
+                    XmlManager.ReadAttribute<double>(out dVal[1], RegistrationDoc, "/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "']/LUT[@Active='1']", "fineScaleY", 1, 0))
                 {
-                    return null;
+                    return dVal;
                 }
-                if (!(GetAttribute(ndList[0], ExperimentDoc, "fineScaleY", ref str)) || (!Double.TryParse(str, out dVal[1])))
+                else if (XmlManager.ReadAttribute<double>(out dVal[0], ExperimentDoc, "/ThorImageExperiment/Photobleaching", "fineScaleX", 1, 0) &&
+                    XmlManager.ReadAttribute<double>(out dVal[1], ExperimentDoc, "/ThorImageExperiment/Photobleaching", "fineScaleY", 1, 0))
                 {
-                    return null;
+                    return dVal;
                 }
-                return dVal;
+                return null;
             }
         }
 
@@ -151,24 +124,18 @@
         {
             get
             {
-                if (null == ExperimentDoc)
-                { return null; }
-
-                XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/Photobleaching");
-                if (0 >= ndList.Count)
-                { return null; }
-
-                int[] iVal = { 0, 0 };
-                string str = string.Empty;
-                if (!(GetAttribute(ndList[0], ExperimentDoc, "horizontalFlip", ref str)) || (!Int32.TryParse(str, out iVal[0])))
+                int[] iVal = new int[2] { 0, 0 };
+                if (XmlManager.ReadAttribute<int>(out iVal[0], RegistrationDoc, "/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "']/LUT[@Active='1']", "horizontalFlip", 0, 0) &&
+                    XmlManager.ReadAttribute<int>(out iVal[1], RegistrationDoc, "/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "']/LUT[@Active='1']", "verticalFlip", 0, 0))
                 {
-                    return null;
+                    return iVal;
                 }
-                if (!(GetAttribute(ndList[0], ExperimentDoc, "verticalFlip", ref str)) || (!Int32.TryParse(str, out iVal[1])))
+                else if (XmlManager.ReadAttribute<int>(out iVal[0], ExperimentDoc, "/ThorImageExperiment/Photobleaching", "horizontalFlip", 0, 0) &&
+                    XmlManager.ReadAttribute<int>(out iVal[1], ExperimentDoc, "/ThorImageExperiment/Photobleaching", "verticalFlip", 0, 0))
                 {
-                    return null;
+                    return iVal;
                 }
-                return iVal;
+                return null;
             }
         }
 
@@ -176,24 +143,18 @@
         {
             get
             {
-                if (null == ExperimentDoc)
-                { return null; }
-
-                XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/Photobleaching");
-                if (0 >= ndList.Count)
-                { return null; }
-
-                int[] iVal = { 0, 0 };
-                string str = string.Empty;
-                if (!(GetAttribute(ndList[0], ExperimentDoc, "offsetX", ref str)) || (!Int32.TryParse(str, out iVal[0])))
+                int[] iVal = new int[2] { 0, 0 };
+                if (XmlManager.ReadAttribute<int>(out iVal[0], RegistrationDoc, "/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "']/LUT[@Active='1']", "offsetX", 0, 0) &&
+                    XmlManager.ReadAttribute<int>(out iVal[1], RegistrationDoc, "/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "']/LUT[@Active='1']", "offsetY", 0, 0))
                 {
-                    return null;
+                    return iVal;
                 }
-                if (!(GetAttribute(ndList[0], ExperimentDoc, "offsetY", ref str)) || (!Int32.TryParse(str, out iVal[1])))
+                else if (XmlManager.ReadAttribute<int>(out iVal[0], ExperimentDoc, "/ThorImageExperiment/Photobleaching", "offsetX", 0, 0) &&
+                    XmlManager.ReadAttribute<int>(out iVal[1], ExperimentDoc, "/ThorImageExperiment/Photobleaching", "offsetY", 0, 0))
                 {
-                    return null;
+                    return iVal;
                 }
-                return iVal;
+                return null;
             }
         }
 
@@ -201,24 +162,18 @@
         {
             get
             {
-                if (null == ExperimentDoc)
-                { return null; }
-
-                XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/Photobleaching");
-                if (0 >= ndList.Count)
-                { return null; }
-
-                int[] dVal = { 0, 0 };
-                string str = string.Empty;
-                if (!(GetAttribute(ndList[0], ExperimentDoc, "pixelX", ref str)) || (!Int32.TryParse(str, out dVal[0])))
+                int[] iVal = new int[2] { 0, 0 };
+                if (XmlManager.ReadAttribute<int>(out iVal[0], RegistrationDoc, "/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "']/LUT[@Active='1']", "pixelX", 0, 0) &&
+                    XmlManager.ReadAttribute<int>(out iVal[1], RegistrationDoc, "/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "']/LUT[@Active='1']", "pixelY", 0, 0))
                 {
-                    return null;
+                    return iVal;
                 }
-                if (!(GetAttribute(ndList[0], ExperimentDoc, "pixelY", ref str)) || (!Int32.TryParse(str, out dVal[1])))
+                else if (XmlManager.ReadAttribute<int>(out iVal[0], ExperimentDoc, "/ThorImageExperiment/Photobleaching", "pixelX", 0, 0) &&
+                    XmlManager.ReadAttribute<int>(out iVal[1], ExperimentDoc, "/ThorImageExperiment/Photobleaching", "pixelY", 0, 0))
                 {
-                    return null;
+                    return iVal;
                 }
-                return dVal;
+                return null;
             }
         }
 
@@ -245,18 +200,11 @@
                 }
                 else
                 {
-                    if (null == ExperimentDoc)
-                    { return new double[1] { 0 }; }
-
-                    XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/Photobleaching");
                     double dVal = 0;
-                    if (0 < ndList.Count)
-                    {
-                        string str = string.Empty;
-                        GetAttribute(ndList[0], ExperimentDoc, "powerMax", ref str);
-                        Double.TryParse(str, out dVal);
-                    }
-                    return new double[1] { dVal };
+                    if (XmlManager.ReadAttribute<double>(out dVal, RegistrationDoc, "/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "']/LUT[@Active='1']", "powerMax", 0, 0))
+                        return new double[1] { dVal };
+
+                    return new double[1] { XmlManager.ReadAttribute<double>(ExperimentDoc, "/ThorImageExperiment/Photobleaching", "powerMax", 0, 0) };
                 }
             }
         }
@@ -284,18 +232,11 @@
                 }
                 else
                 {
-                    if (null == ExperimentDoc)
-                    { return new double[1] { 0 }; }
-
-                    XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/Photobleaching");
                     double dVal = 0;
-                    if (0 < ndList.Count)
-                    {
-                        string str = string.Empty;
-                        GetAttribute(ndList[0], ExperimentDoc, "powerMin", ref str);
-                        Double.TryParse(str, out dVal);
-                    }
-                    return new double[1] { dVal };
+                    if (XmlManager.ReadAttribute<double>(out dVal, RegistrationDoc, "/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "']/LUT[@Active='1']", "powerMin", 0, 0))
+                        return new double[1] { dVal };
+
+                    return new double[1] { XmlManager.ReadAttribute<double>(ExperimentDoc, "/ThorImageExperiment/Photobleaching", "powerMin", 0, 0) };
                 }
             }
         }
@@ -304,20 +245,11 @@
         {
             get
             {
-                if (null == ExperimentDoc)
-                { return 0; }
+                int iVal = 0;
+                if (XmlManager.ReadAttribute<int>(out iVal, RegistrationDoc, "/ThorImageRegistration/Registrations/Registration[@Modality=" + "'" + ResourceManagerCS.GetModality() + "']/LUT[@Active='1']", "scaleYScan", 0, 0))
+                    return iVal;
 
-                XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/Photobleaching");
-                if (0 >= ndList.Count)
-                { return 0; }
-
-                int dVal = 0;
-                string str = string.Empty;
-                if (!(GetAttribute(ndList[0], ExperimentDoc, "scaleYScan", ref str)) || (!Int32.TryParse(str, out dVal)))
-                {
-                    return 0;
-                }
-                return dVal;
+                return XmlManager.ReadAttribute<int>(ExperimentDoc, "/ThorImageExperiment/Photobleaching", "scaleYScan", 0, 0);
             }
         }
 
@@ -458,6 +390,12 @@
                 _isPreBleachBuilding = value;
                 OnPropertyChanged("IsPreBleachBuilding");
             }
+        }
+
+        public double PowerShiftUS
+        {
+            get { return _powerShiftUS; }
+            set { _powerShiftUS = value; }
         }
 
         public int PreBleachWavelength
@@ -608,7 +546,7 @@
         {
             bool ret = true;
             //ensure the buffer is copied after the capture
-            _pixelDataReady = false;
+            ImageDataUpdated = false;
 
             //prepare for callback:
             _bleachPath = Path.GetDirectoryName(WaveH5PathandName) + "\\"; //other path end with "\\"

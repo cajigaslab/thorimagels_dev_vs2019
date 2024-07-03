@@ -393,13 +393,16 @@ long ORCA::SetParam(const long paramID, const double param)
 		break;
 		case ICamera::PARAM_CAMERA_COOLING_MODE:
 		{
-			double coolingMode = (param == 2) ? DCAMPROP_SENSORCOOLER__MAX : param + 1;
-			OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_SENSORCOOLER, coolingMode));
-			if (failed(err))
+			if (_hasCooling[_camID])
 			{
-				StringCbPrintfW(_errMsg, MSG_SIZE, L"SetParam Parameter (%d) PARAM_CAMERA_COOLING_MODE failed", paramID);
-				LogMessage(_errMsg, ERROR_EVENT);
-				ret = FALSE;
+				double coolingMode = (param == 2) ? DCAMPROP_SENSORCOOLER__MAX : param + 1;
+				OrcaErrChk(L"dcamprop_setvalue", dcamprop_setvalue(_hdcam[_camID], DCAM_IDPROP_SENSORCOOLER, coolingMode));
+				if (failed(err))
+				{
+					StringCbPrintfW(_errMsg, MSG_SIZE, L"SetParam Parameter (%d) PARAM_CAMERA_COOLING_MODE failed", paramID);
+					LogMessage(_errMsg, ERROR_EVENT);
+					ret = FALSE;
+				}
 			}
 		}
 		break;
@@ -723,28 +726,33 @@ long ORCA::GetParam(const long paramID, double& param)
 		break;
 		case ICamera::PARAM_CAMERA_COOLING_MODE:
 		{
-			double coolingMode = DCAMPROP_SENSORCOOLER__OFF;
-			OrcaErrChk(L"dcamprop_getvalue", dcamprop_getvalue(_hdcam[_camID], DCAM_IDPROP_SENSORCOOLER, &coolingMode));
-			if (failed(err))
+			if (_hasCooling[_camID])
 			{
-				StringCbPrintfW(_errMsg, MSG_SIZE, L"GetParam Parameter (%d) PARAM_CAMERA_COOLING_MODE failed", paramID);
-				LogMessage(_errMsg, ERROR_EVENT);
-				ret = FALSE;
+				double coolingMode = DCAMPROP_SENSORCOOLER__OFF;
+				OrcaErrChk(L"dcamprop_getvalue", dcamprop_getvalue(_hdcam[_camID], DCAM_IDPROP_SENSORCOOLER, &coolingMode));
+				if (failed(err))
+				{
+					StringCbPrintfW(_errMsg, MSG_SIZE, L"GetParam Parameter (%d) PARAM_CAMERA_COOLING_MODE failed", paramID);
+					LogMessage(_errMsg, ERROR_EVENT);
+					ret = FALSE;
+				}
+				param = (coolingMode == DCAMPROP_SENSORCOOLER__MAX) ? coolingMode - 2 : coolingMode - 1;
 			}
-			param = (coolingMode == DCAMPROP_SENSORCOOLER__MAX) ? coolingMode - 2 : coolingMode - 1;
 		}
 		break;
 		case ICamera::PARAM_CAMERA_COOLING_AVAILABLE:
 		{
-			double coolingMode = 0;
-			param = TRUE;
-			OrcaErrChk(L"dcamprop_getvalue", dcamprop_getvalue(_hdcam[_camID], DCAM_IDPROP_SENSORCOOLER, &coolingMode));
-			if (failed(err))
+			param = FALSE;
+			if (_hasCooling[_camID])
 			{
-				param = FALSE;
+				param = TRUE;
 			}
 		}
 		break;
+		case ICamera::PARAM_GAIN_TYPE:
+		{
+			param = GainType::UNSUPPORTED;
+		}
 		default:
 			ret = FALSE;
 			break;
@@ -1106,6 +1114,14 @@ long ORCA::GetParamInfo(const long paramID, long& paramType, long& paramAvailabl
 			paramMin = FALSE;
 			paramMax = TRUE;
 			paramDefault = FALSE;
+			paramReadOnly = TRUE;
+			break;
+		case ICamera::PARAM_GAIN_TYPE:
+			paramType = ICamera::TYPE_LONG;
+			paramAvailable = TRUE;
+			paramMin = 0;
+			paramMax = (int)GainType::GAIN_TYPE_LAST;
+			paramDefault = (int)GainType::UNSUPPORTED;
 			paramReadOnly = TRUE;
 			break;
 		default:

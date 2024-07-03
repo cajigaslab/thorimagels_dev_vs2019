@@ -50,7 +50,7 @@ DllExportLiveImage SetPockelsMaskFile(char * file)
 			return FALSE;
 		}
 		wstring ext(PathFindExtension(fileNameWideString.c_str()));
-		long width = 0,height = 0,colorChannels = 0;
+		long width = 0,height = 0,colorChannels = 0, bitsPerPixel = 0;
 		char * pBuffer;
 		char * pMask;
 		const long BYTES_PER_PIXEL = 2;
@@ -86,7 +86,7 @@ DllExportLiveImage SetPockelsMaskFile(char * file)
 		}
 		else if (ext == L".tif" || ext == L".Tif")
 		{
-			if(FALSE == ReadImageInfo((wchar_t*)fileNameWideString.c_str(), width, height, colorChannels))
+			if(FALSE == ReadImageInfo((wchar_t*)fileNameWideString.c_str(), width, height, colorChannels, bitsPerPixel))
 			{
 				return FALSE;
 			}
@@ -103,7 +103,7 @@ DllExportLiveImage SetPockelsMaskFile(char * file)
 
 		ResizeImage(pBuffer, width, height, pMask, pockelsMaskWidth, height);
 
-		ret = SetCameraParamBuffer(SelectedHardware::SELECTED_CAMERA1,ICamera::PARAM_LSM_POCKELS_MASK,pMask,pockelsMaskWidth*height*BYTES_PER_PIXEL);
+		ret = SetCameraParamBuffer(SelectedHardware::SELECTED_CAMERA1,ICamera::PARAM_LSM_POCKELS_MASK_0,pMask,pockelsMaskWidth*height*BYTES_PER_PIXEL);
 
 		delete[] pBuffer;
 		delete[] pMask;

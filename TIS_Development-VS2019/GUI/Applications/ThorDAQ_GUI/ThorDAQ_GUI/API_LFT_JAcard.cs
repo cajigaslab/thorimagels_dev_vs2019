@@ -55,7 +55,7 @@
         const uint OpCodeLen = MAX_I2C_SLAVE_WRITE_Len;  // set to LONGEST possible APT cmd+data WRITE to Slave
 
 
-        byte[][] MSGOpcodesRead =
+        static byte[][] MSGOpcodesRead =
         { 
             // READ opcodes (data expected from I2C slave)
             new byte[MAX_I2C_SLAVE_WRITE_Len] { 0x05, 0x00, 0x00, 0x00, 0x67, 0x1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }, // MGMSG_HW_REQ_INFO
@@ -1234,7 +1234,7 @@ e.g., to set both LF0 and LF1 thresholds:
             public ushort pos_thresh_dac;
             public ushort adc_pulse_amplitude;
             public UInt32 frequency;
-            public Byte synth;
+      //      public Byte synth;
         }
 
         // SET Config/Data in LFT mezz. card
@@ -1361,7 +1361,7 @@ e.g., to set both LF0 and LF1 thresholds:
         }
 
         // GET Config/Data from LFT mezz. card
-        List<string> APIgetLFT_JAstatus(List<string> argumentsList)
+        static List<string> APIgetLFT_JAstatus(List<string> argumentsList)
         {
             THORDAQ_STATUS status;
             const uint MasterMUXChan = 0x1;
@@ -1469,9 +1469,9 @@ e.g., to set both LF0 and LF1 thresholds:
                             retStrings.Add(REQParams[i] + ": " + " LF1 PulseAmp  " + lf1.adc_pulse_amplitude + " (ADC cnts)");
 
                             lf0.frequency = (UInt32)DataBytes[2] | (UInt32)(DataBytes[3] << 8) | (UInt32)(DataBytes[4] << 16) | (UInt32)(DataBytes[5] << 24);
-                            retStrings.Add(REQParams[i] + ": " + " LF0 Freq      " + lf0.frequency + " (Hz)");
+                            retStrings.Add(REQParams[i] + ": " + " LF0 Freq      " + lf0.frequency + "        (Hz)");
                             lf1.frequency = (UInt32)DataBytes[6] | (UInt32)(DataBytes[7] << 8) | (UInt32)(DataBytes[8] << 16) | (UInt32)(DataBytes[9] << 24);
-                            retStrings.Add(REQParams[i] + ": " + " LF1 Freq      " + lf1.frequency + " (Hz)");
+                            retStrings.Add(REQParams[i] + ": " + " LF1 Freq      " + lf1.frequency + "        (Hz)");
 
                             break;
                     }

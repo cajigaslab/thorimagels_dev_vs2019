@@ -162,6 +162,7 @@
             {
                 return;
             }
+            vm.IPCDisabled = false;
             vm.SamplingSettingsOptions();
         }
 

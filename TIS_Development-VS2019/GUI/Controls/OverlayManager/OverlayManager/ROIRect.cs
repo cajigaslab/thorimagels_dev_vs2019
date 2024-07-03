@@ -10,7 +10,7 @@
     using System.Windows.Shapes;
     using System.Xml;
 
-    public class ROIRect : Shape
+    public class ROIRect : ScalableShape
     {
         #region Fields
 
@@ -25,6 +25,19 @@
         private Point _topLeft;
         private Point _topRight;
 
+        private Point _statsStartPoint;
+        private Point _statsEndPoint;
+
+        private Point _statsTopLeft;
+        private Point _statsTopRight;
+        private Point _statsBottomLeft;
+        private Point _statsBottomRight;
+
+        private double _imageScaleX;
+        private double _imageScaleY;
+        private double _toAdjustX;
+        private double _toAdjustY;
+
         #endregion Fields
 
         #region Constructors
@@ -35,20 +48,42 @@
             _startPoint = new Point(0, 0);
             _endPoint = new Point(0, 0);
             _topLeft = new Point(0, 0);
+            _statsStartPoint = new Point(0, 0);
+            _statsEndPoint = new Point(0, 0);
+            _statsTopLeft = new Point(0,0);
+            _statsTopRight = new Point(0, 0);
+            _statsBottomLeft = new Point(0, 0);
+            _statsBottomRight = new Point(0, 0);
+
             _roiHeight = 1;
             _roiWidth = 1;
+            _imageScaleX = 1.0;
+            _imageScaleY = 1.0;
+            _toAdjustX = 1.0;
+            _toAdjustY = 1.0;
             _rectangle = new RectangleGeometry();
             RedrawShape();
         }
 
-        public ROIRect(Point start, Point end)
+        public ROIRect(Point start, Point end, double xScale, double yScale)
         {
             _startPoint = start;
             _endPoint = end;
+            _statsStartPoint = start;
+            _statsEndPoint = end;
             _topLeft = new Point(0, 0);
+            _statsTopLeft = new Point(0, 0);
+            _statsTopRight = new Point(0, 0);
+            _statsBottomLeft = new Point(0, 0);
+            _statsBottomRight = new Point(0, 0);
+
             _roiHeight = 1;
             _roiWidth = 1;
             _rectangle = new RectangleGeometry();
+            _imageScaleX = xScale;
+            _imageScaleY = yScale;
+            _toAdjustX = 1.0/xScale;
+            _toAdjustY = 1.0/yScale;
             RedrawShape();
         }
 
@@ -103,6 +138,7 @@
                 _endPoint = _bottomRight = _rectangle.Bounds.BottomRight;
                 _roiWidth = _rectangle.Bounds.Width;
                 _roiHeight = _rectangle.Bounds.Height;
+                RedrawShape();
             }
         }
 
@@ -124,6 +160,40 @@
                 _roiWidth = value;
                 RedrawShape();
             }
+        }
+
+        public override double ImageScaleX
+        {
+            get
+            {
+                return _imageScaleX;
+            }
+            set
+            {
+                _imageScaleX = value > 0 ? value : 1.0;
+            }
+        }
+
+        public override double ImageScaleY
+        {
+            get
+            {
+                return _imageScaleY;
+            }
+            set
+            {
+                _imageScaleY = value > 0 ? value : 1.0;
+            }
+        }
+
+        public Point StatsStartPoint
+        {
+            get => _statsStartPoint;
+        }
+
+        public Point StatsEndPoint
+        {
+            get => _statsEndPoint;
         }
 
         public bool ShiftDown
@@ -159,6 +229,26 @@
             }
         }
 
+        public Point StatsTopLeft
+        {
+            get => _statsTopLeft;
+        }
+
+        public Point StatsTopRight
+        {
+            get => _statsTopRight;
+        }
+
+        public Point StatsBottomLeft
+        {
+            get => _statsBottomLeft;
+        }
+
+        public Point StatsBottomRight
+        {
+            get => _statsBottomRight;
+        }
+
         protected override Geometry DefiningGeometry
         {
             get { return _rectangle; }
@@ -167,6 +257,27 @@
         #endregion Properties
 
         #region Methods
+
+        public override void ApplyScaleUpdate(double xScale, double yScale)
+        {
+            _toAdjustX = xScale / _imageScaleX;
+            _toAdjustY = yScale / _imageScaleY;
+
+            _imageScaleX = xScale;
+            _imageScaleY = yScale;
+
+            double updatedX = _startPoint.X * _toAdjustX;
+            double updatedY = _startPoint.Y * _toAdjustY;
+
+            _startPoint = new Point(updatedX, updatedY);
+
+            updatedX = _endPoint.X * _toAdjustX;
+            updatedY = _endPoint.Y * _toAdjustY;
+
+            _endPoint = new Point(updatedX, updatedY);
+
+            RedrawShape();
+        }
 
         private void CalculateWidthAndHeight()
         {
@@ -201,6 +312,9 @@
                     _endPoint.Y = _startPoint.Y + _roiHeight;
                 }
             }
+
+            _statsStartPoint = new Point(_startPoint.X / _imageScaleX, _startPoint.Y / _imageScaleY);
+            _statsEndPoint = new Point(_endPoint.X / _imageScaleX, _endPoint.Y / _imageScaleY);
         }
 
         private void RedrawShape()
@@ -232,6 +346,12 @@
             _topRight = _rectangle.Bounds.TopRight;
             _bottomLeft = _rectangle.Bounds.BottomLeft;
             _bottomRight = _rectangle.Bounds.BottomRight;
+
+            _statsTopLeft = new Point(_rectangle.Bounds.TopLeft.X/_imageScaleX, _rectangle.Bounds.TopLeft.Y/_imageScaleY);
+            _statsTopRight = new Point(_rectangle.Bounds.TopRight.X / _imageScaleX, _rectangle.Bounds.TopRight.Y / _imageScaleY);
+            _statsBottomLeft = new Point(_rectangle.Bounds.BottomLeft.X / _imageScaleX, _rectangle.Bounds.BottomLeft.Y / _imageScaleY);
+            _statsBottomRight = new Point(_rectangle.Bounds.BottomRight.X / _imageScaleX, _rectangle.Bounds.BottomRight.Y / _imageScaleY);
+
         }
 
         #endregion Methods

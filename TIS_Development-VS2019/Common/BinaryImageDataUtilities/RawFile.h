@@ -40,6 +40,7 @@ public:
 	//Image Properties
 	int getImageWidth() const;
 	int getImageHeight() const;
+	int getNumPlanes() const;
 	int getImageZSlices() const;
 	int getImageNumChannels() const;
 	int getImageNumM() const;
@@ -65,6 +66,7 @@ private:
 	//Image properties
 	int imageWidth;
 	int imageHeight;
+	int imageNumPlanes;
 	int imageSizeBytes;
 	int imageZSlices;
 	int imageNumChannels;
@@ -112,6 +114,7 @@ template <typename T> RawFile<T>::RawFile(std::wstring filePath, int imageWidth,
 	this->memModelType = memModelType;
 	this->containsOnlyEnabledChannels = !containsDisabledChannels;
 	this->enabledChannels = enabledChannels;
+	this->imageNumPlanes = 1;
 
 }
 
@@ -139,6 +142,7 @@ template <typename T> RawFile<T>::RawFile(std::wstring filePath, int imageSizeBy
 	this->containsOnlyEnabledChannels = !containsDisabledChannels;
 	this->enabledChannels = enabledChannels;
 	this->imageSizeBytes = imageSizeBytes;
+	this->imageNumPlanes = 1;
 }
 
 /// <summary> Create a new raw file as a copy of another </summary>
@@ -210,12 +214,12 @@ template <typename T> long long RawFile<T>::getSingleImageSize()
 {
 	if(containsEnabledChannelsOnly())
 	{
-		GenericImage<T> imageToGetSize(getImageWidth(),getImageHeight(),getImageZSlices(),getImageNumChannels(),getImageNumM(),memModelType, enabledChannels);
+		GenericImage<T> imageToGetSize(getImageWidth(),getImageHeight(), getNumPlanes(), getImageZSlices(),getImageNumChannels(),getImageNumM(),memModelType, enabledChannels);
 		return imageToGetSize.getSizeInBytes();
 	}
 	else
 	{
-		GenericImage<T> imageToGetSize(getImageWidth(),getImageHeight(),getImageZSlices(),getImageNumChannels(),getImageNumM(),memModelType);
+		GenericImage<T> imageToGetSize(getImageWidth(),getImageHeight(), getNumPlanes(), getImageZSlices(),getImageNumChannels(),getImageNumM(),memModelType);
 		return imageToGetSize.getSizeInBytes();
 	}
 }
@@ -264,12 +268,12 @@ template <typename T> FileMappedImage<T> RawFile<T>::getImageAtIndex(int index, 
 
 	if(containsEnabledChannelsOnly())
 	{
-		FileMappedImage<T> imageInSeries(filePath,byteOffsetToStart,getImageWidth(),getImageHeight(),getImageZSlices(),getImageNumChannels(),getImageNumM(),memModelType, enabledChannels);
+		FileMappedImage<T> imageInSeries(filePath,byteOffsetToStart,getImageWidth(),getImageHeight(),getNumPlanes(),getImageZSlices(),getImageNumChannels(),getImageNumM(),memModelType, enabledChannels);
 		return imageInSeries;
 	}
 	else
 	{
-		FileMappedImage<T> imageInSeries(filePath,byteOffsetToStart,getImageWidth(),getImageHeight(),getImageZSlices(),getImageNumChannels(),getImageNumM(),memModelType);
+		FileMappedImage<T> imageInSeries(filePath,byteOffsetToStart,getImageWidth(),getImageHeight(),getNumPlanes(),getImageZSlices(),getImageNumChannels(),getImageNumM(),memModelType);
 		return imageInSeries;
 	}
 
@@ -461,6 +465,12 @@ template <typename T> int RawFile<T>::getImageWidth() const
 template <typename T> int RawFile<T>::getImageHeight() const
 {
 	return imageHeight;
+}
+
+/// <returns> The number of planes in the image </returns>
+template <typename T> int RawFile<T>::getNumPlanes() const
+{
+	return imageNumPlanes;
 }
 
 /// <returns> The number of z slices in the image </returns>

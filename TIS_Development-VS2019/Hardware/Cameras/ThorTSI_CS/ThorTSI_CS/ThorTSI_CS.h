@@ -14,7 +14,18 @@
 #define DEFAULT_AVGNUM			1
 #define MAX_FRAMENUM			4096			// Maximum limit of frame count
 
-#define ThorTSIErrChk(fnName,fnCall,fnThrow) if (0 != fnCall) { StringCbPrintfW(_errMsg,MSG_SIZE,L"%s TSI_CS failed ,(%d). ",fnName,__LINE__); if(fnThrow){ ThorCam::getInstance()->LogMessage(_errMsg,ERROR_EVENT); GetLastError(); throw "fnCall"; } else { ThorCam::getInstance()->LogMessage(_errMsg,INFORMATION_EVENT); }}
+#define ThorTSIErrChk(fnCall, fnThrow){if(0!=fnCall){HandleSDKError(tl_camera_get_last_error(),__LINE__,#fnCall,fnThrow);}}
+#define ThorTSIColorErrChk(fnCall, fnThrow){if(0!=fnCall){HandleSDKError(tl_mono_to_color_get_last_error(),__LINE__,#fnCall,fnThrow);}}
+#define ThorTSIPolarErrChk(fnCall, fnThrow){int polarResult = fnCall; if(0!=polarResult){HandlePolarSDKError(polarResult,__LINE__,#fnCall,fnThrow);}}
+
+inline void CharStringIntoWString(const char* inCharString, wstring& outWString)
+{
+	outWString.clear();
+	size_t inLength = strlen(inCharString) + 1;
+	outWString.resize(inLength);
+	size_t numCharsConverted;
+	mbstowcs_s(&numCharsConverted, &outWString[0], inLength, inCharString, inLength);
+}
 
 #ifdef __cplusplus
 
@@ -22,7 +33,7 @@ extern "C"
 {
 #endif
 
-	typedef struct _ImgPty
+	typedef struct _CameraProperties
 	{
 		int exposureTime_us;		
 		int roiBinX;		
@@ -41,7 +52,8 @@ extern "C"
 		//int tapBalanceEnable;
 		int numImagesToBuffer;
 		int readOutSpeedIndex; // 0=60MHz, 1=100MHz
-		int channel; ///<Bitwise selection of channels.		
+		int channelBitmask; ///<Bitwise selection of channels.	
+		int numChannels; ///< number of channels.		
 		int averageMode; ///< average mode, see enumeration of AverageMode;
 		int averageNum;///< number of frame, lines to average		
 		long numFrame; ///<number of frame to acquire for a experiment
@@ -58,8 +70,137 @@ extern "C"
 		double pixelSizeXUM;
 		double pixelSizeYUM;
 		double frameRateControlValue;
+		int colorImageType; // 0 for unprocessed, 1 for sRGB, 2 for linear sRGB
+		//TL_CAMERA_SENSOR_TYPE sensorType; // Monochrome, Bayer, Monochrome Polarized // this is not something that can be set
+		double redGain;
+		double greenGain;
+		double blueGain;
+		int polarImageType; // 0=Unprocessed, 1=Intensity, 2=DoLP, 3=Azimuth, 4=Quadview
+		int isEqualExposurePulseEnabled;
+		double equalExposurePulseWidth;
+		bool isAutoWhiteBalanceEnabled;
+		int whiteBalanceFrameCount;
+		bool oneShotWhiteBalanceFlag;
 
-	}ImgPty, *pImgPty;
+		/// <summary>
+		/// 
+		/// Return true iff image properties could be changed to the other without stopping, false otherwise
+		/// 
+		/// </summary>
+		/// <param name="otherImgPty"></param>
+		/// <returns></returns>
+		bool CanBeChangedWithoutStop(_CameraProperties& otherCameraProperties)
+		{
+			return (roiBinX == otherCameraProperties.roiBinX) &&
+				(roiBinY == otherCameraProperties.roiBinY) &&
+				(roiBottom == otherCameraProperties.roiBottom) &&
+				(roiLeft == otherCameraProperties.roiLeft) &&
+				(roiRight == otherCameraProperties.roiRight) &&
+				(roiTop == otherCameraProperties.roiTop) &&
+				(triggerMode == otherCameraProperties.triggerMode) &&
+				(triggerPolarity == otherCameraProperties.triggerPolarity) &&
+				(bitPerPixel == otherCameraProperties.bitPerPixel) &&
+				(pixelSizeXUM == otherCameraProperties.pixelSizeXUM) &&
+				(pixelSizeYUM == otherCameraProperties.pixelSizeYUM) &&
+				(numImagesToBuffer == otherCameraProperties.numImagesToBuffer) &&
+				(readOutSpeedIndex == otherCameraProperties.readOutSpeedIndex) &&
+				(averageMode == otherCameraProperties.averageMode) &&
+				(numChannels == otherCameraProperties.numChannels) &&
+				(channelBitmask == otherCameraProperties.channelBitmask) &&
+				(averageNum == otherCameraProperties.averageNum) &&
+				(numFrame == otherCameraProperties.numFrame) &&
+				(dmaBufferCount == otherCameraProperties.dmaBufferCount) &&
+				(verticalFlip == otherCameraProperties.verticalFlip) &&
+				(horizontalFlip == otherCameraProperties.horizontalFlip) &&
+				(imageAngle == otherCameraProperties.imageAngle) &&
+				(hotPixelEnabled == otherCameraProperties.hotPixelEnabled) &&
+				(hotPixelThreshold == otherCameraProperties.hotPixelThreshold) &&
+				(gain == otherCameraProperties.gain) &&
+				(blackLevel == otherCameraProperties.blackLevel) &&
+				(frameRateControlEnabled == otherCameraProperties.frameRateControlEnabled) &&
+				(colorImageType == otherCameraProperties.colorImageType) &&
+				(polarImageType == otherCameraProperties.polarImageType) &&
+				(redGain == otherCameraProperties.redGain) && // TODO: these could be removed from this check, right?
+				(greenGain == otherCameraProperties.greenGain) &&
+				(blueGain == otherCameraProperties.blueGain) &&
+				(isEqualExposurePulseEnabled == otherCameraProperties.isEqualExposurePulseEnabled) &&
+				(equalExposurePulseWidth == otherCameraProperties.equalExposurePulseWidth);
+		}
+
+		/// <summary>
+		/// 
+		///  Copy the settings from another image property structure
+		/// 
+		/// </summary>
+		/// <param name="otherCameraProperties"></param>
+		void CopyFrom(_CameraProperties& otherCameraProperties)
+		{
+			exposureTime_us = otherCameraProperties.exposureTime_us;
+			roiBinX = otherCameraProperties.roiBinX;
+			roiBinY = otherCameraProperties.roiBinY;
+			roiBottom = otherCameraProperties.roiBottom;
+			roiLeft = otherCameraProperties.roiLeft;
+			roiRight = otherCameraProperties.roiRight;
+			roiTop = otherCameraProperties.roiTop;
+			triggerMode = otherCameraProperties.triggerMode;
+			triggerPolarity = otherCameraProperties.triggerPolarity;
+			bitPerPixel = otherCameraProperties.bitPerPixel;
+			pixelSizeXUM = otherCameraProperties.pixelSizeXUM;
+			pixelSizeYUM = otherCameraProperties.pixelSizeYUM;
+			numImagesToBuffer = otherCameraProperties.numImagesToBuffer;
+			readOutSpeedIndex = otherCameraProperties.readOutSpeedIndex;
+			numChannels = otherCameraProperties.numChannels;
+			channelBitmask = otherCameraProperties.channelBitmask;
+			averageMode = otherCameraProperties.averageMode;
+			averageNum = otherCameraProperties.averageNum;
+			numFrame = otherCameraProperties.numFrame;
+			dmaBufferCount = otherCameraProperties.dmaBufferCount;
+			verticalFlip = otherCameraProperties.verticalFlip;
+			horizontalFlip = otherCameraProperties.horizontalFlip;
+			imageAngle = otherCameraProperties.imageAngle;
+			widthPx = otherCameraProperties.widthPx;
+			heightPx = otherCameraProperties.heightPx;
+			hotPixelEnabled = otherCameraProperties.hotPixelEnabled;
+			hotPixelThreshold = otherCameraProperties.hotPixelThreshold;
+			gain = otherCameraProperties.gain;
+			blackLevel = otherCameraProperties.blackLevel;
+			frameRateControlEnabled = otherCameraProperties.frameRateControlEnabled;
+			frameRateControlValue = otherCameraProperties.frameRateControlValue;
+			colorImageType = otherCameraProperties.colorImageType;
+			polarImageType = otherCameraProperties.polarImageType;
+			redGain = otherCameraProperties.redGain;
+			greenGain = otherCameraProperties.greenGain;
+			blueGain = otherCameraProperties.blueGain;
+			isEqualExposurePulseEnabled = otherCameraProperties.isEqualExposurePulseEnabled;
+			equalExposurePulseWidth = otherCameraProperties.equalExposurePulseWidth;
+			whiteBalanceFrameCount = otherCameraProperties.whiteBalanceFrameCount;
+			isAutoWhiteBalanceEnabled = otherCameraProperties.isAutoWhiteBalanceEnabled;
+			oneShotWhiteBalanceFlag = otherCameraProperties.oneShotWhiteBalanceFlag;
+		}
+
+		/// <summary>
+		/// 
+		///  Copy the settings from another image property structure - ONLY ASYNC PARAMS
+		///	 This means only parameters that are expected to be nudged by the camera
+		/// 
+		/// </summary>
+		/// <param name="otherCameraProperties"></param>
+		void CopyNudgedParamsFrom(_CameraProperties& otherCameraProperties)
+		{
+			exposureTime_us = otherCameraProperties.exposureTime_us;
+			roiBottom = otherCameraProperties.roiBottom;
+			roiLeft = otherCameraProperties.roiLeft;
+			roiRight = otherCameraProperties.roiRight;
+			roiTop = otherCameraProperties.roiTop;
+			pixelSizeXUM = otherCameraProperties.pixelSizeXUM;
+			pixelSizeYUM = otherCameraProperties.pixelSizeYUM;
+			widthPx = otherCameraProperties.widthPx;
+			heightPx = otherCameraProperties.heightPx;
+			frameRateControlValue = otherCameraProperties.frameRateControlValue;
+			equalExposurePulseWidth = otherCameraProperties.equalExposurePulseWidth;
+		}
+
+	}CameraProperties, *pCameraProperties;
 
 	typedef struct _ImageProperties
 	{
@@ -80,6 +221,29 @@ extern "C"
 		double paramDefault;
 	} TSI_ParamInfo;
 
+	// TODO: not static, just parameters that are host side only or can be safely cached and don't need to be queried from camera 
+	// Camera parameters that will be considered static while the camera is open and don't need to be read from the camera every time.
+	typedef struct _StaticCameraParams
+	{
+		std::string camName;
+		std::string camSerial;
+		std::string camModel;
+		void* cameraHandle;
+		void* colorProcessorHandle;
+		void* colorProcessorHandleForWhiteBalance;
+		void* polarProcessorHandle;
+		TL_CAMERA_USB_PORT_TYPE cameraInterfaceType;
+		TL_CAMERA_SENSOR_TYPE cameraSensorType;
+		TL_POLARIZATION_PROCESSOR_POLAR_PHASE cameraPolarPhase;
+		bool isCameraRunning;
+		bool isHardwareTriggerSupported;
+		bool isBulbModeSupported;
+		bool isEqualExposurePulseSupported;
+		bool isFrameRateControlSupported;
+		bool resyncFlag;
+		long long framesProcessedSinceStart;
+	} StaticCameraParams;
+
 	class ThorCam: ICamera
 	{
 	private:
@@ -88,31 +252,29 @@ extern "C"
 		static bool _instanceFlag;
 		static std::shared_ptr <ThorCam> _single;
 
-		static bool _sdkIsOpen;
-		static std::string _camName[MAX_CAM_NUM];
-		static std::string _camSerial[MAX_CAM_NUM];
-		static void* _camera[MAX_CAM_NUM];
-		static TL_CAMERA_USB_PORT_TYPE _cameraInterfaceType[MAX_CAM_NUM];
+		static bool _isCameraSdkOpen;
+		static bool _isColorSdkOpen;
+		static bool _isPolarSdkOpen;
+		static StaticCameraParams _cameraParams[MAX_CAM_NUM];
 		static unsigned long long _bufferImageIndex;
 		static ThreadSafeMem<USHORT> _pFrmDllBuffer[MAX_DMABUFNUM];
 		static ThreadSafeQueue<ImageProperties> _imagePropertiesQueue;
-		static ImgPty _imgPtyDll;///<settings data structure
-		static unsigned long _expectedImageSize;
+		static unsigned long _expectedImageSizeFromCamera;
+		static unsigned long _expectedProcessedImageSize;
 		static unsigned long _lastCopiedImageSize;
 		static unsigned long long _frameCountOffset;
 		static long _1stSet_Frame;
 		static long  _numCameras;
 		static long _camID;
 		static wchar_t _errMsg[MSG_SIZE];
-		static bool _cameraRunning[MAX_CAM_NUM];
 		static HANDLE _hStopAcquisition; ///<event to stop frame acquisition
 		static long _maxFrameCountReached; ///<flag after exceed max frame count
 		static HANDLE _hFrmBufHandle; ///<Mutex to claim the exclusive access to the buffer
 
 		USHORT* _intermediateBuffer;
-		ImgPty _ImgPty;
-		ImgPty _ImgPty_Pre;
-		ImgPty _ImgPty_SetSettings;
+		CameraProperties _CameraProperties_UI;
+		static CameraProperties _CameraProperties_Active;
+
 		wchar_t * _pDetectorName;
 		wchar_t * _pSerialNumber;
 		unsigned long long _lastImage;
@@ -121,6 +283,7 @@ extern "C"
 		long _lastDMABufferCount;
 		std::map<long, TSI_ParamInfo*> _cameraMapParams;
 		long _forceSettingsUpdate;
+		std::mutex _paramSyncLock;
 
 		//range values
 		int _hbinRange[2];
@@ -167,8 +330,124 @@ extern "C"
 		static bool IsOpen(const long cameraIndex);
 		static void LogMessage(wchar_t *message,long eventLevel);///<Send a message to the log file
 		void ProcessAverageFrame(unsigned short* dst, unsigned long previousDMAIndex);
-		long SetBdDMA(ImgPty *pImgPty);
+		long SyncActiveCameraProperties(CameraProperties *pCameraProperties);
 		static void StopCamera(long cameraIndex);
+		static void ApplyGreyWorldColorBalance(unsigned short* imageData, int xOrigin, int yOrigin, int width, int height, int imageWidth, float* redGain, float* greenGain, float* blueGain);
+		void ProcessColor(unsigned short* input, unsigned short* output, const ImageProperties& imageProperties, FrameInfoStruct* frameInfo);
+		void ProcessPolar(unsigned short* input, unsigned short* output, const ImageProperties& imageProperties, FrameInfoStruct* frameInfo);
+		long SetROI(int left, int right, int top, int bottom);
+
+		//inline functions
+		inline static void HandleSDKError(const char* errorMsg, int lineNumber, const char* functionName, bool isThrow)
+		{
+			std::wstring errorMessageW;
+
+			wstring errorMsg_wide;
+			wstring functionName_wide;
+			CharStringIntoWString(errorMsg, errorMsg_wide);
+			CharStringIntoWString(functionName, functionName_wide);
+
+			StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorTSI_CS Error: call to \"%ls\" (ln. %d) returned error: \"%ls\"", functionName_wide.c_str(), lineNumber, errorMsg_wide.c_str());
+			if (isThrow)
+			{
+				ThorCam::getInstance()->LogMessage(_errMsg, ERROR_EVENT);
+				GetLastError();
+				throw "fnCall";
+			}
+			else
+			{
+				ThorCam::getInstance()->LogMessage(_errMsg, INFORMATION_EVENT);
+			}
+		}
+
+		inline static void HandlePolarSDKError(int errorCode, int lineNumber, const char* functionName, bool isThrow)
+		{
+			// Because polar SDK does not have a 'get last error', implement a version of that here
+			std::string errorMsg;
+			auto error = static_cast<TL_POLARIZATION_PROCESSOR_ERROR>(errorCode);
+
+			switch (errorCode)
+			{
+			case TL_POLARIZATION_PROCESSOR_ERROR_MODULE_NOT_INITIALIZED:
+			{
+				errorMsg = "Attempted to use polarization processor module before it was initialized.";
+				break;
+			}
+			case TL_POLARIZATION_PROCESSOR_ERROR_MEMORY_ALLOCATION_FAILURE:
+			{
+				errorMsg = "Unable to allocate memory for polarization processing.";
+				break;
+			}
+			case TL_POLARIZATION_PROCESSOR_ERROR_NULL_INSTANCE_HANDLE:
+			{
+				errorMsg = "A null polar processor handle was passed to polar processing module.";
+				break;
+			}
+			case TL_POLARIZATION_PROCESSOR_ERROR_NULL_INPUT_BUFFER_POINTER:
+			{
+				errorMsg = "A null input buffer was passed to a polar transform function.";
+				break;
+			}
+			case TL_POLARIZATION_PROCESSOR_ERROR_ALL_OUTPUT_BUFFER_POINTERS_ARE_NULL:
+			{
+				errorMsg = "None of the output buffers of a polar transform function call were non-null. Set at least one output buffer to a valid buffer with a size that is large enough to fit the requested image.";
+				break;
+			}
+			case TL_POLARIZATION_PROCESSOR_ERROR_IDENTICAL_INPUT_AND_OUTPUT_BUFFERS:
+			{
+				errorMsg = "Polar transform cannot use the input buffer as the output buffer. Please allocate and/or choose a different output buffer location.";
+				break;
+			}
+			case TL_POLARIZATION_PROCESSOR_ERROR_DUPLICATE_OUTPUT_BUFFER:
+			{
+				errorMsg = "Duplicate output buffers were found during polar transformation. Please use unique buffers for each desired transformation output.";
+				break;
+			}
+			case TL_POLARIZATION_PROCESSOR_ERROR_INVALID_POLAR_PHASE:
+			{
+				errorMsg = "An unknown polar phase was passed into a polar transform function.";
+				break;
+			}
+			case TL_POLARIZATION_PROCESSOR_ERROR_INVALID_MAX_SCALING_VALUE:
+			{
+				errorMsg = "An invalid maximum scaling value was passed into a polar transform function.";
+				break;
+			}
+			case TL_POLARIZATION_PROCESSOR_ERROR_INVALID_IMAGE_WIDTH:
+			{
+				errorMsg = "An invalid image width was passed into a polar transform function.";
+				break;
+			}
+			case TL_POLARIZATION_PROCESSOR_ERROR_INVALID_IMAGE_HEIGHT:
+			{
+				errorMsg = "An invalid image height was passed into a polar transform function.";
+				break;
+			}
+			case TL_POLARIZATION_PROCESSOR_ERROR_INVALID_IMAGE_DATA_BIT_DEPTH:
+			{
+				errorMsg = "An invalid image bit depth was passed into a polar transform function.";
+				break;
+			}
+			case TL_POLARIZATION_PROCESSOR_ERROR_INITIALIZATION_ERROR:
+			{
+				errorMsg = "An error occurred during initialization of the polar processing module. Please check that all polarization DLLs are discoverable from this application.";
+				break;
+			}
+			case TL_POLARIZATION_PROCESSOR_ERROR_TERMINATION_ERROR:
+			{
+				errorMsg = "An error occurred during termination of the polar processing module.";
+				break;
+			}
+			case TL_POLARIZATION_PROCESSOR_ERROR_UNKNOWN:
+			default:
+			{
+				errorMsg = "Unknown issue occurred in the polarization processor module.";
+				break;
+			}
+			}
+
+			HandleSDKError(errorMsg.c_str(), lineNumber, functionName, isThrow);
+		}
 
 	public:
 		static ThorCam* getInstance();

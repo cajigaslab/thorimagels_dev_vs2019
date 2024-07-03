@@ -1,6 +1,7 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "stdafx.h"
 #include "ThorImageProcess.h"
+#include "ImageDistortionCorrection.h"
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -107,4 +108,14 @@ DllExportImageProcess FilterImage(USHORT* srcImage, USHORT width, USHORT height,
 DllExportImageProcess GetArea(USHORT* imag, USHORT width, USHORT height,int roiCount, long* area, int minLabel)
 {
 	return ImageProcess::getInstance()->GetArea(imag, width, height, roiCount,area,minLabel);
+}
+
+DllExportImageProcess SetImageDistortionCorrectionParameters(int imageWidth, int imageHeight, double xAngleMax, double yAngleMax, double galvoTiltAngle, double scanLensFocalLength)
+{
+	return ImageDistortionCorrection::getInstance()->SetImageDistortionCorrectionParameters(imageWidth, imageHeight, xAngleMax, yAngleMax, galvoTiltAngle, scanLensFocalLength);
+}
+
+DllExportImageProcess CorrectPreludeImageDistortion(const USHORT* srcImage, USHORT* dstImage, int width, int height)
+{
+	return ImageDistortionCorrection::getInstance()->CorrectPreludeImageDistortion(srcImage, dstImage, width, height);
 }

@@ -358,6 +358,12 @@ long ThorCam::SetParam(const long paramID, const double param)
 			ret = TRUE;
 		}
 		break;
+	case ICamera::PARAM_NIR_BOOST:
+		{
+			_ImgPty_SetSettings.isNirBoostEnabled = (uint32_t)param;
+			ret = TRUE;
+		}
+		break;
 	default :
 		{
 			StringCbPrintfW(_errMsg,MSG_SIZE,L"Parameter (%d) not implemented",paramID);
@@ -476,6 +482,12 @@ long ThorCam::GetParam(const long paramID, double &param)
 	case ICamera::PARAM_GAIN:
 		{
 			param = _ImgPty_SetSettings.gain;
+			ret = TRUE;
+		}
+		break;
+	case ICamera::PARAM_GAIN_TYPE:
+		{
+			param = GainType::CONTIGUOUS;
 			ret = TRUE;
 		}
 		break;
@@ -622,6 +634,12 @@ long ThorCam::GetParam(const long paramID, double &param)
 	case ICamera::PARAM_LSM_FORCE_SETTINGS_UPDATE:
 		{
 			param = _forceSettingsUpdate;
+			ret = TRUE;
+		}
+		break;
+	case ICamera::PARAM_NIR_BOOST:
+		{
+			param = _ImgPty_SetSettings.isNirBoostEnabled;
 			ret = TRUE;
 		}
 		break;
@@ -1008,6 +1026,24 @@ long ThorCam::GetParamInfo(const long paramID, long &paramType, long &paramAvail
 			paramReadOnly	= FALSE;
 			ret				= TRUE;
 			break;
+		case ICamera::PARAM_GAIN_TYPE:
+			paramType = ICamera::TYPE_LONG;
+			paramAvailable	= TRUE;
+			paramMin		= 0;
+			paramMax		= (int)GainType::GAIN_TYPE_LAST;
+			paramDefault	= (int)GainType::UNSUPPORTED;
+			paramReadOnly	= TRUE;
+            ret             = TRUE;
+            break;
+		case ICamera::PARAM_NIR_BOOST:
+			paramType		= ICamera::TYPE_LONG;
+			paramAvailable	= _cameraMapParams[TSI_PARAM_QX_OPTION_MODE]->paramMax > 0;
+			paramMin		= 0;
+			paramMax		= 1;
+			paramDefault	= 0;
+			paramReadOnly	= FALSE;
+			ret				= TRUE;
+			break;
 		default:
 			ret				= FALSE;
 			paramAvailable	= FALSE;
@@ -1069,41 +1105,46 @@ long ThorCam::GetParamBuffer(const long paramID, char * buf, long size)
 long ThorCam::BuildTsiParamInfoMap(const unsigned long cameraIndex)
 {
 	if (0 > cameraIndex) return FALSE;
-	const unsigned long i = cameraIndex;
+	const unsigned long cameraIdx = cameraIndex;
 	_cameraMapParams.clear();
 
 	//Query te camera for parameter ranges and availability
 	TSI_ParamInfo* tsiParamInfo = new TSI_ParamInfo;;
 	tsiParamInfo->tsiParamID = TSI_PARAM_READOUT_SPEED;
-	GetTsiParamInfo(tsiParamInfo, i);
+	GetTsiParamInfo(tsiParamInfo, cameraIdx);
 	_cameraMapParams.insert(std::pair<long, TSI_ParamInfo*>(PARAM_READOUT_SPEED_VALUE, tsiParamInfo));
 
 	tsiParamInfo = new TSI_ParamInfo;;
 	tsiParamInfo->tsiParamID = TSI_PARAM_READOUT_SPEED_INDEX;
-	GetTsiParamInfo(tsiParamInfo, i);
+	GetTsiParamInfo(tsiParamInfo, cameraIdx);
 	_cameraMapParams.insert(std::pair<long, TSI_ParamInfo*>(PARAM_READOUT_SPEED_INDEX, tsiParamInfo));
 
 	tsiParamInfo = new TSI_ParamInfo;
 	tsiParamInfo->tsiParamID = TSI_PARAM_GAIN;
-	GetTsiParamInfo(tsiParamInfo, i);
+	GetTsiParamInfo(tsiParamInfo, cameraIdx);
 	_cameraMapParams.insert(std::pair<long, TSI_ParamInfo*>(PARAM_GAIN, tsiParamInfo));
 
 	tsiParamInfo = new TSI_ParamInfo;
 	tsiParamInfo->tsiParamID = TSI_PARAM_TAPS_INDEX;
-	GetTsiParamInfo(tsiParamInfo, i);
+	GetTsiParamInfo(tsiParamInfo, cameraIdx);
 	_cameraMapParams.insert(std::pair<long, TSI_ParamInfo*>(PARAM_TAP_INDEX, tsiParamInfo));
 
 	tsiParamInfo = new TSI_ParamInfo;
 	tsiParamInfo->tsiParamID = TSI_PARAM_TAPS_VALUE;
-	GetTsiParamInfo(tsiParamInfo, i);
+	GetTsiParamInfo(tsiParamInfo, cameraIdx);
 	_cameraMapParams.insert(std::pair<long, TSI_ParamInfo*>(PARAM_TAP_VALUE, tsiParamInfo));
+
+	tsiParamInfo = new TSI_ParamInfo;
+	tsiParamInfo->tsiParamID = TSI_PARAM_QX_OPTION_MODE;
+	GetTsiParamInfo(tsiParamInfo, cameraIdx);
+	_cameraMapParams.insert(std::pair<long, TSI_ParamInfo*>(TSI_PARAM_QX_OPTION_MODE, tsiParamInfo));
 
 	unsigned int param = 0;
 
 	//Some parameters don't have a range option. Get the maximum sizes. HSize and VSize are the max pixels for X and Y
 	tsiParamInfo = new TSI_ParamInfo;
 	tsiParamInfo->tsiParamID = TSI_PARAM_HSIZE;
-	GetTsiParameter_uint(i, tsiParamInfo->tsiParamID, param);
+	GetTsiParameter_uint(cameraIdx, tsiParamInfo->tsiParamID, param);
 	tsiParamInfo->paramAvailable = TRUE;
 	tsiParamInfo->paramReadOnly = FALSE;
 	tsiParamInfo->paramType = ICamera::ParamType::TYPE_LONG;
@@ -1119,7 +1160,7 @@ long ThorCam::BuildTsiParamInfoMap(const unsigned long cameraIndex)
 	}
 	tsiParamInfo = new TSI_ParamInfo;
 	tsiParamInfo->tsiParamID = TSI_PARAM_VSIZE;
-	GetTsiParameter_uint(i, tsiParamInfo->tsiParamID, param);
+	GetTsiParameter_uint(cameraIdx, tsiParamInfo->tsiParamID, param);
 	tsiParamInfo->paramAvailable = TRUE;
 	tsiParamInfo->paramReadOnly = FALSE;
 	tsiParamInfo->paramType = ICamera::ParamType::TYPE_LONG;
@@ -1135,7 +1176,7 @@ long ThorCam::BuildTsiParamInfoMap(const unsigned long cameraIndex)
 	}
 	tsiParamInfo = new TSI_ParamInfo;
 	tsiParamInfo->tsiParamID = TSI_PARAM_HSIZE;
-	GetTsiParameter_uint(i, tsiParamInfo->tsiParamID, param);
+	GetTsiParameter_uint(cameraIdx, tsiParamInfo->tsiParamID, param);
 	tsiParamInfo->paramAvailable = TRUE;
 	tsiParamInfo->paramReadOnly = FALSE;
 	tsiParamInfo->paramType = ICamera::ParamType::TYPE_LONG;
@@ -1146,7 +1187,7 @@ long ThorCam::BuildTsiParamInfoMap(const unsigned long cameraIndex)
 
 	tsiParamInfo = new TSI_ParamInfo;
 	tsiParamInfo->tsiParamID = TSI_PARAM_VSIZE;
-	GetTsiParameter_uint(i, tsiParamInfo->tsiParamID, param);
+	GetTsiParameter_uint(cameraIdx, tsiParamInfo->tsiParamID, param);
 	tsiParamInfo->paramAvailable = TRUE;
 	tsiParamInfo->paramReadOnly = FALSE;
 	tsiParamInfo->paramType = ICamera::ParamType::TYPE_LONG;
@@ -1178,7 +1219,7 @@ long ThorCam::BuildTsiParamInfoMap(const unsigned long cameraIndex)
 	//move frome here
 	tsiParamInfo = new TSI_ParamInfo;
 	tsiParamInfo->tsiParamID = TSI_PARAM_BITS_PER_PIXEL;
-	GetTsiParameter_uint(i, tsiParamInfo->tsiParamID, param);
+	GetTsiParameter_uint(cameraIdx, tsiParamInfo->tsiParamID, param);
 	tsiParamInfo->paramAvailable = TRUE;
 	tsiParamInfo->paramReadOnly = TRUE;
 	tsiParamInfo->paramType = ICamera::ParamType::TYPE_LONG;
@@ -1190,7 +1231,7 @@ long ThorCam::BuildTsiParamInfoMap(const unsigned long cameraIndex)
 	float paramf = 0;
 	tsiParamInfo = new TSI_ParamInfo;
 	tsiParamInfo->tsiParamID = TSI_PARAM_PIXEL_SIZE;
-	GetTsiParameter_float(i, tsiParamInfo->tsiParamID, paramf);
+	GetTsiParameter_float(cameraIdx, tsiParamInfo->tsiParamID, paramf);
 	tsiParamInfo->paramAvailable = TRUE;
 	tsiParamInfo->paramReadOnly = TRUE;
 	tsiParamInfo->paramType = ICamera::ParamType::TYPE_DOUBLE;

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <ThorDetectorSettings>
-  <Detector1 portID="56" baudRate="460800" serialNumber="" type="" />
-  <Detector2 portID="57" baudRate="460800" serialNumber="" type="" />
-  <Detector3 portID="58" baudRate="460800" serialNumber="" type="" />
-  <Detector4 portID="59" baudRate="460800" serialNumber="" type="" />
-  <Detector5 portID="60" baudRate="460800" serialNumber="" type="" />
-  <Detector6 portID="61" baudRate="460800" serialNumber="" type="" />
+  <Detector1 portID="56" baudRate="460800" serialNumber="" type="" HPDAllowGainModification="0" />
+  <Detector2 portID="57" baudRate="460800" serialNumber="" type="" HPDAllowGainModification="0" />
+  <Detector3 portID="58" baudRate="460800" serialNumber="" type="" HPDAllowGainModification="0" />
+  <Detector4 portID="59" baudRate="460800" serialNumber="" type="" HPDAllowGainModification="0" />
+  <Detector5 portID="60" baudRate="460800" serialNumber="" type="" HPDAllowGainModification="0" />
+  <Detector6 portID="61" baudRate="460800" serialNumber="" type="" HPDAllowGainModification="0" />
 </ThorDetectorSettings>

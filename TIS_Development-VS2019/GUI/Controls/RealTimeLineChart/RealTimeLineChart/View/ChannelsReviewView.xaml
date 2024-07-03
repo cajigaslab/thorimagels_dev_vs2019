@@ -101,6 +101,7 @@
                     </StackPanel>
                 </StackPanel>
             </StackPanel>
+            
             <Rectangle VerticalAlignment="Stretch"
                        Width="2"
                        Margin="0,2,0,2"
@@ -144,6 +145,80 @@
                         <TextBlock Text="Cursor"
                                    HorizontalAlignment="Center"
                                    Foreground="White" />
+                    </StackPanel>
+                </Button>
+                <Button Name="CursorFrame"
+                        Visibility="{Binding Path=FrameButtonVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                        Width="65"
+                        Height="65"
+                        Margin="1"
+                        Command="{Binding Path=ShowFrameCursorCommand}">
+                    <StackPanel Width="60"
+                                Height="60">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel"
+                                   BasedOn="{StaticResource {x:Type StackPanel}}">
+                                <Setter Property="Background"
+                                        Value="#FF333333" />
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=IsMouseOver}"
+                                                       Value="True" />
+                                            <Condition Binding="{Binding Path=IsFrameCursorVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                       Value="False" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Background"
+                                                Value="{StaticResource DarkBrush}" />
+                                    </MultiDataTrigger>
+                                    <DataTrigger Binding="{Binding Path=IsFrameCursorVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Value="True">
+                                        <Setter Property="Background"
+                                                Value="LimeGreen" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <Image Source="/RealTimeLineChart;component/Icons/SquareWave.png"
+                               Height="33"
+                               HorizontalAlignment="Center" 
+                               Margin="0,-.5,0,-3"/>
+                        <TextBlock Text="Frame"
+                                   HorizontalAlignment="Center"
+                                   Foreground="White" 
+                                   Margin="0,0,0,-3"/>
+                        <TextBlock Text="Counter"
+                                   HorizontalAlignment="Center"
+                                   Foreground="White" />
+                    </StackPanel>
+                </Button>
+                <Button Name="ExportFrameTimes"
+                Visibility="{Binding Path=FrameButtonVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+        Width="65"
+        Height="65"
+        Margin="1"
+        Command="{Binding Path=ShowExportCommand}">
+                    <StackPanel Width="60"
+                Height="60">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel"
+                   BasedOn="{StaticResource {x:Type StackPanel}}">
+                                <Setter Property="Background"
+                        Value="#FF333333" />
+                                
+                            </Style>
+                        </StackPanel.Style>
+                        <Image Source="/RealTimeLineChart;component/Icons/Export.png"
+               Height="33"
+               HorizontalAlignment="Center" 
+               Margin="5,-.5,0,-3"/>
+                        <TextBlock Text="Export"
+                   HorizontalAlignment="Center"
+                   Foreground="White" 
+                   Margin="0,0,0,-3"/>
+                        <TextBlock Text="Timing"
+                   HorizontalAlignment="Center"
+                   Foreground="White" />
                     </StackPanel>
                 </Button>
                 <Button Margin="1"
@@ -297,6 +372,7 @@
                                                HorizontalAlignment="Center" />
                                 </StackPanel>
                             </Button>
+
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>
@@ -305,11 +381,83 @@
                        Width="2"
                        Margin="0,2,0,2"
                        Fill="#FF474747" />
-            <View:VisibilityChoiceView />
+
+            <StackPanel Visibility = "{Binding IPCEnabled}">
+                <StackPanel Orientation="Vertical"
+                            Width="140"
+                            VerticalAlignment="Top">
+                            
+                    <CheckBox Name="ThorImageLS"
+                              Content="Remote Connection"
+                              Margin="1"
+                              Foreground="White"
+                              VerticalAlignment="Center"
+                              HorizontalAlignment="Center"
+                              IsChecked="{Binding ThorImageLSConnectionStats}">
+                        <CheckBox.Style>
+                            <Style TargetType="CheckBox">
+                                <Style.Triggers>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter Property="Background" Value="Green"/>
+                                    </Trigger>
+                                    <Trigger Property="IsChecked" Value="False">
+                                        <Setter Property="Background" Value="{StaticResource DarkBrush}"/>
+                                    </Trigger>
+                                    <DataTrigger Binding="{Binding IsBlinking}" Value="True">
+                                        <DataTrigger.EnterActions>
+                                            <BeginStoryboard>
+                                                <Storyboard RepeatBehavior="Forever">
+                                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" 
+                                                                     AutoReverse="True"
+                                                                     From="1.0"
+                                                                     To="0.0" 
+                                                                     Duration="0:0:0.5">
+                                                    </DoubleAnimation>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </DataTrigger.EnterActions>
+                                        <DataTrigger.ExitActions>
+                                            <BeginStoryboard>
+                                                <Storyboard RepeatBehavior="Forever">
+                                                    <DoubleAnimation Storyboard.TargetProperty="Opacity"                                                                   
+                                                                     To="1.0" 
+                                                                     Duration="0:0:0">
+                                                    </DoubleAnimation>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </DataTrigger.ExitActions>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </CheckBox.Style>
+                    </CheckBox>
+                    <Button Name="ConnectionSetting"
+                            Margin="1"
+                            PreviewMouseDown="ConnectSetting_PreviewMouseDown"
+                            Style="{StaticResource ButtonNoOutlineStyle}">
+                        <StackPanel>
+                            <Image Source="/RealTimeLineChart;component/Icons/ConnectionSetting.png"
+                                   Height="30"
+                                   HorizontalAlignment="Center" />
+                            <TextBlock Text="Connection Settings"
+                                       HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
             <Rectangle VerticalAlignment="Stretch"
                        Width="2"
                        Margin="0,2,0,2"
                        Fill="#FF474747" />
-        </StackPanel>
+                <View:VisibilityChoiceView />
+            <Rectangle VerticalAlignment="Stretch"
+                       Width="2"
+                       Margin="0,2,0,2"
+                       Fill="#FF474747" />
+
+            
+            
+            </StackPanel>
+        
     </Grid>
 </UserControl>

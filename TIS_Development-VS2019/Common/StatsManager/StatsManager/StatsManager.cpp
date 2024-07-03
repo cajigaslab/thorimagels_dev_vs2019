@@ -88,10 +88,8 @@ long StatsManager::_lineProfileImgHeight = 0;
 long StatsManager::_lineProfileImgWidth = 0;
 long StatsManager::_lineProfileLineWidth = 1;
 long StatsManager::_lineProfileNumChannel = 0;
-long StatsManager::_lineP1X = 0;
-long StatsManager::_lineP1Y = 0;
-long StatsManager::_lineP2X = 0;
-long StatsManager::_lineP2Y = 0;
+vector<long> StatsManager::_polylinePX = vector<long>();
+vector<long>StatsManager::_polylinePY = vector<long>();
 long StatsManager::_includeLineProfileInStatsCalc = FALSE;
 long StatsManager::_lineIsActive = FALSE;
 long StatsManager::_lineProfileImgBufferSize = 0;
@@ -671,7 +669,7 @@ UINT StatsThreadProc( LPVOID pParam )
 		const long imgHeight  = StatsManager::_imgHeight;
 		const BufferType bufferType  = StatsManager::_bufferType;
 		if (TRUE == StatsManager::_includeLineProfileInStatsCalc && NULL != (*(StatsManager::_pushLineProfileFuncPtr)))
-		{			
+		{
 			if (TRUE == StatsManager::_lineIsActive)
 			{
 				Lock lock(StatsManager::_critSect);
@@ -681,13 +679,14 @@ UINT StatsThreadProc( LPVOID pParam )
 
 				long chanEnableBin = 0;
 				double* lineProfileBuffer = NULL;
-				long lineProfileLength = 0;				
+				long lineProfileLength = 0;
+				long reaLineLength = 0;
 				long nChannel = 0;
 
-				StatsManager::GetLineProfileData(lineProfileBuffer,lineProfileLength, chanEnableBin, nChannel);
+				StatsManager::GetLineProfileData(lineProfileBuffer, lineProfileLength, reaLineLength, chanEnableBin, nChannel);
 				if (NULL != lineProfileBuffer)
-					(*(StatsManager::_pushLineProfileFuncPtr))(lineProfileBuffer,lineProfileLength,chanEnableBin, nChannel);			
-				SAFE_DELETE_MEMORY(lineProfileBuffer);
+					(*(StatsManager::_pushLineProfileFuncPtr))(lineProfileBuffer, lineProfileLength, reaLineLength, chanEnableBin, nChannel);
+				SAFE_DELETE_ARRAY(lineProfileBuffer);
 			}
 		}
 
@@ -902,7 +901,7 @@ UINT StatsThreadProc( LPVOID pParam )
 	return 0;
 }
 
-UINT LineProfileThreadProc( LPVOID pParam )
+UINT LineProfileThreadProc(LPVOID pParam)
 {
 	if (NULL != (*(StatsManager::_pushLineProfileFuncPtr)))
 	{
@@ -914,12 +913,13 @@ UINT LineProfileThreadProc( LPVOID pParam )
 
 		double* lineProfileBuffer = NULL;
 		long lineProfileLength = 0;
+		long reaLineLength = 0;
 		long channelEnableBinary = 0;
 		long numChannel = 0;
 
-		StatsManager::GetLineProfileData(lineProfileBuffer,lineProfileLength,channelEnableBinary,numChannel);
+		StatsManager::GetLineProfileData(lineProfileBuffer, lineProfileLength, reaLineLength, channelEnableBinary, numChannel);
 		if (NULL != lineProfileBuffer)
-			(*(StatsManager::_pushLineProfileFuncPtr))(lineProfileBuffer,lineProfileLength,channelEnableBinary,numChannel);
+			(*(StatsManager::_pushLineProfileFuncPtr))(lineProfileBuffer, lineProfileLength, reaLineLength, channelEnableBinary, numChannel);
 		SAFE_DELETE_MEMORY(lineProfileBuffer);
 	}
 	return 0;
@@ -1153,7 +1153,7 @@ long StatsManager::ComputeStats(unsigned short *data, FrameInfoStruct frameInfo,
 
 		long bufferLength = ( 1 == _numChannel) ? _imgWidth * _imgHeight : _imgWidth * _imgHeight * MAX_CHANNEL_COUNT;
 		long dflimHistogramLength = ( 1 == _numChannel) ? DFLIM_HISTOGRAM_BINS : DFLIM_HISTOGRAM_BINS * MAX_CHANNEL_COUNT;
-
+		
 		switch (_bufferType)
 		{
 		case BufferType::DFLIM_ALL:
@@ -1536,29 +1536,34 @@ long StatsManager::GetImageThreadBusyStatus()
 	return _isImageThreadActive;
 }
 
-long StatsManager::SetLineProfileLine(long p1X, long p1Y, long p2X, long p2Y, long lineIsActive)
-{	
+long StatsManager::SetLineProfileLine(long* pX, long* pY, long numberOfPoints, long lineIsActive)
+{
 	long ret = TRUE;
-	_lineP1X = p1X;
-	_lineP1Y = p1Y;
-	_lineP2X = p2X;
-	_lineP2Y = p2Y;
+
+	_polylinePX.clear();
+	_polylinePY.clear();
+
+	for (int p = 0; p < numberOfPoints; ++p)
+	{
+		_polylinePX.push_back(pX[p]);
+		_polylinePY.push_back(pY[p]);
+	}
 
 	if (TRUE == lineIsActive)
 	{
 		// do stats calculation using imagestats
 		DWORD dwThreadId;
 
-		CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE) LineProfileThreadProc, 0, 0, &dwThreadId );
+		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)LineProfileThreadProc, 0, 0, &dwThreadId);
 	}
 
-	if (FALSE == lineIsActive &&  _lineIsActive != lineIsActive &&
+	if (FALSE == lineIsActive && _lineIsActive != lineIsActive &&
 		NULL != (*(StatsManager::_pushLineProfileFuncPtr)))
 	{
-		(*(StatsManager::_pushLineProfileFuncPtr))(NULL,0,0, 0);
+		(*(StatsManager::_pushLineProfileFuncPtr))(NULL, 0, 0, 0, 0);
 	}
 
-	//let the higher level function know that there is no line profile
+	//let the higher level function know if there is a line profile
 	_lineIsActive = lineIsActive;
 
 	return ret;
@@ -1656,10 +1661,10 @@ long StatsManager::CopyStatsImageDataToLineImageData()
 	return TRUE;
 }
 
-long StatsManager::GetLineProfileData(double* &resultBuffer, long &length, long &chanEnableBin, long &nChannel)
+long StatsManager::GetLineProfileData(double*& resultBuffer, long& length, long &realLineLength, long& chanEnableBin, long& nChannel)
 {
 	unsigned short* data = _pDataForLine;
-	if(NULL == data)
+	if (NULL == data)
 	{
 		return FALSE;
 	}
@@ -1669,126 +1674,155 @@ long StatsManager::GetLineProfileData(double* &resultBuffer, long &length, long 
 	const long width = StatsManager::_lineProfileImgWidth;
 	const long height = StatsManager::_lineProfileImgHeight;
 
-	long p1x = StatsManager::_lineP1X;
-	long p1y = StatsManager::_lineP1Y;
-	long p2x = StatsManager::_lineP2X;
-	long p2y = StatsManager::_lineP2Y;
+	vector<long> px = StatsManager::_polylinePX;
+	vector<long> py = StatsManager::_polylinePY;
 
-	//if both points are outside of the image then return FALSE
-	if ((p1x >= width && p2x >= width) || (p1y >= height && p2y >= height))
+	if (px.size() != py.size() || py.size() < 2) // check if x and y are the same size and if at least 2 valid points
 	{
 		return FALSE;
 	}
-
-	//If any part of the line is outside of the image, truncate it to to avoid fake data or crashes
-	if (p1x >= width || p2x >= width || p1y >= height || p2y >= height )
+	/*No longer needed
+	for (int p = 0; p < _polylinePX.size(); ++p)
 	{
-		double m = 0; 
-		if (p2x == p1x)
+		//if any of the points are outside of the image then return FALSE 
+		if ((px[p] >= width) || (py[p] >= height))
 		{
-			m = INFINITE;
+			return FALSE;
 		}
-		else
-		{
-			m = static_cast<double>(p2y - p1y)/static_cast<double>(p2x - p1x);
-		}
-
-		double b = p1y - m * p1x;
-		if (p1x >= width)
-		{
-			p1x = width - 1;
-			p1y = static_cast<long>(m * p1x + b + .5);
-		}
-		if (p2x >= width)
-		{
-			p2x = width - 1;
-			p2y = static_cast<long>(m * p2x + b + .5);
-		}
-
-		if (p1y >= height)
-		{
-			p1y = height - 1;
-			if (INFINITE == m)
-			{
-				p1x = p2x;
-			}
-			else
-			{
-				p1x = static_cast<long>((p1y - b)/m + 0.5);
-			}
-		}
-		if (p2y >= height)
-		{
-			p2y = height - 1;
-			if (INFINITE == m)
-			{
-				p2x = p1x;
-			}
-			else
-			{
-				p2x = static_cast<long>((p2y - b)/m + 0.5);
-			}
-		}
-	}
-
+	}*/
 	const long numChannel = StatsManager::_lineProfileNumChannel;
 	const long lineWidth = StatsManager::_lineProfileLineWidth;
 	const long channelEnableBinary = StatsManager::_lineProfilechannelEnableBinary;
 
-	bool channelEnable[MAX_CHANNEL_COUNT] = {false};
-	memcpy_s(channelEnable, sizeof(bool)*MAX_CHANNEL_COUNT,StatsManager::_lineProfileChannelEnable, sizeof(bool)*MAX_CHANNEL_COUNT);
-
-	double** sumResults = (double**) malloc(numChannel*sizeof(double*));
+	bool channelEnable[MAX_CHANNEL_COUNT] = { false };
+	memcpy_s(channelEnable, sizeof(bool) * MAX_CHANNEL_COUNT, StatsManager::_lineProfileChannelEnable, sizeof(bool) * MAX_CHANNEL_COUNT);
 
 	long totalStats = 0;
-	long part1 = (p1x - p2x) * (p1x - p2x);
-	long part2 = (p1y - p2y) * (p1y - p2y);
-	long lineLength = (long)sqrt(part1 + part2);
-
-	long j = 0;
-	for (long i = 0; i < MAX_CHANNEL_COUNT; i++)
+	long actualLineLength = 0;
+	vector < vector<vector<double>>> sumResults = vector<vector<vector<double>>>();
+	for (long i = 0; i < MAX_CHANNEL_COUNT;++ i)
 	{
-		if (true == channelEnable[i] && j <=numChannel)
+		long j = 0;
+		if (true == channelEnable[i] && j <= numChannel)
 		{
-			long channelOffset = (numChannel > 1) ? i: 0;
-			long offset = channelOffset*width*height*(BITDEPTH/8);
-			unsigned char* results = (unsigned char*)malloc(lineLength*lineWidth*sizeof(unsigned char*));
-			long arraylenght = LineProfile( ((unsigned char*)(data)) + offset,
-				width,
-				height,
-				BITDEPTH,
-				p1x,
-				p1y,
-				p2x,
-				p2y,
-				lineWidth,
-				results);
-			long dispLen = arraylenght / lineWidth;
-			sumResults[j] = (double*) malloc(dispLen*sizeof(double));
-			totalStats+=dispLen;
-
-			//Sum the data and average to include the different lineWidths on the data
-			for (long k = 0; k < dispLen; k++)
+			sumResults.push_back(vector<vector<double>>());
+			realLineLength = 0;
+			for (int p = 0; p < _polylinePX.size() - 1; ++p)
 			{
-				double sumVal = 0;
-				for (long l = 0; l < lineWidth; l++)
+				long p1x = px[p];
+				long p1y = py[p];
+				long p2x = px[p + 1];
+				long p2y = py[p + 1];
+				//If any part of the line is outside of the image, truncate it to to avoid fake data or crashes
+
+				double m = 0;
+				if (p2x == p1x)
 				{
-					long index = k + l * (dispLen);
-					sumVal += ((unsigned short*)(results))[index];
+					m = INFINITE;
 				}
-				sumResults[j][k] = sumVal / lineWidth;
+				else
+				{
+					m = static_cast<double>(p2y - p1y) / static_cast<double>(p2x - p1x);
+				}
+
+				double b = p1y - m * p1x;
+				if (p1x >= width)
+				{
+					p1x = width - 1;
+					p1y = static_cast<long>(m * p1x + b + .5);
+				}
+				if (p2x >= width)
+				{
+					p2x = width - 1;
+					p2y = static_cast<long>(m * p2x + b + .5);
+				}
+
+				if (p1y >= height)
+				{
+					p1y = height - 1;
+					if (INFINITE == m)
+					{
+						p1x = p2x;
+					}
+					else
+					{
+						p1x = static_cast<long>((p1y - b) / m + 0.5);
+					}
+				}
+				if (p2y >= height)
+				{
+					p2y = height - 1;
+					if (INFINITE == m)
+					{
+						p2x = p1x;
+					}
+					else
+					{
+						p2x = static_cast<long>((p2y - b) / m + 0.5);
+					}
+				}
+
+				long part1 = (p1x - p2x) * (p1x - p2x);
+				long part2 = (p1y - p2y) * (p1y - p2y);
+				long lineLength = (long)sqrt(part1 + part2);
+
+				long channelOffset = (numChannel > 1) ? i : 0;
+				long offset = channelOffset * width * height * (BITDEPTH / 8);
+				unsigned short* results = new unsigned short[lineLength * lineWidth](); //(unsigned char*)malloc(lineLength * lineWidth * sizeof(unsigned char*));
+				long arraylength = LineProfile(((unsigned char*)(data)) + offset,
+					width,
+					height,
+					BITDEPTH,
+					p1x,
+					p1y,
+					p2x,
+					p2y,
+					lineWidth,
+					(unsigned char*)results);
+				long dispLen = arraylength / lineWidth;
+				sumResults[j].push_back(vector<double>());
+				totalStats += dispLen;
+				actualLineLength += lineLength;
+				//Sum the data and average to include the different lineWidths on the data
+				for (long k = 0; k < dispLen; k++)
+				{
+					double sumVal = 0;
+					for (long l = 0; l < lineWidth; l++)
+					{
+						long index = k + l * (dispLen);
+						sumVal += (double)results[index];
+					}
+					sumResults[j][p].push_back(sumVal / lineWidth);
+				}
+				delete[] results;
 			}
 			j++;
 		}
 	}
-	resultBuffer = (double*)malloc(totalStats*sizeof(double*));
-	for (long i = 0; i < numChannel; i++)
+
+	resultBuffer = new double[totalStats];//(double*)malloc(totalStats * sizeof(double*));
+	size_t colorOffset = sumResults.size() > 0 ? totalStats / sumResults.size()  : 0;
+	for (long c = 0; c < sumResults.size(); c++)
 	{
-		memcpy_s(resultBuffer + i*totalStats/numChannel, sizeof(double)*totalStats/numChannel, sumResults[i], sizeof(double)*totalStats/numChannel);
+		size_t offset = 0;
+		
+		for (int p = 0; p < sumResults[c].size(); ++p)
+		{
+			if (sumResults[c][p].size() > 0)
+			{
+				double* sumArray = &sumResults[c][p][0];
+				size_t arraySize = sumResults[c][p].size();
+				memcpy_s(resultBuffer + c * colorOffset + offset, sizeof(double) * arraySize, sumArray, sizeof(double) * arraySize);
+				offset += sumResults[c][p].size();
+			}
+		}
 	}
+
 	length = totalStats;
+	realLineLength = actualLineLength;
 	nChannel = numChannel;
 	chanEnableBin = channelEnableBinary;
+
 	return ret;
 }
 

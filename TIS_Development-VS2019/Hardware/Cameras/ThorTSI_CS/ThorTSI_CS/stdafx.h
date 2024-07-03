@@ -66,7 +66,7 @@ enum EventType
 #define TIXML_USE_TICPP
 #endif
 
-#define MSG_SIZE 256
+#define MSG_SIZE 1024
 
 #include "..\..\..\..\Tools\ticpp\ticpp.h"
 #include "..\..\..\..\Tools\ticpp\tinyxml.h"
@@ -74,5 +74,13 @@ enum EventType
 
 #include "..\..\..\..\Common\Camera-TSI\include\tl_camera_sdk.h"
 #include "..\..\..\..\Common\Camera-TSI\include\tl_camera_sdk_load.h"
+#include "..\..\..\..\Common\Camera-TSI\include\tl_mono_to_color_processing.h"
+#include "..\..\..\..\Common\Camera-TSI\include\tl_mono_to_color_processing_load.h"
+#include "..\..\..\..\Common\Camera-TSI\include\tl_color_enum.h"
+#include "..\..\..\..\Common\Camera-TSI\include\tl_mono_to_color_enum.h"
+#include "..\..\..\..\Common\Camera-TSI\include\tl_polarization_processor.h"
+#include "..\..\..\..\Common\Camera-TSI\include\tl_polarization_processor_enums.h"
+#include "..\..\..\..\Common\Camera-TSI\include\tl_polarization_processor_error.h"
+#include "..\..\..\..\Common\Camera-TSI\include\tl_polarization_processor_load.h"
 
 #define DllExport extern "C" long __declspec( dllexport )

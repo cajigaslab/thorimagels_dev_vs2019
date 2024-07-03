@@ -1,0 +1,162 @@
+;/*
+; * ThorDaqDrvDFLIM.inx
+; *
+; * Copyright (c) 2008-2016 Northwest Logic
+; *
+; * This is the base file for the PCI Express DMA Driver inf file.
+; *
+; * Feb-2020 DZimmerman    Adapt for ThorDAQ DFLIM
+; */
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=Multifunction
+ClassGuid={4d36e971-e325-11ce-bfc1-08002be10318}
+Provider=%NWL%
+DriverVer=
+;CatalogFile = DMADx86.cat
+CatalogFile = DMADx64.cat
+
+[DestinationDirs]
+DefaultDestDir = 12
+CoInstaller_CopyFiles = 11
+;DefaultDestDir = 10,System32\drivers
+
+[Manufacturer]
+%NWL%=NWL,NTx86.6.0,NTamd64.6.0,NTx86.5.1,NTamd64.5.1
+
+[SourceDisksFiles]
+ThorDaqDrvDFLIM.sys=1
+wdfcoinstaller01009.dll=1
+
+[SourceDisksNames]
+1=%DISK_NAME%,
+
+[NWL.NTx86.5.1]
+
+; PCI hardware IDs use the form
+;   PCI\VEN_aaaa&DEV_bbbb&SUBSYS_cccccccc&REV_dd
+;
+%DeviceDesc%=ThorDAqDriverXP_DDI.NT, PCI\VEN_19AA&DEV_E004
+
+[NWL.NTamd64.5.1]
+
+; PCI hardware IDs use the form
+;   PCI\VEN_aaaa&DEV_bbbb&SUBSYS_cccccccc&REV_dd
+;
+%DeviceDesc%=ThorDAqDriverXP_DDI.NT, PCI\VEN_19AA&DEV_E004
+
+[NWL.NTx86.6.0]
+
+; PCI hardware IDs use the form
+;   PCI\VEN_aaaa&DEV_bbbb&SUBSYS_cccccccc&REV_dd
+;
+;%DeviceDesc%=ThorDAqDriver_DDI.NT, PCI\VEN_19AA&DEV_E004
+
+[NWL.NTamd64.6.0]
+
+; PCI hardware IDs use the form
+;   PCI\VEN_aaaa&DEV_bbbb&SUBSYS_cccccccc&REV_dd
+;
+%DeviceDesc%=ThorDAqDriver_DDI.NT, PCI\VEN_1DDD&DEV_4001
+
+
+;---------- DDInstall Sections -----------------------------------------------
+; --------- Windows XP Only -----------------
+
+;[ThorDAqDriverXP_DDI.NT]
+;CopyFiles=ThorDAqDriver_Files_Driver
+
+;[ThorDAqDriverXP_DDI.NT.Services]
+;Addservice = ThorDAqDriver, 0x00000002, ThorDAqDriver_AddService
+
+; --------- Disable MSI support -----------------
+[ThorDAqDriverXP_DDI.NT.HW]
+AddReg = ThorDAqDriverNoMSI_AddReg
+
+[ThorDAqDriverNoMSI_AddReg]
+HKR, Interrupt Management,, 0x00000010
+HKR, Interrupt Management\MessageSignaledInterruptProperties,, 0x00000010
+HKR, Interrupt Management\MessageSignaledInterruptProperties, MSISupported, 0x00010001, 0
+HKR, Interrupt Management\MessageSignaledInterruptProperties, MessageNumberLimit, 0x00010001, 1
+HKR, Interrupt Management\Affinity Policy, DevicePriority, 0x00010001, 3
+
+; --------- Windows Vista and Later -----------------
+
+[ThorDAqDriver_DDI.NT]
+CopyFiles=ThorDAqDriver_Files_Driver
+
+[ThorDAqDriver_DDI.NT.Services]
+Addservice = ThorDAqDriver, 0x00000002, ThorDAqDriver_AddService
+
+[ThorDAqDriver_AddService]
+DisplayName    = %SvcDesc%
+ServiceType    = 1                  ; SERVICE_KERNEL_DRIVER
+StartType      = 3                  ; SERVICE_DEMAND_START
+ErrorControl   = 1                  ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %10%\System32\Drivers\ThorDaqDrvDFLIM.sys
+AddReg=ThorDAqDriver_Parameters_AddReg
+
+[ThorDAqDriver_Parameters_AddReg]
+HKR, Parameters\Wdf, VerboseOn,       0x00010001, 0
+HKR, Parameters\Wdf, VerifierOn,      0x00010001, 0
+HKR, Parameters\Wdf, DbgBreakOnError, 0x00010001, 0
+
+; --------- Enable MSI support -----------------
+
+[ThorDAqDriver_DDI.NT.HW]
+AddReg = ThorDAqDriverMSI_AddReg
+
+[ThorDAqDriverMSI_AddReg]
+HKR, Interrupt Management,, 0x00000010
+HKR, Interrupt Management\MessageSignaledInterruptProperties,, 0x00000010
+HKR, Interrupt Management\MessageSignaledInterruptProperties, MSIXSupported, 0x00010001, 1
+HKR, Interrupt Management\MessageSignaledInterruptProperties, MSISupported, 0x00010001, 1
+HKR, Interrupt Management\MessageSignaledInterruptProperties, MessageNumberLimit, 0x00010001, 8
+HKR, Interrupt Management\Affinity Policy, DevicePriority, 0x00010001, 3
+
+; --------- Files (common) -------------
+
+[ThorDAqDriver_Files_Driver]
+ThorDaqDrvDFLIM.sys
+
+; --------- Coinstaller Section
+
+;[DestinationDirs]
+;CoInstaller_CopyFiles = 11
+
+[ThorDAqDriverXP_DDI.NT.CoInstallers]
+AddReg=CoInstaller_AddReg
+CopyFiles=CoInstaller_CopyFiles
+
+[ThorDAqDriver_DDI.NT.CoInstallers]
+AddReg=CoInstaller_AddReg
+CopyFiles=CoInstaller_CopyFiles
+
+[CoInstaller_CopyFiles]
+wdfcoinstaller01009.dll
+
+;[SourceDisksFiles]
+;wdfcoinstaller01009.dll=1
+
+[CoInstaller_AddReg]
+HKR,,CoInstallers32,0x00010000, "wdfcoinstaller01009.dll,WdfCoInstaller"
+
+[ThorDAqDriverXP_DDI.NT.Wdf]
+KmdfService = ThorDAqDriver, ThorDAqDriver_wdfsect
+
+[ThorDAqDriver_DDI.NT.Wdf]
+KmdfService = ThorDAqDriver, ThorDAqDriver_wdfsect
+
+[ThorDAqDriver_wdfsect]
+KmdfLibraryVersion = 1.7
+
+
+;--------- Strings Section ---------------------------------------------------
+
+[Strings]
+NWL = "Thorlabs, Inc. (thorlabs.com)"
+ClassName = "PCI Express DMA Driver"
+DeviceDesc = "ThorDAQ-SDK-2586"
+DISK_NAME = "PCI Express DMA Driver Install Disk"
+SvcDesc   = "PCI Express DMA Driver"

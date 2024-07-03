@@ -464,7 +464,7 @@ long ThorStim::SetParam(const long paramID, const double param)
 			case ICamera::PARAM_LSM_POCKELS_MIN_VOLTAGE_2:index=2;break;
 			case ICamera::PARAM_LSM_POCKELS_MIN_VOLTAGE_3:index=3;break;
 			}
-			if (param >= 0 && param < Constants::HUNDRED_PERCENT && 0 < _pockelsLine[index].length())
+			if (param >= 0 && param <= Constants::HUNDRED_PERCENT && 0 < _pockelsLine[index].length())
 				CheckNewValue<double>(_pockelsMinVoltage[index], param);
 			else
 				ret = FALSE;
@@ -484,7 +484,7 @@ long ThorStim::SetParam(const long paramID, const double param)
 			case ICamera::PARAM_LSM_POCKELS_MAX_VOLTAGE_2:index=2;break;
 			case ICamera::PARAM_LSM_POCKELS_MAX_VOLTAGE_3:index=3;break;
 			}
-			if (param >= 0 && param < Constants::HUNDRED_PERCENT && 0 < _pockelsLine[index].length())
+			if (param >= 0 && param <= Constants::HUNDRED_PERCENT && 0 < _pockelsLine[index].length())
 				CheckNewValue<double>(_pockelsMaxVoltage[index], param);
 			else
 				ret = FALSE;

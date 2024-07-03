@@ -1,0 +1,1 @@
+C:\Users\abenyam\source\repos\TIS_Development\TIS_Development-VS2019\Common\ImageStoreLibrary\msvc\vs2012\libzip\Debug\libzipd.lib

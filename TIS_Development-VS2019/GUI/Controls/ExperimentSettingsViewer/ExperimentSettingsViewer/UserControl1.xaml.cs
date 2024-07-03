@@ -47,7 +47,7 @@
         private string _activeCameraName = string.Empty;
         private int _averageMode;
         private int _cameraType;
-        private ObservableCollection<LightPathSequenceStep> _captureSequence = new ObservableCollection<LightPathSequenceStep>();
+        private ObservableCollection<SequenceStep> _captureSequence = new ObservableCollection<SequenceStep>();
         private bool _captureSequenceEnable = false;
         private bool _changeSettingsEnable;
         private bool _editEnable;
@@ -174,7 +174,7 @@
             }
         }
 
-        public ObservableCollection<LightPathSequenceStep> CollectionCaptureSequence
+        public ObservableCollection<SequenceStep> CollectionCaptureSequence
         {
             get
             {
@@ -362,7 +362,7 @@
                 {
                     if (isCSType)
                     {
-                        return "60 MS/S";
+                        return "Low Read-Noise";
                     }
                     else
                     {
@@ -373,7 +373,7 @@
                 {
                     if (isCSType)
                     {
-                        return "100 MS/S";
+                        return "High Frame Rate";
                     }
                     else
                     {
@@ -883,7 +883,7 @@
                     }
 
                     ndList = xDoc.SelectNodes("/ThorImageExperiment/CaptureSequence/LightPathSequenceStep");
-                    this.CollectionCaptureSequence = new ObservableCollection<LightPathSequenceStep>();
+                    this.CollectionCaptureSequence = new ObservableCollection<SequenceStep>();
 
                     if (true == _captureSequenceEnable && ndList.Count > 0)
                     {
@@ -893,7 +893,7 @@
                             if (XmlManager.GetAttribute(ndList[i], xDoc, "name", ref str))
                             {
                                 //We want the channel step line numbers to start at 1
-                                LightPathSequenceStep si = new LightPathSequenceStep(str, ndList[i], i + 1);
+                                SequenceStep si = new SequenceStep(str, ndList[i], i + 1, false);
                                 _captureSequence.Add(si);
                             }
                         }

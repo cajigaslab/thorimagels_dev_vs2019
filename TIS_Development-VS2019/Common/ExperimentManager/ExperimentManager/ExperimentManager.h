@@ -15,25 +15,25 @@ class DllExportExperimentManger ExperimentManager
 {
 public:
 	~ExperimentManager();
-    static ExperimentManager* getInstance();
-	IExperiment * CreateExperiment(wstring path);
+	static ExperimentManager* getInstance();
+	IExperiment* CreateExperiment(wstring path);
 	long DeleteExperiment(string path);
-	IExperiment * GetExperiment(wstring path);
+	IExperiment* GetExperiment(wstring path);
 	long SetActiveExperiment(wstring path);
-	IExperiment * GetActiveExperiment();
+	IExperiment* GetActiveExperiment();
 	wstring GetActiveExperimentPath();
 	wstring GetActiveExperimentPathAndName();
-	long  GetTotalSampleRowsAndColumns(IExperiment::SampleType type, long &totalRows,long &totalCols);
+	long  GetTotalSampleRowsAndColumns(IExperiment::SampleType type, long& totalRows, long& totalCols);
 
 
 private:
-    ExperimentManager();
+	ExperimentManager();
 
 #pragma warning(push)
 #pragma warning(disable:4251)
 
 	static bool instanceFlag;
-    static auto_ptr<ExperimentManager> _single;
+	static auto_ptr<ExperimentManager> _single;
 	static CritSect critSect;
 	static void cleanup(void);
 	static auto_ptr<ExperimentXML> activeExperiment;

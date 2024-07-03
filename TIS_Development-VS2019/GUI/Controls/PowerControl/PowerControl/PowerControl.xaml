@@ -132,7 +132,7 @@
                                      Width="60"
                                      VerticalAlignment="Center"
                                      Text="{Binding Path=PockelsBlankPercentage, Mode=TwoWay}"
-                                     Valid:Validation.ValidationType="{x:Type System:Int32}"
+                                     Valid:Validation.ValidationType="{x:Type System:Double}"
                                      Valid:Validation.MinValue="0"
                                      Valid:Validation.MaxValue="49" />
                             <Button Width="25"

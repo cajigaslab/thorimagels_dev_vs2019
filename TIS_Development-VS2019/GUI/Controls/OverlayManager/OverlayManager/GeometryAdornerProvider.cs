@@ -12,6 +12,7 @@
     using System.Windows.Input;
     using System.Windows.Media;
     using System.Windows.Shapes;
+    using ThorSharedTypes;
 
     using ThorLogging;
 
@@ -39,7 +40,7 @@
             _foreground = foreground;
 
             _adornedElementType = adornedElement.GetType();
-            if (_adornedElementType.Name.Equals("Line") || _adornedElementType.Name.Equals("Polyline"))
+            if (_adornedElementType.Name.Equals("Line") || _adornedElementType.Name.Equals("Polyline") || _adornedElementType.Name.Equals("ROILine") || _adornedElementType.Name.Equals("ROIPolyline"))
             {
                 _visualChildren = new VisualCollection(this);
             }
@@ -105,7 +106,9 @@
     {
         #region Fields
 
-        private static double _umPerPixel;
+        private static PixelSizeUM _umPerPixel = new PixelSizeUM(1.0, 1.0);
+        private static double _imageScaleX = 1.0;
+        private static double _imageScaleY = 1.0;
 
         #endregion Fields
 
@@ -113,14 +116,31 @@
 
         public GeometryAdornerProvider(UIElement adornedElement, Brush foreground, int imageWidth, int imageHeight)
             : base(adornedElement, foreground, imageWidth, imageHeight)
+        {        }
+        
+        public GeometryAdornerProvider(UIElement adornedElement, Brush foreground, int imageWidth, int imageHeight, PixelSizeUM pixelSizeUM)
+            : base(adornedElement, foreground, imageWidth, imageHeight)
         {
+            UMPerPixel = pixelSizeUM; 
         }
 
         #endregion Constructors
 
         #region Properties
 
-        public static double UMPerPixel
+        public static double ImageScaleX
+        {
+            get => _imageScaleX;
+            set => _imageScaleX = value;
+        }
+
+        public static double ImageScaleY
+        {
+            get => _imageScaleY;
+            set => _imageScaleY = value;
+        }
+
+        public static PixelSizeUM UMPerPixel
         {
             get { return _umPerPixel; }
             set { _umPerPixel = value; }
@@ -192,12 +212,74 @@
                     x2 = (int)Math.Floor(polyline.Points[i].X);
                     y1 = (int)Math.Floor(polyline.Points[i - 1].Y);
                     y2 = (int)Math.Floor(polyline.Points[i].Y);
-                    polylineLength += (int)Math.Round(Math.Sqrt(Math.Pow(x2 - x1, 2) + Math.Pow(y2 - y1, 2)));
+                    polylineLength += (int)Math.Round(Math.Sqrt(Math.Pow((x2 - x1)/_imageScaleX, 2) + Math.Pow((y2 - y1)/_imageScaleY, 2)));
                 }
 
-                double lenth = _umPerPixel * (double)polylineLength;
+                double lenth = _umPerPixel.PixelWidthUM * (double)polylineLength;
                 _text = new FormattedText(
                     lenth.ToString("N3") + "um", System.Threading.Thread.CurrentThread.CurrentCulture,
+                    System.Windows.FlowDirection.LeftToRight,
+                    new Typeface("Arial"), FontSize, _foreground,
+                    VisualTreeHelper.GetDpi(this).PixelsPerDip);
+
+                drawingContext.DrawText(_text, segmentBounds.BottomRight);
+            }
+            else if (_adornedElementType.Name.Equals("ROIPolyline"))
+            {
+                ROIPolyline polyline = (this.AdornedElement as ROIPolyline);
+                if (2 > polyline.Points.Count)
+                {
+                    return;
+                }
+                int x1 = (int)Math.Floor(polyline.Points[0].X);
+                int x2 = (int)Math.Floor(polyline.Points[1].X);
+                int y1 = (int)Math.Floor(polyline.Points[0].Y);
+                int y2 = (int)Math.Floor(polyline.Points[1].Y);
+
+                int maxX = (x1 > x2) ? x1 : x2;
+                int maxY = (y1 > y2) ? y1 : y2;
+                int minX = (x1 < x2) ? x1 : x1;
+                int minY = (y1 < y2) ? y1 : y2;
+
+                Rect segmentBounds;
+                if (y1 == y2)
+                {
+                    segmentBounds = new Rect(minX + (maxX - minX) / 2.0 - ImageWidth / 60.0, minY + (maxY - minY) + ImageWidth / 80.0, 2, 2);
+                }
+                else if (x1 == x2)
+                {
+                    double py = minY + (maxY - minY) / 2.0;
+                    segmentBounds = new Rect(x1 + 1 + ImageWidth / 80.0, py, 2, 2);
+                }
+                else
+                {
+                    double py = minY + (maxY - minY) / 2.0;
+                    double m = (double)(y1 - y2) / ((double)(x1 - x2));
+                    double b = y1 - m * x1;
+                    double px = (py - b) / m;
+                    if (m < 0)
+                    {
+                        segmentBounds = new Rect(px + 1 + ImageWidth / 80.0, py, 2, 2);
+                    }
+                    else
+                    {
+                        segmentBounds = new Rect(px + 1 + ImageWidth / 80.0, py + ImageWidth / 80.0, 2, 2);
+                    }
+                }
+
+                int polylineLength = 1;
+                for (int i = 1; i < polyline.Points.Count; i++)
+                {
+                    x1 = (int)Math.Floor(polyline.Points[i - 1].X);
+                    x2 = (int)Math.Floor(polyline.Points[i].X);
+                    y1 = (int)Math.Floor(polyline.Points[i - 1].Y);
+                    y2 = (int)Math.Floor(polyline.Points[i].Y);
+                    polylineLength += (int)Math.Round(Math.Sqrt(Math.Pow(_umPerPixel.PixelWidthUM*(x2 - x1) / _imageScaleX, 2) + Math.Pow(_umPerPixel.PixelHeightUM*(y2 - y1) / _imageScaleY, 2)));
+                }
+
+                //double lenth = _umPerPixel.PixelWidthUM * (double)polylineLength;
+                _text = new FormattedText(
+                    polylineLength.ToString("N3") + "um", System.Threading.Thread.CurrentThread.CurrentCulture,
                     System.Windows.FlowDirection.LeftToRight,
                     new Typeface("Arial"), FontSize, _foreground,
                     VisualTreeHelper.GetDpi(this).PixelsPerDip);
@@ -244,12 +326,64 @@
                     }
                 }
 
-                int lineLength = (int)Math.Round(Math.Sqrt(Math.Pow(x2 - x1, 2) + Math.Pow(y2 - y1, 2))) + 1;
+                int lineLength = (int)Math.Round(Math.Sqrt(Math.Pow((x2 - x1) / _imageScaleX, 2) + Math.Pow((y2 - y1) / _imageScaleY, 2))) + 1;
 
-                double lenth = _umPerPixel * (double)lineLength;
+                double lenth = _umPerPixel.PixelWidthUM * (double)lineLength;
 
                 _text = new FormattedText(
                     lenth.ToString("N3") + "um", System.Threading.Thread.CurrentThread.CurrentCulture,
+                    System.Windows.FlowDirection.LeftToRight,
+                    new Typeface("Arial"), FontSize, _foreground,
+                    VisualTreeHelper.GetDpi(this).PixelsPerDip);
+
+                drawingContext.DrawText(_text, segmentBounds.BottomRight);
+            }
+            else if (_adornedElementType.Name.Equals("ROILine"))
+            {
+                ROILine line = (this.AdornedElement as ROILine);
+
+                int x1 = (int)Math.Floor(line.StartPoint.X);
+                int x2 = (int)Math.Floor(line.EndPoint.X);
+                int y1 = (int)Math.Floor(line.StartPoint.Y);
+                int y2 = (int)Math.Floor(line.EndPoint.Y);
+
+                int maxX = (x1 > x2) ? x1 : x2;
+                int maxY = (y1 > y2) ? y1 : y2;
+                int minX = (x1 < x2) ? x1 : x1;
+                int minY = (y1 < y2) ? y1 : y2;
+
+                Rect segmentBounds;
+                if (y1 == y2)
+                {
+                    segmentBounds = new Rect(minX + (maxX - minX) / 2.0 - ImageWidth / 60.0, minY + (maxY - minY) + ImageWidth / 100.0, 2, 2);
+                }
+                else if (x1 == x2)
+                {
+                    double py = minY + (maxY - minY) / 2.0;
+                    segmentBounds = new Rect(x1 + 1 + ImageWidth / 80.0, py, 2, 2);
+                }
+                else
+                {
+                    double m = (double)(y1 - y2) / ((double)(x1 - x2));
+                    double b = y1 - m * x1;
+                    double py = minY + (maxY - minY) / 2.0;
+                    double px = (py - b) / m;
+                    if (m < 0)
+                    {
+                        segmentBounds = new Rect(px + 1 + ImageWidth / 80.0, py, 2, 2);
+                    }
+                    else
+                    {
+                        segmentBounds = new Rect(px + 1 + ImageWidth / 80.0, py + ImageWidth / 80.0, 2, 2);
+                    }
+                }
+
+                int lineLength = (int)Math.Round(Math.Sqrt(Math.Pow(_umPerPixel.PixelWidthUM*(x2 - x1) / _imageScaleX, 2) + Math.Pow(_umPerPixel.PixelHeightUM*(y2 - y1) / _imageScaleY, 2))) + 1;
+
+                //double lenth = _umPerPixel.PixelWidthUM * (double)lineLength;
+
+                _text = new FormattedText(
+                    lineLength.ToString("N3") + "um", System.Threading.Thread.CurrentThread.CurrentCulture,
                     System.Windows.FlowDirection.LeftToRight,
                     new Typeface("Arial"), FontSize, _foreground,
                     VisualTreeHelper.GetDpi(this).PixelsPerDip);

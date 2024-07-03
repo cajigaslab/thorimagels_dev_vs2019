@@ -5,7 +5,7 @@
         Title="Macro Overview" 
         Background="#FF333333"
         ResizeMode="CanResizeWithGrip"
-        SizeToContent="WidthAndHeight">
+        Width="800" Height="800">
     <Window.Resources>
         <ResourceDictionary>
             <ts:BooleanToVisibilityConverter x:Key="VisibilityOfBool" />
@@ -16,10 +16,10 @@
     </Window.Resources>
     <Grid x:Name="mainGrid">
         <Grid.RowDefinitions>
-            <RowDefinition Height="8192" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="8192" />
+            <ColumnDefinition Width="*"  />
         </Grid.ColumnDefinitions>
         <Border x:Name="imageBorder"
                 Style="{x:Null}">

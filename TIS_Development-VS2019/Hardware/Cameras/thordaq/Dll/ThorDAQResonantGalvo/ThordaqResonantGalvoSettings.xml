@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ThordaqResonantGalvoSettings>
+	<Configuration field2Theta="0.0901639344" crsFrequency="7931.47208" saveCrsFrequencyToLog="0" pockelsParkAtMinimum="1" fieldSizeMin="5" fieldSizeMax="255" pockelsTurnAroundBlank="1" pockelsFlybackBlank="1" RGGMode="1" rotationPosition="0" preMoveGalvoToStartPosition="0"
+				   waveformUpdateRateSPS="700000" scannerType="0"/>
+	<!-- scannerType
+  0: Galvo + Resonant (also includes RGG)
+  1: MEMS + MEMS resonant (also includes RGG mode, using MEMS instead of galvos)
+  -->
+	<Calibration fieldSizeCalibration="98.38" oneXFieldSize="69" pockelsPhaseAdjustMicroSec="0" pockelsPhaseAdjustMicroSec1="0" pockelsPhaseAdjustMicroSec2="0" pockelsPhaseAdjustMicroSec3="0" pockelsMaskPhaseShiftPercent="2.4" preImagingCalibrationCycles="0" imagingRampExtensionCycles="0" minFlybackCyclesFactor="1.0"
+				 pockelsMinVoltage="" pockelsMaxVoltage="" pockelsMinVoltage1="" pockelsMaxVoltage1="" pockelsMinVoltage2="" pockelsMaxVoltage2="" pockelsMinVoltage3="" pockelsMaxVoltage3="" 
+				 scanLensFocalLength="50.0" xHalfAngleMaxDeg="3.5" yHalfAngleMaxDeg="3.0" galvoTiltAngleDeg="25.0" />
+	<Trigger waitTime="30"/>
+	<IO pockelsVoltageSlopeThreshold="0.01" 
+		pockelsLine="1" pockelsScanVoltageStart="-1.0" pockelsScanVoltageStop="1.3" pockelsPowerInputLine="/Dev3/ai1" 
+		pockelsLine1="" pockelsPowerInputLine1="" pockelsScanVoltageStart1="-1.0" pockelsScanVoltageStop1="1.3" 
+		pockelsLine2="" pockelsPowerInputLine2="" pockelsScanVoltageStart2="-1.0" pockelsScanVoltageStop2="1.3" 
+		pockelsLine3="" pockelsPowerInputLine3="" pockelsScanVoltageStart3="-1.0" pockelsScanVoltageStop3="1.3" 
+		pockelsResponseType="0" pockelsResponseType1="0" pockelsResponseType2="0" pockelsResponseType3="0"
+		/>
+	<HardwareTestMode enable="0" />
+  <HWConnectionInfo lastConnectionTime="-1" />
+</ThordaqResonantGalvoSettings>

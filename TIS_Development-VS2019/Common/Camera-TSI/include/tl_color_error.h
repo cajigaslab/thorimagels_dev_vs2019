@@ -30,4 +30,8 @@ enum TL_COLOR_ERROR
   , TL_COLOR_INVALID_OUTPUT_COLOR_FORMAT /*!< The specified output color format is unknown. */
   , TL_COLOR_INVALID_BIT_SHIFT_DISTANCE /*!< The specified bit shift distance is invalid. */
   , TL_COLOR_INVALID_CLAMP_VALUE /*!< The specified pixel clamp value is invalid. */
+  , TL_COLOR_INVALID_INPUT_IMAGE_WIDTH /*!< The specified input image width is invalid. */
+  , TL_COLOR_INVALID_INPUT_IMAGE_HEIGHT /*!< The specified input image height is invalid. */
+  , TL_COLOR_INITIALIZE_ERROR /*!< Unknown initialization error. */
+  , TL_COLOR_ERROR_MAX /*!< A sentinel value (DO NOT USE). */
 };

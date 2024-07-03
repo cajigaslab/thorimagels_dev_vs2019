@@ -52,7 +52,6 @@
                           LSMPixelDwellTime="{Binding Path=LSMPixelDwellTime,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                           LSMPixelDwellTimeIndex="{Binding Path=LSMPixelDwellTimeIndex,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                           LSMPixelDwellTimeMaxIndex="{Binding Path=LSMPixelDwellTimeMaxIndex,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
-                          LSMPixelDwellTimeMinIndex="{Binding Path=LSMPixelDwellTimeMinIndex,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
                           LSMPulseMultiplexing="{Binding Path=LSMPulseMultiplexing,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                           LSMExternalClockPhaseOffset="{Binding Path=LSMExternalClockPhaseOffset,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                           LSMPulseMultiplexingVisibility="{Binding Path=LSMPulseMultiplexingVisibility,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"

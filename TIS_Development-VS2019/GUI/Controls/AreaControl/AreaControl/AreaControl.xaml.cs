@@ -77,6 +77,16 @@
         "FieldSizeVisible",
         typeof(Visibility),
         typeof(AreaControlUC));
+        public static readonly DependencyProperty GGRegistrationClearAllCommandProperty = 
+        DependencyProperty.Register(
+        "GGRegistrationClearAllCommand",
+        typeof(ICommand),
+        typeof(AreaControlUC));
+        public static readonly DependencyProperty GGRegistrationClearCommandProperty = 
+        DependencyProperty.Register(
+        "GGRegistrationClearCommand",
+        typeof(ICommand),
+        typeof(AreaControlUC));
         public static readonly DependencyProperty LSMFieldOffsetFineResetCommandProperty = 
         DependencyProperty.Register(
         "LSMFieldOffsetFineResetCommand",
@@ -291,6 +301,20 @@
         DependencyProperty.RegisterAttached("GGLSMScanVisibility",
         typeof(Visibility),
         typeof(AreaControlUC));
+        public static DependencyProperty GGRegistrationAbleToClearProperty = 
+        DependencyProperty.RegisterAttached("GGRegistrationAbleToClear",
+        typeof(bool),
+        typeof(AreaControlUC));
+        public static DependencyProperty GGRegistrationIndexProperty = 
+        DependencyProperty.RegisterAttached("GGRegistrationIndex",
+        typeof(int),
+        typeof(AreaControlUC),
+        new FrameworkPropertyMetadata(new PropertyChangedCallback(onGGRegistrationIndexChanged)));
+        public static DependencyProperty GGRegistrationItemsProperty = 
+        DependencyProperty.RegisterAttached("GGRegistrationItems",
+        typeof(IList),
+        typeof(AreaControlUC),
+        new FrameworkPropertyMetadata(new PropertyChangedCallback(onGGRegistrationItemsChanged)));
         public static DependencyProperty GRLSMScanVisibilityProperty = 
         DependencyProperty.RegisterAttached("GRLSMScanVisibility",
         typeof(Visibility),
@@ -672,8 +696,8 @@
 
         public bool EnablePixelDensityChange
         {
-            get {return (bool)GetValue(EnablePixelDensityChangeProperty); }
-            set {SetValue(EnablePixelDensityChangeProperty, value); }
+            get { return (bool)GetValue(EnablePixelDensityChangeProperty); }
+            set { SetValue(EnablePixelDensityChangeProperty, value); }
         }
 
         public int EnableReferenceChannel
@@ -710,6 +734,36 @@
         {
             get { return (Visibility)GetValue(GGLSMScanVisibilityProperty); }
             set { SetValue(GGLSMScanVisibilityProperty, value); }
+        }
+
+        public bool GGRegistrationAbleToClear
+        {
+            get { return (bool)GetValue(GGRegistrationAbleToClearProperty); }
+            set { SetValue(GGRegistrationAbleToClearProperty, value); }
+        }
+
+        public ICommand GGRegistrationClearAllCommand
+        {
+            get { return (ICommand)GetValue(GGRegistrationClearAllCommandProperty); }
+            set { SetValue(GGRegistrationClearAllCommandProperty, value); }
+        }
+
+        public ICommand GGRegistrationClearCommand
+        {
+            get { return (ICommand)GetValue(GGRegistrationClearCommandProperty); }
+            set { SetValue(GGRegistrationClearCommandProperty, value); }
+        }
+
+        public int GGRegistrationIndex
+        {
+            get { return (int)GetValue(GGRegistrationIndexProperty); }
+            set { SetValue(GGRegistrationIndexProperty, value); }
+        }
+
+        public IList GGRegistrationItems
+        {
+            get { return (IList)GetValue(GGRegistrationItemsProperty); }
+            set { SetValue(GGRegistrationItemsProperty, value); }
         }
 
         public Visibility GRLSMScanVisibility
@@ -1467,6 +1521,14 @@
         }
 
         public static void onTimeBasedLSTimeMSChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+        }
+
+        private static void onGGRegistrationIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+        }
+
+        private static void onGGRegistrationItemsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
         }
 

@@ -41,12 +41,13 @@ private:
 	//Memory offset storage
 	long long offsetPerX;
 	long long offsetPerYUnit;
+	long long offsetPerPlane;
 	long long offsetPerChannel;
 	long long offsetPerM;
 	long long offsetPerZSlice;
 
 	//Direct memory access
-	virtual T* getPointerForCoordinates(int x, int y, int z, int channel, int m);
+	virtual T* getPointerForCoordinates(int x, int y, int plane, int channel, int m, int z);
 
 	//Helper methods for iteration
 	bool nextChannel(int& c, int& m, int& z);
@@ -78,7 +79,8 @@ template <typename T> void ContiguousChannelImageMemoryModel<T>::calculateOffset
 	//Calculate Byte Offsets Per Each Image Dimension
 	offsetPerX = 1;
 	offsetPerYUnit = width;
-	offsetPerChannel = offsetPerYUnit * height;
+	offsetPerPlane = offsetPerYUnit * height;
+	offsetPerChannel = offsetPerPlane * numPlanes;
 	offsetPerM = offsetPerChannel * channels;
 	offsetPerZSlice = offsetPerM * numM;
 
@@ -98,16 +100,17 @@ template <typename T> void ContiguousChannelImageMemoryModel<T>::updateParameter
 /// <summary> Gets a pointer to a the memory location of the requested pixel </summary>
 /// <param name="x"> The x coordinate of the requested pixel </param>
 /// <param name="y"> The y coordinate of the requested pixel </param>
+/// <param name="plane"> The plane of the requested pixel </param>
 /// <param name="z"> The z coordinate of the requested pixel </param>
 /// <param name="channel"> The channel of the requested pixel </param>
 /// <param name="m"> The mosaic number of the requested pixel </param>
 /// <returns> Pointer to the pixel value at the specified coordinate </returns>
-template <typename T> T* ContiguousChannelImageMemoryModel<T>::getPointerForCoordinates(int x, int y, int z, int channel, int m)
+template <typename T> T* ContiguousChannelImageMemoryModel<T>::getPointerForCoordinates(int x, int y, int plane, int channel, int m, int z)
 {
 
 
 	//Multiply Byte Offsets By Current Position and Combine
-	long long thisOffset = x*offsetPerX + y*offsetPerYUnit + channel*offsetPerChannel + m*offsetPerM + z*offsetPerZSlice;
+	long long thisOffset = x*offsetPerX + y*offsetPerYUnit + plane*offsetPerPlane + channel*offsetPerChannel + m*offsetPerM + z*offsetPerZSlice;
 	T* bufPtr = buffer+thisOffset;
 	return bufPtr;
 
@@ -121,7 +124,7 @@ template <typename T> T* ContiguousChannelImageMemoryModel<T>::getPointerForCoor
 template <typename T> long long ContiguousChannelImageMemoryModel<T>::getSizeInBytes()
 {
 
-	long long pixels = width * height * channels * numM * zSlices; 
+	long long pixels = width * height * numPlanes * channels * numM * zSlices; 
 	pixels *= bytesPerPixel();
 	return pixels;
 

@@ -39,6 +39,7 @@
     <StartProgram>$(MSBuildProjectDirectory)\..\..\..\Applications\ThorImageLS\ThorImage\bin\Debug\ThorImageLS.exe</StartProgram>
     <StartWorkingDirectory>$(MSBuildProjectDirectory)\..\..\..\Applications\ThorImageLS\ThorImage\bin\Debug</StartWorkingDirectory>
     <Prefer32Bit>false</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -48,6 +49,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AviFile, Version=1.0.3792.24612, Culture=neutral, processorArchitecture=MSIL">
@@ -56,6 +58,10 @@
     </Reference>
     <Reference Include="BitMiracle.LibTiff.NET40">
       <HintPath>..\..\..\..\Tools\LibTiff.Net40\Debug\BitMiracle.LibTiff.NET40.dll</HintPath>
+    </Reference>
+    <Reference Include="DatabaseInterface, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Common\Database\DatabaseInterface\bin\Debug\DatabaseInterface.dll</HintPath>
     </Reference>
     <Reference Include="DeepZoomGen, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -72,13 +78,12 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\FolderDialogControl\FolderDialogControl\bin\Debug\FolderDialogControl.dll</HintPath>
     </Reference>
-    <Reference Include="HistogramControl, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\HistogramControl\HistogramControl\bin\Debug\HistogramControl.dll</HintPath>
-    </Reference>
     <Reference Include="ImageTilerControl, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\ImageTilerControl\ImageTilerControl\bin\Debug\ImageTilerControl.dll</HintPath>
+    </Reference>
+    <Reference Include="ImageViewControl">
+      <HintPath>..\..\ImageViewControl\ImageViewControl\bin\Debug\ImageViewControl.dll</HintPath>
     </Reference>
     <Reference Include="LineProfileWindow">
       <HintPath>..\..\LineProfileWindow\LineProfileWindow\bin\Debug\LineProfileWindow.dll</HintPath>
@@ -190,13 +195,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="View\ImageTilerView.xaml">
+    <Page Include="View\ActiveStatsWinChooser.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
     </Page>
-    <Page Include="View\ImageView.xaml">
+    <Page Include="View\ImageTilerView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
       <Generator>MSBuild:Compile</Generator>
@@ -271,12 +274,11 @@
     <Compile Include="ViewModel\ImageReviewViewModel.cs" />
     <Compile Include="ViewModel\RelayCommand.cs" />
     <Compile Include="ViewModel\ViewModelBase.cs" />
+    <Compile Include="View\ActiveStatsWinChooser.xaml.cs">
+      <DependentUpon>ActiveStatsWinChooser.xaml</DependentUpon>
+    </Compile>
     <Compile Include="View\ImageTilerView.xaml.cs">
       <DependentUpon>ImageTilerView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\ImageView.xaml.cs">
-      <DependentUpon>ImageView.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
     <Compile Include="View\MasterView.xaml.cs">
       <DependentUpon>MasterView.xaml</DependentUpon>

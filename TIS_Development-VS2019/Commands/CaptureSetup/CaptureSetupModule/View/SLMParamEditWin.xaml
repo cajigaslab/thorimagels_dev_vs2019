@@ -1355,11 +1355,14 @@
                              Margin="1" />
                     <Label Content="[s]"
                            Foreground="White"/>
+                    <CheckBox VerticalAlignment="Center"
+                              Content="Randomize"
+                              IsChecked="{Binding Path=SLMRandomEpochs, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
                 <Button Grid.Column="2"
                         Content="Add Epoch"
                         Foreground="White"
-                        Margin="100,0,0,0"
+                        Margin="70,0,0,0"
                         HorizontalContentAlignment="Right"
                         VerticalAlignment="Center"
                         Width="100"

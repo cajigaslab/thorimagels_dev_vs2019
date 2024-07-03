@@ -77,225 +77,19 @@
         #endregion Methods
     }
 
-    public class DoubleCultureConverter : IValueConverter
-    {
-        #region Methods
-
-        object IValueConverter.Convert(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            try
-            {
-                if (targetType == typeof(string))
-                {
-                    return (Double.Parse(value.ToString()).ToString());
-                }
-                else if (targetType == typeof(double))
-                {
-                    return (Double.Parse(value.ToString()));
-                }
-                else if (targetType == typeof(object))
-                {
-                    return (object)value.ToString();
-                }
-                else
-                {
-                    throw new InvalidOperationException("The target must be a string or double");
-                }
-            }
-            catch (FormatException ex)
-            {
-                string str = ex.Message;
-                return null;
-            }
-        }
-
-        object IValueConverter.ConvertBack(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            try
-            {
-                if (targetType == typeof(string))
-                {
-                    return (Double.Parse(value.ToString())).ToString();
-                }
-                else if (targetType == typeof(double))
-                {
-                    return (Double.Parse(value.ToString()));
-                }
-                else if (targetType == typeof(object))
-                {
-                    return (object)value.ToString();
-                }
-                else
-                {
-                    throw new InvalidOperationException("The target must be a string or double");
-                }
-            }
-            catch (FormatException ex)
-            {
-                string str = ex.Message;
-                return null;
-            }
-        }
-
-        #endregion Methods
-    }
-
-    //   [ValueConversion(typeof(bool?), typeof(bool))]
-    public class EnumToBooleanConverter : IValueConverter
-    {
-        #region Methods
-
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            string ParameterString = parameter as string;
-
-            if (ParameterString == null)
-                return DependencyProperty.UnsetValue;
-
-            if (Enum.IsDefined(value.GetType(), value) == false)
-                return DependencyProperty.UnsetValue;
-
-            object paramvalue = Enum.Parse(value.GetType(), ParameterString);
-
-            return paramvalue.Equals(value);
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            string ParameterString = parameter as string;
-            if (ParameterString == null)
-                return DependencyProperty.UnsetValue;
-
-            return Enum.Parse(targetType, ParameterString);
-        }
-
-        #endregion Methods
-    }
-
-    public class HistogramAutoManualToTextConverter : IValueConverter
-    {
-        #region Methods
-
-        object IValueConverter.Convert(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            if (targetType == typeof(object))
-            {
-                if (value.GetType().Equals(typeof(bool)))
-                {
-                    bool val = (bool)value;
-
-                    return (true == val) ? "Auto" : "Manual";
-                }
-            }
-            else
-            {
-                throw new InvalidOperationException("The target must be an object");
-            }
-
-            return "Manual";
-        }
-
-        object IValueConverter.ConvertBack(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            return null;
-        }
-
-        #endregion Methods
-    }
-
-    public class HistogramConverter : IValueConverter
-    {
-        #region Methods
-
-        public object Convert(object value, Type targetType,
-            object parameter, CultureInfo culture)
-        {
-            double val = 0;
-
-            //make sure the string is a well formed double before converting
-            if (System.Double.TryParse(value.ToString(), out val))
-            {
-                return System.Convert.ToInt32((System.Convert.ToDouble(value) * 64)).ToString();
-            }
-            else
-            {
-                return value;
-            }
-        }
-
-        public object ConvertBack(object value, Type targetType,
-            object parameter, CultureInfo culture)
-        {
-            if (value.ToString() == "")
-            {
-                return 0;
-            }
-
-            double val = 0;
-
-            //make sure the string is a well formed double before converting
-            if (System.Double.TryParse(value.ToString(), out val))
-            {
-                return System.Convert.ToDouble(value) / 64;
-            }
-            else
-            {
-                return value;
-            }
-        }
-
-        #endregion Methods
-    }
-
-    public class HistogramLinLogToTextConverter : IValueConverter
-    {
-        #region Methods
-
-        object IValueConverter.Convert(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            if (targetType == typeof(object))
-            {
-                if (value.GetType().Equals(typeof(bool)))
-                {
-                    bool val = (bool)value;
-
-                    return (true == val) ? "Log" : "Lin";
-                }
-            }
-            else
-            {
-                throw new InvalidOperationException("The target must be an object");
-            }
-
-            return "Lin";
-        }
-
-        object IValueConverter.ConvertBack(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            return null;
-        }
-
-        #endregion Methods
-    }
-
     /// <summary>
     /// ViewModel class for the ExpSetup model object
     /// </summary>
-    public class ImageReviewViewModel : ViewModelBase
+    public class ImageReviewViewModel : ViewModelBase, ThorSharedTypes.IMVMReview
     {
         #region Fields
 
-        const int MAX_HISTOGRAM_HEIGHT = 250;
-        const int MAX_HISTOGRAM_WIDTH = 444;
+        public static bool _bitmapIsLoading = false;
+        public static bool _stopRequested = false;
+
+        public ObservableCollection<double> _remoteFocusPositions = new ObservableCollection<double>();
+
         const double MAX_ZOOM = 1000; // In  1000x
-        const int MIN_HISTOGRAM_HEIGHT = 108;
-        const int MIN_HISTOGRAM_WIDTH = 192;
         const double MIN_ZOOM = .01; // Out 100x
 
         // wrapped ImageReview object
@@ -303,63 +97,42 @@
 
         private static Mutex InUpdateROIStatsMut = new Mutex();
 
-        private bool _allHistogramsExpanded = false;
         private bool _allowImageUpdate = false;
-        private bool[] _autoManualTogChecked = { false, false, false, false };
         private AviManager _aviManager = null;
         private VideoStream _aviStream = null;
-        private WriteableBitmap _bitmap;
-        private WriteableBitmap _bitmap16 = null;
-        private Point _bitmapPoint = new Point(0, 0);
-        private WriteableBitmap _bitmapXZ;
-        private WriteableBitmap _bitmapYZ;
         private BackgroundWorker _bw = new BackgroundWorker();
         private BackgroundWorker _bwOrthogonalImageLoader = new BackgroundWorker();
-        private bool _bwOrthogonalImageLoaderDone = true;
         private BackgroundWorker _bwStatsLoader = new BackgroundWorker();
-        private bool _bwStatsLoaderDone = false;
+        //Line profile uses this to check if Stats calculate window is currently loading
+        private static bool _bwStatsLoaderDone = true; 
         private CaptureModes _captureMode;
         private Brush[] _channelColor = new Brush[ImageReview.MAX_CHANNELS];
-        private bool[] _channelEnable = new bool[ImageReview.MAX_CHANNELS];
         private int _completedImageCount;
         private IUnityContainer _container;
-        private List<string> _currentChannelsLutFiles = new List<string>();
         private CurrentMovieParameterEnum _currentMovieParameter;
+        private ICommand _displayROIStatsOptionsCommand;
         private IEventAggregator _eventAggregator;
         private bool _experimentReviewOpened = false;
         private int _fieldSizeX;
         private int _fieldSizeY;
         private H5CSWrapper _hdf5Reader = null;
-        private int _histogramHeight1 = MIN_HISTOGRAM_HEIGHT;
-        private int _histogramHeight2 = MIN_HISTOGRAM_HEIGHT;
-        private int _histogramHeight3 = MIN_HISTOGRAM_HEIGHT;
-        private int _histogramHeight4 = MIN_HISTOGRAM_HEIGHT;
-        private int _histogramSpacing = 10;
-        private int _histogramWidth1 = MIN_HISTOGRAM_WIDTH;
-        private int _histogramWidth2 = MIN_HISTOGRAM_WIDTH;
-        private int _histogramWidth3 = MIN_HISTOGRAM_WIDTH;
-        private int _histogramWidth4 = MIN_HISTOGRAM_WIDTH;
         private int _imageBlkIndex;
+        Thread _imageLoadingThread = null;
         private string _imagePathandName;
+        private bool _indexControlsEnabled = true;
         private Visibility[] _isChannelVisible = new Visibility[ImageReview.MAX_CHANNELS];
+        private volatile bool _isExperimentLoading = false;
         private bool _isRawExperiment = false;
+        private bool _isRemoteFocus = false;
         private bool _isScaleOnOffChecked = false;
         private double _ivHeight;
         private double _iVScrollBarHeight;
-        private bool _largeHistogram1 = false;
-        private bool _largeHistogram2 = false;
-        private bool _largeHistogram3 = false;
-        private bool _largeHistogram4 = false;
-        private DateTime _lastBitmapUpdateTime;
-        private DateTime _lastOrthogonalViewUpdateTime;
-        private LineProfileWindow.LineProfile _lineProfile = null;
+        ScrollBarVisibility _ivScrollbarVisibility = ScrollBarVisibility.Hidden;
+        private LineProfile _lineProfile = null;
+        private bool _lineProfileActive;
         private bool _liveSnapshotStatus;
-        private bool _logScaleEnabled0 = false;
-        private bool _logScaleEnabled1 = false;
-        private bool _logScaleEnabled2 = false;
-        private bool _logScaleEnabled3 = false;
+        volatile bool _loadImages = false;
         private bool _maskReady;
-        private int _maxChannel = 0;
         private int _mEnd;
         private int _mEndValue;
         private ICommand _mEndValueMinusCommand;
@@ -367,35 +140,40 @@
         private string[][] _movieFileNameList;
         private string _movieFilePath;
         private double _movieFPS;
+        bool _mROIShowOverlays = false;
+        bool _mROISpatialDisplaybleEnable = true;
         private int _mStart;
         private int _mStartValue;
         private ICommand _mStartValueMinusCommand;
         private ICommand _mStartValuePlusCommand;
         private List<MultiROIStatsUC> _multiROIStatsWindows = null;
-        private OrthogonalViewStatus _orthogonalViewStat;
         private string _outputDirectory;
         private string _outputExperiment;
         private bool _panelsEnable = true;
-        private byte[] _pdXZ;
-        private byte[] _pdYZ;
         private List<ImageFileNameClass> _primaryChannelFileNames;
         private int _primaryChannelIndex = 0;
         private int _progressPercentage;
+        private Dictionary<string, PropertyInfo> _properties = new Dictionary<string, PropertyInfo>();
         private IRegionManager _regionManager;
         private ICommand _roiCalculationCommand;
         private int _roiCalMode = 1; //1: ROI Calculation, 2: ROI Load
         private bool _roiControlEnabled;
         private ICommand _roiLoadCommand;
+        private bool _roiStatsChartActive;
         private List<ROIStatsChartWin> _roiStatsCharts = null;
+        private bool _roiStatsTableActive;
         private Thickness _roiToolbarMargin = new Thickness(0, 0, 0, 0);
-        private ICommand _scanAreaIDMinusCommand;
-        private ICommand _scanAreaIDPlusCommand;
-        private int _scanAreaIndex = 0;
-        private int _scanAreaIndexMax = 0;
-        private int _scanAreaIndexMin = 0;
-        private bool _scanAreaIsEnabled;
-        private bool _scanAreaIsLive = false;
-        private bool _scanAreaVisible = false;
+        bool _runImageLoadingThread = false;
+        private int _selectedScanArea = 0;
+
+        //private ICommand _scanAreaIDMinusCommand;
+        //private ICommand _scanAreaIDPlusCommand;
+        //private int _scanAreaIndex = 0;
+        //private int _scanAreaIndexMax = 0;
+        //private int _scanAreaIndexMin = 0;
+        //private bool _scanAreaIsEnabled;
+        //private bool _scanAreaIsLive = false;
+        //private bool _scanAreaVisible = false;
         private int _sliderSpMax;
         private int _sliderSpMin;
         private int _sliderTMax;
@@ -405,21 +183,19 @@
         private int _sliderZStreamMax;
         private int _sliderZStreamMin;
         private SpinnerProgress.SpinnerProgressControl _spinner;
-        
         private Window _spinnerWindow = null;
         private bool _spIsEnabled;
         private bool _spIsLive;
         private ImageReviewDll.View.SplashScreen _splash;
         private ICommand _spValueMinusCommand;
         private ICommand _spValuePlusCommand;
-        private ushort[][] _tiffBufferArray;
         private bool _tIsEnabled;
         private bool _tIsLive;
         private int _totalImageCount;
         private int _tValue3D;
         private ICommand _tValueMinusCommand;
         private ICommand _tValuePlusCommand;
-        private bool _updateVirtualStack = true;
+        private object _updateBitmapLock = new object();
         private ICommand _viewMatlabCOmmand;
         private ICommand _viewOMEXMLCommand;
         private ICommand _viewThorAnalysisCommand;
@@ -440,9 +216,19 @@
         private ICommand _zStreamValuePlusCommand;
         private ICommand _zValueMinusCommand;
         private ICommand _zValuePlusCommand;
-        private bool _zVisible = false;
+        private bool _zVisible = true;
         private double _zVolumeSpacing = 1.0;
 
+        ICommand _LSMImageDistortionCorrectionCalibrationGalvoTiltAngleMinusCommand;
+        ICommand _LSMImageDistortionCorrectionCalibrationGalvoTiltAnglePlusCommand;
+        ICommand _LSMImageDistortionCorrectionCalibrationXAngleMaxMinusCommand;
+        ICommand _LSMImageDistortionCorrectionCalibrationXAngleMaxPlusCommand;
+        ICommand _LSMImageDistortionCorrectionCalibrationYAngleMaxMinusCommand;
+        ICommand _LSMImageDistortionCorrectionCalibrationYAngleMaxPlusCommand;
+        Visibility _LSMImageDistortionCorrectionCalibrationVisibility = Visibility.Visible;
+
+        private bool rxFlag = true;
+        private bool rxFlagZ = true;
         #endregion Fields
 
         #region Constructors
@@ -488,9 +274,11 @@
             _outputDirectory = ReadLast3dOutputPath();
             _outputExperiment = "Untitled001";
             _primaryChannelFileNames = new List<ImageFileNameClass>();
-            _orthogonalViewStat = OrthogonalViewStatus.INACTIVE;
             _currentMovieParameter = CurrentMovieParameterEnum.T;
-            OverlayManagerClass.Instance.InitOverlayManagerClass(ExperimentData.ImageInfo.pixelX, ExperimentData.ImageInfo.pixelY * ExperimentData.NumberOfPlanes, ExperimentData.LSMUMPerPixel, false);
+
+            _roiStatsChartActive = false;
+            _roiStatsTableActive = false;
+            _lineProfileActive = false;
 
             //Set boolean in OverlayManager if instance derived from Experiment Review window
             if (ExperimentReviewOpened == true)
@@ -498,19 +286,11 @@
                 OverlayManagerClass.Instance.ReviewWindowOpened = true;
             }
 
+            OverlayManagerClass.Instance.InitOverlayManagerClass(ExperimentData.ImageInfo.pixelX, ExperimentData.ImageInfo.pixelY, ExperimentData.PixelSizeUM, false);
             EnableHandlers();
 
             VirtualZStack = true;
-            _bitmapXZ = null;
-            _bitmapYZ = null;
 
-            ChannelName = new ObservableCollection<StringPC>();
-
-            for (int i = 0; i < imageReview.MaxChannels; i++)
-            {
-                _currentChannelsLutFiles.Add(string.Empty);
-                ChannelName.Add(new StringPC());
-            }
             _imageReview.LineProfileChanged += _imageReview_LineProfileChanged;
             ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Initialized");
         }
@@ -522,11 +302,6 @@
         public enum CurrentMovieParameterEnum
         {
             T, Sp, Z, ZStream
-        }
-
-        public enum OrthogonalViewStatus
-        {
-            INACTIVE, ACTIVE, HOLD
         }
 
         public enum ROIStatsOrigin
@@ -556,47 +331,146 @@
         //notify ImageView When a new experiment path is available
         public event Action ExperimentPathChanged;
 
-        //notify listeners (Ex. histogram) that the image has changed
-        public event Action<bool> ImageDataChanged;
-
         //Increase the view area if the image extends out of bonds for the vertical scroll bar
         public event Action<bool> IncreaseViewArea;
 
-        //notify ImageView When a OrthogonalView images was loaded
-        public event Action<bool> OrthogonalViewImagesLoaded;
-
         //notify 3D VolumeView that the 3D volumne should be rendered
         public event Action RenderVolume;
-
-        //notify ImageView to update the image When Z has changed
-        public event Action ZChanged;
 
         #endregion Events
 
         #region Properties
 
-        public bool AllHistogramsExpanded
+        public double LSMImageDistortionCorrectionCalibrationGalvoTiltAngle
+        {
+            get => _imageReview.LSMImageDistortionCorrectionCalibrationGalvoTiltAngle;
+            set
+            {
+                _imageReview.LSMImageDistortionCorrectionCalibrationGalvoTiltAngle = value;
+                OnPropertyChanged(nameof(LSMImageDistortionCorrectionCalibrationGalvoTiltAngle));
+            }
+        }
+
+        public ICommand LSMImageDistortionCorrectionCalibrationGalvoTiltAngleMinusCommand
         {
             get
             {
-                return _allHistogramsExpanded;
+                if (_LSMImageDistortionCorrectionCalibrationGalvoTiltAngleMinusCommand == null)
+                {
+                    _LSMImageDistortionCorrectionCalibrationGalvoTiltAngleMinusCommand = new RelayCommand(() => LSMImageDistortionCorrectionCalibrationGalvoTiltAngle -= 0.1);
+                }
+                return _LSMImageDistortionCorrectionCalibrationGalvoTiltAngleMinusCommand;
             }
+        }
+
+        public ICommand LSMImageDistortionCorrectionCalibrationGalvoTiltAnglePlusCommand
+        {
+            get
+            {
+                if (_LSMImageDistortionCorrectionCalibrationGalvoTiltAnglePlusCommand == null)
+                {
+                    _LSMImageDistortionCorrectionCalibrationGalvoTiltAnglePlusCommand = new RelayCommand(() => LSMImageDistortionCorrectionCalibrationGalvoTiltAngle += 0.1);
+                }
+                return _LSMImageDistortionCorrectionCalibrationGalvoTiltAnglePlusCommand;
+            }
+        }
+
+
+        public double LSMImageDistortionCorrectionCalibrationXAngleMax
+        {
+            get => _imageReview.LSMImageDistortionCorrectionCalibrationXAngleMax;
             set
             {
-                _allHistogramsExpanded = value;
-                if (_allHistogramsExpanded)
+                _imageReview.LSMImageDistortionCorrectionCalibrationXAngleMax = value;
+                OnPropertyChanged(nameof(LSMImageDistortionCorrectionCalibrationXAngleMax));
+            }
+        }
+
+        public ICommand LSMImageDistortionCorrectionCalibrationXAngleMaxMinusCommand
+        {
+            get
+            {
+                if (_LSMImageDistortionCorrectionCalibrationXAngleMaxMinusCommand == null)
                 {
-                    LargeHistogram1 = false;
-                    LargeHistogram2 = false;
-                    LargeHistogram3 = false;
-                    LargeHistogram4 = false;
-                    ExpandAllHistograms();
+                    _LSMImageDistortionCorrectionCalibrationXAngleMaxMinusCommand = new RelayCommand(() => LSMImageDistortionCorrectionCalibrationXAngleMax -= 0.1);
                 }
-                else
+                return _LSMImageDistortionCorrectionCalibrationXAngleMaxMinusCommand;
+            }
+        }
+
+        public ICommand LSMImageDistortionCorrectionCalibrationXAngleMaxPlusCommand
+        {
+            get
+            {
+                if (_LSMImageDistortionCorrectionCalibrationXAngleMaxPlusCommand == null)
                 {
-                    ShrinkAllHistograms();
+                    _LSMImageDistortionCorrectionCalibrationXAngleMaxPlusCommand = new RelayCommand(() => LSMImageDistortionCorrectionCalibrationXAngleMax += 0.1);
                 }
-                OnPropertyChanged("AllHistogramsExpanded");
+                return _LSMImageDistortionCorrectionCalibrationXAngleMaxPlusCommand;
+            }
+        }
+
+
+        public double LSMImageDistortionCorrectionCalibrationYAngleMax
+        {
+            get => _imageReview.LSMImageDistortionCorrectionCalibrationYAngleMax;
+            set
+            {
+                _imageReview.LSMImageDistortionCorrectionCalibrationYAngleMax = value;
+                OnPropertyChanged(nameof(LSMImageDistortionCorrectionCalibrationYAngleMax));
+            }
+        }
+
+        public ICommand LSMImageDistortionCorrectionCalibrationYAngleMaxMinusCommand
+        {
+            get
+            {
+                if (_LSMImageDistortionCorrectionCalibrationYAngleMaxMinusCommand == null)
+                {
+                    _LSMImageDistortionCorrectionCalibrationYAngleMaxMinusCommand = new RelayCommand(() => LSMImageDistortionCorrectionCalibrationYAngleMax -= 0.1);
+                }
+                return _LSMImageDistortionCorrectionCalibrationYAngleMaxMinusCommand;
+            }
+        }
+
+        public ICommand LSMImageDistortionCorrectionCalibrationYAngleMaxPlusCommand
+        {
+            get
+            {
+                if (_LSMImageDistortionCorrectionCalibrationYAngleMaxPlusCommand == null)
+                {
+                    _LSMImageDistortionCorrectionCalibrationYAngleMaxPlusCommand = new RelayCommand(() => LSMImageDistortionCorrectionCalibrationYAngleMax += 0.1);
+                }
+                return _LSMImageDistortionCorrectionCalibrationYAngleMaxPlusCommand;
+            }
+        }
+
+        public int LSMImageDistortionCorrectionEnable
+        {
+            get => _imageReview.LSMImageDistortionCorrectionEnable;
+            set
+            {
+                _imageReview.LSMImageDistortionCorrectionEnable = value;
+                OnPropertyChanged(nameof(LSMImageDistortionCorrectionEnable));
+            }
+        }
+
+        public Visibility LSMImageDistortionCorrectionVisibility
+        {
+            get => _LSMImageDistortionCorrectionCalibrationVisibility;
+            set
+            {
+                _LSMImageDistortionCorrectionCalibrationVisibility = value;
+                OnPropertyChanged(nameof(LSMImageDistortionCorrectionVisibility));
+            }
+        }
+
+        public Visibility AdvancedImageControlPanelVisibility
+        {
+            get
+            {
+                //Should be updated when more controls get added to the expander. Visibility here is based on visibility of aspect ratio option
+                return Visibility.Visible;
             }
         }
 
@@ -629,234 +503,36 @@
             get { return _imageReview.ApplicationSettingPath; }
         }
 
-        public bool AutoManualTog1Checked
+        public bool BitMapUpdate
         {
             get
             {
-                return _autoManualTogChecked[0];
-            }
-            set
-            {
-                _autoManualTogChecked[0] = value;
-                if (value && null != ImageDataChanged)
-                    ImageDataChanged(true);
-                OnPropertyChanged("AutoManualTog1Checked");
-            }
-        }
-
-        public bool AutoManualTog2Checked
-        {
-            get
-            {
-                return _autoManualTogChecked[1];
-            }
-            set
-            {
-                _autoManualTogChecked[1] = value;
-                if (value && null != ImageDataChanged)
-                    ImageDataChanged(true);
-                OnPropertyChanged("AutoManualTog2Checked");
-            }
-        }
-
-        public bool AutoManualTog3Checked
-        {
-            get
-            {
-                return _autoManualTogChecked[2];
-            }
-            set
-            {
-                _autoManualTogChecked[2] = value;
-                if (value && null != ImageDataChanged)
-                    ImageDataChanged(true);
-                OnPropertyChanged("AutoManualTog3Checked");
-            }
-        }
-
-        public bool AutoManualTog4Checked
-        {
-            get
-            {
-                return _autoManualTogChecked[3];
-            }
-            set
-            {
-                _autoManualTogChecked[3] = value;
-                if (value && null != ImageDataChanged)
-                    ImageDataChanged(true);
-                OnPropertyChanged("AutoManualTog4Checked");
-            }
-        }
-
-        public WriteableBitmap Bitmap
-        {
-            get
-            {
-                return _bitmap;
-            }
-            set
-            {
-                if (!_allowImageUpdate) return;
                 UpdateBitmap(.01);
-                _imageReview.LoadLineProfileData();
+                return false;
             }
+            set { UpdateBitmap(.01); }
         }
 
-        public Point BitmapPoint
-        {
-            get
-            {
-                return _bitmapPoint;
-            }
-            set
-            {
-                _bitmapPoint = value;
-            }
-        }
-
-        public WriteableBitmap BitmapXZ
-        {
-            get
-            {
-                int totalNumOfZstack = this.ZMax - this.ZMin + 1;
-                PixelFormat pf = PixelFormats.Rgb24;
-                int width = this._imageReview.ImageWidth;
-
-                if (width != 0 && _pdXZ != null)
-                {
-                    // Define parameters used to create the BitmapSource.
-                    int rawStrideXZ = (width * pf.BitsPerPixel + 7) / 8; //_bitmapXZ
-
-                    //create a new bitmpap when one does not exist or the size of the image changes
-                    if ((_bitmapXZ == null) || (_bitmapXZ.PixelWidth != width) || (_bitmapXZ.Format != pf) || (totalNumOfZstack != _bitmapXZ.PixelHeight))
-                    {
-                        _bitmapXZ = new WriteableBitmap(width, totalNumOfZstack, 96, 96, pf, null);
-                    }
-                    _bitmapXZ.WritePixels(new Int32Rect(0, 0, width, totalNumOfZstack), _pdXZ, rawStrideXZ, 0);
-
-                    return _bitmapXZ;
-                }
-                return null;
-            }
-        }
-
-        public WriteableBitmap BitmapYZ
-        {
-            get
-            {
-                int totalNumOfZstack = this.ZMax - this.ZMin + 1;
-                PixelFormat pf = PixelFormats.Rgb24;
-                int height = this._imageReview.ImageHeight;
-
-                if (height != 0 && _pdYZ != null)
-                {
-                    // Define parameters used to create the BitmapSource.
-                    int rawStrideYZ = (totalNumOfZstack * pf.BitsPerPixel + 7) / 8;
-
-                    //create a new bitmpap when one does not exist or the size of the image changes
-                    if ((_bitmapYZ == null) || (_bitmapYZ.PixelHeight != height) || (_bitmapYZ.Format != pf) || (totalNumOfZstack != _bitmapYZ.PixelWidth))
-                    {
-                        _bitmapYZ = new WriteableBitmap(totalNumOfZstack, height, 96, 96, pf, null);
-                    }
-                    _bitmapYZ.WritePixels(new Int32Rect(0, 0, totalNumOfZstack, height), _pdYZ, rawStrideYZ, 0);
-
-                    return this._bitmapYZ;
-                }
-                return null;
-            }
-        }
-
+        //public WriteableBitmap Bitmap
+        //{
+        //    get
+        //    {
+        //        return _bitmap;
+        //    }
+        //    set
+        //    {
+        //        if (!_allowImageUpdate) return;
+        //        UpdateBitmap(.01);
+        //        //TODO:IV this should be elsewhere
+        //        _imageReview.LoadLineProfileData();
+        //    }
+        //}
         public int BitsPerPixel
         {
             set
             {
                 this._imageReview.BitsPerPixel = value;
                 OnPropertyChanged("PixelBitShiftValue");
-            }
-        }
-
-        public double BlackPoint0
-        {
-            get
-            {
-                return this._imageReview.BlackPoint0;
-            }
-            set
-            {
-                if (value == this._imageReview.BlackPoint0) return;
-
-                this._imageReview.BlackPoint0 = value;
-                OnPropertyChanged("BlackPoint0");
-                Bitmap = null;
-                OnPropertyChanged("Bitmap");
-                if (_orthogonalViewStat != OrthogonalViewStatus.INACTIVE && VirtualZStack == true)
-                {
-                    UpdateOrthogonalViewImages();
-                }
-            }
-        }
-
-        public double BlackPoint1
-        {
-            get
-            {
-                return this._imageReview.BlackPoint1;
-            }
-            set
-            {
-                if (value == this._imageReview.BlackPoint1) return;
-
-                this._imageReview.BlackPoint1 = value;
-                OnPropertyChanged("BlackPoint1");
-                Bitmap = null;
-                OnPropertyChanged("Bitmap");
-                if (_orthogonalViewStat != OrthogonalViewStatus.INACTIVE && VirtualZStack == true)
-                {
-                    UpdateOrthogonalViewImages();
-                }
-            }
-        }
-
-        public double BlackPoint2
-        {
-            get
-            {
-                return this._imageReview.BlackPoint2;
-            }
-            set
-            {
-                if (value == this._imageReview.BlackPoint2) return;
-
-                this._imageReview.BlackPoint2 = value;
-                OnPropertyChanged("BlackPoint2");
-                Bitmap = null;
-                OnPropertyChanged("Bitmap");
-                if (_orthogonalViewStat != OrthogonalViewStatus.INACTIVE && VirtualZStack == true)
-                {
-                    UpdateOrthogonalViewImages();
-                }
-            }
-        }
-
-        public double BlackPoint3
-        {
-            get
-            {
-                return this._imageReview.BlackPoint3;
-            }
-            set
-            {
-                if (value == this._imageReview.BlackPoint3) return;
-
-                this._imageReview.BlackPoint3 = value;
-                OnPropertyChanged("BlackPoint3");
-                Bitmap = null;
-                OnPropertyChanged("Bitmap");
-                if (_orthogonalViewStat != OrthogonalViewStatus.INACTIVE && VirtualZStack == true)
-                {
-                    UpdateOrthogonalViewImages();
-                }
             }
         }
 
@@ -881,88 +557,111 @@
             }
         }
 
-        public Brush[] ChannelColor
+        //This is to prevent feedback loops
+        public int ChangeFromIPCTValue
         {
             get
             {
-                return _channelColor;
+                return this._imageReview.TValue;
             }
             set
             {
-                _channelColor = value;
-                OnPropertyChanged("ChannelColor");
+                if (this._imageReview.TValue == value)
+                {
+                    SyncROIChart();
+                    OnPropertyChanged("DepthForCurrentPreviewImage");
+                    OnPropertyChanged("TimeForCurrentPreviewImage");
+                    OnPropertyChanged("TimeForCurrentPreviewImageCalculable");
+
+                    return;
+                }
+
+                if (TMax >= value && TMin <= value)
+                {
+                    this._imageReview.TValue = value;
+                    this._tValue3D = value;
+
+                    OnPropertyChanged("ZValue");
+                    OnPropertyChanged("TValue");
+                    OnPropertyChanged("DepthForCurrentPreviewImage");
+                    OnPropertyChanged("TimeForCurrentPreviewImage");
+                    OnPropertyChanged("TimeForCurrentPreviewImageCalculable");
+                    OnPropertyChanged("TBoxValue");
+
+                    _ = UpdateBitmap(.01);
+
+                    if (ViewType == Convert.ToInt32(ViewTypes.ViewType3D))
+                    {
+                        OnPropertyChanged("TValue3D");
+                    }
+                }
+                //TODO:IV
+                //if (_orthogonalViewStat != OrthogonalViewStatus.INACTIVE && CloseOrthogonalView != null)
+                //{
+                //    CloseOrthogonalView();
+                //}
+                //_updateVirtualStack = true;
+
+                if ((bool)MVMManager.Instance["ImageViewReviewVM", "IsOrthogonalViewChecked"])
+                {
+                    MVMManager.Instance["ImageViewReviewVM", "TIndexFromReview"] = value;
+                }
+
+                _ = UpdateBitmap(.01);
+                //Thread.Sleep(5);
+                
+                SyncROIChart();
             }
         }
 
-        public bool ChannelEnableA
+        public int ChangeFromIPCZValue
         {
             get
             {
-                return _channelEnable[0];
+                return this._imageReview.ZValue;
             }
             set
             {
-                if (value == _channelEnable[0]) return;
-                _channelEnable[0] = value;
-                UpdateChannelData();
-                OnPropertyChanged("ChannelEnableA");
-            }
-        }
+                if (this._imageReview.ZValue == value)
+                {
+                    SyncROIChart();
+                    OnPropertyChanged("DepthForCurrentPreviewImage");
+                    OnPropertyChanged("TimeForCurrentPreviewImage");
+                    OnPropertyChanged("SpectralForCurrentPreviewImage");
+                    OnPropertyChanged("TimeForCurrentPreviewImageCalculable");
+                    return;
+                }
 
-        public bool ChannelEnableB
-        {
-            get
-            {
-                return _channelEnable[1];
-            }
-            set
-            {
-                if (value == _channelEnable[1]) return;
-                _channelEnable[1] = value;
-                UpdateChannelData();
-                OnPropertyChanged("ChannelEnableB");
-            }
-        }
+                if (ZMax >= value && ZMin <= value)
+                {
+                    this._imageReview.ZValue = value;
+                    OnPropertyChanged("ZValue");
+                    OnPropertyChanged("DepthForCurrentPreviewImage");
+                    OnPropertyChanged("TimeForCurrentPreviewImage");
+                    OnPropertyChanged("SpectralForCurrentPreviewImage");
+                    OnPropertyChanged("TimeForCurrentPreviewImageCalculable");
+                    OnPropertyChanged("ZBoxValue");
 
-        public bool ChannelEnableC
-        {
-            get
-            {
-                return _channelEnable[2];
-            }
-            set
-            {
-                if (value == _channelEnable[2]) return;
-                _channelEnable[2] = value;
-                UpdateChannelData();
-                OnPropertyChanged("ChannelEnableC");
-            }
-        }
+                    UpdateBitmap(.01);
+                }
 
-        public bool ChannelEnableD
-        {
-            get
-            {
-                return _channelEnable[3];
-            }
-            set
-            {
-                if (value == _channelEnable[3]) return;
-                _channelEnable[3] = value;
-                UpdateChannelData();
-                OnPropertyChanged("ChannelEnableD");
+                //TODO:IV
+                //if (_orthogonalViewStat != OrthogonalViewStatus.INACTIVE)
+                //{
+                //    ZChanged();
+                //}
+
+                UpdateBitmap(.01);
+                //System.Threading.Thread.Sleep(5);
+                
+
+                SyncROIChart();
             }
         }
 
         public byte ChannelEnabled
         {
             get { return _imageReview.ChannelEnabled; }
-        }
-
-        public ObservableCollection<StringPC> ChannelName
-        {
-            get;
-            set;
         }
 
         public int CompletedImageCount
@@ -995,29 +694,50 @@
         {
             get
             {
+                if (IsRemoteFocus && ZValue > 0)
+                {
+                    return _remoteFocusPositions[ExperimentData.PlaneSequence[ZValue - 1] - 1];
+                }
                 return ExperimentData.ZStepSizeUM * (ZValue - 1);
             }
         }
 
-        public double ExperimentAverageMode
+        public Visibility DisplayAspectRatioOptionVisibility
         {
             get
             {
-                int averageMode = 0;
-                if (ExperimentDoc != null)
-                {
-                    string str = string.Empty;
-                    XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/LSM");
-                    if (ndList.Count > 0)
-                    {
-                        XmlManager.GetAttribute(ndList[0], null, "averageMode", ref str);
-                    }
-
-                    Int32.TryParse(str, out averageMode);
-                }
-                return averageMode;
+                return PixelAspectRatioYScale > 1 ? Visibility.Visible : Visibility.Collapsed;
+            }
+            set
+            {
+                OnPropertyChanged("DisplayAspectRatioOptionVisibility");
             }
         }
+
+        private bool _displayAspectRatio = false;
+        public bool DisplayAspectRatio
+        {
+            get => _displayAspectRatio;
+            set
+            {
+                _displayAspectRatio = value;
+                MVMManager.Instance["ImageViewReviewVM", "DisplayPixelAspectRatio"] = value;
+            }
+        }
+
+        public ICommand DisplayROIStatsOptionsCommand
+        {
+            get
+            {
+                if (null == _displayROIStatsOptionsCommand)
+                {
+                    _displayROIStatsOptionsCommand = new RelayCommand(() => DisplayROIStatsOptions());
+                }
+
+                return _displayROIStatsOptionsCommand;
+            }
+        }
+
 
         public XmlDocument ExperimentDoc
         {
@@ -1029,6 +749,7 @@
             {
                 this._imageReview.ExperimentDoc = value;
                 ReloadSettingsByExpModality();
+                MVMManager.Instance["ImageViewReviewVM", "IsOrthogonalViewChecked"] = false;
             }
         }
 
@@ -1068,25 +789,6 @@
             }
         }
 
-        public double ExperimentImagesPerAverage
-        {
-            get
-            {
-                int imagesPerAvg = 0;
-                if (ExperimentDoc != null)
-                {
-                    string str = string.Empty;
-                    XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/LSM");
-                    if (ndList.Count > 0)
-                    {
-                        XmlManager.GetAttribute(ndList[0], null, "averageNum", ref str);
-                    }
-
-                    Int32.TryParse(str, out imagesPerAvg);
-                }
-                return imagesPerAvg;
-            }
-        }
 
         public string ExperimentModality
         {
@@ -1155,18 +857,6 @@
             }
         }
 
-        public bool GrayscaleForSingleChannel
-        {
-            get
-            {
-                return _imageReview.GrayscaleForSingleChannel;
-            }
-            set
-            {
-                _imageReview.GrayscaleForSingleChannel = value;
-            }
-        }
-
         public XmlDocument HardwareDoc
         {
             get
@@ -1182,156 +872,6 @@
         public string HardwareSettingPath
         {
             get { return _imageReview.HardwareSettingPath; }
-        }
-
-        public int[] HistogramData0
-        {
-            get
-            {
-                return this._imageReview.HistogramData0;
-            }
-        }
-
-        public int[] HistogramData1
-        {
-            get
-            {
-                return this._imageReview.HistogramData1;
-            }
-        }
-
-        public int[] HistogramData2
-        {
-            get
-            {
-                return this._imageReview.HistogramData2;
-            }
-        }
-
-        public int[] HistogramData3
-        {
-            get
-            {
-                return this._imageReview.HistogramData3;
-            }
-        }
-
-        public int HistogramHeight1
-        {
-            get
-            {
-                return _histogramHeight1;
-            }
-            set
-            {
-                _histogramHeight1 = value;
-                OnPropertyChanged("HistogramHeight1");
-            }
-        }
-
-        public int HistogramHeight2
-        {
-            get
-            {
-                return _histogramHeight2;
-            }
-            set
-            {
-                _histogramHeight2 = value;
-                OnPropertyChanged("HistogramHeight2");
-            }
-        }
-
-        public int HistogramHeight3
-        {
-            get
-            {
-                return _histogramHeight3;
-            }
-            set
-            {
-                _histogramHeight3 = value;
-                OnPropertyChanged("HistogramHeight3");
-            }
-        }
-
-        public int HistogramHeight4
-        {
-            get
-            {
-                return _histogramHeight4;
-            }
-            set
-            {
-                _histogramHeight4 = value;
-                OnPropertyChanged("HistogramHeight4");
-            }
-        }
-
-        public int HistogramSpacing
-        {
-            get
-            {
-                return 10;
-                //return _histogramSpacing;
-            }
-            set
-            {
-                _histogramSpacing = value;
-                OnPropertyChanged("HistogramSpacing");
-            }
-        }
-
-        public int HistogramWidth1
-        {
-            get
-            {
-                return _histogramWidth1;
-            }
-            set
-            {
-                _histogramWidth1 = value;
-                OnPropertyChanged("HistogramWidth1");
-            }
-        }
-
-        public int HistogramWidth2
-        {
-            get
-            {
-                return _histogramWidth2;
-            }
-            set
-            {
-                _histogramWidth2 = value;
-                OnPropertyChanged("HistogramWidth2");
-            }
-        }
-
-        public int HistogramWidth3
-        {
-            get
-            {
-                return _histogramWidth3;
-            }
-            set
-            {
-                _histogramWidth3 = value;
-                OnPropertyChanged("HistogramWidth3");
-            }
-        }
-
-        public int HistogramWidth4
-        {
-            get
-            {
-                return _histogramWidth4;
-            }
-            set
-            {
-                _histogramWidth4 = value;
-                OnPropertyChanged("HistogramWidth4");
-            }
         }
 
         public int ImageBlkIndex
@@ -1376,14 +916,10 @@
             set
             {
                 _imagePathandName = value;
-                Bitmap = null;
-                OnPropertyChanged("Bitmap");
+                //TODO:IV make sure this works with new iv
+                //OnPropertyChanged("Bitmap");
+                UpdateBitmap(.01);
                 OnPropertyChanged("ImagePathandName");
-                if (ImageDataChanged != null)
-                {
-                    //notify the views of the image data changing
-                    ImageDataChanged(true);
-                }
             }
         }
 
@@ -1406,6 +942,19 @@
             }
         }
 
+        public bool IndexControlsEnabled
+        {
+            get
+            {
+                return _indexControlsEnabled;
+            }
+            set
+            {
+                _indexControlsEnabled = value;
+                OnPropertyChanged("IndexControlsEnabled");
+            }
+        }
+
         public Visibility[] IsChannelVisible
         {
             get
@@ -1416,6 +965,14 @@
             {
                 _isChannelVisible = value;
                 OnPropertyChanged("IsChannelVisible");
+            }
+        }
+
+        public bool IsExperimentLoading
+        {
+            set
+            {
+                _isExperimentLoading = value;
             }
         }
 
@@ -1431,6 +988,14 @@
             }
         }
 
+        public Visibility IsMovieAvailable
+        {
+            get
+            {
+                return IsSpVisible.Equals(Visibility.Visible) || IsZStreamVisible.Equals(Visibility.Visible) || IsTVisible.Equals(Visibility.Visible) || ZVisible.Equals(Visibility.Visible) ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
         public bool IsRawExperiment
         {
             get
@@ -1442,6 +1007,22 @@
                 if (_isRawExperiment != value)
                     _isRawExperiment = value;
                 OnPropertyChanged("IsRawExperiment");
+            }
+        }
+
+        public bool IsRemoteFocus
+        {
+            get
+            {
+                return _isRemoteFocus;
+            }
+            set
+            {
+                _isRemoteFocus = value;
+                OnPropertyChanged("IsRemoteFocus");
+                OnPropertyChanged("PlanePositionVisibility");
+                OnPropertyChanged("RemoteFocusPlaneNumber");
+                OnPropertyChanged("DepthForCurrentPreviewImage");
             }
         }
 
@@ -1507,6 +1088,8 @@
             }
         }
 
+        //TODO
+        //Update visibility to use bound property
         public ScrollBarVisibility IVScrollbarVisibility
         {
             get
@@ -1517,113 +1100,54 @@
                 }
                 return ScrollBarVisibility.Hidden;
             }
-        }
-
-        public bool LargeHistogram1
-        {
-            get
-            {
-                return _largeHistogram1;
-            }
             set
             {
-                _largeHistogram1 = value;
-                if (_largeHistogram1)
-                {
-                    LargeHistogram2 = false;
-                    LargeHistogram3 = false;
-                    LargeHistogram4 = false;
-                    AllHistogramsExpanded = false;
-                    HistogramHeight1 = MAX_HISTOGRAM_HEIGHT;
-                    HistogramWidth1 = MAX_HISTOGRAM_WIDTH;
-                }
-                else
-                {
-                    HistogramHeight1 = MIN_HISTOGRAM_HEIGHT;
-                    HistogramWidth1 = MIN_HISTOGRAM_WIDTH;
-                }
-                OnPropertyChanged("LargeHistogram1");
+                _ivScrollbarVisibility = value;
             }
         }
 
-        public bool LargeHistogram2
+        public LineProfile LineProfile
+        {
+            get { return _lineProfile; }
+            set { _lineProfile = value; }
+        }
+
+        public bool LineProfileActive
         {
             get
             {
-                return _largeHistogram2;
+                return _lineProfileActive;
             }
             set
             {
-                _largeHistogram2 = value;
-                if (_largeHistogram2)
+                _lineProfileActive = value;
+                if (true == _lineProfileActive)
                 {
-                    LargeHistogram1 = false;
-                    LargeHistogram3 = false;
-                    LargeHistogram4 = false;
-                    AllHistogramsExpanded = false;
-                    HistogramHeight2 = MAX_HISTOGRAM_HEIGHT;
-                    HistogramWidth2 = MAX_HISTOGRAM_WIDTH;
+                    LoadLineProfileData(); //Sets the data in stats manager so the line profile has an image reference when drawn.
+                    if (null != _lineProfile)
+                    {
+                        _lineProfile.Show();
+                    }
                 }
                 else
                 {
-                    HistogramHeight2 = MIN_HISTOGRAM_HEIGHT;
-                    HistogramWidth2 = MIN_HISTOGRAM_WIDTH;
+                    if (null != _lineProfile)
+                    {
+                        _lineProfile.Hide();
+                    }
                 }
-                OnPropertyChanged("LargeHistogram2");
             }
         }
 
-        public bool LargeHistogram3
+        public Color[] LineProfileColorAssignment
         {
-            get
-            {
-                return _largeHistogram3;
-            }
             set
             {
-                _largeHistogram3 = value;
-                if (_largeHistogram3)
+                if (null == _lineProfile)
                 {
-                    LargeHistogram1 = false;
-                    LargeHistogram2 = false;
-                    LargeHistogram4 = false;
-                    AllHistogramsExpanded = false;
-                    HistogramHeight3 = MAX_HISTOGRAM_HEIGHT;
-                    HistogramWidth3 = MAX_HISTOGRAM_WIDTH;
+                    return;
                 }
-                else
-                {
-                    HistogramHeight3 = MIN_HISTOGRAM_HEIGHT;
-                    HistogramWidth3 = MIN_HISTOGRAM_WIDTH;
-                }
-                OnPropertyChanged("LargeHistogram3");
-            }
-        }
-
-        public bool LargeHistogram4
-        {
-            get
-            {
-                return _largeHistogram4;
-            }
-            set
-            {
-                _largeHistogram4 = value;
-                if (_largeHistogram4)
-                {
-                    LargeHistogram1 = false;
-                    LargeHistogram2 = false;
-                    LargeHistogram3 = false;
-                    AllHistogramsExpanded = false;
-                    HistogramHeight4 = MAX_HISTOGRAM_HEIGHT;
-                    HistogramWidth4 = MAX_HISTOGRAM_WIDTH;
-                }
-                else
-                {
-                    HistogramHeight4 = MIN_HISTOGRAM_HEIGHT;
-                    HistogramWidth4 = MIN_HISTOGRAM_WIDTH;
-                }
-                OnPropertyChanged("LargeHistogram4");
+                _lineProfile.ColorAssigment = value;
             }
         }
 
@@ -1639,64 +1163,17 @@
             }
         }
 
-        public bool LogScaleEnabled0
-        {
-            get
-            {
-                return _logScaleEnabled0;
-            }
-            set
-            {
-                _logScaleEnabled0 = value;
-                OnPropertyChanged("LogScaleEnabled0");
-            }
-        }
-
-        public bool LogScaleEnabled1
-        {
-            get
-            {
-                return _logScaleEnabled1;
-            }
-            set
-            {
-                _logScaleEnabled1 = value;
-                OnPropertyChanged("LogScaleEnabled1");
-            }
-        }
-
-        public bool LogScaleEnabled2
-        {
-            get
-            {
-                return _logScaleEnabled2;
-            }
-            set
-            {
-                _logScaleEnabled2 = value;
-                OnPropertyChanged("LogScaleEnabled2");
-            }
-        }
-
-        public bool LogScaleEnabled3
-        {
-            get
-            {
-                return _logScaleEnabled3;
-            }
-            set
-            {
-                _logScaleEnabled3 = value;
-                OnPropertyChanged("LogScaleEnabled3");
-            }
-        }
-
         public int LSMChannel
         {
             get
             {
                 return _imageReview.LSMChannel;
             }
+        }
+
+        public int LSMNumberOfPlanes
+        {
+            get => ExperimentData.NumberOfPlanes;
         }
 
         public bool MaskReady
@@ -1810,6 +1287,116 @@
             }
         }
 
+        public ObservableCollection<MesoScan.Params.ScanArea> mROIList
+        {
+            get => ExperimentData.mROIs;
+            set
+            {
+                var x = value;
+            }
+        }
+
+        public bool mROIShowOverlays
+        {
+            get
+            {
+                return _mROIShowOverlays;
+            }
+            set
+            {
+                if (_mROIShowOverlays != value)
+                {
+                    _mROIShowOverlays = value;
+                    OnPropertyChanged("mROIShowOverlays");
+
+                    if (value)
+                    {
+                        mROISpatialDisplaybleEnable = true;
+                    }
+
+                    MVMManager.Instance["ImageViewReviewVM", "ROIToolVisible"] = (_mROIShowOverlays) ?
+                        new bool[14] { false, false, false, false, false, false, false, false, false, false, false, false, false, false } :
+                        new bool[14] { true, true, true, true, true, true, true, true, true, true, true, true, true, true };
+
+                    if (_mROIShowOverlays)
+                    {
+                        OverlayManagerClass.Instance.ValidateROIs();
+
+                        var ROIs = OverlayManagerClass.Instance.GetModeROIs(Mode.MICRO_SCANAREA);
+                        if (ROIs.Count > SelectedmROIIndex && SelectedmROIIndex >= 0)
+                        {
+                            MVMManager.Instance["ImageViewReviewVM", "mROIPriorityIndex"] = SelectedmROIIndex;
+                            OverlayManagerClass.Instance.SelectSingleROI(ROIs[SelectedmROIIndex]);
+                        }
+                        else
+                        {
+                            OverlayManagerClass.Instance.DeselectAllROIs();
+                        }
+                    }
+
+                    OverlayManagerClass.Instance.InitSelectROI();
+                    OverlayManagerClass.Instance.DisplayModeROI(_mROIShowOverlays ? new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.STATSONLY } : new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.MICRO_SCANAREA }, false);
+                    OverlayManagerClass.Instance.DisplayModeROI(_mROIShowOverlays ? new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.MICRO_SCANAREA } : new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.STATSONLY }, true);
+                    OverlayManagerClass.Instance.CurrentMode = _mROIShowOverlays ? ThorSharedTypes.Mode.MICRO_SCANAREA : ThorSharedTypes.Mode.STATSONLY;
+
+                    if (_mROIShowOverlays)
+                    {
+                        MVMManager.Instance["ImageViewReviewVM", "mROIPriorityIndex"] = SelectedmROIIndex;
+                        var ROIs = OverlayManagerClass.Instance.GetModeROIs(Mode.MICRO_SCANAREA);
+                        if (ROIs.Count > SelectedmROIIndex && SelectedmROIIndex >= 0)
+                        {
+                            OverlayManagerClass.Instance.SelectSingleROI(ROIs[SelectedmROIIndex]);
+                        }
+                        else
+                        {
+                            OverlayManagerClass.Instance.DeselectAllROIs();
+                        }
+                    }
+                }
+            }
+        }
+
+        public bool mROISpatialDisplaybleEnable
+        {
+            get => _mROISpatialDisplaybleEnable;
+            set
+            {
+                _mROISpatialDisplaybleEnable = value;
+                if (!value)
+                {
+                    mROIShowOverlays = false;
+                }
+                OnPropertyChanged("mROISpatialDisplaybleEnable");
+                MVMManager.Instance["ImageViewReviewVM", "mROISpatialDisplaybleEnable"] = value;
+            }
+        }
+
+        public double mROIStripePhysicalFieldSizeUM
+        {
+            get
+            {
+                if (ExperimentData.IsmROICapture && mROIList?.Count > 0 && mROIList[0] != null)
+                {
+                    return Math.Round(mROIList[0].PhysicalSizeXUM / mROIList[0].Stripes, 2);
+                }
+
+                return 0;
+            }
+        }
+
+        public int mROIStripePixels
+        {
+            get
+            {
+                if (ExperimentData.IsmROICapture && mROIList?.Count > 0 && mROIList[0] != null)
+                {
+                    return mROIList[0].SizeXPixels / mROIList[0].Stripes;
+                }
+
+                return 0;
+            }
+        }
+
         public int MStart
         {
             get
@@ -1893,18 +1480,6 @@
             set { _multiROIStatsWindows = value; }
         }
 
-        public OrthogonalViewStatus OrthogonalViewStat
-        {
-            get
-            {
-                return this._orthogonalViewStat;
-            }
-            set
-            {
-                _orthogonalViewStat = value;
-            }
-        }
-
         public string OutputDirectory
         {
             get { return _outputDirectory; }
@@ -1944,6 +1519,32 @@
             }
         }
 
+        public PixelSizeUM PixelSizeUM
+        {
+            get => ExperimentData.PixelSizeUM;
+        }
+
+        double _pixelAspectRatioYScale = 1;
+        public double PixelAspectRatioYScale
+        {
+            get => _pixelAspectRatioYScale;
+            set
+            {
+                _pixelAspectRatioYScale = value;
+                OnPropertyChanged("PixelAspectRatioYScale");
+                OnPropertyChanged("DisplayAspectRatioOptionVisibility");
+                OnPropertyChanged("AdvancedImageControlPanelVisibility");
+            }
+        }
+
+        public Visibility PlanePositionVisibility
+        {
+            get
+            {
+                return ExperimentData.IsRemoteFocus ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
         public List<ImageFileNameClass> PrimaryChannelFileNames
         {
             get { return _primaryChannelFileNames; }
@@ -1970,6 +1571,18 @@
             { return _progressPercentage; }
             set
             { _progressPercentage = value; }
+        }
+
+        public int RemoteFocusPlaneNumber
+        {
+            get
+            {
+                if (IsRemoteFocus && ZValue > 0)
+                {
+                    return ExperimentData.PlaneSequence[ZValue - 1];
+                }
+                return 0;
+            }
         }
 
         public ICommand ROICalculation
@@ -2017,10 +1630,81 @@
             set;
         }
 
+        public bool ROIStatsChartActive
+        {
+            get
+            {
+                return _roiStatsChartActive;
+            }
+            set
+            {
+                if (0 < _roiStatsCharts.Count)
+                {
+                    if (value)
+                    {
+                        foreach (ROIStatsChartWin win in _roiStatsCharts)
+                        {
+                            if (null != win)
+                            {
+                                win.Show();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        foreach (ROIStatsChartWin win in _roiStatsCharts)
+                        {
+                            if (null != win)
+                            {
+                                win.Hide();
+                            }
+                        }
+                    }
+                }
+                _roiStatsChartActive = value;
+            }
+        }
+
         public List<ROIStatsChartWin> ROIStatsChartW
         {
             get { return _roiStatsCharts; }
             set { _roiStatsCharts = value; }
+        }
+
+        public bool ROIStatsTableActive
+        {
+            get
+            {
+                return _roiStatsTableActive;
+            }
+            set
+            {
+                if (0 < _multiROIStatsWindows.Count)
+                {
+                    if (value)
+                    {
+                        foreach (MultiROIStatsUC win in _multiROIStatsWindows)
+                        {
+                            if (null != win)
+                            {
+                                win.Show();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        foreach (MultiROIStatsUC win in _multiROIStatsWindows)
+                        {
+                            if (null != win)
+                            {
+                                win.Hide();
+                            }
+
+                        }
+                    }
+                }
+                _roiStatsTableActive = value;
+            }
         }
 
         public Thickness ROItoolbarMargin
@@ -2033,62 +1717,6 @@
             {
                 _roiToolbarMargin = value;
                 OnPropertyChanged("ROItoolbarMargin");
-            }
-        }
-
-        public int RollOverPointIntensity0
-        {
-            get
-            {
-                return this._imageReview.RollOverPointIntensity0;
-            }
-        }
-
-        public int RollOverPointIntensity1
-        {
-            get
-            {
-                return this._imageReview.RollOverPointIntensity1;
-            }
-        }
-
-        public int RollOverPointIntensity2
-        {
-            get
-            {
-                return this._imageReview.RollOverPointIntensity2;
-            }
-        }
-
-        public int RollOverPointIntensity3
-        {
-            get
-            {
-                return this._imageReview.RollOverPointIntensity3;
-            }
-        }
-
-        public int RollOverPointX
-        {
-            get
-            {
-                return this._imageReview.RollOverPointX;
-            }
-            set
-            {
-                this._imageReview.RollOverPointX = value;
-            }
-        }
-
-        public int RollOverPointY
-        {
-            get
-            {
-                return this._imageReview.RollOverPointY;
-            }
-            set
-            {
-                this._imageReview.RollOverPointY = value;
             }
         }
 
@@ -2105,7 +1733,8 @@
                 {
                     CloseOrthogonalView();
                 }
-                _updateVirtualStack = true;
+                //TODO:IV
+                //_updateVirtualStack = true;
             }
         }
 
@@ -2113,145 +1742,213 @@
         {
             get
             {
-                if (null == ImageInfo.scanAreaIDList)
-                    return 0;
-                return (_scanAreaIndex < ImageInfo.scanAreaIDList.Count) ? ImageInfo.scanAreaIDList[_scanAreaIndex].RegionID : 0;
+                return 0;
             }
             set
             {
-                if (null != ImageInfo.scanAreaIDList && 0 < ImageInfo.scanAreaIDList.Count && ScanAreaIDMax >= value && ScanAreaIDMin <= value)
-                {
-                    _scanAreaIndex = ImageInfo.scanAreaIDList.FindIndex(c => c.RegionID == (value - ImageInfo.scanAreaIDList.Where(n => n.RegionID <= value).Min(n => value - n.RegionID)));
-                    OnPropertyChanged("ScanAreaID");
+                //if (null != ImageInfo.scanAreaIDList && 0 < ImageInfo.scanAreaIDList.Count && 0 >= value && 0 <= value)
+                //{
+                //    _scanAreaIndex = ImageInfo.scanAreaIDList.FindIndex(c => c.RegionID == (value - ImageInfo.scanAreaIDList.Where(n => n.RegionID <= value).Min(n => value - n.RegionID)));
+                //    OnPropertyChanged("ScanAreaID");
 
-                    Bitmap = null;
-                    OnPropertyChanged("Bitmap");
-
-                    //notify the views of the image data changing
-                    if (ImageDataChanged != null)
-                        ImageDataChanged(true);
-
-                }
+                //    UpdateBitmap(.01);
+                //}
             }
         }
 
-        public int ScanAreaIDMax
+        public int SelectedmROIIndex
         {
             get
             {
-                if (null == ImageInfo.scanAreaIDList)
-                    return 0;
-                return (_scanAreaIndexMax < ImageInfo.scanAreaIDList.Count) ? ImageInfo.scanAreaIDList[_scanAreaIndexMax].RegionID : 0;
+                return SelectedScanArea - 1;
             }
             set
             {
-                if (null != ImageInfo.scanAreaIDList)
+                SelectedScanArea = value + 1;
+
+            }
+        }
+
+        public int SelectedScanArea
+        {
+            get
+            {
+                return _selectedScanArea;
+            }
+            set
+            {
+                _selectedScanArea = value;
+                OnPropertyChanged("SelectedScanArea");
+                OnPropertyChanged("SelectedmROIIndex");
+
+                MVMManager.Instance["ImageViewReviewVM", "mROIPriorityIndex"] = value - 1;
+
+                if (SelectedmROIIndex >= 0)
                 {
-                    if (0 < ImageInfo.scanAreaIDList.Count)
+                    if (_mROIShowOverlays)
                     {
-                        _scanAreaIndexMax = ImageInfo.scanAreaIDList.FindIndex(c => c.RegionID == (value - ImageInfo.scanAreaIDList.Where(n => n.RegionID <= value).Min(n => value - n.RegionID)));
-                        OnPropertyChanged("ScanAreaIDMax");
+                        var ROIs = OverlayManagerClass.Instance.GetModeROIs(Mode.MICRO_SCANAREA);
+                        if (ROIs?.Count > SelectedmROIIndex)
+                        {
+
+                            ROIs = OverlayManagerClass.Instance.GetModeROIs(Mode.MICRO_SCANAREA);
+                            OverlayManagerClass.Instance.SelectSingleROI(ROIs[SelectedmROIIndex]);
+                        }
+                        else
+                        {
+                            OverlayManagerClass.Instance.DeselectAllROIs();
+                        }
                     }
                 }
-            }
-        }
-
-        public int ScanAreaIDMin
-        {
-            get
-            {
-                if (null == ImageInfo.scanAreaIDList)
-                    return 0;
-                return (_scanAreaIndexMin < ImageInfo.scanAreaIDList.Count) ? ImageInfo.scanAreaIDList[_scanAreaIndexMin].RegionID : 0;
-            }
-            set
-            {
-                if (null != ImageInfo.scanAreaIDList)
+                else if (_mROIShowOverlays)
                 {
-                    if (0 < ImageInfo.scanAreaIDList.Count)
-                    {
-                        _scanAreaIndexMin = ImageInfo.scanAreaIDList.FindIndex(c => c.RegionID == (value - ImageInfo.scanAreaIDList.Where(n => n.RegionID <= value).Min(n => value - n.RegionID)));
-                        OnPropertyChanged("ScanAreaIDMin");
-                    }
+                    OverlayManagerClass.Instance.DeselectAllROIs();
                 }
             }
         }
-
-        public ICommand ScanAreaIDMinusCommand
+        public bool RXFlag
         {
             get
             {
-                if (this._scanAreaIDMinusCommand == null)
-                    this._scanAreaIDMinusCommand = new RelayCommand(() => ScanAreaIDMinus());
-
-                return this._scanAreaIDMinusCommand;
-            }
-        }
-
-        public ICommand ScanAreaIDPlusCommand
-        {
-            get
-            {
-                if (this._scanAreaIDPlusCommand == null)
-                    this._scanAreaIDPlusCommand = new RelayCommand(() => ScanAreaIDPlus());
-
-                return this._scanAreaIDPlusCommand;
-            }
-        }
-
-        public string ScanAreaImagePathPlay
-        {
-            get
-            {
-                if (_scanAreaIsLive)
-                {
-                    return @"/ImageReview;component/Icons/Stop.png";
-                }
-                else
-                {
-                    return @"/ImageReview;component/Icons/Play.png";
-                }
-            }
-        }
-
-        public bool ScanAreaIsEnabled
-        {
-            get
-            {
-                return _scanAreaIsEnabled;
+                return rxFlag;
             }
             set
             {
-                _scanAreaIsEnabled = value;
-                OnPropertyChanged("ScanAreaIsEnabled");
+                rxFlag = value;
             }
         }
 
-        public bool ScanAreaIsLive
+        public bool RXFlagZ
         {
             get
             {
-                return _scanAreaIsLive;
+                return rxFlagZ;
             }
             set
             {
-                _scanAreaIsLive = value;
-                ROIControlEnabled = (true == value) ? false : true;
-                OnPropertyChanged("ScanAreaImagePathPlay");
-                OnPropertyChanged("ROIControlEnabled");
+                rxFlagZ = value;
             }
         }
 
-        public bool ScanAreaVisible
+        public bool SequentialModeEnabled
         {
-            get { return _scanAreaVisible; }
+            get
+            {
+                return _imageReview.SequentialModeEnabled;
+            }
             set
             {
-                _scanAreaVisible = value;
-                OnPropertyChanged("ScanAreaVisible");
+                _imageReview.SequentialModeEnabled = value;
             }
         }
 
+        //public int ScanAreaIDMax
+        //{
+        //    get
+        //    {
+        //        if (null == ImageInfo.scanAreaIDList)
+        //            return 0;
+        //        return (_scanAreaIndexMax < ImageInfo.scanAreaIDList.Count) ? ImageInfo.scanAreaIDList[_scanAreaIndexMax].RegionID : 0;
+        //    }
+        //    set
+        //    {
+        //        if (null != ImageInfo.scanAreaIDList)
+        //        {
+        //            if (0 < ImageInfo.scanAreaIDList.Count)
+        //            {
+        //                _scanAreaIndexMax = ImageInfo.scanAreaIDList.FindIndex(c => c.RegionID == (value - ImageInfo.scanAreaIDList.Where(n => n.RegionID <= value).Min(n => value - n.RegionID)));
+        //                OnPropertyChanged("ScanAreaIDMax");
+        //            }
+        //        }
+        //    }
+        //}
+        //public int ScanAreaIDMin
+        //{
+        //    get
+        //    {
+        //        if (null == ImageInfo.scanAreaIDList)
+        //            return 0;
+        //        return (_scanAreaIndexMin < ImageInfo.scanAreaIDList.Count) ? ImageInfo.scanAreaIDList[_scanAreaIndexMin].RegionID : 0;
+        //    }
+        //    set
+        //    {
+        //        if (null != ImageInfo.scanAreaIDList)
+        //        {
+        //            if (0 < ImageInfo.scanAreaIDList.Count)
+        //            {
+        //                _scanAreaIndexMin = ImageInfo.scanAreaIDList.FindIndex(c => c.RegionID == (value - ImageInfo.scanAreaIDList.Where(n => n.RegionID <= value).Min(n => value - n.RegionID)));
+        //                OnPropertyChanged("ScanAreaIDMin");
+        //            }
+        //        }
+        //    }
+        //}
+        //public ICommand ScanAreaIDMinusCommand
+        //{
+        //    get
+        //    {
+        //        if (this._scanAreaIDMinusCommand == null)
+        //            this._scanAreaIDMinusCommand = new RelayCommand(() => ScanAreaIDMinus());
+        //        return this._scanAreaIDMinusCommand;
+        //    }
+        //}
+        //public ICommand ScanAreaIDPlusCommand
+        //{
+        //    get
+        //    {
+        //        if (this._scanAreaIDPlusCommand == null)
+        //            this._scanAreaIDPlusCommand = new RelayCommand(() => ScanAreaIDPlus());
+        //        return this._scanAreaIDPlusCommand;
+        //    }
+        //}
+        //public string ScanAreaImagePathPlay
+        //{
+        //    get
+        //    {
+        //        if (_scanAreaIsLive)
+        //        {
+        //            return @"/ImageReview;component/Icons/Stop.png";
+        //        }
+        //        else
+        //        {
+        //            return @"/ImageReview;component/Icons/Play.png";
+        //        }
+        //    }
+        //}
+        //public bool ScanAreaIsEnabled
+        //{
+        //    get
+        //    {
+        //        return _scanAreaIsEnabled;
+        //    }
+        //    set
+        //    {
+        //        _scanAreaIsEnabled = value;
+        //        OnPropertyChanged("ScanAreaIsEnabled");
+        //    }
+        //}
+        //public bool ScanAreaIsLive
+        //{
+        //    get
+        //    {
+        //        return _scanAreaIsLive;
+        //    }
+        //    set
+        //    {
+        //        _scanAreaIsLive = value;
+        //        ROIControlEnabled = (true == value) ? false : true;
+        //        OnPropertyChanged("ScanAreaImagePathPlay");
+        //        OnPropertyChanged("ROIControlEnabled");
+        //    }
+        //}
+        //public bool ScanAreaVisible
+        //{
+        //    get { return _scanAreaVisible; }
+        //    set
+        //    {
+        //        _scanAreaVisible = value;
+        //        OnPropertyChanged("ScanAreaVisible");
+        //    }
+        //}
         public int SpectralForCurrentPreviewImage
         {
             get
@@ -2359,20 +2056,14 @@
                     OnPropertyChanged("DepthForCurrentPreviewImage");
                     OnPropertyChanged("TimeForCurrentPreviewImage");
                     OnPropertyChanged("TimeForCurrentPreviewImageCalculable");
-                    Bitmap = null;
-                    OnPropertyChanged("Bitmap");
-                    if (ImageDataChanged != null)
-                    {
-                        //notify the views of the image data changing
-                        ImageDataChanged(true);
-                    }
+                    UpdateBitmap(.01);
                 }
-
-                if (_orthogonalViewStat != OrthogonalViewStatus.INACTIVE && CloseOrthogonalView != null)
-                {
-                    CloseOrthogonalView();
-                }
-                _updateVirtualStack = true;
+                //TODO:IV
+                //if (_orthogonalViewStat != OrthogonalViewStatus.INACTIVE && CloseOrthogonalView != null)
+                //{
+                //    CloseOrthogonalView();
+                //}
+                //_updateVirtualStack = true;
 
                 SyncROIChart();
             }
@@ -2400,6 +2091,11 @@
             }
         }
 
+        public static bool StatsLoaderDone
+        {
+            get => _bwStatsLoaderDone;
+        }
+
         public int SubTileIndex
         {
             get
@@ -2413,7 +2109,8 @@
                 {
                     CloseOrthogonalView();
                 }
-                _updateVirtualStack = true;
+                //TODO:IV
+                //_updateVirtualStack = true;
                 OnPropertyChanged("SubTileIndex");
             }
         }
@@ -2438,7 +2135,7 @@
             get
             {
                 int zStackFrames = ExperimentData.ImageInfo.flybackFrames + ExperimentData.ImageInfo.zSteps;
-                double frameTime = 1.0 / (ExperimentFramerate) * (ExperimentAverageMode != 0 ? ExperimentImagesPerAverage : 1);
+                double frameTime = 1.0 / (ExperimentFramerate) * (ExperimentData.AverageMode ? ExperimentData.ImgPerAvg : 1);
                 return ((TValue - 1) * zStackFrames + (ZValue - 1)) * frameTime;
             }
         }
@@ -2525,6 +2222,25 @@
             }
         }
 
+        public int TotalScanAreas
+        {
+            get => ExperimentData.IsmROICapture ? ExperimentData.mROIs.Count : 1;
+        }
+
+        public int TBoxValue
+        {
+            get
+            {
+                return this._imageReview.TValue;
+            }
+            set
+            {
+                RXFlag = false;
+                TValue = value;
+                RXFlag = true;
+            }
+        }
+
         public int TValue
         {
             get
@@ -2539,37 +2255,42 @@
                     OnPropertyChanged("DepthForCurrentPreviewImage");
                     OnPropertyChanged("TimeForCurrentPreviewImage");
                     OnPropertyChanged("TimeForCurrentPreviewImageCalculable");
+
                     return;
                 }
-
+                
                 if (TMax >= value && TMin <= value)
                 {
                     this._imageReview.TValue = value;
                     this._tValue3D = value;
 
+                    OnPropertyChanged("ZValue");
                     OnPropertyChanged("TValue");
                     OnPropertyChanged("DepthForCurrentPreviewImage");
                     OnPropertyChanged("TimeForCurrentPreviewImage");
                     OnPropertyChanged("TimeForCurrentPreviewImageCalculable");
-                    Bitmap = null;
-                    OnPropertyChanged("Bitmap");
+
+                    _ = UpdateBitmap(.01);
+                    if(false == RXFlag && (bool)MVMManager.Instance["RemoteIPCControlViewModelBase", "RemoteConnection"])
+                        MVMManager.Instance["RemoteIPCControlViewModelBase", "ThorsyncFrameSync"] = TValue.ToString() + "/" + ZValue.ToString() + "/" + ZMax.ToString();
 
                     if (ViewType == Convert.ToInt32(ViewTypes.ViewType3D))
                     {
                         OnPropertyChanged("TValue3D");
                     }
+                }
+                //TODO:IV
+                //if (_orthogonalViewStat != OrthogonalViewStatus.INACTIVE && CloseOrthogonalView != null)
+                //{
+                //    CloseOrthogonalView();
+                //}
+                //_updateVirtualStack = true;
 
-                    if (ImageDataChanged != null)
-                    {
-                        //notify the views of the image data changing
-                        ImageDataChanged(true);
-                    }
-                }
-                if (_orthogonalViewStat != OrthogonalViewStatus.INACTIVE && CloseOrthogonalView != null)
+                if ((bool)MVMManager.Instance["ImageViewReviewVM", "IsOrthogonalViewChecked"])
                 {
-                    CloseOrthogonalView();
+                    MVMManager.Instance["ImageViewReviewVM", "TIndexFromReview"] = value;
                 }
-                _updateVirtualStack = true;
+                OnPropertyChanged("TBoxValue");
 
                 SyncROIChart();
             }
@@ -2611,11 +2332,16 @@
             }
         }
 
-        public bool UseGrayScale
+        public bool UpdateMap
         {
             get
             {
-                return this.GrayscaleForSingleChannel && this.IsSingleChannel;
+                UpdateBitmap();
+                return false;
+            }
+            set
+            {
+                UpdateBitmap();
             }
         }
 
@@ -2672,7 +2398,7 @@
         {
             get
             {
-                return _viewType;
+                return (int)_viewType;
             }
             set
             {
@@ -2681,13 +2407,20 @@
 
                 if (ViewType == Convert.ToInt32(ViewTypes.ViewType3D))
                 {
-                    if (CloseOrthogonalView != null)
+                    if (SequentialModeEnabled)
                     {
-                        CloseOrthogonalView();
+                        MessageBox.Show("Sequential Mode is not supported with 3D view yet.");
                     }
-                    OnPropertyChanged("TValue3D");
-                    OnPropertyChanged("ZStreamValue3D");
-                    if (null != RenderVolume) RenderVolume();
+                    else
+                    {
+                        if (CloseOrthogonalView != null)
+                        {
+                            CloseOrthogonalView();
+                        }
+                        OnPropertyChanged("TValue3D");
+                        OnPropertyChanged("ZStreamValue3D");
+                        if (null != RenderVolume) RenderVolume();
+                    }
                 }
             }
         }
@@ -2722,86 +2455,6 @@
             get
             {
                 return this._imageReview.WavelengthSelectedIndex;
-            }
-        }
-
-        public double WhitePoint0
-        {
-            get
-            {
-                return this._imageReview.WhitePoint0;
-            }
-            set
-            {
-                if (value == _imageReview.WhitePoint0) return;
-                this._imageReview.WhitePoint0 = value;
-                OnPropertyChanged("WhitePoint0");
-                Bitmap = null;
-                OnPropertyChanged("Bitmap");
-                if (_orthogonalViewStat != OrthogonalViewStatus.INACTIVE && VirtualZStack == true)
-                {
-                    UpdateOrthogonalViewImages();
-                }
-            }
-        }
-
-        public double WhitePoint1
-        {
-            get
-            {
-                return this._imageReview.WhitePoint1;
-            }
-            set
-            {
-                if (value == _imageReview.WhitePoint1) return;
-                this._imageReview.WhitePoint1 = value;
-                OnPropertyChanged("WhitePoint1");
-                Bitmap = null;
-                OnPropertyChanged("Bitmap");
-                if (_orthogonalViewStat != OrthogonalViewStatus.INACTIVE && VirtualZStack == true)
-                {
-                    UpdateOrthogonalViewImages();
-                }
-            }
-        }
-
-        public double WhitePoint2
-        {
-            get
-            {
-                return this._imageReview.WhitePoint2;
-            }
-            set
-            {
-                if (value == _imageReview.WhitePoint2) return;
-                this._imageReview.WhitePoint2 = value;
-                OnPropertyChanged("WhitePoint2");
-                Bitmap = null;
-                OnPropertyChanged("Bitmap");
-                if (_orthogonalViewStat != OrthogonalViewStatus.INACTIVE && VirtualZStack == true)
-                {
-                    UpdateOrthogonalViewImages();
-                }
-            }
-        }
-
-        public double WhitePoint3
-        {
-            get
-            {
-                return this._imageReview.WhitePoint3;
-            }
-            set
-            {
-                if (value == _imageReview.WhitePoint3) return;
-                this._imageReview.WhitePoint3 = value;
-                OnPropertyChanged("WhitePoint3");
-                Bitmap = null;
-                OnPropertyChanged("Bitmap");
-                if (_orthogonalViewStat != OrthogonalViewStatus.INACTIVE && VirtualZStack == true)
-                {
-                    UpdateOrthogonalViewImages();
-                }
             }
         }
 
@@ -3038,23 +2691,20 @@
                     this._imageReview.ZStreamValue = value;
                     this._zStreamValue3D = value;
                     OnPropertyChanged("ZStreamValue");
-                    Bitmap = null;
-                    OnPropertyChanged("Bitmap");
-                    if (ViewType == Convert.ToInt32(ViewTypes.ViewType3D))
-                    {
-                        OnPropertyChanged("ZStreamValue3D");
-                    }
-                    if (ImageDataChanged != null)
-                    {
-                        //notify the views of the image data changing
-                        ImageDataChanged(true);
-                    }
+
+                    UpdateBitmap(.01);
+                    //TODO:IV
+                    //if (ViewType == Convert.ToInt32(ViewTypes.ViewType3D))
+                    //{
+                    //    OnPropertyChanged("ZStreamValue3D");
+                    //}
                 }
-                if (_orthogonalViewStat != OrthogonalViewStatus.INACTIVE && CloseOrthogonalView != null)
-                {
-                    CloseOrthogonalView();
-                }
-                _updateVirtualStack = true;
+                //TODO:IV
+                //if (_orthogonalViewStat != OrthogonalViewStatus.INACTIVE && CloseOrthogonalView != null)
+                //{
+                //    CloseOrthogonalView();
+                //}
+                //_updateVirtualStack = true;
                 SyncROIChart();
             }
         }
@@ -3094,6 +2744,20 @@
             }
         }
 
+        public int ZBoxValue
+        {
+            get
+            {
+                return ZValue;
+            }
+            set
+            {
+                RXFlagZ = false;
+                ZValue = value;
+                RXFlagZ = true;
+            }
+        }
+
         public int ZValue
         {
             get
@@ -3109,6 +2773,7 @@
                     OnPropertyChanged("TimeForCurrentPreviewImage");
                     OnPropertyChanged("SpectralForCurrentPreviewImage");
                     OnPropertyChanged("TimeForCurrentPreviewImageCalculable");
+                    OnPropertyChanged("RemoteFocusPlaneNumber");
                     return;
                 }
 
@@ -3120,18 +2785,20 @@
                     OnPropertyChanged("TimeForCurrentPreviewImage");
                     OnPropertyChanged("SpectralForCurrentPreviewImage");
                     OnPropertyChanged("TimeForCurrentPreviewImageCalculable");
-                    Bitmap = null;
-                    OnPropertyChanged("Bitmap");
-                    if (ImageDataChanged != null)
-                    {
-                        //notify the views of the image data changing
-                        ImageDataChanged(true);
-                    }
+                    OnPropertyChanged("RemoteFocusPlaneNumber");
+                    OnPropertyChanged("ZBoxValue");
+
+                    UpdateBitmap(.01);
+                    if (false == RXFlagZ && (bool)MVMManager.Instance["RemoteIPCControlViewModelBase", "RemoteConnection"])
+                        MVMManager.Instance["RemoteIPCControlViewModelBase", "ThorsyncFrameSync"] = TValue.ToString() + "/" + ZValue.ToString() + "/" + ZMax.ToString();
                 }
-                if (_orthogonalViewStat != OrthogonalViewStatus.INACTIVE)
-                {
-                    ZChanged();
-                }
+
+                //TODO:IV
+                //if (_orthogonalViewStat != OrthogonalViewStatus.INACTIVE)
+                //{
+                //    ZChanged();
+                //}
+
                 SyncROIChart();
 
             }
@@ -3169,7 +2836,7 @@
                     return Visibility.Hidden;
                 return _zVisible ? Visibility.Visible : Visibility.Collapsed; 
                 */
-                return ZMax == ZMin ? Visibility.Collapsed : Visibility.Visible;
+                return ZMax <= ZMin ? Visibility.Collapsed : Visibility.Visible;
             }
             set
             {
@@ -3200,13 +2867,6 @@
             }
         }
 
-        public Visibility IsMovieAvailable
-        {
-            get
-            {
-                return IsSpVisible.Equals(Visibility.Visible) || IsZStreamVisible.Equals(Visibility.Visible) || IsTVisible.Equals(Visibility.Visible) || ZVisible.Equals(Visibility.Visible) ? Visibility.Visible : Visibility.Collapsed;
-            }
-        }
 
         public double ZVolumeSpacing
         {
@@ -3224,181 +2884,65 @@
 
         #endregion Properties
 
+        #region Indexers
+
+        public object this[string propertyName, object defaultObject = null]
+        {
+            get
+            {
+                PropertyInfo myPropInfo = GetPropertyInfo(propertyName);
+                return (null != myPropInfo) ? myPropInfo.GetValue(this) : defaultObject;
+            }
+            set
+            {
+                PropertyInfo myPropInfo = GetPropertyInfo(propertyName);
+                if (null != myPropInfo)
+                {
+                    myPropInfo.SetValue(this, value);
+                }
+            }
+        }
+
+        public object this[string propertyName, int index, object defaultObject = null]
+        {
+            get
+            {
+                PropertyInfo myPropInfo = GetPropertyInfo(propertyName);
+                if (null != myPropInfo)
+                {
+                    if (typeof(CustomCollection<>) == myPropInfo.PropertyType.GetGenericTypeDefinition())
+                    {
+                        var collection = myPropInfo.GetValue(this, null);
+                        return collection.GetType().GetProperty("Item").GetValue(collection, new object[] { index });
+                    }
+                    else
+                    {
+                        return myPropInfo.GetValue(this, null);
+                    }
+                }
+                return defaultObject;
+            }
+            set
+            {
+                PropertyInfo myPropInfo = GetPropertyInfo(propertyName);
+                if (null != myPropInfo)
+                {
+                    if (typeof(CustomCollection<>) == myPropInfo.PropertyType.GetGenericTypeDefinition())
+                    {
+                        var collection = myPropInfo.GetValue(this, null);
+                        collection.GetType().GetProperty("Item").SetValue(collection, value, new object[] { index });
+                    }
+                    else
+                    {
+                        myPropInfo.SetValue(this, value, null);
+                    }
+                }
+            }
+        }
+
+        #endregion Indexers
+
         #region Methods
-
-        public WriteableBitmap Bitmap16()
-        {
-            short[] pd = ImageReview.GetPixelDataSave();
-
-            //verify pixel data is available
-            if (pd == null)
-            {
-                return _bitmap16;
-            }
-
-            switch (ImageReview.ImageColorChannels)
-            {
-                case 1:
-                    {
-                        // Define parameters used to create the BitmapSource.
-                        PixelFormat pf = PixelFormats.Gray16;
-                        int width = _imageReview.ImageWidth;
-                        int height = _imageReview.ImageHeight;
-                        int rawStride = (width * pf.BitsPerPixel + 7) / 8;
-
-                        //create a new bitmpap when one does not exist or the size of the image changes
-                        if (_bitmap16 == null)
-                        {
-                            _bitmap16 = new WriteableBitmap(width, height, 96, 96, pf, null);
-                        }
-                        else
-                        {
-                            if ((_bitmap16.Width != width) || (_bitmap16.Height != height) || (_bitmap16.Format != pf))
-                            {
-                                _bitmap16 = new WriteableBitmap(width, height, 96, 96, pf, null);
-                            }
-                        }
-
-                        int w = _bitmap16.PixelWidth;
-                        int h = _bitmap16.PixelHeight;
-                        int widthInBytes = w;
-
-                        if (pd.Length == (width * height))
-                        {
-                            //copy the pixel data into the _bitmap
-                            _bitmap16.WritePixels((new Int32Rect(0, 0, w, h)), pd, rawStride, 0);
-                        }
-
-                    }
-                    break;
-                default:
-                    {
-
-                        // Define parameters used to create the BitmapSource.
-                        PixelFormat pf = PixelFormats.Rgb48;
-
-                        int width = _imageReview.ImageWidth;
-                        int height = _imageReview.ImageHeight;
-                        int rawStride = (width * pf.BitsPerPixel + 7) / 8;
-
-                        //create a new bitmpap when one does not exist or the size of the image changes
-                        if (_bitmap16 == null)
-                        {
-                            _bitmap16 = new WriteableBitmap(width, height, 96, 96, pf, null);
-
-                        }
-                        else
-                        {
-                            if ((_bitmap16.Width != width) || (_bitmap16.Height != height) || (_bitmap16.Format != pf))
-                            {
-                                _bitmap16 = new WriteableBitmap(width, height, 96, 96, pf, null);
-                            }
-                        }
-
-                        int w = _bitmap16.PixelWidth;
-                        int h = _bitmap16.PixelHeight;
-
-                        if ((pd.Length / 3) == (width * height))
-                        {
-                            //copy the pixel data into the bitmap
-                            _bitmap16.WritePixels(new Int32Rect(0, 0, w, h), pd, rawStride, 0);
-                        }
-
-                    }
-                    break;
-            }
-
-            ImageReview.FinishedCopyingPixel();
-
-            return _bitmap16;
-        }
-
-        public bool BuildChannelPalettes()
-        {
-            if (null != HardwareDoc)
-            {
-                string str = string.Empty;
-
-                XmlNodeList ndList = HardwareDoc.SelectNodes("/HardwareSettings/ColorChannels/*");
-
-                string chanName = string.Empty;
-
-                for (int j = 0; j < ImageReview.MaxChannels; j++)
-                {
-                    switch (j)
-                    {
-                        case 0: chanName = "ChanA"; break;
-                        case 1: chanName = "ChanB"; break;
-                        case 2: chanName = "ChanC"; break;
-                        case 3: chanName = "ChanD"; break;
-                    }
-
-                    for (int i = 0; i < ndList.Count; i++)
-                    {
-                        if (XmlManager.GetAttribute(ndList[i], HardwareDoc, "name", ref str))
-                        {
-                            if (str.Contains(chanName))
-                            {
-                                if (this.UseGrayScale)
-                                {
-                                    str = Application.Current.Resources["ApplicationSettingsFolder"].ToString() + "\\luts\\" + "Gray.txt";
-                                }
-                                else
-                                {
-                                    str = Application.Current.Resources["ApplicationSettingsFolder"].ToString() + "\\luts\\" + ndList[i].Name + ".txt";
-                                }
-
-                                //if the current lut for the channel has not changed continue on
-                                if ((_currentChannelsLutFiles.Count > 0) && (_currentChannelsLutFiles[j].Equals(str)))
-                                {
-                                    continue;
-                                }
-
-                                if (File.Exists(str))
-                                {
-                                    StreamReader fs = new StreamReader(str);
-                                    string line;
-                                    int counter = 0;
-                                    try
-                                    {
-                                        while ((line = fs.ReadLine()) != null)
-                                        {
-                                            string[] split = line.Split(',');
-
-                                            if ((split[0] != null) && (split[1] != null) && (split[2] != null))
-                                            {
-                                                ImageReview.ChannelLuts[j][counter] = Color.FromRgb(Convert.ToByte(split[0]), Convert.ToByte(split[1]), Convert.ToByte(split[2]));
-                                            }
-                                            counter++;
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        string msg = ex.Message;
-                                    }
-
-                                    fs.Close();
-
-                                    _currentChannelsLutFiles[j] = str;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                //default gray scale without checking settings:
-                for (int j = 0; j < ImageReview.MaxChannels; j++)
-                {
-                    for (int k = 0; k < ImageReview.LUT_SIZE; k++)
-                    {
-                        ImageReview.ChannelLuts[j][k] = Color.FromRgb(Convert.ToByte(k.ToString()), Convert.ToByte(k.ToString()), Convert.ToByte(k.ToString()));
-                    }
-                }
-            }
-            return true;
-        }
 
         public void CloseAll()
         {
@@ -3452,7 +2996,7 @@
             _bw.RunWorkerAsync();
         }
 
-        public void CreateProgressWindow()
+        public void CreateProgressWindow(string message, Brush background)
         {
             if (null != _spinnerWindow)
                 return;
@@ -3462,13 +3006,13 @@
             _spinnerWindow.Width = 150;
             _spinnerWindow.Height = 150;
             _spinnerWindow.WindowStyle = WindowStyle.None;
-            _spinnerWindow.Background = Brushes.DimGray;
+            _spinnerWindow.Background = background;
             _spinnerWindow.AllowsTransparency = true;
             Border border = new Border();
             border.BorderThickness = new Thickness(2);
             _spinnerWindow.Content = border;
 
-            _spinner = new SpinnerProgress.SpinnerProgressControl("Converting");
+            _spinner = new SpinnerProgress.SpinnerProgressControl(message);
             _spinner.Margin = new Thickness(5);
             _spinner.SpinnerWidth = 120;
             _spinner.SpinnerHeight = 120;
@@ -3479,6 +3023,12 @@
             _spinnerWindow.Top = _spinnerWindow.Owner.Top + ((Panel)_spinnerWindow.Owner.Content).ActualHeight / 4;
             _spinnerWindow.Closed += new EventHandler(_spinnerWindow_Closed);
             _spinnerWindow.Show();
+        }
+
+        public void DelayUpdateBitmap(int milli)
+        {
+            Thread.Sleep(milli);
+            UpdateBitmap(0.01);
         }
 
         public void EnableHandlers()
@@ -3497,6 +3047,8 @@
             OverlayManagerClass.Instance.MaskWillChangeEvent += _overlayManager_MaskWillChangeEvent;
 
             ROIStatsChart.ViewModel.ChartViewModel.OnXReviewPositionChanged += UpdateAsXReviewPositionChanged;
+            OverlayManagerClass.Instance.mROISelectedEvent += Instance_OverlaymROISelectedEvent;
+            OverlayManagerClass.Instance.mROIsDisableMoveAndResize = true;
             _imageReview.RegisterCallbacks();
         }
 
@@ -3588,22 +3140,43 @@
 
         public void ExperimentDataLoaded()
         {
-            BuildChannelPalettes();
             if (null != ExperimentPathChanged) ExperimentPathChanged();
             CloseAll();
-            _updateVirtualStack = true;
+            //TODO:IV
+            //_updateVirtualStack = true;
+            SequentialModeEnabled = XmlManager.ReadAttribute<Boolean>(ExperimentDoc, "/ThorImageExperiment/CaptureSequence", "enable");
+            MVMManager.Instance["ImageViewReviewVM", "IsInSequentialMode"] = SequentialModeEnabled;
+            if (SequentialModeEnabled)
+            {
+                //update the channel view for sequential capture
+                if (ExperimentXMLPath.Substring(ExperimentXMLPath.Length - 4) == ".xml")
+                {
+                    //Create a copy of the Experiment.xml file to modify the colors in the file. This way Experiment.xml stays unmodified.
+                    string colorExperiment = ExperimentXMLPath.Substring(0, ExperimentXMLPath.Length - 4) + "SequentialColorSettings.xml";
+                    if (false == File.Exists(colorExperiment))
+                    {
+                        File.Copy(ExperimentXMLPath, colorExperiment);
+                    }
+                    MVMManager.Instance["ImageViewReviewVM", "SequentialExperimentPath"] = colorExperiment;
+                }
+                _imageReview.LoadSequentialInfo();
+            }
+
             UpdateBitmapAndEventSubscribers();
+            _imageReview.LoadLSMChannelData();//Channel information needs to be loaded from XML when experiment is loaded
             OnPropertyChanged("BurnInVisibility");
+            MVMManager.Instance["ImageViewReviewVM", "ZStepNum"] = ExperimentData.ZMax;
+            MVMManager.Instance["ImageViewReviewVM", "ZStepSizeUM"] = ExperimentData.ZStepSizeUM;
+            MVMManager.Instance["ImageViewReviewVM", "ExperimentPath"] = ExperimentFolderPath;
+            OnPropertyChanged("mROIList");
+            OnPropertyChanged("mROIShowOverlays");
+            OnPropertyChanged("mROIStripePixels");
+            OnPropertyChanged("mROIStripePhysicalFieldSizeUM");
         }
 
         public void FireColorMappingChangedAction(bool bVal)
         {
             ColorMappingChanged(bVal);
-        }
-
-        public Color GetColorAssignment(int i)
-        {
-            return _imageReview.GetColorAssignment(i);
         }
 
         /// <summary>
@@ -3670,7 +3243,7 @@
         {
             double _imageWidth = ExperimentData.ImageInfo.pixelX;
             double _imageHeight = ExperimentData.ImageInfo.pixelY;
-            double _fieldWidth = Math.Round(ExperimentData.LSMUMPerPixel * _imageWidth);
+            double _fieldWidth = Math.Round(ExperimentData.PixelSizeUM.PixelWidthUM * _imageWidth);
 
             scaleLen = _fieldWidth / 4.0;
             if (scaleLen > 100.0)
@@ -3710,6 +3283,20 @@
             drawMarkFormat.LineAlignment = d.StringAlignment.Center;
         }
 
+        public PropertyInfo GetPropertyInfo(string propertyName)
+        {
+            PropertyInfo myPropInfo = null;
+            if (!_properties.TryGetValue(propertyName, out myPropInfo))
+            {
+                myPropInfo = typeof(ImageReviewViewModel).GetProperty(propertyName);
+                if (null != myPropInfo)
+                {
+                    _properties.Add(propertyName, myPropInfo);
+                }
+            }
+            return myPropInfo;
+        }
+
         /// <summary>
         /// Returns the number of images in the raw file input based on the current set
         /// image parameters
@@ -3724,27 +3311,6 @@
             int imageSize = ImageInfo.pixelX * ImageInfo.pixelY * NumChannelsInRaw() * zSteps * 2;
 
             return fileSize / imageSize / ExperimentData.NumberOfPlanes;
-        }
-
-        public void InitOrthogonalView()
-        {
-            int totalNumOfZstack = this.ZMax - this.ZMin + 1;
-            int width = this._imageReview.ImageWidth;
-            int height = this._imageReview.ImageHeight;
-
-            int pdXZ_DataLength = PixelFormats.Rgb24.BitsPerPixel / 8 * this._imageReview.ImageWidth * totalNumOfZstack;
-            int pdYZ_DataLength = PixelFormats.Rgb24.BitsPerPixel / 8 * this._imageReview.ImageHeight * totalNumOfZstack;
-
-            if (_bitmapXZ == null || _pdXZ == null || _pdXZ.Length != pdXZ_DataLength)
-            {
-                _pdXZ = new byte[pdXZ_DataLength];
-            }
-
-            if (_bitmapYZ == null || _pdYZ == null || _pdYZ.Length != pdYZ_DataLength)
-            {
-                _pdYZ = new byte[pdYZ_DataLength];
-            }
-            UpdateOrthogonalView();
         }
 
         public async void InscribeScaleToImages()
@@ -3999,8 +3565,7 @@
             else
             {
                 //Load active.xml to find experiment folder and type
-                var experimentDoc = new XmlDocument();
-                experimentDoc.Load(_imageReview.ExperimentXMLPath);
+                XmlDocument experimentDoc = LoadDocAsReadOnly(_imageReview.ExperimentXMLPath);
                 var pathXmlNode = experimentDoc.SelectSingleNode("/ThorImageExperiment/Name");
                 var typeXmlNode = experimentDoc.SelectSingleNode("/ThorImageExperiment/Streaming");
                 if (pathXmlNode != null && typeXmlNode != null)
@@ -4046,7 +3611,7 @@
                             // Show progress window
                             Application.Current.Dispatcher.BeginInvoke((Action)delegate ()
                             {
-                                CreateProgressWindow();
+                                CreateProgressWindow("Converting", Brushes.DimGray);
                             });
                         }
                     }
@@ -4058,13 +3623,26 @@
 
         public void LoadColorImageSettings()
         {
-            XmlNodeList wavelengths = HardwareDoc.GetElementsByTagName("Wavelength");
+            MVMManager.Instance["ImageViewReviewVM", "ReviewApplicationSettings"] = ApplicationDoc;
+            MVMManager.Instance["ImageViewReviewVM", "ReviewApplicationSettingsPath"] = File.Exists(ApplicationSettingPath) ? ApplicationSettingPath : string.Empty;
+            MVMManager.Instance["ImageViewReviewVM", "ReviewHardwareSettings"] = HardwareDoc; //Loading the HardwareSettings document triggers a LoadColors process in ImageViewControlMVM
+            MVMManager.Instance["ImageViewReviewVM", "ReviewHardwareSettingsPath"] = File.Exists(HardwareSettingPath) ? HardwareSettingPath : string.Empty;
 
-            for (int i = 0; i < wavelengths.Count; i++)
+            if (null != _lineProfile)
             {
-                ChannelColor[i] = new SolidColorBrush(GetColorAssignment(i));
+                _lineProfile.ColorAssigment = GetColorAssignments();
             }
-            UpdateColors();
+        }
+
+        public XmlDocument LoadDocAsReadOnly(string xmlPath)
+        {
+            XmlDocument origDoc = new XmlDocument();
+            origDoc.Load(xmlPath);
+            // Create a clone of the original document to make sure we don't modify Experiment.xml
+            XmlDocument readOnlyExpDoc = new XmlDocument();
+            readOnlyExpDoc.LoadXml(origDoc.OuterXml);
+            origDoc = null;
+            return readOnlyExpDoc;
         }
 
         public Boolean LoadExpFolder(string folderPath)
@@ -4084,10 +3662,10 @@
             }
             else
             {
-                this.TMax = 1;
+                //this.TMax = 1;
 
             }
-            this.ZMax = 1;
+            //this.ZMax = 1;
 
             //load file
             switch (ImageInfo.imageType)
@@ -4228,6 +3806,17 @@
             OnPropertyChanged("BurnInVisibility");
         }
 
+        public void LoadXMLSettings()
+        {
+            XmlNodeList node = ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/General/ChannelTileViewSettings");
+            string str = string.Empty;
+            if (0 < node.Count)
+            {
+                MVMManager.Instance["ImageViewReviewVM", "TileDisplay"] = XmlManager.GetAttribute(node[0], ApplicationDoc, "TilingEnableOption", ref str) && (str == "1" || str == bool.TrueString);
+                MVMManager.Instance["ImageViewReviewVM", "VerticalTileDisplay"] = XmlManager.GetAttribute(node[0], ApplicationDoc, "VerticalTiling", ref str) && (str == "1" || str == bool.TrueString);
+            }
+        }
+
         /// <summary>
         /// Calculates the number of channels that are expected to be actually represented 
         /// in a binary raw file based on the current image parameters
@@ -4253,7 +3842,7 @@
             {
                 channelsInRaw = 1;
             }
-            else if (GetRawContainsDisabledChannels())
+            else if (ExperimentData.OnlyEnabledChannels != 1)
             {
                 channelsInRaw = ImageReview.MAX_CHANNELS;
             }
@@ -4263,6 +3852,14 @@
             }
 
             return channelsInRaw;
+        }
+
+        public void OnPropertyChange(string propertyName)
+        {
+            if (null != GetPropertyInfo(propertyName))
+            {
+                OnPropertyChanged(propertyName);
+            }
         }
 
         public void ReleaseHandlers()
@@ -4276,6 +3873,10 @@
 
             ROIStatsChart.ViewModel.ChartViewModel.OnXReviewPositionChanged -= UpdateAsXReviewPositionChanged;
             _imageReview.UnRegisterCallbacks();
+            OverlayManagerClass.Instance.mROIsDisableMoveAndResize = false;
+            OverlayManagerClass.Instance.mROISelectedEvent -= Instance_OverlaymROISelectedEvent;
+
+            mROIShowOverlays = false;
         }
 
         public void ReloadSettingsByExpModality()
@@ -4284,21 +3885,7 @@
 
             SetDisplayOptions();
 
-            SetNormalization();
-
-            //To load the color settings, force GrayscaleForSingleChannel to be false
-            //this will allow to load the color channels colors instead of gray scale
-            //then change it back to its original value
-            GrayscaleForSingleChannel = false;
-            BuildChannelPalettes();
-            //loading the snapshot settings
             LoadColorImageSettings();
-
-            UpdateGrayscaleForSingleChannel();
-            if (true == GrayscaleForSingleChannel)
-            {
-                BuildChannelPalettes();
-            }
 
             //notice current experiment modality
             if (null != _eventAggregator)
@@ -4309,47 +3896,40 @@
             }
         }
 
-        public void SaveImage(String filename, int filterIndex)
-        {
-            FileStream stream = new FileStream(filename, FileMode.Create);
-
-            switch (filterIndex)
-            {
-                case 1:
-                    {
-                        //8 bit tiff image save
-                        TiffBitmapEncoder encoder = new TiffBitmapEncoder();
-                        encoder.Frames.Add(BitmapFrame.Create(_bitmap));
-                        encoder.Save(stream);
-                    }
-                    break;
-                case 2:
-                    {
-                        //16 bit tiff image save
-                        Bitmap16();
-                        TiffBitmapEncoder encoder = new TiffBitmapEncoder();
-                        encoder.Frames.Add(BitmapFrame.Create(_bitmap16));
-                        encoder.Save(stream);
-                    }
-                    break;
-                case 3:
-                    {
-                        //8 bit jpeg image save
-                        JpegBitmapEncoder jpgEncoder = new JpegBitmapEncoder();
-                        jpgEncoder.Frames.Add(BitmapFrame.Create(_bitmap));
-                        jpgEncoder.Save(stream);
-                    }
-                    break;
-            }
-
-            stream.Close();
-        }
-
-        public void SetColorAssignment(int i, int color)
-        {
-            _imageReview.SetColorAssignment(i, color);
-        }
-
+        //TODO:IV
+        //public void SaveImage(String filename, int filterIndex)
+        //{
+        //    FileStream stream = new FileStream(filename, FileMode.Create);
+        //    switch (filterIndex)
+        //    {
+        //        case 1:
+        //            {
+        //                //8 bit tiff image save
+        //                TiffBitmapEncoder encoder = new TiffBitmapEncoder();
+        //                encoder.Frames.Add(BitmapFrame.Create(_bitmap));
+        //                encoder.Save(stream);
+        //            }
+        //            break;
+        //        case 2:
+        //            {
+        //                //16 bit tiff image save
+        //                Bitmap16();
+        //                TiffBitmapEncoder encoder = new TiffBitmapEncoder();
+        //                encoder.Frames.Add(BitmapFrame.Create(_bitmap16));
+        //                encoder.Save(stream);
+        //            }
+        //            break;
+        //        case 3:
+        //            {
+        //                //8 bit jpeg image save
+        //                JpegBitmapEncoder jpgEncoder = new JpegBitmapEncoder();
+        //                jpgEncoder.Frames.Add(BitmapFrame.Create(_bitmap));
+        //                jpgEncoder.Save(stream);
+        //            }
+        //            break;
+        //    }
+        //    stream.Close();
+        //}
         public void SetDisplayOptions()
         {
             XmlNodeList ndList;
@@ -4364,56 +3944,6 @@
             if (ndList.Count > 0)
             {
                 ZVisible = ndList[0].Attributes["Visibility"].Value.Equals("Visible") ? Visibility.Visible : Visibility.Hidden;
-            }
-        }
-
-        public void SetNormalization()
-        {
-            XmlNodeList wl = HardwareDoc.SelectNodes("/HardwareSettings/Wavelength");
-
-            if (wl.Count > 0)
-            {
-                for (int i = 0; i < wl.Count; i++)
-                {
-                    string bp = string.Empty;
-                    string wp = string.Empty;
-                    string autoTog = string.Empty;
-                    string logTog = string.Empty;
-                    XmlManager.GetAttribute(wl[i], HardwareDoc, "bp", ref bp);
-                    XmlManager.GetAttribute(wl[i], HardwareDoc, "wp", ref wp);
-                    XmlManager.GetAttribute(wl[i], HardwareDoc, "AutoSta", ref autoTog);
-                    XmlManager.GetAttribute(wl[i], HardwareDoc, "LogSta", ref logTog);
-                    switch (i)
-                    {
-                        case 0:
-                            BlackPoint0 = Convert.ToDouble(bp);
-                            WhitePoint0 = Convert.ToDouble(wp);
-                            AutoManualTog1Checked = (string.Empty != autoTog && "1" == autoTog) ? true : false;
-                            LogScaleEnabled0 = (string.Empty != logTog && "1" == logTog) ? true : false;
-                            break;
-                        case 1:
-                            BlackPoint1 = Convert.ToDouble(bp);
-                            WhitePoint1 = Convert.ToDouble(wp);
-                            AutoManualTog2Checked = (string.Empty != autoTog && "1" == autoTog) ? true : false;
-                            LogScaleEnabled1 = (string.Empty != logTog && "1" == logTog) ? true : false;
-                            break;
-                        case 2:
-                            BlackPoint2 = Convert.ToDouble(bp);
-                            WhitePoint2 = Convert.ToDouble(wp);
-                            AutoManualTog3Checked = (string.Empty != autoTog && "1" == autoTog) ? true : false;
-                            LogScaleEnabled2 = (string.Empty != logTog && "1" == logTog) ? true : false;
-                            break;
-                        case 3:
-                            BlackPoint3 = Convert.ToDouble(bp);
-                            WhitePoint3 = Convert.ToDouble(wp);
-                            AutoManualTog4Checked = (string.Empty != autoTog && "1" == autoTog) ? true : false;
-                            LogScaleEnabled3 = (string.Empty != logTog && "1" == logTog) ? true : false;
-                            break;
-                    }
-                    string str = string.Empty;
-                    XmlManager.GetAttribute(wl[i], HardwareDoc, "name", ref str);
-                    ChannelName[i].Value = str;
-                }
             }
         }
 
@@ -4437,6 +3967,21 @@
             }
             IEnumerable<ImageFileNameClass> query = fNameClass.OrderBy(x => x.Wellid).ThenBy(x => x.Tileid).ThenBy(x => x.Tid).ThenBy(x => x.Zid);
             PrimaryChannelFileNames = query.ToList();
+        }
+
+        public void StartImageLoadingThread()
+        {
+            _runImageLoadingThread = true;
+            _imageLoadingThread = new Thread(new ThreadStart(BuildBitmapsTask));
+            _imageLoadingThread.IsBackground = true;
+            _imageLoadingThread.Priority = ThreadPriority.AboveNormal;
+            _imageLoadingThread.Start();
+        }
+
+        public void StopImageLoadingThread()
+        {
+            _runImageLoadingThread = false;
+            _imageLoadingThread?.Abort();
         }
 
         public void SyncROIChart()
@@ -4472,15 +4017,16 @@
         {
             if (null != _multiROIStatsWindows)
             {
-                if (null != _multiROIStatsWindows[tag] && true == InUpdateROIStatsMut.WaitOne(1000))
+                if (true == InUpdateROIStatsMut.WaitOne(1000))
                 {
                     try
                     {
-                        if (basicStatNames.Length == basicStatValues.Length && 0 < basicStatNames.Length && arithmeticStatNames.Length == arithmeticStatValues.Length)
-                        {
-                            _multiROIStatsWindows[tag].SetData(basicStatNames, basicStatValues);
-                            _multiROIStatsWindows[tag].SetArithmeticsData(arithmeticStatNames, arithmeticStatValues);
-                        }
+                        if (null != _multiROIStatsWindows[tag])
+                            if (basicStatNames.Length == basicStatValues.Length && 0 < basicStatNames.Length && arithmeticStatNames.Length == arithmeticStatValues.Length)
+                            {
+                                _multiROIStatsWindows[tag].SetData(basicStatNames, basicStatValues);
+                                _multiROIStatsWindows[tag].SetArithmeticsData(arithmeticStatNames, arithmeticStatValues);
+                            }
                         SpMax = Math.Max(1, SpMax);
                         TMax = Math.Max(1, TMax);
                         ZMax = Math.Max(1, ZMax);
@@ -4543,56 +4089,11 @@
         ///  Will not update if the time elapsed is less than this argument. </param>
         /// <returns> The amount of time since the last update. 
         /// 0 is returned if updated this call. -1 is returned if the image trying to be loaded is invalid </returns>
-        public double UpdateBitmap(double minTimeBetweenUpdates = 0)
+        public Task<double> UpdateBitmap(double minTimeBetweenUpdates = 0)
         {
-            string[] fileNames = GetFileNames(ZValue);
-            if (fileNames == null)
-            {
-                _bitmap = null;
-                return -1;
-            }
-            else
-            {
-                int f = 0;
-                for (int i = 0; i < fileNames.Length; i++)
-                {
-                    if ((fileNames[i] != null) && (File.Exists(fileNames[i]))) f++;
-                }
-                if (f == 0)
-                {
-                    _bitmap = null;
-                    return -1;
-                }
-            }
-
-            bool bEmpty = true;
-            foreach (string file in fileNames)
-            {
-                if (!string.IsNullOrEmpty(file))
-                {
-                    bEmpty = false;
-                    break;
-                }
-            }
-
-            if (bEmpty)
-                return -1;
-
-            TimeSpan ts;
-
-            ts = DateTime.Now - _lastBitmapUpdateTime;
-
-            if (ts.TotalSeconds > minTimeBetweenUpdates)
-            {
-                UpdateChannelData(fileNames, ZValue - 1, ((CaptureModes.HYPERSPECTRAL == CaptureMode) ? SpValue - 1 : TValue - 1));
-                CreateBitmap();
-                _lastBitmapUpdateTime = DateTime.Now;
-                return 0;
-            }
-            else
-            {
-                return ts.TotalSeconds;
-            }
+            if (!_allowImageUpdate) return Task.FromResult(0.0);
+            _loadImages = true;
+            return Task.FromResult(0.0);
         }
 
         /// <summary>
@@ -4601,205 +4102,193 @@
         /// </summary>
         public void UpdateBitmapAndEventSubscribers()
         {
-            if (!_allowImageUpdate) return;
-            Bitmap = null;
-            OnPropertyChanged("Bitmap");
-            if (ImageDataChanged != null)
-            {
-                //notify the views of the image data changing
-                ImageDataChanged(true);
-            }
+            UpdateBitmap(.01);
         }
 
         /// <summary>
         /// update channel's data, use scan area list if exist, regular pixelX / pixelY otherwise
         /// e.g. Histograms
         /// </summary>
-        public void UpdateChannelData(string[] fileNames, int zIndexToRead, int tIndexToRead)
+        public Task<bool> UpdateChannelData(List<string> fileNames, int zIndexToRead, int tIndexToRead, int scanAreaID = 0, int scanAreaIndex = 0)
         {
-            var srStruct = ImageInfo.scanAreaIDList.SingleOrDefault(i => i.RegionID == ScanAreaID);
+            if (ExperimentData.IsmROICapture && ImageInfo.imageType == CaptureFile.FILE_RAW)
+            {
+                int[] pixelXY = { ExperimentData.mROIs[scanAreaIndex].SizeXPixels, ExperimentData.mROIs[scanAreaIndex].SizeYPixels };
 
-            int[] pixelXY = { (0 < ImageInfo.scanAreaIDList.Count && 0 < srStruct.SizeX) ? (int)srStruct.SizeX : ImageInfo.pixelX,
+                _imageReview.UpdateChannelData(fileNames, ImageInfo.channelEnabled, 4, zIndexToRead, tIndexToRead, pixelXY[0], pixelXY[1] * ExperimentData.NumberOfPlanes, ImageInfo.zSteps
+                + ImageInfo.flybackFrames, ExperimentData.OnlyEnabledChannels != 1, scanAreaID, scanAreaIndex);
+            }
+            else
+            {
+                var srStruct = ImageInfo.scanAreaIDList.SingleOrDefault(i => i.RegionID == ScanAreaID);
+
+                int[] pixelXY = { (0 < ImageInfo.scanAreaIDList.Count && 0 < srStruct.SizeX) ? (int)srStruct.SizeX : ImageInfo.pixelX,
                            (0 < ImageInfo.scanAreaIDList.Count && 0 < srStruct.SizeY) ? (int)srStruct.SizeY : ImageInfo.pixelY};
 
-            _imageReview.UpdateChannelData(fileNames, ImageInfo.channelEnabled, 4, zIndexToRead, tIndexToRead, pixelXY[0], pixelXY[1] * ExperimentData.NumberOfPlanes, ImageInfo.zSteps
-                + ImageInfo.flybackFrames, GetRawContainsDisabledChannels(), ScanAreaID);
+                _imageReview.UpdateChannelData(fileNames, ImageInfo.channelEnabled, 4, zIndexToRead, tIndexToRead, pixelXY[0], pixelXY[1] * ExperimentData.NumberOfPlanes, ImageInfo.zSteps
+                    + ImageInfo.flybackFrames, ExperimentData.OnlyEnabledChannels != 1, ScanAreaID);
+            }
+            return Task.FromResult(true);
         }
 
-        public void UpdateColors()
+        public void UpdateExpXMLSettings(ref XmlDocument xmlDoc)
         {
-            BuildChannelPalettes();
-            if (null != _lineProfile)
-            {
-                _lineProfile.ColorAssigment = GetColorAssignments();
-            }
-            OnPropertyChanged("ChannelColor");
         }
 
-        public void UpdateGrayscaleForSingleChannel()
-        {
-            //if this is a single channel experiment
-            //check to see user wants to view the data
-            //as grayscale
-            if (null == ApplicationDoc)
-                return;
-
-            XmlNodeList ndList = ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/General/GrayscaleForSingleChannel");
-
-            string str = string.Empty;
-            if (ndList.Count > 0)
-            {
-                if (XmlManager.GetAttribute(ndList[0], ApplicationDoc, "value", ref str))
-                {
-                    GrayscaleForSingleChannel = ("1" == str || Boolean.TrueString == str) ? true : false;
-                }
-            }
-        }
-
-        public void UpdateOrthogonalBitmapAndEventSubscribers()
-        {
-            if (_orthogonalViewStat != OrthogonalViewStatus.INACTIVE)
-            {
-                UpdateOrthogonalViewImages();
-            }
-        }
-
-        public void UpdateOrthogonalView()
-        {
-            BackgroundWorker splashWkr = new BackgroundWorker();
-            splashWkr.WorkerSupportsCancellation = true;
-            _bwOrthogonalImageLoaderDone = false;
-            ProgressPercentage = 0;
-            _splash = new ImageReviewDll.View.SplashScreen();
-            try
-            {
-                _splash.DisplayText = "Please wait while loading images ...";
-                _splash.ShowInTaskbar = false;
-                _splash.Owner = Application.Current.MainWindow;
-                _splash.Show();
-                _splash.CancelSplashProgress += delegate (object sender, EventArgs e)
-                {
-                    splashWkr.CancelAsync();
-                };
-                PanelsEnable = false;
-
-                //get dispatcher to update the contents that was created on the UI thread:
-                System.Windows.Threading.Dispatcher spDispatcher = _splash.Dispatcher;
-
-                splashWkr.DoWork += delegate (object sender, DoWorkEventArgs e)
-                {
-                    int totalNumOfZstack = this.ZMax - this.ZMin + 1;
-                    if ((false == VirtualZStack || true == _updateVirtualStack) ||
-                        (null == _tiffBufferArray) || (_tiffBufferArray.Length != totalNumOfZstack))
-                    {
-                        if ((null == _tiffBufferArray) || (_tiffBufferArray.Length != totalNumOfZstack))
-                        {
-                            _tiffBufferArray = new ushort[totalNumOfZstack][];
-                        }
-                        for (int i = 0; i < totalNumOfZstack; i++)
-                        {
-                            if (splashWkr.CancellationPending == true)
-                            {
-                                e.Cancel = true;
-                                break;
-                            }
-                            //load the images
-                            string[] fileNames = GetFileNames(this.ZMin + i); // get first image
-                            UpdateChannelData(fileNames, i, ((CaptureModes.HYPERSPECTRAL == CaptureMode) ? SpValue - 1 : TValue - 1));
-                            if (VirtualZStack)
-                            {
-                                if (null == _tiffBufferArray[i] || _tiffBufferArray[i].Length != _imageReview.PixelData.Length)
-                                {
-                                    _tiffBufferArray[i] = new ushort[_imageReview.PixelData.Length];
-                                }
-                                Buffer.BlockCopy(_imageReview.PixelData, 0, _tiffBufferArray[i], 0, _imageReview.PixelData.Length * sizeof(short));
-                            }
-                            CreateOrthogonalBitmap(i);
-
-                            ImageReview.FinishedCopyingPixel();
-                            //report progress:
-                            _progressPercentage = (int)(i * 100 / totalNumOfZstack);
-                            //create a new delegate for updating our progress text
-                            UpdateProgressDelegate update = new UpdateProgressDelegate(UpdateProgressText);
-
-                            //invoke the dispatcher and pass the percentage
-                            spDispatcher.BeginInvoke(update, ProgressPercentage);
-                        }
-                        _maxChannel = this.ImageReview.MaxChannels;
-                        _updateVirtualStack = false;
-                    }
-                };
-                splashWkr.RunWorkerCompleted += delegate (object sender, RunWorkerCompletedEventArgs e)
-                {
-                    _splash.Close();
-                    // App inherits from Application, and has a Window property called MainWindow
-                    // and a List<Window> property called OpenWindows.
-                    Application.Current.MainWindow.Activate();
-                    _bwOrthogonalImageLoaderDone = true;
-                    PanelsEnable = true;
-
-                    if (e.Cancelled == false)
-                    {
-                        OnPropertyChanged("BitmapXZ");
-                        OnPropertyChanged("BitmapYZ");
-                    }
-
-                    if (OrthogonalViewImagesLoaded != null)
-                    {
-                        OrthogonalViewImagesLoaded(e.Cancelled);
-                    }
-
-                };
-                splashWkr.RunWorkerAsync();
-            }
-            catch (Exception ex)
-            {
-                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "ImageReview Orthogonal Images Loading Error: " + ex.Message);
-                splashWkr.CancelAsync();
-            }
-        }
-
-        public void UpdateOrthogonalViewImages()
-        {
-            //Check image files.
-            string[] fileNames = GetFileNames(ZMin);
-            bool bEmpty = true;
-            foreach (string file in fileNames)
-            {
-                if (null != file && 0 != file.Length && file != string.Empty) // If first image is not existed
-                {
-                    bEmpty = false;
-                    break;
-                }
-            }
-            if (true == bEmpty)
-            {
-                MessageBox.Show("No Image is found", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-            //Set Click time-Gap
-            TimeSpan ts;
-            ts = DateTime.Now - _lastOrthogonalViewUpdateTime;
-            if (ts.TotalSeconds > 0.01 && _bwOrthogonalImageLoaderDone == true)
-            {
-                if (VirtualZStack == true)
-                {
-                    int totalNumOfZstack = this.ZMax - this.ZMin + 1;
-                    for (int i = 0; i < totalNumOfZstack; i++)
-                    {
-                        CreateOrthogonalBitmap(i); // create Bitmap
-                    }
-                    OnPropertyChanged("BitmapXZ");
-                    OnPropertyChanged("BitmapYZ");
-                }
-                else
-                {
-                    UpdateOrthogonalView();
-                }
-                _lastOrthogonalViewUpdateTime = DateTime.Now;
-            }
-        }
-
+        //TODO:IV
+        //public void UpdateGrayscaleForSingleChannel()
+        //{
+        //    //if this is a single channel experiment
+        //    //check to see user wants to view the data
+        //    //as grayscale
+        //    if (null == ApplicationDoc)
+        //        return;
+        //    XmlNodeList ndList = ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/General/GrayscaleForSingleChannel");
+        //    string str = string.Empty;
+        //    if (ndList.Count > 0)
+        //    {
+        //        if (XmlManager.GetAttribute(ndList[0], ApplicationDoc, "value", ref str))
+        //        {
+        //            GrayscaleForSingleChannel = ("1" == str || Boolean.TrueString == str) ? true : false;
+        //        }
+        //    }
+        //}
+        //TODO:IV
+        //public void UpdateOrthogonalBitmapAndEventSubscribers()
+        //{
+        //    if (_orthogonalViewStat != OrthogonalViewStatus.INACTIVE)
+        //    {
+        //        UpdateOrthogonalViewImages();
+        //    }
+        //}
+        //TODO:IV
+        //public void UpdateOrthogonalView()
+        //{
+        //    BackgroundWorker splashWkr = new BackgroundWorker();
+        //    splashWkr.WorkerSupportsCancellation = true;
+        //    _bwOrthogonalImageLoaderDone = false;
+        //    ProgressPercentage = 0;
+        //    _splash = new ImageReviewDll.View.SplashScreen();
+        //    try
+        //    {
+        //        _splash.DisplayText = "Please wait while loading images ...";
+        //        _splash.ShowInTaskbar = false;
+        //        _splash.Owner = Application.Current.MainWindow;
+        //        _splash.Show();
+        //        _splash.CancelSplashProgress += delegate (object sender, EventArgs e)
+        //        {
+        //            splashWkr.CancelAsync();
+        //        };
+        //        PanelsEnable = false;
+        //        //get dispatcher to update the contents that was created on the UI thread:
+        //        System.Windows.Threading.Dispatcher spDispatcher = _splash.Dispatcher;
+        //        splashWkr.DoWork += delegate (object sender, DoWorkEventArgs e)
+        //        {
+        //            int totalNumOfZstack = this.ZMax - this.ZMin + 1;
+        //            if ((false == VirtualZStack || true == _updateVirtualStack) ||
+        //                (null == _tiffBufferArray) || (_tiffBufferArray.Length != totalNumOfZstack))
+        //            {
+        //                if ((null == _tiffBufferArray) || (_tiffBufferArray.Length != totalNumOfZstack))
+        //                {
+        //                    _tiffBufferArray = new ushort[totalNumOfZstack][];
+        //                }
+        //                for (int i = 0; i < totalNumOfZstack; i++)
+        //                {
+        //                    if (splashWkr.CancellationPending == true)
+        //                    {
+        //                        e.Cancel = true;
+        //                        break;
+        //                    }
+        //                    //load the images
+        //                    string[] fileNames = GetFileNames(this.ZMin + i); // get first image
+        //                    UpdateChannelData(fileNames, i, ((CaptureModes.HYPERSPECTRAL == CaptureMode) ? SpValue - 1 : TValue - 1));
+        //                    if (VirtualZStack)
+        //                    {
+        //                        if (null == _tiffBufferArray[i] || _tiffBufferArray[i].Length != _imageReview.PixelData.Length)
+        //                        {
+        //                            _tiffBufferArray[i] = new ushort[_imageReview.PixelData.Length];
+        //                        }
+        //                        Buffer.BlockCopy(_imageReview.PixelData, 0, _tiffBufferArray[i], 0, _imageReview.PixelData.Length * sizeof(short));
+        //                    }
+        //                    CreateOrthogonalBitmap(i);
+        //                    ImageReview.FinishedCopyingPixel();
+        //                    //report progress:
+        //                    _progressPercentage = (int)(i * 100 / totalNumOfZstack);
+        //                    //create a new delegate for updating our progress text
+        //                    UpdateProgressDelegate update = new UpdateProgressDelegate(UpdateProgressText);
+        //                    //invoke the dispatcher and pass the percentage
+        //                    spDispatcher.BeginInvoke(update, ProgressPercentage);
+        //                }
+        //                _maxChannel = this.ImageReview.MaxChannels;
+        //                _updateVirtualStack = false;
+        //            }
+        //        };
+        //        splashWkr.RunWorkerCompleted += delegate (object sender, RunWorkerCompletedEventArgs e)
+        //        {
+        //            _splash.Close();
+        //            // App inherits from Application, and has a Window property called MainWindow
+        //            // and a List<Window> property called OpenWindows.
+        //            Application.Current.MainWindow.Activate();
+        //            _bwOrthogonalImageLoaderDone = true;
+        //            PanelsEnable = true;
+        //            if (e.Cancelled == false)
+        //            {
+        //                OnPropertyChanged("BitmapXZ");
+        //                OnPropertyChanged("BitmapYZ");
+        //            }
+        //            if (OrthogonalViewImagesLoaded != null)
+        //            {
+        //                OrthogonalViewImagesLoaded(e.Cancelled);
+        //            }
+        //        };
+        //        splashWkr.RunWorkerAsync();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "ImageReview Orthogonal Images Loading Error: " + ex.Message);
+        //        splashWkr.CancelAsync();
+        //    }
+        //}
+        //public void UpdateOrthogonalViewImages()
+        //{
+        //    //Check image files.
+        //    string[] fileNames = GetFileNames(ZMin);
+        //    bool bEmpty = true;
+        //    foreach (string file in fileNames)
+        //    {
+        //        if (null != file && 0 != file.Length && file != string.Empty) // If first image is not existed
+        //        {
+        //            bEmpty = false;
+        //            break;
+        //        }
+        //    }
+        //    if (true == bEmpty)
+        //    {
+        //        MessageBox.Show("No Image is found", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        //        return;
+        //    }
+        //    //Set Click time-Gap
+        //    TimeSpan ts;
+        //    ts = DateTime.Now - _lastOrthogonalViewUpdateTime;
+        //    if (ts.TotalSeconds > 0.01 && _bwOrthogonalImageLoaderDone == true)
+        //    {
+        //        if (VirtualZStack == true)
+        //        {
+        //            int totalNumOfZstack = this.ZMax - this.ZMin + 1;
+        //            for (int i = 0; i < totalNumOfZstack; i++)
+        //            {
+        //                CreateOrthogonalBitmap(i); // create Bitmap
+        //            }
+        //            OnPropertyChanged("BitmapXZ");
+        //            OnPropertyChanged("BitmapYZ");
+        //        }
+        //        else
+        //        {
+        //            UpdateOrthogonalView();
+        //        }
+        //        _lastOrthogonalViewUpdateTime = DateTime.Now;
+        //    }
+        //}
         /// <summary>
         /// this is the method that the UpdateProgressDelegate will execute
         /// </summary>
@@ -4809,6 +4298,47 @@
             //set our progress dialog text and value
             _splash.ProgressText = string.Format("{0}%", percentage.ToString());
             _splash.ProgressValue = percentage;
+        }
+
+        protected virtual void BuildBitmapsTask()
+        {
+            do
+            {
+                Thread.Sleep(1);
+                if (_loadImages && !_isExperimentLoading)
+                {
+                    lock (_updateBitmapLock)
+                    {
+                        //_bitmapIsLoading = true;
+                        if (ZStreamIsEnabled && ZIsEnabled && SpIsEnabled && TIsEnabled)
+                        {
+                            // Show progress window
+                            Application.Current.Dispatcher.BeginInvoke((Action)delegate ()
+                            {
+                                CreateProgressWindow("Loading", Brushes.Transparent);
+                            });
+                            IndexControlsEnabled = false;
+                        }
+
+                        _loadImages = false;
+                        bool loadImagesFail= -1 == LoadImages();
+
+                        if (false == IndexControlsEnabled)
+                        {
+                            Application.Current.Dispatcher.BeginInvoke((Action)delegate ()
+                            {
+                                CloseProgressWindow();
+                                if (loadImagesFail)
+                                    MessageBox.Show("No Experiment data available.", "Failed to load experiment", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                            });
+                            IndexControlsEnabled = true;
+                        }
+                        _bitmapIsLoading = false;
+                    }
+                }
+            }
+            while (_runImageLoadingThread);
         }
 
         [DllImport(".\\Modules_Native\\HDF5IO.dll", EntryPoint = "CheckGroupDataset")]
@@ -4976,40 +4506,9 @@
             _bwStatsLoader.CancelAsync();
         }
 
-        private void CreateBitmap()
-        {
-            byte[] pd = ImageReview.GetPixelDataByte();
-            if (pd != null)
-            {
-                // Define parameters used to create the BitmapSource.
-                PixelFormat pf = PixelFormats.Rgb24;
-                int width = this._imageReview.ImageWidth;
-                int height = this._imageReview.ImageHeight;
-
-                //create a new bitmpap when one does not exist or the size of the image changes
-                if ((_bitmap == null) ||
-                    (_bitmap.Width != width) ||
-                    (_bitmap.Height != height) ||
-                    (_bitmap.Format != pf))
-                {
-                    _bitmap = new WriteableBitmap(width, height, 96, 96, pf, null);
-                }
-
-                if ((pd.Length / 3) == (width * height))
-                {
-                    int rawStride = (int)Math.Ceiling(width * pf.BitsPerPixel / 8.0);
-                    //copy the pixel data into the bitmap
-                    _bitmap.WritePixels(new Int32Rect(0, 0, width, height), pd, rawStride, 0);
-                }
-
-                ImageReview.FinishedCopyingPixel();
-            }
-            return;
-        }
-
         private void CreateLineProfileWindow()
         {
-            if (null == _lineProfile)
+            if (null == _lineProfile && true == _lineProfileActive)
             {
                 if (GetNumROI() <= 0)
                 {
@@ -5161,59 +4660,57 @@
                 }
             }
             _multiROIStatsWindows[_multiROIStatsWindows.Count - 1].Show();
+            ROIStatsTableActive = true;
         }
 
-        private void CreateOrthogonalBitmap(int index)
-        {
-            int totalNumOfZstack = this.ZMax - this.ZMin + 1;
-            PixelFormat pf = PixelFormats.Rgb24;
-            int step = pf.BitsPerPixel / 8;
-            int length = this._imageReview.ImageWidth * this._imageReview.ImageHeight;
-            ushort[] position = new ushort[ImageReview.MaxChannels]; //store the point of grayscale image which used to calculate the RGB value
-            //Create the XZ orthogonal view
-            for (int j = 0; j < this._imageReview.ImageWidth; j++)
-            {
-                for (int k = 0; k < this._imageReview.DataBufferOffsetIndex.Count; k++)
-                {
-                    if (VirtualZStack)
-                    {
-                        position[k] = _tiffBufferArray[index][_imageReview.DataBufferOffsetIndex[k] * length + Convert.ToInt32(Math.Floor(BitmapPoint.Y)) * _imageReview.ImageWidth + j];
-                    }
-                    else
-                    {
-                        position[k] = _imageReview.PixelData[_imageReview.DataBufferOffsetIndex[k] * length + Convert.ToInt32(Math.Floor(BitmapPoint.Y)) * _imageReview.ImageWidth + j];
-                    }
-
-                }
-                byte[] color = ImageReview.UpdataPixelDatabyte(position); //calculate the RGB value by current color mapping table
-                for (int k = 0; k < 3; k++)
-                {
-                    _pdXZ[index * this._imageReview.ImageWidth * step + j * 3 + k] = color[k]; // assign the RGB value
-                }
-            }
-            //Create the YZ orthogonal view
-            for (int j = 0; j < this._imageReview.ImageHeight; j++)
-            {
-                for (int k = 0; k < this._imageReview.DataBufferOffsetIndex.Count; k++)
-                {
-                    if (VirtualZStack)
-                    {
-                        position[k] = _tiffBufferArray[index][_imageReview.DataBufferOffsetIndex[k] * length + j * _imageReview.ImageWidth + Convert.ToInt32(Math.Floor(BitmapPoint.X))];
-                    }
-                    else
-                    {
-                        position[k] = this._imageReview.PixelData[_imageReview.DataBufferOffsetIndex[k] * length + j * _imageReview.ImageWidth + Convert.ToInt32(Math.Floor(BitmapPoint.X))];
-                    }
-
-                }
-                byte[] color = ImageReview.UpdataPixelDatabyte(position); //calculate the RGB value by current color mapping table
-                for (int k = 0; k < 3; k++)
-                {
-                    _pdYZ[j * totalNumOfZstack * step + index * step + k] = color[k]; // assign the RGB value
-                }
-            }
-        }
-
+        //private void CreateOrthogonalBitmap(int index)
+        //{
+        //    int totalNumOfZstack = this.ZMax - this.ZMin + 1;
+        //    PixelFormat pf = PixelFormats.Rgb24;
+        //    int step = pf.BitsPerPixel / 8;
+        //    int length = this._imageReview.ImageWidth * this._imageReview.ImageHeight;
+        //    ushort[] position = new ushort[ImageReview.MaxChannels]; //store the point of grayscale image which used to calculate the RGB value
+        //    //Create the XZ orthogonal view
+        //    for (int j = 0; j < this._imageReview.ImageWidth; j++)
+        //    {
+        //        for (int k = 0; k < this._imageReview.DataBufferOffsetIndex.Count; k++)
+        //        {
+        //            if (VirtualZStack)
+        //            {
+        //                position[k] = _tiffBufferArray[index][_imageReview.DataBufferOffsetIndex[k] * length + Convert.ToInt32(Math.Floor(BitmapPoint.Y)) * _imageReview.ImageWidth + j];
+        //            }
+        //            else
+        //            {
+        //                position[k] = _imageReview.PixelData[_imageReview.DataBufferOffsetIndex[k] * length + Convert.ToInt32(Math.Floor(BitmapPoint.Y)) * _imageReview.ImageWidth + j];
+        //            }
+        //        }
+        //        byte[] color = ImageReview.UpdataPixelDatabyte(position); //calculate the RGB value by current color mapping table
+        //        for (int k = 0; k < 3; k++)
+        //        {
+        //            _pdXZ[index * this._imageReview.ImageWidth * step + j * 3 + k] = color[k]; // assign the RGB value
+        //        }
+        //    }
+        //    //Create the YZ orthogonal view
+        //    for (int j = 0; j < this._imageReview.ImageHeight; j++)
+        //    {
+        //        for (int k = 0; k < this._imageReview.DataBufferOffsetIndex.Count; k++)
+        //        {
+        //            if (VirtualZStack)
+        //            {
+        //                position[k] = _tiffBufferArray[index][_imageReview.DataBufferOffsetIndex[k] * length + j * _imageReview.ImageWidth + Convert.ToInt32(Math.Floor(BitmapPoint.X))];
+        //            }
+        //            else
+        //            {
+        //                position[k] = this._imageReview.PixelData[_imageReview.DataBufferOffsetIndex[k] * length + j * _imageReview.ImageWidth + Convert.ToInt32(Math.Floor(BitmapPoint.X))];
+        //            }
+        //        }
+        //        byte[] color = ImageReview.UpdataPixelDatabyte(position); //calculate the RGB value by current color mapping table
+        //        for (int k = 0; k < 3; k++)
+        //        {
+        //            _pdYZ[j * totalNumOfZstack * step + index * step + k] = color[k]; // assign the RGB value
+        //        }
+        //    }
+        //}
         private void CreateStatsChartWindow(bool editable, string tittle, string path)
         {
             if (null == _roiStatsCharts)
@@ -5311,6 +4808,7 @@
             }
             _roiStatsCharts[_roiStatsCharts.Count - 1].ROIChart.LoadSettings();
             _roiStatsCharts[_roiStatsCharts.Count - 1].Show();
+            ROIStatsChartActive = true;
         }
 
         private string CreateUniqueName(string str)
@@ -5333,34 +4831,46 @@
             return str;
         }
 
-        /// <summary>
-        /// Expands all histograms to their maximum size
-        /// </summary>
-        void ExpandAllHistograms()
+        private void DisplayROIStatsOptions()
         {
-            HistogramHeight1 = MAX_HISTOGRAM_HEIGHT;
-            HistogramWidth1 = MAX_HISTOGRAM_WIDTH;
-            HistogramHeight2 = MAX_HISTOGRAM_HEIGHT;
-            HistogramWidth2 = MAX_HISTOGRAM_WIDTH;
-            HistogramHeight3 = MAX_HISTOGRAM_HEIGHT;
-            HistogramWidth3 = MAX_HISTOGRAM_WIDTH;
-            HistogramHeight4 = MAX_HISTOGRAM_HEIGHT;
-            HistogramWidth4 = MAX_HISTOGRAM_WIDTH;
+            ActiveStatsWinChooser activeStatsWinChooser = new ActiveStatsWinChooser();
+            activeStatsWinChooser.DataContext = this;
+            activeStatsWinChooser.ShowDialog();
+
+            ApplicationDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+            XmlNode node = ApplicationDoc.SelectSingleNode("/ApplicationSettings/DisplayOptions/CaptureSetup/ROIChartWindow");
+
+            if (node != null)
+            {
+                string str = (true == _roiStatsChartActive) ? "1" : "0";
+
+                XmlManager.SetAttribute(node, ApplicationDoc, "display", str);
+            }
+
+            node = ApplicationDoc.SelectSingleNode("/ApplicationSettings/DisplayOptions/CaptureSetup/ROIStatsWindow");
+
+            if (node != null)
+            {
+                string str = (true == _roiStatsTableActive) ? "1" : "0";
+
+                XmlManager.SetAttribute(node, ApplicationDoc, "display", str);
+            }
+
+            node = ApplicationDoc.SelectSingleNode("/ApplicationSettings/DisplayOptions/CaptureSetup/LineProfileWindow");
+
+            if (node != null)
+            {
+                string str = (true == _lineProfileActive) ? "1" : "0";
+
+                XmlManager.SetAttribute(node, ApplicationDoc, "display", str);
+            }
+
+            MVMManager.Instance.SaveSettings(SettingsFileType.APPLICATION_SETTINGS);
         }
 
         private Color[] GetColorAssignments()
         {
-            Color[] colorAssignments = new Color[ImageReview.MAX_CHANNELS];
-
-            for (int i = 0; i < ImageReview.MAX_CHANNELS; i++)
-            {
-                if (null != _channelColor[i])
-                {
-                    colorAssignments[i] = ((SolidColorBrush)_channelColor[i]).Color;
-                }
-            }
-
-            return colorAssignments;
+            return (Color[])MVMManager.Instance["ImageViewReviewVM", "DefaultChannelColors"];
         }
 
         private i.ImageCodecInfo GetEncoderInfo(String mimeType)
@@ -5384,11 +4894,10 @@
 
         private bool GetExperimentStatus(ref string status)
         {
-            XmlDocument experimentDoc = new XmlDocument();
             bool ret = false;
             if (File.Exists(ExperimentXMLPath))
             {
-                experimentDoc.Load(ExperimentXMLPath);
+                XmlDocument experimentDoc = LoadDocAsReadOnly(ExperimentXMLPath);
                 XmlNodeList ndList = experimentDoc.SelectNodes("/ThorImageExperiment/ExperimentStatus");
                 if (ndList.Count > 0)
                 {
@@ -5400,9 +4909,9 @@
         }
 
         // Get the file name
-        private string[] GetFileNames(int zValue)
+        private List<string> GetFileNames(int zValue, int scanAreaID = 0)
         {
-            string[] fileNames = new string[ImageReview.MaxChannels];
+            List<string> fileNames = new List<string>();
 
             if (FileFormatMode == ImageReview.FormatMode.EXPERIMENT)
             {
@@ -5447,14 +4956,25 @@
                                     break;
                                 case CaptureFile.FILE_RAW:
                                     {
-                                        String temp = string.Format("{0}{1}{2}",
-                                                            "Image",
-                                                            "_" + sampleSiteIndex.ToString(imgNameFormat),
-                                                            "_" + subIndex.ToString(imgNameFormat));
-                                        DirectoryInfo di = new DirectoryInfo(ExperimentFolderPath);
-                                        FileInfo[] fi = di.GetFiles(temp + "*.raw*");
-                                        if (fi == null || fi.Length == 0) return null;
-                                        sbTemp.AppendFormat(fi[0].FullName);
+                                        if (ExperimentData.IsmROICapture)
+                                        {
+                                            String temp = "Image_scan_" + sampleSiteIndex.ToString() + "_region_" + scanAreaID.ToString();
+                                            DirectoryInfo di = new DirectoryInfo(ExperimentFolderPath);
+                                            FileInfo[] fi = di.GetFiles(temp + "*.raw*");
+                                            if (fi == null || fi.Length == 0) return null;
+                                            sbTemp.AppendFormat(fi[0].FullName);
+                                        }
+                                        else
+                                        {
+                                            String temp = string.Format("{0}{1}{2}",
+                                                                "Image",
+                                                                "_" + sampleSiteIndex.ToString(imgNameFormat),
+                                                                "_" + subIndex.ToString(imgNameFormat));
+                                            DirectoryInfo di = new DirectoryInfo(ExperimentFolderPath);
+                                            FileInfo[] fi = di.GetFiles(temp + "*.raw*");
+                                            if (fi == null || fi.Length == 0) return null;
+                                            sbTemp.AppendFormat(fi[0].FullName);
+                                        }
                                     }
                                     break;
                                 case CaptureFile.FILE_TIFF:
@@ -5487,15 +5007,27 @@
 
                             string strTemp = sbTemp.ToString();
 
-                            for (int j = 0; j < ndListHW.Count; j++)
+                            //For sequential capture, ignore the cross check with HardwareSettings for the name
+                            if (SequentialModeEnabled)
                             {
-                                if (WavelengthNames[i].Equals(ndListHW[j].Attributes["name"].Value) && _channelEnable[j])
+                                fileNames.Add(strTemp);
+                            }
+                            else
+                            {
+
+                                for (int j = 0; j < ndListHW.Count; j++)
                                 {
-                                    fileNames[j] = strTemp;
-                                    break;
+                                    if (WavelengthNames[i].Equals(ndListHW[j].Attributes["name"].Value))
+                                    {
+                                        fileNames.Add(strTemp);
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "Channel name " + WavelengthNames[i] + " doesn't match expected name in HardwareSettings.xml: " + ndListHW[j].Attributes["name"].Value);
+                                    }
                                 }
                             }
-                            //fileNames[i] = strTemp;
                             if (false == File.Exists(strTemp))
                             {
                                 return fileNames;
@@ -5506,7 +5038,7 @@
             }
             else
             {
-                fileNames[0] = ImagePathandName;
+                fileNames.Add(ImagePathandName);
             }
 
             return fileNames;
@@ -5536,24 +5068,6 @@
             }
 
             return markLocations;
-        }
-
-        private bool GetRawContainsDisabledChannels()
-        {
-            XmlDocument experimentDoc = new XmlDocument();
-            if (File.Exists(ExperimentXMLPath))
-            {
-                experimentDoc.Load(ExperimentXMLPath);
-                XmlNodeList ndList = experimentDoc.SelectNodes("/ThorImageExperiment/RawData");
-                if (ndList.Count > 0)
-                {
-                    string value = "";
-                    XmlManager.GetAttribute(ndList[0], experimentDoc, "onlyEnabledChannels", ref value);
-                    if (value == "1")
-                        return false;
-                }
-            }
-            return true;
         }
 
         private long GetTotalFreeSpace(string driveName)
@@ -5630,6 +5144,18 @@
             return images;
         }
 
+        private void Instance_OverlaymROISelectedEvent(int obj)
+        {
+            if (_mROIShowOverlays)
+            {
+                _selectedScanArea = obj;
+                OnPropertyChanged("SelectedScanArea");
+                OnPropertyChanged("SelectedmROIIndex");
+
+                MVMManager.Instance["ImageViewReviewVM", "mROIPriorityIndex"] = obj - 1;
+            }
+        }
+
         private void LaunchWindowsExplorer()
         {
             string explorerExe = "explorer.exe";
@@ -5652,6 +5178,98 @@
             catch (Exception ex)
             {
                 ex.ToString();
+            }
+        }
+
+        double LoadImages()
+        {
+            if (ExperimentData.IsmROICapture)
+            {
+                for (int j = 0; j < ExperimentData.mROIs?.Count; j++)
+                {
+                    List<string> fileNames = GetFileNames(ZValue, ExperimentData.mROIs[j].ScanAreaID);
+                    if (!(fileNames?.Count > 0))
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        int f = 0;
+                        for (int i = 0; i < fileNames.Count; i++)
+                        {
+                            if ((fileNames[i] != null) && (File.Exists(fileNames[i]))) f++;
+                        }
+                        if (f == 0)
+                        {
+                            continue;
+                        }
+                    }
+
+                    bool bEmpty = true;
+                    foreach (string file in fileNames)
+                    {
+                        if (!string.IsNullOrEmpty(file))
+                        {
+                            bEmpty = false;
+                            break;
+                        }
+                    }
+
+                    if (bEmpty)
+                        continue;
+
+                    MVMManager.Instance["ImageViewReviewVM", "BitmapLoaded"] = false;
+
+                    UpdateChannelData(fileNames, ZValue - 1, ((CaptureModes.HYPERSPECTRAL == CaptureMode) ? SpValue - 1 : TValue - 1), ExperimentData.mROIs[j].ScanAreaID, j);
+
+                    DateTime startTime = DateTime.Now;
+                    TimeSpan elapsedTime = DateTime.Now - startTime;
+                    while (false == (bool)MVMManager.Instance["ImageViewReviewVM", "BitmapLoaded", (object)true] && elapsedTime.TotalMilliseconds < ImageReview.BITMAP_UPDATE_TIMEOUT && false == _stopRequested)
+                    {
+                        elapsedTime = DateTime.Now - startTime;
+                    }
+                }
+                return 0;
+            }
+            else
+            {
+                List<string> fileNames = GetFileNames(ZValue);
+                if (null == fileNames || 0 == fileNames.Count)
+                {
+                    return -1;
+                }
+                else
+                {
+                    int f = 0;
+                    for (int i = 0; i < fileNames.Count; i++)
+                    {
+                        if ((fileNames[i] != null) && (File.Exists(fileNames[i]))) f++;
+                    }
+                    if (f == 0)
+                    {
+                        return -1;
+                    }
+                }
+
+                bool bEmpty = true;
+                foreach (string file in fileNames)
+                {
+                    if (!string.IsNullOrEmpty(file))
+                    {
+                        bEmpty = false;
+                        break;
+                    }
+                }
+
+                if (bEmpty)
+                    return -1;
+
+                UpdateChannelData(fileNames, ZValue - 1, ((CaptureModes.HYPERSPECTRAL == CaptureMode) ? SpValue - 1 : (TValue - 1 < 0 ? 0 : TValue - 1)));
+                if (_lineProfileActive)
+                {
+                    LoadLineProfileData();
+                }
+                return 0;
             }
         }
 
@@ -5757,8 +5375,8 @@
                     output.SetField(TiffTag.BITSPERSAMPLE, 16);
                     output.SetField(TiffTag.ORIENTATION, BitMiracle.LibTiff.Classic.Orientation.TOPLEFT);
                     output.SetField(TiffTag.ROWSPERSTRIP, ExperimentData.ImageInfo.pixelY);
-                    output.SetField(TiffTag.XRESOLUTION, 10000 / ExperimentData.LSMUMPerPixel);
-                    output.SetField(TiffTag.YRESOLUTION, 10000 / ExperimentData.LSMUMPerPixel);
+                    output.SetField(TiffTag.XRESOLUTION, 10000 / ExperimentData.PixelSizeUM.PixelWidthUM);
+                    output.SetField(TiffTag.YRESOLUTION, 10000 / ExperimentData.PixelSizeUM.PixelHeightUM);
                     output.SetField(TiffTag.RESOLUTIONUNIT, ResUnit.CENTIMETER);
                     output.SetField(TiffTag.PLANARCONFIG, PlanarConfig.CONTIG);
                     output.SetField(TiffTag.PHOTOMETRIC, Photometric.MINISBLACK);
@@ -5774,18 +5392,16 @@
             }
         }
 
-        private void ScanAreaIDMinus()
-        {
-            _scanAreaIndex = Math.Min(ImageInfo.scanAreaIDList.Count - 1, Math.Max(0, _scanAreaIndex - 1));
-            ScanAreaID = ImageInfo.scanAreaIDList[_scanAreaIndex].RegionID;
-        }
-
-        private void ScanAreaIDPlus()
-        {
-            _scanAreaIndex = Math.Min(ImageInfo.scanAreaIDList.Count - 1, Math.Max(0, _scanAreaIndex + 1));
-            ScanAreaID = ImageInfo.scanAreaIDList[_scanAreaIndex].RegionID;
-        }
-
+        //private void ScanAreaIDMinus()
+        //{
+        //    _scanAreaIndex = Math.Min(ImageInfo.scanAreaIDList.Count - 1, Math.Max(0, _scanAreaIndex - 1));
+        //    ScanAreaID = ImageInfo.scanAreaIDList[_scanAreaIndex].RegionID;
+        //}
+        //private void ScanAreaIDPlus()
+        //{
+        //    _scanAreaIndex = Math.Min(ImageInfo.scanAreaIDList.Count - 1, Math.Max(0, _scanAreaIndex + 1));
+        //    ScanAreaID = ImageInfo.scanAreaIDList[_scanAreaIndex].RegionID;
+        //}
         void SetMenuBarEnable(bool status)
         {
             ChangeEvent changeEvent = new ChangeEvent();
@@ -5800,21 +5416,6 @@
             }
         }
 
-        /// <summary>
-        /// Shrinks all histograms to their minimum size
-        /// </summary>
-        void ShrinkAllHistograms()
-        {
-            HistogramHeight1 = MIN_HISTOGRAM_HEIGHT;
-            HistogramWidth1 = MIN_HISTOGRAM_WIDTH;
-            HistogramHeight2 = MIN_HISTOGRAM_HEIGHT;
-            HistogramWidth2 = MIN_HISTOGRAM_WIDTH;
-            HistogramHeight3 = MIN_HISTOGRAM_HEIGHT;
-            HistogramWidth3 = MIN_HISTOGRAM_WIDTH;
-            HistogramHeight4 = MIN_HISTOGRAM_HEIGHT;
-            HistogramWidth4 = MIN_HISTOGRAM_WIDTH;
-        }
-
         private void SpValueMinus()
         {
             SpValue -= 1;
@@ -5827,35 +5428,16 @@
 
         private void TValueMinus()
         {
+            RXFlag = false;
             TValue -= 1;
+            RXFlag = true;
         }
 
         private void TValuePlus()
         {
+            RXFlag = false;
             TValue += 1;
-        }
-
-        private void UpdateChannelData()
-        {
-            int chan = 0;
-            for (int i = 0; i < _channelEnable.Length; ++i)
-            {
-                chan |= Convert.ToInt32(_channelEnable[i]) << i;
-            }
-
-            bool oldIsSingleChan = this.IsSingleChannel;
-            _imageReview.LSMChannel = chan;
-
-            //only build pallete when changing from single channel to multichannel or viceversa
-            if (this.IsSingleChannel != oldIsSingleChan)
-            {
-                BuildChannelPalettes();
-            }
-
-            if (_allowImageUpdate)
-            {
-                UpdateBitmapAndEventSubscribers();
-            }
+            RXFlag = true;
         }
 
         private void ZStreamValueMinus()
@@ -5870,7 +5452,9 @@
 
         private void ZValueMinus()
         {
+            RXFlagZ = false;
             ZValue -= 1;
+            RXFlagZ = true;
         }
 
         private void ZValuePlus()
@@ -6045,7 +5629,7 @@
                                     }
                                     else
                                     {
-                                        ImageReview.LoadImageIntoBufferFromRawFile(dataIn, fname, ImageInfo.channelEnabled, ImageReview.MaxChannels, zSlice, time, ImageInfo.pixelX, ImageInfo.pixelY * ExperimentData.NumberOfPlanes, ZMax, GetRawContainsDisabledChannels());
+                                        ImageReview.LoadImageIntoBufferFromRawFile(dataIn, fname, ImageInfo.channelEnabled, ImageReview.MaxChannels, zSlice, time, ImageInfo.pixelX, ImageInfo.pixelY * ExperimentData.NumberOfPlanes, ZMax, ExperimentData.OnlyEnabledChannels != 1);
                                     }
                                     break;
                                 case CaptureFile.FILE_TIFF:
@@ -6196,7 +5780,7 @@
                 return;
             }
 
-            string[] fileNames = new string[this.MaxChannels];
+            List<string> fileNames = new List<string>();
             _completedImageCount = 0;
             _totalImageCount = 1;
 
@@ -6210,7 +5794,7 @@
                     case CaptureFile.FILE_BIG_TIFF:
                     case CaptureFile.FILE_RAW:
                         //passthrough filename
-                        fileNames[0] = _movieFileNameList[0][0];
+                        fileNames.Add(_movieFileNameList[0][0]);
                         break;
                     case CaptureFile.FILE_TIFF:
                         //allocate a string array to accomodate the maximum number of channels
@@ -6224,7 +5808,7 @@
                                 string hwChanName = _imageReview.HardwareChannelNames[j];
                                 if (str.Contains(hwChanName))
                                 {
-                                    fileNames[j] = str;
+                                    fileNames.Add(_movieFileNameList[i][n]);
                                     break;
                                 }
                             }
@@ -6234,13 +5818,30 @@
                         break;
                 }
 
-                //This is to ensure that the main thread releases its control of the bitmap handle
-                _bitmap = null;
+                MVMManager.Instance["ImageViewReviewVM", "BitmapLoaded"] = false;
                 UpdateChannelData(fileNames, zID, tID);
+                DateTime startTime = DateTime.Now;
+                TimeSpan elapsedTime = DateTime.Now - startTime;
+                while (false == (bool)MVMManager.Instance["ImageViewReviewVM", "BitmapLoaded", (object)true] /*&& elapsedTime.TotalMilliseconds < ImageReview.BITMAP_UPDATE_TIMEOUT */&& false == ImageReviewViewModel._stopRequested)
+                {
+                    elapsedTime = DateTime.Now - startTime;
+                }
+                WriteableBitmap wBmp = (WriteableBitmap)MVMManager.Instance["ImageViewReviewVM", "Bitmap", true];
+                d.Bitmap bmp = null;
+                Application.Current.Dispatcher.Invoke(new Action(() => 
+                {
+                    using (MemoryStream outStream = new MemoryStream())
+                    {
+                        BitmapEncoder enc = new BmpBitmapEncoder();
+                        enc.Frames.Add(BitmapFrame.Create((BitmapSource)wBmp));
+                        enc.Save(outStream);
+                        bmp = new d.Bitmap(outStream);
+                    }
 
-                CreateBitmap();
-                System.Drawing.Bitmap bmp = BitmapFromSource(_bitmap);
-                //create avi at beginning:
+                }));
+                    //TODO:IV get bitmap from imageViewVM
+                    //System.Drawing.Bitmap bmp = BitmapFromSource(_bitmap);
+                    ////create avi at beginning:
                 if (0 == n)
                 {
                     _aviManager = new AviManager(_movieFilePath, false);
@@ -6256,6 +5857,7 @@
                 worker.ReportProgress(percent);
                 _completedImageCount = n + 1;
                 _totalImageCount = _movieFileNameList[0].Length;
+                fileNames.Clear();
 
             }
         }
@@ -6272,12 +5874,8 @@
             {
                 _aviManager.Close();
                 _aviManager = null;
-                _aviStream = null;
             }
             System.Diagnostics.Process.Start(_movieFilePath);
-
-            //This is to ensure that the background thread releases its control of the bitmap handle
-            _bitmap = null;
 
             PanelsEnable = true;
             SetMenuBarEnable(true);
@@ -6323,6 +5921,8 @@
         void _lineProfile_Closed(object sender, EventArgs e)
         {
             PersistLineProfileWindowSettings();
+            _lineProfileActive = false;
+            OnPropertyChanged("LineProfileActive");
         }
 
         void _lineProfile_LineWidthChange(int lineWidth)
@@ -6351,6 +5951,21 @@
                 XmlManager.SetAttribute(ndList[0], ApplicationDoc, "height", ((int)Math.Round(_multiROIStatsWindows[indx].Height)).ToString());
             }
             _multiROIStatsWindows[indx] = null;
+
+            bool empty = true;
+            for (int i = 0; i < _multiROIStatsWindows.Count; i++)
+            {
+                if (null != _multiROIStatsWindows[i])
+                {
+                    empty = false;
+                    break;
+                }
+            }
+            if (empty)
+            {
+                ROIStatsTableActive = false;
+            }
+
             ApplicationDoc.Save(appSettingsFile);
         }
 
@@ -6379,9 +5994,7 @@
 
             if (node != null)
             {
-                string str = string.Empty;
 
-                //// Code below this point is not being reached ////
                 XmlManager.SetAttribute(node, ApplicationDoc, "left", ((int)Math.Round(_roiStatsCharts[indx].Left)).ToString());
                 XmlManager.SetAttribute(node, ApplicationDoc, "top", ((int)Math.Round(_roiStatsCharts[indx].Top)).ToString());
                 XmlManager.SetAttribute(node, ApplicationDoc, "width", ((int)Math.Round(_roiStatsCharts[indx].Width)).ToString());
@@ -6393,163 +6006,25 @@
             _roiStatsCharts[indx].ROIChart.ClearChart();
             //_rOIStatsChart.ROIChart.ClearLegendGroup(true);
             _roiStatsCharts[indx] = null;
+
+            bool empty = true;
+            for (int i = 0; i < _roiStatsCharts.Count; i++)
+            {
+                if (null != _roiStatsCharts[i])
+                {
+                    empty = false;
+                    break;
+                }
+            }
+            if (empty)
+            {
+                ROIStatsChartActive = false;
+            }
         }
 
         void _spinnerWindow_Closed(object sender, EventArgs e)
         {
             _spinnerWindow = null;
-        }
-
-        #endregion Methods
-    }
-
-    public class NullToBooleanConverter : IValueConverter
-    {
-        #region Methods
-
-        public object Convert(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            if (targetType != typeof(bool))
-                throw new InvalidOperationException("The target must be a boolean");
-
-            if (null == value)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            throw new NotSupportedException();
-        }
-
-        #endregion Methods
-    }
-
-    public class NullToOpacityConverter : IValueConverter
-    {
-        #region Methods
-
-        public object Convert(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            if (targetType != typeof(double))
-                throw new InvalidOperationException("The target must be a double");
-
-            if (null == value)
-            {
-                return 0.5;
-            }
-            else
-            {
-                return 1;
-            }
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            throw new NotSupportedException();
-        }
-
-        #endregion Methods
-    }
-
-    public class NullToVisibilityConverter : IValueConverter
-    {
-        #region Methods
-
-        public object Convert(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            if (targetType != typeof(Visibility))
-                throw new InvalidOperationException("The target must be a Visibility");
-
-            if (null == value)
-            {
-                return Visibility.Hidden;
-            }
-            else
-            {
-                return Visibility.Visible;
-            }
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            throw new NotSupportedException();
-        }
-
-        #endregion Methods
-    }
-
-    public class PercentStringConverter : IValueConverter
-    {
-        #region Methods
-
-        object IValueConverter.Convert(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            try
-            {
-                if (targetType == typeof(string))
-                {
-                    double percentValue = Convert.ToDouble(value);
-                    string formatedPercentValue = String.Format("{0:P0}", percentValue).Replace(" ", "").Replace(CultureInfo.CurrentCulture.NumberFormat.CurrencyGroupSeparator, "");
-                    return formatedPercentValue;
-                }
-                else
-                {
-                    throw new InvalidOperationException("The target must be a string");
-                }
-            }
-            catch (FormatException ex)
-            {
-                ex.ToString();
-                return null;
-            }
-            catch (InvalidCastException ex)
-            {
-                ex.ToString();
-                return null;
-            }
-        }
-
-        object IValueConverter.ConvertBack(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            try
-            {
-                if (targetType == typeof(double))
-                {
-                    string valueString = value.ToString();
-                    valueString = valueString.Replace(System.Globalization.CultureInfo.CurrentCulture.NumberFormat.PercentSymbol, "");
-                    valueString = valueString.Replace(" ", "");
-                    double percentValue = double.Parse(valueString) / 100d;
-                    return percentValue;
-                }
-                else
-                {
-                    throw new InvalidOperationException("The target must be a string");
-                }
-            }
-            catch (FormatException ex)
-            {
-                ex.ToString();
-                return null;
-            }
-            catch (InvalidCastException ex)
-            {
-                ex.ToString();
-                return null;
-            }
         }
 
         #endregion Methods

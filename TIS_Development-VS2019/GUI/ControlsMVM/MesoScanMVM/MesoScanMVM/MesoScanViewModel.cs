@@ -11,12 +11,14 @@
     using System.Reflection;
     using System.Runtime.CompilerServices;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
     using System.Windows;
     using System.Windows.Controls;
     using System.Windows.Input;
     using System.Windows.Media;
     using System.Windows.Shapes;
+    using System.Windows.Threading;
     using System.Xml;
     using System.Xml.Linq;
 
@@ -24,9 +26,13 @@
 
     using OverlayManager;
 
+    using Params;
+
     using ThorLogging;
 
     using ThorSharedTypes;
+
+    using static ThorSharedTypes.ICamera;
 
     public class MesoScanViewModel : ThorSharedTypes.VMBase, ThorSharedTypes.IMVM
     {
@@ -38,16 +44,25 @@
 
         private readonly MesoScanModel _mesoScanModel;
 
+        private static Mutex mutex = new Mutex();
+        private static Mutex mutex2 = new Mutex();
+
+        object compareAndGenLock = new object();
         System.Timers.Timer hb;
+        bool mROISpatialDisplay = false;
+        bool running = false;
+        bool running2 = false;
         Dictionary<ActionMessage, string> _actionReq;
         bool _doCalculation = false;
+        bool _ignoreChanges = false;
         Dictionary<string, string> _localParamsVal;
         MesoParams _mesoParams;
         private List<Roi> _microScanROIs = new List<Roi>();
         Dictionary<string, List<string>> _mvmParamsName;
         Dictionary<Tuple<string, string>, string> _mvmParamsVal;
+        Dictionary<string, double> _params;
         XDocument _pDoc;
-        Dictionary<string, double> _positionParams;
+        bool _previewAllROIs = true;
         private Dictionary<string, PropertyInfo> _properties = new Dictionary<string, PropertyInfo>();
         private bool _restartScanner = true;
         private int _scanAreaID = 1;
@@ -68,19 +83,33 @@
             _mesoParams = new MesoParams();
             _actionReq = new Dictionary<ActionMessage, string>();
             _doCalculation = false;
-            _positionParams = new Dictionary<string, double>
+            _params = new Dictionary<string, double>
             {
                 {"LSMAreaMode", 0.0},
-                {"LSMPixelX", 0.0},
-                {"LSMPixelY", 0.0},
-                {"PhysicalFieldSize", 0.0},
-                {"StripLength", 0.0},
-                {"LSMFieldSize", 0.0},
+                {"LSMPixelX", 512.0},
+                {"LSMPixelY", 512.0},
+                {"FullFOVPhysicalFieldSizeUM", 300.0},
+                {"mROIStripePhysicalFieldSizeUM", 100.0},
+                {"FullFOVStripePixels", 256.0},
+                {"mROIStripePixels", 256.0},
+                {"FullFOVStripeFieldSize", 255.0},
+                {"mROIStripeFieldSize", 5.0},
+                {"LSMFieldSize", 255.0},
+                {"LSMFieldSizeXUM", 0.0},
+                {"LSMFieldSizeYUM", 0.0},
                 {"LSMFieldSizeMax", 0.0},
                 {"LSMFieldSizeCalibration", 0.0},
                 {"LSMFieldOffsetXActual", 0.0},
                 {"LSMFieldOffsetYActual", 0.0},
-                {"LSMChannel", 1.0}
+                {"LSMScaleYScan", 1.0},
+                {"LSMChannel", 1.0},
+                {"CurrentPower0", 0.0 },
+                {"CurrentPower1", 0.0 },
+                {"CurrentPower2", 0.0 },
+                {"CurrentPower3", 0.0 },
+                {"ZPosition", 0.0 },
+                {"LSMFlipHorizontal", 0 },
+                {"LSMFlipVerticalScan", 0 }
             };
             _templScanLevel1Nodes = new HashSet<long>();
             _templScanLevel2Nodes = new HashSet<Tuple<long, long>>();
@@ -93,14 +122,23 @@
                                             "LSMAreaMode",
                                             "LSMPixelY",
                                             "LSMFieldSize",
+                                            "LSMFieldSizeXUM",
+                                            "LSMFieldSizeYUM",
                                             "LSMFieldSizeMax",
                                             "LSMFieldSizeCalibration",
-                                            "SelectedStripSize",
-                                            "MesoStripPixels",
+                                            "FullFOVPhysicalFieldSizeUM",
+                                            "mROIStripePhysicalFieldSizeUM",
+                                            "LSMScaleYScan",
+                                            "FullFOVStripeFieldSize",
+                                            "mROIStripeFieldSize",
+                                            "FullFOVStripePixels",
+                                            "mROIStripePixels",
                                             "LSMFieldOffsetXActual",
                                             "LSMFieldOffsetYActual",
                                             "SelectedViewMode",
-                                            "SelectedScanArea"
+                                            "SelectedScanArea",
+                                            "LSMFlipHorizontal",
+                                            "LSMFlipVerticalScan"
                                         }
                 },
                 {"ScanControlViewModel", new List<string>()
@@ -152,6 +190,7 @@
                                                             {"XPixelSize", 10},
                                                             {"YPixelSize", 10},
                                                             {"ZPixelSize", 10},
+                                                            {"MaxSizeInUMForMaxFieldSize", 10},
                                                             {"IPixelType", 10},
                                                             {"ResUnit", 10},
                                                             {"TileWidth", 10},
@@ -164,9 +203,10 @@
                                                             {"NumberOfAverageFrame", 20},
                                                             {"PhysicalFieldSize", 20},
                                                             {"StripLength", 20},
-                                                            {"CurrentPower", 20},
+                                                            {"StripeFieldSize", 20},
                                                             {"IsLivingMode", 20},
                                                             {"RemapShift", 20},
+                                                            {"CurrentPower", 20},
                                                             {"ScanAreaID", 30},
                                                             {"PhysicalSizeX", 30},
                                                             {"PhysicalSizeY", 30},
@@ -181,7 +221,6 @@
                                                             {"SizeT", 30},
                                                             {"IsEnable", 30},
                                                             {"IsActionable", 30},
-                                                            {"CurrentZPosition", 30},
                                                             {"ZPosition", 40},
                                                             {"PowerPercentage", 40}
                                                           };
@@ -200,6 +239,33 @@
 
         #region Properties
 
+        public static ICamera.CameraType CameraType
+        {
+            get
+            {
+                int cameraType = 1;
+                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_CAMERA_TYPE, ref cameraType);
+                return (ICamera.CameraType)cameraType;
+            }
+        }
+
+        public static ICamera.LSMType LSMType
+        {
+            get
+            {
+                if (ICamera.CameraType.LSM == CameraType)
+                {
+                    int lsmType = 1;
+                    ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_TYPE, ref lsmType);
+                    return (ICamera.LSMType)lsmType;
+                }
+                else
+                {
+                    return ICamera.LSMType.LSMTYPE_LAST;
+                }
+            }
+        }
+
         public int IsLivingMode
         {
             get { return hb.Enabled ? 1 : 0; }
@@ -217,11 +283,58 @@
             }
         }
 
-        public bool IsResonanceGalvoGalvo
+        public bool IsmROIAvaliableAndEnabled
         {
             get
             {
-                return ((int)ICamera.CameraType.LSM == ResourceManagerCS.GetCameraType() && (int)ICamera.LSMType.RESONANCE_GALVO_GALVO == ResourceManagerCS.GetLSMType());
+                bool isRGG = ((int)ICamera.CameraType.LSM == ResourceManagerCS.GetCameraType() && (int)ICamera.LSMType.RESONANCE_GALVO_GALVO == ResourceManagerCS.GetLSMType());
+                bool mROIModeEnable = (int)MVMManager.Instance["AreaControlViewModel", "MROIModeEnable", (object)0] == 1;
+                return isRGG && mROIModeEnable;
+            }
+        }
+
+        public MesoParams mROIParams
+        {
+            get => _mesoParams;
+        }
+
+        public bool PreviewAllROIs
+        {
+            get => _previewAllROIs;
+            set
+            {
+                if (SetProperty(ref _previewAllROIs, value))
+                {
+                    _previewAllROIs = value;
+
+                    CompleteUpdateOfROIs();
+                }
+            }
+        }
+
+        public bool ReorderROIs
+        {
+            set
+            {
+                CompleteReorderingOfROIs();
+            }
+        }
+
+        public bool ResizeROIsForFullFOVPixelDensity
+        {
+            set
+            {
+                DisplayROIsWithFULLFOVPixelDensity();
+                mROISpatialDisplay = false;
+            }
+        }
+
+        public bool ResizeROIsFormROIPixelDensity
+        {
+            set
+            {
+                DisplayROIsWithmROIPixelDensity();
+                mROISpatialDisplay = true;
             }
         }
 
@@ -230,8 +343,34 @@
             get { return _scanAreaID; }
             set
             {
-                _scanAreaID = value;
-                OnPropertyChanged("ScanAreaID");
+                if (_scanAreaID != value)
+                {
+                    _scanAreaID = value;
+                    OnPropertyChanged("ScanAreaID");
+                    if (!IsmROIAvaliableAndEnabled)
+                    {
+                        return;
+                    }
+                    if ((int)MesoScanTypes.Micro == _scanID)
+                    {
+                        int scanIndex = _scanID - 1;
+                        if (_mesoParams?.TemplateScans?.Count > scanIndex)
+                        {
+                            for (int i = 0; i < _mesoParams.TemplateScans[scanIndex].ScanAreas?.Count; ++i)
+                            {
+                                if (_mesoParams.TemplateScans[scanIndex].ScanAreas[i]?.ScanAreaID == _scanAreaID)
+                                {
+                                    _ignoreChanges = true;
+                                    MVMManager.Instance["PowerControlViewModel", "Power0"] = _mesoParams.TemplateScans[scanIndex].ScanAreas[i].Power0; //TODO:
+                                    MVMManager.Instance["ZControlViewModel", "ZPosition"] = _mesoParams.TemplateScans[scanIndex].ScanAreas[i].ZPosition; //TODO:
+                                    Thread.Sleep(300);
+                                    _ignoreChanges = false;
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -244,7 +383,10 @@
                 {
                     _scanID = ((int)MesoScanTypes.Micro == value) ? (int)MesoScanTypes.Micro : (int)MesoScanTypes.Meso;
                     OnPropertyChanged("ScanID");
-
+                    if (!IsmROIAvaliableAndEnabled)
+                    {
+                        return;
+                    }
                     if (TryReloadXDoc())
                     {
                         XElement q = _pDoc.Root.Element("TemplateScans");
@@ -268,25 +410,27 @@
                                     }
                                 }
                             }
-                            else
+
+                            MapXml2MesoParams(ref q);
+                            int scanIndex = _scanID - 1;
+                            if ((int)MesoScanTypes.Meso == _scanID)
                             {
-                                scanArea = scanAreas.Descendants("ScanArea").Where(x => 0 == Int32.Parse(x.Attribute("ScanAreaID").Value)).FirstOrDefault();
+                                MVMManager.Instance["PowerControlViewModel", "IsMROI"] = false;
                             }
-
-                            if (null != scanArea)
+                            if (scanIndex < _mesoParams?.TemplateScans?.Count && _mesoParams.TemplateScans[scanIndex]?.ScanAreas?.Count > 0)
                             {
-                                MVMManager.Instance["AreaControlViewModel", "LSMPixelX"] = Convert.ToInt32(scanArea.Attribute("SizeX").Value);
-                                MVMManager.Instance["AreaControlViewModel", "LSMPixelY"] = Convert.ToInt32(scanArea.Attribute("SizeY").Value);
+                                int selectedArea = (int)MesoScanTypes.Meso == _scanID ? 0 : ScanAreaID - 1;
 
-                                if ((int)MVMManager.Instance["AreaControlViewModel", "LSMPixelX", (object)0] != (int)MVMManager.Instance["AreaControlViewModel", "LSMPixelY", (object)0])
-                                    MVMManager.Instance["AreaControlViewModel", "LSMAreaMode"] = (int)ICamera.LSMAreaMode.RECTANGLE;
-                                else
-                                    MVMManager.Instance["AreaControlViewModel", "LSMAreaMode"] = (int)ICamera.LSMAreaMode.SQUARE;
+                                if (selectedArea < _mesoParams.TemplateScans[scanIndex].ScanAreas.Count && selectedArea >= 0)
+                                {
+                                    MVMManager.Instance["PowerControlViewModel", "Power0"] = _mesoParams.TemplateScans[scanIndex].ScanAreas[selectedArea].Power0; //TODO: Fix this
+                                    MVMManager.Instance["ZControlViewModel", "ZPosition"] = _mesoParams.TemplateScans[scanIndex].ScanAreas[selectedArea].ZPosition; //TODO:
+                                }
                             }
-
-                            MVMManager.Instance["AreaControlViewModel", "SelectedStripSize"] = Convert.ToInt32(scanInfo.Element("ScanConfigure").Attribute("PhysicalFieldSize").Value);
-                            MVMManager.Instance["AreaControlViewModel", "MesoStripPixels"] = Convert.ToInt32(scanInfo.Element("ScanConfigure").Attribute("StripLength").Value);
-                            MVMManager.Instance["PowerControlViewModel", "Power0"] = Convert.ToInt32(scanInfo.Element("ScanConfigure").Attribute("CurrentPower").Value);
+                            if ((int)MesoScanTypes.Micro == _scanID)
+                            {
+                                MVMManager.Instance["PowerControlViewModel", "IsMROI"] = true;
+                            }
                         }
                     }
                 }
@@ -300,10 +444,35 @@
             {
                 _settingsPath = value;
                 OnPropertyChanged("SettingsPath");
-
+                if (!IsmROIAvaliableAndEnabled)
+                {
+                    return;
+                }
+                CompareAndGenerateActionRequests();
                 UpdateMicroScanAreaSettings();
-                CompareAndGenerateActionRequest();
-                ResourceManagerCS.SetCameraParamString((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_MESO_EXP_PATH, _settingsPath);
+
+                CalculateAndHandleActionRequests();
+                Thread.Sleep(1);
+                UpdateCaptureAndCheckLines();
+            }
+        }
+
+        public bool TryForceUpdateLines
+        {
+            set 
+            {
+                if (!hb.Enabled)
+                {
+                    CompleteUpdateOfROIs();
+                }
+            }
+        }
+
+        public bool UpdateROIs
+        {
+            set
+            {
+                CompleteUpdateOfROIs();
             }
         }
 
@@ -369,246 +538,280 @@
 
         #region Methods
 
-        public bool CompareAndGenerateActionRequest()
+        public bool CalculateAndHandleActionRequests()
         {
-            bool ret = false;
-            if (!IsResonanceGalvoGalvo)
+            if (!IsmROIAvaliableAndEnabled)
             {
-                _actionReq.Clear();
-                return ret;
+                return false;
             }
+            if (running) return false;
 
-            try
+            running = true;
+            mutex.WaitOne();
             {
-                //compare with other mvms
-                foreach (var vm in _mvmParamsName)
-                {
-                    foreach (var param in vm.Value)
-                    {
-                        Tuple<string, string> k = new Tuple<string, string>(vm.Key, param);
-                        string val = MVMManager.Instance[vm.Key, param, (object)0].ToString();
-                        if (val.CompareTo(_mvmParamsVal[k]) != 0)
-                        {
-                            _mvmParamsVal[k] = val;
-                            GenerateActionRequest(vm.Key, param, val);
-                        }
+                bool ret = false;
 
+                //update active xml
+                if (_doCalculation || 0 < _actionReq.Count)
+                {
+                    bool doLock = (0 == _settingsPath.CompareTo(ResourceManagerCS.GetActiveSettingsFileString())) ? true : false;
+
+                    if (!TryReloadXDoc(doLock))
+                    {
+                        if (doLock)
+                            ResourceManagerCS.ReturnDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
+                        return ret;
                     }
-                }
-                //compare with local props
-                foreach (var param in _localParamsVal.ToList())
-                {
-                    string val = this[param.Key, (object)0].ToString();
-                    if (val.CompareTo(param.Value) != 0)
+                    try
                     {
-                        _localParamsVal[param.Key] = val;
-                        GenerateActionRequest("this", param.Key);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, ex.Message);
-                return ret;
-            }
-
-            //update active xml
-            if (_doCalculation || 0 < _actionReq.Count)
-            {
-                bool doLock = (0 == _settingsPath.CompareTo(ResourceManagerCS.GetActiveSettingsFileString())) ? true : false;
-
-                if (!TryReloadXDoc(doLock))
-                {
-                    if (doLock)
-                        ResourceManagerCS.ReturnDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
-                    return ret;
-                }
-                try
-                {
-                    XElement q = _pDoc.Root.Element("TemplateScans");
-                    if (null != q)
-                    {
-                        //calculate for size and position
-                        double umPerFieldSize = _positionParams["PhysicalFieldSize"] / _positionParams["LSMFieldSizeCalibration"];
-                        double pixelX = _positionParams["LSMFieldSize"] * _positionParams["StripLength"] / umPerFieldSize;
-                        double umPerPixel = _positionParams["PhysicalFieldSize"] / _positionParams["StripLength"];
-                        if (_doCalculation)
+                        XElement q = _pDoc.Root.Element("TemplateScans");
+                        if (null != q)
                         {
-                            //meso only, micro scan update based on settings
-                            double aspectRatio = (int)ICamera.LSMAreaMode.SQUARE == (int)_positionParams["LSMAreaMode"] ? 1.0 : _positionParams["LSMPixelY"] / pixelX;
-                            double[] pixelXY = ValidateImageSize(new double[2] { pixelX, pixelX * aspectRatio });
+                            MVMManager.Instance["AreaControlViewModel", "LSMAreaMode"] = (int)ICamera.LSMAreaMode.SQUARE;
+                            //calculate for size and position
+                            double currentMagnification = (double)MVMManager.Instance["ObjectiveControlViewModel", "TurretMagnification", (object)1.0];
+                            double xDivision = _params["LSMFieldSize"] * _params["LSMFieldSizeCalibration"] / _params["FullFOVPhysicalFieldSizeUM"] / currentMagnification;
+                            double xDivisionRound = Math.Round(xDivision);
+                            double pixelX = xDivisionRound * _params["FullFOVStripePixels"];
+                            double yScale = _params["LSMScaleYScan"];
+                            double umPerPixelX = _params["FullFOVPhysicalFieldSizeUM"] / _params["FullFOVStripePixels"];
+                            double umPerPixelY = (_params["FullFOVPhysicalFieldSizeUM"] / _params["FullFOVStripePixels"]) * yScale;
 
-                            UpdateRequest("XPixelSize", umPerPixel.ToString(), _scanID);
-                            UpdateRequest("YPixelSize", umPerPixel.ToString(), _scanID);
-                            UpdateRequest("PhysicalFieldSize", _positionParams["PhysicalFieldSize"].ToString(), _scanID, 0);
-                            UpdateRequest("StripLength", _positionParams["StripLength"].ToString(), _scanID, 0);
-                            UpdateRequest("TileWidth", _positionParams["StripLength"].ToString(), _scanID);
-                            UpdateRequest("TileHeight", _positionParams["StripLength"].ToString(), _scanID);
-
-                            UpdateRequest("SizeX", ((int)pixelXY[0]).ToString(), _scanID, 0);
-                            if ((int)pixelXY[0] != (int)_positionParams["LSMPixelX"])
+                            if (_doCalculation && (int)MesoScanTypes.Meso == _scanID)
                             {
-                                MVMManager.Instance["AreaControlViewModel", "LSMPixelX"] = (int)pixelXY[0];
-                                _positionParams["LSMPixelX"] = (int)MVMManager.Instance["AreaControlViewModel", "LSMPixelX", (object)0];
-                            }
+                                //meso only, micro scan update based on settings
+                                double aspectRatio = (int)ICamera.LSMAreaMode.SQUARE == (int)_params["LSMAreaMode"] ? 1.0 : _params["LSMPixelY"] / pixelX;
+                                double[] pixelXY = ValidateImageSize(new double[2] { pixelX, pixelX * aspectRatio });
 
-                            if ((int)pixelXY[0] != (int)pixelXY[1])
-                                MVMManager.Instance["AreaControlViewModel", "LSMAreaMode"] = (int)ICamera.LSMAreaMode.RECTANGLE;
+                                UpdateRequest("XPixelSize", umPerPixelX.ToString(), _scanID);
+                                UpdateRequest("YPixelSize", umPerPixelY.ToString(), _scanID);
+                                UpdateRequest("PhysicalFieldSize", _params["FullFOVPhysicalFieldSizeUM"].ToString(), _scanID, 0);
+                                UpdateRequest("StripeFieldSize", _params["FullFOVStripeFieldSize"].ToString(), _scanID, 0);
+                                UpdateRequest("StripLength", _params["FullFOVStripePixels"].ToString(), _scanID, 0);
+                                UpdateRequest("TileWidth", _params["FullFOVStripePixels"].ToString(), _scanID);
+                                UpdateRequest("TileHeight", _params["FullFOVStripePixels"].ToString(), _scanID);
 
-                            _positionParams["LSMAreaMode"] = (int)MVMManager.Instance["AreaControlViewModel", "LSMAreaMode", (object)(int)ICamera.LSMAreaMode.RECTANGLE];
-
-                            UpdateRequest("SizeY", ((int)pixelXY[1]).ToString(), _scanID, 0);
-                            if ((int)pixelXY[1] != (int)_positionParams["LSMPixelY"])
-                            {
-                                MVMManager.Instance["AreaControlViewModel", "LSMPixelY"] = (int)pixelXY[1];
-                                _positionParams["LSMPixelY"] = (int)MVMManager.Instance["AreaControlViewModel", "LSMPixelY", (object)0];
-                            }
-
-                            double[] sizeUM = { _positionParams["LSMPixelX"] * umPerPixel, _positionParams["LSMPixelY"] * umPerPixel };
-                            UpdateRequest("PhysicalSizeX", sizeUM[0].ToString(), _scanID, 0);
-                            UpdateRequest("PhysicalSizeY", sizeUM[1].ToString(), _scanID, 0);
-
-                            double maxXUM = _positionParams["LSMFieldSizeMax"] * _positionParams["LSMFieldSizeCalibration"];
-                            double[] origin = { maxXUM * (-0.5), maxXUM * (-0.5) };
-
-                            double[] position = {(_positionParams["LSMFieldSize"] * (-0.5) - (_positionParams["LSMFieldOffsetXActual"])) * _positionParams["LSMFieldSizeCalibration"] - origin[0],
-                                        (_positionParams["LSMFieldSize"] * aspectRatio * (-0.5) + (_positionParams["LSMFieldOffsetYActual"])) * _positionParams["LSMFieldSizeCalibration"] - origin[1]};
-
-                            UpdateRequest("PositionX", position[0].ToString("F4"), _scanID, 0);
-                            UpdateRequest("PositionY", position[1].ToString("F4"), _scanID, 0);
-
-                            _doCalculation = false;
-                        }
-                        //update active scan area
-                        if ((int)MesoScanTypes.Meso == _scanID)
-                        {
-                            //meso scan only, disable all micro scan area
-                            UpdateRequest("IsEnable", true.ToString().ToLower(), (int)MesoScanTypes.Meso, 0);
-
-                            for (int i = 0; i < _microScanROIs.Count; i++)
-                            {
-                                UpdateRequest("IsEnable", false.ToString().ToLower(), (int)MesoScanTypes.Micro, _microScanROIs[i]._roiID);
-                            }
-                        }
-                        else if (0 < _microScanROIs.Count)
-                        {
-                            //disable Meso scan and enable single micro scan area
-                            UpdateRequest("IsEnable", false.ToString().ToLower(), (int)MesoScanTypes.Meso, 0);
-
-                            //update active from micro scan area settings
-                            XElement lsm = _pDoc.Root.Element("LSM");
-                            XElement microScanInfo = q.Descendants("ScanInfo").Where(x => (int)MesoScanTypes.Micro == Int32.Parse(x.Attribute("ScanID").Value)).FirstOrDefault();
-                            XElement microScanAreas = microScanInfo.Element("ScanAreas");
-                            XElement scanArea = microScanAreas.Descendants("ScanArea").Where(x => _scanAreaID == Int32.Parse(x.Attribute("ScanAreaID").Value)).FirstOrDefault();
-
-                            lsm.Attribute("pixelX").Value = scanArea.Attribute("SizeX").Value;
-                            MVMManager.Instance["AreaControlViewModel", "LSMPixelX"] = Int32.Parse(lsm.Attribute("pixelX").Value);
-                            _positionParams["LSMPixelX"] = (int)MVMManager.Instance["AreaControlViewModel", "LSMPixelX", (object)0];
-
-                            MVMManager.Instance["AreaControlViewModel", "LSMAreaMode"] = (int)ICamera.LSMAreaMode.RECTANGLE;
-                            _positionParams["LSMAreaMode"] = (int)MVMManager.Instance["AreaControlViewModel", "LSMAreaMode", (object)(int)ICamera.LSMAreaMode.RECTANGLE];
-
-                            lsm.Attribute("pixelY").Value = scanArea.Attribute("SizeY").Value;
-                            MVMManager.Instance["AreaControlViewModel", "LSMPixelY"] = Int32.Parse(lsm.Attribute("pixelY").Value);
-                            _positionParams["LSMPixelY"] = (int)MVMManager.Instance["AreaControlViewModel", "LSMPixelY", (object)0];
-
-                            for (int i = 0; i < _microScanROIs.Count; i++)
-                            {
-                                UpdateRequest("IsEnable", ((bool)(_scanAreaID == _microScanROIs[i]._roiID)).ToString().ToLower(), _scanID, _microScanROIs[i]._roiID);
-                            }
-                        }
-
-                        //handle action requests
-                        foreach (var item in _actionReq)
-                        {
-                            ActionMessage am = item.Key;
-                            XElement temp = null;
-                            XElement tInfo = null;
-                            XElement tArea = null;
-                            XElement tPowerPoint = null;
-                            if (am._scanInfoId != -1)
-                            {
-                                tInfo = q.Descendants("ScanInfo").Where(x => x.Attribute("ScanID").Value.Equals(am._scanInfoId.ToString())).FirstOrDefault();
-                                if (am._scanAreaId != -1)
+                                UpdateRequest("SizeX", ((int)pixelXY[0]).ToString(), _scanID, 0);
+                                if ((int)pixelXY[0] != (int)_params["LSMPixelX"])
                                 {
-                                    tArea = tInfo.Element("ScanAreas").Descendants("ScanArea").Where(x => x.Attribute("ScanAreaID").Value.Equals(am._scanAreaId.ToString())).FirstOrDefault();
-                                    if (am._zposition != -1)
+                                    MVMManager.Instance["AreaControlViewModel", "LSMPixelX"] = (int)pixelXY[0];
+                                    _params["LSMPixelX"] = (int)MVMManager.Instance["AreaControlViewModel", "LSMPixelX", (object)0];
+                                }
+
+                                if ((int)pixelXY[0] != (int)pixelXY[1])
+                                    MVMManager.Instance["AreaControlViewModel", "LSMAreaMode"] = (int)ICamera.LSMAreaMode.RECTANGLE;
+
+                                _params["LSMAreaMode"] = (int)MVMManager.Instance["AreaControlViewModel", "LSMAreaMode", (object)(int)ICamera.LSMAreaMode.RECTANGLE];
+
+                                UpdateRequest("SizeY", ((int)pixelXY[1]).ToString(), _scanID, 0);
+                                if ((int)pixelXY[1] != (int)_params["LSMPixelY"])
+                                {
+                                    MVMManager.Instance["AreaControlViewModel", "LSMPixelY"] = (int)pixelXY[1];
+                                    _params["LSMPixelY"] = (int)MVMManager.Instance["AreaControlViewModel", "LSMPixelY", (object)0];
+                                }
+
+                                double[] sizeUM = { _params["LSMPixelX"] * umPerPixelX, _params["LSMPixelY"] * umPerPixelY };
+                                UpdateRequest("PhysicalSizeX", sizeUM[0].ToString(), _scanID, 0);
+                                UpdateRequest("PhysicalSizeY", sizeUM[1].ToString(), _scanID, 0);
+
+                                double maxXUM = _params["LSMFieldSizeMax"] * _params["LSMFieldSizeCalibration"] / currentMagnification;
+                                double[] origin = { maxXUM * (-0.5), maxXUM * (-0.5) };
+
+                                double[] position = { _params["FullFOVPhysicalFieldSizeUM"] * 0.5 - sizeUM[0] * 0.5, -sizeUM[1] * 0.5 };
+
+                                UpdateRequest("PositionX", position[0].ToString("F4"), _scanID, 0);
+                                UpdateRequest("PositionY", position[1].ToString("F4"), _scanID, 0);
+                                _doCalculation = false;
+                            }
+                            _doCalculation = false;
+                            //update active scan area
+                            if ((int)MesoScanTypes.Meso == _scanID)
+                            {
+                                int tempZoom = 5;
+                                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_FIELD_SIZE, ref tempZoom);
+
+                                int newZoom = (int)_params["FullFOVStripeFieldSize"];
+                                ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_CONTROLUNIT, (int)IDevice.Params.PARAM_SCANNER_ZOOM_POS, newZoom, 1);
+
+                                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_FIELD_SIZE, newZoom);
+                                MVMManager.Instance["ScanControlViewModel", "LSMTwoWayAlignmentCoarse"] = (int)MVMManager.Instance["ScanControlViewModel", "LSMTwoWayAlignmentCoarse", (object)0];
+                                MVMManager.Instance["ScanControlViewModel", "LSMTwoWayAlignment"] = (int)MVMManager.Instance["ScanControlViewModel", "LSMTwoWayAlignment", (object)0];
+
+                                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_FIELD_SIZE, tempZoom);
+                                MVMManager.Instance["AreaControlViewModel", "LSMAreaMode"] = (int)ICamera.LSMAreaMode.SQUARE;
+
+                                double maxStripeSize = ((double)MVMManager.Instance["AreaControlViewModel", "LSMMaxFieldSizeXUM", (object)0]);
+
+                                UpdateRequest("MaxSizeInUMForMaxFieldSize", maxStripeSize.ToString(), (int)MesoScanTypes.Meso, 0);
+
+                                XElement scanInfo = q.Descendants("ScanInfo").Where(x => (int)MesoScanTypes.Meso == Int32.Parse(x.Attribute("ScanID").Value)).FirstOrDefault();
+
+                                //set the single power point for the FULL FOV view (MESO)
+                                if (null != scanInfo)
+                                {
+                                    XElement scanAreas = scanInfo.Element("ScanAreas");
+
+                                    var area = scanAreas?.Descendants().FirstOrDefault();
+
+                                    var pwrPoints = area?.Element("PowerPoints");
+                                    if (pwrPoints != null)
                                     {
-                                        tPowerPoint = tArea.Element("PowerPoints").Descendants("PowerPoint").Where(x => x.Attribute("ZPosition").Value.Equals(am._zposition.ToString())).FirstOrDefault();
+                                        var pw = pwrPoints.Descendants();
+                                        for (int i = pw.Count() - 1; i >= 0; --i)
+                                        {
+                                            pw.ElementAt(i).Remove();
+                                        }
+                                        AddPowerPoint(ref pwrPoints, _params["ZPosition"], _params["CurrentPower0"]);
+                                    }
+                                }
+
+                                //meso scan only, disable all micro scan area
+                                UpdateRequest("IsEnable", true.ToString().ToLower(), (int)MesoScanTypes.Meso, 0);
+
+                                for (int i = 0; i < _microScanROIs.Count; i++)
+                                {
+                                    UpdateRequest("IsEnable", false.ToString().ToLower(), (int)MesoScanTypes.Micro, _microScanROIs[i]._roiID);
+                                }
+                            }
+                            else if (0 < _microScanROIs.Count)
+                            {
+
+                                int tempZoom = 5;
+
+                                ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_FIELD_SIZE, ref tempZoom);
+
+                                int newZoom = (int)_params["mROIStripeFieldSize"];
+                                ResourceManagerCS.SetDeviceParamInt((int)SelectedHardware.SELECTED_CONTROLUNIT, (int)IDevice.Params.PARAM_SCANNER_ZOOM_POS, newZoom, 1);
+                                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_FIELD_SIZE, newZoom);
+                                MVMManager.Instance["ScanControlViewModel", "LSMTwoWayAlignmentCoarse"] = (int)MVMManager.Instance["ScanControlViewModel", "LSMTwoWayAlignmentCoarse", (object)0];
+                                MVMManager.Instance["ScanControlViewModel", "LSMTwoWayAlignment"] = (int)MVMManager.Instance["ScanControlViewModel", "LSMTwoWayAlignment", (object)0];
+
+                                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_FIELD_SIZE, tempZoom);
+
+                                MVMManager.Instance["AreaControlViewModel", "LSMAreaMode"] = (int)ICamera.LSMAreaMode.SQUARE;
+
+                                //disable Meso scan and enable single micro scan area
+                                UpdateRequest("IsEnable", false.ToString().ToLower(), (int)MesoScanTypes.Meso, 0);
+
+                                if (_previewAllROIs)
+                                {
+                                    for (int i = 0; i < _microScanROIs.Count; i++)
+                                    {
+                                        UpdateRequest("IsEnable", true.ToString().ToLower(), _scanID, _microScanROIs[i]._roiID);
+                                    }
+                                }
+                                else
+                                {
+                                    for (int i = 0; i < _microScanROIs.Count; i++)
+                                    {
+                                        UpdateRequest("IsEnable", ((bool)(_scanAreaID == _microScanROIs[i]._roiID)).ToString().ToLower(), _scanID, _microScanROIs[i]._roiID);
                                     }
                                 }
                             }
-                            switch (am._actionName)
-                            {
-                                case "ScanInfo":
-                                    temp = q;
-                                    if (item.Value.CompareTo("Create") == 0)
-                                        AddScanInfo(ref temp, (int)am._scanInfoId);
-                                    else
-                                        RemoveScanInfo(ref temp, (int)am._scanInfoId);
-                                    break;
-                                case "ScanArea":
-                                    temp = tInfo.Element("ScanAreas");
-                                    if (item.Value.CompareTo("Create") == 0)
-                                        AddScanArea(ref temp, (int)am._scanAreaId);
-                                    else
-                                        RemoveScanArea(ref temp, (int)am._scanAreaId);
-                                    break;
-                                case "PowerPoint":
-                                    temp = tArea.Element("PowerPoints");
-                                    if (item.Value.CompareTo("Create") == 0)
-                                        AddPowerPoint(ref temp, am._zposition, 100.0);
-                                    else
-                                        RemovePowerPoint(ref temp, am._zposition);
-                                    break;
-                                default:
-                                    if (tPowerPoint != null)
-                                        temp = tPowerPoint;
-                                    else if (tArea != null)
-                                        temp = tArea;
-                                    else
-                                        temp = tInfo;
 
-                                    if (_templParamList[am._actionName] == 20)
+                            //handle action requests
+                            foreach (var item in _actionReq)
+                            {
+                                ActionMessage am = item.Key;
+                                XElement temp = null;
+                                XElement tInfo = null;
+                                XElement tArea = null;
+                                XElement tPowerPoint = null;
+                                if (am._scanInfoId != -1)
+                                {
+                                    tInfo = q.Descendants("ScanInfo").Where(x => x.Attribute("ScanID").Value.Equals(am._scanInfoId.ToString())).FirstOrDefault();
+                                    if (am._scanAreaId != -1)
                                     {
-                                        temp.Element("ScanConfigure").Attribute(am._actionName).Value = item.Value;
-                                    }
-                                    else if (_templParamList[am._actionName] == 21)
-                                    {
-                                        temp.Element("ScanConfigure").Element(am._actionName).Value = item.Value;
-                                    }
-                                    else
-                                    {
-                                        temp.Attribute(am._actionName).Value = item.Value;
-                                        if (tArea == temp)
+                                        tArea = tInfo.Element("ScanAreas").Descendants("ScanArea").Where(x => x.Attribute("ScanAreaID").Value.Equals(am._scanAreaId.ToString())).FirstOrDefault();
+                                        if (am._zposition != -1)
                                         {
-                                            XElement lsm = _pDoc.Root.Element("LSM");
-                                            if (am._actionName.Equals("SizeX"))
-                                                lsm.Attribute("pixelX").Value = item.Value;
-                                            if (am._actionName.Equals("SizeY"))
-                                                lsm.Attribute("pixelY").Value = item.Value;
+                                            tPowerPoint = tArea.Element("PowerPoints").Descendants("PowerPoint").Where(x => x.Attribute("ZPosition").Value.Equals(am._zposition.ToString())).FirstOrDefault();
                                         }
                                     }
-                                    break;
+                                }
+                                try
+                                {
+                                    switch (am._actionName)
+                                    {
+                                        case "ScanInfo":
+                                            temp = q;
+                                            if (item.Value.CompareTo("Create") == 0)
+                                                AddScanInfo(ref temp, (int)am._scanInfoId);
+                                            else
+                                                RemoveScanInfo(ref temp, (int)am._scanInfoId);
+                                            break;
+                                        case "ScanArea":
+                                            temp = tInfo.Element("ScanAreas");
+                                            if (item.Value.CompareTo("Create") == 0)
+                                                AddScanArea(ref temp, (int)am._scanAreaId);
+                                            else
+                                                RemoveScanArea(ref temp, (int)am._scanAreaId);
+                                            break;
+                                        case "PowerPoint":
+                                            temp = tArea.Element("PowerPoints");
+                                            if (item.Value.CompareTo("Create") == 0)
+                                                AddPowerPoint(ref temp, am._zposition, 100.0);
+                                            else
+                                                RemovePowerPoint(ref temp, am._zposition);
+                                            break;
+                                        default:
+                                            if (tPowerPoint != null)
+                                                temp = tPowerPoint;
+                                            else if (tArea != null)
+                                                temp = tArea;
+                                            else
+                                                temp = tInfo;
+
+                                            if (_templParamList[am._actionName] == 20)
+                                            {
+                                                temp.Element("ScanConfigure").Attribute(am._actionName).Value = item.Value;
+                                            }
+                                            else if (_templParamList[am._actionName] == 21)
+                                            {
+                                                temp.Element("ScanConfigure").Element(am._actionName).Value = item.Value;
+                                            }
+                                            else
+                                            {
+                                                temp.Attribute(am._actionName).Value = item.Value;
+                                                if (tArea == temp)
+                                                {
+                                                    XElement lsm = _pDoc.Root.Element("LSM");
+                                                    if (am._actionName.Equals("SizeX"))
+                                                        lsm.Attribute("pixelX").Value = item.Value;
+                                                    if (am._actionName.Equals("SizeY"))
+                                                        lsm.Attribute("pixelY").Value = item.Value;
+                                                }
+                                            }
+                                            break;
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    ex.ToString();
+                                }
                             }
+
+                            _pDoc.Save(_settingsPath);
+                            if (doLock)
+                                MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS] = XmlManager.ToXmlDocument(_pDoc);
+
+                            _actionReq.Clear();
+
+                            ret = true;
                         }
-
-                        _pDoc.Save(_settingsPath);
-                        if (doLock)
-                            MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS] = XmlManager.ToXmlDocument(_pDoc);
-
-                        _actionReq.Clear();
-                        ret = true;
                     }
+                    catch (Exception ex)
+                    {
+                        ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, ex.Message);
+                    }
+                    if (doLock)
+                        ResourceManagerCS.ReturnDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
                 }
-                catch (Exception ex)
-                {
-                    ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, ex.Message);
-                }
-                if (doLock)
-                    ResourceManagerCS.ReturnDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
+                mutex.ReleaseMutex();
+
+                running = false;
+                return ret;
             }
-            return ret;
         }
 
         public PropertyInfo GetPropertyInfo(string propertyName)
@@ -641,9 +844,11 @@
 
         public void UpdateExpXMLSettings(ref XmlDocument experimentFile)
         {
+            CompareAndGenerateActionRequests();
             UpdateMicroScanROIs();
+            UpdateMicroScanAreaSettings();
             IsLivingMode = 0;
-            CompareAndGenerateActionRequest();
+            CalculateAndHandleActionRequests();
         }
 
         public long UpdateRequest(string paramName = "", string paramValue = "", int scanId = -1, int scanAreaId = -1, double zPosition = -1)
@@ -773,42 +978,145 @@
 
         private void ActionRequestFromAreaControl(string prop, string val)
         {
-            _doCalculation = true;
             switch (prop)
             {
                 case "LSMAreaMode":
-                    _positionParams["LSMAreaMode"] = Convert.ToDouble(val);
+                    if (_params["LSMAreaMode"] != Convert.ToDouble(val))
+                    {
+                        _params["LSMAreaMode"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
                     break;
                 case "LSMPixelY":
-                    _positionParams["LSMPixelY"] = Convert.ToDouble(val);
+                    if (_params["LSMPixelY"] != Convert.ToDouble(val))
+                    {
+                        _params["LSMPixelY"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
                     break;
                 case "LSMFieldSize":
-                    _positionParams["LSMFieldSize"] = Convert.ToDouble(val);
+                    if (_params["LSMFieldSize"] != Convert.ToDouble(val))
+                    {
+                        _params["LSMFieldSize"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
+                    break;
+                case "LSMFieldSizeXUM":
+                    if (_params["LSMFieldSizeXUM"] != Convert.ToDouble(val))
+                    {
+                        _params["LSMFieldSizeXUM"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
+                    break;
+                case "LSMFieldSizeYUM":
+                    if (_params["LSMFieldSizeYUM"] != Convert.ToDouble(val))
+                    {
+                        _params["LSMFieldSizeYUM"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
                     break;
                 case "LSMFieldSizeMax":
-                    _positionParams["LSMFieldSizeMax"] = Convert.ToDouble(val);
+                    if (_params["LSMFieldSizeMax"] != Convert.ToDouble(val))
+                    {
+                        _params["LSMFieldSizeMax"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
                     break;
                 case "LSMFieldSizeCalibration":
-                    _positionParams["LSMFieldSizeCalibration"] = Convert.ToDouble(val);
+                    if (_params["LSMFieldSizeCalibration"] != Convert.ToDouble(val))
+                    {
+                        _params["LSMFieldSizeCalibration"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
                     break;
-                case "SelectedStripSize":
-                    _positionParams["PhysicalFieldSize"] = Convert.ToDouble(val);
+                case "FullFOVStripePixels":
+                    if (_params["FullFOVStripePixels"] != Convert.ToDouble(val))
+                    {
+                        _params["FullFOVStripePixels"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
                     break;
-                case "MesoStripPixels":
-                    _positionParams["StripLength"] = Convert.ToDouble(val);
+                case "mROIStripePixels":
+                    if (_params["mROIStripePixels"] != Convert.ToDouble(val))
+                    {
+                        _params["mROIStripePixels"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
+                    break;
+                case "FullFOVStripeFieldSize":
+                    if (_params["FullFOVStripeFieldSize"] != Convert.ToDouble(val))
+                    {
+                        _params["FullFOVStripeFieldSize"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
+                    break;
+                case "mROIStripeFieldSize":
+                    if (_params["mROIStripeFieldSize"] != Convert.ToDouble(val))
+                    {
+                        _params["mROIStripeFieldSize"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
+                    break;
+                case "FullFOVPhysicalFieldSizeUM":
+                    if (_params["FullFOVPhysicalFieldSizeUM"] != Convert.ToDouble(val))
+                    {
+                        _params["FullFOVPhysicalFieldSizeUM"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
+                    break;
+                case "mROIStripePhysicalFieldSizeUM":
+                    if (_params["mROIStripePhysicalFieldSizeUM"] != Convert.ToDouble(val))
+                    {
+                        _params["mROIStripePhysicalFieldSizeUM"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
+                    break;
+                case "LSMScaleYScan":
+                    if (_params["LSMScaleYScan"] != Convert.ToDouble(val))
+                    {
+                        _params["LSMScaleYScan"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
                     break;
                 case "LSMFieldOffsetXActual":
-                    _positionParams["LSMFieldOffsetXActual"] = Convert.ToDouble(val);
+                    if (_params["LSMFieldOffsetXActual"] != Convert.ToDouble(val))
+                    {
+                        _params["LSMFieldOffsetXActual"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
                     break;
                 case "LSMFieldOffsetYActual":
-                    _positionParams["LSMFieldOffsetYActual"] = Convert.ToDouble(val);
+                    if (_params["LSMFieldOffsetYActual"] != Convert.ToDouble(val))
+                    {
+                        _params["LSMFieldOffsetYActual"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
+
                     break;
                 case "SelectedViewMode":
-                    ScanID = Convert.ToInt32(val) + (int)MesoScanTypes.Meso;
+                    if (ScanID != Convert.ToInt32(val))
+                    {
+                        ScanID = Convert.ToInt32(val) + (int)MesoScanTypes.Meso;
+                        _doCalculation = true;
+                    }
                     break;
                 case "SelectedScanArea":
                     _doCalculation = false;
                     ScanAreaID = Convert.ToInt32(val);
+                    break;
+                case "LSMFlipHorizontal":
+                    if (_params["LSMFlipHorizontal"] != Convert.ToDouble(val))
+                    {
+                        _params["LSMFlipHorizontal"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
+                    break;
+                case "LSMFlipVerticalScan":
+                    if (_params["LSMFlipVerticalScan"] != Convert.ToDouble(val))
+                    {
+                        _params["LSMFlipVerticalScan"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
                     break;
             }
         }
@@ -819,8 +1127,8 @@
             {
                 case "LSMChannel":  //[A]:0,[B]:1,[C]:2,[D]:3,All:4
                     //restart if changing single or multiple(4) channels
-                    _restartScanner = (((4 > _positionParams["LSMChannel"]) ? true : false) != ((4 > Convert.ToDouble(val)) ? true : false)) ? true : false;
-                    _positionParams["LSMChannel"] = Convert.ToDouble(val);
+                    _restartScanner = (((4 > _params["LSMChannel"]) ? true : false) != ((4 > Convert.ToDouble(val)) ? true : false)) ? true : false;
+                    _params["LSMChannel"] = Convert.ToDouble(val);
                     _doCalculation = true;
                     break;
             }
@@ -838,7 +1146,7 @@
                     UpdateRequest("IsEnable", val.ToString().ToLower(), (int)MesoScanTypes.Meso, 0);
                     break;
                 case "ScanAreaID":
-                    UpdateRequest(prop, ScanAreaID.ToString(), (int)MesoScanTypes.Micro, _scanAreaID);
+                    //     UpdateRequest(prop, ScanAreaID.ToString(), (int)MesoScanTypes.Micro, _scanAreaID);
                     break;
             }
         }
@@ -847,36 +1155,98 @@
         {
             switch (prop)
             {
+                //case "Power0":
+                //UpdateRequest("PowerPercentage", val, _scanID, ((int)MesoScanTypes.Meso == _scanID) ? 0 : _scanAreaID, 0);
                 case "Power0":
-                    UpdateRequest("PowerPercentage", val, _scanID, ((int)MesoScanTypes.Meso == _scanID) ? 0 : _scanAreaID, 0);
-                    UpdateRequest("CurrentPower", val, _scanID);
-                    _restartScanner = false;
+                    if (_params["CurrentPower0"] != Convert.ToDouble(val))
+                    {
+                        //  UpdateRequest("CurrentPower", val, _scanID);
+                        // UpdateRequest("CurrentPower", val, _scanID, ((int)MesoScanTypes.Meso == _scanID) ? 0 : _scanAreaID, _params["ZPosition"]);
+                        _params["CurrentPower0"] = Convert.ToDouble(val);
+
+                        if (!_ignoreChanges)
+                        {
+                            _doCalculation = true;
+                        }
+                    }
                     break;
                 case "Power1":
+                    if (_params["CurrentPower1"] != Convert.ToDouble(val))
+                    {
+                        _params["CurrentPower1"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
                     break;
                 case "Power2":
+                    if (_params["CurrentPower2"] != Convert.ToDouble(val))
+                    {
+                        _params["CurrentPower2"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
                     break;
                 case "Power3":
+                    if (_params["CurrentPower3"] != Convert.ToDouble(val))
+                    {
+                        _params["CurrentPower3"] = Convert.ToDouble(val);
+                        _doCalculation = true;
+                    }
                     break;
+                    //UpdateRequest("CurrentPower", val, _scanID);
+                    //_restartScanner = false;
+                    //break;
+                    //case "Power1":
+                    //case "Power2":
+                    //    break;
+                    //case "Power3":
+                    //    break;
             }
         }
 
         private void ActionRequestFromScanControl(string prop, string val)
         {
-            for (int i = 0; i < _mesoParams._templateScans.Count; i++)
+            for (int i = 0; i < _mesoParams.TemplateScans.Count; i++)
             {
                 switch (prop)
                 {
                     case "LastLSMScanMode":
-                        UpdateRequest("ScanMode", val, _mesoParams._templateScans[i]._scanId);
+                        UpdateRequest("ScanMode", val, _mesoParams.TemplateScans[i].ScanID);
                         break;
                     case "LSMSignalAverage":
-                        UpdateRequest("AverageMode", val, _mesoParams._templateScans[i]._scanId);
+                        UpdateRequest("AverageMode", val, _mesoParams.TemplateScans[i].ScanID);
                         break;
                     case "LSMSignalAverageFrames":
-                        UpdateRequest("NumberOfAverageFrame", val, _mesoParams._templateScans[i]._scanId);
+                        UpdateRequest("NumberOfAverageFrame", val, _mesoParams.TemplateScans[i].ScanID);
                         break;
                 }
+            }
+        }
+
+        //    break;
+        private void ActionRequestFromZControl(string prop, string val)
+        {
+            switch (prop)
+            {
+                //case "Power0":
+                //UpdateRequest("PowerPercentage", val, _scanID, ((int)MesoScanTypes.Meso == _scanID) ? 0 : _scanAreaID, 0);
+                case "ZPosition":
+                    //   if (_params["ZPosition"] != Convert.ToDouble(val))
+                    {
+                        _params["ZPosition"] = Convert.ToDouble(val);
+                        if (!_ignoreChanges)
+                        {
+                            _doCalculation = true;
+                        }
+                    }
+                    break;
+                    //UpdateRequest("CurrentPower", val, _scanID);
+                    //_restartScanner = false;
+                    //break;
+                    //case "Power1":
+                    //    break;
+                    //case "Power2":
+                    //    break;
+                    //case "Power3":
+                    //    break;
             }
         }
 
@@ -896,12 +1266,14 @@
                                     new XAttribute("ScanAreaID", scanAreaId),
                                     new XAttribute("Name", name),
                                     new XAttribute("Color", "#7D144389"),
-                                    new XAttribute("PhysicalSizeX", 5000),
+                                    new XAttribute("PhysicalSizeX", 5000), //TODO: need to rename variables
                                     new XAttribute("PhysicalSizeY", 5000),
                                     new XAttribute("PhysicalSizeZ", 1),
                                     new XAttribute("PositionX", 0),
                                     new XAttribute("PositionY", 0),
                                     new XAttribute("PositionZ", 0),
+                                    new XAttribute("PositionXFieldOffset", 0),
+                                    new XAttribute("PositionYFieldOffset", 0),
                                     new XAttribute("SizeX", 2134),
                                     new XAttribute("SizeY", 2134),
                                     new XAttribute("SizeZ", 1),
@@ -932,12 +1304,14 @@
                                         new XAttribute("TimeInterval", 0.5),
                                         new XAttribute("SignificantBits", 14),
                                         new XAttribute("HasStored", false),
+                                        new XAttribute("MaxSizeInUMForMaxFieldSize", 1400.0),
                                         new XElement("ScanAreas", null),
                                         new XElement("ScanConfigure",
                                                 new XAttribute("ScanMode", 1),
                                                 new XAttribute("AverageMode", 0),
                                                 new XAttribute("NumberOfAverageFrame", 1),
                                                 new XAttribute("PhysicalFieldSize", 600),
+                                                new XAttribute("StripeFieldSize", 50),
                                                 new XAttribute("StripLength", 256),
                                                 new XAttribute("CurrentPower", 100),
                                                 new XAttribute("IsLivingMode", 0),
@@ -947,77 +1321,356 @@
             templateScansElement.Add(tScanInfo);
         }
 
+        private void CompareAndGenerateActionRequests()
+        {
+            try
+            {
+                if (!IsmROIAvaliableAndEnabled)
+                {
+                    _actionReq.Clear();
+                    return;
+                }
+
+                //compare with other mvms
+                foreach (var vm in _mvmParamsName)
+                {
+                    foreach (var param in vm.Value)
+                    {
+                        Tuple<string, string> k = new Tuple<string, string>(vm.Key, param);
+                        string val = MVMManager.Instance[vm.Key, param, (object)0].ToString();
+                        if (val.CompareTo(_mvmParamsVal[k]) != 0)
+                        {
+                            _mvmParamsVal[k] = val;
+                            GenerateActionRequest(vm.Key, param, val);
+                        }
+
+                    }
+                }
+                //compare with local props
+                foreach (var param in _localParamsVal.ToList())
+                {
+                    string val = this[param.Key, (object)0].ToString();
+                    if (val.CompareTo(param.Value) != 0)
+                    {
+                        _localParamsVal[param.Key] = val;
+                        GenerateActionRequest("this", param.Key);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, ex.Message);
+                return;
+            }
+        }
+
+        void CompleteReorderingOfROIs()
+        {
+            if (mROIParams?.TemplateScans != null)
+            {
+                for (int j = 0; j < mROIParams.TemplateScans.Count; ++j)
+                {
+                    if (mROIParams.TemplateScans[j].Name == Enum.GetName(typeof(MesoScanTypes), MesoScanTypes.Micro))
+                    {
+                        var mROIs = mROIParams.TemplateScans[j].ScanAreas;
+
+                        mROIParams.TemplateScans[j].ScanAreas = new ObservableCollection<ScanArea>();
+
+                        if (mROIs != null)
+                        {
+                            List<PowerPoint> PowerPoints = new List<PowerPoint>();
+                            Dictionary<int, int> oldAndNewROIOrder = new Dictionary<int, int>();
+                            for (int i = 0; i < mROIs.Count; i++)
+                            {
+                                oldAndNewROIOrder.Add(i, mROIs[i].ScanAreaID - 1);
+                                PowerPoints.Add(new PowerPoint() { PowerPercentage0 = mROIs[i].Power0, ZPosition = mROIs[i].ZPosition });
+                            }
+                            OverlayManagerClass.Instance.ReorderROIs(oldAndNewROIOrder);
+                            UpdateMicroScanAreaSettings(PowerPoints);
+
+                            _doCalculation = true;
+                            CalculateAndHandleActionRequests();
+                            Thread.Sleep(1);
+                            UpdateCaptureAndCheckLines();
+
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        void CompleteUpdateOfROIs()
+        {
+            if (mROIParams?.TemplateScans != null)
+            {
+                for (int j = 0; j < mROIParams.TemplateScans.Count; ++j)
+                {
+                    if (mROIParams.TemplateScans[j].Name == Enum.GetName(typeof(MesoScanTypes), MesoScanTypes.Micro))
+                    {
+                        var mROIs = mROIParams.TemplateScans[j].ScanAreas;
+
+                        mROIParams.TemplateScans[j].ScanAreas = new ObservableCollection<ScanArea>();
+
+                        if (mROIs != null)
+                        {
+                            List<PowerPoint> PowerPoints = new List<PowerPoint>();
+
+                            for (int i = 0; i < mROIs.Count; i++)
+                            {
+                                PowerPoints.Add(new PowerPoint() { PowerPercentage0 = mROIs[i].Power0, ZPosition = mROIs[i].ZPosition });
+                            }
+
+                            UpdateMicroScanAreaSettings(PowerPoints);
+
+                            _doCalculation = true;
+                            CalculateAndHandleActionRequests();
+
+                            UpdateCaptureAndCheckLines();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// Convert calibration from Confocal to Meso
         /// </summary>
         private void ConvertCalibration()
         {
-            const int FIELDSIZE_CNT = 256;
-            const int FIELDSIZE_REF = 120;
-            string path = System.IO.Directory.GetCurrentDirectory();
-            string zoomFile = path + "\\ZoomData.txt";
-            string alignFile = path + "\\AlignData.txt";
-            string mesoSettings = path + "\\ThorMesoScanSettings.xml";
-            string confocalSettings = path + "\\ThorConfocalSettings.xml";
+            //const int FIELDSIZE_CNT = 256;
+            //const int FIELDSIZE_REF = 120;
+            //string path = System.IO.Directory.GetCurrentDirectory();
+            //string zoomFile = path + "\\ZoomData.txt";
+            //string alignFile = path + "\\AlignData.txt";
+            //string mesoSettings = path + "\\ThorMesoScanSettings.xml";
+            //string confocalSettings = path + "\\ThorConfocalSettings.xml";
 
-            if (File.Exists(mesoSettings) && File.Exists(confocalSettings))
+            //if (File.Exists(mesoSettings) && File.Exists(confocalSettings))
+            //{
+            //    if (!File.Exists(zoomFile) && !File.Exists(alignFile))
+            //        return;
+
+            //    XDocument confocalDoc = XDocument.Load(confocalSettings);
+            //    XElement confocalCal = confocalDoc.Root.Element("Calibration");
+            //    double fieldSizeCalXmlVal = (null == confocalCal || null == confocalCal.Attribute("fieldSizeCalibration")) ? 80.1 : Double.Parse(confocalCal.Attribute("fieldSizeCalibration").Value);
+            //    confocalCal = confocalDoc.Root.Element("Configuration");
+            //    double field2theta = (null == confocalCal || null == confocalCal.Attribute("field2Theta")) ? 0.1 : Double.Parse(confocalCal.Attribute("field2Theta").Value);
+
+            //    XDocument mesoDoc = XDocument.Load(mesoSettings);
+            //    XElement res = mesoDoc.Root.Element("Resonance");
+            //    XElement pockels = mesoDoc.Root.Element("Waveforms").Descendants("PokelsCellWaveform").FirstOrDefault();
+            //    double pockelDutyCycle = (null == pockels || null == pockels.Attribute("PockelDutyCycle")) ? 1.0 : Double.Parse(pockels.Attribute("PockelDutyCycle").Value);
+            //    pockelDutyCycle = (0 >= pockelDutyCycle) ? 1.0 : pockelDutyCycle;
+
+            //    XElement decend1 = null, decend2 = null;
+            //    List<int[]> fieldSizeAlign = new List<int[]>();
+
+            //    //fine alignments
+            //    if (File.Exists(alignFile))
+            //    {
+            //        decend2 = res.Descendants("TowWayAlignment").FirstOrDefault();
+            //        fieldSizeAlign = File.ReadLines(alignFile).Select(line => line.Split(' ').Select(s => int.Parse(s)).ToArray()).ToList();
+            //    }
+
+            //    //zoom data
+            //    if (File.Exists(zoomFile))
+            //    {
+            //        decend1 = res.Descendants("ZoomCalibration").FirstOrDefault();
+            //        List<int[]> fieldSizePercentage = File.ReadLines(zoomFile).Select(line => line.Split(' ').Select(s => int.Parse(s)).ToArray()).ToList();
+            //        if (0 < fieldSizePercentage.Count)
+            //        {
+            //            if (FIELDSIZE_CNT != fieldSizePercentage.Count)
+            //                ThorLogging.ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Warning, 1, "Number of calibrated field size is not 256 but: " + fieldSizePercentage.Count);
+
+            //            if (0 < fieldSizeAlign.Count && FIELDSIZE_CNT != fieldSizeAlign.Count)
+            //                ThorLogging.ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Warning, 1, "Number of calibrated field size is not 256 but: " + fieldSizeAlign.Count);
+
+            //            decend1.Elements().Remove();
+            //            if (null != decend2)
+            //                decend2.Elements().Remove();
+
+            //            for (int i = 0; i < fieldSizePercentage.Count; i++)
+            //            {
+            //                double confocalFieldSizeCalibration = fieldSizeCalXmlVal * (1 + ((fieldSizePercentage[i][0] - fieldSizePercentage[FIELDSIZE_REF][0]) / (double)Constants.HUNDRED_PERCENT));
+            //                double xUM = i * confocalFieldSizeCalibration / (double)MVMManager.Instance["ObjectiveControlViewModel", "TurretMagnification", (object)1.0];
+            //                double theta = i * field2theta;
+            //                double volt = theta / 2 * (1 + (fieldSizePercentage[i][0] / (double)Constants.HUNDRED_PERCENT)) / pockelDutyCycle;
+            //                decend1.Add(new XElement("Point", new XAttribute("Amplitude", xUM), new XAttribute("Voltage", volt)));
+
+            //                if ((null != decend2) && (i < fieldSizeAlign.Count))
+            //                    decend2.Add(new XElement("Point", new XAttribute("Amplitude", xUM), new XAttribute("ShiftPoints", fieldSizeAlign[i][0])));
+            //            }
+            //        }
+            //    }
+            //    mesoDoc.Save(mesoSettings);
+            // }
+        }
+
+        private void DisplayROIsWithFULLFOVPixelDensity()
+        {
+            try
             {
-                if (!File.Exists(zoomFile) && !File.Exists(alignFile))
-                    return;
+                var ROIs = OverlayManagerClass.Instance.GetModeROIs(Mode.MICRO_SCANAREA);
 
-                XDocument confocalDoc = XDocument.Load(confocalSettings);
-                XElement confocalCal = confocalDoc.Root.Element("Calibration");
-                double fieldSizeCalXmlVal = (null == confocalCal || null == confocalCal.Attribute("fieldSizeCalibration")) ? 80.1 : Double.Parse(confocalCal.Attribute("fieldSizeCalibration").Value);
-                confocalCal = confocalDoc.Root.Element("Configuration");
-                double field2theta = (null == confocalCal || null == confocalCal.Attribute("field2Theta")) ? 0.1 : Double.Parse(confocalCal.Attribute("field2Theta").Value);
-
-                XDocument mesoDoc = XDocument.Load(mesoSettings);
-                XElement res = mesoDoc.Root.Element("Resonance");
-                XElement pockels = mesoDoc.Root.Element("Waveforms").Descendants("PokelsCellWaveform").FirstOrDefault();
-                double pockelDutyCycle = (null == pockels || null == pockels.Attribute("PockelDutyCycle")) ? 1.0 : Double.Parse(pockels.Attribute("PockelDutyCycle").Value);
-                pockelDutyCycle = (0 >= pockelDutyCycle) ? 1.0 : pockelDutyCycle;
-
-                XElement decend1 = null, decend2 = null;
-                List<int[]> fieldSizeAlign = new List<int[]>();
-
-                //fine alignments
-                if (File.Exists(alignFile))
+                int pixelW = 0;
+                int pixelH = 0;
+                double pixelSizeX = 0;
+                double pixelSizeY = 0;
+                if (mROIParams?.TemplateScans != null)
                 {
-                    decend2 = res.Descendants("TowWayAlignment").FirstOrDefault();
-                    fieldSizeAlign = File.ReadLines(alignFile).Select(line => line.Split(' ').Select(s => int.Parse(s)).ToArray()).ToList();
-                }
-
-                //zoom data
-                if (File.Exists(zoomFile))
-                {
-                    decend1 = res.Descendants("ZoomCalibration").FirstOrDefault();
-                    List<int[]> fieldSizePercentage = File.ReadLines(zoomFile).Select(line => line.Split(' ').Select(s => int.Parse(s)).ToArray()).ToList();
-                    if (0 < fieldSizePercentage.Count)
+                    for (int j = 0; j < mROIParams.TemplateScans.Count; ++j)
                     {
-                        if (FIELDSIZE_CNT != fieldSizePercentage.Count)
-                            ThorLogging.ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Warning, 1, "Number of calibrated field size is not 256 but: " + fieldSizePercentage.Count);
-
-                        if (0 < fieldSizeAlign.Count && FIELDSIZE_CNT != fieldSizeAlign.Count)
-                            ThorLogging.ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Warning, 1, "Number of calibrated field size is not 256 but: " + fieldSizeAlign.Count);
-
-                        decend1.Elements().Remove();
-                        if (null != decend2)
-                            decend2.Elements().Remove();
-
-                        for (int i = 0; i < fieldSizePercentage.Count; i++)
+                        if (mROIParams.TemplateScans[j].Name == Enum.GetName(typeof(MesoScanTypes), MesoScanTypes.Meso))
                         {
-                            double confocalFieldSizeCalibration = fieldSizeCalXmlVal * (1 + ((fieldSizePercentage[i][0] - fieldSizePercentage[FIELDSIZE_REF][0]) / (double)Constants.HUNDRED_PERCENT));
-                            double xUM = i * confocalFieldSizeCalibration / (double)MVMManager.Instance["ObjectiveControlViewModel", "TurretMagnification", (object)1.0];
-                            double theta = i * field2theta;
-                            double volt = theta / 2 * (1 + (fieldSizePercentage[i][0] / (double)Constants.HUNDRED_PERCENT)) / pockelDutyCycle;
-                            decend1.Add(new XElement("Point", new XAttribute("Amplitude", xUM), new XAttribute("Voltage", volt)));
+                            var mROIs = mROIParams.TemplateScans[j].ScanAreas;
+                            if (mROIs?.Count > 0 && mROIs[0] != null)
+                            {
+                                pixelSizeX = mROIParams.TemplateScans[j].PixelSize.X;
+                                pixelSizeY = mROIParams.TemplateScans[j].PixelSize.Y;
+                                pixelW = (int)Math.Floor(mROIs[0].PhysicalSizeXUM / mROIs[0].PhysicalSizeXUM) * mROIs[0].SizeXPixels;
+                                pixelH = (int)Math.Floor(mROIs[0].PhysicalSizeYUM / mROIs[0].PhysicalSizeYUM) * mROIs[0].SizeYPixels;
+                            }
 
-                            if ((null != decend2) && (i < fieldSizeAlign.Count))
-                                decend2.Add(new XElement("Point", new XAttribute("Amplitude", xUM), new XAttribute("ShiftPoints", fieldSizeAlign[i][0])));
+                            break;
+                        }
+                    }
+                    int horizontalFlip = (int)_params["LSMFlipHorizontal"];
+                    int horizontalFlipSign = horizontalFlip == 0 ? 1 : -1;
+
+                    int verticvalFlip = (int)_params["LSMFlipVerticalScan"];
+                    int verticalFlipSign = verticvalFlip == 0 ? 1 : -1;
+
+                    for (int j = 0; j < mROIParams.TemplateScans.Count; ++j)
+                    {
+                        if (mROIParams.TemplateScans[j].Name == Enum.GetName(typeof(MesoScanTypes), MesoScanTypes.Micro))
+                        {
+                            var mROIs = mROIParams.TemplateScans[j].ScanAreas;
+
+                            int imageWidth = pixelW;
+                            int imageHeight = pixelH;
+                            if (mROIs != null)
+                            {
+                                for (int i = 0; i < mROIs.Count; i++)
+                                {
+                                    if (i >= ROIs.Count)
+                                    {
+                                        break;
+                                    }
+                                    double stripeSize = (double)MVMManager.Instance["AreaControlViewModel", "mROIStripePhysicalFieldSizeUM", (object)0];
+                                    int pixelX = (int)Math.Ceiling((mROIs[i].Stripes * stripeSize / pixelSizeX));
+                                    int pixelY = (int)Math.Round((mROIs[i].PhysicalSizeYUM / pixelSizeY));
+                                    double position = horizontalFlipSign * mROIs[i].PositionXUM / pixelSizeX + 0.5 * imageWidth;
+                                    int left = (int)(int)Math.Round((position - pixelX / 2 / mROIs[i].Stripes));
+
+                                    if (horizontalFlip == 1 && mROIs[i].Stripes > 1)
+                                    {
+                                        double stripeWidth = pixelX / mROIs[i].Stripes;
+                                        int stripeCollocation = mROIs[i].Stripes - 1;
+                                        left -= (int)stripeWidth * stripeCollocation;
+                                    }
+
+                                    int top = (int)(int)Math.Round((verticalFlipSign * mROIs[i].PositionYUM / pixelSizeY + 0.5 * imageHeight));
+
+                                    if (verticvalFlip == 1)
+                                    {
+                                        top -= (int)pixelY;
+                                    }
+
+                                    ((ROIRect)ROIs[i]).StartPoint = new Point(left, top);
+                                    ((ROIRect)ROIs[i]).EndPoint = new Point(left + pixelX, top + pixelY);
+                                }
+                            }
                         }
                     }
                 }
-                mesoDoc.Save(mesoSettings);
+            }
+            catch (Exception ex)
+            {
+                ex.ToString();
+            }
+        }
+
+        private void DisplayROIsWithmROIPixelDensity()
+        {
+            try
+            {
+                var ROIs = OverlayManagerClass.Instance.GetModeROIs(Mode.MICRO_SCANAREA);
+
+                double imageWidthUM = 0;
+                double imageHeightUM = 0;
+                if (mROIParams?.TemplateScans != null)
+                {
+                    for (int j = 0; j < mROIParams.TemplateScans.Count; ++j)
+                    {
+                        if (mROIParams.TemplateScans[j].Name == Enum.GetName(typeof(MesoScanTypes), MesoScanTypes.Meso))
+                        {
+                            var mROIs = mROIParams.TemplateScans[j].ScanAreas;
+                            if (mROIs?.Count > 0 && mROIs[0] != null)
+                            {
+                                imageWidthUM = mROIs[0].PhysicalSizeXUM;
+                                imageHeightUM = mROIs[0].PhysicalSizeYUM;
+                            }
+
+                            break;
+                        }
+                    }
+
+                    int horizontalFlip = (int)_params["LSMFlipHorizontal"];
+
+                    int horizontalFlipSign = horizontalFlip == 0 ? 1 : -1;
+
+                    int verticvalFlip = (int)_params["LSMFlipVerticalScan"];
+                    int verticalFlipSign = verticvalFlip == 0 ? 1 : -1;
+
+                    for (int j = 0; j < mROIParams.TemplateScans.Count; ++j)
+                    {
+                        if (mROIParams.TemplateScans[j].Name == Enum.GetName(typeof(MesoScanTypes), MesoScanTypes.Micro))
+                        {
+                            var mROIs = mROIParams.TemplateScans[j].ScanAreas;
+                            var pixelSizeX = mROIParams.TemplateScans[j].PixelSize.X;
+                            var pixelSizeY = mROIParams.TemplateScans[j].PixelSize.Y;
+                            int imageWidth = (int)(imageWidthUM / pixelSizeX);
+                            imageWidth = (imageWidth % 2) == 0 ? imageWidth : imageWidth + 1;
+                            int imageHeight = (int)(imageHeightUM / pixelSizeY);
+                            imageHeight = (imageHeight % 2) == 0 ? imageHeight : imageHeight + 1;
+                            if (mROIs != null)
+                            {
+                                for (int i = 0; i < mROIs.Count; i++)
+                                {
+                                    if (i >= ROIs.Count)
+                                    {
+                                        break;
+                                    }
+
+                                    int pixelX = (int)(mROIs[i].SizeXPixels);
+                                    double stripeWidth = pixelX / mROIs[i].Stripes;
+                                    int pixelY = mROIs[i].SizeYPixels;
+                                    double position = horizontalFlipSign * mROIs[i].PositionXUM / pixelSizeX + 0.5 * imageWidth;
+                                    int left = (int)Math.Round((position - mROIs[i].SizeXPixels / 2 / mROIs[i].Stripes));
+                                    if (horizontalFlip == 1 && mROIs[i].Stripes > 1)
+                                    {
+                                        int stripeCollocation = mROIs[i].Stripes - 1;
+                                        left -= (int)stripeWidth * stripeCollocation;
+                                    }
+                                    int top = (int)Math.Round(verticalFlipSign * mROIs[i].PositionYUM / pixelSizeY + 0.5 * imageHeight);
+
+                                    if (verticvalFlip == 1)
+                                    {
+                                        top -= (int)pixelY;
+                                    }
+                                    ((ROIRect)ROIs[i]).StartPoint = new Point(left, top);
+                                    ((ROIRect)ROIs[i]).EndPoint = new Point(left + pixelX, top + pixelY);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ex.ToString();
             }
         }
 
@@ -1065,11 +1718,18 @@
                 case "PowerControlViewModel":
                     ActionRequestFromPowerControl(prop, val);
                     break;
+                case "ZControlViewModel":
+                    ActionRequestFromZControl(prop, val);
+                    break;
             }
         }
 
         private void LoadXmlMesoParams()
         {
+            if (!IsmROIAvaliableAndEnabled)
+            {
+                return;
+            }
             try
             {
                 _pDoc = XmlManager.ToXDocument(MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS]);
@@ -1084,12 +1744,11 @@
                     AddScanArea(ref scanAreas, (int)MesoScanTypes.Meso - 1);
                     XElement scanArea = scanAreas.Descendants("ScanArea").Where(x => (int)MesoScanTypes.Meso - 1 == Int32.Parse(x.Attribute("ScanAreaID").Value)).FirstOrDefault();
                     XElement powerPoints = scanArea.Element("PowerPoints");
-                    AddPowerPoint(ref powerPoints, 0.0, 100.0);
-                    AddPowerPoint(ref powerPoints, 400.0, 100.0);
+                    AddPowerPoint(ref powerPoints, _params["ZPosition"], 0.0);
                     AddScanInfo(ref templateScans, (int)MesoScanTypes.Micro);
 
                     //update active settings and global xmldocument when scanner is Resonance-Galvo-Galvo
-                    if (IsResonanceGalvoGalvo)
+                    if (IsmROIAvaliableAndEnabled)
                     {
                         ResourceManagerCS.BorrowDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
                         MVMManager.Instance.SaveSettings(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
@@ -1104,15 +1763,25 @@
                 MapXml2MesoParams(ref q);
 
                 //update through MVM for params only from TemplateScan
-                Tuple<string, string> k = new Tuple<string, string>("AreaControlViewModel", "SelectedStripSize");
-                MVMManager.Instance[k.Item1, k.Item2] = _mesoParams._templateScans[0]._scanConfigure._physicalFieldSize;
-                _mvmParamsVal[k] = _mesoParams._templateScans[0]._scanConfigure._physicalFieldSize.ToString();
-                GenerateActionRequest("AreaControlViewModel", "SelectedStripSize", _mesoParams._templateScans[0]._scanConfigure._physicalFieldSize.ToString());
+                Tuple<string, string> k = new Tuple<string, string>("AreaControlViewModel", "FullFOVStripeFieldSize");
+                MVMManager.Instance[k.Item1, k.Item2] = _mesoParams.TemplateScans[0].ScanConfigure._stripeFieldSize;
+                _mvmParamsVal[k] = _mesoParams.TemplateScans[0].ScanConfigure._stripeFieldSize.ToString();
+                GenerateActionRequest("AreaControlViewModel", "FullFOVStripeFieldSize", _mesoParams.TemplateScans[0].ScanConfigure._stripeFieldSize.ToString());
 
-                k = new Tuple<string, string>("AreaControlViewModel", "MesoStripPixels");
-                MVMManager.Instance[k.Item1, k.Item2] = _mesoParams._templateScans[0]._scanConfigure._stripLength;
-                _mvmParamsVal[k] = _mesoParams._templateScans[0]._scanConfigure._stripLength.ToString();
-                GenerateActionRequest("AreaControlViewModel", "MesoStripPixels", _mesoParams._templateScans[0]._scanConfigure._stripLength.ToString());
+                k = new Tuple<string, string>("AreaControlViewModel", "FullFOVStripePixels");
+                MVMManager.Instance[k.Item1, k.Item2] = _mesoParams.TemplateScans[0].ScanConfigure._stripLength;
+                _mvmParamsVal[k] = _mesoParams.TemplateScans[0].ScanConfigure._stripLength.ToString();
+                GenerateActionRequest("AreaControlViewModel", "FullFOVStripePixels", _mesoParams.TemplateScans[0].ScanConfigure._stripLength.ToString());
+
+                k = new Tuple<string, string>("AreaControlViewModel", "mROIStripeFieldSize");
+                MVMManager.Instance[k.Item1, k.Item2] = _mesoParams.TemplateScans[1].ScanConfigure._stripeFieldSize;
+                _mvmParamsVal[k] = _mesoParams.TemplateScans[1].ScanConfigure._stripeFieldSize.ToString();
+                GenerateActionRequest("AreaControlViewModel", "mROIStripeFieldSize", _mesoParams.TemplateScans[1].ScanConfigure._stripeFieldSize.ToString());
+
+                k = new Tuple<string, string>("AreaControlViewModel", "mROIStripePixels");
+                MVMManager.Instance[k.Item1, k.Item2] = _mesoParams.TemplateScans[1].ScanConfigure._stripLength;
+                _mvmParamsVal[k] = _mesoParams.TemplateScans[1].ScanConfigure._stripLength.ToString();
+                GenerateActionRequest("AreaControlViewModel", "mROIStripePixels", _mesoParams.TemplateScans[1].ScanConfigure._stripLength.ToString());
 
             }
             catch (Exception ex)
@@ -1123,77 +1792,102 @@
 
         private void MapXml2MesoParams(ref XElement q)
         {
-            _mesoParams._templateScans.Clear();
+            if (!IsmROIAvaliableAndEnabled)
+            {
+                return;
+            }
+            if (q == null) return;
+            _mesoParams.TemplateScans.Clear();
             foreach (var scanInfo in q.Elements("ScanInfo"))
             {
                 ScanInfo tScanInfo = new ScanInfo();
-                tScanInfo._scanId = Convert.ToInt32(scanInfo.Attribute("ScanID").Value);
-                _templScanLevel1Nodes.Add(tScanInfo._scanId);
-                tScanInfo._name = scanInfo.Attribute("Name").Value;
-                tScanInfo._objectiveType = scanInfo.Attribute("ObjectiveType").Value;
-                tScanInfo._pixelSize.X = Convert.ToDouble(scanInfo.Attribute("XPixelSize").Value);
-                tScanInfo._pixelSize.Y = Convert.ToDouble(scanInfo.Attribute("YPixelSize").Value);
-                tScanInfo._pixelSize.Z = Convert.ToDouble(scanInfo.Attribute("ZPixelSize").Value);
-                tScanInfo._iPixelType = scanInfo.Attribute("IPixelType").ToString().GetTypeCode();
-                tScanInfo._resUnit = (ResUnit)Enum.Parse(typeof(ResUnit), scanInfo.Attribute("ResUnit").Value, true);
-                tScanInfo._tileWidth = Convert.ToInt32(scanInfo.Attribute("TileWidth").Value);
-                tScanInfo._tileHeight = Convert.ToInt32(scanInfo.Attribute("TileHeight").Value);
-                tScanInfo._timeInterval = Convert.ToDouble(scanInfo.Attribute("TimeInterval").Value);
-                tScanInfo._significantBits = Convert.ToInt32(scanInfo.Attribute("SignificantBits").Value);
-                tScanInfo._hasStored = Convert.ToBoolean(scanInfo.Attribute("HasStored").Value);
+                tScanInfo.ScanID = Convert.ToInt32(scanInfo.Attribute("ScanID").Value);
+                _templScanLevel1Nodes.Add(tScanInfo.ScanID);
+                tScanInfo.Name = scanInfo.Attribute("Name").Value;
+                tScanInfo.ObjectiveType = scanInfo.Attribute("ObjectiveType").Value;
+                tScanInfo.PixelSize.X = Convert.ToDouble(scanInfo.Attribute("XPixelSize").Value);
+                tScanInfo.PixelSize.Y = Convert.ToDouble(scanInfo.Attribute("YPixelSize").Value);
+                tScanInfo.PixelSize.Z = Convert.ToDouble(scanInfo.Attribute("ZPixelSize").Value);
+                tScanInfo.iPixelType = scanInfo.Attribute("IPixelType").ToString().GetTypeCode();
+                tScanInfo.ResUnit = (ResUnit)Enum.Parse(typeof(ResUnit), scanInfo.Attribute("ResUnit").Value, true);
+                tScanInfo.TileWidth = Convert.ToInt32(scanInfo.Attribute("TileWidth").Value);
+                tScanInfo.TileHeight = Convert.ToInt32(scanInfo.Attribute("TileHeight").Value);
+                tScanInfo.TimeInterval = Convert.ToDouble(scanInfo.Attribute("TimeInterval").Value);
+                tScanInfo.SignificantBits = Convert.ToInt32(scanInfo.Attribute("SignificantBits").Value);
+                tScanInfo.HasStored = Convert.ToBoolean(scanInfo.Attribute("HasStored").Value);
+                var scanConfigure = scanInfo.Element("ScanConfigure");
+                double stripeSize = Convert.ToDouble(scanConfigure.Attribute("PhysicalFieldSize").Value);
                 var scanAreas = scanInfo.Element("ScanAreas");
+
                 foreach (var scanArea in scanAreas.Elements("ScanArea"))
                 {
                     ScanArea tScanArea = new ScanArea();
-                    tScanArea._scanAreaId = Convert.ToInt32(scanArea.Attribute("ScanAreaID").Value);
-                    _templScanLevel2Nodes.Add(new Tuple<long, long>(tScanInfo._scanId, tScanArea._scanAreaId));
-                    tScanArea._name = scanArea.Attribute("Name").Value;
-                    tScanArea._color = (Color)ColorConverter.ConvertFromString(scanArea.Attribute("Color").Value);
-                    tScanArea._physicalSize.X = Convert.ToDouble(scanArea.Attribute("PhysicalSizeX").Value);
-                    tScanArea._physicalSize.Y = Convert.ToDouble(scanArea.Attribute("PhysicalSizeY").Value);
-                    tScanArea._physicalSize.Z = Convert.ToDouble(scanArea.Attribute("PhysicalSizeZ").Value);
-                    tScanArea._position.X = Convert.ToDouble(scanArea.Attribute("PositionX").Value);
-                    tScanArea._position.Y = Convert.ToDouble(scanArea.Attribute("PositionY").Value);
-                    tScanArea._position.Z = Convert.ToDouble(scanArea.Attribute("PositionZ").Value);
-                    tScanArea._size.X = Convert.ToDouble(scanArea.Attribute("SizeX").Value);
-                    tScanArea._size.Y = Convert.ToDouble(scanArea.Attribute("SizeY").Value);
-                    tScanArea._size.Z = Convert.ToDouble(scanArea.Attribute("SizeZ").Value);
-                    tScanArea._sizeS = Convert.ToDouble(scanArea.Attribute("SizeS").Value);
-                    tScanArea._sizeT = Convert.ToDouble(scanArea.Attribute("SizeT").Value);
-                    tScanArea._isEnable = Convert.ToBoolean(scanArea.Attribute("IsEnable").Value);
-                    tScanArea._isActionable = Convert.ToBoolean(scanArea.Attribute("IsActionable").Value);
-                    tScanArea._currentZPosition = Convert.ToDouble(scanArea.Attribute("CurrentZPosition").Value);
+                    tScanArea.ScanAreaID = Convert.ToInt32(scanArea.Attribute("ScanAreaID").Value);
+                    _templScanLevel2Nodes.Add(new Tuple<long, long>(tScanInfo.ScanID, tScanArea.ScanAreaID));
+                    tScanArea.Name = scanArea.Attribute("Name").Value;
+                    // tScanArea.Color = (Color)ColorConverter.ConvertFromString(scanArea.Attribute("Color").Value);
+                    tScanArea.PhysicalSizeXUM = Convert.ToDouble(scanArea.Attribute("PhysicalSizeX").Value);
+                    int nStripes = (int)Math.Round(tScanArea.PhysicalSizeXUM / stripeSize);
+                    tScanArea.Stripes = nStripes;
+                    tScanArea.PhysicalSizeYUM = Convert.ToDouble(scanArea.Attribute("PhysicalSizeY").Value);
+                    tScanArea.PhysicalSizeZ = Convert.ToDouble(scanArea.Attribute("PhysicalSizeZ").Value);
+                    tScanArea.PositionXUM = Convert.ToDouble(scanArea.Attribute("PositionX").Value);
+                    tScanArea.PositionYUM = Convert.ToDouble(scanArea.Attribute("PositionY").Value);
+                    tScanArea.PositionZ = Convert.ToDouble(scanArea.Attribute("PositionZ").Value);
+                    tScanArea.SizeXPixels = (int)Convert.ToDouble(scanArea.Attribute("SizeX").Value);
+                    tScanArea.SizeYPixels = (int)Convert.ToDouble(scanArea.Attribute("SizeY").Value);
+                    //tScanArea.SizeXPixels = Convert.ToDouble(scanArea.Attribute("SizeZ").Value);
+                    //tScanArea._sizeS = Convert.ToDouble(scanArea.Attribute("SizeS").Value);
+                    //tScanArea._sizeT = Convert.ToDouble(scanArea.Attribute("SizeT").Value);
+                    tScanArea.IsEnable = Convert.ToBoolean(scanArea.Attribute("IsEnable").Value);
+                    //tScanArea._isActionable = Convert.ToBoolean(scanArea.Attribute("IsActionable").Value);
+                    //tScanArea._currentZPosition = Convert.ToDouble(scanArea.Attribute("CurrentZPosition").Value);
                     var powerPoints = scanArea.Element("PowerPoints");
                     foreach (var powerPoint in powerPoints.Elements("PowerPoint"))
                     {
                         PowerPoint tPowerPoint = new PowerPoint();
-                        tPowerPoint._zPosition = Convert.ToDouble(powerPoint.Attribute("ZPosition").Value);
-                        _templScanLevel3Nodes.Add(new Tuple<long, long, double>(tScanInfo._scanId, tScanArea._scanAreaId, tPowerPoint._zPosition));
-                        tPowerPoint._powerPercentage = Convert.ToDouble(powerPoint.Attribute("PowerPercentage").Value);
-                        tScanArea._powerPoints.Add(tPowerPoint);
+                        tPowerPoint.ZPosition = Convert.ToDouble(powerPoint.Attribute("ZPosition").Value);
+                        _templScanLevel3Nodes.Add(new Tuple<long, long, double>(tScanInfo.ScanID, tScanArea.ScanAreaID, tPowerPoint.ZPosition));
+                        tPowerPoint.PowerPercentage0 = Convert.ToDouble(powerPoint.Attribute("PowerPercentage").Value);
+                        tScanArea.PowerPoints.Add(tPowerPoint);
+                        tScanArea.ZPosition = Convert.ToDouble(powerPoint.Attribute("ZPosition").Value);
+                        tScanArea.Power0 = Convert.ToDouble(powerPoint.Attribute("PowerPercentage").Value);
                     }
-                    tScanInfo._scanAreas.Add(tScanArea);
+                    tScanInfo.ScanAreas.Add(tScanArea);
                 }
-                var scanConfigure = scanInfo.Element("ScanConfigure");
+
                 ScanConfigure tScanConfigure = new ScanConfigure();
                 tScanConfigure._scanMode = Convert.ToInt32(scanConfigure.Attribute("ScanMode").Value);
                 tScanConfigure._averageMode = Convert.ToInt32(scanConfigure.Attribute("AverageMode").Value);
                 tScanConfigure._numberOfAverageFrame = Convert.ToInt32(scanConfigure.Attribute("NumberOfAverageFrame").Value);
-                tScanConfigure._physicalFieldSize = Convert.ToInt32(scanConfigure.Attribute("PhysicalFieldSize").Value);
+                tScanConfigure._physicalFieldSize = Convert.ToDouble(scanConfigure.Attribute("PhysicalFieldSize").Value);
                 tScanConfigure._stripLength = Convert.ToInt32(scanConfigure.Attribute("StripLength").Value);
-                tScanConfigure._currentPower = Convert.ToInt32(scanConfigure.Attribute("CurrentPower").Value);
+                tScanConfigure._stripeFieldSize = Convert.ToInt32(scanConfigure.Attribute("StripeFieldSize").Value);
+                tScanConfigure._currentPower = Convert.ToDouble(scanConfigure.Attribute("CurrentPower").Value);
                 tScanConfigure._isLivingMode = Convert.ToInt32(scanConfigure.Attribute("IsLivingMode").Value);
                 tScanConfigure._remapShift = Convert.ToInt32(scanConfigure.Attribute("RemapShift").Value);
-                tScanInfo._scanConfigure = tScanConfigure;
-                _mesoParams._templateScans.Add(tScanInfo);
+                tScanInfo.ScanConfigure = tScanConfigure;
+                _mesoParams.TemplateScans.Add(tScanInfo);
             }
+
+            int currentSelectedArea = ScanAreaID;
+            ((IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("mROIList");
+            MVMManager.Instance["AreaControlViewModel", "SelectedScanArea"] = currentSelectedArea;
         }
 
         private void OnTimedEvent(object source, System.Timers.ElapsedEventArgs e)
         {
-            if (CompareAndGenerateActionRequest())
+            CompareAndGenerateActionRequests();
+            if (_doCalculation || 0 < _actionReq.Count)
             {
-                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_FORCE_SETTINGS_UPDATE, (_restartScanner ? 1 : 0));
+                _ = (Application.Current?.Dispatcher.Invoke(DispatcherPriority.Normal,
+             new Action(delegate ()
+             {
+                 UpdateMicroScanAreaSettings();
+             })));
+                CalculateAndHandleActionRequests();
+
+                UpdateCaptureAndCheckLines();
             }
         }
 
@@ -1250,71 +1944,279 @@
             return ret;
         }
 
+        void UpdateCaptureAndCheckLines()
+        {
+            ResourceManagerCS.SetCameraParamString((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_MESO_EXP_PATH, _settingsPath);
+
+            int lines = 0;
+            ResourceManagerCS.GetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_MROI_TOTAL_LINES, ref lines);
+
+            int minLines = 0, maxLines = 0, defaultLines = 0;
+            ResourceManagerCS.GetCameraParamRangeInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_MROI_TOTAL_LINES, ref minLines, ref maxLines, ref defaultLines);
+            double percent = ((double)lines / (double)maxLines)*100;
+            if (maxLines < lines)
+            {
+                //TODO: Try changing the pixel densityh to allow all ROIs, and block the new ROI tool
+                //MessageBox.Show("There are too many lines in your mROIs, please reduce the pixel density, the number of ROIs, the Z distance between ROIs, or the height of your ROIs");
+                //MVMManager.Instance["AreaControlViewModel", "mROIStatusMessage"] = "ERROR - Too many lines in mROI's";
+            }
+            else
+            {
+                ResourceManagerCS.SetCameraParamInt((int)SelectedHardware.SELECTED_CAMERA1, (int)ICamera.Params.PARAM_LSM_FORCE_SETTINGS_UPDATE, 1);
+                //MVMManager.Instance["AreaControlViewModel", "mROIStatusMessage"] = "OK";
+            }
+            MVMManager.Instance["AreaControlViewModel", "mROIStatusPercentLines"] = Math.Round(percent, 2);
+        }
+
         /// <summary>
         /// Set micro scan areas' geometry settings by ROIs
         /// </summary>
-        private void UpdateMicroScanAreaSettings()
+        private void UpdateMicroScanAreaSettings(List<PowerPoint> passedPowerPoints = null)
         {
-            UpdateMicroScanROIs();
-
-            if (0 < _microScanROIs.Count)
+            if (!IsmROIAvaliableAndEnabled)
             {
+                return;
+            }
+            if (running2)
+            {
+                return;
+            }
+            running2 = true;
+
+            mutex2.WaitOne();
+            bool useArgumentPowerPoints = passedPowerPoints?.Count > 0;
+            try
+            {
+
+                UpdateMicroScanROIs();
+
                 if (TryReloadXDoc(true))
                 {
                     XElement q = _pDoc.Root.Element("TemplateScans");
+                    if (q == null)
+                    {
+                        // make sure we don't stay locked if we need to exit
+                        ResourceManagerCS.ReturnDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
+                        running2 = false;
+                        mutex2.ReleaseMutex();
+                        return;
+                    }
+                    double fullFOVPhysicalSizeXUM = 0;
+                    double fullFOVPhysicalSizeYUM = 0;
+
+                    if (_mesoParams?.TemplateScans?.Count > 0 && _mesoParams.TemplateScans[0]?.ScanAreas?.Count > 0)
+                    {
+                        fullFOVPhysicalSizeXUM = _mesoParams.TemplateScans[0].ScanAreas[0].PhysicalSizeXUM;
+                        fullFOVPhysicalSizeYUM = _mesoParams.TemplateScans[0].ScanAreas[0].PhysicalSizeYUM;
+                    }
+
                     XElement scanInfo = q.Descendants("ScanInfo").Where(x => (int)MesoScanTypes.Micro == Int32.Parse(x.Attribute("ScanID").Value)).FirstOrDefault();
+                    double currentMagnification = (double)MVMManager.Instance["ObjectiveControlViewModel", "TurretMagnification", (object)1.0];
                     if (null != scanInfo)
                     {
                         XElement scanAreas = scanInfo.Element("ScanAreas");
                         XElement scanConfigure = scanInfo.Element("ScanConfigure");
-                        scanAreas.Descendants("ScanArea").Remove();
 
-                        double umPerPixel = _positionParams["PhysicalFieldSize"] / _positionParams["StripLength"];
-                        double maxXUM = _positionParams["LSMFieldSizeMax"] * _positionParams["LSMFieldSizeCalibration"];
-                        double[] origin = { maxXUM * (-0.5), maxXUM * (-0.5) };
+                        if (((int)MesoScanTypes.Micro == _scanID))
+                        {
+                            foreach (var scanArea in scanAreas.Descendants("ScanArea"))
+                            {
+                                scanArea.Attribute("IsEnable").Value = false.ToString();
+                            }
+                        }
+
+                        List<PowerPoint> PowerPoints = new List<PowerPoint>();
 
                         for (int i = 0; i < _microScanROIs.Count; i++)
                         {
-                            AddScanArea(ref scanAreas, _microScanROIs[i]._roiID);
                             XElement scanArea = scanAreas.Descendants("ScanArea").Where(x => _microScanROIs[i]._roiID == Int32.Parse(x.Attribute("ScanAreaID").Value)).FirstOrDefault();
-                            XElement powerPoints = scanArea.Element("PowerPoints");
-                            AddPowerPoint(ref powerPoints, 0.0, 100.0);
-                            AddPowerPoint(ref powerPoints, 400.0, 100.0);
 
-                            scanInfo.Attribute("XPixelSize").Value = umPerPixel.ToString();
-                            scanInfo.Attribute("YPixelSize").Value = umPerPixel.ToString();
-                            scanConfigure.Attribute("PhysicalFieldSize").Value = _positionParams["PhysicalFieldSize"].ToString();
-                            scanConfigure.Attribute("StripLength").Value = _positionParams["StripLength"].ToString();
-                            scanInfo.Attribute("TileWidth").Value = _positionParams["StripLength"].ToString();
-                            scanInfo.Attribute("TileHeight").Value = _positionParams["StripLength"].ToString();
+                            if (scanArea == null)
+                            {
+                                continue;
+                            }
+                            var powerPoint = scanArea?.Element("PowerPoints")?.Descendants("PowerPoint")?.First();
+                            if (powerPoint == null)
+                            {
+                                continue;
+                            }
+                            double zPos = Convert.ToDouble(powerPoint.Attribute("ZPosition").Value);
 
-                            double[] pixelXY = ValidateImageSize(new double[2] { Math.Round(_microScanROIs[i]._bound.Size.Width), Math.Round(_microScanROIs[i]._bound.Size.Height) });
-                            scanArea.Attribute("SizeX").Value = ((int)pixelXY[0]).ToString();
-                            scanArea.Attribute("SizeY").Value = ((int)pixelXY[1]).ToString();
-
-                            double[] sizeUM = { pixelXY[0] * umPerPixel, pixelXY[1] * umPerPixel };
-                            scanArea.Attribute("PhysicalSizeX").Value = sizeUM[0].ToString();
-                            scanArea.Attribute("PhysicalSizeY").Value = sizeUM[1].ToString();
-
-                            double aspectRatio = pixelXY[1] / pixelXY[0];
-
-                            double[] position = {(_positionParams["LSMFieldSize"] * (-0.5) - (_positionParams["LSMFieldOffsetXActual"])) * _positionParams["LSMFieldSizeCalibration"] - origin[0],
-                                        (_positionParams["LSMFieldSize"] * aspectRatio * (-0.5) + (_positionParams["LSMFieldOffsetYActual"])) * _positionParams["LSMFieldSizeCalibration"] - origin[1]};
-
-                            // roi Position = Vec of position + Vec of roiTLcorner
-                            double[] roiTL = { _microScanROIs[i]._bound.TopLeft.X * umPerPixel, _microScanROIs[i]._bound.TopLeft.Y * umPerPixel };
-                            scanArea.Attribute("PositionX").Value = (position[0] + roiTL[0]).ToString("F4");
-                            scanArea.Attribute("PositionY").Value = (position[1] + roiTL[1]).ToString("F4");
+                            double powerPercent = Convert.ToDouble(powerPoint.Attribute("PowerPercentage").Value);
+                            PowerPoints.Add(new PowerPoint() { PowerPercentage0 = powerPercent, ZPosition = zPos });
                         }
 
+                        if (0 < _microScanROIs.Count && (int)MesoScanTypes.Micro == _scanID)
+                        {
+                            scanAreas.Descendants("ScanArea").Remove();
+                            double yScale = _params["LSMScaleYScan"];
+                            double umPerPixelX = _params["mROIStripePhysicalFieldSizeUM"] / _params["mROIStripePixels"];
+                            double umPerPixelY = umPerPixelX * yScale;
+
+                            double fullFOVumPerPixelX = _params["FullFOVPhysicalFieldSizeUM"] / _params["FullFOVStripePixels"];
+                            double fullFOVumPerPixelY = fullFOVumPerPixelX * yScale;
+
+
+                            for (int i = 0; i < _microScanROIs.Count; i++)
+                            {
+                                AddScanArea(ref scanAreas, _microScanROIs[i]._roiID);
+                                XElement scanArea = scanAreas.Descendants("ScanArea").Where(x => _microScanROIs[i]._roiID == Int32.Parse(x.Attribute("ScanAreaID").Value)).FirstOrDefault();
+                                XElement powerPoints = scanArea.Element("PowerPoints");
+
+                                if (useArgumentPowerPoints && passedPowerPoints?.Count > i && passedPowerPoints[i] != null)
+                                {
+                                    AddPowerPoint(ref powerPoints, passedPowerPoints[i].ZPosition, passedPowerPoints[i].PowerPercentage0);
+                                }
+                                else
+                                {
+                                    //need to retrieve current power for other areas from xml somehow
+                                    if (_scanAreaID == _microScanROIs[i]._roiID && (int)MesoScanTypes.Meso != _scanID)
+                                    {
+                                        AddPowerPoint(ref powerPoints, _params["ZPosition"], _params["CurrentPower0"]);
+                                    }
+                                    else
+                                    {
+                                        if (PowerPoints?.Count > i && PowerPoints[i] != null)
+                                        {
+                                            double zPos = PowerPoints[i].ZPosition;
+
+                                            double powerPercent = PowerPoints[i].PowerPercentage0;
+                                            AddPowerPoint(ref powerPoints, zPos, powerPercent);
+                                        }
+                                        else
+                                        {
+                                            AddPowerPoint(ref powerPoints, _params["ZPosition"], _params["CurrentPower0"]);
+                                        }
+                                    }
+                                }
+
+                                scanInfo.Attribute("XPixelSize").Value = umPerPixelX.ToString();
+                                scanInfo.Attribute("YPixelSize").Value = umPerPixelY.ToString();
+
+                                scanInfo.Attribute("MaxSizeInUMForMaxFieldSize").Value = ((double)MVMManager.Instance["AreaControlViewModel", "LSMMaxFieldSizeXUM", (object)0]).ToString();
+
+                                scanConfigure.Attribute("PhysicalFieldSize").Value = _params["mROIStripePhysicalFieldSizeUM"].ToString();
+                                scanConfigure.Attribute("StripeFieldSize").Value = _params["mROIStripeFieldSize"].ToString();
+                                scanConfigure.Attribute("StripLength").Value = _params["mROIStripePixels"].ToString();
+                                scanInfo.Attribute("TileWidth").Value = _params["mROIStripePixels"].ToString();
+                                scanInfo.Attribute("TileHeight").Value = _params["mROIStripePixels"].ToString();
+
+                                double[] pixelXY = new double[2];
+                                if (!mROISpatialDisplay)
+                                {
+
+                                    int newPixels = (int)(Math.Round((double)_params["FullFOVStripePixels"] * (double)_params["mROIStripePhysicalFieldSizeUM"] / (double)_params["FullFOVPhysicalFieldSizeUM"] / 1.0) * 1.0);
+
+                                    int mults = (int)(Math.Round(_microScanROIs[i]._bound.Size.Width / newPixels));
+                                    mults = mults == 0 ? 1 : mults;
+                                    int multsH = (int)(_microScanROIs[i]._bound.Size.Height * mults * _params["mROIStripePixels"] / (int)_microScanROIs[i]._bound.Size.Width);
+
+                                    pixelXY = ValidateImageSize(new double[2] { mults * _params["mROIStripePixels"], 4.0 * Math.Ceiling(multsH / 4.0) });
+                                }
+                                else
+                                {
+                                    fullFOVumPerPixelX = umPerPixelX;
+
+                                    int newPixels = (int)_params["mROIStripePixels"];
+
+                                    int mults = (int)Math.Round(_microScanROIs[i]._bound.Size.Width / newPixels);
+                                    mults = mults < 1 ? 1 : mults;
+                                    int multsH = (int)(_microScanROIs[i]._bound.Size.Height * mults * _params["mROIStripePixels"] / (int)_microScanROIs[i]._bound.Size.Width);
+
+                                    pixelXY = ValidateImageSize(new double[2] { mults * _params["mROIStripePixels"], 4.0 * Math.Ceiling(multsH / 4.0) });
+                                }
+                                scanArea.Attribute("SizeX").Value = ((int)pixelXY[0]).ToString();
+                                scanArea.Attribute("SizeY").Value = ((int)pixelXY[1]).ToString();
+                                double[] sizeUM = { pixelXY[0] * umPerPixelX, pixelXY[1] * umPerPixelY };
+                                scanArea.Attribute("PhysicalSizeX").Value = sizeUM[0].ToString();
+                                scanArea.Attribute("PhysicalSizeY").Value = sizeUM[1].ToString();
+
+                                double[] sizeFullFOVUM = { fullFOVPhysicalSizeXUM, fullFOVPhysicalSizeYUM };
+
+                                double[] position = { -sizeFullFOVUM[0] * 0.5 + _params["mROIStripePhysicalFieldSizeUM"] * 0.5, -sizeFullFOVUM[1] * 0.5 };
+
+                                double[] roiTL = new double[2];
+                                int mROIScanIndex = 1;
+                                if (mROISpatialDisplay && mROIScanIndex < _mesoParams?.TemplateScans?.Count && _mesoParams.TemplateScans[mROIScanIndex].PixelSize != null)
+                                {
+                                    roiTL[0] = Math.Floor(_microScanROIs[i]._bound.TopLeft.X) * _mesoParams.TemplateScans[mROIScanIndex].PixelSize.X;
+                                    roiTL[1] = Math.Floor(_microScanROIs[i]._bound.TopLeft.Y) * _mesoParams.TemplateScans[mROIScanIndex].PixelSize.Y;
+                                }
+                                else
+                                {
+                                    roiTL[0] = Math.Floor(_microScanROIs[i]._bound.TopLeft.X) * fullFOVumPerPixelX;
+                                    roiTL[1] = Math.Floor(_microScanROIs[i]._bound.TopLeft.Y) * fullFOVumPerPixelY;
+                                }
+                                double stripeSize = _params["mROIStripePhysicalFieldSizeUM"];
+
+                                int nStripes = (int)Math.Round(sizeUM[0] / stripeSize);
+
+                                int horizontalFlip = (int)_params["LSMFlipHorizontal"];
+                                double xp = 0;
+                                if (horizontalFlip != 0)
+                                {
+                                    int width = (int)Math.Floor(_microScanROIs[i]._bound.Width);
+                                    double pixelXPos = (Math.Floor(_microScanROIs[i]._bound.BottomRight.X) - width / nStripes);
+                                    if (mROISpatialDisplay && mROIScanIndex < _mesoParams?.TemplateScans?.Count && _mesoParams.TemplateScans[mROIScanIndex].PixelSize != null)
+                                    {
+                                        roiTL[0] = pixelXPos * _mesoParams.TemplateScans[mROIScanIndex].PixelSize.X;
+                                    }
+                                    else
+                                    {
+                                        roiTL[0] = pixelXPos * fullFOVumPerPixelX;
+                                    }
+                                    xp = -1 * (position[0] + roiTL[0]);
+                                }
+                                else
+                                {
+                                    xp = position[0] + roiTL[0];
+                                }
+                                int verticalFlip = (int)_params["LSMFlipVerticalScan"];
+                                double yp = 0;
+                                if (verticalFlip != 0)
+                                {
+                                    int width = (int)Math.Floor(_microScanROIs[i]._bound.Width);
+                                    double pixelYPos = (Math.Floor(_microScanROIs[i]._bound.BottomRight.Y));
+                                    if (mROISpatialDisplay && mROIScanIndex < _mesoParams?.TemplateScans?.Count && _mesoParams.TemplateScans[mROIScanIndex].PixelSize != null)
+                                    {
+                                        roiTL[1] = pixelYPos * _mesoParams.TemplateScans[mROIScanIndex].PixelSize.Y;
+                                    }
+                                    else
+                                    {
+                                        roiTL[1] = pixelYPos * fullFOVumPerPixelY;
+                                    }
+                                    yp = -1 * (position[1] + roiTL[1]);
+                                }
+                                else
+                                {
+                                    yp = position[1] + roiTL[1];
+                                }
+
+                                scanArea.Attribute("PositionX").Value = xp.ToString("F4");
+                                scanArea.Attribute("PositionY").Value = yp.ToString("F4");
+                            }
+                        }
+                        else if (0 >= _microScanROIs.Count && OverlayManagerClass.Instance.ROIsLoaded)
+                        {
+                            scanAreas.Descendants("ScanArea").Remove();
+                        }
                         MapXml2MesoParams(ref q);
 
                         MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS] = XmlManager.ToXmlDocument(_pDoc);
                         MVMManager.Instance.SaveSettings(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
                     }
+                    ResourceManagerCS.ReturnDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
                 }
-                ResourceManagerCS.ReturnDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
             }
+            catch (Exception ex)
+            {
+                // make sure we don't stay locked if we need to exit
+                ResourceManagerCS.ReturnDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
+                ex.ToString();
+            }
+
+            running2 = false;
+            mutex2.ReleaseMutex();
         }
 
         /// <summary>
@@ -1326,7 +2228,7 @@
             _microScanROIs = OverlayManagerClass.Instance.GetModeROIs(Mode.MICRO_SCANAREA).Where(a => typeof(ROIRect) == a.GetType()).Select(area => new Roi()
             {
                 _roiID = ((int[])area.Tag)[(int)Tag.SUB_PATTERN_ID],
-                _bound = new Rect(((ROIRect)area).StartPoint, ((ROIRect)area).EndPoint),
+                _bound = new Rect(((ROIRect)area).StatsStartPoint, ((ROIRect)area).StatsEndPoint),
             }).ToList();
         }
 
@@ -1339,10 +2241,10 @@
         {
             double[] retVal = pixelSizeXY;
             double aspectRatio = pixelSizeXY[1] / pixelSizeXY[0];
-            double imageSize = (int)retVal[0] * (int)retVal[1] * (3.0 < _positionParams["LSMChannel"] ? 4.0 : 1.0) * sizeof(short);
+            double imageSize = (int)retVal[0] * (int)retVal[1] * (3.0 < _params["LSMChannel"] ? 4.0 : 1.0) * sizeof(short);
             if (MAX_IMAGE_SIZE < imageSize)
             {
-                retVal[0] = (double)MAX_IMAGE_SIZE / ((int)retVal[1] * (3.0 < _positionParams["LSMChannel"] ? 4.0 : 1.0) * sizeof(short));
+                retVal[0] = (double)MAX_IMAGE_SIZE / ((int)retVal[1] * (3.0 < _params["LSMChannel"] ? 4.0 : 1.0) * sizeof(short));
                 retVal[1] = retVal[0] * aspectRatio;
             }
             return retVal;

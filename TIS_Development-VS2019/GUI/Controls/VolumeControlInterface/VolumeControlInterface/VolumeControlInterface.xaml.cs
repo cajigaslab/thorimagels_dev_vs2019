@@ -133,10 +133,6 @@
                      DependencyProperty.RegisterAttached("TimePointIndex",
                      typeof(int),
                      typeof(VolumeControlInterface), new FrameworkPropertyMetadata(1));
-        public static DependencyProperty ZStreamIndexProperty =
-             DependencyProperty.RegisterAttached("ZStreamIndex",
-             typeof(int),
-             typeof(VolumeControlInterface), new FrameworkPropertyMetadata(1));
         public static DependencyProperty TimepointsProperty = 
                      DependencyProperty.RegisterAttached("Timepoints",
                      typeof(int),
@@ -169,6 +165,10 @@
                         DependencyProperty.RegisterAttached("ZStackCacheDirectory",
                         typeof(string),
                         typeof(VolumeControlInterface));
+        public static DependencyProperty ZStreamIndexProperty = 
+             DependencyProperty.RegisterAttached("ZStreamIndex",
+             typeof(int),
+             typeof(VolumeControlInterface), new FrameworkPropertyMetadata(1));
 
         private int _renderedVolumeXMax;
         private int _renderedVolumeXMin;
@@ -362,11 +362,11 @@
             }
         }
 
-        public string IsChanASelected
+        public bool IsChanASelected
         {
             get
             {
-                return (string)GetValue(IsChanASelectedProperty);
+                return (bool)GetValue(IsChanASelectedProperty);
             }
             set
             {
@@ -374,11 +374,11 @@
             }
         }
 
-        public string IsChanBSelected
+        public bool IsChanBSelected
         {
             get
             {
-                return (string)GetValue(IsChanBSelectedProperty);
+                return (bool)GetValue(IsChanBSelectedProperty);
             }
             set
             {
@@ -386,11 +386,11 @@
             }
         }
 
-        public string IsChanCSelected
+        public bool IsChanCSelected
         {
             get
             {
-                return (string)GetValue(IsChanCSelectedProperty);
+                return (bool)GetValue(IsChanCSelectedProperty);
             }
             set
             {
@@ -398,11 +398,11 @@
             }
         }
 
-        public string IsChanDSelected
+        public bool IsChanDSelected
         {
             get
             {
-                return (string)GetValue(IsChanDSelectedProperty);
+                return (bool)GetValue(IsChanDSelectedProperty);
             }
             set
             {
@@ -568,18 +568,6 @@
             }
         }
 
-        public int ZStreamIndex
-        {
-            get
-            {
-                return (int)GetValue(ZStreamIndexProperty);
-            }
-            set
-            {
-                SetValue(ZStreamIndexProperty, value);
-            }
-        }
-
         public int Timepoints
         {
             get
@@ -673,6 +661,18 @@
             set
             {
                 SetValue(ZStackCacheDirectoryProperty, value);
+            }
+        }
+
+        public int ZStreamIndex
+        {
+            get
+            {
+                return (int)GetValue(ZStreamIndexProperty);
+            }
+            set
+            {
+                SetValue(ZStreamIndexProperty, value);
             }
         }
 

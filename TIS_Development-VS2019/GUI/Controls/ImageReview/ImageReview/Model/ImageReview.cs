@@ -8,17 +8,22 @@
     using System.Globalization;
     using System.IO;
     using System.Linq;
+    using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
     using System.Text;
     using System.Text.RegularExpressions;
+    using System.Threading;
     using System.Timers;
     using System.Windows;
     using System.Windows.Data;
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
+    using System.Windows.Media.Media3D;
     using System.Windows.Threading;
     using System.Xml;
     using System.Xml.Serialization;
+
+    using ImageReviewDll.ViewModel;
 
     using LineProfileWindow;
 
@@ -98,57 +103,55 @@
     {
         #region Fields
 
+        public const int BITMAP_UPDATE_TIMEOUT = 2000;
         public const int LUT_SIZE = 256;
         public const int MAX_CHANNELS = 4;
 
         public double[] Stats;
         public string[] StatsNames;
 
-        private const int LUT_MAX = 255;
-        private const int LUT_MIN = 0;
-        private const int PIXEL_DATA_HISTOGRAM_SIZE = 256;
+        readonly FrameData _frameData = new FrameData();
 
         private static ReportLineProfile _lineProfileCallback;
         private static int _shiftValue = 6;
 
+        private List<Tuple<int, int>> SequenceSelectedChannel = new List<Tuple<int, int>>();
         private XmlDocument _applicationDoc;
-        private int _bitsPerPixel = 14;
-        private double[] _blackPoint;
-        private int[] _colorAssigment;
+        int _bitsPerPixel = 14;
         private int _colorChannels;
+        bool _correctionParametersSet = false;
         private int _currentSpCount;
         private int _currentTCount;
         private int _currentZCount;
         private int _currentZStreamCount;
-        private List<int> _dataBufferOffsetIndex;
         private int _dataLength;
         private XmlDocument _experimentDoc;
         private string _experimentFolderPath;
         private bool _experimentReviewOpened;
         private string _experimentXMLPath;
         private int _foundChannelCount = 0;
-        private bool _grayscaleForSingleChannel;
         private XmlDocument _hardwareDoc;
         private IntPtr _imageData;
+        int _imageDataSize = 0;
         private int _imageHeight;
         private ImgInfo _ImageInfo;
         private int _imageWidth;
-        private string[] _lastFileNames = new string[] { };
+        private List<string> _lastFileNames = new List<string>();
         private LineProfileData _lineProfileData;
         private int _lsmChannel;
-        private ushort[] _pixelData;
-        private byte[] _pixelDataByte;
-        private int[][] _pixelDataHistogram;
-        private byte[][] _pixelDataLUT;
-        private bool _pixelDataReady;
-        private short[] _pixelDataSave = null;
-        private int _rollOverPointX;
-        private int _rollOverPointY;
+        private double _LSMImageCalibrationGalvoTiltAngle = 25.0;
+        private double _LSMImageCalibrationXAngleMax = 3.5;
+        private double _LSMImageCalibrationYAngleMax = 3.0;
+        private int _LSMImageDistortionCorrectionEnable = 0;
+        private ushort[] _pixelData = null;
         int _sampleSiteIndex = 1;
+        private int _sequenceStepChannels = 0;
+        private int _sequenceStepIndex = 0;
+        private int _sequenceStepsNum = 0;
         int _subTileIndex = 1;
+        private int _totalSequentialChannelCount;
         private Color _wavelengthColor;
         private int _wavelengthSelectedIndex;
-        private double[] _whitePoint;
         private ObservableCollection<XYPosition> _xYtableData = new ObservableCollection<XYPosition>();
 
         #endregion Fields
@@ -159,14 +162,6 @@
         {
             _wavelengthColor = Colors.White;
 
-            ChannelLuts = new Color[MAX_CHANNELS][];
-
-            for (int i = 0; i < MAX_CHANNELS; i++)
-            {
-                ChannelLuts[i] = new Color[LUT_SIZE];
-            }
-
-            InitializeClassArrays(MAX_CHANNELS);
             _lineProfileCallback = new ReportLineProfile(LineProfileUpdate);
             ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Created");
         }
@@ -199,7 +194,7 @@
         #region Delegates
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode)]
-        private delegate void ReportLineProfile(IntPtr lineProfile, int length, int channelEnable, int numChannel);
+        private delegate void ReportLineProfile(IntPtr lineProfile, int length, int realLength, int channelEnable, int numChannel);
 
         #endregion Delegates
 
@@ -210,12 +205,6 @@
         #endregion Events
 
         #region Properties
-
-        public static Color[][] ChannelLuts
-        {
-            get;
-            set;
-        }
 
         public XmlDocument ApplicationDoc
         {
@@ -254,54 +243,6 @@
             }
         }
 
-        public double BlackPoint0
-        {
-            get
-            {
-                return _blackPoint[0];
-            }
-            set
-            {
-                _blackPoint[0] = Math.Min(LUT_MAX, Math.Max(LUT_MIN, value));
-            }
-        }
-
-        public double BlackPoint1
-        {
-            get
-            {
-                return _blackPoint[1];
-            }
-            set
-            {
-                _blackPoint[1] = Math.Min(LUT_MAX, Math.Max(LUT_MIN, value)); ;
-            }
-        }
-
-        public double BlackPoint2
-        {
-            get
-            {
-                return _blackPoint[2];
-            }
-            set
-            {
-                _blackPoint[2] = Math.Min(LUT_MAX, Math.Max(LUT_MIN, value)); ;
-            }
-        }
-
-        public double BlackPoint3
-        {
-            get
-            {
-                return _blackPoint[3];
-            }
-            set
-            {
-                _blackPoint[3] = Math.Min(LUT_MAX, Math.Max(LUT_MIN, value)); ;
-            }
-        }
-
         public byte ChannelEnabled
         {
             get
@@ -320,14 +261,6 @@
                     }
                 }
                 return bVal;
-            }
-        }
-
-        public List<int> DataBufferOffsetIndex
-        {
-            get
-            {
-                return _dataBufferOffsetIndex;
             }
         }
 
@@ -415,15 +348,11 @@
             set;
         }
 
-        public bool GrayscaleForSingleChannel
+        public FrameData FrameData
         {
             get
             {
-                return _grayscaleForSingleChannel;
-            }
-            set
-            {
-                _grayscaleForSingleChannel = value;
+                return _frameData;
             }
         }
 
@@ -489,59 +418,10 @@
             }
         }
 
-        public int[] HistogramData0
-        {
-            get
-            {
-
-                {
-                    return _pixelDataHistogram[0];
-                }
-            }
-        }
-
-        public int[] HistogramData1
-        {
-            get
-            {
-
-                {
-                    return _pixelDataHistogram[1];
-                }
-            }
-        }
-
-        public int[] HistogramData2
-        {
-            get
-            {
-
-                {
-                    return _pixelDataHistogram[2];
-                }
-            }
-        }
-
-        public int[] HistogramData3
-        {
-            get
-            {
-
-                {
-                    return _pixelDataHistogram[3];
-                }
-            }
-        }
-
         public int ImageColorChannels
         {
             get { return _colorChannels; }
             set { _colorChannels = value; }
-        }
-
-        public IntPtr ImageData
-        {
-            get { return _imageData; }
         }
 
         public int ImageHeight
@@ -621,7 +501,6 @@
             set
             {
                 _lsmChannel = value;
-
                 switch (_lsmChannel)
                 {
                     case 1: _wavelengthSelectedIndex = 0; break;
@@ -629,6 +508,61 @@
                     case 4: _wavelengthSelectedIndex = 2; break;
                     case 8: _wavelengthSelectedIndex = 3; break;
                     default: _wavelengthSelectedIndex = 0; break;
+                }
+            }
+        }
+
+        public double LSMImageDistortionCorrectionCalibrationGalvoTiltAngle
+        {
+            get => _LSMImageCalibrationGalvoTiltAngle;
+            internal set
+            {
+                _LSMImageCalibrationGalvoTiltAngle = value;
+                _correctionParametersSet = false;
+                if (_frameData?.frameInfo != null)
+                {
+                    CopyChannelData(_frameData.frameInfo.channels, _frameData.contiguousChannels, _frameData.frameInfo.scanAreaID, _frameData.frameInfo.scanAreaIndex);
+                }
+            }
+        }
+
+        public double LSMImageDistortionCorrectionCalibrationXAngleMax
+        {
+            get => _LSMImageCalibrationXAngleMax;
+            internal set
+            {
+                _LSMImageCalibrationXAngleMax = value;
+                _correctionParametersSet = false;
+                if (_frameData?.frameInfo != null)
+                {
+                    CopyChannelData(_frameData.frameInfo.channels, _frameData.contiguousChannels, _frameData.frameInfo.scanAreaID, _frameData.frameInfo.scanAreaIndex);
+                }
+            }
+        }
+
+        public double LSMImageDistortionCorrectionCalibrationYAngleMax
+        {
+            get => _LSMImageCalibrationYAngleMax;
+            internal set
+            {
+                _LSMImageCalibrationYAngleMax = value;
+                _correctionParametersSet = false;
+                if (_frameData?.frameInfo != null)
+                {
+                    CopyChannelData(_frameData.frameInfo.channels, _frameData.contiguousChannels, _frameData.frameInfo.scanAreaID, _frameData.frameInfo.scanAreaIndex);
+                }
+            }
+        }
+
+        public int LSMImageDistortionCorrectionEnable
+        {
+            get => _LSMImageDistortionCorrectionEnable;
+            internal set
+            {
+                _LSMImageDistortionCorrectionEnable = value;
+                if (_frameData?.frameInfo != null)
+                {
+                    CopyChannelData(_frameData.frameInfo.channels, _frameData.contiguousChannels, _frameData.frameInfo.scanAreaID, _frameData.frameInfo.scanAreaIndex);
                 }
             }
         }
@@ -649,150 +583,6 @@
             }
         }
 
-        public ushort[] PixelData
-        {
-            get
-            {
-                return _pixelData;
-            }
-        }
-
-        public int RollOverPointIntensity0
-        {
-            get
-            {
-                if (_pixelData != null && _imageHeight != 0)
-                {
-                    //if the requested pixel is within the buffer size
-                    int location = (int)(_rollOverPointX + (_imageWidth * _rollOverPointY));
-
-                    if ((_rollOverPointX >= 0) && (_rollOverPointY >= 0) && (_rollOverPointX < _imageWidth) && (_rollOverPointY < _imageHeight) && (location < _pixelData.Length))
-                    {
-                        int val;
-                        if (_pixelData[location] < 0)
-                        {
-                            val = (int)(_pixelData[location] + 32768.0);
-                        }
-                        else
-                        {
-                            val = (_pixelData[location]);
-                        }
-
-                        return val;
-                    }
-                }
-                return 0;
-            }
-        }
-
-        public int RollOverPointIntensity1
-        {
-            get
-            {
-                if (_pixelData != null && _imageHeight != 0)
-                {
-                    //if the requested pixel is within the buffer size
-                    int location = (int)(_rollOverPointX + (_imageWidth * _rollOverPointY));
-
-                    if ((_rollOverPointX >= 0) && (_rollOverPointY >= 0) && (_rollOverPointX < _imageWidth) && (_rollOverPointY < _imageHeight) && (location < _pixelData.Length))
-                    {
-                        int val;
-                        if (_pixelData[location] < 0)
-                        {
-                            val = (int)(_pixelData[location + _dataLength] + 32768.0);
-                        }
-                        else
-                        {
-                            val = (_pixelData[location + _dataLength]);
-                        }
-
-                        return val;
-                    }
-                }
-                return 0;
-            }
-        }
-
-        public int RollOverPointIntensity2
-        {
-            get
-            {
-                if (_pixelData != null && _imageHeight != 0)
-                {
-                    //if the requested pixel is within the buffer size
-                    int location = (int)(_rollOverPointX + (_imageWidth * _rollOverPointY));
-
-                    if ((_rollOverPointX >= 0) && (_rollOverPointY >= 0) && (_rollOverPointX < _imageWidth) && (_rollOverPointY < _imageHeight) && (location < _pixelData.Length))
-                    {
-                        int val;
-                        if (_pixelData[location] < 0)
-                        {
-                            val = (int)(_pixelData[location + 2 * _dataLength] + 32768.0);
-                        }
-                        else
-                        {
-                            val = (_pixelData[location + 2 * _dataLength]);
-                        }
-
-                        return val;
-                    }
-                }
-                return 0;
-            }
-        }
-
-        public int RollOverPointIntensity3
-        {
-            get
-            {
-                if (_pixelData != null && _imageHeight != 0)
-                {
-                    //if the requested pixel is within the buffer size
-                    int location = (int)(_rollOverPointX + (_imageWidth * _rollOverPointY));
-
-                    if ((_rollOverPointX >= 0) && (_rollOverPointY >= 0) && (_rollOverPointX < _imageWidth) && (_rollOverPointY < _imageHeight) && (location < _pixelData.Length))
-                    {
-                        int val;
-                        if (_pixelData[location] < 0)
-                        {
-                            val = (int)(_pixelData[location + 3 * _dataLength] + 32768.0);
-                        }
-                        else
-                        {
-                            val = (_pixelData[location + 3 * _dataLength]);
-                        }
-
-                        return val;
-                    }
-                }
-                return 0;
-            }
-        }
-
-        public int RollOverPointX
-        {
-            get
-            {
-                return _rollOverPointX;
-            }
-            set
-            {
-                _rollOverPointX = value;
-            }
-        }
-
-        public int RollOverPointY
-        {
-            get
-            {
-                return _rollOverPointY;
-            }
-            set
-            {
-                _rollOverPointY = value;
-            }
-        }
-
         public int SampleSiteIndex
         {
             get
@@ -803,6 +593,12 @@
             {
                 this._sampleSiteIndex = value;
             }
+        }
+
+        public bool SequentialModeEnabled
+        {
+            get;
+            set;
         }
 
         public int SpValue
@@ -861,54 +657,6 @@
             }
         }
 
-        public double WhitePoint0
-        {
-            get
-            {
-                return _whitePoint[0];
-            }
-            set
-            {
-                _whitePoint[0] = Math.Min(LUT_MAX, Math.Max(LUT_MIN, value)); ;
-            }
-        }
-
-        public double WhitePoint1
-        {
-            get
-            {
-                return _whitePoint[1];
-            }
-            set
-            {
-                _whitePoint[1] = Math.Min(LUT_MAX, Math.Max(LUT_MIN, value)); ;
-            }
-        }
-
-        public double WhitePoint2
-        {
-            get
-            {
-                return _whitePoint[2];
-            }
-            set
-            {
-                _whitePoint[2] = Math.Min(LUT_MAX, Math.Max(LUT_MIN, value)); ;
-            }
-        }
-
-        public double WhitePoint3
-        {
-            get
-            {
-                return _whitePoint[3];
-            }
-            set
-            {
-                _whitePoint[3] = Math.Min(LUT_MAX, Math.Max(LUT_MIN, value)); ;
-            }
-        }
-
         // We need a new XYTableData structure to send to the XYTileControl project. XYTileControl is expecting to
         // get XYtableData from it's MVM, but since ImageReview doesn't have it's own instance of MVMManager, this is
         // a work around.
@@ -946,21 +694,8 @@
 
         #region Methods
 
-        public static Color[] GetColorAssignments()
-        {
-            Color[] colorAssignments = new Color[MAX_CHANNELS];
-            const int LUT_SIZE = 256;
-
-            for (int i = 0; i < MAX_CHANNELS; i++)
-            {
-                colorAssignments[i] = ChannelLuts[i][LUT_SIZE - 1];
-            }
-
-            return colorAssignments;
-        }
-
         [DllImport("..\\Modules_Native\\ImageStoreLibrary.dll", EntryPoint = "GetImageStoreInfo")]
-        public static extern int GetImageStoreInfo([MarshalAs(UnmanagedType.LPStr)]string fileName, int regionID, ref int regionCount, ref int width, ref int height, ref int channelCount, ref int zMaxCount, ref int timeCount, ref int spectCount);
+        public static extern int GetImageStoreInfo([MarshalAs(UnmanagedType.LPStr)] string fileName, int regionID, ref int regionCount, ref int width, ref int height, ref int channelCount, ref int zMaxCount, ref int timeCount, ref int spectCount);
 
         /// <summary>
         /// Loads an image from a raw file into the destination buffer
@@ -1022,14 +757,14 @@
         }
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadChannelImageRawSlice")]
-        public static extern int ReadChannelImageRawSlice(IntPtr outputBuffer, [MarshalAs(UnmanagedType.LPStr)]string fileName, int width, int height,
+        public static extern int ReadChannelImageRawSlice(IntPtr outputBuffer, [MarshalAs(UnmanagedType.LPStr)] string fileName, int width, int height,
             int zDepth, int channels, int loadChannel, int zSlice, int time, int enabledChannelsBitmask, bool containsDisabledChannels);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadChannelImages")]
-        public static extern int ReadChannelImages([MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr)]string[] fileNames, int size, ref IntPtr outputBuffer, int cameraWidth, int cameraHeight);
+        public static extern int ReadChannelImages([MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr)] string[] fileNames, int size, ref IntPtr outputBuffer, int cameraWidth, int cameraHeight);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadChannelImagesRaw")]
-        public static extern int ReadChannelImagesRaw(ref IntPtr outputBuffer, int bufChs, [MarshalAs(UnmanagedType.LPStr)]string fName, int fileChs, int ChToRead, int frmSize, int blkIndex);
+        public static extern int ReadChannelImagesRaw(ref IntPtr outputBuffer, int bufChs, [MarshalAs(UnmanagedType.LPStr)] string fName, int fileChs, int ChToRead, int frmSize, int blkIndex);
 
         [DllImport("..\\Modules_Native\\ImageStoreLibrary.dll", EntryPoint = "ReadImageStoreData")]
         public static extern int ReadImageStoreData(IntPtr outputBuffer, int channelCount, int width, int height, int zSliceID, int timeID, int specID, int wID = 0, int regionID = 0);
@@ -1037,201 +772,35 @@
         [DllImport(".\\StatsManager.dll", EntryPoint = "SetLineProfileLineWidth")]
         public static extern int SetLineProfileLineWidth(int width);
 
-        public void FinishedCopyingPixel()
+        public void AllocateImageDataMemoryFormROI()
         {
+            if (ExperimentData.IsmROICapture)
             {
-                _pixelDataReady = false;
+                int newSize = 0;
+                int channels = (int)Math.Max(_colorChannels, MAX_CHANNELS);
+                for (int i = 0; i < ExperimentData.mROIs?.Count; ++i)
+                {
+                    int size = ExperimentData.mROIs[i].SizeXPixels * ExperimentData.mROIs[i].SizeYPixels * 2 * channels;
+                    if ((ExperimentData.mROIs[i].SizeXPixels * ExperimentData.mROIs[i].SizeYPixels * 2 * channels) > newSize)
+                    {
+                        newSize = size;
+                    }
+                }
+
+                if (_imageData != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(_imageData);
+                    _imageData = IntPtr.Zero;
+                }
+
+                _imageData = Marshal.AllocHGlobal(_imageWidth * _imageHeight * _colorChannels * 2);
+                _imageDataSize = _imageWidth * _imageHeight * _colorChannels * 2;
             }
-        }
-
-        public Color GetColorAssignment(int index)
-        {
-            Color colorAssignment = new Color();
-
-            colorAssignment = ChannelLuts[index][LUT_SIZE - 1];
-
-            double luminance = (0.2126 * colorAssignment.R + 0.7152 * colorAssignment.G + 0.0722 * colorAssignment.B);
-
-            bool useGrayScale = _grayscaleForSingleChannel && this.IsSingleChannel;
-            //if grayscale or the color is too bright it will not
-            //display on a white background
-            //substitute gray if the color is too bright
-            if ((luminance > 240) || (useGrayScale))
-            {
-                colorAssignment = Colors.Gray;
-            }
-            return colorAssignment;
         }
 
         public int GetFoundChannels()
         {
             return _foundChannelCount;
-        }
-
-        public byte[] GetPixelDataByte()
-        {
-            if (null != _pixelData) // null can happen when Experiment folder has only Experiment.xml but no image
-            {
-                //need to rebuid the color image because a palette option is not available for RGB images
-                if ((_dataLength * MAX_CHANNELS == _pixelData.Length))
-                {
-                    int i;
-                    //clear the histogram
-                    for (int k = 0; k < MAX_CHANNELS; k++)
-                    {
-                        Array.Clear(_pixelDataHistogram[k], 0, _pixelDataHistogram[k].Length);
-                    }
-
-                    //calculate the raw data buffer offset index for each of the
-                    //selected display channels
-                    if (_dataBufferOffsetIndex == null)
-                    {
-                        _dataBufferOffsetIndex = new List<int>();
-                    }
-                    else
-                    {
-                        _dataBufferOffsetIndex.Clear();
-                    }
-
-                    int j;
-                    for (i = 0; i < MAX_CHANNELS; i++)
-                    {
-                        //if the channgel is enabled store the index and
-                        //increment the enabled counter index j
-                        if (((_lsmChannel >> i) & 0x1) > 0)
-                        {
-                            _dataBufferOffsetIndex.Add(i);
-                        }
-                    }
-
-                    double shiftValueResult = 64;
-
-                    //original shift value is determined by the examining camera type
-                    shiftValueResult = Math.Pow(2, _shiftValue);
-
-                    if (null == _pixelDataLUT)
-                    {
-                        _pixelDataLUT = new byte[MAX_CHANNELS][];
-
-                        for (int m = 0; m < MAX_CHANNELS; m++)
-                        {
-                            _pixelDataLUT[m] = new byte[ushort.MaxValue + 1];
-                        }
-                    }
-
-                    //Build the 12/14-bit to 8-bit Lut
-                    for (int m = 0; m < MAX_CHANNELS; m++)
-                    {
-                        for (int k = 0; k < _pixelDataLUT[m].Length; k++)
-                        {
-                            double val = (255.0 / (shiftValueResult * (_whitePoint[m] - _blackPoint[m]))) * (k - _blackPoint[m] * shiftValueResult);
-                            val = (val >= 0) ? val : 0;
-                            val = (val <= 255) ? val : 255;
-
-                            _pixelDataLUT[m][k] = (byte)Math.Round(val);
-                        }
-                    }
-
-                    Array.Clear(_pixelDataByte, 0, 3 * _dataLength);
-                    bool useGrayScale = _grayscaleForSingleChannel && (1 == _lsmChannel || 2 == _lsmChannel || 4 == _lsmChannel || 8 == _lsmChannel);
-
-                    for (i = 0, j = 0; j < _dataLength; i += 3, j++)
-                    {
-                        byte maxRed = 0;
-                        byte maxGreen = 0;
-                        byte maxBlue = 0;
-
-                        for (int k = 0; k < _dataBufferOffsetIndex.Count; k++)
-                        {
-                            int kk = _dataBufferOffsetIndex[k];
-                            ushort plD = _pixelData[j + kk * _dataLength];
-                            if (plD >= 0)
-                            {
-
-                                byte valRaw = (byte)(plD >> _shiftValue);
-                                byte valNormalized = _pixelDataLUT[kk][plD];
-                                Color col = ChannelLuts[kk][valNormalized];
-                                if (useGrayScale)
-                                {
-                                    if (0 == valNormalized)
-                                    {
-                                        Color satLowBlue = Colors.Blue;
-                                        _pixelDataByte[i] = maxRed = Math.Max(maxRed, satLowBlue.R);
-                                        _pixelDataByte[i + 1] = maxGreen = Math.Max(maxGreen, satLowBlue.G);
-                                        _pixelDataByte[i + 2] = maxBlue = Math.Max(maxBlue, satLowBlue.B);
-                                    }
-                                    else if (ChannelLuts[kk].Length - 1 == valNormalized)
-                                    {
-                                        Color satHighRed = Colors.Red;
-                                        _pixelDataByte[i] = Math.Max(maxRed, satHighRed.R);
-                                        _pixelDataByte[i + 1] = Math.Max(maxGreen, satHighRed.G);
-                                        _pixelDataByte[i + 2] = Math.Max(maxBlue, satHighRed.B);
-                                    }
-                                    else
-                                    {
-                                        _pixelDataByte[i] = maxRed = Math.Max(maxRed, col.R);
-                                        _pixelDataByte[i + 1] = maxGreen = Math.Max(maxGreen, col.G);
-                                        _pixelDataByte[i + 2] = maxBlue = Math.Max(maxBlue, col.B);
-                                    }
-                                }
-                                else
-                                {
-                                    _pixelDataByte[i] = maxRed = Math.Max(maxRed, col.R);
-                                    _pixelDataByte[i + 1] = maxGreen = Math.Max(maxGreen, col.G);
-                                    _pixelDataByte[i + 2] = maxBlue = Math.Max(maxBlue, col.B);
-                                }
-                                _pixelDataHistogram[kk][valRaw]++;
-                            }
-                        }
-                    }
-                }
-
-                return _pixelDataByte;
-            }
-            else // _pixelData == null
-            {
-                return null;
-            }
-        }
-
-        public short[] GetPixelDataSave()
-        {
-            if ((null == _pixelDataSave) || (_pixelDataSave.Length != (_dataLength * 3)))
-            {
-                _pixelDataSave = new short[_dataLength * 3];
-            }
-            for (int k = 0; k < MAX_CHANNELS; k++)
-            {
-                if (((_lsmChannel >> k) & 0x1) > 0)
-                {
-                    Array.Clear(_pixelDataSave, 0, _dataLength * 3);
-                    for (int i = 0, j = 0; j < _dataLength; i += 3, j++)
-                    {
-                        short maxRed = 0;
-                        short maxGreen = 0;
-                        short maxBlue = 0;
-
-                        ushort valRaw = _pixelData[j + k * _dataLength];
-                        int valRawByte = Math.Min(255, valRaw >> _shiftValue);
-                        Color col = ChannelLuts[k][valRawByte];
-
-                        double total = ((double)valRaw) / (col.R + col.G + col.B);
-
-                        _pixelDataSave[i] = maxRed = Math.Max(maxRed, (short)(col.R * total));
-                        _pixelDataSave[i + 1] = maxGreen = Math.Max(maxGreen, (short)(col.G * total));
-                        _pixelDataSave[i + 2] = maxBlue = Math.Max(maxBlue, (short)(col.B * total));
-                    }
-                }
-            }
-
-            return _pixelDataSave;
-        }
-
-        public bool IsPixelDataReady()
-        {
-            {
-                return _pixelDataReady;
-            }
         }
 
         public void LoadLineProfileData()
@@ -1256,11 +825,221 @@
                     }
                     IEnumerable<ushort> pixelDataOneChannel = _pixelData.Skip(skip).Take(_imageWidth * _imageHeight);
                     var ta = pixelDataOneChannel.ToArray();
-                    ComputeStats(pixelDataOneChannel.ToArray(), frameInfo, _lsmChannel, 1, 0, 0);
+                    if (ImageReviewViewModel.StatsLoaderDone)
+                        ComputeStats(pixelDataOneChannel.ToArray(), frameInfo, _lsmChannel, 1, 0, 0);
                 }
                 else
                 {
-                    ComputeStats(_pixelData, frameInfo, _lsmChannel, 1, 0, 0);
+                    if (ImageReviewViewModel.StatsLoaderDone)
+                        ComputeStats(_pixelData, frameInfo, _lsmChannel, 1, 0, 0);
+                }
+            }
+        }
+
+        //public byte[] GetPixelDataByte()
+        //{
+        //    if (null != _pixelData) // null can happen when Experiment folder has only Experiment.xml but no image
+        //    {
+        //        //need to rebuid the color image because a palette option is not available for RGB images
+        //        if ((_dataLength * MAX_CHANNELS == _pixelData.Length))
+        //        {
+        //            int i;
+        //            //clear the histogram
+        //            for (int k = 0; k < MAX_CHANNELS; k++)
+        //            {
+        //                Array.Clear(_pixelDataHistogram[k], 0, _pixelDataHistogram[k].Length);
+        //            }
+        //            //calculate the raw data buffer offset index for each of the
+        //            //selected display channels
+        //            if (_dataBufferOffsetIndex == null)
+        //            {
+        //                _dataBufferOffsetIndex = new List<int>();
+        //            }
+        //            else
+        //            {
+        //                _dataBufferOffsetIndex.Clear();
+        //            }
+        //            int j;
+        //            for (i = 0; i < MAX_CHANNELS; i++)
+        //            {
+        //                //if the channgel is enabled store the index and
+        //                //increment the enabled counter index j
+        //                if (((_lsmChannel >> i) & 0x1) > 0)
+        //                {
+        //                    _dataBufferOffsetIndex.Add(i);
+        //                }
+        //            }
+        //            double shiftValueResult = 64;
+        //            //original shift value is determined by the examining camera type
+        //            shiftValueResult = Math.Pow(2, _shiftValue);
+        //            if (null == _pixelDataLUT)
+        //            {
+        //                _pixelDataLUT = new byte[MAX_CHANNELS][];
+        //                for (int m = 0; m < MAX_CHANNELS; m++)
+        //                {
+        //                    _pixelDataLUT[m] = new byte[ushort.MaxValue + 1];
+        //                }
+        //            }
+        //            //Build the 12/14-bit to 8-bit Lut
+        //            for (int m = 0; m < MAX_CHANNELS; m++)
+        //            {
+        //                for (int k = 0; k < _pixelDataLUT[m].Length; k++)
+        //                {
+        //                    double val = (255.0 / (shiftValueResult * (_whitePoint[m] - _blackPoint[m]))) * (k - _blackPoint[m] * shiftValueResult);
+        //                    val = (val >= 0) ? val : 0;
+        //                    val = (val <= 255) ? val : 255;
+        //                    _pixelDataLUT[m][k] = (byte)Math.Round(val);
+        //                }
+        //            }
+        //            Array.Clear(_pixelDataByte, 0, 3 * _dataLength);
+        //            bool useGrayScale = _grayscaleForSingleChannel && (1 == _lsmChannel || 2 == _lsmChannel || 4 == _lsmChannel || 8 == _lsmChannel);
+        //            for (i = 0, j = 0; j < _dataLength; i += 3, j++)
+        //            {
+        //                byte maxRed = 0;
+        //                byte maxGreen = 0;
+        //                byte maxBlue = 0;
+        //                for (int k = 0; k < _dataBufferOffsetIndex.Count; k++)
+        //                {
+        //                    int kk = _dataBufferOffsetIndex[k];
+        //                    ushort plD = _pixelData[j + kk * _dataLength];
+        //                    if (plD >= 0)
+        //                    {
+        //                        byte valRaw = (byte)(plD >> _shiftValue);
+        //                        byte valNormalized = _pixelDataLUT[kk][plD];
+        //                        Color col = ChannelLuts[kk][valNormalized];
+        //                        if (useGrayScale)
+        //                        {
+        //                            if (0 == valNormalized)
+        //                            {
+        //                                Color satLowBlue = Colors.Blue;
+        //                                _pixelDataByte[i] = maxRed = Math.Max(maxRed, satLowBlue.R);
+        //                                _pixelDataByte[i + 1] = maxGreen = Math.Max(maxGreen, satLowBlue.G);
+        //                                _pixelDataByte[i + 2] = maxBlue = Math.Max(maxBlue, satLowBlue.B);
+        //                            }
+        //                            else if (ChannelLuts[kk].Length - 1 == valNormalized)
+        //                            {
+        //                                Color satHighRed = Colors.Red;
+        //                                _pixelDataByte[i] = Math.Max(maxRed, satHighRed.R);
+        //                                _pixelDataByte[i + 1] = Math.Max(maxGreen, satHighRed.G);
+        //                                _pixelDataByte[i + 2] = Math.Max(maxBlue, satHighRed.B);
+        //                            }
+        //                            else
+        //                            {
+        //                                _pixelDataByte[i] = maxRed = Math.Max(maxRed, col.R);
+        //                                _pixelDataByte[i + 1] = maxGreen = Math.Max(maxGreen, col.G);
+        //                                _pixelDataByte[i + 2] = maxBlue = Math.Max(maxBlue, col.B);
+        //                            }
+        //                        }
+        //                        else
+        //                        {
+        //                            _pixelDataByte[i] = maxRed = Math.Max(maxRed, col.R);
+        //                            _pixelDataByte[i + 1] = maxGreen = Math.Max(maxGreen, col.G);
+        //                            _pixelDataByte[i + 2] = maxBlue = Math.Max(maxBlue, col.B);
+        //                        }
+        //                        _pixelDataHistogram[kk][valRaw]++;
+        //                    }
+        //                }
+        //            }
+        //        }
+        //        return _pixelDataByte;
+        //    }
+        //    else // _pixelData == null
+        //    {
+        //        return null;
+        //    }
+        //}
+        //public short[] GetPixelDataSave()
+        //{
+        //    if ((null == _pixelDataSave) || (_pixelDataSave.Length != (_dataLength * 3)))
+        //    {
+        //        _pixelDataSave = new short[_dataLength * 3];
+        //    }
+        //    for (int k = 0; k < MAX_CHANNELS; k++)
+        //    {
+        //        if (((_lsmChannel >> k) & 0x1) > 0)
+        //        {
+        //            Array.Clear(_pixelDataSave, 0, _dataLength * 3);
+        //            for (int i = 0, j = 0; j < _dataLength; i += 3, j++)
+        //            {
+        //                short maxRed = 0;
+        //                short maxGreen = 0;
+        //                short maxBlue = 0;
+        //                ushort valRaw = _pixelData[j + k * _dataLength];
+        //                int valRawByte = Math.Min(255, valRaw >> _shiftValue);
+        //                Color col = ChannelLuts[k][valRawByte];
+        //                double total = ((double)valRaw) / (col.R + col.G + col.B);
+        //                _pixelDataSave[i] = maxRed = Math.Max(maxRed, (short)(col.R * total));
+        //                _pixelDataSave[i + 1] = maxGreen = Math.Max(maxGreen, (short)(col.G * total));
+        //                _pixelDataSave[i + 2] = maxBlue = Math.Max(maxBlue, (short)(col.B * total));
+        //            }
+        //        }
+        //    }
+        //    return _pixelDataSave;
+        //}
+        public void LoadLSMChannelData()
+        {
+            string str = string.Empty;
+            int intVal = 0;
+            if (null != _experimentDoc)
+            {
+                XmlNodeList ndList = _experimentDoc.SelectNodes("/ThorImageExperiment/Wavelengths/ChannelEnable");
+                if (0 < ndList.Count)
+                {
+                    if (XmlManager.GetAttribute(ndList[0], _experimentDoc, "Set", ref str) && (int.TryParse(str, out intVal)))
+                    {
+                        _lsmChannel = intVal;
+                    }
+                }
+            }
+        }
+
+        public void LoadSequentialInfo()
+        {
+            string str = string.Empty;
+            int intVal;
+            if (null != _experimentDoc)
+            {
+                XmlNodeList ndList = _experimentDoc.SelectNodes("/ThorImageExperiment/CaptureSequence/LightPathSequenceStep");
+                _sequenceStepsNum = ndList.Count;
+                SequenceSelectedChannel.Clear();
+                _totalSequentialChannelCount = 0;
+
+                foreach (XmlNode sequenceNode in ndList)
+                {
+                    int selectedChannel = 0;
+
+                    if (ResourceManagerCS.GetCameraType() == (int)ICamera.CameraType.LSM)
+                    {
+                        XmlNode lsmNode = sequenceNode.SelectSingleNode("LSM");
+                        if (XmlManager.GetAttribute(lsmNode, _experimentDoc, "channel", ref str) && Int32.TryParse(str, out intVal))
+                        {
+                            selectedChannel = intVal;
+                        }
+                    }
+                    else
+                    {
+                        XmlNode camNode = sequenceNode.SelectSingleNode("Camera");
+                        if (XmlManager.GetAttribute(camNode, _experimentDoc, "channel", ref str) && Int32.TryParse(str, out intVal))
+                        {
+                            selectedChannel = intVal;
+                        }
+                        else
+                        {
+                            selectedChannel = 1;
+                        }
+                    }
+
+                    int count = 0;
+                    for (int i = 0; i < MAX_CHANNELS; i++)
+                    {
+                        if ((selectedChannel & (0x0001 << i)) > 0)
+                        {
+                            count++;
+                        }
+                    }
+
+                    SequenceSelectedChannel.Add(new Tuple<int, int>(selectedChannel, count));
+                    _totalSequentialChannelCount += count;
                 }
             }
         }
@@ -1270,40 +1049,16 @@
             InitCallBackLineProfilePush(_lineProfileCallback);
         }
 
-        public void SetColorAssignment(int i, int color)
-        {
-            if (_colorAssigment.Length > i)
-            {
-                _colorAssigment[i] = color;
-            }
-        }
-
         public void UnRegisterCallbacks()
         {
             InitCallBackLineProfilePush(null);
-        }
-
-        //used after update the bitmap
-        public byte[] UpdataPixelDatabyte(ushort[] savePixelData)
-        {
-            byte[] pixelData = new byte[3] { 0, 0, 0 };
-            byte valNormalized;
-            for (int k = 0; k < _dataBufferOffsetIndex.Count; k++)
-            {
-                valNormalized = _pixelDataLUT[_dataBufferOffsetIndex[k]][savePixelData[k]];
-
-                pixelData[0] = Math.Max(pixelData[0], ChannelLuts[_dataBufferOffsetIndex[k]][valNormalized].R);
-                pixelData[1] = Math.Max(pixelData[1], ChannelLuts[_dataBufferOffsetIndex[k]][valNormalized].G);
-                pixelData[2] = Math.Max(pixelData[2], ChannelLuts[_dataBufferOffsetIndex[k]][valNormalized].B);
-            }
-            return pixelData;
         }
 
         /// <summary>
         /// Updates the channel data for the selected channel, compatible with Experiment style projects in both raw and tiff
         /// formats, as well as Custom style projects 
         /// </summary>
-        /// <param name="fileNames"> Array containing files to update </param>
+        /// <param name="fileNames"> List containing files to update </param>
         /// <param name="enabledChannels"> Bitmask of enabled channels </param>
         /// <param name="channelToRead"> Channel to read </param>
         /// <param name="zToRead"> Read channel at this depth </param>
@@ -1312,7 +1067,7 @@
         /// <param name="imageHeight"> The height of the image in pixels </param>
         /// <param name="imageDepth"> The depth of the image in pixels </param>
         /// <param name="rawContainsDisabledChannels"> Boolean representing if a raw file contains all channels, or just the enabled ones </param>
-        public void UpdateChannelData(string[] fileNames, byte enabledChannels = 0, byte channelToRead = 0, int zToRead = 0, int timeToRead = 0, int imageWidth = 0, int imageHeight = 0, int imageDepth = 0, bool rawContainsDisabledChannels = true, int scanAreaID = 0)
+        public void UpdateChannelData(List<string> fileNames, byte enabledChannels = 0, byte channelToRead = 0, int zToRead = 0, int timeToRead = 0, int imageWidth = 0, int imageHeight = 0, int imageDepth = 0, bool rawContainsDisabledChannels = true, int scanAreaID = 0, int regionIndex = 0)
         {
             switch (FileFormatMode)
             {
@@ -1324,7 +1079,42 @@
 
                 case FormatMode.EXPERIMENT:
                     {
-                        UpdateExperimentFileFormatChannelData(fileNames, enabledChannels, channelToRead, zToRead, timeToRead, imageWidth, imageHeight, imageDepth, rawContainsDisabledChannels, scanAreaID);
+                        if (SequentialModeEnabled)
+                        {
+                            if (fileNames.Count == _totalSequentialChannelCount)
+                            {
+                                int filesRead = 0;
+
+                                for (int i = 0; i < _sequenceStepsNum; i++)
+                                {
+                                    _sequenceStepIndex = i;
+                                    _sequenceStepChannels = SequenceSelectedChannel[i].Item1;
+
+                                    List<string> sublistFileNames = new List<string>();
+                                    for (int k = filesRead; k < filesRead + SequenceSelectedChannel[i].Item2; k++)
+                                    {
+                                        sublistFileNames.Add(fileNames[k]);
+                                    }
+
+                                    MVMManager.Instance["ImageViewReviewVM", "BitmapLoaded"] = false;
+
+                                    UpdateExperimentFileFormatChannelData(sublistFileNames, enabledChannels, channelToRead, zToRead, timeToRead, imageWidth, imageHeight, imageDepth, rawContainsDisabledChannels, scanAreaID, regionIndex);
+
+                                    filesRead += SequenceSelectedChannel[i].Item2;
+
+                                    DateTime startTime = DateTime.Now;
+                                    TimeSpan elapsedTime = DateTime.Now - startTime;
+                                    while (false == (bool)MVMManager.Instance["ImageViewReviewVM", "BitmapLoaded", (object)true] && elapsedTime.TotalMilliseconds < BITMAP_UPDATE_TIMEOUT && false == ImageReviewViewModel._stopRequested)
+                                    {
+                                        elapsedTime = DateTime.Now - startTime;
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            UpdateExperimentFileFormatChannelData(fileNames, enabledChannels, channelToRead, zToRead, timeToRead, imageWidth, imageHeight, imageDepth, rawContainsDisabledChannels, scanAreaID, regionIndex);
+                        }
                         break;
                     }
             }
@@ -1334,7 +1124,7 @@
         /// Updates the image data for selected channel in experiments with the custom format
         /// </summary>
         /// <param name="fileNames"> File names to read </param>
-        public void UpdateCustomFileFormatChannelData(string[] fileNames)
+        public void UpdateCustomFileFormatChannelData(List<string> fileNames)
         {
             foreach (string file in fileNames)
             {
@@ -1353,24 +1143,22 @@
                             {
                                 int width = 0;
                                 int height = 0;
+                                int bitsPerPixel = 0;
                                 _colorChannels = 1;
 
                                 if (null != file)
-                                    ReadImageInfo(file, ref width, ref height, ref _colorChannels);
+                                    ReadImageInfo(file, ref width, ref height, ref _colorChannels, ref bitsPerPixel);
 
-                                _imageWidth = width;
-                                _imageHeight = height;
-
-                                //clear the histogram
-                                for (int i = 0; i < PIXEL_DATA_HISTOGRAM_SIZE; i++)
+                                if (_imageWidth != width || _imageHeight != height)
                                 {
-                                    _pixelDataHistogram[0][i] = 0;
+                                    _imageWidth = width;
+                                    _imageHeight = height;
+                                    _correctionParametersSet = false;
+                                    // hard coded to use MAX_CHANNELS, may change this later to _colorChannels
+                                    _imageData = Marshal.AllocHGlobal(_imageWidth * _imageHeight * MAX_CHANNELS * 2);
                                 }
-
-                                // hard coded to use MAX_CHANNELS, may change this later to _colorChannels
-                                _imageData = Marshal.AllocHGlobal(_imageWidth * _imageHeight * MAX_CHANNELS * 2);
                                 ReadImage(file, ref _imageData);
-                                CopyChannelData();
+                                CopyChannelData(MAX_CHANNELS, false, 0, 0);
                                 break;
                             }
 
@@ -1387,7 +1175,12 @@
                 }
                 finally
                 {
-                    Marshal.FreeHGlobal(_imageData);
+                    if (_imageData != IntPtr.Zero)
+                    {
+                        Marshal.FreeHGlobal(_imageData);
+                        _imageData = IntPtr.Zero;
+                        _imageDataSize = 0;
+                    }
                 }
             }
         }
@@ -1405,95 +1198,141 @@
         /// <param name="imageDepth"> The total depth(z) of the image in pixels </param>
         /// <param name="rawContainsDisabledChannels"> Boolean describing is a raw file is structured with blank data for disabled channels, or excludes
         ///  the data blocks for disabled channels all togeather </param>
-        public void UpdateExperimentFileFormatChannelData(string[] fileNames, byte chEnabled = 0, int selectedChannel = 0, int selectedZ = 0, int selectedTime = 0,
-            int imageWidth = 0, int imageHeight = 0, int imageDepth = 0, bool rawContainsDisabledChannels = true, int scanAreaID = 0)
+        public void UpdateExperimentFileFormatChannelData(List<string> fileNames, byte chEnabled = 0, int selectedChannel = 0, int selectedZ = 0, int selectedTime = 0,
+            int imageWidth = 0, int imageHeight = 0, int imageDepth = 0, bool rawContainsDisabledChannels = true, int scanAreaID = 0, int regionIndex = 0)
         {
             try
             {
-                //=== First non null file in fileNames ===
-                int i = 0;
-                for (i = 0; i < MAX_CHANNELS; i++)
+                if (1 > fileNames.Count)
                 {
-                    if (fileNames[i] != null)
-                    {
-                        break;
-                    }
+                    return;
                 }
-                if (i == MAX_CHANNELS) return;
 
                 int width = 0;
                 int height = 0;
                 int colorChannels = 0;
+                int bitsPerPixel = 0;
+                bool contiguous = false;
 
                 //=== Read File ===
-                if (File.Exists(fileNames[i]))
+                if (File.Exists(fileNames[0]))
                 {
                     //=== Image Parameters ===
-                    _imageWidth = imageWidth;
-                    _imageHeight = imageHeight;
-                    _colorChannels = MAX_CHANNELS;
+
+                    if (_imageWidth != imageWidth || _imageHeight != imageHeight)
+                    {
+                        _imageWidth = imageWidth;
+                        _imageHeight = imageHeight;
+                        _correctionParametersSet = false;
+                    }
+                    _colorChannels = (fileNames.Count > MAX_CHANNELS) ? fileNames.Count : MAX_CHANNELS; // Needs to change
 
                     switch ((CaptureFile)_ImageInfo.imageType)
                     {
                         case CaptureFile.FILE_BIG_TIFF:
-                            _imageData = Marshal.AllocHGlobal(_imageWidth * _imageHeight * _colorChannels * 2);
+
+                            if (_imageDataSize < _imageWidth * _imageHeight * _colorChannels * 2)
+                            {
+                                if (_imageData != IntPtr.Zero)
+                                {
+                                    Marshal.FreeHGlobal(_imageData);
+                                    _imageData = IntPtr.Zero;
+                                }
+                                _imageData = Marshal.AllocHGlobal(_imageWidth * _imageHeight * _colorChannels * 2);
+                                _imageDataSize = _imageWidth * _imageHeight * _colorChannels * 2;
+                            }
                             RtlZeroMemory(_imageData, _imageWidth * _imageHeight * _colorChannels * 2);
                             if (!_lastFileNames.SequenceEqual(fileNames))
                             {
                                 //load OME at first load, sliders were reset
                                 int tileCount = 0, chCount = 0, zMaxCount = 0, timeCount = 0, specCount = 0;
-                                ImageReview.GetImageStoreInfo(fileNames[i], scanAreaID, ref tileCount, ref width, ref height, ref chCount, ref zMaxCount, ref timeCount, ref specCount);
+                                ImageReview.GetImageStoreInfo(fileNames[0], 0, ref tileCount, ref width, ref height, ref chCount, ref zMaxCount, ref timeCount, ref specCount);
                                 _lastFileNames = fileNames;
                             }
                             if (CaptureModes.HYPERSPECTRAL == ExperimentData.CaptureMode)
                             {
-                                ReadImageStoreData(_imageData, _colorChannels, imageWidth, imageHeight, selectedZ, 0, selectedTime, scanAreaID);
+                                ReadImageStoreData(_imageData, _colorChannels, imageWidth, imageHeight, selectedZ, 0, selectedTime, 0);
                             }
                             else
                             {
-                                ReadImageStoreData(_imageData, _colorChannels, imageWidth, imageHeight, selectedZ, selectedTime, 0, scanAreaID);
+                                ReadImageStoreData(_imageData, _colorChannels, imageWidth, imageHeight, selectedZ, selectedTime, 0, 0);
                             }
                             break;
                         case CaptureFile.FILE_RAW:
-                            _imageData = Marshal.AllocHGlobal(_imageWidth * _imageHeight * _colorChannels * 2);
+                            if (_imageDataSize < _imageWidth * _imageHeight * _colorChannels * 2)
+                            {
+                                if (_imageData != IntPtr.Zero)
+                                {
+                                    Marshal.FreeHGlobal(_imageData);
+                                    _imageData = IntPtr.Zero;
+                                }
+                                _imageData = Marshal.AllocHGlobal(_imageWidth * _imageHeight * _colorChannels * 2);
+                                _imageDataSize = _imageWidth * _imageHeight * _colorChannels * 2;
+                            }
                             RtlZeroMemory(_imageData, _imageWidth * _imageHeight * _colorChannels * 2);
 
-                            LoadImageIntoBufferFromRawFile(_imageData, fileNames[i], chEnabled, selectedChannel, selectedZ, selectedTime, imageWidth, imageHeight, imageDepth, rawContainsDisabledChannels);
+                            LoadImageIntoBufferFromRawFile(_imageData, fileNames[0], chEnabled, selectedChannel, selectedZ, selectedTime, imageWidth, imageHeight, imageDepth, rawContainsDisabledChannels);
                             break;
                         case CaptureFile.FILE_TIFF:
-                            ReadImageInfo(fileNames[i], ref width, ref height, ref colorChannels);
-                            if ((width > 0) && (height > 0))
+                            contiguous = true;
+                            ReadImageInfo(fileNames[0], ref width, ref height, ref colorChannels, ref bitsPerPixel);
+                            if (width <= 0 || height <= 0)
                             {
-                                // setting the parameters to be used in the View Model
+                                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, $"Image dimensions error while loading TIFF; Image Width = {width}, Image Height = {height}");
+                                break;
+                            }
+                            bool isMultiChannel = colorChannels > 1;
+
+                            if (_imageWidth != width || _imageHeight != height)
+                            {
                                 _imageWidth = width;
                                 _imageHeight = height;
-
-                                _imageData = Marshal.AllocHGlobal(_imageWidth * _imageHeight * _colorChannels * 2);
-                                RtlZeroMemory(_imageData, _imageWidth * _imageHeight * _colorChannels * 2);
-
-                                //read the image and output the buffer with image data
-                                ReadChannelImages(fileNames, _colorChannels, ref _imageData, _imageWidth, _imageHeight);
+                                _correctionParametersSet = false;
                             }
+
+                            _colorChannels = isMultiChannel ? colorChannels : fileNames.Count;
+
+                            if (_imageDataSize < _imageWidth * _imageHeight * _colorChannels * 2)
+                            {
+                                if (_imageData != IntPtr.Zero)
+                                {
+                                    Marshal.FreeHGlobal(_imageData);
+                                    _imageData = IntPtr.Zero;
+                                }
+                                _imageData = Marshal.AllocHGlobal(_imageWidth * _imageHeight * _colorChannels * 2);
+                                _imageDataSize = _imageWidth * _imageHeight * _colorChannels * 2;
+                            }
+                            RtlZeroMemory(_imageData, _imageWidth * _imageHeight * _colorChannels * 2);
+
+                            //read the image and output the buffer with image data
+                            if (isMultiChannel)
+                            {
+                                ReadMultiChannelImage(fileNames[0], _colorChannels, ref _imageData, _imageWidth, _imageHeight);
+                            }
+                            else
+                            {
+                                ReadChannelImages(fileNames.ToArray(), _colorChannels, ref _imageData, _imageWidth, _imageHeight);
+                            }
+
                             break;
                         default:
                             break;
                     }
-                    CopyChannelData();
+
+                    CopyChannelData(_colorChannels, contiguous, scanAreaID, regionIndex);
                 }
             }
             catch
             {
                 ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + "File not found exception");
             }
-            finally
-            {
-                Marshal.FreeHGlobal(_imageData);
-                _imageData = IntPtr.Zero;
-            }
         }
 
         [DllImport(".\\StatsManager.dll", EntryPoint = "ComputeStats")]
         private static extern int ComputeStats(ushort[] data, FrameInfoStruct frameInfo, long colorChannels, int includeLineProfile, int includeRegularStats, int enabledChannelsOnly);
+
+        [DllImport(".\\ThorImageProcess.dll", EntryPoint = "CorrectPreludeImageDistortion")]
+        private static unsafe extern int CorrectPreludeImageDistortion(IntPtr imageData, ushort* correctedImageData, int width, int height);
 
         [DllImport(".\\StatsManager.dll", EntryPoint = "InitCallBackLineProfilePush")]
         private static extern void InitCallBackLineProfilePush(ReportLineProfile reportLineProfile);
@@ -1512,125 +1351,140 @@
         }
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadColorImage")]
-        private static extern int ReadColorImage([MarshalAs(UnmanagedType.LPWStr)]string rPath, [MarshalAs(UnmanagedType.LPWStr)]string gPath, [MarshalAs(UnmanagedType.LPWStr)]string bPath, ref IntPtr outputBuffer, int cameraWidth, int cameraHeight);
+        private static extern int ReadColorImage([MarshalAs(UnmanagedType.LPWStr)] string rPath, [MarshalAs(UnmanagedType.LPWStr)] string gPath, [MarshalAs(UnmanagedType.LPWStr)] string bPath, ref IntPtr outputBuffer, int cameraWidth, int cameraHeight);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadImage")]
-        private static extern int ReadImage([MarshalAs(UnmanagedType.LPWStr)]string path, ref IntPtr outputBuffer);
+        private static extern int ReadImage([MarshalAs(UnmanagedType.LPWStr)] string path, ref IntPtr outputBuffer);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadImageInfo")]
-        private static extern int ReadImageInfo([MarshalAs(UnmanagedType.LPWStr)]string path, ref int width, ref int height, ref int colorChannels);
+        private static extern int ReadImageInfo([MarshalAs(UnmanagedType.LPWStr)] string path, ref int width, ref int height, ref int colorChannels, ref int bitsPerPixel);
+
+        [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadMultiChannelImage")]
+        private static extern int ReadMultiChannelImage([MarshalAs(UnmanagedType.LPWStr)] string fileName, int numChannels, ref IntPtr outputBuffer, int cameraWidth, int cameraHeight);
 
         [DllImport("kernel32.dll")]
         static extern void RtlZeroMemory(IntPtr dst, int length);
 
-        private System.Drawing.Bitmap BitmapFromSource(BitmapSource bitmapsource)
+        [DllImport(".\\ThorImageProcess.dll", EntryPoint = "SetImageDistortionCorrectionParameters")]
+        private static extern int SetImageDistortionCorrectionParameters(int imageWidth, int imageHeight, double xAngleMax, double yAngleMax, double galvoTiltAngle, double scanLensFocalLength);
+
+        private unsafe void CopyChannelData(int numChannels, bool contiguousMode, int regionID, int regionIndex)
         {
-            System.Drawing.Bitmap bitmap;
-            using (MemoryStream outStream = new MemoryStream())
+            //bool imageUpdateComplete = (bool)MVMManager.Instance["ImageViewReviewVM", "ImageUpdateComplete", (object)false];
+            //while (!imageUpdateComplete)
+            //{
+            //    Thread.Sleep(2);
+            //    imageUpdateComplete = (bool)MVMManager.Instance["ImageViewReviewVM", "ImageUpdateComplete", (object)false];
+            //}
+
+            lock (_frameData.dataLock)
             {
-                // from System.Media.BitmapImage to System.Drawing.Bitmap
-                BitmapEncoder enc = new BmpBitmapEncoder();
-                enc.Frames.Add(BitmapFrame.Create(bitmapsource));
-                enc.Save(outStream);
-                bitmap = new System.Drawing.Bitmap(outStream);
-            }
-            return bitmap;
-        }
+                //TODO:IV set iv framedata here
+                _dataLength = (_imageWidth * _imageHeight);
 
-        private void BuildColorImage()
-        {
-            if (_experimentFolderPath == null)
-            {
-                return;
-            }
-
-            XmlNodeList ndList = _hardwareDoc.SelectNodes("/HardwareSettings/ColorChannels/*");
-            XmlNodeList ndListHW = _hardwareDoc.SelectNodes("/HardwareSettings/Wavelength");
-
-            string[] fileNames = new string[ExperimentData.NumberOfChannels];
-            _foundChannelCount = 0;
-
-            for (int k = 0; k < ndListHW.Count; k++)
-            {
-                for (int i = 0; i < ndList.Count; i++)
+                if ((_pixelData == null) || (_pixelData.Length != (_dataLength * numChannels)))
                 {
-                    string str = ndList[i].Attributes["name"].Value.ToString();
+                    _pixelData = new ushort[_dataLength * numChannels];
+                }
 
-                    if (str.Contains(ndListHW[k].Attributes["name"].Value.ToString()))
+                if (1 == _LSMImageDistortionCorrectionEnable)
+                {
+                    if (!_correctionParametersSet)
                     {
-                        StringBuilder sbTemp = new StringBuilder();
-                        int spIndex = (CaptureModes.HYPERSPECTRAL == ExperimentData.CaptureMode) ? SpValue : this.SampleSiteIndex;
+                        SetImageDistortionCorrectionParameters(_imageWidth, _imageHeight, _LSMImageCalibrationXAngleMax, _LSMImageCalibrationYAngleMax, _LSMImageCalibrationGalvoTiltAngle, 50);
+                        _correctionParametersSet = true;
+                    }
 
-                        sbTemp.AppendFormat("{0}{1}{2}{3}{4}{5}",
-                                            _experimentFolderPath,
-                                            ndListHW[k].Attributes["name"].Value.ToString(),
-                                            "_" + spIndex.ToString(ImageNameFormat),
-                                            "_" + this.SubTileIndex.ToString(ImageNameFormat),
-                                            "_" + _currentZCount.ToString(ImageNameFormat),
-                                            "_" + _currentTCount.ToString(ImageNameFormat) + ".tif");
-                        string strTemp = sbTemp.ToString();
-
-                        if (File.Exists(strTemp))
+                    if (contiguousMode || numChannels <=1)
+                    {
+                        for (int i = 0; i < numChannels; ++i)
                         {
-                            fileNames[k] = strTemp;
-                            _foundChannelCount++;
+                            IntPtr ptr = IntPtr.Add(_imageData, 2 * _imageWidth * _imageHeight * i);
+                            fixed (ushort* pPixelData = &_pixelData[_imageWidth * _imageHeight * i])
+                            {
+
+                                CorrectPreludeImageDistortion(ptr, pPixelData, _imageWidth, _imageHeight);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < MAX_CHANNELS; ++i)
+                        {
+                            IntPtr ptr = IntPtr.Add(_imageData, 2 * _imageWidth * _imageHeight * i);
+                            fixed (ushort* pPixelData = &_pixelData[_imageWidth * _imageHeight * i])
+                            {
+                                CorrectPreludeImageDistortion(ptr, pPixelData, _imageWidth, _imageHeight);
+                            }
                         }
                     }
                 }
-            }
-
-            if (_foundChannelCount > 0)
-            {
-                //set the image file path for display
-                UpdateChannelData(fileNames);
-            }
-        }
-
-        private void CopyChannelData()
-        {
-            //only copy to the buffer when pixel data is not being read
-            if (_pixelDataReady == false)
-            {
-                _dataLength = (_imageWidth * _imageHeight);
-
-                if ((_pixelData == null) || (_pixelData.Length != (_dataLength * MAX_CHANNELS)))
+                else
                 {
-                    _pixelData = new ushort[_dataLength * MAX_CHANNELS];
-                    _pixelDataByte = new byte[_dataLength * 3];
-                    _pixelDataHistogram = new int[MAX_CHANNELS][];
-
-                    for (int i = 0; i < MAX_CHANNELS; i++)
-                    {
-                        _pixelDataHistogram[i] = new int[PIXEL_DATA_HISTOGRAM_SIZE];
-                    }
+                    MemoryCopyManager.CopyIntPtrMemory(_imageData, _pixelData, 0, _dataLength * numChannels);
                 }
 
-                MemoryCopyManager.CopyIntPtrMemory(_imageData, _pixelData, 0, _dataLength * MAX_CHANNELS);
-                _pixelDataReady = true;
+                FrameInfoStruct imageInfo = new FrameInfoStruct();
+
+                if (ExperimentData.IsmROICapture)
+                {
+                    int top = (int)Math.Floor((double)ExperimentData.mROIFullFOVMetadata.PixelHeight / 2 + ExperimentData.mROIs[regionIndex].PositionYUM / ExperimentData.mROIPixelSizeYUM);
+                    int left = (int)Math.Floor((double)ExperimentData.mROIFullFOVMetadata.PixelWidth / 2 + (ExperimentData.mROIs[regionIndex].PositionXUM - ExperimentData.mROIs[regionIndex].PhysicalSizeXUM / ExperimentData.mROIs[regionIndex].Stripes / 2) / ExperimentData.mROIPixelSizeXUM);
+                    imageInfo.bufferType = 0;
+                    imageInfo.numberOfPlanes = 1;
+                    imageInfo.fullFrame = 1;
+                    imageInfo.copySize = (ulong)(_dataLength * numChannels);
+                    imageInfo.channels = numChannels;
+                    imageInfo.isNewMROIFrame = regionIndex == 0 ? 1 : 0;
+                    imageInfo.isMROI = ExperimentData.IsmROICapture ? 1 : 0;
+                    imageInfo.totalScanAreas = ExperimentData.mROIs.Count;
+                    imageInfo.scanAreaIndex = regionIndex;
+                    imageInfo.scanAreaID = regionID;
+                    imageInfo.fullImageWidth = ExperimentData.mROIFullFOVMetadata.PixelWidth;
+                    imageInfo.fullImageHeight = ExperimentData.mROIFullFOVMetadata.PixelHeight;
+                    imageInfo.topInFullImage = top;
+                    imageInfo.leftInFullImage = left;
+                    imageInfo.imageHeight = _imageHeight;
+                    imageInfo.imageWidth = _imageWidth;
+                }
+                else
+                {
+                    imageInfo.bufferType = 0;
+                    imageInfo.imageHeight = (ExperimentData.NumberOfPlanes > 1) ? _imageHeight / ExperimentData.NumberOfPlanes : _imageHeight;
+                    imageInfo.imageWidth = _imageWidth;
+                    imageInfo.numberOfPlanes = ExperimentData.NumberOfPlanes;
+                    imageInfo.fullFrame = 1;
+                    imageInfo.copySize = (ulong)(_dataLength * numChannels);
+                    imageInfo.channels = numChannels;//TODO:IV make sure we don't need actual number of channels// ExperimentData.NumberOfChannels;
+                    imageInfo.sequenceIndex = SequentialModeEnabled ? _sequenceStepIndex : 0;
+                    imageInfo.totalSequences = SequentialModeEnabled ? _sequenceStepsNum : 0;
+                    imageInfo.sequenceSelectedChannels = SequentialModeEnabled ? _sequenceStepChannels : 0;
+                }
+
+                imageInfo.pixelAspectRatioYScale = (int)(ExperimentData.PixelAspectRatioYScale*100);
+                _frameData.pixelData = _pixelData;
+                _frameData.bitsPerPixel = ExperimentData.BitsPerPixel;
+                _frameData.dFLIMArrivalTimeSumData = null;
+                _frameData.dFLIMSinglePhotonData = null;
+                _frameData.dFLIMBinDurations = null;
+                _frameData.averageMode = 0;
+                _frameData.averageFrameCount = 1;
+                _frameData.contiguousChannels = contiguousMode;
+                _frameData.channelSelection = ImageInfo.channelEnabled;
+                _frameData.frameInfo = imageInfo;
+                _frameData.pixelSizeUM = ExperimentData.PixelSizeUM;
             }
+            MVMManager.Instance["ImageViewReviewVM", "FrameData"] = _frameData;
         }
 
-        private void InitializeClassArrays(int channels)
-        {
-            _whitePoint = new double[channels];
-            _blackPoint = new double[channels];
-            _pixelDataHistogram = new int[channels][];
-            _colorAssigment = new int[channels];
-
-            for (int i = 0; i < channels; i++)
-            {
-                _whitePoint[i] = LUT_SIZE - 1;
-                _blackPoint[i] = 0;
-                _pixelDataHistogram[i] = new int[PIXEL_DATA_HISTOGRAM_SIZE];
-            }
-        }
-
-        private void LineProfileUpdate(IntPtr lineProfile, int length, int channelEnable, int numChannel)
+        private void LineProfileUpdate(IntPtr lineProfile, int length, int realLength, int channelEnable, int numChannel)
         {
             if (0 < numChannel && 0 < length)
             {
                 int lengthPerChannel = length / numChannel;
 
+                _lineProfileData.LengthPerChannel = lengthPerChannel;
+                _lineProfileData.PixeltoµmConversionFactor = _frameData.pixelSizeUM.PixelWidthUM * realLength / length;
                 _lineProfileData.profileDataX = new double[lengthPerChannel];
                 for (int i = 0; i < lengthPerChannel; i++)
                 {

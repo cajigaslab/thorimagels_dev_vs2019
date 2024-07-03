@@ -1,6 +1,7 @@
-#pragma once
+﻿#pragma once
 #include ".\ThorSharedTypes\ThorSharedTypes\SharedEnums.cs"
 #include <iostream>
+#include <math.h>
 #include <string>
 #include <vector>
 #include <regex>
@@ -16,6 +17,8 @@ using namespace std;
 #define MAX_CHANNEL_COUNT			4
 #define MAX_IMAGE_SIZE				2147483648							//2GB
 #define BUFFER_LENGTH				255
+#define MAX_DIGITAL_SWITCHES		8
+#define US_TO_S						1000000.0 //microseconds to seconds conversion
 
 #define SAFE_MEMCPY(x,y,z) if((x != NULL) && (z != NULL) && (0 < y)) { memcpy_s(x,y,z,y); }
 #define SAFE_DELETE_MEMORY(x) if (NULL != x) { free((void*)x); x = NULL; }
@@ -88,6 +91,9 @@ extern "C" _declspec(dllexport) typedef struct ThorDAQGGWaveformParams
 	unsigned short* GalvoWaveformY;
 	unsigned short* GalvoWaveformPockel;
 	unsigned short* DigBufWaveform;
+	unsigned short GalvoWaveformXOffset;
+	unsigned short GalvoWaveformYOffset;
+	unsigned short GalvoWaveformPoceklsOffset;
 	long digitalLineCnt;
 	long Scanmode;
 	long Triggermode;
@@ -127,11 +133,30 @@ extern "C" _declspec(dllexport) typedef struct FrameInfoStruct
 	long	 imageHeight;
 	long	 channels;
 	long	 fullFrame;
+	long	 isMROI;
 	long	 scanAreaID;
+	long	 scanAreaIndex;
+	long	 totalScanAreas;
+	long	 isNewMROIFrame;
+	long	 fullImageWidth;
+	long     fullImageHeight;
+	long     topInFullImage;
+	long     leftInFullImage;
+	long	 mROIStripeFieldSize;
 	long	 bufferType;
 	unsigned long long copySize;
-	long numberOfPlanes;
+	long	 numberOfPlanes;
+	long	 polarImageType;
+	long	 totalSequences;
+	long	 sequenceIndex;
+	long	 sequenceSelectedChannels;
+	long     pixelAspectRatioYScale;
 }FrameInfo;
+
+extern "C" _declspec(dllexport) typedef struct CaptureNotificationStruct
+{
+	long isAsyncParamUpdate;
+}CaptureNotification;
 
 struct WaveformGenParams
 {
@@ -161,6 +186,7 @@ struct WaveformGenParams
 	double  field2Volts;
 	long	digLineSelect;
 	long	pockelsTurnAroundBlank;
+	long	pockelsFlybackBlank;
 	long	scanMode;
 	double	yAmplitudeScaler;
 	long	galvoEnable;
@@ -172,16 +198,77 @@ struct WaveformGenParams
 
 };
 
-static double CalculateMinimumDwellTime(double fieldSize, long pixelX, long turnAroundTimeUS, double field2Theta, long maxGalvoOpticalAngle)
+extern "C" _declspec(dllexport) typedef struct ThorDAQZWaveformParams
 {
-	double minDwell = (4.0 * ((double)turnAroundTimeUS / 2.0) * fieldSize * field2Theta) / (PI * pixelX * (maxGalvoOpticalAngle - fieldSize * field2Theta));
-	return minDwell;
+	double updateRate;
+	long framesPerWaveform;
+	long samplesPerFrame;
+	long waveformLength;
+	long waveformChannel;
+	double parkPosition;
+	double offsetPosition;
+	USHORT* waveform;
+}ThorDAQZWaveformParams;
+
+static double CalculateMinimumDwellTime(double fieldSize, double fineFieldSizeScale, long pixelX, long turnAroundTimeUS, double field2Theta, long maxGalvoOpticalAngle, double maxAngularVelocityRadSecSq, double maxAngularAccelerationRadSecSq, double minDwellTimeUS, double maxDwellTimeUS, double dwellTimeIncrementUS)
+{
+	//peak velocity = amplitude * 2π * Freq
+	//peak acceleration = amplitude * (2π * Freq)^2
+
+	/*
+		converion(V / s to rad / s)
+		escale = 20; %% volts peak to peak full scale
+		mscale = 15; %% mechanical degrees full scale
+		volts2deg = mscale / escale; volts to degrees
+	*/
+
+	double accelerationMinDwellUS = minDwellTimeUS - dwellTimeIncrementUS; //us
+	double peakAccelerationDegPerSecSq = 0;
+	const double escale = 20;// volts peak - peak full scale
+	const double mscale = 15;// mechanical degrees full scale
+	const double volts2deg = mscale / escale;// volts to Degrees;
+
+	const double linearPortionAmplitudeDeg = fieldSize * fineFieldSizeScale * field2Theta * volts2deg;
+
+	const double freq = US_TO_SEC / (2 * turnAroundTimeUS);
+	do
+	{
+		accelerationMinDwellUS += dwellTimeIncrementUS;
+		if (accelerationMinDwellUS > maxDwellTimeUS)
+		{
+			return accelerationMinDwellUS;
+		}
+		double linearPortionTimeUS = accelerationMinDwellUS * pixelX;
+
+		double accelerationPortionAmplitudeDeg = linearPortionAmplitudeDeg * ((double)turnAroundTimeUS / linearPortionTimeUS) / PI;
+
+		peakAccelerationDegPerSecSq = accelerationPortionAmplitudeDeg * pow((2 * PI * freq), 2);
+
+	} while (peakAccelerationDegPerSecSq > (maxAngularAccelerationRadSecSq * 180 / PI));
+
+	double velocityMinDwellUS = dwellTimeIncrementUS; //us
+
+	double  peakVelocityDegPerSec = 0;
+
+	do
+	{
+		velocityMinDwellUS += dwellTimeIncrementUS;
+		if (velocityMinDwellUS > maxDwellTimeUS)
+		{
+			return accelerationMinDwellUS;
+		}
+		double linearPortionTimeUS = velocityMinDwellUS * pixelX;
+		peakVelocityDegPerSec = (linearPortionAmplitudeDeg / (linearPortionTimeUS / US_TO_S)) / PI / 2;
+
+	} while (peakVelocityDegPerSec > (maxAngularVelocityRadSecSq * 180 / PI));
+
+	return velocityMinDwellUS > accelerationMinDwellUS ? velocityMinDwellUS : accelerationMinDwellUS;
 }
 
-static long CalculateMinimumFieldSize(double dwellTime, long pixelX, long turnAroundTimeUS, double field2Theta, long maxGalvoOpticalAngle)
+static long CalculateMaxFieldSize(double dwellTime, long pixelX, long turnAroundTimeUS, double field2Theta, long maxGalvoOpticalAngle, double maxAngularVelocity, double maxAngularAcceleration)
 {
-	long minFieldSize = static_cast<long>((dwellTime * PI * maxGalvoOpticalAngle * pixelX) / (field2Theta * ((4.0 * ((double)turnAroundTimeUS / 2.0)) + (dwellTime * pixelX * PI))));
-	return minFieldSize;
+	long maxFieldSize = static_cast<long>((dwellTime * PI * maxGalvoOpticalAngle * pixelX) / (field2Theta * ((4.0 * ((double)turnAroundTimeUS / 2.0)) + (dwellTime * pixelX * PI))));
+	return maxFieldSize;
 }
 
 static string removeSpaces(string& str)
@@ -222,14 +309,12 @@ static vector<string> FindSerialNumbersInRegistry(string VID, string PID)
 	if (ERROR_SUCCESS != RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\services\\usbser", 0, KEY_READ, &hk))
 	{
 		// No usbSer device is connected, return empty list (size=0).
-		//logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"ThorMCM6000: Could not find registry key SYSTEM\\CurrentControlSet\\services\\usbser");
 		return serialNumbers;
 	}
 	// Read parameter Count which is the number of connected usbser devices 
 	if (ERROR_SUCCESS != RegGetValue(hk, L"Enum", L"Count", RRF_RT_REG_DWORD, NULL, (LPBYTE)&count, &sz))
 	{
 		// No usbSer device is connected, return empty list (size=0).
-		//logDll->TLTraceEvent(INFORMATION_EVENT, 1, L"ThorMCM6000: No USB serial device is connected, registry key SYSTEM\\CurrentControlSet\\services\\usbser\\Enum doesn't exist");
 		return serialNumbers;
 	}
 	// Iterate through the parameters, one for each connected device
@@ -243,21 +328,12 @@ static vector<string> FindSerialNumbersInRegistry(string VID, string PID)
 		if (ERROR_SUCCESS != RegGetValue(hk, L"Enum", usbConnectedIndex, RRF_RT_REG_SZ, NULL, (LPBYTE)data, &cbData))
 			continue;
 		// Convert the returned wstring data to string for regex search
-		//std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converterX;
-		//dataString = converterX.to_bytes(wstring(data));
 		dataString = ConvertWStringToString(data);
-		// serach for the regular expression VID/PID in 'data' using this format 'VID_####&PID_####\'
+		// search for the regular expression VID/PID in 'data' using this format 'VID_####&PID_####\'
 		if (regex_search(dataString.c_str(), matchedResult, reg))
 		{
 			// If regex search matched, store the substring after the regex format. This is the 17-digit serial number of the device.
 			serialNumbers.push_back(matchedResult[0].second);
-		}
-		else
-		{
-			wstring messageWstring = L"ThorMCM6000: USB serial device " + wstring(data) + L" doesn't match device PID and VID";
-			vector<wchar_t> buf(messageWstring.begin(), messageWstring.end());
-			buf.push_back(0);
-			//logDll->TLTraceEvent(INFORMATION_EVENT, 1, buf.data());
 		}
 	}
 	return serialNumbers;
@@ -280,7 +356,6 @@ static wstring FindCOMPortInRegistry(string VID, string PID, string serialNum)
 	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Enum", 0, KEY_READ, &hk) != ERROR_SUCCESS)
 		return comPort;
 	// For every subfolder in the key generate a new key (SubKeyName) and open the subfolder
-	//std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converterX;
 	for (DWORD i = 0; ; i++)
 	{
 		DWORD cName = BUFFER_LENGTH;
@@ -301,7 +376,6 @@ static wstring FindCOMPortInRegistry(string VID, string PID, string serialNum)
 			if (ERROR_SUCCESS != RegEnumKeyEx(hSubKey, j, devicesPidVid, &dName, NULL, NULL, NULL, NULL))
 				break;
 			// Convert the key name to string for RegEx search
-			//devicesPidVidString = converterX.to_bytes(wstring(devicesPidVid));
 			devicesPidVidString = ConvertWStringToString(devicesPidVid);
 			// Compare the key name to the passed VID/PID using this format VID_####&PID_####
 			if (regex_search(devicesPidVidString.c_str(), matchedResult, reg))
@@ -320,7 +394,6 @@ static wstring FindCOMPortInRegistry(string VID, string PID, string serialNum)
 					if (ERROR_SUCCESS != RegEnumKeyEx(deviceSubKey, k, deviceHID, &pName, NULL, NULL, NULL, NULL))
 						break;
 					// Convert the name of the subkey to a string and compare it to the passed serialNum
-					//deviceNames = converterX.to_bytes(wstring(deviceHID));
 					deviceNames = ConvertWStringToString(deviceHID);
 					if (0 == deviceNames.compare(serialNum))
 					{
@@ -333,7 +406,6 @@ static wstring FindCOMPortInRegistry(string VID, string PID, string serialNum)
 						// Get the value from the PortName parameter
 						if (ERROR_SUCCESS != RegGetValue(parameterSubKey, L"Device Parameters", L"PortName", RRF_RT_REG_SZ, NULL, (LPBYTE)value, &cbData))
 							continue;
-						//comPort = converterX.to_bytes(wstring(value));
 						comPort = wstring(value);
 					}
 				}

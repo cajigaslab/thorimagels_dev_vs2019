@@ -1,0 +1,32 @@
+﻿<UserControl x:Class="UpDownButtonsControl.UpDownButtonsControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:UpDownButtonsControl"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid>
+        <StackPanel Orientation="Vertical"
+                    VerticalAlignment="Center">
+            <RepeatButton Name="upBtn"
+                          Width="25"
+                          Height="20"
+                          Delay="500"
+                          Interval="100"
+                          Content="{Binding UpText, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                          Command="{Binding UpCommand, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=OneWay}">
+                
+            </RepeatButton>
+            <RepeatButton Name="downBtn"
+                          Width="25"
+                          Height="20"
+                          Delay="500"
+                          Interval="100"
+                          Content="{Binding DownText, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                          Command="{Binding DownCommand, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=OneWay}">
+
+            </RepeatButton>
+        </StackPanel>
+    </Grid>
+</UserControl>

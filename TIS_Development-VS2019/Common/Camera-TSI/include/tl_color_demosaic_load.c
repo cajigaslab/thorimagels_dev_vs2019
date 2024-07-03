@@ -1,4 +1,5 @@
 #include "tl_color_demosaic_load.h"
+#include <stdio.h>
 
 #ifndef THORLABS_TSI_BUILD_DLL
 
@@ -13,11 +14,17 @@ static TL_DEMOSAIC_MODULE_TERMINATE tl_demosaic_module_terminate = 0;
 #include "windows.h"
 #endif
 
+#ifdef __linux__
+#include "dlfcn.h"
+#endif
+
 #ifdef _WIN32
 static const char* DEMOSAIC_MODULE_NAME = "thorlabs_tsi_demosaic.dll";
 static HMODULE demosaic_obj = NULL;
-#else
-// Linux stuff here
+#endif
+#ifdef __linux__
+static const char* DEMOSAIC_MODULE_NAME = "libthorlabs_tsi_demosaic.so";
+void* demosaic_obj = 0;
 #endif
 
 /// <summary>
@@ -25,24 +32,29 @@ static HMODULE demosaic_obj = NULL;
 /// </summary>
 static void init_demosaic_function_pointers()
 {
-	tl_demosaic_transform_16_to_48 = 0;
+    tl_demosaic_transform_16_to_48 = 0;
 }
 
 static int init_error_cleanup()
 {
-	#ifdef _WIN32
-		if (demosaic_obj != NULL)
-		{
-			FreeLibrary(demosaic_obj);
-			demosaic_obj = NULL;
-		}
-	#else
-		//Linux specific stuff
-	#endif
-	init_demosaic_function_pointers();
-	tl_demosaic_module_initialize = 0;
-	tl_demosaic_module_terminate = 0;
-	return (1);
+    #ifdef _WIN32
+        if (demosaic_obj != NULL)
+        {
+            FreeLibrary(demosaic_obj);
+            demosaic_obj = NULL;
+        }
+    #endif
+    #ifdef __linux__
+        if (demosaic_obj != 0)
+        {
+            dlclose (demosaic_obj);
+            demosaic_obj = 0;
+        }
+    #endif
+    init_demosaic_function_pointers();
+    tl_demosaic_module_initialize = 0;
+    tl_demosaic_module_terminate = 0;
+    return (1);
 }
 
 /// <summary>
@@ -53,76 +65,107 @@ static int init_error_cleanup()
 /// </returns>
 int tl_demosaic_initialize(void)
 {
-	//printf("Entering tl_camera_sdk_dll_initialize");
-	init_demosaic_function_pointers();
+    //printf("Entering tl_camera_sdk_dll_initialize");
+    init_demosaic_function_pointers();
 
-	// Platform specific code to get a handle to the SDK kernel module.
+    // Platform specific code to get a handle to the SDK kernel module.
 #ifdef _WIN32
-	//printf("Before loading unified sdk kernel");
-	demosaic_obj = LoadLibraryA("thorlabs_tsi_demosaic.dll");
-	int lastError = GetLastError();
-	if (!demosaic_obj)
-	{
-		return (init_error_cleanup());
-	}
-
-	tl_demosaic_module_initialize = (TL_DEMOSAIC_MODULE_INITIALIZE)(GetProcAddress(demosaic_obj, (char*) "tl_demosaic_module_initialize"));
-	if (!tl_demosaic_module_initialize)
-	{
-		return (init_error_cleanup());
-	}
-
-	tl_demosaic_transform_16_to_48 = (TL_DEMOSAIC_TRANSFORM_16_TO_48)(GetProcAddress(demosaic_obj, (char*) "tl_demosaic_transform_16_to_48"));
-	if (!tl_demosaic_module_initialize)
-	{
-		return (init_error_cleanup());
-	}
-
-	tl_demosaic_module_terminate = (TL_DEMOSAIC_MODULE_TERMINATE)(GetProcAddress(demosaic_obj, (char*) "tl_demosaic_module_terminate"));
-	if (!tl_demosaic_module_terminate)
-	{
-		return (init_error_cleanup());
-	}
-#else
-	// Linux specific stuff
+    demosaic_obj = LoadLibraryA (DEMOSAIC_MODULE_NAME);
 #endif
+#ifdef __linux__
+    // First look in the current folder for the .so entry dll, then in the path (/usr/local/lib most likely).
+    char local_path_to_library[2048];
+    sprintf(local_path_to_library, "./%s", DEMOSAIC_MODULE_NAME);
+    demosaic_obj = dlopen(local_path_to_library, RTLD_LAZY);
+    if (!demosaic_obj)
+    {
+        demosaic_obj = dlopen(DEMOSAIC_MODULE_NAME, RTLD_LAZY);
+    }
+#endif
+    if (!demosaic_obj)
+    {
+        return (init_error_cleanup());
+    }
 
-	if (tl_demosaic_module_initialize())
-	{
 #ifdef _WIN32
-		if (demosaic_obj != NULL)
-		{
-			FreeLibrary(demosaic_obj);
-			demosaic_obj = NULL;
-		}
-#else
-		//Linux specific stuff
+    tl_demosaic_module_initialize = (TL_DEMOSAIC_MODULE_INITIALIZE)(GetProcAddress(demosaic_obj, (char*) "tl_demosaic_module_initialize"));
 #endif
-		return (init_error_cleanup());
-	}
+#ifdef __linux__
+    tl_demosaic_module_initialize = (TL_DEMOSAIC_MODULE_INITIALIZE) (dlsym (demosaic_obj, "tl_demosaic_module_initialize"));
+#endif
+    if (!tl_demosaic_module_initialize)
+    {
+        return (init_error_cleanup());
+    }
 
-	return (0);
+#ifdef _WIN32
+    tl_demosaic_transform_16_to_48 = (TL_DEMOSAIC_TRANSFORM_16_TO_48)(GetProcAddress(demosaic_obj, (char*) "tl_demosaic_transform_16_to_48"));
+#endif
+#ifdef __linux__
+    tl_demosaic_transform_16_to_48 = (TL_DEMOSAIC_TRANSFORM_16_TO_48) (dlsym (demosaic_obj, "tl_demosaic_transform_16_to_48"));
+#endif
+    if (!tl_demosaic_module_initialize)
+    {
+        return (init_error_cleanup());
+    }
+
+#ifdef _WIN32
+    tl_demosaic_module_terminate = (TL_DEMOSAIC_MODULE_TERMINATE)(GetProcAddress(demosaic_obj, (char*) "tl_demosaic_module_terminate"));
+#endif
+#ifdef __linux__
+    tl_demosaic_module_terminate = (TL_DEMOSAIC_MODULE_TERMINATE) (dlsym (demosaic_obj, "tl_demosaic_module_terminate"));
+#endif
+    if (!tl_demosaic_module_terminate)
+    {
+        return (init_error_cleanup());
+    }
+
+    if (tl_demosaic_module_initialize())
+    {
+#ifdef _WIN32
+        if (demosaic_obj != NULL)
+        {
+            FreeLibrary(demosaic_obj);
+            demosaic_obj = NULL;
+        }
+#endif
+#ifdef __linux__
+        if (demosaic_obj != 0)
+        {
+            dlclose(demosaic_obj);
+            demosaic_obj = 0;
+        }
+#endif
+        return (init_error_cleanup());
+    }
+
+    return (0);
 }
 
 int tl_demosaic_terminate(void)
 {
-	if (tl_demosaic_module_terminate)
-	{
-		tl_demosaic_module_terminate();
-	}
-	
+    if (tl_demosaic_module_terminate)
+    {
+        tl_demosaic_module_terminate();
+    }
+
 #ifdef _WIN32
-	if (demosaic_obj != NULL)
-	{
-		FreeLibrary(demosaic_obj);
-		demosaic_obj = NULL;
-	}
-#else
-	//Linux specific stuff
+    if (demosaic_obj != NULL)
+    {
+        FreeLibrary(demosaic_obj);
+        demosaic_obj = NULL;
+    }
+#endif
+#ifdef __linux__
+    if (demosaic_obj != 0)
+    {
+        dlclose(demosaic_obj);
+        demosaic_obj = 0;
+    }
 #endif
 
-	init_demosaic_function_pointers();
-	return (0);
+    init_demosaic_function_pointers();
+    return (0);
 }
 
 #endif

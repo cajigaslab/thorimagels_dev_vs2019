@@ -266,6 +266,19 @@ long AutoFocusImage::Execute(long index, IDevice* pAutoFocus, BOOL& afFound)
 
 		_width = static_cast<long>((right - left) / binX);
 		_height = static_cast<long>((bottom - top) / binY);
+
+		_pCamera->GetParam(ICamera::PARAM_CAMERA_CHANNEL, numChannels);
+		switch (static_cast<int>(numChannels))
+		{
+		default:
+			logDll->TLTraceEvent(ERROR_EVENT, 1, L"AutoFocus with Camera encountered an unexpected number of channels");
+		case 0x01:
+			_numberOfChannels = 1;
+			break;
+		case 0x07:
+			_numberOfChannels = 3;
+			break;
+		}
 	}
 
 	_pCamera->GetParam(ICamera::PARAM_BITS_PER_PIXEL, bitDepth);
@@ -300,7 +313,7 @@ long AutoFocusImage::Execute(long index, IDevice* pAutoFocus, BOOL& afFound)
 
 	_currentZIndex = -1;
 	_autoFocusStatus = AutoFocusStatusTypes::COARSE_AUTOFOCUS;
-	_zSteps = abs((stop - start) / step) + 1;
+	_zSteps = (long)(abs((stop - start) / step) + 1);
 
 	if(step > 0) //currently step is always > 0
 	{
@@ -411,7 +424,7 @@ long AutoFocusImage::Execute(long index, IDevice* pAutoFocus, BOOL& afFound)
 	stop = min((_finePercentageDecrease * _stopPosMM) + focusLoc, zParamMax);
 	step = step * _finePercentageDecrease;
 
-	_zSteps = abs((stop - start) / step) + 1;
+	_zSteps = (long)(abs((stop - start) / step) + 1);
 
 	if(step > 0) //currently step is always > 0
 	{

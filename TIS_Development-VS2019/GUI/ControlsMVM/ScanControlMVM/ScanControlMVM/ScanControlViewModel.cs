@@ -37,6 +37,8 @@
         private string _activeLSMName = string.Empty;
         ICommand _AverageFramesMinusCommand;
         ICommand _AverageFramesPlusCommand;
+        ICommand _averageLineNumberMinusCommand;
+        ICommand _averageLineNumberPlusCommand;
         private ObservableCollection<ObservableCollection<string>> _bandwidthList = new ObservableCollection<ObservableCollection<string>>();
 
         //the order of the Bandwidth tags is important, it needs to match the order from DetectorBandwidths in SharedEnums.cs
@@ -45,22 +47,36 @@
         private Visibility _bipolarityVisibility = Visibility.Collapsed;
         ICommand _ChanDigOffsetMinusCommand;
         ICommand _ChanDigOffsetPlusCommand;
+        private int _coarseAlignmentStepSize = 1;
         private Visibility _coarsePanelVisibility;
+        ICommand _coarseStepDecreaseCommand;
+        ICommand _coarseStepIncreaseCommand;
         private Visibility _digOffsetVisibility;
         string _displayedCRSFrequency = "Not Running";
         private bool _dwellTimeSliderEnabled = true;
         Visibility _fastOneWayImagingModeEnableVisibility = Visibility.Collapsed;
         ICommand _FlybackCyclesMinusCommand;
         ICommand _FlybackCyclesPlusCommand;
+        ICommand _imagingRampExtensionCyclesMinusCommand;
+        ICommand _imagingRampExtensionCyclesPlusCommand;
+        Visibility _imagingRampExtensionCyclesVisibility = Visibility.Collapsed;
         ICommand _LSMAlignmentMinusCoarseCommand;
         ICommand _LSMAlignmentMinusCommand;
         ICommand _LSMAlignmentPlusCoarseCommand;
         ICommand _LSMAlignmentPlusCommand;
+        ICommand _LSMImageDistortionCorrectionCalibrationGalvoTiltAngleMinusCommand;
+        ICommand _LSMImageDistortionCorrectionCalibrationGalvoTiltAnglePlusCommand;
+        ICommand _LSMImageDistortionCorrectionCalibrationXAngleMaxMinusCommand;
+        ICommand _LSMImageDistortionCorrectionCalibrationXAngleMaxPlusCommand;
+        ICommand _LSMImageDistortionCorrectionCalibrationYAngleMaxMinusCommand;
+        ICommand _LSMImageDistortionCorrectionCalibrationYAngleMaxPlusCommand;
+        Visibility _LSMImageDistortionCorrectionCalibrationVisibility = Visibility.Collapsed;
+        private bool _lsmChannelDisableAll = true;
         ICommand _LSMDwellTimeMinusCommand;
         ICommand _LSMDwellTimePlusCommand;
+        Visibility _lsmImageOnFlybackVisibility = Visibility.Collapsed;
         private Visibility _LSMPixelProcessVisibility;
         private Visibility _lsmPulseMultiplexingVisibility;
-        double[][] _minDwellTimeTable;
         private Visibility _pmtBandwidthLabelVisibility;
         private string[] _pmtBwSelected = new string[NUM_DETECTORS];
         ICommand _PMTGainMinusCommand;
@@ -69,11 +85,16 @@
         private Visibility _pmtOffsetLabelVisibility;
         ICommand _PMTOffsetMinusCommand;
         ICommand _PMTOffsetPlusCommand;
+        Visibility _pmtSaturationsVisibility = Visibility.Visible;
         private int _pmtTripCount;
+        ICommand _preImagingCalibrationCyclesMinusCommand;
+        ICommand _preImagingCalibrationCyclesPlusCommand;
+        Visibility _preImagingCalibrationCyclesVisibility = Visibility.Collapsed;
         private Dictionary<string, PropertyInfo> _properties = new Dictionary<string, PropertyInfo>();
         private double _sliderIndex = 0;
         private Dictionary<string, int> _stringToBandwidthMap = new Dictionary<string, int>();
         private Visibility _turnAroundOptionVisibility;
+        private Visibility _twoWayAlignmentPanelVisibility = Visibility.Visible;
         ICommand _TwoWayCalibrationCommand;
         private Visibility _twoWayCalibrationVisibility;
         private TwoWaySettings _twoWayDialog = new TwoWaySettings();
@@ -87,8 +108,6 @@
         {
             this._scanControlModel = new ScanControlModel();
             InitializeProperties();
-            BuildDwellTimeTable();
-
             _pmtTripCount = 0;
         }
 
@@ -122,6 +141,24 @@
             get
             {
                 if (this._AverageFramesPlusCommand == null) this._AverageFramesPlusCommand = new RelayCommand(() => LSMSignalAverageFrames++); return this._AverageFramesPlusCommand;
+            }
+        }
+
+        public ICommand AverageLineNumberMinusCommand
+        {
+            get
+            {
+                if (_averageLineNumberMinusCommand == null) _averageLineNumberMinusCommand = new RelayCommand(() => LSMLineAveragingNumber--);
+                return _averageLineNumberMinusCommand;
+            }
+        }
+
+        public ICommand AverageLineNumberPlusCommand
+        {
+            get
+            {
+                if (_averageLineNumberPlusCommand == null) _averageLineNumberPlusCommand = new RelayCommand(() => LSMLineAveragingNumber++);
+                return _averageLineNumberPlusCommand;
             }
         }
 
@@ -189,6 +226,22 @@
             set;
         }
 
+        public int CoarseAlignmentStepSize
+        {
+            get
+            {
+                return _coarseAlignmentStepSize;
+            }
+            set
+            {
+                if (1 <= value)
+                {
+                    _coarseAlignmentStepSize = value;
+                    OnPropertyChanged("CoarseAlignmentStepSize");
+                }
+            }
+        }
+
         public Visibility CoarsePanelVisibility
         {
             get
@@ -199,6 +252,24 @@
             {
                 _coarsePanelVisibility = value;
                 OnPropertyChanged("CoarsePanelVisibility");
+            }
+        }
+
+        public ICommand CoarseStepDecreaseCommand
+        {
+            get
+            {
+                if (_coarseStepDecreaseCommand == null) _coarseStepDecreaseCommand = new RelayCommand(() => CoarseAlignmentStepSize /= 10);
+                return _coarseStepDecreaseCommand;
+            }
+        }
+
+        public ICommand CoarseStepIncreaseCommand
+        {
+            get
+            {
+                if (_coarseStepIncreaseCommand == null) _coarseStepIncreaseCommand = new RelayCommand(() => CoarseAlignmentStepSize *= 10);
+                return _coarseStepIncreaseCommand;
             }
         }
 
@@ -278,7 +349,16 @@
                 {
                     if (PMTGain[i].Value > GetPMTMin(i))
                     {
-                        PMTGainEnable[i].Value = value ? 1 : 0;
+                        PMTGainEnable[i].Value = value && LSMChannelEnable[i] ? 1 : 0;
+                    }
+                    else if ((int)DetectorTypes.HPD1000 == PMTDetectorType[i].Value)
+                    {
+                        PMTGainEnable[i].Value = value && LSMChannelEnable[i] ? 1 : 0;
+                        PMTVolt[i].Value = _scanControlModel.GetDetectorAtenuation(i);
+                    }
+                    else if (false == value)
+                    {
+                        PMTGainEnable[i].Value = 0;
                     }
                 }
             }
@@ -366,6 +446,58 @@
             }
         }
 
+        public int ImagingRampExtensionCycles
+        {
+            get => _scanControlModel.ImagingRampExtensionCycles;
+            set
+            {
+                _scanControlModel.ImagingRampExtensionCycles = value;
+                OnPropertyChanged("ImagingRampExtensionCycles");
+            }
+        }
+
+        public ICommand ImagingRampExtensionCyclesMinusCommand
+        {
+            get
+            {
+                if (_imagingRampExtensionCyclesMinusCommand == null)
+                {
+                    _imagingRampExtensionCyclesMinusCommand = new RelayCommand(() => --ImagingRampExtensionCycles);
+                }
+                return _imagingRampExtensionCyclesMinusCommand;
+            }
+        }
+
+        public ICommand ImagingRampExtensionCyclesPlusCommand
+        {
+            get
+            {
+                if (_imagingRampExtensionCyclesPlusCommand == null)
+                {
+                    _imagingRampExtensionCyclesPlusCommand = new RelayCommand(() => ++ImagingRampExtensionCycles);
+                }
+                return _imagingRampExtensionCyclesPlusCommand;
+            }
+        }
+
+        public Visibility ImagingRampExtensionCyclesVisibility
+        {
+            get
+            {
+                if (_scanControlModel.IsImagingRampExtensionCyclesAvailable &&
+                    _imagingRampExtensionCyclesVisibility == Visibility.Visible)
+                {
+                    return Visibility.Visible;
+                }
+                return Visibility.Collapsed;
+            }
+            set
+            {
+                _imagingRampExtensionCyclesVisibility = value;
+                OnPropertyChanged("PreImagingCalibrationCyclesVisibility");
+            }
+        }
+
         public CustomCollection<HwVal<int>> InputRange
         {
             get;
@@ -422,7 +554,7 @@
         {
             get
             {
-                if (this._LSMAlignmentMinusCoarseCommand == null) this._LSMAlignmentMinusCoarseCommand = new RelayCommand(() => LSMTwoWayAlignmentCoarse--);
+                if (this._LSMAlignmentMinusCoarseCommand == null) this._LSMAlignmentMinusCoarseCommand = new RelayCommand(() => LSMTwoWayAlignmentCoarse -= CoarseAlignmentStepSize);
                 return this._LSMAlignmentMinusCoarseCommand;
             }
         }
@@ -440,7 +572,7 @@
         {
             get
             {
-                if (this._LSMAlignmentPlusCoarseCommand == null) this._LSMAlignmentPlusCoarseCommand = new RelayCommand(() => LSMTwoWayAlignmentCoarse++);
+                if (this._LSMAlignmentPlusCoarseCommand == null) this._LSMAlignmentPlusCoarseCommand = new RelayCommand(() => LSMTwoWayAlignmentCoarse += CoarseAlignmentStepSize);
                 return this._LSMAlignmentPlusCoarseCommand;
             }
         }
@@ -458,6 +590,255 @@
         {
             get;
             set;
+        }
+
+        public double LSMImageDistortionCorrectionCalibrationGalvoTiltAngle
+        {
+            get => _scanControlModel.LSMImageDistortionCorrectionCalibrationGalvoTiltAngle;
+            set
+            {
+                _scanControlModel.LSMImageDistortionCorrectionCalibrationGalvoTiltAngle = value;
+                OnPropertyChanged(nameof(LSMImageDistortionCorrectionCalibrationGalvoTiltAngle));
+            }
+        }
+
+        public ICommand LSMImageDistortionCorrectionCalibrationGalvoTiltAngleMinusCommand
+        {
+            get
+            {
+                if (_LSMImageDistortionCorrectionCalibrationGalvoTiltAngleMinusCommand == null)
+                {
+                    _LSMImageDistortionCorrectionCalibrationGalvoTiltAngleMinusCommand = new RelayCommand(() => LSMImageDistortionCorrectionCalibrationGalvoTiltAngle -= 0.1);
+                }
+                return _LSMImageDistortionCorrectionCalibrationGalvoTiltAngleMinusCommand;
+            }
+        }
+
+        public ICommand LSMImageDistortionCorrectionCalibrationGalvoTiltAnglePlusCommand
+        {
+            get
+            {
+                if (_LSMImageDistortionCorrectionCalibrationGalvoTiltAnglePlusCommand == null)
+                {
+                    _LSMImageDistortionCorrectionCalibrationGalvoTiltAnglePlusCommand = new RelayCommand(() => LSMImageDistortionCorrectionCalibrationGalvoTiltAngle += 0.1);
+                }
+                return _LSMImageDistortionCorrectionCalibrationGalvoTiltAnglePlusCommand;
+            }
+        }
+
+
+        public double LSMImageDistortionCorrectionCalibrationXAngleMax
+        {
+            get => _scanControlModel.LSMImageDistortionCorrectionCalibrationXAngleMax;
+            set
+            {
+                _scanControlModel.LSMImageDistortionCorrectionCalibrationXAngleMax = value;
+                OnPropertyChanged(nameof(LSMImageDistortionCorrectionCalibrationXAngleMax));
+            }
+        }
+
+        public ICommand LSMImageDistortionCorrectionCalibrationXAngleMaxMinusCommand
+        {
+            get
+            {
+                if (_LSMImageDistortionCorrectionCalibrationXAngleMaxMinusCommand == null)
+                {
+                    _LSMImageDistortionCorrectionCalibrationXAngleMaxMinusCommand = new RelayCommand(() => LSMImageDistortionCorrectionCalibrationXAngleMax -= 0.1);
+                }
+                return _LSMImageDistortionCorrectionCalibrationXAngleMaxMinusCommand;
+            }
+        }
+
+        public ICommand LSMImageDistortionCorrectionCalibrationXAngleMaxPlusCommand
+        {
+            get
+            {
+                if (_LSMImageDistortionCorrectionCalibrationXAngleMaxPlusCommand == null)
+                {
+                    _LSMImageDistortionCorrectionCalibrationXAngleMaxPlusCommand = new RelayCommand(() => LSMImageDistortionCorrectionCalibrationXAngleMax += 0.1);
+                }
+                return _LSMImageDistortionCorrectionCalibrationXAngleMaxPlusCommand;
+            }
+        }
+
+
+        public double LSMImageDistortionCorrectionCalibrationYAngleMax
+        {
+            get => _scanControlModel.LSMImageDistortionCorrectionCalibrationYAngleMax;
+            set
+            {
+                _scanControlModel.LSMImageDistortionCorrectionCalibrationYAngleMax = value;
+                OnPropertyChanged(nameof(LSMImageDistortionCorrectionCalibrationYAngleMax));
+            }
+        }
+
+        public ICommand LSMImageDistortionCorrectionCalibrationYAngleMaxMinusCommand
+        {
+            get
+            {
+                if (_LSMImageDistortionCorrectionCalibrationYAngleMaxMinusCommand == null)
+                {
+                    _LSMImageDistortionCorrectionCalibrationYAngleMaxMinusCommand = new RelayCommand(() => LSMImageDistortionCorrectionCalibrationYAngleMax -= 0.1);
+                }
+                return _LSMImageDistortionCorrectionCalibrationYAngleMaxMinusCommand;
+            }
+        }
+
+        public ICommand LSMImageDistortionCorrectionCalibrationYAngleMaxPlusCommand
+        {
+            get
+            {
+                if (_LSMImageDistortionCorrectionCalibrationYAngleMaxPlusCommand == null)
+                {
+                    _LSMImageDistortionCorrectionCalibrationYAngleMaxPlusCommand = new RelayCommand(() => LSMImageDistortionCorrectionCalibrationYAngleMax += 0.1);
+                }
+                return _LSMImageDistortionCorrectionCalibrationYAngleMaxPlusCommand;
+            }
+        }
+
+        public int LSMChannel
+        {
+            get
+            {
+                return _scanControlModel.LSMChannel;
+            }
+        }
+
+        /// <summary>
+        /// Disable the toggle button for the PMT enable. We need to disable it while continuous preview is running and orthogonal view is enabled.
+        /// </summary>
+        public bool LSMChannelDisableAll
+        {
+            get
+            {
+                return _lsmChannelDisableAll;
+            }
+            set
+            {
+                _lsmChannelDisableAll = value;
+                OnPropertyChanged("LSMChannelDisableAll");
+            }
+        }
+
+        public bool[] LSMChannelEnable
+        {
+            get => _scanControlModel.LSMChannelEnable;
+        }
+
+        public bool LSMChannelEnable0
+        {
+            get
+            {
+                return _scanControlModel.LSMChannelEnable0;
+            }
+            set
+            {
+                if (_scanControlModel.LSMChannelEnable0 != value)
+                {
+                    _scanControlModel.LSMChannelEnable0 = value;
+                    OnPropertyChanged("LSMChannelEnable0");
+
+                    if ((bool)MVMManager.Instance["CaptureSetupViewModel", "IsLive", false])
+                    {
+                        PMTGainEnable[0].Value = value ? 1 : 0;
+                    }
+
+                    ((IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("LSMPixelXMax");
+                    ((IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("LSMPixelYMax");
+                    bool modified = (bool)MVMManager.Instance["AreaControlViewModel", "ConfirmAreaModeSettingsForGG", false];
+
+                    OnPropertyChanged("LSMPixelDwellTimeIndex");
+                    OnPropertyChanged("LSMPixelDwellTime");
+                    OnPropertyChanged("LSMPixelDwellTimeMaxIndex");
+                }
+            }
+        }
+
+        public bool LSMChannelEnable1
+        {
+            get
+            {
+                return _scanControlModel.LSMChannelEnable1;
+            }
+            set
+            {
+                if (_scanControlModel.LSMChannelEnable1 != value)
+                {
+                    _scanControlModel.LSMChannelEnable1 = value;
+                    OnPropertyChanged("LSMChannelEnable1");
+
+                    if ((bool)MVMManager.Instance["CaptureSetupViewModel", "IsLive", false])
+                    {
+                        PMTGainEnable[1].Value = value ? 1 : 0;
+                    }
+
+                    ((IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("LSMPixelXMax");
+                    ((IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("LSMPixelYMax");
+                    bool modified = (bool)MVMManager.Instance["AreaControlViewModel", "ConfirmAreaModeSettingsForGG", false];
+
+                    OnPropertyChanged("LSMPixelDwellTimeIndex");
+                    OnPropertyChanged("LSMPixelDwellTime");
+                    OnPropertyChanged("LSMPixelDwellTimeMaxIndex");
+                }
+            }
+        }
+
+        public bool LSMChannelEnable2
+        {
+            get
+            {
+                return _scanControlModel.LSMChannelEnable2;
+            }
+            set
+            {
+                if (_scanControlModel.LSMChannelEnable2 != value)
+                {
+                    _scanControlModel.LSMChannelEnable2 = value;
+                    OnPropertyChanged("LSMChannelEnable2");
+
+                    if ((bool)MVMManager.Instance["CaptureSetupViewModel", "IsLive", false])
+                    {
+                        PMTGainEnable[2].Value = value ? 1 : 0;
+                    }
+
+                    ((IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("LSMPixelXMax");
+                    ((IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("LSMPixelYMax");
+                    bool modified = (bool)MVMManager.Instance["AreaControlViewModel", "ConfirmAreaModeSettingsForGG", false];
+
+                    OnPropertyChanged("LSMPixelDwellTimeIndex");
+                    OnPropertyChanged("LSMPixelDwellTime");
+                    OnPropertyChanged("LSMPixelDwellTimeMaxIndex");
+                }
+            }
+        }
+
+        public bool LSMChannelEnable3
+        {
+            get
+            {
+                return _scanControlModel.LSMChannelEnable3;
+            }
+            set
+            {
+                if (_scanControlModel.LSMChannelEnable3 != value)
+                {
+                    _scanControlModel.LSMChannelEnable3 = value;
+                    OnPropertyChanged("LSMChannelEnable3");
+
+                    if ((bool)MVMManager.Instance["CaptureSetupViewModel", "IsLive", false])
+                    {
+                        PMTGainEnable[3].Value = value ? 1 : 0;
+                    }
+
+                    ((IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("LSMPixelXMax");
+                    ((IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("LSMPixelYMax");
+                    bool modified = (bool)MVMManager.Instance["AreaControlViewModel", "ConfirmAreaModeSettingsForGG", false];
+
+                    OnPropertyChanged("LSMPixelDwellTimeIndex");
+                    OnPropertyChanged("LSMPixelDwellTime");
+                    OnPropertyChanged("LSMPixelDwellTimeMaxIndex");
+                }
+            }
         }
 
         public bool LsmClkPnlEnabled
@@ -536,14 +917,7 @@
         {
             get
             {
-                const int PIXEL_DENSITY_INCREMENT = 5;//step by 32
                 int index = 0;
-                try
-                {
-                    index = Convert.ToInt32(Math.Round((_minDwellTimeTable[((int)MVMManager.Instance["AreaControlViewModel", "LSMPixelX", (object)32] >> PIXEL_DENSITY_INCREMENT) - 1][(int)MVMManager.Instance["AreaControlViewModel", "LSMFieldSize", (object)5]] - this.LSMPixelDwellTimeMin) / this.LSMPixelDwellTimeStep, 0));
-                }
-                catch { }
-
                 return index;
 
             }
@@ -639,6 +1013,59 @@
             }
         }
 
+        public int LSMImageDistortionCorrectionEnable
+        {
+            get => _scanControlModel.LSMImageDistortionCorrectionEnable;
+            set
+            {
+                _scanControlModel.LSMImageDistortionCorrectionEnable = value;
+                OnPropertyChanged(nameof(LSMImageDistortionCorrectionEnable));
+            }
+        }
+
+        public Visibility LSMImageDistortionCorrectionVisibility
+        {
+            get => _scanControlModel.IsLSMImageDistortionCorrectionAvailable && _LSMImageDistortionCorrectionCalibrationVisibility == Visibility.Visible ? Visibility.Visible : Visibility.Collapsed;
+            set
+            {
+                _LSMImageDistortionCorrectionCalibrationVisibility = value;
+                OnPropertyChanged(nameof(LSMImageDistortionCorrectionVisibility));
+            }
+        }
+
+        public int LSMImageOnFlyback
+        {
+            get
+            {
+                return _scanControlModel.LSMImageOnFlyback;
+            }
+            set
+            {
+                _scanControlModel.LSMImageOnFlyback = value;
+                LSMFlybackCycles = LSMFlybackCycles;
+                OnPropertyChanged(nameof(LSMImageOnFlyback));
+                OnPropertyChanged(nameof(LSMFlybackCycles));
+                OnPropertyChanged(nameof(LSMFlybackTime));
+            }
+        }
+
+        public Visibility LSMImageOnFlybackVisibility
+        {
+            get
+            { if (_scanControlModel.LSMIsImageOnFlybackAvailable == 1 &&
+                    _lsmImageOnFlybackVisibility == Visibility.Visible)
+                {
+                    return Visibility.Visible;
+                }
+                return Visibility.Collapsed;
+            }
+            set
+            {
+                _lsmImageOnFlybackVisibility = value;
+                OnPropertyChanged("LSMImageOnFlybackVisibility");
+            }
+        }
+
         public int LSMInterleaveScan
         {
             get
@@ -649,6 +1076,42 @@
             {
                 _scanControlModel.LSMInterleaveScan = value;
                 OnPropertyChanged("LSMInterleaveScan");
+            }
+        }
+
+        public int LSMLineAveragingEnable
+        {
+            get
+            {
+                return _scanControlModel.LSMLineAveragingEnable;
+            }
+            set
+            {
+                _scanControlModel.LSMLineAveragingEnable = value;
+                OnPropertyChanged("LSMLineAveragingEnable");
+            }
+        }
+
+        public int LSMLineAveragingNumber
+        {
+            get
+            {
+                return _scanControlModel.LSMLineAveragingNumber;
+            }
+            set
+            {
+                _scanControlModel.LSMLineAveragingNumber = value;
+                OnPropertyChanged("LSMLineAveragingNumber");
+                ((IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("LSMPixelX");
+                ((IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("LSMPixelY");
+            }
+        }
+
+        public Visibility LSMLineAveragingVisibility
+        {
+            get
+            {
+                return _scanControlModel.LSMIsLineAveragingAvailable ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
@@ -867,11 +1330,7 @@
             {
                 if (true == this.TwoWayEnable)
                 {
-                    if (ICamera.LSMAreaMode.POLYLINE == (ICamera.LSMAreaMode)MVMManager.Instance["AreaControlViewModel", "LSMAreaMode", (object)0])
-                    {
-                        this._scanControlModel.LSMScanMode = (int)ICamera.ScanMode.FORWARD_SCAN;
-                    }
-                    else if ((int)ICamera.ScanMode.FORWARD_SCAN != value && (int)ICamera.ScanMode.TWO_WAY_SCAN != value)
+                    if ((int)ICamera.ScanMode.FORWARD_SCAN != value && (int)ICamera.ScanMode.TWO_WAY_SCAN != value)
                     {
                         this._scanControlModel.LSMScanMode = (int)ICamera.ScanMode.TWO_WAY_SCAN;
                     }
@@ -887,6 +1346,9 @@
                 OnPropertyChanged("LSMScanMode");
                 ((IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("LSMPixelXMax");
                 ((IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("LSMPixelYMax");
+                ((IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("LSMPixelY");
+                OnPropertyChanged("LSMLineAveragingNumber");
+                ((IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("FullFOVMaxStripePixels");
                 bool modified = (bool)MVMManager.Instance["AreaControlViewModel", "ConfirmAreaModeSettingsForGG", false];
                 LastLSMScanMode = this._scanControlModel.LSMScanMode;
                 if ((bool)MVMManager.Instance["AreaControlViewModel", "TimeBasedLineScan", (object)false])
@@ -959,13 +1421,14 @@
             }
         }
 
-        public double MinDwellTimeFromTable
+        public int MovingAvarageFilterEnable
         {
-            get
+            get => _scanControlModel.MovingAvarageFilterEnable;
+            set
             {
-                const int PIXEL_DENSITY_INCREMENT = 5;//step by 32
+                _scanControlModel.MovingAvarageFilterEnable = value;
 
-                return _minDwellTimeTable[(((int)(MVMManager.Instance["AreaControlViewModel", "LSMPixelX", (object)32])) >> PIXEL_DENSITY_INCREMENT) - 1][(int)MVMManager.Instance["AreaControlViewModel", "LSMFieldSize", (object)5]];
+                OnPropertyChanged("MovingAvarageFilterEnable");
             }
         }
 
@@ -999,7 +1462,7 @@
                     return;
                 }
                 _pmtBwSelected[0] = value;
-                if (PMTBandwidth[0].Value != _stringToBandwidthMap[_pmtBwSelected[0]] && _bandwidthList[0].Contains(_pmtBwSelected[0]))
+                if (_pmtBwSelected[0] != null && PMTBandwidth[0]?.Value != _stringToBandwidthMap[_pmtBwSelected[0]] && _bandwidthList[0].Contains(_pmtBwSelected[0]))
                 {
                     PMTBandwidth[0].Value = _stringToBandwidthMap[_pmtBwSelected[0]];
                 }
@@ -1012,6 +1475,14 @@
             get
             {
                 return this._scanControlModel.PMT1Saturations;
+            }
+        }
+
+        public Visibility PMT1VoltageVisibility
+        {
+            get
+            {
+                return PMTGain[0].IsAvailable || (int)DetectorTypes.HPD1000 == PMTDetectorType[0].Value ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
@@ -1035,7 +1506,7 @@
                     return;
                 }
                 _pmtBwSelected[1] = value;
-                if (PMTBandwidth[1].Value != _stringToBandwidthMap[_pmtBwSelected[1]] && _bandwidthList[1].Contains(_pmtBwSelected[1]))
+                if (_pmtBwSelected[1] != null && PMTBandwidth[1]?.Value != _stringToBandwidthMap[_pmtBwSelected[1]] && _bandwidthList[1].Contains(_pmtBwSelected[1]))
                 {
                     PMTBandwidth[1].Value = _stringToBandwidthMap[_pmtBwSelected[1]];
                 }
@@ -1048,6 +1519,14 @@
             get
             {
                 return this._scanControlModel.PMT2Saturations;
+            }
+        }
+
+        public Visibility PMT2VoltageVisibility
+        {
+            get
+            {
+                return PMTGain[1].IsAvailable || (int)DetectorTypes.HPD1000 == PMTDetectorType[1].Value ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
@@ -1071,7 +1550,7 @@
                     return;
                 }
                 _pmtBwSelected[2] = value;
-                if (PMTBandwidth[2].Value != _stringToBandwidthMap[_pmtBwSelected[2]] && _bandwidthList[2].Contains(_pmtBwSelected[2]))
+                if (_pmtBwSelected[2] != null && PMTBandwidth[2]?.Value != _stringToBandwidthMap[_pmtBwSelected[2]] && _bandwidthList[2].Contains(_pmtBwSelected[2]))
                 {
                     PMTBandwidth[2].Value = _stringToBandwidthMap[_pmtBwSelected[2]];
                 }
@@ -1084,6 +1563,14 @@
             get
             {
                 return this._scanControlModel.PMT3Saturations;
+            }
+        }
+
+        public Visibility PMT3VoltageVisibility
+        {
+            get
+            {
+                return PMTGain[2].IsAvailable || (int)DetectorTypes.HPD1000 == PMTDetectorType[2].Value ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
@@ -1107,7 +1594,7 @@
                     return;
                 }
                 _pmtBwSelected[3] = value;
-                if (PMTBandwidth[3].Value != _stringToBandwidthMap[_pmtBwSelected[3]] && _bandwidthList[3].Contains(_pmtBwSelected[3]))
+                if (_pmtBwSelected[3] != null && PMTBandwidth[3]?.Value != _stringToBandwidthMap[_pmtBwSelected[3]] && _bandwidthList[3].Contains(_pmtBwSelected[3]))
                 {
                     PMTBandwidth[3].Value = _stringToBandwidthMap[_pmtBwSelected[3]];
                 }
@@ -1120,6 +1607,14 @@
             get
             {
                 return this._scanControlModel.PMT4Saturations;
+            }
+        }
+
+        public Visibility PMT4VoltageVisibility
+        {
+            get
+            {
+                return PMTGain[3].IsAvailable || (int)DetectorTypes.HPD1000 == PMTDetectorType[3].Value ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
@@ -1295,6 +1790,19 @@
             }
         }
 
+        public Visibility PMTSaturationsVisibility
+        {
+            get
+            {
+                return _pmtSaturationsVisibility;
+            }
+            set
+            {
+                _pmtSaturationsVisibility = value;
+                OnPropertyChanged("PMTSaturationsVisibility");
+            }
+        }
+
         public int PMTTripCount
         {
             get
@@ -1324,6 +1832,60 @@
             set
             {
                 this._scanControlModel.PMTVoltage = value;
+            }
+        }
+
+        public int PreImagingCalibrationCycles
+        {
+            get => _scanControlModel.PreImagingCalibrationCycles;
+            set
+            {
+                _scanControlModel.PreImagingCalibrationCycles = value;
+                OnPropertyChanged("PreImagingCalibrationCycles");
+                ((IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("LSMPixelYMax");
+                ((IMVM)MVMManager.Instance["AreaControlViewModel", this]).OnPropertyChange("LSMPixelY");
+            }
+        }
+
+        public ICommand PreImagingCalibrationCyclesMinusCommand
+        {
+            get
+            {
+                if (_preImagingCalibrationCyclesMinusCommand == null)
+                {
+                    _preImagingCalibrationCyclesMinusCommand = new RelayCommand(() => --PreImagingCalibrationCycles);
+                }
+                return _preImagingCalibrationCyclesMinusCommand;
+            }
+        }
+
+        public ICommand PreImagingCalibrationCyclesPlusCommand
+        {
+            get
+            {
+                if (_preImagingCalibrationCyclesPlusCommand == null)
+                {
+                    _preImagingCalibrationCyclesPlusCommand = new RelayCommand(() => ++PreImagingCalibrationCycles);
+                }
+                return _preImagingCalibrationCyclesPlusCommand;
+            }
+        }
+
+        public Visibility PreImagingCalibrationCyclesVisibility
+        {
+            get
+            {
+                if (_scanControlModel.IsPreImagingCalibrationCyclesAvailable &&
+                    _preImagingCalibrationCyclesVisibility == Visibility.Visible)
+                {
+                    return Visibility.Visible;
+                }
+                return Visibility.Collapsed;
+            }
+            set
+            {
+                _preImagingCalibrationCyclesVisibility = value;
+                OnPropertyChanged("PreImagingCalibrationCyclesVisibility");
             }
         }
 
@@ -1371,6 +1933,19 @@
             }
         }
 
+        public Visibility TwoWayAlignmentPanelVisibility
+        {
+            get
+            {
+                return _twoWayAlignmentPanelVisibility;
+            }
+            set
+            {
+                _twoWayAlignmentPanelVisibility = value;
+                OnPropertyChanged("TwoWayAlignmentPanelVisibility");
+            }
+        }
+
         public ICommand TwoWayCalibrationCommand
         {
             get
@@ -1390,7 +1965,7 @@
         {
             get
             {
-                if (4 > (int)MVMManager.Instance["AreaControlViewModel", "LSMAreaMode", (object)0])
+                if (5 > (int)MVMManager.Instance["AreaControlViewModel", "LSMAreaMode", (object)0])
                 {
                     return true;
                 }
@@ -1405,7 +1980,7 @@
         {
             get
             {
-                if (ICamera.LSMAreaMode.POLYLINE == (ICamera.LSMAreaMode)MVMManager.Instance["AreaControlViewModel", "LSMAreaMode", (object)0])
+                if (false == (bool)MVMManager.Instance["AreaControlViewModel", "TwoWayAvailable", (object)false])
                 {
                     return Visibility.Collapsed;
                 }
@@ -1845,6 +2420,28 @@
                 {
                     LSMFastOneWayImagingModeEnable = "1" == str;
                 }
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "lineAveragingEnable", ref str))
+                {
+                    LSMLineAveragingEnable = "1" == str ? 1 : 0;
+                }
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "lineAveragingNumber", ref str))
+                {
+                    int tmp = 0;
+                    if (int.TryParse(str, out tmp))
+                    {
+                        LSMLineAveragingNumber = tmp;
+                    }
+                }
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "imageOnFlyback", ref str))
+                {
+                    if (int.TryParse(str, out int tmp))
+                    {
+                        LSMImageOnFlyback = tmp;
+                    }
+                }
             }
 
             ActiveLSMName = ResourceManagerCS.Instance.GetActiveLSMName();
@@ -2051,6 +2648,79 @@
                 BipolarityVisibility = Visibility.Collapsed;
             }
 
+            ndList = appDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/ScannerView/SaturationCount");
+            if (ndList.Count > 0)
+            {
+                string str = string.Empty;
+                XmlManager.GetAttribute(ndList[0], appDoc, "Visibility", ref str);
+
+                PMTSaturationsVisibility = str.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
+            }
+            else
+            {
+                PMTSaturationsVisibility = Visibility.Collapsed;
+            }
+
+            ndList = appDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/ScannerView/PreImagingCalibrationCycles");
+            if (ndList.Count > 0)
+            {
+                string str = string.Empty;
+                XmlManager.GetAttribute(ndList[0], appDoc, "Visibility", ref str);
+
+                PreImagingCalibrationCyclesVisibility = str.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
+            }
+            else
+            {
+                PreImagingCalibrationCyclesVisibility = Visibility.Collapsed;
+            }
+
+            ndList = appDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/ScannerView/ImagingRampExtensionCycles");
+            if (ndList.Count > 0)
+            {
+                string str = string.Empty;
+                XmlManager.GetAttribute(ndList[0], appDoc, "Visibility", ref str);
+
+                ImagingRampExtensionCyclesVisibility = str.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
+            }
+            else
+            {
+                ImagingRampExtensionCyclesVisibility = Visibility.Collapsed;
+            }
+
+            ndList = appDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/ScannerView/ImageOnFlyback");
+            if (ndList.Count > 0)
+            {
+                string str = string.Empty;
+                XmlManager.GetAttribute(ndList[0], appDoc, "Visibility", ref str);
+
+                LSMImageOnFlybackVisibility = str.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
+            }
+            else
+            {
+                LSMImageOnFlybackVisibility = Visibility.Collapsed;
+                LSMImageOnFlyback = 0;
+            }
+
+            ndList = appDoc.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/ScannerView/ImageDistortionCorrectionControl");
+            if (ndList.Count > 0)
+            {
+                string str = string.Empty;
+                XmlManager.GetAttribute(ndList[0], appDoc, "Visibility", ref str);
+
+                LSMImageDistortionCorrectionVisibility = str.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
+            }
+            else
+            {
+                LSMImageDistortionCorrectionVisibility = Visibility.Collapsed;
+                LSMImageDistortionCorrectionEnable = 0;
+            }            
+
+            LoadChannelSelection();
+
+            OnPropertyChanged(nameof(FastOneWayImagingModeEnableVisibility));
+            OnPropertyChanged(nameof(DisplayedCRSFrequencyVisibility));
+            OnPropertyChanged(nameof(LSMLineAveragingVisibility));
+            OnPropertyChanged(nameof(LSMImageDistortionCorrectionVisibility));
             OnPropertyChange("");
         }
 
@@ -2060,6 +2730,115 @@
             {
                 OnPropertyChanged(propertyName);
             }
+        }
+
+        public void PersistChannels()
+        {
+            if (ResourceManagerCS.BorrowDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS, (int)Constants.TIMEOUT_MS))
+            {
+                MVMManager.Instance.ReloadSettings(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
+                XmlDocument activeXmlDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS];
+                XmlNodeList ndList = activeXmlDoc.SelectNodes("/ThorImageExperiment/Wavelengths");
+
+                if (ndList.Count > 0)
+                {
+                    ndList[0].RemoveAll();
+                }
+
+                ndList = activeXmlDoc.SelectNodes("/ThorImageExperiment/Wavelengths");
+
+                if (ndList.Count > 0)
+                {
+                    int cameraChannels = 0;
+                    XmlManager.SetAttribute(ndList[0], activeXmlDoc, "nyquistExWavelengthNM", MVMManager.Instance["AreaControlViewModel", "NyquistExWavelength", (object)string.Empty].ToString());
+                    XmlManager.SetAttribute(ndList[0], activeXmlDoc, "nyquistEmWavelengthNM", MVMManager.Instance["AreaControlViewModel", "NyquistEmWavelength", (object)string.Empty].ToString());
+
+                    XmlElement newElement;
+                    var hwDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS];
+                    XmlNodeList waveList = hwDoc.SelectNodes("/HardwareSettings/Wavelength");
+
+                    //TODO: make sure code here can be commented so we don't have the switch
+                    //   switch (this.LSMChannel)
+                    {
+                        //case 0:
+                        //    {
+                        //        newElement = CreateWavelengthTag(waveList[0].Attributes["name"].Value, activeXmlDoc);
+                        //        ndList[0].AppendChild(newElement);
+                        //    }
+                        //    break;
+                        //case 1:
+                        //    {
+                        //        newElement = CreateWavelengthTag(waveList[1].Attributes["name"].Value, activeXmlDoc);
+                        //        ndList[0].AppendChild(newElement);
+                        //    }
+                        //    break;
+                        //case 2:
+                        //    {
+                        //        newElement = CreateWavelengthTag(waveList[2].Attributes["name"].Value, activeXmlDoc);
+                        //        ndList[0].AppendChild(newElement);
+                        //    }
+                        //    break;
+                        //case 3:
+                        //    {
+                        //        newElement = CreateWavelengthTag(waveList[3].Attributes["name"].Value, activeXmlDoc);
+                        //        ndList[0].AppendChild(newElement);
+                        //    }
+                        //    break;
+                        //case 4:
+                        //    {
+                        if (ResourceManagerCS.GetCameraType() == (int)ICamera.CameraType.LSM)
+                        {
+                            for (int i = 0; i < waveList.Count; i++)
+                            {
+                                if (LSMChannelEnable[i])
+                                {
+                                    newElement = CreateWavelengthTag(waveList[i].Attributes["name"].Value, activeXmlDoc);
+                                    ndList[0].AppendChild(newElement);
+                                }
+                            }
+                        }
+                        else //Camera case
+                        {
+                            cameraChannels = (int)MVMManager.Instance["CameraControlViewModel", "ChannelNum"];
+                            for (int i = 0; i < waveList.Count; i++)
+                            {
+                                if (0 != (cameraChannels & (1 << i)))
+                                {
+                                    newElement = CreateWavelengthTag(waveList[i].Attributes["name"].Value, activeXmlDoc);
+                                    _ = ndList[0].AppendChild(newElement);
+                                }
+                            }
+                        }
+                        //}
+                        //break;
+                    }
+
+                    //Persist channel selection as an integer which will be decoded at Master loading:
+                    XmlElement newElement2 = activeXmlDoc.CreateElement("ChannelEnable");
+                    XmlAttribute ChanAttribute = activeXmlDoc.CreateAttribute("Set");
+
+                    if (ResourceManagerCS.GetCameraType() == (int)ICamera.CameraType.LSM)
+                    {
+                        bool[] bArray = new bool[NUM_DETECTORS];
+
+                        for (int i = 0; i < NUM_DETECTORS; ++i)
+                        {
+                            bArray[i] = LSMChannelEnable[i];
+                        }
+
+                        ChanAttribute.Value = ConvertBoolAry2Int(bArray, NUM_DETECTORS).ToString();
+                    }
+                    else //Camera case
+                    {
+                        ChanAttribute.Value = cameraChannels.ToString();
+                    }
+                    newElement2.Attributes.Append(ChanAttribute);
+                    ndList[0].AppendChild(newElement2);
+                }
+
+                MVMManager.Instance.SaveSettings(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
+            }
+            ResourceManagerCS.ReturnDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
         }
 
         public void UpdateExpXMLSettings(ref XmlDocument experimentFile)
@@ -2134,35 +2913,40 @@
                             // Only need to save PixelProcess to active.xml if the image detector is GalvoGalvo.
                             XmlManager.SetAttribute(ndList[0], experimentFile, "LSMPixelProcess", this.LSMPixelProcess.ToString());
                         }
+
+                        XmlManager.SetAttribute(ndList[0], experimentFile, "lineAveragingEnable", LSMLineAveragingEnable.ToString());
+                        XmlManager.SetAttribute(ndList[0], experimentFile, "lineAveragingNumber", LSMLineAveragingNumber.ToString());
+                        XmlManager.SetAttribute(ndList[0], experimentFile, "imageOnFlyback", LSMImageOnFlyback.ToString());
                     }
                 }
-
+                PersistChannels();
             }
 
             ndList = experimentFile.SelectNodes("/ThorImageExperiment/PMT");
 
             if (ndList.Count > 0)
             {
-                int lsmChannel = (int)MVMManager.Instance["CaptureSetupViewModel", "LSMChannel"];
                 XmlManager.SetAttribute(ndList[0], experimentFile, "gainA", Math.Round(PMTGain[0].Value, 2).ToString());
-                XmlManager.SetAttribute(ndList[0], experimentFile, "enableA", ((lsmChannel == 0) || (lsmChannel == 4)) && (PMTGain[0].Value > 0) ? "1" : "0");
+                XmlManager.SetAttribute(ndList[0], experimentFile, "enableA", LSMChannelEnable[0] ? "1" : "0");
                 XmlManager.SetAttribute(ndList[0], experimentFile, "bandwidthAHz", PMTBandwidth[0].Value.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "offsetAVolts", PMTOffset[0].Value.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "gainB", Math.Round(PMTGain[1].Value, 2).ToString());
-                XmlManager.SetAttribute(ndList[0], experimentFile, "enableB", ((lsmChannel == 1) || (lsmChannel == 4)) && (PMTGain[1].Value > 0) ? "1" : "0");
+                XmlManager.SetAttribute(ndList[0], experimentFile, "enableB", LSMChannelEnable[1] ? "1" : "0");
                 XmlManager.SetAttribute(ndList[0], experimentFile, "bandwidthBHz", PMTBandwidth[1].Value.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "offsetBVolts", PMTOffset[1].Value.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "gainC", Math.Round(PMTGain[2].Value, 2).ToString());
-                XmlManager.SetAttribute(ndList[0], experimentFile, "enableC", ((lsmChannel == 2) || (lsmChannel == 4)) && (PMTGain[2].Value > 0) ? "1" : "0");
+                XmlManager.SetAttribute(ndList[0], experimentFile, "enableC", LSMChannelEnable[2] ? "1" : "0");
                 XmlManager.SetAttribute(ndList[0], experimentFile, "bandwidthCHz", PMTBandwidth[2].Value.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "offsetCVolts", PMTOffset[2].Value.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "gainD", Math.Round(PMTGain[3].Value, 2).ToString());
-                XmlManager.SetAttribute(ndList[0], experimentFile, "enableD", ((lsmChannel == 3) || (lsmChannel == 4)) && (PMTGain[3].Value > 0) ? "1" : "0");
+                XmlManager.SetAttribute(ndList[0], experimentFile, "enableD", LSMChannelEnable[3] ? "1" : "0");
                 XmlManager.SetAttribute(ndList[0], experimentFile, "bandwidthDHz", PMTBandwidth[3].Value.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "offsetDVolts", PMTOffset[3].Value.ToString());
             }
 
-            if (ResourceManagerCS.GetLSMType() == (int)ICamera.LSMType.GALVO_RESONANCE && File.Exists("AlignData.txt"))
+            if ((ResourceManagerCS.GetLSMType() == (int)ICamera.LSMType.GALVO_RESONANCE ||
+                ResourceManagerCS.GetLSMType() == (int)ICamera.LSMType.RESONANCE_GALVO_GALVO)
+                && File.Exists("AlignData.txt"))
             {
                 string textstring;
                 StreamReader alignmentfile = File.OpenText("AlignData.txt");
@@ -2179,54 +2963,6 @@
                 alignmentfile.Close();
                 outalignmentfile.Close();
                 File.Replace("OutAlignData.txt", "AlignData.txt", null);
-            }
-        }
-
-        //:TODO: Need to check if this is still required in a certain use case. Checking the speed of the Galvos should be moved to the lower level
-        private void BuildDwellTimeTable()
-        {
-            //build the minimum dwell time table
-
-            //This is table large enough to hold the dwell times for
-            //the known scanning systems
-            const int PIXELDENSITY_POINTS = 128;// 4096/32
-            const int FIELD_SIZE_ARRAY_SIZE = 256;
-
-            _minDwellTimeTable = new double[PIXELDENSITY_POINTS][];
-
-            for (int i = 0; i < PIXELDENSITY_POINTS; i++)
-            {
-                _minDwellTimeTable[i] = new double[FIELD_SIZE_ARRAY_SIZE];
-            }
-
-            const int START_LOC_FOR_EXTRAPOLATION = 5;
-            //derived by taking Dwelltime range (9.6 - .6) / FieldSize range (255-10)
-            //table for minimum values was determined empiracally
-            double dwellTimeInitialStepPerFieldSize = (9.6 - .6) / (FIELD_SIZE_ARRAY_SIZE - 1 - START_LOC_FOR_EXTRAPOLATION);
-
-            double dwellTimeSlopeChange = .007179487 / dwellTimeInitialStepPerFieldSize / PIXELDENSITY_POINTS;
-
-            //setup first valid dwell times for pixelX 32
-
-            const int FINAL_START_POSITION = 50;
-
-            double dwellTimeStep = _scanControlModel.LSMPixelDwellTimeStep;
-
-            for (int j = 0; j < PIXELDENSITY_POINTS; j++)
-            {
-                for (int i = 0; i < FIELD_SIZE_ARRAY_SIZE; i++)
-                {
-                    int rampStartPosition = (START_LOC_FOR_EXTRAPOLATION + (FINAL_START_POSITION / START_LOC_FOR_EXTRAPOLATION * j));
-                    if (i > rampStartPosition)
-                    {
-                        //Round the value to the nearest value
-                        _minDwellTimeTable[j][i] = dwellTimeStep * Math.Round((.6 + (i - rampStartPosition) * (dwellTimeInitialStepPerFieldSize - dwellTimeSlopeChange * j)) / dwellTimeStep, 0);
-                    }
-                    else
-                    {
-                        _minDwellTimeTable[j][i] = _scanControlModel.LSMPixelDwellTimeMin;
-                    }
-                }
             }
         }
 
@@ -2252,8 +2988,18 @@
                     break;
                 case ICamera.LSMAreaMode.POLYLINE:
                     {
+                        bool singleLinePolyline = (bool)MVMManager.Instance["AreaControlViewModel", "SingleLinePolyline", (object)false];
+                        if (singleLinePolyline)
+                        {
+                            dwellFactor = 0.24; //0.24 was determined experimentally
+
+                        }
+                        else
+                        {
+                            dwellFactor = 0.72; //0.72 was determined experimentally
+
+                        }
                         channel = 1; //channel buffer size has no effect for polyline acquisition. Thus, it is not being considered
-                        dwellFactor = 0.72; //0.72 was determined experimentally
                     }
                     break;
                 default:
@@ -2283,6 +3029,34 @@
                     newDwellTime = Math.Round(tmpDwellTime, 1);
                 }
             }
+        }
+
+        int ConvertBoolAry2Int(bool[] boolArray, int nDigit)
+        {
+            int setter = 1, output = 0;
+            for (int i = 0; i < nDigit; i++, setter <<= 1)
+            {
+                if (boolArray[i] == true)
+                { output |= setter; }
+            }
+            return output;
+        }
+
+        XmlElement CreateWavelengthTag(string name, XmlDocument doc)
+        {
+            //create a new XML tag for the wavelength settings
+            XmlElement newElement = doc.CreateElement("Wavelength");
+
+            XmlAttribute nameAttribute = doc.CreateAttribute("name");
+            XmlAttribute expAttribute = doc.CreateAttribute("exposureTimeMS");
+
+            nameAttribute.Value = name;
+            expAttribute.Value = "0".ToString();
+
+            newElement.Attributes.Append(nameAttribute);
+            newElement.Attributes.Append(expAttribute);
+
+            return newElement;
         }
 
         void GenerateBandwidthList()
@@ -2435,6 +3209,63 @@
                                                   (int)IDevice.DeviceSetParamType.EXECUTION_NO_WAIT);
                 PMTDetectorType.Add(pmtDetectorType);
             }
+
+            //Setup the stepsize for Prelude
+            if ((int)ScopeType.PRELUDE == _scanControlModel.ControlUnitType)
+            {
+                _coarseAlignmentStepSize = 100;
+            }
+        }
+
+        private void LoadChannelSelection()
+        {
+            try
+            {
+                var experimentDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS];
+                XmlNodeList ChannelEnable = experimentDoc.GetElementsByTagName("ChannelEnable");
+                if (ChannelEnable.Count > 0)
+                {
+                    LSMChannelEnable0 = false;
+                    LSMChannelEnable1 = false;
+                    LSMChannelEnable2 = false;
+                    LSMChannelEnable3 = false;
+
+                    string ChanEnableSet = string.Empty;
+                    XmlManager.GetAttribute(ChannelEnable[0], experimentDoc, "Set", ref ChanEnableSet);
+                    //iterate through binary string to check channels:
+                    int tmp = 0;
+                    if (Int32.TryParse(ChanEnableSet, out tmp))
+                    {
+                        string binaryString = Convert.ToString(tmp, 2).PadLeft(NUM_DETECTORS, '0');
+
+                        for (int i = 0; i < NUM_DETECTORS; i++)
+                        {
+                            if ((i == 0) && (binaryString[NUM_DETECTORS - 1 - i] == '1'))
+                            {
+                                LSMChannelEnable0 = true;
+                            }
+                            else if ((i == 1) && (binaryString[NUM_DETECTORS - 1 - i] == '1'))
+                            {
+                                LSMChannelEnable1 = true;
+                            }
+                            else if ((i == 2) && (binaryString[NUM_DETECTORS - 1 - i] == '1'))
+                            {
+                                LSMChannelEnable2 = true;
+                            }
+                            else if ((i == 3) && (binaryString[NUM_DETECTORS - 1 - i] == '1'))
+                            {
+                                LSMChannelEnable3 = true;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ex.ToString();
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + ex.Message);
+
+            }
         }
 
         private void LoadPixelCountXY(XmlNodeList ndList)
@@ -2513,6 +3344,16 @@
                 }
 
             }
+            int i = 0;
+            for (; i < 4; i++)
+            {
+                if (1 == ResourceManagerCS.GetDeviceParamAvailable((int)Enum.Parse(typeof(SelectedHardware), string.Format("SELECTED_PMT{0}", i + 1)), (int)Enum.Parse(typeof(IDevice.Params), string.Format("PARAM_PMT{0}_GAIN_POS_CURRENT_VOLTS", i + 1))))
+                {
+                    double voltVal = 0;
+                    ResourceManagerCS.GetDeviceParamDouble((int)Enum.Parse(typeof(SelectedHardware), string.Format("SELECTED_PMT{0}", i + 1)),  (int)Enum.Parse(typeof(IDevice.Params), string.Format("PARAM_PMT{0}_GAIN_POS_CURRENT_VOLTS", i + 1)), ref voltVal);
+                    PMTVolt[i].Value = voltVal;
+                }
+            }
 
             PMTVoltage = new double[2, 101];
             // debug to check p
@@ -2524,7 +3365,7 @@
             }
 
             var reader = new StreamReader(File.OpenRead(p));
-            int i = 0;
+            i = 0;
             while (!reader.EndOfStream)
             {
                 var l = reader.ReadLine();
@@ -2653,23 +3494,26 @@
                 return;
             }
 
-            if (true == (bool)MVMManager.Instance["CaptureSetupViewModel", "IsLive", (object)false])
+            if (true == (bool)MVMManager.Instance["CaptureSetupViewModel", "IsLive", (object)false] && LSMChannelEnable[index])
             {
                 PMTGainEnable[index].Value = (0 == val) ? 0 : 1;
             }
 
-            if (1 == ResourceManagerCS.GetDeviceParamAvailable((int)SelectedHardware.SELECTED_PMT1 + index, (int)IDevice.Params.PARAM_PMT1_DETECTOR_TYPE + index))
+            if (1 == ResourceManagerCS.GetDeviceParamAvailable((int)Enum.Parse(typeof(SelectedHardware), string.Format("SELECTED_PMT{0}", index + 1)), (int)Enum.Parse(typeof(IDevice.Params), string.Format("PARAM_PMT{0}_DETECTOR_TYPE", index + 1))))
             {
                 PMTVolt[index].Value = _scanControlModel.GetDetectorAtenuation(index);
             }
             else
             {
-                if (PMTVoltage != null)
+                if (1 == ResourceManagerCS.GetDeviceParamAvailable((int)Enum.Parse(typeof(SelectedHardware), string.Format("SELECTED_PMT{0}", index + 1)), (int)Enum.Parse(typeof(IDevice.Params), string.Format("PARAM_PMT{0}_GAIN_POS_CURRENT_VOLTS", index + 1))))
                 {
-                    if (PMTVoltage.GetLength(1) > val)
-                    {
-                        PMTVolt[index].Value = PMTVoltage[PMTMode[index], (int)val];
-                    }
+                    double voltVal = 0;
+                    ResourceManagerCS.GetDeviceParamDouble((int)Enum.Parse(typeof(SelectedHardware), string.Format("SELECTED_PMT{0}", index + 1)), (int)Enum.Parse(typeof(IDevice.Params), string.Format("PARAM_PMT{0}_GAIN_POS_CURRENT_VOLTS", index + 1)), ref voltVal);
+                    PMTVolt[index].Value = voltVal;
+                }
+                else if (PMTVoltage.GetLength(1) > val)
+                {
+                    PMTVolt[index].Value = PMTVoltage[PMTMode[index], (int)val];
                 }
             }
         }
@@ -2825,9 +3669,9 @@
                 ((IMVM)MVMManager.Instance["MultiLaserControlViewModel", this]).OnPropertyChange("Laser4Power");
 
                 //Update LightPath Position
-                MVMManager.Instance["CaptureSetupViewModel", "LightPathGGEnable"] = 0;
-                MVMManager.Instance["CaptureSetupViewModel", "LightPathGREnable"] = 0;
-                MVMManager.Instance["CaptureSetupViewModel", "LightPathCamEnable"] = 0;
+                MVMManager.Instance["LightPathControlViewModel", "LightPathGGEnable"] = 0;
+                MVMManager.Instance["LightPathControlViewModel", "LightPathGREnable"] = 0;
+                MVMManager.Instance["LightPathControlViewModel", "LightPathCamEnable"] = 0;
 
                 //Set the digital switches to the low position, since TearDown will set all TTL signals to low. This way the GUI will match their state
                 foreach (IntPC digiSwitch in (ObservableCollection<IntPC>)MVMManager.Instance["DigitalOutputSwitchesViewModel", "SwitchState"])
@@ -2891,16 +3735,16 @@
             MVMManager.Instance["MultiLaserControlViewModel", "Laser4Enable"] = 0;
 
             //Update LightPath Position
-            MVMManager.Instance["CaptureSetupViewModel", "LightPathGGEnable"] = 0;
-            MVMManager.Instance["CaptureSetupViewModel", "LightPathGREnable"] = 0;
-            MVMManager.Instance["CaptureSetupViewModel", "LightPathCamEnable"] = 0;
+            MVMManager.Instance["LightPathControlViewModel", "LightPathGGEnable"] = 0;
+            MVMManager.Instance["LightPathControlViewModel", "LightPathGREnable"] = 0;
+            MVMManager.Instance["LightPathControlViewModel", "LightPathCamEnable"] = 0;
 
             //Set the digital switches to the low position, since TearDown will set all TTL signals to low. This way the GUI will match their state
             foreach (IntPC digiSwitch in (ObservableCollection<IntPC>)MVMManager.Instance["DigitalOutputSwitchesViewModel", "SwitchState"])
             {
                 digiSwitch.Value = 0;
             }
-                ((IMVM)MVMManager.Instance["DigitalOutputSwitchesViewModel", this]).OnPropertyChange("SwitchState");
+            ((IMVM)MVMManager.Instance["DigitalOutputSwitchesViewModel", this]).OnPropertyChange("SwitchState");
         }
 
         void _twoWayDialog_EnableImaging(bool obj)

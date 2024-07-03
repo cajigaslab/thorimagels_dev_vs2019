@@ -15,7 +15,10 @@
     using System.Windows.Navigation;
     using System.Windows.Shapes;
 
+    using ImageReviewDll.Model;
     using ImageReviewDll.ViewModel;
+
+    using ThorSharedTypes;
 
     /// <summary>
     /// Interaction logic for VolumeControlView.xaml
@@ -55,6 +58,46 @@
 
         void VolumeControlView_RenderVolume()
         {
+            List<List<int>> histogramWPBP = (List<List<int>>)MVMManager.Instance["ImageViewReviewVM", "VolumeViewHistogramBPWP"];
+            int channelSelection = (int)MVMManager.Instance["ImageViewReviewVM", "VolumeViewVisibleChannels"];
+            int index = 0;
+
+            VolumeInterface.IsChanASelected = false;
+            VolumeInterface.IsChanBSelected = false;
+            VolumeInterface.IsChanCSelected = false;
+            VolumeInterface.IsChanDSelected = false;
+
+            for (int i = 0; i < ImageReview.MAX_CHANNELS; i++)
+            {
+                if ((channelSelection & (0x0001 << i)) > 0)
+                {
+                    switch(i)
+                    {
+                        case 0:
+                            VolumeInterface.BlackPoint0 = histogramWPBP[0][index];
+                            VolumeInterface.WhitePoint0 = histogramWPBP[1][index];
+                            VolumeInterface.IsChanASelected = true;
+                            break;
+                        case 1:
+                            VolumeInterface.BlackPoint1 = histogramWPBP[0][index];
+                            VolumeInterface.WhitePoint1 = histogramWPBP[1][index];
+                            VolumeInterface.IsChanBSelected = true;
+                            break;
+                        case 2:
+                            VolumeInterface.BlackPoint2 = histogramWPBP[0][index];
+                            VolumeInterface.WhitePoint2 = histogramWPBP[1][index];
+                            VolumeInterface.IsChanCSelected = true;
+                            break;
+                        case 3:
+                            VolumeInterface.BlackPoint3 = histogramWPBP[0][index];
+                            VolumeInterface.WhitePoint3 = histogramWPBP[1][index];
+                            VolumeInterface.IsChanDSelected = true;
+                            break;
+                    }
+                    index++;
+                }
+            }
+
             VolumeInterface.ResetView = true;
             VolumeInterface.RenderVolume();
         }

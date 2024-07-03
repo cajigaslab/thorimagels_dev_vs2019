@@ -23,6 +23,7 @@
         <ResourceDictionary Source=".\tooltip.xaml" />
         <ResourceDictionary Source=".\ListView.xaml" />
         <ResourceDictionary Source=".\ProgressBar.xaml" />
+        <ResourceDictionary Source=".\TextBlock.xaml"/>
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

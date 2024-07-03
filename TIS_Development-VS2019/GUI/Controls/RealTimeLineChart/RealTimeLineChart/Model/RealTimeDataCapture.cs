@@ -19,6 +19,8 @@
 
         private StringBuilder _errMsg = null;
 
+        private List<double> _frameTimes = null;
+
         #endregion Fields
 
         #region Constructors
@@ -56,6 +58,18 @@
             get
             {
                 return _instance;
+            }
+        }
+
+        public List<double> FrameTimes
+        {
+            get
+            {
+                return _frameTimes;
+            }
+            set
+            {
+                _frameTimes = value;
             }
         }
 

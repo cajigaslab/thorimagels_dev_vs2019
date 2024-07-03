@@ -9,19 +9,19 @@ std::timed_mutex hSettingsDocMutex[(int)SettingsFileType::SETTINGS_FILE_LAST];
 
 wchar_t message[MAX_PATH];
 
-long CreateTag(ticpp::Document *obj, string tag)
+long CreateTag(ticpp::Document* obj, string tag)
 {
 	// make sure the top level root element exist
-	ticpp::Element *configObj = obj->FirstChildElement(false);
+	ticpp::Element* configObj = obj->FirstChildElement(false);
 
-	if ( configObj == NULL )
+	if (configObj == NULL)
 	{
 		return FALSE;
 	}
 	else
 	{
 		//get the attribute value for the specified attribute name
-		ticpp::Element * element = new ticpp::Element(tag);
+		ticpp::Element* element = new ticpp::Element(tag);
 
 		configObj->LinkEndChild(element);
 
@@ -29,25 +29,26 @@ long CreateTag(ticpp::Document *obj, string tag)
 	}
 }
 
-long SetAttribute(ticpp::Document *obj, string tagName, string attribute, string attributeValue)
+long SetAttribute(ticpp::Document* obj, string tagName, string attribute, string attributeValue)
 {
 	try
 	{
-		if(NULL == obj)
+		if (NULL == obj)
 			return FALSE;
 
 		// make sure the top level root element exist
-		ticpp::Element *configObj = obj->FirstChildElement(false);
+		ticpp::Element* configObj = obj->FirstChildElement(false);
 
-		if ( configObj == NULL )
+		if (configObj == NULL)
 			return FALSE;
 
 		// iterate over to get the particular tag element specified as a parameter(tagName)
 		ticpp::Iterator<ticpp::Element> child(configObj->FirstChildElement(tagName), tagName);
 		//get the attribute value for the specified attribute name
 		child->SetAttribute(attribute, attributeValue);
+		obj->SaveFile();
 	}
-	catch(ticpp::Exception ex)
+	catch (ticpp::Exception ex)
 	{
 		//char buf[512];
 		//WCHAR wbuf[512];
@@ -60,17 +61,17 @@ long SetAttribute(ticpp::Document *obj, string tagName, string attribute, string
 	return TRUE;
 }
 
-long GetAttribute(ticpp::Document *obj, string tagName, string attribute, string &attributeValue)
+long GetAttribute(ticpp::Document* obj, string tagName, string attribute, string& attributeValue)
 {
 	try
 	{
-		if(NULL == obj)
+		if (NULL == obj)
 			return FALSE;
 
 		// make sure the top level root element exist
-		ticpp::Element *configObj = obj->FirstChildElement(false);
+		ticpp::Element* configObj = obj->FirstChildElement(false);
 
-		if ( configObj == NULL )
+		if (configObj == NULL)
 			return FALSE;
 
 		// iterate over to get the particular tag element specified as a parameter(tagName)
@@ -78,7 +79,7 @@ long GetAttribute(ticpp::Document *obj, string tagName, string attribute, string
 		//get the attribute value for the specified attribute name
 		child->GetAttribute(attribute, &attributeValue);
 	}
-	catch(ticpp::Exception ex)
+	catch (ticpp::Exception ex)
 	{
 		//char buf[512];
 		//WCHAR wbuf[512];
@@ -97,7 +98,7 @@ ResourceManager::ResourceManager()
 
 ResourceManager::~ResourceManager()
 {
-	if(true == instanceFlag)
+	if (true == instanceFlag)
 	{
 		const string file = ".\\ResourceManager.xml";
 		auto_ptr<ticpp::Document> obj(new ticpp::Document(file));
@@ -106,32 +107,32 @@ ResourceManager::~ResourceManager()
 		{
 			obj->LoadFile();
 		}
-		catch(ticpp::Exception ex)
+		catch (ticpp::Exception ex)
 		{
-			StringCbPrintfW(message,MAX_PATH,L"ResourceManager Locate Directories Failed");
+			StringCbPrintfW(message, MAX_PATH, L"ResourceManager Locate Directories Failed");
 
-			logDll->TLTraceEvent(ERROR_EVENT,1,message);	
+			logDll->TLTraceEvent(ERROR_EVENT, 1, message);
 		}
 
 		//Do not save modality if it is empty
-		if(_modality.length() > 0)
+		if (_modality.length() > 0)
 		{
 			//get parent tag
-			ticpp::Element *configObj = obj->FirstChildElement(false);
+			ticpp::Element* configObj = obj->FirstChildElement(false);
 
-			ticpp::Element * modalityElement = configObj->FirstChildElement("Modality",false);
+			ticpp::Element* modalityElement = configObj->FirstChildElement("Modality", false);
 
-			if(NULL == modalityElement)
+			if (NULL == modalityElement)
 			{
-				CreateTag(obj.get(),"Modality");
+				CreateTag(obj.get(), "Modality");
 			}
 
 			string strModality = ConvertWStringToString(_modality);
 
-			if(SetAttribute(obj.get(), "Modality", "value", strModality))
+			if (SetAttribute(obj.get(), "Modality", "value", strModality))
 			{
 			}
-			
+
 			obj->SaveFile();
 		}
 	}
@@ -149,6 +150,7 @@ wstring ResourceManager::_appSettingsFile;
 wstring ResourceManager::_hwSettingsFile;
 wstring ResourceManager::_modality;
 wstring ResourceManager::_autoFocusCacheDir;
+wstring ResourceManager::_sequentialCacheDir;
 const wstring ResourceManager::MODALITY_TAG_NAME = L"Modality";
 
 auto_ptr<ResourceManager> ResourceManager::_single(new ResourceManager());
@@ -156,18 +158,18 @@ auto_ptr<ticpp::Document> _settingsDoc[(int)SettingsFileType::SETTINGS_FILE_LAST
 
 ResourceManager* ResourceManager::getInstance()
 {
-	if(! instanceFlag)
+	if (!instanceFlag)
 	{
 		try
 		{
 			_single.reset(new ResourceManager());
 
-			wsprintf(message,L"ResourceManager Created");
-			logDll->TLTraceEvent(VERBOSE_EVENT,1,message);
+			wsprintf(message, L"ResourceManager Created");
+			logDll->TLTraceEvent(VERBOSE_EVENT, 1, message);
 
 			LocateDirectories();
 		}
-		catch(...)
+		catch (...)
 		{
 			//critically low on resources
 			//do not proceed with application
@@ -176,6 +178,12 @@ ResourceManager* ResourceManager::getInstance()
 		instanceFlag = true;
 	}
 	return _single.get();
+}
+
+long ResourceManager::ReloadDirectories()
+{
+	LocateDirectories();
+	return _MyDocumentsThorImageDir.empty();
 }
 
 long ResourceManager::LoadSettings()
@@ -190,10 +198,10 @@ long ResourceManager::LoadSettings()
 		_settingsDoc[(int)SettingsFileType::HARDWARE_SETTINGS].reset(new ticpp::Document(WStringToString(_hwSettingsFile)));
 		_settingsDoc[(int)SettingsFileType::HARDWARE_SETTINGS]->LoadFile();
 	}
-	catch(ticpp::Exception ex)
+	catch (ticpp::Exception ex)
 	{
-		StringCbPrintfW(message,MAX_PATH,L"ResourceManager load settings Failed");
-		logDll->TLTraceEvent(ERROR_EVENT,1,message);	
+		StringCbPrintfW(message, MAX_PATH, L"ResourceManager load settings Failed");
+		logDll->TLTraceEvent(ERROR_EVENT, 1, message);
 		return FALSE;
 	}
 	return TRUE;
@@ -201,57 +209,95 @@ long ResourceManager::LoadSettings()
 
 void ResourceManager::LocateDirectories()
 {
+	//Load the resource manager document 
 	const string file = ".\\ResourceManager.xml";
 	auto_ptr<ticpp::Document> obj(new ticpp::Document(file));
+
+	//boolean to act as a flag that indicates if it is safe to locate the directories
+	bool safeToLocate = true;
 
 	try
 	{
 		obj->LoadFile();
 	}
-	catch(ticpp::Exception ex)
+	catch (ticpp::Exception ex)
 	{
-		StringCbPrintfW(message,MAX_PATH,L"ResourceManager Locate Directories Failed");
-
-		logDll->TLTraceEvent(ERROR_EVENT,1,message);	
+		StringCbPrintfW(message, MAX_PATH, L"ResourceManager Locate Directories Failed");
+		logDll->TLTraceEvent(ERROR_EVENT, 1, message);
 	}
 
+	//Get the name of the current documents folder
 	string str;
-
-	if(!GetAttribute(obj.get(), "DocumentsFolder", "value", str))
+	if (!GetAttribute(obj.get(), "DocumentsFolder", "value", str))
 	{
+		safeToLocate = false;
 	}
 
-	wstring thorImageFolder = L"\\" + StringToWString(str) + L"\\"; 
+	wstring thorImageFolder = L"\\" + StringToWString(str) + L"\\";
 	wstring modalityFolder;
 
 	string strModality;
 
-	if(GetAttribute(obj.get(), "Modality", "value", strModality))
+	if (GetAttribute(obj.get(), "Modality", "value", strModality))
 	{
 		modalityFolder = L"\\Modalities\\" + StringToWString(strModality) + L"\\";
 		_modality = StringToWString(strModality);
 	}
 
+	string strUseDefaultDocumentsFolderPath;
+	string documentsFolderPath;
+	if (!GetAttribute(obj.get(), "UseDefaultDocumentsFolderPath", "value", strUseDefaultDocumentsFolderPath))
+	{
+		safeToLocate = false;
+	}
+
+	if (!GetAttribute(obj.get(), "DocumentsFolderPath", "value", documentsFolderPath))
+	{
+		safeToLocate = false;
+	}
+
 	wchar_t buffer[_MAX_PATH];
-	GetModuleFileName( NULL, buffer, _MAX_PATH );
+	GetModuleFileName(NULL, buffer, _MAX_PATH);
 
 	_appDir = wstring(buffer);
 
-	if(SUCCEEDED(SHGetFolderPath(NULL,CSIDL_PERSONAL|CSIDL_FLAG_CREATE,NULL,0,buffer))) 
+	//Modify _MyDocumentsThorImageDir based on if Default path or not
+	if ("0" == strUseDefaultDocumentsFolderPath)
 	{
-		_MyDocumentsThorImageDir = wstring(buffer);
+		//Use path from XML
+		_MyDocumentsThorImageDir = StringToWString(documentsFolderPath);
 		_MyDocumentsThorImageDir += thorImageFolder;
+	}
+	else if ("1" == strUseDefaultDocumentsFolderPath)
+	{
+		//Use the default path for Documents folder
+		if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_PERSONAL | CSIDL_FLAG_CREATE, NULL, 0, buffer)))
+		{
+			_MyDocumentsThorImageDir = wstring(buffer);
+			_MyDocumentsThorImageDir += thorImageFolder;
+		}
+		else
+		{
+			safeToLocate = false;
+		}
+	}
+	else
+	{
+		safeToLocate = false;
+	}
 
+	if (safeToLocate)
+	{
 		_appSettingsDir = wstring(_MyDocumentsThorImageDir);
 		_appSettingsDir += wstring(L"Application Settings\\");
 
-		wstring tmp = wstring(_MyDocumentsThorImageDir) +  modalityFolder;
+		wstring tmp = wstring(_MyDocumentsThorImageDir) + modalityFolder;
 		DWORD ftyp = GetFileAttributes(tmp.c_str());
-		if(INVALID_FILE_ATTRIBUTES == ftyp || _modality.compare(L"") == 0)
+		if (INVALID_FILE_ATTRIBUTES == ftyp || _modality.compare(L"") == 0)
 		{
 			tmp = wstring(_MyDocumentsThorImageDir) + L"Modalities\\";
 			ftyp = GetFileAttributes(tmp.c_str());
-			if(INVALID_FILE_ATTRIBUTES == ftyp)
+			if (INVALID_FILE_ATTRIBUTES == ftyp)
 			{
 				modalityFolder = L"";
 				_modality = L"";
@@ -259,9 +305,9 @@ void ResourceManager::LocateDirectories()
 			else
 			{
 				tmp = tmp + L"*";
-				LPWIN32_FIND_DATA ffd =  new WIN32_FIND_DATA();
+				LPWIN32_FIND_DATA ffd = new WIN32_FIND_DATA();
 				HANDLE hf = FindFirstFile(tmp.c_str(), ffd);
-				if(INVALID_HANDLE_VALUE == hf)
+				if (INVALID_HANDLE_VALUE == hf)
 				{
 					modalityFolder = L"";
 					_modality = L"";
@@ -270,20 +316,20 @@ void ResourceManager::LocateDirectories()
 				{
 					BOOL r;
 
-					while(wstring(ffd->cFileName).compare(L".") == 0 || wstring(ffd->cFileName).compare(L"..") == 0)
+					while (wstring(ffd->cFileName).compare(L".") == 0 || wstring(ffd->cFileName).compare(L"..") == 0)
 					{
 						r = FindNextFile(hf, ffd);
 						// if no modality is found in the modalities folder, break out of the while loop
-						if(!r)		
+						if (!r)
 						{
 							break;
-						} 
-						else 
+						}
+						else
 						{
 						}
 
 					}
-					if(r != 0 && ffd->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+					if (r != 0 && ffd->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 					{
 						modalityFolder = L"\\Modalities\\" + wstring(ffd->cFileName) + L"\\";
 						_modality = wstring(ffd->cFileName);
@@ -301,7 +347,7 @@ void ResourceManager::LocateDirectories()
 		}
 
 		_captureTemplateDir = wstring(_MyDocumentsThorImageDir);
-		_captureTemplateDir += wstring(L"Capture Templates\\"); 
+		_captureTemplateDir += wstring(L"Capture Templates\\");
 
 		_zStackCacheDir = wstring(_MyDocumentsThorImageDir);
 		_zStackCacheDir += wstring(L"ZStackCache\\");
@@ -318,6 +364,9 @@ void ResourceManager::LocateDirectories()
 
 		_autoFocusCacheDir = wstring(_MyDocumentsThorImageDir);
 		_autoFocusCacheDir += wstring(L"AutoFocusCache\\");
+
+		_sequentialCacheDir = wstring(_MyDocumentsThorImageDir);
+		_sequentialCacheDir += wstring(L"SequentialCaptureCache\\");
 
 		LoadSettings();
 	}
@@ -348,6 +397,50 @@ wstring ResourceManager::GetMyDocumentsThorImageFolder()
 	return _MyDocumentsThorImageDir;
 }
 
+long ResourceManager::SetMyDocumentsThorImageFolderPath(wchar_t* folderPath)
+{
+	//Incoming path will have the form: "C:\\Users\\USERNAME\\ThorImageLS 5.0" etc
+	wstring updatedFolderPath = folderPath;
+	//Substring from the position of the final \\ in the path
+	wstring folderNameFromPath = updatedFolderPath.substr(updatedFolderPath.find_last_of('\\') + 1);
+	wstring folderPathWithoutName = updatedFolderPath.substr(0, updatedFolderPath.find_last_of('\\'));
+
+	const string file = ".\\ResourceManager.xml";
+	auto_ptr<ticpp::Document> obj(new ticpp::Document(file));
+
+	try
+	{
+		obj->LoadFile();
+	}
+	catch (ticpp::Exception ex)
+	{
+		StringCbPrintfW(message, MAX_PATH, L"ResourceManager Set Documents Directory Path Failed");
+		logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+	}
+
+	if (!SetAttribute(obj.get(), "DocumentsFolder", "value", WStringToString(folderNameFromPath)))
+	{
+		//Issue with setting attribute in the XML... return 
+		return false;
+	}
+
+	if (!SetAttribute(obj.get(), "DocumentsFolderPath", "value", WStringToString(folderPathWithoutName)))
+	{
+		//Issue with setting attribute in the XML... return 
+		return false;
+	}
+
+	if (!SetAttribute(obj.get(), "UseDefaultDocumentsFolderPath", "value", "0"))
+	{
+		//Issue with setting attribute in the XML... return 
+		return false;
+	}
+	obj->SaveFile();
+	LocateDirectories();
+
+	return true;
+}
+
 wstring ResourceManager::GetZStackCachePath()
 {
 	return _zStackCacheDir;
@@ -356,6 +449,11 @@ wstring ResourceManager::GetZStackCachePath()
 wstring ResourceManager::GetAutoFocusCachePath()
 {
 	return _autoFocusCacheDir;
+}
+
+wstring ResourceManager::GetSequentialCachePath()
+{
+	return _sequentialCacheDir;
 }
 
 wstring ResourceManager::GetApplicationSettingsFilePathAndName()
@@ -367,7 +465,7 @@ wstring ResourceManager::GetModalityApplicationSettingsFilePathAndName(wchar_t* 
 {
 	wstring temp;
 	temp = wstring(_MyDocumentsThorImageDir);
-	temp +=  L"Modalities\\";
+	temp += L"Modalities\\";
 	temp += modality;
 	temp += L"\\";
 
@@ -376,7 +474,7 @@ wstring ResourceManager::GetModalityApplicationSettingsFilePathAndName(wchar_t* 
 	if (ftyp == INVALID_FILE_ATTRIBUTES)
 	{
 		//something is wrong with your path, return from current modality
-		return _appSettingsFile;  
+		return _appSettingsFile;
 	}
 	if (ftyp & FILE_ATTRIBUTE_DIRECTORY)
 	{
@@ -395,7 +493,7 @@ wstring ResourceManager::GetModalityHardwareSettingsFilePathAndName(wchar_t* mod
 {
 	wstring temp;
 	temp = wstring(_MyDocumentsThorImageDir);
-	temp +=  L"Modalities\\";
+	temp += L"Modalities\\";
 	temp += modality;
 	temp += L"\\";
 
@@ -404,7 +502,7 @@ wstring ResourceManager::GetModalityHardwareSettingsFilePathAndName(wchar_t* mod
 	if (ftyp == INVALID_FILE_ATTRIBUTES)
 	{
 		//something is wrong with your path, return from current modality
-		return _hwSettingsFile;  
+		return _hwSettingsFile;
 	}
 	if (ftyp & FILE_ATTRIBUTE_DIRECTORY)
 	{
@@ -418,13 +516,13 @@ long ResourceManager::SetModality(wchar_t* modalityName)
 {
 	wstring temp;
 	wstring modality = modalityName;
-	if(0 == wcslen(modalityName))
+	if (0 == wcslen(modalityName))
 	{
 		modality = GetModality();
 	}
 
 	temp = wstring(_MyDocumentsThorImageDir);
-	temp +=  L"Modalities\\";
+	temp += L"Modalities\\";
 	temp += modality;
 	temp += L"\\";
 
@@ -433,13 +531,13 @@ long ResourceManager::SetModality(wchar_t* modalityName)
 	if (ftyp == INVALID_FILE_ATTRIBUTES)
 	{
 		//something is wrong with your path!
-		return FALSE;  
+		return FALSE;
 	}
 	if (ftyp & FILE_ATTRIBUTE_DIRECTORY)
 	{
 		// this is a directory!
 		_appSettingsFile = temp + wstring(L"Application Settings\\ApplicationSettings.xml");
-		_appSettingsDir = temp + wstring(L"Application Settings\\"); 
+		_appSettingsDir = temp + wstring(L"Application Settings\\");
 		_hwSettingsFile = temp + wstring(L"Application Settings\\HardwareSettings.xml");
 		_modality = modality;
 
@@ -460,11 +558,60 @@ long ResourceManager::GetSettingsParamLong(int settingsFileType, wchar_t* tagNam
 {
 	long ret = defaultValue;
 	std::string strValue;
-	if(GetAttribute(_settingsDoc[(int)settingsFileType].get(), WStringToString(tagName), WStringToString(attribute), strValue))
+	if (GetAttribute(_settingsDoc[(int)settingsFileType].get(), WStringToString(tagName), WStringToString(attribute), strValue))
 	{
 		ret = atoi(strValue.c_str());
 	}
 	return ret;
+}
+
+long ResourceManager::SetStartupFlag(wchar_t* value)
+{
+	const string file = ".\\ResourceManager.xml";
+	auto_ptr<ticpp::Document> obj(new ticpp::Document(file));
+
+	try
+	{
+		obj->LoadFile();
+	}
+	catch (ticpp::Exception ex)
+	{
+		StringCbPrintfW(message, MAX_PATH, L"ResourceManager Set Startup Flag Failed");
+		logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+	}
+
+	if (!SetAttribute(obj.get(), "StartupFlag", "value", WStringToString(value)))
+	{
+		//Issue with setting attribute in the XML... return 
+		return false;
+	}
+
+	return true;
+}
+
+wstring ResourceManager::GetStartupFlag()
+{
+	const string file = ".\\ResourceManager.xml";
+	auto_ptr<ticpp::Document> obj(new ticpp::Document(file));
+
+	try
+	{
+		obj->LoadFile();
+	}
+	catch (ticpp::Exception ex)
+	{
+		StringCbPrintfW(message, MAX_PATH, L"ResourceManager Set Startup Flag Failed");
+		logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+	}
+
+	//Get the name of the current documents folder
+	string str;
+	if (!GetAttribute(obj.get(), "StartupFlag", "value", str))
+	{
+		str = "";
+	}
+
+	return StringToWString(str);
 }
 
 bool ResourceManager::BorrowDocMutex(long sfType, long timeMS)

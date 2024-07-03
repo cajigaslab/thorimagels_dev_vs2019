@@ -22,6 +22,12 @@ using namespace std;
 #include "..\..\..\..\Common\Device.h"
 #include "..\..\..\..\Common\Thread.h"
 
+#define LOGGING_ENABLED
+
+#ifdef LOGGING_ENABLED
+#include "..\..\..\..\Common\Log.h"
+#endif
+
 #define MSG_SIZE 256
 
 #ifndef TIXML_USE_TICPP

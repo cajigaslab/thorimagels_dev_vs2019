@@ -61,6 +61,68 @@ namespace ThorSharedTypes
         #endregion Methods
     }
 
+    public interface IMVMCapture
+    {
+        #region Properties
+
+        object this[string propertyName, object defaultObject = null]
+        {
+            get;
+            set;
+        }
+
+        object this[string propertyName, int index, object defaultObject = null]
+        {
+            get;
+            set;
+        }
+
+        #endregion Properties
+
+        #region Methods
+
+        PropertyInfo GetPropertyInfo(string propertyName);
+
+        void LoadXMLSettings();
+
+        void OnPropertyChange(string propertyName);
+
+        void UpdateExpXMLSettings(ref XmlDocument xmlDoc);
+
+        #endregion Methods
+    }
+
+    public interface IMVMReview
+    {
+        #region Properties
+
+        object this[string propertyName, object defaultObject = null]
+        {
+            get;
+            set;
+        }
+
+        object this[string propertyName, int index, object defaultObject = null]
+        {
+            get;
+            set;
+        }
+
+        #endregion Properties
+
+        #region Methods
+
+        PropertyInfo GetPropertyInfo(string propertyName);
+
+        void LoadXMLSettings();
+
+        void OnPropertyChange(string propertyName);
+
+        void UpdateExpXMLSettings(ref XmlDocument xmlDoc);
+
+        #endregion Methods
+    }
+
     public interface IViewModelActions
     {
         #region Methods
@@ -82,7 +144,9 @@ namespace ThorSharedTypes
         private static string[] _dependentMVMs = { "MesoScanMVM" };
         private static MVMManager _instance = null;
         private static HashSet<string> _loadedAssemblies = new HashSet<string>();
-        private static Dictionary<string, Object> _mvmCollection;
+        private static Dictionary<string, object> _mvmCollection;
+        private static Dictionary<string, object> _mvmCollectionCapture;
+        private static Dictionary<string, object> _mvmCollectionReview;
         private static XmlDocument[] _xmlDoc = new XmlDocument[(int)SettingsFileType.SETTINGS_FILE_LAST];
 
         #endregion Fields
@@ -131,7 +195,15 @@ namespace ThorSharedTypes
                 {
                     if (_mvmCollection.ContainsKey(destination))
                     {
-                        return (ThorSharedTypes.IMVM)(_mvmCollection[destination]);
+                        return (IMVM)(_mvmCollection[destination]);
+                    }
+                    else if (_mvmCollectionCapture.ContainsKey(destination))
+                    {
+                        return (IMVMCapture)(_mvmCollectionCapture[destination]);
+                    }
+                    else if (_mvmCollectionReview.ContainsKey(destination))
+                    {
+                        return (IMVMReview)(_mvmCollectionReview[destination]);
                     }
                     else
                     {
@@ -154,6 +226,14 @@ namespace ThorSharedTypes
                     {
                         _mvmCollection[destination] = value;
                     }
+                    else if (_mvmCollectionCapture.ContainsKey(destination))
+                    {
+                        _mvmCollectionCapture[destination] = value;
+                    }
+                    else if (_mvmCollectionCapture.ContainsKey(destination))
+                    {
+                        _mvmCollectionReview[destination] = value;
+                    }
                     else
                     {
                         ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, "IMVM Set failed, destination: " + destination + " is not found.\n");
@@ -174,7 +254,15 @@ namespace ThorSharedTypes
                 {
                     if (_mvmCollection.ContainsKey(destination))
                     {
-                        return ((ThorSharedTypes.IMVM)(_mvmCollection[destination]))[propertyName, defaultObject];
+                        return ((IMVM)(_mvmCollection[destination]))[propertyName, defaultObject];
+                    }
+                    else if (_mvmCollectionCapture.ContainsKey(destination))
+                    {
+                        return ((IMVMCapture)(_mvmCollectionCapture[destination]))[propertyName, defaultObject];
+                    }
+                    else if (_mvmCollectionReview.ContainsKey(destination))
+                    {
+                        return ((IMVMReview)(_mvmCollectionReview[destination]))[propertyName, defaultObject];
                     }
                     else
                     {
@@ -184,7 +272,14 @@ namespace ThorSharedTypes
                 }
                 catch (Exception ex)
                 {
-                    ThorLog.Instance.TraceEvent(TraceEventType.Warning, 1, "IMVM Get failed, destination: " + destination + " property: " + propertyName + " error: " + ex.InnerException.Message);
+                    if (null != ex.InnerException)
+                    {
+                        ThorLog.Instance.TraceEvent(TraceEventType.Warning, 1, "IMVM Get failed, destination: " + destination + " property: " + propertyName + " error: " + ex.InnerException.Message);
+                    }
+                    else
+                    {
+                        ThorLog.Instance.TraceEvent(TraceEventType.Warning, 1, "IMVM Get failed, destination: " + destination + " property: " + propertyName + " error: " + ex.Message);
+                    }
                     return defaultObject;
                 }
             }
@@ -194,7 +289,15 @@ namespace ThorSharedTypes
                 {
                     if (_mvmCollection.ContainsKey(destination))
                     {
-                        ((ThorSharedTypes.IMVM)(_mvmCollection[destination]))[propertyName] = value;
+                        ((IMVM)(_mvmCollection[destination]))[propertyName] = value;
+                    }
+                    else if (_mvmCollectionCapture.ContainsKey(destination))
+                    {
+                        ((IMVMCapture)(_mvmCollectionCapture[destination]))[propertyName] = value;
+                    }
+                    else if (_mvmCollectionReview.ContainsKey(destination))
+                    {
+                        ((IMVMReview)(_mvmCollectionReview[destination]))[propertyName] = value;
                     }
                     else
                     {
@@ -203,7 +306,7 @@ namespace ThorSharedTypes
                 }
                 catch (Exception ex)
                 {
-                    ThorLog.Instance.TraceEvent(TraceEventType.Warning, 1, "IMVM Set failed, destination: " + destination + " property: " + propertyName + " error: " + ex.InnerException.Message);
+                    ThorLog.Instance.TraceEvent(TraceEventType.Warning, 1, "IMVM Set failed, destination: " + destination + " property: " + propertyName + " error: " + ex.InnerException?.Message);
                 }
             }
         }
@@ -216,7 +319,15 @@ namespace ThorSharedTypes
                 {
                     if (_mvmCollection.ContainsKey(destination))
                     {
-                        return ((ThorSharedTypes.IMVM)(_mvmCollection[destination]))[propertyName, index, defaultObject];
+                        return ((IMVM)(_mvmCollection[destination]))[propertyName, index, defaultObject];
+                    }
+                    else if (_mvmCollectionCapture.ContainsKey(destination))
+                    {
+                        return ((IMVMCapture)(_mvmCollectionCapture[destination]))[propertyName, index, defaultObject];
+                    }
+                    else if (_mvmCollectionReview.ContainsKey(destination))
+                    {
+                        return ((IMVMReview)(_mvmCollectionReview[destination]))[propertyName, index, defaultObject];
                     }
                     else
                     {
@@ -226,7 +337,7 @@ namespace ThorSharedTypes
                 }
                 catch (Exception ex)
                 {
-                    ThorLog.Instance.TraceEvent(TraceEventType.Warning, 1, "IMVM Get failed, destination: " + destination + " property: " + propertyName + " index: " + index + " error: " + ex.InnerException.Message);
+                    ThorLog.Instance.TraceEvent(TraceEventType.Warning, 1, "IMVM Get failed, destination: " + destination + " property: " + propertyName + " index: " + index + " error: " + ex.InnerException?.Message);
                     return defaultObject;
                 }
 
@@ -237,7 +348,15 @@ namespace ThorSharedTypes
                 {
                     if (_mvmCollection.ContainsKey(destination))
                     {
-                        ((ThorSharedTypes.IMVM)(_mvmCollection[destination]))[propertyName, index] = value;
+                        ((IMVM)(_mvmCollection[destination]))[propertyName, index] = value;
+                    }
+                    else if (_mvmCollectionCapture.ContainsKey(destination))
+                    {
+                        ((IMVMCapture)(_mvmCollectionCapture[destination]))[propertyName, index] = value;
+                    }
+                    else if (_mvmCollectionReview.ContainsKey(destination))
+                    {
+                        ((IMVMReview)(_mvmCollectionReview[destination]))[propertyName, index] = value;
                     }
                     else
                     {
@@ -246,7 +365,7 @@ namespace ThorSharedTypes
                 }
                 catch (Exception ex)
                 {
-                    ThorLog.Instance.TraceEvent(TraceEventType.Warning, 1, "IMVM Set failed, destination: " + destination + " property: " + propertyName + " index: " + index + " error: " + ex.InnerException.Message);
+                    ThorLog.Instance.TraceEvent(TraceEventType.Warning, 1, "IMVM Set failed, destination: " + destination + " property: " + propertyName + " index: " + index + " error: " + ex.InnerException?.Message);
                 }
 
             }
@@ -255,6 +374,50 @@ namespace ThorSharedTypes
         #endregion Indexers
 
         #region Methods
+
+        public static void CollectSingleMVM(string mvmName)
+        {
+            string ModulesPath = System.IO.Path.GetDirectoryName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName) + "\\Modules\\MVM";
+            var files = System.IO.Directory.GetFiles(ModulesPath, "*MVM.dll", System.IO.SearchOption.AllDirectories);
+            List<string> foundFiles = new List<string>();
+
+            if (files.Contains(ModulesPath + "\\" + mvmName))
+            {
+                if (null == _mvmCollection)
+                {
+                    _mvmCollection = new Dictionary<string, object>();
+                }
+
+                if (null == _mvmCollectionCapture)
+                {
+                    _mvmCollectionCapture = new Dictionary<string, object>();
+                }
+
+                if (null == _mvmCollectionReview)
+                {
+                    _mvmCollectionReview = new Dictionary<string, object>();
+                }
+
+                if (!_loadedAssemblies.Contains(mvmName))
+                {
+                    if (!_dependentMVMs.Contains(Path.GetFileNameWithoutExtension(ModulesPath + "\\" + mvmName)))
+                    {
+                        LoadInstance(ModulesPath + "\\" + mvmName);
+                    }
+                    else
+                    {
+                        foundFiles.Add(ModulesPath + "\\" + mvmName);
+                        LoadInstance(ModulesPath + "\\" + mvmName);
+                    }
+                    _loadedAssemblies.Add(ModulesPath + "\\" + mvmName);
+                }
+
+            }
+            else
+            {
+                return;
+            }
+        }
 
         public static void CollectMVM()
         {
@@ -266,7 +429,17 @@ namespace ThorSharedTypes
 
             if (null == _mvmCollection)
             {
-                _mvmCollection = new Dictionary<string, Object>();
+                _mvmCollection = new Dictionary<string, object>();
+            }
+
+            if (null == _mvmCollectionCapture)
+            {
+                _mvmCollectionCapture = new Dictionary<string, object>();
+            }
+
+            if (null == _mvmCollectionReview)
+            {
+                _mvmCollectionReview = new Dictionary<string, object>();
             }
 
             foreach (var file in files)
@@ -291,7 +464,7 @@ namespace ThorSharedTypes
             }
         }
 
-        public static bool InterfaceClassFilter(Type typeObj, Object criteriaObj)
+        public static bool InterfaceClassFilter(Type typeObj, object criteriaObj)
         {
             Type baseClassType = (Type)criteriaObj;
             return (typeObj == baseClassType) ? true : false;
@@ -299,13 +472,107 @@ namespace ThorSharedTypes
 
         public void AddMVM(string name, object obj)
         {
-            if (null == _mvmCollection)
+            if (obj is IMVM)
             {
-                _mvmCollection = new Dictionary<string, Object>();
+                if (null == _mvmCollection)
+                {
+                    _mvmCollection = new Dictionary<string, object>();
+                }
+                if (!_mvmCollection.ContainsKey(name))
+                {
+                    _mvmCollection.Add(name, obj);
+                    ThorLog.Instance.TraceEvent(TraceEventType.Information, 1, obj.ToString() + " Added to Collection");
+                }
             }
-            if (!_mvmCollection.ContainsKey(name))
+            else if (obj is IMVMReview)
             {
-                _mvmCollection.Add(name, obj);
+                if (null == _mvmCollectionReview)
+                {
+                    _mvmCollectionReview = new Dictionary<string, object>();
+                }
+                if (!_mvmCollectionReview.ContainsKey(name))
+                {
+                    _mvmCollectionReview.Add(name, obj);
+                    ThorLog.Instance.TraceEvent(TraceEventType.Information, 1, obj.ToString() + " Added to Review Collection");
+                }
+            }
+            else if (obj is IMVMCapture)
+            {
+                if (null == _mvmCollectionCapture)
+                {
+                    _mvmCollectionCapture = new Dictionary<string, object>();
+                }
+                if (!_mvmCollectionCapture.ContainsKey(name))
+                {
+                    _mvmCollectionCapture.Add(name, obj);
+                    ThorLog.Instance.TraceEvent(TraceEventType.Information, 1, obj.ToString() + " Added to Capture Collection");
+                }
+            }
+            else
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Information, 1, "Cannot add " + obj.ToString() + "to the collection. Object is not of correct type");
+            }
+        }
+
+        /// <summary>
+        /// request all (or specified) Capture MVMs to load settings
+        /// </summary>
+        /// <param name="mvmNames"></param>
+        public void LoadMVMCaptureSettings(string[] mvmNames = null)
+        {
+            if (null == mvmNames)
+            {
+                foreach (var item in _mvmCollectionCapture.Values)
+                {
+                    if (item is IMVMCapture)
+                    {
+                        (item as IMVMCapture).LoadXMLSettings();
+                    }
+                }
+            }
+            else
+            {
+                foreach (var item in mvmNames)
+                {
+                    if (_mvmCollectionCapture.ContainsKey(item))
+                    {
+                        if (_mvmCollection[item] is IMVMCapture)
+                        {
+                            ((IMVMCapture)_mvmCollectionCapture[item]).LoadXMLSettings();
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// request all (or specified) Review MVMs to load settings
+        /// </summary>
+        /// <param name="mvmNames"></param>
+        public void LoadMVMReviewSettings(string[] mvmNames = null)
+        {
+            if (null == mvmNames)
+            {
+                foreach (var item in _mvmCollectionReview.Values)
+                {
+                    if (item is IMVMReview)
+                    {
+                        (item as IMVMReview).LoadXMLSettings();
+                    }
+                }
+            }
+            else
+            {
+                foreach (var item in mvmNames)
+                {
+                    if (_mvmCollectionReview.ContainsKey(item))
+                    {
+                        if (_mvmCollection[item] is IMVMReview)
+                        {
+                            ((IMVMReview)_mvmCollectionReview[item]).LoadXMLSettings();
+                        }
+                    }
+                }
             }
         }
 
@@ -319,9 +586,9 @@ namespace ThorSharedTypes
             {
                 foreach (var item in _mvmCollection.Values)
                 {
-                    if (item is ThorSharedTypes.IMVM)
+                    if (item is IMVM)
                     {
-                        (item as ThorSharedTypes.IMVM).LoadXMLSettings();
+                        (item as IMVM).LoadXMLSettings();
                     }
                 }
             }
@@ -331,9 +598,9 @@ namespace ThorSharedTypes
                 {
                     if (_mvmCollection.ContainsKey(item))
                     {
-                        if (_mvmCollection[item] is ThorSharedTypes.IMVM)
+                        if (_mvmCollection[item] is IMVM)
                         {
-                            ((ThorSharedTypes.IMVM)_mvmCollection[item]).LoadXMLSettings();
+                            ((IMVM)_mvmCollection[item]).LoadXMLSettings();
                         }
                     }
                 }
@@ -362,6 +629,18 @@ namespace ThorSharedTypes
                     break;
                 case SettingsFileType.HARDWARE_SETTINGS:
                     settingsFile = ResourceManagerCS.GetHardwareSettingsFileString();
+                    break;
+                case SettingsFileType.REGISTRATION_SETTINGS:
+                    settingsFile = ResourceManagerCS.GetCaptureTemplatePathString() + "Registration.xml";
+                    if (!File.Exists(settingsFile))
+                    {
+                        using (XmlWriter writer = XmlWriter.Create(settingsFile))
+                        {
+                            writer.WriteStartElement("ThorImageRegistration");
+                            writer.WriteElementString("Registrations", "");
+                            writer.Flush();
+                        }
+                    }
                     break;
                 case SettingsFileType.SETTINGS_FILE_LAST:
                 default:
@@ -392,6 +671,11 @@ namespace ThorSharedTypes
             return LoadSettings(fType, lockAccess);
         }
 
+        public bool ReloadSettingsWithoutSave(SettingsFileType fType, bool lockAccess = false)
+        {
+            return LoadSettings(fType, lockAccess);
+        }
+
         public void SaveSettings(bool lockAccess = false)
         {
             for (SettingsFileType i = SettingsFileType.SETTINGS_FILE_FIRST; i < SettingsFileType.SETTINGS_FILE_LAST; i++)
@@ -414,6 +698,9 @@ namespace ThorSharedTypes
                     break;
                 case SettingsFileType.HARDWARE_SETTINGS:
                     settingsFile = ResourceManagerCS.GetHardwareSettingsFileString();
+                    break;
+                case SettingsFileType.REGISTRATION_SETTINGS:
+                    settingsFile = ResourceManagerCS.GetCaptureTemplatePathString() + "Registration.xml";
                     break;
                 case SettingsFileType.SETTINGS_FILE_LAST:
                 default:
@@ -446,7 +733,7 @@ namespace ThorSharedTypes
             {
                 foreach (var item in _mvmCollection.Values)
                 {
-                    (item as ThorSharedTypes.IMVM).UpdateExpXMLSettings(ref experimentDoc);
+                    (item as IMVM).UpdateExpXMLSettings(ref experimentDoc);
                 }
             }
             else
@@ -454,7 +741,7 @@ namespace ThorSharedTypes
                 foreach (var item in mvmNames)
                 {
                     if (_mvmCollection.ContainsKey(item))
-                        ((ThorSharedTypes.IMVM)_mvmCollection[item]).UpdateExpXMLSettings(ref experimentDoc);
+                        ((IMVM)_mvmCollection[item]).UpdateExpXMLSettings(ref experimentDoc);
                 }
             }
         }
@@ -464,16 +751,28 @@ namespace ThorSharedTypes
             Type[] types;
             try
             {
-                types = System.Reflection.Assembly.LoadFrom(file).GetTypes();
+                types = Assembly.LoadFrom(file).GetTypes();
 
                 foreach (Type t in types)
                 {
                     // Specify the TypeFilter delegate that compares the interfaces against filter criteria.
-                    System.Reflection.TypeFilter theFilter = new System.Reflection.TypeFilter(InterfaceClassFilter);
+                    TypeFilter theFilter = new TypeFilter(InterfaceClassFilter);
                     if (0 < t.FindInterfaces(theFilter, typeof(IMVM)).Length)
                     {
-                        Object obj = Activator.CreateInstance(t);
+                        object obj = Activator.CreateInstance(t);
                         _mvmCollection.Add(t.Name, obj);
+                    }
+
+                    if (0 < t.FindInterfaces(theFilter, typeof(IMVMCapture)).Length)
+                    {
+                        object obj = Activator.CreateInstance(t);
+                        _mvmCollectionCapture.Add(t.Name, obj);
+                    }
+
+                    if (0 < t.FindInterfaces(theFilter, typeof(IMVMReview)).Length)
+                    {
+                        object obj = Activator.CreateInstance(t);
+                        _mvmCollectionReview.Add(t.Name, obj);
                     }
                 }
             }
@@ -580,7 +879,7 @@ namespace ThorSharedTypes
         /// Raises this object's PropertyChanged event.
         /// </summary>
         /// <param name="propertyName">The name of the property that has a new value.</param>
-        protected virtual void OnPropertyChanged(string propertyName)
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             this.VerifyPropertyName(propertyName);
 
@@ -588,6 +887,16 @@ namespace ThorSharedTypes
             {
                 this.PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
             }
+        }
+
+        protected virtual bool SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = null, bool forcePropertyChanged = false)
+        {
+            if (!forcePropertyChanged && EqualityComparer<T>.Default.Equals(field, value))
+                return false;
+
+            field = value;
+            OnPropertyChanged(propertyName);
+            return true;
         }
 
         #endregion Methods

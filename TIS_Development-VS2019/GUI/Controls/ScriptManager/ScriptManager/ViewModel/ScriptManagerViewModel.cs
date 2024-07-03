@@ -359,6 +359,8 @@
             {
                 return;
             }
+            ResourceManagerCS.BackupDirectory(ResourceManagerCS.GetMyDocumentsThorImageFolderString());
+
             const string RESPONSE_COMPLETE = "Complete";
             const string RESPONSE_ERROR = "Error";
             const string RESPONSE_PAUSECONTINUE = "PauseContinue";

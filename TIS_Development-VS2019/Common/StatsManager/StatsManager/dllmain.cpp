@@ -60,9 +60,9 @@ DllExport InitCallBackDFLIMROIHistogramsPush(pushDFLIMROIHistogramsCallBack push
 	return StatsManager::InitCallBackDFLIMROIHistogramsPush(pushFuncPtr);
 }
 
-DllExport SetLineProfileLine(long p1X, long p1Y, long p2X, long p2Y, long lineIsActive)
+DllExport SetLineProfileLine(long *pX, long *pY, long numberOfPoints, long lineIsActive)
 {
-	return StatsManager::getInstance()->SetLineProfileLine(p1X, p1Y, p2X, p2Y, lineIsActive);
+	return StatsManager::getInstance()->SetLineProfileLine(pX, pY, numberOfPoints, lineIsActive);
 }
 
 DllExport SetLineProfileLineWidth(long lineWidth)

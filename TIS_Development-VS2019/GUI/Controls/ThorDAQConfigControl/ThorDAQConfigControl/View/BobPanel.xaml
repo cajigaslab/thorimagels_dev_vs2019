@@ -1,0 +1,228 @@
+﻿<telerik:RadWindow x:Class="ThorDAQConfigControl.View.BobPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:ThorDAQConfigControl.View" 
+             xmlns:converter="clr-namespace:ThorDAQConfigControl.Converter"
+             xmlns:telerik="http://schemas.telerik.com/2008/xaml/presentation"
+             xmlns:navigation="clr-namespace:Telerik.Windows.Controls.Navigation;assembly=Telerik.Windows.Controls.Navigation"
+             mc:Ignorable="d" WindowStartupLocation="CenterOwner" navigation:RadWindowInteropHelper.ShowInTaskbar="True"
+             HeaderedContentControl.Header="BOB Configuration" Height="480" Width="1200" ResizeMode="NoResize" Style="{DynamicResource RadWindowStyle}">
+    <telerik:RadWindow.Resources>
+        <ResourceDictionary>
+            <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+            <converter:BoolToInversedVisibilityConverter x:Key="BoolToInversedVisibilityConverter"/>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Resources/Thorlabs_Logo.xaml"/>
+                <ResourceDictionary Source="../Resources/Indicator_Idle.xaml"/>
+                <ResourceDictionary Source="../Resources/Indicator_Normal.xaml"/>
+                <telerik:FluentResourceDictionary />
+                <ResourceDictionary Source="/Telerik.Windows.Controls;component/Themes/FontResources.xaml" />
+                <ResourceDictionary Source="/Telerik.Windows.Themes.Fluent;component/Themes/System.Windows.xaml"/>
+                <ResourceDictionary Source="/Telerik.Windows.Themes.Fluent;component/Themes/Telerik.Windows.Controls.xaml" />
+                <ResourceDictionary Source="/Telerik.Windows.Themes.Fluent;component/Themes/Telerik.Windows.Controls.Input.xaml"/>
+                <ResourceDictionary Source="/Telerik.Windows.Themes.Fluent;component/Themes/Telerik.Windows.Controls.Navigation.xaml"/>
+                <ResourceDictionary Source="../ApplicationStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </telerik:RadWindow.Resources>
+    <Grid  Background="SlateGray" Opacity="0.9">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="4*" />
+        </Grid.ColumnDefinitions>
+        <Border Grid.ColumnSpan="2" BorderThickness="1" CornerRadius="6" Margin="5,15,0,15" >
+            <Border Margin="1" BorderThickness="1" CornerRadius="5" Background="Transparent">
+                <Grid Name="AO1M200Grid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Label Content="1MSPS 200kΩ" Grid.Column="5" FontSize="10" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,0,-5"/>
+                </Grid>
+            </Border>
+        </Border>
+        <Border Grid.Row="1" BorderThickness="1"  CornerRadius="6" Margin="5,15">
+            <Border Margin="1" BorderThickness="1" CornerRadius="5" Background="Transparent">
+                <Grid Name="AO1M50Grid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Label Content="1MSPS 50Ω" Grid.Column="3" FontSize="10" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,0,-5"/>
+                </Grid>
+            </Border>
+        </Border>
+        <Border Grid.Row="1" Grid.Column="1" BorderThickness="1" CornerRadius="6" Margin="5,15,0,15">
+            <Border Margin="1" BorderThickness="1" CornerRadius="5" Background="Transparent">
+                <Grid Name="AO20M50Grid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Label Content="20MSPS 50Ω" Grid.Column="1" FontSize="10" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,0,-5"/>
+                </Grid>
+            </Border>
+        </Border>
+        <Border Grid.Row="2" Grid.ColumnSpan="2" BorderThickness="1" CornerRadius="6" Margin="5,15,0,15" >
+            <Border Margin="1" BorderThickness="1" CornerRadius="5" Background="Transparent">
+                <Grid Name="AO200KGrid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Label Content="200kSPS" Grid.Column="5" FontSize="10" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,0,-5"/>
+                </Grid>
+            </Border>
+        </Border>
+        <Border Grid.Row="3" Grid.ColumnSpan="3" BorderThickness="1" CornerRadius="6" Margin="5,15" >
+            <Border Margin="1" BorderThickness="1" CornerRadius="5" Background="Transparent">
+                <Grid Name="AO1KGrid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Label Content="1kSPS" Grid.Column="7" FontSize="10" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,0,-5"/>
+                </Grid>
+            </Border>
+        </Border>
+        <Border Grid.Column="3" Grid.RowSpan="4" BorderThickness="1" CornerRadius="6" Margin="5,15">
+            <Border Margin="1" BorderThickness="1" CornerRadius="5" Background="Transparent">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border BorderThickness="0" Margin="0,-15,0,15" Padding="0,15">
+                        <Grid Name="DIOLine1Grid">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                        </Grid>
+                    </Border>
+                    <Border Grid.Row="1" BorderThickness="0" Margin="0,5,0,15" Padding="0,5" >
+                        <Grid Name="DIOLine2Grid">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                        </Grid>
+                    </Border>
+                    <Border Grid.Row="2" BorderThickness="0" Margin="0,5,0,-5" Padding="0,12">
+                        <Grid Name="DIOLine3Grid">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                        </Grid>
+                    </Border>
+                    <Border Grid.Row="3" BorderThickness="0" Margin="0,15,0,-15" Padding="0,12" >
+                        <Grid Name="DIOLine4Grid">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Border>
+
+        <Border Grid.Column="2" Grid.RowSpan="3" BorderThickness="0">
+            <Grid >
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="2.5*"/>
+                    <RowDefinition Height="2.5*"/>
+                    <RowDefinition Height="4*"/>
+                </Grid.RowDefinitions>
+                <Image Source="{DynamicResource Thorlabs_LogoDrawingImage}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Height="20"/>
+                <TextBlock Grid.Row="1" Text="ThorDAQ Breakout Box" TextWrapping="Wrap" FontSize="12" HorizontalAlignment="Center" Margin="0,10"/>
+                <Grid Grid.Row="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="2*"/>
+                    </Grid.ColumnDefinitions>
+                    <Image Width="15" Height="15" Source="{DynamicResource Indicator_NormalDrawingImage}" Visibility="{Binding IsBobConnected, Converter={StaticResource BoolToVisibilityConverter}}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                    <Image Width="15" Height="15" Source="{DynamicResource Indicator_IdleDrawingImage}" Visibility="{Binding IsBobConnected, Converter={StaticResource BoolToInversedVisibilityConverter}}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                    <Label Grid.Column="1" Content="Connected" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                    <Image Grid.Row="1" Width="15" Height="15" Source="{DynamicResource Indicator_NormalDrawingImage}" Visibility="{Binding IsScanEnabled, Converter={StaticResource BoolToVisibilityConverter}}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                    <Image Grid.Row="1" Width="15" Height="15" Source="{DynamicResource Indicator_IdleDrawingImage}" Visibility="{Binding IsScanEnabled, Converter={StaticResource BoolToInversedVisibilityConverter}}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                    <Label Grid.Row="1" Grid.Column="1" Content="Scan Enabled" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                    <Image Grid.Row="2" Width="15" Height="15" Source="{DynamicResource Indicator_NormalDrawingImage}" Visibility="{Binding IsDC0, Converter={StaticResource BoolToVisibilityConverter}}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                    <Image Grid.Row="2" Width="15" Height="15" Source="{DynamicResource Indicator_IdleDrawingImage}" Visibility="{Binding IsDC0, Converter={StaticResource BoolToInversedVisibilityConverter}}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                    <Label Grid.Row="2" Grid.Column="1" Content="DC0" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                    <Image Grid.Row="3" Width="15" Height="15" Source="{DynamicResource Indicator_NormalDrawingImage}" Visibility="{Binding IsDC1, Converter={StaticResource BoolToVisibilityConverter}}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                    <Image Grid.Row="3" Width="15" Height="15" Source="{DynamicResource Indicator_IdleDrawingImage}" Visibility="{Binding IsDC1, Converter={StaticResource BoolToInversedVisibilityConverter}}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                    <Label Grid.Row="3" Grid.Column="1" Content="DC1" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                    <Image Grid.Row="4" Width="15" Height="15" Source="{DynamicResource Indicator_NormalDrawingImage}" Visibility="{Binding IsDC2, Converter={StaticResource BoolToVisibilityConverter}}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                    <Image Grid.Row="4" Width="15" Height="15" Source="{DynamicResource Indicator_IdleDrawingImage}" Visibility="{Binding IsDC2, Converter={StaticResource BoolToInversedVisibilityConverter}}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                    <Label Grid.Row="4" Grid.Column="1" Content="DC2" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                    <Image Grid.Row="5" Width="15" Height="15" Source="{DynamicResource Indicator_NormalDrawingImage}" Visibility="{Binding IsDC3, Converter={StaticResource BoolToVisibilityConverter}}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                    <Image Grid.Row="5" Width="15" Height="15" Source="{DynamicResource Indicator_IdleDrawingImage}" Visibility="{Binding IsDC3, Converter={StaticResource BoolToInversedVisibilityConverter}}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                    <Label Grid.Row="5" Grid.Column="1" Content="DC3" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</telerik:RadWindow>

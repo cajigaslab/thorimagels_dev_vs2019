@@ -91,48 +91,10 @@
         private void ConnectionSettings_Click(object sender, RoutedEventArgs e)
         {
             EditPipeDialog editPipeDialog = new EditPipeDialog();
-            editPipeDialog.DataContext = MVMManager.Instance["RemoteIPCControlViewModel"]; ;
+            editPipeDialog.DataContext = MVMManager.Instance["RemoteIPCControlViewModelBase"]; ;
             editPipeDialog.ShowDialog();
         }
 
         #endregion Methods
-
-        #region Other
-
-        //public static readonly DependencyProperty **REPLACE**CommandProperty =
-        //      DependencyProperty.Register(
-        //      "**REPLACE**Command",
-        //      typeof(ICommand),
-        //      typeof(RemoteIPCControlUC));
-        //      public ICommand **REPLACE**
-        //      {
-        //          get { return (ICommand)GetValue(**REPLACE**CommandProperty); }
-        //          set { SetValue(**REPLACE**CommandProperty, value); }
-        //      }
-        //public static readonly DependencyProperty **REPLACE**Property =
-        //      DependencyProperty.Register(
-        //      "**REPLACE**",
-        //      typeof(int),
-        //      typeof(RemoteIPCControlUC));
-        //      public int **REPLACE**
-        //      {
-        //          get { return (int)GetValue(**REPLACE**Property); }
-        //          set { SetValue(**REPLACE**Property, value); }
-        //      }
-        //public static DependencyProperty **REPLACE**Property =
-        //DependencyProperty.RegisterAttached("**REPLACE**",
-        //typeof(int),
-        //typeof(RemoteIPCControlUC),
-        //new FrameworkPropertyMetadata(new PropertyChangedCallback(on**REPLACE**Changed)));
-        //public int **REPLACE**
-        //{
-        //    get { return (int)GetValue(**REPLACE**Property); }
-        //    set { SetValue(**REPLACE**Property, value); }
-        //}
-        //public static void on**REPLACE**Changed(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        //{
-        //}
-
-        #endregion Other
     }
 }

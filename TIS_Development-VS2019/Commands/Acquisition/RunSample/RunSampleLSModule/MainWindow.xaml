@@ -2,6 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:View="clr-namespace:RunSampleLSDll.View"
+             xmlns:ivc="clr-namespace:ImageViewControl;assembly=ImageViewControl"
              xmlns:help="clr-namespace:HelpProvider;assembly=HelpProvider"
              help:Help.Filename="ThorImage.chm"
              help:Help.Keyword="Run Sample LS">
@@ -44,8 +45,21 @@
                           ScrollChanged="scrollViewImage_ScrollChanged"
                           Margin="5">
                 <StackPanel Height="{Binding Path=IVScrollBarHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                    <View:ImageView x:Name="ImageView"
-                                    Grid.Column="1" />
+                    <ivc:ImageView x:Name="imageView"
+                                   ImageCanvas="{Binding Path=ImageCanvas, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                   OrthogonalLineType="{Binding Path=OrthogonalLineType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                   OrthogonalLineColorType="{Binding Path=OrthogonalLineColorType, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                   OrthogonalChangeCount="{Binding Path=OrthogonalChangeCount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                   ZoomLevel="{Binding Path=ZoomLevel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                   ImageOffsetX="{Binding Path=ImageOffsetX, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                   ImageOffsetY="{Binding Path=ImageOffsetY, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                   RollOverPointX="{Binding Path=RollOverPointX, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                   RollOverPointY="{Binding Path=RollOverPointY, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                   ZNumSteps="{Binding Path=ZNumSteps, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                   IVScrollBarHeight="{Binding Path=IVScrollBarHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                   IsOrthogonalViewChecked="{Binding Path=IsOrthogonalViewChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                   OrthogonalViewPosition="{Binding Path=OrthogonalViewPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                   Grid.Column="1" />
                 </StackPanel>
             </ScrollViewer>
         </Border>

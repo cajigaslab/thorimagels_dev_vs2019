@@ -11,8 +11,7 @@ extern auto_ptr<TiffLibDll> tiffDll;
 unique_ptr<HDF5ioDLL> h5io(new HDF5ioDLL(L".\\Modules_Native\\HDF5IO.dll"));
 
 void GetLookUpTables(unsigned short * rlut, unsigned short * glut, unsigned short *blut,long red, long green, long blue, long bp, long wp, long bitdepth);
-long SaveTIFFWithoutOME(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height, unsigned short * rlut, unsigned short * glut,unsigned short * blut, double umPerPixel,int nc, int nt, int nz, double timeIncrement, int c, int t, int z,string *acquiredDate, double dt, long doCompression);
-long SaveTIFF(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height, unsigned short * rlut, unsigned short * glut,unsigned short * blut, double umPerPixel,int nc, int nt, int nz, double timeIncrement, int c, int t, int z,string *acquiredDate, double dt, string * omeTiffData, PhysicalSize physicalSize, long doCompression);
+long SaveTIFF(wchar_t *filePathAndName, char * pMemoryBuffer, long width, long height, unsigned short * rlut, unsigned short * glut,unsigned short * blut, double umPerPixel,int nc, int nt, int nz, double timeIncrement, int c, int t, int z,string *acquiredDate, double dt, string * omeTiffDataOrNull, PhysicalSize physicalSize, long doCompression, bool isMultiChannel);
 long SetDeviceParameterValue(IDevice *pDevice,long paramID, double val,long bWait,HANDLE hEvent,long waitTime);
 string ConvertWStringToString(wstring ws);
 
@@ -317,10 +316,13 @@ long AcquireBleaching::SetupCameraParams(ICamera * pCamera,long &bufferChannels,
 		long tapsIndex, tapsBalance;
 		long readoutSpeedIndex;
 		long camAverageMode, camAverageNum;
-		long camVericalFlip, camHorizontalFlip, imageAngle;
+		long camVericalFlip, camHorizontalFlip, imageAngle, camChannel;
+		long colorImageType, polarImageType;
+		long isContinuousWhiteBalance, continuousWhiteBalanceNumFrames;
+		double redGain, greenGain, blueGain;
 
 		//getting the values from the experiment setup XML files
-		_pExp->GetCamera(camName,camImageWidth,camImageHeight,camPixelSize,camExposureTimeMS,gain,blackLevel,lightMode,left,top,right,bottom,binningX,binningY,tapsIndex,tapsBalance,readoutSpeedIndex,camAverageMode,camAverageNum,camVericalFlip,camHorizontalFlip,imageAngle);
+		_pExp->GetCamera(camName,camImageWidth,camImageHeight,camPixelSize,camExposureTimeMS,gain,blackLevel,lightMode,left,top,right,bottom,binningX,binningY,tapsIndex,tapsBalance,readoutSpeedIndex,camAverageMode,camAverageNum,camVericalFlip,camHorizontalFlip,imageAngle,camChannel, colorImageType, polarImageType, isContinuousWhiteBalance, continuousWhiteBalanceNumFrames, redGain, greenGain, blueGain);
 
 		pCamera->SetParam(ICamera::PARAM_EXPOSURE_TIME_MS,camExposureTimeMS);
 		pCamera->SetParam(ICamera::PARAM_GAIN,gain);
@@ -344,7 +346,23 @@ long AcquireBleaching::SetupCameraParams(ICamera * pCamera,long &bufferChannels,
 		pCamera->SetParam(ICamera::PARAM_CAMERA_AVERAGEMODE,ICamera::AVG_MODE_NONE);
 		pCamera->SetParam(ICamera::PARAM_CAMERA_AVERAGENUM,1);
 
-		bufferChannels = 1;
+		pCamera->SetParam(ICamera::PARAM_CAMERA_COLOR_IMAGE_TYPE, colorImageType);
+		pCamera->SetParam(ICamera::PARAM_CAMERA_POLAR_IMAGE_TYPE, polarImageType);
+		pCamera->SetParam(ICamera::PARAM_CAMERA_IS_CONTINUOUS_WHITE_BALANCE_ENABLED, isContinuousWhiteBalance);
+		pCamera->SetParam(ICamera::PARAM_CAMERA_CONTINUOUS_WHITE_BALANCE_NUM_FRAMES, continuousWhiteBalanceNumFrames);
+		pCamera->SetParam(ICamera::PARAM_CAMERA_RED_GAIN, redGain);
+		pCamera->SetParam(ICamera::PARAM_CAMERA_GREEN_GAIN, greenGain);
+		pCamera->SetParam(ICamera::PARAM_CAMERA_BLUE_GAIN, blueGain);
+
+		switch (camChannel)
+		{
+		case 0b0111:
+			bufferChannels = 4; // TODO: having an image buffer that is not 1 or 4 channels may crash
+			break;
+		case 0b0001:
+		default:
+			bufferChannels = 1;
+		}
 		width = camImageWidth;
 		height = camImageHeight;
 		umPerPixel = camPixelSize;
@@ -357,8 +375,12 @@ long AcquireBleaching::SetupCameraParams(ICamera * pCamera,long &bufferChannels,
 		long timeBasedLineScanMS = 0;
 		long threePhotonEnable = FALSE;
 		long numberOfPlanes = 1;
+		long selectedImagingGG = 0;
+		long selectedStimGG = 0;
+		double pixelAspectRatioYScale = 1;
+
 		//getting the values from the experiment setup XML files
-		_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,chan,lsmFieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes);
+		_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,chan,lsmFieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes, selectedImagingGG, selectedStimGG, pixelAspectRatioYScale);
 
 		//notify the ECU of the zoom change also
 		IDevice * pControlUnitDevice = NULL;
@@ -451,6 +473,8 @@ long AcquireBleaching::SetupCameraParams(ICamera * pCamera,long &bufferChannels,
 		pCamera->SetParam(ICamera::PARAM_LSM_HORIZONTAL_FLIP, horizontalFlip);
 		pCamera->SetParam(ICamera::PARAM_LSM_3P_ENABLE, threePhotonEnable);
 		pCamera->SetParam(ICamera::PARAM_LSM_NUMBER_OF_PLANES, numberOfPlanes);
+		pCamera->SetParam(ICamera::PARAM_LSM_SELECTED_IMAGING_GG, selectedImagingGG);
+		pCamera->SetParam(ICamera::PARAM_LSM_Y_AMPLITUDE_SCALER, (int)(pixelAspectRatioYScale*100));
 
 		switch(chan)
 		{
@@ -844,7 +868,7 @@ long AcquireBleaching::CaptureStream(ICamera* pCamera, char* pMemoryBuffer, long
 	double ccdType = ICamera::CMOS;
 
 	//Read the size of the dma buffer from the lower level and use that if it is larger
-	double dmaFrm = 0;
+	double dmaFrm = 1;
 	pCamera->GetParam(ICamera::PARAM_CAMERA_DMA_BUFFER_COUNT, dmaFrm);
 	long dmaFrames = max(static_cast<long>(dmaFrm), 4);
 
@@ -1002,15 +1026,7 @@ long AcquireBleaching::CaptureTSeries(ICamera *pCamera, long currentT, long tFra
 	{
 	case ICamera::CCD:
 		{				
-			if(_pExp->GetNumberOfWavelengths() > 1)
-			{
-				acqFrame.reset(factory.getAcquireInstance(AcquireFactory::ACQ_MULTI_WAVELENGTH,NULL,_pExp,_path));
-			}
-			else
-			{
-				acqFrame.reset(factory.getAcquireInstance(AcquireFactory::ACQ_SINGLE,NULL,_pExp,_path));
-			}
-
+			acqFrame.reset(factory.getAcquireInstance(AcquireFactory::ACQ_SINGLE, NULL, _pExp, _path));
 		}
 		break;
 	case ICamera::LSM:
@@ -1241,11 +1257,11 @@ void AcquireBleaching::SaveStream(long currentT, long numFrames, SaveParams *sp)
 
 	long imgIndxDigiCnts = ResourceManager::getInstance()->GetSettingsParamLong((int)SettingsFileType::APPLICATION_SETTINGS,L"ImageNameFormat",L"indexDigitCounts", (int)Constants::DEFAULT_FILE_FORMAT_DIGITS);
 	std::wstringstream rawNameFormat;
-	rawNameFormat << L"%s%s\\Image_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" 
+	rawNameFormat << L"%s%sImage_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" 
 		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" 
 		<< std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d.raw";
 	std::wstringstream rawBaseNameFormat;
-	rawBaseNameFormat << L"%s%s\\Image_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_";
+	rawBaseNameFormat << L"%s%sImage_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_%" << std::setw(2) << std::setfill(L'0') << imgIndxDigiCnts << L"d_";
 
 	hFind = FindFirstFile(rawName, &FindFileData);
 	if (hFind != INVALID_HANDLE_VALUE)
@@ -1303,7 +1319,9 @@ long AcquireBleaching::PreCaptureProtocol(ICamera * pCamera, long index, long su
 		pCamera->SetParam(ICamera::PARAM_MULTI_FRAME_COUNT, avgFrames);
 	}
 
-	wstring streamPath; double previewRate = 4;
+	wstring streamPath; 
+	double previewRate = 4;
+	long alwaysSaveImagesOnStop = FALSE;
 
 	d->c = bufferChannels;
 	d->dType = INT_16BIT;
@@ -1319,7 +1337,7 @@ long AcquireBleaching::PreCaptureProtocol(ICamera * pCamera, long index, long su
 			//notify camera to capture finite number of images
 			pCamera->SetParam(ICamera::PARAM_MULTI_FRAME_COUNT, numFrames*avgFrames);
 			d->t = numFrames * avgFrames;
-			pHardware->GetStreaming(streamPath, previewRate);
+			pHardware->GetStreaming(streamPath, previewRate, alwaysSaveImagesOnStop);
 
 			//for raw mode output to the experiment folder
 			wchar_t drive[_MAX_DRIVE];
@@ -1347,6 +1365,8 @@ long AcquireBleaching::PreCaptureProtocol(ICamera * pCamera, long index, long su
 	d->imageBufferType = 0;
 	string lambdaName;
 	double exposureTimeMS;
+	long cameraType = ICamera::CameraType::LAST_CAMERA_TYPE;
+	cameraType = (GetCameraParamLong(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_CAMERA_TYPE, cameraType)) ? cameraType : ICamera::CameraType::LAST_CAMERA_TYPE;
 
 	//populate all of the wavelength names
 	for(long w=0; w<_pExp->GetNumberOfWavelengths(); w++)
@@ -1371,6 +1391,7 @@ long AcquireBleaching::PreCaptureProtocol(ICamera * pCamera, long index, long su
 	sp->lsmChannels = lsmChannel;
 	sp->displayImage = displayImage;
 	sp->previewRate = previewRate;
+	sp->isCombinedChannels = ICamera::CCD == cameraType && _pExp->GetNumberOfWavelengths() > 1;
 
 	return ret;
 }
@@ -1551,8 +1572,12 @@ long AcquireBleaching::Execute(long index, long subWell)
 	long timeBasedLineScanMS = 0;
 	long threePhotonEnable = FALSE;
 	long numberOfPlanes = 1;
+	long selectedImagingGG = 0;
+	long selectedStimGG = 0;
+	double pixelAspectRatioYScale = 1;
+
 	_pExp->GetPhotobleaching(photoBleachingEnable, laserPositiion, durationMS, powerPosition, bleachWidth,bleachHeight,bleachOffsetX,bleachOffsetY, bleachingFrames, bleachFieldSize, bleachTrigger,preBleachingFrames, preBleachingInterval,preBleachingStream, postBleachingFrames1, postBleachingInterval1,postBleachingStream1, postBleachingFrames2, postBleachingInterval2,postBleachingStream2,powerEnable,laserEnable,bleachQuery,bleachPostTrigger,enableSimultaneousBleachingAndImaging,pmtEnableDuringBleach[0],pmtEnableDuringBleach[1],pmtEnableDuringBleach[2],pmtEnableDuringBleach[3]);
-	_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,channel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes);
+	_pExp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,channel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles, polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes, selectedImagingGG, selectedStimGG, pixelAspectRatioYScale);
 	pCamera->SetParam(ICamera::PARAM_LSM_VERTICAL_SCAN_DIRECTION, verticalFlip);
 	pCamera->SetParam(ICamera::PARAM_LSM_HORIZONTAL_FLIP, horizontalFlip);
 	pHardware->GetShutterOptions(_digiShutterEnabled);
@@ -1594,7 +1619,7 @@ long AcquireBleaching::Execute(long index, long subWell)
 			postTrigMode = ICamera::SW_MULTI_FRAME;
 		}
 	}
-
+	pBleachScanner->SetParam(ICamera::PARAM_LSM_SELECTED_STIM_GG, selectedStimGG);
 	double ledPower1 = 0, ledPower2 = 0, ledPower3 = 0, ledPower4 = 0, ledPower5 = 0, ledPower6 = 0;
 	SetLEDs(_pExp, pCamera, 0, ledPower1, ledPower2, ledPower3, ledPower4, ledPower5, ledPower6);
 
@@ -1615,7 +1640,6 @@ long AcquireBleaching::Execute(long index, long subWell)
 	{
 		return FALSE;
 	}
-
 
 	//master time index
 	long currentT = 1;
@@ -2125,6 +2149,16 @@ void AcquireBleaching::SaveTIFFChannels(SaveParams *sp, long size, char *buffer,
 
 void AcquireBleaching::SaveTIFFChannels(SaveParams *sp, long size, char *buffer, long j, string &strOme, string &timeStamp, double dt, long doOME, long doCompression)
 {
+	wchar_t filePathAndName[_MAX_PATH];
+	const int COLOR_MAP_SIZE = 65536;
+	unsigned short rlut[COLOR_MAP_SIZE];
+	unsigned short glut[COLOR_MAP_SIZE];
+	unsigned short blut[COLOR_MAP_SIZE];
+	wchar_t drive[_MAX_DRIVE];
+	wchar_t dir[_MAX_DIR];
+	wchar_t fname[_MAX_FNAME];
+	wchar_t ext[_MAX_EXT];
+
 	long channel = 0;
 
 	long imgIndxDigiCnts = ResourceManager::getInstance()->GetSettingsParamLong((int)SettingsFileType::APPLICATION_SETTINGS,L"ImageNameFormat",L"indexDigitCounts", (int)Constants::DEFAULT_FILE_FORMAT_DIGITS);
@@ -2139,49 +2173,46 @@ void AcquireBleaching::SaveTIFFChannels(SaveParams *sp, long size, char *buffer,
 	physicalSize.x = res;
 	physicalSize.y = res;
 	physicalSize.z = _zstageStepSize;
-
-	for(long i=0; i<sp->colorChannels; i++)
+	const int COLOR_MAP_BIT_DEPTH_TIFF = 8;
+	
+	if (sp->isCombinedChannels && sp->bp)
 	{
-		wchar_t filePathAndName[_MAX_PATH];
-		const int COLOR_MAP_SIZE = 65536;
-		unsigned short rlut[COLOR_MAP_SIZE];
-		unsigned short glut[COLOR_MAP_SIZE];
-		unsigned short blut[COLOR_MAP_SIZE];
+		GetLookUpTables(rlut, glut, blut, 255, 255, 255, sp->bp[0], sp->wp[0], COLOR_MAP_BIT_DEPTH_TIFF);
 
-		const int COLOR_MAP_BIT_DEPTH_TIFF = 8;
+		_wsplitpath_s(_path.c_str(), drive, _MAX_DRIVE, dir, _MAX_DIR, fname, _MAX_FNAME, ext, _MAX_EXT);
+		StringCbPrintfW(filePathAndName, _MAX_PATH, imgNameFormat.str().c_str(), drive, dir, _wavelengthName[0].c_str(), sp->index, sp->subWell, 1, j);
+		logDll->TLTraceEvent(VERBOSE_EVENT, 1, filePathAndName);
 
-		wchar_t drive[_MAX_DRIVE];
-		wchar_t dir[_MAX_DIR];
-		wchar_t fname[_MAX_FNAME];
-		wchar_t ext[_MAX_EXT];
-		GetLookUpTables(rlut, glut, blut, sp->red[i], sp->green[i], sp->blue[i], sp->bp[i], sp->wp[i],COLOR_MAP_BIT_DEPTH_TIFF);
-
-		_wsplitpath_s(_path.c_str(),drive,_MAX_DRIVE,dir,_MAX_DIR,fname,_MAX_FNAME,ext,_MAX_EXT);
-
-		StringCbPrintfW(filePathAndName,_MAX_PATH,imgNameFormat.str().c_str(),drive,dir,_wavelengthName[i].c_str(),sp->index,sp->subWell,1,j);
-
-		logDll->TLTraceEvent(VERBOSE_EVENT,1,filePathAndName);
-
-		for (long ch=0;ch<sp->bufferChannels;ch++)
+		string* omeTiffData = doOME ? &strOme : nullptr;
+		SaveTIFF(filePathAndName, buffer, sp->width, sp->height, rlut, glut, blut, sp->umPerPixel, sp->colorChannels, size, 1, 0, channel, j, 0, &timeStamp, dt, omeTiffData, physicalSize, doCompression, true);
+	}
+	else
+	{
+		for (long i = 0; i < sp->colorChannels; i++)
 		{
-			if(0 == _wavelengthName[i].compare(AcquireFactory::bufferChannelName[ch]))
-			{	channel = ch;	}
-		}
+			GetLookUpTables(rlut, glut, blut, sp->red[i], sp->green[i], sp->blue[i], sp->bp[i], sp->wp[i], COLOR_MAP_BIT_DEPTH_TIFF);
 
-		if(_wavelengthName[i].size() > 0)
-		{
-			long bufferOffset = channel*sp->width*sp->height*2;
+			_wsplitpath_s(_path.c_str(), drive, _MAX_DRIVE, dir, _MAX_DIR, fname, _MAX_FNAME, ext, _MAX_EXT);
 
-			if (TRUE == doOME)
+			StringCbPrintfW(filePathAndName, _MAX_PATH, imgNameFormat.str().c_str(), drive, dir, _wavelengthName[i].c_str(), sp->index, sp->subWell, 1, j);
+
+			logDll->TLTraceEvent(VERBOSE_EVENT, 1, filePathAndName);
+
+			for (long ch = 0; ch < sp->bufferChannels; ch++)
 			{
-				SaveTIFF(filePathAndName,buffer+bufferOffset,sp->width,sp->height,rlut,glut,blut, sp->umPerPixel,sp->colorChannels, size, 1, 0, channel, j, 0, &timeStamp, dt, &strOme, physicalSize, doCompression);
-			}
-			else
-			{
-				SaveTIFFWithoutOME(filePathAndName,buffer+bufferOffset,sp->width,sp->height,rlut,glut,blut, sp->umPerPixel,sp->colorChannels, size, 1, 0, channel, j, 0, &timeStamp, dt,doCompression);
+				if (0 == _wavelengthName[i].compare(AcquireFactory::bufferChannelName[ch]))
+				{
+					channel = ch;
+				}
 			}
 
-			//SaveTIFF(filePathAndName,buffer+bufferOffset,sp->width,sp->height,rlut,glut,blut, sp->umPerPixel,sp->colorChannels, size, 1, 0, channel, j, 0, &timeStamp, dt, &strOme, physicalSize);
+			if (_wavelengthName[i].size() > 0)
+			{
+				long bufferOffset = channel * sp->width * sp->height * 2;
+
+				string* omeTiffData = doOME ? &strOme : nullptr;
+				SaveTIFF(filePathAndName, buffer + bufferOffset, sp->width, sp->height, rlut, glut, blut, sp->umPerPixel, sp->colorChannels, size, 1, 0, channel, j, 0, &timeStamp, dt, omeTiffData, physicalSize, doCompression, false);
+			}
 		}
 	}
 }
@@ -2839,6 +2870,11 @@ DllExport_RunSample ReleaseBleachParams()
 		AcquireBleaching::bleachMemSize = 0;
 	}
 	return TRUE;
+}
+
+long AcquireBleaching::ZStreamExecute(long index, long subWell, ICamera* pCamera, long zstageSteps, long timePoints, long undefinedVar)
+{
+	return FALSE;
 }
 
 DllExport_RunSample SetBleachWaveformFile(const wchar_t* bleachH5PathName, int CycleNum)

@@ -8,6 +8,8 @@
 void (*myFunctionPointer)(char * buffer,FrameInfoStruct &imageInfo) = NULL;
 //mechanism to notify listeners that the z Stack capture is finished
 void (*myFuncPtrZStack)() = NULL;
+//general non-image-data related notifications
+void (*captureNotificiationFuncPtr) (CaptureNotificationStruct &captureNotification) = NULL;
 
 char * pMemoryBuffer = NULL;
 char * pBackgroundSubtractionBuffer = NULL;
@@ -35,8 +37,17 @@ HANDLE _hAutoFocusCaptureThread = NULL;
 DWORD _dwAutoFocusStatusThreadId = NULL;
 HANDLE _hAutoFocusStatusThread = NULL;
 
+DWORD _dwAutoExposureCaptureThreadId = NULL;
+HANDLE _hAutoExposureCaptureThread = NULL;
+
+DWORD _dwAutoExposureStatusThreadId = NULL;
+HANDLE _hAutoExposureStatusThread = NULL;
+
 DWORD _dwSafetyInterLockCheckThreadId = NULL;
 HANDLE _hSafetyInterLockCheckThread = NULL;
+
+DWORD _dwSequentialPreviewCaptureThreadId = NULL;
+HANDLE _hSequentialPreviewCaptureThread = NULL;
 
 //events
 HANDLE hStatusEvent[3];
@@ -627,7 +638,6 @@ long CaptureSetup::SetupCommand()
 		{
 		case ICamera::LSM:_pActiveImageRoutine = _pImageRoutines[0]; break;
 		case ICamera::CCD:
-		case ICamera::CCD_MOSAIC:
 			_pActiveImageRoutine = _pImageRoutines[1]; break;
 		}
 
@@ -685,6 +695,11 @@ long CaptureSetup::SetDisplayChannels(int channelEnable)
 	CHECK_PACTIVEIMAGEROUTINE(SetDisplayChannels(channelEnable));
 }
 
+long CaptureSetup::GetDisplayChannels()
+{
+	return _pActiveImageRoutine->GetDisplayChannels();
+}
+
 long CaptureSetup::ImgProGenConf(int maxRoiNum, int minSnr)
 {
 	StatsManager::_maxRoiNum = maxRoiNum;
@@ -700,4 +715,15 @@ long CaptureSetup::EnableMinAreaFilter(bool minAreaActive, int minAreaValue)
 		StatsManager::_minAreaFilterValue = minAreaValue;
 	}
 	return TRUE;
+}
+
+long CaptureSetup::SetCaptureNotificationCallback(captureNotificationCallback callback)
+{
+	captureNotificiationFuncPtr = callback;
+	return TRUE;
+}
+
+DllExportLiveImage SetCaptureNotificationCallback(captureNotificationCallback callback)
+{
+	return CaptureSetup::getInstance()->SetCaptureNotificationCallback(callback);
 }

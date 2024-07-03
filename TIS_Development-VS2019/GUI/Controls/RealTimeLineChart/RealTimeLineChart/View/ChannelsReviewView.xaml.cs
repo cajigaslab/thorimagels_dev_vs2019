@@ -23,7 +23,6 @@
     public partial class ChannelsReviewView : UserControl
     {
         #region Constructors
-
         /// <summary>
         /// Initializes a new instance of the <see cref="ChannelsReviewView"/> class.
         /// </summary>
@@ -35,6 +34,20 @@
         #endregion Constructors
 
         #region Methods
+        /// <summary>
+        /// Handles the PreviewMouseDown event of the ConnectSetting control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="MouseButtonEventArgs"/> instance containing the event data.</param>
+        private void ConnectSetting_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            RealTimeLineChartViewModel vm = (RealTimeLineChartViewModel)this.DataContext;
+            if (vm == null)
+            {
+                return;
+            }
+            vm.ConnectionSettingsOptions();
+        }
 
         /// <summary>
         /// Handles the PreviewMouseDown event of the LoadRecent control.

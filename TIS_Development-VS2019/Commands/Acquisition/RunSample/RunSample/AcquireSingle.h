@@ -34,6 +34,8 @@ public:
 	virtual long CallNotifySavedFileIPC(wchar_t* message);
 	virtual long CallAutoFocusStatus(long isRunning, long bestScore, double bestZPos, double nextZPos, long currRepeat);
 
+	virtual long ZStreamExecute(long index, long subWell, ICamera* pCamera, long zstageSteps, long timePoints, long undefinedVar);
+
 	static HANDLE hEvent;
 	static HANDLE hEventZ;
 

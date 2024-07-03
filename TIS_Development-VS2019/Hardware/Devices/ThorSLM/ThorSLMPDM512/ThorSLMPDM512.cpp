@@ -19,7 +19,7 @@ unique_ptr<MeadowlarkPDM> MeadowlarkPDM::_single(new MeadowlarkPDM());
 unique_ptr<ThorSLMXML> pSetup(new ThorSLMXML());
 long MeadowlarkPDM::_arrayOrFileID = 0;			//0-based buffer or sequence index
 long MeadowlarkPDM::_bufferCount = 1;			//1-based total buffer size
-long MeadowlarkPDM::_slmRuntimeCalculate = 0;	//[0]:fixed transient frames,[1]:calculate transient frames at runtime,[2]:fixed transient frames but NO NI callback.
+long MeadowlarkPDM::_slmRuntimeCalculate = 0;	//[0]:fixed transient frames,[1]:calculate transient frames at runtime.
 MemoryStruct<unsigned char> MeadowlarkPDM::_intermediateBuf[MAX_ARRAY_CNT]; //intermediate buffers for transient or bmp
 Blink_SDK* MeadowlarkPDM::_blinkSDK = NULL;
 unsigned int MeadowlarkPDM::_slmTimeout = SLM_TIMEOUT_MIN;
@@ -194,7 +194,7 @@ long MeadowlarkPDM::SetParam(const long paramID, const double param)
 		if (TRUE == param) { ReleaseTransientBuf(); }
 		break;
 	case ISLM::SLMParams::WRITE_TRANSIANT_BUFFER:
-		if (1 == _slmRuntimeCalculate)
+		if (TRUE == _slmRuntimeCalculate)
 		{
 			//calculate transient frames then write directly
 			if (_blinkSDK->Calculate_transient_frames(_intermediateBuf[static_cast<int>(param)].GetMem(), &tmpCount))
@@ -205,13 +205,13 @@ long MeadowlarkPDM::SetParam(const long paramID, const double param)
 
 				if ((0 != tmpCount) && (_blinkSDK->Retrieve_transient_frames(_slmTempBuf.GetMem())))
 				{
-					_blinkSDK->Write_transient_frames(1, _slmTempBuf.GetMem(), 0U, false, true, 0U);
+					_blinkSDK->Write_transient_frames(1, _slmTempBuf.GetMem(), 0U, false, false, 0U);
 				}
 			}
 		}
 		else
 		{
-			_blinkSDK->Write_transient_frames(1, _intermediateBuf[static_cast<int>(param)].GetMem(), 0U, false, true, 0U);
+			_blinkSDK->Write_transient_frames(1, _intermediateBuf[static_cast<int>(param)].GetMem(), 0U, false, false, 0U);
 		}
 		break;
 	default:
@@ -253,7 +253,7 @@ long MeadowlarkPDM::GetParamBuffer(const long paramID, char* pBuffer, long size)
 		}
 		else
 		{
-			if (1 == _slmRuntimeCalculate)
+			if (TRUE == _slmRuntimeCalculate)
 			{
 				if ((DWORD)size < _slmTempBuf.GetSize())
 					SAFE_MEMCPY(pBuffer, _slmTempBuf.GetSize(), _slmTempBuf.GetMem());
@@ -325,7 +325,7 @@ long MeadowlarkPDM::StartSLM()
 
 			//The quality of Write_overdrive_image is not as good as Write_transient_frames,
 			//use Write_overdrive_image mainly for transient frame calculation
-			_blinkSDK->Write_transient_frames(1, _intermediateBuf[0].GetMem(), 0U, false, true, 0U);
+			_blinkSDK->Write_transient_frames(1, _intermediateBuf[0].GetMem(), 0U, false, false, 0U);
 		}
 		else
 		{
@@ -338,7 +338,7 @@ long MeadowlarkPDM::StartSLM()
 
 				if ((0 != tmpCount) && (_blinkSDK->Retrieve_transient_frames(_slmTempBuf.GetMem())))
 				{
-					_blinkSDK->Write_transient_frames(1, _slmTempBuf.GetMem(), 0U, false, true, 0U);
+					_blinkSDK->Write_transient_frames(1, _slmTempBuf.GetMem(), 0U, false, false, 0U);
 				}
 			}
 		}
@@ -359,7 +359,7 @@ long MeadowlarkPDM::UpdateSLM(long arrayID)
 {
 	if (static_cast<long>(_slmTempBuf.GetIndex()) != arrayID)
 	{
-		if (1 == _slmRuntimeCalculate)
+		if (TRUE == _slmRuntimeCalculate)
 		{
 			//calculate transient frames then write:
 			unsigned int tmpCount = 0U;
@@ -373,12 +373,12 @@ long MeadowlarkPDM::UpdateSLM(long arrayID)
 			if ((0 == tmpCount) || (false == _blinkSDK->Retrieve_transient_frames(_slmTempBuf.GetMem())))
 				return FALSE;
 
-			_blinkSDK->Write_transient_frames(1, _slmTempBuf.GetMem(), 0U, true, true, _slmTimeout);
+			_blinkSDK->Write_transient_frames(1, _slmTempBuf.GetMem(), 0U, true, false, _slmTimeout);
 		}
 		else
 		{
 			//write pre-calculated transient frames:
-			_blinkSDK->Write_transient_frames(1, _intermediateBuf[arrayID].GetMem(), 0U, true, true, _slmTimeout);
+			_blinkSDK->Write_transient_frames(1, _intermediateBuf[arrayID].GetMem(), 0U, true, false, _slmTimeout);
 		}
 	}
 	//keep current index:
@@ -446,7 +446,7 @@ long MeadowlarkPDM::SetIntermediateBuffer(unsigned char* mem, size_t msize)
 	timer.Start();
 #endif
 
-	if (1 == _slmRuntimeCalculate)
+	if (TRUE == _slmRuntimeCalculate)
 	{
 		//persist image buffers, then calculate transient at callback
 		_intermediateBuf[_arrayOrFileID].ReallocMemChk((DWORD)msize);

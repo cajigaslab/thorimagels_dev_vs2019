@@ -101,6 +101,7 @@ extern "C"
 		uint32_t horizontalFlip;///<flip the image in the X direction
 		uint32_t imageAngle; ///<0,90,180,270
 		uint32_t bitsPerPixel; // Used to store the camera's bitsPerPixel 
+		uint32_t isNirBoostEnabled;
 
 	}ImgPty, *pImgPty;
 

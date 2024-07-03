@@ -1,0 +1,202 @@
+﻿  dllmain.cpp
+  ImageStoreLibrary.cpp
+  ImageStoreWrapper.cpp
+  image_container.cpp
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\utility(242,55): warning C4267: 'initializing': conversion from 'size_t' to '_Ty2', possible loss of data
+          with
+          [
+              _Ty2=uint16_t
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xmemory(681): message : see reference to function template instantiation 'std::pair<const frame_info_ext,uint16_t>::pair<frame_info_ext,unsigned __int64,0>(std::pair<frame_info_ext,unsigned __int64> &&) noexcept' being compiled
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xmemory(681): message : see reference to function template instantiation 'std::pair<const frame_info_ext,uint16_t>::pair<frame_info_ext,unsigned __int64,0>(std::pair<frame_info_ext,unsigned __int64> &&) noexcept' being compiled
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(805): message : see reference to function template instantiation 'void std::_Default_allocator_traits<_Alloc>::construct<_Ty,std::pair<frame_info_ext,unsigned __int64>>(_Alloc &,_Objty *const ,std::pair<frame_info_ext,unsigned __int64> &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::_Tree_node<std::pair<const frame_info_ext,uint16_t>,std::_Default_allocator_traits<std::allocator<std::pair<const frame_info_ext,uint16_t>>>::void_pointer>>,
+              _Ty=std::pair<const frame_info_ext,uint16_t>,
+              _Objty=std::pair<const frame_info_ext,uint16_t>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(805): message : see reference to function template instantiation 'void std::_Default_allocator_traits<_Alloc>::construct<_Ty,std::pair<frame_info_ext,unsigned __int64>>(_Alloc &,_Objty *const ,std::pair<frame_info_ext,unsigned __int64> &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::_Tree_node<std::pair<const frame_info_ext,uint16_t>,std::_Default_allocator_traits<std::allocator<std::pair<const frame_info_ext,uint16_t>>>::void_pointer>>,
+              _Ty=std::pair<const frame_info_ext,uint16_t>,
+              _Objty=std::pair<const frame_info_ext,uint16_t>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(1012): message : see reference to function template instantiation 'std::_Tree_temp_node<std::allocator<std::_Tree_node<std::pair<const frame_info_ext,uint16_t>,std::_Default_allocator_traits<_Alloc>::void_pointer>>>::_Tree_temp_node<_Ty>(_Alnode &,std::_Tree_node<std::pair<const frame_info_ext,uint16_t>,std::_Default_allocator_traits<_Alloc>::void_pointer> *,_Ty &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::pair<const frame_info_ext,uint16_t>>,
+              _Ty=std::pair<frame_info_ext,unsigned __int64>,
+              _Alnode=std::allocator<std::_Tree_node<std::pair<const frame_info_ext,uint16_t>,std::_Default_allocator_traits<std::allocator<std::pair<const frame_info_ext,uint16_t>>>::void_pointer>>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(1012): message : see reference to function template instantiation 'std::_Tree_temp_node<std::allocator<std::_Tree_node<std::pair<const frame_info_ext,uint16_t>,std::_Default_allocator_traits<_Alloc>::void_pointer>>>::_Tree_temp_node<_Ty>(_Alnode &,std::_Tree_node<std::pair<const frame_info_ext,uint16_t>,std::_Default_allocator_traits<_Alloc>::void_pointer> *,_Ty &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::pair<const frame_info_ext,uint16_t>>,
+              _Ty=std::pair<frame_info_ext,unsigned __int64>,
+              _Alnode=std::allocator<std::_Tree_node<std::pair<const frame_info_ext,uint16_t>,std::_Default_allocator_traits<std::allocator<std::pair<const frame_info_ext,uint16_t>>>::void_pointer>>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(1037): message : see reference to function template instantiation 'std::pair<std::_Tree_node<std::pair<const frame_info_ext,uint16_t>,std::_Default_allocator_traits<_Alloc>::void_pointer> *,bool> std::_Tree<std::_Tmap_traits<_Kty,_Ty,_Pr,_Alloc,false>>::_Emplace<std::pair<frame_info_ext,unsigned __int64>>(std::pair<frame_info_ext,unsigned __int64> &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::pair<const frame_info_ext,uint16_t>>,
+              _Kty=frame_info_ext,
+              _Ty=uint16_t,
+              _Pr=std::less<frame_info_ext>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(1037): message : see reference to function template instantiation 'std::pair<std::_Tree_node<std::pair<const frame_info_ext,uint16_t>,std::_Default_allocator_traits<_Alloc>::void_pointer> *,bool> std::_Tree<std::_Tmap_traits<_Kty,_Ty,_Pr,_Alloc,false>>::_Emplace<std::pair<frame_info_ext,unsigned __int64>>(std::pair<frame_info_ext,unsigned __int64> &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::pair<const frame_info_ext,uint16_t>>,
+              _Kty=frame_info_ext,
+              _Ty=uint16_t,
+              _Pr=std::less<frame_info_ext>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\map(163): message : see reference to function template instantiation 'std::pair<std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<std::pair<const frame_info_ext,uint16_t>>>>,bool> std::_Tree<std::_Tmap_traits<_Kty,_Ty,_Pr,_Alloc,false>>::emplace<std::pair<frame_info_ext,unsigned __int64>>(std::pair<frame_info_ext,unsigned __int64> &&)' being compiled
+          with
+          [
+              _Kty=frame_info_ext,
+              _Ty=uint16_t,
+              _Pr=std::less<frame_info_ext>,
+              _Alloc=std::allocator<std::pair<const frame_info_ext,uint16_t>>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\map(163): message : see reference to function template instantiation 'std::pair<std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<std::pair<const frame_info_ext,uint16_t>>>>,bool> std::_Tree<std::_Tmap_traits<_Kty,_Ty,_Pr,_Alloc,false>>::emplace<std::pair<frame_info_ext,unsigned __int64>>(std::pair<frame_info_ext,unsigned __int64> &&)' being compiled
+          with
+          [
+              _Kty=frame_info_ext,
+              _Ty=uint16_t,
+              _Pr=std::less<frame_info_ext>,
+              _Alloc=std::allocator<std::pair<const frame_info_ext,uint16_t>>
+          ]
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\image_container.cpp(140): message : see reference to function template instantiation 'std::pair<std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<std::pair<const frame_info_ext,uint16_t>>>>,bool> std::map<frame_info_ext,uint16_t,std::less<frame_info_ext>,std::allocator<std::pair<const frame_info_ext,uint16_t>>>::insert<std::pair<frame_info_ext,unsigned __int64>,0>(_Valty &&)' being compiled
+          with
+          [
+              _Valty=std::pair<frame_info_ext,unsigned __int64>
+          ]
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\image_container.cpp(140): message : see reference to function template instantiation 'std::pair<std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<std::pair<const frame_info_ext,uint16_t>>>>,bool> std::map<frame_info_ext,uint16_t,std::less<frame_info_ext>,std::allocator<std::pair<const frame_info_ext,uint16_t>>>::insert<std::pair<frame_info_ext,unsigned __int64>,0>(_Valty &&)' being compiled
+          with
+          [
+              _Valty=std::pair<frame_info_ext,unsigned __int64>
+          ]
+  jpeg_handler.cpp
+  region.cpp
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\utility(242,16): warning C4244: 'initializing': conversion from '_Ty' to '_Ty1', possible loss of data
+          with
+          [
+              _Ty=unsigned __int64
+          ]
+          and
+          [
+              _Ty1=const uint16_t
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xmemory(681): message : see reference to function template instantiation 'std::pair<const uint16_t,image_container *>::pair<unsigned __int64,image_container*,0>(std::pair<unsigned __int64,image_container *> &&) noexcept' being compiled
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xmemory(681): message : see reference to function template instantiation 'std::pair<const uint16_t,image_container *>::pair<unsigned __int64,image_container*,0>(std::pair<unsigned __int64,image_container *> &&) noexcept' being compiled
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(805): message : see reference to function template instantiation 'void std::_Default_allocator_traits<_Alloc>::construct<_Ty,std::pair<unsigned __int64,image_container *>>(_Alloc &,_Objty *const ,std::pair<unsigned __int64,image_container *> &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::_Tree_node<std::pair<const uint16_t,image_container *>,std::_Default_allocator_traits<std::allocator<std::pair<const uint16_t,image_container *>>>::void_pointer>>,
+              _Ty=std::pair<const uint16_t,image_container *>,
+              _Objty=std::pair<const uint16_t,image_container *>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(805): message : see reference to function template instantiation 'void std::_Default_allocator_traits<_Alloc>::construct<_Ty,std::pair<unsigned __int64,image_container *>>(_Alloc &,_Objty *const ,std::pair<unsigned __int64,image_container *> &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::_Tree_node<std::pair<const uint16_t,image_container *>,std::_Default_allocator_traits<std::allocator<std::pair<const uint16_t,image_container *>>>::void_pointer>>,
+              _Ty=std::pair<const uint16_t,image_container *>,
+              _Objty=std::pair<const uint16_t,image_container *>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(1015): message : see reference to function template instantiation 'std::_Tree_temp_node<std::allocator<std::_Tree_node<std::pair<const uint16_t,image_container *>,std::_Default_allocator_traits<_Alloc>::void_pointer>>>::_Tree_temp_node<_Ty>(_Alnode &,std::_Tree_node<std::pair<const uint16_t,image_container *>,std::_Default_allocator_traits<_Alloc>::void_pointer> *,_Ty &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::pair<const uint16_t,image_container *>>,
+              _Ty=std::pair<unsigned __int64,image_container *>,
+              _Alnode=std::allocator<std::_Tree_node<std::pair<const uint16_t,image_container *>,std::_Default_allocator_traits<std::allocator<std::pair<const uint16_t,image_container *>>>::void_pointer>>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(1015): message : see reference to function template instantiation 'std::_Tree_temp_node<std::allocator<std::_Tree_node<std::pair<const uint16_t,image_container *>,std::_Default_allocator_traits<_Alloc>::void_pointer>>>::_Tree_temp_node<_Ty>(_Alnode &,std::_Tree_node<std::pair<const uint16_t,image_container *>,std::_Default_allocator_traits<_Alloc>::void_pointer> *,_Ty &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::pair<const uint16_t,image_container *>>,
+              _Ty=std::pair<unsigned __int64,image_container *>,
+              _Alnode=std::allocator<std::_Tree_node<std::pair<const uint16_t,image_container *>,std::_Default_allocator_traits<std::allocator<std::pair<const uint16_t,image_container *>>>::void_pointer>>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(1037): message : see reference to function template instantiation 'std::pair<std::_Tree_node<std::pair<const uint16_t,image_container *>,std::_Default_allocator_traits<_Alloc>::void_pointer> *,bool> std::_Tree<std::_Tmap_traits<_Kty,_Ty,_Pr,_Alloc,false>>::_Emplace<std::pair<unsigned __int64,image_container *>>(std::pair<unsigned __int64,image_container *> &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::pair<const uint16_t,image_container *>>,
+              _Kty=uint16_t,
+              _Ty=image_container *,
+              _Pr=std::less<uint16_t>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\xtree(1037): message : see reference to function template instantiation 'std::pair<std::_Tree_node<std::pair<const uint16_t,image_container *>,std::_Default_allocator_traits<_Alloc>::void_pointer> *,bool> std::_Tree<std::_Tmap_traits<_Kty,_Ty,_Pr,_Alloc,false>>::_Emplace<std::pair<unsigned __int64,image_container *>>(std::pair<unsigned __int64,image_container *> &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::pair<const uint16_t,image_container *>>,
+              _Kty=uint16_t,
+              _Ty=image_container *,
+              _Pr=std::less<uint16_t>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\map(163): message : see reference to function template instantiation 'std::pair<std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<std::pair<const uint16_t,image_container *>>>>,bool> std::_Tree<std::_Tmap_traits<_Kty,_Ty,_Pr,_Alloc,false>>::emplace<std::pair<unsigned __int64,image_container *>>(std::pair<unsigned __int64,image_container *> &&)' being compiled
+          with
+          [
+              _Kty=uint16_t,
+              _Ty=image_container *,
+              _Pr=std::less<uint16_t>,
+              _Alloc=std::allocator<std::pair<const uint16_t,image_container *>>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.29.30133\include\map(163): message : see reference to function template instantiation 'std::pair<std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<std::pair<const uint16_t,image_container *>>>>,bool> std::_Tree<std::_Tmap_traits<_Kty,_Ty,_Pr,_Alloc,false>>::emplace<std::pair<unsigned __int64,image_container *>>(std::pair<unsigned __int64,image_container *> &&)' being compiled
+          with
+          [
+              _Kty=uint16_t,
+              _Ty=image_container *,
+              _Pr=std::less<uint16_t>,
+              _Alloc=std::allocator<std::pair<const uint16_t,image_container *>>
+          ]
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\region.cpp(246): message : see reference to function template instantiation 'std::pair<std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<std::pair<const uint16_t,image_container *>>>>,bool> std::map<uint16_t,image_container *,std::less<uint16_t>,std::allocator<std::pair<const uint16_t,image_container *>>>::insert<std::pair<unsigned __int64,image_container *>,0>(_Valty &&)' being compiled
+          with
+          [
+              _Valty=std::pair<unsigned __int64,image_container *>
+          ]
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\region.cpp(246): message : see reference to function template instantiation 'std::pair<std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<std::pair<const uint16_t,image_container *>>>>,bool> std::map<uint16_t,image_container *,std::less<uint16_t>,std::allocator<std::pair<const uint16_t,image_container *>>>::insert<std::pair<unsigned __int64,image_container *>,0>(_Valty &&)' being compiled
+          with
+          [
+              _Valty=std::pair<unsigned __int64,image_container *>
+          ]
+  scan.cpp
+  TiffData.cpp
+  xml_handler.cpp
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(123,6): warning C4477: 'sscanf_s' : format string '%d' requires an argument of type 'int *', but variadic argument 1 has type 'uint16_t *'
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(123,6): message : consider using '%hd' in the format string
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(137,7): warning C4477: 'sscanf_s' : format string '%hd' requires an argument of type 'short *', but variadic argument 1 has type 'ResUnit *'
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(137,7): message : consider using '%d' in the format string
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(137,7): message : consider using '%I32d' in the format string
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(138,7): warning C4477: 'sscanf_s' : format string '%hd' requires an argument of type 'short *', but variadic argument 1 has type 'ResUnit *'
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(138,7): message : consider using '%d' in the format string
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(138,7): message : consider using '%I32d' in the format string
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(139,7): warning C4477: 'sscanf_s' : format string '%hd' requires an argument of type 'short *', but variadic argument 1 has type 'ResUnit *'
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(139,7): message : consider using '%d' in the format string
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(139,7): message : consider using '%I32d' in the format string
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(513,84): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(860,6): warning C4477: 'sscanf_s' : format string '%d' requires an argument of type 'int *', but variadic argument 1 has type 'uint16_t *'
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(860,6): message : consider using '%hd' in the format string
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(911,4): warning C4477: 'sscanf_s' : format string '%d' requires an argument of type 'int *', but variadic argument 1 has type 'uint16_t *'
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(911,4): message : consider using '%hd' in the format string
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(1021,5): warning C4477: 'sscanf_s' : format string '%d' requires an argument of type 'int *', but variadic argument 1 has type 'uint16_t *'
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(1021,5): message : consider using '%hd' in the format string
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(1110,6): warning C4477: 'sscanf_s' : format string '%d' requires an argument of type 'int *', but variadic argument 1 has type 'uint16_t *'
+D:\4.4-opensource\TIS_Development-VS2019\Common\ImageStoreLibrary\src\ImageStoreLibrary\xml_handler.cpp(1110,6): message : consider using '%hd' in the format string
+  zip.cpp
+     Creating library D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Release\ImageStoreLibrary.lib and object D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Release\ImageStoreLibrary.exp
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 2319 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  ImageStoreLibrary.vcxproj -> D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Release\ImageStoreLibrary.dll
+  D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Release\ImageStoreLibrary.dll
+  1 File(s) copied
+  D:\4.4-opensource\TIS_Development-VS2019\Tools\BuildAllSolution2012\x64\Release\ImageStoreLibrary.lib
+  1 File(s) copied
+  packages\ImageProcessLibrary.1.0.1\build\native\ImageProcessLibraryBasic.dll
+  1 File(s) copied
+  ..\..\..\src\ImageStoreLibrary\ImageStoreLibrary.h
+  1 File(s) copied

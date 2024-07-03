@@ -1,15 +1,12 @@
 ﻿namespace ConsoleTest
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
     using System.IO.Pipes;
-    using System.Linq;
     using System.Runtime.InteropServices;
     using System.Security.Principal;
     using System.Text;
     using System.Threading;
-    using System.Threading.Tasks;
 
     #region Enumerations
 
@@ -18,7 +15,7 @@
         Establish,
         TearDown,
         AcquireInformation,
-        UpdataInformation,
+        UpdateInformation,
         FilePath,
         StartAcquiring,
         StopAcquiring,
@@ -33,7 +30,15 @@
         MoveY,
         MoveZ,
         MoveSecondaryZ,
-        NotifySavedFile
+        NotifySavedFile,
+        ReportPositionX,
+        ReportPositionY,
+        ReportPositionZ,
+        ReportPositionSecondaryZ,
+        PositionReportX,
+        PositionReportY,
+        PositionReportZ,
+        PositionReportSecondaryZ,
     }
 
     public enum ThorPipeDst
@@ -142,7 +147,6 @@
 
         Thread _pipeClient = null;
         NamedPipeServerStream _pipeServer;
-        bool _receiveIPCCommandActive = false;
         string[] _sendBuffer = null;
         Thread _serverThread = null;
         bool _thorImageLSConnectionStats = false;
@@ -185,7 +189,6 @@
         /// <returns></returns>
         public bool ExcuteNamedPipeData(String[] msg, StreamString ss, bool isAcknowledgment)
         {
-            _receiveIPCCommandActive = true;
             if (msg.Length == 4)
             {
                 switch ((ThorPipeCommand)(Enum.Parse(typeof(ThorPipeCommand), msg[2])))
@@ -245,16 +248,53 @@
                             Console.WriteLine(msg[3]);
                         };
                         break;
+                    case ThorPipeCommand.ReportPositionX:
+                        {
+
+                        };
+                        break;
+                    case ThorPipeCommand.ReportPositionY:
+                        {
+
+                        };
+                        break;
+                    case ThorPipeCommand.ReportPositionZ:
+                        {
+
+                        };
+                        break;
+                    case ThorPipeCommand.ReportPositionSecondaryZ:
+                        {
+
+                        };
+                        break;
+                    case ThorPipeCommand.PositionReportX:
+                        {
+                            Console.WriteLine(msg[3] + "[um]");
+                        };
+                        break;
+                    case ThorPipeCommand.PositionReportY:
+                        {
+                            Console.WriteLine(msg[3] + "[um]");
+                        };
+                        break;
+                    case ThorPipeCommand.PositionReportZ:
+                        {
+                            Console.WriteLine(msg[3] + "[um]");
+                        };
+                        break;
+                    case ThorPipeCommand.PositionReportSecondaryZ:
+                        {
+                            Console.WriteLine(msg[3] + "[um]");
+                        };
+                        break;
                     default:
-                        _receiveIPCCommandActive = false;
                         return false;
                 }
-                _receiveIPCCommandActive = false;
                 return true;
             }
             else
             {
-                _receiveIPCCommandActive = false;
                 return false;
             }
         }
@@ -301,52 +341,6 @@
             {
                 ss.WriteString(String.Join("~", new String[]{Enum.GetName(typeof(ThorPipeSrc), ThorPipeSrc.Remote), Enum.GetName(typeof(ThorPipeDst), ThorPipeDst.Local),
                                    Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.Error), "3"}));
-            }
-        }
-
-        /// <summary>
-        /// Receives the ipc ack message.
-        /// </summary>
-        /// <param name="msg">The MSG.</param>
-        public void ReceiveIPCMessageACK(string msg)
-        {
-            if (msg.Contains("~"))
-            {
-                String[] msgRecv = msg.Split('~');
-                if (msgRecv.Length == 4)
-                {
-                    if (VerifyNamedPipeRouting(msgRecv))
-                    {
-                        if (msgRecv[2] == _sendBuffer[2] && msgRecv[3] == "1")
-                        {
-
-                        }
-                        else
-                        {
-                            switch ((ThorPipeStatus)(Convert.ToInt32(msgRecv[3])))
-                            {
-                                case ThorPipeStatus.ThorPipeStsNoError:
-                                    break;
-                                case ThorPipeStatus.ThorPipeStsBusy:
-                                    break;
-                                case ThorPipeStatus.ThorPipeStsBlankCommandError:
-                                    break;
-                                case ThorPipeStatus.ThorPipeStreamNotSupportedError:
-                                    break;
-                                case ThorPipeStatus.ThorPipeFormatError:
-                                    break;
-                                case ThorPipeStatus.ThorPipeFormatRoutingError:
-                                    break;
-                                case ThorPipeStatus.ThorpipeIOError:
-                                    break;
-                                case ThorPipeStatus.ThorPipeError:
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-                    }
-                }
             }
         }
 
@@ -433,8 +427,7 @@
                 // Verify our identity to the connected client using a
                 // string that the client anticipates.
                 ss.WriteString(String.Join("~", _sendBuffer));
-                msgRecv = ss.ReadString();
-                ReceiveIPCMessageACK(msgRecv);
+                //msgRecv = ss.ReadString();
             }
             // Catch the IOException that is raised if the pipe is broken
             // or disconnected.
@@ -537,7 +530,7 @@
                             Thread.Sleep(50);
                             String[] configurarionInformation = { "true", "0" };
                             _sendBuffer = new string[] { Enum.GetName(typeof(ThorPipeSrc),ThorPipeSrc.Remote),  Enum.GetName(typeof(ThorPipeDst),ThorPipeDst.Local),
-                                        Enum.GetName(typeof(ThorPipeCommand),ThorPipeCommand.UpdataInformation), string.Join("/",configurarionInformation) };
+                                        Enum.GetName(typeof(ThorPipeCommand),ThorPipeCommand.UpdateInformation), string.Join("/",configurarionInformation) };
                             StreamOutNamedPipe();
                         }
                         break;
@@ -564,8 +557,6 @@
         static void Main(string[] args)
         {
             var conn = new IpcConnection();
-            string path = string.Empty;
-
             if (args.Length == 3)
             {
                 conn.RemotePCHostName = args[1];
@@ -580,12 +571,13 @@
             }
             else
             {
-                Console.WriteLine("Default remote host name used: '.' ");
-                conn.RemotePCHostName = ".";
-                Console.WriteLine("Default save name used: C:\\temp\\exp01\\");
+                string defaultHostName = conn.GetHostName();
+                Console.WriteLine("Default remote host name used: " + defaultHostName);
+                conn.RemotePCHostName = defaultHostName;
+                Console.WriteLine("Default experiment save path used: C:\\temp\\exp01\\");
                 conn.FullSaveName = "C:\\temp\\exp01\\";
             }
-            //This is the name of the application you have to write in the remote setup, in ThorImage/Capture
+            //This is the name of the application you have to write in the remote setup window, in ThorImage/Capture
             string applicationName = "ConsoleTest";
             conn._connectionServerID = applicationName + "ThorImagePipe";
             conn._connectionClientID = "ThorImage" + applicationName + "Pipe";
@@ -597,42 +589,48 @@
             Console.WriteLine("c - change experiment path.");
             Console.WriteLine("x - stop acquisition.");
             Console.WriteLine("m - move stage.");
+            Console.WriteLine("r - request stage position.");
             Console.WriteLine("Esc - end application.");
-
+            ConsoleKey keyInput = Console.ReadKey(true).Key;
             do
             {
-                if (Console.ReadKey(true).Key == ConsoleKey.S)
+                if (keyInput == ConsoleKey.S)
                 {
+                    //We need to set the Update Information to true first in case ThorImageLS was closed and it tries to reconnect again
+                    String[] configurarionInformation = { "true", "0" };
+                    conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.UpdateInformation), string.Join("/", configurarionInformation));
+                    Thread.Sleep(20);
+
                     conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.StartAcquiring), conn.FullSaveName);
                     Console.WriteLine("Starting Experiment");
                 }
-                else if (Console.ReadKey(true).Key == ConsoleKey.L)
+                else if (keyInput == ConsoleKey.L)
                 {
-                    Console.WriteLine("Enter the new experiment path:");
-                    path = Console.ReadLine();
+                    Console.WriteLine("Enter the full path of the xml file to be loaded:");
+                    string path = Console.ReadLine();
                     conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.LoadExperimentFile), path);
                     Console.WriteLine("Experiment Path was successfully loaded from " + path);
                 }
-                else if (Console.ReadKey(true).Key == ConsoleKey.C)
+                else if (keyInput == ConsoleKey.C)
                 {
                     Console.WriteLine("Enter the new experiment path:");
-                    conn.FullSaveName = Console.ReadLine();
+                    conn.FullSaveName = Console.ReadLine() + "\\";
                     Console.WriteLine("Experiment Path was successfully changed to " + conn.FullSaveName);
                 }
-                else if (Console.ReadKey(true).Key == ConsoleKey.H)
+                else if (keyInput == ConsoleKey.H)
                 {
                     Console.WriteLine("Enter the new Local Computer Name:");
                     conn.RemotePCHostName = Console.ReadLine();
                     Console.WriteLine("PC Host Name was successfully changed to " + conn.RemotePCHostName);
                 }
-                else if (Console.ReadKey(true).Key == ConsoleKey.X)
+                else if (keyInput == ConsoleKey.X)
                 {
                     conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.StopAcquiring));
                     Console.WriteLine("Experiment Stopped");
                 }
-                else if (Console.ReadKey(true).Key == ConsoleKey.M)
+                else if (keyInput == ConsoleKey.M)
                 {
-                    Console.WriteLine("Select the stage you want to move \n Options are: X, Y, Z, Secondary Z");
+                    Console.WriteLine("Select the stage you want to move. \n Options are: X, Y, Z, Secondary Z");
                     string optionSelected = Console.ReadLine();
                     if ("X" != optionSelected && "Y" != optionSelected && "Z" != optionSelected && "Secondary Z" != optionSelected)
                     {
@@ -640,35 +638,63 @@
                     }
                     else
                     {
-                        Console.WriteLine("Set the distance you want to move by in micrometers: ");
+                        Console.WriteLine("Set the position to move to in micrometers: ");
                         string distanceUM = Console.ReadLine();
                         switch (optionSelected)
                         {
                             case ("X"):
                                 conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.MoveX), distanceUM);
-                                Console.WriteLine("Stage X was successfully moved by " + distanceUM);
+                                Console.WriteLine("Stage X was successfully moved to " + distanceUM);
                                 break;
                             case ("Y"):
                                 conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.MoveY), distanceUM);
-                                Console.WriteLine("Stage Y was successfully moved by " + distanceUM);
+                                Console.WriteLine("Stage Y was successfully moved to " + distanceUM);
                                 break;
                             case ("Z"):
                                 conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.MoveZ), distanceUM);
-                                Console.WriteLine("Stage Z was successfully moved by " + distanceUM);
+                                Console.WriteLine("Stage Z was successfully moved to " + distanceUM);
                                 break;
                             case ("Secondary Z"):
                                 conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.MoveSecondaryZ), distanceUM);
-                                Console.WriteLine("Stage Secondary Z was successfully moved by " + distanceUM);
+                                Console.WriteLine("Stage Secondary Z was successfully moved to " + distanceUM);
                                 break;
                         }
                     }
                 }
-            } while (Console.ReadKey(true).Key != ConsoleKey.Escape);
+                else if (keyInput == ConsoleKey.R)
+                {
+                    Console.WriteLine("Select the stage you want to request the position from in micrometers. \n Options are: X, Y, Z, Secondary Z");
+                    string optionSelected = Console.ReadLine();
+                    if ("X" != optionSelected && "Y" != optionSelected && "Z" != optionSelected && "Secondary Z" != optionSelected)
+                    {
+                        Console.WriteLine("That stage doesn't exist");
+                    }
+                    else
+                    {
+                        switch (optionSelected)
+                        {
+                            case ("X"):
+                                conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.ReportPositionX));
+                                break;
+                            case ("Y"):
+                                conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.ReportPositionY));
+                                break;
+                            case ("Z"):
+                                conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.ReportPositionZ));
+                                break;
+                            case ("Secondary Z"):
+                                conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.PositionReportSecondaryZ));
+                                break;
+                        }
+                    }
+                }
+                keyInput = Console.ReadKey(true).Key;
+            } while (keyInput != ConsoleKey.Escape);
 
             conn.SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.TearDown));
 
             Console.WriteLine("Bye, see you next time.");
-            System.Threading.Thread.Sleep(5000);
+            Thread.Sleep(5000);
             Environment.Exit(0);
             return;
         }

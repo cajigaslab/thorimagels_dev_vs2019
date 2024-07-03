@@ -13,7 +13,7 @@
 #include "ippi.h"
 
 typedef void (_cdecl *myPrototype)(long* index, long* completed, long* total, long* timeElapsed, long* timeRemaining, long* captureCompletee);
-void (*myFunctionPointer)(long* index, long* completed, long* total, long* timeElapsed, long* timeRemaining, long* captureComplete) = NULL;
+void (*updateProgressBarCallback)(long* index, long* completed, long* total, long* timeElapsed, long* timeRemaining, long* captureComplete) = NULL;
 
 //typedef void (_cdecl *myPrototypeCaptureComplete)(long* index);
 ////funtion pointer for sending back the index of the completed capture
@@ -82,7 +82,7 @@ atomic<BOOL> _shutterOpened = FALSE;
 
 DllExport_RunSample InitCallBack(myPrototype dm, myPrototypeBeginImage di, myPrototypeBeginSubImage bsi, myPrototypeEndSubImage esi, myPrototypeSaveZImage szi, myPrototypeSaveTImage sti, myPrototypePreCapture pc, myPrototypeSequenceStepCurrentIndex cs, myPrototypeInformMessage sm, myPrototypeFileSavedNameAndPathForIPC savedFileIPC, myPrototypeAutoFocusStatus afs) //myPrototypeCaptureComplete cc,
 {
-	myFunctionPointer = dm;
+	updateProgressBarCallback = dm;
 
 	myFunctionPointerBeginImage = di;
 
@@ -106,7 +106,7 @@ DllExport_RunSample InitCallBack(myPrototype dm, myPrototypeBeginImage di, myPro
 
 	myFunctionPointerAutoFocusStatus = afs;
 
-	if(myFunctionPointer != NULL)
+	if(updateProgressBarCallback != NULL)
 	{
 		logDll->TLTraceEvent(VERBOSE_EVENT,1,L"RunSample InitCallBack");		
 	}
@@ -466,13 +466,14 @@ long CreateSample(IExperiment *exp)
 	double fPt[3][3];
 	exp->GetSample(sampleOffsetX,sampleOffsetY,sampleOffsetZ,tiltAdjustment,fPt[0][0],fPt[0][1],fPt[0][2],fPt[1][0],fPt[1][1],fPt[1][2],fPt[2][0],fPt[2][1],fPt[2][2]);
 
-	long camType = 0, lsmType = ICamera::LSMType::LSMTYPE_LAST;
+	long camType = 0, lsmType = ICamera::LSMType::LSMTYPE_LAST, mROIEnabled;
 	GetCameraParamLong(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_CAMERA_TYPE, camType);
 	GetCameraParamLong(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_LSM_TYPE, lsmType);
+	GetCameraParamLong(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_MROI_MODE_ENABLE, mROIEnabled);
 
 	vector<IExperiment::SubImage> SubImages; 
 	if(IsXyViewVisible())
-		exp->GetSubImages(SubImages, camType, lsmType);
+		exp->GetSubImages(SubImages, camType, lsmType, mROIEnabled);
 	GetXPosition(currentX);
 	GetYPosition(currentY);
 
@@ -637,7 +638,7 @@ void RunSample::SetPockelsMask(ICamera* camera, IExperiment* exp, string maskPat
 		long pockelsMaskWidth = static_cast<long>(param);
 
 		wstring ext(PathFindExtension(fileNameWideString.c_str()));
-		long width = 0,height = 0,colorChannels = 0;
+		long width = 0,height = 0,colorChannels = 0, bitsPerPixel = 0;
 		char * pBuffer;
 		char * pMask;
 		const long BYTES_PER_PIXEL = 2;		
@@ -649,8 +650,12 @@ void RunSample::SetPockelsMask(ICamera* camera, IExperiment* exp, string maskPat
 			long timeBasedLineScanMS = 0;
 			long threePhotonEnable = FALSE;
 			long numberOfPlanes = 1;
+			long selectedImagingGG = 0;
+			long selectedStimGG = 0;
+			double pixelAspectRatioYScale = 1;
+
 			exp->GetLSM(areaMode,areaAngle,scanMode,interleave,pixelX,pixelY,channel,fieldSize,offsetX,offsetY,averageMode,averageNum,clockSource,inputRange1,inputRange2,twoWayAlignment,extClockRate,dwellTime,
-				flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes);
+				flybackCycles,inputRange3,inputRange4,minimizeFlybackCycles,polarity[0],polarity[1],polarity[2],polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes, selectedImagingGG, selectedStimGG, pixelAspectRatioYScale);
 			width = static_cast<long>(pixelX);
 			height = static_cast<long>(pixelY);
 
@@ -673,7 +678,7 @@ void RunSample::SetPockelsMask(ICamera* camera, IExperiment* exp, string maskPat
 		}
 		else if (ext == L".tif" || ext == L".Tif")
 		{
-			if(FALSE == ReadImageInfo((wchar_t*)fileNameWideString.c_str(), width, height, colorChannels))
+			if(FALSE == ReadImageInfo((wchar_t*)fileNameWideString.c_str(), width, height, colorChannels, bitsPerPixel))
 			{
 				return;
 			}
@@ -692,7 +697,7 @@ void RunSample::SetPockelsMask(ICamera* camera, IExperiment* exp, string maskPat
 
 		ResizeImage(pBuffer, width, height, pMask, pockelsMaskWidth, height);
 
-		camera->SetParamBuffer(ICamera::PARAM_LSM_POCKELS_MASK,pMask,pockelsMaskWidth*height*BYTES_PER_PIXEL);
+		camera->SetParamBuffer(ICamera::PARAM_LSM_POCKELS_MASK_0,pMask,pockelsMaskWidth*height*BYTES_PER_PIXEL);
 
 		delete[] pBuffer;
 		delete[] pMask;
@@ -704,7 +709,7 @@ void RunSample::SetPockelsMask(ICamera* camera, IExperiment* exp, string maskPat
 	}
 }
 
-void PreCaptureProtocol(IExperiment* exp)
+void PreCaptureProtocol(IExperiment* exp, long zCount)
 {	
 	//This function will go through both types of Lasers (MCLS and Multiphoton)
 	//and will set the parameters as found in the Active.xml file
@@ -725,7 +730,8 @@ void PreCaptureProtocol(IExperiment* exp)
 	long wavelength3;
 	long wavelength4;
 	long captureSequenceEnable = FALSE;
-	exp->GetCaptureSequence(captureSequenceEnable);
+	long sequentialType = 0;
+	exp->GetCaptureSequence(captureSequenceEnable, sequentialType);
 	exp->GetMCLS(enable1, power1, enable2, power2, enable3, power3, enable4, power4, allTTL, allAnalog, wavelength1, wavelength2, wavelength3, wavelength4);
 	//only set the power if TTL mode is on and analog mode is off, otherwise set it to 100
 	if (allAnalog == 0)
@@ -903,16 +909,17 @@ void PreCaptureProtocol(IExperiment* exp)
 	pCamera->SetParam(ICamera::PARAM_LSM_POCKELS_MASK_INVERT_0, pockelsInvert);
 	if(TRUE == pockelsMaskEnable)
 	{
-		RunSample::getInstance()->SetPockelsMask(pCamera,exp,pockelsMaskPath);
+		RunSample::getInstance()->SetPockelsMask(pCamera, exp, pockelsMaskPath);
 	}
 
-	long zPos = 1;
-	myFunctionPointerSaveZImage(&zPos,&p0,&p1,&p2,&p3,&p4,&p5);
+	//This also updates image view between sequences
+	long zPos = zCount;
+	myFunctionPointerSaveZImage(&zPos, &p0, &p1, &p2, &p3, &p4, &p5);
 
 	//Set Lighpath mirrors in position
 	IDevice* pLightPath = NULL;
 	double epiTurretAvailable = FALSE;
-	long MAX_LIGHTPATH_WAIT_TIME = 2000;
+	long MAX_LIGHTPATH_WAIT_TIME = 4000;
 
 	pLightPath = GetDevice(SelectedHardware::SELECTED_LIGHTPATH);
 
@@ -930,7 +937,7 @@ void PreCaptureProtocol(IExperiment* exp)
 		if (TRUE == pLightPath->GetParam(IDevice::PARAM_SCOPE_TYPE, scopeType) && static_cast<long>(ScopeType::INVERTED) == scopeType)
 		{
 			pLightPath->SetParam(IDevice::PARAM_LIGHTPATH_INVERTED_POS, invertedLightPathPos);
-			MAX_LIGHTPATH_WAIT_TIME = 4500;
+			MAX_LIGHTPATH_WAIT_TIME = 9000;
 		}
 		else
 		{
@@ -972,7 +979,7 @@ void PreCaptureProtocol(IExperiment* exp)
 	{
 		long position;
 		string name;
-		long MAX_EPITURRET_WAIT_TIME = 2000;
+		long MAX_EPITURRET_WAIT_TIME = 4000;
 
 		exp->GetEpiTurret(position, name);
 
@@ -986,7 +993,7 @@ void PreCaptureProtocol(IExperiment* exp)
 			//Check if the selected epi turret is the MCM6000, if it isn't call the movement commands from lightpath that we skipped
 			if (TRUE == pEpiTurret->GetParam(IDevice::PARAM_EPI_TURRET_AVAILABLE, epiTurretAvailable))
 			{
-				MAX_EPITURRET_WAIT_TIME = 4500;
+				MAX_EPITURRET_WAIT_TIME = 9000;
 			}
 			else
 			{
@@ -1163,9 +1170,13 @@ UINT RunSampleThreadProc( LPVOID pParam )
 			long tapsIndex, tapsBalance;
 			long readoutSpeedIndex;
 			long averageMode, averageNum;
-			long vericalFlip, horizontalFlip, imageAngle;
+			long vericalFlip, horizontalFlip, imageAngle, camChannel;
+			long colorImageType, polarImageType;
+			long isContinuousWhiteBalance, continuousWhiteBalanceNumFrames;
+			double redGain, greenGain, blueGain;
 			//getting the values from the experiment setup XML files
-			exp->GetCamera(camName,camImageWidth,camImageHeight,pixelSize,exposureTimeMS,gain,blackLevel,lightMode,left,top,right,bottom,binningX,binningY,tapsIndex,tapsBalance,readoutSpeedIndex,averageMode,averageNum,vericalFlip,horizontalFlip,imageAngle);
+			exp->GetCamera(camName, camImageWidth, camImageHeight, pixelSize, exposureTimeMS, gain, blackLevel, lightMode, left, top, right, bottom, binningX, binningY, tapsIndex, tapsBalance, readoutSpeedIndex, averageMode, averageNum, vericalFlip, horizontalFlip, imageAngle, camChannel, colorImageType, polarImageType, isContinuousWhiteBalance, continuousWhiteBalanceNumFrames, redGain, greenGain, blueGain);
+
 			long totalNumOfTiles = 0;
 			long binning = 1;
 			string objName;
@@ -1233,8 +1244,9 @@ UINT RunSampleThreadProc( LPVOID pParam )
 			exp->GetStreaming(streamEnable, streamFrames, rawData, triggerMode, displayImage, storageMode, zFastEnable, zFastMode, flybackFrames, flybackLines, flybackTimeAdjustMS, volumeTimeAdjustMS, stepTimeAdjustMS, previewIndex, stimulusTriggering, dmaFrames, stimulusMaxFrames, useReferenceVoltageForFastZPockels, streamDisplayCumulativeAveragePreview);
 			exp->GetPhotobleaching(photoBleachingEnable, laserPositiion, durationMS, powerPosition, bleachWidth,bleachHeight,bleachOffsetX,bleachOffsetY, bleachingFrames, fieldSize, bleachTrigger,preBleachingFrames, preBleachingInterval,preBleachingStream, postBleachingFrames1, postBleachingInterval1,postBleachingStream1, postBleachingFrames2, postBleachingInterval2,postBleachingStream2,powerEnable,laserEnable,bleachQuery,bleachPostTrigger,enableSimultaneousBleachingAndImaging,pmtEnableDuringBleach[0],pmtEnableDuringBleach[1],pmtEnableDuringBleach[2],pmtEnableDuringBleach[3]);
 
-			long captureSequenceEnable = FALSE;
-			exp->GetCaptureSequence(captureSequenceEnable);
+			//SequentialTypes: 0 - between stacks, 1 - between frames
+			long captureSequenceEnable = FALSE, sequentialType = 0;
+			exp->GetCaptureSequence(captureSequenceEnable, sequentialType);
 
 			//Get the Capture Sequence Settings
 			vector<IExperiment::SequenceStep> captureSequence;
@@ -1300,7 +1312,14 @@ UINT RunSampleThreadProc( LPVOID pParam )
 				}
 			}
 
-			acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_SEQUENCE,pOb,exp,ws));
+			if (1 == sequentialType && TRUE == captureSequenceEnable)
+			{
+				acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_T_SERIES, pOb, exp, ws));
+			}
+			else
+			{
+				acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_SEQUENCE, pOb, exp, ws));
+			}
 
 			//capture all of the well images
 			sampleDll->GoToAllWellSites(xyStage, acq.get(), exp);
@@ -1402,17 +1421,17 @@ void RunSample::SetLaser(long enable1, double power1, long enable2, double power
 			pLaser = GetDevice(SelectedHardware::SELECTED_LASER1);
 			if(pLaser != NULL)
 			{
-				if (sequential == true)
+				if (sequential == TRUE)
 				{
 					//Toptica Sequential laser 1 logic (only set power if laser enabled, set emission if TTL Mode is off)
 					if ((405 <= laserWavelength1) && (laserWavelength1 <= 785))
 					{
-						if (enable1 == true) 
+						if (enable1 == TRUE) 
 						{
 							SetDeviceParamDouble(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_POWER, power1, FALSE);
 						}
 						SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_ENABLE, enable1, FALSE);
-						if (laserTTL == false)
+						if (laserTTL == FALSE)
 						{
 							SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_EMISSION, ENABLE_EMISSION, FALSE);
 						}
@@ -1428,7 +1447,7 @@ void RunSample::SetLaser(long enable1, double power1, long enable2, double power
 				else 
 				{
 					//If sequential is not enabled, set the power, enable state (and emission state for laser 1 if not in TTL Mode)
-					if (laserTTL == false)
+					if (laserTTL == FALSE)
 					{
 						SetDeviceParamLong(SelectedHardware::SELECTED_LASER1, IDevice::PARAM_LASER1_EMISSION, ENABLE_EMISSION, FALSE);
 					}
@@ -1444,23 +1463,23 @@ void RunSample::SetLaser(long enable1, double power1, long enable2, double power
 			pLaser = GetDevice(SelectedHardware::SELECTED_LASER2);
 			if(pLaser != NULL)
 			{
-				if (sequential == true)
+				if (sequential == TRUE)
 				{
 					//Toptica Sequential laser 2 logic (only set power if laser enabled, set emission if TTL Mode is off)
 					if ((405 <= laserWavelength2) && (laserWavelength2 <= 785))
 					{
-						if (enable2 == true) 
+						if (enable2 == TRUE) 
 						{
 							SetDeviceParamDouble(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_POWER, power2, FALSE);
 						}
 						SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_ENABLE, enable2, FALSE);
-						if (laserTTL == false)
+						if (laserTTL == FALSE)
 						{
 							SetDeviceParamLong(SelectedHardware::SELECTED_LASER2, IDevice::PARAM_LASER2_EMISSION, ENABLE_EMISSION, FALSE);
 						}
 					}
 					//If sequential is enabled, enable laser 2 and set its power (old MCLS logic)
-					if (laserAnalog == false && laserTTL == false)
+					if (laserAnalog == FALSE && laserTTL == FALSE)
 					{
 						pLaser->SetParam(IDevice::PARAM_LASER2_ENABLE, enable2);
 						pLaser->SetParam(IDevice::PARAM_LASER2_POWER, power2);
@@ -1486,24 +1505,24 @@ void RunSample::SetLaser(long enable1, double power1, long enable2, double power
 			pLaser = GetDevice(SelectedHardware::SELECTED_LASER3);
 			if(pLaser != NULL)
 			{
-				if (sequential == true)
+				if (sequential == TRUE)
 				{
 					//Toptica Sequential laser 3 logic (only set power if laser enabled, set emission if TTL Mode is off)
 
 					if ((405 <= laserWavelength3) && (laserWavelength3 <= 785))
 					{
-						if (enable3 == true) 
+						if (enable3 == TRUE) 
 						{
 							SetDeviceParamDouble(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_POWER, power3, FALSE);
 						}
 						SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_ENABLE, enable3, FALSE);
-						if (laserTTL == false)
+						if (laserTTL == FALSE)
 						{
 							SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_EMISSION, ENABLE_EMISSION, FALSE);
 						}
 					}
 					//If sequential is enabled, enable laser 3 and set its power (old MCLS logic)
-					if (laserAnalog == false && laserTTL == false)
+					if (laserAnalog == FALSE && laserTTL == FALSE)
 					{
 						pLaser->SetParam(IDevice::PARAM_LASER3_ENABLE, enable3);
 						pLaser->SetParam(IDevice::PARAM_LASER3_POWER, power3);
@@ -1513,7 +1532,7 @@ void RunSample::SetLaser(long enable1, double power1, long enable2, double power
 				else
 				{
 					//If sequential is not enabled, set the power, enable state (and emission state for laser 3 if not in TTL Mode)
-					if (laserTTL == false)
+					if (laserTTL == FALSE)
 					{
 						SetDeviceParamLong(SelectedHardware::SELECTED_LASER3, IDevice::PARAM_LASER3_EMISSION, ENABLE_EMISSION, FALSE);
 					}
@@ -1529,23 +1548,23 @@ void RunSample::SetLaser(long enable1, double power1, long enable2, double power
 			pLaser = GetDevice(SelectedHardware::SELECTED_LASER4);
 			if (pLaser != NULL)
 			{
-				if (sequential == true)
+				if (sequential == TRUE)
 				{
 					//Toptica Sequential laser 3 logic (only set power if laser enabled, set emission if TTL Mode is off)
 					if ((405 <= laserWavelength4) && (laserWavelength4 <= 785))
 					{
-						if (enable4 == true) 
+						if (enable4 == TRUE) 
 						{
 							SetDeviceParamDouble(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_POWER, power4, FALSE);
 						}
 						SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_ENABLE, enable4, FALSE);
-						if (laserTTL == false) 
+						if (laserTTL == FALSE) 
 						{
 							SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_EMISSION, ENABLE_EMISSION, FALSE);
 						}
 					}
 					//If sequential is enabled, enable laser 4 and set its power (old MCLS logic)
-					if (laserAnalog == false && laserTTL == false)
+					if (laserAnalog == FALSE && laserTTL == FALSE)
 					{
 						pLaser->SetParam(IDevice::PARAM_LASER4_ENABLE, enable4);
 						pLaser->SetParam(IDevice::PARAM_LASER4_POWER, power4);
@@ -1555,7 +1574,7 @@ void RunSample::SetLaser(long enable1, double power1, long enable2, double power
 				else 
 				{
 					//If sequential is not enabled, set the power, enable state (and emission state for laser 4 if not in TTL Mode)
-					if (laserTTL == false)
+					if (laserTTL == FALSE)
 					{
 						SetDeviceParamLong(SelectedHardware::SELECTED_LASER4, IDevice::PARAM_LASER4_EMISSION, ENABLE_EMISSION, FALSE);
 					}
@@ -1853,21 +1872,8 @@ long ScannerEnableProc(long cameraOrBleachScanner, long enable)
 	switch ((ICamera::LSMType)static_cast<long>(dVal))
 	{
 	case ICamera::LSMType::GALVO_RESONANCE:
-		pControlUnit->SetParam(IDevice::PARAM_SCANNER_ENABLE, enable);
-		pControlUnit->PreflightPosition();
-		pControlUnit->SetupPosition();
-		pControlUnit->StartPosition();
-		pControlUnit->PostflightPosition();
-
-		if (TRUE == enable)
-		{
-			//wait for Resonance scanner to be stable, 
-			//required especially for single channel acquisition:
-			Sleep(300);	//140
-		}
-		break;
 	case ICamera::LSMType::RESONANCE_GALVO_GALVO:
-		pControlUnit->SetParam(IDevice::PARAM_SCANNER_ENABLE_ANALOG, enable);
+		pControlUnit->SetParam(IDevice::PARAM_SCANNER_ENABLE, enable);
 		pControlUnit->PreflightPosition();
 		pControlUnit->SetupPosition();
 		pControlUnit->StartPosition();
@@ -2102,11 +2108,12 @@ void GetZPositions(IExperiment* exp, IDevice* pZStage, double &zStartPos, double
 	exp->GetSample(sampleOffsetX,sampleOffsetY,sampleOffsetZ,tiltAdjustment,fPt[0][0],fPt[0][1],fPt[0][2],fPt[1][0],fPt[1][1],fPt[1][2],fPt[2][0],fPt[2][1],fPt[2][2]);
 
 	//no tilt if no tiles is active
-	long camType = 0, lsmType = ICamera::LSMType::LSMTYPE_LAST;
+	long camType = 0, lsmType = ICamera::LSMType::LSMTYPE_LAST, mROIEnabled;
 	GetCameraParamLong(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_CAMERA_TYPE, camType);
 	GetCameraParamLong(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_LSM_TYPE, lsmType);
+	GetCameraParamLong(SelectedHardware::SELECTED_CAMERA1, ICamera::PARAM_MROI_MODE_ENABLE, mROIEnabled);
 	vector<IExperiment::SubImage> SubImages; 	
-	exp->GetSubImages(SubImages, camType, lsmType);
+	exp->GetSubImages(SubImages, camType, lsmType, mROIEnabled);
 	if (0 == SubImages.size()) 
 		tiltAdjustment = 0;
 
@@ -2314,6 +2321,187 @@ void SetLEDs(IExperiment* exp, ICamera* camera, double zPos, double &power1, dou
 
 	//Turn ON LEDS 
 	SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP, IDevice::PARAM_LEDS_ENABLE_DISABLE, TRUE, TRUE);
+}
+
+void SetCameraParameters(IExperiment* exp, ICamera* camera)
+{
+	ICamera::CameraType cameraType;
+	ICamera::LSMType lsmType;
+	double val;
+	camera->GetParam(ICamera::PARAM_CAMERA_TYPE, val);
+	cameraType = (ICamera::CameraType)static_cast<long> (val);
+	camera->GetParam(ICamera::PARAM_LSM_TYPE, val);
+	lsmType = (ICamera::LSMType)static_cast<long> (val);
+	if (ICamera::CCD == cameraType)
+	{
+		string camName;
+		long camImageWidth;
+		long camImageHeight;
+		double camPixelSize;
+		double camExposureTimeMS;
+		long gain, blackLevel, lightMode;
+		long left, top, right, bottom;
+		long binningX, binningY;
+		long tapsIndex, tapsBalance;
+		long readoutSpeedIndex;
+		long camAverageMode, camAverageNum;
+		long camVericalFlip, camHorizontalFlip, imageAngle, camChannel;
+		long colorImageType, polarImageType;
+		long isContinuousWhiteBalance, continuousWhiteBalanceNumFrames;
+		double redGain, greenGain, blueGain;
+
+		//getting the values from the experiment setup XML files
+		exp->GetCamera(camName, camImageWidth, camImageHeight, camPixelSize, camExposureTimeMS, gain, blackLevel, lightMode, left, top, right, bottom, binningX, binningY, tapsIndex, tapsBalance, readoutSpeedIndex, camAverageMode, camAverageNum, camVericalFlip, camHorizontalFlip, imageAngle, camChannel, colorImageType, polarImageType, isContinuousWhiteBalance, continuousWhiteBalanceNumFrames, redGain, greenGain, blueGain);
+
+		camAverageMode = (1 == camAverageMode) ? camAverageNum : 1;
+		camera->SetParam(ICamera::PARAM_EXPOSURE_TIME_MS, camExposureTimeMS);
+		camera->SetParam(ICamera::PARAM_GAIN, gain);
+		camera->SetParam(ICamera::PARAM_OPTICAL_BLACK_LEVEL, blackLevel);
+		camera->SetParam(ICamera::PARAM_LIGHT_MODE, lightMode);
+		camera->SetParam(ICamera::PARAM_CAPTURE_REGION_LEFT, left);
+		camera->SetParam(ICamera::PARAM_CAPTURE_REGION_TOP, top);
+		camera->SetParam(ICamera::PARAM_CAPTURE_REGION_RIGHT, right);
+		camera->SetParam(ICamera::PARAM_CAPTURE_REGION_BOTTOM, bottom);
+		camera->SetParam(ICamera::PARAM_BINNING_X, binningX);
+		camera->SetParam(ICamera::PARAM_BINNING_Y, binningY);
+		camera->SetParam(ICamera::PARAM_TAP_INDEX, tapsIndex);
+		camera->SetParam(ICamera::PARAM_TAP_BALANCE_MODE, tapsBalance);
+		camera->SetParam(ICamera::PARAM_READOUT_SPEED_INDEX, readoutSpeedIndex);
+		camera->SetParam(ICamera::PARAM_CAMERA_AVERAGENUM, camAverageNum);
+		camera->SetParam(ICamera::PARAM_CAMERA_IMAGE_VERTICAL_FLIP, camVericalFlip);
+		camera->SetParam(ICamera::PARAM_CAMERA_IMAGE_HORIZONTAL_FLIP, camHorizontalFlip);
+		camera->SetParam(ICamera::PARAM_CAMERA_IMAGE_ANGLE, imageAngle);
+		camera->SetParam(ICamera::PARAM_CAMERA_DMA_BUFFER_COUNT, camAverageNum);
+		//will average after acquisition is complete. Set to none at camera level
+		camera->SetParam(ICamera::PARAM_CAMERA_AVERAGEMODE, ICamera::AVG_MODE_NONE);
+
+		camera->SetParam(ICamera::PARAM_CAMERA_COLOR_IMAGE_TYPE, colorImageType);
+		camera->SetParam(ICamera::PARAM_CAMERA_POLAR_IMAGE_TYPE, polarImageType);
+		camera->SetParam(ICamera::PARAM_CAMERA_IS_CONTINUOUS_WHITE_BALANCE_ENABLED, isContinuousWhiteBalance);
+		camera->SetParam(ICamera::PARAM_CAMERA_CONTINUOUS_WHITE_BALANCE_NUM_FRAMES, continuousWhiteBalanceNumFrames);
+		camera->SetParam(ICamera::PARAM_CAMERA_RED_GAIN, redGain);
+		camera->SetParam(ICamera::PARAM_CAMERA_GREEN_GAIN, greenGain);
+		camera->SetParam(ICamera::PARAM_CAMERA_BLUE_GAIN, blueGain);
+	}
+	else
+	{
+		wstring pathAndName = exp->GetPathAndName();
+		camera->SetParamString(ICamera::PARAM_MESO_EXP_PATH, (wchar_t*)pathAndName.c_str());
+		camera->SetParamString(ICamera::PARAM_WAVEFORM_OUTPATH, (wchar_t*)GetDir(pathAndName).c_str());
+
+		long areaMode, scanMode, interleave, pixelX, pixelY, chan, lsmFieldSize, offsetX, offsetY, averageMode, averageNum, clockSource, inputRange1, inputRange2, twoWayAlignment, extClockRate, flybackCycles, inputRange3, inputRange4, minimizeFlybackCycles, polarity[4], verticalFlip, horizontalFlip;
+		double areaAngle, dwellTime, crsFrequencyHz = 0;
+		long timeBasedLineScan = FALSE;
+		long timeBasedLineScanMS = 0;
+		long threePhotonEnable = FALSE;
+		long numberOfPlanes = 1;
+		long selectedImagingGG = 0;
+		long selectedStimGG = 0;
+		double pixelAspectRatioYScale = 1;
+
+		//getting the values from the experiment setup XML files
+		exp->GetLSM(areaMode, areaAngle, scanMode, interleave, pixelX, pixelY, chan, lsmFieldSize, offsetX, offsetY, averageMode, averageNum, clockSource, inputRange1, inputRange2, twoWayAlignment, extClockRate, dwellTime,
+			flybackCycles, inputRange3, inputRange4, minimizeFlybackCycles, polarity[0], polarity[1], polarity[2], polarity[3], verticalFlip, horizontalFlip, crsFrequencyHz, timeBasedLineScan, timeBasedLineScanMS, threePhotonEnable, numberOfPlanes, selectedImagingGG, selectedStimGG, pixelAspectRatioYScale);
+		switch (areaMode)
+		{
+		case 0: //Square
+		{
+			areaMode = ICamera::SQUARE;
+			camera->SetParam(ICamera::PARAM_LSM_GALVO_ENABLE, TRUE);
+		}
+		break;
+		case 1: //Rect
+		{
+			areaMode = ICamera::RECTANGLE;
+			camera->SetParam(ICamera::PARAM_LSM_GALVO_ENABLE, TRUE);
+		}
+		break;
+		case 2: //Kymopgragh
+		{
+			areaMode = ICamera::RECTANGLE;
+			camera->SetParam(ICamera::PARAM_LSM_GALVO_ENABLE, FALSE);
+		}
+		break;
+		case 3: //LineScan
+		{
+			areaMode = ICamera::RECTANGLE;
+			camera->SetParam(ICamera::PARAM_LSM_GALVO_ENABLE, FALSE);
+		}
+		break;
+		case 4: //Polyline
+		{
+			areaMode = ICamera::POLYLINE;
+			camera->SetParam(ICamera::PARAM_LSM_GALVO_ENABLE, FALSE);
+		}
+		break;
+		default:
+		{
+			areaMode = ICamera::SQUARE;
+			camera->SetParam(ICamera::PARAM_LSM_GALVO_ENABLE, TRUE);
+		}
+		break;
+		}
+
+		averageNum = (1 == averageMode) ? averageNum : 1;
+		camera->SetParam(ICamera::PARAM_LSM_AREAMODE, areaMode);
+		camera->SetParam(ICamera::PARAM_LSM_SCANAREA_ANGLE, areaAngle);
+		camera->SetParam(ICamera::PARAM_LSM_PIXEL_X, pixelX);
+		camera->SetParam(ICamera::PARAM_LSM_PIXEL_Y, pixelY);
+		camera->SetParam(ICamera::PARAM_LSM_DWELL_TIME, dwellTime);
+		camera->SetParam(ICamera::PARAM_LSM_SCANMODE, scanMode);
+		camera->SetParam(ICamera::PARAM_LSM_INTERLEAVE_SCAN, interleave);
+		camera->SetParam(ICamera::PARAM_LSM_CHANNEL, chan);
+		camera->SetParam(ICamera::PARAM_LSM_FIELD_SIZE, lsmFieldSize);
+		camera->SetParam(ICamera::PARAM_LSM_OFFSET_X, offsetX);
+		camera->SetParam(ICamera::PARAM_LSM_OFFSET_Y, offsetY);
+		camera->SetParam(ICamera::PARAM_LSM_AVERAGEMODE, averageMode);
+		camera->SetParam(ICamera::PARAM_LSM_AVERAGENUM, averageNum);
+		camera->SetParam(ICamera::PARAM_LSM_CLOCKSOURCE, clockSource);
+		camera->SetParam(ICamera::PARAM_LSM_INPUTRANGE1, inputRange1);
+		camera->SetParam(ICamera::PARAM_LSM_INPUTRANGE2, inputRange2);
+		camera->SetParam(ICamera::PARAM_LSM_INPUTRANGE3, inputRange3);
+		camera->SetParam(ICamera::PARAM_LSM_INPUTRANGE4, inputRange4);
+		camera->SetParam(ICamera::PARAM_LSM_MINIMIZE_FLYBACK_CYCLES, minimizeFlybackCycles);
+		camera->SetParam(ICamera::PARAM_LSM_ALIGNMENT, twoWayAlignment);
+		camera->SetParam(ICamera::PARAM_LSM_EXTERNALCLOCKRATE, extClockRate);
+		camera->SetParam(ICamera::PARAM_LSM_DMA_BUFFER_COUNT, averageNum);
+		camera->SetParam(ICamera::PARAM_LSM_FLYBACK_CYCLE, flybackCycles);
+		//will average after acquisition is complete. Set to none at camera level
+		camera->SetParam(ICamera::PARAM_TRIGGER_MODE, ICamera::SW_SINGLE_FRAME);
+		camera->SetParam(ICamera::PARAM_LSM_POCKELS_OUTPUT_USE_REF, FALSE);
+
+		camera->SetParam(ICamera::PARAM_LSM_VERTICAL_SCAN_DIRECTION, verticalFlip);
+		camera->SetParam(ICamera::PARAM_LSM_HORIZONTAL_FLIP, horizontalFlip);
+		camera->SetParam(ICamera::PARAM_LSM_TIME_BASED_LINE_SCAN, timeBasedLineScan);
+		camera->SetParam(ICamera::PARAM_LSM_TB_LINE_SCAN_TIME_MS, timeBasedLineScanMS);
+
+		camera->SetParam(ICamera::PARAM_LSM_3P_ENABLE, threePhotonEnable);
+		camera->SetParam(ICamera::PARAM_LSM_NUMBER_OF_PLANES, numberOfPlanes);
+		camera->SetParam(ICamera::PARAM_LSM_Y_AMPLITUDE_SCALER, (int)(pixelAspectRatioYScale * 100));
+
+
+		//notify the ECU of the zoom change also
+		IDevice* pControlUnitDevice = NULL;
+		pControlUnitDevice = GetDevice(SelectedHardware::SELECTED_CONTROLUNIT);
+		if (NULL != pControlUnitDevice && ICamera::LSMType::RESONANCE_GALVO_GALVO != lsmType)
+		{
+			if (SetDeviceParameterValue(pControlUnitDevice, IDevice::PARAM_SCANNER_ZOOM_POS, lsmFieldSize, FALSE, NULL, 0))
+			{
+				//If the device is an ECU2, read the alignment value from the ECU and set it back to itself, same way as capture setup LSMFieldSize->Setter
+				long minFS, maxFS, fieldSizeDefault, alignment, zone, zoneECU;
+				GetDeviceParamRangeLong(SelectedHardware::SELECTED_CONTROLUNIT, IDevice::PARAM_SCANNER_ZOOM_POS, minFS, maxFS, fieldSizeDefault);
+				zone = maxFS - lsmFieldSize;
+				zoneECU = IDevice::PARAM_ECU_TWO_WAY_ZONE_1 + zone;
+				if (GetDeviceParamLong(SelectedHardware::SELECTED_CONTROLUNIT, zoneECU, alignment))
+				{
+					SetDeviceParamDouble(SelectedHardware::SELECTED_CONTROLUNIT, zoneECU, alignment, FALSE);
+				}
+			}
+		}
+
+		SetPMTProc(exp);
+		ScannerEnableProc(0, TRUE);
+	}
 }
 
 long GetTotalNumOfTiles()

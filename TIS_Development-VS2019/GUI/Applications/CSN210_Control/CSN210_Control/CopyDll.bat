@@ -1,0 +1,2 @@
+echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorObjectiveChanger\x64\Debug\ThorObjectiveChanger.dll .\bin\Debug
+echo F | xcopy /F ..\..\..\..\Hardware\Devices\ThorObjectiveChanger\x64\Debug\ThorObjectiveChanger.pdb .\bin\Debug

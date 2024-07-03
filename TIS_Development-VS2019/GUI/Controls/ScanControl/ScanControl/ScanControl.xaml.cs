@@ -266,6 +266,43 @@
         #endregion Methods
     }
 
+    public class MultiValConverter : IMultiValueConverter
+    {
+        #region Methods
+
+        public object Convert(object[] values, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            Brush brush = Brushes.White;
+            bool PMTLive = System.Convert.ToBoolean(values[0]);
+
+            if (false == (bool)values[1]) //If toggle switch is to the left (OFF)
+            {
+                return (object)Brushes.Red;
+            }
+
+            double num = System.Convert.ToDouble(values[2]);
+            int detectorType = (int)values[3];
+            bool isHPD = (int)DetectorTypes.HPD1000 == detectorType;
+            if ((num > 0.04 || isHPD) && PMTLive) //If channel is live and gain is above 0(0.04 for tolerance)
+            {
+                brush = Brushes.LimeGreen;
+            }
+            else
+            {
+                brush = Brushes.DodgerBlue;
+            }
+
+            return (object)brush;
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, System.Globalization.CultureInfo culture)
+        {
+            throw new NotImplementedException("Going back to what you had isn't supported.");
+        }
+
+        #endregion Methods
+    }
+
     public class PMTOnBrushConverter : IValueConverter
     {
         #region Methods
@@ -280,7 +317,7 @@
             switch ((int)value)
             {
                 case 0: brush = Brushes.Red; break;
-                case 1: brush = Brushes.Green; break;
+                case 1: brush = Brushes.LimeGreen; break;
             }
             return brush;
         }
@@ -294,6 +331,60 @@
         #endregion Methods
     }
 
+    public class PMTSwitchConverter : IValueConverter
+    {
+        #region Methods
+
+        public object Convert(object value, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            if (targetType != typeof(Brush))
+                throw new InvalidOperationException("The target must be a brush");
+
+            Brush brush = Brushes.White;
+
+            switch ((int)value)
+            {
+
+                case 0:
+
+                    brush = Brushes.Red;
+                    break;
+                case 1: brush = Brushes.LimeGreen; break;
+            }
+            return brush;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+
+        #endregion Methods
+    }
+
+    public class RoundingConverter : IValueConverter
+    {
+        #region Methods
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is double)
+            {
+                double number = (double)value;
+                return Math.Round(number, 3); // Rounds to 2 decimal places
+            }
+            return value;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+        #endregion Methods
+    }
+
+
     /// <summary>
     /// Interaction logic for UserControl1.xaml
     /// </summary>
@@ -301,347 +392,351 @@
     {
         #region Fields
 
-        public static readonly DependencyProperty AverageFramesMinusCommandProperty = 
+        public static readonly DependencyProperty AverageFramesMinusCommandProperty =
         DependencyProperty.Register(
         "AverageFramesMinusCommand",
         typeof(ICommand),
         typeof(ScanControlUC));
-        public static readonly DependencyProperty AverageFramesPlusCommandProperty = 
+        public static readonly DependencyProperty AverageFramesPlusCommandProperty =
         DependencyProperty.Register(
         "AverageFramesPlusCommand",
         typeof(ICommand),
         typeof(ScanControlUC));
-        public static readonly DependencyProperty BandwidthListProperty = 
+        public static readonly DependencyProperty BandwidthListProperty =
         DependencyProperty.Register(
         "BandwidthList",
         typeof(ObservableCollection<ObservableCollection<string>>),
         typeof(ScanControlUC));
-        public static readonly DependencyProperty ChanDigOffsetMinusCommandProperty = 
+        public static readonly DependencyProperty ChanDigOffsetMinusCommandProperty =
         DependencyProperty.Register(
         "ChanDigOffsetMinusCommand",
         typeof(ICommand),
         typeof(ScanControlUC));
-        public static readonly DependencyProperty ChanDigOffsetPlusCommandProperty = 
+        public static readonly DependencyProperty ChanDigOffsetPlusCommandProperty =
         DependencyProperty.Register(
         "ChanDigOffsetPlusCommand",
         typeof(ICommand),
         typeof(ScanControlUC));
-        public static readonly DependencyProperty FlybackCyclesMinusCommandProperty = 
+        public static readonly DependencyProperty FlybackCyclesMinusCommandProperty =
         DependencyProperty.Register(
         "FlybackCyclesMinusCommand",
         typeof(ICommand),
         typeof(ScanControlUC));
-        public static readonly DependencyProperty FlybackCyclesPlusCommandProperty = 
+        public static readonly DependencyProperty FlybackCyclesPlusCommandProperty =
         DependencyProperty.Register(
         "FlybackCyclesPlusCommand",
         typeof(ICommand),
         typeof(ScanControlUC));
-        public static readonly DependencyProperty LSMAlignmentMinusCoarseCommandProperty = 
+        public static readonly DependencyProperty LSMAlignmentMinusCoarseCommandProperty =
         DependencyProperty.Register(
         "LSMAlignmentMinusCoarseCommand",
         typeof(ICommand),
         typeof(ScanControlUC));
-        public static readonly DependencyProperty LSMAlignmentMinusCommandProperty = 
+        public static readonly DependencyProperty LSMAlignmentMinusCommandProperty =
         DependencyProperty.Register(
         "LSMAlignmentMinusCommand",
         typeof(ICommand),
         typeof(ScanControlUC));
-        public static readonly DependencyProperty LSMAlignmentPlusCoarseCommandProperty = 
+        public static readonly DependencyProperty LSMAlignmentPlusCoarseCommandProperty =
         DependencyProperty.Register(
         "LSMAlignmentPlusCoarseCommand",
         typeof(ICommand),
         typeof(ScanControlUC));
-        public static readonly DependencyProperty LSMAlignmentPlusCommandProperty = 
+        public static readonly DependencyProperty LSMAlignmentPlusCommandProperty =
         DependencyProperty.Register(
         "LSMAlignmentPlusCommand",
         typeof(ICommand),
         typeof(ScanControlUC));
-        public static readonly DependencyProperty LSMDwellTimeMinusCommandProperty = 
+        public static readonly DependencyProperty LSMDwellTimeMinusCommandProperty =
         DependencyProperty.Register(
         "LSMDwellTimeMinusCommand",
         typeof(ICommand),
         typeof(ScanControlUC));
-        public static readonly DependencyProperty LSMDwellTimePlusCommandProperty = 
+        public static readonly DependencyProperty LSMDwellTimePlusCommandProperty =
         DependencyProperty.Register(
         "LSMDwellTimePlusCommand",
         typeof(ICommand),
         typeof(ScanControlUC));
-        public static readonly DependencyProperty PMTGainMinusCommandProperty = 
+        public static readonly DependencyProperty PMTGainMinusCommandProperty =
         DependencyProperty.Register(
         "PMTGainMinusCommand",
         typeof(ICommand),
         typeof(ScanControlUC));
-        public static readonly DependencyProperty PMTGainPlusCommandProperty = 
+        public static readonly DependencyProperty PMTGainPlusCommandProperty =
         DependencyProperty.Register(
         "PMTGainPlusCommand",
         typeof(ICommand),
         typeof(ScanControlUC));
-        public static readonly DependencyProperty PMTOffsetMinusCommandProperty = 
+        public static readonly DependencyProperty PMTOffsetMinusCommandProperty =
         DependencyProperty.Register(
         "PMTOffsetMinusCommand",
         typeof(ICommand),
         typeof(ScanControlUC));
-        public static readonly DependencyProperty PMTOffsetPlusCommandProperty = 
+        public static readonly DependencyProperty PMTOffsetPlusCommandProperty =
         DependencyProperty.Register(
         "PMTOffsetPlusCommand",
         typeof(ICommand),
         typeof(ScanControlUC));
-        public static readonly DependencyProperty TwoWayCalibrationCommandProperty = 
+        public static readonly DependencyProperty TwoWayCalibrationCommandProperty =
         DependencyProperty.Register(
         "TwoWayCalibrationCommand",
         typeof(ICommand),
         typeof(ScanControlUC));
 
-        public static DependencyProperty BipolarityVisibilityProperty = 
+        public static DependencyProperty BipolarityVisibilityProperty =
         DependencyProperty.Register("BipolarityVisibility",
         typeof(Visibility),
         typeof(ScanControlUC));
-        public static DependencyProperty ChanDigOffsetProperty = 
+        public static DependencyProperty ChanDigOffsetProperty =
         DependencyProperty.Register("ChanDigOffset",
         typeof(CustomCollection<HwVal<int>>),
         typeof(ScanControlUC));
-        public static DependencyProperty ChanDigOffsetVisibilityProperty = 
+        public static DependencyProperty ChanDigOffsetVisibilityProperty =
         DependencyProperty.Register("ChanDigOffsetVisibility",
         typeof(CustomCollection<Visibility>),
         typeof(ScanControlUC));
-        public static DependencyProperty CoarsePanelVisibilityProperty = 
+        public static DependencyProperty CheckedProperty =
+        DependencyProperty.Register("IsChecked",
+        typeof(Visibility),
+        typeof(ScanControlUC));
+        public static DependencyProperty CoarsePanelVisibilityProperty =
         DependencyProperty.Register("CoarsePanelVisibility",
         typeof(Visibility),
         typeof(ScanControlUC));
-        public static DependencyProperty DigitizerBoardNameProperty = 
+        public static DependencyProperty DigitizerBoardNameProperty =
         DependencyProperty.Register("DigitizerBoardName",
         typeof(string),
         typeof(ScanControlUC));
-        public static DependencyProperty DigOffsetLabelProperty = 
+        public static DependencyProperty DigOffsetLabelProperty =
         DependencyProperty.Register("DigOffsetLabel",
         typeof(string),
         typeof(ScanControlUC));
-        public static DependencyProperty DigOffsetVisibilityProperty = 
+        public static DependencyProperty DigOffsetVisibilityProperty =
         DependencyProperty.Register("DigOffsetVisibility",
         typeof(Visibility),
         typeof(ScanControlUC));
-        public static DependencyProperty DwellTimeSliderEnabledProperty = 
+        public static DependencyProperty DwellTimeSliderEnabledProperty =
         DependencyProperty.Register("DwellTimeSliderEnabled",
         typeof(bool),
         typeof(ScanControlUC));
-        public static DependencyProperty FastOneWayImagingModeEnableVisibilityProperty = 
+        public static DependencyProperty FastOneWayImagingModeEnableVisibilityProperty =
         DependencyProperty.Register("FastOneWayImagingModeEnableVisibility",
         typeof(Visibility),
         typeof(ScanControlUC));
-        public static DependencyProperty FramesPerSecondAverageProperty = 
+        public static DependencyProperty FramesPerSecondAverageProperty =
         DependencyProperty.Register("FramesPerSecondAverage",
         typeof(string),
         typeof(ScanControlUC));
-        public static DependencyProperty GGLSMScanVisibilityProperty = 
+        public static DependencyProperty GGLSMScanVisibilityProperty =
         DependencyProperty.Register("GGLSMScanVisibility",
         typeof(Visibility),
         typeof(ScanControlUC));
-        public static DependencyProperty GRLSMScanVisibilityProperty = 
+        public static DependencyProperty GRLSMScanVisibilityProperty =
         DependencyProperty.Register("GRLSMScanVisibility",
         typeof(Visibility),
         typeof(ScanControlUC));
-        public static DependencyProperty InputRangeMaxProperty = 
+        public static DependencyProperty InputRangeMaxProperty =
         DependencyProperty.Register("InputRangeMax",
         typeof(int),
         typeof(ScanControlUC));
-        public static DependencyProperty InputRangeMinProperty = 
+        public static DependencyProperty InputRangeMinProperty =
         DependencyProperty.Register("InputRangeMin",
         typeof(int),
         typeof(ScanControlUC));
-        public static DependencyProperty InputRangeProperty = 
+        public static DependencyProperty InputRangeProperty =
         DependencyProperty.Register("InputRange",
         typeof(CustomCollection<HwVal<int>>),
         typeof(ScanControlUC));
-        public static DependencyProperty IsChannelVisibleProperty = 
+        public static DependencyProperty IsChannelVisibleProperty =
         DependencyProperty.Register("IsChannelVisible",
         typeof(CustomCollection<Visibility>),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMAverageEnabledProperty = 
+        public static DependencyProperty LSMAverageEnabledProperty =
            DependencyProperty.Register("LSMAverageEnabled",
            typeof(bool),
            typeof(ScanControlUC));
-        public static DependencyProperty LsmClkPnlEnabledProperty = 
+        public static DependencyProperty LsmClkPnlEnabledProperty =
         DependencyProperty.Register("LsmClkPnlEnabled",
         typeof(bool),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMClockSourceProperty = 
+        public static DependencyProperty LSMClockSourceProperty =
         DependencyProperty.Register("LSMClockSource",
         typeof(int),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMExtClockRateProperty = 
+        public static DependencyProperty LSMExtClockRateProperty =
         DependencyProperty.Register("LSMExtClockRate",
         typeof(double),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMExternalClockPhaseOffsetProperty = 
+        public static DependencyProperty LSMExternalClockPhaseOffsetProperty =
         DependencyProperty.Register("LSMExternalClockPhaseOffset",
         typeof(double),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMFastOneWayImagingModeEnableProperty = 
+        public static DependencyProperty LSMFastOneWayImagingModeEnableProperty =
         DependencyProperty.Register("LSMFastOneWayImagingModeEnable",
         typeof(bool),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMFlybackCyclesProperty = 
+        public static DependencyProperty LSMFlybackCyclesProperty =
         DependencyProperty.Register("LSMFlybackCycles",
         typeof(int),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMFlybackTimeProperty = 
+        public static DependencyProperty LSMFlybackTimeProperty =
         DependencyProperty.Register("LSMFlybackTime",
         typeof(double),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMInterleaveScanProperty = 
+        public static DependencyProperty LSMInterleaveScanProperty =
         DependencyProperty.Register("LSMInterleaveScan",
         typeof(int),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMPhaseAdjusmentVisibilityProperty = 
+        public static DependencyProperty LSMPhaseAdjusmentVisibilityProperty =
         DependencyProperty.Register("LSMPhaseAdjusmentVisibility",
         typeof(Visibility),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMPixelDwellTimeIndexProperty = 
+        public static DependencyProperty LSMPixelDwellTimeIndexProperty =
         DependencyProperty.Register("LSMPixelDwellTimeIndex",
         typeof(int),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMPixelDwellTimeMaxIndexProperty = 
+        public static DependencyProperty LSMPixelDwellTimeMaxIndexProperty =
         DependencyProperty.Register("LSMPixelDwellTimeMaxIndex",
         typeof(int),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMPixelDwellTimeMinIndexProperty = 
+        public static DependencyProperty LSMPixelDwellTimeMinIndexProperty =
         DependencyProperty.Register("LSMPixelDwellTimeMinIndex",
         typeof(int),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMPixelDwellTimeProperty = 
+        public static DependencyProperty LSMPixelDwellTimeProperty =
         DependencyProperty.Register("LSMPixelDwellTime",
         typeof(double),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMPixelProcessProperty = 
+        public static DependencyProperty LSMPixelProcessProperty =
         DependencyProperty.Register("LSMPixelProcess",
         typeof(int),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMPixelProcessVisibilityProperty = 
+        public static DependencyProperty LSMPixelProcessVisibilityProperty =
         DependencyProperty.Register("LSMPixelProcessVisibility",
         typeof(Visibility),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMPulseMultiplexingProperty = 
+        public static DependencyProperty LSMPulseMultiplexingProperty =
         DependencyProperty.Register("LSMPulseMultiplexing",
         typeof(int),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMPulseMultiplexingVisibilityProperty = 
+        public static DependencyProperty LSMPulseMultiplexingVisibilityProperty =
         DependencyProperty.Register("LSMPulseMultiplexingVisibility",
         typeof(Visibility),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMRealtimeAveragingProperty = 
+        public static DependencyProperty LSMRealtimeAveragingProperty =
         DependencyProperty.Register("LSMRealtimeAveraging",
         typeof(int),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMScanModeProperty = 
+        public static DependencyProperty LSMScanModeProperty =
         DependencyProperty.Register("LSMScanMode",
         typeof(int),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMSignalAverageFramesProperty = 
+        public static DependencyProperty LSMSignalAverageFramesProperty =
         DependencyProperty.Register("LSMSignalAverageFrames",
         typeof(int),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMSignalAverageProperty = 
+        public static DependencyProperty LSMSignalAverageProperty =
         DependencyProperty.Register("LSMSignalAverage",
         typeof(int),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMTwoWayAlignmentCoarseProperty = 
+        public static DependencyProperty LSMTwoWayAlignmentCoarseProperty =
         DependencyProperty.Register("LSMTwoWayAlignmentCoarse",
         typeof(int),
         typeof(ScanControlUC));
-        public static DependencyProperty LSMTwoWayAlignmentProperty = 
+        public static DependencyProperty LSMTwoWayAlignmentProperty =
         DependencyProperty.Register("LSMTwoWayAlignment",
         typeof(int),
         typeof(ScanControlUC));
-        public static DependencyProperty NumberOfPulsesPerPixelProperty = 
+        public static DependencyProperty NumberOfPulsesPerPixelProperty =
         DependencyProperty.Register("NumberOfPulsesPerPixel",
         typeof(int),
         typeof(ScanControlUC));
-        public static DependencyProperty Pmt1BandwidthSelectedProperty = 
+        public static DependencyProperty Pmt1BandwidthSelectedProperty =
         DependencyProperty.Register("Pmt1BandwidthSelected",
         typeof(string),
         typeof(ScanControlUC));
-        public static DependencyProperty Pmt2BandwidthSelectedProperty = 
+        public static DependencyProperty Pmt2BandwidthSelectedProperty =
         DependencyProperty.Register("Pmt2BandwidthSelected",
         typeof(string),
         typeof(ScanControlUC));
-        public static DependencyProperty Pmt3BandwidthSelectedProperty = 
+        public static DependencyProperty Pmt3BandwidthSelectedProperty =
         DependencyProperty.Register("Pmt3BandwidthSelected",
         typeof(string),
         typeof(ScanControlUC));
-        public static DependencyProperty Pmt4BandwidthSelectedProperty = 
+        public static DependencyProperty Pmt4BandwidthSelectedProperty =
         DependencyProperty.Register("Pmt4BandwidthSelected",
         typeof(string),
         typeof(ScanControlUC));
-        public static DependencyProperty PMTBandwidthLabelVisibilityProperty = 
+        public static DependencyProperty PMTBandwidthLabelVisibilityProperty =
         DependencyProperty.Register("PMTBandwidthLabelVisibility",
         typeof(Visibility),
         typeof(ScanControlUC));
-        public static DependencyProperty PmtBandwidthVisibilityProperty = 
+        public static DependencyProperty PmtBandwidthVisibilityProperty =
         DependencyProperty.Register("PmtBandwidthVisibility",
         typeof(CustomCollection<Visibility>),
         typeof(ScanControlUC));
-        public static DependencyProperty PMTGainProperty = 
+        public static DependencyProperty PMTGainProperty =
         DependencyProperty.Register("PMTGain",
         typeof(CustomCollection<HwVal<double>>),
         typeof(ScanControlUC));
-        public static DependencyProperty PMTOffsetLabelVisibilityProperty = 
+        public static DependencyProperty PMTOffsetLabelVisibilityProperty =
         DependencyProperty.Register("PMTOffsetLabelVisibility",
         typeof(Visibility),
         typeof(ScanControlUC));
-        public static DependencyProperty PMTOffsetProperty = 
+        public static DependencyProperty PMTOffsetProperty =
         DependencyProperty.Register("PMTOffset",
         typeof(CustomCollection<HwVal<double>>),
         typeof(ScanControlUC));
-        public static DependencyProperty PMTOffsetVisibilityProperty = 
+        public static DependencyProperty PMTOffsetVisibilityProperty =
         DependencyProperty.Register("PMTOffsetVisibility",
         typeof(CustomCollection<Visibility>),
         typeof(ScanControlUC));
-        public static DependencyProperty PMTOnProperty = 
+        public static DependencyProperty PMTOnProperty =
         DependencyProperty.Register("PMTOn",
         typeof(CustomCollection<HwVal<int>>),
         typeof(ScanControlUC));
-        public static DependencyProperty PMTPolarityProperty = 
+        public static DependencyProperty PMTPolarityProperty =
         DependencyProperty.Register("PMTPolarity",
         typeof(CustomCollection<HwVal<int>>),
         typeof(ScanControlUC));
-        public static DependencyProperty PMTVoltProperty = 
+        public static DependencyProperty PMTVoltProperty =
         DependencyProperty.Register("PMTVolt",
         typeof(CustomCollection<HwVal<double>>),
         typeof(ScanControlUC));
-        public static DependencyProperty PulsesPerPixelVisibilityProperty = 
+        public static DependencyProperty PulsesPerPixelVisibilityProperty =
         DependencyProperty.Register("PulsesPerPixelVisibility",
         typeof(Visibility),
         typeof(ScanControlUC));
-        public static DependencyProperty RapidScanVisibilityProperty = 
+        public static DependencyProperty RapidScanVisibilityProperty =
         DependencyProperty.Register("RapidScanVisibility",
         typeof(Visibility),
         typeof(ScanControlUC));
-        public static DependencyProperty TurnAroundOptionVisibilityProperty = 
+        public static DependencyProperty TurnAroundOptionVisibilityProperty =
         DependencyProperty.Register("TurnAroundOptionVisibility",
         typeof(Visibility),
         typeof(ScanControlUC));
-        public static DependencyProperty TurnAroundTimeUSProperty = 
+        public static DependencyProperty TurnAroundTimeUSProperty =
         DependencyProperty.Register("TurnAroundTimeUS",
         typeof(int),
         typeof(ScanControlUC));
-        public static DependencyProperty TwoWayCalibrationVisibilityProperty = 
+        public static DependencyProperty TwoWayCalibrationVisibilityProperty =
         DependencyProperty.Register("TwoWayCalibrationVisibility",
         typeof(Visibility),
         typeof(ScanControlUC));
-        public static DependencyProperty TwoWayVisibilityProperty = 
+        public static DependencyProperty TwoWayVisibilityProperty =
         DependencyProperty.Register("TwoWayVisibility",
         typeof(Visibility),
         typeof(ScanControlUC));
-        public static DependencyProperty UpdateDwellTimeProperty = 
+        public static DependencyProperty UpdateDwellTimeProperty =
         DependencyProperty.RegisterAttached(
         "UpdateDwellTime",
         typeof(bool),
         typeof(ScanControlUC));
-        public static DependencyProperty UseFastestFlybackEnabledProperty = 
+        public static DependencyProperty UseFastestFlybackEnabledProperty =
            DependencyProperty.Register("UseFastestFlybackEnabled",
            typeof(bool),
            typeof(ScanControlUC));
-        public static DependencyProperty UseFastestSettingForFlybackCyclesProperty = 
+        public static DependencyProperty UseFastestSettingForFlybackCyclesProperty =
         DependencyProperty.Register("UseFastestSettingForFlybackCycles",
         typeof(int),
         typeof(ScanControlUC));
@@ -1163,6 +1258,7 @@
         {
             if ("Slider" == sender.GetType().Name)
             {
+
                 Slider slider = (Slider)sender;
                 string name = slider.Name;
                 char index = name[name.Length - 1];

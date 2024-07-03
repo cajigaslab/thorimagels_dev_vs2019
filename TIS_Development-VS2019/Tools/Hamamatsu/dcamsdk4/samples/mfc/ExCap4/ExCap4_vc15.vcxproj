@@ -223,7 +223,6 @@
     <None Include="res\ExCapDoc.ico" />
     <None Include="res\playbar.bmp" />
     <None Include="res\Toolbar.bmp" />
-    <None Include="res\ToolbarHPK.bmp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bitmap.h" />
@@ -243,8 +242,6 @@
     <ClInclude Include="ExCapDoc.h" />
     <ClInclude Include="ExCapFiretrigger.h" />
     <ClInclude Include="ExCapFramerate.h" />
-    <ClInclude Include="ExCapUI.h" />
-    <ClInclude Include="excapuidll.h" />
     <ClInclude Include="ExCapView.h" />
     <ClInclude Include="image.h" />
     <ClInclude Include="imagedcam.h" />
@@ -275,7 +272,6 @@
     <ClCompile Include="ExCapDoc.cpp" />
     <ClCompile Include="ExCapFiretrigger.cpp" />
     <ClCompile Include="ExCapFramerate.cpp" />
-    <ClCompile Include="excapuidll.cpp" />
     <ClCompile Include="ExCapView.cpp" />
     <ClCompile Include="image.cpp" />
     <ClCompile Include="imagedcam.cpp" />

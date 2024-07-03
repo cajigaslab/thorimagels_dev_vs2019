@@ -1,0 +1,88 @@
+;===========================================================
+; File    : ThorDaqDrv.inf
+;
+; (c) Copyright 2019-2020 Thorlabs Inc., DZimmerman. 27-Feb-2020 
+; For Windows 10 (1607 & above) Microsoft Attestation Cert. Signing
+; Driver originally from Northwest Logic, and uses "Multifunction" Class/GUID
+; https://docs.microsoft.com/en-us/windows-hardware/drivers/install/system-defined-device-setup-classes-available-to-vendors
+;
+;===========================================================
+
+[Version]
+Signature=$WINDOWS NT$
+Class=%ClassName%
+ClassGUID={4d36e971-e325-11ce-bfc1-08002be10318}
+Provider=%ManufacturerName%
+DriverPackageDisplayName=%DriverDisplayName%
+CatalogFile=ThorDaqDrvDFLIM.cat
+DriverVer = 
+PnpLockdown=1
+
+[SourceDisksNames]
+1="Disk1"
+
+[SourceDisksFiles]
+ThorDaqDrvDFLIM.sys=1
+
+[DestinationDirs]
+DefaultDestDir=12
+Thordaq_CopyDriver = 12
+
+
+
+[Manufacturer]
+%ManufacturerName%=DeviceList,NTamd64
+
+;[DeviceList.ntx86]
+
+
+[DeviceList.NTamd64]
+%PCIe-Adapter.dDesc0%=PCIe-AdapterCfg,PCI\VEN_1DDD&DEV_4000
+%PCIe-Adapter.dDesc1%=PCIe-AdapterCfg,PCI\VEN_1DDD&DEV_4001
+
+
+[PCIe-AdapterCfg.NT]
+CopyFiles=Thordaq_CopyDriver
+AddReg=Reg_PCIe-Adapter
+
+
+[PCIe-AdapterCfg.NT.Services]
+AddService = ThorDaqDrvDFLIM,0x00000002, ThorDaqDrv_Service_Inst
+[PCIe-AdapterCfg.NT.HW]
+AddReg=Reg_PCIe-Adapter_INTERRUPTS
+
+
+[Reg_PCIe-Adapter]
+HKLM,System\CurrentControlSet\Services\ThorDaqDrvDFLIM,DLLVersion,0x00000001,0x000001
+
+
+[Reg_PCIe-Adapter_INTERRUPTS]
+HKR, Interrupt Management,, 0x00000010
+HKR, Interrupt Management\MessageSignaledInterruptProperties,, 0x00000010
+HKR, Interrupt Management\MessageSignaledInterruptProperties, MSISupported, 0x00010001, 1
+HKR, Interrupt Management\MessageSignaledInterruptProperties, MessageNumberLimit, 0x00010001, 4
+HKR, Interrupt Management\Affinity Policy, DevicePriority, 0x00010001, 3
+
+[ThorDaqDrv_Service_Inst]
+DisplayName    = %ThorDaqDrvDFLIM.SVCDESC%
+ServiceType    = 1; SERVICE_KERNEL_DRIVER
+StartType      = 3; SERVICE_DEMAND_START
+ErrorControl   = 1; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\ThorDaqDrvDFLIM.sys
+;LoadOrderGroup = Extended Base
+
+[Thordaq_CopyDriver]
+ThorDaqDrvDFLIM.sys
+
+
+[Strings]
+DriverDisplayName="ThorLabs Data Acquisition Driver"
+ThorDaqDrvDFLIM.SVCDESC = "ThorDAQ  Acquisition Service"
+ThorDaqDrv.DeviceDesc = "Thorlabs DFLIM PCIe Data AQC Device"
+
+ManufacturerName="ThorLabs Scientific Imaging Corp"
+THORDAQClassName="ThorDAQ Acquisition Devices"
+PCIe-Adapter.dDesc0="PCIe-Endpoint"
+PCIe-Adapter.dDesc1="ThorDAQ-2586-DFLIM"   ; Shows up in O/S Device Manager
+
+ClassName="Multifunction"

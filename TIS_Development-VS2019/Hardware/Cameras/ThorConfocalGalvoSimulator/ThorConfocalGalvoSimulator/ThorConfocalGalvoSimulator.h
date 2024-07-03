@@ -301,9 +301,9 @@ extern "C"
 		~ThorLSMCam();
 
 	private:
-		void PrintText(char *pDataBuffer, int x, int y, wchar_t *str, int c); 
+		void PrintText(char *pDataBuffer, int x, int y, wchar_t *str, int p, int c, int z); 
 		void FillImageWithGradient(GenericImage<unsigned short>& image);
-		unsigned short GetGradientValue(int x, int y, int channelNum);
+		unsigned short GetGradientValue(double xRatio, double yRatio, int plane, int channelNum);
 		void FillImageWithData(GenericImage<unsigned short>& image, int chanIndex);
 
 	};

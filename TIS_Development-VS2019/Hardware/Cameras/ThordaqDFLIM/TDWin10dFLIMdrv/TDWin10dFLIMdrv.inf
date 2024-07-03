@@ -1,0 +1,163 @@
+;  TDWin10dFLIMdrv
+; * Copyright (c) 2008-2023 Thorlabs Inc
+; *
+; * This is the base file for the PCI Express DMA Driver inf file.
+; * 28-Sep-2023 DZimmerman		change DDR3 image buffer to 4 channels, 120MB each (was 6 chan at 64MB each)
+; * 16-Jun-2023 DZimmerman		change the GUID to distinguish from ThorDAQ
+; * 09-May-2023 DZimmerman		Adapt for ThorDAQ dFLIM
+; */
+
+[Version]
+PnpLockdown=1                  ; i.e. PCIe card doesn't change slot position while booted?
+Signature="$WINDOWS NT$"
+Class=Multifunction
+ClassGuid={4d36e971-e325-11ce-bfc1-08002be10318} ; Windows O/S class GUID
+Provider=%NWL%
+DriverVer = 09/28/2023,09.15.45.00
+;CatalogFile = DMADx86.cat
+CatalogFile = TDWin10dFLIMdrv.cat
+
+[DestinationDirs]
+DefaultDestDir = 12
+CoInstaller_CopyFiles = 11
+;DefaultDestDir = 10,System32\drivers
+
+[Manufacturer]
+%NWL%=NWL,NTx86.6.0,NTamd64.6.0,NTx86.5.1,NTamd64.5.1
+
+[SourceDisksFiles]
+TDWin10dFLIMdrv.sys=1
+;wdfcoinstaller01009.dll=1
+
+[SourceDisksNames]
+1=%DISK_NAME%,
+
+[NWL.NTx86.5.1]
+
+; PCI hardware IDs use the form
+;   PCI\VEN_aaaa&DEV_bbbb&SUBSYS_cccccccc&REV_dd
+;
+%DeviceDesc%=ThorDAqdFLIMDriverXP_DDI.NT, PCI\VEN_19AA&DEV_E004
+
+[NWL.NTamd64.5.1]
+
+; PCI hardware IDs use the form
+;   PCI\VEN_aaaa&DEV_bbbb&SUBSYS_cccccccc&REV_dd
+;
+%DeviceDesc%=ThorDAqdFLIMDriverXP_DDI.NT, PCI\VEN_19AA&DEV_E004
+
+[NWL.NTx86.6.0]
+
+; PCI hardware IDs use the form
+;   PCI\VEN_aaaa&DEV_bbbb&SUBSYS_cccccccc&REV_dd
+;
+%DeviceDesc%=ThorDAqdFLIMDriver_DDI.NT, PCI\VEN_19AA&DEV_E004
+
+[NWL.NTamd64.6.0]
+
+; PCI hardware IDs use the form; dFLIM is 0x4002, ThorDAQ 0x4001
+;   PCI\VEN_aaaa&DEV_bbbb&SUBSYS_cccccccc&REV_dd
+;
+%DeviceDesc%=ThorDAqdFLIMDriver_DDI.NT, PCI\VEN_1DDD&DEV_4001
+%DeviceDesc%=ThorDAqdFLIMDriver_DDI.NT, PCI\VEN_1DDD&DEV_4002
+
+
+;---------- DDInstall Sections -----------------------------------------------
+; --------- Windows XP Only -----------------
+
+[ThorDAqdFLIMDriverXP_DDI.NT]
+CopyFiles=ThorDAqdFLIMDriver_Files_Driver
+
+[ThorDAqdFLIMDriverXP_DDI.NT.Services]
+Addservice = ThorDAqdFLIMDriver, 0x00000002, ThorDAqdFLIMDriver_AddService
+
+; --------- Disable MSI support -----------------
+//[ThorDAqDriverXP_DDI.NT.HW]
+//AddReg = ThorDAqdFLIMDriverNoMSI_AddReg
+
+;[ThorDAqdFLIMDriverNoMSI_AddReg]
+;HKR, Interrupt Management,, 0x00000010
+;HKR, Interrupt Management\MessageSignaledInterruptProperties,, 0x00000010
+;HKR, Interrupt Management\MessageSignaledInterruptProperties, MSISupported, 0x00010001, 0
+;HKR, Interrupt Management\MessageSignaledInterruptProperties, MessageNumberLimit, 0x00010001, 1
+;HKR, Interrupt Management\Affinity Policy, DevicePriority, 0x00010001, 3
+
+; --------- Windows Vista and Later -----------------
+
+[ThorDAqdFLIMDriver_DDI.NT]
+CopyFiles=ThorDAqdFLIMDriver_Files_Driver
+
+[ThorDAqdFLIMDriver_DDI.NT.Services]
+Addservice = ThorDAqdFLIMDriver, 0x00000002, ThorDAqdFLIMDriver_AddService
+
+[ThorDAqdFLIMDriver_AddService]
+DisplayName    = %SvcDesc%
+ServiceType    = 1                  ; SERVICE_KERNEL_DRIVER
+StartType      = 3                  ; SERVICE_DEMAND_START
+ErrorControl   = 1                  ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %10%\System32\Drivers\TDWin10dFLIMdrv.sys
+AddReg=ThorDAqdFLIMDriver_Parameters_AddReg
+
+[ThorDAqdFLIMDriver_Parameters_AddReg]
+HKR, Parameters\Wdf, VerboseOn,       0x00010001, 0
+HKR, Parameters\Wdf, VerifierOn,      0x00010001, 0
+HKR, Parameters\Wdf, DbgBreakOnError, 0x00010001, 0
+
+; --------- Enable MSI support -----------------
+
+[ThorDAqdFLIMDriver_DDI.NT.HW]
+AddReg = ThorDAqdFLIMDriverMSI_AddReg
+
+[ThorDAqdFLIMDriverMSI_AddReg]
+HKR, Interrupt Management,, 0x00000010
+HKR, Interrupt Management\MessageSignaledInterruptProperties,, 0x00000010
+;HKR, Interrupt Management\MessageSignaledInterruptProperties, MSIXSupported, 0x00010001, 1
+HKR, Interrupt Management\MessageSignaledInterruptProperties, MSISupported, 0x00010001, 1
+HKR, Interrupt Management\MessageSignaledInterruptProperties, MessageNumberLimit, 0x00010001, 8  ; was "8", only one supporter by ThorDAQ
+HKR, Interrupt Management\Affinity Policy, DevicePriority, 0x00010001, 3
+
+; --------- Files (common) -------------
+
+[ThorDAqdFLIMDriver_Files_Driver]
+TDWin10dFLIMdrv.sys
+
+; --------- Coinstaller Section
+
+;[DestinationDirs]
+;CoInstaller_CopyFiles = 11
+
+;[ThorDAqDriverXP_DDI.NT.CoInstallers]
+;AddReg=CoInstaller_AddReg
+;CopyFiles=CoInstaller_CopyFiles
+
+;[ThorDAqDriver_DDI.NT.CoInstallers]
+;AddReg=CoInstaller_AddReg
+;CopyFiles=CoInstaller_CopyFiles
+
+;[CoInstaller_CopyFiles]
+;wdfcoinstaller01009.dll
+
+;[SourceDisksFiles]
+;wdfcoinstaller01009.dll=1
+
+;[CoInstaller_AddReg]
+;HKR,,CoInstallers32,0x00010000, "wdfcoinstaller01009.dll,WdfCoInstaller"
+
+[ThorDAqdFLIMDriverXP_DDI.NT.Wdf]
+KmdfService = ThorDAqdFLIMDriver, ThorDAqdFLIMDriver_wdfsect
+
+[ThorDAqdFLIMDriver_DDI.NT.Wdf]
+KmdfService = ThorDAqdFLIMDriver, ThorDAqdFLIMDriver_wdfsect
+
+[ThorDAqdFLIMDriver_wdfsect]
+KmdfLibraryVersion = 1.7
+
+
+;--------- Strings Section ---------------------------------------------------
+
+[Strings]
+NWL = "Thorlabs, Inc. (thorlabs.com)"
+ClassName = "PCI Express DMA Driver"
+DeviceDesc = "ThorDAQ-dFLIM-224M"
+DISK_NAME = "PCI Express DMA Driver Install Disk"
+SvcDesc   = "PCI Express DMA Driver"

@@ -52,6 +52,9 @@
     <Reference Include="AreaControl">
       <HintPath>..\..\..\GUI\Controls\AreaControl\AreaControl\bin\Debug\AreaControl.dll</HintPath>
     </Reference>
+    <Reference Include="AutoExposureModule">
+      <HintPath>..\..\..\Common\AutoExposureModule\AutoExposureModule\bin\Debug\AutoExposureModule.dll</HintPath>
+    </Reference>
     <Reference Include="AutoFocusControl">
       <HintPath>..\..\..\GUI\Controls\AutoFocusControl\AutoFocusControl\bin\Debug\AutoFocusControl.dll</HintPath>
     </Reference>
@@ -61,9 +64,9 @@
     <Reference Include="CaptureOptionsControl">
       <HintPath>..\..\..\GUI\Controls\CaptureOptionsControl\CaptureOptionsControl\bin\Debug\CaptureOptionsControl.dll</HintPath>
     </Reference>
-    <Reference Include="ChartPlotterControl, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="CurveFitting, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\GUI\Controls\ChartPlotterControl\ChartPlotterControl\bin\Debug\ChartPlotterControl.dll</HintPath>
+      <HintPath>..\..\..\Tools\CurveFitting\bin\Debug\CurveFitting.dll</HintPath>
     </Reference>
     <Reference Include="DatabaseInterface, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -78,10 +81,6 @@
     </Reference>
     <Reference Include="DigitalOutputSwitches">
       <HintPath>..\..\..\GUI\Controls\DigitalOutputSwitches\DigitalOutputSwitches\bin\Debug\DigitalOutputSwitches.dll</HintPath>
-    </Reference>
-    <Reference Include="DynamicDataDisplay, Version=0.3.0.0, Culture=neutral, PublicKeyToken=5b7d744a7263923f, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Tools\DynamicDataDisplay v0.3 Binaries &amp; Samples\DynamicDataDisplay\DynamicDataDisplay.dll</HintPath>
     </Reference>
     <Reference Include="EpiTurretControl">
       <HintPath>..\..\..\GUI\Controls\EpiTurretControl\EpiTurretControl\bin\Debug\EpiTurretControl.dll</HintPath>
@@ -105,9 +104,11 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\Common\HelpProvider\HelpProvider\bin\Debug\HelpProvider.dll</HintPath>
     </Reference>
-    <Reference Include="HistogramControl, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Tools\HistogramControl\HistogramControl\bin\Debug\HistogramControl.dll</HintPath>
+    <Reference Include="ImageViewControl">
+      <HintPath>..\..\..\GUI\Controls\ImageViewControl\ImageViewControl\bin\Debug\ImageViewControl.dll</HintPath>
+    </Reference>
+    <Reference Include="ImageViewControl">
+      <HintPath>..\..\..\GUI\Controls\ImageViewControl\ImageViewControl\bin\Debug\ImageViewControl.dll</HintPath>
     </Reference>
     <Reference Include="KuriosControl">
       <HintPath>..\..\..\GUI\Controls\KuriosControl\KuriosControl\bin\Debug\KuriosControl.dll</HintPath>
@@ -120,6 +121,9 @@
     </Reference>
     <Reference Include="LightEngineControl">
       <HintPath>..\..\..\GUI\Controls\LightEngineControl\LightEngineControl\bin\Debug\LightEngineControl.dll</HintPath>
+    </Reference>
+    <Reference Include="LightPathControl">
+      <HintPath>..\..\..\GUI\Controls\LightPathControl\LightPathControl\bin\Debug\LightPathControl.dll</HintPath>
     </Reference>
     <Reference Include="LineProfileWindow">
       <HintPath>..\..\..\GUI\Controls\LineProfileWindow\LineProfileWindow\bin\Debug\LineProfileWindow.dll</HintPath>
@@ -200,33 +204,11 @@
     <Reference Include="ScanControl">
       <HintPath>..\..\..\GUI\Controls\ScanControl\ScanControl\bin\Debug\ScanControl.dll</HintPath>
     </Reference>
-    <Reference Include="SciChart.Charting, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting.dll</HintPath>
+    <Reference Include="SequentialControl">
+      <HintPath>..\..\..\GUI\Controls\SequentialControl\SequentialControl\bin\Debug\SequentialControl.dll</HintPath>
     </Reference>
-    <Reference Include="SciChart.Charting.DrawingTools, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting.DrawingTools.dll</HintPath>
-    </Reference>
-    <Reference Include="SciChart.Charting3D, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting3D.dll</HintPath>
-    </Reference>
-    <Reference Include="SciChart.Core, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="SciChart.Data, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Data.dll</HintPath>
-    </Reference>
-    <Reference Include="SciChart.Drawing, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Drawing.dll</HintPath>
-    </Reference>
-    <Reference Include="SciChart.Drawing.DirectX, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Drawing.DirectX.dll</HintPath>
+    <Reference Include="SLMControl">
+      <HintPath>..\..\..\GUI\Controls\SLMControl\SLMControl\bin\Debug\SLMControl.dll</HintPath>
     </Reference>
     <Reference Include="SpinnerProgress, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -304,21 +286,18 @@
     <Compile Include="Model\CaptureSetupAcquire.cs" />
     <Compile Include="Model\CaptureSetupBleach.cs" />
     <Compile Include="Model\CaptureSetupImage.cs" />
-    <Compile Include="Model\CaptureSetupLightPath.cs" />
     <Compile Include="Model\CaptureSetupBleachSLM.cs" />
     <Compile Include="Model\CaptureSetupSpectralFilter.cs" />
-    <Compile Include="Model\CaptureSetupZStage.cs" />
+    <Compile Include="Model\CaptureSetupPreviewElements.cs" />
     <Compile Include="ImageResolution.cs" />
     <Compile Include="ViewModel\CaptureSetupViewModel.cs" />
     <Compile Include="ViewModel\CaptureSetupViewModelBleachSLM.cs" />
-    <Compile Include="ViewModel\LightPathSequenceStep.cs" />
     <Compile Include="ViewModel\Converters.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ViewModel\CaptureSetupViewModelAcquire.cs" />
     <Compile Include="ViewModel\CaptureSetupViewModelImage.cs" />
-    <Compile Include="ViewModel\CaptureSetupViewModelLightPath.cs" />
     <Compile Include="ViewModel\CaptureSetupViewModelPersist.cs" />
-    <Compile Include="ViewModel\CaptureSetupViewModelZStage.cs" />
+    <Compile Include="ViewModel\CaptureSetupViewModelPreviewElements.cs" />
     <Compile Include="ViewModel\RelayCommand.cs" />
     <Compile Include="ViewModel\ViewModelBase.cs" />
     <Compile Include="View\ActiveStatsWinChooser.xaml.cs">
@@ -327,14 +306,14 @@
     <Compile Include="View\AreaControlView.xaml.cs">
       <DependentUpon>AreaControlView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="View\AutoContourWin.xaml.cs">
-      <DependentUpon>AutoContourWin.xaml</DependentUpon>
-    </Compile>
     <Compile Include="View\BleachControlView.xaml.cs">
       <DependentUpon>BleachControlView.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\DFLIMControl.xaml.cs">
       <DependentUpon>DFLIMControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\SequentialControlView.xaml.cs">
+      <DependentUpon>SequentialControlView.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\MultiLaserControlView.xaml.cs">
       <DependentUpon>MultiLaserControlView.xaml</DependentUpon>
@@ -350,9 +329,6 @@
     </Compile>
     <Compile Include="View\AutoFocusControlView.xaml.cs">
       <DependentUpon>AutoFocusControlView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\RemoteIPCView.xaml.cs">
-      <DependentUpon>RemoteIPCView.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\LampControlView.xaml.cs">
       <DependentUpon>LampControlView.xaml</DependentUpon>
@@ -409,12 +385,6 @@
     <Compile Include="View\CaptureOptionsView.xaml.cs">
       <DependentUpon>CaptureOptionsView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="View\LightPathSequenceStepView.xaml.cs">
-      <DependentUpon>LightPathSequenceStepView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="View\LightPathStepNameEdit.xaml.cs">
-      <DependentUpon>LightPathStepNameEdit.xaml</DependentUpon>
-    </Compile>
     <Compile Include="View\SplashScreen.xaml.cs">
       <DependentUpon>SplashScreen.xaml</DependentUpon>
     </Compile>
@@ -438,15 +408,8 @@
       <DependentUpon>ZoomSettings.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\DragCanvas.cs" />
-    <Compile Include="View\LUTSettings.xaml.cs">
-      <DependentUpon>LUTSettings.xaml</DependentUpon>
-    </Compile>
     <Compile Include="View\WavelengthTemplates.cs" />
     <Compile Include="View\ExperimentTemplates.cs" />
-    <Compile Include="View\ImageView.xaml.cs">
-      <DependentUpon>ImageView.xaml</DependentUpon>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Compile>
     <Compile Include="View\LocalTemplates.cs" />
     <Compile Include="View\MasterView.xaml.cs">
       <DependentUpon>MasterView.xaml</DependentUpon>
@@ -476,10 +439,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="View\AutoContourWin.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="View\BleachControlView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -493,6 +452,10 @@
     <Page Include="View\DFLIMControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\SequentialControlView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="View\MultiLaserControlView.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -513,10 +476,6 @@
     <Page Include="View\AutoFocusControlView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
-    </Page>
-    <Page Include="View\RemoteIPCView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="View\LampControlView.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -596,14 +555,6 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="View\LightPathSequenceStepView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="View\LightPathStepNameEdit.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="View\SplashScreen.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -640,20 +591,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="View\ImageView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="View\MasterView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="View\LUTSettings.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -739,14 +677,6 @@
     <Resource Include="Icons\ChanC.PNG" />
     <Resource Include="Icons\ChanD.PNG" />
     <Resource Include="Icons\OneWayArrow.PNG" />
-    <Resource Include="Icons\ToggleCam_down.png" />
-    <Resource Include="Icons\ToggleCam_up.png" />
-    <Resource Include="Icons\ToggleOff_down.png" />
-    <Resource Include="Icons\ToggleOff_up.png" />
-    <Resource Include="Icons\ToggleOn_down.png" />
-    <Resource Include="Icons\ToggleOn_up.png" />
-    <Resource Include="Icons\TogglePMT_down.png" />
-    <Resource Include="Icons\TogglePMT_up.png" />
     <Resource Include="Icons\TwoWayArrow.png" />
   </ItemGroup>
   <ItemGroup>

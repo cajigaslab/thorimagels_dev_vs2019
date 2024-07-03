@@ -283,7 +283,7 @@ long RealTimeDataXML::GetDataChannel(std::vector<Channels>& channel)
 			for ( child2 = child2.Get(); child2 != child2.end(); child2++)
 			{	
 				bool skipChannel = false;
-				Channels localch={"",0,"","",0,0};						
+				Channels localch={"",0,"","",0,0,0};						
 
 				for(long count2=0; count2<NUM_CHANNELTYPE_ATTRIBUTES; count2++)
 				{
@@ -314,6 +314,13 @@ long RealTimeDataXML::GetDataChannel(std::vector<Channels>& channel)
 				}
 				if(!skipChannel)
 				{
+					if (localch.type == "/CI")
+					{
+						std::string str;
+						child2->GetAttribute("savetiming", &str); // for frame timing text file
+						std::stringstream ss(str);
+						ss >> (localch.saveTiming);
+					}
 					channel.push_back(localch);
 				}
 			}					

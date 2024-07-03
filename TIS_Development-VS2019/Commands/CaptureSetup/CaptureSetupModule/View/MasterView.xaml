@@ -955,22 +955,33 @@
                     </Border>
                     <Border Name="cameraControlBorder"
                             Width="{Binding Path=PanelBorderWidth}">
-                        <Expander Name="cameraControlExpander"
+                      <Expander Name="cameraControlExpander"
                       Foreground="White"
                       IsExpanded="True"
                       Margin="1"
                       Expanded="Expander_Expanded">
                             <Expander.Header>
-                                <StackPanel Orientation="Horizontal"
-                            HorizontalAlignment="Left">
-                                    <Label Content="Camera Control" />
-                                    <CheckBox Content="LED Indicators"
-                            Visibility="{Binding Path=CameraLedAvailable, ConverterParameter=False, Converter={StaticResource VisibilityOfBool}}"
-                            IsChecked="{Binding Path=CameraLedEnable}"
-                            VerticalContentAlignment="Center"
-                            VerticalAlignment="Center"
-                            Margin="35,0" />
-                                </StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="225"></ColumnDefinition>
+                                        <ColumnDefinition Width="*"></ColumnDefinition>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left">
+                                        <Label Content="Camera Control" />
+                                        <CheckBox Content="LED Indicators"
+                                                Visibility="{Binding Path=CameraLedAvailable, ConverterParameter=False, Converter={StaticResource VisibilityOfBool}}"
+                                                IsChecked="{Binding Path=CameraLedEnable}"
+                                                VerticalContentAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Margin="15,0" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Visibility= "{Binding ElementName = cameraControlExpander, Path=IsExpanded,ConverterParameter=True, Converter={StaticResource VisibilityOfBool}}">
+                                        <Label Content="Exposure Time:"/>
+                                        <Label Content= "{Binding Path=CollapsedExposureTime, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <Label Content="ms"/>
+                                    </StackPanel>
+                                </Grid>
+
                             </Expander.Header>
                             <StackPanel Margin="1"
                           HorizontalAlignment="Center"
@@ -1202,6 +1213,22 @@
                             </Expander.Header>
                             <View:MultiLaserControlView x:Name="MultiLaserControlView"
                                     HorizontalAlignment="Center" />
+                        </Expander>
+                    </Border>
+                    <Border Name="sequentialControlBorder"
+                            Width="{Binding Path=PanelBorderWidth}">
+                        <Expander Name="sequentialControlExpander"
+                                  Margin="1"
+                                  Expanded="Expander_Expanded"
+                                  Foreground="#FFFFFFFF"
+                                  Header="Sequential Control"
+                                  IsExpanded="True">
+                            <StackPanel Margin="1"
+                                        HorizontalAlignment="Center"
+                                        Orientation="Horizontal"
+                                        Visibility="Visible">
+                                <View:SequentialControlView x:Name="sequentialControlView" />
+                            </StackPanel>
                         </Expander>
                     </Border>
                 </StackPanel>

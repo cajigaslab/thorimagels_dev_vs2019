@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <HardwareSettings>
-  <Wavelength name="ChanA" wavelength="495" ex="1" em="1" dic="1" fluor="1" color="#FF00FF00" bp="0" wp="255" AutoSta="0" LogSta="0" />
-  <Wavelength name="ChanB" wavelength="589" ex="2" em="2" dic="2" fluor="1" color="#FFFF0000" bp="0" wp="255" AutoSta="0" LogSta="0" />
-  <Wavelength name="ChanC" wavelength="480" ex="1" em="1" dic="1" fluor="1" color="#FF0000FF" bp="0" wp="255" AutoSta="0" LogSta="0" />
-  <Wavelength name="ChanD" wavelength="480" ex="1" em="1" dic="1" fluor="1" color="#FFFFFFFF" bp="0" wp="255" AutoSta="0" LogSta="0" />
+  <Wavelength name="ChanA" wavelength="495" ex="1" em="1" dic="1" fluor="1" color="#FF00FF00" bp="0" wp="255" AutoSta="0" LogSta="0" AutoTopPercentile="0" AutoBottomPercentile="0" />
+  <Wavelength name="ChanB" wavelength="589" ex="2" em="2" dic="2" fluor="1" color="#FFFF0000" bp="0" wp="255" AutoSta="0" LogSta="0" AutoTopPercentile="0" AutoBottomPercentile="0" />
+  <Wavelength name="ChanC" wavelength="480" ex="1" em="1" dic="1" fluor="1" color="#FF0000FF" bp="0" wp="255" AutoSta="0" LogSta="0" AutoTopPercentile="0" AutoBottomPercentile="0" />
+  <Wavelength name="ChanD" wavelength="480" ex="1" em="1" dic="1" fluor="1" color="#FFFFFFFF" bp="0" wp="255" AutoSta="0" LogSta="0" AutoTopPercentile="0" AutoBottomPercentile="0" />
   <Objectives beamExpType="2" lastSavedMagnification="4X" f1MM="200" f2MM="100" f3MM="50" f4MM="200">
     <Objective name="4X" mag="4" na=".1" afScanStartMM="-6.0" afFocusOffsetMM=".1650" afAdaptiveOffsetMM=".3" beamExp="100" beamWavelength="0" beamExp2="100" beamWavelength2="0" turretPosition="1" zAxisToEscape="2" zAxisEscapeDistance="0" fineAfPercentDecrease=".15" />
     <Objective name="10X" mag="10" na=".25" afScanStartMM="-6.0" afFocusOffsetMM=".1650" afAdaptiveOffsetMM=".3" beamExp="100" beamWavelength="0" beamExp2="100" beamWavelength2="0" turretPosition="1" zAxisToEscape="2" zAxisEscapeDistance="0" fineAfPercentDecrease=".15" />
@@ -27,7 +27,7 @@
     <YellowHot name="None" />
   </ColorChannels>
   <LSM fieldSizeCalibration="94.7372" pixelXLimit="2048" pixelYLimit="2048" field2Theta="0.0901639344"/>
-  <Streaming path="C:\Temp" previewRate="2" />
+  <Streaming path="C:\Temp" previewRate="2" alwaysSaveImagesOnStop="0"/>
   <Lasers>
     <Laser name="Laser1" />
     <Laser name="Laser2" />

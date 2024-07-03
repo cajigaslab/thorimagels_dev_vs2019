@@ -446,7 +446,7 @@ long ThorEpiTurret::SetParam(const long paramID, const double param)
 
 					if (PARAM_FW_DIC_FIRMWAREUPDATE == paramID && TRUE == param)
 					{
-						_setToBootloaderMode = param;
+						_setToBootloaderMode = (long)param;
 					}
 
 					return TRUE;

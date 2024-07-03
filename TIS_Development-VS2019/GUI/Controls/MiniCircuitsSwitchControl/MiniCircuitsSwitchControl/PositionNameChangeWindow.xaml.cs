@@ -3,7 +3,7 @@
     using System.Windows;
 
     /// <summary>
-    /// Interaction logic for ZoomSettings.xaml
+    /// Interaction logic for PositionNameChangeWindow.xaml
     /// </summary>
     public partial class PositionNameChangeWin : Window
     {

@@ -3,7 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="MainWindow"
         Height="800"
-        Width="525">
+        Width="525"
+        xmlns:local="clr-namespace:ThemeControl">
+
     <Grid>
         <Grid.Resources>
             <ResourceDictionary>
@@ -146,6 +148,14 @@
                       IsChecked="True" />
             <RadioButton Content="radio button1" GroupName="testRB" Margin="1" IsChecked="True"/>
             <RadioButton Content="radio button2" GroupName="testRB" Margin="1"/>
+
+            <ToggleButton Style="{StaticResource SliderToggleSwitchStyle}" Visibility="Visible"/>
+            <ToggleButton Style="{StaticResource SliderToggleSwitchStyle}" IsChecked="True"/>
+
+            
+            
+
         </StackPanel>
+        
     </Grid>
 </Window>

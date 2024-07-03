@@ -194,6 +194,26 @@
             "PreviewZStackCommand",
             typeof(ICommand),
             typeof(ZControlUC));
+        public static readonly DependencyProperty RemoteFocusMaxPosProperty = 
+            DependencyProperty.Register(
+            "RemoteFocusMaxPos",
+            typeof(double),
+            typeof(ZControlUC));
+        public static readonly DependencyProperty RemoteFocusMinPosProperty = 
+            DependencyProperty.Register(
+            "RemoteFocusMinPos",
+            typeof(double),
+            typeof(ZControlUC));
+        public static readonly DependencyProperty RemoteFocusNumberOfTicksProperty = 
+            DependencyProperty.Register(
+            "RemoteFocusNumberOfTicks",
+            typeof(int),
+            typeof(ZControlUC));
+        public static readonly DependencyProperty RemoteFocusPositionProperty = 
+            DependencyProperty.Register(
+            "RemoteFocusPosition",
+            typeof(double),
+            typeof(ZControlUC));
         public static readonly DependencyProperty RPositionProperty = 
             DependencyProperty.Register(
             "RPosition",
@@ -210,6 +230,11 @@
            "SecondaryZScale",
            typeof(double),
            typeof(ZControlUC));
+        public static readonly DependencyProperty StepAndStartTupleProperty = 
+            DependencyProperty.Register(
+            "StepAndStartTuple",
+            typeof((double, double)),
+            typeof(ZControlUC));
         public static readonly DependencyProperty Z2InvertLimitsProperty = 
             DependencyProperty.Register(
             "Z2InvertLimits",
@@ -455,6 +480,30 @@
         {
             get { return (ICommand)GetValue(PreviewZStackCommandProperty); }
             set { SetValue(PreviewZStackCommandProperty, value); }
+        }
+
+        public double RemoteFocusMaxPos
+        {
+            get { return (double)GetValue(RemoteFocusMaxPosProperty); }
+            set { SetValue(RemoteFocusMaxPosProperty, value); }
+        }
+
+        public double RemoteFocusMinPos
+        {
+            get { return (double)GetValue(RemoteFocusMinPosProperty); }
+            set { SetValue(RemoteFocusMinPosProperty, value); }
+        }
+
+        public int RemoteFocusNumberOfTicks
+        {
+            get { return (int)GetValue(RemoteFocusNumberOfTicksProperty); }
+            set { SetValue(RemoteFocusNumberOfTicksProperty, value); }
+        }
+
+        public double RemoteFocusPosition
+        {
+            get { return (double)GetValue(RemoteFocusPositionProperty); }
+            set { SetValue(RemoteFocusPositionProperty, value); }
         }
 
         public double RPosition

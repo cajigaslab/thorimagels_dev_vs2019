@@ -80,6 +80,7 @@ static struct {
 #ifdef HPKINTERNALUSE//{{HPKINTERNALUSE
 	DCAM_IDSTR_BUS_DETAIL,					_T("BUS Detail"),
 	DCAM_IDSTR_BUS_MANUFACTURER,			_T("BUS Manufacturer"),
+	DCAM_IDSTR_FGDEVICE_PROPERTIES,			_T("FGDevice Properties"),
 #endif //}}HPKINTERNALUSE
 
 	DCAM_IDSTR_OPTICALBLOCK_MODEL,			_T("Optical Block Model"),
@@ -112,6 +113,10 @@ CDlgDcamAbout::CDlgDcamAbout( HDCAM hdcam, CWnd* pParent )
 			param.text = buf;
 			param.textbytes = 256;
 			param.iString = strings[i].id;
+#ifdef HPKINTERNALUSE//{{HPKINTERNALUSE
+			if (DCAM_IDSTR_FGDEVICE_PROPERTIES == param.iString)
+				param.textbytes = 2048;	// should be same as MAXSIZE_FGDEVICE_PROPERTIES of module_common.h.
+#endif
 
 			err = dcamdev_getstring( hdcam, &param );
 			if( failed(err) || buf[0] == '\0' )

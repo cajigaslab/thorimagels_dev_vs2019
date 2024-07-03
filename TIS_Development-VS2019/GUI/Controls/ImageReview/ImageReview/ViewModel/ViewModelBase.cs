@@ -1,20 +1,31 @@
-﻿// The following code is inspired by the work of Josh Smith
+﻿#region Header
+
+// The following code is inspired by the work of Josh Smith
 // http://joshsmithonwpf.wordpress.com/
-using System.ComponentModel;
-using System.Diagnostics;
+
+#endregion Header
 
 namespace ImageReviewDll.ViewModel
 {
+    using System.ComponentModel;
+    using System.Diagnostics;
+
     /// <summary>
     /// Base class for all ViewModel classes in the application. Provides support for 
     /// property changes notification.
     /// </summary>
     public abstract class ViewModelBase : INotifyPropertyChanged
     {
+        #region Events
+
         /// <summary>
         /// Raised when a property on this object has a new value.
         /// </summary>
         public event PropertyChangedEventHandler PropertyChanged;
+
+        #endregion Events
+
+        #region Methods
 
         /// <summary>
         /// Warns the developer if this object does not have a public property with
@@ -24,7 +35,7 @@ namespace ImageReviewDll.ViewModel
         [DebuggerStepThrough]
         public void VerifyPropertyName(string propertyName)
         {
-            // verify that the property name matches a real,  
+            // verify that the property name matches a real,
             // public, instance property on this object.
             if (TypeDescriptor.GetProperties(this)[propertyName] == null)
             {
@@ -45,5 +56,7 @@ namespace ImageReviewDll.ViewModel
                 this.PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
             }
         }
+
+        #endregion Methods
     }
 }

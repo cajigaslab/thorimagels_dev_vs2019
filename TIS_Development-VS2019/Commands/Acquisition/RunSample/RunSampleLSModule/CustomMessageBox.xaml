@@ -4,7 +4,8 @@
         Title="MainWindow"
         SizeToContent="WidthAndHeight"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize">
+        ResizeMode="NoResize"
+        Topmost="True">
     <Grid Width="500">
         <Grid.RowDefinitions>
             <RowDefinition Height="2*" />

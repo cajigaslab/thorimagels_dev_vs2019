@@ -68,7 +68,7 @@ class ImageStoreLibraryDLL : public PDLL
 
 	DECLARE_FUNCTION9(long, ReadImageStoreData, char*, long, long, long, long, long, long, long, long)
 
-	DECLARE_FUNCTION3(long, SetupImageStore, wchar_t *, void*, long)
+	DECLARE_FUNCTION4(long, SetupImageStore, wchar_t *, void*, long, long)
 
 	DECLARE_FUNCTION1(long, SetScan, long)
 

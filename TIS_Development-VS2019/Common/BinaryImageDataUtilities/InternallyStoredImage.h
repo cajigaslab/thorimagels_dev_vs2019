@@ -14,7 +14,7 @@ class InternallyStoredImage : public GenericImage<T>
 public:
 
 	//Setup
-	InternallyStoredImage(int width, int height, int numZSlices, int numChannels, int numM, MemoryType memModelType, const std::vector<int>& enabledChannels = std::vector<int>());
+	InternallyStoredImage(int width, int height, int numPlanes, int numZSlices, int numChannels, int numM, MemoryType memModelType, const std::vector<int>& enabledChannels = std::vector<int>());
 	virtual ~InternallyStoredImage(void);
 	InternallyStoredImage(const InternallyStoredImage<T>& copyFrom);
 	InternallyStoredImage<T>& operator = (const InternallyStoredImage<T>& assignFrom);
@@ -31,15 +31,16 @@ private:
 
 };
 
-///<summary> Constructs a 5 dimensional image class with an internal buffer to store the pixel values. The dimensions are width, height, depth, channel, and M </summary>
+///<summary> Constructs a 6 dimensional image class with an internal buffer to store the pixel values. The dimensions are width, height, planes, depth, channel, and M </summary>
 ///<param name="width"> The width in pixels for this image </param>
 ///<param name="height"> The width in pixels for this image </param>
+///<param name="numPlanes"> The number of planes for this image </param>
 ///<param name="numZSlices"> The depth in pixels of this image </param>
 ///<param name="numChannels"> The number of channels for this image </param>
 ///<param name="numM"> the length of the 'm' dimension in pixels for this image </param>
 ///<param name="enabledChannels"> Optional vector containing the enabled channels in this image. If a value is given, the total channel parameters will remain the same, but only the enabled channels will be stored in memory </param>
-template <typename T> InternallyStoredImage<T>::InternallyStoredImage(int width, int height, int numZSlices, int numChannels, int numM, MemoryType memModelType, const std::vector<int>& enabledChannels):
-	GenericImage(width,height,numZSlices,numChannels,numM,memModelType, enabledChannels)
+template <typename T> InternallyStoredImage<T>::InternallyStoredImage(int width, int height, int numPlanes, int numZSlices, int numChannels, int numM, MemoryType memModelType, const std::vector<int>& enabledChannels):
+	GenericImage(width,height,numPlanes,numZSlices,numChannels,numM,memModelType, enabledChannels)
 {
 
 	buffer = new T[getSizeInPixels()];

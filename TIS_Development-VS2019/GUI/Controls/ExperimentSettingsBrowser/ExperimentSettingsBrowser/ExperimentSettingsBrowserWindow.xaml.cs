@@ -16,6 +16,7 @@
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using Validations;
     using System.Windows;
     using System.Windows.Controls;
     using System.Windows.Data;
@@ -37,6 +38,8 @@
     using SpinnerProgress;
 
     using ThorLogging;
+    using System.Diagnostics.Contracts;
+    using System.Windows.Media.Animation;
 
     /// <summary>
     /// Interaction logic for ExperimentSettingsBrowserWindow.xaml
@@ -59,8 +62,10 @@
         private string _experimentSettingsName;
         private string _experimentSettingsPath;
         private double _listBoxOpacity;
+        private int _pageNumber;
         private DirectoryInfo _settingTemplatesDirInfo;
         private Visibility _spinVisible;
+        private int ExpListCount;
 
         #endregion Fields
 
@@ -71,7 +76,12 @@
             InitializeComponent();
 
             _settingTemplatesDirInfo = new DirectoryInfo(Application.Current.Resources["TemplatesFolder"].ToString() + "\\Template Favorites");
-
+            
+            ExpListCount = 15;
+            if (DataStore.Instance.ExperimentsDataSet.Tables[0].Rows.Count < ExpListCount)
+            {
+                this.ExpListCount = DataStore.Instance.ExperimentsDataSet.Tables[0].Rows.Count;
+            }
             this.Loaded += new RoutedEventHandler(ExperimentSettingsBrowserWindow_Loaded);
             this.Unloaded += new RoutedEventHandler(ExperimentSettingsBrowserWindow_Unloaded);
             listingDataView = (CollectionViewSource)(this.Resources["listingDataView"]);
@@ -80,6 +90,7 @@
             this.Closing += new CancelEventHandler(ExperimentSettingsBrowserWindow_Closing);
             this.Title = "Settings Browser";
             this.DataContext = this;
+            _pageNumber = MaxPages;
         }
 
         #endregion Constructors
@@ -101,6 +112,134 @@
         #endregion Events
 
         #region Properties
+
+        public Int32 ExpAmount
+        {
+            get { return this.ExpListCount; }
+            set {
+                int currPage = JumpToPosition;
+                ExpListCount = value;
+                OnPropertyChanged("ExpAmount");
+
+                OnPropertyChanged("MaxPages");
+                OnPropertyChanged("MaxPagesStr");
+
+                if (ExpAmount > DataStore.Instance.ExperimentsDataSet.Tables[0].Rows.Count)
+                {
+                    this.ExpListCount = DataStore.Instance.ExperimentsDataSet.Tables[0].Rows.Count;
+                    JumpToPosition = 1;
+                    LoadDatabase();
+                }
+                else
+                {
+
+                    if (currPage > MaxPages)
+                    {
+                        JumpToPosition = MaxPages;
+                    }
+                    else
+                    {
+                        JumpToPosition = currPage;
+                    }
+ 
+                }
+                listingDataView.View.Refresh();
+                OnPropertyChanged("ExpAmount");
+
+                OnPropertyChanged("MaxPages");
+                OnPropertyChanged("MaxPagesStr");
+            }
+        }
+
+        public Int32 MaxPages
+        {
+            get
+            {
+                double pageFrac = (double)DataStore.Instance.ExperimentsDataSet.Tables[0].Rows.Count / (double)ExpAmount;
+
+                int retMaxPg = (int)Math.Ceiling(pageFrac);
+
+
+                if(retMaxPg == 0)
+                {
+                    retMaxPg = 1;
+                }
+
+                return retMaxPg;
+            }
+            set
+            {
+            }
+        }
+
+        public string MaxPagesStr
+        {
+            get
+            {
+                return "/" + MaxPages;
+            }
+            set
+            {
+            }
+        }
+
+        
+
+        public Int32 JumpToPosition
+        {
+            get {
+                return (MaxPages + 1) - this._pageNumber;  
+
+                  }
+            set
+            {
+
+                int reverseJ = (MaxPages + 1) - value;
+
+                if (ExpAmount >= DataStore.Instance.ExperimentsDataSet.Tables[0].Rows.Count)
+                {
+                    LoadDatabase();
+                    this._pageNumber = 1;
+                    return;
+                }
+
+
+                if (reverseJ >= 1 && reverseJ <= MaxPages)
+                {
+                    this._pageNumber = reverseJ;
+                }
+                else
+                {
+                    ColorAnimation colorAnimation = new ColorAnimation
+                    {
+                        To = Colors.Red,
+                        Duration = TimeSpan.FromSeconds(0.5), // Duration of the animation (0.5 seconds in this example)
+                        AutoReverse = true, // Animation plays in reverse after completing
+                        RepeatBehavior = new RepeatBehavior(2) // Repeat twice (original + once more)
+                    };
+                    
+                    Storyboard.SetTargetProperty(colorAnimation, new PropertyPath("(Border.BorderBrush).(SolidColorBrush.Color)"));// Set the target property of the animation (BorderBrushProperty in this case)
+
+                    Storyboard storyboard = new Storyboard();// Create a Storyboard and add the ColorAnimation to it
+                    storyboard.Children.Add(colorAnimation);
+                    TextBox PageTextBox = this.FindName("PageTextBox") as TextBox;
+
+                    Storyboard.SetTarget(colorAnimation, PageTextBox);   // Set the target of the animation to your TextBox's border
+                    storyboard.Begin();
+                    return;
+                }
+                                
+                LoadPage(value); 
+                
+
+
+                listingDataView.View.Refresh();
+                SetExperimentSettingsViewer(); 
+                OnPropertyChanged("JumpToPosition");
+                OnPropertyChanged("MaxPages");
+                OnPropertyChanged("MaxPagesStr");
+            }
+        }
 
         public bool BrowseBool
         {
@@ -202,6 +341,7 @@
             }
         }
 
+
         public Visibility SpinVisible
         {
             get { return this._spinVisible; }
@@ -283,6 +423,31 @@
             SetExperimentSettingsViewer();
         }
 
+        private void btnAnimation(string buttonName, string templateName, string rectangleName)
+        {
+            ColorAnimation colorAnimation = new ColorAnimation
+            {
+                To = Colors.Red,
+                Duration = TimeSpan.FromSeconds(.12), // Duration of the animation (0.5 seconds in this example)
+                AutoReverse = true, // Animation plays in reverse after completing
+                RepeatBehavior = new RepeatBehavior(2) // Repeat twice (original + once more)
+            };
+
+            Storyboard.SetTargetProperty(colorAnimation, new PropertyPath("Fill.Color"));// Set the target property of the animation (BorderBrushProperty in this case)
+
+            Storyboard storyboard = new Storyboard();// Create a Storyboard and add the ColorAnimation to it
+            storyboard.Children.Add(colorAnimation);
+
+            Button LeftButton = FindName(buttonName) as Button;
+            ControlTemplate LeftButtonTemplate = LeftButton.FindName(templateName) as ControlTemplate; // Replace "YourButtonTemplate" with the actual key of your Button template
+            LeftButton.Template = LeftButtonTemplate;
+
+            Rectangle backgroundRectLeft = LeftButtonTemplate.FindName(rectangleName, LeftButton) as Rectangle;
+
+            Storyboard.SetTarget(colorAnimation, backgroundRectLeft);   // Set the target of the animation to your TextBox's border
+            storyboard.Begin();
+        }
+
         private void btnBrowse_Click(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.OpenFileDialog ofd = new Microsoft.Win32.OpenFileDialog();
@@ -302,7 +467,10 @@
                     SetExperimentSettingsViewer();
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "Exception thrown, ExperimentSettingsBrowser window, btnBrowse_Click: " + ex.Message);
+            }
         }
 
         private void btnCancel_Click(object sender, RoutedEventArgs e)
@@ -310,6 +478,33 @@
             _experimentPath = "";
             DialogResult = false;
             this.Close();
+        }
+        
+        private void btnLeft_Click(object sender, RoutedEventArgs e)
+        {
+            if (JumpToPosition > 1)
+            {
+                JumpToPosition -= 1;
+            }
+            else
+            {
+                btnAnimation("Left", "LeftTemplate", "BackgroundRectLeft");
+                return;
+            }
+        }
+
+        private void btnRight_Click(object sender, RoutedEventArgs e)
+        {
+            if (JumpToPosition < MaxPages)
+            {
+                JumpToPosition += 1;
+            }
+            else
+            {
+                btnAnimation("RightButton","RightTemplate","BackgroundRectRight");
+                return;
+            }
+
         }
 
         private void btnOK_Click(object sender, RoutedEventArgs e)
@@ -426,12 +621,16 @@
             {
                 //Pass Experiment Settings File Location to Settings Viewer
                 DatabaseItem databaseItem = ((DatabaseItem)this.ListBox.SelectedItem);
+                if (null == databaseItem) return;
                 _experimentSettingsPath = databaseItem.ExpPath + "\\Experiment.xml";
                 _databaseExperimentPath = System.IO.Directory.GetParent(_experimentSettingsPath).ToString();
                 _databaseExperimentName = databaseItem.ExpName;
                 SetExperimentSettingsViewer();
             }
-            catch { };
+            catch (Exception ex)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "Exception thrown, ExperimentSettingsBrowser window, ChooseFromDatabase: " + ex.Message);
+            }
         }
 
         private void ChooseFromTemplates(object sender, RoutedEventArgs args)
@@ -443,14 +642,15 @@
             try
             {
                 //Pass Experiment Settings File Location to Settings Viewer
-                if (null != cbChooseFromTamplate)
-                {
-                    _experimentSettingsName = cbChooseFromTamplate.SelectedItem.ToString();
-                    _experimentSettingsPath = _settingTemplatesDirInfo.ToString() + "\\" + _experimentSettingsName + ".xml";
-                    SetExperimentSettingsViewer();
-                }
+                if (null == cbChooseFromTamplate) return;
+                _experimentSettingsName = cbChooseFromTamplate.SelectedItem.ToString();
+                _experimentSettingsPath = _settingTemplatesDirInfo.ToString() + "\\" + _experimentSettingsName + ".xml";
+                SetExperimentSettingsViewer();
             }
-            catch { };
+            catch (Exception ex)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "Exception thrown, ExperimentSettingsBrowser window, ChooseFromTemplates: " + ex.Message);
+            }
         }
 
         private void CreateXmlNode(XmlDocument doc, string nodeName)
@@ -481,23 +681,16 @@
             BrowserWin.IsEnabled = false;
             _allowExit = false;
             SpinVisible = Visibility.Visible;
-            BackgroundWorker settingsLoader = new BackgroundWorker();
-            settingsLoader.DoWork += (o, ea) =>
-            {
-                LoadDatabase();
-                SetExperimentSettingsViewer();
-            };
-
-            settingsLoader.RunWorkerCompleted += (o, ea) =>
-            {
-                listingDataView.SortDescriptions.Clear();
-                listingDataView.SortDescriptions.Add(new SortDescription("ID", ListSortDirection.Descending));
-                BrowserWin.IsEnabled = true;
-                SpinVisible = Visibility.Collapsed;
-                _allowExit = true;
-            };
-            settingsLoader.RunWorkerAsync();
+            JumpToPosition = 1;
+            SetExperimentSettingsViewer();
+           
+            listingDataView.SortDescriptions.Clear();
+            listingDataView.SortDescriptions.Add(new SortDescription("ID", ListSortDirection.Descending));
+            BrowserWin.IsEnabled = true;
+            SpinVisible = Visibility.Collapsed;
+            _allowExit = true;
             LoadTemplateCombox();
+            
         }
 
         private void ExperimentSettingsBrowserWindow_Unloaded(object sender, RoutedEventArgs e)
@@ -512,12 +705,16 @@
                 try
                 {
                     DatabaseItem databaseItem = ((DatabaseItem)this.ListBox.SelectedItem);
+                    if (null == databaseItem) return;
                     _experimentSettingsPath = databaseItem.ExpPath + "Experiment.xml";
                     _databaseExperimentPath = System.IO.Directory.GetParent(_experimentSettingsPath).ToString();
                     _databaseExperimentName = databaseItem.ExpName;
                     SetExperimentSettingsViewer();
                 }
-                catch { };
+                catch (Exception ex)
+                {
+                    ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "Exception thrown, ExperimentSettingsBrowser window, ListBoxSelectionChanged: " + ex.Message);
+                }
             }
         }
 
@@ -526,30 +723,128 @@
             rdChooseFromDatabase.IsChecked = true;
         }
 
-        private void LoadDatabase()
+        private void LoadPage(int page, int offset = 0)
         {
+            _databaseItems.Clear();
             List<DatabaseItem> databaseItems = new List<DatabaseItem>();
             try
             {
                 DataStore.Instance.ConnectionString = "URI=file:" + Application.Current.Resources["ThorDatabase"].ToString();
                 DataStore.Instance.Open();
 
-                int i = 0;
+
                 DataTable table = new DataTable("Experiments");
 
-                foreach (DataRow row in DataStore.Instance.ExperimentsDataSet.Tables[0].Rows)
+                page = page - 1; //Displayed page numbers are indexed at 1, the logic below is for 0 based index
+
+                int totalItems = DataStore.Instance.ExperimentsDataSet.Tables[0].Rows.Count;
+                int totalPages = (totalItems + ExpListCount - 1) / ExpListCount;  // Calculate total pages
+
+                int startIndex;
+                int itemsToLoad;
+
+                if (page == totalPages)
                 {
-                    i++;
+                    // Last page, load the remainder
+                    startIndex = totalItems - ((totalPages - 1) * ExpListCount);
+                    itemsToLoad = startIndex;
+                }
+                else
+                {
+                    // Not the last page, load ExpListCount items
+                    startIndex = totalItems - (page * ExpListCount);
+                    itemsToLoad = ExpListCount;
+                }
+
+                for (int x = startIndex - 1; x >= startIndex - itemsToLoad; x--)
+                {
+                    DataRow row = DataStore.Instance.ExperimentsDataSet.Tables[0].Rows[x];
+
                     DatabaseItem databaseItem = new DatabaseItem();
-                    databaseItem.ID = i;
+                    databaseItem.ID = x;
                     databaseItem.ExpName = row["Name"].ToString();
                     databaseItem.ExpPath = row["Path"].ToString();
                     databaseItems.Add(databaseItem);
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                e.ToString();
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "Exception thrown, ExperimentSettingsBrowser window, LoadDatabase: " + ex.Message);
+            }
+            _databaseItems.AddRange(databaseItems);
+        }
+
+        private void LoadDatabase(int pos, int offset = -1)
+        {
+            _databaseItems.Clear();
+            List<DatabaseItem> databaseItems = new List<DatabaseItem>();
+            try
+            {
+                DataStore.Instance.ConnectionString = "URI=file:" + Application.Current.Resources["ThorDatabase"].ToString();
+                DataStore.Instance.Open();
+
+
+                DataTable table = new DataTable("Experiments");
+
+                int diff = ExpListCount;
+
+
+
+                if(offset >= 0)
+                {
+                    diff = offset;
+                }
+                //get the size of the DB for looping
+                //int lastIndex = DataStore.Instance.ExperimentsDataSet.Tables[0].Rows.Count;
+                //loop from the end of the database to (diff) amount, diff is a GUI var that defaults to 15
+                for (int x = pos; x > pos - diff; x--)
+                {
+                    DataRow row = DataStore.Instance.ExperimentsDataSet.Tables[0].Rows[x];
+
+                    DatabaseItem databaseItem = new DatabaseItem();
+                    databaseItem.ID = x;
+                    databaseItem.ExpName = row["Name"].ToString();
+                    databaseItem.ExpPath = row["Path"].ToString();
+                    databaseItems.Add(databaseItem);
+                }
+            }
+            catch (Exception ex)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "Exception thrown, ExperimentSettingsBrowser window, LoadDatabase: " + ex.Message);
+            }
+            _databaseItems.AddRange(databaseItems);
+        }
+
+        private void LoadDatabase()
+        {
+            _databaseItems.Clear();
+            List<DatabaseItem> databaseItems = new List<DatabaseItem>();
+            try
+            {
+                DataStore.Instance.ConnectionString = "URI=file:" + Application.Current.Resources["ThorDatabase"].ToString();
+                DataStore.Instance.Open();
+
+                
+                DataTable table = new DataTable("Experiments");
+                int diff = ExpListCount;
+                //get the size of the DB for looping
+                int lastIndex = DataStore.Instance.ExperimentsDataSet.Tables[0].Rows.Count;
+                //loop from the end of the database to (diff) amount, diff is a GUI var that defaults to 15
+                
+                for (int x = lastIndex - 1; x >lastIndex - 1 - diff; x--)
+                {
+                    DataRow row = DataStore.Instance.ExperimentsDataSet.Tables[0].Rows[x];
+
+                    DatabaseItem databaseItem = new DatabaseItem();
+                    databaseItem.ID = x;
+                    databaseItem.ExpName = row["Name"].ToString();
+                    databaseItem.ExpPath = row["Path"].ToString();
+                    databaseItems.Add(databaseItem);
+                }
+            }
+            catch (Exception ex)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "Exception thrown, ExperimentSettingsBrowser window, LoadDatabase: " + ex.Message);
             }
             _databaseItems.AddRange(databaseItems);
         }
@@ -563,6 +858,7 @@
                     {
                         string[] strList = Directory.GetFiles(_settingTemplatesDirInfo.FullName, "*.xml");
                         FileInfo[] experimentNames = _settingTemplatesDirInfo.GetFiles("*.xml");
+                        if (1 > strList.Length) return;
 
                         for (int i = 0; i < strList.Length; i++)
                         {
@@ -573,9 +869,9 @@
                         _experimentSettingsName = cbChooseFromTamplate.SelectedItem.ToString();
                         _experimentSettingsPath = _settingTemplatesDirInfo.ToString() + "\\" + _experimentSettingsName + ".xml";
                     }
-                    catch (Exception e)
+                    catch (Exception ex)
                     {
-                        e.ToString();
+                        ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "Exception thrown, ExperimentSettingsBrowser window, LoadTemplateCombox, SETTINGS: " + ex.Message);
                     }
 
                     break;
@@ -587,13 +883,14 @@
                     {
                         //Pass Experiment Settings File Location to Settings Viewer
                         DatabaseItem databaseItem = ((DatabaseItem)this.ListBox.SelectedItem);
+                        if (null == databaseItem) return;
                         _experimentSettingsPath = databaseItem.ExpPath + "\\Experiment.xml";
                         _databaseExperimentPath = System.IO.Directory.GetParent(_experimentSettingsPath).ToString();
                         _databaseExperimentName = databaseItem.ExpName;
                     }
-                    catch (Exception e)
+                    catch (Exception ex)
                     {
-                        e.ToString();
+                        ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "Exception thrown, ExperimentSettingsBrowser window, LoadTemplateCombox, EXPERIMENT: " + ex.Message);
                     }
                     break;
             }
@@ -617,9 +914,9 @@
                 settingsPreview.EditEnable = false;
                 settingsPreview.SettingsDocument = doc;
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                e.ToString();
+                ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "Exception thrown, ExperimentSettingsBrowser window, SetExperimentSettingsViewer: " + ex.Message);
             }
         }
 

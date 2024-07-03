@@ -25,6 +25,7 @@
         private static string _lastSavedModality = string.Empty;
         static ObservableCollection<string> _modalities = new ObservableCollection<string>();
 
+        private bool _allowSwitchBox = false;
         private PMTSwitch _pmtSwitchController = new PMTSwitch();
         private PMTSwitch _pmtSwitchController2 = new PMTSwitch();
         private bool _tabletMode = false;
@@ -100,6 +101,12 @@
             }
         }
 
+        public bool AllowSwitchBoxToWork
+        {
+            get => _allowSwitchBox;
+            set => _allowSwitchBox = value;
+        }
+
         public BleachMode GetBleachMode
         {
             get
@@ -146,6 +153,88 @@
         #endregion Properties
 
         #region Methods
+
+        /// <summary>
+        /// Method to backup a specified directory. Checks if directory exists and creates if not. 
+        /// </summary>
+        /// <param name="folderPath">Path to the folder to be backed up. Path should end with '\'</param>
+        /// <returns>Returns the number of errors that ocurred while copying to the backup folder or -1 for a file or folder error</returns>
+        public static int BackupDirectory(string folderPath)
+        {
+            string allowedExtenstions = ".xml | .txt | .db";
+            string excludedFiles = "ThorLogging.xml";
+            int errorNum = 0;
+
+            string backupFolderPath = folderPath + "Backup";
+            if (!Directory.Exists(backupFolderPath))
+            {
+                try
+                {
+                    Directory.CreateDirectory(backupFolderPath);
+                }
+                catch (Exception e)
+                {
+                    ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "ResourceManager " + e.GetType() + "Unable to create the requested directory");
+                    return -1;
+                }
+            }
+            else
+            {
+                try
+                {
+                    Directory.Delete(backupFolderPath, true);
+                }
+                catch (Exception e)
+                {
+                    ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "ResourceManager " + e.GetType() + "Unable to delete the requested directory");
+                    return -1;
+                }
+            }
+
+            string[] filesInFolder = Directory.GetFiles(folderPath, ".", SearchOption.AllDirectories);
+            foreach (string filePath in filesInFolder)
+            {
+                FileInfo info = new FileInfo(filePath);
+                if (allowedExtenstions.Contains(info.Extension) && !excludedFiles.Contains(info.Name))
+                {
+                    string relativeFilePath = info.DirectoryName.Substring(Directory.GetParent(backupFolderPath).FullName.Length);
+                    string pathToBackupFile;
+
+                    //Relative path will include the '\' character if it is not empty
+                    if (0 < relativeFilePath.Length)
+                    {
+                        pathToBackupFile = backupFolderPath + relativeFilePath;
+                    }
+                    else
+                    {
+                        pathToBackupFile = backupFolderPath;
+                    }
+
+                    if (!Directory.Exists(pathToBackupFile))
+                    {
+                        try
+                        {
+                            Directory.CreateDirectory(pathToBackupFile);
+                        }
+                        catch (Exception e)
+                        {
+                            ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "ResourceManager " + e.GetType() + "Unable to create the requested directory");
+                            return -1;
+                        }
+                    }
+                    try
+                    {
+                        File.Copy(info.FullName, pathToBackupFile + "\\" + info.Name);
+                    }
+                    catch (Exception e)
+                    {
+                        ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "ResourceManager " + e.GetType() + " Error During Backup: " + e.Message);
+                        errorNum++;
+                    }
+                }
+            }
+            return errorNum;
+        }
 
         public static bool BorrowDocMutexCS(SettingsFileType sfType, int tryTimeMSec = -1)
         {
@@ -204,6 +293,9 @@
         {
             if (File.Exists(src))
             {
+                if (!Directory.Exists(System.IO.Path.GetDirectoryName(dst)))
+                    Directory.CreateDirectory(System.IO.Path.GetDirectoryName(dst));
+
                 File.Copy(src, dst, overwrite);
             }
         }
@@ -233,6 +325,26 @@
 
         [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "GetCameraParamAvailable")]
         public static extern int GetCameraParamAvailable(int cameraSelection, int paramId);
+
+        [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "GetCameraParamBuffer")]
+        public static extern int GetCameraParamBuffer(long cameraSelection, long paramID, IntPtr pBuffer, long size);
+
+        public static int GetCameraParamBuffer<T>(int deviceSelection, int paramId, T[] buf, long len)
+        {
+            int ret = 0;
+            var gch = default(GCHandle);
+            try
+            {
+                gch = GCHandle.Alloc(buf, GCHandleType.Pinned);
+                ret = GetCameraParamBuffer(deviceSelection, paramId, gch.AddrOfPinnedObject(), len);
+            }
+            finally
+            {
+                if (gch.IsAllocated)
+                    gch.Free();
+            }
+            return ret;
+        }
 
         [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "GetCameraParamDouble")]
         public static extern int GetCameraParamDouble(int cameraSelection, int param, ref double value);
@@ -387,6 +499,60 @@
             return sb.ToString();
         }
 
+        public static string GetRegistrationFileString()
+        {
+            string regFile = GetCaptureTemplatePathString() + "\\" + "Registration.xml";
+            if (!File.Exists(regFile))
+            {
+                using (XmlWriter writer = XmlWriter.Create(regFile))
+                {
+                    writer.WriteStartElement("ThorImageRegistration");
+                    writer.WriteElementString("Registrations","");
+                    writer.Flush();
+                }
+            }
+            return regFile;
+        }
+
+        public static string GetStartupFlag()
+        {
+            StringBuilder sb = new StringBuilder(256);
+            GetStartupFlag(sb, 256);
+            return sb.ToString();
+        }
+
+        public static string GetValueString(string xPath, string attrName)
+        {
+            XmlDocument appSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+            string tmp = string.Empty;
+            XmlNodeList ndList = appSettings.SelectNodes(xPath);
+            if (ndList.Count > 0)
+            {
+                if (null != ndList[0].Attributes.GetNamedItem(attrName))
+                {
+                    tmp = ndList[0].Attributes[attrName].Value;
+                }
+            }
+            return tmp;
+        }
+
+        public static Visibility GetVisibility(string xPath, string attrName)
+        {
+            XmlDocument appSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+
+            XmlNodeList ndList = appSettings.SelectNodes(xPath);
+            if (ndList.Count > 0)
+            {
+                string tmp = string.Empty;
+                if (null != ndList[0].Attributes.GetNamedItem(attrName))
+                {
+                    tmp = ndList[0].Attributes[attrName].Value;
+                    return tmp.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
+                }
+            }
+            return Visibility.Collapsed;
+        }
+
         public static void LoadModalities()
         {
             string modalitiesFolder = GetMyDocumentsThorImageFolderString() + "Modalities";
@@ -417,8 +583,60 @@
         [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "PreflightCamera")]
         public static extern int PreflightCamera(int cameraSelection);
 
+        public static bool ReloadDirectories()
+        {
+            return ResourceManagerReloadDirectories() == 0 ? true : false;
+        }
+
         [DllImport(".\\ResourceManager.dll", EntryPoint = "LoadSettings")]
         public static extern int ResourceManagerLoadSettings();
+
+        [DllImport(".\\ResourceManager.dll", EntryPoint = "ReloadDirectories")]
+        public static extern int ResourceManagerReloadDirectories();
+
+        /// <summary>
+        /// Method to restore a specified directory that has been previously backed up.
+        /// </summary>
+        /// <param name="folderPath">Path to the folder to be backed up. Path should end with '\'</param>
+        /// <returns>Returns the number of errors that ocurred while copying from the backup folder or -1 for a file or folder error</returns>
+        public static int RestoreDirectory(string folderPath)
+        {
+            string backupFolderPath = folderPath + "Backup";
+            int errorNum = 0;
+
+            if (!Directory.Exists(backupFolderPath))
+            {
+                return -1;
+            }
+
+            string[] filesInBackupFolder = Directory.GetFiles(backupFolderPath, ".", SearchOption.AllDirectories);
+            foreach (string filePath in filesInBackupFolder)
+            {
+                FileInfo info = new FileInfo(filePath);
+                string relativeFilePath = info.DirectoryName.Substring(backupFolderPath.Length);
+                string pathToRestoredFile;
+
+                //Relative path will include the '\' character if it is not empty
+                if (0 < relativeFilePath.Length)
+                {
+                    pathToRestoredFile = folderPath.Remove(folderPath.Length - 1, 1) + relativeFilePath;
+                }
+                else
+                {
+                    pathToRestoredFile = folderPath;
+                }
+                try
+                {
+                    File.Copy(info.FullName, pathToRestoredFile + "\\" + info.Name, true);
+                }
+                catch (Exception e)
+                {
+                    ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, "ResourceManager " + e.GetType() + " Error during Restore: " + e.Message);
+                    errorNum++;
+                }
+            }
+            return errorNum;
+        }
 
         public static bool ReturnDocMutexCS(SettingsFileType sfType)
         {
@@ -429,6 +647,26 @@
         {
             if (!Directory.Exists(target_dir))
                 Directory.CreateDirectory(target_dir);
+        }
+
+        [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "SetCameraParamBuffer")]
+        public static extern int SetCameraParamBuffer(long cameraSelection, long paramID, IntPtr pBuffer, long size);
+
+        public static int SetCameraParamBuffer<T>(int deviceSelection, int paramId, T[] buf, long len)
+        {
+            int ret = 0;
+            var gch = default(GCHandle);
+            try
+            {
+                gch = GCHandle.Alloc(buf, GCHandleType.Pinned);
+                ret = SetCameraParamBuffer(deviceSelection, paramId, gch.AddrOfPinnedObject(), len);
+            }
+            finally
+            {
+                if (gch.IsAllocated)
+                    gch.Free();
+            }
+            return ret;
         }
 
         [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "SetCameraParamDouble")]
@@ -548,7 +786,7 @@
                 }
             }
             SetModality(new StringBuilder(modality));
-            SaveRemotePCHostNameToXML(modality);
+            //SaveRemotePCHostNameToXML(modality);
             MVMManager.Instance.LoadSettings();
         }
 
@@ -573,11 +811,11 @@
                 rootNode.AppendChild(elementRoot);
                 node = (XmlElement)doc.SelectSingleNode("ApplicationSettings/IPCRemoteHostPCName");
             }
-            node.SetAttribute("name", remotePCHostNameList.ToString() + "///");
-            node.SetAttribute("IP", remotePCIPAddressList.ToString() + "///");
-            node.SetAttribute("IDMode", "0");
-            node.SetAttribute("activeIndex", "0");
-            node.SetAttribute("remoteAppName", "ThorSync");
+            //node.SetAttribute("name", remotePCHostNameList.ToString());
+            //node.SetAttribute("IP", remotePCIPAddressList.ToString());
+            //node.SetAttribute("IDMode", "0");
+            //node.SetAttribute("activeIndex", "0");
+            //node.SetAttribute("remoteAppName", "ThorSync");
             //doc.Save(GetMyDocumentsThorImageFolderString() + "Modalities\\" + modality + "\\Application Settings\\ApplicationSettings.xml");
         }
 
@@ -610,8 +848,6 @@
             }
             string str = string.Empty;
             string strActiveExp = GetCaptureTemplatePathString() + "Active.xml";
-            XmlDocument activeDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS];
-            XmlNodeList ndList = (null != activeDoc) ? activeDoc.SelectNodes("/ThorImageExperiment/Modality") : null;
 
             if (!Directory.Exists(ResourceManagerCS.GetMyDocumentsThorImageFolderString() + "Modalities\\" + modality))
             {
@@ -620,17 +856,19 @@
             }
 
             /// [persist last modality]
+
+            //persist current modality as last if no history available
+            _lastSavedModality = (0 >= _lastSavedModality.Length) ? modality : _lastSavedModality;
+
+            //update settings from all mvm
+            MVMManager.Instance.UpdateMVMXMLSettings(ref MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS]);
+            XmlNodeList ndList = (null != MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS]) ? MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS].SelectNodes("/ThorImageExperiment/Modality") : null;
+
             if (null != ndList)
             {
-                //persist current modality as last if no history available
-                _lastSavedModality = (0 >= _lastSavedModality.Length) ? modality : _lastSavedModality;
-
-                //update settings from all mvm
-                MVMManager.Instance.UpdateMVMXMLSettings(ref MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS]);
-
                 //update modality name
-                XmlManager.SetAttribute(ndList[0], activeDoc, "name", _lastSavedModality);
-                MVMManager.Instance.SaveSettings(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
+                XmlManager.SetAttribute(ndList[0], MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS], "name", _lastSavedModality);
+                MVMManager.Instance.SaveSettings(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS, true);
 
                 //Disable lasers when swapping modalities in case TTL mode is enabled and the laser source is disconnected
                 //Special case for when modality is swapped from Capture Setup. Swapping modalities from Hardware Connetions handled in MenuModuleLS
@@ -677,15 +915,15 @@
                         XmlDocument modActiveDoc = new XmlDocument();
                         modActiveDoc.Load(str);
                         XmlNode nl = modActiveDoc.SelectSingleNode("/ThorImageExperiment/Modality");
-                        XmlNode newNl = activeDoc.ImportNode(nl, true);
-                        activeDoc.DocumentElement.AppendChild(newNl);
-                        activeDoc.Save(strActiveExp);
+                        XmlNode newNl = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS].ImportNode(nl, true);
+                        MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS].DocumentElement.AppendChild(newNl);
+                        MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS].Save(strActiveExp);
                     }
                 }
                 else
                 {
                     //copy if modality is mismatched with current
-                    if (XmlManager.GetAttribute(ndList[0], activeDoc, "name", ref str) && !modality.Equals(str))
+                    if (XmlManager.GetAttribute(ndList[0], MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS], "name", ref str) && !modality.Equals(str))
                     {
                         try
                         {
@@ -715,6 +953,14 @@
 
             MVMManager.Instance.LoadSettings();
         }
+
+        public static void SetStartupFlag(string value)
+        {
+            SetStartupFlag(new StringBuilder(value));
+        }
+
+        [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "SetupCamera")]
+        public static extern int SetupCamera(int cameraSelection);
 
         public static T StructFromByteArray<T>(byte[] array)
         {
@@ -980,8 +1226,8 @@
         {
             byte toggle = 0; //Toggle all off by default 0000
 
-            //only switch when changing to an LSM camera
-            if ((int)ICamera.CameraType.LSM == GetCameraType())
+            //only switch when changing to an LSM camera and when Capture Setup has loaded
+            if ((int)ICamera.CameraType.LSM == GetCameraType() && AllowSwitchBoxToWork)
             {
                 int lsmType = GetLSMType();
 
@@ -1069,6 +1315,9 @@
         [DllImport(".\\ResourceManager.dll", EntryPoint = "GetMyDocumentsThorImageFolder", CharSet = CharSet.Unicode)]
         private static extern int GetMyDocumentsThorImageFolder(StringBuilder sb, int length);
 
+        [DllImport(".\\ResourceManager.dll", EntryPoint = "GetStartupFlag", CharSet = CharSet.Unicode)]
+        private static extern int GetStartupFlag(StringBuilder value, int length);
+
         [DllImport(".\\ResourceManager.dll", EntryPoint = "ReturnDocMutex")]
         private static extern bool ReturnDocMutex(SettingsFileType sfType);
 
@@ -1080,6 +1329,9 @@
 
         [DllImport(".\\ResourceManager.dll", EntryPoint = "SetModality", CharSet = CharSet.Unicode)]
         private static extern int SetModality(StringBuilder sb);
+
+        [DllImport(".\\ResourceManager.dll", EntryPoint = "SetStartupFlag", CharSet = CharSet.Unicode)]
+        private static extern int SetStartupFlag(StringBuilder value);
 
         [DllImport(".\\Modules_Native\\SelectHardware.dll", EntryPoint = "UpdateAndPersistCurrentDevices")]
         private static extern int UpdateAndPersistCurrentDevices();

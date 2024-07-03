@@ -72,7 +72,9 @@ private:
 	long _activeLoadMS;
 	long _preLoadCount;
 	long _piezoVolumePoints;
+	long _pockelsRefVolumePoints;
 	long _piezoStepPoints;
+	long _piezoRefStepPoints;
 	long _piezoIntraStepPoints;
 	long _piezoFlybackPoints;
 	long _piezoSampleRate;

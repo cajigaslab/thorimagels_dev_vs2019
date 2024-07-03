@@ -1,0 +1,457 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{277F6329-2507-44F7-BF61-051BF0D90D3A}</ProjectGuid>
+    <OutputType>library</OutputType>
+    <RootNamespace>ImageViewControl</RootNamespace>
+    <AssemblyName>ImageViewControl</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <WarningLevel>4</WarningLevel>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="HistogramControl, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\HistogramControl\HistogramControl\bin\Debug\HistogramControl.dll</HintPath>
+    </Reference>
+    <Reference Include="MahApps.Metro">
+      <HintPath>..\..\..\..\Tools\MahApps.Metro\MahApps.Metro.1.5.0\lib\net45\MahApps.Metro.dll</HintPath>
+    </Reference>
+    <Reference Include="OverlayManager">
+      <HintPath>..\..\OverlayManager\OverlayManager\bin\Debug\OverlayManager.dll</HintPath>
+    </Reference>
+    <Reference Include="SpinnerProgress">
+      <HintPath>..\..\SpinnerProgress\SpinnerProgress\bin\Debug\SpinnerProgress.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Windows.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xaml">
+      <RequiredTargetFramework>4.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="ThemeControl">
+      <HintPath>..\..\ThemeControl\ThemeControl\bin\Debug\ThemeControl.dll</HintPath>
+    </Reference>
+    <Reference Include="ThorLogging">
+      <HintPath>..\..\..\..\Common\ThorLogging\ThorLogging\bin\Debug\ThorLogging.dll</HintPath>
+    </Reference>
+    <Reference Include="ThorSharedTypes">
+      <HintPath>..\..\..\..\Common\ThorSharedTypes\ThorSharedTypes\bin\Debug\ThorSharedTypes.dll</HintPath>
+    </Reference>
+    <Reference Include="Validations">
+      <HintPath>..\..\Validations\Validations\bin\Debug\Validations.dll</HintPath>
+    </Reference>
+    <Reference Include="WindowsBase" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BindingProxy.cs" />
+    <Compile Include="Converters.cs" />
+    <Compile Include="Extensions.cs" />
+    <Compile Include="ImageView.xaml.cs">
+      <DependentUpon>ImageView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="LUTSettings.xaml.cs">
+      <DependentUpon>LUTSettings.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="OrthogonalViewOptionsWindow.xaml.cs">
+      <DependentUpon>OrthogonalViewOptionsWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ProgressSplashScreen.xaml.cs">
+      <DependentUpon>ProgressSplashScreen.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <Compile Include="LUTComboBoxSelection.xaml.cs">
+      <DependentUpon>LUTComboBoxSelection.xaml</DependentUpon>
+    </Compile>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="..\..\..\Styles\Border.xaml">
+      <Link>Icons\Border.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\Styles\Button.xaml">
+      <Link>Icons\Button.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\Styles\Checkbox.xaml">
+      <Link>Icons\Checkbox.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\Styles\Label.xaml">
+      <Link>Icons\Label.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\Styles\Listbox.xaml">
+      <Link>Icons\Listbox.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\Styles\RepeatButton.xaml">
+      <Link>Icons\RepeatButton.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\Styles\Scrollviewer.xaml">
+      <Link>Icons\Scrollviewer.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\Styles\Shared.xaml">
+      <Link>Icons\Shared.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\Styles\slider.xaml">
+      <Link>Icons\slider.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\Styles\Tab.xaml">
+      <Link>Icons\Tab.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\Styles\TabStyle2.xaml">
+      <Link>Icons\TabStyle2.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\Styles\TextBox.xaml">
+      <Link>Icons\TextBox.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\Styles\ThorStyleDark.xaml">
+      <Link>Icons\ThorStyleDark.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\Styles\tooltip.xaml">
+      <Link>Icons\tooltip.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\Styles\Window.xaml">
+      <Link>Icons\Window.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="ImageView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="LUTSettings.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="OrthogonalViewOptionsWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ProgressSplashScreen.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="LUTComboBoxSelection.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\Styles\2D.png">
+      <Link>Icons\2D.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\2pNyquist.png">
+      <Link>Icons\2pNyquist.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\3D.png">
+      <Link>Icons\3D.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\activation.png">
+      <Link>Icons\activation.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\add.png">
+      <Link>Icons\add.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Arithmetics.png">
+      <Link>Icons\Arithmetics.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\arrow move.png">
+      <Link>Icons\arrow move.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\autotrack.png">
+      <Link>Icons\autotrack.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Blank.png">
+      <Link>Icons\Blank.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\bleach.png">
+      <Link>Icons\bleach.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\bleach2.png">
+      <Link>Icons\bleach2.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\BleachSetting.png">
+      <Link>Icons\BleachSetting.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\BleachSettings.png">
+      <Link>Icons\BleachSettings.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\bluegear.png">
+      <Link>Icons\bluegear.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\calculator.png">
+      <Link>Icons\calculator.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Camera2.png">
+      <Link>Icons\Camera2.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\CameraSave.png">
+      <Link>Icons\CameraSave.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\ChanA.PNG">
+      <Link>Icons\ChanA.PNG</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\ChanAB.PNG">
+      <Link>Icons\ChanAB.PNG</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\ChanB.PNG">
+      <Link>Icons\ChanB.PNG</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\ChanC.PNG">
+      <Link>Icons\ChanC.PNG</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\ChanD.PNG">
+      <Link>Icons\ChanD.PNG</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\ClearAll.png">
+      <Link>Icons\ClearAll.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\ColorTile.PNG">
+      <Link>Icons\ColorTile.PNG</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\confocalNyquist.png">
+      <Link>Icons\confocalNyquist.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\ConnectionSetting.png">
+      <Link>Icons\ConnectionSetting.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\ConnectThorImage.png">
+      <Link>Icons\ConnectThorImage.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\cursor.png">
+      <Link>Icons\cursor.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\cursoricon.png">
+      <Link>Icons\cursoricon.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\cursors.png">
+      <Link>Icons\cursors.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\delete.png">
+      <Link>Icons\delete.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\DeleteSelectedROIs.png">
+      <Link>Icons\DeleteSelectedROIs.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Ellipse.png">
+      <Link>Icons\Ellipse.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\FastFocus.png">
+      <Link>Icons\FastFocus.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\gear.png">
+      <Link>Icons\gear.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Histogram.png">
+      <Link>Icons\Histogram.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\home.png">
+      <Link>Icons\home.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\InfoBox.png">
+      <Link>Icons\InfoBox.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Line.png">
+      <Link>Icons\Line.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\loadfile.png">
+      <Link>Icons\loadfile.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\loadrecent.png">
+      <Link>Icons\loadrecent.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\marker.png">
+      <Link>Icons\marker.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\microscope_objective.png">
+      <Link>Icons\microscope_objective.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\minus.png">
+      <Link>Icons\minus.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\mover.png">
+      <Link>Icons\mover.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\newdog_main_unleashed_green_icon.ico">
+      <Link>Icons\newdog_main_unleashed_green_icon.ico</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\OFF.png">
+      <Link>Icons\OFF.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\ON.png">
+      <Link>Icons\ON.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Open.png">
+      <Link>Icons\Open.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\orthogonal.png">
+      <Link>Icons\orthogonal.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Pause.png">
+      <Link>Icons\Pause.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Pencil.png">
+      <Link>Icons\Pencil.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Play.png">
+      <Link>Icons\Play.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\play2.png">
+      <Link>Icons\play2.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Point.png">
+      <Link>Icons\Point.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Polygon.png">
+      <Link>Icons\Polygon.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\polyline.png">
+      <Link>Icons\polyline.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\purple_dog_icon.ico">
+      <Link>Icons\purple_dog_icon.ico</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Rectangle.png">
+      <Link>Icons\Rectangle.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Reset.png">
+      <Link>Icons\Reset.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Resize.png">
+      <Link>Icons\Resize.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Reticle.png">
+      <Link>Icons\Reticle.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\roi_calc.png">
+      <Link>Icons\roi_calc.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\roi_load.png">
+      <Link>Icons\roi_load.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Run.png">
+      <Link>Icons\Run.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Run2.png">
+      <Link>Icons\Run2.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Run3.png">
+      <Link>Icons\Run3.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\SamplingSettings.png">
+      <Link>Icons\SamplingSettings.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Save.png">
+      <Link>Icons\Save.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Scale.png">
+      <Link>Icons\Scale.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Select.png">
+      <Link>Icons\Select.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Setting.png">
+      <Link>Icons\Setting.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\ShowStats.png">
+      <Link>Icons\ShowStats.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Stop.png">
+      <Link>Icons\Stop.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\ThorImage.png">
+      <Link>Icons\ThorImage.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\ThorImageLS.png">
+      <Link>Icons\ThorImageLS.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Thorlabs.png">
+      <Link>Icons\Thorlabs.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Tile.png">
+      <Link>Icons\Tile.png</Link>
+    </Resource>
+    <Resource Include="..\..\..\Styles\Wrench.png">
+      <Link>Icons\Wrench.png</Link>
+    </Resource>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>if $(ConfigurationName) == Debug  copy $(TargetPath) $(TargetDir)..\..\..\..\..\Applications\ThorImageLS\ThorImage\bin\Debug\Modules</PostBuildEvent>
+  </PropertyGroup>
+</Project>

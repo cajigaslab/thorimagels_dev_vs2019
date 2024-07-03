@@ -13,7 +13,13 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\Common\Camera-TSI\include\tl_camera_sdk_load.cpp">
+    <ClCompile Include="..\..\..\..\Common\Camera-TSI\include\tl_polarization_processor_load.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Common\Camera-TSI\include\tl_mono_to_color_processing_load.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Common\Camera-TSI\include\tl_camera_sdk_load.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -33,10 +39,34 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_camera_sdk.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_camera_sdk_load.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_camera_sdk.h">
+    <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_color_enum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_mono_to_color_enum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_mono_to_color_processing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_mono_to_color_processing_load.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_polarization_processor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_polarization_processor_enums.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_polarization_processor_error.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_polarization_processor_load.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

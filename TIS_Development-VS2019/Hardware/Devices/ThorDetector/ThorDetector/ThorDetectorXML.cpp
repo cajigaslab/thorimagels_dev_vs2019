@@ -26,14 +26,14 @@ ThorDetectorXML::~ThorDetectorXML()
 	}
 }
 
-const char* const ThorDetectorXML::CONNECTION_ATTR[NUM_SETTINGS_ATTRIBUTES] = { "portID","baudRate","serialNumber", "type" };
+const char* const ThorDetectorXML::CONNECTION_ATTR[NUM_SETTINGS_ATTRIBUTES] = { "portID","baudRate","serialNumber", "type", "HPDAllowGainModification" };
 
 /// <summary>
 /// Gets the connection info.
 /// </summary>
 /// <param name="portID">The port identifier.</param>
 /// <returns>long.</returns>
-long ThorDetectorXML::GetDeviceConnectionInfo(const string signature, long& portID, long& baudRate, string& serialNumber, long& detectorType)
+long ThorDetectorXML::GetDeviceConnectionInfo(const string signature, long& portID, long& baudRate, string& serialNumber, long& detectorType, long& HPDenableGain)
 {
 	try
 	{
@@ -72,6 +72,11 @@ long ThorDetectorXML::GetDeviceConnectionInfo(const string signature, long& port
 				case 3:
 				{
 					ss >> detectorType;
+				}
+				break;
+				case 4:
+				{
+					ss >> HPDenableGain;
 				}
 				break;
 				}

@@ -102,6 +102,7 @@
         WAVELENGTH_NM,
         Z_UM_INT,
         Z_UM_DEC,
+        MROI_STRIPE_COUNT,
         LAST_TAG
     }
 
@@ -132,19 +133,6 @@
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = (int)Constants.EPHYS_ARRAY_SIZE)]
         public double[] powerPercent;
         public Int32 responseType;
-    }
-
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    public struct FrameInfoStruct
-    {
-        public Int32 imageWidth;
-        public Int32 imageHeight;
-        public Int32 channels;
-        public Int32 fullFrame;
-        public Int32 scanAreaID;
-        public Int32 bufferType;
-        public UInt64 copySize;
-        public Int32 numberOfPlanes;
     }
 
     /// <summary>
@@ -210,6 +198,9 @@
         public IntPtr GalvoWaveformY;
         public IntPtr GalvoWaveformPockel;
         public IntPtr DigBufWaveform;
+        public ushort GalvoWaveformXOffset;
+        public ushort GalvoWaveformYOffset;
+        public ushort GalvoWaveformPoceklsOffset;
         public int digitalLineCnt;
         public int Scanmode;
         public int Triggermode;
@@ -267,11 +258,18 @@
             AVG_MODE_CUMULATIVE = 1
         }
 
+        public enum CameraSensorType
+        {
+            MONOCHROME = 0,
+            BAYER = 1,
+            MONOCHROME_POLARIZED = 2,
+            LAST_CAMERA_SENSOR_TYPE
+        }
+
         public enum CameraType
         {
             CCD = 0,
             LSM = 1,
-            CCD_MOSAIC = 2,
             LAST_CAMERA_TYPE
         }
 
@@ -301,6 +299,23 @@
             POLARITY_NEGATIVE = 2,
             POLARITY_MIXED = 3,
             LAST_MAPPING_MODE
+        }
+
+        public enum EqualExposurePulseStatusType
+        {
+            DISABLED = 0,
+            ENABLED_ACTIVE = 1,
+            ENABLED_INACTIVE = 2,
+            ENABLED_BULB = 3,
+            MAX
+        }
+
+        public enum GainType
+        {
+            UNSUPPORTED,
+            CONTIGUOUS, // Gain is Unitless and has a constant increment from a min to max value (Ex: Scientific Camera line)
+            CONTIGUOUS_DECIBELS, // Gain also has a conversion to Decibels available (Ex: Compact Scientific camera line)
+            DISCRETE_DECIBELS // Gain is expressed as a set of non-contiguous options (Ex: CS135xx camera models)
         }
 
         public enum LSMAreaMode
@@ -632,7 +647,7 @@
 
             PARAM_LSM_FORCE_SETTINGS_UPDATE,
 
-            PARAM_LSM_POCKELS_MASK,
+            PARAM_LSM_POCKELS_MASK_0,
             PARAM_LSM_POCKELS_MASK_ENABLE_0,
 
             PARAM_LSM_FIELD_SIZE_CALIBRATION,
@@ -737,6 +752,10 @@
             PARAM_LSM_DAQ_DRIVER_VER,
             PARAM_LSM_LOW_FREQ_TRIG_BOARD_FW_VER,
             PARAM_LSM_LOW_FREQ_TRIG_BOARD_CPLD_VER,
+
+            PARAM_LSM_POCKELS_MASK_1 = 575,
+            PARAM_LSM_POCKELS_MASK_2,
+            PARAM_LSM_POCKELS_MASK_3,
 
             PARAM_LSM_TWO_WAY_ZONE_FINE_1 = 700,
             PARAM_LSM_TWO_WAY_ZONE_FINE_2,
@@ -1005,7 +1024,7 @@
             PARAM_LSM_FINE_OFFSET_Y2,///<2nd GG mirror Y fine offset
             PARAM_LSM_3P_ENABLE,
             PARAM_LSM_3P_ALIGN_FINE,
-            PARAM_LSM_3P_ALIGN_COARSE,
+            PARAM_LSM_3P_ALIGN_COARSE_0,
             PARAM_LSM_3P_FIR_CHANNEL,
             PARAM_LSM_3P_FIR_INDEX,
             PARAM_LSM_3P_FIR_TAP_INDEX,
@@ -1034,6 +1053,9 @@
             PARAM_LSM_POCKELS_LINE_DELAY_US_1,
             PARAM_LSM_POCKELS_LINE_DELAY_US_2,
             PARAM_LSM_POCKELS_LINE_DELAY_US_3,
+            PARAM_LSM_3P_ALIGN_COARSE_1,
+            PARAM_LSM_3P_ALIGN_COARSE_2,
+            PARAM_LSM_3P_ALIGN_COARSE_3,
 
             PARAM_FIRST_CCD_PARAM = 1000,
             PARAM_BINNING_X = 1000,///<Binning X
@@ -1045,7 +1067,10 @@
             PARAM_CAPTURE_REGION_BOTTOM,
 
             PARAM_GAIN,///<Camera gain
-            PARAM_EM_GAIN,///<Camear EM Gain
+            PARAM_EM_GAIN,///<Camera EM Gain
+            PARAM_GAIN_DECIBELS,
+            PARAM_GAIN_DISCRETE_DECIBELS_VALUES,
+            PARAM_GAIN_TYPE,
             PARAM_EXPOSURE_TIME_MS,
             PARAM_PIXEL_SIZE,///<Pixel size in microns
             PARAM_TDI_HEIGHT,///<TDI height. Can be smaller than height returned by camera
@@ -1093,6 +1118,21 @@
             PARAM_CAMERA_STATIC_FPS,
             PARAM_CAMERA_COOLING_AVAILABLE,
             PARAM_CAMERA_COOLING_MODE,
+            PARAM_CAMERA_SENSOR_TYPE,
+            PARAM_CAMERA_COLOR_IMAGE_TYPE,
+            PARAM_CAMERA_RED_GAIN,
+            PARAM_CAMERA_BLUE_GAIN,
+            PARAM_CAMERA_GREEN_GAIN,
+            PARAM_CAMERA_POLAR_IMAGE_TYPE,
+            PARAM_CAMERA_FRAME_TIME,
+            PARAM_CAMERA_EEP_ENABLE,
+            PARAM_CAMERA_EEP_WIDTH,
+            PARAM_CAMERA_EEP_STATUS,
+            PARAM_CAMERA_RESYNC_FLAG,
+            PARAM_CAMERA_IS_CONTINUOUS_WHITE_BALANCE_ENABLED,
+            PARAM_CAMERA_CONTINUOUS_WHITE_BALANCE_NUM_FRAMES,
+            PARAM_CAMERA_ONE_SHOT_WHITE_BALANCE_FLAG,
+            PARAM_CAMERA_IS_AUTOEXPOSURE_SUPPORTED,
 
             PARAM_MESO_PLATE_INFO = 1500,
             PARAM_MESO_SCAN_INFO,
@@ -1159,6 +1199,10 @@
             PARAM_MESO_RESONANT_AMPLITUDE,
             PARAM_MESO_EXP_PATH,
             PARAM_WAVEFORM_OUTPATH,
+            PARAM_MROI_MODE_ENABLE,
+            PARAM_MROI_TOTAL_LINES,
+            PARAM_LSM_PREIMAGING_CALIBRATION_CYCLES,
+            PARAM_LSM_IMAGING_RAMP_EXTENSION_CYCLES,
 
             PARAM_FIRST_RESEARCH_CAMERA = 6000,	///Temporary parameters for research group
             PARAM_DFLIM_ACQUISITION_MODE = 6000,
@@ -1198,6 +1242,17 @@
             PARAM_3P_DOWNSAMPLING_RATE,
             PARAM_LIGHTPATH_TYPE,
             PARAM_LSM_CURRENT_CRS_FREQUENCY,
+            PARAM_LSM_SECONDARY_GG_AVAILABLE,
+            PARAM_LSM_SELECTED_IMAGING_GG,
+            PARAM_LSM_SELECTED_STIM_GG,
+            PARAM_LSM_FIELD_SIZE_CALIBRATION_XML,
+            PARAM_LSM_LINE_AVERAGING_ENABLE,
+            PARAM_LSM_LINE_AVERAGING_NUMBER,
+            PARAM_LSM_IMAGE_ON_FLYBACK,
+            PARAM_LSM_IMAGE_DISTORTION_CORRECTION_ENABLE,
+            PARAM_LSM_IMAGE_DISTORTION_CORRECTION_CALIBRATION_X_ANGLE_MAX,
+            PARAM_LSM_IMAGE_DISTORTION_CORRECTION_CALIBRATION_Y_ANGLE_MAX,
+            PARAM_LSM_IMAGE_DISTORTION_CORRECTION_CALIBRATION_GALVO_TILT_ANGLE,
             PARAM_RESEARCH_CAMERA_0,
             PARAM_RESEARCH_CAMERA_1,
             PARAM_RESEARCH_CAMERA_2,
@@ -1309,6 +1364,15 @@
             TYPE_DOUBLE,
             TYPE_STRING,
             TYPE_BUFFER
+        }
+
+        public enum PolarizationTransformType
+        {
+            UNPROCESSED = 0,
+            INTENSITY = 1,
+            DOLP = 2,
+            AZIMUTH = 3,
+            QUADVIEW = 4
         }
 
         public enum ScanMode
@@ -1759,6 +1823,7 @@
             PARAM_SLM_BLANK_SAFE,
             PARAM_SLM_TIMEOUT,
             PARAM_SLM_RUNTIME_CALC,
+            PARAM_SLM_SET_ARM_TRIGGER,
             PARAM_SLM_SEQ_FILENAME,
             PARAM_SLM_SKIP_FITTING,
             PARAM_SLM_WAVELENGTH,
@@ -1766,7 +1831,9 @@
             PARAM_SLM_3D,
             PARAM_SLM_PHASE_DIRECT,
             PARAM_SLM_DEFOCUS,
+            PARAM_SLM_SAVE_DEFOCUS,
             PARAM_SLM_DUAL_SHIFT_PX,
+            PARAM_SLM_POWER_DISTRIBUTION,
 
             PARAM_R_POS = 1200,
             PARAM_R_HOME = 1201,
@@ -2335,6 +2402,13 @@
             PARAM_LAMP_TERMINAL = 1840,
             PARAM_LAMP1_CONNECTION,
             PARAM_LAMP2_CONNECTION,
+            PARAM_LAMP_TYPE,
+            PARAM_LAMP_MODE_1,
+            PARAM_LAMP_MODE_2,
+            PARAM_LAMP_MODE_3,
+            PARAM_LAMP_MODE_4,
+            PARAM_LAMP_MODE_5,
+            PARAM_LAMP_MODE_6,
 
             PARAM_LIGHTPATH_GG = 1850,
             PARAM_LIGHTPATH_GR,
@@ -2547,6 +2621,10 @@
             PARAM_EPHYS_GOTO_BUFFER,
             PARAM_WAVEFORM_OUTPATH,
 
+            PARAM_CONTROL_UNIT_TYPE,
+
+            PARAM_REMOTE_FOCUS_NUMBER_OF_PLANES,
+
             PARAM_HPD1_GAIN_VOLTS = 7000,	///Temporary parameters for research group
             PARAM_HPD2_GAIN_VOLTS,
             PARAM_HPD3_GAIN_VOLTS,
@@ -2714,6 +2792,10 @@
         public static void CopyIntPtrMemory<T>(IntPtr source, T[] destination, int startIndex, int length)
             where T : struct
         {
+            if (source == IntPtr.Zero)
+            {
+                return;
+            }
             var gch = GCHandle.Alloc(destination, GCHandleType.Pinned);
             try
             {
@@ -2734,8 +2816,148 @@
             }
         }
 
+        public static void CopyIntPtrMemory<T>(IntPtr source, int sourceOffset, T[] destination, int destinationOffset, int length)
+            where T : struct
+        {
+            var gch = GCHandle.Alloc(destination, GCHandleType.Pinned);
+            try
+            {
+                var targetPtr = Marshal.UnsafeAddrOfPinnedArrayElement(destination, destinationOffset);
+                var rangePartitioner = Partitioner.Create(0, length, (length >> 3) + 1);
+                Parallel.ForEach
+                    (rangePartitioner, new ParallelOptions { MaxDegreeOfParallelism = 4 }, range =>
+                    {
+                        var bytesToCopy = Marshal.SizeOf(typeof(T)) * (range.Item2 - range.Item1);
+
+                        CopyMemory(targetPtr + Marshal.SizeOf(typeof(T)) * range.Item1, source + Marshal.SizeOf(typeof(T)) * (range.Item1 + sourceOffset), (UIntPtr)bytesToCopy);
+                    }
+                    );
+            }
+            finally
+            {
+                gch.Free();
+            }
+        }
+
         [DllImport("kernel32.dll", SetLastError = false)]
         static extern void CopyMemory(IntPtr destination, IntPtr source, UIntPtr length);
+
+        #endregion Methods
+    }
+
+    public class PixelSizeUM
+    {
+        #region Constructors
+
+        public PixelSizeUM(double pixelWidthUM, double pixelHeightUM)
+        {
+            PixelWidthUM = pixelWidthUM;
+            PixelHeightUM = pixelHeightUM;
+        }
+
+        #endregion Constructors
+
+        #region Properties
+
+        public double PixelHeightUM
+        {
+            get;
+            set;
+        }
+
+        public double PixelWidthUM
+        {
+            get;
+            set;
+        }
+
+        #endregion Properties
+
+        #region Methods
+
+        public bool Compare(PixelSizeUM pixelSize)
+        {
+            return pixelSize.PixelHeightUM == PixelHeightUM && pixelSize.PixelWidthUM == PixelWidthUM;
+        }
+
+        #endregion Methods
+    }
+
+    public static class PolarUtilities
+    {
+        #region Methods
+
+        public static double GetUnitsMaximum(FrameData frameData)
+        {
+            var polarTransform = (ICamera.PolarizationTransformType)frameData.frameInfo.polarImageType;
+
+            if (ICamera.PolarizationTransformType.INTENSITY == polarTransform || ICamera.PolarizationTransformType.DOLP == polarTransform)
+            {
+                return 100;
+            }
+            else if (ICamera.PolarizationTransformType.AZIMUTH == polarTransform)
+            {
+                return 90;
+            }
+            else
+            {
+                return Math.Pow(2, frameData.bitsPerPixel) - 1;
+            }
+        }
+
+        public static double GetUnitsMinimum(FrameData frameData)
+        {
+            var polarTransform = (ICamera.PolarizationTransformType)frameData.frameInfo.polarImageType;
+
+            if (ICamera.PolarizationTransformType.INTENSITY == polarTransform || ICamera.PolarizationTransformType.DOLP == polarTransform)
+            {
+                return 0;
+            }
+            else if (ICamera.PolarizationTransformType.AZIMUTH == polarTransform)
+            {
+                return -90;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        public static string GetUnitsSymbol(FrameData frameData)
+        {
+            var polarTransform = (ICamera.PolarizationTransformType)frameData.frameInfo.polarImageType;
+
+            if (ICamera.PolarizationTransformType.INTENSITY == polarTransform || ICamera.PolarizationTransformType.DOLP == polarTransform)
+            {
+                return "%";
+            }
+            else if (ICamera.PolarizationTransformType.AZIMUTH == polarTransform)
+            {
+                return "°";
+            }
+            else
+            {
+                return string.Empty;
+            }
+        }
+
+        public static double ToUnits(int value, FrameData frameData)
+        {
+            var polarTransform = (ICamera.PolarizationTransformType)frameData.frameInfo.polarImageType;
+
+            if (ICamera.PolarizationTransformType.INTENSITY == polarTransform || ICamera.PolarizationTransformType.DOLP == polarTransform)
+            {
+                return (value * 100.0) / (Math.Pow(2, frameData.bitsPerPixel) - 1);
+            }
+            else if (ICamera.PolarizationTransformType.AZIMUTH == polarTransform)
+            {
+                return ((value * 180.0) / (Math.Pow(2, frameData.bitsPerPixel) - 1)) - 90.0;
+            }
+            else
+            {
+                return (double)value;
+            }
+        }
 
         #endregion Methods
     }
@@ -2841,80 +3063,91 @@
 
         public static bool ReadAttribute<T>(out T value, XmlDocument doc, string xPathToNode, string attribute, T valueOnError = default(T), int index = 0)
         {
-            XmlNodeList ndList = doc.SelectNodes(xPathToNode);
-            if (ndList.Count > index)
+            if (null != doc)
             {
-                string attributeValue = "1";
-                if (XmlManager.GetAttribute(ndList[index], doc, attribute, ref attributeValue))
+                XmlNodeList ndList = doc.SelectNodes(xPathToNode);
+                if (ndList.Count > index)
                 {
-                    int iVal = 0;
-                    bool bVal = false;
-                    double dVal = 0;
-                    byte byVal = 0;
-                    UInt16 uiVal16 = 0;
-                    UInt32 uiVal = 0;
-                    switch (Type.GetTypeCode(typeof(T)))
+                    string attributeValue = "1";
+                    if (XmlManager.GetAttribute(ndList[index], doc, attribute, ref attributeValue))
                     {
-                        case TypeCode.Boolean:
-                            if (Boolean.TryParse(attributeValue, out bVal))
-                            {
-                                value = (T)Convert.ChangeType(bVal, typeof(T));
-                                return true;
-                            }
-                            else
-                            {
-                                if (attributeValue == "1")
+                        long lVal = 0;
+                        int iVal = 0;
+                        bool bVal = false;
+                        double dVal = 0;
+                        byte byVal = 0;
+                        UInt16 uiVal16 = 0;
+                        UInt32 uiVal = 0;
+                        switch (Type.GetTypeCode(typeof(T)))
+                        {
+                            case TypeCode.Boolean:
+                                if (Boolean.TryParse(attributeValue, out bVal))
                                 {
-                                    value = (T)Convert.ChangeType(true, typeof(T));
+                                    value = (T)Convert.ChangeType(bVal, typeof(T));
                                     return true;
                                 }
-                                else if (attributeValue == "0")
+                                else
                                 {
-                                    value = (T)Convert.ChangeType(false, typeof(T));
+                                    if (attributeValue == "1")
+                                    {
+                                        value = (T)Convert.ChangeType(true, typeof(T));
+                                        return true;
+                                    }
+                                    else if (attributeValue == "0")
+                                    {
+                                        value = (T)Convert.ChangeType(false, typeof(T));
+                                        return true;
+                                    }
+                                }
+                                break;
+                            case TypeCode.Byte:
+                                if (Byte.TryParse(attributeValue, out byVal))
+                                {
+                                    value = (T)Convert.ChangeType(byVal, typeof(T));
                                     return true;
                                 }
-                            }
-                            break;
-                        case TypeCode.Byte:
-                            if (Byte.TryParse(attributeValue, out byVal))
-                            {
-                                value = (T)Convert.ChangeType(byVal, typeof(T));
+                                break;
+                            case TypeCode.Double:
+                                if (Double.TryParse(attributeValue, out dVal))
+                                {
+                                    value = (T)Convert.ChangeType(dVal, typeof(T));
+                                    return true;
+                                }
+                                break;
+                            case TypeCode.Int64:
+                                if (Int64.TryParse(attributeValue, out lVal))
+                                {
+                                    value = (T)Convert.ChangeType(lVal, typeof(T));
+                                    return true;
+                                }
+                                break;
+                            case TypeCode.Int32:
+                                if (Int32.TryParse(attributeValue, out iVal))
+                                {
+                                    value = (T)Convert.ChangeType(iVal, typeof(T));
+                                    return true;
+                                }
+                                break;
+                            case TypeCode.UInt32:
+                                if (UInt32.TryParse(attributeValue, out uiVal))
+                                {
+                                    value = (T)Convert.ChangeType(uiVal, typeof(T));
+                                    return true;
+                                }
+                                break;
+                            case TypeCode.UInt16:
+                                if (UInt16.TryParse(attributeValue, out uiVal16))
+                                {
+                                    value = (T)Convert.ChangeType(uiVal16, typeof(T));
+                                    return true;
+                                }
+                                break;
+                            case TypeCode.String:
+                                value = (T)Convert.ChangeType(attributeValue, typeof(T));
                                 return true;
-                            }
-                            break;
-                        case TypeCode.Double:
-                            if (Double.TryParse(attributeValue, out dVal))
-                            {
-                                value = (T)Convert.ChangeType(dVal, typeof(T));
-                                return true;
-                            }
-                            break;
-                        case TypeCode.Int32:
-                            if (Int32.TryParse(attributeValue, out iVal))
-                            {
-                                value = (T)Convert.ChangeType(iVal, typeof(T));
-                                return true;
-                            }
-                            break;
-                        case TypeCode.UInt32:
-                            if (UInt32.TryParse(attributeValue, out uiVal))
-                            {
-                                value = (T)Convert.ChangeType(uiVal, typeof(T));
-                                return true;
-                            }
-                            break;
-                        case TypeCode.UInt16:
-                            if (UInt16.TryParse(attributeValue, out uiVal16))
-                            {
-                                value = (T)Convert.ChangeType(uiVal16, typeof(T));
-                                return true;
-                            }
-                            break;
-                        case TypeCode.String:
-                            value = (T)Convert.ChangeType(attributeValue, typeof(T));
-                            return true;
-                        default:
-                            break;
+                            default:
+                                break;
+                        }
                     }
                 }
             }

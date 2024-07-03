@@ -277,58 +277,74 @@
                         </Style>
                     </ToggleButton.Style>
                 </ToggleButton>
-                <Label Content="Z offset"
-                                   HorizontalAlignment="Center"
-                                   Foreground="White" />
-                <TextBox x:Name="txZOffset"
-                                     Text="{Binding Path=DefocusUM, Mode=TwoWay}"
-                                     validator:Validation.ValidationType="{x:Type system:Double}"
-                                     validator:Validation.MinValue="-5000.0"
-                                     validator:Validation.MaxValue="5000.0"
-                                     validator:Validation.NoEmptyValue="True"
-                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
-                                     Width="40"
-                                     HorizontalAlignment="Center"
-                                     VerticalAlignment="Center"
-                                     Margin="1">
-                    <TextBox.Style>
-                        <Style TargetType="{x:Type TextBox}"
-                                               BasedOn="{StaticResource {x:Type TextBox}}">
-                            <Style.Triggers>
-                                <Trigger Property="Validation.HasError"
-                                                     Value="True">
-                                    <Setter Property="ToolTip"
-                                                        Value="{Binding RelativeSource={x:Static RelativeSource.Self}, Path=(Validation.Errors).CurrentItem.ErrorContent}" />
-                                </Trigger>
-                                <Trigger Property="Validation.HasError"
-                                                     Value="False">
-                                    <Setter Property="ToolTip"
-                                                        Value="Apply z offset in um on current modality" />
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBox.Style>
-                </TextBox>
-                <Button Width="25"
-                                    Height="25"
-                                    Content="✓">
-                    <Button.Style>
-                        <Style TargetType="Button">
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel"
+                               BasedOn="{StaticResource {x:Type StackPanel}}">
                             <Setter Property="Visibility"
-                                                Value="Collapsed" />
+                                    Value="Visible" />
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txZOffset}"
-                                                         Value="True">
+                                <DataTrigger Binding="{Binding ElementName=tbtnSLM3D, Path=IsChecked, UpdateSourceTrigger=PropertyChanged}"
+                                             Value="True">
                                     <Setter Property="Visibility"
-                                                        Value="Visible" />
+                                            Value="Hidden" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
-                    </Button.Style>
-                </Button>
-                <Label Content="[um]"
-                                   HorizontalAlignment="Center"
-                                   Foreground="White" />
+                    </StackPanel.Style>
+                    <Label Content="Z offset"
+                           HorizontalAlignment="Center"
+                           Foreground="White" />
+                    <TextBox x:Name="txZOffset"
+                             Text="{Binding Path=DefocusUM, Mode=TwoWay}"
+                             validator:Validation.ValidationType="{x:Type system:Double}"
+                             validator:Validation.MinValue="-5000.0"
+                             validator:Validation.MaxValue="5000.0"
+                             validator:Validation.NoEmptyValue="True"
+                             validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                             Width="40"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center"
+                             Margin="1">
+                        <TextBox.Style>
+                            <Style TargetType="{x:Type TextBox}"
+                                   BasedOn="{StaticResource {x:Type TextBox}}">
+                                <Style.Triggers>
+                                    <Trigger Property="Validation.HasError"
+                                             Value="True">
+                                        <Setter Property="ToolTip"
+                                                Value="{Binding RelativeSource={x:Static RelativeSource.Self}, Path=(Validation.Errors).CurrentItem.ErrorContent}" />
+                                    </Trigger>
+                                    <Trigger Property="Validation.HasError"
+                                             Value="False">
+                                        <Setter Property="ToolTip"
+                                                Value="Apply z offset in um on current modality" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+                    <Button Width="25"
+                            Height="25"
+                            Content="✓">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txZOffset}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Label Content="[um]"
+                           HorizontalAlignment="Center"
+                           Foreground="White" />
+                </StackPanel>
                 <StackPanel Orientation="Horizontal">
                     <StackPanel.Style>
                         <Style TargetType="StackPanel"
@@ -398,6 +414,7 @@
                         VerticalAlignment="Center"
                         Width="113"
                         Height="25"
+                        IsEnabled="{Binding Path=SLMPanelAvailable, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
                         Command="{Binding Path=EditSLMParamRelayCommand}"
                         CommandParameter="SLM_CONFIG_SEQUENCE"
                         Content="Configure Epochs">
@@ -825,15 +842,20 @@
                                           Content="{Binding Path=SLMWavelengthNM, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}">
                             </ToggleButton>
                             <Label Content="[nm]"
-                                   Width="50"
+                                   Width="30"
                                    Height="30"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center" />
-                            <Label Content=""
-                                   Width="40"
-                                   Height="30"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center" />
+                            <Button ToolTip="Command to check Z calibration"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Height="30"
+                                    Width="Auto"
+                                    Margin="3"
+                                    Command="{Binding Path=EditSLMParamRelayCommand}"
+                                    CommandParameter="SLM_ZCALIBRATION">
+                                <TextBlock ToolTip="Calibrate Z Positions">Z Calibration</TextBlock>
+                            </Button>
                             <Button ToolTip="Command to check SLM calibration"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
@@ -844,6 +866,92 @@
                                     CommandParameter="SLM_CALIBRATION">
                                 <TextBlock ToolTip="Calibrate SLM">Check Calibration</TextBlock>
                             </Button>
+                        </StackPanel>
+                        <StackPanel Name ="powerDistributionControl"
+                                    Orientation="Vertical"
+                                    HorizontalAlignment="Stretch"
+                                    Visibility="{Binding Path=PowerDistributionVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                            <StackPanel Name ="powerDistributionFlatDiag"
+                                        ToolTip="SLM Power Distribution Settings"
+                                        Orientation="Horizontal"
+                                        Margin="1"
+                                        HorizontalAlignment="Right">
+                                <Label Content="FlatDiagRatio"
+                                       HorizontalAlignment="Center"
+                                       Foreground="White"
+                                       VerticalAlignment="Center" />
+                                <TextBox Name="tbFlatDiagRatio"
+                                         Text="{Binding Path=SLMFlatDiagRatio, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}"
+                                         ToolTip="SLM power flatness correction range ratio"
+                                         Width="40"
+                                         VerticalAlignment="Center"
+                                         HorizontalAlignment="Center"
+                                         validator:Validation.ValidationType="{x:Type system:Double}"
+                                         validator:Validation.MinValue="0"
+                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text">
+                                </TextBox>
+                                <Label Content="MinPower"
+                                       HorizontalAlignment="Center"
+                                       Foreground="White"
+                                       VerticalAlignment="Center" />
+                                <TextBox Name="flatPowerMinPercent"
+                                         Text="{Binding Path=SLMFlatPowerMinPercent, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}"
+                                         ToolTip="SLM power flatness correction minimum(%) range"
+                                         Width="25"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"
+                                         validator:Validation.ValidationType="{x:Type system:Double}"
+                                         validator:Validation.MinValue="0"
+                                         validator:Validation.MaxValue="100"
+                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text">
+                                </TextBox>
+                                <Label Content="MaxPower"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                                <TextBox Name="flatPowerMaxPercent"
+                                         Text="{Binding Path=SLMFlatPowerMaxPercent, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}"
+                                         ToolTip="SLM power flatness correction maximum(%) range"
+                                         Width="25"
+                                         VerticalAlignment="Center"
+                                         HorizontalAlignment="Center"
+                                         validator:Validation.ValidationType="{x:Type system:Double}"
+                                         validator:Validation.MinValue="0"
+                                         validator:Validation.MaxValue="100"
+                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text">
+                                </TextBox>
+                                <Button ToolTip="Command to Update SLM Power Distribution Settings"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Height="Auto"
+                                        Width="Auto"
+                                        Margin="3"
+                                        Command="{Binding Path=EditSLMParamRelayCommand}"
+                                        CommandParameter="SLM_UPDATE_POWER_DISTRIBUTION">
+                                    <TextBlock >Update</TextBlock>
+                                </Button>
+                            </StackPanel>
+                            <StackPanel ToolTip="SLM Power phase shift in micro seconds: (+) means delay"
+                                        Orientation="Horizontal"
+                                        Margin="1"
+                                        HorizontalAlignment="Left">
+                                <Label Content="PowerShift"
+                                       HorizontalAlignment="Left"
+                                       VerticalAlignment="Center" />
+                                <TextBox Name="powerShiftTxb"
+                                         Text="{Binding Path=PowerShiftUS, Mode=TwoWay, UpdateSourceTrigger=LostFocus, NotifyOnValidationError=True, ValidatesOnNotifyDataErrors=True}"
+                                         Width="30"
+                                         VerticalAlignment="Center"
+                                         HorizontalAlignment="Left"
+                                         HorizontalContentAlignment="Right"
+                                         validator:Validation.ValidationType="{x:Type system:Double}"
+                                         validator:Validation.MinValue="-100000"
+                                         validator:Validation.MaxValue="100000"
+                                         validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text">
+                                </TextBox>
+                                <Label Content="[us]"
+                                       HorizontalAlignment="Left"
+                                       VerticalAlignment="Center" />
+                            </StackPanel>
                         </StackPanel>
                         <StackPanel Grid.Row="5"
                                     Name="stpSLMBleacherControl"
@@ -885,7 +993,7 @@
                                     ToolTip="Command to set SLM blank"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
-                                    Width="50"
+                                    Width="45"
                                     Height="40"
                                     Margin="1"
                                     Command="{Binding Path=EditSLMParamRelayCommand}"
@@ -940,7 +1048,7 @@
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         Command="{Binding Path=SetBleacherPowerCommand}"
-                                        MinWidth="25"
+                                        MinWidth="20"
                                         Margin="1">
                                 </Button>
                                 <Button Name="btnSetPockelsZero"

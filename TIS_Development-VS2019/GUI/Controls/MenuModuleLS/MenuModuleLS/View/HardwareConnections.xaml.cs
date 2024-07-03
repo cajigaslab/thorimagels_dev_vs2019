@@ -1,6 +1,7 @@
 ﻿namespace MenuLSDll.ViewModel
 {
     using System.Windows;
+    using ThorSharedTypes;
 
     /// <summary>
     /// Interaction logic for HardwareConnections.xaml
@@ -22,6 +23,8 @@
         {
             this.DialogResult = true;
             this.Close();
+            ResourceManagerCS.BackupDirectory(ResourceManagerCS.GetMyDocumentsThorImageFolderString());
+
         }
 
         #endregion Methods

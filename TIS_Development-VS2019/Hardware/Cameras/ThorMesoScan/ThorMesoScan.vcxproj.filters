@@ -1,0 +1,167 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Models">
+      <UniqueIdentifier>{fa6db38e-5015-469b-b11b-0269e8e9161e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Models\WaveformModels">
+      <UniqueIdentifier>{43d80a07-1674-492b-a7c6-750b48eda69c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ThorMesoScan.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\AlazarApi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\AlazarCmd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\AlazarError.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DevParamDef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CircleBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AlazarBoard.h">
+      <Filter>Models</Filter>
+    </ClInclude>
+    <ClInclude Include="DAQBoard.h">
+      <Filter>Models</Filter>
+    </ClInclude>
+    <ClInclude Include="MesoWaveformManager.h">
+      <Filter>Models</Filter>
+    </ClInclude>
+    <ClInclude Include="WaveformManagerBase.h">
+      <Filter>Models</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonWaveform.h">
+      <Filter>Models\WaveformModels</Filter>
+    </ClInclude>
+    <ClInclude Include="FrameTriggerWaveform.h">
+      <Filter>Models\WaveformModels</Filter>
+    </ClInclude>
+    <ClInclude Include="GalvoXWaveForm.h">
+      <Filter>Models\WaveformModels</Filter>
+    </ClInclude>
+    <ClInclude Include="GalvoYWaveForm.h">
+      <Filter>Models\WaveformModels</Filter>
+    </ClInclude>
+    <ClInclude Include="PokelsCellWaveForm.h">
+      <Filter>Models\WaveformModels</Filter>
+    </ClInclude>
+    <ClInclude Include="VoiceCoilWaveform.h">
+      <Filter>Models\WaveformModels</Filter>
+    </ClInclude>
+    <ClInclude Include="WaveformModel.h">
+      <Filter>Models\WaveformModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ScanMeso.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Tools\National Instruments\NIDAQmx\include\BoardInfoNI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PockelsCalibration.h">
+      <Filter>Models</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ThorMesoScan.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GenericFuncs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SetParams.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DllMain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GetParams.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CircleBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CameraConfig.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AlazarBoard.cpp">
+      <Filter>Models</Filter>
+    </ClCompile>
+    <ClCompile Include="DAQBoard.cpp">
+      <Filter>Models</Filter>
+    </ClCompile>
+    <ClCompile Include="MesoWaveformManager.cpp">
+      <Filter>Models</Filter>
+    </ClCompile>
+    <ClCompile Include="WaveformManagerBase.cpp">
+      <Filter>Models</Filter>
+    </ClCompile>
+    <ClCompile Include="CommonWaveform.cpp">
+      <Filter>Models\WaveformModels</Filter>
+    </ClCompile>
+    <ClCompile Include="FrameTriggerWaveform.cpp">
+      <Filter>Models\WaveformModels</Filter>
+    </ClCompile>
+    <ClCompile Include="GalvoXWaveForm.cpp">
+      <Filter>Models\WaveformModels</Filter>
+    </ClCompile>
+    <ClCompile Include="GalvoYWaveForm.cpp">
+      <Filter>Models\WaveformModels</Filter>
+    </ClCompile>
+    <ClCompile Include="PokelsCellWaveForm.cpp">
+      <Filter>Models\WaveformModels</Filter>
+    </ClCompile>
+    <ClCompile Include="VoiceCoilWaveform.cpp">
+      <Filter>Models\WaveformModels</Filter>
+    </ClCompile>
+    <ClCompile Include="Types.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Tools\National Instruments\NIDAQmx\include\BoardInfoNI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PockelsCalibration.cpp">
+      <Filter>Models</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ThorMesoScan.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

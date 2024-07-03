@@ -965,6 +965,77 @@
                         </Expander>
                     </StackPanel>
                 </ListBoxItem>
+                <!-- -->
+                <ListBoxItem Visibility="{Binding VisibilityCollection[7],ConverterParameter=Normal,Converter={StaticResource _Converter}}">
+                    <StackPanel>
+                        <Expander Header="Frame Counter"
+                                  Foreground="white"
+                                  BorderThickness="0.2"
+                                  Width="300"
+                                  IsExpanded="False"
+                                  BorderBrush="Gray">
+                            <StackPanel>
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <Label Width="70"
+                                               Height="30"
+                                               Content="Averaging: "
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Top"
+                                               Grid.Row="1"
+                                               Grid.Column="0" />
+                                        
+                                        
+                                        <StackPanel Grid.Row="1"
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    Orientation="Horizontal">
+                                            <TextBox x:Name="Averaging"
+                                                     Width="75"
+                                                     validator:Validation.ValidationType="{x:Type system:Int32}"
+                                                     validator:Validation.NoEmptyValue="True"
+                                                     validator:Validation.MinValue="1.0"
+                                                     Text="{Binding Average}"
+                                                     validator:InputBindingsManager.UpdatePropertySourceWhenEnterPressed="TextBox.Text"
+                                                      />
+                                            <Button Width="30"
+                                                    Content="&#x2713;">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Path=IsFocused,ElementName=tbFifo}"
+                                                                         Value="True">
+                                                                <Setter Property="Visibility"
+                                                                        Value="{Binding ChartMode, ConverterParameter=Inverted, Converter={StaticResource _IntToBoolConverter}}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                              <Label Content="[pulses/frame]" /> 
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                               
+                                
+                                
+                            </StackPanel>
+                        </Expander>
+                    </StackPanel>
+                </ListBoxItem>
+                <!-- -->
                 <ListBoxItem Visibility="{Binding VisibilityCollection[5],ConverterParameter=Normal,Converter={StaticResource _Converter}}">
                     <StackPanel>
                         <Expander Header="Vertical Marker"

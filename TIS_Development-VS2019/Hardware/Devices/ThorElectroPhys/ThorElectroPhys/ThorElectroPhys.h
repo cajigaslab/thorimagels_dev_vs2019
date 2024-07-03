@@ -1,9 +1,12 @@
 
 #pragma once
 #include "..\..\..\..\Common\BlockRingBuffer.h"
+#include "..\..\..\..\Common\HighPerfTimer.h"
+
 
 #define MAX_DIG_PORT_OUTPUT		8
 #define DEFAULT_DO_SAMPLE_RATE	20000	//[Hz]
+#define MULTIPLE_RATIO			4		//multiple of buffer sizes set to on-board memory
 
 enum EPhysTriggerLines
 {
@@ -69,7 +72,7 @@ private:
 	void ResetParams();
 	static std::string GetTriggerInputLine();
 	long SetDigitalTriggerTask();
-	static long SetAnalogTriggerTask();
+	static long SetAnalogTriggerTask(long doSleep = FALSE);
 	long SetEdgeMonitorTask();
 	long SetTriggerTasks();
 	long StartTriggerTasks();
@@ -131,7 +134,7 @@ private:
 	static long _analogRepeatCount; ///<# of repeat count of analog task is done
 	static long _analogRestarted; ///<flag of analog task is restarted at CycleDone event
 	static std::string _analogCounterInternalOutput; ///<clock source for analog output task, "InternalOutput" of AnalogCounter
-	static unsigned long long _targetCount; ///<total trigger counts of finite counter output task, used to determine when to stop edge monitor mode
+	static unsigned long long _targetCount[2]; ///<total trigger counts of finite counter output task, used to determine when to stop edge monitor mode
 	static unsigned long long _outputCount; ///<output index of finite counter output task, index of triggering edges
 	static AnalogTaskType _analogTaskType; ///<mark analog task is finite [0], continuous but limit [1], or open-end continuous [2]
 };

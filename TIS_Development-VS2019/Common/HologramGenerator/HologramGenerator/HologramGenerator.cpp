@@ -39,6 +39,11 @@ HologramGen::HologramGen()
 	_refractiveN = 1;
 	_NAeff = 1;
 	_fftSize = 0;
+	_stopRequest = FALSE;
+	_isStopped = StatusType::STATUS_READY;
+	_powerWeightRadiusPx = 0;
+	_powerPercent[0] = 25;
+	_powerPercent[1] = 75;
 }
 
 ///singleton
@@ -253,7 +258,6 @@ double* HologramGen::CalculateZernikePoly(double u, double v)
 	return zernPoly;
 }
 
-
 // set coefficients in fitting transformation
 long HologramGen::SetCoeffs(long algorithm, double* affCoeffs)
 {
@@ -289,20 +293,29 @@ long HologramGen::SetCoeffs(long algorithm, double* affCoeffs)
 	default:
 		break;
 	}
+	return TRUE;
+}
 
+long HologramGen::SetPowerWeight(int weightRadiusPx, double minPercent, double maxPercent)
+{
+	_powerWeightRadiusPx = weightRadiusPx;
+	_powerPercent[0] = minPercent;
+	_powerPercent[1] = maxPercent;
 	return TRUE;
 }
 
 //generate hologram with weight by distance from center, affine Transformaton
-long HologramGen::GenerateHologram(float* pImgDst, int iteCount, int weightRadiusPx, double minPercent, double maxPercent, float z)
+long HologramGen::GenerateHologram(float* pImgDst, int iteCount, float z)
 {
 	long ret = TRUE;
+	_stopRequest = FALSE;
+	_isStopped = StatusType::STATUS_BUSY;
 
 	Ipp32f* pPhase = ippsDll->ippsMalloc_32f(_mtrxLength);
 	ippsDll->ippsZero_32f(pPhase, _mtrxLength);
 
 	//linear weight by distance from center:
-	WeightByDistance(pImgDst, weightRadiusPx, minPercent, maxPercent);
+	WeightByDistance(pImgDst);
 
 	//generate phase:
 	switch (_holoGenMethod)
@@ -330,6 +343,10 @@ long HologramGen::GenerateHologram(float* pImgDst, int iteCount, int weightRadiu
 //zCount is z frame count + 1, last of pImgDst expected be output result
 long HologramGen::Generate3DHologram(void* pMemStruct, int zCount)
 {
+	long ret = TRUE;
+	_stopRequest = FALSE;
+	_isStopped = StatusType::STATUS_BUSY;
+
 	MemoryStruct<float>* pMem = (MemoryStruct<float>*)pMemStruct;
 	int threadCount = (int)(zCount - 1);		//reserve last for result
 	int lastElement = (int)(threadCount - 1);	//last element of all threads
@@ -383,6 +400,10 @@ long HologramGen::Generate3DHologram(void* pMemStruct, int zCount)
 		for (int i = 0; i < threadCount; i++)
 			threadVec[i].join();
 
+		if (_stopRequest) {
+			ret = FALSE;
+			break;
+		}
 		//sum of all calculations
 		for (int i = 0; i < lastElement; i++)
 			ippsDll->ippsAdd_32fc_I(pImgCmplx[i], pImgCmplx[lastElement], _mtrxLength);
@@ -414,7 +435,8 @@ long HologramGen::Generate3DHologram(void* pMemStruct, int zCount)
 	//NormalizePhase(pPolPhase[lastElement]); //to be done by user at the end of rad operations
 
 	//copy to output result
-	ippsDll->ippsCopy_32f(pPolPhase[lastElement], pMem[threadCount].GetMem(), _mtrxLength);
+	if (ret)
+		ippsDll->ippsCopy_32f(pPolPhase[lastElement], pMem[threadCount].GetMem(), _mtrxLength);
 
 	//clear
 	ippsDll->ippsFree(pPhase);
@@ -430,7 +452,8 @@ long HologramGen::Generate3DHologram(void* pMemStruct, int zCount)
 	pPolPhase.clear();
 	pImgCmplx.clear();
 	threadVec.clear();
-	return TRUE;
+	_isStopped = StatusType::STATUS_READY;
+	return ret;
 }
 
 //apply z defocus on given hologram, expect input unit in [rad]
@@ -1148,7 +1171,7 @@ void HologramGen::LogMessage(long eventLevel)
 //hologram generation by Gerchberg-Saxton
 long HologramGen::PhaseGenByGS(float* pImg, float* pPolPhase, int iterateCount)
 {
-
+	long ret = TRUE;
 	IppStatus ippStatus;
 	IppiSize ippSize = { _mtrxWidth, _mtrxHeight };
 	IppiRect  roi = { 0, 0, ippSize.width, ippSize.height };
@@ -1178,12 +1201,12 @@ long HologramGen::PhaseGenByGS(float* pImg, float* pPolPhase, int iterateCount)
 	ippsDll->ippsRandUniform_32f(pPolPhase, _mtrxLength, pRus);
 	ippsDll->ippsRandUniformFree_32f(pRus);
 
-
-
-
 	for (int i = 1; i <= iterateCount; i++)
 	{
-
+		if (_stopRequest) {
+			ret = FALSE;
+			break;
+		}
 
 		//FFT
 		FFT(pPolMagn, pPolPhase, true);
@@ -1213,9 +1236,9 @@ long HologramGen::PhaseGenByGS(float* pImg, float* pPolPhase, int iterateCount)
 	//ippsDll->ippsFree(pUnit);
 	ippsDll->ippsFree(pPolMagn);
 	ippsDll->ippsFree(pImgInt);
-	return TRUE;
+	_isStopped = StatusType::STATUS_READY;
+	return ret;
 }
-
 
 long HologramGen::PhaseGenBy3DGS(float* pImg, float* pPolPhase, int iterateCount, double z)
 {
@@ -1327,19 +1350,14 @@ long HologramGen::PhaseGenBy3DGS(float* pImg, float* pPolPhase, int iterateCount
 	return TRUE;
 }
 
-
-
-
-
-
-long HologramGen::WeightByDistance(float* pImgDst, int weightRadiusPx, double minPercent, double maxPercent)
+long HologramGen::WeightByDistance(float* pImgDst)
 {
-	if ((NULL == pImgDst) || (0 == _mtrxWidth) || (0 == _mtrxHeight))
+	if ((NULL == pImgDst) || (0 == _mtrxWidth) || (0 == _mtrxHeight) || (0 == _powerWeightRadiusPx))
 		return FALSE;
 
 	//y = mx+b, linear mapping
-	double m = maxPercent / weightRadiusPx;
-	double b = minPercent;
+	double m = _powerPercent[1] / _powerWeightRadiusPx;
+	double b = _powerPercent[0];
 	int centerX = static_cast<int>(floor(_mtrxWidth / 2));
 	int centerY = static_cast<int>(floor(_mtrxHeight / 2));
 
@@ -1353,10 +1371,7 @@ long HologramGen::WeightByDistance(float* pImgDst, int weightRadiusPx, double mi
 			{
 				double disFromCenter = sqrt(pow((i - centerX), 2) + pow((j - centerY), 2));
 				float weightValue = static_cast<float>((m * disFromCenter + b) / Constants::HUNDRED_PERCENT * MAX_PIXEL_VALUE);
-				if (weightRadiusPx > disFromCenter)
-				{
-					*pSrc = weightValue;
-				}
+				*pSrc = (_powerWeightRadiusPx > disFromCenter) ? weightValue : *pSrc;
 			}
 			pSrc++;
 		}
@@ -1426,6 +1441,9 @@ long HologramGen::SinglePassFilter(float* pImgDst)
 //calculate phase mask along given z frame
 long HologramGen::GenerateZHologram(float* pImgInt, float* pImgPhase, void* pImgCx, float* pTarget, float kz)
 {
+	if (_stopRequest)
+		return FALSE;
+
 	IppiSize ippSize = { _mtrxWidth, _mtrxHeight };
 	IppiDFTSpec_C_32fc* spec;
 	int stepBytes;
@@ -1435,7 +1453,10 @@ long HologramGen::GenerateZHologram(float* pImgInt, float* pImgPhase, void* pImg
 	ippiDll->ippiDFTInitAlloc_C_32fc(&spec, ippSize, IPP_FFT_DIV_FWD_BY_N, ippAlgHintAccurate);
 	Ipp32fc* pDstC = ippiDll->ippiMalloc_32fc_C1(_mtrxWidth, _mtrxHeight, &stepBytes);
 
-	//defocus on phase ?
+	//power weight by distance from center:
+	WeightByDistance(pImgPhase);
+
+	//defocus on phase:
 	DefocusHologram(pImgPhase, kz);
 
 	//polar to complex:

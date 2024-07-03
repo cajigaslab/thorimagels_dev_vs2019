@@ -1,0 +1,396 @@
+﻿<UserControl x:Class="AreaControl.mROIsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:AreaControl"
+             xmlns:dragdrop="clr-namespace:GongSolutions.Wpf.DragDrop;assembly=GongSolutions.Wpf.DragDrop"
+             xmlns:sharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <Style x:Key="mySPStyle"
+                   TargetType="{x:Type StackPanel}"
+                   BasedOn="{StaticResource {x:Type StackPanel}}">
+                <Style.Triggers>
+                    <MultiTrigger>
+                        <MultiTrigger.Conditions>
+                            <Condition Property="Selector.IsSelectionActive"
+                                       Value="True" />
+                        </MultiTrigger.Conditions>
+                        <Setter Property="Background"
+                                Value="DodgerBlue" />
+                    </MultiTrigger>
+                    <MultiTrigger>
+                        <MultiTrigger.Conditions>
+                            <Condition Property="Selector.IsSelectionActive"
+                                       Value="False" />
+                        </MultiTrigger.Conditions>
+                        <Setter Property="Background"
+                                Value="DodgerBlue" />
+                        <Setter Property="Opacity"
+                                Value="50" />
+                    </MultiTrigger>
+                </Style.Triggers>
+            </Style>
+            <Style x:Key="myLBStyle"
+                   TargetType="{x:Type ListViewItem}">
+                <Style.Setters>
+                    <Setter Property="BorderThickness"
+                            Value="0" />
+                    <Setter Property="BorderBrush"
+                            Value="White" />
+                    <Setter Property="Background"
+                            Value="Transparent" />
+                    <Setter Property="Foreground"
+                            Value="White" />
+                </Style.Setters>
+            </Style>
+            <sharedTypes:BooleanToVisibilityConverter x:Key="boolToVisConverter" />
+            <sharedTypes:BoolToOppositeBoolConverter x:Key="boolOppositeConverter" />
+            <sharedTypes:DoubleCultureConverter x:Key="doubleCulture" />
+            <sharedTypes:DoubleScaledCultureConverter x:Key="doubleCultureUnitConverter" />
+            <sharedTypes:PercentStringConverter x:Key="percentStringConverter" />
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel Orientation="Vertical">
+            <GroupBox Header="Display" BorderThickness="0.5">
+                <StackPanel>
+                    <RadioButton Content="Spatial Display" GroupName="DisplayType" Margin="3"
+                         IsChecked="{Binding mROISpatialDisplaybleEnable}" />
+                    <RadioButton Content="Only Scan ROIs" Margin="3"
+                         GroupName="DisplayType"
+                         IsChecked="False" />
+                    <StackPanel Orientation="Horizontal" >
+                        <CheckBox Name="showBackgroundCheckbox" Margin="4" VerticalAlignment="Center" IsChecked="{Binding mROIShowFullFovAsBackground}"/>
+                        <Label Content="Use Full FOV Image as Background?" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="Preview" BorderThickness="0.5">
+                <StackPanel>
+                    <RadioButton Content="All ROIs" GroupName="PreviewType" Margin="3"
+                         IsChecked="{Binding mROIPreviewAllROIs}" />
+                    <RadioButton Content="Selected ROI" Margin="3"
+                         GroupName="PreviewType"
+                         IsChecked="False" />
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="Stripe Editor" BorderThickness="0.5">
+                <StackPanel>
+                    <ToggleButton x:Name= "stripeEditToggleButton" Width="100" Margin="0,5,0,0" IsChecked="{Binding Path=StripeEditToggleButtonChecked}">
+                        <ToggleButton.Style>
+                            <Style TargetType="ToggleButton"
+                               BasedOn="{StaticResource {x:Type ToggleButton}}">
+                                <Setter Property="Content"
+                                    Value="Edit" />
+                                <Style.Triggers>
+                                    <Trigger Property="IsChecked"
+                                         Value="True">
+                                        <Setter Property="Content"
+                                            Value="Editing" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ToggleButton.Style>
+                    </ToggleButton>
+                    <StackPanel Orientation="Horizontal"
+                        Margin="1"
+                        HorizontalAlignment="Left" 
+                        IsEnabled="{Binding ElementName=stripeEditToggleButton, Path=IsChecked}">
+                        <Label VerticalAlignment="Center"
+                       Content="Stripe Pixels"/>
+                        <Slider Margin="3,3,0,0"
+                        Width="175"
+                        VerticalAlignment="Center"
+                        Maximum="{Binding mROIStripePixelsRange[1], Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                        Minimum="{Binding mROIStripePixelsRange[0], Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                        Value="{Binding mROIStripePixels, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        IsSnapToTickEnabled="True"
+                        TickFrequency="{Binding mROIStripePixelsFineStep, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                        ToolTip="{Binding mROIStripePixels, StringFormat=F0}"
+                        AutoToolTipPlacement="TopLeft"
+                        AutoToolTipPrecision="0" />
+                        <StackPanel VerticalAlignment="Center">
+                            <RepeatButton Width="20"
+                                      Height="20"
+                                      Command="{Binding Path=mROIStripPixelsPlusCommand}"
+                                      Content="+"
+                                      Delay="500"
+                                      Interval="100" />
+                            <RepeatButton Width="20"
+                                  Height="20"
+                                  Command="{Binding Path=mROIStripPixelsMinusCommand}"
+                                  Content="-"
+                                  Delay="500"
+                                  Interval="100" />
+                        </StackPanel>
+                        <Label Name="tbStripPixel"
+                         Width="35"
+                       VerticalContentAlignment="Center"
+                       VerticalAlignment="Center"
+                       Content="{Binding Path=mROIStripePixels}" />
+                    </StackPanel>
+                    <StackPanel IsEnabled="{Binding ElementName=stripeEditToggleButton, Path=IsChecked}"
+                        Orientation="Horizontal" Margin="1"
+                        HorizontalAlignment="Left" >
+                        <Label Content="Stripe Width" VerticalContentAlignment="Center"/>
+                        <Slider Margin="3,3,0,3"
+                        Width="175"
+                         Visibility="{Binding Path=StripVisible, Mode=OneWay, Converter={StaticResource boolToVisConverter}, UpdateSourceTrigger=PropertyChanged}"
+                        VerticalAlignment="Center"
+                        Maximum="{Binding mROIStripeFieldSizeMax, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                        Minimum="{Binding LSMFieldSizeMin, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                        Value="{Binding mROIStripeFieldSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        IsSnapToTickEnabled="True"
+                        TickFrequency="1"
+                        ToolTip="{Binding mROIStripeFieldSize}"
+                        AutoToolTipPlacement="TopLeft"
+                        AutoToolTipPrecision="0" />
+                        <Label Content="{Binding mROIStripePhysicalFieldSizeUM}"
+                       VerticalContentAlignment="Center"
+                       VerticalAlignment="Center" />
+
+                        <Label Content="[µm]" VerticalContentAlignment="Center" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="1">
+                        <Label Content="Status: "/>
+                        <Label Foreground="White" MaxWidth="250" >
+                            <Label.Content>
+                                <AccessText TextWrapping="Wrap" Text="{Binding Path=mROIStatusMessage}"/>
+                            </Label.Content>
+                            <Label.Style>
+                                <Style TargetType="Label">
+                                    <Style.Resources>
+                                        <Storyboard x:Key="flashingAnimation">
+                                            <DoubleAnimation AutoReverse="True"
+                                                                             Duration="0:0:0.5"
+                                                                             From=".8"
+                                                                             RepeatBehavior="Forever"
+                                                                             Storyboard.TargetProperty="(Background).(Opacity)"
+                                                                             To="0.2" />
+                                        </Storyboard>
+                                    </Style.Resources>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=mROIStatusErrorAlert}"
+                                                                     Value="True">
+                                            <Setter Property="Background"
+                                                                    Value="Red" />
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard Name="flashingError"
+                                                                                 Storyboard="{StaticResource flashingAnimation}" />
+                                            </DataTrigger.EnterActions>
+                                            <DataTrigger.ExitActions>
+                                                <StopStoryboard BeginStoryboardName="flashingError" />
+                                            </DataTrigger.ExitActions>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Path=mROIStatusWarningAlert}"
+                                                                     Value="True">
+                                            <Setter Property="Background"
+                                                                    Value="Yellow" />
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard Name="flashingWarning"
+                                                                                 Storyboard="{StaticResource flashingAnimation}" />
+                                            </DataTrigger.EnterActions>
+                                            <DataTrigger.ExitActions>
+                                                <StopStoryboard BeginStoryboardName="flashingWarning" />
+                                            </DataTrigger.ExitActions>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Label.Style>
+                        </Label>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="1">
+                        <Label Content="Lines Used: "/>
+                        <Label Content="{Binding Path=mROIStatusPercentLines, Converter={StaticResource doubleCulture}}" MaxWidth="250"/>
+                        <Label Content="%"/>
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+            <StackPanel Orientation="Horizontal">
+                <StackPanel>
+                    <!--<StackPanel Orientation="Horizontal">
+                        <Label Content="Power" />
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="4,0">
+                            <Label Content="{Binding PowerControlName[0].Value}" />
+                            <Label Content="{Binding Power0}"
+                                   VerticalContentAlignment="Center"
+                                   Padding="0" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="4,0">
+                            <Label Content="{Binding PowerControlName[1].Value}" />
+                            <Label Content="{Binding Power1}"
+                                   VerticalContentAlignment="Center"
+                                   Padding="0" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="4,0">
+                            <Label Content="{Binding PowerControlName[2].Value}" />
+                            <Label Content="{Binding Power2}"
+                                   VerticalContentAlignment="Center"
+                                   Padding="0" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="4,0">
+                            <Label Content="{Binding PowerControlName[3].Value}" />
+                            <Label Content="{Binding Power3}"
+                                   VerticalContentAlignment="Center"
+                                   Padding="0" />
+                        </StackPanel>
+                    </StackPanel>-->
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0"
+                                VerticalAlignment="Center">
+                        <!--<StackPanel Orientation="Horizontal"
+                                    Margin="8,0"
+                                    VerticalAlignment="Center">
+                   
+                                <RepeatButton Width="20"
+                                              Height="20"
+                                              Command="{Binding IntraROIDelayPlusCommand}"
+                                              Content="+"
+                                              Delay="500"
+                                              Interval="100" />
+                                <RepeatButton Width="20"
+                                              Height="20"
+                                          Command="{Binding IntraROIDelayMinusCommand}"
+                                              Content="-"
+                                              Delay="500"
+                                              Interval="100" />                  
+                        </StackPanel>-->
+                    </StackPanel>
+
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Left">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Visibility"
+                                Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Path=SelectedViewMode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                         Value="1">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <!--<Label Content="ROI Index   " />-->
+                <!--<ComboBox Margin="1"
+                          ItemsSource="{Binding Path=MicroScanAreas, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" SelectedIndex="{Binding SelectedmROIIndex}"/>
+                <Label Width="8" />
+                <Label Width="180"
+                       Content="{Binding Path=ROIFrameRate, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />-->
+            </StackPanel>
+            <ListView Name="mROIListView"
+                      Height="150"
+                      Background="#FF333333"
+                      Margin="1"
+                      SelectedIndex="{Binding SelectedmROIIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                      ItemsSource="{Binding mROIList}"
+                      SelectionMode="Single"
+                      HorizontalContentAlignment="Center"                      
+                      ToolTip="List of mROI Scan Areas"
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                      dragdrop:DragDrop.DropHandler="{Binding}"
+                      dragdrop:DragDrop.IsDragSource="True"
+                      dragdrop:DragDrop.IsDropTarget="True">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="Focusable"
+                                Value="True" />
+                        <Setter Property="HorizontalContentAlignment"
+                                Value="Stretch" />
+                        <Setter Property="Background"
+                                Value="#FF333333" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.Style>
+                    <Style TargetType="{x:Type ListView}">
+                        <Setter Property="HorizontalContentAlignment"
+                                Value="Stretch" />
+                        <Setter Property="Background"
+                                Value="#FF333333" />
+                    </Style>
+                </ListView.Style>
+                <ListView.View>
+                    <GridView AllowsColumnReorder="False">
+                        <GridViewColumn Header="ID"                                        
+                                        Width="Auto" >
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock x:Name="Txt" Text="{Binding ScanAreaID}" Foreground="{Binding Color}" FontWeight="Bold"  />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="   Z&#x0a;(µm)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding ZPosition,
+                                                         ConverterParameter=1000,
+                                                         Converter={StaticResource doubleCultureUnitConverter}}" />
+                        <GridViewColumn Header="{Binding PowerControlName[0].Value}"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=Power0}" />
+                        <GridViewColumn Header=" Width&#x0a;(Pixels)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=SizeXPixels}" />
+                        <GridViewColumn Header="Height&#x0a;(Pixels)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=SizeYPixels}" />
+                        <GridViewColumn Header="Width&#x0a; (um)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=PhysicalSizeXUM, StringFormat={}{0:F1}}" />
+                        <GridViewColumn Header="Height&#x0a;  (um)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=PhysicalSizeYUM, StringFormat={}{0:F1}}" />
+                        <GridViewColumn Header="Left&#x0a;(um)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=LeftUM, StringFormat={}{0:F1}}" />
+                        <GridViewColumn Header="Top&#x0a;(um)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=TopUM, StringFormat={}{0:F1}}" />
+                        <!--<GridViewColumn Header="IntraROI&#x0a;Delay (ms)" Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=FlyToNextAreaLineCycles}" />-->
+                    </GridView>
+                </ListView.View>
+            </ListView>
+            <StackPanel Orientation="Horizontal"
+                        Margin="1"
+                        HorizontalAlignment="Center"
+                        Visibility="{Binding Path=SelectedViewMode, Mode=OneWay, Converter={StaticResource boolToVisConverter}, UpdateSourceTrigger=PropertyChanged}">
+                <ToggleButton Name="tbCfgMicroView"
+                              Margin="2,0"
+                              Height="25"
+                              HorizontalAlignment="Center"
+                              ToolTip="ON to draw mROI view scan areas and OFF to stop.">
+                    <ToggleButton.Style>
+                        <Style TargetType="ToggleButton"
+                               BasedOn="{StaticResource {x:Type ToggleButton}}">
+                            <Setter Property="IsChecked"
+                                    Value="{Binding Path=ConfigmROISettings, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <Setter Property="Content"
+                                    Value="ROI Config" />
+                            <Style.Triggers>
+                                <Trigger Property="IsChecked"
+                                         Value="True">
+                                    <Setter Property="Content"
+                                            Value="Hide ROI Config" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ToggleButton.Style>
+                </ToggleButton>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

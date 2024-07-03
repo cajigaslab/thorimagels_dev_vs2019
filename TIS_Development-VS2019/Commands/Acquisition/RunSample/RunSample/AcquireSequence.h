@@ -20,6 +20,7 @@ public:
 	virtual long CallStartProgressBar(long index, long resetTotalCount = 0);
 	virtual long CallInformMessage(wchar_t* message);
 	virtual long CallNotifySavedFileIPC(wchar_t* message);
+	virtual long ZStreamExecute(long index, long subWell, ICamera* pCamera, long zstageSteps, long timePoints, long undefinedVar);
 	virtual long CallAutoFocusStatus(long isRunning, long bestScore, double bestZPos, double nextZPos, long currRepeat);
 
 	static HANDLE hEvent;

@@ -62,12 +62,6 @@
         //notify 2D view that the bleach is finished
         public event Action<bool> BleachFinished;
 
-        public event Action BleachWaveformGeneratedEvent;
-
-        //public event Action BleachROICheck;
-        //notify listeners (Ex. ImageView) that RecROI need to be updated
-        public event Action<string> ROIUpdateRequested;
-
         #endregion Events
 
         #region Properties
@@ -350,7 +344,7 @@
         {
             get
             {
-                return (0 < _bleachLSMUMPerPixel) ? ((double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (double)1.0] / _bleachLSMUMPerPixel) : 1.0;
+                return (0 < _bleachLSMUMPerPixel) ? (((PixelSizeUM)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (double)1.0]).PixelWidthUM / _bleachLSMUMPerPixel) : 1.0;
             }
         }
 
@@ -575,7 +569,7 @@
                 double maxRate = 1540;
 
                 //if ThorDAQ limit it to correct max and min rates
-                if  (WaveformDriverType.WaveformDriver_ThorDAQ == _captureSetup.WaveformDriverType)
+                if (WaveformDriverType.WaveformDriver_ThorDAQ == _captureSetup.WaveformDriverType)
                 {
                     minRate = 20;
                     maxRate = 1000;
@@ -648,6 +642,31 @@
                 Decimal val = Decimal.Round((Decimal)value, 3);
                 _postEpochIdleTime = (double)val;
                 OnPropertyChanged("PostEpochIdleTime");
+            }
+        }
+
+        public Visibility PowerDistributionVisibility
+        {
+            get
+            {
+                return ResourceManagerCS.GetVisibility("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView/BleachCalibrationTool", "PowerDistributionVisibility");
+            }
+        }
+
+        public double PowerShiftUS
+        {
+            get { return _captureSetup.PowerShiftUS; }
+            set
+            {
+                if (_captureSetup.PowerShiftUS != value)
+                {
+                    _captureSetup.PowerShiftUS = value;
+
+                    if (_slmPanelInUse && _slmBuildOnce) //no build at loading since will do at EpochCount
+                        EditSLMParam("SLM_BUILD");
+
+                    OnPropertyChanged("PowerShiftUS");
+                }
             }
         }
 
@@ -790,6 +809,12 @@
             this._captureSetup.StopBleach();
         }
 
+        private void BleachWaveformGeneratedEvent()
+        {
+            MVMManager.Instance["ImageViewCaptureSetupVM", "ROIDrawingToolsSelectedIndex"] = 0;
+            OverlayManagerClass.Instance.InitSelectROI();
+        }
+
         private void bleachWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             BackgroundWorker worker = sender as BackgroundWorker;
@@ -919,7 +944,8 @@
         {
             ExtractBleachROI();
             double[] FieldScaleFine = { 0, 0 };
-            if ((Bitmap == null) || (0 == _captureSetup.GetBleachLSMFieldScaleXYFine(0, ref FieldScaleFine[0])) || (0 == _captureSetup.GetBleachLSMFieldScaleXYFine(1, ref FieldScaleFine[1])))
+
+            if (0 == _captureSetup.GetBleachLSMFieldScaleXYFine(0, ref FieldScaleFine[0]) || 0 == _captureSetup.GetBleachLSMFieldScaleXYFine(1, ref FieldScaleFine[1]))
             {
                 return;
             }
@@ -938,7 +964,7 @@
                     return;
                 if (_editBleach.RoiCapsule.ROIs.Length > 0)
                 {
-                    BleachParamList = WaveformBuilder.LoadBleachWaveParams(_editBleach.RoiPathandName, _editBleach.RoiCapsule, (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (double)1.0], BleachPixelSizeUMRatio, (int)MVMManager.Instance["CameraControlViewModel", "BinX", (object)1], (int)MVMManager.Instance["CameraControlViewModel", "BinY", (object)1]);
+                    BleachParamList = WaveformBuilder.LoadBleachWaveParams(_editBleach.RoiPathandName, _editBleach.RoiCapsule, ((PixelSizeUM)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (double)1.0]).PixelWidthUM, BleachPixelSizeUMRatio, (int)MVMManager.Instance["CameraControlViewModel", "BinX", (object)1], (int)MVMManager.Instance["CameraControlViewModel", "BinY", (object)1]);
                     if (0 == BleachParamList.Count)
                     { return; }
                     if (!ValidateParams())
@@ -1004,10 +1030,8 @@
                 _editBleach.Closed += _editBleach_Closed;
                 _editBleach.Show();
             }
-            if (null != BleachWaveformGeneratedEvent)
-            {
-                BleachWaveformGeneratedEvent();
-            }
+
+            BleachWaveformGeneratedEvent();
         }
 
         private void ImagingCenterScanners(object type)
@@ -1056,7 +1080,7 @@
                     {
                         return false;
                     }
-                    BleachParamList = WaveformBuilder.LoadBleachWaveParams(PathandName, roiCapsule, (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (double)1.0], (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (double)1.0] / this.BleachLSMUMPerPixel, (int)MVMManager.Instance["CameraControlViewModel", "BinX", (object)1], (int)MVMManager.Instance["CameraControlViewModel", "BinY", (object)1]);
+                    BleachParamList = WaveformBuilder.LoadBleachWaveParams(PathandName, roiCapsule, ((PixelSizeUM)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (double)1.0]).PixelWidthUM, (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (double)1.0] / this.BleachLSMUMPerPixel, (int)MVMManager.Instance["CameraControlViewModel", "BinX", (object)1], (int)MVMManager.Instance["CameraControlViewModel", "BinY", (object)1]);
                 }
             }
             else
@@ -1072,6 +1096,26 @@
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// notify listeners (Ex. ImageView) that RecROI need to be updated
+        /// </summary>
+        /// <param name="pathName"></param>
+        private void ROIUpdateRequested(string pathName)
+        {
+            if (File.Exists(pathName))
+            {
+                //remove existing ROIs:
+                OverlayManagerClass.Instance.ClearAllObjects();
+                MVMManager.Instance["ImageViewCaptureSetupVM", "IsReticleChecked"] = false;
+                MVMManager.Instance["ImageViewCaptureSetupVM", "IsScaleButtonChecked"] = false;
+                MVMManager.Instance["ImageViewCaptureSetupVM", "ROIDrawingToolsSelectedIndex"] = 0;
+                OverlayManagerClass.Instance.InitSelectROI();
+
+                //load from user-defined ROI file: could be BleachROIs, SLMCalibROIs, ...
+                OverlayManagerClass.Instance.UserLoadROIs(pathName);
+            }
         }
 
         private bool StartBleach()

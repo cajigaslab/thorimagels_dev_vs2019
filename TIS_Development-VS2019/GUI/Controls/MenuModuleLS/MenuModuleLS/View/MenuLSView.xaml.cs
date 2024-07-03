@@ -30,7 +30,6 @@
     {
         #region Fields
 
-        private string _initialModality;
         private DispatcherTimer _memoryReadTimer;
         bool _noLSMImageDetectors;
         bool _viewLoaded;
@@ -262,6 +261,8 @@
                     vm.NeedToReconnectCamera = false;
                 }
             }
+            ResourceManagerCS.BackupDirectory(ResourceManagerCS.GetMyDocumentsThorImageFolderString());
+
         }
 
         private void gearButton_Click(object sender, RoutedEventArgs e)

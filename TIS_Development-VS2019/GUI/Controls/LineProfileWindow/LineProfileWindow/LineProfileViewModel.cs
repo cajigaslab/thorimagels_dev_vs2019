@@ -2,24 +2,39 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using System.IO;
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
     using System.Windows.Media;
 
-    using Microsoft.Research.DynamicDataDisplay;
-    using Microsoft.Research.DynamicDataDisplay.Charts;
-    using Microsoft.Research.DynamicDataDisplay.DataSources;
-    using Microsoft.Research.DynamicDataDisplay.PointMarkers;
+    using SciChart;
+    using SciChart.Charting;
+    using SciChart.Charting.ChartModifiers;
+    using SciChart.Charting.Common.Extensions;
+    using SciChart.Charting.Model.DataSeries;
+    using SciChart.Charting.Themes;
+    using SciChart.Charting.Visuals;
+    using SciChart.Charting.Visuals.Annotations;
+    using SciChart.Charting.Visuals.Axes;
+    using SciChart.Charting.Visuals.Axes.LabelProviders;
+    using SciChart.Charting.Visuals.Events;
+    using SciChart.Charting.Visuals.RenderableSeries;
+    using SciChart.Core;
+    using SciChart.Data.Model;
+    using SciChart.Drawing.HighSpeedRasterizer;
+    using SciChart.Drawing.Utility;
+    using SciChart.Drawing.VisualXcceleratorRasterizer;
 
     using ThorSharedTypes;
 
-    class LineProfileViewModel : ThorSharedTypes.VMBase
+    internal class LineProfileViewModel : ThorSharedTypes.VMBase
     {
         #region Fields
 
-        private bool[] _channelEnable = null;
+        AutoRange _autoRangeY = AutoRange.Always;
+        private ObservableCollection<IRenderableSeries> _chartSeries;
         private Color[] _colorAssigment = null;
         private int _displayChannelIndex = 0;
         private string _horizontalAxisTitle = string.Empty;
@@ -34,16 +49,20 @@
         private int _numChannel = 1;
         private string _title;
         private string _verticalAxisTitle;
-        //:TODO: Make Ymax dynamically read from the camera the current bitdepth
+
         private double _ymax = 17000; //Max pixel depth is 14bit
         private double _ymin = 0;
+        IRange _yVisibleRange;
 
         #endregion Fields
 
         #region Constructors
 
-        public LineProfileViewModel()
+        public LineProfileViewModel(Color[] colorAssigment)
         {
+            _chartSeries = new ObservableCollection<IRenderableSeries>();
+            _colorAssigment = colorAssigment;
+            _yVisibleRange = new DoubleRange();
         }
 
         #endregion Constructors
@@ -56,10 +75,22 @@
 
         #region Properties
 
-        public bool[] ChannelEnable
+        string _chartXLabel = "Line Length (pixels)";
+        
+        public string ChartXLabel
         {
-            get { return _channelEnable; }
-            set { _channelEnable = value; }
+            get => _chartXLabel;
+            set=> SetProperty(ref _chartXLabel, value);
+        }
+        public AutoRange AutoRangeY
+        {
+            get => _autoRangeY;
+            set => SetProperty(ref _autoRangeY, value);
+        }
+
+        public ObservableCollection<IRenderableSeries> ChartSeries
+        {
+            get { return _chartSeries; }
         }
 
         public Color[] ColorAssigment
@@ -71,6 +102,7 @@
             set
             {
                 _colorAssigment = value;
+                Redraw();
             }
         }
 
@@ -97,13 +129,30 @@
         public bool IsAutoScaleActive
         {
             get { return _isAutoScaleActive; }
-            set { _isAutoScaleActive = value; }
+            set
+            {
+                _isAutoScaleActive = value;
+                AutoRangeY = _isAutoScaleActive ? AutoRange.Always : AutoRange.Never;
+                OnPropertyChanged("IsAutoScaleActive");
+            }
         }
 
         public bool IsConversionActive
         {
             get { return _isConversionActive; }
-            set { _isConversionActive = value; }
+            set
+            {
+                _isConversionActive = value;
+                Redraw();
+                if (value)
+                {
+                    ChartXLabel = "Line Length (µm)";
+                }
+                else
+                {
+                    ChartXLabel = "Line Length (pixels)";
+                }
+            }
         }
 
         public bool IsDisplaying
@@ -180,6 +229,7 @@
                 if (value > _ymin)
                 {
                     _ymax = value;
+                    YVisibleRange = new DoubleRange(_ymin, _ymax);
                 }
             }
         }
@@ -192,6 +242,24 @@
                 if (value < _ymax)
                 {
                     _ymin = value;
+                    YVisibleRange = new DoubleRange(_ymin, _ymax);
+                }
+            }
+        }
+
+        public IRange YVisibleRange
+        {
+            get { return _yVisibleRange; }
+            set
+            {
+                if (_yVisibleRange != value)
+                {
+                    _yVisibleRange = value;
+                    OnPropertyChanged("YVisibleRange");
+                    _ymin = (double)value.Min;
+                    OnPropertyChanged("YminValue");
+                    _ymax = (double)value.Max;
+                    OnPropertyChanged("YmaxValue");
                 }
             }
         }
@@ -199,6 +267,42 @@
         #endregion Properties
 
         #region Methods
+
+        public void Redraw()
+        {
+            _chartSeries.Clear();
+            int j = 0;
+
+                for (int i = 0; i < _maxChannels; i++)
+            {
+                if (Convert.ToBoolean(_lineProfileData.channelEnable & (int)Math.Pow(2, i)) && _lineProfileData.profileDataY != null && _lineProfileData.profileDataY[j] != null)
+                {
+                    UniformXyDataSeries<double> series;
+
+                    if (_isConversionActive)
+                    {
+                        series = new UniformXyDataSeries<double>(0) { FifoCapacity = null, XStart = 0, XStep = _lineProfileData.PixeltoµmConversionFactor };
+                    }
+                    else
+                    {
+                        series = new UniformXyDataSeries<double>(0) { FifoCapacity = null, XStart = 0, XStep = 1 };
+                    }
+                    var l = new FastLineRenderableSeries
+                    {
+                        StrokeThickness = 2,
+                        Stroke = ColorAssigment[i],
+                        IsVisible = true,
+                        ResamplingMode = SciChart.Data.Numerics.ResamplingMode.Auto,
+                        AntiAliasing = false,
+                        DataSeries = series
+                    };
+                    series.Append(_lineProfileData.profileDataY[j]);
+                    _chartSeries.Add(l);
+                    ++j;
+                }
+            }
+            OnPropertyChanged("ChartSeries");
+        }
 
         public void SaveAs()
         {
@@ -237,12 +341,7 @@
         public void SetData(LineProfileData lineprofileData)
         {
             _lineProfileData = lineprofileData;
-            _numChannel = 0;
-            for (int i = 0; i < _channelEnable.Length; i++)
-            {
-                _channelEnable[i] = Convert.ToBoolean(_lineProfileData.channelEnable & (int)Math.Pow(2, i));
-                _numChannel += (true == _channelEnable[i]) ? 1 : 0;
-            }
+            Redraw();
         }
 
         #endregion Methods

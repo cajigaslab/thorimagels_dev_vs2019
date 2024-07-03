@@ -13,11 +13,6 @@
 #include <windows.h>
 #include <memory>
 #include <math.h>
-#include <direct.h>
-#include "process.h"
-#include <map>
-#include <mutex>
-#include "Blink_SDK.h"
 
 using namespace std;
 
@@ -31,13 +26,6 @@ using namespace std;
 #ifndef TIXML_USE_TICPP
 #define TIXML_USE_TICPP
 #endif
-
-#define MSG_SIZE		256
-
-#define XY_COORD		2
-#define RGB_CNT			3
-#define LUT_SIZE		65536
-#define SLM_TIMEOUT_MIN	20000	//[ms]
 
 #include "..\..\..\..\Tools\ticpp\ticpp.h"
 #include "..\..\..\..\Tools\ticpp\tinyxml.h"

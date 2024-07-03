@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
+    using System.Data;
     using System.Diagnostics;
     using System.Globalization;
     using System.IO;
@@ -19,6 +20,8 @@
     using System.Windows.Media;
     using System.Windows.Threading;
     using System.Xml;
+
+    using DatabaseInterface;
 
     using ExperimentSettingsBrowser;
 
@@ -47,22 +50,26 @@
     {
         #region Fields
 
-        private const int PATH_LENGTH = 261;
+        const int TIMEOUT_MILLISECONDS = 5000;
+
+        private static int _maxPreviewDisplayFrameRate = 120;
+        private static bool _spIndexThreadRun = false;
+        private static int _spTimerValue;
+        private static bool _streamIndexThreadRun = false;
+        private static int _streamTimerValue;
+        private static bool _tIndexThreadRun = false;
+        private static int _tTimerValue;
+        private static bool _zIndexThreadRun = false;
+        private static int _zTimerValue;
 
         object _dataContextliveImageVM = null;
         private string _expFile;
         private string _expPath;
         ImageReviewViewModel _imageReviewVM = null;
-        DispatcherTimer _scanAreaTimer;
-        private int _scanAreaTimerValue;
-        DispatcherTimer _spTimer;
-        private int _spTimerValue;
-        DispatcherTimer _streamTimer;
-        private int _streamTimerValue;
-        DispatcherTimer _tTimer;
-        private int _tTimerValue;
-        DispatcherTimer _zTimer;
-        private int _zTimerValue;
+        Thread _spIndexLive;
+        Thread _streamIndexLive;
+        Thread _tIndexLive;
+        Thread _zIndexLive;
 
         #endregion Fields
 
@@ -74,6 +81,7 @@
             this.KeyDown += ImageReviewView_KeyDown;
             this.Loaded += new RoutedEventHandler(MasterView_Loaded);
             this.Unloaded += new RoutedEventHandler(MasterView_Unloaded);
+            System.Windows.Application.Current.Exit += Stop_PlayMovie_Threads;
         }
 
         #endregion Constructors
@@ -103,9 +111,31 @@
             }
         }
 
+        public bool ForceBitMap
+        {
+            get
+            {
+                ForceUpdateBitmap();
+                return false;
+            }
+            set
+            {
+                ForceUpdateBitmap();
+            }
+        }
+
         #endregion Properties
 
         #region Methods
+
+        public void Stop_PlayMovie_Threads(object sender, ExitEventArgs e)
+        {
+            StopSPIndexThread();
+            StopStreamIndexThread();
+            StopTIndexThread();
+            StopZIndexThread();
+
+        }
 
         public void ImageReviewView_KeyDown(object sender, KeyEventArgs e)
         {
@@ -131,6 +161,34 @@
             LoadActiveExp();
         }
 
+        public void LoadRemoteFocusPositionValues()
+        {
+            //Load Dynamic Labels for Remote Focus
+            if (ExperimentData.IsRemoteFocus)
+            {
+                string posFile = _expPath + "\\RemoteFocus\\RemoteFocusPositionsValues.txt";
+
+                if (File.Exists(posFile))
+                {
+                    var reader = new StreamReader(File.OpenRead(posFile));
+
+                    double tmp = 0;
+                    _imageReviewVM._remoteFocusPositions.Clear();
+
+                    while (!reader.EndOfStream)
+                    {
+                        string l = reader.ReadLine();
+
+                        if (Double.TryParse(l, NumberStyles.Any, CultureInfo.InvariantCulture, out tmp))
+                        {
+                            _imageReviewVM._remoteFocusPositions.Add(tmp);
+                        }
+
+                    }
+                }
+            }
+        }
+
         public void OnConvertRawToTIFF(object sender, RoutedEventArgs e)
         {
             if (_imageReviewVM == null)
@@ -139,9 +197,7 @@
             }
             string tiffExperimentFilePth = "";
 
-            //Get experiment folder and type
-            var experimentDoc = new XmlDocument();
-            experimentDoc.Load(_imageReviewVM.ImageReviewObject.ExperimentXMLPath);
+            XmlDocument experimentDoc = _imageReviewVM.LoadDocAsReadOnly(_imageReviewVM.ImageReviewObject.ExperimentXMLPath);
             var pathXmlNode = experimentDoc.SelectSingleNode("/ThorImageExperiment/Name");
             if (pathXmlNode != null)
             {
@@ -161,16 +217,16 @@
                         {
                             _imageReviewVM.CloseProgressWindow();
 
-                        // Show message to load new converted tiff experiment
-                        if (MessageBox.Show("Would you like to open the converted experiment?", "", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-                            LoadExperiment(tiffExperimentFilePth); // open new .tif experiment
+                            // Show message to load new converted tiff experiment
+                            if (MessageBox.Show("Would you like to open the converted experiment?", "", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                                LoadExperiment(tiffExperimentFilePth); // open new .tif experiment
                         });
                     });
 
                     // Show progress window
                     Application.Current.Dispatcher.BeginInvoke((Action)delegate ()
                     {
-                        _imageReviewVM.CreateProgressWindow();
+                        _imageReviewVM.CreateProgressWindow("Converting", Brushes.DimGray);
                     });
                 }
             }
@@ -206,6 +262,98 @@
         [DllImport(".\\ExperimentManager.dll", EntryPoint = "GetActiveExperimentPathAndName", CharSet = CharSet.Unicode)]
         private static extern int GetActiveExperimentPathAndName(StringBuilder path, int length);
 
+        private static void SPIndexThreadProc(Object obj)
+        {
+            ImageReviewViewModel imageReviewVM = (ImageReviewViewModel)obj;
+            int minTimeBetweenFrames = (int)Math.Floor((Decimal)Constants.MS_TO_SEC / _maxPreviewDisplayFrameRate);
+
+            while (_spIndexThreadRun)
+            {
+                ImageReviewViewModel._bitmapIsLoading = true;
+
+                _spTimerValue = _spTimerValue % imageReviewVM.SpMax + 1;
+
+                imageReviewVM.SpValue = _spTimerValue;
+
+                DateTime startTime = DateTime.Now;
+                TimeSpan elapsedTime = DateTime.Now - startTime;
+                while ((ImageReviewViewModel._bitmapIsLoading || elapsedTime.TotalMilliseconds < minTimeBetweenFrames) && elapsedTime.TotalMilliseconds < TIMEOUT_MILLISECONDS)
+                {
+                    elapsedTime = DateTime.Now - startTime;
+                    Thread.Sleep(2);
+                }
+            }
+        }
+
+        private static void StreamIndexThreadProc(Object obj)
+        {
+            ImageReviewViewModel imageReviewVM = (ImageReviewViewModel)obj;
+            int minTimeBetweenFrames = (int)Math.Floor((Decimal)Constants.MS_TO_SEC / _maxPreviewDisplayFrameRate);
+
+            while (_streamIndexThreadRun)
+            {
+                ImageReviewViewModel._bitmapIsLoading = true;
+
+                _streamTimerValue = _streamTimerValue % imageReviewVM.ZStreamMax + 1;
+
+                imageReviewVM.ZStreamValue = _streamTimerValue;
+
+                DateTime startTime = DateTime.Now;
+                TimeSpan elapsedTime = DateTime.Now - startTime;
+                while ((ImageReviewViewModel._bitmapIsLoading || elapsedTime.TotalMilliseconds < minTimeBetweenFrames) && elapsedTime.TotalMilliseconds < TIMEOUT_MILLISECONDS)
+                {
+                    elapsedTime = DateTime.Now - startTime;
+                    Thread.Sleep(2);
+                }
+            }
+        }
+
+        private static void TIndexThreadProc(Object obj)
+        {
+            ImageReviewViewModel imageReviewVM = (ImageReviewViewModel)obj;
+            int minTimeBetweenFrames = (int)Math.Floor((Decimal)Constants.MS_TO_SEC / _maxPreviewDisplayFrameRate);
+
+            while (_tIndexThreadRun)
+            {
+                ImageReviewViewModel._bitmapIsLoading = true;
+
+                _tTimerValue = _tTimerValue % imageReviewVM.TMax + 1;
+
+                imageReviewVM.TValue = _tTimerValue;
+
+                DateTime startTime = DateTime.Now;
+                TimeSpan elapsedTime = DateTime.Now - startTime;
+                while ((ImageReviewViewModel._bitmapIsLoading || elapsedTime.TotalMilliseconds < minTimeBetweenFrames) && elapsedTime.TotalMilliseconds < TIMEOUT_MILLISECONDS)
+                {
+                    elapsedTime = DateTime.Now - startTime;
+                    Thread.Sleep(2);
+                }
+            }
+        }
+
+        private static void ZIndexThreadProc(Object obj)
+        {
+            ImageReviewViewModel imageReviewVM = (ImageReviewViewModel)obj;
+            int minTimeBetweenFrames = (int)Math.Floor((Decimal)Constants.MS_TO_SEC / _maxPreviewDisplayFrameRate);
+
+            while (_zIndexThreadRun)
+            {
+                ImageReviewViewModel._bitmapIsLoading = true;
+
+                _zTimerValue = _zTimerValue % imageReviewVM.ZMax + 1;
+
+                imageReviewVM.ZValue = _zTimerValue;
+
+                DateTime startTime = DateTime.Now;
+                TimeSpan elapsedTime = DateTime.Now - startTime;
+                while ((ImageReviewViewModel._bitmapIsLoading || elapsedTime.TotalMilliseconds < minTimeBetweenFrames) && elapsedTime.TotalMilliseconds < TIMEOUT_MILLISECONDS)
+                {
+                    elapsedTime = DateTime.Now - startTime;
+                    Thread.Sleep(2);
+                }
+            }
+        }
+
         private void btnColor_Checked(object sender, RoutedEventArgs e)
         {
         }
@@ -217,8 +365,9 @@
         //Called from ThorImage -> Review tab
         private void btnShowMostRecent_Click(object sender, RoutedEventArgs e)
         {
+            string expPath = LoadActiveExp();
+            MVMManager.Instance["RemoteIPCControlViewModelBase", "ShowMostRecent"] = expPath;
             //load the active experiment last run
-            LoadActiveExp();
         }
 
         private void btnSp_Checked(object sender, RoutedEventArgs e)
@@ -275,55 +424,6 @@
             _imageReviewVM.MEnd = _imageReviewVM.ZMax;
             _imageReviewVM.MStartValue = _imageReviewVM.ZMin;
             _imageReviewVM.MEndValue = _imageReviewVM.ZMax;
-        }
-
-        private void colorImageSettings_Click(object sender, RoutedEventArgs e)
-        {
-            SnapshotSettings dlg = new SnapshotSettings();
-
-            XmlNodeList ndList = _imageReviewVM.ApplicationDoc.SelectNodes("/ApplicationSettings/DisplayOptions/General/GrayscaleForSingleChannel");
-
-            if (ndList.Count > 0)
-            {
-                string str = string.Empty;
-
-                XmlManager.GetAttribute(ndList[0], _imageReviewVM.ApplicationDoc, "value", ref str);
-
-                dlg.GrayscaleForSingleChannel = ("1" == str || Boolean.TrueString == str) ? true : false;
-            }
-
-            dlg.HardwareDoc = _imageReviewVM.HardwareDoc;
-
-            if (true == dlg.ShowDialog())
-            {
-
-                if (ndList.Count > 0)
-                {
-                    string str = (true == dlg.GrayscaleForSingleChannel) ? "1" : "0";
-
-                    XmlManager.SetAttribute(ndList[0], _imageReviewVM.ApplicationDoc, "value", str);
-                }
-
-                _imageReviewVM.ApplicationDoc.Save(_imageReviewVM.ApplicationSettingPath);
-
-                //To load the color settings, force GrayscaleForSingleChannel to be false
-                //this will allow to load the color channels colors instead of grey scale
-                //then change it back to its original value
-                _imageReviewVM.HardwareDoc.Save(_imageReviewVM.HardwareSettingPath);
-                _imageReviewVM.GrayscaleForSingleChannel = false;
-                _imageReviewVM.BuildChannelPalettes();
-                _imageReviewVM.LoadColorImageSettings();
-                if (true == dlg.GrayscaleForSingleChannel)
-                {
-                    _imageReviewVM.GrayscaleForSingleChannel = true;
-                    _imageReviewVM.BuildChannelPalettes();
-                }
-
-                _imageReviewVM.UpdateBitmapAndEventSubscribers();
-                _imageReviewVM.UpdateOrthogonalBitmapAndEventSubscribers();
-
-                _imageReviewVM.FireColorMappingChangedAction(true);
-            }
         }
 
         private void createMovie_Click(object sender, RoutedEventArgs e)
@@ -396,16 +496,16 @@
                                     break;
                             }
 
-                            _zTimer.Stop();
+                            StopZIndexThread();
                             _imageReviewVM.ZIsLive = false;
 
-                            _tTimer.Stop();
+                            StopTIndexThread();
                             _imageReviewVM.TIsLive = false;
 
-                            _spTimer.Stop();
+                            StopSPIndexThread();
                             _imageReviewVM.SpIsLive = false;
 
-                            _streamTimer.Stop();
+                            StopStreamIndexThread();
                             _imageReviewVM.ZStreamIsLive = false;
 
                             _imageReviewVM.CreateColorMovie(fileNameList, destFileNamePath, Double.Parse(fpsText.Text));
@@ -508,16 +608,16 @@
             {
                 if (_imageReviewVM.ExperimentDoc != null)
                 {
-                    _zTimer.Stop();
+                    StopZIndexThread();
                     _imageReviewVM.ZIsLive = false;
 
-                    _tTimer.Stop();
+                    StopTIndexThread();
                     _imageReviewVM.TIsLive = false;
 
-                    _spTimer.Stop();
+                    StopSPIndexThread();
                     _imageReviewVM.SpIsLive = false;
 
-                    _streamTimer.Stop();
+                    StopStreamIndexThread();
                     _imageReviewVM.ZStreamIsLive = false;
 
                     _imageReviewVM.InscribeScaleToImages();
@@ -525,33 +625,38 @@
             }
         }
 
-        private void LoadActiveExp()
+        private string LoadActiveExp()
         {
-            XmlNode node;
+            string experimentPath = "-1";
+            //Open connection to the database
+            DataStore.Instance.ConnectionString = "URI=file:" + Application.Current.Resources["ThorDatabase"].ToString();
+            DataStore.Instance.Open();
 
-            //reads experiment folder path from ApplicationSettings.xml
-            // Use the application settings file from the current active modality
-            if (null != MVMManager.Instance && null != MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS])
-            {
-                node = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS].SelectSingleNode("/ApplicationSettings/LastExperiment");
-            }
-            else
-            {
-                node = _imageReviewVM.ApplicationDoc.SelectSingleNode("/ApplicationSettings/LastExperiment");
-            }
-            string experimentPath = "";
-            if (node != null && node.Attributes.GetNamedItem("path") != null)
-            {
-                experimentPath = node.Attributes["path"].Value;
-                //Set ExperimentDoc to the path save in the curent modality's Application Settings
-                //for when Show Most Recent is clicked
-                XmlDocument experimentDoc = new XmlDocument();
+            //Not currently implemented
+            //DataStore.Instance.VerifyExperiments();
 
-                if (File.Exists(experimentPath + "\\Experiment.xml"))
+            //Search through database to ensure that listed experiments exist. If they do, add them to list
+            int i = 0;
+            List<DatabaseItem> databaseItems = new List<DatabaseItem>();
+            foreach (DataRow row in DataStore.Instance.ExperimentsDataSet.Tables[0].Rows)
+            {
+                if (File.Exists(row["Path"].ToString() + "\\" + "Experiment.xml"))
                 {
-                    experimentDoc.Load(experimentPath + "\\Experiment.xml");
-                    _imageReviewVM.ExperimentDoc = experimentDoc;
+                    DatabaseItem databaseItem = new DatabaseItem();
+                    databaseItem.ID = i;
+                    databaseItem.ExpName = row["Name"].ToString();
+                    databaseItem.ExpPath = row["Path"].ToString();
+                    databaseItems.Add(databaseItem);
+                    i++;
                 }
+            }
+            DataStore.Instance.Close();
+
+            if (0 < databaseItems.Count)
+            {
+                experimentPath = databaseItems[databaseItems.Count - 1].ExpPath;
+
+                _imageReviewVM.ExperimentDoc = _imageReviewVM.LoadDocAsReadOnly(experimentPath + "\\Experiment.xml");
 
                 //Once ExperimentDoc is set, load the view model settings
                 _imageReviewVM.LoadViewModelSettingsDoc();
@@ -561,6 +666,12 @@
                     MessageBox.Show("Application failed to load the last experiment. Please choose an experiment using Select Experiment button.", "Experiment Not Loaded", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
+            else
+            {
+                MessageBox.Show("Application failed to load the last experiment. Please choose an experiment using Select Experiment button.", "Experiment Not Loaded", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
+            return experimentPath + "\\Experiment.xml";
         }
 
         private void LoadData(string expfile, bool resetSliders)
@@ -573,24 +684,24 @@
             // to speed up load don't allow updates while loading experiment
             _imageReviewVM.AllowImageUpdate = false;
 
+            MVMManager.Instance["ImageViewReviewVM", "ResetBitmap"] = true;
+            MVMManager.Instance["ImageViewReviewVM", "StopBitmapBuildingThread"] = true;
             //enabling the main control
             controlContainer.IsEnabled = true;
             XmlDataProvider dataProvider = (XmlDataProvider)this.FindResource("Experiment");
-            XmlDocument experimentDoc = new XmlDocument();
 
             if (File.Exists(expfile))
-            { experimentDoc.Load(expfile); }
+            {
+                XmlDocument experimentDoc = _imageReviewVM.LoadDocAsReadOnly(expfile);
+                ExperimentData.Populate(experimentDoc, _imageReviewVM.HardwareDoc);
 
-            dataProvider.Document = experimentDoc;
-            _imageReviewVM.ExperimentDoc = experimentDoc;
+                dataProvider.Document = experimentDoc;
+                _imageReviewVM.ExperimentDoc = experimentDoc;
+            }
 
-            ExperimentData.Populate(experimentDoc, _imageReviewVM.HardwareDoc);
+            _imageReviewVM.ImageReview.AllocateImageDataMemoryFormROI();
 
             _imageReviewVM.ImageInfo = ExperimentData.ImageInfo;
-
-            _imageReviewVM.ScanAreaIDMin = (CaptureFile.FILE_BIG_TIFF == _imageReviewVM.ImageInfo.imageType && 1 < _imageReviewVM.ImageInfo.scanAreaIDList.Count) ? _imageReviewVM.ImageInfo.scanAreaIDList[0].RegionID : 0;
-            _imageReviewVM.ScanAreaIDMax = (CaptureFile.FILE_BIG_TIFF == _imageReviewVM.ImageInfo.imageType && 1 < _imageReviewVM.ImageInfo.scanAreaIDList.Count) ? _imageReviewVM.ImageInfo.scanAreaIDList[_imageReviewVM.ImageInfo.scanAreaIDList.Count - 1].RegionID : 0;
-            _imageReviewVM.ScanAreaVisible = (CaptureFile.FILE_BIG_TIFF == _imageReviewVM.ImageInfo.imageType && MesoScanTypes.Micro == ExperimentData.ViewMode && 1 < _imageReviewVM.ImageInfo.scanAreaIDList.Count) ? true : false;
 
             _imageReviewVM.BitsPerPixel = ExperimentData.BitsPerPixel;
 
@@ -605,6 +716,10 @@
             _imageReviewVM.ZStreamMode = ExperimentData.ZStreamMode;
             _imageReviewVM.ZStreamMax = ExperimentData.ZStreamMax;
             _imageReviewVM.ZStreamMin = 1;
+
+            _imageReviewVM.IsRemoteFocus = ExperimentData.IsRemoteFocus;
+            _imageReviewVM.PixelAspectRatioYScale = ExperimentData.PixelAspectRatioYScale;
+            LoadRemoteFocusPositionValues();
 
             if (ExperimentData.MMPerPixel != 0)
             {
@@ -634,11 +749,13 @@
 
                 btnSp.IsChecked = true;
             }
-            else if (_imageReviewVM.CaptureMode == CaptureModes.STREAMING) {
+            else if (_imageReviewVM.CaptureMode == CaptureModes.STREAMING || _imageReviewVM.CaptureMode == CaptureModes.T_AND_Z
+                || _imageReviewVM.CaptureMode == CaptureModes.BLEACHING)
+            {
                 _imageReviewVM.MStart = _imageReviewVM.TMin;
-                _imageReviewVM.MEnd = _imageReviewVM.TMax;
+                /*_imageReviewVM.MEnd = _imageReviewVM.TMax;*/
                 _imageReviewVM.MStartValue = _imageReviewVM.TMin;
-                _imageReviewVM.MEndValue = _imageReviewVM.TMax;
+                /*_imageReviewVM.MEndValue = _imageReviewVM.TMax;*/
 
                 btnT.IsChecked = true;
             }
@@ -646,9 +763,9 @@
             {
                 //loading the default movie slider parameters for LSM configurationi
                 _imageReviewVM.MStart = _imageReviewVM.ZMin;
-                _imageReviewVM.MEnd = _imageReviewVM.ZMax;
+                /*_imageReviewVM.MEnd = _imageReviewVM.ZMax;*/
                 _imageReviewVM.MStartValue = _imageReviewVM.ZMin;
-                _imageReviewVM.MEndValue = _imageReviewVM.ZMax;
+                /*_imageReviewVM.MEndValue = _imageReviewVM.ZMax;*/
 
                 btnZ.IsChecked = true;
             }
@@ -658,37 +775,36 @@
 
             _imageReviewVM.UpdateBitmapAndEventSubscribers();
 
-            for (int i = 0; i < ExperimentData.ImageInfo.channelEnable.Length; ++i)
-            {
-                switch (i)
-                {
-                    case 0:
-                        _imageReviewVM.ChannelEnableA = ExperimentData.ImageInfo.channelEnable[i];
-                        chanAEnable.Visibility = _imageReviewVM.ChannelEnableA ? Visibility.Visible : Visibility.Collapsed;
-                        break;
-                    case 1:
-                        _imageReviewVM.ChannelEnableB = ExperimentData.ImageInfo.channelEnable[i];
-                        chanBEnable.Visibility = _imageReviewVM.ChannelEnableB ? Visibility.Visible : Visibility.Collapsed;
-                        break;
-                    case 2:
-                        _imageReviewVM.ChannelEnableC = ExperimentData.ImageInfo.channelEnable[i];
-                        chanCEnable.Visibility = _imageReviewVM.ChannelEnableC ? Visibility.Visible : Visibility.Collapsed;
-                        break;
-                    case 3:
-                        _imageReviewVM.ChannelEnableD = ExperimentData.ImageInfo.channelEnable[i];
-                        chanDEnable.Visibility = _imageReviewVM.ChannelEnableD ? Visibility.Visible : Visibility.Collapsed;
-                        break;
-                }
-            }
-
             //load userControl
             if (File.Exists(expfile))
             {
                 tileControl.SelectExpFile(expfile);
             }
+
+            OverlayManagerClass.Instance.ClearAllObjects();
+            if (ExperimentData.IsmROICapture)
+            {
+                OverlayManagerClass.Instance.PixelUnitSizeXY = new int[] { (int)ExperimentData.mROIStripLength, 1 };
+                mROIDisplay.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                mROIDisplay.Visibility = Visibility.Collapsed;
+            }
+
+            //If the ROI's file exists, load it.
+            //Loading the ROI's will reset the overlay manager which is needed at this point
+            string roiPath = Directory.GetParent(expfile).FullName + "\\ROIs.xaml";
+            OverlayManagerClass.Instance.UserLoadROIs(roiPath);
+
+
+            /*OverlayManagerClass.Instance.InitOverlayManagerClass(ExperimentData.ImageInfo.pixelX, ExperimentData.ImageInfo.pixelY, ExperimentData.PixelSizeUM, false);*/
+
             // At this point allow data update
             _imageReviewVM.AllowImageUpdate = true;
             _imageReviewVM.ExperimentDataLoaded();
+            MVMManager.Instance["ImageViewReviewVM", "StartBitmapBuildingThread"] = true;
+
         }
 
         /// <summary>
@@ -698,6 +814,7 @@
         /// <returns> True if the experiment was successfully loaded </returns>
         private bool LoadExperiment(string experimentPath)
         {
+            _imageReviewVM.IsExperimentLoading = true;
             ResetPlayStopButtons();
             if (!String.IsNullOrEmpty(experimentPath))
             {
@@ -707,6 +824,7 @@
 
             if (!File.Exists(_expFile) || (_imageReviewVM == null))
             {
+                _imageReviewVM.IsExperimentLoading = false;
                 return false;
             }
 
@@ -719,8 +837,43 @@
             _imageReviewVM.ExperimentXMLPath = _expFile;
             _imageReviewVM.ExperimentFolderPath = _expPath;
 
+            XmlDocument experimentDoc = _imageReviewVM.LoadDocAsReadOnly(_expFile);
+
+            XmlNodeList nodeList = experimentDoc.SelectNodes("/ThorImageExperiment/ThorSyncDataPath");
+            if (nodeList.Count != 0)
+            {
+                XmlAttribute thorSyncDataPath = nodeList[0].Attributes[0];
+                if (thorSyncDataPath != null && thorSyncDataPath.Value != "" && (bool)MVMManager.Instance["RemoteIPCControlViewModelBase", "RemoteConnection"])
+                {
+                    MVMManager.Instance["RemoteIPCControlViewModelBase", "ShowMostRecent"] = thorSyncDataPath.Value;
+                    //ThorIPCModule.Instance.SendIPCCommand("ShowMostRecent", thorSyncDataPath.Value);
+                }
+            }
+
             LoadData(_expFile, resetSliders);
             _imageReviewVM.LoadExpFolder(_expPath);
+
+            if (CaptureModes.HYPERSPECTRAL == ExperimentData.CaptureMode)
+            {
+                _imageReviewVM.MEnd = _imageReviewVM.SpMax;
+                _imageReviewVM.MEndValue = _imageReviewVM.SpMax;
+
+            }
+            else if (_imageReviewVM.CaptureMode == CaptureModes.STREAMING || _imageReviewVM.CaptureMode == CaptureModes.T_AND_Z 
+                || _imageReviewVM.CaptureMode == CaptureModes.BLEACHING)
+            {
+                _imageReviewVM.MEnd = _imageReviewVM.TMax;
+                _imageReviewVM.MEndValue = _imageReviewVM.TMax;
+
+            } 
+            else
+            {
+
+                _imageReviewVM.MEnd = _imageReviewVM.ZMax;
+                _imageReviewVM.MEndValue = _imageReviewVM.ZMax;
+            }
+
+
 
             Match match = Regex.Match(_expPath.TrimEnd('\\'), "(.*)\\\\(.*)");
 
@@ -746,6 +899,7 @@
             // Show/hide ConvertToTIFF button
             _imageReviewVM.IsRawExperiment = _imageReviewVM.ImageInfo.imageType == CaptureFile.FILE_RAW;
 
+            _imageReviewVM.IsExperimentLoading = false;
             return true;
         }
 
@@ -762,31 +916,16 @@
                 return;
             }
 
-            _spTimer = new DispatcherTimer();
-
-            _zTimer = new DispatcherTimer();
-
-            _tTimer = new DispatcherTimer();
-
-            _streamTimer = new DispatcherTimer();
-
-            _scanAreaTimer = new DispatcherTimer();
-
             _imageReviewVM.ReloadSettingsByExpModality();
 
-            _zTimer.Tick += new EventHandler(zTimerTick);
-            _tTimer.Tick += new EventHandler(tTimerTick);
-            _spTimer.Tick += new EventHandler(spTimerTick);
-            _streamTimer.Tick += new EventHandler(streamTimer_Tick);
-            _scanAreaTimer.Tick += new EventHandler(scanAreaTimer_Tick);
             this.tileControl.TilesIndexChangedEvent += tileControl_TilesIndexChangedEvent;
             this.tileControl.Loaded += tileControl_Loaded;
             _imageReviewVM.EnableHandlers();
 
             // Show/hide "Open In ThorAnalysis" button
             string str = string.Empty;
-            var node = _imageReviewVM.ApplicationDoc.SelectSingleNode("/ApplicationSettings/DisplayOptions/Review/OpenInThorAnalysisButton");
-            if (XmlManager.GetAttribute(node, _imageReviewVM.ApplicationDoc, "Visibility", ref str) && (str.EndsWith("Visible")))
+            XmlNode node = _imageReviewVM.ApplicationDoc.SelectSingleNode("/ApplicationSettings/DisplayOptions/Review/OpenInThorAnalysisButton");
+            if (null != node && XmlManager.GetAttribute(node, _imageReviewVM.ApplicationDoc, "Visibility", ref str) && (str.EndsWith("Visible")))
             {
                 btLoadThorAnalysis.Visibility = Visibility.Visible;
             }
@@ -794,22 +933,26 @@
             {
                 btLoadThorAnalysis.Visibility = Visibility.Collapsed;
             }
+
+            node = _imageReviewVM.ApplicationDoc.SelectSingleNode("/ApplicationSettings/DisplayOptions/Review/PreviewDisplay");
+            if (null != node && XmlManager.GetAttribute(node, _imageReviewVM.ApplicationDoc, "MaxFrameRate", ref str))
+            {
+                _maxPreviewDisplayFrameRate = Int32.Parse(str);
+            }
+
+            _imageReviewVM.StartImageLoadingThread();
+            ResourceManagerCS.BackupDirectory(ResourceManagerCS.GetMyDocumentsThorImageFolderString());
         }
 
         void MasterView_Unloaded(object sender, RoutedEventArgs e)
         {
-            _zTimer.Tick -= new EventHandler(zTimerTick);
-            _tTimer.Tick -= new EventHandler(tTimerTick);
-            _spTimer.Tick -= new EventHandler(spTimerTick);
-            _streamTimer.Tick -= new EventHandler(streamTimer_Tick);
-            this.tileControl.TilesIndexChangedEvent -= tileControl_TilesIndexChangedEvent;
-            this.tileControl.Loaded -= tileControl_Loaded;
+            tileControl.TilesIndexChangedEvent -= tileControl_TilesIndexChangedEvent;
+            tileControl.Loaded -= tileControl_Loaded;
 
             _imageReviewVM.ReleaseHandlers();
-
             if (_imageReviewVM.TIsLive)
             {
-                _tTimer.Stop();
+                StopTIndexThread();
                 _imageReviewVM.TIsLive = false;
                 _imageReviewVM.ZIsEnabled = true;
                 _imageReviewVM.ZStreamIsEnabled = true;
@@ -823,7 +966,7 @@
 
             if (_imageReviewVM.SpIsLive)
             {
-                _spTimer.Stop();
+                StopSPIndexThread();
                 _imageReviewVM.SpIsLive = false;
                 _imageReviewVM.ZIsEnabled = true;
                 _imageReviewVM.TIsEnabled = true;
@@ -832,7 +975,7 @@
 
             if (_imageReviewVM.ZIsLive)
             {
-                _zTimer.Stop();
+                StopZIndexThread();
                 _imageReviewVM.ZIsLive = false;
                 _imageReviewVM.TIsEnabled = true;
                 _imageReviewVM.ZStreamIsEnabled = true;
@@ -841,7 +984,7 @@
 
             if (_imageReviewVM.ZStreamIsLive)
             {
-                _streamTimer.Stop();
+                StopStreamIndexThread();
 
                 //changed the click image control
                 _imageReviewVM.ZStreamIsLive = false;
@@ -851,6 +994,8 @@
                 _imageReviewVM.TIsEnabled = true;
                 _imageReviewVM.SpIsEnabled = true;
             }
+
+            _imageReviewVM.StopImageLoadingThread();
         }
 
         private void OpenNewReviewer_Click(object sender, RoutedEventArgs e)
@@ -894,7 +1039,7 @@
             _imageReviewVM.ZValue = _imageReviewVM.ZMax > 1 ? (int)Math.Ceiling(_imageReviewVM.ZMax / 2.0) : 1;
             _imageReviewVM.ZStreamValue = _imageReviewVM.ZStreamMin;
             _imageReviewVM.SpValue = _imageReviewVM.SpMin;
-            _imageReviewVM.ScanAreaID = _imageReviewVM.ScanAreaIDMin;
+            // _imageReviewVM.ScanAreaID = _imageReviewVM.ScanAreaIDMin;
 
             //Reset all timers
             _tTimerValue = 1;
@@ -906,117 +1051,108 @@
         private void ResetPlayStopButtons()
         {
             //Reset play/stop buttos
-            if (null != _tTimer) _tTimer.Stop();
-            if (null != _zTimer) _zTimer.Stop();
-            if (null != _streamTimer) _streamTimer.Stop();
-            if (null != _spTimer) _spTimer.Stop();
-            if (null != _scanAreaTimer) _scanAreaTimer.Stop();
+            StopTIndexThread();
+            StopZIndexThread();
+            StopStreamIndexThread();
+            StopSPIndexThread();
+            //if (null != _scanAreaTimer) _scanAreaTimer.Stop();
             _imageReviewVM.TIsLive = false;
             _imageReviewVM.ZIsLive = false;
             _imageReviewVM.ZStreamIsLive = false;
             _imageReviewVM.SpIsLive = false;
-            _imageReviewVM.ScanAreaIsLive = false;
+            //_imageReviewVM.ScanAreaIsLive = false;
             _imageReviewVM.TIsEnabled = true;
             _imageReviewVM.ZIsEnabled = true;
             _imageReviewVM.ZStreamIsEnabled = true;
             _imageReviewVM.SpIsEnabled = true;
-            _imageReviewVM.ScanAreaIsEnabled = true;
+            //_imageReviewVM.ScanAreaIsEnabled = true;
 
             //Reset all timers
             _tTimerValue = 1;
             _zTimerValue = 1;
             _streamTimerValue = 1;
             _spTimerValue = 1;
-            _scanAreaTimerValue = _imageReviewVM.ScanAreaIDMin;
+            // _scanAreaTimerValue = _imageReviewVM.ScanAreaIDMin;
 
             //Reset sliders to 1 in case the same experiment is being loaded
             _imageReviewVM.TValue = 1;
             _imageReviewVM.ZValue = 1;
             _imageReviewVM.ZStreamValue = 1;
             _imageReviewVM.SpValue = 1;
-            _imageReviewVM.ScanAreaID = _imageReviewVM.ScanAreaIDMin;
+            //_imageReviewVM.ScanAreaID = _imageReviewVM.ScanAreaIDMin;
         }
 
-        private void ScanAreaSliderText_LostFocus(object sender, RoutedEventArgs e)
-        {
-            if (_imageReviewVM == null)
-                return;
-
-            Regex regex = new Regex("^[0-9]*$");
-            if (scanAreaSliderText.Text != "" && regex.IsMatch(scanAreaSliderText.Text))
-            {
-                if ((Int32.Parse(scanAreaSliderText.Text) < _imageReviewVM.ScanAreaIDMin) || (Int32.Parse(spSliderText.Text) > _imageReviewVM.ScanAreaIDMax))
-                {
-                    MessageBox.Show("Enter values between " + _imageReviewVM.ScanAreaIDMin + " and " + _imageReviewVM.ScanAreaIDMax, "Invalid Range", MessageBoxButton.OK, MessageBoxImage.Error);
-                    scanAreaSliderText.Text = _imageReviewVM.ScanAreaID.ToString();
-                }
-            }
-            else if (scanAreaSliderText.Text == "")
-            {
-                //Do nothing, just wait for number to be entered
-            }
-            else
-            {
-                MessageBox.Show("Enter only numbers", "Invalid Value", MessageBoxButton.OK, MessageBoxImage.Error);
-                scanAreaSliderText.Text = _imageReviewVM.ScanAreaID.ToString();
-                return;
-            }
-        }
-
-        private void ScanAreaStart_Click(object sender, RoutedEventArgs e)
-        {
-            if (_imageReviewVM == null)
-                return;
-
-            if (!_imageReviewVM.ScanAreaIsLive)
-            {
-                if (_imageReviewVM.ScanAreaIDMax == _imageReviewVM.ScanAreaID)
-                {
-                    _scanAreaTimerValue = _imageReviewVM.ScanAreaIDMin;
-                }
-                else
-                {
-                    _scanAreaTimerValue = _imageReviewVM.ScanAreaID;
-                }
-
-                _scanAreaTimer.Interval = TimeSpan.FromMilliseconds(Convert.ToDouble(0));
-                _scanAreaTimer.Start();
-
-                //change the click image control
-                _imageReviewVM.ScanAreaIsLive = true;
-                _imageReviewVM.TIsEnabled = false;
-                _imageReviewVM.ZIsEnabled = false;
-                _imageReviewVM.ZStreamIsEnabled = false;
-                _imageReviewVM.SpIsEnabled = false;
-            }
-            else
-            {
-                _scanAreaTimer.Stop();
-                _imageReviewVM.ScanAreaIsLive = false;
-                _imageReviewVM.TIsEnabled = true;
-                _imageReviewVM.ZIsEnabled = true;
-                _imageReviewVM.ZStreamIsEnabled = true;
-                _imageReviewVM.SpIsEnabled = true;
-            }
-        }
-
-        void scanAreaTimer_Tick(object sender, EventArgs e)
-        {
-            if (_imageReviewVM == null)
-                return;
-
-            _imageReviewVM.ScanAreaID = _scanAreaTimerValue;
-
-            if (_scanAreaTimerValue < _imageReviewVM.ScanAreaIDMax)
-            {
-                _scanAreaTimerValue++;
-            }
-            else
-            {
-                _scanAreaTimerValue = _imageReviewVM.ScanAreaIDMin;
-            }
-        }
-
+        //private void ScanAreaSliderText_LostFocus(object sender, RoutedEventArgs e)
+        //{
+        //    if (_imageReviewVM == null)
+        //        return;
+        //    Regex regex = new Regex("^[0-9]*$");
+        //    if (scanAreaSliderText.Text != "" && regex.IsMatch(scanAreaSliderText.Text))
+        //    {
+        //        if ((Int32.Parse(scanAreaSliderText.Text) < _imageReviewVM.ScanAreaIDMin) || (Int32.Parse(spSliderText.Text) > _imageReviewVM.ScanAreaIDMax))
+        //        {
+        //            MessageBox.Show("Enter values between " + _imageReviewVM.ScanAreaIDMin + " and " + _imageReviewVM.ScanAreaIDMax, "Invalid Range", MessageBoxButton.OK, MessageBoxImage.Error);
+        //            scanAreaSliderText.Text = _imageReviewVM.ScanAreaID.ToString();
+        //        }
+        //    }
+        //    else if (scanAreaSliderText.Text == "")
+        //    {
+        //        //Do nothing, just wait for number to be entered
+        //    }
+        //    else
+        //    {
+        //        MessageBox.Show("Enter only numbers", "Invalid Value", MessageBoxButton.OK, MessageBoxImage.Error);
+        //        scanAreaSliderText.Text = _imageReviewVM.ScanAreaID.ToString();
+        //        return;
+        //    }
+        //}
+        //private void ScanAreaStart_Click(object sender, RoutedEventArgs e)
+        //{
+        //    if (_imageReviewVM == null)
+        //        return;
+        //    if (!_imageReviewVM.ScanAreaIsLive)
+        //    {
+        //        if (_imageReviewVM.ScanAreaIDMax == _imageReviewVM.ScanAreaID)
+        //        {
+        //            _scanAreaTimerValue = _imageReviewVM.ScanAreaIDMin;
+        //        }
+        //        else
+        //        {
+        //            _scanAreaTimerValue = _imageReviewVM.ScanAreaID;
+        //        }
+        //        _scanAreaTimer.Interval = TimeSpan.FromMilliseconds(Convert.ToDouble(0));
+        //        _scanAreaTimer.Start();
+        //        //change the click image control
+        //        _imageReviewVM.ScanAreaIsLive = true;
+        //        _imageReviewVM.TIsEnabled = false;
+        //        _imageReviewVM.ZIsEnabled = false;
+        //        _imageReviewVM.ZStreamIsEnabled = false;
+        //        _imageReviewVM.SpIsEnabled = false;
+        //    }
+        //    else
+        //    {
+        //        _scanAreaTimer.Stop();
+        //        _imageReviewVM.ScanAreaIsLive = false;
+        //        _imageReviewVM.TIsEnabled = true;
+        //        _imageReviewVM.ZIsEnabled = true;
+        //        _imageReviewVM.ZStreamIsEnabled = true;
+        //        _imageReviewVM.SpIsEnabled = true;
+        //    }
+        //}
+        //void scanAreaTimer_Tick(object sender, EventArgs e)
+        //{
+        //    if (_imageReviewVM == null)
+        //        return;
+        //    _imageReviewVM.ScanAreaID = _scanAreaTimerValue;
+        //    if (_scanAreaTimerValue < _imageReviewVM.ScanAreaIDMax)
+        //    {
+        //        _scanAreaTimerValue++;
+        //    }
+        //    else
+        //    {
+        //        _scanAreaTimerValue = _imageReviewVM.ScanAreaIDMin;
+        //    }
+        //}
         /// <summary>
         /// Forces an update of the bitmap, overriding any normal time spacing 
         /// </summary>
@@ -1072,8 +1208,9 @@
                     _spTimerValue = _imageReviewVM.SpValue;
                 }
 
-                _spTimer.Interval = TimeSpan.FromMilliseconds(Convert.ToDouble(0));
-                _spTimer.Start();
+                _spIndexThreadRun = true;
+                _spIndexLive = new Thread(SPIndexThreadProc);
+                _spIndexLive.Start(_imageReviewVM);
 
                 //change the click image control
                 _imageReviewVM.SpIsLive = true;
@@ -1083,7 +1220,8 @@
             }
             else
             {
-                _spTimer.Stop();
+                ImageReviewViewModel._stopRequested = true;
+                StopSPIndexThread();
                 _imageReviewVM.SpIsLive = false;
                 _imageReviewVM.TIsEnabled = true;
                 _imageReviewVM.ZStreamIsEnabled = true;
@@ -1162,6 +1300,46 @@
             _imageReviewVM.MStartValue = (int)((Slider)e.Source).Value;
         }
 
+        private void StopSPIndexThread()
+        {
+            if (_spIndexThreadRun)
+            {
+                _spIndexThreadRun = false;
+                _spIndexLive.Join();
+                ImageReviewViewModel._stopRequested = false;
+            }
+        }
+
+        private void StopStreamIndexThread()
+        {
+            if (_streamIndexThreadRun)
+            {
+                _streamIndexThreadRun = false;
+                _streamIndexLive.Join();
+                ImageReviewViewModel._stopRequested = false;
+            }
+        }
+
+        private void StopTIndexThread()
+        {
+            if (_tIndexThreadRun)
+            {
+                _tIndexThreadRun = false;
+                _tIndexLive.Join();
+                ImageReviewViewModel._stopRequested = false;
+            }
+        }
+
+        private void StopZIndexThread()
+        {
+            if (_zIndexThreadRun)
+            {
+                _zIndexThreadRun = false;
+                _zIndexLive.Join();
+                ImageReviewViewModel._stopRequested = false;
+            }
+        }
+
         private void streamStart_Click(object sender, RoutedEventArgs e)
         {
             if (_imageReviewVM == null)
@@ -1179,8 +1357,9 @@
                     _streamTimerValue = _imageReviewVM.ZStreamValue;
                 }
 
-                _streamTimer.Interval = TimeSpan.FromMilliseconds(Convert.ToDouble(0));
-                _streamTimer.Start();
+                _streamIndexThreadRun = true;
+                _streamIndexLive = new Thread(StreamIndexThreadProc);
+                _streamIndexLive.Start(_imageReviewVM);
 
                 //change the click image control
                 _imageReviewVM.ZStreamIsLive = true;
@@ -1192,33 +1371,14 @@
             }
             else
             {
-                _streamTimer.Stop();
-
+                ImageReviewViewModel._stopRequested = true;
+                StopStreamIndexThread();
                 //changed the click image control
                 _imageReviewVM.ZStreamIsLive = false;
-
                 //enable T Z back when stream play is finished
                 _imageReviewVM.ZIsEnabled = true;
                 _imageReviewVM.TIsEnabled = true;
                 _imageReviewVM.SpIsEnabled = true;
-            }
-        }
-
-        void streamTimer_Tick(object sender, EventArgs e)
-        {
-            if (_imageReviewVM == null)
-            {
-                return;
-            }
-            _imageReviewVM.ZStreamValue = _streamTimerValue;
-
-            if (_streamTimerValue < _imageReviewVM.ZStreamMax)
-            {
-                _streamTimerValue++;
-            }
-            else
-            {
-                _streamTimerValue = 1;
             }
         }
 
@@ -1287,40 +1447,27 @@
                     _tTimerValue = _imageReviewVM.TValue;
                 }
 
-                _tTimer.Interval = TimeSpan.FromMilliseconds(Convert.ToDouble(0));
-                _tTimer.Start();
+                _tIndexThreadRun = true;
+                _tIndexLive = new Thread(TIndexThreadProc);
+                _imageReviewVM.RXFlag = false;
+                _tIndexLive.Start(_imageReviewVM);
 
                 //change the click image control
                 _imageReviewVM.TIsLive = true;
+
                 _imageReviewVM.ZIsEnabled = false;
                 _imageReviewVM.ZStreamIsEnabled = false;
                 _imageReviewVM.SpIsEnabled = false;
             }
             else
             {
-                _tTimer.Stop();
+                ImageReviewViewModel._stopRequested = true;
+                StopTIndexThread();
+                _imageReviewVM.RXFlag = true;
                 _imageReviewVM.TIsLive = false;
                 _imageReviewVM.ZIsEnabled = true;
                 _imageReviewVM.ZStreamIsEnabled = true;
                 _imageReviewVM.SpIsEnabled = true;
-            }
-        }
-
-        private void tTimerTick(object sender, EventArgs e)
-        {
-            if (_imageReviewVM == null)
-            {
-                return;
-            }
-            _imageReviewVM.TValue = _tTimerValue;
-
-            if (_tTimerValue < _imageReviewVM.TMax)
-            {
-                _tTimerValue++;
-            }
-            else
-            {
-                _tTimerValue = 1;
             }
         }
 
@@ -1382,8 +1529,10 @@
                     _zTimerValue = _imageReviewVM.ZValue;
                 }
 
-                _zTimer.Interval = TimeSpan.FromMilliseconds(Convert.ToDouble(0));
-                _zTimer.Start();
+                _zIndexThreadRun = true;
+                _zIndexLive = new Thread(ZIndexThreadProc);
+                _imageReviewVM.RXFlagZ = false;
+                _zIndexLive.Start(_imageReviewVM);
 
                 //change the click image control
                 _imageReviewVM.ZIsLive = true;
@@ -1393,7 +1542,9 @@
             }
             else
             {
-                _zTimer.Stop();
+                ImageReviewViewModel._stopRequested = true;
+                StopZIndexThread();
+                _imageReviewVM.RXFlagZ = true;
                 _imageReviewVM.ZIsLive = false;
                 _imageReviewVM.TIsEnabled = true;
                 _imageReviewVM.ZStreamIsEnabled = true;
@@ -1426,24 +1577,6 @@
                 MessageBox.Show("Enter only numbers", "Invalid Value", MessageBoxButton.OK, MessageBoxImage.Error);
                 tSliderText.Text = _imageReviewVM.ZValue.ToString();
                 return;
-            }
-        }
-
-        private void zTimerTick(object sender, EventArgs e)
-        {
-            if (_imageReviewVM == null)
-            {
-                return;
-            }
-            _imageReviewVM.ZValue = _zTimerValue;
-
-            if (_zTimerValue < _imageReviewVM.ZMax)
-            {
-                _zTimerValue++;
-            }
-            else
-            {
-                _zTimerValue = 1;
             }
         }
 

@@ -1,0 +1,1023 @@
+﻿ <Window x:Class="ThorDetector_Control.Window1"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:ThorDetector_Control"
+        Name="ThorDetectorControlApp"
+        Title="ThorDetector Control"
+        Width="675"
+        Height="Auto"
+        Loaded="Window1_Loaded"
+        ResizeMode="NoResize"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterScreen"><Window.Resources>
+    <ResourceDictionary>
+        <ResourceDictionary.MergedDictionaries>
+            <ResourceDictionary Source="pack://application:,,,/ThemeControl;component/ThorStyleDark.xaml" />
+        </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+</Window.Resources>
+<Grid>
+    <StackPanel>
+        <StackPanel Margin="5" Orientation="Horizontal">
+            <Menu Width="50"
+                      Background="#FF333333"
+                      Foreground="White">
+                <MenuItem Header="File"
+                              Background="#FF333333"
+                              Foreground="White">
+
+                    <MenuItem Name="btnUpdateFirmware"
+                                  Background="#FF333333"
+                                  Foreground="White"
+                                  Click="btnUpdateFirmware_Click"                              
+                                  Header="Update Firmware" />
+                    <MenuItem Name="btnExit"
+                                  Background="#FF333333"
+                                  Foreground="White"
+                                  Click="btnExit_Click"
+                                  Header="Exit" />
+                </MenuItem>
+            </Menu>
+            <Label Width="435" />
+            <Image Width="140" Source=".\Thorlabs.png" />
+
+        </StackPanel>
+        <Border Name="brdMain"
+                    Margin="5"
+                    BorderBrush="White"
+                    BorderThickness="2">
+            <StackPanel Margin="3">
+                <StackPanel Orientation="Horizontal">
+                    <Button x:Name="StartDetectors"
+                                Width="45"
+                                Height="40"
+                                MinWidth="45"
+                                Margin="3"
+                                HorizontalAlignment="Left"
+                                Click="StartDetectors_Click"
+                                ToolTip="Activate Detectors">
+                        <Image x:Name="image1" Source="{Binding ElementName=ThorDetectorControlApp, Path=ImagePathPlay}" />
+                    </Button>
+                    <Button Name="refresh"
+                                Width="45"
+                                Height="40"
+                                MinWidth="45"
+                                Margin="3"
+                                Click="refresh_Click"
+                                ToolTip="Refresh Detector connections">
+                        <Image HorizontalAlignment="Center" Source="/ThorDetector_Control;component/Reset.png" />
+                    </Button>
+                    <Label Width="60" />
+                    <Label Width="75"
+                               VerticalAlignment="Bottom"
+                               HorizontalContentAlignment="Center"
+                               Content="Gain" />
+                    <Label Width="185" />
+                    <Label Width="100"
+                               VerticalAlignment="Bottom"
+                               HorizontalContentAlignment="Center"
+                               Content="Bandwidth" />
+                </StackPanel>
+                <StackPanel Name="Detector1" Orientation="Horizontal">
+                    <Expander>
+                        <Expander.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <CheckBox x:Name="cbD1"
+                                              Width="72"
+                                              VerticalAlignment="Center"
+                                              Content="Detector1"
+                                              Foreground="White"
+                                              IsChecked="{Binding Detector1On,
+                                                                  ElementName=ThorDetectorControlApp}" />
+                                <Slider Width="200"
+                                            VerticalAlignment="Center"
+                                            IsEnabled="{Binding IsChecked,
+                                                                ElementName=cbGain1}"
+                                            Maximum="{Binding Detector1GainMax,
+                                                              ElementName=ThorDetectorControlApp,
+                                                              Mode=OneWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                            Minimum="{Binding Detector1GainMin,
+                                                              ElementName=ThorDetectorControlApp,
+                                                              Mode=OneWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                            Value="{Binding Detector1Gain,
+                                                            ElementName=ThorDetectorControlApp,
+                                                            Mode=TwoWay,
+                                                            UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Width="45"
+                                             Height="25"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"
+                                             Text="{Binding Detector1Gain,
+                                                            ElementName=ThorDetectorControlApp}"
+                                             ToolTip="Detector1Gain" />
+                                <StackPanel>
+                                    <RepeatButton x:Name="btnDetector1Plus"
+                                                      Width="30"
+                                                      Click="btnDetector1Plus_Click"
+                                                      Content="+"
+                                                      Style="{x:Null}" />
+                                    <RepeatButton x:Name="btnDetector1Minus"
+                                                      Click="btnDetector1Minus_Click"
+                                                      Content="-"
+                                                      Style="{x:Null}" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,5,0"
+                                                HorizontalAlignment="Left"
+                                                Orientation="Horizontal">
+                                    <Label Width="38"
+                                               Height="25"
+                                               Content="{Binding ElementName=ThorDetectorControlApp,
+                                                                 Path=Detector1GainVolts}" />
+                                    <Label Height="25"
+                                               HorizontalAlignment="Left"
+                                               HorizontalContentAlignment="Left"
+                                               Content="[v]" />
+                                </StackPanel>
+                                    <ComboBox Width="100"
+                                              Height="30"
+                                              Margin="3"
+                                              SelectedItem="{Binding Detector1Bandwidth,
+                                                                      ElementName=ThorDetectorControlApp}"
+                                              ItemsSource="{Binding Path=BandwidthList[0], ElementName=ThorDetectorControlApp}">
+                                    </ComboBox>
+                                <Label MinWidth="30"
+                                           VerticalAlignment="Center"
+                                           Background="{Binding TrippedColor1,
+                                                                ElementName=ThorDetectorControlApp}"
+                                           Content="{Binding TrippedText1,
+                                                             ElementName=ThorDetectorControlApp}" />
+                                <Button x:Name="btnReset1"
+                                            Width="35"
+                                            Height="30"
+                                            MinWidth="35"
+                                            Click="btnReset1_Click"
+                                            Content="Reset"
+                                            Visibility="{Binding TrippedVis1,
+                                                                 ElementName=ThorDetectorControlApp}" />
+                            </StackPanel>
+                        </Expander.Header>
+                        <StackPanel Margin="3" Orientation="Horizontal" Width="Auto">
+                            <Label Margin="5,0,0,0"
+                                       VerticalAlignment="Center"
+                                       Content="Output Offset" />
+                            <Slider Width="100"
+                                        VerticalAlignment="Center"
+                                        IsSnapToTickEnabled="True"
+                                        LargeChange="0.004"
+                                        Maximum="{Binding Detector1OutputOffsetMax,
+                                                          ElementName=ThorDetectorControlApp,
+                                                          Mode=OneWay,
+                                                          UpdateSourceTrigger=PropertyChanged}"
+                                        Minimum="{Binding Detector1OutputOffsetMin,
+                                                          ElementName=ThorDetectorControlApp,
+                                                          Mode=OneWay,
+                                                          UpdateSourceTrigger=PropertyChanged}"
+                                        SmallChange="0.004"
+                                        TickFrequency="0.004"
+                                        TickPlacement="none"
+                                        Value="{Binding Detector1OutputOffset,
+                                                        ElementName=ThorDetectorControlApp,
+                                                        Mode=TwoWay,
+                                                        UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Width="45"
+                                         Height="25"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"
+                                         Text="{Binding Detector1OutputOffset,
+                                                        ElementName=ThorDetectorControlApp}"
+                                         ToolTip="Detector1 Output Offset" />
+                            <Label Height="25" Content="[v]" />
+                                <StackPanel>
+                                    <RepeatButton x:Name="btnDetector1OffsetPlus"
+                                                  Width="30"
+                                                  Click="btnDetector1OffsetPlus_Click"
+                                                  Content="+"
+                                                  Style="{x:Null}" />
+                                    <RepeatButton x:Name="btnDetector1OffsetMinus"
+                                                  Click="btnDetector1OffsetMinus_Click"
+                                                  Content="-"
+                                                  Style="{x:Null}" />
+                                </StackPanel>
+                                <StackPanel Grid.Row="1"
+                                            Grid.Column="1"
+                                            Margin="10,0,0,0"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Orientation="Horizontal">
+                                    <Label HorizontalAlignment="Center" Content="SN:" />
+                                    <TextBox Width="70"
+                                             VerticalAlignment="Center"
+                                             IsReadOnly="True"
+                                             Text="{Binding ElementName=ThorDetectorControlApp,
+                                                            Path=Detector1SerialNumber,
+                                                            UpdateSourceTrigger=PropertyChanged,
+                                                            Mode=OneWay}" />
+                                </StackPanel>
+                            <Button x:Name="btnUpdateSerial1"
+                                        Height="30"
+                                        Margin="3"
+                                        Click="btnUpdateSerial1_Click"
+                                        Content="Update Settings SN"
+                                        ToolTip="Update the settings file with this serial number for Detector1" />
+                                <StackPanel Margin="6,0,0,0"
+                                            Orientation="Horizontal"
+                                            VerticalAlignment="Center">
+                                    <Label Content="Type:" />
+                                    <Label Content="{Binding ElementName=ThorDetectorControlApp, 
+                                                                 Path=Detector1DetectorType,
+                                                                 UpdateSourceTrigger=PropertyChanged}" 
+                                           VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                    </Expander>
+                </StackPanel>
+                <StackPanel Name="Detector2" Orientation="Horizontal">
+                    <Border Margin="1"
+                                BorderBrush="White"
+                                BorderThickness="0">
+                        <Expander>
+                            <Expander.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox Name="cbD2"
+                                                  Width="72"
+                                                  VerticalAlignment="Center"
+                                                  Content="Detector2"
+                                                  Foreground="White"
+                                                  IsChecked="{Binding ElementName=ThorDetectorControlApp,
+                                                                      Path=Detector2On}" />
+                                    <Slider Width="200"
+                                                VerticalAlignment="Center"
+                                                IsEnabled="{Binding ElementName=cbGain2,
+                                                                    Path=IsChecked}"
+                                                Maximum="{Binding ElementName=ThorDetectorControlApp,
+                                                                  Path=Detector2GainMax,
+                                                                  Mode=OneWay,
+                                                                  UpdateSourceTrigger=PropertyChanged}"
+                                                Minimum="{Binding ElementName=ThorDetectorControlApp,
+                                                                  Path=Detector2GainMin,
+                                                                  Mode=OneWay,
+                                                                  UpdateSourceTrigger=PropertyChanged}"
+                                                Value="{Binding ElementName=ThorDetectorControlApp,
+                                                                Path=Detector2Gain,
+                                                                Mode=TwoWay,
+                                                                UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Width="45"
+                                                 Height="25"
+                                                 HorizontalAlignment="Center"
+                                                 VerticalAlignment="Center"
+                                                 Text="{Binding ElementName=ThorDetectorControlApp,
+                                                                Path=Detector2Gain}"
+                                                 ToolTip="Detector2Gain" />
+                                    <StackPanel>
+                                        <RepeatButton Name="btnDetector2Plus"
+                                                          Width="30"
+                                                          Click="btnDetector2Plus_Click"
+                                                          Content="+"
+                                                          Style="{x:Null}" />
+                                        <RepeatButton Name="btnDetector2Minus"
+                                                          Click="btnDetector2Minus_Click"
+                                                          Content="-"
+                                                          Style="{x:Null}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,5,0"
+                                                    HorizontalAlignment="Left"
+                                                    Orientation="Horizontal">
+                                        <Label Width="38"
+                                                   Height="25"
+                                                   Content="{Binding ElementName=ThorDetectorControlApp,
+                                                                     Path=Detector2GainVolts}" />
+                                        <Label Height="25"
+                                                   HorizontalAlignment="Left"
+                                                   HorizontalContentAlignment="Left"
+                                                   Content="[v]" />
+                                    </StackPanel>
+                                        <ComboBox Width="100"
+                                                  Height="30"
+                                                  Margin="3"
+                                                  SelectedItem="{Binding ElementName=ThorDetectorControlApp,
+                                                                          Path=Detector2Bandwidth}"
+                                                  ItemsSource="{Binding Path=BandwidthList[1], ElementName=ThorDetectorControlApp}">
+                                        </ComboBox>
+                                    <Label MinWidth="30"
+                                               VerticalAlignment="Center"
+                                               Background="{Binding ElementName=ThorDetectorControlApp,
+                                                                    Path=TrippedColor2}"
+                                               Content="{Binding ElementName=ThorDetectorControlApp,
+                                                                 Path=TrippedText2}" />
+                                    <Button Name="btnReset2"
+                                                Width="35"
+                                                Height="30"
+                                                MinWidth="35"
+                                                Click="btnReset2_Click"
+                                                Content="Reset"
+                                                Visibility="{Binding ElementName=ThorDetectorControlApp,
+                                                                     Path=TrippedVis2}" />
+                                </StackPanel>
+                            </Expander.Header>
+                            <StackPanel Margin="3" Orientation="Horizontal">
+                                <Label Margin="5,0,0,0"
+                                           VerticalAlignment="Center"
+                                           Content="Output Offset" />
+                                <Slider Width="100"
+                                            VerticalAlignment="Center"
+                                            IsSnapToTickEnabled="True"
+                                            LargeChange="0.004"
+                                            Maximum="{Binding ElementName=ThorDetectorControlApp,
+                                                              Path=Detector2OutputOffsetMax,
+                                                              Mode=OneWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                            Minimum="{Binding ElementName=ThorDetectorControlApp,
+                                                              Path=Detector2OutputOffsetMin,
+                                                              Mode=OneWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                            SmallChange="0.004"
+                                            TickFrequency="0.004"
+                                            TickPlacement="none"
+                                            Value="{Binding ElementName=ThorDetectorControlApp,
+                                                            Path=Detector2OutputOffset,
+                                                            Mode=TwoWay,
+                                                            UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Width="45"
+                                             Height="25"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"
+                                             Text="{Binding ElementName=ThorDetectorControlApp,
+                                                            Path=Detector2OutputOffset}"
+                                             ToolTip="Detector2 Output Offset" />
+                                <Label Height="25" Content="[v]" />
+                                    <StackPanel>
+                                        <RepeatButton Name="btnDetector2OffsetPlus"
+                                                      Width="30"
+                                                      Click="btnDetector2OffsetPlus_Click"
+                                                      Content="+"
+                                                      Style="{x:Null}" />
+                                        <RepeatButton Name="btnDetector2OffsetMinus"
+                                                      Click="btnDetector2OffsetMinus_Click"
+                                                      Content="-"
+                                                      Style="{x:Null}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1"
+                                            Grid.Column="1"
+                                            Margin="10,0,0,0"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Orientation="Horizontal">
+                                            <Label HorizontalAlignment="Center" Content="SN:" />
+                                        <TextBox Width="70"
+                                             VerticalAlignment="Center"
+                                             IsReadOnly="True"
+                                             Text="{Binding ElementName=ThorDetectorControlApp,
+                                                            Path=Detector2SerialNumber,
+                                                            UpdateSourceTrigger=PropertyChanged,
+                                                            Mode=OneWay}" />
+                                    </StackPanel>
+                                    <Button x:Name="btnUpdateSerial2"
+                                            Height="30"
+                                            Margin="3"
+                                            Click="btnUpdateSerial2_Click"
+                                            Content="Update Settings SN"
+                                            ToolTip="Update the settings file with this serial number for Detector2" />
+                                    <StackPanel Margin="6,0,0,0"
+                                            Orientation="Horizontal"
+                                            VerticalAlignment="Center">
+                                        <Label Content="Type:" />
+                                        <Label Content="{Binding ElementName=ThorDetectorControlApp, 
+                                                                 Path=Detector2DetectorType,
+                                                                 UpdateSourceTrigger=PropertyChanged}" 
+                                               VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </StackPanel>
+                        </Expander>
+                    </Border>
+                </StackPanel>
+                <StackPanel Name="Detector3" Orientation="Horizontal">
+                    <Expander>
+                        <Expander.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <CheckBox Name="cbD3"
+                                              Width="72"
+                                              VerticalAlignment="Center"
+                                              Content="Detector3"
+                                              Foreground="White"
+                                              IsChecked="{Binding ElementName=ThorDetectorControlApp,
+                                                                  Path=Detector3On}" />
+                                <Slider Width="200"
+                                            VerticalAlignment="Center"
+                                            IsEnabled="{Binding ElementName=cbGain3,
+                                                                Path=IsChecked}"
+                                            Maximum="{Binding ElementName=ThorDetectorControlApp,
+                                                              Path=Detector3GainMax,
+                                                              Mode=OneWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                            Minimum="{Binding ElementName=ThorDetectorControlApp,
+                                                              Path=Detector3GainMin,
+                                                              Mode=OneWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                            Value="{Binding ElementName=ThorDetectorControlApp,
+                                                            Path=Detector3Gain,
+                                                            Mode=TwoWay,
+                                                            UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Width="45"
+                                             Height="25"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"
+                                             Text="{Binding ElementName=ThorDetectorControlApp,
+                                                            Path=Detector3Gain}"
+                                             ToolTip="Detector3Gain" />
+                                <StackPanel>
+                                    <RepeatButton Name="btnDetector3Plus"
+                                                      Width="30"
+                                                      Click="btnDetector3Plus_Click"
+                                                      Content="+"
+                                                      Style="{x:Null}" />
+                                    <RepeatButton Name="btnDetector3Minus"
+                                                      Click="btnDetector3Minus_Click"
+                                                      Content="-"
+                                                      Style="{x:Null}" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,5,0"
+                                                HorizontalAlignment="Left"
+                                                Orientation="Horizontal">
+                                    <Label Width="38"
+                                               Height="25"
+                                               Content="{Binding ElementName=ThorDetectorControlApp,
+                                                                 Path=Detector3GainVolts}" />
+                                    <Label Height="25"
+                                               HorizontalAlignment="Left"
+                                               HorizontalContentAlignment="Left"
+                                               Content="[v]" />
+                                </StackPanel>
+                                    <ComboBox Width="100"
+                                              Height="30"
+                                              Margin="3"
+                                              SelectedItem="{Binding ElementName=ThorDetectorControlApp,
+                                                                      Path=Detector3Bandwidth}"
+                                              ItemsSource="{Binding Path=BandwidthList[2], ElementName=ThorDetectorControlApp}">
+                                    </ComboBox>
+                                <Label MinWidth="30"
+                                           VerticalAlignment="Center"
+                                           Background="{Binding ElementName=ThorDetectorControlApp,
+                                                                Path=TrippedColor3}"
+                                           Content="{Binding ElementName=ThorDetectorControlApp,
+                                                             Path=TrippedText3}" />
+                                <Button Name="btnReset3"
+                                            Width="35"
+                                            Height="30"
+                                            MinWidth="35"
+                                            Click="btnReset3_Click"
+                                            Content="Reset"
+                                            Visibility="{Binding ElementName=ThorDetectorControlApp,
+                                                                 Path=TrippedVis3}" />
+                            </StackPanel>
+                        </Expander.Header>
+                        <StackPanel Margin="3" Orientation="Horizontal">
+                            <Label Margin="5,0,0,0"
+                                       VerticalAlignment="Center"
+                                       Content="Output Offset" />
+                            <Slider Width="100"
+                                        VerticalAlignment="Center"
+                                        IsSnapToTickEnabled="True"
+                                        LargeChange="0.004"
+                                        Maximum="{Binding ElementName=ThorDetectorControlApp,
+                                                          Path=Detector3OutputOffsetMax,
+                                                          Mode=OneWay,
+                                                          UpdateSourceTrigger=PropertyChanged}"
+                                        Minimum="{Binding ElementName=ThorDetectorControlApp,
+                                                          Path=Detector3OutputOffsetMin,
+                                                          Mode=OneWay,
+                                                          UpdateSourceTrigger=PropertyChanged}"
+                                        SmallChange="0.004"
+                                        TickFrequency="0.004"
+                                        TickPlacement="none"
+                                        Value="{Binding ElementName=ThorDetectorControlApp,
+                                                        Path=Detector3OutputOffset,
+                                                        Mode=TwoWay,
+                                                        UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Width="45"
+                                         Height="25"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"
+                                         Text="{Binding ElementName=ThorDetectorControlApp,
+                                                        Path=Detector3OutputOffset}"
+                                         ToolTip="Detector3 Output Offset" />
+                            <Label Height="25"
+                                       HorizontalAlignment="Left"
+                                       Content="[v]" />
+                                <StackPanel>
+                                    <RepeatButton Name="btnDetector3OffsetPlus"
+                                                  Width="30"
+                                                  Click="btnDetector3OffsetPlus_Click"
+                                                  Content="+"
+                                                  Style="{x:Null}" />
+                                    <RepeatButton Name="btnDetector3OffsetMinus"
+                                                  Click="btnDetector3OffsetMinus_Click"
+                                                  Content="-"
+                                                  Style="{x:Null}" />
+                                </StackPanel>
+                                <StackPanel Grid.Row="1"
+                                            Grid.Column="1"
+                                            Margin="10,0,0,0"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Orientation="Horizontal">
+                                    <Label HorizontalAlignment="Center" Content="SN:" />
+                                    <TextBox Width="70"
+                                             VerticalAlignment="Center"
+                                             IsReadOnly="True"
+                                             Text="{Binding ElementName=ThorDetectorControlApp,
+                                                            Path=Detector3SerialNumber,
+                                                            UpdateSourceTrigger=PropertyChanged,
+                                                            Mode=OneWay}" />
+                                </StackPanel>
+                                <Button x:Name="btnUpdateSerial3"
+                                        Height="30"
+                                        Margin="3"
+                                        Click="btnUpdateSerial3_Click"
+                                        Content="Update Settings SN"
+                                        ToolTip="Update the settings file with this serial number for Detector3" />
+                                <StackPanel Margin="6,0,0,0"
+                                            Orientation="Horizontal"
+                                            VerticalAlignment="Center">
+                                    <Label Content="Type:" />
+                                    <Label Content="{Binding ElementName=ThorDetectorControlApp, 
+                                                                 Path=Detector3DetectorType,
+                                                                 UpdateSourceTrigger=PropertyChanged}" 
+                                           VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                    </Expander>
+                </StackPanel>
+                <StackPanel Name="Detector4" Orientation="Horizontal">
+                    <Expander>
+                        <Expander.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <CheckBox Name="cbD4"
+                                              Width="72"
+                                              VerticalAlignment="Center"
+                                              Content="Detector4"
+                                              Foreground="White"
+                                              IsChecked="{Binding ElementName=ThorDetectorControlApp,
+                                                                  Path=Detector4On}" />
+                                <Slider Width="200"
+                                            VerticalAlignment="Center"
+                                            IsEnabled="{Binding ElementName=cbGain4,
+                                                                Path=IsChecked}"
+                                            Maximum="{Binding ElementName=ThorDetectorControlApp,
+                                                              Path=Detector4GainMax,
+                                                              Mode=OneWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                            Minimum="{Binding ElementName=ThorDetectorControlApp,
+                                                              Path=Detector4GainMin,
+                                                              Mode=OneWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                            Value="{Binding ElementName=ThorDetectorControlApp,
+                                                            Path=Detector4Gain,
+                                                            Mode=TwoWay,
+                                                            UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Width="45"
+                                             Height="25"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"
+                                             Text="{Binding ElementName=ThorDetectorControlApp,
+                                                            Path=Detector4Gain}"
+                                             ToolTip="Detector4Gain" />
+                                <StackPanel>
+                                    <RepeatButton Name="btnDetector4Plus"
+                                                      Width="30"
+                                                      Click="btnDetector4Plus_Click"
+                                                      Content="+"
+                                                      Style="{x:Null}" />
+                                    <RepeatButton Name="btnDetector4Minus"
+                                                      Click="btnDetector4Minus_Click"
+                                                      Content="-"
+                                                      Style="{x:Null}" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,5,0"
+                                                HorizontalAlignment="Left"
+                                                Orientation="Horizontal">
+                                    <Label Width="38"
+                                               Height="25"
+                                               Content="{Binding ElementName=ThorDetectorControlApp,
+                                                                 Path=Detector4GainVolts}" />
+                                    <Label Height="25"
+                                               HorizontalAlignment="Left"
+                                               HorizontalContentAlignment="Left"
+                                               Content="[v]" />
+                                </StackPanel>
+                                    <ComboBox Width="100"
+                                              Height="30"
+                                              Margin="3"
+                                              SelectedItem="{Binding ElementName=ThorDetectorControlApp,
+                                                                      Path=Detector4Bandwidth}"
+                                              ItemsSource="{Binding Path=BandwidthList[3], ElementName=ThorDetectorControlApp}">
+                                    </ComboBox>
+                                <Label MinWidth="30"
+                                           VerticalAlignment="Center"
+                                           Background="{Binding ElementName=ThorDetectorControlApp,
+                                                                Path=TrippedColor4}"
+                                           Content="{Binding ElementName=ThorDetectorControlApp,
+                                                             Path=TrippedText4}" />
+                                <Button Name="btnReset4"
+                                            Width="35"
+                                            Height="30"
+                                            MinWidth="35"
+                                            Click="btnReset4_Click"
+                                            Content="Reset"
+                                            Visibility="{Binding ElementName=ThorDetectorControlApp,
+                                                                 Path=TrippedVis4}" />
+                            </StackPanel>
+                        </Expander.Header>
+                        <StackPanel Margin="3" Orientation="Horizontal">
+                            <Label Margin="5,0,0,0"
+                                       VerticalAlignment="Center"
+                                       Content="Output Offset" />
+                            <Slider Width="100"
+                                        VerticalAlignment="Center"
+                                        IsSnapToTickEnabled="True"
+                                        LargeChange="0.004"
+                                        Maximum="{Binding ElementName=ThorDetectorControlApp,
+                                                          Path=Detector4OutputOffsetMax,
+                                                          Mode=OneWay,
+                                                          UpdateSourceTrigger=PropertyChanged}"
+                                        Minimum="{Binding ElementName=ThorDetectorControlApp,
+                                                          Path=Detector4OutputOffsetMin,
+                                                          Mode=OneWay,
+                                                          UpdateSourceTrigger=PropertyChanged}"
+                                        SmallChange="0.004"
+                                        TickFrequency="0.004"
+                                        TickPlacement="none"
+                                        Value="{Binding ElementName=ThorDetectorControlApp,
+                                                        Path=Detector4OutputOffset,
+                                                        Mode=TwoWay,
+                                                        UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Width="45"
+                                         Height="25"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"
+                                         Text="{Binding ElementName=ThorDetectorControlApp,
+                                                        Path=Detector4OutputOffset}"
+                                         ToolTip="Detector4 Output Offset" />
+                            <Label Height="25" Content="[v]" />
+                                <StackPanel>
+                                    <RepeatButton Name="btnDetector4OffsetPlus"
+                                                  Width="30"
+                                                  Click="btnDetector4OffsetPlus_Click"
+                                                  Content="+"
+                                                  Style="{x:Null}" />
+                                    <RepeatButton Name="btnDetector4OffsetMinus"
+                                                  Click="btnDetector4OffsetMinus_Click"
+                                                  Content="-"
+                                                  Style="{x:Null}" />
+                                </StackPanel>
+                                <StackPanel Grid.Row="1"
+                                            Grid.Column="1"
+                                            Margin="10,0,0,0"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Orientation="Horizontal">
+                                    <Label HorizontalAlignment="Center" Content="SN:" />
+                                    <TextBox Width="70"
+                                             VerticalAlignment="Center"
+                                             IsReadOnly="True"
+                                             Text="{Binding ElementName=ThorDetectorControlApp,
+                                                            Path=Detector4SerialNumber,
+                                                            UpdateSourceTrigger=PropertyChanged,
+                                                            Mode=OneWay}" />
+                                </StackPanel>
+                                <Button x:Name="btnUpdateSerial4"
+                                        Height="30"
+                                        Margin="3"
+                                        Click="btnUpdateSerial4_Click"
+                                        Content="Update Settings SN"
+                                        ToolTip="Update the settings file with this serial number for Detector4" />
+                                <StackPanel Margin="6,0,0,0"
+                                            Orientation="Horizontal"
+                                            VerticalAlignment="Center">
+                                    <Label Content="Type:" />
+                                    <Label Content="{Binding ElementName=ThorDetectorControlApp, 
+                                                                 Path=Detector4DetectorType,
+                                                                 UpdateSourceTrigger=PropertyChanged}" 
+                                           VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                    </Expander>
+                </StackPanel>
+                <StackPanel Name="Detector5" Orientation="Horizontal">
+                    <Expander>
+                        <Expander.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <CheckBox Name="cbD5"
+                                              Width="72"
+                                              VerticalAlignment="Center"
+                                              Content="Detector5"
+                                              Foreground="White"
+                                              IsChecked="{Binding ElementName=ThorDetectorControlApp,
+                                                                  Path=Detector5On}" />
+                                <Slider Width="200"
+                                            VerticalAlignment="Center"
+                                            IsEnabled="{Binding ElementName=cbGain5,
+                                                                Path=IsChecked}"
+                                            Maximum="{Binding ElementName=ThorDetectorControlApp,
+                                                              Path=Detector5GainMax,
+                                                              Mode=OneWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                            Minimum="{Binding ElementName=ThorDetectorControlApp,
+                                                              Path=Detector5GainMin,
+                                                              Mode=OneWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                            Value="{Binding ElementName=ThorDetectorControlApp,
+                                                            Path=Detector5Gain,
+                                                            Mode=TwoWay,
+                                                            UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Width="45"
+                                             Height="25"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"
+                                             Text="{Binding ElementName=ThorDetectorControlApp,
+                                                            Path=Detector5Gain}"
+                                             ToolTip="Detector5Gain" />
+                                <StackPanel>
+                                    <RepeatButton Name="btnDetector5Plus"
+                                                      Width="30"
+                                                      Click="btnDetector5Plus_Click"
+                                                      Content="+"
+                                                      Style="{x:Null}" />
+                                    <RepeatButton Name="btnDetector5Minus"
+                                                      Click="btnDetector5Minus_Click"
+                                                      Content="-"
+                                                      Style="{x:Null}" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,5,0"
+                                                HorizontalAlignment="Left"
+                                                Orientation="Horizontal">
+                                    <Label Width="38"
+                                               Height="25"
+                                               Content="{Binding ElementName=ThorDetectorControlApp,
+                                                                 Path=Detector5GainVolts}" />
+                                    <Label Height="25"
+                                               HorizontalAlignment="Left"
+                                               HorizontalContentAlignment="Left"
+                                               Content="[v]" />
+                                </StackPanel>
+                                    <ComboBox Width="100"
+                                              Height="30"
+                                              Margin="3"
+                                              SelectedItem="{Binding ElementName=ThorDetectorControlApp,
+                                                                      Path=Detector5Bandwidth}"
+                                              ItemsSource="{Binding Path=BandwidthList[4], ElementName=ThorDetectorControlApp}">
+                                    </ComboBox>
+                                <Label MinWidth="30"
+                                           VerticalAlignment="Center"
+                                           Background="{Binding ElementName=ThorDetectorControlApp,
+                                                                Path=TrippedColor5}"
+                                           Content="{Binding ElementName=ThorDetectorControlApp,
+                                                             Path=TrippedText5}" />
+                                <Button Name="btnReset5"
+                                            Width="35"
+                                            Height="30"
+                                            MinWidth="35"
+                                            Click="btnReset3_Click"
+                                            Content="Reset"
+                                            Visibility="{Binding ElementName=ThorDetectorControlApp,
+                                                                 Path=TrippedVis5}" />
+                            </StackPanel>
+                        </Expander.Header>
+                        <StackPanel Margin="3" Orientation="Horizontal">
+                            <Label Margin="5,0,0,0"
+                                       VerticalAlignment="Center"
+                                       Content="Output Offset" />
+                            <Slider Width="100"
+                                        VerticalAlignment="Center"
+                                        IsSnapToTickEnabled="True"
+                                        LargeChange="0.004"
+                                        Maximum="{Binding ElementName=ThorDetectorControlApp,
+                                                          Path=Detector5OutputOffsetMax,
+                                                          Mode=OneWay,
+                                                          UpdateSourceTrigger=PropertyChanged}"
+                                        Minimum="{Binding ElementName=ThorDetectorControlApp,
+                                                          Path=Detector5OutputOffsetMin,
+                                                          Mode=OneWay,
+                                                          UpdateSourceTrigger=PropertyChanged}"
+                                        SmallChange="0.004"
+                                        TickFrequency="0.004"
+                                        TickPlacement="none"
+                                        Value="{Binding ElementName=ThorDetectorControlApp,
+                                                        Path=Detector5OutputOffset,
+                                                        Mode=TwoWay,
+                                                        UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Width="45"
+                                         Height="25"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"
+                                         Text="{Binding ElementName=ThorDetectorControlApp,
+                                                        Path=Detector5OutputOffset}"
+                                         ToolTip="Detector5 Output Offset" />
+                            <Label Height="25" Content="[v]" />
+                                <StackPanel>
+                                    <RepeatButton Name="btnDetector5OffsetPlus"
+                                                  Width="30"
+                                                  Click="btnDetector5OffsetPlus_Click"
+                                                  Content="+"
+                                                  Style="{x:Null}" />
+                                    <RepeatButton Name="btnDetector5OffsetMinus"
+                                                  Click="btnDetector5OffsetMinus_Click"
+                                                  Content="-"
+                                                  Style="{x:Null}" />
+                                </StackPanel>
+                                <StackPanel Grid.Row="1"
+                                            Grid.Column="1"
+                                            Margin="10,0,0,0"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Orientation="Horizontal">
+                                        <Label HorizontalAlignment="Center" Content="SN:" />
+                                        <TextBox Width="70"
+                                             VerticalAlignment="Center"
+                                             IsReadOnly="True"
+                                             Text="{Binding ElementName=ThorDetectorControlApp,
+                                                            Path=Detector5SerialNumber,
+                                                            UpdateSourceTrigger=PropertyChanged,
+                                                            Mode=OneWay}" />
+                                    </StackPanel>
+
+                                <Button x:Name="btnUpdateSerial5"
+                                        Height="30"
+                                        Margin="3"
+                                        Click="btnUpdateSerial5_Click"
+                                        Content="Update Settings SN"
+                                        ToolTip="Update the settings file with this serial number for Detector5" />
+                                <StackPanel Margin="6,0,0,0"
+                                            Orientation="Horizontal"
+                                            VerticalAlignment="Center">
+                                    <Label Content="Type:" />
+                                    <Label Content="{Binding ElementName=ThorDetectorControlApp, 
+                                                                 Path=Detector5DetectorType,
+                                                                 UpdateSourceTrigger=PropertyChanged}" 
+                                           VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                    </Expander>
+                </StackPanel>
+                <StackPanel Name="Detector6" Orientation="Horizontal">
+                    <Expander>
+                        <Expander.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <CheckBox Name="cbD6"
+                                              Width="72"
+                                              VerticalAlignment="Center"
+                                              Content="Detector6"
+                                              Foreground="White"
+                                              IsChecked="{Binding ElementName=ThorDetectorControlApp,
+                                                                  Path=Detector6On}" />
+                                <Slider Width="200"
+                                            VerticalAlignment="Center"
+                                            IsEnabled="{Binding ElementName=cbGain6,
+                                                                Path=IsChecked}"
+                                            Maximum="{Binding ElementName=ThorDetectorControlApp,
+                                                              Path=Detector6GainMax,
+                                                              Mode=OneWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                            Minimum="{Binding ElementName=ThorDetectorControlApp,
+                                                              Path=Detector6GainMin,
+                                                              Mode=OneWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
+                                            Value="{Binding ElementName=ThorDetectorControlApp,
+                                                            Path=Detector6Gain,
+                                                            Mode=TwoWay,
+                                                            UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Width="45"
+                                             Height="25"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"
+                                             Text="{Binding ElementName=ThorDetectorControlApp,
+                                                            Path=Detector6Gain}"
+                                             ToolTip="Detector6Gain" />
+                                <StackPanel>
+                                    <RepeatButton Name="btnDetector6Plus"
+                                                      Width="30"
+                                                      Click="btnDetector6Plus_Click"
+                                                      Content="+"
+                                                      Style="{x:Null}" />
+                                    <RepeatButton Name="btnDetector6Minus"
+                                                      Click="btnDetector6Minus_Click"
+                                                      Content="-"
+                                                      Style="{x:Null}" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,5,0"
+                                                HorizontalAlignment="Left"
+                                                Orientation="Horizontal">
+                                    <Label Width="38"
+                                               Height="25"
+                                               Content="{Binding ElementName=ThorDetectorControlApp,
+                                                                 Path=Detector6GainVolts}" />
+                                    <Label Height="25"
+                                               HorizontalAlignment="Left"
+                                               HorizontalContentAlignment="Left"
+                                               Content="[v]" />
+                                </StackPanel>
+                                    <ComboBox Width="100"
+                                              Height="30"
+                                              Margin="3"
+                                              SelectedItem="{Binding ElementName=ThorDetectorControlApp,
+                                                                      Path=Detector6Bandwidth}"
+                                              ItemsSource="{Binding Path=BandwidthList[5], ElementName=ThorDetectorControlApp}">
+                                    </ComboBox>
+                                <Label MinWidth="30"
+                                           VerticalAlignment="Center"
+                                           Background="{Binding ElementName=ThorDetectorControlApp,
+                                                                Path=TrippedColor6}"
+                                           Content="{Binding ElementName=ThorDetectorControlApp,
+                                                             Path=TrippedText6}" />
+                                <Button Name="btnReset6"
+                                            Width="35"
+                                            Height="30"
+                                            MinWidth="35"
+                                            Click="btnReset6_Click"
+                                            Content="Reset"
+                                            Visibility="{Binding ElementName=ThorDetectorControlApp,
+                                                                 Path=TrippedVis6}" />
+                            </StackPanel>
+                        </Expander.Header>
+                        <StackPanel Margin="3" Orientation="Horizontal">
+                            <Label Margin="5,0,0,0"
+                                       VerticalAlignment="Center"
+                                       Content="Output Offset" />
+                            <Slider Width="100"
+                                        VerticalAlignment="Center"
+                                        IsSnapToTickEnabled="True"
+                                        LargeChange="0.004"
+                                        Maximum="{Binding ElementName=ThorDetectorControlApp,
+                                                          Path=Detector6OutputOffsetMax,
+                                                          Mode=OneWay,
+                                                          UpdateSourceTrigger=PropertyChanged}"
+                                        Minimum="{Binding ElementName=ThorDetectorControlApp,
+                                                          Path=Detector6OutputOffsetMin,
+                                                          Mode=OneWay,
+                                                          UpdateSourceTrigger=PropertyChanged}"
+                                        SmallChange="0.004"
+                                        TickFrequency="0.004"
+                                        TickPlacement="none"
+                                        Value="{Binding ElementName=ThorDetectorControlApp,
+                                                        Path=Detector6OutputOffset,
+                                                        Mode=TwoWay,
+                                                        UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Width="45"
+                                         Height="25"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"
+                                         Text="{Binding ElementName=ThorDetectorControlApp,
+                                                        Path=Detector6OutputOffset}"
+                                         ToolTip="Detector6 Output Offset" />
+                            <Label Height="25" Content="[v]" />
+                                <StackPanel>
+                                    <RepeatButton Name="btnDetector6OffsetPlus"
+                                                  Width="30"
+                                                  Click="btnDetector6OffsetPlus_Click"
+                                                  Content="+"
+                                                  Style="{x:Null}" />
+                                    <RepeatButton Name="btnDetector6OffsetMinus"
+                                                  Click="btnDetector6OffsetMinus_Click"
+                                                  Content="-"
+                                                  Style="{x:Null}" />
+                                </StackPanel>
+                                <StackPanel Grid.Row="1"
+                                            Grid.Column="1"
+                                            Margin="10,0,0,0"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Orientation="Horizontal">
+                                        <Label HorizontalAlignment="Center" Content="SN:" />
+                                    <TextBox Width="70"
+                                             VerticalAlignment="Center"
+                                             IsReadOnly="True"
+                                             Text="{Binding ElementName=ThorDetectorControlApp,
+                                                            Path=Detector6SerialNumber,
+                                                            UpdateSourceTrigger=PropertyChanged,
+                                                            Mode=OneWay}" />
+                                    
+                                </StackPanel>
+                                <Button x:Name="btnUpdateSerial6"
+                                        Height="30"
+                                        Margin="3"
+                                        Click="btnUpdateSerial6_Click"
+                                        Content="Update Settings SN"
+                                        ToolTip="Update the settings file with this serial number for Detector6" />
+                                <StackPanel Margin="6,0,0,0"
+                                            Orientation="Horizontal"
+                                            VerticalAlignment="Center">
+                                    <Label Content="Type:" />
+                                    <Label Content="{Binding ElementName=ThorDetectorControlApp, 
+                                                                 Path=Detector6DetectorType,
+                                                                 UpdateSourceTrigger=PropertyChanged}" 
+                                           VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                    </Expander>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</Grid>
+</Window>

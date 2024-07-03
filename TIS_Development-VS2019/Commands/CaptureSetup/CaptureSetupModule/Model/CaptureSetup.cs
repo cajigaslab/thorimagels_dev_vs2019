@@ -11,15 +11,14 @@
     using System.Timers;
     using System.Windows;
     using System.Windows.Data;
+    using System.Windows.Input;
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
     using System.Windows.Threading;
     using System.Xml;
-    using Microsoft.Win32;
-
 
     using LineProfileWindow;
-
+    using OverlayManager;
     using ThorLogging;
 
     using ThorSharedTypes;
@@ -27,21 +26,16 @@
     public partial class CaptureSetup : INotifyPropertyChanged
     {
         #region Fields
-        private static string _referenceChannelImagePath = "";
-        private static string _referenceChannelImageName = "";
+
         public double[] Stats;
         public string[] StatsNames;
 
+        private static ReportCaptureNotification _captureNotificationCallback;
         private static ReportLineProfile _lineProfileCallback;
         private static ReportMultiROIStats _multiROIStatsCallBack;
-        private static int _prevTickCount = 0;
-        private static double _sumTickCount = 0;
 
         private XmlDocument _applicationDoc;
         private Guid _commandGuid;
-
-        //private DigitizerBoardNames _digitizerBoardName = DigitizerBoardNames.ATS460;
-        private DigitizerBoardNames _digitizerBoardName = DigitizerBoardNames.ATS9440;
         private XmlDocument _experimentDoc;
         private String _expPath;
         private LineProfileData _lineProfileData;
@@ -52,35 +46,8 @@
 
         public CaptureSetup()
         {
-            _colorChannels = MAX_CHANNELS;
-            _pixelDataReady = false;
             _liveStartButtonStatus = true;
             _isBleaching = false;
-            _dataWidth = 1024;
-            _dataHeight = 1024;
-            _lsmChannelEnable = new bool[MAX_CHANNELS];
-            _lightPathGGEnable = 0;
-            _lightPathGREnable = 1;
-            _lightPathCamEnable = 0;
-            _referenceChannelImageName = "ReferenceChannel.tif";
-            _referenceChannelImagePath = Application.Current.Resources["AppRootFolder"].ToString() + "\\ReferenceChannel.tif";
-
-            //enable the first 4 channels only
-            for (int i = 0; i < MAX_CHANNELS; i++)
-            {
-                _lsmChannelEnable[i] = true;
-            }
-
-            _whitePoint = new double[_colorChannels];
-            _blackPoint = new double[_colorChannels];
-
-            for (int i = 0; i < _colorChannels; i++)
-            {
-                _whitePoint[i] = 255;
-                _blackPoint[i] = 0;
-            }
-
-            _paletteChanged = true;
 
             CreateCallbackHandlers();
 
@@ -98,21 +65,6 @@
             catch (System.DllNotFoundException e)
             {
                 ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " DllNotFoundException " + e.Message);
-            }
-
-            //create one instance of the histogram arrays
-            _pixelDataHistogram = new int[MAX_CHANNELS][];
-
-            for (int i = 0; i < MAX_CHANNELS; i++)
-            {
-                _pixelDataHistogram[i] = new int[PIXEL_DATA_HISTOGRAM_SIZE];
-            }
-
-            _pal = new byte[_colorChannels][];
-
-            for (int i = 0; i < _colorChannels; i++)
-            {
-                _pal[i] = new byte[ushort.MaxValue + 1];
             }
 
             const int PATH_LENGTH = 261;
@@ -152,12 +104,6 @@
             TRANSPARENT
         }
 
-        public enum DigitizerBoardNames
-        {
-            ATS460,
-            ATS9440
-        }
-
         #endregion Enumerations
 
         #region Delegates
@@ -166,10 +112,13 @@
         private delegate void Report(ref int index, ref int completed, ref int total, ref int timeElapsed, ref int timeRemaining);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void ReportCaptureNotification(ref CaptureNotification captureNotificiation);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void ReportIndex(ref int index);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode)]
-        private delegate void ReportLineProfile(IntPtr lineProfile, int length, int channelEnable, int numChannel);
+        private delegate void ReportLineProfile(IntPtr lineProfile, int length, int realLength, int channelEnable, int numChannel);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode)]
         private delegate void ReportMultiROIStats(IntPtr statsName, IntPtr stats, ref int length, ref int isLast);
@@ -219,18 +168,6 @@
             get { return _commandGuid; }
         }
 
-        public DigitizerBoardNames DigitizerBoardName
-        {
-            get
-            {
-                return _digitizerBoardName;
-            }
-            set
-            {
-                _digitizerBoardName = value;
-            }
-        }
-
         public XmlDocument ExperimentDoc
         {
             get
@@ -263,11 +200,6 @@
                 //SetCustomParamsBinaryCS(ref escParams);
                 //CaptureSetupExecute();
             }
-        }
-
-        public int ImageColorChannels
-        {
-            get { return _colorChannels; }
         }
 
         public int ImageHeight
@@ -339,88 +271,11 @@
             }
         }
 
-        public int NAcquireChannels
+        public XmlDocument RegistrationDoc
         {
             get
             {
-                if (DigitizerBoardName == DigitizerBoardNames.ATS9440)
-                {
-                    switch (LSMChannel)
-                    {
-                        case 1: return 0;
-                        case 2: return 1;
-                        case 4: return 2;
-                        case 8: return 3;
-                        default: return 4;
-                    }
-                }
-                else if (DigitizerBoardName == DigitizerBoardNames.ATS460)
-                {
-                    switch (LSMChannel)
-                    {
-                        case 1: return 1;
-                        case 2: return 1;
-                        default: return 2;
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("Error in Model.LiveImage.DigitizerBoardName setter", "Unrecognized Boardname");
-                    return -1;
-                }
-            }
-            //           set
-            //           {
-            //               if (DigitizerBoardName == DigitizerBoardNames.ATS9440)
-            //               {
-            //                   // number of the current active channels can be either 1 or 4
-            //                   switch (value)
-            //                   {
-            //                       case 4: _nAcquireChannels = 4; break;
-            //                      default:
-            //                           {
-            //                               _nAcquireChannels = 1;
-            //                           }
-            //                           break;
-            //                  }
-            //               }
-            //               else if (DigitizerBoardName == DigitizerBoardNames.ATS460)
-            //               {
-            //                   // number of the current active channels can be either 1 or 2
-            //                   switch (value)
-            //                   {
-            //                       case 4: _nAcquireChannels = 2; break;
-            //                       default:
-            //                           {
-            //                               _nAcquireChannels = 1;
-            //                           }
-            //                          break;
-            //                   }
-            //               }
-            //               else
-            //               {
-            //                   MessageBox.Show("Error in Model.LiveImage.DigitizerBoardName setter", "Unrecognized Boardname");
-            //               }
-            //           }
-        }
-
-        public string ReferenceChannelImageName
-        {
-            get
-            {
-                return _referenceChannelImageName;
-            }
-            set
-            {
-                _referenceChannelImageName = value;
-            }
-        }
-
-        public string ReferenceChannelImagePath
-        {
-            get
-            {
-                return _referenceChannelImagePath;
+                return MVMManager.Instance.SettingsDoc[(int)SettingsFileType.REGISTRATION_SETTINGS];
             }
         }
 
@@ -443,29 +298,6 @@
 
         #region Methods
 
-        public bool BrowseForReferenceImage()
-        {
-            OpenFileDialog dlg = new OpenFileDialog();
-            dlg.Title = "Select a Reference Image File";
-            dlg.DefaultExt = "tif";
-            dlg.InitialDirectory = Application.Current.Resources["AppRootFolder"].ToString();
-            dlg.Filter = "16 Bit Tiff file (*.tif)|*.tif";
-
-            // Show save file dialog box
-            Nullable<bool> result = dlg.ShowDialog();
-            // Process save file dialog box results
-            if (result == true && dlg.FileName != "")
-            {
-                _referenceChannelImageName = dlg.SafeFileName;
-                _referenceChannelImagePath = dlg.FileName;
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
         [DllImport(".\\StatsManager.dll", EntryPoint = "SetLineProfileLineWidth")]
         public static extern int SetLineProfileLineWidth(int width);
 
@@ -476,13 +308,15 @@
             InitCallBackBleachSLM(_BleachNowSLMFinishedCallBack, _PreBleachSLMCallBack);
 
             InitCallBackROIDataStore(_multiROIStatsCallBack);
-            InitImageProcessCallBack(_reportImageProcessData);
             InitCallBackLineProfilePush(_lineProfileCallback);
             const int DSTYPE_PASSTHROUGH = 0;
 
             CreateStatsManagerROIDS(DSTYPE_PASSTHROUGH, "");
+
+            SetCaptureNotificationCallback(_captureNotificationCallback);
         }
 
+        //TODO:IV should remove?
         public void MarshalStrArray(IntPtr pUnStrArray, int AryCnt, out string[] StrArray)
         {
             if (AryCnt > 0)
@@ -583,20 +417,20 @@
         [DllImport(".\\ROIDataStore.dll", EntryPoint = "InitCallBack")]
         private static extern void InitCallBackROIDataStore(ReportMultiROIStats reportMultiROIStats);
 
-        [DllImport(".\\StatsManager.dll", EntryPoint = "InitCallBack")]
-        private static extern int InitImageProcessCallBack(ReportImageProcessData reportImageProcessData);
-
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadImage")]
         private static extern bool ReadImage([MarshalAs(UnmanagedType.LPWStr)] string path, ref IntPtr outputBuffer);
 
         [DllImport(".\\ThorDiskIO.dll", EntryPoint = "ReadImageInfo")]
-        private static extern bool ReadImageInfo([MarshalAs(UnmanagedType.LPWStr)] string selectedFileName, ref long width, ref long height, ref long colorChannels);
+        private static extern bool ReadImageInfo([MarshalAs(UnmanagedType.LPWStr)] string selectedFileName, ref long width, ref long height, ref long colorChannels, ref long bitsPerPixel);
 
         [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "SetCameraParamDouble")]
         private static extern int SetCameraParamDouble(int cameraSelection, int param, double value);
 
         [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "SetCameraParamLong")]
         private static extern int SetCameraParamInt(int cameraSelection, int param, int value);
+
+        [DllImport(".\\Modules_Native\\CaptureSetup.dll", EntryPoint = "SetCaptureNotificationCallback")]
+        private static extern void SetCaptureNotificationCallback(ReportCaptureNotification reportCaptureNotification);
 
         [DllImport(".\\Modules_Native\\HardwareCom.dll", EntryPoint = "SetDeviceParamBuffer")]
         private static extern int SetDeviceParamBuffer(int deviceSelection, int paramId, string buf, long len, bool wait);
@@ -619,32 +453,12 @@
             _PreBleachSLMCallBack = new PreBleachSLMCallback(BleachSLMCallback);
 
             _multiROIStatsCallBack = new ReportMultiROIStats(MultiROIStatsUpdate);
-            _reportImageProcessData = new ReportImageProcessData(ImageProcessDataUpdata);
             _lineProfileCallback = new ReportLineProfile(LineProfileUpdate);
+
+            _captureNotificationCallback = new ReportCaptureNotification(OnCaptureNotification);
         }
 
-        private void GetTotalColorChannels()
-        {
-            int numCameras = 0;
-            GetNumberOfCameras(ref numCameras);
-
-            if ((int)ICamera.CameraType.LSM == ResourceManagerCS.GetCameraType())
-            {
-                const int MAX_LSM_CHANNELS = 4;
-                //LSM connected
-                _colorChannels = MAX_LSM_CHANNELS;
-            }
-            else
-            {
-                switch (numCameras)
-                {
-                    case 3: _colorChannels = 3; break;
-                    default: _colorChannels = 1; break;
-                }
-            }
-        }
-
-        private void LineProfileUpdate(IntPtr lineProfile, int length, int channelEnable, int numChannel)
+        private void LineProfileUpdate(IntPtr lineProfile, int length, int realLength, int channelEnable, int numChannel)
         {
             if (0 < numChannel && 0 < length)
             {
@@ -652,15 +466,25 @@
                 if (((int)ICamera.CameraType.LSM == ResourceManagerCS.GetCameraType()))
                 {
                     // Sending conversion factor to the line profile view
-                    double lengthinµm = (double)(length * (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1]);
-                    _lineProfileData.PixeltoµmConversionFactor = lengthinµm / length;
+                    double pixelWidth = ((PixelSizeUM)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)null]).PixelWidthUM;
+                    double lengthinµm = (double)(realLength * ((PixelSizeUM)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)null]).PixelWidthUM);
+                    double roiLength = OverlayManagerClass.Instance.GetCurrentROILength();
+                    if (roiLength > 0 && _lineProfileData.profileDataX != null)
+                        _lineProfileData.PixeltoµmConversionFactor = roiLength / _lineProfileData.profileDataX.Length;
+                    else
+                        _lineProfileData.PixeltoµmConversionFactor = lengthinµm;
                 }
 
                 else if (((int)ICamera.CameraType.LSM != ResourceManagerCS.GetCameraType()))
                 {
                     // Sending conversion factor to the line profile view
-                    double lengthinµm = (double)(length * (double)MVMManager.Instance["CameraControlViewModel", "CamPixelSizeUM", (object)1]);
-                    _lineProfileData.PixeltoµmConversionFactor = lengthinµm / length;
+                    double lengthinµm = (double)(realLength * (double)MVMManager.Instance["CameraControlViewModel", "CamPixelSizeUM", (object)1]);
+
+                    double roiLength = OverlayManagerClass.Instance.GetCurrentROILength();
+                    if (roiLength > 0 && _lineProfileData.profileDataX != null)
+                        _lineProfileData.PixeltoµmConversionFactor = roiLength / _lineProfileData.profileDataX.Length;
+                    else
+                        _lineProfileData.PixeltoµmConversionFactor = lengthinµm / length;
                 }
 
                 int lengthPerChannel = length / numChannel;
@@ -734,6 +558,14 @@
             if (handler != null)
             {
                 handler(this, EventArgs.Empty);
+            }
+        }
+
+        private void OnCaptureNotification(ref CaptureNotification captureNotification)
+        {
+            if ((int)ICamera.CameraType.CCD == ResourceManagerCS.GetCameraType() && 0 != captureNotification.isAsyncParamUpdate)
+            {
+                ((ICommand)MVMManager.Instance["CameraControlViewModel", "ResyncParametersCommand"]).Execute(null);
             }
         }
 

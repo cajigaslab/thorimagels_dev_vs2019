@@ -65,6 +65,8 @@ public:
 	virtual long CallNotifySavedFileIPC(wchar_t* message);
 	virtual long CallAutoFocusStatus(long isRunning, long bestScore, double bestZPos, double nextZPos, long currRepeat);
 
+	virtual long ZStreamExecute(long index, long subWell, ICamera* pCamera, long zstageSteps, long timePoints, long undefinedVar);
+
 	static HANDLE hEvent;
 	static HANDLE hEventZ;
 	static HANDLE hEventAbort;
@@ -177,6 +179,7 @@ public:
 			this->fileType = src.fileType;
 			this->_zInfo = src._zInfo;
 			this->imageMethod = src.imageMethod;
+			this->isCombinedChannels = src.isCombinedChannels;
 		}
 
 		~SaveParams()
@@ -219,12 +222,13 @@ public:
 		HeaderInfo* _pHeaderInfo;					//used in Hyperspectral capture
 		ZRangeInfo _zInfo;
 		size_t photonsBufferTotalSize;
+		bool isCombinedChannels; // if true, save all channels to a single TIFF 
 	};
 
 	static AcquireSaveInfo* _acquireSaveInfo;
 
 	static string uUIDSetup(SaveParams *sp, long bufferChannels, long timePoints, long zstageSteps, long index, long subWell);
-	static long HandleStimStreamRawFile(SaveParams *sp, long ID, std::wstring lhsFilename=std::wstring(), std::wstring rhsFilename=std::wstring(), bool rawContainsDisabledChannels=false);
+	static long HandleStimStreamRawFile(SaveParams* sp, long ID, std::wstring lhsFilename = std::wstring(), std::wstring rhsFilename = std::wstring(), bool rawContainsDisabledChannels = false, long regionTempID = -1, long regionID = -1, bool keepAppendedFile = false);
 	static void ReAscendFileNameVec(std::vector<FileNameStruc> &nameStrucVec, std::wstring targetStr, std::wstring fileType);
 	static bool SortFileNameStrucByIndex(const FileNameStruc &lhsNameStruc, const FileNameStruc &rhsNameStruc) {return lhsNameStruc.index < rhsNameStruc.index; }
 
@@ -240,10 +244,11 @@ private:
 	long SaveTimingToExperimentFolder();
 	bool saveHeaderHdr(wstring filename, HeaderInfo& hinfo);
 	void SavePreviewImage(SaveParams *sp, long tFrame, char * pBuffer, long saveEnabledChannelsOnly);
+	void SavePreviewImagemROI(SaveParams* sp, long tFrame, char* pBuffer, long saveEnabledChannelsOnly, long regionID);
 	void SaveFastZPreviewImageWithoutOME(SaveParams *sp, char *buffer, long bufferSizeBytes);
-	long SetupImageData(wstring streamPath, ICamera *pCamera, long averageMode, SaveParams* sp, long zFastEnableGUI, long bufferChannels, double pixelDwellTime, long avgFrames, Dimensions &baseDimensions);
-	void SetupSaveParams(long index, long subWell, long streamFrames, double exposureTimeMS, long width, long height, long numberOfPlanes, double umPerPixel, long zFastEnable, long zStageSteps, long zFlybackFrames,long bufferChannels, long lsmChannels, long storageMode, long hyperSpectralWavelengths, long rawData, long previewID, SaveParams *sp);
-	void SaveImagesPostCapture(long index, long subWell, long streamFrames, SaveParams *sp, bool rawContainsDisabledChannels, long subwell);
+	long SetupImageData(wstring streamPath, ICamera *pCamera, long averageMode, SaveParams* sp, long zFastEnableGUI, long bufferChannels, double pixelDwellTime, long avgFrames, Dimensions &baseDimensions, long mROIEnabled);
+	void SetupSaveParams(long index, long subWell, long streamFrames, double exposureTimeMS, long width, long height, long numberOfPlanes, double umPerPixel, long zFastEnable, long zStageSteps, long zFlybackFrames,long bufferChannels, long lsmChannels, long storageMode, long hyperSpectralWavelengths, long rawData, long previewID, bool isCombineChannels, SaveParams *sp);
+	void SaveImagesPostCapture(long index, long subWell, long streamFrames, SaveParams *sp, bool rawContainsDisabledChannels, long subwell, map<long, long> regionImageIDsMap = map<long, long>());
 	long SetupZStage(int setupMode, ICamera *pCamera, ZRangeInfo* zRange);
 	//void ExtractBufferDetails(ICamera *pCamera,double magnification, double fieldSizeCalibration, long channel,long pixelX,long pixelY, long left, long top, long right, long bottom, long binningX, long binningY, ICamera::CameraType &cameraType, double &umPerPixel, long &bufferChannels);
 	long PreCaptureAutoFocus(ICamera* pCamera, long index, long subWell, double afStartPos, double afAdaptiveOffset, double magnification, long cameraType);
@@ -256,7 +261,7 @@ private:
 	void UnlockImages(map<long, long>& idsMap, long unlockFrameID);
 	void DestroyImages(map<long, long>& idsMap);
 	void FailedAcquisition(ICamera* pCamera, SaveParams& sp, long zFastEnableGUI);
-	long BreakOutWaitCameraStatus(ICamera* pCamera, SaveParams& sp, long& status, double& droppedFrameCnt, long totalFrame, long zFastEnableGUI, long saveEnabledChannelsOnly, long captureMode);
+	long BreakOutWaitCameraStatus(ICamera* pCamera, SaveParams& sp, long& status, double& droppedFrameCnt, long totalFrame, long zFastEnableGUI, long saveEnabledChannelsOnly, long captureMode, long alwaysSaveImagesOnStop);
 	long CalculateRollingAverage(USHORT* historyBuffer, USHORT* newBuffer, long averageNum, long frameLength);
 	long CalculateRollingAverageAndSumDFLIM(USHORT* averageIntensityBuffer, USHORT* sumSinglePhotonBuffer, ULONG32* sumArrivalTimeSumBuffer, ULONG32* sumHistogramBuffer, USHORT* newIntensityBuffer, USHORT* newSinglePhotonBuffer, ULONG32* newArrivalTimeSumBuffer, ULONG32* newHistogramBuffer, long averageNum, long frameLength);
 

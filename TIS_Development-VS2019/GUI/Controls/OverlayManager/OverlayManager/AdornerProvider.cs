@@ -19,8 +19,11 @@
     {
         #region Fields
 
-        private static int _imageHeight;
-        private static int _imageWidth;
+        private static int _imageHeight = 0;
+        private static int _imageWidth = 0;
+        private static double _imageScaleX = 1.0;
+        private static double _imageScaleY = 1.0;
+        private static double _zoomLevel = 1.0;
 
         private Type _adornedElementType;
         private Thumb _linePanningThumb; // For Line Overlay
@@ -33,6 +36,12 @@
         private VisualCollection _visualChildren;
 
         #endregion Fields
+
+        #region Events
+
+        public event Action<Shape> RectangleAdornerPositionUpdatedEvent;
+
+        #endregion Events
 
         #region Constructors
 
@@ -81,6 +90,21 @@
                 {
                     BuildResizeAdornerCorner(ref _lineResizingThumb[i], Cursors.SizeAll);
                     _lineResizingThumb[i].DragDelta += new DragDeltaEventHandler(LineResizeThumb_DragDelta);
+                    _lineResizingThumb[i].DragCompleted += new DragCompletedEventHandler(Thumb_DragComplete);
+                    _lineResizingThumb[i].Tag = i;
+                }
+            }
+            else if (_adornedElementType.Name.Equals("ROILine"))
+            {
+                _visualChildren = new VisualCollection(this);
+                BuildPanningdAdornerCorner(ref _linePanningThumb, Cursors.ScrollAll);
+                _linePanningThumb.DragDelta += new DragDeltaEventHandler(ROILinePanningThumb_DragDelta);
+                _linePanningThumb.DragCompleted += new DragCompletedEventHandler(Thumb_DragComplete);
+                _lineResizingThumb = new Thumb[2];
+                for (int i = 0; i < 2; i++)
+                {
+                    BuildResizeAdornerCorner(ref _lineResizingThumb[i], Cursors.SizeAll);
+                    _lineResizingThumb[i].DragDelta += new DragDeltaEventHandler(ROILineResizeThumb_DragDelta);
                     _lineResizingThumb[i].DragCompleted += new DragCompletedEventHandler(Thumb_DragComplete);
                     _lineResizingThumb[i].Tag = i;
                 }
@@ -136,6 +160,26 @@
                     }
                 }
             }
+            else if (_adornedElementType.Name.Equals("ROIPolyline"))
+            {
+                _visualChildren = new VisualCollection(this);
+                int polyPoints = ((ROIPolyline)adornedElement).Points.Count;
+
+                if (polyPoints > 1)
+                {
+                    BuildPanningdAdornerCorner(ref _polyPanningThumb, Cursors.ScrollAll);
+                    _polyPanningThumb.DragDelta += new DragDeltaEventHandler(ROIPolylinePannigThumb_DragDelta);
+                    _polyPanningThumb.DragCompleted += new DragCompletedEventHandler(Thumb_DragComplete);
+                    _polyReshapeThumb = new Thumb[polyPoints];
+                    for (int i = 0; i < polyPoints; i++)
+                    {
+                        BuildResizeAdornerCorner(ref _polyReshapeThumb[i], Cursors.SizeAll);
+                        _polyReshapeThumb[i].DragDelta += new DragDeltaEventHandler(ROIPolylineReshapeThumb_DragDelta);
+                        _polyReshapeThumb[i].DragCompleted += new DragCompletedEventHandler(Thumb_DragComplete);
+                        _polyReshapeThumb[i].Tag = i;
+                    }
+                }
+            }
             else if (_adornedElementType.Name.Equals("ROIEllipse"))
             {
                 _visualChildren = new VisualCollection(this);
@@ -174,6 +218,16 @@
 
         #region Properties
 
+        private static Size _defaultThumbSize = new Size(7, 7);
+        private static Size _thumbSize = new Size(7, 7);
+        public static Size ThumbSize
+        {
+            get
+            {
+                return _thumbSize;
+            }
+        }
+
         public static int ImageHeight
         {
             get { return _imageHeight; }
@@ -186,9 +240,55 @@
             set { _imageWidth = value; }
         }
 
+        public static double ImageScaleX
+        {
+            get => _imageScaleX;
+            set => _imageScaleX = value;
+        }
+
+        public static double ImageScaleY
+        {
+            get => _imageScaleY;
+            set => _imageScaleY = value;
+        }
+
         protected override int VisualChildrenCount
         {
             get { return _visualChildren.Count; }
+        }
+
+        public bool DisableDrag
+        {
+            get; set;
+        }
+
+        public static double ZoomLevel
+        {
+            get => _zoomLevel;
+            set
+            {
+                _zoomLevel = value;
+                if (ImageWidth <= 0 || ImageHeight <= 0)
+                {
+                    _thumbSize = _defaultThumbSize;
+                }
+                double maxDimension = Math.Max(ImageWidth, ImageHeight);
+                double maxThumbWidthOrHeight = Math.Max(ImageWidth, ImageHeight) / 45;
+                double scaleFactor = (maxDimension / 512.0) / ZoomLevel;// Somewhat arbitrary. 7x7 size looked good on a 512px image
+
+                double thumbWidth = scaleFactor * _defaultThumbSize.Width;
+                double thumbHeight = scaleFactor * _defaultThumbSize.Height;
+                if (thumbWidth > maxThumbWidthOrHeight)
+                {
+                    thumbWidth = maxThumbWidthOrHeight;
+                }
+                if (thumbHeight > maxThumbWidthOrHeight)
+                {
+                    thumbHeight = maxThumbWidthOrHeight;
+                }
+
+                _thumbSize = new Size(thumbWidth, thumbHeight);
+            }
         }
 
         #endregion Properties
@@ -218,6 +318,10 @@
                 {
                     UpdateLineThumbPos();
                 }
+                else if (_adornedElementType.Name.Equals("ROILine"))
+                {
+                    UpdateROILineThumbPos();
+                }
                 else if (_adornedElementType.Name.Equals("ROIPoly"))
                 {
                     UpdatePolyThumbPos();
@@ -226,9 +330,9 @@
                 {
                     ROICrosshair temp = AdornedElement as ROICrosshair;
                     Point corner = new Point();
-                    corner.X = temp.CenterPoint.X - 3.5;
-                    corner.Y = temp.CenterPoint.Y - 3.5;
-                    _singleThumb.Arrange(new Rect(corner, new Size(7, 7)));
+                    corner.X = temp.CenterPoint.X - ThumbSize.Width/2;
+                    corner.Y = temp.CenterPoint.Y - ThumbSize.Height/2;
+                    _singleThumb.Arrange(new Rect(corner, ThumbSize));
 
                 }
                 else if (_adornedElementType.Name.Equals("Reticle"))
@@ -242,6 +346,10 @@
                 else if (_adornedElementType.Name.Equals("Polyline"))
                 {
                     UpdatePolylineThumbPos();
+                }
+                else if (_adornedElementType.Name.Equals("ROIPolyline"))
+                {
+                    UpdateROIPolylineThumbPos();
                 }
                 else if (_adornedElementType.Name.Equals("ROIEllipse"))
                 {
@@ -272,7 +380,7 @@
             {
                 cornerThumb = new Thumb();
                 cornerThumb.Cursor = customizedCursor;
-                cornerThumb.Height = cornerThumb.Width = 7;
+                cornerThumb.Height = cornerThumb.Width = ThumbSize.Width;
                 cornerThumb.Background = new SolidColorBrush(Colors.Red);
                 _visualChildren.Add(cornerThumb);
                 return;
@@ -299,13 +407,17 @@
 
             cornerThumb = new Thumb();
             cornerThumb.Cursor = customizedCursor;
-            cornerThumb.Height = cornerThumb.Width = 7;
+            cornerThumb.Height = cornerThumb.Width = ThumbSize.Width;
             cornerThumb.Background = new SolidColorBrush(Colors.Blue);
             _visualChildren.Add(cornerThumb);
         }
 
         private void CrosshairPanningThumb_DragDelta(object sender, DragDeltaEventArgs e)
         {
+            if (DisableDrag)
+            {
+                return;
+            }
             try
             {
                 ROICrosshair tempCrosshair = AdornedElement as ROICrosshair;
@@ -326,7 +438,7 @@
                     corner.X = newPos.X - 3.5;
                     corner.Y = newPos.Y - 3.5;
 
-                    (sender as Thumb).Arrange(new Rect(corner, new Size(7, 7)));
+                    (sender as Thumb).Arrange(new Rect(corner, ThumbSize));
                 }
             }
             catch (Exception ex)
@@ -337,6 +449,10 @@
 
         private void EllipsePanningThumb_DragDelta(object sender, DragDeltaEventArgs e)
         {
+            if (DisableDrag)
+            {
+                return;
+            }
             try
             {
                 ROIEllipse tempEllipse = AdornedElement as ROIEllipse;
@@ -370,6 +486,10 @@
 
         void EllipseResizingThumbBottom_DragDelta(object sender, DragDeltaEventArgs e)
         {
+            if (DisableDrag)
+            {
+                return;
+            }
             try
             {
                 ROIEllipse tempEllipse = AdornedElement as ROIEllipse;
@@ -415,6 +535,10 @@
 
         void EllipseResizingThumbLeft_DragDelta(object sender, DragDeltaEventArgs e)
         {
+            if (DisableDrag)
+            {
+                return;
+            }
             try
             {
                 ROIEllipse tempEllipse = AdornedElement as ROIEllipse;
@@ -460,6 +584,10 @@
 
         void EllipseResizingThumbRight_DragDelta(object sender, DragDeltaEventArgs e)
         {
+            if (DisableDrag)
+            {
+                return;
+            }
             try
             {
                 ROIEllipse tempEllipse = AdornedElement as ROIEllipse;
@@ -505,6 +633,10 @@
 
         void EllipseResizingThumbTop_DragDelta(object sender, DragDeltaEventArgs e)
         {
+            if (DisableDrag)
+            {
+                return;
+            }
             try
             {
                 ROIEllipse tempEllipse = AdornedElement as ROIEllipse;
@@ -551,6 +683,10 @@
 
         private void EnforceSize(FrameworkElement adornedElement)
         {
+            if (DisableDrag)
+            {
+                return;
+            }
             try
             {
                 if (adornedElement.Width.Equals(Double.NaN))
@@ -571,8 +707,110 @@
             }
         }
 
+        private void ROILinePanningThumb_DragDelta(object sender, DragDeltaEventArgs e)
+        {
+            if (DisableDrag)
+            {
+                return;
+            }
+            double x2Change;
+            double y2Change;
+            double x1Change;
+            double y1Change;
+
+            try
+            {
+                x2Change = x1Change = e.HorizontalChange;
+                y2Change = y1Change = e.VerticalChange;
+
+                double newX1 = (AdornedElement as ROILine).StartPoint.X + x1Change;
+                double newY1 = (AdornedElement as ROILine).StartPoint.Y + y1Change;
+                double newX2 = (AdornedElement as ROILine).EndPoint.X + x2Change;
+                double newY2 = (AdornedElement as ROILine).EndPoint.Y + y2Change;
+
+                Point newX1Y1 = new Point(newX1, newY1);
+                Point newX2Y2 = new Point(newX2, newY2);
+
+                bool isX1Y1Valid = validatePoint(newX1Y1);
+                bool isX2Y2Valid = validatePoint(newX2Y2);
+
+                if (isX1Y1Valid && isX2Y2Valid)
+                {
+                    (AdornedElement as ROILine).StartPoint = newX1Y1;
+                    (AdornedElement as ROILine).EndPoint = newX2Y2;
+
+                    UpdateROILineThumbPos();
+                    int[] tag = new int[2];
+                    int roiIndex = ((int[])(AdornedElement as Shape).Tag)[0];
+                    if (null != UpdateLinePosition) UpdateLinePosition(roiIndex);
+                }
+            }
+            catch (Exception ex)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + "linePanningThumb_DragDelta exception " + ex.Message);
+            }
+        }
+
+        private void ROILineResizeThumb_DragDelta(object sender, DragDeltaEventArgs e)
+        {
+            if (DisableDrag)
+            {
+                return;
+            }
+            double xChange;
+            double yChange;
+
+            try
+            {
+                Thumb tempThumb = sender as Thumb;
+
+                xChange = e.HorizontalChange;
+                yChange = e.VerticalChange;
+                double newX;
+                double newY;
+                if (0 == (int)tempThumb.Tag)
+                {
+                    newX = (AdornedElement as ROILine).StartPoint.X + xChange;
+                    newY = (AdornedElement as ROILine).StartPoint.Y + yChange;
+                }
+                else
+                {
+                    newX = (AdornedElement as ROILine).EndPoint.X + xChange;
+                    newY = (AdornedElement as ROILine).EndPoint.Y + yChange;
+                }
+
+                Point newPoint = new Point(newX, newY);
+
+                bool isPointValid = validatePoint(newPoint);
+
+                if (isPointValid)
+                {
+                    if (0 == (int)tempThumb.Tag)
+                    {
+                        (AdornedElement as ROILine).StartPoint = new Point(newX, newY);
+                    }
+                    else
+                    {
+                        (AdornedElement as ROILine).EndPoint = new Point(newX, newY);
+                    }
+                    UpdateROILineThumbPos();
+                    int[] tag = new int[2];
+                    int roiIndex = ((int[])(AdornedElement as Shape).Tag)[0];
+                    if (null != UpdateLinePosition) UpdateLinePosition(roiIndex);
+                }
+            }
+            catch (Exception ex)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + "linePanningThumb_DragDelta exception " + ex.Message);
+            }
+        }
+
         private void LinePanningThumb_DragDelta(object sender, DragDeltaEventArgs e)
         {
+            if (DisableDrag)
+            {
+                return;
+            }
             double x2Change;
             double y2Change;
             double x1Change;
@@ -614,6 +852,10 @@
 
         private void LineResizeThumb_DragDelta(object sender, DragDeltaEventArgs e)
         {
+            if (DisableDrag)
+            {
+                return;
+            }
             double xChange;
             double yChange;
 
@@ -667,6 +909,10 @@
 
         private void PolylinePannigThumb_DragDelta(object sender, DragDeltaEventArgs e)
         {
+            if (DisableDrag)
+            {
+                return;
+            }
             double leftChange;
             double topChange;
 
@@ -713,6 +959,10 @@
 
         private void PolylineReshapeThumb_DragDelta(object sender, DragDeltaEventArgs e)
         {
+            if (DisableDrag)
+            {
+                return;
+            }
             try
             {
                 Polyline tempPoly = AdornedElement as Polyline;
@@ -743,8 +993,98 @@
             }
         }
 
+        private void ROIPolylinePannigThumb_DragDelta(object sender, DragDeltaEventArgs e)
+        {
+            if (DisableDrag)
+            {
+                return;
+            }
+            double leftChange;
+            double topChange;
+
+            try
+            {
+                leftChange = e.HorizontalChange;
+                topChange = e.VerticalChange;
+
+                ROIPolyline tempPoly = AdornedElement as ROIPolyline;
+                bool isOverlayValid = false;
+
+                int[] verticesX = new int[tempPoly.Points.Count];
+                int[] verticesY = new int[tempPoly.Points.Count];
+                for (int i = 0; i < tempPoly.Points.Count; i++)
+                {
+                    verticesX[i] = Convert.ToInt32(tempPoly.Points[i].X + leftChange);
+                    verticesY[i] = Convert.ToInt32(tempPoly.Points[i].Y + topChange);
+                }
+
+                int ROIminX = int.MaxValue, ROIminY = int.MaxValue, ROImaxX = int.MinValue, ROImaxY = int.MinValue;
+
+                for (int i = 0; i < verticesX.Length; i++)
+                {
+                    if (verticesX[i] < ROIminX) ROIminX = verticesX[i];
+                    if (verticesY[i] < ROIminY) ROIminY = verticesY[i];
+                    if (verticesX[i] > ROImaxX) ROImaxX = verticesX[i];
+                    if (verticesY[i] > ROImaxY) ROImaxY = verticesY[i];
+                }
+                isOverlayValid = ValidateOverlay(ROIminX, ROIminY, ROImaxX - ROIminX, ROImaxY - ROIminY);
+                if (true == isOverlayValid)
+                {
+                    for (int i = 0; i < verticesX.Length; i++)
+                    {
+                        (AdornedElement as ROIPolyline).Points[i] = new Point(verticesX[i], verticesY[i]);
+                    }
+                    UpdateROIPolylineThumbPos();
+                }
+            }
+            catch (Exception ex)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + "panningThumb_DragDelta exception " + ex.Message);
+            }
+        }
+
+        private void ROIPolylineReshapeThumb_DragDelta(object sender, DragDeltaEventArgs e)
+        {
+            if (DisableDrag)
+            {
+                return;
+            }
+            try
+            {
+                ROIPolyline tempPoly = AdornedElement as ROIPolyline;
+                Thumb tempThumb = sender as Thumb;
+                double deltaX = e.HorizontalChange;
+                double deltaY = e.VerticalChange;
+                Point newPos = new Point();
+
+                newPos.X = tempPoly.Points[(int)tempThumb.Tag].X + deltaX;
+                newPos.Y = tempPoly.Points[(int)tempThumb.Tag].Y + deltaY;
+
+                bool isOverlayValid = validatePoint(newPos);
+
+                if (true == isOverlayValid)
+                {
+                    (AdornedElement as ROIPolyline).Points[(int)tempThumb.Tag] = newPos;
+
+                    Point corner = new Point();
+                    corner.X = newPos.X - 3.5;
+                    corner.Y = newPos.Y - 3.5;
+
+                    UpdateROIPolylineThumbPos();
+                }
+            }
+            catch (Exception ex)
+            {
+                ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + "panningThumb_DragDelta exception " + ex.Message);
+            }
+        }
+
         private void PolyPannigThumb_DragDelta(object sender, DragDeltaEventArgs e)
         {
+            if (DisableDrag)
+            {
+                return;
+            }
             double leftChange;
             double topChange;
 
@@ -791,6 +1131,10 @@
 
         private void PolyReshapeThumb_DragDelta(object sender, DragDeltaEventArgs e)
         {
+            if (DisableDrag)
+            {
+                return;
+            }
             try
             {
                 ROIPoly tempPoly = AdornedElement as ROIPoly;
@@ -819,6 +1163,10 @@
 
         private void RectPanningThumb_DragDelta(object sender, DragDeltaEventArgs e)
         {
+            if (DisableDrag)
+            {
+                return;
+            }
             try
             {
 
@@ -853,6 +1201,10 @@
 
         void RectResizingThumbBottom_DragDelta(object sender, DragDeltaEventArgs e)
         {
+            if (DisableDrag)
+            {
+                return;
+            }
             try
             {
                 ROIRect tempRect = AdornedElement as ROIRect;
@@ -879,6 +1231,10 @@
 
         void RectResizingThumbLeft_DragDelta(object sender, DragDeltaEventArgs e)
         {
+            if (DisableDrag)
+            {
+                return;
+            }
             try
             {
                 ROIRect tempRect = AdornedElement as ROIRect;
@@ -905,6 +1261,10 @@
 
         void RectResizingThumbRight_DragDelta(object sender, DragDeltaEventArgs e)
         {
+            if (DisableDrag)
+            {
+                return;
+            }
             try
             {
                 ROIRect tempRect = AdornedElement as ROIRect;
@@ -931,6 +1291,10 @@
 
         void RectResizingThumbTop_DragDelta(object sender, DragDeltaEventArgs e)
         {
+            if (DisableDrag)
+            {
+                return;
+            }
             try
             {
                 ROIRect tempRect = AdornedElement as ROIRect;
@@ -957,6 +1321,10 @@
 
         private void Thumb_DragComplete(object sender, DragCompletedEventArgs e)
         {
+            if (DisableDrag)
+            {
+                return;
+            }
             if (null != UpdateNow)
             {
                 UpdateNow(AdornedElement as Shape);
@@ -999,6 +1367,37 @@
             _rectResizingThumbRight.Arrange(new Rect(rightX, rightY, adornerWidth, adornerHeight));
         }
 
+        private void UpdateROILineThumbPos()
+        {
+            ROILine temp = AdornedElement as ROILine;
+            Point lineMidPoint;
+
+            if (temp.StartPoint.X == temp.EndPoint.X)
+            {
+                double midY = (temp.StartPoint.Y + temp.EndPoint.Y) / 2 - 3.5;
+                lineMidPoint = new Point(temp.StartPoint.X - 3.5, midY);
+            }
+            else if (temp.StartPoint.Y == temp.EndPoint.Y)
+            {
+                double midX = (temp.StartPoint.X + temp.EndPoint.X) / 2 - 3.5;
+                lineMidPoint = new Point(midX, temp.StartPoint.Y - 3.5);
+            }
+            else
+            {
+                double midX = (temp.StartPoint.X + temp.EndPoint.X) / 2 - 3.5;
+                double midY = (temp.StartPoint.Y + temp.EndPoint.Y) / 2 - 3.5;
+                lineMidPoint = new Point(midX, midY);
+            }
+
+            _linePanningThumb.Arrange(new Rect(lineMidPoint, ThumbSize));
+
+            Point linePoint0 = new Point(temp.StartPoint.X - 3.5, temp.StartPoint.Y - 3.5);
+            _lineResizingThumb[0].Arrange(new Rect(linePoint0, ThumbSize));
+
+            Point linePoint1 = new Point(temp.EndPoint.X - 3.5, temp.EndPoint.Y - 3.5);
+            _lineResizingThumb[1].Arrange(new Rect(linePoint1, ThumbSize));
+        }
+
         private void UpdateLineThumbPos()
         {
             Line temp = AdornedElement as Line;
@@ -1021,13 +1420,13 @@
                 lineMidPoint = new Point(midX, midY);
             }
 
-            _linePanningThumb.Arrange(new Rect(lineMidPoint, new Size(7, 7)));
+            _linePanningThumb.Arrange(new Rect(lineMidPoint, ThumbSize));
 
             Point linePoint0 = new Point(temp.X1 - 3.5, temp.Y1 - 3.5);
-            _lineResizingThumb[0].Arrange(new Rect(linePoint0, new Size(7, 7)));
+            _lineResizingThumb[0].Arrange(new Rect(linePoint0, ThumbSize));
 
             Point linePoint1 = new Point(temp.X2 - 3.5, temp.Y2 - 3.5);
-            _lineResizingThumb[1].Arrange(new Rect(linePoint1, new Size(7, 7)));
+            _lineResizingThumb[1].Arrange(new Rect(linePoint1, ThumbSize));
         }
 
         private void UpdatePolylineThumbPos()
@@ -1040,7 +1439,7 @@
             {
                 corner.X = tempPolyline.Points[i].X - 3.5;
                 corner.Y = tempPolyline.Points[i].Y - 3.5;
-                _polyReshapeThumb[i].Arrange(new Rect(corner, new Size(7, 7)));
+                _polyReshapeThumb[i].Arrange(new Rect(corner, ThumbSize));
                 if (tempPolyline.Points[i].X < ROIminX)
                 {
                     ROIminX = tempPolyline.Points[i].X;
@@ -1061,7 +1460,41 @@
             double midX = ROIminX + (ROImaxX - ROIminX) / 2;
             double midY = ROIminY + (ROImaxY - ROIminY) / 2;
 
-            _polyPanningThumb.Arrange(new Rect(new Point(midX, midY), new Size(7, 7)));
+            _polyPanningThumb.Arrange(new Rect(new Point(midX, midY), ThumbSize));
+        }
+
+        private void UpdateROIPolylineThumbPos()
+        {
+            ROIPolyline tempPolyline = AdornedElement as ROIPolyline;
+
+            Point corner = new Point();
+            double ROIminX = int.MaxValue, ROIminY = int.MaxValue, ROImaxX = int.MinValue, ROImaxY = int.MinValue;
+            for (int i = 0; i < tempPolyline.Points.Count; i++)
+            {
+                corner.X = tempPolyline.Points[i].X - 3.5;
+                corner.Y = tempPolyline.Points[i].Y - 3.5;
+                _polyReshapeThumb[i].Arrange(new Rect(corner, ThumbSize));
+                if (tempPolyline.Points[i].X < ROIminX)
+                {
+                    ROIminX = tempPolyline.Points[i].X;
+                }
+                if (tempPolyline.Points[i].Y < ROIminY)
+                {
+                    ROIminY = tempPolyline.Points[i].Y;
+                }
+                if (tempPolyline.Points[i].X > ROImaxX)
+                {
+                    ROImaxX = tempPolyline.Points[i].X;
+                }
+                if (tempPolyline.Points[i].Y > ROImaxY)
+                {
+                    ROImaxY = tempPolyline.Points[i].Y;
+                }
+            }
+            double midX = ROIminX + (ROImaxX - ROIminX) / 2;
+            double midY = ROIminY + (ROImaxY - ROIminY) / 2;
+
+            _polyPanningThumb.Arrange(new Rect(new Point(midX, midY), ThumbSize));
         }
 
         private void UpdatePolyThumbPos()
@@ -1072,12 +1505,12 @@
             {
                 corner.X = tempPoly.Points[i].X - 3.5;
                 corner.Y = tempPoly.Points[i].Y - 3.5;
-                _polyReshapeThumb[i].Arrange(new Rect(corner, new Size(7, 7)));
+                _polyReshapeThumb[i].Arrange(new Rect(corner,ThumbSize));
             }
 
             double midX = tempPoly.Bounds.Left + (tempPoly.Bounds.Right - tempPoly.Bounds.Left) / 2;
             double midY = tempPoly.Bounds.Top + (tempPoly.Bounds.Bottom - tempPoly.Bounds.Top) / 2;
-            _polyPanningThumb.Arrange(new Rect(new Point(midX, midY), new Size(7, 7)));
+            _polyPanningThumb.Arrange(new Rect(new Point(midX, midY), ThumbSize));
         }
 
         private void UpdateRectThumbsPos()
@@ -1114,17 +1547,23 @@
             _rectResizingThumbBottom.Arrange(new Rect(BottomX, BottomY, adornerWidth, adornerHeight));
             _rectResizingThumbLeft.Arrange(new Rect(leftX, leftY, adornerWidth, adornerHeight));
             _rectResizingThumbRight.Arrange(new Rect(rightX, rightY, adornerWidth, adornerHeight));
+
+            RectangleAdornerPositionUpdatedEvent?.Invoke((AdornedElement as ROIRect));
         }
 
         private bool validateEllipse(Point PointToValidate, double roiWidth, double roiHeight)
         {
+            if (DisableDrag)
+            {
+                return false;
+            }
             bool isValid = false;
             try
             {
                 if ((PointToValidate.X - roiWidth / 2) > 0 &&
-                    (PointToValidate.X + roiWidth / 2) < (0 + _imageWidth) &&
+                    (PointToValidate.X + roiWidth / 2) < (0 + _imageHeight * _imageScaleY) &&
                     (PointToValidate.Y - roiHeight / 2) > 0 &&
-                    (PointToValidate.Y + roiHeight / 2) < (0 + _imageHeight))
+                    (PointToValidate.Y + roiHeight / 2) < (0 + _imageHeight * _imageScaleY))
                     isValid = true;
                 else
                 {
@@ -1141,6 +1580,10 @@
 
         private bool ValidateOverlay(double overlayLeft, double overlayTop, double overlayWidth, double overlayHeight)
         {
+            if (DisableDrag)
+            {
+                return false;
+            }
             bool isValid = true;
 
             try
@@ -1155,7 +1598,7 @@
 
                 foreach (Point point in overlayPoints)
                 {
-                    if (point.X > 0 && point.X < (0 + _imageWidth) && point.Y > 0 && point.Y < (0 + _imageHeight))
+                    if (point.X > 0 && point.X < (0 + _imageWidth) && point.Y > 0 && point.Y < (0 + _imageHeight*_imageScaleY))
                         isValid = true;
                     else
                     {
@@ -1174,10 +1617,14 @@
 
         private bool validatePoint(Point PointToValidate)
         {
+            if (DisableDrag)
+            {
+                return false;
+            }
             bool isValid = false;
             try
             {
-                if (PointToValidate.X > 0 && PointToValidate.X < (0 + _imageWidth) && PointToValidate.Y > 0 && PointToValidate.Y < (0 + _imageHeight))
+                if (PointToValidate.X > 0 && PointToValidate.X < (0 + _imageWidth) && PointToValidate.Y > 0 && PointToValidate.Y < (0 + _imageHeight * _imageScaleY))
                     isValid = true;
                 else
                 {

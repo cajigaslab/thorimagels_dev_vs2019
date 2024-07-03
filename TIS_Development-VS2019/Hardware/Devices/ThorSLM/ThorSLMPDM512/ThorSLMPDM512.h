@@ -1,5 +1,6 @@
 
 #include "stdafx.h"
+#include "Blink_SDK.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -53,7 +54,7 @@ extern "C"
 
 	private:
 		MeadowlarkPDM();
-		BOOL IsOverdrive() { return ((_overDrive) && (0 == _pSlmName.compare("PDM512")) && (NULL != _blinkSDK)) ? TRUE : FALSE; }
+		BOOL IsOverdrive() { return ((_overDrive) && (0 == _pSlmName.compare(EnumString<SLMHardware>::From(SLMHardware::PDM512))) && (NULL != _blinkSDK)) ? TRUE : FALSE; }
 		void ReleaseMem();
 		void ReleaseTransientBuf();
 		void SetDefault();

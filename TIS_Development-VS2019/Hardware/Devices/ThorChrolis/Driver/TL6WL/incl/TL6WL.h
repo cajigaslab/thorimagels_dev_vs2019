@@ -76,7 +76,7 @@ extern "C"
 
 
 // User defined driver error codes
-#define VI_DRIVER_USB_ERROR            (VI_DRIVER_ERROR_OFFSET)
+#define VI_DRIVER_USB_ERROR            (VI_DRIVER_ERROR_OFFSET)                        // 0xBFFC0500
 #define VI_DRIVER_FRAME_SERV_ERROR     (VI_DRIVER_ERROR_OFFSET - 1)                    // 0xBFFC04FF
 #define VI_DRIVER_DEV_INTER_BROKEN     (VI_DRIVER_ERROR_OFFSET - 2)                    // 0xBFFC04FE
 
@@ -456,6 +456,9 @@ ViStatus _VI_FUNC TL6WL_TU_AddTriggerPoint (ViSession instrumentHandle,
                                             ViUInt8 signalNr, ViBoolean startsLow,
                                             ViUInt32 edgeCount,
                                             ViInt16 affectedSignalBitmask);
+
+ViStatus _VI_FUNC TL6WL_TU_LoopBackTrigger (ViSession instrumentHandle,
+                                            ViUInt32 refTrigPoint);
 
 ViStatus _VI_FUNC TL6WL_TU_StartStopGeneratorOutput_TU (ViSession instrumentHandle,
                                                         ViBoolean start);

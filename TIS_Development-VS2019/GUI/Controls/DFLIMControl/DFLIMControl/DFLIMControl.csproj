@@ -37,39 +37,36 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DynamicDataDisplay">
-      <HintPath>..\..\..\..\Tools\DynamicDataDisplay v0.3 Binaries &amp; Samples\DynamicDataDisplay\DynamicDataDisplay.dll</HintPath>
-    </Reference>
     <Reference Include="ROIStatsChart">
       <HintPath>..\..\ROIStatsChart\ROIStatsChart\bin\Debug\ROIStatsChart.dll</HintPath>
     </Reference>
-    <Reference Include="SciChart.Charting, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+    <Reference Include="SciChart.Charting, Version=8.0.0.27737, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting.dll</HintPath>
+      <HintPath>..\..\..\..\Tools\SciChart v8.x\Lib\net462\SciChart.Charting.dll</HintPath>
     </Reference>
-    <Reference Include="SciChart.Charting.DrawingTools, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+    <Reference Include="SciChart.Charting.DrawingTools, Version=8.0.0.27737, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting.DrawingTools.dll</HintPath>
+      <HintPath>..\..\..\..\Tools\SciChart v8.x\Lib\net462\SciChart.Charting.DrawingTools.dll</HintPath>
     </Reference>
-    <Reference Include="SciChart.Charting3D, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+    <Reference Include="SciChart.Charting3D, Version=8.0.0.27737, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting3D.dll</HintPath>
+      <HintPath>..\..\..\..\Tools\SciChart v8.x\Lib\net462\SciChart.Charting3D.dll</HintPath>
     </Reference>
-    <Reference Include="SciChart.Core, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+    <Reference Include="SciChart.Core, Version=8.0.0.27737, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Core.dll</HintPath>
+      <HintPath>..\..\..\..\Tools\SciChart v8.x\Lib\net462\SciChart.Core.dll</HintPath>
     </Reference>
-    <Reference Include="SciChart.Data, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+    <Reference Include="SciChart.Data, Version=8.0.0.27737, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Data.dll</HintPath>
+      <HintPath>..\..\..\..\Tools\SciChart v8.x\Lib\net462\SciChart.Data.dll</HintPath>
     </Reference>
-    <Reference Include="SciChart.Drawing, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+    <Reference Include="SciChart.Drawing, Version=8.0.0.27737, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Drawing.dll</HintPath>
+      <HintPath>..\..\..\..\Tools\SciChart v8.x\Lib\net462\SciChart.Drawing.dll</HintPath>
     </Reference>
-    <Reference Include="SciChart.Drawing.DirectX, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+    <Reference Include="SciChart.Drawing.DirectX, Version=8.0.0.27737, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Drawing.DirectX.dll</HintPath>
+      <HintPath>..\..\..\..\Tools\SciChart v8.x\Lib\net462\SciChart.Drawing.DirectX.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -83,6 +80,10 @@
     </Reference>
     <Reference Include="ThemeControl">
       <HintPath>..\..\ThemeControl\ThemeControl\bin\Debug\ThemeControl.dll</HintPath>
+    </Reference>
+    <Reference Include="ThorLogging, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Common\ThorLogging\ThorLogging\bin\Debug\ThorLogging.dll</HintPath>
     </Reference>
     <Reference Include="ThorSharedTypes">
       <HintPath>..\..\..\..\Common\ThorSharedTypes\ThorSharedTypes\bin\Debug\ThorSharedTypes.dll</HintPath>

@@ -668,22 +668,14 @@ DllExportLiveImage InitCallBackBleachSLM(completeCallback dt, preCapturetype pc)
 	return TRUE;
 }
 
-DllExportLiveImage PostflightSLMBleachScanner()
+DllExportLiveImage PostflightSLM()
 {
 	long retVal = TRUE;
-	//stop slm before bleach scanner first:
 	IDevice* slm = GetDevice(SelectedHardware::SELECTED_SLM);
 	if(NULL != slm)
 	{
 		retVal = slm->PostflightPosition();
 	}
-
-	if((retVal = PostflightCamera(SelectedHardware::SELECTED_BLEACHINGSCANNER)) && (FALSE == retVal))		
-	{		
-		StringCbPrintfW(message,MSG_SIZE,L"CaptureSetup Bleach PostflightAcquisition failed");
-		logDll->TLTraceEvent(ERROR_EVENT,1,message);	
-	}
-
 	return retVal;
 }
 
@@ -736,7 +728,12 @@ DllExportLiveImage SLMBleach()
 	}
 	while(PreCaptureStatus::PRECAPTURE_DONE != slmCapStatus);
 
-	PostflightSLMBleachScanner();
+	PostflightSLM();
+	if (FALSE == PostflightCamera(SelectedHardware::SELECTED_BLEACHINGSCANNER))
+	{
+		StringCbPrintfW(message, MSG_SIZE, L"CaptureSetup Bleach PostflightAcquisition failed");
+		logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+	}
 
 	//notify bleach finished:
 	(*myFuncPtrBleachSLM)();		
@@ -749,6 +746,9 @@ DllExportLiveImage CalibrateSLM(const wchar_t* bmpPatternName, float* xyPointFro
 {
 	long ret = TRUE;
 
+	//initialize bleacher & reset stop flag:
+	InitializeBleach();
+
 	///***	SLM device	***///
 	SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_FUNC_MODE,IDevice::SLMFunctionMode::PHASE_CALIBRATION, IDevice::DeviceSetParamType::NO_EXECUTION);
 	SetDeviceParamString(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_BMP_FILENAME,(wchar_t*)bmpPatternName, IDevice::DeviceSetParamType::NO_EXECUTION);
@@ -757,16 +757,15 @@ DllExportLiveImage CalibrateSLM(const wchar_t* bmpPatternName, float* xyPointFro
 	//going to display id == 0:
 	SetDeviceParamLong(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_ARRAY_ID, 0, IDevice::DeviceSetParamType::NO_EXECUTION);
 	SetDeviceParamBuffer(SelectedHardware::SELECTED_SLM,IDevice::PARAM_SLM_POINTS_ARRAY,(char*)xyPointFrom,size, IDevice::DeviceSetParamType::EXECUTION_WAIT);
-	//return if no need to use bleach scanner
-	if (!setBleacher)
-		return TRUE;
+
+	//return here if stop requested during SLM hologen:
+	if (stopBleach) { return FALSE; }
+	//return if no need to use bleach scanner:
+	if (!setBleacher) { return TRUE; }
 
 	///***	Galvo-Galvo	 ***///
 	std::wstring pathName(bmpPatternName);
 	pathName = pathName.substr(0,pathName.find_last_of(L"\\")) + L"\\SLMCalibWaveform.raw";
-
-	//initialize:
-	InitializeBleach();
 
 	//set waveform params:
 	if(FALSE == SetBleachWaveform(pathName.c_str(), 1))
@@ -783,15 +782,9 @@ DllExportLiveImage CalibrateSLM(const wchar_t* bmpPatternName, float* xyPointFro
 	ReleaseMutex(CaptureSetup::getInstance()->bleachParams[0]->bufferHandle);
 
 	//check scanner is Galvo-Galvo:
-	if(FALSE == ValidateBleacher())
-	{
-		return FALSE;
-	}
-
-	if(stopBleach)
-	{
-		return FALSE;
-	}
+	if(FALSE == ValidateBleacher())	{ return FALSE;	}
+	//return here if stop requested during bleacher setup:
+	if(stopBleach) { return FALSE; }
 
 	//execute:
 	CreateThenWaitBleacherThread();
@@ -844,11 +837,17 @@ DllExportLiveImage StopLiveBleach()
 {
 	stopBleach = TRUE;
 
+	PostflightSLM();
+
 	while((TRUE == inFileLoading) || (TRUE == activeBleach) || (NULL != hBleachThread))
 	{
 		Sleep(1);
 	}
 
-	PostflightSLMBleachScanner();
+	if (FALSE == PostflightCamera(SelectedHardware::SELECTED_BLEACHINGSCANNER))
+	{
+		StringCbPrintfW(message, MSG_SIZE, L"CaptureSetup Bleach PostflightAcquisition failed");
+		logDll->TLTraceEvent(ERROR_EVENT, 1, message);
+	}
 	return TRUE;
 }

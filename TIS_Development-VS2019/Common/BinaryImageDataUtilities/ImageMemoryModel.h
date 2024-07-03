@@ -24,8 +24,8 @@ public:
 	virtual void updateParameters(GenericImage<T>& image);
 
 	//Direct Pixel Access
-	virtual T getVal(int x, int y, int z, int channel, int m);
-	virtual void setVal(int x, int y, int z, int channel, int m, T val);
+	virtual T getVal(int x, int y, int p, int z, int channel, int m);
+	virtual void setVal(int x, int y, int p, int z, int channel, int m, T val);
 
 	//Memory Management
 	virtual long long getSizeInBytes() = 0;
@@ -45,14 +45,14 @@ public:
 	virtual iterator channelEnd(int channel, int m, int z)=0;
 
 	//Direct Memory Access
-	virtual T* getPointerForCoordinates(int x, int y, int z, int channel, int m)=0;
+	virtual T* getPointerForCoordinates(int x, int y, int p, int channel, int m, int z)=0;
 	virtual T* getMemoryBufferStart();
 
 
 protected:
 
 	//Image Params
-	int width, height, channels, zSlices, numM;
+	int width, height, numPlanes, channels, zSlices, numM;
 	T* buffer;
 
 private:
@@ -76,6 +76,7 @@ template <typename T> void ImageMemoryModel<T>::updateParameters(GenericImage<T>
 {
 	width = image.getWidth();
 	height = image.getHeight();
+	numPlanes = image.getNumPlanes();
 	zSlices = image.getNumZSlices();
 	channels = image.getNumEnabledChannels();
 	numM = image.getNumM();
@@ -90,32 +91,34 @@ template <typename T> ImageMemoryModel<T>::~ImageMemoryModel(void)
 /// <returns> The total number of pixels reflecting width, height, number of channels, depth, and mosaics </returns>
 template <typename T> int ImageMemoryModel<T>::getSizeInPixels()
 {
-	return height*width*channels*zSlices*numM;
+	return height*width*numPlanes*channels*zSlices*numM;
 }
 
 
 /// <summary> Gets the pixel value at the specified coordinate </summary>
 /// <param name="x"> The x coordinate of the requested pixel </param>
 /// <param name="y"> The y coordinate of the requested pixel </param>
+/// <param name="p"> The plane of the requested pixel </param>
 /// <param name="z"> The z coordinate of the requested pixel </param>
 /// <param name="channel"> The channel of the requested pixel </param>
 /// <param name="m"> The mosaic number of the requested pixel </param>
 /// <returns> The pixel value at the specified coordinate </returns>
-template <typename T> T ImageMemoryModel<T>::getVal(int x, int y, int z, int channel, int m) 
+template <typename T> T ImageMemoryModel<T>::getVal(int x, int y, int p, int z, int channel, int m) 
 {
-	return *getPointerForCoordinates(x,y,z,channel,m);
+	return *getPointerForCoordinates(x,y,p,channel,m,z);
 }
 
 
 /// <summary> Sets the pixel value at the specified coordinate </summary>
 /// <param name="x"> The x coordinate of the pixel to set </param>
 /// <param name="y"> The y coordinate of the pixel to set </param>
+/// <param name="p"> The plane of the pixel to set </param>
 /// <param name="z"> The z coordinate of the pixel to set </param>
 /// <param name="channel"> The channel of the pixel to set </param>
 /// <param name="m"> The mosaic number of the pixel to set </param>
-template <typename T> void ImageMemoryModel<T>::setVal(int x, int y, int z, int channel, int m, T val)
+template <typename T> void ImageMemoryModel<T>::setVal(int x, int y, int p, int z, int channel, int m, T val)
 {
-		*getPointerForCoordinates(x,y,z,channel,m) = val;
+		*getPointerForCoordinates(x,y,p,channel,m,z) = val;
 }
 
 

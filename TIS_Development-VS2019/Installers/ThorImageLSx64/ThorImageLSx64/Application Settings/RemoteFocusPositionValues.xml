@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<RemoteFocusPositionSettings>
+	<NumberOfPlanes value="16" />
+	<MeasurementObjective magnification="16.0" />
+    <MeasuredPlaneDistance
+    	plane1="0" 
+		plane2="22.59" 
+		plane3="40.109" 
+		plane4="62.286" 
+		plane5="80.394" 
+		plane6="101.7" 
+		plane7="118.151"
+		plane8="139.161" 
+		plane9="156.746" 
+		plane10="176.873" 
+		plane11="192.274" 
+		plane12="212.103" 
+		plane13="228.31" 
+		plane14="247.205"
+		plane15="261.863" 
+		plane16="280.421"/>
+  	<PlaneVoltage
+  		plane1="0.3125" 
+  		plane2="0.9375" 
+  		plane3="1.5625" 
+  		plane4="2.1875" 
+  		plane5="2.8125" 
+  		plane6="3.4375" 
+  		plane7="4.0625"
+  		plane8="4.6875" 
+  		plane9="5.3125" 
+  		plane10="5.9375" 
+  		plane11="6.5625" 
+  		plane12="7.1875" 
+  		plane13="7.8125" 
+  		plane14="8.4375"
+  		plane15="9.0625" 
+  		plane16="9.6875"/>
+</RemoteFocusPositionSettings>

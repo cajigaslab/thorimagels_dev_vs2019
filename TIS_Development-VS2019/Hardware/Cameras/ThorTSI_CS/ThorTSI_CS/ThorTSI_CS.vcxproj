@@ -116,6 +116,10 @@
 REM echo F | xcopy /F /Y $(TargetDir)$(TargetName).pdb \\tsifs01\Engineering\Greg\TIS\$(TargetName)_Debug.pdb
 </Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Midl>
@@ -143,6 +147,10 @@ REM echo F | xcopy /F /Y $(TargetDir)$(TargetName).pdb \\tsifs01\Engineering\Gre
       </Message>
       <Command>if $(Configuration) == Debug  copy "$(SolutionDir)\x64\Debug\ThorTSI_CS.dll" "$(ProjectDir)..\..\..\..\GUI\Applications\ThorImageLS\ThorImage\bin\Debug\Modules_Native"</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -169,6 +177,10 @@ REM echo F | xcopy /F /Y $(TargetDir)$(TargetName).pdb \\tsifs01\Engineering\Gre
 REM echo F | xcopy /F /Y $(TargetDir)$(TargetName).pdb \\tsifs01\Engineering\Greg\TIS
 </Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Midl>
@@ -199,8 +211,30 @@ REM echo F | xcopy /F /Y $(TargetDir)$(TargetName).pdb \\tsifs01\Engineering\Gre
 REM echo F | xcopy /F /Y $(TargetDir)$(TargetName).pdb \\tsifs01\Engineering\Greg\TIS
 </Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\Common\Camera-TSI\include\tl_camera_sdk_load.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Common\Camera-TSI\include\tl_mono_to_color_processing_load.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Common\Camera-TSI\include\tl_polarization_processor_load.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="dllmain.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </PrecompiledHeader>
@@ -222,11 +256,6 @@ REM echo F | xcopy /F /Y $(TargetDir)$(TargetName).pdb \\tsifs01\Engineering\Gre
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\Common\Camera-TSI\include\tl_camera_sdk_load.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="ThorTSI_CS.cpp">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\work\TSI\API\tsi_sdk\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\work\TSI\API\tsi_sdk\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -235,6 +264,14 @@ REM echo F | xcopy /F /Y $(TargetDir)$(TargetName).pdb \\tsifs01\Engineering\Gre
   <ItemGroup>
     <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_camera_sdk.h" />
     <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_camera_sdk_load.h" />
+    <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_color_enum.h" />
+    <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_mono_to_color_enum.h" />
+    <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_mono_to_color_processing.h" />
+    <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_mono_to_color_processing_load.h" />
+    <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_polarization_processor.h" />
+    <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_polarization_processor_enums.h" />
+    <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_polarization_processor_error.h" />
+    <ClInclude Include="..\..\..\..\Common\Camera-TSI\include\tl_polarization_processor_load.h" />
     <ClInclude Include="..\..\..\..\Common\Camera.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />

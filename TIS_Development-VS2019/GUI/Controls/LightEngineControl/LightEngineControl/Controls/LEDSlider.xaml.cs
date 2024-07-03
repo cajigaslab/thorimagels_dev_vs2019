@@ -247,6 +247,15 @@
                 FrameworkPropertyMetadataOptions.AffectsRender |
                 FrameworkPropertyMetadataOptions.AffectsMeasure));
 
+        public static readonly DependencyProperty ExternalModeProperty = DependencyProperty.RegisterAttached(
+            "ExternalMode",
+            typeof(Boolean),
+            typeof(LEDSlider),
+            new FrameworkPropertyMetadata(false,
+                //FrameworkPropertyMetadataOptions.Inherits |
+                FrameworkPropertyMetadataOptions.AffectsRender |
+                FrameworkPropertyMetadataOptions.AffectsMeasure |
+                FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
         #endregion Fields
 
         #region Constructors
@@ -581,6 +590,17 @@
             }
         }
 
+        public Boolean ExternalMode
+        {
+            get
+            {
+                return (Boolean)this.GetValue(ExternalModeProperty);
+            }
+            set
+            {
+                this.SetValue(ExternalModeProperty, value);
+            }
+        }
         //public static readonly DependencyProperty ValueProperty = DependencyProperty.RegisterAttached(
         //    "Value",
         //    typeof(Double),

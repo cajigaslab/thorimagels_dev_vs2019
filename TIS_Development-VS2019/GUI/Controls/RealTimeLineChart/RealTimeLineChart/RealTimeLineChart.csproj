@@ -44,41 +44,47 @@
     <Reference Include="DatabaseInterface">
       <HintPath>..\..\..\..\Common\Database\DatabaseInterface\bin\Debug\DatabaseInterface.dll</HintPath>
     </Reference>
-    <Reference Include="FolderDialogControl">
+    <Reference Include="FolderDialogControl, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\FolderDialogControl\FolderDialogControl\bin\Debug\FolderDialogControl.dll</HintPath>
     </Reference>
     <Reference Include="MessageBoxCheck">
       <HintPath>..\..\MessageBoxCheck\MessageBoxCheck\bin\Debug\MessageBoxCheck.dll</HintPath>
     </Reference>
-    <Reference Include="SciChart.Charting, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+    <Reference Include="SciChart.Charting, Version=8.0.0.27737, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting.dll</HintPath>
+      <HintPath>..\..\..\..\Tools\SciChart v8.x\Lib\net462\SciChart.Charting.dll</HintPath>
     </Reference>
-    <Reference Include="SciChart.Charting.DrawingTools, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+    <Reference Include="SciChart.Charting.DrawingTools, Version=8.0.0.27737, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Charting.DrawingTools.dll</HintPath>
+      <HintPath>..\..\..\..\Tools\SciChart v8.x\Lib\net462\SciChart.Charting.DrawingTools.dll</HintPath>
     </Reference>
-    <Reference Include="SciChart.Core, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+    <Reference Include="SciChart.Charting3D, Version=8.0.0.27737, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Core.dll</HintPath>
+      <HintPath>..\..\..\..\Tools\SciChart v8.x\Lib\net462\SciChart.Charting3D.dll</HintPath>
     </Reference>
-    <Reference Include="SciChart.Data, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+    <Reference Include="SciChart.Core, Version=8.0.0.27737, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Data.dll</HintPath>
+      <HintPath>..\..\..\..\Tools\SciChart v8.x\Lib\net462\SciChart.Core.dll</HintPath>
     </Reference>
-    <Reference Include="SciChart.Drawing, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+    <Reference Include="SciChart.Data, Version=8.0.0.27737, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Drawing.dll</HintPath>
+      <HintPath>..\..\..\..\Tools\SciChart v8.x\Lib\net462\SciChart.Data.dll</HintPath>
     </Reference>
-    <Reference Include="SciChart.Drawing.DirectX, Version=6.4.0.13629, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+    <Reference Include="SciChart.Drawing, Version=8.0.0.27737, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Tools\SciChart v6.x\Lib\net452\SciChart.Drawing.DirectX.dll</HintPath>
+      <HintPath>..\..\..\..\Tools\SciChart v8.x\Lib\net462\SciChart.Drawing.dll</HintPath>
+    </Reference>
+    <Reference Include="SciChart.Drawing.DirectX, Version=8.0.0.27737, Culture=neutral, PublicKeyToken=b55dd9efe817e823, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Tools\SciChart v8.x\Lib\net462\SciChart.Drawing.DirectX.dll</HintPath>
     </Reference>
     <Reference Include="SpinnerProgress">
       <HintPath>..\..\SpinnerProgress\SpinnerProgress\bin\Debug\SpinnerProgress.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -391,6 +397,12 @@
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\SquareWave.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\Export.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

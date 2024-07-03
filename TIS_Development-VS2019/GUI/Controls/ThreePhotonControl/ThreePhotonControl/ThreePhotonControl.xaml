@@ -50,7 +50,259 @@
                 </StackPanel>
 
             </StackPanel >
-            <StackPanel Visibility="Collapsed"
+            <StackPanel Name="spPhaseA"
+                        Orientation="Horizontal"
+                        Margin="0,3,0,3"
+                        ToolTip="Coarse Alignment"
+                        IsEnabled="{Binding Path=IsChecked, ElementName=CbThreePhotonModeEnable}"
+                        Visibility="{Binding Path=ThreePhotonPhaseCoarseVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <Label Content="A"
+                           Foreground="White"
+                           VerticalAlignment="Center" />
+                <Label Content="Phase Alignment"
+                       Margin="0,3"
+                       HorizontalContentAlignment="Right"
+                       VerticalAlignment="Center"
+                       Foreground="White" />
+                <Slider Name="sliderPhaseA"
+                        VerticalAlignment="Center"
+                        Minimum="0"
+                        Maximum="600"
+                        Margin="2"
+                        Width="150"
+                        IsEnabled="True"
+                        Foreground="White"
+                        Value="{Binding Path=ThreePhotonPhaseCoarse0, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Name="tbPhaseA"
+                         VerticalAlignment="Center"
+                         Width="40"
+                         Text="{Binding Path=Value, ElementName=sliderPhaseA, Mode=TwoWay}"
+                         validator:Validation.MaxValue="320.0"
+                         validator:Validation.MinValue="0.0"
+                         validator:Validation.ValidationType="{x:Type system:Double}">
+                </TextBox>
+                <Button Width="30"
+                        Height="25"
+                        Content="&#x2713;">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbPhaseA}"
+                                             Value="True">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <StackPanel VerticalAlignment="Center">
+                    <RepeatButton Content="+"
+                                  Width="30"
+                                  Height="20"
+                                  Command="{Binding Path=ThreePhotonPhaseCoarse0PlusCommand}"
+                                  Delay="500"
+                                  Interval="100" />
+                    <RepeatButton Content="-"
+                                  Width="30"
+                                  Height="20"
+                                  Command="{Binding Path=ThreePhotonPhaseCoarse0MinusCommand}"
+                                  Delay="500"
+                                  Interval="100" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Name="spPhaseB"
+                        Orientation="Horizontal"
+                        Margin="0,3,0,3"
+                        ToolTip="Coarse Alignment"
+                        IsEnabled="{Binding Path=IsChecked, ElementName=CbThreePhotonModeEnable}"
+                        Visibility="{Binding Path=ThreePhotonPhaseCoarseVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <Label Content="B"
+                           Foreground="White"
+                           VerticalAlignment="Center" />
+                <Label Content="Phase Alignment"
+                       Margin="0,3"
+                       HorizontalContentAlignment="Right"
+                       VerticalAlignment="Center"
+                       Foreground="White" />
+                <Slider Name="sliderPhaseB"
+                        VerticalAlignment="Center"
+                        Minimum="0"
+                        Maximum="600"
+                        Margin="2"
+                        Width="150"
+                        IsEnabled="True"
+                        Foreground="White"
+                        Value="{Binding Path=ThreePhotonPhaseCoarse1, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Name="tbPhaseB"
+                         VerticalAlignment="Center"
+                         Width="40"
+                         Text="{Binding Path=Value, ElementName=sliderPhaseB, Mode=TwoWay}"
+                         validator:Validation.MaxValue="320.0"
+                         validator:Validation.MinValue="0.0"
+                         validator:Validation.ValidationType="{x:Type system:Double}">
+                </TextBox>
+                <Button Width="30"
+                        Height="25"
+                        Content="&#x2713;">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbPhaseB}"
+                                             Value="True">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <StackPanel VerticalAlignment="Center">
+                    <RepeatButton Content="+"
+                                  Width="30"
+                                  Height="20"
+                                  Command="{Binding Path=ThreePhotonPhaseCoarse1PlusCommand}"
+                                  Delay="500"
+                                  Interval="100" />
+                    <RepeatButton Content="-"
+                                  Width="30"
+                                  Height="20"
+                                  Command="{Binding Path=ThreePhotonPhaseCoarse1MinusCommand}"
+                                  Delay="500"
+                                  Interval="100" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Name="spPhaseC"
+                        Orientation="Horizontal"
+                        Margin="0,3,0,3"
+                        ToolTip="Coarse Alignment"
+                        IsEnabled="{Binding Path=IsChecked, ElementName=CbThreePhotonModeEnable}"
+                        Visibility="{Binding Path=ThreePhotonPhaseCoarseVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <Label Content="C"
+                           Foreground="White"
+                           VerticalAlignment="Center" />
+                <Label Content="Phase Alignment"
+                       Margin="0,3"
+                       HorizontalContentAlignment="Right"
+                       VerticalAlignment="Center"
+                       Foreground="White" />
+                <Slider Name="sliderPhaseC"
+                        VerticalAlignment="Center"
+                        Minimum="0"
+                        Maximum="600"
+                        Margin="2"
+                        Width="150"
+                        IsEnabled="True"
+                        Foreground="White"
+                        Value="{Binding Path=ThreePhotonPhaseCoarse2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Name="tbPhaseC"
+                         VerticalAlignment="Center"
+                         Width="40"
+                         Text="{Binding Path=Value, ElementName=sliderPhaseC, Mode=TwoWay}"
+                         validator:Validation.MaxValue="320.0"
+                         validator:Validation.MinValue="0.0"
+                         validator:Validation.ValidationType="{x:Type system:Double}">
+                </TextBox>
+                <Button Width="30"
+                        Height="25"
+                        Content="&#x2713;">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbPhaseC}"
+                                             Value="True">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <StackPanel VerticalAlignment="Center">
+                    <RepeatButton Content="+"
+                                  Width="30"
+                                  Height="20"
+                                  Command="{Binding Path=ThreePhotonPhaseCoarse2PlusCommand}"
+                                  Delay="500"
+                                  Interval="100" />
+                    <RepeatButton Content="-"
+                                  Width="30"
+                                  Height="20"
+                                  Command="{Binding Path=ThreePhotonPhaseCoarse2MinusCommand}"
+                                  Delay="500"
+                                  Interval="100" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Name="spPhaseD"
+                        Orientation="Horizontal"
+                        Margin="0,3,0,3"
+                        ToolTip="Coarse Alignment"
+                        IsEnabled="{Binding Path=IsChecked, ElementName=CbThreePhotonModeEnable}"
+                        Visibility="{Binding Path=ThreePhotonPhaseCoarseVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <Label Content="D"
+                           Foreground="White"
+                           VerticalAlignment="Center" />
+                <Label Content="Phase Alignment"
+                       Margin="0,3"
+                       HorizontalContentAlignment="Right"
+                       VerticalAlignment="Center"
+                       Foreground="White" />
+                <Slider Name="sliderPhaseD"
+                        VerticalAlignment="Center"
+                        Minimum="0"
+                        Maximum="600"
+                        Margin="2"
+                        Width="150"
+                        IsEnabled="True"
+                        Foreground="White"
+                        Value="{Binding Path=ThreePhotonPhaseCoarse3, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Name="tbPhaseD"
+                         VerticalAlignment="Center"
+                         Width="40"
+                         Text="{Binding Path=Value, ElementName=sliderPhaseD, Mode=TwoWay}"
+                         validator:Validation.MaxValue="320.0"
+                         validator:Validation.MinValue="0.0"
+                         validator:Validation.ValidationType="{x:Type system:Double}">
+                </TextBox>
+                <Button Width="30"
+                        Height="25"
+                        Content="&#x2713;">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbPhaseD}"
+                                             Value="True">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <StackPanel VerticalAlignment="Center">
+                    <RepeatButton Content="+"
+                                  Width="30"
+                                  Height="20"
+                                  Command="{Binding Path=ThreePhotonPhaseCoarse3PlusCommand}"
+                                  Delay="500"
+                                  Interval="100" />
+                    <RepeatButton Content="-"
+                                  Width="30"
+                                  Height="20"
+                                  Command="{Binding Path=ThreePhotonPhaseCoarse3MinusCommand}"
+                                  Delay="500"
+                                  Interval="100" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Visibility="{Binding Path=ThreePhotonPhaseFineVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                         IsEnabled="{Binding Path=IsChecked, ElementName=CbThreePhotonModeEnable}"
                         Name="SpThreePhotonPhaseAdj1"
                         Orientation="Horizontal"
@@ -60,13 +312,13 @@
                            Margin="3"
                            VerticalAlignment="Center"
                            Foreground="White"
-                           Width="100" />
+                           Width="112" />
                 <Slider Name="SliderPhase1"
                         VerticalAlignment="Center"
                         Minimum="0"
                         Maximum="100"
                         Margin="2"
-                        Width="175"
+                        Width="150"
                         IsEnabled="True"
                         Value="{Binding Path=ThreePhotonPhaseFine, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 <TextBox Name="tbPhase1"
@@ -105,66 +357,6 @@
                                   Width="30"
                                   Height="20"
                                   Command="{Binding Path=ThreePhotonPhaseFineMinusCommand}"
-                                  Delay="500"
-                                  Interval="100" />
-                </StackPanel>
-            </StackPanel>
-            <StackPanel Name="spPhase2"
-                        Orientation="Horizontal"
-                        Margin="0,3,0,3"
-                        ToolTip="Coarse Alignment"
-                        IsEnabled="{Binding Path=IsChecked, ElementName=CbThreePhotonModeEnable}"
-                        Visibility="{Binding Path=ThreePhotonPhaseCoarseVisibility, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
-                <Label Content="Phase Alignment"
-                       Margin="0,3"
-                       HorizontalContentAlignment="Right"
-                       VerticalAlignment="Center"
-                       Foreground="White" />
-                <Slider Name="sliderPhase2"
-                        VerticalAlignment="Center"
-                        Minimum="0"
-                        Maximum="600"
-                        Margin="2"
-                        Width="150"
-                        IsEnabled="True"
-                        Foreground="White"
-                        Value="{Binding Path=ThreePhotonPhaseCoarse, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBox Name="tbPhase2"
-                         VerticalAlignment="Center"
-                         Width="40"
-                         Text="{Binding Path=Value, ElementName=sliderPhase2, Mode=TwoWay}"
-                         validator:Validation.MaxValue="320.0"
-                         validator:Validation.MinValue="0.0"
-                         validator:Validation.ValidationType="{x:Type system:Double}">
-                </TextBox>
-                <Button Width="30"
-                        Height="25"
-                        Content="&#x2713;">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Visibility"
-                                    Value="Collapsed" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Path=IsFocused, ElementName=tbPhase2}"
-                                             Value="True">
-                                    <Setter Property="Visibility"
-                                            Value="Visible" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
-                <StackPanel VerticalAlignment="Center">
-                    <RepeatButton Content="+"
-                                  Width="30"
-                                  Height="20"
-                                  Command="{Binding Path=ThreePhotonPhaseCoarsePlusCommand}"
-                                  Delay="500"
-                                  Interval="100" />
-                    <RepeatButton Content="-"
-                                  Width="30"
-                                  Height="20"
-                                  Command="{Binding Path=ThreePhotonPhaseCoarseMinusCommand}"
                                   Delay="500"
                                   Interval="100" />
                 </StackPanel>

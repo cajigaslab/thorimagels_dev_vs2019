@@ -48,7 +48,7 @@
 
             // create the ViewModel object and setup the DataContext to it
             this.RunSampleLSView.DataContext = runSampleViewModel;
-            this.ImageView.DataContext = runSampleViewModel;
+            this.imageView.DataContext = runSampleViewModel;
 
             this.Loaded += new RoutedEventHandler(MainWindow_Loaded);
             this.Unloaded += new RoutedEventHandler(MainWindow_Unloaded);
@@ -56,14 +56,15 @@
             this.KeyUp += new KeyEventHandler(MainWindow_KeyUp);
             this.RunSampleLSView.PreviewMouseDown += new MouseButtonEventHandler(RunSampleLSView_PreviewMouseDown);
 
-            runSampleViewModel.IncreaseViewArea += new Action<bool>(AdjustImageViewSize);
+            MVMManager.Instance["ImageViewCaptureVM", "IncreaseViewAreaAction"] = new Action<bool>(AdjustImageViewSize);
 
             MVMManager.Instance.AddMVM("RunSampleLSViewModel", runSampleViewModel);
             //populate data contents from specified MVMs
 
             this.RunSampleLSView.digOutputSwitchView.DataContext = MVMManager.Instance["DigitalOutputSwitchesViewModel", runSampleViewModel];
             this.RunSampleLSView.DFLIMControlView.DataContext = MVMManager.Instance["DFLIMControlCaptureViewModel", runSampleViewModel];
-
+            this.imageView.DataContext = MVMManager.Instance["ImageViewCaptureVM", runSampleViewModel];
+            //this.RunSampleLSView.RemoteIPC.DataContext = MVMManager.Instance["RemoteIPCControlViewModelBase", runSampleViewModel];
             Application.Current.Exit += Current_Exit;
 
             ThorLog.Instance.TraceEvent(TraceEventType.Verbose, 1, this.GetType().Name + " Initialized");
@@ -98,12 +99,6 @@
             }
         }
 
-        public void RunSampleLSIPC(string command, string data)
-        {
-            RunSampleLSViewModel viewModel = (RunSampleLSViewModel)this.RunSampleLSView.DataContext;
-            viewModel.RunSampleLS.ReceiveFromIPCController(command, data);
-        }
-
         public void RunSampleLSStart(string path, string experimentName)
         {
             //the view model parameters for the experiment must first be loaded
@@ -132,12 +127,8 @@
         {
             if (true == obj)
             {
-                RunSampleLSViewModel viewModel = (RunSampleLSViewModel)this.RunSampleLSView.DataContext;
-                if (null == viewModel)
-                {
-                    return;
-                }
-                this.ImageView.Height = Math.Max(viewModel.IVScrollBarHeight, Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_SCROLL);
+                double scrollBareight = (double)MVMManager.Instance["ImageViewCaptureSetupVM", "IVScrollBarHeight"];
+                imageView.Height = Math.Max(scrollBareight, Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_SCROLL);
             }
         }
 
@@ -152,40 +143,41 @@
 
         void MainWindow_KeyDown(object sender, KeyEventArgs e)
         {
-            this.ImageView.ImageView_KeyDown(sender, e);
+            this.imageView.ImageView_KeyDown(sender, e);
         }
 
         void MainWindow_KeyUp(object sender, KeyEventArgs e)
         {
-            this.ImageView.ImageView_KeyUp(sender, e);
+            this.imageView.ImageView_KeyUp(sender, e);
         }
 
         void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             Application.Current.MainWindow.SizeChanged += new SizeChangedEventHandler(MainWindow_SizeChanged);
             this.scrollView.Height = Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_SCROLL;
-            this.ImageView.Height = Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_SCROLL;
+            this.imageView.Height = Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_SCROLL;
             RunSampleLSViewModel viewModel = (RunSampleLSViewModel)this.RunSampleLSView.DataContext;
-            viewModel.MVMNames = new string[] { "DigitalOutputSwitchesViewModel", "LampControlViewModel", "ObjectiveControlViewModel", "DFLIMControlCaptureViewModel", "MiniCircuitsSwitchControlViewModel" };
+            viewModel.MVMNames = new string[] { "DigitalOutputSwitchesViewModel", "LampControlViewModel", "ObjectiveControlViewModel", "DFLIMControlCaptureViewModel", "MiniCircuitsSwitchControlViewModel", "RemoteIPCControlViewModelBase" };
             viewModel.UnloadWhole = false;
 
-            viewModel.IVHeight = this.ImageView.Height;
+            MVMManager.Instance["ImageViewCaptureVM", "IVHeight"] = this.imageView.Height;
 
             //populate data contents from specified MVMs
-            viewModel.MVMNames = new string[] { "DigitalOutputSwitchesViewModel", "LampControlViewModel", "ObjectiveControlViewModel", "MiniCircuitsSwitchControlViewModel" };
+            viewModel.MVMNames = new string[] { "DigitalOutputSwitchesViewModel", "LampControlViewModel", "ObjectiveControlViewModel", "MiniCircuitsSwitchControlViewModel", "RemoteIPCControlViewModelBase" };
             this.RunSampleLSView.digOutputSwitchView.DataContext = MVMManager.Instance["DigitalOutputSwitchesViewModel", viewModel];
         }
 
         void MainWindow_SizeChanged(object sender, System.Windows.SizeChangedEventArgs e)
         {
-            this.scrollView.Height = Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_SCROLL;
-            this.ImageView.Height = Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_SCROLL;
-            RunSampleLSViewModel viewModel = (RunSampleLSViewModel)this.RunSampleLSView.DataContext;
-            if (null == viewModel)
+            double newHeight = Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_SCROLL;
+            if (newHeight <= 0)
             {
-                return;
+                newHeight = 1;
             }
-            viewModel.IVHeight = this.ImageView.Height;
+            this.scrollView.Height = newHeight;
+            this.imageView.Height = newHeight;
+
+            MVMManager.Instance["ImageViewCaptureVM", "IVHeight"] = this.imageView.Height;
         }
 
         void MainWindow_Unloaded(object sender, RoutedEventArgs e)
@@ -199,7 +191,7 @@
 
         void RunSampleLSView_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
-            this.ImageView.SetSelectROI();
+            this.imageView.SetSelectROI();
         }
 
         private void scrollViewImage_ScrollChanged(object sender, ScrollChangedEventArgs e)

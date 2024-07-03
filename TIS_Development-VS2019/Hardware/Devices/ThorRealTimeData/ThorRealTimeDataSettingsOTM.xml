@@ -32,7 +32,7 @@
       <DataChannel enable="0" alias="PatternComplete" signalType="1" group="/DI" physicalChannel="/port0/line13" sample="0" Stimulus="0" red="70" green="191" blue="159" />
       <DataChannel enable="0" alias="Line14" signalType="1" group="/DI" physicalChannel="/port0/line14" sample="0" Stimulus="0" red="195" green="164" blue="157" />
       <DataChannel enable="0" alias="Line15" signalType="1" group="/DI" physicalChannel="/port0/line15" sample="0" Stimulus="0" red="185" green="0" blue="0" />
-      <DataChannel enable="1" alias="FrameCounter" signalType="2" group="/CI" physicalChannel="/PFI3" sample="0" Stimulus="0" red="255" green="70" blue="70" />
+      <DataChannel enable="1" alias="FrameCounter" signalType="2" group="/CI" physicalChannel="/PFI3" sample="0" Stimulus="0" red="255" green="70" blue="70" savetiming="0"/>
       <VirtualChannel enable="1" alias="xnorm" signalType="6" group="/VT" physicalChannel="Vx/xsum" red="55" green="100" blue="50" plot="1" visible="1" />
       <VirtualChannel enable="1" alias="ynorm" signalType="6" group="/VT" physicalChannel="Vy/ysum" red="199" green="160" blue="233" plot="1" visible="1" />
       <VirtualChannel enable="1" alias="ForceXpN" signalType="6" group="/VT" physicalChannel="VAR3 / VAR1 * xnorm" red="255" green="200" blue="150" plot="1" visible="0" />
@@ -79,7 +79,7 @@
       <DataChannel enable="1" alias="BleachComplete" signalType="1" group="/DI" physicalChannel="/port0/line5" sample="0" Stimulus="0" red="70" green="180" blue="0" />
       <DataChannel enable="0" alias="Line6" signalType="1" group="/DI" physicalChannel="/port0/line6" sample="0" Stimulus="0" red="69" green="180" blue="0" />
       <DataChannel enable="0" alias="Line7" signalType="1" group="/DI" physicalChannel="/port0/line7" sample="0" Stimulus="0" red="240" green="70" blue="180" />
-      <DataChannel enable="1" alias="FrameCounter" signalType="2" group="/CI" physicalChannel="/PFI3" sample="0" Stimulus="0" red="255" green="70" blue="70" />
+      <DataChannel enable="1" alias="FrameCounter" signalType="2" group="/CI" physicalChannel="/PFI3" sample="0" Stimulus="0" red="255" green="70" blue="70" savetiming="0"/>
       <SampleRate name="High 1MHz" enable="0" rate="1000001" />
       <SampleRate name="Med-High 200kHz" enable="0" rate="200000" />
       <SampleRate name="Medium 100kHz" enable="0" rate="100000" />
@@ -107,7 +107,7 @@
       <DataChannel enable="1" alias="BleachComplete" signalType="1" group="/DI" physicalChannel="/port0/line5" sample="0" Stimulus="0" red="70" green="180" blue="0" />
       <DataChannel enable="0" alias="Line6" signalType="1" group="/DI" physicalChannel="/port0/line6" sample="0" Stimulus="0" red="69" green="180" blue="0" />
       <DataChannel enable="0" alias="Line7" signalType="1" group="/DI" physicalChannel="/port0/line7" sample="0" Stimulus="0" red="240" green="70" blue="180" />
-      <DataChannel enable="1" alias="FrameCounter" signalType="2" group="/CI" physicalChannel="/PFI3" sample="0" Stimulus="0" red="255" green="70" blue="70" />
+      <DataChannel enable="1" alias="FrameCounter" signalType="2" group="/CI" physicalChannel="/PFI3" sample="0" Stimulus="0" red="255" green="70" blue="70" savetiming="0"/>
       <SampleRate name="High 250kHz" enable="0" rate="250000" />
       <SampleRate name="Med-High 200kHz" enable="0" rate="200000" />
       <SampleRate name="Medium 100kHz" enable="0" rate="100000" />
@@ -135,7 +135,7 @@
       <DataChannel enable="1" alias="BleachComplete" signalType="1" group="/DI" physicalChannel="/port0/line5" sample="0" Stimulus="0" red="70" green="180" blue="0" />
       <DataChannel enable="0" alias="Line6" signalType="1" group="/DI" physicalChannel="/port0/line6" sample="0" Stimulus="0" red="69" green="180" blue="0" />
       <DataChannel enable="0" alias="Line7" signalType="1" group="/DI" physicalChannel="/port0/line7" sample="0" Stimulus="0" red="240" green="70" blue="180" />
-      <DataChannel enable="1" alias="FrameCounter" signalType="2" group="/CI" physicalChannel="/PFI3" sample="0" Stimulus="0" red="255" green="70" blue="70" />
+      <DataChannel enable="1" alias="FrameCounter" signalType="2" group="/CI" physicalChannel="/PFI3" sample="0" Stimulus="0" red="255" green="70" blue="70" savetiming="0"/>
       <SampleRate name="High 500kHz" enable="0" rate="500000" />
       <SampleRate name="Med-High 200kHz" enable="0" rate="200000" />
       <SampleRate name="Medium 100kHz" enable="0" rate="100000" />
@@ -163,7 +163,7 @@
       <DataChannel enable="1" alias="Line5" signalType="1" group="/DI" physicalChannel="/port0/line5" sample="0" Stimulus="0" red="70" green="180" blue="0" />
       <DataChannel enable="0" alias="Line6" signalType="1" group="/DI" physicalChannel="/port0/line6" sample="0" Stimulus="0" red="69" green="180" blue="0" />
       <DataChannel enable="0" alias="Line7" signalType="1" group="/DI" physicalChannel="/port0/line7" sample="0" Stimulus="0" red="240" green="70" blue="180" />
-      <DataChannel enable="0" alias="Counter" signalType="2" group="/CI" physicalChannel="/PFI3" sample="0" Stimulus="0" red="255" green="70" blue="70" />
+      <DataChannel enable="0" alias="Counter" signalType="2" group="/CI" physicalChannel="/PFI3" sample="0" Stimulus="0" red="255" green="70" blue="70" savetiming="0"/>
       <SampleRate name="High 250kHz" enable="0" rate="250000" />
       <SampleRate name="Med-High 200kHz" enable="0" rate="200000" />
       <SampleRate name="Medium 100kHz" enable="0" rate="100000" />

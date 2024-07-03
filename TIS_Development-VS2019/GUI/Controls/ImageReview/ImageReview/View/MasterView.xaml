@@ -7,6 +7,7 @@
              xmlns:esv="clr-namespace:ExperimentSettingsViewer;assembly=ExperimentSettingsViewer"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:xy="clr-namespace:XYTileControl;assembly=XYTileControl"
+             xmlns:sharedTypes="clr-namespace:ThorSharedTypes;assembly=ThorSharedTypes"
              Width="Auto"
              Height="Auto"
              mc:Ignorable="d">
@@ -26,8 +27,10 @@
                 <GridViewColumn DisplayMemberBinding="{Binding Mode=OneWay, XPath=Wavelengths/Wavelength/@exposureTimeMS}"
                                 Header="Exposure Time (ms)" />
             </GridViewColumnCollection>
-            <ViewModel:EnumToBooleanConverter x:Key="enumConverter" />
-            <BooleanToVisibilityConverter x:Key="boolToVis" />
+            <sharedTypes:EnumToBooleanConverter x:Key="enumConverter" />
+            <sharedTypes:DoubleScaledCultureConverter x:Key="doubleCultureUnitConverter" />
+            <sharedTypes:DoubleCultureConverter x:Key="doubleCultureConverter" />
+            <sharedTypes:BooleanToVisibilityConverter x:Key="boolToVis" />
             <DataTemplate x:Key="MultiColumnHeaderTemplate">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -154,148 +157,181 @@
                         <esv:UserControl1 Name="settingsPreview" />
                     </ScrollViewer>
                 </Expander>
-            </Border>
-            <Border Grid.Row="2" Margin="1">
-                <StackPanel Grid.Row="1"
-                            Grid.Column="0"
-                            Width="203"
-                            Height="Auto">
-                    <StackPanel Margin="1">
-                        <StackPanel Orientation="Horizontal">
-                            <StackPanel Grid.Row="0"
-                                        Grid.Column="4">
-                                <ToggleButton x:Name="chanAEnable"
-                                              Grid.Row="2"
-                                              Grid.Column="4"
-                                              Width="40"
-                                              Height="40"
-                                              Margin="5"
-                                              HorizontalAlignment="Center"
-                                              VerticalAlignment="Top"
-                                              IsChecked="{Binding Path=ChannelEnableA}"
-                                              ToolTip="Enables display of A Channel"
-                                              Visibility="{Binding Path=IsChannelVisible[0]}">
-                                    <Border>
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Setter Property="Background" Value="#FFEEEEEE" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Path=IsChecked, ElementName=chanAEnable}" Value="True">
-                                                        <Setter Property="Background" Value="{Binding Path=ChannelColor[0]}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                        <Label Width="40"
-                                               Margin="-1,-7,0,0"
-                                               HorizontalContentAlignment="Center"
-                                               Background="Transparent"
-                                               Content="A"
-                                               FontSize="30" />
-                                    </Border>
-                                </ToggleButton>
-                                <ToggleButton x:Name="chanBEnable"
-                                                      Grid.Row="2"
-                                                      Grid.Column="4"
-                                                      Width="40"
-                                                      Height="40"
-                                                      Margin="5"
-                                                      HorizontalAlignment="Center"
-                                                      VerticalAlignment="Top"
-                                                      IsChecked="{Binding Path=ChannelEnableB}"
-                                                      ToolTip="Enables display of B Channel"
-                                                      Visibility="{Binding Path=IsChannelVisible[1]}">
-                                    <Border>
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Setter Property="Background" Value="#FFEEEEEE" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Path=IsChecked, ElementName=chanBEnable}" Value="True">
-                                                        <Setter Property="Background" Value="{Binding Path=ChannelColor[1]}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                        <Label Width="40"
-                                               Margin="-1,-7,0,0"
-                                               HorizontalContentAlignment="Center"
-                                               Background="Transparent"
-                                               Content="B"
-                                               FontSize="30" />
-                                    </Border>
-                                </ToggleButton>
-                                <ToggleButton x:Name="chanCEnable"
-                                              Grid.Row="2"
-                                              Grid.Column="4"
-                                              Width="40"
-                                              Height="40"
-                                              Margin="5"
-                                              HorizontalAlignment="Center"
-                                              VerticalAlignment="Top"
-                                              IsChecked="{Binding Path=ChannelEnableC}"
-                                              ToolTip="Enables display of C Channel"
-                                              Visibility="{Binding Path=IsChannelVisible[2]}">
-                                    <Border>
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Setter Property="Background" Value="#FFEEEEEE" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Path=IsChecked, ElementName=chanCEnable}" Value="True">
-                                                        <Setter Property="Background" Value="{Binding Path=ChannelColor[2]}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                        <Label Width="40"
-                                               Margin="-1,-7,0,0"
-                                               HorizontalContentAlignment="Center"
-                                               Background="Transparent"
-                                               Content="C"
-                                               FontSize="30" />
-                                    </Border>
-                                </ToggleButton>
-                                <ToggleButton x:Name="chanDEnable"
-                                              Grid.Row="2"
-                                              Grid.Column="4"
-                                              Width="40"
-                                              Height="40"
-                                              Margin="5"
-                                              HorizontalAlignment="Center"
-                                              VerticalAlignment="Top"
-                                              IsChecked="{Binding Path=ChannelEnableD}"
-                                              ToolTip="Enables display of D Channel"
-                                              Visibility="{Binding Path=IsChannelVisible[3]}">
-                                    <Border>
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Setter Property="Background" Value="#FFEEEEEE" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Path=IsChecked, ElementName=chanDEnable}" Value="True">
-                                                        <Setter Property="Background" Value="{Binding Path=ChannelColor[3]}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                        <Label Width="40"
-                                               Margin="-1,-7,0,0"
-                                               HorizontalContentAlignment="Center"
-                                               Background="Transparent"
-                                               Content="D"
-                                               FontSize="30" />
-                                    </Border>
-                                </ToggleButton>
+            </Border>            
+            <Border Visibility="{Binding Path=AdvancedImageControlPanelVisibility}">
+                <Expander Foreground="White"
+                          Header="Advanced Image Controls"
+                          IsExpanded="False">
+                    <StackPanel>
+                        <Grid Margin="0,2,0,5" Visibility="{Binding Path=DisplayAspectRatioOptionVisibility}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition></RowDefinition>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition></ColumnDefinition>
+                                <ColumnDefinition></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0"
+                                            HorizontalAlignment="Left"
+                                            Orientation="Horizontal"
+                                            ToolTip="Pixel aspect ratio X:Y">
+                                <Label Content="Pixel Aspect Ratio X:Y"
+                                           Foreground="White" />
+                                <Label Content="1:"
+                                           Foreground="White" 
+                                           HorizontalContentAlignment="Right"
+                                           HorizontalAlignment="Right"/>
+                                <Label Name="tbLSMScaleYScan"
+                                             Width="Auto"
+                                             MinWidth="15"
+                                             MaxWidth="30"
+                                             HorizontalContentAlignment="Left"
+                                             HorizontalAlignment="Left"
+                                             VerticalAlignment="Stretch" 
+                                             VerticalContentAlignment="Center"
+                                             Content="{Binding Path=PixelAspectRatioYScale,
+                                                            Mode=TwoWay,
+                                                            Converter={StaticResource doubleCultureConverter}}" />
                             </StackPanel>
-                            <Button Name="colorImageSettings"
-                                    Margin="20"
-                                    Width="50"
-                                    Height="50"
-                                    Click="colorImageSettings_Click"
-                                    ToolTip="Color image setttings">
-                                <Image Source="/ImageReview;component/Icons/ChanAB.png" />
-                            </Button>
-                        </StackPanel>
+                            <CheckBox Grid.Column="1" VerticalAlignment="Center" Content="Display Aspect Ratio in Image" HorizontalAlignment="Left" IsChecked="{Binding Path=DisplayAspectRatio}"/>
+                        </Grid>
+                        <Border Grid.Row="2"
+        Margin="1">
+    <GroupBox Foreground="White"
+              Header="Image Correction">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal"
+                                                Margin="3"
+                                                Visibility="{Binding LSMImageDistortionCorrectionVisibility}">
+                                        <CheckBox Content="Image Distortion Correction"
+                                                  IsChecked="{Binding LSMImageDistortionCorrectionEnable}" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal"
+                                                Visibility="{Binding LSMImageDistortionCorrectionVisibility}">
+                                        <Label Content="LSM Calibration X-Angle Max"
+                                               VerticalAlignment="Center" />
+                                        <TextBox Name="txtLSMImageDistortionCorrectionCalibrationXAngleMax"
+                                                 Width="50"
+                                                 Height="25"
+                                                 Text="{Binding Path=LSMImageDistortionCorrectionCalibrationXAngleMax, Mode=TwoWay}"
+                                                 ToolTip="Maximum X-angle for LSM calibration."
+                                                 VerticalAlignment="Center" />
+                                        <Button Width="30"
+                                                Height="25"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txtLSMImageDistortionCorrectionCalibrationXAngleMax}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <StackPanel>
+                                            <RepeatButton Content="+"
+                                                          MinWidth="30"
+                                                          Command="{Binding Path=LSMImageDistortionCorrectionCalibrationXAngleMaxPlusCommand}"
+                                                          Delay="500"
+                                                          Interval="100" />
+                                            <RepeatButton Content="-"
+                                                          MinWidth="30"
+                                                          Command="{Binding Path=LSMImageDistortionCorrectionCalibrationXAngleMaxMinusCommand}"
+                                                          Delay="500"
+                                                          Interval="100" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal"
+                                                Visibility="{Binding LSMImageDistortionCorrectionVisibility}">
+                                        <Label Content="LSM Calibration Y-Angle Max"
+                                               VerticalAlignment="Center" />
+                                        <TextBox Name="txtLSMImageDistortionCorrectionCalibrationYAngleMax"
+                                                 Width="50"
+                                                 Height="25"
+                                                 Text="{Binding Path=LSMImageDistortionCorrectionCalibrationYAngleMax, Mode=TwoWay}"
+                                                 ToolTip="Maximum Y-angle for LSM calibration."
+                                                 VerticalAlignment="Center" />
+                                        <Button Width="30"
+                                                Height="25"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txtLSMImageDistortionCorrectionCalibrationYAngleMax}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <StackPanel>
+                                            <RepeatButton Content="+"
+                                                          MinWidth="30"
+                                                          Command="{Binding Path=LSMImageDistortionCorrectionCalibrationYAngleMaxPlusCommand}"
+                                                          Delay="500"
+                                                          Interval="100" />
+                                            <RepeatButton Content="-"
+                                                          MinWidth="30"
+                                                          Command="{Binding Path=LSMImageDistortionCorrectionCalibrationYAngleMaxMinusCommand}"
+                                                          Delay="500"
+                                                          Interval="100" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal"
+                                                Visibility="{Binding LSMImageDistortionCorrectionVisibility}">
+                                        <Label Content="LSM Calibration Angle In"
+                                               VerticalAlignment="Center" />
+                                        <TextBox Name="txtLSMImageDistortionCorrectionCalibrationGalvoTiltAngle"
+                                                 Width="50"
+                                                 Height="25"
+                                                 Text="{Binding Path=LSMImageDistortionCorrectionCalibrationGalvoTiltAngle, Mode=TwoWay}"
+                                                 ToolTip="Galvo tilt angle for LSM calibration."
+                                                 VerticalAlignment="Center" />
+                                        <Button Width="30"
+                                                Height="25"
+                                                Content="&#x2713;">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility"
+                                                            Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsFocused, ElementName=txtLSMImageDistortionCorrectionCalibrationGalvoTiltAngle}"
+                                                                     Value="True">
+                                                            <Setter Property="Visibility"
+                                                                    Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <StackPanel>
+                                            <RepeatButton Content="+"
+                                                          MinWidth="30"
+                                                          Command="{Binding Path=LSMImageDistortionCorrectionCalibrationGalvoTiltAnglePlusCommand}"
+                                                          Delay="500"
+                                                          Interval="100" />
+                                            <RepeatButton Content="-"
+                                                          MinWidth="30"
+                                                          Command="{Binding Path=LSMImageDistortionCorrectionCalibrationGalvoTiltAngleMinusCommand}"
+                                                          Delay="500"
+                                                          Interval="100" />
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                </StackPanel>
+    </GroupBox>
+</Border>
                     </StackPanel>
-                </StackPanel>
+                </Expander>
             </Border>
             <Border Name="tilesControlBorder"
                     Visibility="{Binding Path=XYVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVis}}"
@@ -311,11 +347,172 @@
                     </StackPanel>
                 </Expander>
             </Border>
-            <Border Margin="1">
-                <StackPanel 
-                    Visibility="{Binding IsTVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                    Grid.Column="0" Margin="1" VerticalAlignment="Center">
-                    <StackPanel Margin="1" HorizontalAlignment="Right" Orientation="Horizontal">
+            <Border Name="mROIDisplay"
+                    Margin="1">
+                <Expander Foreground="White" Header="mROI" IsExpanded="True">
+                    <StackPanel Orientation="Vertical">
+                        <GroupBox Header="Display" BorderThickness="0.5">
+                            <StackPanel>
+                                <RadioButton Content="Spatial Display" GroupName="ReviewDisplayType" Margin="3"
+                         IsChecked="{Binding mROISpatialDisplaybleEnable}" />
+                                <RadioButton Content="Only Scan ROIs" Margin="3"
+                         GroupName="ReviewDisplayType"
+                         IsChecked="False" />
+                            </StackPanel>
+                        </GroupBox>
+
+                        <StackPanel Orientation="Horizontal"
+                        Margin="1"
+                        HorizontalAlignment="Left" >
+                            <Label VerticalAlignment="Center"
+                       Content="Stripe Pixels"/>
+
+                            <Label Name="tbStripPixel"
+                         Width="35"
+                       VerticalContentAlignment="Center"
+                       VerticalAlignment="Center"
+                       Content="{Binding Path=mROIStripePixels}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="1"
+                        HorizontalAlignment="Left" >
+                            <Label Content="Stripe Width" VerticalContentAlignment="Center"/>
+
+                            <Label Content="{Binding mROIStripePhysicalFieldSizeUM}"
+                       VerticalContentAlignment="Center"
+                       VerticalAlignment="Center" />
+                            <Label Content="[µm]" VerticalContentAlignment="Center" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal"
+                                Margin="0"
+                                VerticalAlignment="Center">
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Left">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility"
+                                Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=SelectedViewMode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                         Value="1">
+                                            <Setter Property="Visibility"
+                                        Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                        </StackPanel>
+                        <ListView Name="mROIListView"
+                      Height="150"
+                      Background="#FF333333"
+                      Margin="1"
+                      SelectedIndex="{Binding SelectedmROIIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                      ItemsSource="{Binding mROIList}"
+                      SelectionMode="Single"
+                      HorizontalContentAlignment="Center"                      
+                      ToolTip="List of mROI Scan Areas"
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="Focusable"
+                                Value="True" />
+                                    <Setter Property="HorizontalContentAlignment"
+                                Value="Stretch" />
+                                    <Setter Property="Background"
+                                Value="#FF333333" />
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.Style>
+                                <Style TargetType="{x:Type ListView}">
+                                    <Setter Property="HorizontalContentAlignment"
+                                Value="Stretch" />
+                                    <Setter Property="Background"
+                                Value="#FF333333" />
+                                </Style>
+                            </ListView.Style>
+                            <ListView.View>
+                                <GridView AllowsColumnReorder="False">
+                                    <GridViewColumn Header="ID"                                        
+                                        Width="Auto" >
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock x:Name="Txt" Text="{Binding ScanAreaID}" Foreground="{Binding Color}" FontWeight="Bold"  />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="   Z&#x0a;(µm)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding ZPosition,
+                                                         ConverterParameter=1000,
+                                                         Converter={StaticResource doubleCultureUnitConverter}}" />
+                                    <GridViewColumn Header="P1"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=Power0}" />
+                                    <GridViewColumn Header=" Width&#x0a;(Pixels)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=SizeXPixels}" />
+                                    <GridViewColumn Header="Height&#x0a;(Pixels)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=SizeYPixels}" />
+                                    <GridViewColumn Header="Width&#x0a; (um)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=PhysicalSizeXUM, StringFormat={}{0:F1}}" />
+                                    <GridViewColumn Header="Height&#x0a;  (um)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=PhysicalSizeYUM, StringFormat={}{0:F1}}" />
+                                    <GridViewColumn Header="Left&#x0a;(um)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=LeftUM, StringFormat={}{0:F1}}" />
+                                    <GridViewColumn Header="Top&#x0a;(um)"
+                                        Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=TopUM, StringFormat={}{0:F1}}" />
+                                    <!--<GridViewColumn Header="IntraROI&#x0a;Delay (ms)" Width="Auto"
+                                        DisplayMemberBinding="{Binding Path=FlyToNextAreaLineCycles}" />-->
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        <StackPanel Orientation="Horizontal"
+                        Margin="1"
+                        HorizontalAlignment="Center">
+                            <ToggleButton Name="tbCfgMicroView"
+                              Margin="2,0"
+                              Height="25"
+                              HorizontalAlignment="Center"
+                              ToolTip="ON to show Overlay ROIs, OFF to hide">
+                                <ToggleButton.Style>
+                                    <Style TargetType="ToggleButton"
+                               BasedOn="{StaticResource {x:Type ToggleButton}}">
+                                        <Setter Property="IsChecked"
+                                    Value="{Binding Path=mROIShowOverlays, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                        <Setter Property="Content"
+                                    Value="Show Overlay ROIs" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsChecked"
+                                         Value="True">
+                                                <Setter Property="Content"
+                                            Value="Hide Overlay ROIs" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ToggleButton.Style>
+                            </ToggleButton>
+                        </StackPanel>
+                    </StackPanel>
+                </Expander>
+            </Border>
+            
+            <Border Margin="1"
+                    Visibility="{Binding IsTVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <StackPanel Grid.Column="0" Margin="1" VerticalAlignment="Center">
+                    <StackPanel Margin="1" 
+                                HorizontalAlignment="Right" 
+                                Orientation="Horizontal"
+                                IsEnabled="{Binding IndexControlsEnabled}">
                         <StackPanel Orientation="Horizontal"
                                     VerticalAlignment="Top"
                                     Margin="1"
@@ -361,7 +558,9 @@
                                      Margin="1"
                                      HorizontalAlignment="Center"
                                      LostFocus="tSliderText_LostFocus"
-                                     Text="{Binding TValue, Mode=TwoWay}" />
+                                     
+                                     Text="{Binding TBoxValue, Mode=TwoWay}"
+                                     />
                             <Button Width="30" Height="25" Margin="1" Content="✓">
                                 <Button.Style>
                                     <Style TargetType="Button">
@@ -420,9 +619,10 @@
                                 SmallChange="1"
                                 Thumb.DragCompleted="Slider_DragComplete"
                                 TickPlacement="None"
-                                Value="{Binding TValue,
+                                Value="{Binding TBoxValue,
                                                 Mode=TwoWay,
-                                                UpdateSourceTrigger=PropertyChanged}" />
+                                                UpdateSourceTrigger=PropertyChanged}" 
+                                IsEnabled="{Binding IndexControlsEnabled}"/>
                         <Label Width="Auto"
                                Height="25"
                                Margin="1"
@@ -452,7 +652,8 @@
                             VerticalAlignment="Center">
                     <StackPanel Margin="1"
                                 HorizontalAlignment="Right"
-                                Orientation="Horizontal">
+                                Orientation="Horizontal"
+                                IsEnabled="{Binding IndexControlsEnabled}">
                         <StackPanel Orientation="Horizontal"
                                     VerticalAlignment="Top"
                                     Margin="1"
@@ -548,7 +749,8 @@
                                 SmallChange="1"
                                 Thumb.DragCompleted="Slider_DragComplete"
                                 TickPlacement="None"
-                                Value="{Binding SpValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                Value="{Binding SpValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                IsEnabled="{Binding IndexControlsEnabled}"/>
                         <Label Width="Auto"
                                Height="25"
                                Margin="1"
@@ -577,7 +779,24 @@
                     Margin="1"
                     VerticalAlignment="Center">
                     <StackPanel HorizontalAlignment="Right"
-                      Orientation="Horizontal">
+                                Orientation="Horizontal"
+                                IsEnabled="{Binding IndexControlsEnabled}">
+                        <StackPanel Margin="0,0,5,0"
+                                    Visibility="{Binding Path=PlanePositionVisibility}">
+                            <TextBlock Width="Auto"
+                                       Margin="1"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Text="Plane" />
+                            <TextBox Name="zSliderPlaneNumber"
+                                     Width="Auto"
+                                     MinWidth="53"
+                                     Height="25"
+                                     Margin="1"
+                                     IsReadOnly="True"
+                                     HorizontalAlignment="Center"
+                                     Text="{Binding RemoteFocusPlaneNumber, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
                         <StackPanel Orientation="Horizontal"
                         VerticalAlignment="Top"
                         Margin="1"
@@ -623,7 +842,7 @@
                          Margin="1"
                          HorizontalAlignment="Center"
                          LostFocus="zSliderText_LostFocus"
-                         Text="{Binding ZValue,
+                         Text="{Binding ZBoxValue,
                                                 Mode=TwoWay}" />
                             </StackPanel>
                             <Button Width="30"
@@ -689,10 +908,12 @@
                                                   UpdateSourceTrigger=PropertyChanged}"
                     SmallChange="1"
                     Thumb.DragCompleted="Slider_DragComplete"
+
                     TickPlacement="None"
-                    Value="{Binding Path=ZValue,
+                    Value="{Binding Path=ZBoxValue,
                                                 Mode=TwoWay,
-                                                UpdateSourceTrigger=PropertyChanged}" />
+                                                UpdateSourceTrigger=PropertyChanged}" 
+                                IsEnabled="{Binding IndexControlsEnabled}"/>
                         <Label Width="Auto"
                    Height="25"
                    Margin="1"
@@ -716,14 +937,17 @@
                     </StackPanel>
                 </StackPanel>
             </Border>
-            <Border Margin="1">
+            <Border Margin="1"
+                    Visibility="{Binding IsZStreamVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                    >
                 <StackPanel Grid.Column="0"
                             Visibility="{Binding IsZStreamVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                             Margin="1"
                             VerticalAlignment="Center">
                     <StackPanel Margin="1"
                                 HorizontalAlignment="right"
-                                Orientation="Horizontal">
+                                Orientation="Horizontal"
+                                IsEnabled="{Binding IndexControlsEnabled}">
                         <TextBlock Width="Auto"
                                    Margin="1"
                                    HorizontalAlignment="Center"
@@ -789,7 +1013,8 @@
                                 TickPlacement="None"
                                 Value="{Binding Path=ZStreamValue,
                                                 Mode=TwoWay,
-                                                UpdateSourceTrigger=PropertyChanged}" />
+                                                UpdateSourceTrigger=PropertyChanged}"
+                                IsEnabled="{Binding IndexControlsEnabled}"/>
                         <Label Width="Auto"
                                Height="25"
                                Margin="1"
@@ -811,7 +1036,7 @@
                     </StackPanel>
                 </StackPanel>
             </Border>
-            <Border Visibility="{Binding Path=ScanAreaVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVis}}"
+            <!--<Border Visibility="{Binding Path=ScanAreaVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVis}}"
                     Margin="1">
                 <StackPanel Grid.Column="0"
                             Margin="1"
@@ -903,9 +1128,9 @@
                         </Button>
                     </StackPanel>
                 </StackPanel>
-            </Border>
+            </Border>-->
             <Border Grid.Row="4"
-                    Visibility="{Binding IsMovieAvailable, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                Visibility="{Binding IsMovieAvailable, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
                 <StackPanel Margin="1" VerticalAlignment="Center">
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
                         <Label Width="Auto"
@@ -917,11 +1142,13 @@
                                Content="Movie Parameters" />
                     </StackPanel>
                     <StackPanel Name="spZAndTSliders">
-                        <!--Visibility="{Binding Path=ZVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVis}}">-->
+                        <!--Visibility="{Binding Path=ZVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVis}}"-->
                         
                         <RadioButton Name="btnT"
                                      Margin="2"
-                                     Visibility="{Binding IsTVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     
+                                     Visibility="{Binding Path=IsTVisible, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+
                                      VerticalAlignment="Center"
                                      Checked="btnT_Checked"
                                      GroupName="MoviePlaneOption"

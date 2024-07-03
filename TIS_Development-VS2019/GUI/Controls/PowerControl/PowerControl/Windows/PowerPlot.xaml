@@ -1,8 +1,8 @@
 ﻿<Window x:Class="PowerControl.PowerPlotWin"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d3="http://research.microsoft.com/DynamicDataDisplay/1.0"
         WindowStyle="ToolWindow"
+        xmlns:sci="http://schemas.abtsoftware.co.uk/scichart"
         Height="320"
         Width="480"
         Title="PowerPlot"
@@ -17,42 +17,99 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
-    <Grid Margin="3">
-        <StackPanel>
-            <d3:ChartPlotter Name="plotter"
-                             Height="220"
-                             Margin="5">
-                <d3:VerticalLine Stroke="MidnightBlue"
-                                 StrokeDashArray="4 4"
-                                 Value="{Binding Path=PowerPlotZPosition}" />
-                <d3:VerticalAxisTitle Content="Power (%)" />
-                <d3:HorizontalLine Stroke="MidnightBlue"
-                                   StrokeDashArray="4 4"
-                                   Value="{Binding Path=PowerPositionActive}" />
-                <d3:HorizontalAxisTitle Content="Z [mm]" />
-            </d3:ChartPlotter>
-            <StackPanel Orientation="Horizontal"
-                        HorizontalAlignment="Right">
-                <Button Content="Clear All"
-                        Width="75"
-                        Height="35"
-                        HorizontalAlignment="Right"
-                        Margin="3"
-                        Command="{Binding Path=PowerClearPlotCommand}"></Button>
-                <Button Content="Record"
-                        Width="75"
-                        Height="35"
-                        HorizontalAlignment="Right"
-                        Margin="3"
-                        Command="{Binding Path=PowerRecordPlotCommand}"></Button>
-                <Button Content="OK"
-                        Name="btnOK"
-                        Width="75"
-                        Height="35"
-                        HorizontalAlignment="Right"
-                        Margin="3"
-                        Click="btnOK_Click"></Button>
-            </StackPanel>
+    <Grid Margin="3"
+          Background="#FF333333">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <!--<d3:ChartPlotter Name="plotter"
+                         Height="220"
+                         Margin="5">
+            <d3:VerticalLine Stroke="MidnightBlue"
+                             StrokeDashArray="4 4"
+                             Value="{Binding Path=PowerPlotZPosition}" />
+            <d3:VerticalAxisTitle Content="Power (%)" />
+            <d3:HorizontalLine Stroke="MidnightBlue"
+                               StrokeDashArray="4 4"
+                               Value="{Binding Path=PowerPositionActive}" />
+            <d3:HorizontalAxisTitle Content="Z [mm]" />
+        </d3:ChartPlotter>-->
+        <sci:SciChartSurface Name="sciChartSurface"
+                             Grid.Row="0"
+                             RenderPriority="Normal"
+                             MaxFrameRate="33"
+                             sci:VisualXcceleratorEngine.IsEnabled="True"
+                             sci:VisualXcceleratorEngine.FallbackType="{x:Type sci:HighSpeedRenderSurface}"
+                             sci:VisualXcceleratorEngine.DowngradeWithoutException="False"
+                             sci:VisualXcceleratorEngine.EnableImpossibleMode="True">
+            <sci:SciChartSurface.XAxis>
+                <sci:NumericAxis Name="XAxis"
+                                 DrawMajorBands="False"
+                                 DrawMinorGridLines="False"
+                                 DrawMinorTicks="False"
+                                 AxisTitle="Z [mm]"
+                                 AutoRange="Always">
+                </sci:NumericAxis>
+
+            </sci:SciChartSurface.XAxis>
+            <sci:SciChartSurface.YAxis>
+                <sci:NumericAxis AxisTitle="Power (%)"
+                                 Name="PowerAxis"
+                                 DrawMinorTicks="False"
+                                 DrawMinorGridLines="False"
+                                 DrawMajorBands="False"
+                                 TextFormatting="0.0##">
+                    <sci:NumericAxis.GrowBy>
+                        <sci:DoubleRange Max="0.1"
+                                         Min="0.01" />
+                    </sci:NumericAxis.GrowBy>
+                </sci:NumericAxis>
+            </sci:SciChartSurface.YAxis>
+            <sci:SciChartSurface.Annotations>
+                <sci:VerticalLineAnnotation x:Name="verticalLine"
+                                            X1="{Binding PowerPlotZPosition, UpdateSourceTrigger=PropertyChanged}"
+                                            X2="{Binding PowerPlotZPosition, UpdateSourceTrigger=PropertyChanged}"
+                                            Stroke="CadetBlue" 
+                                            StrokeThickness="2"
+                                            StrokeDashArray="3 3"/>
+                <sci:HorizontalLineAnnotation x:Name="horizontalLine"
+                                              Y1="{Binding PowerPositionActive, UpdateSourceTrigger=PropertyChanged}"
+                                              Y2="{Binding PowerPositionActive, UpdateSourceTrigger=PropertyChanged}"
+                                              Stroke="CadetBlue"
+                                              StrokeThickness="2"
+                                              StrokeDashArray="3 3" />
+            </sci:SciChartSurface.Annotations>
+            <sci:SciChartSurface.ChartModifier>
+                <sci:ModifierGroup>
+                    <sci:RubberBandXyZoomModifier ExecuteOn="MouseRightButton" />
+                    <sci:ZoomExtentsModifier ExecuteOn="MouseDoubleClick"
+                                             XyDirection="XYDirection" />
+                </sci:ModifierGroup>
+            </sci:SciChartSurface.ChartModifier>
+        </sci:SciChartSurface>
+        <StackPanel Orientation="Horizontal"
+                    Grid.Row="1"
+                    HorizontalAlignment="Right">
+            <Button Content="Clear All"
+                    Width="75"
+                    Height="35"
+                    HorizontalAlignment="Right"
+                    Margin="3"
+                    Command="{Binding Path=PowerClearPlotCommand}"></Button>
+            <Button Content="Record"
+                    Width="75"
+                    Height="35"
+                    HorizontalAlignment="Right"
+                    Margin="3"
+                    Command="{Binding Path=PowerRecordPlotCommand}"></Button>
+            <Button Content="OK"
+                    Name="btnOK"
+                    Width="75"
+                    Height="35"
+                    HorizontalAlignment="Right"
+                    Margin="3"
+                    Click="btnOK_Click"></Button>
         </StackPanel>
     </Grid>
 </Window>

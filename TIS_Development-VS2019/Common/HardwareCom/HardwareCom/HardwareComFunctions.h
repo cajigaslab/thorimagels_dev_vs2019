@@ -46,4 +46,5 @@ DllExportCameraFunc GetCamera(long selectedCamera);
 DllExportFunc GetDeviceSelectedIndex(long selectedDevice, long &selectedIndex);
 DllExportFunc GetCameraSelectedIndex(long selectedCamera, long &selectedIndex);
 DllExportFunc PreflightCamera(long cameraSelection);
+DllExportFunc SetupCamera(long cameraSelection);
 DllExportFunc PostflightCamera(long cameraSelection);

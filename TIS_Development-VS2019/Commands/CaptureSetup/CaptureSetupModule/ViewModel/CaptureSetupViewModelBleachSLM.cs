@@ -19,11 +19,15 @@
 
     using CaptureSetupDll.View;
 
+    using CurveFitting;
+
     using GeometryUtilities;
 
     using HDF5CS;
 
     using OverlayManager;
+
+    using SLMControl;
 
     using ThorLogging;
 
@@ -37,6 +41,7 @@
 
         private RelayCommandWithParam _editSLMParamRelayCommand;
         private List<SLMEpochSequence> _epochSequence = new List<SLMEpochSequence>();
+        private Delegate _registrationHandler = null;
         private bool[] _roiToolVisible = new bool[14] { true, true, true, true, true, true, true, true, true, true, true, true, true, true };
         private ObservableCollection<SLMParams> _slmBleachCompParams = new ObservableCollection<GeometryUtilities.SLMParams>();
         private bool _slmBuildOnce = false;
@@ -55,6 +60,8 @@
         private SLMParamEditWin _slmParamEditWin = null;
         private int _slmPatternSelectedIndex = -1;
         private bool _slmPatternsVisible = true;
+        private Delegate _turretPosHandler = null;
+        private ZDefocusPlotWin _zDefocusPlotWin = null;
 
         #endregion Fields
 
@@ -132,7 +139,7 @@
                         EditSLMParam("SLM_BUILD");
                     }
                 }
-                else if (SLMPanelInUse && (!_slmBuildOnce))    //build once at first loading of SLM panel
+                else if (SLMPanelInUse && !_slmBuildOnce)    //build once at first loading of SLM panel
                 {
                     EditSLMParam("SLM_BUILD");
                     _slmBuildOnce = true;
@@ -173,7 +180,7 @@
                     string str = string.Empty;
                     int val = 0;
                     XmlNodeList ndList = ExperimentDoc.SelectNodes("/ThorImageExperiment/Photobleaching");
-                    if (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "pixelX", ref str) && (Int32.TryParse(str, out val)) && 512 == val)
+                    if (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "pixelX", ref str) && (Int32.TryParse(str, out val)) && 0 < val)
                     {
                         return (string)MVMManager.Instance["AreaControlViewModel", "LSMLastCalibrationDate", (object)string.Empty];
                     }
@@ -182,32 +189,13 @@
             }
         }
 
-        public double PatternImportLimit
+        public int PatternImportLimit
         {
             get
             {
-                string strTmp = string.Empty;
-                const int DEFAULT_PATTERN_COUNT_MAX = 100;  //max # of pattern ROIs to be imported, none is available if over the limit
-                int iVal = DEFAULT_PATTERN_COUNT_MAX;
-                try
-                {
-                    XmlDocument appSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
-                    XmlNodeList ndList = appSettings.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView");
-                    if (null != ndList)
-                    {
-                        if (!(XmlManager.GetAttribute(ndList[0], appSettings, "PatternImportLimit", ref strTmp) && int.TryParse(strTmp, out iVal)))
-                        {
-                            iVal = DEFAULT_PATTERN_COUNT_MAX;
-                            XmlManager.SetAttribute(ndList[0], appSettings, "PatternImportLimit", iVal.ToString());
-                            MVMManager.Instance.ReloadSettings(SettingsFileType.APPLICATION_SETTINGS);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    ThorLogging.ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Verbose, 1, "Fail to get PatternImportLimit: " + ex.Message);
-                }
-                return iVal;
+                object iVal = (int)Constants.DEFAULT_SLM_PATTERN_IMPORT_CNT;    //max # of pattern ROIs to be imported, none is available if over the limit
+                GetBleachViewAttribute("PatternImportLimit", ref iVal);
+                return (int)iVal;
             }
         }
 
@@ -233,12 +221,9 @@
         /// </summary>
         public bool[] ROIToolVisible
         {
-            get
-            { return _roiToolVisible; }
             set
             {
-                _roiToolVisible = value;
-                OnPropertyChanged("ROIToolVisible");
+                MVMManager.Instance["ImageViewCaptureSetupVM", "ROIToolVisible"] = value;
             }
         }
 
@@ -440,6 +425,45 @@
             }
         }
 
+        public double SLMFlatDiagRatio
+        {
+            get
+            {
+                return _captureSetup.FlatDiagRatio;
+            }
+            set
+            {
+                _captureSetup.FlatDiagRatio = value;
+                OnPropertyChanged("SLMFlatDiagRatio");
+            }
+        }
+
+        public double SLMFlatPowerMaxPercent
+        {
+            get
+            {
+                return _captureSetup.FlatPowerMaxPercent;
+            }
+            set
+            {
+                _captureSetup.FlatPowerMaxPercent = value;
+                OnPropertyChanged("SLMFlatPowerMaxPercent");
+            }
+        }
+
+        public double SLMFlatPowerMinPercent
+        {
+            get
+            {
+                return _captureSetup.FlatPowerMinPercent;
+            }
+            set
+            {
+                _captureSetup.FlatPowerMinPercent = value;
+                OnPropertyChanged("SLMFlatPowerMinPercent");
+            }
+        }
+
         public string SLMImportFilePathName
         {
             get
@@ -533,8 +557,9 @@
             set
             {
                 _slmPatternsVisible = value;
-                OverlayManagerClass.Instance.InitSelectROI(ref CaptureSetupViewModel.OverlayCanvas);
-                OverlayManagerClass.Instance.DisplayModeROI(ref CaptureSetupViewModel.OverlayCanvas, new ThorSharedTypes.Mode[2] { ThorSharedTypes.Mode.PATTERN_NOSTATS, ThorSharedTypes.Mode.PATTERN_WIDEFIELD }, _slmPatternsVisible);
+
+                OverlayManagerClass.Instance.InitSelectROI();
+                OverlayManagerClass.Instance.DisplayModeROI(new ThorSharedTypes.Mode[2] { ThorSharedTypes.Mode.PATTERN_NOSTATS, ThorSharedTypes.Mode.PATTERN_WIDEFIELD }, _slmPatternsVisible);
             }
         }
 
@@ -544,9 +569,30 @@
             set { this._captureSetup.SLMPhaseDirect = value; }
         }
 
-        public string SLMPreviewFileName
+        public Visibility SLMPowerDistributionVisibility
         {
-            get { return SLMWaveformFolder[0] + "\\SLMPreview.bmp"; }
+            get
+            {
+                return ResourceManagerCS.GetVisibility("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView/BleachCalibrationTool", "PowerDistributionVisibility");
+            }
+        }
+
+        public string[] SLMPreviewFileName
+        {
+            get { return new string[] { SLMWaveformFolder[0] + "\\SLMPreview.bmp", SLMWaveformFolder[0] + "\\SLMPreviewWaveform.raw" }; }
+        }
+
+        public bool SLMRandomEpochs
+        {
+            get
+            {
+                return _captureSetup.SLMRandomEpochs;
+            }
+            set
+            {
+                _captureSetup.SLMRandomEpochs = value;
+                OnPropertyChanged("SLMRandomEpochs");
+            }
         }
 
         public bool SLMSelectWavelength
@@ -556,15 +602,16 @@
             {
                 if (value != SLMSelectWavelengthProp)
                 {
+
                     SLMSelectWavelengthProp = value;
                     //update for wavelength selection
                     OverlayManagerClass.Instance.WavelengthNM = SLMWavelengthNM;
-                    OverlayManagerClass.Instance.DimWavelengthROI(ref CaptureSetupViewModel.OverlayCanvas);
+                    OverlayManagerClass.Instance.DimWavelengthROI();
 
                     var modes = new ThorSharedTypes.Mode[2] { ThorSharedTypes.Mode.PATTERN_NOSTATS, ThorSharedTypes.Mode.PATTERN_WIDEFIELD };
 
                     var wavelengths = new int[] { OverlayManagerClass.Instance.WavelengthNM };
-                    OverlayManagerClass.Instance.DisplayOnlyPatternROIs(ref CaptureSetupViewModel.OverlayCanvas, modes, OverlayManagerClass.Instance.PatternID, wavelengths);
+                    OverlayManagerClass.Instance.DisplayOnlyPatternROIs(modes, OverlayManagerClass.Instance.PatternID, wavelengths);
                     //update power settings
                     if (null != _slmParamEditWin)
                         _slmParamEditWin.UpdateSLMParamPower();
@@ -999,9 +1046,9 @@
             _captureSetup.InitializeWaveformBuilder(clockRateHz);
         }
 
-        public bool LoadSLMPatternName(int runtimeCal, int id, string bmpPatternName, bool start, bool phaseDirect = false, int timeoutVal = 0)
+        public bool LoadSLMPatternName(int runtimeCal, int id, string bmpPatternName, bool start, bool phaseDirect = false, int phaseType = 0, int timeoutVal = 0)
         {
-            return _captureSetup.LoadSLMPatternName(runtimeCal, id, bmpPatternName, start, phaseDirect, timeoutVal);
+            return _captureSetup.LoadSLMPatternName(runtimeCal, id, bmpPatternName, start, phaseDirect, phaseType, timeoutVal);
         }
 
         public bool ResetSLMCalibration()
@@ -1026,8 +1073,10 @@
         {
             SLMBleachWaveParams.Clear();
 
-            OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, -1,
+            OverlayManagerClass.Instance.DeletePatternROI(-1,
                 (IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS));
+
+            OverlayManagerClass.Instance.PersistSaveROIs();
 
             for (int i = 0; i < SLMWaveformFolder.Length; i++)
                 ClearSLMFiles(SLMWaveformFolder[i]);
@@ -1052,6 +1101,31 @@
         public void UpdateSLMListGUI()
         {
             OnPropertyChanged("SLMBleachWaveParams");
+        }
+
+        /// <summary>
+        /// Set SLM calibration file and display scaled ROIs
+        /// </summary>
+        private bool DisplaySLMCalibROI()
+        {
+            if (1.0 != SLMCalibPatternScaleXY[0] || 1.0 != SLMCalibPatternScaleXY[1])
+            {
+                SLMCalibFile = System.IO.Path.GetFileNameWithoutExtension(DEFAULT_SLMCALIB_XAML) + "_scale" + System.IO.Path.GetExtension(DEFAULT_SLMCALIB_XAML);
+                FileCopyWithAccessCheck(BleachROIPath + DEFAULT_SLMCALIB_XAML, SLMCalibROIFilePath, true);
+            }
+            else
+                SLMCalibFile = DEFAULT_SLMCALIB_XAML;
+
+            //scale ROIs to current image, apply scaling-up ratio of default pattern
+            if (!OverlayManagerClass.Instance.ScaleROIs(SLMCalibROIFilePath, new int[] { ImageWidth, ImageHeight }))
+                return false;
+
+            //scale ROIs within current image by ratio per user request
+            if (!OverlayManagerClass.Instance.ScaleROIsByRatio(SLMCalibROIFilePath, SLMCalibPatternScaleXY))
+                return false;
+
+            //display calibration ROIs
+            return DisplayROI(SLMCalibROIFilePath);
         }
 
         void DuplicateSelectedSLMPattern()
@@ -1086,7 +1160,7 @@
 
             paramDuplicate.Name = compName.NameWithoutExtension;
 
-            OverlayManagerClass.Instance.DuplicatePatternROIs(ref CaptureSetupViewModel.OverlayCanvas, (int)SLMBleachWaveParams[_slmPatternSelectedIndex].BleachWaveParams.ID,              //ID: 1 based
+            OverlayManagerClass.Instance.DuplicatePatternROIs((int)SLMBleachWaveParams[_slmPatternSelectedIndex].BleachWaveParams.ID,              //ID: 1 based
                             (IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS));
             OverlayManagerClass.Instance.BackupROIs();
             paramDuplicate.BleachWaveParams.ID = (uint)SLMBleachWaveParams.Count + 1;
@@ -1158,10 +1232,13 @@
                             if (1 < BleachCalibratePockelsVoltageMin0.Length)
                                 _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.MeasurePower1 = (XmlManager.GetAttribute(ndList[0], ExperimentDoc, "measurePower1MW", ref str) && Double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out dTmp)) ? dTmp : 0.0;
                         }
-                        _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.UMPerPixel = (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0];
+                        _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.UMPerPixel = ((PixelSizeUM)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0]).PixelWidthUM;
                         _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.UMPerPixelRatio = this.BleachPixelSizeUMRatio;
                         _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.ROIWidthUM = 0;
                         _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.ROIHeight = 0;
+                        _slmParamEditWin.SLMParamsCurrent.PixelSpacing = (WaveformDriverType.WaveformDriver_ThorDAQ == _captureSetup.WaveformDriverType) ?
+                            Math.Max((int)(ImageWidth / (double)Constants.KHZ) + 1, (int)(ImageHeight / (double)Constants.KHZ) + 1) :
+                            Math.Max((int)(ImageWidth / (2 * (double)Constants.KHZ)) + 1, (int)(ImageHeight / (2 * (double)Constants.KHZ)) + 1);
                         _slmParamEditWin.SLMParamsCurrent.PhaseType = (IsStimulator || SLM3D) ? 1 : 0;
                         _slmParamEditWin.UpdateSLMParamPower();
                         _slmParamEditWin.Title = "Add SLM Pattern";
@@ -1180,7 +1257,7 @@
 
                         var modes = new ThorSharedTypes.Mode[2] { ThorSharedTypes.Mode.PATTERN_NOSTATS, ThorSharedTypes.Mode.PATTERN_WIDEFIELD };
                         var wavelengths = new int[] { OverlayManagerClass.Instance.WavelengthNM };
-                        OverlayManagerClass.Instance.DisplayOnlyPatternROIs(ref CaptureSetupViewModel.OverlayCanvas, modes, OverlayManagerClass.Instance.PatternID, wavelengths);
+                        OverlayManagerClass.Instance.DisplayOnlyPatternROIs(modes, OverlayManagerClass.Instance.PatternID, wavelengths);
 
                         //create working-directory
                         ResourceManagerCS.SafeCreateDirectory(SLMWaveformFolder[0]);
@@ -1228,7 +1305,7 @@
                             OverlayManagerClass.Instance.PatternID = SLMBleachWaveParams.Count + 1;     //pattern ID: 1 based
                         }
 
-                        _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.UMPerPixel = (double)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0];
+                        _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.UMPerPixel = ((PixelSizeUM)MVMManager.Instance["AreaControlViewModel", "PixelSizeUM", (object)1.0]).PixelWidthUM;
                         _slmParamEditWin.SLMParamsCurrent.BleachWaveParams.UMPerPixelRatio = this.BleachPixelSizeUMRatio;
                         _slmParamEditWin.SLMParamsCurrent.PhaseType = (IsStimulator || SLM3D) ? 1 : 0;
                         _slmParamEditWin.Title = "Edit SLM Pattern Name: " + _slmParamEditWin.SLMParamsCurrent.Name;
@@ -1244,7 +1321,7 @@
                         var modes = new ThorSharedTypes.Mode[2] { ThorSharedTypes.Mode.PATTERN_NOSTATS, ThorSharedTypes.Mode.PATTERN_WIDEFIELD };
 
                         var wavelengths = new int[] { OverlayManagerClass.Instance.WavelengthNM };
-                        OverlayManagerClass.Instance.DisplayOnlyPatternROIs(ref CaptureSetupViewModel.OverlayCanvas, modes, OverlayManagerClass.Instance.PatternID, wavelengths);
+                        OverlayManagerClass.Instance.DisplayOnlyPatternROIs(modes, OverlayManagerClass.Instance.PatternID, wavelengths);
 
                         _slmParamEditWin.DataContext = _slmParamEditWin.SLMParamsCurrent;
                         SetSLMParamEditWinPosition();
@@ -1260,7 +1337,7 @@
                     if ((0 < SLMBleachWaveParams.Count)
                         && (0 <= _slmPatternSelectedIndex) && (SLMBleachWaveParams.Count > _slmPatternSelectedIndex))
                     {
-                        OverlayManagerClass.Instance.DeletePatternROI(ref CaptureSetupViewModel.OverlayCanvas, (int)SLMBleachWaveParams[_slmPatternSelectedIndex].BleachWaveParams.ID,              //ID: 1 based
+                        OverlayManagerClass.Instance.DeletePatternROI((int)SLMBleachWaveParams[_slmPatternSelectedIndex].BleachWaveParams.ID,              //ID: 1 based
                             (IsStimulator ? ThorSharedTypes.Mode.PATTERN_WIDEFIELD : ThorSharedTypes.Mode.PATTERN_NOSTATS));
                         OverlayManagerClass.Instance.BackupROIs();
                         DeleteSLMBleachParamsID((int)SLMBleachWaveParams[_slmPatternSelectedIndex].BleachWaveParams.ID);
@@ -1293,7 +1370,7 @@
                     SLMCalibZPos = (double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0];
                     if (null == _slmParamEditWin)
                     {
-                        if (null == Bitmap)
+                        if (null == MVMManager.Instance["ImageViewCaptureSetupVM", "Bitmap"])
                             return;
                         if ((int)ICamera.LSMType.LSMTYPE_LAST == ResourceManagerCS.GetBleacherType())
                         {
@@ -1311,12 +1388,11 @@
                         OverlayManagerClass.Instance.PersistSaveROIs();
 
                         //prepare calibration xaml and file path:
-                        SetSLMCalibROIFilePath();
-
-                        //display calibration ROIs:
-                        if (!DisplayROI(SLMCalibROIFilePath))
+                        if (!DisplaySLMCalibROI())
+                        {
+                            ThorLogging.ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Error, 1, "Fail to display SLM Calibration: " + SLMCalibFile);
                             return;
-
+                        }
                         //blank slm before start of calibration:
                         SLMSetBlank((int)IDevice.Params.PARAM_SLM_BLANK_SAFE);
 
@@ -1427,10 +1503,68 @@
                     _slmParamEditWin.Show();
                     _slmParamEditWin.ReBuildAll();
                     break;
+                case SLMParamEditWin.SLMPatternType.ZCalibration:
+                    if (null != _zDefocusPlotWin) return;
+                    _zDefocusPlotWin = new SLMControl.ZDefocusPlotWin();
+                    _zDefocusPlotWin.Closed += _zDefocusPlotWin_Closed;
+                    _zDefocusPlotWin.DefocusUM = DefocusSavedUM;
+                    _zDefocusPlotWin.Show();
+                    break;
+                case SLMParamEditWin.SLMPatternType.UpdatePowerDistribution:
+                    EditSLMParam("SLM_REBUILDALL");
+                    break;
                 default:
                     break;
             }
             OnPropertyChanged("SLMBleachNowEnabled");
+        }
+
+        /// <summary>
+        /// Get a bleach view attribute from application settings, defaultVal can be (int) or (double)
+        /// </summary>
+        /// <param name="attributeName"></param>
+        /// <param name="defaultVal"></param>
+        /// <returns></returns>
+        private bool GetBleachViewAttribute(string attributeName, ref object defaultVal)
+        {
+            string attributVal = string.Empty;
+            bool ret = false;
+            int iVal = 0;
+            double dVal = 0.0;
+            try
+            {
+                XmlDocument appSettings = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+                XmlNodeList ndList = appSettings.SelectNodes("/ApplicationSettings/DisplayOptions/CaptureSetup/BleachView");
+                if (null != ndList)
+                {
+                    ret = XmlManager.GetAttribute(ndList[0], appSettings, attributeName, ref attributVal);
+                    if (!ret)
+                    {
+                        XmlManager.SetAttribute(ndList[0], appSettings, attributeName, (defaultVal is int) ? ((int)defaultVal).ToString() : ((double)defaultVal).ToString());
+                        MVMManager.Instance.ReloadSettings(SettingsFileType.APPLICATION_SETTINGS);
+                    }
+                    else
+                    {
+                        defaultVal = (defaultVal is int && int.TryParse(attributVal, out iVal)) ? iVal : (defaultVal is double && double.TryParse(attributVal, out dVal)) ? dVal : defaultVal;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ThorLogging.ThorLog.Instance.TraceEvent(System.Diagnostics.TraceEventType.Verbose, 1, "Fail to get " + attributeName + ": " + ex.Message);
+            }
+            return ret;
+        }
+
+        private void OnRegistrationChanged(object sender, EventArgs e)
+        {
+            EditSLMParam("SLM_REBUILDALL");
+        }
+
+        private void OnTurretPositionChanged(object sender, EventArgs e)
+        {
+            _captureSetup.SetDefocusParam();
+            IdleSLM();
         }
 
         /// <summary>
@@ -1480,26 +1614,6 @@
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// Set SLM calibration file and scale ROIs
-        /// </summary>
-        private void SetSLMCalibROIFilePath()
-        {
-            if (1.0 != SLMCalibPatternScaleXY[0] || 1.0 != SLMCalibPatternScaleXY[1])
-            {
-                SLMCalibFile = System.IO.Path.GetFileNameWithoutExtension(DEFAULT_SLMCALIB_XAML) + "_scale" + System.IO.Path.GetExtension(DEFAULT_SLMCALIB_XAML);
-                FileCopyWithAccessCheck(BleachROIPath + DEFAULT_SLMCALIB_XAML, SLMCalibROIFilePath, true);
-            }
-            else
-                SLMCalibFile = DEFAULT_SLMCALIB_XAML;
-
-            //scale ROIs to current image, apply scaling-up ratio of default pattern
-            OverlayManagerClass.Instance.ScaleROIs(SLMCalibROIFilePath, new int[] { ImageWidth, ImageHeight });
-
-            //scale ROIs within current image by ratio per user request
-            OverlayManagerClass.Instance.ScaleROIsByRatio(SLMCalibROIFilePath, SLMCalibPatternScaleXY);
         }
 
         private void SetSLMParamEditWinPosition()
@@ -1731,18 +1845,37 @@
                 MVMManager.Instance.SaveSettings(SettingsFileType.APPLICATION_SETTINGS, true);
             }
 
-            OverlayManagerClass.Instance.InitSelectROI(ref CaptureSetupViewModel.OverlayCanvas);
+            OverlayManagerClass.Instance.InitSelectROI();
             //no redraw if import
             if (!OverlayManagerClass.Instance.SimulatorMode)
             {
-                OverlayManagerClass.Instance.DisplayModeROI(ref CaptureSetupViewModel.OverlayCanvas, new ThorSharedTypes.Mode[2] { ThorSharedTypes.Mode.PATTERN_NOSTATS, ThorSharedTypes.Mode.PATTERN_WIDEFIELD }, _slmPatternsVisible);
-                OverlayManagerClass.Instance.DisplayModeROI(ref CaptureSetupViewModel.OverlayCanvas, new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.STATSONLY }, true);
+                OverlayManagerClass.Instance.DisplayModeROI(new ThorSharedTypes.Mode[2] { ThorSharedTypes.Mode.PATTERN_NOSTATS, ThorSharedTypes.Mode.PATTERN_WIDEFIELD }, _slmPatternsVisible);
+                OverlayManagerClass.Instance.DisplayModeROI(new ThorSharedTypes.Mode[1] { ThorSharedTypes.Mode.STATSONLY }, true);
             }
             //give back overlay manager access to hardware mvms and update visible ROIs & masks
             OverlayManagerClass.Instance.SimulatorMode = false;
 
             _slmParamEditWin = null;
             OnPropertyChanged("SLMBleachNowEnabled");
+        }
+
+        private void _zDefocusPlotWin_Closed(object sender, EventArgs e)
+        {
+            //persist SLM param edit window position
+            ApplicationDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.APPLICATION_SETTINGS];
+            XmlNode node = ApplicationDoc.SelectSingleNode("/ApplicationSettings/DisplayOptions/CaptureSetup/EditBleachWindow");
+
+            if (null != node && null != _zDefocusPlotWin)
+            {
+                XmlManager.SetAttribute(node, ApplicationDoc, "left", ((int)Math.Round(_zDefocusPlotWin.Left)).ToString());
+                XmlManager.SetAttribute(node, ApplicationDoc, "top", ((int)Math.Round(_zDefocusPlotWin.Top)).ToString());
+
+                MVMManager.Instance.SaveSettings(SettingsFileType.APPLICATION_SETTINGS, true);
+            }
+            _zDefocusPlotWin = null;
+
+            //give back z defocus value for 2D
+            DefocusUM = DefocusSavedUM;
         }
 
         #endregion Methods

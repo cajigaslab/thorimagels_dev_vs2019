@@ -55,110 +55,6 @@
         [DllImport(".\\Modules_Native\\SelectHardware.dll", EntryPoint = "UpdateAndPersistCurrentDevices")]
         public static extern int UpdateAndPersistCurrentDevices();
 
-        public void PersistChannels()
-        {
-            if (ResourceManagerCS.BorrowDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS, (int)Constants.TIMEOUT_MS))
-            {
-                MVMManager.Instance.ReloadSettings(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
-                XmlDocument xmlDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS];
-                XmlNodeList ndList = xmlDoc.SelectNodes("/ThorImageExperiment/Wavelengths");
-
-                if (ndList.Count > 0)
-                {
-                    ndList[0].RemoveAll();
-                }
-
-                ndList = xmlDoc.SelectNodes("/ThorImageExperiment/Wavelengths");
-
-                if (ndList.Count > 0)
-                {
-                    XmlManager.SetAttribute(ndList[0], xmlDoc, "nyquistExWavelengthNM", MVMManager.Instance["AreaControlViewModel", "NyquistExWavelength", (object)string.Empty].ToString());
-                    XmlManager.SetAttribute(ndList[0], xmlDoc, "nyquistEmWavelengthNM", MVMManager.Instance["AreaControlViewModel", "NyquistEmWavelength", (object)string.Empty].ToString());
-
-                    XmlElement newElement;
-
-                    XmlNodeList waveList = this.HardwareDoc.SelectNodes("/HardwareSettings/Wavelength");
-
-                    switch (this.LSMChannel)
-                    {
-                        case 0:
-                            {
-                                newElement = CreateWavelengthTag(waveList[0].Attributes["name"].Value, xmlDoc);
-                                ndList[0].AppendChild(newElement);
-
-                            }
-                            break;
-                        case 1:
-                            {
-                                newElement = CreateWavelengthTag(waveList[1].Attributes["name"].Value, xmlDoc);
-                                ndList[0].AppendChild(newElement);
-                            }
-                            break;
-                        case 2:
-                            {
-                                newElement = CreateWavelengthTag(waveList[2].Attributes["name"].Value, xmlDoc);
-                                ndList[0].AppendChild(newElement);
-                            }
-                            break;
-                        case 3:
-                            {
-                                newElement = CreateWavelengthTag(waveList[3].Attributes["name"].Value, xmlDoc);
-                                ndList[0].AppendChild(newElement);
-                            }
-                            break;
-                        case 4:
-                            {
-                                for (int i = 0; i < waveList.Count; i++)
-                                {
-
-                                    bool isEnabled = false;
-
-                                    switch (i)
-                                    {
-                                        case 0: isEnabled = LSMChannelEnable0; break;
-                                        case 1: isEnabled = LSMChannelEnable1; break;
-                                        case 2: isEnabled = LSMChannelEnable2; break;
-                                        case 3: isEnabled = LSMChannelEnable3; break;
-                                    }
-
-                                    if (isEnabled)
-                                    {
-                                        newElement = CreateWavelengthTag(waveList[i].Attributes["name"].Value, xmlDoc);
-                                        ndList[0].AppendChild(newElement);
-                                    }
-                                }
-                            }
-                            break;
-                    }
-
-                    //Persist channel selection as an integer which will be decoded at Master loading:
-                    XmlElement newElement2 = xmlDoc.CreateElement("ChannelEnable");
-                    XmlAttribute ChanAttribute = xmlDoc.CreateAttribute("Set");
-
-                    int maxChannels = this.MaxChannels;
-                    bool[] bArray = new bool[maxChannels];
-
-                    for (int i = 0; i < maxChannels; ++i)
-                    {
-                        switch (i)
-                        {
-                            case 0: bArray[0] = LSMChannelEnable0; break;
-                            case 1: bArray[1] = LSMChannelEnable1; break;
-                            case 2: bArray[2] = LSMChannelEnable2; break;
-                            case 3: bArray[3] = LSMChannelEnable3; break;
-                        }
-                    }
-
-                    ChanAttribute.Value = ConvertBoolAry2Int(bArray, maxChannels).ToString();
-                    newElement2.Attributes.Append(ChanAttribute);
-                    ndList[0].AppendChild(newElement2);
-                }
-
-                MVMManager.Instance.SaveSettings(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
-            }
-            ResourceManagerCS.ReturnDocMutexCS(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
-        }
-
         /// <summary>
         /// Saves all global experiment parameters in all the modalities, or in path otherwise
         /// </summary>
@@ -219,7 +115,7 @@
                                 XmlManager.SetAttribute(ndList[0], experimentFile, "pixelX", MVMManager.Instance["AreaControlViewModel", "LSMPixelX", (object)0].ToString());
                                 XmlManager.SetAttribute(ndList[0], experimentFile, "pixelY", MVMManager.Instance["AreaControlViewModel", "LSMPixelY", (object)0].ToString());
                                 XmlManager.SetAttribute(ndList[0], experimentFile, "scaleYScan", MVMManager.Instance["AreaControlViewModel", "LSMScaleYScan", (object)0].ToString());
-                                XmlManager.SetAttribute(ndList[0], experimentFile, "pixelSizeUM", MVMManager.Instance["AreaControlViewModel", "LSMUMPerPixel", (object)0].ToString());
+                                XmlManager.SetAttribute(ndList[0], experimentFile, "pixelSizeUM", ((PixelSizeUM)MVMManager.Instance["AreaControlViewModel", "LSMUMPerPixel", (object)0]).PixelWidthUM.ToString());
                                 XmlManager.SetAttribute(ndList[0], experimentFile, "offsetX", MVMManager.Instance["AreaControlViewModel", "LSMFieldOffsetXActual", (object)0].ToString());
                                 XmlManager.SetAttribute(ndList[0], experimentFile, "offsetY", MVMManager.Instance["AreaControlViewModel", "LSMFieldOffsetYActual", (object)0].ToString());
                                 XmlManager.SetAttribute(ndList[0], experimentFile, "fineOffsetX", MVMManager.Instance["AreaControlViewModel", "LSMFieldOffsetXFine", (object)0].ToString());
@@ -244,6 +140,7 @@
                                 XmlManager.SetAttribute(ndList[0], experimentFile, "laserEnable", this.BleachWavelengthEnable.ToString());
                                 XmlManager.SetAttribute(ndList[0], experimentFile, "laserPos", this.BleachWavelength.ToString());
                                 XmlManager.SetAttribute(ndList[0], experimentFile, "bleachQuery", this.BleachQuery.ToString());
+                                XmlManager.SetAttribute(ndList[0], experimentFile, "powerShiftUS", this.PowerShiftUS.ToString());
                             }
                             break;
                         case GlobalExpAttribute.SLM_BLEACH:
@@ -253,6 +150,7 @@
                             if (ndList.Count > 0)
                             {
                                 XmlManager.SetAttribute(ndList[0], experimentFile, "bleachFrames", this.BleachFrames.ToString());
+                                XmlManager.SetAttribute(ndList[0], experimentFile, "powerShiftUS", this.PowerShiftUS.ToString());
                             }
 
                             //SLM:
@@ -260,7 +158,7 @@
 
                             if (ndList.Count <= 0)
                             {
-                                CreateXmlNode(experimentFile, "SLM");
+                                XmlManager.CreateXmlNode(experimentFile, "SLM");
                                 ndList = experimentFile.SelectNodes("/ThorImageExperiment/SLM");
                             }
                             XmlManager.SetAttribute(ndList[0], experimentFile, "lastCalibTime", this.SLMLastCalibTime.ToString());
@@ -270,6 +168,7 @@
                             XmlManager.SetAttribute(ndList[0], experimentFile, "cycleDelay", this.SLMBleachDelay.ToString());
                             XmlManager.SetAttribute(ndList[0], experimentFile, "epochCount", this.EpochCount.ToString());
                             XmlManager.SetAttribute(ndList[0], experimentFile, "advanceMode", this.SLMSequenceOn ? "1" : "0");
+                            XmlManager.SetAttribute(ndList[0], experimentFile, "randomEpochs", this.SLMRandomEpochs ? "1" : "0");
                             XmlManager.SetAttribute(ndList[0], experimentFile, "holoGen3D", this.SLM3D ? "1" : "0");
                             XmlManager.SetAttribute(ndList[0], experimentFile, "refractiveIndex", this.RefractiveIndex.ToString());
                             XmlManager.SetAttribute(ndList[0], experimentFile, "sequenceEpochDelay", this.SLMSequenceEpochDelay.ToString());
@@ -350,7 +249,7 @@
                             ndList = experimentFile.SelectNodes("/ThorImageExperiment/SLM");
                             if (ndList.Count <= 0)
                             {
-                                CreateXmlNode(experimentFile, "SLM");
+                                XmlManager.CreateXmlNode(experimentFile, "SLM");
                                 ndList = experimentFile.SelectNodes("/ThorImageExperiment/SLM");
                             }
                             XmlManager.SetAttribute(ndList[0], experimentFile, "zRefMM", ((double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0.0]).ToString());
@@ -396,7 +295,7 @@
 
                 //Persist ROIs that are in the canvas, except in SLM calibration:
                 if (null == _slmParamEditWin || View.SLMParamEditWin.SLMPanelMode.Calibration != _slmParamEditWin.PanelMode)
-                    OverlayManagerClass.Instance.PersistSaveROIs();
+                    OverlayManagerClass.Instance.PersistSaveROIs(true);
 
                 bool tempSwitchCI;
                 System.Globalization.CultureInfo originalCultureInfo;
@@ -414,199 +313,29 @@
 
                 XmlNodeList ndList;
                 XmlNodeList ndListHW;
-                XmlNodeList lightPathSequenceStepNdList;
 
                 ndList = xmlDoc.SelectNodes("/ThorImageExperiment/LSM");
                 if (ndList.Count > 0)
                 {
-
-                    if (LSMChannel == 4)
-                    {
-                        //channel is stored as a zero based index
-                        //convert the enabled channels to the index value
-                        int chan = (Convert.ToInt32(LSMChannelEnable0) |
-                            (Convert.ToInt32(LSMChannelEnable1) << 1) |
-                            (Convert.ToInt32(LSMChannelEnable2) << 2) |
-                            (Convert.ToInt32(LSMChannelEnable3) << 3));
-                        XmlManager.SetAttribute(ndList[0], xmlDoc, "channel", chan.ToString());
-                    }
-                    else
-                    {
-                        int ch = 0;
-                        switch ((int)LSMChannel)
-                        {
-                            case 0: ch = 0x1; break;
-                            case 1: ch = 0x2; break;
-                            case 2: ch = 0x4; break;
-                            case 3: ch = 0x8; break;
-                        }
-
-                        XmlManager.SetAttribute(ndList[0], xmlDoc, "channel", ch.ToString());
-                    }
-                }
-                ndList = xmlDoc.SelectNodes("/ThorImageExperiment/ZStage");
-
-                if (ndList.Count > 0)
-                {
-                    double stepSize = (double)MVMManager.Instance["ZControlViewModel", "ZScanStep", (object)0.0];
-
-                    //ensure the sign of the step is correct
-                    if ((double)MVMManager.Instance["ZControlViewModel", "ZScanStart", (object)0.0] > (double)MVMManager.Instance["ZControlViewModel", "ZScanStop", (object)0.0])
-                    {
-                        stepSize *= -1;
-                    }
-
-                    XmlManager.SetAttribute(ndList[0], xmlDoc, "steps", ((int)MVMManager.Instance["ZControlViewModel", "ZScanNumSteps", (object)0.0]).ToString());
-                    XmlManager.SetAttribute(ndList[0], xmlDoc, "stepSizeUM", stepSize.ToString());
-                    XmlManager.SetAttribute(ndList[0], xmlDoc, "setupPositionMM", ((double)MVMManager.Instance["ZControlViewModel", "ZPosition", (object)0.0]).ToString());
-                    XmlManager.SetAttribute(ndList[0], xmlDoc, "startPos", ((double)MVMManager.Instance["ZControlViewModel", "ZScanStart", (object)0.0]).ToString());
-                }
-
-                ndListHW = HardwareDoc.SelectNodes("/HardwareSettings/Devices/ZStage");
-
-                //persist the active ZStage name:
-                if (ndListHW.Count > 0)
-                {
-                    string str = string.Empty;
-                    for (int i = 0; i < ndListHW.Count; i++)
-                    {
-                        XmlManager.GetAttribute(ndListHW[i], this.HardwareDoc, "active", ref str);
-                        if (1 == Convert.ToInt32(str))
-                        {
-                            XmlManager.GetAttribute(ndListHW[i], this.HardwareDoc, "dllName", ref str);
-                            if (str != string.Empty)
-                            {
-                                XmlManager.SetAttribute(ndList[0], xmlDoc, "name", str);
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                // Persist RStage Position
-                ndList = xmlDoc.SelectNodes("/ThorImageExperiment/RStage");
-
-                if (ndList.Count <= 0)
-                {
-                    CreateXmlNode(xmlDoc, "RStage");
-                    ndList = xmlDoc.SelectNodes("/ThorImageExperiment/RStage");
-                }
-                if (ndList.Count > 0)
-                {
-                    XmlManager.SetAttribute(ndList[0], xmlDoc, "pos", ((double)MVMManager.Instance["ZControlViewModel", "RPosition", (object)0.0]).ToString());
-                }
-
-                // Persist Secondary Z Position
-                ndList = xmlDoc.SelectNodes("/ThorImageExperiment/ZStage2");
-
-                if (0 >= ndList.Count)
-                {
-                    CreateXmlNode(xmlDoc, "ZStage2");
-                    ndList = xmlDoc.SelectNodes("/ThorImageExperiment/ZStage2");
-                }
-                if (0 < ndList.Count)
-                {
-                    XmlManager.SetAttribute(ndList[0], xmlDoc, "pos", ((double)MVMManager.Instance["ZControlViewModel", "Z2Position", (object)0.0]).ToString());
+                    XmlManager.SetAttribute(ndList[0], xmlDoc, "channel", LSMChannel.ToString());
                 }
 
                 //SLM
                 UpdateSLMFiles();
 
-                ndList = xmlDoc.SelectNodes("/ThorImageExperiment/LightPath");
-                if (ndList.Count <= 0)
-                {
-                    CreateXmlNode(xmlDoc, "LightPath");
-                    ndList = xmlDoc.SelectNodes("/ThorImageExperiment/LightPath");
-                }
-
-                XmlManager.SetAttribute(ndList[0], xmlDoc, "GalvoGalvo", this.LightPathGGEnable.ToString());
-                XmlManager.SetAttribute(ndList[0], xmlDoc, "GalvoResonance", this.LightPathGREnable.ToString());
-                XmlManager.SetAttribute(ndList[0], xmlDoc, "Camera", this.LightPathCamEnable.ToString());
-                if (-1 == this.InvertedLightPathPos)
-                {
-                    XmlManager.SetAttribute(ndList[0], xmlDoc, "InvertedLightPathPos", "-1");
-                }
-                else
-                {
-                    XmlManager.SetAttribute(ndList[0], xmlDoc, "InvertedLightPathPos", this.InvertedLightPathPos.ToString());
-                }
-                XmlManager.SetAttribute(ndList[0], xmlDoc, "NDD", this.PositionNDD.ToString());
-
-                //////Capture Sequence
-                ndList = xmlDoc.SelectNodes("/ThorImageExperiment/CaptureSequence");
-                if (0 >= ndList.Count)
-                {
-                    ndList = xmlDoc.SelectNodes("ThorImageExperiment");
-                    XmlElement elem = xmlDoc.CreateElement("CaptureSequence");
-                    ndList[0].AppendChild(elem);
-                    ndList = xmlDoc.SelectNodes("/ThorImageExperiment/CaptureSequence");
-                }
-
-                if (ndList.Count > 0)
-                {
-                    XmlManager.SetAttribute(ndList[0], xmlDoc, "enable", this.EnableSequentialCapture.ToString());
-                }
-
-                lightPathSequenceStepNdList = xmlDoc.SelectNodes("/ThorImageExperiment/CaptureSequence/LightPathSequenceStep");
-
-                //Remove all channel steps and add those that are in capture sequence collection
-                for (int i = 0; i < lightPathSequenceStepNdList.Count; i++)
-                {
-                    ndList[0].RemoveChild(lightPathSequenceStepNdList[i]);
-                }
-                for (int i = 0; i < _captureSequence.Count; i++)
-                {
-
-                    XmlNode importNode = ndList[0].OwnerDocument.ImportNode(_captureSequence[i].LightPathSequenceStepNode, true);
-                    ndList[0].AppendChild(importNode);
-                }
-                //Add in default values for light path laser elements that did not exist in previous TILS versions (Carrying over from SettingsUpdater)
-                XmlNodeList laserNodeList = xmlDoc.SelectNodes("/ThorImageExperiment/CaptureSequence/LightPathSequenceStep/MCLS");
-                XmlNode wavelengthNode = xmlDoc.SelectSingleNode("/ThorImageExperiment/MCLS");
-
-                foreach (XmlNode laserNode in laserNodeList)
-                {
-                    //Only replace these for the MCLS, and if the node already exists, but is missing the new tags
-                    if (laserNode.Attributes != null && laserNode.Attributes["allttl"] == null)
-                    {
-                        //Fill in the missing attributes with current settings
-                        XmlAttribute wavelengthAttribute = wavelengthNode.Attributes["wavelength1"];
-                        if (wavelengthAttribute != null)
-                        {
-                            XmlAttribute attr1 = xmlDoc.CreateAttribute("allttl");
-                            attr1.Value = wavelengthNode.Attributes["allttl"].Value;
-                            laserNode.Attributes.Append(attr1);
-                            XmlAttribute attr2 = xmlDoc.CreateAttribute("allanalog");
-                            attr2.Value = wavelengthNode.Attributes["allanalog"].Value;
-                            laserNode.Attributes.Append(attr2);
-                            XmlAttribute attr3 = xmlDoc.CreateAttribute("wavelength1");
-                            attr3.Value = wavelengthNode.Attributes["wavelength1"].Value;
-                            laserNode.Attributes.Append(attr3);
-                            XmlAttribute attr4 = xmlDoc.CreateAttribute("wavelength2");
-                            attr4.Value = wavelengthNode.Attributes["wavelength2"].Value;
-                            laserNode.Attributes.Append(attr4);
-                            XmlAttribute attr5 = xmlDoc.CreateAttribute("wavelength3");
-                            attr5.Value = wavelengthNode.Attributes["wavelength3"].Value;
-                            laserNode.Attributes.Append(attr5);
-                            XmlAttribute attr6 = xmlDoc.CreateAttribute("wavelength4");
-                            attr6.Value = wavelengthNode.Attributes["wavelength4"].Value;
-                            laserNode.Attributes.Append(attr6);
-                        }
-                    }
-                }
-                ////End Capture Sequence
-
-                //////(SLM) Bleach non-waveform criticals
+                ///*** (SLM) Bleach non-waveform criticals or shared params ***///
                 ndList = xmlDoc.SelectNodes("/ThorImageExperiment/Photobleaching");
                 if (ndList.Count > 0)
                 {
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "bleachFrames", this.BleachFrames.ToString());
+                    XmlManager.SetAttribute(ndList[0], xmlDoc, "powerShiftUS", this.PowerShiftUS.ToString());
                 }
                 ndList = xmlDoc.SelectNodes("/ThorImageExperiment/SLM");
                 if (ndList.Count > 0)
                 {
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "cycleDelay", this.SLMBleachDelay.ToString());
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "advanceMode", this.SLMSequenceOn ? "1" : "0");
+                    XmlManager.SetAttribute(ndList[0], xmlDoc, "randomEpochs", this.SLMRandomEpochs ? "1" : "0");
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "holoGen3D", this.SLM3D ? "1" : "0");
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "refractiveIndex", this.RefractiveIndex.ToString());
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "sequenceEpochDelay", this.SLMSequenceEpochDelay.ToString());
@@ -614,7 +343,7 @@
                     //non-global SLM properties:
                     XmlManager.SetAttribute(ndList[0], xmlDoc, "calibZoffsetUM", this.DefocusSavedUM.ToString());
                 }
-                ////End (SLM) Bleach non-waveform criticals
+                ///*** End (SLM) Bleach non-waveform criticals or shared params ***///
 
                 //Set the date for the file
                 string formatDate = "MM/dd/yyyy";
@@ -650,97 +379,18 @@
                 ndList = xmlDoc.SelectNodes("/ThorImageExperiment/Modality");
                 if (ndList.Count <= 0)
                 {
-                    CreateXmlNode(xmlDoc, "Modality");
+                    XmlManager.CreateXmlNode(xmlDoc, "Modality");
                     ndList = xmlDoc.SelectNodes("/ThorImageExperiment/Modality");
                 }
 
                 XmlManager.SetAttribute(ndList[0], xmlDoc, "primaryDetectorType", ResourceManagerCS.GetCameraType().ToString());
                 XmlManager.SetAttribute(ndList[0], xmlDoc, "detectorLSMType", ResourceManagerCS.GetLSMType().ToString());
 
-                //Update the channel step templates
-                XmlDocument lightPathListDoc = new XmlDocument();
-                string lightPathListFolder = Application.Current.Resources["LightPathListFolder"].ToString();
-                //if the directory doesn't existe, create it.
-                ResourceManagerCS.SafeCreateDirectory(lightPathListFolder);
-
-                string lightPathListFile = lightPathListFolder + "\\LightPathList.xml";
-
-                //if the file doesnt exist or is corrupted, create it.
-                if (true == Directory.Exists(lightPathListFile))
-                {
-                    lightPathListDoc.Load(lightPathListFile);
-                    if (null == lightPathListDoc)
-                    {
-                        lightPathListDoc.LoadXml("<ThorImageLightPathList></ThorImageLightPathList>");
-                    }
-                }
-                else
-                {
-                    lightPathListDoc.LoadXml("<ThorImageLightPathList></ThorImageLightPathList>");
-                }
-
-                ndList = lightPathListDoc.SelectNodes("/ThorImageLightPathList");
-                lightPathSequenceStepNdList = lightPathListDoc.SelectNodes("/ThorImageLightPathList/LightPathSequenceStep");
-                //remove all nodes before inserting the ones found in the lighpath sequence step collection
-                for (int j = 0; j < lightPathSequenceStepNdList.Count; j++)
-                {
-                    ndList[0].RemoveChild(lightPathSequenceStepNdList[j]);
-                }
-                for (int j = 0; j < _lightPaths.Count; j++)
-                {
-                    XmlNode importNode = ndList[0].OwnerDocument.ImportNode(_lightPaths[j].LightPathSequenceStepNode, true);
-                    ndList[0].AppendChild(importNode);
-                }
-                lightPathListDoc.Save(lightPathListFile);
-
                 //reload the hardware doc to make sure the hardware document is updated to date:
                 MVMManager.Instance.ReloadSettings(SettingsFileType.HARDWARE_SETTINGS);
-                this.HardwareDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS];
+                HardwareDoc = MVMManager.Instance.SettingsDoc[(int)SettingsFileType.HARDWARE_SETTINGS];
 
                 ndListHW = this.HardwareDoc.SelectNodes("/HardwareSettings/Wavelength");
-
-                if (ndListHW.Count > 0)
-                {
-                    for (int i = 0; i < ndListHW.Count; i++)
-                    {
-                        double bp = 0;
-                        double wp = 255;
-                        string autoTog = string.Empty;
-                        string logTog = string.Empty;
-
-                        switch (i)
-                        {
-                            case 0:
-                                bp = BlackPoint0;
-                                wp = WhitePoint0;
-                                autoTog = (AutoManualTog1Checked) ? "1" : "0";
-                                logTog = (LogScaleEnabled0) ? "1" : "0";
-                                break;
-                            case 1:
-                                bp = BlackPoint1;
-                                wp = WhitePoint1;
-                                autoTog = (AutoManualTog2Checked) ? "1" : "0";
-                                logTog = (LogScaleEnabled1) ? "1" : "0";
-                                break;
-                            case 2:
-                                bp = BlackPoint2;
-                                wp = WhitePoint2;
-                                autoTog = (AutoManualTog3Checked) ? "1" : "0";
-                                logTog = (LogScaleEnabled2) ? "1" : "0";
-                                break;
-                            case 3:
-                                bp = BlackPoint3;
-                                wp = WhitePoint3;
-                                autoTog = (AutoManualTog4Checked) ? "1" : "0";
-                                logTog = (LogScaleEnabled3) ? "1" : "0";
-                                break;
-                        }
-                        XmlManager.SetAttribute(ndListHW[i], this.HardwareDoc, "bp", bp.ToString());
-                        XmlManager.SetAttribute(ndListHW[i], this.HardwareDoc, "wp", wp.ToString());
-                        XmlManager.SetAttribute(ndListHW[i], this.HardwareDoc, "AutoSta", autoTog);
-                        XmlManager.SetAttribute(ndListHW[i], this.HardwareDoc, "LogSta", logTog);
-                    }
-                }
 
                 MVMManager.Instance.SaveSettings(SettingsFileType.HARDWARE_SETTINGS);
                 //give back CultureInfo:

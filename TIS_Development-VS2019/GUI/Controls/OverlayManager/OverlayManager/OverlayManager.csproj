@@ -28,6 +28,7 @@
     <StartAction>Program</StartAction>
     <StartProgram>$(MSBuildProjectDirectory)\..\..\..\Applications\ThorImageLS\ThorImage\bin\Debug\ThorImageLS.exe</StartProgram>
     <StartWorkingDirectory>$(MSBuildProjectDirectory)\..\..\..\Applications\ThorImageLS\ThorImage\bin\Debug</StartWorkingDirectory>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -87,9 +88,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Reticle.cs" />
     <Compile Include="ROICrosshair.cs" />
+    <Compile Include="ROILine.cs" />
     <Compile Include="ROIPoly.cs" />
+    <Compile Include="ROIPolyline.cs" />
     <Compile Include="ROIRect.cs" />
+    <Compile Include="ScalableShape.cs" />
     <Compile Include="Scale.cs" />
+    <Compile Include="DividerAdornerProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <Page Include="..\..\..\Styles\Border.xaml">

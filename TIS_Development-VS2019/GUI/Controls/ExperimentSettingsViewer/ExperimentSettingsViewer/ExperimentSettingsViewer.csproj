@@ -98,7 +98,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Page Include="LightPathSequenceStepView.xaml">
+    <Page Include="SequenceStepView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -126,9 +126,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Compile Include="LightPathSequenceStep.cs" />
-    <Compile Include="LightPathSequenceStepView.xaml.cs">
-      <DependentUpon>LightPathSequenceStepView.xaml</DependentUpon>
+    <Compile Include="SequenceStep.cs" />
+    <Compile Include="SequenceStepView.xaml.cs">
+      <DependentUpon>SequenceStepView.xaml</DependentUpon>
     </Compile>
     <Compile Include="UserControl1.xaml.cs">
       <DependentUpon>UserControl1.xaml</DependentUpon>

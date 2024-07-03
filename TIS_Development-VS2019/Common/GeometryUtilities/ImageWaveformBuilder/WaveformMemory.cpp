@@ -217,15 +217,28 @@ long WaveformMemory::AllocateMemThorDAQ(ThorDAQGGWaveformParams gWParams, const 
 		GetSystemInfo(&si);
 		_granularityOfMapView = si.dwAllocationGranularity;
 
-		//fill header: clockRate, xySize, pockelSize, digLineSize, deltaVolt
+		//fill header: clockRate, xySize, pockelSize, digLineSize, deltaVolt, pockelsCount, driverType
 		char *p = (char*)MapViewOfFile(hFileMapArray[0], FILE_MAP_ALL_ACCESS, 0x0, 0x0, _dwlHeaderSize);
+		size_t offset = 0;
 		SAFE_MEMCPY(p, _uint64ByteSize, &(gWParams.ClockRate));
-		SAFE_MEMCPY(p + 1 * _uint64ByteSize, _uint64ByteSize, &(gWParams.analogXYSize));
-		SAFE_MEMCPY(p + 2 * _uint64ByteSize, _uint64ByteSize, &(gWParams.analogPockelSize));
-		SAFE_MEMCPY(p + 3 * _uint64ByteSize, _uint64ByteSize, &(gWParams.digitalSize));
-		SAFE_MEMCPY(p + 4 * _uint64ByteSize, _doubleByteSize, &(gWParams.stepVolt));
-		SAFE_MEMCPY(p + 4 * _uint64ByteSize + _doubleByteSize, _byteByteSize, &(gWParams.pockelsCount));
-		SAFE_MEMCPY(p + 4 * _uint64ByteSize + _doubleByteSize + _byteByteSize, _byteByteSize, &(gWParams.driverType));
+		offset += _uint64ByteSize;
+		SAFE_MEMCPY(p + offset, _uint64ByteSize, &(gWParams.analogXYSize));
+		offset += _uint64ByteSize;
+		SAFE_MEMCPY(p + offset, _uint64ByteSize, &(gWParams.analogPockelSize));
+		offset += _uint64ByteSize;
+		SAFE_MEMCPY(p + offset, _uint64ByteSize, &(gWParams.digitalSize));
+		offset += _uint64ByteSize;
+		SAFE_MEMCPY(p + offset, _doubleByteSize, &(gWParams.stepVolt));
+		offset += _doubleByteSize;
+		SAFE_MEMCPY(p + offset, _byteByteSize, &(gWParams.pockelsCount));
+		offset += _byteByteSize;
+		SAFE_MEMCPY(p + offset, _byteByteSize, &(gWParams.driverType));
+		offset += _byteByteSize;
+		SAFE_MEMCPY(p + offset, _ushortByteSize, &(gWParams.GalvoWaveformXOffset));
+		offset += _ushortByteSize;
+		SAFE_MEMCPY(p + offset, _ushortByteSize, &(gWParams.GalvoWaveformYOffset));
+		offset += _ushortByteSize;
+		SAFE_MEMCPY(p + offset, _ushortByteSize, &(gWParams.GalvoWaveformPoceklsOffset));
 
 		if(FALSE == UnmapViewOfFile(p))
 		{
@@ -419,15 +432,28 @@ long WaveformMemory::OpenMemThorDAQ(ThorDAQGGWaveformParams& gWParams, const wch
 		GetSystemInfo(&si);
 		_granularityOfMapView = si.dwAllocationGranularity;
 
-		//fill header:
+		//fill header: clockRate, xySize, pockelSize, digLineSize, deltaVolt, pockelsCount, driverType
 		char *p = (char*)MapViewOfFile(hFileMapArray[0], FILE_MAP_READ, 0x0, 0x0, _dwlHeaderSize);
-		SAFE_MEMCPY((void*)(&(gWParams.ClockRate)), _uint64ByteSize, p);
-		SAFE_MEMCPY((void*)(&(gWParams.analogXYSize)),		_uint64ByteSize, (p + 1 * _uint64ByteSize));
-		SAFE_MEMCPY((void*)(&(gWParams.analogPockelSize)),	_uint64ByteSize, (p + 2 * _uint64ByteSize));
-		SAFE_MEMCPY((void*)(&(gWParams.digitalSize)),		_uint64ByteSize, (p + 3 * _uint64ByteSize));
-		SAFE_MEMCPY((void*)(&(gWParams.stepVolt)),			_doubleByteSize, (p + 4 * _uint64ByteSize));
-		SAFE_MEMCPY((void*)(&(gWParams.pockelsCount)),		_byteByteSize, (p + 4 * _uint64ByteSize + _doubleByteSize));
-		SAFE_MEMCPY((void*)(&(gWParams.driverType)),		_byteByteSize, (p + 4 * _uint64ByteSize + _doubleByteSize + _byteByteSize));
+		size_t offset = 0;
+		SAFE_MEMCPY((void*)(&(gWParams.ClockRate)), _uint64ByteSize, p + offset);
+		offset += _uint64ByteSize;
+		SAFE_MEMCPY((void*)(&(gWParams.analogXYSize)),		_uint64ByteSize, (p + offset));
+		offset += _uint64ByteSize;
+		SAFE_MEMCPY((void*)(&(gWParams.analogPockelSize)),	_uint64ByteSize, (p + offset));
+		offset += _uint64ByteSize;
+		SAFE_MEMCPY((void*)(&(gWParams.digitalSize)),		_uint64ByteSize, (p + offset));
+		offset += _uint64ByteSize;
+		SAFE_MEMCPY((void*)(&(gWParams.stepVolt)),			_doubleByteSize, (p + offset));
+		offset += _doubleByteSize;
+		SAFE_MEMCPY((void*)(&(gWParams.pockelsCount)),		_byteByteSize, (p + offset));
+		offset += _byteByteSize;
+		SAFE_MEMCPY((void*)(&(gWParams.driverType)),		_byteByteSize, (p + offset));
+		offset += _byteByteSize;
+		SAFE_MEMCPY((void*)(&(gWParams.GalvoWaveformXOffset)), _ushortByteSize, (p + offset));
+		offset += _ushortByteSize;
+		SAFE_MEMCPY((void*)(&(gWParams.GalvoWaveformYOffset)), _ushortByteSize, (p + offset));
+		offset += _ushortByteSize;
+		SAFE_MEMCPY((void*)(&(gWParams.GalvoWaveformPoceklsOffset)), _ushortByteSize, (p + offset))
 
 		_dwlAnalogXYSize = _ushortByteSize * gWParams.analogXYSize * 2; // 1 for x and 1 for y
 		_dwlAnalogPoSize = _ushortByteSize * gWParams.analogPockelSize;
@@ -532,7 +558,7 @@ char *WaveformMemory::GetMemMapPtr(SignalType stype, uint64_t offset, uint64_t s
 }
 
 // get memory map with offset and size
-char *WaveformMemory::GetMemMapPtrThorDAQ(SignalTypeThorDAQ stype, uint64_t offset, uint64_t size)
+inline char *WaveformMemory::GetMemMapPtrThorDAQ(SignalTypeThorDAQ stype, uint64_t offset, uint64_t size)
 {
 	DWORDLONG mapOffset = _dwlHeaderSize;
 	DWORDLONG mapSize = size;
@@ -588,7 +614,7 @@ char *WaveformMemory::GetMemMapPtrThorDAQ(SignalTypeThorDAQ stype, uint64_t offs
 
 
 // release memory map
-void WaveformMemory::UnlockMemMapPtr()
+inline void WaveformMemory::UnlockMemMapPtr()
 {
 	if(FALSE == UnmapViewOfFile(ptrMap))
 	{

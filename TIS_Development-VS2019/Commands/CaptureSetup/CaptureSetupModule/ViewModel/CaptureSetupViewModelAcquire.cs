@@ -14,6 +14,8 @@
 
     using CaptureSetupDll.Model;
 
+    using ThorImageInfastructure;
+
     using ThorLogging;
 
     using ThorSharedTypes;
@@ -39,14 +41,12 @@
         private int _preFFScanMode;
         private int _preLsmInterleaveScanMode;
         private ICommand _remoteCaptureCommand;
-        private ICommand _saveNowCommand;
         private string _settingsTemplateName;
         private string _settingsTemplatesPath;
         private ICommand _snapshotCommand;
         private string _snapshotKey;
         private string _snapshotModifier;
         ICommand _snapshotSettingsCommand;
-        bool _stackPreviewStopped = false;
         private ICommand _startCommand;
         private ICommand _startFastFocusCommand;
         bool _startingContinuousZStackPreview = false;
@@ -55,6 +55,13 @@
         private ICommand _stopCommand;
 
         #endregion Fields
+
+        #region Events
+
+        //notify 2D volumeview that the live image is ongoing
+        public event Action<bool> LiveImageCapturing;
+
+        #endregion Events
 
         #region Properties
 
@@ -273,7 +280,6 @@
                             ZStackCapturing((bool)MVMManager.Instance["ZControlViewModel", "IsZStackCapturing", (object)false]);
                             _bw.RunWorkerAsync();
                             CreateProgressWindow();
-                            _stackPreviewStopped = false;
                         }
                         break;
                     case "ZStackPreviewStop":
@@ -284,9 +290,8 @@
 
                             if (null != ZStackCaptureFinished)
                             {
-                                LoadZPreviewParameters();
                                 bool continuousZStackPreview = (bool)MVMManager.Instance["ZControlViewModel", "EnableContinuousZStackPreview", (object)false];
-                                if (!IsOrthogonalViewChecked && !continuousZStackPreview)
+                                if (!(bool)MVMManager.Instance["ImageViewCaptureSetupVM", "IsOrthogonalViewChecked"] && !continuousZStackPreview)
                                 {
                                     ZStackCaptureFinished(!(bool)MVMManager.Instance["ZControlViewModel", "IsZStackCapturing", (object)false]);
                                 }
@@ -308,12 +313,12 @@
                                 }
 
                                 //if continuous zstack is checked then continuously update
-                                if (continuousZStackPreview == true && !IsOrthogonalViewChecked)
+                                if (continuousZStackPreview == true && !(bool)MVMManager.Instance["ImageViewCaptureSetupVM", "IsOrthogonalViewChecked"])
                                 {
                                     CloseProgressWindow();
                                     _startingContinuousZStackPreview = true;
                                     ICommand zStackPreviewCommand = (ICommand)MVMManager.Instance["ZControlViewModel", "PreviewZStackCommand", (object)null];
-                                    if (null !=  zStackPreviewCommand)
+                                    if (null != zStackPreviewCommand)
                                     {
                                         zStackPreviewCommand.Execute(null);
                                     }
@@ -324,10 +329,26 @@
                                 }
 
                                 _startingContinuousZStackPreview = false;
-                                if (IsOrthogonalViewChecked)
+                                if ((bool)MVMManager.Instance["ImageViewCaptureSetupVM", "IsOrthogonalViewChecked"])
                                 {
-                                    UpdateOrthogonalView();
+                                    var updateOrthogonalViewCommand = (ICommand)MVMManager.Instance["ImageViewCaptureSetupVM", "UpdateOrthogonalViewCommand"];
+                                    updateOrthogonalViewCommand.Execute(null);
                                 }
+                            }
+                        )
+                    );
+                        }
+                        break;
+                    case "SequentialPreview":
+                        CreateProgressWindow();
+                        break;
+                    case "SequentialPreviewStop":
+                        {
+                            System.Windows.Application.Current.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal,
+                        new Action(
+                            delegate ()
+                            {
+                                CloseProgressWindow();
                             }
                         )
                     );
@@ -458,6 +479,12 @@
             }
         }
 
+        public bool StartingContinuousZStackPreview
+        {
+            get => _startingContinuousZStackPreview;
+            set => _startingContinuousZStackPreview = value;
+        }
+
         public string StartKey
         {
             get { return _startKey; }
@@ -547,6 +574,61 @@
             ///End update Camera Active Settings/////
         }
 
+        private void ApplyOrRevertFastFocusParams(bool isLive)
+        {
+            if (false == isLive)
+            {
+                _preFFPixelX = (int)MVMManager.Instance["AreaControlViewModel", "LSMPixelX", (object)0];
+                _preFFPixelY = (int)MVMManager.Instance["AreaControlViewModel", "LSMPixelY", (object)0];
+                _preFFScanMode = (int)MVMManager.Instance["ScanControlViewModel", "LSMScanMode", (object)0];
+                _preFFDwellTime = (double)MVMManager.Instance["ScanControlViewModel", "LSMPixelDwellTime", (object)1.0];
+                _preFFAreaMode = (int)MVMManager.Instance["AreaControlViewModel", "LSMAreaMode", (object)0];
+                _preFFAverageMode = (int)MVMManager.Instance["ScanControlViewModel", "LSMSignalAverage", (object)0];
+                _preLsmInterleaveScanMode = (int)MVMManager.Instance["ScanControlViewModel", "LSMInterleaveScan", (object)0];
+
+                MVMManager.Instance["AreaControlViewModel", "LSMAreaMode", (object)0] = (int)ICamera.LSMAreaMode.SQUARE;
+                MVMManager.Instance["AreaControlViewModel", "LSMPixelX", (object)0] = 512;
+                MVMManager.Instance["AreaControlViewModel", "LSMPixelY", (object)0] = 512;
+                MVMManager.Instance["ScanControlViewModel", "LSMScanMode"] = 0;
+                MVMManager.Instance["ScanControlViewModel", " LSMPixelDwellTime"] = 2.0;
+                MVMManager.Instance["ScanControlViewModel", "LSMSignalAverage"] = 0;
+                MVMManager.Instance["ScanControlViewModel", "LSMInterleaveScan"] = 1;
+            }
+            else
+            {
+                MVMManager.Instance["AreaControlViewModel", "LSMAreaMode", (object)0] = _preFFAreaMode;
+                MVMManager.Instance["AreaControlViewModel", "LSMPixelX", (object)0] = _preFFPixelX;
+                MVMManager.Instance["AreaControlViewModel", "LSMPixelY", (object)0] = _preFFPixelY;
+                MVMManager.Instance["ScanControlViewModel", "LSMScanMode"] = _preFFScanMode;
+                MVMManager.Instance["ScanControlViewModel", "LSMPixelDwellTime"] = _preFFDwellTime;
+                MVMManager.Instance["ScanControlViewModel", "LSMSignalAverage"] = _preFFAverageMode;
+                MVMManager.Instance["ScanControlViewModel", "LSMInterleaveScan"] = _preLsmInterleaveScanMode;
+            }
+        }
+
+        private void CaptureNow()
+        {
+            MVMManager.Instance.UpdateMVMXMLSettings(ref MVMManager.Instance.SettingsDoc[(int)SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS]);
+            MVMManager.Instance.SaveSettings(SettingsFileType.ACTIVE_EXPERIMENT_SETTINGS);
+
+            Command command = new Command();
+            command.Message = "RunSample LS";
+            command.CommandGUID = new Guid("30db4357-7508-46c9-84eb-3ca0900aa4c5");
+            command.Payload = new List<string>();
+            command.Payload.Add("RunImmediately");
+
+            _eventAggregator.GetEvent<CommandShowDialogEvent>().Publish(command);
+        }
+
+        private void RemoteCaptureNow()
+        {
+            if (ResourceManagerCS.Instance.TabletModeEnabled)
+            {
+                //Set the property to start acquisition remotely with the required experiment path
+                MVMManager.Instance["RemoteIPCControlViewModel", "StartAcquisition"] = "C:\\temp\\exp01";
+            }
+        }
+
         /// <summary>
         /// Stop live image capture
         /// </summary>
@@ -597,10 +679,9 @@
                 //cannot snapshot while bleaching with the same lsm type:
                 return;
             }
-            HandleAcquireButtonPressed();
             LiveSnapshotStopped = false;
             IsLiveSnapshot = true;
-            BitmapReady = true;
+
             snapshotWorker = new BackgroundWorker();
             snapshotWorker.WorkerSupportsCancellation = true;
 
@@ -608,10 +689,6 @@
             {
                 do
                 {
-                    if (CaptureSetup.IsPixelDataReady())
-                    {
-                        OnPropertyChanged("Bitmap");
-                    }
                     System.Threading.Thread.Sleep(30);
                     if (!CaptureStatus)
                         break;
@@ -625,24 +702,18 @@
 
                 if ((int)ICamera.LSMAreaMode.LINE == (int)MVMManager.Instance["AreaControlViewModel", "LSMAreaMode", (object)0])
                 {
-                    if (null != DrawLineForLineScanEvent)
-                    {
-                        DrawLineForLineScanEvent();
-                    }
+                    DrawLineForLineScanEvent();
                 }
-                if (CaptureSetup.IsPixelDataReady())
-                {
-                    OnPropertyChanged("Bitmap");
-                    OnPropertyChanged("BitmapPresentation");
-                }
-                UpdateOverlayManager();
+                
                 RequestROIData();
 
                 //user has chosen to save without the experiment info
                 //save the image with the viewmodel bitmap when not more than 3 channels:
                 if (this._captureSetup.SaveSnapshot && !this._captureSetup.SnapshotIncludeExperimentInfo && (0xF > this._captureSetup.GetChannelEnabledBitmask()))
                 {
-                    SaveNow();
+                    MVMManager.Instance["ImageViewCaptureSetupVM", "SaveNowImagePath"] = _captureSetup.GetUniqueSnapshotFilename();
+
+                    ((ICommand)MVMManager.Instance["ImageViewCaptureSetupVM", "SaveNowCommand"])?.Execute(null);
                 }
                 IsLiveSnapshot = false;
                 LiveImageCapturing(!CaptureStatus);
@@ -652,16 +723,16 @@
                 CloseProgressWindow();
             };
 
-            //Snapshots don't currentlty do sequential captures
+            //Snapshots don't currently do sequential captures
             //Change to non sequential capture, so the settings file is correct.
             //and change back after
-            int seqCapture = this.EnableSequentialCapture;
-            this.EnableSequentialCapture = 0;
+            int seqCapture = (int)MVMManager.Instance["SequentialControlViewModel", "EnableSequentialCapture", (object)0];
+            MVMManager.Instance["SequentialControlViewModel", "EnableSequentialCapture"] = 0;
 
             //first capture the image
             this._captureSetup.Snapshot();
 
-            this.EnableSequentialCapture = seqCapture;
+            MVMManager.Instance["SequentialControlViewModel", "EnableSequentialCapture"] = seqCapture;
 
             snapshotWorker.RunWorkerAsync();
             if (snapshotWorker.IsBusy)
@@ -703,7 +774,6 @@
 
                 FastFocusButtonStatus = !FastFocusButtonStatus;
                 StartOrStopLiveCapture();
-                BitmapReady = true;
             }
             else
             {
@@ -741,7 +811,6 @@
                     }
                 }
 
-                HandleAcquireButtonPressed();
 
                 this._captureSetup.Start();
 
@@ -753,10 +822,7 @@
                 if ((int)ICamera.LSMAreaMode.LINE == (int)MVMManager.Instance["AreaControlViewModel", "LSMAreaMode", (object)0] ||
                     (int)ICamera.LSMAreaMode.POLYLINE == (int)MVMManager.Instance["AreaControlViewModel", "LSMAreaMode", (object)0])
                 {
-                    if (null != DrawLineForLineScanEvent)
-                    {
-                        DrawLineForLineScanEvent();
-                    }
+                    DrawLineForLineScanEvent();
                 }
 
                 //check capture status if live
@@ -791,7 +857,7 @@
             MVMManager.Instance["PowerControlViewModel", "PockelsCalibrateAgainEnable"] = !_isLive;
 
             LiveImageCapturing(IsLive);
-            BitmapReady = true;
+
             OnPropertyChanged("ImagePathPlay");
             OnPropertyChanged("ImagePathFastFocus");
             OnPropertyChanged("IsLive");
@@ -828,12 +894,17 @@
 
             if (true == (bool)MVMManager.Instance["ZControlViewModel", "IsZStackCapturing", (object)false])
             {
-                _stackPreviewStopped = true;
                 MVMManager.Instance["ZControlViewModel", "IsZCaptureStopped"] = true;
                 this._captureSetup.StopZStackPreview();
                 _bw.CancelAsync();
                 MVMManager.Instance["ZControlViewModel", "IsZStackCapturing"] = false;
-                LoadZPreviewParameters();
+                CloseProgressWindow();
+            }
+
+            if (true == (bool)MVMManager.Instance["SequentialControlViewModel", "IsSequentialCapturing", (object)false])
+            {
+                MVMManager.Instance["SequentialControlViewModel", "SequentialStopped"] = true;
+                MVMManager.Instance["SequentialControlViewModel", "IsSequentialCapturing"] = false;
                 CloseProgressWindow();
             }
 

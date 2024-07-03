@@ -69,7 +69,7 @@ namespace ImageReviewDll.OME
         public static extern int CreateOMETiff(string fileName);
 
         [DllImport(dllName, EntryPoint = "TC_ConfigOMEHeader", CallingConvention = CallingConvention.Cdecl)]
-        public static extern int ConfigOMEHeader(long handle, SampleInfo sample, int regionPixelX, int regionPixelY, float regionW, float regionH, ushort zCount, ushort tCount,
+        public static extern int ConfigOMEHeader(long handle, SampleInfo sample, int regionPixelX, int regionPixelY, float regionW, float regionH, ushort zCount, int tCount,
             int regionPositionPixelX, int regionPositionPixelY, int bitsPerPixel, float regionPixelSizeUM, double zStepSizeUM, double intervalSec, int channelNumber, string channels);
 
         [DllImport(dllName, EntryPoint = "TC_SaveOMEData", CallingConvention = CallingConvention.Cdecl)]

@@ -31,6 +31,7 @@ extern "C"
 	extern TL_COLOR_GET_RED_OUTPUT_LUT tl_color_get_red_output_LUT;
 	extern TL_COLOR_ENABLE_OUTPUT_LUTS tl_color_enable_output_LUTs;
 	extern TL_COLOR_TRANSFORM_48_TO_48 tl_color_transform_48_to_48;
+    extern TL_COLOR_TRANSFORM_48_TO_64 tl_color_transform_48_to_64;
 	extern TL_COLOR_TRANSFORM_48_TO_32 tl_color_transform_48_to_32;
 	extern TL_COLOR_TRANSFORM_48_TO_24 tl_color_transform_48_to_24;
 	extern TL_COLOR_DESTROY_COLOR_PROCESSOR tl_color_destroy_color_processor;

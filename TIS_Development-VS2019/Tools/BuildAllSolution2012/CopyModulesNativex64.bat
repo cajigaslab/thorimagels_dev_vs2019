@@ -90,6 +90,10 @@ mkdir "..\..\Common\AutoFocusModule\x64\Debug"
 copy .\x64\Debug\AutoFocus.dll ..\..\Common\AutoFocusModule\x64\Debug
 copy .\x64\Debug\AutoFocus.lib ..\..\Common\AutoFocusModule\x64\Debug
 copy .\x64\Debug\AutoFocus.pdb ..\..\Common\AutoFocusModule\x64\Debug
+mkdir "..\..\Common\AutoExposureModule\x64\Debug"
+copy .\x64\Debug\AutoExposure.dll ..\..\Common\AutoExposureModule\x64\Debug
+copy .\x64\Debug\AutoExposure.lib ..\..\Common\AutoExposureModule\x64\Debug
+copy .\x64\Debug\AutoExposure.pdb ..\..\Common\AutoExposureModule\x64\Debug
 mkdir "..\..\Commands\General\SelectHardware\x64\Debug"
 copy .\x64\Debug\SelectHardware.dll ..\..\Commands\General\SelectHardware\x64\Debug
 copy .\x64\Debug\SelectHardware.lib ..\..\Commands\General\SelectHardware\x64\Debug
@@ -152,6 +156,12 @@ mkdir "..\..\Hardware\Cameras\ThordaqDFLIM\x64\Debug"
 copy .\x64\Debug\ThordaqDFLIM.dll ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Debug
 copy .\x64\Debug\ThordaqDFLIM.lib ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Debug
 copy .\x64\Debug\ThordaqDFLIM.pdb ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Debug
+copy .\x64\Debug\dFLIM_4002.dll ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Debug
+copy .\x64\Debug\dFLIM_4002.lib ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Debug
+copy .\x64\Debug\dFLIM_4002.pdb ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Debug
+copy .\x64\Debug\dFLIMGG.dll ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Debug
+copy .\x64\Debug\dFLIMGG.lib ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Debug
+copy .\x64\Debug\dFLIMGG.pdb ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Debug
 copy .\x64\Debug\ThorDFLIMGalvoGalvo.dll ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Debug
 copy .\x64\Debug\ThorDFLIMGalvoGalvo.lib ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Debug
 copy .\x64\Debug\ThorDFLIMGalvoGalvo.pdb ..\..\Hardware\Cameras\ThordaqDFLIM\x64\Debug
@@ -229,6 +239,10 @@ mkdir "..\..\Hardware\Devices\ThorMCM6000_Aux\x64\Debug"
 copy .\x64\Debug\ThorMCM6000_Aux.dll ..\..\Hardware\Devices\ThorMCM6000_Aux\x64\Debug
 copy .\x64\Debug\ThorMCM6000_Aux.lib ..\..\Hardware\Devices\ThorMCM6000_Aux\x64\Debug
 copy .\x64\Debug\ThorMCM6000_Aux.pdb ..\..\Hardware\Devices\ThorMCM6000_Aux\x64\Debug
+mkdir "..\..\Hardware\Devices\ThorMCM301\x64\Debug"
+copy .\x64\Debug\ThorMCM301.dll ..\..\Hardware\Devices\ThorMCM301\x64\Debug
+copy .\x64\Debug\ThorMCM301.lib ..\..\Hardware\Devices\ThorMCM301\x64\Debug
+copy .\x64\Debug\ThorMCM301.pdb ..\..\Hardware\Devices\ThorMCM301\x64\Debug
 mkdir "..\..\Hardware\Devices\ThorBCMPA\x64\Debug"
 copy .\x64\Debug\ThorBCMPA.dll ..\..\Hardware\Devices\ThorBCMPA\x64\Debug
 copy .\x64\Debug\ThorBCMPA.lib ..\..\Hardware\Devices\ThorBCMPA\x64\Debug
@@ -261,6 +275,10 @@ mkdir "..\..\Hardware\Devices\ThorPowerSimulator\x64\Debug"
 copy .\x64\Debug\ThorPowerSimulator.dll ..\..\Hardware\Devices\ThorPowerSimulator\x64\Debug
 copy .\x64\Debug\ThorPowerSimulator.lib ..\..\Hardware\Devices\ThorPowerSimulator\x64\Debug
 copy .\x64\Debug\ThorPowerSimulator.pdb ..\..\Hardware\Devices\ThorPowerSimulator\x64\Debug
+mkdir "..\..\Hardware\Devices\ThorPrelude\x64\Debug"
+copy .\x64\Debug\ThorPrelude.dll ..\..\Hardware\Devices\ThorPrelude\x64\Debug
+copy .\x64\Debug\ThorPrelude.lib ..\..\Hardware\Devices\ThorPrelude\x64\Debug
+copy .\x64\Debug\ThorPrelude.pdb ..\..\Hardware\Devices\ThorPrelude\x64\Debug
 mkdir "..\..\Hardware\Devices\ThorShutterSimulator\x64\Debug"
 copy .\x64\Debug\ThorShutterSimulator.dll ..\..\Hardware\Devices\ThorShutterSimulator\x64\Debug
 copy .\x64\Debug\ThorShutterSimulator.lib ..\..\Hardware\Devices\ThorShutterSimulator\x64\Debug
@@ -328,6 +346,10 @@ mkdir "..\..\Hardware\Devices\ThorZPiezo\x64\Debug"
 copy .\x64\Debug\ThorZPiezo.dll ..\..\Hardware\Devices\ThorZPiezo\x64\Debug
 copy .\x64\Debug\ThorZPiezo.lib ..\..\Hardware\Devices\ThorZPiezo\x64\Debug
 copy .\x64\Debug\ThorZPiezo.pdb ..\..\Hardware\Devices\ThorZPiezo\x64\Debug
+mkdir "..\..\Hardware\Devices\ThorDAQZ\x64\Debug"
+copy .\x64\Debug\ThorDAQZ.dll ..\..\Hardware\Devices\ThorDAQZ\x64\Debug
+copy .\x64\Debug\ThorDAQZ.lib ..\..\Hardware\Devices\ThorDAQZ\x64\Debug
+copy .\x64\Debug\ThorDAQZ.pdb ..\..\Hardware\Devices\ThorDAQZ\x64\Debug
 mkdir "..\..\Hardware\Devices\ThorZStepper\x64\Debug"
 copy .\x64\Debug\ThorZStepper.dll ..\..\Hardware\Devices\ThorZStepper\x64\Debug
 copy .\x64\Debug\ThorZStepper.lib ..\..\Hardware\Devices\ThorZStepper\x64\Debug
@@ -400,3 +422,15 @@ mkdir "..\..\Common\ConvertUtilities\x64\Debug"
 copy .\x64\Debug\ClassicTiffConverter.dll ..\..\Common\ConvertUtilities\x64\Debug
 copy .\x64\Debug\ClassicTiffConverter.lib ..\..\Common\ConvertUtilities\x64\Debug
 copy .\x64\Debug\ClassicTiffConverter.pdb ..\..\Common\ConvertUtilities\x64\Debug
+mkdir "..\..\Hardware\Devices\ThorElectroPhys\x64\Debug"
+copy .\x64\Debug\ThorElectroPhys.dll ..\..\Hardware\Devices\ThorElectroPhys\x64\Debug
+copy .\x64\Debug\ThorElectroPhys.lib ..\..\Hardware\Devices\ThorElectroPhys\x64\Debug
+copy .\x64\Debug\ThorElectroPhys.pdb ..\..\Hardware\Devices\ThorElectroPhys\x64\Debug
+mkdir "..\..\Hardware\Devices\ThorRemoteFocusNI\x64\Debug"
+copy .\x64\Debug\ThorRemoteFocusNI.dll ..\..\Hardware\Devices\ThorRemoteFocusNI\x64\Debug
+copy .\x64\Debug\ThorRemoteFocusNI.lib ..\..\Hardware\Devices\ThorRemoteFocusNI\x64\Debug
+copy .\x64\Debug\ThorRemoteFocusNI.pdb ..\..\Hardware\Devices\ThorRemoteFocusNI\x64\Debug
+mkdir "..\..\Hardware\Devices\ThorDAQRemoteFocus\x64\Debug"
+copy .\x64\Debug\ThorDAQRemoteFocus.dll ..\..\Hardware\Devices\ThorDAQRemoteFocus\x64\Debug
+copy .\x64\Debug\ThorDAQRemoteFocus.lib ..\..\Hardware\Devices\ThorDAQRemoteFocus\x64\Debug
+copy .\x64\Debug\ThorDAQRemoteFocus.pdb ..\..\Hardware\Devices\ThorDAQRemoteFocus\x64\Debug

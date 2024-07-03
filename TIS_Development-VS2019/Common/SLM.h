@@ -1,7 +1,16 @@
 
 //SLM.h
 #include ".\PDLL\pdll.h"
+#include ".\EnumString.h"
 //dll wrapper class using the virtual class
+
+#define MSG_SIZE			256
+#define XY_COORD			2
+#define XYZ_COORD			3
+#define RGB_CNT				3
+#define LUT_SIZE			65536
+#define SLM_TIMEOUT_MIN		20000	//[ms]
+#define PHASEMASK_DIRNAME	L"PhaseMask\\"
 
 template <typename T>
 class MemoryStruct
@@ -51,15 +60,23 @@ public:
 
 #define MAX_ARRAY_CNT	1024
 
+enum SLMHardware
+{
+	PDM512,
+	PDM1024,
+	EXULUS
+};
+
+Begin_Enum_String(SLMHardware)
+{
+	Enum_String(PDM512);
+	Enum_String(PDM1024);
+	Enum_String(EXULUS);
+}End_Enum_String;
+
 class ISLM
 {
 public:
-
-	enum SLMHardware
-	{
-		PDM512,
-		EXULUS
-	};
 
 	enum SLMParams
 	{
@@ -83,7 +100,7 @@ public:
 		BLANK_RIGHT
 	};
 
-	virtual long FindSLM(char* slm) = 0;///<returns the number of SLMs
+	virtual long FindSLM(char* xml) = 0;///<returns the number of SLMs
 	virtual long TeardownSLM() = 0;///<release SLM and its resources
 	virtual long SetParam(const long paramID, const double param) = 0;
 	virtual long GetParam(const long paramID, double& param) = 0;

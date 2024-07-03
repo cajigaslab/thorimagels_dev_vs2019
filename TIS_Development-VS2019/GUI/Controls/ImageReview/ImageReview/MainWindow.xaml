@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:View="clr-namespace:ImageReviewDll.View"
              xmlns:ViewModel="clr-namespace:ImageReviewDll.ViewModel"
+             xmlns:ivc="clr-namespace:ImageViewControl;assembly=ImageViewControl"
              xmlns:local="clr-namespace:ImageReviewDll"
              xmlns:Spin="clr-namespace:SpinnerProgress;assembly=SpinnerProgress"
              Name="mwUserControl"
@@ -52,8 +53,7 @@
             <Grid>
                 <Grid Name="expGrid"
                       Margin="1"
-                      Background="#FF333333"
-                      Visibility="Visible">
+                      Background="#FF333333">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
@@ -63,7 +63,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <Border Margin="1"
+                    <Border
                             VerticalAlignment="Top"
                             Grid.Column="0">
                         <ScrollViewer Name="scrollView"
@@ -82,16 +82,28 @@
                                           ScrollChanged="scrollViewImage_ScrollChanged"
                                           Visibility="{Binding Path=ViewType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource ViewTypeConverter}, ConverterParameter=0}"
                                           Margin="1">
-                                <StackPanel Height="{Binding Path=IVScrollBarHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                                    <View:ImageView x:Name="ImageView"
-                                                    Grid.Column="1" />
-                                </StackPanel>
+                                <ivc:ImageView x:Name="imageView"
+                                               ImageCanvas="{Binding Path=ImageCanvas, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                               OrthogonalLineType="{Binding Path=OrthogonalLineType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                               OrthogonalLineColorType="{Binding Path=OrthogonalLineColorType, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                               OrthogonalChangeCount="{Binding Path=OrthogonalChangeCount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                               ZoomLevel="{Binding Path=ZoomLevel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                               ImageOffsetX="{Binding Path=ImageOffsetX, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                               ImageOffsetY="{Binding Path=ImageOffsetY, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                               RollOverPointX="{Binding Path=RollOverPointX, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                               RollOverPointY="{Binding Path=RollOverPointY, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                               ZNumSteps="{Binding Path=ZNumSteps, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                               IVScrollBarHeight="{Binding Path=IVScrollBarHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                               IsOrthogonalViewChecked="{Binding Path=IsOrthogonalViewChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                               OrthogonalViewPosition="{Binding Path=OrthogonalViewPosition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                               Grid.Column="1" />
                             </ScrollViewer>
                             <StackPanel Name="stackPanelVolume"
                                         Visibility="{Binding Path=ViewType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource ViewTypeConverter}, ConverterParameter=1}"
                                         Margin="1">
                                 <View:VolumeControlView x:Name="volumeView"
-                                                        HorizontalAlignment="Stretch" />
+                                                        Grid.Column="1"
+                                                        Margin="1" />
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -100,7 +112,6 @@
                             BorderBrush="Transparent"
                             VerticalAlignment="Top">
                         <StackPanel>
-                            <View:ROIMasterView x:Name="roiMasterView" />
                             <View:ToolBarView x:Name="toolBarView" />
                         </StackPanel>
                     </Border>

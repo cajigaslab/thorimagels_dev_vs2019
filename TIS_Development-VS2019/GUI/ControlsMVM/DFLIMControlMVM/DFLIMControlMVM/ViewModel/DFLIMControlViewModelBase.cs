@@ -28,10 +28,11 @@
 
     using ThorSharedTypes;
 
-    public class DFLIMControlViewModelBase : ThorSharedTypes.VMBase, ThorSharedTypes.IMVM
+    public class DFLIMControlViewModelBase : VMBase
     {
         #region Fields
 
+        protected Color[] _channelsColors;
         protected string _currentViewModel;
         protected Dictionary<KeyValuePair<int, SolidColorBrush>, uint[]> _dflimHistogramDictionary;
         protected long _diagnosticsDataCopyCounter = 0;
@@ -39,6 +40,7 @@
         protected FlimFittingWindow _flimFittingWindow = null;
         protected long _histogramCopyCounter = 0;
         protected bool _histogramDataReady = false;
+        protected string _imageViewMVMName;
         protected string _mainViewModelName;
 
         const long NUM_CHANNELS = 4;
@@ -501,67 +503,70 @@
                             dflimDiagnosticsData[i] = ObjectExtensions.Copy(temp[i]);
                         }
                     }
-                    bool[] lsmChannelEnable = (bool[])MVMManager.Instance[_mainViewModelName, "LSMChannelEnable"];
-                    Brush[] lsmChannelColor = (Brush[])MVMManager.Instance[_mainViewModelName, "LSMChannelColor"];
-
-                    List<int> channels = new List<int>();
-                    for (int i = 0; i < NUM_CHANNELS; ++i)
+                    bool[] lsmChannelEnable = (bool[])MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable"];
+                    Application.Current.Dispatcher.Invoke(new Action(() =>
                     {
-                        if (lsmChannelEnable[i])
-                        {
-                            channels.Add(i);
-                        }
-                    }
+                        _channelsColors = (Color[])MVMManager.Instance[_imageViewMVMName, "DefaultChannelColors"];
 
-                    lock (_dflimDiagnosticsMVMDataLock)
-                    {
-                        _dflimDiagnosticsDataDictionary = new Dictionary<KeyValuePair<int, SolidColorBrush>, ushort[]>();
-                        for (int i = 0; i < dflimDiagnosticsData.Length; ++i)
+                        List<int> channels = new List<int>();
+                        for (int i = 0; i < NUM_CHANNELS; ++i)
                         {
-                            var channel = i;
-                            if (dflimDiagnosticsData.Length == 1)
+                            if (lsmChannelEnable[i])
                             {
-                                if ((bool)MVMManager.Instance[_mainViewModelName, "LSMChannelEnable0"])
-                                {
-                                    channel = 0;
-                                }
-                                else if ((bool)MVMManager.Instance[_mainViewModelName, "LSMChannelEnable1"])
-                                {
-                                    channel = 1;
-                                }
-                                else if ((bool)MVMManager.Instance[_mainViewModelName, "LSMChannelEnable2"])
-                                {
-                                    channel = 2;
-                                }
-                                else if ((bool)MVMManager.Instance[_mainViewModelName, "LSMChannelEnable3"])
-                                {
-                                    channel = 3;
-                                }
+                                channels.Add(i);
                             }
                         }
 
-                        _dflimDiagnosticsDataDictionary = new Dictionary<KeyValuePair<int, SolidColorBrush>, ushort[]>();
-                        for (int i = 0; i < dflimDiagnosticsData.Length; ++i)
+                        lock (_dflimDiagnosticsMVMDataLock)
                         {
-                            if (NUM_CHANNELS == dflimDiagnosticsData.Length)
+                            _dflimDiagnosticsDataDictionary = new Dictionary<KeyValuePair<int, SolidColorBrush>, ushort[]>();
+                            for (int i = 0; i < dflimDiagnosticsData.Length; ++i)
                             {
-                                if (lsmChannelEnable[i])
+                                var channel = i;
+                                if (dflimDiagnosticsData.Length == 1)
                                 {
-                                    var channel = new KeyValuePair<int, SolidColorBrush>(i, (SolidColorBrush)lsmChannelColor[i]);
+                                    if ((bool)MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable0"])
+                                    {
+                                        channel = 0;
+                                    }
+                                    else if ((bool)MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable1"])
+                                    {
+                                        channel = 1;
+                                    }
+                                    else if ((bool)MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable2"])
+                                    {
+                                        channel = 2;
+                                    }
+                                    else if ((bool)MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable3"])
+                                    {
+                                        channel = 3;
+                                    }
+                                }
+                            }
+
+                            _dflimDiagnosticsDataDictionary = new Dictionary<KeyValuePair<int, SolidColorBrush>, ushort[]>();
+                            for (int i = 0; i < dflimDiagnosticsData.Length; ++i)
+                            {
+                                if (NUM_CHANNELS == dflimDiagnosticsData.Length)
+                                {
+                                    if (lsmChannelEnable[i])
+                                    {
+                                        var channel = new KeyValuePair<int, SolidColorBrush>(i, new SolidColorBrush(_channelsColors[i]));
+                                        _dflimDiagnosticsDataDictionary.Add(channel, (ushort[])(object)dflimDiagnosticsData[i]);
+                                    }
+                                }
+                                else
+                                {
+
+                                    var channel = new KeyValuePair<int, SolidColorBrush>(channels[i], new SolidColorBrush(_channelsColors[channels[i]]));
                                     _dflimDiagnosticsDataDictionary.Add(channel, (ushort[])(object)dflimDiagnosticsData[i]);
                                 }
                             }
-                            else
-                            {
 
-                                var channel = new KeyValuePair<int, SolidColorBrush>(channels[i], (SolidColorBrush)lsmChannelColor[channels[i]]);
-                                _dflimDiagnosticsDataDictionary.Add(channel, (ushort[])(object)dflimDiagnosticsData[i]);
-                            }
+                            ++_diagnosticsDataCopyCounter;
+                            _diagnosticsDataReady = true;
                         }
-
-                        ++_diagnosticsDataCopyCounter;
-                        _diagnosticsDataReady = true;
-                    }
+                    }));
                 }
             }
         }
@@ -591,47 +596,50 @@
                             }
                         }
 
-                        bool[] lsmChannelEnable = (bool[])MVMManager.Instance[_mainViewModelName, "LSMChannelEnable"];
-                        Brush[] lsmChannelColor = (Brush[])MVMManager.Instance[_mainViewModelName, "LSMChannelColor"];
-
-                        List<int> channels = new List<int>();
-                        for (int i = 0; i < NUM_CHANNELS; ++i)
+                        bool[] lsmChannelEnable = (bool[])MVMManager.Instance["ScanControlViewModel", "LSMChannelEnable"];
+                        Application.Current.Dispatcher.Invoke(new Action(() =>
                         {
-                            if (lsmChannelEnable[i])
-                            {
-                                channels.Add(i);
-                            }
-                        }
+                            _channelsColors = (Color[])MVMManager.Instance[_imageViewMVMName, "DefaultChannelColors"];
 
-                        //FLIMFitting.FLIMHistogramGroupData histogramGroupData = null;
-                        lock (_dflimHistogramMVMDataLock)
-                        {
-                            OnPropertyChanged("DFLIMHistogramMVMDataLock");
-                            _dflimHistogramDictionary = new Dictionary<KeyValuePair<int, SolidColorBrush>, uint[]>();
-                            for (int i = 0; i < dflimHistogramData.Length; ++i)
+                            List<int> channels = new List<int>();
+                            for (int i = 0; i < NUM_CHANNELS; ++i)
                             {
-                                if (NUM_CHANNELS == dflimHistogramData.Length)
+                                if (lsmChannelEnable[i])
                                 {
-                                    if (lsmChannelEnable[i])
+                                    channels.Add(i);
+                                }
+                            }
+
+                            //FLIMFitting.FLIMHistogramGroupData histogramGroupData = null;
+                            lock (_dflimHistogramMVMDataLock)
+                            {
+                                OnPropertyChanged("DFLIMHistogramMVMDataLock");
+                                _dflimHistogramDictionary = new Dictionary<KeyValuePair<int, SolidColorBrush>, uint[]>();
+                                for (int i = 0; i < dflimHistogramData.Length; ++i)
+                                {
+                                    if (NUM_CHANNELS == dflimHistogramData.Length)
                                     {
-                                        var channel = new KeyValuePair<int, SolidColorBrush>(i, (SolidColorBrush)lsmChannelColor[i]);
+                                        if (lsmChannelEnable[i])
+                                        {
+                                            var channel = new KeyValuePair<int, SolidColorBrush>(i, new SolidColorBrush(_channelsColors[i]));
+                                            _dflimHistogramDictionary.Add(channel, (dflimHistogramData[i]));
+                                        }
+                                    }
+                                    else
+                                    {
+
+                                        var channel = new KeyValuePair<int, SolidColorBrush>(channels[i], new SolidColorBrush(_channelsColors[channels[i]]));
                                         _dflimHistogramDictionary.Add(channel, (dflimHistogramData[i]));
+
+                                        ////to convert from uint to int[] array do the following
+                                        //var x =  new Dictionary<KeyValuePair<int, SolidColorBrush>, int[]>();
+                                        //x.Add(channel, (int[])(object)dflimHistogramData[i]);
                                     }
                                 }
-                                else
-                                {
-
-                                    var channel = new KeyValuePair<int, SolidColorBrush>(channels[i], (SolidColorBrush)lsmChannelColor[channels[i]]);
-                                    _dflimHistogramDictionary.Add(channel, (dflimHistogramData[i]));
-
-                                    ////to convert from uint to int[] array do the following
-                                    //var x =  new Dictionary<KeyValuePair<int, SolidColorBrush>, int[]>();
-                                    //x.Add(channel, (int[])(object)dflimHistogramData[i]);
-                                }
+                                ++_histogramCopyCounter;
+                                _histogramDataReady = true;
                             }
-                            ++_histogramCopyCounter;
-                            _histogramDataReady = true;
-                        }
+                        }));
                         OnPropertyChanged("DFLIMHistogramMVMDataLock");
                         OnPropertyChanged("DFLIMHistogramCopyCounter");
                         OnPropertyChanged("DFLIMHistogramDictionary");
@@ -646,12 +654,14 @@
                         }
                         catch (Exception ex)
                         {
+                            ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + " CopyHistogram inner " + ex.Message);
                             ex.ToString();
                         }
                     }
                 }
                 catch (Exception ex)
                 {
+                    ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + " CopyHistogram outter " + ex.Message);
                     ex.ToString();
                 }
             }
@@ -749,7 +759,7 @@
             if (_dflimDisplayLifetimeImage)
             {
                 MVMManager.Instance[_mainViewModelName, "RebuildBitmap"] = true;
-                ((ThorSharedTypes.IMVM)MVMManager.Instance[_mainViewModelName, this]).OnPropertyChange("Bitmap");
+                ((IMVM)MVMManager.Instance[_mainViewModelName, this]).OnPropertyChange("Bitmap");
             }
         }
 

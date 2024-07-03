@@ -5,6 +5,7 @@ namespace RealTimeLineChart.ViewModel
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel;
     using System.Diagnostics;
     using System.IO;
     using System.IO.Pipes;
@@ -28,6 +29,7 @@ namespace RealTimeLineChart.ViewModel
     using System.Windows.Shapes;
     using System.Xml;
     using System.Xml.Linq;
+    using ThorLogging;
 
     using global::RealTimeLineChart.Model;
 
@@ -95,7 +97,14 @@ namespace RealTimeLineChart.ViewModel
         string _serverPipeName = string.Empty;
         Thread _serverThread = null;
         bool _thorImageLSConnectionStats = false;
-        bool _threadCompleted = true;
+        bool _sendServerRunning = false;
+        private bool _disconnectedPopup = false;
+        bool _disableDuplicateIPC = false;
+
+        Queue<String[]> sendCmdBuffer = new Queue<String[]>(); //Queue for sending TS cmds
+        private object sendCmdBufferLock = new object();       //Lock for the Queue above
+
+        int syncCMDCount = 0;
 
         #endregion Fields
 
@@ -105,9 +114,9 @@ namespace RealTimeLineChart.ViewModel
         {
             Establish,
             TearDown,
-            UpdataInformation,
             AcquireInformation,
-            Filepath,
+            UpdateInformation,
+            FilePath,
             StartAcquiring,
             StopAcquiring,
             StartBleach,
@@ -115,7 +124,25 @@ namespace RealTimeLineChart.ViewModel
             Receive,
             Error,
             ChangeRemotePC,
-            ChangeRemoteApp
+            ChangeRemoteApp,
+            LoadExperimentFile,
+            MoveX,
+            MoveY,
+            MoveZ,
+            MoveSecondaryZ,
+            NotifySavedFile,
+            ReportPositionX,
+            ReportPositionY,
+            ReportPositionZ,
+            ReportPositionSecondaryZ,
+            PositionReportX,
+            PositionReportY,
+            PositionReportZ,
+            PositionReportSecondaryZ,
+
+            ShowMostRecent,
+            SyncFrame,
+            IsSaving
         }
 
         public enum ThorPipeDst
@@ -162,6 +189,53 @@ namespace RealTimeLineChart.ViewModel
             {
                 _clientPipeName = value;
                 OnPropertyChanged("ClientPipeName");
+            }
+        }
+
+        public Visibility IPCEnabled
+        {
+            get
+            {
+                if (IPCDisabled)
+                {
+                    return Visibility.Collapsed;
+                }
+                else
+                {
+                    return Visibility.Visible; 
+                }
+
+            }
+        }
+
+        public bool IPCDisabled
+        {
+            get
+            {
+                return _disableDuplicateIPC;
+            }
+            set
+            {
+                if(true == _disableDuplicateIPC && false == value)
+                {
+                    //run check for other ThorSync process to init IPC
+
+                    if (true == checkToDisableIPC()) //IPC wants to be turned on however there are still other thorsync running
+                    {
+                        _disableDuplicateIPC = true;
+                    }
+                    else
+                    {
+                        InitIPC();
+                        _disableDuplicateIPC = value;
+                    }
+                }
+                else
+                {
+                    _disableDuplicateIPC = value;
+                }
+                OnPropertyChanged("IPCDisabled");
+                OnPropertyChanged("IPCEnabled");
             }
         }
 
@@ -258,6 +332,12 @@ namespace RealTimeLineChart.ViewModel
             }
             set
             {
+                if (IPCDisabled)
+                {
+                    StopNamedPipeClient();
+                    return;
+                }
+
                 if (value == "")
                 {
                     return;
@@ -423,6 +503,36 @@ namespace RealTimeLineChart.ViewModel
             }
         }
 
+        public bool checkToDisableIPC() //set this function equal to IPCDisabled property
+        {
+            try
+            {
+                Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
+
+                System.Diagnostics.Process[] process = System.Diagnostics.Process.GetProcessesByName("ThorSync");
+
+                System.Diagnostics.Process myprocess = System.Diagnostics.Process.GetCurrentProcess();
+
+                foreach (System.Diagnostics.Process p in process)
+                {
+                    StringBuilder sb = new StringBuilder();
+
+                    sb.AppendFormat("Process id {0} MyProcess id {1}", p.Id, myprocess.Id);
+                    if (false == p.Id.Equals(myprocess.Id))
+                    {
+                        //disable IPC for ThorSync
+                        return true;
+                    }
+
+                }
+            }
+            catch (Exception exc)
+            {
+                MessageBox.Show(exc.Message);
+            }
+            return false;
+        }
+
         /// <summary>
         /// Connects IPC.
         /// </summary>
@@ -439,6 +549,9 @@ namespace RealTimeLineChart.ViewModel
             SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.TearDown));
         }
 
+
+
+
         /// <summary>
         /// Excutes the namedpipe data.
         /// </summary>
@@ -447,6 +560,9 @@ namespace RealTimeLineChart.ViewModel
         /// <returns></returns>
         public bool ExcuteNamedPipeData(String[] msg, StreamString ss, bool isAcknowledgment)
         {
+            
+            
+            
             _receiveIPCCommandActive = true;
             if (msg.Length == 4)
             {
@@ -495,7 +611,7 @@ namespace RealTimeLineChart.ViewModel
                         {
                             Application.Current.Dispatcher.Invoke((Action)(() =>
                             {
-                                StopCapturing(forceIPC);
+                                StopCapturing(forceIPC, false);//second parameter is false because we don't wan't to send the same command we just recieved
                             }));
                         };
                         break;
@@ -506,6 +622,91 @@ namespace RealTimeLineChart.ViewModel
                                 SendThorSyncConfiguration();
                             }));
                         };
+                        break;
+                    case ThorPipeCommand.ShowMostRecent:
+                        if(false == ThorImageLSConnectionStats) //dont show most recent if not connected
+                        {
+                            break;
+                        }
+                        
+                        Application.Current.Dispatcher.Invoke((Action)(() =>
+                        {
+                            ChartMode = (int)ChartModes.REVIEW;
+                            FilePath = msg[3];
+                            LoadDataFile();
+                        }));
+
+                        string newStr = msg[3]; 
+
+                        if (newStr.Contains("\\\\"))
+                        {
+                            string[] split = newStr.Split(new string[] { "\\\\" }, StringSplitOptions.None);
+
+                            string acc = "";
+
+                            for(int x = 0; x < split.Length; x++)
+                            {
+                                acc += split[x];
+                                if (x != split.Length - 1)
+                                {
+                                    acc += "\\";
+                                }
+
+                            }
+
+                            newStr = acc;
+                        }
+
+                        XmlDocument doc = new XmlDocument();
+                        try 
+                        {
+
+                            doc.Load(newStr);
+                            XmlNodeList loadData = doc.SelectNodes("ThorImageExperiment/LSM");
+
+                            int avgMode = int.Parse(loadData.Item(0).Attributes.GetNamedItem("averageMode").Value);
+                            int avgNum = int.Parse(loadData.Item(0).Attributes.GetNamedItem("averageNum").Value);
+
+                            Application.Current.Dispatcher.Invoke((Action)(() =>
+                            {
+                                if (1 == avgMode)
+                                {
+                                    Average = avgNum;
+                                }
+                                else
+                                {
+                                    Average = 1;  //No Averaging
+                                }
+                            }));
+                        } catch (Exception ex)
+                        {
+                            ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, GetType().Name + " Could not load h5 settings file: " + newStr + "\n" + ex.Message);
+                        }
+
+                        break;
+                    case ThorPipeCommand.SyncFrame:
+                        if (false == ThorImageLSConnectionStats) //dont sync the frame if there is no connection
+                        {
+                            break;
+                        }
+                        int frameNum = -1;
+
+                        string[] payload = msg[3].Split('/');
+
+                        int TVal = int.Parse(payload[0]);
+
+                        int ZVal = int.Parse(payload[1]);
+
+                        int ZMax = int.Parse(payload[2]);
+
+                        frameNum = ZVal + ((TVal-1) * ZMax);
+
+                        Application.Current.Dispatcher.Invoke((Action)(() =>
+                        {
+                            CustomModifiers.ChartCanvasModifier.UpdateFrameCursorXAction(frameNum); 
+
+                        }));
+
                         break;
                     default:
                         _receiveIPCCommandActive = false;
@@ -645,7 +846,7 @@ namespace RealTimeLineChart.ViewModel
                     if (ExcuteNamedPipeData(msgRecv, ss, true))
                     {
                         ss.WriteString(String.Join("~", new String[]{Enum.GetName(typeof(ThorPipeSrc), ThorPipeSrc.Remote), Enum.GetName(typeof(ThorPipeDst), ThorPipeDst.Local),
-                                           msgRecv[2], "1"}));
+                                           msgRecv[2],  msgRecv[3]}));
                     }
                     else
                     {
@@ -744,8 +945,9 @@ namespace RealTimeLineChart.ViewModel
         /// </summary>
         public void SendThorSyncConfiguration()
         {
-            SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.UpdataInformation), string.Join("/", new string[] { (IsSaving || forceIPC).ToString(), TriggerMode.ToString() }));
+            SendToClient(Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.UpdateInformation), string.Join("/", new string[] { (IsSaving || forceIPC).ToString(), TriggerMode.ToString() }));
         }
+
 
         /// <summary>
         /// Sends to client.
@@ -754,17 +956,86 @@ namespace RealTimeLineChart.ViewModel
         /// <param name="data">The data.</param>
         public void SendToClient(String command, String data = "0")
         {
-            if (_threadCompleted == true)
-            {
-                if (_serverThread != null)
-                {
-                    _serverThread = null;
-                }
-                _sendBuffer = new string[] { Enum.GetName(typeof(ThorPipeSrc), ThorPipeSrc.Remote), Enum.GetName(typeof(ThorPipeDst), ThorPipeDst.Local), command, data };
+            String[] cmdAndData = {command, data };
+            if(command == "SyncFrame")
+                syncCMDCount++;
 
-                _serverThread = new Thread(ServerThread);
+            lock (sendCmdBufferLock)
+            {
+                sendCmdBuffer.Enqueue(cmdAndData); //add the cmd to queue
+
+
+                
+                if (_sendServerRunning == true) //if the _serverThread is running the CMD was added to the queue and will be output from that thread
+                {
+                    return;
+                }
+                
+
+                _sendServerRunning = true;
+                //default case, need to restart or initalize _serverThread
+                _serverThread = new Thread(sendCMD);
                 _serverThread.Start();
             }
+            
+        }
+
+        public void sendCMD()
+        {
+            do
+            {
+                bool dequeueFailed = false;
+                string[] currentCMD = { "", "" };
+
+                lock (sendCmdBufferLock)
+                {
+                    int count = sendCmdBuffer.Count;
+                    if (3 < count && syncCMDCount == count) //case for SyncFrame cmds in queue
+                    {
+                        for (int x = 0; x < count - 1; x ++)
+                        {
+                            sendCmdBuffer.Dequeue(); //remove all but the latest
+                        }
+                        syncCMDCount = 0;
+                        currentCMD = sendCmdBuffer.Dequeue();
+                    }
+                    else if (syncCMDCount == count) { //case for SyncFrame cmds in queue
+                        currentCMD = sendCmdBuffer.Dequeue();
+                        syncCMDCount--;
+                    }
+                    else if (0 < count) // if the queue has a cmd store it in local var regular case, there could be a SyncFrame cmd potentially
+                    {
+                        currentCMD = sendCmdBuffer.Dequeue();
+                        if (currentCMD[0] == "SyncFrame")
+                            syncCMDCount--;
+                    }
+                    else
+                    {
+                        dequeueFailed = true;
+                    }
+                }
+
+                string command = currentCMD[0];
+                string data = currentCMD[1];
+
+                if (false == dequeueFailed) //a cmd was succesfully dequeued earlier
+                {
+                    _sendBuffer = new string[] { Enum.GetName(typeof(ThorPipeSrc), ThorPipeSrc.Remote), Enum.GetName(typeof(ThorPipeDst), ThorPipeDst.Local), command, data };
+                    ServerThread(); //this function is no longer its own thread but the sendCMD function is now the new Thread
+                }
+                
+
+                lock (sendCmdBufferLock)
+                {
+                    if (sendCmdBuffer.Count == 0)
+                    {
+
+                        _sendServerRunning = false;
+                        return;
+
+                    }
+                }
+            } while (true); //not great but there is an exit condition, this is for being able to queue calling threads and not starting another
         }
 
         /// <summary>
@@ -808,6 +1079,21 @@ namespace RealTimeLineChart.ViewModel
             }
         }
 
+        private void createDisconnectBackgroundBox()
+        {
+
+            _disconnectedPopup = true;
+            // Start the time-consuming operation.
+            if (_sendBuffer[2] != Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.TearDown))
+            {
+                //This MessageBoxOptions.DefaultDesktopOnly parameter forces the popup box to the front
+                MessageBox.Show("ThorImageLS is Disconnected","Connection Error",MessageBoxButton.OK,MessageBoxImage.Error,MessageBoxResult.OK,MessageBoxOptions.DefaultDesktopOnly);
+                
+            }
+            _disconnectedPopup = false;
+
+        }
+
         /// <summary>
         /// Send Message Out
         /// </summary>
@@ -826,11 +1112,12 @@ namespace RealTimeLineChart.ViewModel
             {
                 _thorImageLSConnectionStats = false;
                 OnPropertyChanged("ThorImageLSConnectionStats");
-                if (_sendBuffer[2] != Enum.GetName(typeof(ThorPipeCommand), ThorPipeCommand.TearDown))
+                if(_disconnectedPopup == false)
                 {
-                    MessageBox.Show("ThorImageLS is Disconnected", "Connection Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    new Thread(() => createDisconnectBackgroundBox()) { IsBackground = true }.Start();
                 }
-                _threadCompleted = true;
+                
+                    
                 return;
             }
             catch (Exception)
@@ -906,14 +1193,14 @@ namespace RealTimeLineChart.ViewModel
                 try
                 {
                     _namedPipeClient.Connect();
-                    if (ChartMode == (int)ChartModes.CAPTURE) // make sure in the capture mode
-                    {
+                    //if (ChartMode == (int)ChartModes.CAPTURE) // make sure in the capture mode           <--This if was removed for the framesync feature -Ryan
+                    //{
                         // Read the request from the Server. Once the Server has
-                        // written to the pipe its security token will be available
+                        // written to the pipe its security token will be available                         
                         StreamString ss = new StreamString(_namedPipeClient);
                         string msg = ss.ReadString();
                         ReceiveIPCCommand(msg, ss);
-                    }
+                    //} 
                 }
                 catch (InvalidOperationException)
                 {
@@ -939,7 +1226,6 @@ namespace RealTimeLineChart.ViewModel
         /// </summary>
         private void ServerThread()
         {
-            _threadCompleted = false;
             StreamOutNamedPipe();
             if (_thorImageLSConnectionStats == true)
             {
@@ -952,7 +1238,7 @@ namespace RealTimeLineChart.ViewModel
                             Thread.Sleep(50);
                             String[] configurarionInformation = { (IsSaving || forceIPC).ToString(), TriggerMode.ToString() };
                             _sendBuffer = new string[] { Enum.GetName(typeof(ThorPipeSrc),ThorPipeSrc.Remote),  Enum.GetName(typeof(ThorPipeDst),ThorPipeDst.Local),
-                                        Enum.GetName(typeof(ThorPipeCommand),ThorPipeCommand.UpdataInformation), string.Join("/",configurarionInformation) };
+                                        Enum.GetName(typeof(ThorPipeCommand),ThorPipeCommand.UpdateInformation), string.Join("/",configurarionInformation) };
                             StreamOutNamedPipe();
                         }
                         break;
@@ -962,11 +1248,23 @@ namespace RealTimeLineChart.ViewModel
                             OnPropertyChanged("ThorImageLSConnectionStats");
                         }
                         break;
+                    case ThorPipeCommand.FilePath:
+                        //_thorImageLSConnectionStats = false;
+                        OnPropertyChanged("ThorImageLSConnectionStats");
+                        Thread.Sleep(50);
+                        _sendBuffer = new string[] { Enum.GetName(typeof(ThorPipeSrc),ThorPipeSrc.Remote),  Enum.GetName(typeof(ThorPipeDst),ThorPipeDst.Local),
+                                        Enum.GetName(typeof(ThorPipeCommand),ThorPipeCommand.FilePath), _sendBuffer[3] };
+                        StreamOutNamedPipe();
+                        break;
+                    case ThorPipeCommand.IsSaving:
+                        _sendBuffer = new string[] { Enum.GetName(typeof(ThorPipeSrc),ThorPipeSrc.Remote),  Enum.GetName(typeof(ThorPipeDst),ThorPipeDst.Local),
+                                        Enum.GetName(typeof(ThorPipeCommand),ThorPipeCommand.IsSaving), _sendBuffer[3] };
+                        StreamOutNamedPipe();
+                        break;
                     default:
                         break;
                 }
             }
-            _threadCompleted = true;
         }
 
         /// <summary>

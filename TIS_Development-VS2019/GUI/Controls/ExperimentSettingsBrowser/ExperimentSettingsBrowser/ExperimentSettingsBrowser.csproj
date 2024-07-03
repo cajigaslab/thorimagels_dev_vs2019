@@ -69,6 +69,9 @@
     <Reference Include="ThorLogging">
       <HintPath>..\..\..\..\Common\ThorLogging\ThorLogging\bin\Debug\ThorLogging.dll</HintPath>
     </Reference>
+    <Reference Include="Validations">
+      <HintPath>..\..\Validations\Validations\bin\Debug\Validations.dll</HintPath>
+    </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />

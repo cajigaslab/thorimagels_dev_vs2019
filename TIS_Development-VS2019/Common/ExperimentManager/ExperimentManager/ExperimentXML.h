@@ -34,11 +34,11 @@ public:
 	static const char * const MODALITY_ATTR[NUM_MODALITY_ATTRIBUTES];
 
 	static const char * const CAMERA;
-	enum {NUM_CAMERA_ATTRIBUTES = 22};
+	enum {NUM_CAMERA_ATTRIBUTES = 30};
 	static const char * const CAMERA_ATTR[NUM_CAMERA_ATTRIBUTES];
 
 	static const char * const LSM;
-	enum {NUM_LSM_ATTRIBUTES = 33};
+	enum {NUM_LSM_ATTRIBUTES = 36};
 	static const char * const LSM_ATTR[NUM_LSM_ATTRIBUTES];
 
 	static const char * const RAW;
@@ -143,7 +143,7 @@ public:
 	static const char * const LIGHTPATH_ATTR[NUM_LIGHTPATH_ATTRIBUTES];
 
 	static const char * const CAPTURESEQUENCE;
-	enum {NUM_CAPTURESEQUENCE_ATTRIBUTES = 1};
+	enum {NUM_CAPTURESEQUENCE_ATTRIBUTES = 2};
 	static const char * const CAPTURESEQUENCE_ATTR[NUM_CAPTURESEQUENCE_ATTRIBUTES];
 
 	static const char * const SEQUENCESTEP;
@@ -174,6 +174,21 @@ public:
 	enum { NUM_EPITURRET_ATTRIBUTES = 2 };
 	static const char* const EPITURRET_ATTR[NUM_EPITURRET_ATTRIBUTES];
 
+	static const char* const REMOTEFOCUS;
+	enum { NUM_REMOTE_FOCUS_ATTRIBUTES = 6 };
+	static const char* const REMOTE_FOCUS_ATTR[NUM_REMOTE_FOCUS_ATTRIBUTES];
+
+	static const char* const DIGITALIO;
+	enum { NUM_SEQUENCESTEP_DIGITALIO_ATTRIBUTES = 9 };
+	static const char* const SEQUENCESTEP_DIGITALIO_ATTR[NUM_SEQUENCESTEP_DIGITALIO_ATTRIBUTES];
+
+	static const char* const CAMERA;
+	enum { NUM_SEQUENCESTEP_CAMERA_ATTRIBUTES = 2 };
+	static const char* const SEQUENCESTEP_CAMERA_ATTR[NUM_SEQUENCESTEP_CAMERA_ATTRIBUTES];
+
+	enum { NUM_SEQUENCESTEP_EPITURRET_ATTRIBUTES = 2 };
+	static const char* const SEQUENCESTEP_EPITURRET_ATTR[NUM_SEQUENCESTEP_EPITURRET_ATTRIBUTES];
+
 	enum {NUM_TEMPLATE_LEVELS = 4};
 	static const char * const TEMPLATE_NODES[NUM_TEMPLATE_LEVELS];
 
@@ -199,14 +214,15 @@ public:
 
 	long GetModality(long& cameraType,string &modality,long& lsmType);
 
-	long GetImageArea(long cameraType,long lsmtype,long &pixelX,long &pixelY,double &pixelSizeUM);
-	long GetCamera(string &name,long &width,long &height,double &pixelSizeUM,double &exposureTimeMS, long &gain, long &blackLevel, long &lightMode, long &left, long &top, long &right, long &bottom, long &binningX, long &binningY, long &tapsIndex, long &tapsBalance, long &readOutSpeedIndex, long &averageMode, long &averageNum, long &verticalFlip, long &horizontalFlip, long &imageAngle);///camera information
-	long SetCamera(string name, long width, long height, double pixelSizeUM, long binning, long gain, long lightMode);
+	long GetImageArea(long cameraType,long lsmtype, long mROIEnabled, long &pixelX,long &pixelY,double &pixelSizeUM);
+	long GetCamera(string& name, long& width, long& height, double& pixelSizeUM, double& exposureTimeMS, long& gain, long& blackLevel, long& lightMode, long& left, long& top, long& right, long& bottom, long& binningX, long& binningY, long& tapsIndex, long& tapsBalance, long& readOutSpeedIndex, long& averageMode, long& averageNum, long& verticalFlip, long& horizontalFlip, long& imageAngle, long& channel, long& colorImageType, long& polarImageType, long& isContinuousWhiteBalance, long& continuousWhiteBalanceNumFrames, double& redGain, double& greenGain, double& blueGain);
+	long SetCamera(string name, long width, long height, double pixelSizeUM, double exposureTimeMS, long gain, long blackLevel, long lightMode, long left, long top, long right, long bottom, long binningX, long binningY, long tapsIndex, long tapsBalance, long readOutSpeedIndex, long averageMode, long averageNum, long verticalFlip, long horizontalFlip, long imageAngle, long channel, long colorImageType, long polarImageType, long isContinuousWhiteBalance, long continuousWhiteBalanceNumFrames, double redGain, double greenGain, double blueGain);
+
 
 	long GetLSM(long& areaMode, double& areaAngle, long& scanMode, long& interleave, long& pixelX, long& pixelY, long& channel, long& fieldSize, long& offsetX, long& offsetY,
 		long& averageMode, long& averageNum, long& clockSource, long& inputRange1, long& inputRange2, long& twoWayAlignment, long& extClockRate, double& dwellTime,
 		long& flybackCycles, long& inputRange3, long& inputRange4, long& minimizeFlybackCycles, long& polarity1, long& polarity2, long& polarity3, long& polarity4,
-		long& verticalFlip, long& horizontalFlip, double& crsFrequencyHz, long& timeBasedLineScan, long& timeBasedLSTimeMS, long& threePhotonEnable, long& numberOfPlanes);
+		long& verticalFlip, long& horizontalFlip, double& crsFrequencyHz, long& timeBasedLineScan, long& timeBasedLSTimeMS, long& threePhotonEnable, long& numberOfPlanes, long& selectedImagingGG, long& selectedStimGG, double& pixelAspectRatioYScale);
 	long SetLSM(long areaMode, double areaAngle,long scanMode,long interleave,long pixelX,long pixelY,long channel, long fieldSize, long offsetX, long offsetY,
 		long averageMode, long averageNum, long clockSource, long inputRange1, long inputRange2, long twoWayAlignment, long extClockRate,double dwellTime, long flybackCycles, long inputRange3, long inputRange4, long minimizeFlybackCycles, long polarity1, long polarity2, long polarity3, long polarity4, long verticalFlip, long horizontalFlip);
 
@@ -251,7 +267,7 @@ public:
 	long GetWells(long &startRow, long &startColumn, long &rows, long &columns, double &wellOffSetXMM, double &wellOffsetYMM);///Well information for sample type "plate"
 	long SetWells(long startRow, long startColumn, long rows, long columns, double wellOffSetXMM, double wellOffsetYMM);
 
-	long GetSubImages(vector<SubImage>& subImages, long cameraType, long lsmType);///mosaic details at each well
+	long GetSubImages(vector<SubImage>& subImages, long cameraType, long lsmType, long mROIEnabled);///mosaic details at each well
 	long SetSubImages(long subRows,long subColumns, double subOffsetXMM, double subOffsetYMM, double transOffsetXMM, double transOffsetYMM);
 
 	long GetComments(string &name);///user provided comments
@@ -286,7 +302,7 @@ public:
 	long GetLightPath(long& galvoGalvo, long& galvoRes, long& camera, long& invertedLightPathPos, long& ndd);
 	long SetLightPath(long galvoGalvo, long galvoRes, long camera, long invertedLightPathPos, long ndd);
 
-	long GetCaptureSequence(long &enable);
+	long GetCaptureSequence(long &enable, long &sequentialType);
 	long GetSequenceSteps(vector<SequenceStep> &captureSequenceSettings);
 
 	long GetSpectralFilter(long &startWavelength, long &stopWavelength, long &stepsSizeWavelength, long &bandwidthMode, string &path);
@@ -294,6 +310,9 @@ public:
 
 	long GetEpiTurret(long& position, string& name);
 	long SetEpiTurret(long position, string name);
+
+	long GetRemoteFocus(long &steps, long &startPlane, long &stepSize, long &captureMode, string &customSequence, long &isRemoteFocus);
+	long SetRemoteFocus(long steps, long startPlane, long stepSize, long captureMode, string customSequence, long isRemoteFocus);
 
 	long GetLampLED(long& led1enable, double& led1power, long& led2enable, double& led2power, long& led3enable, double& led3power, long& led4enable, double& led4power, long& led5enable, double& led5power, long& led6enable, double& led6power, double& mainPower);
 

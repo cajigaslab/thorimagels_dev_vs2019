@@ -90,14 +90,25 @@
                               Foreground="White"
                               OpacityMask="{x:Null}"
                               BorderBrush="{x:Null}"></MenuItem-->
+                    <MenuItem Header="_ThorDAQ Config Tool"
+                              Command="{Binding Path=LaunchThorDAQCommand}"
+                              Background="#FF333333"
+                              Foreground="White"
+                              OpacityMask="{x:Null}"
+                              BorderBrush="{x:Null}"></MenuItem>
                 </MenuItem>
             </Menu>
-            <Label Name="lblMemoryUsage"
-                   Content="Mb"
-                   HorizontalAlignment="Right"
-                   VerticalAlignment="Center"
-                   Grid.Column="1"
-                   Margin="0,0,5,0" />
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center">
+                <View:RemoteIPCView x:Name="RemoteIPC" VerticalContentAlignment="Center"/>
+                <Label Name="lblMemoryUsage"
+                       Content="MB"
+                       HorizontalContentAlignment="Right"
+                       MinWidth="65"
+                       Margin="5,0,5,0" />
+            </StackPanel>
         </Grid>
         <Grid Grid.Row="1"
               Width="Auto">
@@ -188,6 +199,11 @@
                     </TabItem>
                 </TabControl>
             </StackPanel>
+            <StackPanel VerticalAlignment="Center"
+                        Width="200"
+                        HorizontalAlignment="Right"
+                        Margin="1">
+            </StackPanel>
             <StackPanel Grid.Column="1"
                         VerticalAlignment="Center"
                         Width="200"
@@ -200,6 +216,7 @@
                           IsSynchronizedWithCurrentItem="True"
                           SelectionChanged="cbModality_SelectionChanged"
                           LostFocus="cbModality_LostFocus"
+                          FontSize="15"
                           IsEnabled="{Binding Path=ModalityComboBoxStatus, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
                     <ComboBox.Style>
                         <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">

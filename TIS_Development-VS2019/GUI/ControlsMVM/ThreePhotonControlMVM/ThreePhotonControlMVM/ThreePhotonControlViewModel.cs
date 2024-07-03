@@ -44,6 +44,9 @@
         ICommand _ddsPhase1MinusCommand;
         ICommand _ddsPhase1PlusCommand;
         bool _disable3PCheckbox = true;
+        ICommand _downsamplingRateMinusCommand;
+        ICommand _downsamplingRatePlusCommand;
+        Visibility _downsamplingRateVisibility;
         Visibility _firSettingsVisibility;
         Visibility _multiplaneVisibility;
         ICommand _numberOfPlanesMinusCommand;
@@ -51,15 +54,18 @@
         Dictionary<string, PropertyInfo> _properties = new Dictionary<string, PropertyInfo>();
         ICommand _threePhotonMeasureFrequencyCommand;
         int _threePhotonPanelEnable = 1;
-        ICommand _threePhotonPhaseCoarseMinusCommand;
-        ICommand _threePhotonPhaseCoarsePlusCommand;
+        ICommand _threePhotonPhaseCoarse0MinusCommand;
+        ICommand _threePhotonPhaseCoarse0PlusCommand;
+        ICommand _threePhotonPhaseCoarse1MinusCommand;
+        ICommand _threePhotonPhaseCoarse1PlusCommand;
+        ICommand _threePhotonPhaseCoarse2MinusCommand;
+        ICommand _threePhotonPhaseCoarse2PlusCommand;
+        ICommand _threePhotonPhaseCoarse3MinusCommand;
+        ICommand _threePhotonPhaseCoarse3PlusCommand;
         Visibility _threePhotonPhaseCoarseVisibility;
         ICommand _threePhotonPhaseFineMinusCommand;
         ICommand _threePhotonPhaseFinePlusCommand;
-        ICommand _downsamplingRateMinusCommand;
-        ICommand _downsamplingRatePlusCommand;
-        Visibility _downsamplingRateVisibility;
-
+        Visibility _threePhotonPhaseFineVisibility;
 
         #endregion Fields
 
@@ -202,6 +208,54 @@
             }
         }
 
+        public ICommand DownsamplingRateMinusCommand
+        {
+            get
+            {
+                if (this._downsamplingRateMinusCommand == null)
+                    this._downsamplingRateMinusCommand = new RelayCommand(() => --ThreePhotonDownsamplingRate);
+
+                return this._downsamplingRateMinusCommand;
+            }
+        }
+
+        public ICommand DownsamplingRatePlusCommand
+        {
+            get
+            {
+                if (this._downsamplingRatePlusCommand == null)
+                    this._downsamplingRatePlusCommand = new RelayCommand(() => ++ThreePhotonDownsamplingRate);
+
+                return this._downsamplingRatePlusCommand;
+            }
+        }
+
+        public Visibility DownsamplingRateVisibility
+        {
+            get
+            {
+                return _downsamplingRateVisibility;
+            }
+            set
+            {
+                _downsamplingRateVisibility = value;
+                OnPropertyChanged("DownsamplingRateVisibility");
+            }
+        }
+
+        public int EnableDownsamplingRateChange
+        {
+            get
+            {
+                return _threePhotonControlModel.EnableDownsamplingRateChange;
+            }
+            set
+            {
+                _threePhotonControlModel.EnableDownsamplingRateChange = value;
+                OnPropertyChanged("EnableDownsamplingRateChange");
+            }
+        }
+
         public int FIR1ManualControlEnable
         {
             get
@@ -271,19 +325,6 @@
             }
         }
 
-        public int ThreePhotonDownsamplingRate
-        {
-            get
-            {
-                return this._threePhotonControlModel.ThreePhotonDownsamplingRate;
-            }
-            set
-            {
-                this._threePhotonControlModel.ThreePhotonDownsamplingRate = value;
-                OnPropertyChanged("ThreePhotonDownsamplingRate");
-            }
-        }
-
         public int LSMNumberOfPlanes
         {
             get
@@ -335,41 +376,6 @@
             }
         }
 
-        public Visibility DownsamplingRateVisibility
-        {
-            get
-            {
-                return _downsamplingRateVisibility;
-            }
-            set
-            {
-                _downsamplingRateVisibility = value;
-                OnPropertyChanged("DownsamplingRateVisibility");
-            }
-        }
-
-        public ICommand DownsamplingRateMinusCommand
-        {
-            get
-            {
-                if (this._downsamplingRateMinusCommand == null)
-                    this._downsamplingRateMinusCommand = new RelayCommand(() => --ThreePhotonDownsamplingRate);
-
-                return this._downsamplingRateMinusCommand;
-            }
-        }
-
-        public ICommand DownsamplingRatePlusCommand
-        {
-            get
-            {
-                if (this._downsamplingRatePlusCommand == null)
-                    this._downsamplingRatePlusCommand = new RelayCommand(() => ++ThreePhotonDownsamplingRate);
-
-                return this._downsamplingRatePlusCommand;
-            }
-        }
-
         public ICommand NumberOfPlanesMinusCommand
         {
             get
@@ -389,6 +395,19 @@
                     this._numberOfPlanesPlusCommand = new RelayCommand(() => ++LSMNumberOfPlanes);
 
                 return this._numberOfPlanesPlusCommand;
+            }
+        }
+
+        public int ThreePhotonDownsamplingRate
+        {
+            get
+            {
+                return this._threePhotonControlModel.ThreePhotonDownsamplingRate;
+            }
+            set
+            {
+                this._threePhotonControlModel.ThreePhotonDownsamplingRate = value;
+                OnPropertyChanged("ThreePhotonDownsamplingRate");
             }
         }
 
@@ -438,19 +457,6 @@
             }
         }
 
-        public int EnableDownsamplingRateChange
-        {
-            get
-            {
-                return _threePhotonControlModel.EnableDownsamplingRateChange;
-            }
-            set
-            {
-                _threePhotonControlModel.EnableDownsamplingRateChange = value;
-                OnPropertyChanged("EnableDownsamplingRateChange");
-            }
-        }
-
         public double ThreePhotonFreq
         {
             get
@@ -488,38 +494,143 @@
             }
         }
 
-        public int ThreePhotonPhaseCoarse
+        public int ThreePhotonPhaseCoarse0
         {
             get
             {
-                return this._threePhotonControlModel.ThreePhotonPhaseCoarse;
+                return this._threePhotonControlModel.ThreePhotonPhaseCoarse0;
             }
             set
             {
-                this._threePhotonControlModel.ThreePhotonPhaseCoarse = value;
-                OnPropertyChanged("ThreePhotonPhaseCoarse");
+                this._threePhotonControlModel.ThreePhotonPhaseCoarse0 = value;
+                OnPropertyChanged();
             }
         }
 
-        public ICommand ThreePhotonPhaseCoarseMinusCommand
+        public ICommand ThreePhotonPhaseCoarse0MinusCommand
         {
             get
             {
-                if (this._threePhotonPhaseCoarseMinusCommand == null)
-                    this._threePhotonPhaseCoarseMinusCommand = new RelayCommand(() => ThreePhotonPhaseCoarseMinus());
+                if (this._threePhotonPhaseCoarse0MinusCommand == null)
+                    this._threePhotonPhaseCoarse0MinusCommand = new RelayCommand(() => ThreePhotonPhaseCoarse0Minus());
 
-                return this._threePhotonPhaseCoarseMinusCommand;
+                return this._threePhotonPhaseCoarse0MinusCommand;
             }
         }
 
-        public ICommand ThreePhotonPhaseCoarsePlusCommand
+        public ICommand ThreePhotonPhaseCoarse0PlusCommand
         {
             get
             {
-                if (this._threePhotonPhaseCoarsePlusCommand == null)
-                    this._threePhotonPhaseCoarsePlusCommand = new RelayCommand(() => ThreePhotonPhaseCoarsePlus());
+                if (this._threePhotonPhaseCoarse0PlusCommand == null)
+                    this._threePhotonPhaseCoarse0PlusCommand = new RelayCommand(() => ThreePhotonPhaseCoarse0Plus());
 
-                return this._threePhotonPhaseCoarsePlusCommand;
+                return this._threePhotonPhaseCoarse0PlusCommand;
+            }
+        }
+
+        public int ThreePhotonPhaseCoarse1
+        {
+            get
+            {
+                return this._threePhotonControlModel.ThreePhotonPhaseCoarse1;
+            }
+            set
+            {
+                this._threePhotonControlModel.ThreePhotonPhaseCoarse1 = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ICommand ThreePhotonPhaseCoarse1MinusCommand
+        {
+            get
+            {
+                if (this._threePhotonPhaseCoarse1MinusCommand == null)
+                    this._threePhotonPhaseCoarse1MinusCommand = new RelayCommand(() => ThreePhotonPhaseCoarse1Minus());
+
+                return this._threePhotonPhaseCoarse1MinusCommand;
+            }
+        }
+
+        public ICommand ThreePhotonPhaseCoarse1PlusCommand
+        {
+            get
+            {
+                if (this._threePhotonPhaseCoarse1PlusCommand == null)
+                    this._threePhotonPhaseCoarse1PlusCommand = new RelayCommand(() => ThreePhotonPhaseCoarse1Plus());
+
+                return this._threePhotonPhaseCoarse1PlusCommand;
+            }
+        }
+
+        public int ThreePhotonPhaseCoarse2
+        {
+            get
+            {
+                return this._threePhotonControlModel.ThreePhotonPhaseCoarse2;
+            }
+            set
+            {
+                this._threePhotonControlModel.ThreePhotonPhaseCoarse2 = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ICommand ThreePhotonPhaseCoarse2MinusCommand
+        {
+            get
+            {
+                if (this._threePhotonPhaseCoarse2MinusCommand == null)
+                    this._threePhotonPhaseCoarse2MinusCommand = new RelayCommand(() => ThreePhotonPhaseCoarse2Minus());
+
+                return this._threePhotonPhaseCoarse2MinusCommand;
+            }
+        }
+
+        public ICommand ThreePhotonPhaseCoarse2PlusCommand
+        {
+            get
+            {
+                if (this._threePhotonPhaseCoarse2PlusCommand == null)
+                    this._threePhotonPhaseCoarse2PlusCommand = new RelayCommand(() => ThreePhotonPhaseCoarse2Plus());
+
+                return this._threePhotonPhaseCoarse2PlusCommand;
+            }
+        }
+
+        public int ThreePhotonPhaseCoarse3
+        {
+            get
+            {
+                return this._threePhotonControlModel.ThreePhotonPhaseCoarse3;
+            }
+            set
+            {
+                this._threePhotonControlModel.ThreePhotonPhaseCoarse3 = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ICommand ThreePhotonPhaseCoarse3MinusCommand
+        {
+            get
+            {
+                if (this._threePhotonPhaseCoarse3MinusCommand == null)
+                    this._threePhotonPhaseCoarse3MinusCommand = new RelayCommand(() => ThreePhotonPhaseCoarse3Minus());
+
+                return this._threePhotonPhaseCoarse3MinusCommand;
+            }
+        }
+
+        public ICommand ThreePhotonPhaseCoarse3PlusCommand
+        {
+            get
+            {
+                if (this._threePhotonPhaseCoarse3PlusCommand == null)
+                    this._threePhotonPhaseCoarse3PlusCommand = new RelayCommand(() => ThreePhotonPhaseCoarse3Plus());
+
+                return this._threePhotonPhaseCoarse3PlusCommand;
             }
         }
 
@@ -570,6 +681,21 @@
                     this._threePhotonPhaseFinePlusCommand = new RelayCommand(() => ThreePhotonPhaseFinePlus());
 
                 return this._threePhotonPhaseFinePlusCommand;
+            }
+        }
+
+        public Visibility ThreePhotonPhaseFineVisibility
+        {
+            get
+            {
+
+                return _threePhotonPhaseFineVisibility;
+            }
+            set
+            {
+                _threePhotonPhaseFineVisibility = value;
+                OnPropertyChanged("ThreePhotonPhaseFineVisibility");
+
             }
         }
 
@@ -667,15 +793,36 @@
                 //    ThreePhotonEnable = itmp;
                 //}
 
-                //whad the wrong spelling, bring the value from the old tag ThreePhotonPhaseCourse if ThreePhotonPhaseCoarse doesn't exist
-                if (XmlManager.GetAttribute(ndList[0], doc, "ThreePhotonPhaseCoarse", ref str) && (Int32.TryParse(str, out itmp)))
+                //whad the wrong spelling, bring the value from the old tag ThreePhotonPhaseCourse if ThreePhotonPhaseCoarse doesn't exist, also we are
+                //making it backwards compatible to when we only had one coarse alignment value, now we have a per channel value
+                if (XmlManager.GetAttribute(ndList[0], doc, "ThreePhotonPhaseCoarse0", ref str) && (Int32.TryParse(str, out itmp)))
                 {
-                    ThreePhotonPhaseCoarse = itmp;
+                    ThreePhotonPhaseCoarse0 = itmp;
+                }
+                else if (XmlManager.GetAttribute(ndList[0], doc, "ThreePhotonPhaseCoarse", ref str) && (Int32.TryParse(str, out itmp)))
+                {
+                    ThreePhotonPhaseCoarse0 = itmp;
                 }
                 else if (XmlManager.GetAttribute(ndList[0], doc, "ThreePhotonPhaseCourse", ref str) && (Int32.TryParse(str, out itmp)))
                 {
-                    ThreePhotonPhaseCoarse = itmp;
+                    ThreePhotonPhaseCoarse0 = itmp;
                 }
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "ThreePhotonPhaseCoarse1", ref str) && (Int32.TryParse(str, out itmp)))
+                {
+                    ThreePhotonPhaseCoarse1 = itmp;
+                }
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "ThreePhotonPhaseCoarse2", ref str) && (Int32.TryParse(str, out itmp)))
+                {
+                    ThreePhotonPhaseCoarse2 = itmp;
+                }
+
+                if (XmlManager.GetAttribute(ndList[0], doc, "ThreePhotonPhaseCoarse3", ref str) && (Int32.TryParse(str, out itmp)))
+                {
+                    ThreePhotonPhaseCoarse3 = itmp;
+                }
+
                 if (XmlManager.GetAttribute(ndList[0], doc, "NumberOfPlanes", ref str) && (Int32.TryParse(str, out itmp)))
                 {
                     LSMNumberOfPlanes = itmp;
@@ -730,6 +877,10 @@
                 {
                     ThreePhotonPhaseCoarseVisibility = str.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
                 }
+                if (XmlManager.GetAttribute(ndList[0], appDoc, "PhaseFineVisibility", ref str))
+                {
+                    ThreePhotonPhaseFineVisibility = str.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
+                }
                 if (XmlManager.GetAttribute(ndList[0], appDoc, "FIRSettingsVisibility", ref str))
                 {
                     FIRSettingsVisibility = str.Equals("Visible") ? Visibility.Visible : Visibility.Collapsed;
@@ -770,7 +921,10 @@
             {
                 XmlManager.SetAttribute(ndList[0], experimentFile, "ThreePhotonEnable", this.ThreePhotonEnable.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "ThreePhotonFreq", this.ThreePhotonFreq.ToString());
-                XmlManager.SetAttribute(ndList[0], experimentFile, "ThreePhotonPhaseCoarse", this.ThreePhotonPhaseCoarse.ToString());
+                XmlManager.SetAttribute(ndList[0], experimentFile, "ThreePhotonPhaseCoarse0", this.ThreePhotonPhaseCoarse0.ToString());
+                XmlManager.SetAttribute(ndList[0], experimentFile, "ThreePhotonPhaseCoarse1", this.ThreePhotonPhaseCoarse1.ToString());
+                XmlManager.SetAttribute(ndList[0], experimentFile, "ThreePhotonPhaseCoarse2", this.ThreePhotonPhaseCoarse2.ToString());
+                XmlManager.SetAttribute(ndList[0], experimentFile, "ThreePhotonPhaseCoarse3", this.ThreePhotonPhaseCoarse3.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "ThreePhotonPhaseFine", this.ThreePhotonPhaseFine.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "NumberOfPlanes", this.LSMNumberOfPlanes.ToString());
                 XmlManager.SetAttribute(ndList[0], experimentFile, "FIR1ManualControlEnable", (this.FIR1ManualControlEnable).ToString());
@@ -806,14 +960,44 @@
             UpdateDwellTimeForThreePhoton();
         }
 
-        private void ThreePhotonPhaseCoarseMinus()
+        private void ThreePhotonPhaseCoarse0Minus()
         {
-            ThreePhotonPhaseCoarse--;
+            ThreePhotonPhaseCoarse0--;
         }
 
-        private void ThreePhotonPhaseCoarsePlus()
+        private void ThreePhotonPhaseCoarse0Plus()
         {
-            ThreePhotonPhaseCoarse++;
+            ThreePhotonPhaseCoarse0++;
+        }
+
+        private void ThreePhotonPhaseCoarse1Minus()
+        {
+            ThreePhotonPhaseCoarse1--;
+        }
+
+        private void ThreePhotonPhaseCoarse1Plus()
+        {
+            ThreePhotonPhaseCoarse1++;
+        }
+
+        private void ThreePhotonPhaseCoarse2Minus()
+        {
+            ThreePhotonPhaseCoarse2--;
+        }
+
+        private void ThreePhotonPhaseCoarse2Plus()
+        {
+            ThreePhotonPhaseCoarse2++;
+        }
+
+        private void ThreePhotonPhaseCoarse3Minus()
+        {
+            ThreePhotonPhaseCoarse3--;
+        }
+
+        private void ThreePhotonPhaseCoarse3Plus()
+        {
+            ThreePhotonPhaseCoarse3++;
         }
 
         private void ThreePhotonPhaseFineMinus()

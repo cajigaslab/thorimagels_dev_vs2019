@@ -5,10 +5,7 @@
 #include "Serial.h"
 #include "ThorDetector.h"
 #include "ThorDetectorXML.h"
-#include "Strsafe.h"
 #include "ParamInfo.h"
-#include <string>
-#include <math.h>
 
 #ifdef LOGGING_ENABLED
 auto_ptr<LogDll> logDll(new LogDll(L".\\Modules_Native\\ThorLoggingUnmanaged.dll"));
@@ -37,6 +34,9 @@ ThorDetector::ThorDetector()
 		_gainSliderMax[i] = 100;
 		_offsetMinVolts[i] = 0;
 		_offsetMaxVolts[i] = 100;
+		_gainAvailable[i] = TRUE;
+		_bandwidthAvailable[i] = TRUE;
+		_offsetAvailable[i] = TRUE;
 	}
 	_connectedPMTs = 0;
 	_deviceDetected[DEVICE_NUM] = FALSE;
@@ -62,7 +62,7 @@ bool ThorDetector::_instanceFlag = false;
 auto_ptr<ThorDetector> ThorDetector::_single(new ThorDetector());
 const string ThorDetector::_deviceSignature[DEVICE_NUM] = { "Detector1", "Detector2", "Detector3", "Detector4", "Detector5", "Detector6" };
 const long ThorDetector::_pmtSelect[DEVICE_NUM] = { PMT1, PMT2, PMT3, PMT4, PMT5, PMT6 };
-const vector<wstring> ThorDetector::_listOfTypes = { L"PMT Old Bootloader", L"PMT1000", L"PMT2100", L"PMT2106", L"APD", L"Photodiode", L"HPD1000", L"SIPM100", L"PMT2110", L"PMT3100" };
+const vector<wstring> ThorDetector::_listOfTypes = { L"PMT Old Bootloader", L"PMT1000", L"PMT2100", L"PMT2106", L"APD", L"Photodiode", L"HPD1000", L"SIPM100", L"PMT2110", L"PMT3100", L"PMT5100"};
 
 /// <summary>
 /// Gets the instance.
@@ -102,7 +102,7 @@ long ThorDetector::FindDevices(long& deviceCount)
 			//Get portID, etc from hardware ThorDetectorSettings.xml
 			auto_ptr<ThorDetectorXML> pSetup(new ThorDetectorXML());
 			long type = 0;
-			pSetup->GetDeviceConnectionInfo(_deviceSignature[i], portID, _baudRate, _settingsSerialNumber[i], type);
+			pSetup->GetDeviceConnectionInfo(_deviceSignature[i], portID, _baudRate, _settingsSerialNumber[i], type, _hpdGainAvailable[i]);
 		}
 		catch (...)
 		{
@@ -131,6 +131,7 @@ long ThorDetector::FindDevices(long& deviceCount)
 	_snList.push_back(FindSerialNumbersInRegistry(THORLABS_VID, THORLABS_SIPM100_PID)); // type 7 SIPM
 	_snList.push_back(FindSerialNumbersInRegistry(THORLABS_VID, THORLABS_PMT2110_PID)); // type 8 GAASP_FAST
 	_snList.push_back(FindSerialNumbersInRegistry(THORLABS_VID, THORLABS_PMT3100_PID));	// type 9 GAASP_3P
+	_snList.push_back(FindSerialNumbersInRegistry(THORLABS_VID, THORLABS_PMT5100_PID));	// type 9 GAASP_3P
 
 	for (int i = 0; i < _snList.size(); i++)
 	{
@@ -226,6 +227,9 @@ long ThorDetector::SelectDevice(const long device)
 					break;
 				case (long)DetectorTypes::PMT3100:
 					devicePID = THORLABS_PMT3100_PID;
+					break;
+				case (long)DetectorTypes::PMT5100:
+					devicePID = THORLABS_PMT5100_PID;
 					break;
 				}
 				for (it = _snList[h].begin(); it != _snList[h].end(); ++it)
@@ -330,7 +334,7 @@ long ThorDetector::ConnectToComPort(wstring portName, long pmtIndex)
 				LogMessage(_errMsg, ERROR_EVENT);
 				return FALSE;
 			}
-			// Open the serial port after getting the number
+			// Check if the port number is between 16 and 56 which are already used port numbers in ThorImageLS
 			wstring portNumber = portName.substr(3, portName.size());
 			portID = stoi(portNumber);
 			if (16 < portID && 56 > portID)
@@ -339,6 +343,7 @@ long ThorDetector::ConnectToComPort(wstring portName, long pmtIndex)
 				StringCbPrintfW(message, 512, L"ThorDetector: WARNING One of the detectors COM port is unavailable. Port: COM%d. Please change the COM port number of this detector to one that is not between 17 and 56 to avoid any conflicts in ThorImageLS. \nRecommended ports COM56 - COM62.", portID);
 				MessageBox(NULL, message, L"ThorDetector COM port warning", MB_OK | MB_DEFAULT_DESKTOP_ONLY | MB_ICONWARNING);
 			}
+			// Open the serial port after getting the number
 			if (FALSE == _serialPort[pmtIndex].Open(portID, _baudRate))
 			{
 				StringCbPrintfW(_errMsg, MSG_SIZE, L"ThorDetector SelectDevice could not open serial port: %d", portID);
@@ -527,6 +532,18 @@ long ThorDetector::GetParam(const long paramID, double& param)
 			double value = 0;
 			int pmtIndex = _tableParams[paramID]->GetDeviceIndex();
 			ExecuteCmd(_tableParams[paramID]->GetCmdBytes(), pmtIndex, value, FALSE, returnedCommand);
+
+			//Sometimes the return command is for MGMSG_GET_PMTTRIP. When this happens we need to retry getting the command, timeout after 1 seconds
+			std::chrono::seconds duration(1);
+			auto startTime = std::chrono::steady_clock::now();
+			auto currentTime = std::chrono::steady_clock::now();
+			while (MGMSG_GET_PMT_GAIN != returnedCommand && currentTime - startTime < duration)
+			{
+				Sleep(15);
+				ExecuteCmd(_tableParams[paramID]->GetCmdBytes(), pmtIndex, value, FALSE, returnedCommand);
+				currentTime = std::chrono::steady_clock::now();
+			}
+
 			if (MGMSG_GET_PMT_GAIN == returnedCommand)
 			{
 				// The Gain will only return > 0 from the device when the PMT is enabled, we need to be able to see the current Gain V even
@@ -970,14 +987,22 @@ long ThorDetector::ExecuteCmdParam(ParamInfo* pParamInfo)
 		long pmtIndex = pParamInfo->GetDeviceIndex();
 		long paramVal = static_cast<long>(Round((pParamInfo->GetParamVal() / _gainSliderMax[pmtIndex] * ((double)_gainMax[pmtIndex] - _gainMin[pmtIndex])) + _gainMin[pmtIndex], 0));
 
-		std::vector<unsigned char> paramValBytes = GetBytes(paramVal);
-		cmd[6] = paramValBytes[0];
-		cmd[7] = paramValBytes[1];
-		cmd[8] = paramValBytes[2];
-		cmd[9] = paramValBytes[3];
-		double readBackVal = -1;
-		long index = pParamInfo->GetDeviceIndex();
-		ExecuteCmd(cmd, index, readBackVal, FALSE, returnedCommand);
+		if (_gainAvailable[pmtIndex])
+		{
+			///To persist the HPD gain value to the device, set the 32nd bit to 1.
+			if (DetectorTypes::HPD1000 == _detectorType[pmtIndex])
+			{
+				paramVal |= 0x80000000;
+			}
+			std::vector<unsigned char> paramValBytes = GetBytes(paramVal);
+			cmd[6] = paramValBytes[0];
+			cmd[7] = paramValBytes[1];
+			cmd[8] = paramValBytes[2];
+			cmd[9] = paramValBytes[3];
+			double readBackVal = -1;
+			long index = pParamInfo->GetDeviceIndex();
+			ExecuteCmd(cmd, index, readBackVal, FALSE, returnedCommand);
+		}
 		break;
 	}
 	break;
@@ -1011,7 +1036,7 @@ long ThorDetector::ExecuteCmdParam(ParamInfo* pParamInfo)
 	{
 		//int paramVal = static_cast<int>(Round((pParamInfo->GetParamVal() + 100) / 2.132, 0));
 
-		std::vector<unsigned char> paramValBytes = GetBytes(pParamInfo->GetParamVal());
+		std::vector<unsigned char> paramValBytes = GetBytes((int) pParamInfo->GetParamVal());
 
 		cmd[6] = paramValBytes[0];
 		cmd[7] = paramValBytes[1];
@@ -1378,6 +1403,13 @@ long ThorDetector::RetrieveDevicesInfo()
 				LogMessage(_errMsg, ERROR_EVENT);
 			}
 		}
+
+		if (DetectorTypes::HPD1000 == _detectorType[i])
+		{
+			_gainAvailable[i] = _hpdGainAvailable[i];
+			_bandwidthAvailable[i] = FALSE;
+			_offsetAvailable[i] = FALSE;
+		}
 	}
 	return TRUE;
 }
@@ -1614,7 +1646,7 @@ long ThorDetector::BuildParamTable()
 		_defaultGain[0],
 		FALSE,
 		TYPE_DOUBLE,
-		TRUE,
+		_gainAvailable[0],
 		FALSE,
 		_gainSliderMin[0],
 		_gainSliderMax[0],
@@ -1632,7 +1664,7 @@ long ThorDetector::BuildParamTable()
 		_defaultGain[1],
 		FALSE,
 		TYPE_DOUBLE,
-		TRUE,
+		_gainAvailable[1],
 		FALSE,
 		_gainSliderMin[1],
 		_gainSliderMax[1],
@@ -1650,7 +1682,7 @@ long ThorDetector::BuildParamTable()
 		_defaultGain[2],
 		FALSE,
 		TYPE_DOUBLE,
-		TRUE,
+		_gainAvailable[2],
 		FALSE,
 		_gainSliderMin[2],
 		_gainSliderMax[2],
@@ -1668,7 +1700,7 @@ long ThorDetector::BuildParamTable()
 		_defaultGain[3],
 		FALSE,
 		TYPE_LONG,
-		TRUE,
+		_gainAvailable[3],
 		FALSE,
 		_gainSliderMin[3],
 		_gainSliderMax[3],
@@ -1686,7 +1718,7 @@ long ThorDetector::BuildParamTable()
 		_defaultGain[4],
 		FALSE,
 		TYPE_DOUBLE,
-		TRUE,
+		_gainAvailable[4],
 		FALSE,
 		_gainSliderMin[4],
 		_gainSliderMax[4],
@@ -1704,7 +1736,7 @@ long ThorDetector::BuildParamTable()
 		_defaultGain[5],
 		FALSE,
 		TYPE_DOUBLE,
-		TRUE,
+		_gainAvailable[5],
 		FALSE,
 		_gainSliderMin[5],
 		_gainSliderMax[5],
@@ -1964,7 +1996,7 @@ long ThorDetector::BuildParamTable()
 		0,
 		FALSE,
 		TYPE_DOUBLE,
-		TRUE,
+		_offsetAvailable[0],
 		FALSE,
 		_offsetMinVolts[0],
 		_offsetMaxVolts[0],
@@ -1982,7 +2014,7 @@ long ThorDetector::BuildParamTable()
 		0,
 		FALSE,
 		TYPE_DOUBLE,
-		TRUE,
+		_offsetAvailable[1],
 		FALSE,
 		_offsetMinVolts[1],
 		_offsetMaxVolts[1],
@@ -2000,7 +2032,7 @@ long ThorDetector::BuildParamTable()
 		0,
 		FALSE,
 		TYPE_DOUBLE,
-		TRUE,
+		_offsetAvailable[2],
 		FALSE,
 		_offsetMinVolts[2],
 		_offsetMaxVolts[2],
@@ -2018,7 +2050,7 @@ long ThorDetector::BuildParamTable()
 		0,
 		FALSE,
 		TYPE_DOUBLE,
-		TRUE,
+		_offsetAvailable[3],
 		FALSE,
 		_offsetMinVolts[3],
 		_offsetMaxVolts[3],
@@ -2036,7 +2068,7 @@ long ThorDetector::BuildParamTable()
 		0,
 		FALSE,
 		TYPE_DOUBLE,
-		TRUE,
+		_offsetAvailable[4],
 		FALSE,
 		_offsetMinVolts[4],
 		_offsetMaxVolts[4],
@@ -2054,7 +2086,7 @@ long ThorDetector::BuildParamTable()
 		0,
 		FALSE,
 		TYPE_DOUBLE,
-		TRUE,
+		_offsetAvailable[5],
 		FALSE,
 		_offsetMinVolts[5],
 		_offsetMaxVolts[5],
@@ -2185,7 +2217,7 @@ long ThorDetector::BuildParamTable()
 		0,
 		FALSE,
 		TYPE_LONG,
-		TRUE,
+		_bandwidthAvailable[0],
 		FALSE,
 		_bandwidthMin[0],
 		_bandwidthMax[0],
@@ -2203,7 +2235,7 @@ long ThorDetector::BuildParamTable()
 		0,
 		FALSE,
 		TYPE_LONG,
-		TRUE,
+		_bandwidthAvailable[1],
 		FALSE,
 		_bandwidthMin[1],
 		_bandwidthMax[1],
@@ -2221,7 +2253,7 @@ long ThorDetector::BuildParamTable()
 		0,
 		FALSE,
 		TYPE_LONG,
-		TRUE,
+		_bandwidthAvailable[2],
 		FALSE,
 		_bandwidthMin[2],
 		_bandwidthMax[2],
@@ -2239,7 +2271,7 @@ long ThorDetector::BuildParamTable()
 		0,
 		FALSE,
 		TYPE_LONG,
-		TRUE,
+		_bandwidthAvailable[3],
 		FALSE,
 		_bandwidthMin[3],
 		_bandwidthMax[3],
@@ -2257,7 +2289,7 @@ long ThorDetector::BuildParamTable()
 		0,
 		FALSE,
 		TYPE_LONG,
-		TRUE,
+		_bandwidthAvailable[4],
 		FALSE,
 		_bandwidthMin[4],
 		_bandwidthMax[4],
@@ -2275,7 +2307,7 @@ long ThorDetector::BuildParamTable()
 		0,
 		FALSE,
 		TYPE_LONG,
-		TRUE,
+		_bandwidthAvailable[5],
 		FALSE,
 		_bandwidthMin[5],
 		_bandwidthMax[5],

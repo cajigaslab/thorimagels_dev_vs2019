@@ -68,7 +68,8 @@
 
         void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            this.scrollView.Height = Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_SCROLL;            
+            double newHeight = Application.Current.MainWindow.ActualHeight - OFFSET_FOR_RESIZE_SCROLL;
+            this.scrollView.Height = newHeight <= 0 ? 1 : newHeight;
         }
 
         void MainWindow_Unloaded(object sender, RoutedEventArgs e)

@@ -78,10 +78,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Command.cs" />
-    <Compile Include="CommandIPCEvent.cs" />
     <Compile Include="CommandShowDialogEvent.cs" />
     <Compile Include="ChangeEvent.cs" />
-    <Compile Include="IPCCommand.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

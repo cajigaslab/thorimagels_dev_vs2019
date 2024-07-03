@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Text;
@@ -17,6 +18,8 @@
     using FLIMFitting.Model;
 
     using Microsoft.Win32;
+
+    using ThorLogging;
 
     public partial class FLIMFittingViewModel : BindableBase
     {
@@ -118,7 +121,7 @@
         {
             set
             {
-                lock(_dflimHistogramGroupsDataLock)
+                lock (_dflimHistogramGroupsDataLock)
                 {
                     _dflimHistogramGroups = value;
 
@@ -211,11 +214,11 @@
                                 {
                                     for (int i = FlimDataGroups.Count - 1; i >= 0; --i)
                                     {
-                                       var existingGroup = _dflimHistogramGroups.FirstOrDefault(c => c.GroupName == FlimDataGroups[i].Name);
-                                       if (null == existingGroup)
-                                       {
-                                           FlimDataGroups.RemoveAt(i);
-                                       }
+                                        var existingGroup = _dflimHistogramGroups.FirstOrDefault(c => c.GroupName == FlimDataGroups[i].Name);
+                                        if (null == existingGroup)
+                                        {
+                                            FlimDataGroups.RemoveAt(i);
+                                        }
                                     }
                                     foreach (var hgroup in _dflimHistogramGroups)
                                     {
@@ -258,6 +261,7 @@
                         }
                         catch (Exception ex)
                         {
+                            ThorLog.Instance.TraceEvent(TraceEventType.Error, 1, this.GetType().Name + " FLIMHistogramsUpdate " + ex.ToString());
                             ex.ToString();
                         }
                     }

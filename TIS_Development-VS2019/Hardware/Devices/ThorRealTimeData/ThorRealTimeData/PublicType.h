@@ -44,6 +44,7 @@ typedef struct channelSpec
 	long sample;
 	//long aiTrigger;
 	long Stimulus;
+	long saveTiming; // Only for CI
 }Channels;
 
 typedef struct AcquireMode

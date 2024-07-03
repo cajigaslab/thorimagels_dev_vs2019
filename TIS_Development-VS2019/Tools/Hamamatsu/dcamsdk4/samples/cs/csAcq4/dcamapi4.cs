@@ -592,6 +592,7 @@ namespace Hamamatsu.DCAM4
         public static readonly DCAMIDPROP DARKCALIB_TARGET                  = new DCAMIDPROP(0x003803E0);
         public static readonly DCAMIDPROP CAPTUREMODE                       = new DCAMIDPROP(0x00380410);
         public static readonly DCAMIDPROP LINEAVERAGING                     = new DCAMIDPROP(0x00380450);
+        public static readonly DCAMIDPROP IMAGEFILTER                       = new DCAMIDPROP(0x00380460);
         public static readonly DCAMIDPROP INTENSITYLUT_MODE                 = new DCAMIDPROP(0x00380510);
         public static readonly DCAMIDPROP INTENSITYLUT_PAGE                 = new DCAMIDPROP(0x00380520);
         public static readonly DCAMIDPROP INTENSITYLUT_WHITECLIP            = new DCAMIDPROP(0x00380530);
@@ -618,6 +619,9 @@ namespace Hamamatsu.DCAM4
         public static readonly DCAMIDPROP CCDMODE                           = new DCAMIDPROP(0x00400310);
         public static readonly DCAMIDPROP EMCCD_CALIBRATIONMODE             = new DCAMIDPROP(0x00400320);
         public static readonly DCAMIDPROP CMOSMODE                          = new DCAMIDPROP(0x00400350);
+        public static readonly DCAMIDPROP MULTILINESENSOR_READOUTMODE       = new DCAMIDPROP(0x00400380);
+        public static readonly DCAMIDPROP MULTILINESENSOR_TOP               = new DCAMIDPROP(0x00400390);
+        public static readonly DCAMIDPROP MULTILINESENSOR_HEIGHT            = new DCAMIDPROP(0x004003A0);
         public static readonly DCAMIDPROP OUTPUT_INTENSITY                  = new DCAMIDPROP(0x00400410);
         public static readonly DCAMIDPROP OUTPUTDATA_OPERATION              = new DCAMIDPROP(0x00400440);
         public static readonly DCAMIDPROP TESTPATTERN_KIND                  = new DCAMIDPROP(0x00400510);
@@ -787,6 +791,7 @@ namespace Hamamatsu.DCAM4
             public static readonly DCAMPROP SPLITVIEW               = new DCAMPROP(14);         // "SPLIT VIEW"
             public static readonly DCAMPROP DUALLIGHTSHEET          = new DCAMPROP(16);         // "DUAL LIGHTSHEET"
             public static readonly DCAMPROP PHOTONNUMBERRESOLVING   = new DCAMPROP(18);         // "PHOTON NUMBER RESOLVING"
+            public static readonly DCAMPROP WHOLELINES              = new DCAMPROP(19);         // "WHOLE LINES"
         };
         public struct SHUTTER_MODE      {
             public static readonly DCAMPROP GLOBAL                  = new DCAMPROP(1);          // "GLOBAL"
@@ -801,6 +806,8 @@ namespace Hamamatsu.DCAM4
             public static readonly DCAMPROP BACKWARD                = new DCAMPROP(2);          // "BACKWARD"
             public static readonly DCAMPROP BYTRIGGER               = new DCAMPROP(3);          // "BY TRIGGER"
             public static readonly DCAMPROP DIVERGE                 = new DCAMPROP(5);          // "DIVERGE"
+            public static readonly DCAMPROP FORWARDBIDIRECTION      = new DCAMPROP(6);          // "FORWARD BIDIRECTION"
+            public static readonly DCAMPROP REVERSEBIDIRECTION      = new DCAMPROP(7);          // "REVERSE BIDIRECTION"
         };
         public struct READOUT_UNIT      {
             public static readonly DCAMPROP FRAME                   = new DCAMPROP(2);          // "FRAME"
@@ -814,6 +821,10 @@ namespace Hamamatsu.DCAM4
         public struct CMOSMODE      {
             public static readonly DCAMPROP NORMAL                  = new DCAMPROP(1);          // "NORMAL"
             public static readonly DCAMPROP NONDESTRUCTIVE          = new DCAMPROP(2);          // "NON DESTRUCTIVE"
+        };
+        public struct MULTILINESENSOR_READOUTMODE       {
+            public static readonly DCAMPROP SYNCACCUMULATE          = new DCAMPROP(1);          // "SYNC ACCUMULATE"
+            public static readonly DCAMPROP SYNCAVERAGE             = new DCAMPROP(2);          // "SYNC AVERAGE"
         };
         public struct OUTPUT_INTENSITY      {
             public static readonly DCAMPROP NORMAL                  = new DCAMPROP(1);          // "NORMAL"
@@ -1038,6 +1049,10 @@ namespace Hamamatsu.DCAM4
             public static readonly DCAMPROP TAPGAINCALIB            = new DCAMPROP(4);          // "TAP GAIN CALIBRATION"
             public static readonly DCAMPROP BACKFOCUSCALIB          = new DCAMPROP(5);          // "BACK FOCUS CALIBRATION"
         };
+        public struct IMAGEFILTER       {
+            public static readonly DCAMPROP THROUGH                 = new DCAMPROP(0);          // "THROUGH"
+            public static readonly DCAMPROP PATTERN_1               = new DCAMPROP(1);          // "PATTERN 1"
+        };
         public struct INTERFRAMEALU_ENABLE      {
             public static readonly DCAMPROP OFF                     = new DCAMPROP(1);          // "OFF"
             public static readonly DCAMPROP TRIGGERSOURCE_ALL       = new DCAMPROP(2);          // "TRIGGER SOURCE ALL"
@@ -1095,6 +1110,7 @@ namespace Hamamatsu.DCAM4
         public struct DEFECTCORRECT_METHOD      {
             public static readonly DCAMPROP CEILING                 = new DCAMPROP(3);          // "CEILING"
             public static readonly DCAMPROP PREVIOUS                = new DCAMPROP(4);          // "PREVIOUS"
+            public static readonly DCAMPROP NEXT                    = new DCAMPROP(5);          // "NEXT"
         };
         public struct HOTPIXELCORRECT_LEVEL     {
             public static readonly DCAMPROP STANDARD                = new DCAMPROP(1);          // "STANDARD"
@@ -1620,6 +1636,50 @@ namespace Hamamatsu.DCAM4
         }
     }
 
+    public struct DCAMAPI_INITOPTION : IEquatable<DCAMAPI_INITOPTION>
+    {
+        private uint initoption;
+
+        public static readonly DCAMAPI_INITOPTION APIVER__LATEST     = new DCAMAPI_INITOPTION(0x00000001);
+        public static readonly DCAMAPI_INITOPTION APIVER__4_0        = new DCAMAPI_INITOPTION(0x00000400);
+        public static readonly DCAMAPI_INITOPTION MULTIVIEW__DISABLE = new DCAMAPI_INITOPTION(0x00010002);
+        public static readonly DCAMAPI_INITOPTION ENDMARK            = new DCAMAPI_INITOPTION(0x00000000);
+
+
+        public DCAMAPI_INITOPTION(uint v)
+        {
+            initoption = v;
+        }
+
+        public override int GetHashCode()
+        {
+            return initoption.GetHashCode();
+        }
+
+        public bool Equals(DCAMAPI_INITOPTION a)
+        {
+            return initoption == a.initoption;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if(!(obj is DCAMAPI_INITOPTION))
+                return false;
+            
+            return Equals((DCAMAPI_INITOPTION)obj);
+        }
+
+        public static implicit operator uint(DCAMAPI_INITOPTION self)
+        {
+            return (uint)self.initoption;
+        }
+
+        public static implicit operator int(DCAMAPI_INITOPTION self)
+        {
+            return (int)self.initoption;
+        }
+    }
+
     public struct DCAMBUF_METADATAKIND : IEquatable<DCAMBUF_METADATAKIND>
     {
         private uint metadatakind;
@@ -1658,6 +1718,184 @@ namespace Hamamatsu.DCAM4
         public static implicit operator int(DCAMBUF_METADATAKIND self)
         {
             return (int)self.metadatakind;
+        }
+    }
+
+    public struct DCAMREC_METADATAKIND : IEquatable<DCAMREC_METADATAKIND>
+    {
+        private uint metadatakind;
+
+        public static readonly DCAMREC_METADATAKIND USERDATATEXT= new DCAMREC_METADATAKIND(0x00000001);
+        public static readonly DCAMREC_METADATAKIND USERDATABIN = new DCAMREC_METADATAKIND(0x00000002);
+        public static readonly DCAMREC_METADATAKIND TIMESTAMPS  = new DCAMREC_METADATAKIND(0x00010000);
+        public static readonly DCAMREC_METADATAKIND FRAMESTAMPS = new DCAMREC_METADATAKIND(0x00020000);
+
+
+        public DCAMREC_METADATAKIND(uint v)
+        {
+            metadatakind = v;
+        }
+
+        public override int GetHashCode()
+        {
+            return metadatakind.GetHashCode();
+        }
+
+        public bool Equals(DCAMREC_METADATAKIND a)
+        {
+            return metadatakind == a.metadatakind;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if(!(obj is DCAMREC_METADATAKIND a))
+                return false;
+            
+            return Equals((DCAMREC_METADATAKIND)obj);
+        }
+
+        public static implicit operator uint(DCAMREC_METADATAKIND self)
+        {
+            return (uint)self.metadatakind;
+        }
+
+        public static implicit operator int(DCAMREC_METADATAKIND self)
+        {
+            return (int)self.metadatakind;
+        }
+    }
+
+
+    public struct DCAMDATA_KIND : IEquatable<DCAMDATA_KIND>
+    {
+        private uint kind;
+
+        public static readonly DCAMDATA_KIND LUT    = new DCAMDATA_KIND(0x00000002);
+        public static readonly DCAMDATA_KIND NONE   = new DCAMDATA_KIND(0x00000000);
+
+
+        public DCAMDATA_KIND(uint v)
+        {
+            kind = v;
+        }
+
+        public override int GetHashCode()
+        {
+            return kind.GetHashCode();
+        }
+
+        public bool Equals(DCAMDATA_KIND a)
+        {
+            return kind == a.kind;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if(!(obj is DCAMDATA_KIND))
+                return false;
+            
+            return Equals((DCAMDATA_KIND)obj);
+        }
+
+        public static implicit operator uint(DCAMDATA_KIND self)
+        {
+            return (uint)self.kind;
+        }
+
+        public static implicit operator int(DCAMDATA_KIND self)
+        {
+            return (int)self.kind;
+        }
+    }
+
+
+    public struct DCAMDATA_LUTTYPE : IEquatable<DCAMDATA_LUTTYPE>
+    {
+        private uint luttype;
+
+        public static readonly DCAMDATA_LUTTYPE SEGMENTED_LINEAR= new DCAMDATA_LUTTYPE(0x00000001);
+        public static readonly DCAMDATA_LUTTYPE MONO16          = new DCAMDATA_LUTTYPE(0x00000002);
+        public static readonly DCAMDATA_LUTTYPE ACCESSREADY     = new DCAMDATA_LUTTYPE(0x01000000);
+        public static readonly DCAMDATA_LUTTYPE ACCESSBUSY      = new DCAMDATA_LUTTYPE(0x02000000);
+        public static readonly DCAMDATA_LUTTYPE BODYMASK        = new DCAMDATA_LUTTYPE(0x00FFFFFF);
+        public static readonly DCAMDATA_LUTTYPE ATTRIBUTEMASK   = new DCAMDATA_LUTTYPE(0xFF000000);
+        public static readonly DCAMDATA_LUTTYPE NONE            = new DCAMDATA_LUTTYPE(0x00000000);
+
+
+        public DCAMDATA_LUTTYPE(uint v)
+        {
+            luttype = v;
+        }
+
+        public override int GetHashCode()
+        {
+            return luttype.GetHashCode();
+        }
+
+        public bool Equals(DCAMDATA_LUTTYPE a)
+        {
+            return luttype == a.luttype;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if(!(obj is DCAMDATA_LUTTYPE))
+                return false;
+            
+            return Equals((DCAMDATA_LUTTYPE)obj);
+        }
+
+        public static implicit operator uint(DCAMDATA_LUTTYPE self)
+        {
+            return (uint)self.luttype;
+        }
+
+        public static implicit operator int(DCAMDATA_LUTTYPE self)
+        {
+            return (int)self.luttype;
+        }
+    }
+
+
+    public struct DCAMDEV_CAPDOMAIN : IEquatable<DCAMDEV_CAPDOMAIN>
+    {
+        private uint capdomain;
+
+        public static readonly DCAMDEV_CAPDOMAIN DCAMDATA   = new DCAMDEV_CAPDOMAIN(0x00000001);
+        public static readonly DCAMDEV_CAPDOMAIN FUNCTION   = new DCAMDEV_CAPDOMAIN(0x00000000);
+
+
+        public DCAMDEV_CAPDOMAIN(uint v)
+        {
+            capdomain = v;
+        }
+
+        public override int GetHashCode()
+        {
+            return capdomain.GetHashCode();
+        }
+
+        public bool Equals(DCAMDEV_CAPDOMAIN a)
+        {
+            return capdomain == a.capdomain;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if(!(obj is DCAMDEV_CAPDOMAIN))
+                return false;
+            
+            return Equals((DCAMDEV_CAPDOMAIN)obj);
+        }
+
+        public static implicit operator uint(DCAMDEV_CAPDOMAIN self)
+        {
+            return (uint)self.capdomain;
+        }
+
+        public static implicit operator int(DCAMDEV_CAPDOMAIN self)
+        {
+            return (int)self.capdomain;
         }
     }
 
@@ -1717,7 +1955,7 @@ namespace Hamamatsu.DCAM4
                                             // [in] iKind should be DCAMBUF_METADATAKIND_TIMESTAMPS.
                                             // [in] option should be one of DCAMBUF_METADATAOPTION or DCAMREC_METADATAOPTION
 
-        public IntPtr timestamp;            // [in] pointer for TIMESTAMP block. DCAM_TIMESTAMP[]
+        public IntPtr timestamps;            // [in] pointer for TIMESTAMP block. DCAM_TIMESTAMP[]
 
         public Int32 timestampsize;             // [in] sizeof(DCAM_TIMESTRAMP)
         public Int32 timestampvaildsize;        // [o] return the written data size of DCAM_TIMESTRAMP.
@@ -1733,7 +1971,7 @@ namespace Hamamatsu.DCAM4
             hdr.in_count = 0;
             hdr.outcount = 0;
 
-            timestamp = IntPtr.Zero;
+            timestamps = IntPtr.Zero;
 
             timestampsize = 0;
             timestampvaildsize = 0;
@@ -1808,9 +2046,20 @@ namespace Hamamatsu.DCAM4
     public struct DCAMDEV_CAPABILITY
     {
         public Int32 size;                      // [in]
-        public Int32 reserved;                  // [in] reserved to 0
+        public Int32 domain;                    // [in] DCAMDEV_CAPDOMAIN__*
         public Int32 capflag;                   // [out] DCAMDEV_CAPFLAG
-        public Int32 reserved2;                 // [out] reserved to 0
+        public Int32 kind;                      // [out] data kind of domain
+    }
+
+    [StructLayout(LayoutKind.Sequential,Pack=8)]
+    public struct DCAMDEV_CAPABILITY_LUT
+    {
+        public DCAMDEV_CAPABILITY hdr;      // [in] size:       size of this structure
+                                            // [in] domain:     DCAMDEV_CAPDOMAIN__DCAMDATA
+                                            // [out]capflag:    DCAMDATA_LUTTYPE__*
+                                            // [in] kind:       DCAMDATA_KIND__LUT
+        
+        public Int32 linearpointmax;        // [out] max of linear lut point
     }
 
 
@@ -1829,6 +2078,35 @@ namespace Hamamatsu.DCAM4
             text = IntPtr.Zero;
             textbytes = 0;
         }
+    }
+
+    [StructLayout(LayoutKind.Sequential,Pack=8)]
+    public struct DCAMDATA_HDR
+    {
+        public Int32 size;                      // [in] size of whole structure, not only this
+        public Int32 iKind;                     // [in] DCAMDATA_KIND__*
+        public Int32 option;                    // [in] DCAMDATA_OPTION__*
+        public Int32 reserved2;                 // [in] 0 reserved
+    }
+
+    [StructLayout(LayoutKind.Sequential,Pack=8)]
+    public struct DCAMDATA_LUT
+    {
+        public DCAMDATA_HDR hdr;                // [in] size:   size of this structure
+                                                // [in] iKind:  DCAMDATA_KIND__LUT
+        
+        public Int32 type;                      // [in] DCAMDATA_LUTTYPE
+        public Int32 page;                      // [in] use to load or store
+        public IntPtr data;                     // WORD array or DCAMDATA_LINEARLUT array
+        public Int32 datasize;                  // size of data
+        public Int32 reserved;                  // 0 reserved
+    }
+
+    [StructLayout(LayoutKind.Sequential,Pack=8)]
+    public struct DCAMDATA_LINEARLUT
+    {
+        public Int32 lutin;
+        public Int32 lutout;
     }
 
     [StructLayout(LayoutKind.Sequential,Pack=8)]
@@ -2056,7 +2334,28 @@ namespace Hamamatsu.DCAM4
         public Int32 size;                      // [in] size of this structure.
         public Int32 reserved;                  // [in]
         public IntPtr hrec;                     // [out]
+        [MarshalAs(UnmanagedType.LPWStr)]
         public string path;                     // [in]
+        [MarshalAs(UnmanagedType.LPWStr)]
+        public string ext;                      // [in]
+        public Int32 maxframepersession;        // [in]
+        public Int32 userdatasize;              // [in]
+        public Int32 userdatasize_session;      // [in]
+        public Int32 userdatasize_file;         // [in]
+        public Int32 usertextsize;              // [in]
+        public Int32 usertextsize_session;      // [in]
+        public Int32 usertextsize_file;         // [in]
+    }
+    
+    [StructLayout(LayoutKind.Sequential,Pack=8,CharSet=CharSet.Ansi)]
+    public struct DCAMREC_OPENA
+    {
+        public Int32 size;                      // [in] size of this structure.
+        public Int32 reserved;                  // [in]
+        public IntPtr hrec;                     // [out]
+        [MarshalAs(UnmanagedType.LPStr)]
+        public string path;                     // [in]
+        [MarshalAs(UnmanagedType.LPStr)]
         public string ext;                      // [in]
         public Int32 maxframepersession;        // [in]
         public Int32 userdatasize;              // [in]
@@ -2112,6 +2411,15 @@ namespace Hamamatsu.DCAM4
         [DllImport("dcamapi")]
         public static extern DCAMERR dcamdev_getcapability(IntPtr h, ref DCAMDEV_CAPABILITY param);
 
+        [DllImport("dcamapi", EntryPoint = "dcamdev_getcapability")]
+        public static extern DCAMERR dcamdev_getcapability_lut(IntPtr h, ref DCAMDEV_CAPABILITY_LUT param);
+
+        [DllImport("dcamapi")]
+        public static extern DCAMERR dcamdev_setdata(IntPtr h, ref DCAMDATA_HDR hdr);
+
+        [DllImport("dcamapi", EntryPoint = "dcamdev_setdata")]
+        public static extern DCAMERR dcamdev_setdata_lut(IntPtr h, ref DCAMDATA_LUT lut);
+
         //buffer control
         [DllImport("dcamapi")]
         public static extern DCAMERR dcambuf_alloc(IntPtr h, Int32 framecount);
@@ -2135,7 +2443,7 @@ namespace Hamamatsu.DCAM4
         public static extern DCAMERR dcambuf_copymetadata_timestampblock(IntPtr h, ref DCAM_TIMESTAMPBLOCK tsb);
 
         [DllImport("dcamapi", EntryPoint = "dcambuf_copymetadata")]
-        public static extern DCAMERR dcambuf_copymetadata_framestampblock(IntPtr h, ref DCAM_FRAMESTAMPBLOCK tsb);
+        public static extern DCAMERR dcambuf_copymetadata_framestampblock(IntPtr h, ref DCAM_FRAMESTAMPBLOCK fsb);
 
         // Capturing
         [DllImport("dcamapi")]
@@ -2171,7 +2479,9 @@ namespace Hamamatsu.DCAM4
 
         // Recording
         [DllImport("dcamapi", CharSet = CharSet.Ansi)]
-        public static extern DCAMERR dcamrec_openA(ref DCAMREC_OPEN param);
+        public static extern DCAMERR dcamrec_openA(ref DCAMREC_OPENA param);
+        [DllImport("dcamapi", CharSet = CharSet.Unicode)]
+        public static extern DCAMERR dcamrec_openW(ref DCAMREC_OPEN param);
 
         [DllImport("dcamapi")]
         public static extern DCAMERR dcamrec_status(IntPtr hdcamrec, ref DCAMREC_STATUS param);
@@ -2199,6 +2509,12 @@ namespace Hamamatsu.DCAM4
 
         [DllImport("dcamapi")]
         public static extern DCAMERR dcamrec_copymetadatablock(IntPtr hdcamrec, ref DCAM_METADATABLOCKHDR hdr);
+
+        [DllImport("dcamapi", EntryPoint = "dcamrec_copymetadatablock")]
+        public static extern DCAMERR dcamrec_copymetadata_timestampblock(IntPtr h, ref DCAM_TIMESTAMPBLOCK tsb);
+
+        [DllImport("dcamapi", EntryPoint = "dcamrec_copymetadatablock")]
+        public static extern DCAMERR dcamrec_copymetadata_framestampblock(IntPtr h, ref DCAM_FRAMESTAMPBLOCK fsb);
 
         [DllImport("dcamapi")]
         public static extern DCAMERR dcamrec_pause(IntPtr hdcamrec);
@@ -2473,6 +2789,9 @@ namespace Hamamatsu.DCAM4
     class dcamrec
     {
         public static DCAMERR open(ref DCAMREC_OPEN param ) {
+            return dcamapidll.dcamrec_openW(ref param);
+        }
+        public static DCAMERR open(ref DCAMREC_OPENA param ) {
             return dcamapidll.dcamrec_openA(ref param);
         }
 
