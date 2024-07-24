@@ -12,7 +12,7 @@ This project contains most of the source code of ThorImageLS. See Thorlabs Open 
     - For PMT2100, VISA drivers are required
     - 
 3.	Latest releases
-    - Current branch: ThorImageLS 4.3
+    - Current branch: ThorImageLS 4.4
 4.	API references
     - See Thorlabs Open Source License.pdf 
 
@@ -27,7 +27,7 @@ Building ThorImageLS
 5.	Open the ThorImage.sln in VS2019
 6.	Open the Solution Properties window set the configuration to desired Configuration
 7.	If this is the first time you run ThorImageLS off this repo, skip to step 10.
-8.	Open CopyDependenciesx64.bat or CopyDependenciesx64-Release.bat depending on the configuration that you choose.
+8.	Open CopyDependenciesx64.bat.
 9. Uncomment (delete the word "REM") the copy commands of the devices you want to include in the run. We recommend not including any the first time you run it.
 10. Buld the ThorImage project.
 11.	Navigate to .\GUI\Applications\ThorImageLS\ThorImage\bin\debug (or Release)
