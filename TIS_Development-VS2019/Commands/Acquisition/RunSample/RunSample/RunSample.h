@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 struct RunSampleCommandParams
 {
 	double version;
@@ -29,6 +31,9 @@ private:
 
 	long InitializeCustomParameters();
 	long StopCamera();
+
+	struct Impl;
+  std::unique_ptr<Impl> impl;
 
 public:
 
