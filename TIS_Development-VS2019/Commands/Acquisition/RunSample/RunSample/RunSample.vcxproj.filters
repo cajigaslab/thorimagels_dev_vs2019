@@ -78,6 +78,18 @@
     <ClCompile Include="AcquireHyperspectral.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="thalamus.grpc.pb.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="thalamus.pb.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="util.grpc.pb.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="util.pb.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AcquireBleaching.h">
@@ -152,6 +164,18 @@
     <ClInclude Include="AcquireHyperspectral.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="thalamus.grpc.pb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="thalamus.pb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util.grpc.pb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util.pb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RunSample.rc">
@@ -160,6 +184,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram1.cd" />
+    <None Include="thalamus.proto" />
+    <None Include="util.proto" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />

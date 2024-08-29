@@ -1546,6 +1546,9 @@ long AcquireTStream::BreakOutWaitCameraStatus(ICamera* pCamera, SaveParams& sp, 
 	return doBreak;
 }
 
+void AcquireTStream::SetPublisher(Publisher* publisher) {
+	this->publisher = publisher;
+}
 
 long AcquireTStream::Execute(long index, long subWell)
 {	
@@ -2171,6 +2174,9 @@ long AcquireTStream::Execute(long index, long subWell)
 				frameInfo.bufferType = BufferType::INTENSITY;
 				pCamera->CopyAcquisition(_pMemoryBuffer, &frameInfo);
 			}
+
+      publisher->publish_image(width, height, bufferChannels, 2, reinterpret_cast<unsigned char*>(_pMemoryBuffer));
+
 			if (1 == imageMethod)	//dFlim capture
 			{
 				frameInfo.bufferType = BufferType::DFLIM_HISTOGRAM;

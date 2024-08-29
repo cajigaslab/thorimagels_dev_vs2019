@@ -12,6 +12,18 @@
 #include "ImageCorrection.h"
 #include "ippi.h"
 
+#pragma push_macro("min")
+#pragma push_macro("max")
+#undef min
+#undef max
+#include <grpcpp/grpcpp.h>
+#include <absl/strings/str_format.h>
+#pragma pop_macro("min")
+#pragma pop_macro("max")
+
+#include <thread>
+#include "thalamus.grpc.pb.h"
+
 typedef void (_cdecl *myPrototype)(long* index, long* completed, long* total, long* timeElapsed, long* timeRemaining, long* captureCompletee);
 void (*myFunctionPointer)(long* index, long* completed, long* total, long* timeElapsed, long* timeRemaining, long* captureComplete) = NULL;
 
@@ -162,7 +174,146 @@ DllExport_RunSample SetSaving(bool _toSave)
 	return TRUE;
 }
 
-RunSample::RunSample()
+struct RunSample::Impl : public thalamus_grpc::Thalamus::Service, Publisher {
+  std::mutex mutex;
+  std::set<::grpc::ServerWriter< ::thalamus_grpc::Image>*> clients;
+  bool bigendian;
+  bool running;
+  std::thread grpc_thread;
+	std::unique_ptr<grpc::Server> server;
+
+  Impl() {
+  	int num = 1;
+  	bigendian = *(char*)&num != 1;
+  }
+
+  ~Impl() {
+    shutdown();
+  }
+
+  void setup() {
+    grpc::ServerBuilder builder;
+    builder.AddListeningPort("0.0.0.0:50060", grpc::InsecureServerCredentials());
+    builder.RegisterService(this);
+    server = builder.BuildAndStart();
+    running = true;
+
+    grpc_thread = std::thread([&] {
+      server->Wait();
+    });
+  }
+
+  void shutdown() {
+    running = false;
+    if(grpc_thread.joinable()) {
+      server->Shutdown();
+      grpc_thread.join();
+    }
+  }
+
+  static const size_t image_chunk_size = 524288;
+
+  void publish_image(int width, int height, int bufferChannels, int bytesPerChannel, unsigned char* data) override {
+    std::lock_guard<std::mutex> lock(mutex);
+
+		thalamus_grpc::Image::Format format;
+		if (bytesPerChannel == 1) {
+			format = bufferChannels == 1 ? thalamus_grpc::Image_Format_Gray : thalamus_grpc::Image_Format_RGB;
+		}
+		else {
+			format = bufferChannels == 2 ? thalamus_grpc::Image_Format_Gray16 : thalamus_grpc::Image_Format_RGB16;
+		}
+    auto position = 0ull;
+    auto length = width*height*bufferChannels*bytesPerChannel;
+
+    while(position < length) {
+      auto step_size = min(image_chunk_size, length-position);
+      thalamus_grpc::Image image;
+      image.set_width(width);
+      image.set_height(height);
+      image.set_format(format);
+      image.set_bigendian(bigendian);
+      image.add_data(data + position, step_size);
+      position += step_size;
+      image.set_last(position == length);
+
+      for(auto client : clients) {
+        client->Write(image);
+      }
+    }
+  }
+
+  ::grpc::Status get_type_name(::grpc::ServerContext* context, const ::thalamus_grpc::StringMessage* request, ::thalamus_grpc::StringMessage* response) override {
+    return ::grpc::Status::OK;
+  }
+  ::grpc::Status node_request(::grpc::ServerContext* context, const ::thalamus_grpc::NodeRequest* request, ::thalamus_grpc::NodeResponse* response) override {
+    return ::grpc::Status::OK;
+  }
+  ::grpc::Status events(::grpc::ServerContext* context, ::grpc::ServerReader< ::thalamus_grpc::Event>* reader, ::util_grpc::Empty*) override {
+    return ::grpc::Status::OK;
+  }
+  ::grpc::Status log(::grpc::ServerContext* context, ::grpc::ServerReader< ::thalamus_grpc::Text>* reader, ::util_grpc::Empty*) override {
+    return ::grpc::Status::OK;
+  }
+  ::grpc::Status observable_bridge(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::thalamus_grpc::ObservableChange, ::thalamus_grpc::ObservableChange>* stream) override {
+    return ::grpc::Status::OK;
+  }
+  ::grpc::Status graph(::grpc::ServerContext* context, const ::thalamus_grpc::GraphRequest* request, ::grpc::ServerWriter< ::thalamus_grpc::GraphResponse>* writer) override {
+    return ::grpc::Status::OK;
+  }
+  ::grpc::Status get_recommended_channels(::grpc::ServerContext* context, const ::thalamus_grpc::NodeSelector* request, ::thalamus_grpc::StringListMessage* response) override {
+    return ::grpc::Status::OK;
+  }
+  ::grpc::Status analog(::grpc::ServerContext* context, const ::thalamus_grpc::AnalogRequest* request, ::grpc::ServerWriter< ::thalamus_grpc::AnalogResponse>* writer) override {
+    return ::grpc::Status::OK;
+  }
+  ::grpc::Status spectrogram(::grpc::ServerContext* context, const ::thalamus_grpc::SpectrogramRequest* request, ::grpc::ServerWriter< ::thalamus_grpc::SpectrogramResponse>* writer) override {
+    return ::grpc::Status::OK;
+  }
+  ::grpc::Status channel_info(::grpc::ServerContext* context, const ::thalamus_grpc::AnalogRequest* request, ::grpc::ServerWriter< ::thalamus_grpc::AnalogResponse>* writer) override {
+    return ::grpc::Status::OK;
+  }
+  ::grpc::Status xsens(::grpc::ServerContext* context, const ::thalamus_grpc::NodeSelector* request, ::grpc::ServerWriter< ::thalamus_grpc::XsensResponse>* writer) override {
+    return ::grpc::Status::OK;
+  }
+  ::grpc::Status image(::grpc::ServerContext* context, const ::thalamus_grpc::ImageRequest* request, ::grpc::ServerWriter< ::thalamus_grpc::Image>* writer) override {
+    {
+      std::lock_guard<std::mutex> lock(mutex);
+      clients.insert(writer);
+    }
+
+    while(!context->IsCancelled() && running) {
+      std::this_thread::sleep_for(1s);
+    }
+
+    std::lock_guard<std::mutex> lock(mutex);
+    clients.erase(writer);
+    return ::grpc::Status::OK;
+  }
+  ::grpc::Status replay(::grpc::ServerContext* context, const ::thalamus_grpc::ReplayRequest* request, ::util_grpc::Empty* response) override {
+    return ::grpc::Status::OK;
+  }
+  ::grpc::Status eval(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::thalamus_grpc::EvalRequest, ::thalamus_grpc::EvalResponse>* stream) override {
+    return ::grpc::Status::OK;
+  }
+  ::grpc::Status remote_node(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::thalamus_grpc::RemoteNodeMessage, ::thalamus_grpc::RemoteNodeMessage>* stream) override {
+    return ::grpc::Status::OK;
+  }
+  ::grpc::Status notification(::grpc::ServerContext* context, const ::util_grpc::Empty* request, ::grpc::ServerWriter< ::thalamus_grpc::Notification>* writer) override {
+    return ::grpc::Status::OK;
+  }
+  ::grpc::Status inject_analog(::grpc::ServerContext* context, ::grpc::ServerReader< ::thalamus_grpc::InjectAnalogRequest>* reader, ::util_grpc::Empty*) override {
+    return ::grpc::Status::OK;
+  }
+  ::grpc::Status get_modalities(::grpc::ServerContext* context, const ::thalamus_grpc::NodeSelector* request, ::thalamus_grpc::ModalitiesMessage* response) override {
+    return ::grpc::Status::OK;
+  }
+  ::grpc::Status ping(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::thalamus_grpc::Pong, ::thalamus_grpc::Ping>* stream) override {
+    return ::grpc::Status::OK;
+  }
+};
+
+RunSample::RunSample() : impl(new Impl())
 {
 	//private constructor
 
@@ -1028,6 +1179,11 @@ void RunSample::PostCaptureProtocol(IExperiment *exp)
 	SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP, IDevice::PARAM_LEDS_ENABLE_DISABLE, FALSE, TRUE);
 }
 
+struct RunSampleThreadProcArgs {
+	Observer* observer;
+	Publisher* publisher;
+};
+
 UINT RunSampleThreadProc( LPVOID pParam )
 {	
 	IDevice *xyStage = GetDevice(SelectedHardware::SELECTED_XYSTAGE);
@@ -1152,7 +1308,8 @@ UINT RunSampleThreadProc( LPVOID pParam )
 				zstageSteps = 1;
 			}
 
-			Observer *pOb = (Observer*)pParam;
+			auto args = static_cast<RunSampleThreadProcArgs*>(pParam);
+			Observer *pOb = (Observer*)args->observer;
 			//passing the values from the XML as parameters
 
 			AcquireFactory factory;
@@ -1198,6 +1355,7 @@ UINT RunSampleThreadProc( LPVOID pParam )
 			}
 
 			acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_SEQUENCE,pOb,exp,ws));
+			acq->SetPublisher(args->publisher);
 
 			//capture all of the well images
 			sampleDll->GoToAllWellSites(xyStage, acq.get(), exp);
@@ -1374,7 +1532,8 @@ long RunSample::Execute()
 	if((_isActive) || NULL != hRunSampleThread)
 		return FALSE;
 
-	hRunSampleThread = ::CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE) RunSampleThreadProc, (LPVOID)&_ob, 0, &dwRunSampleThreadId );
+	RunSampleThreadProcArgs args = { &_ob, impl.get() };
+	hRunSampleThread = ::CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE) RunSampleThreadProc, (LPVOID)&args, 0, &dwRunSampleThreadId );
 	return TRUE;
 }
 
@@ -1404,6 +1563,7 @@ long RunSample::SetupCommand()
 	if(FALSE == _setupFlag)
 	{	
 		_setupFlag = TRUE;
+    impl->setup();
 		return TRUE;
 	}
 	else

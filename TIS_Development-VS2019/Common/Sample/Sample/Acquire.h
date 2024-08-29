@@ -1,6 +1,7 @@
 #pragma once
 
 #include "..\..\SigSlot.h"
+#include "Publisher.h"
 
 using namespace sigslot;
 
@@ -18,6 +19,8 @@ public:
 	signal1<long&> PreCapture;
 	signal1<long> SequenceStepCurrent;
 	signal2<long, long> StartProgressBar;
+
+	virtual void SetPublisher(Publisher*) {};
 
 	virtual long Execute(long index, long subWell) = 0;//Synchronous acquisition of data
 	virtual long Execute(long index, long subWell, long zFrame, long tFrame)=0;//
