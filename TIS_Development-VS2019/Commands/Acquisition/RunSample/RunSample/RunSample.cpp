@@ -22,6 +22,7 @@
 #pragma pop_macro("max")
 
 #include <thread>
+#include <condition_variable>
 #include "thalamus.grpc.pb.h"
 
 typedef void (_cdecl *myPrototype)(long* index, long* completed, long* total, long* timeElapsed, long* timeRemaining, long* captureCompletee);
@@ -174,13 +175,20 @@ DllExport_RunSample SetSaving(bool _toSave)
 	return TRUE;
 }
 
+struct RunSampleThreadProcArgs {
+	Observer* observer;
+	Publisher* publisher;
+};
+
 struct RunSample::Impl : public thalamus_grpc::Thalamus::Service, Publisher {
   std::mutex mutex;
-  std::set<::grpc::ServerWriter< ::thalamus_grpc::Image>*> clients;
+	std::condition_variable condition;
+	std::set< std::vector<thalamus_grpc::Image>*> outputs;
   bool bigendian;
   bool running;
   std::thread grpc_thread;
 	std::unique_ptr<grpc::Server> server;
+	RunSampleThreadProcArgs threadproc_args;
 
   Impl() {
   	int num = 1;
@@ -214,33 +222,42 @@ struct RunSample::Impl : public thalamus_grpc::Thalamus::Service, Publisher {
   static const size_t image_chunk_size = 524288;
 
   void publish_image(int width, int height, int bufferChannels, int bytesPerChannel, unsigned char* data) override {
-    std::lock_guard<std::mutex> lock(mutex);
-
 		thalamus_grpc::Image::Format format;
 		if (bytesPerChannel == 1) {
 			format = bufferChannels == 1 ? thalamus_grpc::Image_Format_Gray : thalamus_grpc::Image_Format_RGB;
 		}
 		else {
-			format = bufferChannels == 2 ? thalamus_grpc::Image_Format_Gray16 : thalamus_grpc::Image_Format_RGB16;
+			format = bufferChannels == 1 ? thalamus_grpc::Image_Format_Gray16 : thalamus_grpc::Image_Format_RGB16;
 		}
     auto position = 0ull;
     auto length = width*height*bufferChannels*bytesPerChannel;
 
-    while(position < length) {
-      auto step_size = min(image_chunk_size, length-position);
-      thalamus_grpc::Image image;
-      image.set_width(width);
-      image.set_height(height);
-      image.set_format(format);
-      image.set_bigendian(bigendian);
-      image.add_data(data + position, step_size);
-      position += step_size;
-      image.set_last(position == length);
+		{
+			std::lock_guard<std::mutex> lock(mutex);
 
-      for(auto client : clients) {
-        client->Write(image);
-      }
-    }
+			while (position < length) {
+				auto step_size = min(image_chunk_size, length - position);
+				thalamus_grpc::Image image;
+				image.set_width(width);
+				image.set_height(height);
+				image.set_format(format);
+				image.set_bigendian(bigendian);
+				image.add_data(data + position, step_size);
+				position += step_size;
+				image.set_last(position == length);
+				for (auto i = outputs.begin(); i != outputs.end(); ++i) {
+					auto j = i;
+					++j;
+					if (j == outputs.end()) {
+						(*i)->push_back(std::move(image));
+					}
+					else {
+						(*i)->push_back(image);
+					}
+				}
+			}
+		}
+		condition.notify_all();
   }
 
   ::grpc::Status get_type_name(::grpc::ServerContext* context, const ::thalamus_grpc::StringMessage* request, ::thalamus_grpc::StringMessage* response) override {
@@ -277,17 +294,29 @@ struct RunSample::Impl : public thalamus_grpc::Thalamus::Service, Publisher {
     return ::grpc::Status::OK;
   }
   ::grpc::Status image(::grpc::ServerContext* context, const ::thalamus_grpc::ImageRequest* request, ::grpc::ServerWriter< ::thalamus_grpc::Image>* writer) override {
-    {
+		std::vector<thalamus_grpc::Image> output;
+		{
       std::lock_guard<std::mutex> lock(mutex);
-      clients.insert(writer);
+			outputs.insert(&output);
     }
 
     while(!context->IsCancelled() && running) {
-      std::this_thread::sleep_for(1s);
+			std::vector<thalamus_grpc::Image> new_images;
+			{
+				std::unique_lock<std::mutex> lock(mutex);
+				condition.wait_for(lock, 1s, [&] { return !output.empty(); });
+				std::swap(new_images, output);
+			}
+			for (auto& image : new_images) {
+				writer->Write(image);
+			}
     }
 
-    std::lock_guard<std::mutex> lock(mutex);
-    clients.erase(writer);
+		{
+			std::lock_guard<std::mutex> lock(mutex);
+			outputs.erase(&output);
+		}
+
     return ::grpc::Status::OK;
   }
   ::grpc::Status replay(::grpc::ServerContext* context, const ::thalamus_grpc::ReplayRequest* request, ::util_grpc::Empty* response) override {
@@ -1179,11 +1208,6 @@ void RunSample::PostCaptureProtocol(IExperiment *exp)
 	SetDeviceParamDouble(SelectedHardware::SELECTED_BFLAMP, IDevice::PARAM_LEDS_ENABLE_DISABLE, FALSE, TRUE);
 }
 
-struct RunSampleThreadProcArgs {
-	Observer* observer;
-	Publisher* publisher;
-};
-
 UINT RunSampleThreadProc( LPVOID pParam )
 {	
 	IDevice *xyStage = GetDevice(SelectedHardware::SELECTED_XYSTAGE);
@@ -1531,9 +1555,9 @@ long RunSample::Execute()
 	//single thread only
 	if((_isActive) || NULL != hRunSampleThread)
 		return FALSE;
-
-	RunSampleThreadProcArgs args = { &_ob, impl.get() };
-	hRunSampleThread = ::CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE) RunSampleThreadProc, (LPVOID)&args, 0, &dwRunSampleThreadId );
+	
+	impl->threadproc_args = { &_ob, impl.get() };
+	hRunSampleThread = ::CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE) RunSampleThreadProc, (LPVOID)&impl->threadproc_args, 0, &dwRunSampleThreadId );
 	return TRUE;
 }
 

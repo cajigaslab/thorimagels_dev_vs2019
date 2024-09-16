@@ -3,8 +3,12 @@
 class AcquireSequence :
 	public IAcquire
 {
+	Publisher* publisher;
 public:
 	AcquireSequence(IExperiment *pExperiment,wstring path);
+
+	void SetPublisher(Publisher*) override;
+
 	virtual long Execute(long index, long subWell);//Synchrnous acquisition of data
 	virtual	long Execute(long index, long subWell, long zFrame, long tFrame);
 	virtual long CallCaptureComplete(long captureComplete);

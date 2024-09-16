@@ -14,6 +14,10 @@ AcquireSequence::AcquireSequence(IExperiment *pExperiment, wstring path)
 	_path = path;
 }
 
+void AcquireSequence::SetPublisher(Publisher* publisher) {
+	this->publisher = publisher;
+}
+
 long AcquireSequence::CallCaptureComplete(long captureComplete)
 {
 	return TRUE;
@@ -258,4 +262,5 @@ void AcquireSequence::SetAcquire(long captureMode, size_t timePoints, long zStre
 		}
 		break;
 	}
+	acq->SetPublisher(publisher);
 }
