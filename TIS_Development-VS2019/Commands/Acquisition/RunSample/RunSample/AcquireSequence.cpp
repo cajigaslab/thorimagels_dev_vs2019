@@ -14,6 +14,10 @@ AcquireSequence::AcquireSequence(IExperiment *pExperiment, wstring path)
 	_path = path;
 }
 
+void AcquireSequence::SetPublisher(Publisher* publisher) {
+	this->publisher = publisher;
+}
+
 long AcquireSequence::CallCaptureComplete(long captureComplete)
 {
 	return TRUE;
@@ -225,6 +229,7 @@ long AcquireSequence::Execute(long index, long subWell)
 			{
 				AcquireFactory factory;
 				acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_SINGLE, NULL, _pExp, _path));
+				acq->SetPublisher(publisher);
 
 				ICamera* pCamera = NULL;
 				pCamera = GetCamera(SelectedHardware::SELECTED_CAMERA1);
@@ -235,6 +240,7 @@ long AcquireSequence::Execute(long index, long subWell)
 				{
 					AcquireFactory factory;
 					acq.reset(factory.getAcquireInstance(AcquireFactory::ACQ_T_SERIES, NULL, _pExp, _path));
+					acq->SetPublisher(publisher);
 
 					//update progress to observer, need to reset the progress once a ZStream is completed
 					CallSaveImage(updateIndex - 1, FALSE);
@@ -338,6 +344,7 @@ void AcquireSequence::SetAcquire(long captureMode, size_t timePoints, long zStre
 		}
 		break;
 	}
+	acq->SetPublisher(publisher);
 }
 
 long AcquireSequence::ZStreamExecute(long index, long subWell, ICamera* pCamera, long zstageSteps, long timePoints, long undefinedVar)
