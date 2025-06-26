@@ -360,7 +360,7 @@ REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\ThorMesoScanSimulator\TorboJp
 REM echo F | xcopy /F ..\..\..\..\Tools\ImageProcessLibrary.1.0.3\build\native\ImageProcessLibrary.dll .\bin\%BUILD_CONFIG%\Lib
 
 ::TSI Libraries::::::::::::::::
-set INCLUDE_TSI_DLLS=FALSE
+set INCLUDE_TSI_DLLS=TRUE
 if %INCLUDE_TSI_DLLS%==TRUE (
 echo F | xcopy /F ..\..\..\..\Common\Camera-TSI\dlls\Native_64_lib\*.dll .\bin\%BUILD_CONFIG%\Lib
 REM echo F | xcopy /F ..\..\..\..\Hardware\Cameras\DCxCamera\x64\%BUILD_CONFIG%\DCxCamera.dll .\bin\%BUILD_CONFIG%\Modules_Native
